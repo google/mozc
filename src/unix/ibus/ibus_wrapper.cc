@@ -32,6 +32,8 @@
 #include <string>
 #include <type_traits>
 
+#include "absl/strings/string_view.h"
+
 static_assert(std::is_same<gint, int>::value, "gint must be int.");
 static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
 static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
@@ -43,6 +45,17 @@ static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 
 namespace mozc {
 namespace ibus {
+
+namespace {
+absl::string_view MakeStringView(const char *str) {
+  // If str is nullptr, returns null_sv as the default string_view.
+  // Then null_sv.data() returns nullptr.
+  // Note, std::string_view requires this treatment,
+  // but absl::string_view handles it internally.
+  constexpr absl::string_view null_sv = {};
+  return str ? str : null_sv;
+}
+}
 
 // GobjectWrapper
 
@@ -65,11 +78,10 @@ void GobjectWrapper::RefSink() {
 IbusPropertyWrapper::IbusPropertyWrapper(IBusProperty *property)
     : property_(property) {}
 
-IbusPropertyWrapper::IbusPropertyWrapper(const char *key, IBusPropType type,
-                                         const std::string &label,
-                                         const char *icon, IBusPropState state,
-                                         IBusPropList *prop_list) {
-  Initialize(key, type, label, icon, state, prop_list);
+IbusPropertyWrapper::IbusPropertyWrapper(
+    absl::string_view key, IBusPropType type, absl::string_view label,
+    absl::string_view icon, IBusPropState state, IBusPropList *prop_list) {
+  Initialize(key.data(), type, label.data(), icon.data(), state, prop_list);
 }
 
 GObject *IbusPropertyWrapper::GetGobject() {
@@ -78,24 +90,27 @@ GObject *IbusPropertyWrapper::GetGobject() {
 
 IBusProperty *IbusPropertyWrapper::GetProperty() { return property_; }
 
-void IbusPropertyWrapper::Initialize(const char *key, IBusPropType type,
-                                     const std::string &label, const char *icon,
+void IbusPropertyWrapper::Initialize(absl::string_view key, IBusPropType type,
+                                     absl::string_view label,
+                                     absl::string_view icon,
                                      IBusPropState state,
                                      IBusPropList *prop_list) {
-  IBusText *ibus_label = ibus_text_new_from_string(label.c_str());
+  IBusText *ibus_label = ibus_text_new_from_string(label.data());
 
   constexpr IBusText *tooltip = nullptr;
   constexpr bool sensitive = true;
   constexpr bool visible = true;
 
-  property_ = ibus_property_new(key, type, ibus_label, icon, tooltip, sensitive,
-                                visible, state, prop_list);
+  property_ =
+      ibus_property_new(key.data(), type, ibus_label, icon.data(),
+                        tooltip, sensitive, visible, state, prop_list);
 }
 
 bool IbusPropertyWrapper::IsInitialized() { return property_ != nullptr; }
 
-const char *IbusPropertyWrapper::GetKey() {
-  return ibus_property_get_key(property_);
+absl::string_view IbusPropertyWrapper::GetKey() {
+  const char *key = ibus_property_get_key(property_);
+  return MakeStringView(key);
 }
 
 IbusPropertyWrapper IbusPropertyWrapper::GetSubProp(uint index) {
@@ -104,15 +119,15 @@ IbusPropertyWrapper IbusPropertyWrapper::GetSubProp(uint index) {
   return IbusPropertyWrapper(sub_prop);
 }
 
-void IbusPropertyWrapper::SetIcon(const char *icon) {
-  ibus_property_set_icon(property_, icon);
+void IbusPropertyWrapper::SetIcon(absl::string_view icon) {
+  ibus_property_set_icon(property_, icon.data());
 }
-void IbusPropertyWrapper::SetLabel(const char *label) {
-  IBusText *ibus_label = ibus_text_new_from_string(label);
+void IbusPropertyWrapper::SetLabel(absl::string_view label) {
+  IBusText *ibus_label = ibus_text_new_from_string(label.data());
   ibus_property_set_label(property_, ibus_label);
 }
-void IbusPropertyWrapper::SetSymbol(const char *symbol) {
-  IBusText *ibus_symbol = ibus_text_new_from_string(symbol);
+void IbusPropertyWrapper::SetSymbol(absl::string_view symbol) {
+  IBusText *ibus_symbol = ibus_text_new_from_string(symbol.data());
   ibus_property_set_symbol(property_, ibus_symbol);
 }
 void IbusPropertyWrapper::SetState(IBusPropState state) {
@@ -141,8 +156,8 @@ void IbusPropListWrapper::Append(IbusPropertyWrapper *property) {
 
 // IbusTextWrapper
 
-IbusTextWrapper::IbusTextWrapper(const std::string &text) {
-  text_ = ibus_text_new_from_string(text.c_str());
+IbusTextWrapper::IbusTextWrapper(absl::string_view text) {
+  text_ = ibus_text_new_from_string(text.data());
 }
 
 IBusText *IbusTextWrapper::GetText() { return text_; }
@@ -160,16 +175,16 @@ IbusEngineWrapper::IbusEngineWrapper(IBusEngine *engine) : engine_(engine) {}
 
 IBusEngine *IbusEngineWrapper::GetEngine() { return engine_; }
 
-const char *IbusEngineWrapper::GetName() {
-  return ibus_engine_get_name(engine_);
+absl::string_view IbusEngineWrapper::GetName() {
+  return MakeStringView(ibus_engine_get_name(engine_));
 }
 
 void IbusEngineWrapper::GetContentType(uint *purpose, uint *hints) {
   ibus_engine_get_content_type(engine_, purpose, hints);
 }
 
-void IbusEngineWrapper::CommitText(const std::string &text) {
-  IBusText *ibus_text = ibus_text_new_from_string(text.c_str());
+void IbusEngineWrapper::CommitText(absl::string_view text) {
+  IBusText *ibus_text = ibus_text_new_from_string(text.data());
   ibus_engine_commit_text(engine_, ibus_text);
   // `ibus_text` is released by ibus_engine_commit_text.
 }
@@ -201,13 +216,13 @@ void IbusEngineWrapper::EnableSurroundingText() {
   ibus_engine_get_surrounding_text(engine_, nullptr, nullptr, nullptr);
 }
 
-const char *IbusEngineWrapper::GetSurroundingText(uint *cursor_pos,
-                                                  uint *anchor_pos) {
+absl::string_view IbusEngineWrapper::GetSurroundingText(uint *cursor_pos,
+                                                       uint *anchor_pos) {
   // DO NOT call g_object_unref against this.
   // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
   IBusText *text = nullptr;
   ibus_engine_get_surrounding_text(engine_, &text, cursor_pos, anchor_pos);
-  return ibus_text_get_text(text);
+  return MakeStringView(ibus_text_get_text(text));
 }
 
 void IbusEngineWrapper::DeleteSurroundingText(int offset, uint size) {
@@ -234,34 +249,38 @@ IbusEngineWrapper::Rectangle IbusEngineWrapper::GetCursorArea() {
 // IbusComponentWrapper
 
 IbusComponentWrapper::IbusComponentWrapper(
-    const char *name, const char *description, const char *version,
-    const char *license, const char *author, const char *homepage,
-    const char *command_line, const char *textdomain) {
-  component_ = ibus_component_new(name, description, version, license, author,
-                                  homepage, command_line, textdomain);
+    absl::string_view name, absl::string_view description,
+    absl::string_view version, absl::string_view license,
+    absl::string_view author, absl::string_view homepage,
+    absl::string_view command_line, absl::string_view textdomain) {
+  component_ = ibus_component_new(
+      name.data(), description.data(), version.data(), license.data(),
+      author.data(), homepage.data(), command_line.data(), textdomain.data());
 }
 
 GObject *IbusComponentWrapper::GetGobject() { return G_OBJECT(component_); }
 
 IBusComponent *IbusComponentWrapper::GetComponent() { return component_; }
 
-void IbusComponentWrapper::AddEngine(const char *name, const char *longname,
-                                     const char *description,
-                                     const char *language, const char *license,
-                                     const char *author, const char *icon,
-                                     const char *layout) {
+void IbusComponentWrapper::AddEngine(
+    absl::string_view name, absl::string_view longname,
+    absl::string_view description, absl::string_view language,
+    absl::string_view license, absl::string_view author, absl::string_view icon,
+    absl::string_view layout) {
   ibus_component_add_engine(
-      component_, ibus_engine_desc_new(name, longname, description, language,
-                                       license, author, icon, layout));
+      component_,
+      ibus_engine_desc_new(name.data(), longname.data(), description.data(),
+                           language.data(), license.data(), author.data(),
+                           icon.data(), layout.data()));
 }
 
-std::vector<const char *> IbusComponentWrapper::GetEngineNames() {
-  std::vector<const char *> names;
+std::vector<absl::string_view > IbusComponentWrapper::GetEngineNames() {
+  std::vector<absl::string_view> names;
   GList *engines = ibus_component_get_engines(component_);
   for (GList *p = engines; p; p = p->next) {
     IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc *>(p->data);
     const char *engine_name = ibus_engine_desc_get_name(engine);
-    names.push_back(engine_name);
+    names.push_back(MakeStringView(engine_name));
   }
   return names;
 }
@@ -273,16 +292,16 @@ IbusBusWrapper::IbusBusWrapper() { bus_ = ibus_bus_new(); }
 
 IBusBus *IbusBusWrapper::GetBus() { return bus_; }
 
-void IbusBusWrapper::AddEngines(const std::vector<const char *> engine_names,
-                                GType type) {
+void IbusBusWrapper::AddEngines(
+    const std::vector<absl::string_view> engine_names, GType type) {
   IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(bus_));
-  for (const char *engine_name : engine_names) {
-    ibus_factory_add_engine(factory, engine_name, type);
+  for (absl::string_view engine_name : engine_names) {
+    ibus_factory_add_engine(factory, engine_name.data(), type);
   }
 }
-void IbusBusWrapper::RequestName(const char *name) {
+void IbusBusWrapper::RequestName(absl::string_view name) {
   constexpr uint32_t flags = 0;
-  ibus_bus_request_name(bus_, name, flags);
+  ibus_bus_request_name(bus_, name.data(), flags);
 }
 void IbusBusWrapper::RegisterComponent(IbusComponentWrapper *component) {
   ibus_bus_register_component(bus_, component->GetComponent());

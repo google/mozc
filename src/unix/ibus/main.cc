@@ -74,19 +74,18 @@ void Disconnected(IBusBus *bus, gpointer user_data) { ibus_quit(); }
 
 // Creates a IBusComponent object and add engine(s) to the object.
 IbusComponentWrapper GetIbusComponent() {
-  IbusComponentWrapper component(
-      kComponentName, kComponentDescription,
-      mozc::Version::GetMozcVersion().c_str(), kComponentLicense,
-      kComponentAuthor, kComponentHomepage, "", kComponentTextdomain);
+  IbusComponentWrapper component(kComponentName, kComponentDescription,
+                                 mozc::Version::GetMozcVersion(),
+                                 kComponentLicense, kComponentAuthor,
+                                 kComponentHomepage, "", kComponentTextdomain);
   const std::string icon_path = GetIconPath(kEngineIcon);
 
   mozc::IbusConfig ibus_config;
   ibus_config.Initialize();
   for (const Engine &engine : ibus_config.GetConfig().engines()) {
-    component.AddEngine(engine.name().c_str(), engine.longname().c_str(),
-                        kEngineDescription, kEngineLanguage, kComponentLicense,
-                        kComponentAuthor, icon_path.c_str(),
-                        engine.layout().c_str());
+    component.AddEngine(engine.name(), engine.longname(), kEngineDescription,
+                        kEngineLanguage, kComponentLicense, kComponentAuthor,
+                        icon_path, engine.layout());
   }
   return component;
 }

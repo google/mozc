@@ -34,6 +34,7 @@
 #include <string>
 
 #include "unix/ibus/ibus_config.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -53,12 +54,12 @@ class IbusConfig {
   bool LoadConfig(const std::string &config_data);
 
   const std::string &GetEnginesXml() const;
-  const std::string &GetLayout(const std::string &name) const;
+  const std::string &GetLayout(absl::string_view name) const;
   const ibus::Config &GetConfig() const;
   bool IsActiveOnLaunch() const;
 
   ibus::Engine::CompositionMode GetCompositionMode(
-      const std::string &name) const;
+      absl::string_view engine_name) const;
 
  private:
   std::string default_layout_;

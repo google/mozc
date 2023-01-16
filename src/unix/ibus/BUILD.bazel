@@ -86,7 +86,9 @@ cc_library_mozc(
     name = "ibus_wrapper",
     srcs = select_mozc(linux = ["ibus_wrapper.cc"]),
     hdrs = select_mozc(linux = ["ibus_wrapper.h"]),
-    deps = select_mozc(
+    deps = [
+        "@com_google_absl//absl/strings",
+    ] + select_mozc(
         linux = [
             ":ibus_header",
             "//third_party/ibus",
@@ -113,6 +115,7 @@ cc_library_mozc(
         "//base:system_util",
         "//client:client",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ] + select_mozc(
         linux = ["//third_party/ibus"],
         oss_linux = ["@ibus//:ibus"],
@@ -209,6 +212,7 @@ cc_library_mozc(
         "//session:ime_switch_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -280,6 +284,7 @@ cc_binary_mozc(
         "//base:logging",
         "//base:version",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 

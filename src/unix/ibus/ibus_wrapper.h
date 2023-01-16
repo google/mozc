@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace ibus {
 
@@ -49,14 +51,14 @@ class GobjectWrapper {
 
   // https://docs.gtk.org/gobject/method.Object.get_data.html
   template <typename T>
-  const T *GetData(const char *key) {
-    void *data = g_object_get_data(GetGobject(), key);
+  const T *GetData(absl::string_view key) {
+    void *data = g_object_get_data(GetGobject(), key.data());
     return reinterpret_cast<const T *>(data);
   }
 
   template <typename T>
-  void SetData(const char *key, const T &data) {
-    g_object_set_data(GetGobject(), key,
+  void SetData(absl::string_view key, const T &data) {
+    g_object_set_data(GetGobject(), key.data(),
                       reinterpret_cast<void *>(const_cast<T *>(&data)));
   }
 };
@@ -66,26 +68,26 @@ class IbusPropertyWrapper : public GobjectWrapper {
   explicit IbusPropertyWrapper(IBusProperty *property);
   virtual ~IbusPropertyWrapper() = default;
 
-  IbusPropertyWrapper(const char *key, IBusPropType type,
-                      const std::string &label, const char *icon,
+  IbusPropertyWrapper(absl::string_view key, IBusPropType type,
+                      absl::string_view label, absl::string_view icon,
                       IBusPropState state, IBusPropList *prop_list);
 
   GObject *GetGobject() override;
 
-  void Initialize(const char *key, IBusPropType type, const std::string &label,
-                  const char *icon, IBusPropState state,
-                  IBusPropList *prop_list);
+  void Initialize(absl::string_view key, IBusPropType type,
+                  absl::string_view label, absl::string_view icon,
+                  IBusPropState state, IBusPropList *prop_list);
 
   IBusProperty *GetProperty();
 
   bool IsInitialized();
 
-  const char *GetKey();
+  absl::string_view GetKey();
   IbusPropertyWrapper GetSubProp(uint index);
 
-  void SetIcon(const char *icon);
-  void SetLabel(const char *label);
-  void SetSymbol(const char *symbol);
+  void SetIcon(absl::string_view icon);
+  void SetLabel(absl::string_view label);
+  void SetSymbol(absl::string_view symbol);
   void SetState(IBusPropState state);
 
  private:
@@ -109,7 +111,7 @@ class IbusPropListWrapper : public GobjectWrapper {
 
 class IbusTextWrapper {
  public:
-  IbusTextWrapper(const std::string &text);
+  IbusTextWrapper(absl::string_view text);
   ~IbusTextWrapper() = default;
 
   IBusText *GetText();
@@ -129,11 +131,11 @@ class IbusEngineWrapper {
 
   IBusEngine *GetEngine();
 
-  const char *GetName();
+  absl::string_view GetName();
 
   void GetContentType(uint *purpose, uint *hints);
 
-  void CommitText(const std::string &text);
+  void CommitText(absl::string_view text);
 
   void UpdatePreeditTextWithMode(IbusTextWrapper *text, int cursor);
 
@@ -145,7 +147,7 @@ class IbusEngineWrapper {
 
   void EnableSurroundingText();
 
-  const char *GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
+  absl::string_view GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
 
   void DeleteSurroundingText(int offset, uint size);
 
@@ -167,22 +169,23 @@ class IbusEngineWrapper {
 
 class IbusComponentWrapper : public GobjectWrapper {
  public:
-  IbusComponentWrapper(const char *name, const char *description,
-                    const char *version, const char *license,
-                    const char *author, const char *homepage,
-                    const char *command_line, const char *textdomain);
+  IbusComponentWrapper(absl::string_view name, absl::string_view description,
+                       absl::string_view version, absl::string_view license,
+                       absl::string_view author, absl::string_view homepage,
+                       absl::string_view command_line,
+                       absl::string_view textdomain);
   ~IbusComponentWrapper() = default;
 
   GObject *GetGobject() override;
 
   IBusComponent *GetComponent();
 
-  void AddEngine(const char *name, const char *longname,
-                 const char *description, const char *language,
-                 const char *license, const char *author, const char *icon,
-                 const char *layout);
+  void AddEngine(absl::string_view name, absl::string_view longname,
+                 absl::string_view description, absl::string_view language,
+                 absl::string_view license, absl::string_view author,
+                 absl::string_view icon, absl::string_view layout);
 
-  std::vector<const char *> GetEngineNames();
+  std::vector<absl::string_view> GetEngineNames();
 
  private:
   IBusComponent *component_;  // Does not take the ownership.
@@ -195,8 +198,9 @@ class IbusBusWrapper {
 
   IBusBus *GetBus();
 
-  void AddEngines(const std::vector<const char *> engine_names, GType type);
-  void RequestName(const char *name);
+  void AddEngines(const std::vector<absl::string_view> engine_names,
+                  GType type);
+  void RequestName(absl::string_view name);
   void RegisterComponent(IbusComponentWrapper *component);
 
  private:

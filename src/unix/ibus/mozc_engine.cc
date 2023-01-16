@@ -63,6 +63,7 @@
 #include "unix/ibus/selection_monitor.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
@@ -123,7 +124,7 @@ bool GetSurroundingText(IbusEngineWrapper *engine,
   }
   uint cursor_pos = 0;
   uint anchor_pos = 0;
-  const std::string surrounding_text =
+  const absl::string_view surrounding_text =
       engine->GetSurroundingText(&cursor_pos, &anchor_pos);
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -373,7 +374,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
   }
 
   // layout_is_jp is only used determine Kana input with US layout.
-  const std::string &layout = ibus_config_.GetLayout(engine->GetName());
+  const absl::string_view layout = ibus_config_.GetLayout(engine->GetName());
   const bool layout_is_jp = (layout != "us");
 
   commands::KeyEvent key;

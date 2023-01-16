@@ -34,6 +34,7 @@
 
 #include "base/port.h"
 #include "unix/ibus/ibus_header.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
@@ -62,8 +63,8 @@ class SurroundingTextUtil {
   // When both 1) and 2) are satisfied, this function calculates
   // |*anchor_pos| for case 1).
   // Otherwise returns false.
-  static bool GetAnchorPosFromSelection(const std::string &surrounding_text,
-                                        const std::string &selected_text,
+  static bool GetAnchorPosFromSelection(absl::string_view surrounding_text,
+                                        absl::string_view selected_text,
                                         uint cursor_pos, uint *anchor_pos);
 };
 

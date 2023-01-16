@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
@@ -105,8 +106,8 @@ bool StartsWith(ConstChar32Iterator *iter, ConstChar32Iterator *prefix_iter) {
 // Returns true if |surrounding_text| contains |selected_text|
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosForward(const std::string &surrounding_text,
-                            const std::string &selected_text,
+bool SearchAnchorPosForward(absl::string_view surrounding_text,
+                            absl::string_view selected_text,
                             size_t selected_chars_len, uint cursor_pos,
                             uint *anchor_pos) {
   ConstChar32Iterator iter(surrounding_text);
@@ -126,8 +127,8 @@ bool SearchAnchorPosForward(const std::string &surrounding_text,
 // Returns true if |surrounding_text| contains |selected_text|
 // from |*anchor_pos| to |cursor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosBackward(const std::string &surrounding_text,
-                             const std::string &selected_text,
+bool SearchAnchorPosBackward(absl::string_view surrounding_text,
+                             absl::string_view selected_text,
                              size_t selected_chars_len, uint cursor_pos,
                              uint *anchor_pos) {
   if (cursor_pos < selected_chars_len) {
@@ -153,7 +154,7 @@ bool SearchAnchorPosBackward(const std::string &surrounding_text,
 }  // namespace
 
 bool SurroundingTextUtil::GetAnchorPosFromSelection(
-    const std::string &surrounding_text, const std::string &selected_text,
+    absl::string_view surrounding_text, absl::string_view selected_text,
     uint cursor_pos, uint *anchor_pos) {
   DCHECK(anchor_pos);
 
