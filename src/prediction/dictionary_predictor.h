@@ -99,7 +99,7 @@ class DictionaryPredictor : public PredictorInterface {
     SUFFIX = 8,
     // add English words.
     ENGLISH = 16,
-    // add prediciton to type corrected keys
+    // add prediction to type corrected keys
     TYPING_CORRECTION = 32,
     // prefix candidates
     // "今日", "教" for the input, "きょうは"
@@ -397,7 +397,7 @@ class DictionaryPredictor : public PredictorInterface {
   size_t GetMissSpelledPosition(const std::string &key,
                                 const std::string &value) const;
 
-  // Returns language model cost of |token| given prediciton type |type|.
+  // Returns language model cost of |token| given prediction type |type|.
   // |rid| is the right id of previous word (token).
   // If |rid| is unknown, set 0 as a default value.
   int GetLMCost(const Result &result, int rid) const;

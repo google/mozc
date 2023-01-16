@@ -178,9 +178,9 @@ class UserHistoryPredictor : public PredictorInterface {
 
   class SegmentsForLearning {
    public:
-    SegmentsForLearning() {}
+    SegmentsForLearning() = default;
 
-    virtual ~SegmentsForLearning() {}
+    virtual ~SegmentsForLearning() = default;
 
     void push_back_history_segment(const SegmentForLearning &val) {
       history_segments_.push_back(val);

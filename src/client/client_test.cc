@@ -55,7 +55,7 @@ constexpr char kPrecedingText[] = "preceding_text";
 constexpr char kFollowingText[] = "following_text";
 constexpr bool kSuppressSuggestion = true;
 
-const std::string UpdateVersion(int diff) {
+std::string UpdateVersion(int diff) {
   std::vector<std::string> tokens =
       absl::StrSplit(Version::GetMozcVersion(), '.', absl::SkipEmpty());
   EXPECT_EQ(tokens.size(), 4);
@@ -736,8 +736,8 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   }
 
   const std::string &server_program() const override {
-    static const std::string path;
-    return path;
+    static std::string *path = new std::string();
+    return *path;
   }
 
  private:
@@ -754,8 +754,8 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
 
 class SessionPlaybackTest : public testing::Test {
  protected:
-  SessionPlaybackTest() {}
-  ~SessionPlaybackTest() override {}
+  SessionPlaybackTest() = default;
+  ~SessionPlaybackTest() override = default;
 
   void SetUp() override {
     ipc_client_factory_ = std::make_unique<IPCClientFactoryMock>();

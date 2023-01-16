@@ -121,7 +121,7 @@ TEST(LoggingTest, SideEffectTest) {
   flag = true;
   LOG_IF(DFATAL, flag = false) << "";
   EXPECT_TRUE(flag);
-#else
+#else  // MOZC_NO_LOGGING
   flag = true;
   LOG_IF(INFO, flag = false) << "";
   EXPECT_FALSE(flag);
@@ -137,7 +137,7 @@ TEST(LoggingTest, SideEffectTest) {
   flag = true;
   LOG_IF(DFATAL, flag = false) << "";
   EXPECT_FALSE(flag);
-#endif
+#endif  // MOZC_NO_LOGGING
 
   flag = true;
   LOG_IF(FATAL, flag = false) << "";
@@ -192,9 +192,9 @@ TEST(LoggingTest, RightHandSideEvaluation) {
 
 #ifdef MOZC_NO_LOGGING
   EXPECT_EQ(0, g_counter);
-#else
+#else  // MOZC_NO_LOGGING
   EXPECT_EQ(3, g_counter);
-#endif
+#endif  // MOZC_NO_LOGGING
 
   g_counter = 0;
   LOG_IF(INFO, true) << "test: " << DebugString();
@@ -203,9 +203,9 @@ TEST(LoggingTest, RightHandSideEvaluation) {
 
 #ifdef MOZC_NO_LOGGING
   EXPECT_EQ(0, g_counter);
-#else
+#else  // MOZC_NO_LOGGING
   EXPECT_EQ(3, g_counter);
-#endif
+#endif  // MOZC_NO_LOGGING
 
   g_counter = 0;
   LOG_IF(INFO, false) << "test: " << DebugString();

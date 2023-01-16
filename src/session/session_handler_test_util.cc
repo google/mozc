@@ -108,8 +108,8 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-SessionHandlerTestBase::SessionHandlerTestBase() {}
-SessionHandlerTestBase::~SessionHandlerTestBase() {}
+SessionHandlerTestBase::SessionHandlerTestBase() = default;
+SessionHandlerTestBase::~SessionHandlerTestBase() = default;
 
 void SessionHandlerTestBase::SetUp() {
   flags_max_session_size_backup_ = absl::GetFlag(FLAGS_max_session_size);

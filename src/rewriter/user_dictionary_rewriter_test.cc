@@ -79,8 +79,8 @@ std::string GetCandidates(const Segments &segments) {
 
 class UserDictionaryRewriterTest : public testing::Test {
  protected:
-  UserDictionaryRewriterTest() {}
-  ~UserDictionaryRewriterTest() override {}
+  UserDictionaryRewriterTest() = default;
+  ~UserDictionaryRewriterTest() override = default;
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));

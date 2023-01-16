@@ -828,7 +828,7 @@ TEST_P(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
-  // test of reseting the history segements
+  // test of resetting the history segements
   {
     MockEngine engine;
     MockConverter converter;

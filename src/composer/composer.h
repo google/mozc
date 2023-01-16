@@ -171,7 +171,7 @@ class Composer final {
   bool InsertCharacterKeyAndPreedit(const std::string &key,
                                     const std::string &preedit);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
-  void InsertCommandCharacter(const InternalCommand internal_command);
+  void InsertCommandCharacter(InternalCommand internal_command);
   void Delete();
   void Backspace();
 
@@ -189,15 +189,15 @@ class Composer final {
   // Returns substring of raw input.  The position and size is based on the
   // composed string.  For example, when [さ|sa][し|shi][み|mi] is the
   // composition, GetRawSubString(0, 2) returns "sashi".
-  void GetRawSubString(const size_t position, const size_t size,
+  void GetRawSubString(size_t position, size_t size,
                        std::string *raw_sub_string) const;
 
   // Generate transliterations.
   void GetTransliterations(transliteration::Transliterations *t13ns) const;
 
   // Generate substrings of specified transliteration.
-  void GetSubTransliteration(const transliteration::TransliterationType type,
-                             const size_t position, const size_t size,
+  void GetSubTransliteration(transliteration::TransliterationType type,
+                             size_t position, size_t size,
                              std::string *transliteration) const;
 
   // Generate substrings of transliterations.
@@ -262,7 +262,7 @@ class Composer final {
 
   // Generate transliterated substrings.
   void GetTransliteratedText(Transliterators::Transliterator t12r,
-                             const size_t position, const size_t size,
+                             size_t position, size_t size,
                              std::string *result) const;
 
   size_t position_;

@@ -55,7 +55,7 @@ void VerifySidContained(const std::vector<Sid> sids,
       return;
     }
   }
-  EXPECT_TRUE(false) << "Not found. Expected SID: " << expected_well_known_sid;
+  ADD_FAILURE() << "Not found. Expected SID: " << expected_well_known_sid;
 }
 
 TEST(WinSandboxTest, GetSidsToDisable) {

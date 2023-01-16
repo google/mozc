@@ -71,8 +71,14 @@ register_extension_info(
 )
 
 def cc_test_mozc(name, tags = [], deps = [], copts = [], **kwargs):
-    """
-    cc_test wrapper adding //:macro dependecny.
+    """cc_test wrapper adding //:macro dependecny.
+
+    Args:
+      name: name for cc_test.
+      tags: targs for cc_test.
+      deps: deps for cc_test.  //:macro is added.
+      copts: copts for cc_test.  -funsigned-char is added.
+      **kwargs: other args for cc_test.
     """
 
     requires_full_emulation = kwargs.pop("requires_full_emulation", False)

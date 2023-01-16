@@ -112,7 +112,7 @@ namespace {
                             "are encoded into 2 bytes.");
   }
   return MakeAssertResult(size == 3, c,
-                          "Other charaters should be encoded into 3bytes.");
+                          "Other characters should be encoded into 3bytes.");
 }
 
 }  // namespace

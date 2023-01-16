@@ -42,7 +42,7 @@ TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
   PredictorInterface *predictor = engine->GetPredictor();
 #ifdef OS_ANDROID
   EXPECT_EQ("MobilePredictor", predictor->GetPredictorName());
-#else
+#else   // OS_ANDROID
   EXPECT_EQ("DefaultPredictor", predictor->GetPredictorName());
 #endif  // OS_ANDROID
 }

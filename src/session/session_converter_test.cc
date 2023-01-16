@@ -104,8 +104,8 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
 class SessionConverterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  SessionConverterTest() {}
-  ~SessionConverterTest() override {}
+  SessionConverterTest() = default;
+  ~SessionConverterTest() override = default;
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
@@ -3396,7 +3396,7 @@ TEST_F(SessionConverterTest, ExecuteCommandCandidate) {
   }
 }
 
-TEST_F(SessionConverterTest, PropageteConfigToRenderer) {
+TEST_F(SessionConverterTest, PropagateConfigToRenderer) {
   // Disable information_list_config()
   {
     MockConverter mock_converter;
