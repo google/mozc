@@ -64,5 +64,8 @@
         'wtl_dir': '<(ext_third_party_dir)/wtl',
       }],
     ],
+
+    # glob command to get files.
+    'glob': '<(python) <(abs_depth)/gyp/glob_files.py --include',
   },
 }
