@@ -337,6 +337,7 @@ cc_library_mozc(
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
         "//renderer:unix_const",
+        "@com_google_absl//absl/strings",
     ] + select_mozc(
         linux = [
             ":ibus_wrapper",

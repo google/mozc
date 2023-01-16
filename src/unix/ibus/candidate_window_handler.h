@@ -31,19 +31,17 @@
 #define MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_H_
 
 #include <memory>
+#include <string>
+#include <variant>
 
 #include "base/port.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
 #include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-namespace renderer {
-class RendererInterface;
-}  // namespace renderer
 namespace ibus {
 
 class GSettingsObserver;
@@ -69,6 +67,9 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
       bool use_custom_font_description);
 
   void RegisterGSettingsObserver();
+
+  using Variant = std::variant<bool, std::string>;
+  void OnSettingsUpdated(absl::string_view key, const Variant &value);
 
  protected:
   bool SendUpdateCommand(IbusEngineWrapper *engine,
