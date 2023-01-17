@@ -41,7 +41,7 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {

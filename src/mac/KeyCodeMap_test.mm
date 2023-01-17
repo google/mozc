@@ -33,8 +33,8 @@
 #import <Cocoa/Cocoa.h>
 
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 using mozc::commands::KeyEvent;
 

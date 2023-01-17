@@ -45,8 +45,8 @@
 #include "protocol/config.pb.h"
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap_factory.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 

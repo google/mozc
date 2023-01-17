@@ -31,8 +31,8 @@
 
 #include <cstdint>
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace internal {

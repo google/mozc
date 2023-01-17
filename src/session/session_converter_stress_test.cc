@@ -43,8 +43,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_converter.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, test_deterministic, true,

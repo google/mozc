@@ -33,7 +33,7 @@
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::Return;

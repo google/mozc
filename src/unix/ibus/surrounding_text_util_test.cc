@@ -30,7 +30,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "unix/ibus/surrounding_text_util.h"
 
 namespace mozc {

@@ -36,7 +36,7 @@
 
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

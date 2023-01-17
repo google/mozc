@@ -39,7 +39,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

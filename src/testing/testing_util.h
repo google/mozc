@@ -27,12 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_TESTING_UTIL_H_
-#define MOZC_TESTING_BASE_PUBLIC_TESTING_UTIL_H_
+#ifndef MOZC_TESTING_TESTING_UTIL_H_
+#define MOZC_TESTING_TESTING_UTIL_H_
 
 #include "base/port.h"
 #include "base/protobuf/message.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace testing {
@@ -101,4 +101,4 @@ template <typename T>
 }  // namespace testing
 }  // namespace mozc
 
-#endif  // MOZC_TESTING_BASE_PUBLIC_TESTING_UTIL_H_
+#endif  // MOZC_TESTING_TESTING_UTIL_H_

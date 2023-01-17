@@ -30,8 +30,8 @@
 #include "renderer/unix/gtk_window_base.h"
 
 #include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::DoAll;

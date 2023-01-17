@@ -31,7 +31,7 @@
 #define MOZC_ENGINE_ENGINE_MOCK_H_
 
 #include "engine/engine_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 

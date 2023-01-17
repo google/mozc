@@ -37,7 +37,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

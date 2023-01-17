@@ -33,7 +33,7 @@
 
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

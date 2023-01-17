@@ -37,7 +37,7 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 

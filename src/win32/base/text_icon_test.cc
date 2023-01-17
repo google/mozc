@@ -42,7 +42,7 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "base/win_font_test_helper.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {

@@ -50,9 +50,9 @@
 #include "base/util.h"
 #include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 using ::std::max;
 using ::std::min;

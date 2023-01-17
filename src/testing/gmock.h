@@ -27,30 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
-#define MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
+#ifndef MOZC_TESTING_GMOCK_H_
+#define MOZC_TESTING_GMOCK_H_
 
-#include "absl/flags/declare.h"
-#include "absl/flags/flag.h"
+#include <gmock/gmock.h>
 
-// gunit doesn't expose test_srcdir and test_tmpdir on mobile platforms like
-// Android.
-
-// --test_srcdir is the path to a directory that contains the input data files
-// for a test, so that each entry in the 'data' section of the BUILD rule for
-// this test specifies a path relative to FLAGS_test_srcdir.
-ABSL_DECLARE_FLAG(std::string, test_srcdir);
-
-// --test_tmpdir is a temporary directory that you can write to from inside a
-// test.  Files you write will eventually be cleaned up but you can see them at
-// ~/local/tmp in the immediate aftermath of the test.  These files are
-// stored on local disk, not on the networked filer.
-ABSL_DECLARE_FLAG(std::string, test_tmpdir);
+#ifndef EXPECT_OK
 
 namespace mozc {
-// Initialize FLAGS_test_srcdir and FLAGS_test_tmpdir.
-void InitTestFlags();
+
+MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
+
 }  // namespace mozc
 
+#define ASSERT_OK(expr) ASSERT_THAT(expr, ::mozc::IsOkStatus())
+#define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
 
-#endif  // MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_
+#endif  // EXPECT_OK
+
+
+#endif  // MOZC_TESTING_GMOCK_H_

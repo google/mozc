@@ -40,8 +40,8 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_interface.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 

@@ -39,8 +39,8 @@
 #include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_join.h"
 
 class MozcEmacsHelperLibTest : public testing::Test {

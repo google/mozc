@@ -37,8 +37,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace config {

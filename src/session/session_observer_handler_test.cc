@@ -30,7 +30,7 @@
 #include "session/session_observer_handler.h"
 #include "protocol/commands.pb.h"
 #include "session/session_observer_interface.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace session {

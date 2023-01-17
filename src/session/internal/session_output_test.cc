@@ -40,7 +40,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace session {

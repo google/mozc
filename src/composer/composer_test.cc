@@ -48,7 +48,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

@@ -47,9 +47,9 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 

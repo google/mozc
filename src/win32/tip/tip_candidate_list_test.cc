@@ -38,8 +38,8 @@
 #include <string>
 #include <vector>
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "win32/tip/tip_dll_module.h"
 
 namespace mozc {

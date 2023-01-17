@@ -31,8 +31,8 @@
 #include "base/coordinates.h"
 #include "renderer/unix/cairo_wrapper_mock.h"
 #include "renderer/unix/const.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::Expectation;

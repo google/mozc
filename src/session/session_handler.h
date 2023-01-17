@@ -45,7 +45,7 @@
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 

@@ -40,8 +40,8 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "data_manager/connection_file_reader.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

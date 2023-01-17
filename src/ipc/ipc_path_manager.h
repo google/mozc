@@ -44,7 +44,7 @@
 
 #include "base/port.h"
 // For FRIEND_TEST
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {

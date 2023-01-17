@@ -39,7 +39,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 

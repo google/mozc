@@ -27,23 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
-#define MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
-
-#include <gmock/gmock.h>
-
-#ifndef EXPECT_OK
-
-namespace mozc {
-
-MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
-
-}  // namespace mozc
-
-#define ASSERT_OK(expr) ASSERT_THAT(expr, ::mozc::IsOkStatus())
-#define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
-
-#endif  // EXPECT_OK
+#ifndef MOZC_TESTING_GUNIT_H_
+#define MOZC_TESTING_GUNIT_H_
 
 
-#endif  // MOZC_TESTING_BASE_PUBLIC_GMOCK_H_
+#include <gtest/gtest.h>  // IWYU pragma: export
+
+#include "testing/googletest.h"
+
+
+#endif  // MOZC_TESTING_GUNIT_H_

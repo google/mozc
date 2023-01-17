@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_MOZCTEST_H_
-#define MOZC_TESTING_BASE_PUBLIC_MOZCTEST_H_
+#ifndef MOZC_TESTING_MOZCTEST_H_
+#define MOZC_TESTING_MOZCTEST_H_
 
 #include <string>
 #include <vector>
@@ -91,4 +91,4 @@ class ScopedTmpUserProfileDirectory {
 }  // namespace testing
 }  // namespace mozc
 
-#endif  // MOZC_TESTING_BASE_PUBLIC_MOZCTEST_H_
+#endif  // MOZC_TESTING_MOZCTEST_H_

@@ -34,8 +34,8 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {

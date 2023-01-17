@@ -40,7 +40,7 @@
 #include "composer/composer.h"
 #include "session/session_interface.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

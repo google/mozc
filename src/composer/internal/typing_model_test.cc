@@ -32,7 +32,7 @@
 #include <cstdint>
 #include <iterator>
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace composer {

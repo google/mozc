@@ -40,7 +40,7 @@
 #include "renderer/unix/gtk_window_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 #include "renderer/unix/window_manager_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace renderer {

@@ -32,7 +32,7 @@
 #include "renderer/window_util.h"
 
 #include "base/coordinates.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace renderer {

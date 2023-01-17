@@ -36,8 +36,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using mozc::commands::Candidates;
 using mozc::commands::Command;

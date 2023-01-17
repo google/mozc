@@ -43,8 +43,8 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 

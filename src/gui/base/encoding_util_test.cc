@@ -42,7 +42,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #ifdef OS_WIN
 #include "absl/strings/string_view.h"
 #endif  // OS_WIN

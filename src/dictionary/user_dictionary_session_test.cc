@@ -41,10 +41,10 @@
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/testing_util.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
+#include "testing/testing_util.h"
 #include "absl/flags/flag.h"
 
 namespace {

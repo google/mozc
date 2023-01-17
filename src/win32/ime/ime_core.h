@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
 #include "win32/base/keyevent_handler.h"

@@ -29,7 +29,7 @@
 
 #include "storage/louds/bit_stream.h"
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace {
 

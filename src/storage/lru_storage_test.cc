@@ -43,9 +43,9 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {

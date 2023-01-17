@@ -29,8 +29,8 @@
 
 #include "win32/tip/tip_surrounding_text.h"
 #include "base/util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {

@@ -39,9 +39,9 @@
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 

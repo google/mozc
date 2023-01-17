@@ -39,7 +39,7 @@
 #include "base/system_util.h"
 #include "base/win_api_test_helper.h"
 #include "base/win_util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "win32/base/omaha_util.h"
 
 namespace mozc {

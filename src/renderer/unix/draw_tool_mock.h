@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_UNIX_DRAW_TOOL_MOCK_H_
 
 #include "renderer/unix/draw_tool_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

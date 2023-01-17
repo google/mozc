@@ -43,7 +43,7 @@
 #include "renderer/unix/draw_tool_interface.h"
 #include "renderer/unix/gtk_window_base.h"
 #include "renderer/unix/text_renderer_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace renderer {

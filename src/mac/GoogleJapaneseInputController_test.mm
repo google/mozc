@@ -42,8 +42,8 @@
 #include "client/client_mock.h"
 #include "protocol/candidates.pb.h"
 #include "renderer/renderer_interface.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 @interface MockIMKServer : IMKServer <ServerCallback> {
   // The controller which accepts user's clicks

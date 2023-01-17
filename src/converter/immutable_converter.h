@@ -45,7 +45,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "absl/base/attributes.h"
 //  for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 

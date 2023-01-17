@@ -38,7 +38,7 @@
 #include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/pango_wrapper_interface.h"
 #include "renderer/unix/text_renderer_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace renderer {

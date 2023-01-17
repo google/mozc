@@ -31,7 +31,7 @@
 #define MOZC_CONVERTER_CONVERTER_MOCK_H_
 
 #include "converter/converter_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 

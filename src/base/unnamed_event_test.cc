@@ -33,7 +33,7 @@
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

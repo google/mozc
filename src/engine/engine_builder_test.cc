@@ -33,10 +33,10 @@
 
 #include "base/file_util.h"
 #include "prediction/predictor_interface.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {

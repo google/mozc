@@ -42,8 +42,8 @@
 #include "renderer/unix/draw_tool_mock.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "renderer/unix/text_renderer_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::DoAll;

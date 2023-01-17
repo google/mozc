@@ -30,8 +30,8 @@
 #include "win32/base/imm_reconvert_string.h"
 
 #include "base/util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {

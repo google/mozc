@@ -36,7 +36,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

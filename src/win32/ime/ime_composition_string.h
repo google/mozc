@@ -38,7 +38,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/ime/ime_types.h"
 

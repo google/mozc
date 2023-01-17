@@ -31,7 +31,7 @@
 #define MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 
 #include "engine/user_data_manager_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 

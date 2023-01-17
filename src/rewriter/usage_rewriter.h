@@ -43,7 +43,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/base/public/gunit_prod.h"  // for FRIEND_TEST()
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
 namespace mozc {
 

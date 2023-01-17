@@ -43,8 +43,8 @@
 #include "session/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_tool.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace {
