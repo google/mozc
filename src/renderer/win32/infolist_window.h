@@ -89,6 +89,8 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   END_MSG_MAP()
 
   InfolistWindow();
+  InfolistWindow(const InfolistWindow &) = delete;
+  InfolistWindow &operator=(const InfolistWindow &) = delete;
   ~InfolistWindow();
   void OnDestroy();
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
@@ -118,8 +120,6 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   std::unique_ptr<renderer::RendererStyle> style_;
   bool metrics_changed_;
   bool visible_;
-
-  DISALLOW_COPY_AND_ASSIGN(InfolistWindow);
 };
 
 }  // namespace win32

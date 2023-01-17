@@ -636,6 +636,9 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
       : logical_to_physical_point_for_per_monitor_dpi_(
             GetLogicalToPhysicalPointForPerMonitorDPI()) {}
 
+  NativeWindowPositionAPI(const NativeWindowPositionAPI &) = delete;
+  NativeWindowPositionAPI &operator=(const NativeWindowPositionAPI &) = delete;
+
   virtual ~NativeWindowPositionAPI() {}
 
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
@@ -749,8 +752,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 
   const LogicalToPhysicalPointForPerMonitorDPIFunc
       logical_to_physical_point_for_per_monitor_dpi_;
-
-  DISALLOW_COPY_AND_ASSIGN(NativeWindowPositionAPI);
 };
 
 struct WindowInfo {
@@ -799,6 +800,9 @@ class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
  public:
   WindowPositionEmulatorImpl() {}
+  WindowPositionEmulatorImpl(const WindowPositionEmulatorImpl &) = delete;
+  WindowPositionEmulatorImpl &operator=(const WindowPositionEmulatorImpl &) =
+      delete;
   virtual ~WindowPositionEmulatorImpl() {}
 
   // This method is not const to implement Win32WindowInterface.
@@ -938,8 +942,6 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   std::map<HWND, WindowInfo> window_map_;
   std::map<HWND, HWND> root_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(WindowPositionEmulatorImpl);
 };
 
 bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {

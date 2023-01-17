@@ -119,6 +119,9 @@ class Balloon {
             left, top, width, height, balloon_tail_height, balloon_tail_width,
             balloon_tail)) {}
 
+  Balloon(const Balloon &) = delete;
+  Balloon &operator=(const Balloon &) = delete;
+
   void RenderPixel(int x, int y, SubdivisionalPixel *pixel) const {
     {
       const PixelType fast_check_type = GetPixelTypeInternalFast(x, y);
@@ -353,7 +356,6 @@ class Balloon {
   const RGBColor inside_color_;
   const BalloonImage::BalloonImageInfo::TailDirection balloon_tail_;
   const Rect bounding_rect_;
-  DISALLOW_COPY_AND_ASSIGN(Balloon);
 };
 
 Rect GetBoundingRect(double left, double top, double width, double height) {

@@ -60,6 +60,8 @@ class WorkingAreaInterface;
 class WindowManager {
  public:
   WindowManager();
+  WindowManager(const WindowManager &) = delete;
+  WindowManager &operator=(const WindowManager &) = delete;
   ~WindowManager();
   void Initialize();
   void AsyncHideAllWindows();
@@ -85,8 +87,6 @@ class WindowManager {
   POINT last_position_;
   int candidates_finger_print_;
   DWORD thread_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
 
 }  // namespace win32

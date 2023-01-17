@@ -44,6 +44,8 @@ namespace win32 {
 class CompositionWindowList {
  public:
   CompositionWindowList() {}
+  CompositionWindowList(const CompositionWindowList &) = delete;
+  CompositionWindowList &operator=(const CompositionWindowList &) = delete;
   virtual ~CompositionWindowList() {}
 
   virtual void Initialize() = 0;
@@ -55,9 +57,6 @@ class CompositionWindowList {
       const std::vector<CompositionWindowLayout> &layouts) = 0;
 
   static CompositionWindowList *CreateInstance();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(CompositionWindowList);
 };
 }  // namespace win32
 }  // namespace renderer

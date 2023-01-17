@@ -140,6 +140,10 @@ class BalloonImage {
     int blur_offset_y;
   };
 
+  BalloonImage() = delete;
+  BalloonImage(const BalloonImage &) = delete;
+  BalloonImage &operator=(const BalloonImage &) = delete;
+
   // Returns a bitmap handle to a DIB section that contains generated balloon
   // image. Returns nullptr if fails.
   // |tail_offset| is an offset pixels from the top-left corner of the bitmap.
@@ -156,9 +160,6 @@ class BalloonImage {
   static HBITMAP CreateInternal(const BalloonImageInfo &info,
                                 POINT *tail_offset, SIZE *size,
                                 std::vector<ARGBColor> *arbg_buffer);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(BalloonImage);
 };
 
 // Following types are declared in this header so that unit test can access
@@ -218,6 +219,8 @@ class SubdivisionalPixel {
   };
 
   SubdivisionalPixel();
+  SubdivisionalPixel(const SubdivisionalPixel &) = delete;
+  SubdivisionalPixel &operator=(const SubdivisionalPixel &) = delete;
 
   // Returns the coverage of this entire region as [0.0, 1.0].
   const double GetCoverage() const;
@@ -247,8 +250,6 @@ class SubdivisionalPixel {
   std::bitset<kTotalPixels> filled_;
   std::unique_ptr<ColorType[]> colors_;
   ColorType single_color_;
-
-  DISALLOW_COPY_AND_ASSIGN(SubdivisionalPixel);
 };
 
 // An implementation of Gaussian blur filter.
@@ -257,6 +258,9 @@ class GaussianBlur {
   // Sigma parameter in pixels of the 2D Gaussian function. Set 0 to disable
   // blur effect.
   explicit GaussianBlur(double sigma);
+
+  GaussianBlur(const GaussianBlur &) = delete;
+  GaussianBlur &operator=(const GaussianBlur &) = delete;
 
   // Returns the cut-off length to construct the convolution matrix. If the
   // returned value is x, (2 * x + 1)^2 matrix will be used.
@@ -290,8 +294,6 @@ class GaussianBlur {
   const double sigma_;
   const int cutoff_length_;
   Matrix matrix_;
-
-  DISALLOW_COPY_AND_ASSIGN(GaussianBlur);
 };
 
 // A virtual 2D container of ARGB pixels where out-of-range pixels are treated
@@ -301,6 +303,9 @@ class SafeFrameBuffer {
   // Initializes the frame buffer with real backing store as follows.
   //     [left, left + width) x [top, top + height)
   explicit SafeFrameBuffer(const Rect &rect);
+
+  SafeFrameBuffer(const SafeFrameBuffer &) = delete;
+  SafeFrameBuffer &operator=(const SafeFrameBuffer &) = delete;
 
   // Returns the color of the specified pixel. If the pixel is out-of-window,
   // returns a transparent black.
@@ -315,8 +320,6 @@ class SafeFrameBuffer {
   size_t GetIndex(int x, int y) const;
   const Rect rect_;
   std::unique_ptr<ARGBColor[]> buffer_;
-
-  DISALLOW_COPY_AND_ASSIGN(SafeFrameBuffer);
 };
 
 // A text rendering utility class that utilize sub-pixel rendering and can
@@ -330,6 +333,8 @@ class TextLabel {
   TextLabel(double left, double top, double width, double height,
             const std::string &text, const std::string &font, size_t font_point,
             const RGBColor text_color);
+  TextLabel(const TextLabel &) = delete;
+  TextLabel &operator=(const TextLabel &) = delete;
   ~TextLabel();
 
   // Copies the pixel specified by |x| and |y| to |dest|. Does nothing if the
@@ -343,8 +348,6 @@ class TextLabel {
   const std::vector<std::unique_ptr<BinarySubdivisionalPixel>> pixels_;
   const Rect bounding_rect_;
   const RGBColor text_color_;
-
-  DISALLOW_COPY_AND_ASSIGN(TextLabel);
 };
 
 }  // namespace internal

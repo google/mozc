@@ -176,6 +176,9 @@ WindowPositionEmulator *CreateWindowEmulatorWithClassName(
 
 class AppInfoUtil {
  public:
+  AppInfoUtil() = delete;
+  AppInfoUtil(const AppInfoUtil &) = delete;
+  AppInfoUtil &operator=(const AppInfoUtil &) = delete;
   static void SetBasicApplicationInfo(ApplicationInfo *app_info, HWND hwnd,
                                       int visibility) {
     app_info->set_ui_visibilities(visibility);
@@ -265,9 +268,6 @@ class AppInfoUtil {
     area->set_right(right);
     area->set_bottom(bottom);
   }
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(AppInfoUtil);
 };
 
 }  // namespace

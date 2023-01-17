@@ -49,6 +49,8 @@ class LayoutManager;
 class IndicatorWindow {
  public:
   IndicatorWindow();
+  IndicatorWindow(const IndicatorWindow &) = delete;
+  IndicatorWindow &operator=(const IndicatorWindow &) = delete;
   ~IndicatorWindow();
 
   void Initialize();
@@ -60,8 +62,6 @@ class IndicatorWindow {
  private:
   class WindowImpl;
   std::unique_ptr<WindowImpl> impl_;
-
-  DISALLOW_COPY_AND_ASSIGN(IndicatorWindow);
 };
 
 }  // namespace win32
