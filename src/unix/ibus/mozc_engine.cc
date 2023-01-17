@@ -68,6 +68,8 @@
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
 
+namespace mozc {
+namespace ibus {
 namespace {
 
 // The ID for candidates which are not associated with texts.
@@ -100,12 +102,6 @@ std::string GetMessageLocale() {
   return kMozcDefaultUILocale;
 }
 
-}  // namespace
-
-namespace mozc {
-namespace ibus {
-
-namespace {
 struct SurroundingTextInfo {
   SurroundingTextInfo() : relative_selected_length(0) {}
   int32 relative_selected_length;
