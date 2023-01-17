@@ -41,6 +41,10 @@ class Segments;
 // static converter utilities
 class ConverterUtil {
  public:
+  ConverterUtil() = delete;
+  ConverterUtil(const ConverterUtil &) = delete;
+  ConverterUtil &operator=(const ConverterUtil &) = delete;
+
   // Make a segment having one candidate. The value of candidate is the
   // same as the preedit.  This function can be used for error handling.
   // When the converter fails, we can call this function to make a
@@ -48,9 +52,6 @@ class ConverterUtil {
   static void InitSegmentsFromString(const std::string &key,
                                      const std::string &preedit,
                                      Segments *segments);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ConverterUtil);
 };
 
 }  // namespace mozc

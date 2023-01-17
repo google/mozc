@@ -49,6 +49,8 @@ namespace internal {
 //            pos_id_printer.IdToString(-1));  // invalid id
 class PosIdPrinter {
  public:
+  PosIdPrinter(const PosIdPrinter&) = delete;
+  PosIdPrinter& operator=(const PosIdPrinter&) = delete;
   explicit PosIdPrinter(std::istream *id_def);
 
   ~PosIdPrinter();
@@ -59,8 +61,6 @@ class PosIdPrinter {
 
  private:
   std::map<int, std::string> id_to_pos_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(PosIdPrinter);
 };
 
 }  // namespace internal
