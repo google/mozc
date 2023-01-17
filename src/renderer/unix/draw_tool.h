@@ -46,6 +46,8 @@ class DrawToolTest;
 class DrawTool : public DrawToolInterface {
  public:
   explicit DrawTool() {}
+  DrawTool(const DrawTool &) = delete;
+  DrawTool &operator=(const DrawTool &) = delete;
   virtual ~DrawTool() {}
   virtual void Save();
   virtual void Restore();
@@ -64,7 +66,6 @@ class DrawTool : public DrawToolInterface {
   friend class DrawToolTest;
   void SetColor(const RGBA &color);
   std::unique_ptr<CairoWrapperInterface> cairo_;
-  DISALLOW_COPY_AND_ASSIGN(DrawTool);
 };
 
 }  // namespace gtk

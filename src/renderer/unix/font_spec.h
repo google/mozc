@@ -46,6 +46,8 @@ struct FontInfo;
 class FontSpec : public FontSpecInterface {
  public:
   explicit FontSpec(GtkWrapperInterface *gtk);
+  FontSpec(const FontSpec &) = delete;
+  FontSpec &operator=(const FontSpec &) = delete;
   virtual ~FontSpec();
 
   virtual void Reload(const std::string &font_description);
@@ -60,9 +62,6 @@ class FontSpec : public FontSpecInterface {
   std::vector<FontInfo> fonts_;
   bool is_initialized_;
   std::unique_ptr<GtkWrapperInterface> gtk_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FontSpec);
 };
 
 }  // namespace gtk

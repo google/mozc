@@ -56,6 +56,8 @@ class InfolistWindow : public GtkWindowBase {
                           DrawToolInterface *draw_tool,
                           GtkWrapperInterface *gtk,
                           CairoFactoryInterface *cairo_factory);
+  InfolistWindow(const InfolistWindow &) = delete;
+  InfolistWindow &operator=(const InfolistWindow &) = delete;
   virtual ~InfolistWindow() {}
 
   virtual Size Update(const commands::Candidates &candidates);
@@ -109,7 +111,6 @@ class InfolistWindow : public GtkWindowBase {
   std::unique_ptr<RendererStyle> style_;
   std::unique_ptr<DrawToolInterface> draw_tool_;
   std::unique_ptr<CairoFactoryInterface> cairo_factory_;
-  DISALLOW_COPY_AND_ASSIGN(InfolistWindow);
 };
 
 }  // namespace gtk

@@ -42,6 +42,8 @@ class DataManagerInterface;
 class NumberRewriter : public RewriterInterface {
  public:
   explicit NumberRewriter(const DataManagerInterface *data_manager);
+  NumberRewriter(const NumberRewriter &) = delete;
+  NumberRewriter &operator=(const NumberRewriter &) = delete;
   ~NumberRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
@@ -52,8 +54,6 @@ class NumberRewriter : public RewriterInterface {
  private:
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;
-
-  DISALLOW_COPY_AND_ASSIGN(NumberRewriter);
 };
 
 }  // namespace mozc

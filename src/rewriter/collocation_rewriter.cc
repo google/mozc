@@ -511,6 +511,8 @@ class CollocationRewriter::CollocationFilter {
  public:
   CollocationFilter(const char *existence_data, size_t size)
       : filter_(ExistenceFilter::Read(existence_data, size)) {}
+  CollocationFilter(const CollocationFilter &) = delete;
+  CollocationFilter &operator=(const CollocationFilter &) = delete;
   ~CollocationFilter() {}
 
   bool Exists(const std::string &left, const std::string &right) const {
@@ -526,14 +528,14 @@ class CollocationRewriter::CollocationFilter {
 
  private:
   std::unique_ptr<ExistenceFilter> filter_;
-
-  DISALLOW_COPY_AND_ASSIGN(CollocationFilter);
 };
 
 class CollocationRewriter::SuppressionFilter {
  public:
   SuppressionFilter(const char *suppression_data, size_t size)
       : filter_(ExistenceFilter::Read(suppression_data, size)) {}
+  SuppressionFilter(const SuppressionFilter &) = delete;
+  SuppressionFilter &operator=(const SuppressionFilter &) = delete;
   ~SuppressionFilter() {}
 
   bool Exists(const Segment::Candidate &cand) const {
@@ -548,8 +550,6 @@ class CollocationRewriter::SuppressionFilter {
 
  private:
   std::unique_ptr<ExistenceFilter> filter_;
-
-  DISALLOW_COPY_AND_ASSIGN(SuppressionFilter);
 };
 
 CollocationRewriter::CollocationRewriter(

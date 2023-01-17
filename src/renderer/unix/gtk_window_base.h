@@ -63,6 +63,8 @@ class GtkWindowBase : public GtkWindowInterface {
  public:
   // GtkWindowBase takes ownership of GtkWrapperInterface.
   explicit GtkWindowBase(GtkWrapperInterface *gtk);
+  GtkWindowBase(const GtkWindowBase &) = delete;
+  GtkWindowBase &operator=(const GtkWindowBase &) = delete;
   virtual ~GtkWindowBase();
 
   virtual void ShowWindow();
@@ -112,8 +114,6 @@ class GtkWindowBase : public GtkWindowInterface {
 
   friend class GtkWindowBaseTest;
   friend class CandidateWindowTest;
-
-  DISALLOW_COPY_AND_ASSIGN(GtkWindowBase);
 };
 
 }  // namespace gtk

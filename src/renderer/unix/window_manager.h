@@ -52,6 +52,8 @@ class WindowManager : public WindowManagerInterface {
   explicit WindowManager(GtkWindowInterface *main_window,
                          GtkWindowInterface *infolist_window,
                          GtkWrapperInterface *gtk);
+  WindowManager(const WindowManager &) = delete;
+  WindowManager &operator=(const WindowManager &) = delete;
   virtual ~WindowManager();
 
   virtual void Initialize();
@@ -98,7 +100,6 @@ class WindowManager : public WindowManagerInterface {
   std::unique_ptr<GtkWrapperInterface> gtk_;
   client::SendCommandInterface *send_command_interface_;
   std::string previous_font_description_;
-  DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
 
 }  // namespace gtk

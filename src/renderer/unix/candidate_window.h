@@ -54,6 +54,8 @@ class CandidateWindow : public GtkWindowBase {
                   TextRendererInterface *text_renderer,
                   DrawToolInterface *draw_tool, GtkWrapperInterface *gtk,
                   CairoFactoryInterface *cairo_factory);
+  CandidateWindow(const CandidateWindow &) = delete;
+  CandidateWindow &operator=(const CandidateWindow &) = delete;
   virtual ~CandidateWindow() {}
 
   virtual Size Update(const commands::Candidates &candidates);
@@ -150,7 +152,6 @@ class CandidateWindow : public GtkWindowBase {
   std::unique_ptr<DrawToolInterface> draw_tool_;
   std::unique_ptr<CairoFactoryInterface> cairo_factory_;
   client::SendCommandInterface *send_command_interface_;
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };
 
 }  // namespace gtk

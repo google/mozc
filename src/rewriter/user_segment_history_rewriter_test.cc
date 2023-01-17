@@ -115,6 +115,11 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
  protected:
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
 
+  UserSegmentHistoryRewriterTest(const UserSegmentHistoryRewriterTest &) =
+      delete;
+  UserSegmentHistoryRewriterTest &operator=(
+      const UserSegmentHistoryRewriterTest &) = delete;
+
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
@@ -177,7 +182,6 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
   PosMatcher pos_matcher_;
   std::unique_ptr<const PosGroup> pos_group_;
-  DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 
 TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {

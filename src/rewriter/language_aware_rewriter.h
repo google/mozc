@@ -44,6 +44,8 @@ class LanguageAwareRewriter : public RewriterInterface {
  public:
   LanguageAwareRewriter(const dictionary::PosMatcher &pos_matcher,
                         const dictionary::DictionaryInterface *dictionary);
+  LanguageAwareRewriter(const LanguageAwareRewriter &) = delete;
+  LanguageAwareRewriter &operator=(const LanguageAwareRewriter &) = delete;
   ~LanguageAwareRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
@@ -59,8 +61,6 @@ class LanguageAwareRewriter : public RewriterInterface {
 
   const uint16_t unknown_id_;
   const dictionary::DictionaryInterface *dictionary_;
-
-  DISALLOW_COPY_AND_ASSIGN(LanguageAwareRewriter);
 };
 
 }  // namespace mozc

@@ -78,6 +78,8 @@ class CollocationRewriterTest : public ::testing::Test {
   };
 
   CollocationRewriterTest() = default;
+  CollocationRewriterTest(const CollocationRewriterTest &) = delete;
+  CollocationRewriterTest &operator=(const CollocationRewriterTest &) = delete;
   ~CollocationRewriterTest() override = default;
 
   void SetUp() override {
@@ -134,7 +136,6 @@ class CollocationRewriterTest : public ::testing::Test {
 
  private:
   std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
-  DISALLOW_COPY_AND_ASSIGN(CollocationRewriterTest);
 };
 
 TEST_F(CollocationRewriterTest, NekowoKaitai) {
