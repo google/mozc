@@ -38,6 +38,8 @@ namespace session {
 class SessionObserverMock : public SessionObserverInterface {
  public:
   SessionObserverMock() : eval_count_(0) {}
+  SessionObserverMock(const SessionObserverMock &) = delete;
+  SessionObserverMock &operator=(const SessionObserverMock &) = delete;
   ~SessionObserverMock() override {}
 
   void EvalCommandHandler(const commands::Command &command) override {
@@ -52,7 +54,6 @@ class SessionObserverMock : public SessionObserverInterface {
  private:
   int eval_count_;
   commands::Command command_;
-  DISALLOW_COPY_AND_ASSIGN(SessionObserverMock);
 };
 
 TEST(SessionObserverHandlerTest, ObserverTest) {

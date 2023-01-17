@@ -49,6 +49,9 @@ class ClientInterface;
 // for every some specified seconds.
 class SessionWatchDog : public Thread {
  public:
+  SessionWatchDog(const SessionWatchDog &) = delete;
+  SessionWatchDog &operator=(const SessionWatchDog &) = delete;
+
   // return the interval sec of watch dog timer
   int32_t interval() const { return interval_sec_; }
 
@@ -86,8 +89,6 @@ class SessionWatchDog : public Thread {
   client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
   std::unique_ptr<UnnamedEvent> event_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionWatchDog);
 };
 
 }  // namespace mozc

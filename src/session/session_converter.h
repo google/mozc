@@ -65,6 +65,8 @@ class SessionConverter : public SessionConverterInterface {
   SessionConverter(const ConverterInterface *converter,
                    const commands::Request *request,
                    const config::Config *config);
+  SessionConverter(const SessionConverter &) = delete;
+  SessionConverter &operator=(const SessionConverter &) = delete;
   ~SessionConverter() override;
 
   // Checks if the current state is in the state bitmap.
@@ -408,8 +410,6 @@ class SessionConverter : public SessionConverterInterface {
   // Mutable values of |config_|.  These values may be changed temporaliry per
   // session.
   bool use_cascading_window_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };
 
 }  // namespace session

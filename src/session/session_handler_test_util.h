@@ -72,6 +72,8 @@ class SessionHandlerTestBase : public ::testing::Test {
 
   // This class should not be instantiated directly.
   SessionHandlerTestBase();
+  SessionHandlerTestBase(const SessionHandlerTestBase &) = delete;
+  SessionHandlerTestBase &operator=(const SessionHandlerTestBase &) = delete;
   ~SessionHandlerTestBase() override;
 
   void ClearState();
@@ -87,8 +89,6 @@ class SessionHandlerTestBase : public ::testing::Test {
   int32_t flags_last_create_session_timeout_backup_;
   bool flags_restricted_backup_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionHandlerTestBase);
 };
 
 }  // namespace testing

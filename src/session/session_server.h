@@ -60,6 +60,8 @@ class SessionUsageObserver;
 class SessionServer : public IPCServer {
  public:
   SessionServer();
+  SessionServer(const SessionServer&) = delete;
+  SessionServer& operator=(const SessionServer&) = delete;
   ~SessionServer() override;
 
   bool Connected() const;
@@ -69,8 +71,6 @@ class SessionServer : public IPCServer {
  private:
   std::unique_ptr<session::SessionUsageObserver> usage_observer_;
   std::unique_ptr<SessionHandlerInterface> session_handler_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionServer);
 };
 
 }  // namespace mozc

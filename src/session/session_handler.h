@@ -74,6 +74,8 @@ class SessionHandler : public SessionHandlerInterface {
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
   SessionHandler(std::unique_ptr<EngineInterface> engine,
                  std::unique_ptr<EngineBuilderInterface> engine_builder);
+  SessionHandler(const SessionHandler &) = delete;
+  SessionHandler &operator=(const SessionHandler &) = delete;
   ~SessionHandler() override;
 
   // Returns true if SessionHandle is available.
@@ -168,7 +170,6 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;
 
-  DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };
 
 }  // namespace mozc

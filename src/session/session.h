@@ -64,6 +64,8 @@ class ImeContext;
 class Session : public SessionInterface {
  public:
   explicit Session(EngineInterface *engine);
+  Session(const Session &) = delete;
+  Session &operator=(const Session &) = delete;
   ~Session() override;
 
   bool SendKey(mozc::commands::Command *command) override;
@@ -395,8 +397,6 @@ class Session : public SessionInterface {
 
   // Commits the raw text of the composition.
   bool CommitRawText(commands::Command *command);
-
-  DISALLOW_COPY_AND_ASSIGN(Session);
 };
 
 }  // namespace session

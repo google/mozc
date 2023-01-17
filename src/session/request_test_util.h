@@ -41,10 +41,10 @@ class Request;
 
 class RequestForUnitTest {
  public:
+  RequestForUnitTest() = delete;
+  RequestForUnitTest(const RequestForUnitTest&) = delete;
+  RequestForUnitTest& operator=(const RequestForUnitTest&) = delete;
   static void FillMobileRequest(Request *request);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(RequestForUnitTest);
 };
 }  // namespace commands
 }  // namespace mozc

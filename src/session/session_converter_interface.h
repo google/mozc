@@ -77,6 +77,9 @@ struct ConversionPreferences {
 class SessionConverterInterface {
  public:
   SessionConverterInterface() {}
+  SessionConverterInterface(const SessionConverterInterface &) = delete;
+  SessionConverterInterface &operator=(const SessionConverterInterface &) =
+      delete;
   virtual ~SessionConverterInterface() {}
 
   typedef int States;
@@ -245,9 +248,6 @@ class SessionConverterInterface {
       config::Config::SelectionShortcut selection_shortcut) = 0;
 
   virtual void set_use_cascading_window(bool use_cascading_window) = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SessionConverterInterface);
 };
 
 }  // namespace session
