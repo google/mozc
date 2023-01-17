@@ -41,10 +41,9 @@ namespace oss {
 class OssDataManager : public DataManager {
  public:
   OssDataManager();
+  OssDataManager(const OssDataManager&) = delete;
+  OssDataManager& operator=(const OssDataManager&) = delete;
   ~OssDataManager() override;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(OssDataManager);
 };
 
 }  // namespace oss

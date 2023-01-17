@@ -77,6 +77,8 @@ class KeyMapManager {
   KeyMapManager();
   // Decoder should explicitly set the keymap.
   explicit KeyMapManager(config::Config::SessionKeymap keymap);
+  KeyMapManager(const KeyMapManager &) = delete;
+  KeyMapManager &operator=(const KeyMapManager &) = delete;
   ~KeyMapManager();
 
   config::Config::SessionKeymap GetKeymap() const { return keymap_; }
@@ -210,8 +212,6 @@ class KeyMapManager {
   // enabled only if prediction is shown. Otherwise, inherit from
   // keymap_conversion
   keymap::KeyMap<keymap::ConversionState> keymap_prediction_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyMapManager);
 };
 
 }  // namespace keymap

@@ -44,6 +44,8 @@ namespace dictionary {
 class DictionaryFileBuilder {
  public:
   explicit DictionaryFileBuilder(DictionaryFileCodecInterface *file_codec);
+  DictionaryFileBuilder(const DictionaryFileBuilder &) = delete;
+  DictionaryFileBuilder &operator=(const DictionaryFileBuilder &) = delete;
   virtual ~DictionaryFileBuilder();
 
   // Adds a section from a file
@@ -58,8 +60,6 @@ class DictionaryFileBuilder {
   DictionaryFileCodecInterface *file_codec_;
   std::vector<DictionaryFileSection> sections_;
   std::set<std::string> added_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFileBuilder);
 };
 
 }  // namespace dictionary

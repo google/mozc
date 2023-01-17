@@ -39,10 +39,9 @@ namespace testing {
 class MockDataManager : public DataManager {
  public:
   MockDataManager();
+  MockDataManager(const MockDataManager&) = delete;
+  MockDataManager& operator=(const MockDataManager&) = delete;
   ~MockDataManager() override;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(MockDataManager);
 };
 
 }  // namespace testing

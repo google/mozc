@@ -75,6 +75,10 @@ static const TransliterationType TransliterationTypeArray[NUM_T13N_TYPES] = {
 
 class T13n {
  public:
+  T13n() = delete;
+  T13n(const T13n&) = delete;
+  T13n& operator=(const T13n&) = delete;
+
   // Return true if the prefix of the type starts with FULL_ASCII.
   static bool IsInFullAsciiTypes(TransliterationType type);
 
@@ -97,9 +101,6 @@ class T13n {
   // Return one of half ascii types toggling the current type.
   static TransliterationType ToggleHalfAsciiTypes(
       TransliterationType current_type);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(T13n);
 };
 
 }  // namespace transliteration

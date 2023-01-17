@@ -48,6 +48,8 @@ namespace mozc {
 class ConnectionFileReader {
  public:
   explicit ConnectionFileReader(absl::string_view filename);
+  ConnectionFileReader(const ConnectionFileReader&) = delete;
+  ConnectionFileReader& operator=(const ConnectionFileReader&) = delete;
   ~ConnectionFileReader();
 
   bool done() const { return done_; }
@@ -66,8 +68,6 @@ class ConnectionFileReader {
   size_t pos_size_;
   int32_t array_index_;
   int32_t cost_;
-
-  DISALLOW_COPY_AND_ASSIGN(ConnectionFileReader);
 };
 
 }  // namespace mozc

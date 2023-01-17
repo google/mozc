@@ -44,13 +44,13 @@ class Table;
 class Converter {
  public:
   explicit Converter(const Table& table);
+  Converter(const Converter&) = delete;
+  Converter& operator=(const Converter&) = delete;
 
   void Convert(const std::string& input, std::string* output) const;
 
  private:
   const Table& table_;
-
-  DISALLOW_COPY_AND_ASSIGN(Converter);
 };
 
 }  // namespace composer
