@@ -56,6 +56,8 @@ class SuffixDictionary : public DictionaryInterface {
   SuffixDictionary(absl::string_view key_array_data,
                    absl::string_view value_array_data,
                    const uint32_t *token_array);
+  SuffixDictionary(const SuffixDictionary &) = delete;
+  SuffixDictionary &operator=(const SuffixDictionary &) = delete;
   ~SuffixDictionary() override;
 
   bool HasKey(absl::string_view key) const override;
@@ -83,8 +85,6 @@ class SuffixDictionary : public DictionaryInterface {
   SerializedStringArray key_array_;
   SerializedStringArray value_array_;
   const uint32_t *token_array_;
-
-  DISALLOW_COPY_AND_ASSIGN(SuffixDictionary);
 };
 
 }  // namespace dictionary

@@ -60,6 +60,10 @@ class StorageInterface;
 //  CHECK(Registry::Insert<string>("hello", value));
 class Registry {
  public:
+  Registry() = delete;
+  Registry(const Registry &) = delete;
+  Registry &operator=(const Registry &) = delete;
+
   template <typename T>
   static bool Lookup(const std::string &key, T *value) {
     DCHECK(value);
@@ -123,8 +127,6 @@ class Registry {
  private:
   static bool LookupInternal(const std::string &key, std::string *value);
   static bool InsertInternal(const std::string &key, const std::string &value);
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Registry);
 };
 }  // namespace storage
 }  // namespace mozc

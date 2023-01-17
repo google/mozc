@@ -124,6 +124,10 @@ std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
 }  // namespace
 
 class LruStorageTest : public ::testing::Test {
+ public:
+  LruStorageTest(const LruStorageTest &) = delete;
+  LruStorageTest &operator=(const LruStorageTest &) = delete;
+
  protected:
   LruStorageTest() {}
 
@@ -141,9 +145,6 @@ class LruStorageTest : public ::testing::Test {
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                               "LruStorageTest_test.db");
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(LruStorageTest);
 };
 
 TEST_F(LruStorageTest, LruStorageTest) {

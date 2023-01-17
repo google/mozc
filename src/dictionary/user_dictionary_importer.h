@@ -43,6 +43,10 @@ namespace mozc {
 // dictionaries.
 class UserDictionaryImporter {
  public:
+  UserDictionaryImporter() = delete;
+  UserDictionaryImporter(const UserDictionaryImporter &) = delete;
+  UserDictionaryImporter &operator=(const UserDictionaryImporter &) = delete;
+
   // A raw entry to be read.
   struct RawEntry {
     std::string key;
@@ -63,6 +67,8 @@ class UserDictionaryImporter {
   class InputIteratorInterface {
    public:
     InputIteratorInterface() {}
+    InputIteratorInterface(const InputIteratorInterface &) = delete;
+    InputIteratorInterface &operator=(const InputIteratorInterface &) = delete;
     virtual ~InputIteratorInterface() {}
 
     // Return true if the input iterator is available.
@@ -71,9 +77,6 @@ class UserDictionaryImporter {
     // Return true if entry is read successfully.
     // Next method doesn't have to convert the POS of entry.
     virtual bool Next(RawEntry *raw_entry) = 0;
-
-   private:
-    DISALLOW_COPY_AND_ASSIGN(InputIteratorInterface);
   };
 
   // An abstract class for reading a text file per line.  It runs over
@@ -83,6 +86,9 @@ class UserDictionaryImporter {
   class TextLineIteratorInterface {
    public:
     TextLineIteratorInterface() {}
+    TextLineIteratorInterface(const TextLineIteratorInterface &) = delete;
+    TextLineIteratorInterface &operator=(const TextLineIteratorInterface &) =
+        delete;
     virtual ~TextLineIteratorInterface() {}
 
     // Return true text line iterator is available.
@@ -95,9 +101,6 @@ class UserDictionaryImporter {
 
     // Reset the current position.
     virtual void Reset() = 0;
-
-   private:
-    DISALLOW_COPY_AND_ASSIGN(TextLineIteratorInterface);
   };
 
   // A wrapper for string. The string should contain utf-8 characters.
@@ -108,6 +111,8 @@ class UserDictionaryImporter {
   class StringTextLineIterator : public TextLineIteratorInterface {
    public:
     explicit StringTextLineIterator(absl::string_view data);
+    StringTextLineIterator(const StringTextLineIterator &) = delete;
+    StringTextLineIterator &operator=(const StringTextLineIterator &) = delete;
     ~StringTextLineIterator() override;
 
     bool IsAvailable() const override;
@@ -117,7 +122,6 @@ class UserDictionaryImporter {
    private:
     const absl::string_view data_;
     size_t position_;
-    DISALLOW_COPY_AND_ASSIGN(StringTextLineIterator);
   };
 
   // List of IMEs.
@@ -157,6 +161,8 @@ class UserDictionaryImporter {
   class TextInputIterator : public InputIteratorInterface {
    public:
     TextInputIterator(IMEType ime_type, TextLineIteratorInterface *iter);
+    TextInputIterator(const TextInputIterator &) = delete;
+    TextInputIterator &operator=(const TextInputIterator &) = delete;
     ~TextInputIterator() override;
 
     bool IsAvailable() const override;
@@ -167,8 +173,6 @@ class UserDictionaryImporter {
     IMEType ime_type_;
     TextLineIteratorInterface *iter_;
     std::string first_line_;
-
-    DISALLOW_COPY_AND_ASSIGN(TextInputIterator);
   };
 
   enum ErrorType {
@@ -193,9 +197,6 @@ class UserDictionaryImporter {
   static ErrorType ImportFromTextLineIterator(
       IMEType ime_type, TextLineIteratorInterface *iter,
       user_dictionary::UserDictionary *dic);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryImporter);
 };
 
 }  // namespace mozc

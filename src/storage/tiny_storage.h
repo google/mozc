@@ -42,14 +42,14 @@ namespace storage {
 // We will replace it with faster and more robust implementation.
 class TinyStorage {
  public:
+  TinyStorage() = delete;
+  TinyStorage(const TinyStorage &) = delete;
+  TinyStorage &operator=(const TinyStorage &) = delete;
   // Returns an implementation of StorageInterface.
   // Caller must take ownership of the returned object.
   // Returns NULL if fails.
   static StorageInterface *New();
   static StorageInterface *Create(const char *filename);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TinyStorage);
 };
 
 }  // namespace storage

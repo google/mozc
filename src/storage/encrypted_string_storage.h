@@ -48,6 +48,8 @@ class StringStorageInterface {
 class EncryptedStringStorage : public StringStorageInterface {
  public:
   explicit EncryptedStringStorage(const std::string &filename);
+  EncryptedStringStorage(const EncryptedStringStorage &) = delete;
+  EncryptedStringStorage &operator=(const EncryptedStringStorage &) = delete;
   ~EncryptedStringStorage() override;
 
   bool Load(std::string *output) const override;
@@ -59,8 +61,6 @@ class EncryptedStringStorage : public StringStorageInterface {
 
  private:
   std::string filename_;
-
-  DISALLOW_COPY_AND_ASSIGN(EncryptedStringStorage);
 };
 
 }  // namespace storage

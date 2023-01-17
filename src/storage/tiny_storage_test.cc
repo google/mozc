@@ -66,6 +66,8 @@ void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
 class TinyStorageTest : public testing::Test {
  protected:
   TinyStorageTest() {}
+  TinyStorageTest(const TinyStorageTest &) = delete;
+  TinyStorageTest &operator=(const TinyStorageTest &) = delete;
 
   void SetUp() override { UnlinkDBFileIfExists(); }
 
@@ -83,9 +85,6 @@ class TinyStorageTest : public testing::Test {
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                               "TinyStorageTest_test.db");
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TinyStorageTest);
 };
 
 TEST_F(TinyStorageTest, TinyStorageTest) {

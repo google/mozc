@@ -47,6 +47,9 @@ class UserPosInterface;
 // TODO(hidehiko): Move this class into user_dictionary namespace.
 class UserDictionaryUtil {
  public:
+  UserDictionaryUtil() = delete;
+  UserDictionaryUtil(const UserDictionaryUtil &) = delete;
+  UserDictionaryUtil &operator=(const UserDictionaryUtil &) = delete;
   // Following methods return limits of dictionary/entry size.
   static size_t max_dictionary_size();
   static size_t max_entry_size();
@@ -157,9 +160,6 @@ class UserDictionaryUtil {
       user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
       int *original_index,
       user_dictionary::UserDictionary **deleted_dictionary);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserDictionaryUtil);
 };
 }  // namespace mozc
 

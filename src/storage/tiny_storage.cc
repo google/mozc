@@ -91,6 +91,8 @@ bool IsInvalid(const std::string &key, const std::string &value, size_t size) {
 class TinyStorageImpl : public StorageInterface {
  public:
   TinyStorageImpl();
+  TinyStorageImpl(const TinyStorageImpl &) = delete;
+  TinyStorageImpl &operator=(const TinyStorageImpl &) = delete;
   ~TinyStorageImpl() override;
 
   bool Open(const std::string &filename) override;
@@ -105,8 +107,6 @@ class TinyStorageImpl : public StorageInterface {
   std::string filename_;
   bool should_sync_;
   std::map<std::string, std::string> dic_;
-
-  DISALLOW_COPY_AND_ASSIGN(TinyStorageImpl);
 };
 
 TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {
