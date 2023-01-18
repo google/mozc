@@ -58,6 +58,10 @@ class GetPreferredTouchKeyboardLayoutImpl
     : public ITfFnGetPreferredTouchKeyboardLayout {
  public:
   GetPreferredTouchKeyboardLayoutImpl() {}
+  GetPreferredTouchKeyboardLayoutImpl(
+      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
+  GetPreferredTouchKeyboardLayoutImpl &operator=(
+      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
@@ -117,8 +121,6 @@ class GetPreferredTouchKeyboardLayoutImpl
   }
 
   TipRefCount ref_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(GetPreferredTouchKeyboardLayoutImpl);
 };
 
 }  // namespace

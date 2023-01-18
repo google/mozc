@@ -99,6 +99,8 @@ class TipInputModeManager : public TipInputModeManagerImpl {
   typedef uint32 NotifyActionSet;
 
   explicit TipInputModeManager(const Config &config);
+  TipInputModeManager(const TipInputModeManager &) = delete;
+  TipInputModeManager &operator=(const TipInputModeManager &) = delete;
   ~TipInputModeManager();
 
   // Functions to access embedded IndicatorVisibilityTracker.
@@ -130,8 +132,6 @@ class TipInputModeManager : public TipInputModeManagerImpl {
  private:
   class InternalState;
   std::unique_ptr<InternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipInputModeManager);
 };
 
 }  // namespace tsf

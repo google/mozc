@@ -52,6 +52,8 @@ class TipUiElementManager {
     kIndicatorWindow = 1 << 2,
   };
   TipUiElementManager();
+  TipUiElementManager(const TipUiElementManager &) = delete;
+  TipUiElementManager &operator=(const TipUiElementManager &) = delete;
   ~TipUiElementManager();
 
   ITfUIElement *GetElement(UIElementFlags element) const;
@@ -63,8 +65,6 @@ class TipUiElementManager {
  private:
   class UiElementMap;
   std::unique_ptr<UiElementMap> ui_element_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipUiElementManager);
 };
 
 }  // namespace tsf

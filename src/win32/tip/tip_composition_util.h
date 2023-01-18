@@ -47,6 +47,10 @@ class TipTextService;
 
 class TipCompositionUtil {
  public:
+  TipCompositionUtil() = delete;
+  TipCompositionUtil(const TipCompositionUtil &) = delete;
+  TipCompositionUtil &operator=(const TipCompositionUtil &) = delete;
+
   // Returns composition view object if there is an composition which belongs
   // to Mozc in |context|. Otherwise returns nullptr.
   static ATL::CComPtr<ITfCompositionView> GetComposition(
@@ -56,9 +60,6 @@ class TipCompositionUtil {
   static HRESULT ClearDisplayAttributes(ITfContext *context,
                                         ITfComposition *composition,
                                         TfEditCookie write_cookie);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipCompositionUtil);
 };
 
 }  // namespace tsf

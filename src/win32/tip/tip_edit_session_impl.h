@@ -51,6 +51,10 @@ class TipTextService;
 // TODO(yukawa): Use more descriptive class name.
 class TipEditSessionImpl {
  public:
+  TipEditSessionImpl() = delete;
+  TipEditSessionImpl(const TipEditSessionImpl &) = delete;
+  TipEditSessionImpl &operator=(const TipEditSessionImpl &) = delete;
+
   // A high level logic to handle on-composition-terminated event.
   static HRESULT OnCompositionTerminated(TipTextService *text_service,
                                          ITfContext *context,
@@ -77,9 +81,6 @@ class TipEditSessionImpl {
   // - Invokes UI update.
   static void UpdateUI(TipTextService *text_service, ITfContext *context,
                        TfEditCookie read_cookie);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSessionImpl);
 };
 
 }  // namespace tsf

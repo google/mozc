@@ -45,6 +45,10 @@ namespace tsf {
 
 class TipCompartmentUtil {
  public:
+  TipCompartmentUtil() = delete;
+  TipCompartmentUtil(const TipCompartmentUtil &) = delete;
+  TipCompartmentUtil &operator=(const TipCompartmentUtil &) = delete;
+
   // Returns true when |data| is stored into the compartment specified by
   // |compartment_guid| and owned by |compartment_manager| successfully.
   // Returns false otherwise.
@@ -98,9 +102,6 @@ class TipCompartmentUtil {
                                      TfClientId client_id,
                                      const ATL::CComVariant &default_data,
                                      ATL::CComVariant *data);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipCompartmentUtil);
 };
 
 }  // namespace tsf

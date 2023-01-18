@@ -104,6 +104,10 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
   AsyncLayoutChangeEditSessionImpl(CComPtr<TipTextService> text_service,
                                    CComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
+  AsyncLayoutChangeEditSessionImpl(const AsyncLayoutChangeEditSessionImpl &) =
+      delete;
+  AsyncLayoutChangeEditSessionImpl &operator=(
+      const AsyncLayoutChangeEditSessionImpl &) = delete;
   ~AsyncLayoutChangeEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -139,8 +143,6 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(AsyncLayoutChangeEditSessionImpl);
 };
 
 bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
@@ -174,6 +176,9 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
   AsyncSetFocusEditSessionImpl(CComPtr<TipTextService> text_service,
                                CComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
+  AsyncSetFocusEditSessionImpl(const AsyncSetFocusEditSessionImpl &) = delete;
+  AsyncSetFocusEditSessionImpl &operator=(
+      const AsyncSetFocusEditSessionImpl &) = delete;
   ~AsyncSetFocusEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -221,8 +226,6 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(AsyncSetFocusEditSessionImpl);
 };
 
 bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
@@ -248,6 +251,10 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
         context_(context),
         open_(open),
         native_mode_(native_mode) {}
+  AsyncSwitchInputModeEditSessionImpl(
+      const AsyncSwitchInputModeEditSessionImpl &) = delete;
+  AsyncSwitchInputModeEditSessionImpl &operator=(
+      const AsyncSwitchInputModeEditSessionImpl &) = delete;
   ~AsyncSwitchInputModeEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -322,8 +329,6 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
   CComPtr<ITfContext> context_;
   bool open_;
   uint32 native_mode_;
-
-  DISALLOW_COPY_AND_ASSIGN(AsyncSwitchInputModeEditSessionImpl);
 };
 
 bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
@@ -355,6 +360,10 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
       : text_service_(text_service), context_(context) {
     session_command_ = session_command;
   }
+  AsyncSessionCommandEditSessionImpl(
+      const AsyncSessionCommandEditSessionImpl &) = delete;
+  AsyncSessionCommandEditSessionImpl &operator=(
+      const AsyncSessionCommandEditSessionImpl &) = delete;
   ~AsyncSessionCommandEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -394,8 +403,6 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
   SessionCommand session_command_;
-
-  DISALLOW_COPY_AND_ASSIGN(AsyncSessionCommandEditSessionImpl);
 };
 
 bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
@@ -568,6 +575,8 @@ class SyncEditSessionImpl : public ITfEditSession {
       : text_service_(text_service), context_(context) {
     output_ = output;
   }
+  SyncEditSessionImpl(const SyncEditSessionImpl &) = delete;
+  SyncEditSessionImpl &operator=(const SyncEditSessionImpl &) = delete;
   ~SyncEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -598,8 +607,6 @@ class SyncEditSessionImpl : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
   Output output_;
-
-  DISALLOW_COPY_AND_ASSIGN(SyncEditSessionImpl);
 };
 
 enum EditSessionMode {
@@ -663,6 +670,9 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
  public:
   SyncGetTextEditSessionImpl(TipTextService *text_service, ITfRange *range)
       : text_service_(text_service), range_(range) {}
+  SyncGetTextEditSessionImpl(const SyncGetTextEditSessionImpl &) = delete;
+  SyncGetTextEditSessionImpl &operator=(const SyncGetTextEditSessionImpl &) =
+      delete;
   ~SyncGetTextEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -695,8 +705,6 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfRange> range_;
   std::wstring text_;
-
-  DISALLOW_COPY_AND_ASSIGN(SyncGetTextEditSessionImpl);
 };
 
 // This class is an implementation class for the ITfEditSession classes, which
@@ -707,6 +715,9 @@ class AsyncSetTextEditSessionImpl : public ITfEditSession {
   AsyncSetTextEditSessionImpl(TipTextService *text_service,
                               const std::wstring &text, ITfRange *range)
       : text_service_(text_service), text_(text), range_(range) {}
+  AsyncSetTextEditSessionImpl(const AsyncSetTextEditSessionImpl &) = delete;
+  AsyncSetTextEditSessionImpl &operator=(const AsyncSetTextEditSessionImpl &) =
+      delete;
   ~AsyncSetTextEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -737,8 +748,6 @@ class AsyncSetTextEditSessionImpl : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   const std::wstring text_;
   CComPtr<ITfRange> range_;
-
-  DISALLOW_COPY_AND_ASSIGN(AsyncSetTextEditSessionImpl);
 };
 
 }  // namespace

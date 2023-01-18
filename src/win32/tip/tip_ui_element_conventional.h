@@ -63,13 +63,15 @@ class TipUiElementConventional {
     KIndicatorWindow,
   };
 
+  TipUiElementConventional() = delete;
+  TipUiElementConventional(const TipUiElementConventional &) = delete;
+  TipUiElementConventional &operator=(const TipUiElementConventional &) =
+      delete;
+
   // Returns a ITfUIElement object based of the given parameters. Caller must
   // maintain the reference count of the object returned.
   static ITfUIElement *New(UIType type, TipTextService *text_service,
                            ITfContext *contxt);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiElementConventional);
 };
 
 }  // namespace tsf

@@ -49,6 +49,10 @@ class TipTextService;
 // Utility functions to begin edit session for various purposes.
 class TipEditSession {
  public:
+  TipEditSession() = delete;
+  TipEditSession(const TipEditSession &) = delete;
+  TipEditSession &operator=(const TipEditSession &) = delete;
+
   // Begins a sync edit session with |new_output| to update the context. Note
   // that sync edit session is guaranteed to be capable only in key event
   // handler and ITfFnReconversion::QueryRange. In other cases, you should use
@@ -110,9 +114,6 @@ class TipEditSession {
   // Begins an async edit session to set |text| to |range|.
   static bool SetTextAsync(TipTextService *text_service,
                            const std::wstring &text, ITfRange *range);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSession);
 };
 
 }  // namespace tsf

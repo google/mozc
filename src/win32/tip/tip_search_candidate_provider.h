@@ -40,13 +40,15 @@ namespace tsf {
 
 class TipSearchCandidateProvider {
  public:
+  TipSearchCandidateProvider() = delete;
+  TipSearchCandidateProvider(const TipSearchCandidateProvider&) = delete;
+  TipSearchCandidateProvider& operator=(const TipSearchCandidateProvider&) =
+      delete;
+
   // Returns a COM object that implements ITfFnSearchCandidateProvider.
   // Caller must maintain the reference count.
   static IUnknown* New();
   static const IID& GetIID();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipSearchCandidateProvider);
 };
 
 }  // namespace tsf

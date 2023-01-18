@@ -379,6 +379,8 @@ void UpdateCommand(TipTextService *text_service, ITfContext *context,
 // is an observer for exclusively read the date from the text store.
 class UpdateUiEditSessionImpl : public ITfEditSession {
  public:
+  UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
+  UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
   ~UpdateUiEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -446,8 +448,6 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSessionImpl);
 };
 
 }  // namespace

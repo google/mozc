@@ -46,6 +46,8 @@ class TipTextService;
 class TipUiElementDelegate {
  public:
   TipUiElementDelegate();
+  TipUiElementDelegate(const TipUiElementDelegate &) = delete;
+  TipUiElementDelegate &operator=(const TipUiElementDelegate &) = delete;
   virtual ~TipUiElementDelegate();
 
   virtual bool IsObservable() const = 0;
@@ -73,9 +75,6 @@ class TipUiElementDelegate {
 
   // The ITfToolTipUIElement interface methods
   virtual HRESULT GetString(BSTR *text) = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TipUiElementDelegate);
 };
 
 class TipUiElementDelegateFactory {
@@ -92,8 +91,10 @@ class TipUiElementDelegateFactory {
   static TipUiElementDelegate *Create(TipTextService *text_service,
                                       ITfContext *context, ElementType type);
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiElementDelegateFactory);
+  TipUiElementDelegateFactory() = delete;
+  TipUiElementDelegateFactory(const TipUiElementDelegateFactory &) = delete;
+  TipUiElementDelegateFactory &operator=(const TipUiElementDelegateFactory &) =
+      delete;
 };
 
 }  // namespace tsf

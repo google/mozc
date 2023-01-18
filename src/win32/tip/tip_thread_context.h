@@ -48,6 +48,8 @@ class TipInputModeManager;
 class TipThreadContext {
  public:
   TipThreadContext();
+  TipThreadContext(const TipThreadContext &) = delete;
+  TipThreadContext &operator=(const TipThreadContext &) = delete;
   ~TipThreadContext();
 
   TipInputModeManager *GetInputModeManager();
@@ -61,8 +63,6 @@ class TipThreadContext {
  private:
   class InternalState;
   std::unique_ptr<InternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipThreadContext);
 };
 
 }  // namespace tsf

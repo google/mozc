@@ -48,6 +48,10 @@ namespace tsf {
 // TODO(yukawa): Revisit and refactor when minimum implementation has done.
 class TipStatus {
  public:
+  TipStatus() = delete;
+  TipStatus(const TipStatus &) = delete;
+  TipStatus &operator=(const TipStatus &) = delete;
+
   // Returns true if the keyboard state specified by |thread_mgr| is open.
   static bool IsOpen(ITfThreadMgr *thread_mgr);
 
@@ -68,9 +72,6 @@ class TipStatus {
   // Returns true if TSF conversion mode is updated.
   static bool SetInputModeConversion(ITfThreadMgr *thread_mgr, DWORD client_id,
                                      DWORD native_mode);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipStatus);
 };
 
 }  // namespace tsf

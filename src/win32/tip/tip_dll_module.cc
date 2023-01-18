@@ -88,6 +88,10 @@ void TipShutdownCrashReportHandler() {
 
 class ModuleImpl {
  public:
+  ModuleImpl() = delete;
+  ModuleImpl(const ModuleImpl &) = delete;
+  ModuleImpl &operator=(const ModuleImpl &) = delete;
+
   // Increases and decreases the reference count to this module.
   // This reference count is used for preventing Windows from unloading
   // this module.
@@ -162,8 +166,6 @@ class ModuleImpl {
   static bool unloaded_;
   static bool in_unit_test_;
   static CRITICAL_SECTION critical_section_for_breakpad_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ModuleImpl);
 };
 
 HMODULE ModuleImpl::module_handle_ = nullptr;

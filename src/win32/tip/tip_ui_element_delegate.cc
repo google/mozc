@@ -146,6 +146,9 @@ constexpr bool kIsNotIndicator = false;
 
 class TipUiElementDelegateImpl : public TipUiElementDelegate {
  public:
+  TipUiElementDelegateImpl(const TipUiElementDelegateImpl &) = delete;
+  TipUiElementDelegateImpl &operator=(const TipUiElementDelegateImpl &) =
+      delete;
   TipUiElementDelegateImpl(TipTextService *text_service, ITfContext *context,
                            TipUiElementDelegateFactory::ElementType type)
       : text_service_(text_service), context_(context), type_(type) {}
@@ -581,7 +584,6 @@ class TipUiElementDelegateImpl : public TipUiElementDelegate {
   const TipUiElementDelegateFactory::ElementType type_;
   CandidateList last_candidate_list_;
   bool shown_;
-  DISALLOW_COPY_AND_ASSIGN(TipUiElementDelegateImpl);
 };
 
 }  // namespace

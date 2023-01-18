@@ -84,6 +84,8 @@ class TipLangBarCallback : public IUnknown {
 class TipLangBar {
  public:
   TipLangBar();
+  TipLangBar(const TipLangBar &) = delete;
+  TipLangBar &operator=(const TipLangBar &) = delete;
   ~TipLangBar();
 
   // initialize and uninitialize ImeLangBarItemButton object.
@@ -121,8 +123,6 @@ class TipLangBar {
 
   // The cookie issued for installing ITfSystemLangBarItemSink of help_menu_.
   DWORD help_menu_cookie_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipLangBar);
 };
 
 }  // namespace tsf

@@ -63,6 +63,8 @@ class SurroudingTextUpdater : public ITfEditSession {
  public:
   SurroudingTextUpdater(ITfContext *context, bool move_anchor)
       : context_(context), move_anchor_(move_anchor) {}
+  SurroudingTextUpdater(const SurroudingTextUpdater &) = delete;
+  SurroudingTextUpdater &operator=(const SurroudingTextUpdater &) = delete;
 
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
@@ -181,14 +183,14 @@ class SurroudingTextUpdater : public ITfEditSession {
   CComPtr<ITfContext> context_;
   TipSurroundingTextInfo result_;
   bool move_anchor_;
-
-  DISALLOW_COPY_AND_ASSIGN(SurroudingTextUpdater);
 };
 
 class PrecedingTextDeleter : public ITfEditSession {
  public:
   PrecedingTextDeleter(ITfContext *context, size_t num_characters_in_ucs4)
       : context_(context), num_characters_in_ucs4_(num_characters_in_ucs4) {}
+  PrecedingTextDeleter(const PrecedingTextDeleter &) = delete;
+  PrecedingTextDeleter &operator=(const PrecedingTextDeleter &) = delete;
 
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
@@ -295,8 +297,6 @@ class PrecedingTextDeleter : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<ITfContext> context_;
   size_t num_characters_in_ucs4_;
-
-  DISALLOW_COPY_AND_ASSIGN(PrecedingTextDeleter);
 };
 
 bool PrepareForReconversionIMM32(ITfContext *context,

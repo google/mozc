@@ -42,13 +42,14 @@ class TipTextService;
 
 class TipLinguisticAlternates {
  public:
+  TipLinguisticAlternates() = delete;
+  TipLinguisticAlternates(const TipLinguisticAlternates &) = delete;
+  TipLinguisticAlternates &operator=(const TipLinguisticAlternates &) = delete;
+
   // Returns a COM object that implements ITfFnGetLinguisticAlternates.
   // Caller must maintain the reference count.
   static IUnknown *New(TipTextService *text_service);
   static const IID &GetIID();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipLinguisticAlternates);
 };
 
 }  // namespace tsf

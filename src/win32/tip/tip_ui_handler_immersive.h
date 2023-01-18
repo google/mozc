@@ -47,6 +47,9 @@ class TipTextService;
 
 class TipUiHandlerImmersive {
  public:
+  TipUiHandlerImmersive() = delete;
+  TipUiHandlerImmersive(const TipUiHandlerImmersive &) = delete;
+  TipUiHandlerImmersive &operator=(const TipUiHandlerImmersive &) = delete;
   static ITfUIElement *CreateUI(TipUiHandler::UiType type,
                                 TipTextService *text_service,
                                 ITfContext *context);
@@ -61,9 +64,6 @@ class TipUiHandlerImmersive {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiHandlerImmersive);
 };
 
 }  // namespace tsf

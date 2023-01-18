@@ -43,13 +43,14 @@ class TipTextService;
 
 class TipReconvertFunction {
  public:
+  TipReconvertFunction() = delete;
+  TipReconvertFunction(const TipReconvertFunction &) = delete;
+  TipReconvertFunction &operator=(const TipReconvertFunction &) = delete;
+
   // Returns a TSF function object that can be use to invoke reconversion from
   // an application.
   // Caller must maintain the reference count.
   static ITfFnReconversion *New(TipTextService *text_service);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipReconvertFunction);
 };
 
 }  // namespace tsf

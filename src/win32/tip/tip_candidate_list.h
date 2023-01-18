@@ -55,6 +55,10 @@ class TipCandidateListCallback {
 
 class TipCandidateList {
  public:
+  TipCandidateList() = delete;
+  TipCandidateList(const TipCandidateList &) = delete;
+  TipCandidateList &operator=(const TipCandidateList &) = delete;
+
   // Returns an object that implements ITfFnSearchCandidateProvider.
   // |callback| will be called back when ITfCandidateList::SetResult
   // is called with CAND_FINALIZED. TipCandidateList will take the
@@ -63,9 +67,6 @@ class TipCandidateList {
   static ITfCandidateList *New(const std::vector<std::wstring> &candidates,
                                TipCandidateListCallback *callback);
   static const IID &GetIID();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipCandidateList);
 };
 
 }  // namespace tsf

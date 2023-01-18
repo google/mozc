@@ -49,6 +49,10 @@ class TipUiHandler {
     kIndicatorWindow,
   };
 
+  TipUiHandler() = delete;
+  TipUiHandler(const TipUiHandler &) = delete;
+  TipUiHandler &operator=(const TipUiHandler &) = delete;
+
   static ITfUIElement *CreateUI(UiType type, TipTextService *text_service,
                                 ITfContext *context);
   static void OnDestroyElement(TipTextService *text_service,
@@ -65,9 +69,6 @@ class TipUiHandler {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiHandler);
 };
 
 }  // namespace tsf

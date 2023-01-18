@@ -65,6 +65,9 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
   GetLinguisticAlternatesImpl(TipTextService *text_service,
                               TipQueryProvider *provider)
       : text_service_(text_service), provider_(provider) {}
+  GetLinguisticAlternatesImpl(const GetLinguisticAlternatesImpl &) = delete;
+  GetLinguisticAlternatesImpl &operator=(const GetLinguisticAlternatesImpl &) =
+      delete;
 
  private:
   // The IUnknown interface methods.
@@ -136,8 +139,6 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   std::unique_ptr<TipQueryProvider> provider_;
-
-  DISALLOW_COPY_AND_ASSIGN(GetLinguisticAlternatesImpl);
 };
 
 }  // namespace

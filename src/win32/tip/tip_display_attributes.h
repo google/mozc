@@ -45,6 +45,8 @@ namespace tsf {
 // Defines the base class of the display attributes used in this module.
 class TipDisplayAttribute : public ITfDisplayAttributeInfo {
  public:
+  TipDisplayAttribute(const TipDisplayAttribute &) = delete;
+  TipDisplayAttribute &operator=(const TipDisplayAttribute &) = delete;
   virtual ~TipDisplayAttribute();
 
   // IUnknown interface methods
@@ -71,30 +73,28 @@ class TipDisplayAttribute : public ITfDisplayAttributeInfo {
   TF_DISPLAYATTRIBUTE original_attribute_;
   std::wstring description_;
   TF_DISPLAYATTRIBUTE attribute_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipDisplayAttribute);
 };
 
 // Represents the display attributes for input characters.
 class TipDisplayAttributeInput : public TipDisplayAttribute {
  public:
   TipDisplayAttributeInput();
+  TipDisplayAttributeInput(const TipDisplayAttributeInput &) = delete;
+  TipDisplayAttributeInput &operator=(const TipDisplayAttributeInput &) =
+      delete;
 
   static const GUID &guid();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TipDisplayAttributeInput);
 };
 
 // Represents the display attributes for converted characters.
 class TipDisplayAttributeConverted : public TipDisplayAttribute {
  public:
   TipDisplayAttributeConverted();
+  TipDisplayAttributeConverted(const TipDisplayAttributeConverted &) = delete;
+  TipDisplayAttributeConverted &operator=(
+      const TipDisplayAttributeConverted &) = delete;
 
   static const GUID &guid();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TipDisplayAttributeConverted);
 };
 
 }  // namespace tsf

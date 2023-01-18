@@ -276,6 +276,8 @@ class CompositionSinkImpl : public ITfCompositionSink {
  public:
   CompositionSinkImpl(TipTextService *text_service, ITfContext *context)
       : text_service_(text_service), context_(context) {}
+  CompositionSinkImpl(const CompositionSinkImpl &) = delete;
+  CompositionSinkImpl &operator=(const CompositionSinkImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -321,8 +323,6 @@ class CompositionSinkImpl : public ITfCompositionSink {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositionSinkImpl);
 };
 
 void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
@@ -389,6 +389,9 @@ const PreserveKeyItem kPreservedKeyItems[] = {
 
 class UpdateUiEditSessionImpl : public ITfEditSession {
  public:
+  UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
+  UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
+
   // This destructor is non-virtual because the instance of this class is
   // deleted by and only by "delete this" in the Release method.
   ~UpdateUiEditSessionImpl() {}
@@ -453,8 +456,6 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSessionImpl);
 };
 
 bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
@@ -497,6 +498,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
         thread_context_(nullptr),
         task_window_handle_(nullptr),
         renderer_callback_window_handle_(nullptr) {}
+
+  TipTextServiceImpl(const TipTextServiceImpl &) = delete;
+  TipTextServiceImpl &operator=(const TipTextServiceImpl &) = delete;
 
   static bool OnDllProcessAttach(HMODULE module_handle) {
     if (!RegisterWindowClass(module_handle, kTaskWindowClassName,
@@ -1750,8 +1754,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   std::unique_ptr<TipThreadContext> thread_context_;
   HWND task_window_handle_;
   HWND renderer_callback_window_handle_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipTextServiceImpl);
 };
 
 }  // namespace

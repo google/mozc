@@ -44,6 +44,10 @@ class TipTextService;
 
 class TipUiHandlerConventional {
  public:
+  TipUiHandlerConventional() = delete;
+  TipUiHandlerConventional(const TipUiHandlerConventional &) = delete;
+  TipUiHandlerConventional &operator=(const TipUiHandlerConventional &) =
+      delete;
   static ITfUIElement *CreateUI(TipUiHandler::UiType type,
                                 TipTextService *text_service,
                                 ITfContext *context);
@@ -58,9 +62,6 @@ class TipUiHandlerConventional {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiHandlerConventional);
 };
 
 }  // namespace tsf
