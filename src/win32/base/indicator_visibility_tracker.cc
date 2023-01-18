@@ -50,12 +50,11 @@ IndicatorVisibilityTracker::Action GetDefaultAction(bool previously_visible,
 struct IndicatorVisibilityTracker::InternalState {
  public:
   InternalState() : visible(false) {}
+  InternalState(const InternalState &) = delete;
+  InternalState &operator=(const InternalState &) = delete;
 
   bool visible;
   Stopwatch mode_changed_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(InternalState);
 };
 
 IndicatorVisibilityTracker::IndicatorVisibilityTracker()

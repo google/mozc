@@ -52,10 +52,11 @@ class ConfigSnapshot {
     Info();
   };
 
-  static bool Get(client::ClientInterface *client, Info *info);
+  ConfigSnapshot() = delete;
+  ConfigSnapshot(const ConfigSnapshot &) = delete;
+  ConfigSnapshot &operator=(const ConfigSnapshot &) = delete;
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigSnapshot);
+  static bool Get(client::ClientInterface *client, Info *info);
 };
 
 }  // namespace win32

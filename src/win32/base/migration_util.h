@@ -39,6 +39,10 @@ namespace win32 {
 // Input implemented with TSF to the new one implemented with IMM32.
 class MigrationUtil {
  public:
+  MigrationUtil() = delete;
+  MigrationUtil(const MigrationUtil&) = delete;
+  MigrationUtil& operator=(const MigrationUtil&) = delete;
+
   // Checks if the IMM32 version is available.
   // Returns true if the operation completed successfully.
   static bool IsFullIMEAvailable();
@@ -64,9 +68,6 @@ class MigrationUtil {
   // already disabled for the current user, or 3) IMM32 Mozc is successfully
   // disabled by this method.
   static bool DisableLegacyMozcForCurrentUserOnWin8();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(MigrationUtil);
 };
 
 }  // namespace win32

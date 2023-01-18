@@ -40,6 +40,9 @@ namespace win32 {
 
 class ImeUtil {
  public:
+  ImeUtil(const ImeUtil&) = delete;
+  ImeUtil& operator=(const ImeUtil&) = delete;
+
   // Returns true if Google Japanese Input is selected as the default IME.
   static bool IsDefault();
 
@@ -78,9 +81,6 @@ class ImeUtil {
   // applications running in the current session.
   // Returns true if the operation completed successfully.
   static bool ActivateForCurrentSession();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ImeUtil);
 };
 
 }  // namespace win32

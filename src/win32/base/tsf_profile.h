@@ -39,14 +39,14 @@ namespace win32 {
 
 class TsfProfile {
  public:
+  TsfProfile() = delete;
+  TsfProfile(const TsfProfile &) = delete;
+  TsfProfile &operator=(const TsfProfile &) = delete;
   static const GUID &GetTextServiceGuid();
   static const GUID &GetProfileGuid();
   static LANGID GetLangId();
   static int GetIconIndex();
   static int GetDescriptionTextIndex();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TsfProfile);
 };
 
 }  // namespace win32

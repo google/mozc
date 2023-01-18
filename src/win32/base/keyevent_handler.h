@@ -63,6 +63,10 @@ struct KeyEventHandlerResult {
 // TODO(yukawa): Refactor to support NotifyIME and UI messages.
 class KeyEventHandler {
  public:
+  KeyEventHandler() = delete;
+  KeyEventHandler(const KeyEventHandler &) = delete;
+  KeyEventHandler &operator=(const KeyEventHandler &) = delete;
+
   // Updates |behavior->prefer_kana_input| based on the key and IME open
   // status.  Currently, key down event of VK_DBE_ROMAN or VK_DBE_NOROMAN
   // flips the input style when both |state.open| and
@@ -121,9 +125,6 @@ class KeyEventHandler {
   // Span Tool if launch_tool_mode is set in |output|.
   static void MaybeSpawnTool(client::ClientInterface *client,
                              commands::Output *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyEventHandler);
 };
 }  // namespace win32
 }  // namespace mozc

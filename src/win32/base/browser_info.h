@@ -49,6 +49,10 @@ class BrowserInfo {
     kBrowserTypeOpera,
   };
 
+  BrowserInfo() = delete;
+  BrowserInfo(const BrowserInfo &) = delete;
+  BrowserInfo &operator=(const BrowserInfo &) = delete;
+
   static BrowserType GetBrowerType();
 
   static bool IsInIncognitoMode(
@@ -59,9 +63,6 @@ class BrowserInfo {
   static void OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserInfo);
 };
 
 }  // namespace win32

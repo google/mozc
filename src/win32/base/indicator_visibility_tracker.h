@@ -47,6 +47,9 @@ class IndicatorVisibilityTracker {
     kUpdateUI,  // The caller must update UI for the indicator.
   };
   IndicatorVisibilityTracker();
+  IndicatorVisibilityTracker(const IndicatorVisibilityTracker &) = delete;
+  IndicatorVisibilityTracker &operator=(const IndicatorVisibilityTracker &) =
+      delete;
   ~IndicatorVisibilityTracker();
 
   // Event call back endpoints.
@@ -62,7 +65,6 @@ class IndicatorVisibilityTracker {
  private:
   struct InternalState;
   std::unique_ptr<InternalState> state_;
-  DISALLOW_COPY_AND_ASSIGN(IndicatorVisibilityTracker);
 };
 
 }  // namespace win32

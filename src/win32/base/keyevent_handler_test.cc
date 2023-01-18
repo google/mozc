@@ -170,6 +170,8 @@ class KeyboardMock : public Win32KeyboardInterface {
       key_state_.SetState(VK_KANA, kPressed);
     }
   }
+  KeyboardMock(const KeyboardMock &) = delete;
+  KeyboardMock &operator=(const KeyboardMock &) = delete;
   bool kana_locked() const {
     return ((key_state_.GetState(VK_KANA) & kPressed) == kPressed);
   }
@@ -203,7 +205,6 @@ class KeyboardMock : public Win32KeyboardInterface {
 
  private:
   KeyboardStatus key_state_;
-  DISALLOW_COPY_AND_ASSIGN(KeyboardMock);
 };
 
 class MockState {
@@ -222,6 +223,8 @@ class MockState {
     client_->SetServerLauncher(launcher_);
     launcher_->set_start_server_result(true);
   }
+  MockState(const MockState &) = delete;
+  MockState &operator=(const MockState &) = delete;
 
   client::ClientInterface *mutable_client() { return client_.get(); }
 
@@ -235,7 +238,6 @@ class MockState {
   IPCClientFactoryMock client_factory_;
   std::unique_ptr<client::ClientInterface> client_;
   TestServerLauncher *launcher_;
-  DISALLOW_COPY_AND_ASSIGN(MockState);
 };
 
 }  // namespace
@@ -243,6 +245,8 @@ class MockState {
 class KeyEventHandlerTest : public testing::Test {
  protected:
   KeyEventHandlerTest() {}
+  KeyEventHandlerTest(const KeyEventHandlerTest &) = delete;
+  KeyEventHandlerTest &operator=(const KeyEventHandlerTest &) = delete;
   virtual ~KeyEventHandlerTest() {}
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
@@ -286,9 +290,6 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   mozc::config::Config default_config_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(KeyEventHandlerTest);
 };
 
 TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {

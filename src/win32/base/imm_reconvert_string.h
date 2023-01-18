@@ -61,6 +61,9 @@ namespace win32 {
 //   - [TE]: TargetEnd
 class ReconvertString {
  public:
+  ReconvertString(const ReconvertString &) = delete;
+  ReconvertString &operator=(const ReconvertString &) = delete;
+
   // Returns true if given substrings are copied into |reconvert_string|.
   // The caller is responsible for allocating enough memory for
   // |reconvert_string|.
@@ -89,9 +92,6 @@ class ReconvertString {
   // Returns true if |reconvert_string| is valid and has a non-empty
   // composition range finally.
   static bool EnsureCompositionIsNotEmpty(RECONVERTSTRING *reconvert_string);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ReconvertString);
 };
 
 }  // namespace win32

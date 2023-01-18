@@ -46,6 +46,8 @@ const uint64 kOutputId = 0x12345678;
 class KeyboardMock : public Win32KeyboardInterface {
  public:
   KeyboardMock() {}
+  KeyboardMock(const KeyboardMock &) = delete;
+  KeyboardMock &operator=(const KeyboardMock &) = delete;
 
   virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) {
     return keyboard_state.IsPressed(VK_KANA);
@@ -104,7 +106,6 @@ class KeyboardMock : public Win32KeyboardInterface {
   KeyboardStatus key_state_;
   KeyboardStatus async_key_state_;
   std::vector<INPUT> last_send_input_data_;
-  DISALLOW_COPY_AND_ASSIGN(KeyboardMock);
 };
 
 }  // namespace

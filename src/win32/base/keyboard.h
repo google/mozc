@@ -138,6 +138,11 @@ class Win32KeyboardInterface {
 
 class JapaneseKeyboardLayoutEmulator {
  public:
+  JapaneseKeyboardLayoutEmulator(const JapaneseKeyboardLayoutEmulator &) =
+      delete;
+  JapaneseKeyboardLayoutEmulator &operator=(
+      const JapaneseKeyboardLayoutEmulator &) = delete;
+
   // This methods emulates ToUnicode API as if the current keyboard layout was
   // Japanese keyboard.  Currently this emulation ignores |scan_code|.
   static int ToUnicode(__in UINT virtual_key, __in UINT scan_code,
@@ -154,9 +159,6 @@ class JapaneseKeyboardLayoutEmulator {
   static wchar_t GetCharacterForKeyDown(BYTE virtual_key,
                                         const BYTE keyboard_state[256],
                                         bool is_menu_active);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(JapaneseKeyboardLayoutEmulator);
 };
 }  // namespace win32
 }  // namespace mozc
