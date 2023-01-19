@@ -41,6 +41,7 @@
 // clang-format on
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 
 #include "base/const.h"
@@ -487,7 +488,7 @@ class LangBarCallbackImpl : public LangBarCallback {
     }
 
     const UIContext context(himc);
-    uint32 imm32_composition_mode = 0;
+    uint32_t imm32_composition_mode = 0;
     if (!win32::ConversionModeUtil::ToNativeMode(
             mode, context.IsKanaInputPreferred(), &imm32_composition_mode)) {
       return E_FAIL;
@@ -686,7 +687,7 @@ class DefaultUIWindow {
     if ((command_type == commands::SessionCommand::SELECT_CANDIDATE) ||
         (command_type == commands::SessionCommand::HIGHLIGHT_CANDIDATE)) {
       // Convert |mozc_candidate_id| to candidate index.
-      const int32 mozc_candidate_id = static_cast<int32>(lParam);
+      const int32_t mozc_candidate_id = static_cast<int32_t>(lParam);
       int candidate_index = 0;
       {
         UIContext context(himc);

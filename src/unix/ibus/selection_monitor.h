@@ -30,6 +30,7 @@
 #ifndef MOZC_UNIX_IBUS_SELECTION_MONITOR_H_
 #define MOZC_UNIX_IBUS_SELECTION_MONITOR_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -38,8 +39,8 @@ namespace mozc {
 namespace ibus {
 
 struct SelectionInfo {
-  uint64 timestamp;
-  uint32 process_id;
+  uint64_t timestamp;
+  uint32_t process_id;
   std::string machine_name;
   std::string window_title;
   std::string selected_text;

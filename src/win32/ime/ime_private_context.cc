@@ -29,6 +29,8 @@
 
 #include "win32/ime/ime_private_context.h"
 
+#include <cstdint>
+
 #include "base/run_level.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
@@ -47,9 +49,9 @@ namespace win32 {
 namespace {
 
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-constexpr uint32 kMagicNumber = 0x4d6f7a63;  // 'Mozc'
+constexpr uint32_t kMagicNumber = 0x4d6f7a63;  // 'Mozc'
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
-constexpr uint32 kMagicNumber = 0x637a6f4d;  // 'cozM'
+constexpr uint32_t kMagicNumber = 0x637a6f4d;  // 'cozM'
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {

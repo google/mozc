@@ -32,6 +32,7 @@
 #include <xcb/xcb.h>
 #include <xcb/xfixes.h>
 
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -127,14 +128,14 @@ class SelectionMonitorServer {
         ::xcb_setup_roots_iterator(::xcb_get_setup(connection_)).data;
 
     requestor_window_ = ::xcb_generate_id(connection_);
-    const uint32 mask = XCB_CW_EVENT_MASK;
-    const uint32 values[] = {XCB_EVENT_MASK_PROPERTY_CHANGE};
+    const uint32_t mask = XCB_CW_EVENT_MASK;
+    const uint32_t values[] = {XCB_EVENT_MASK_PROPERTY_CHANGE};
     root_window_ = screen->root;
     ::xcb_create_window(connection_, screen->root_depth, requestor_window_,
                         root_window_, 0, 0, 1, 1, 0,
                         XCB_WINDOW_CLASS_INPUT_OUTPUT, screen->root_visual,
                         mask, values);
-    const uint32 xfixes_mask =
+    const uint32_t xfixes_mask =
         XCB_XFIXES_SELECTION_EVENT_MASK_SET_SELECTION_OWNER |
         XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY |
         XCB_XFIXES_SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE;
@@ -256,7 +257,7 @@ class SelectionMonitorServer {
                                          xcb_error.mutable_get()));
     if (xcb_error.get() != nullptr) {
       LOG(ERROR) << "xcb_xfixes_query_version_reply failed. error_code: "
-                 << static_cast<uint32>(xcb_error.get()->error_code);
+                 << static_cast<uint32_t>(xcb_error.get()->error_code);
       return false;
     }
     if (xfixes_query.get() == nullptr) {
@@ -286,7 +287,7 @@ class SelectionMonitorServer {
         connection_, cookie, xcb_error.mutable_get()));
     if (xcb_error.get() != nullptr) {
       LOG(ERROR) << "xcb_get_atom_name_reply failed. error_code: "
-                 << static_cast<uint32>(xcb_error.get()->error_code);
+                 << static_cast<uint32_t>(xcb_error.get()->error_code);
       return "";
     }
     if (reply.get() == nullptr) {
@@ -475,8 +476,8 @@ class SelectionMonitorServer {
   xcb_connection_t *connection_;
   xcb_window_t requestor_window_;
   xcb_window_t root_window_;
-  uint32 xfixes_first_event_;
-  uint32 xcb_maximum_request_len_;
+  uint32_t xfixes_first_event_;
+  uint32_t xcb_maximum_request_len_;
   SelectionInfo last_request_info_;
   XcbAtoms atoms_;
 };
