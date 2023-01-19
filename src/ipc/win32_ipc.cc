@@ -238,7 +238,7 @@ IPCErrorType WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event,
   const HANDLE events[] = {quit_event,
                            GetEventHandleFromOverlapped(overlapped)};
   const DWORD wait_result =
-      ::WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, timeout);
+      ::WaitForMultipleObjects(std::size(events), events, FALSE, timeout);
   const DWORD wait_error = ::GetLastError();
   // Clear the I/O operation if still exists.
   if (!HasOverlappedIoCompleted(overlapped)) {

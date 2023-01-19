@@ -51,6 +51,7 @@
 #include "base/win_util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
+#include "absl/base/macros.h"
 
 namespace mozc {
 namespace renderer {
@@ -721,8 +722,8 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     }
     wchar_t class_name_buffer[1024] = {};
     const size_t num_copied_without_null = ::GetClassNameW(
-        window_handle, class_name_buffer, ARRAYSIZE(class_name_buffer));
-    if (num_copied_without_null >= (ARRAYSIZE(class_name_buffer) - 1)) {
+        window_handle, class_name_buffer, std::size(class_name_buffer));
+    if (num_copied_without_null >= (std::size(class_name_buffer) - 1)) {
       DLOG(ERROR) << "buffer length is insufficient.";
       return false;
     }
@@ -2446,7 +2447,7 @@ int LayoutManager::GetCompatibilityMode(
         L"OperaWindowClass",
         L"QWidget",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
+    for (size_t i = 0; i < std::size(kUseCandidateFormForSuggest); ++i) {
       if (kUseCandidateFormForSuggest[i] == class_name) {
         mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
         break;
@@ -2460,7 +2461,7 @@ int LayoutManager::GetCompatibilityMode(
         L"SunAwtDialog",
         L"SunAwtFrame",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
+    for (size_t i = 0; i < std::size(kUseLocalCoord); ++i) {
       if (kUseLocalCoord[i] == class_name) {
         mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
         break;
@@ -2473,7 +2474,7 @@ int LayoutManager::GetCompatibilityMode(
         L"SunAwtDialog",
         L"SunAwtFrame",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
+    for (size_t i = 0; i < std::size(kIgnoreDefaultCompositionForm); ++i) {
       if (kIgnoreDefaultCompositionForm[i] == class_name) {
         mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
         break;
@@ -2486,7 +2487,7 @@ int LayoutManager::GetCompatibilityMode(
         L"Emacs",
         L"MEADOW",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
+    for (size_t i = 0; i < std::size(kShowInfolistImmediately); ++i) {
       if (kShowInfolistImmediately[i] == class_name) {
         mode |= SHOW_INFOLIST_IMMEDIATELY;
         break;

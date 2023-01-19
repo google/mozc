@@ -29,6 +29,8 @@
 
 #include "base/win_font_test_helper.h"
 
+#include <string>
+
 // skip all unless OS_WIN
 #ifdef OS_WIN
 #include <Windows.h>
@@ -47,13 +49,13 @@ HANDLE g_ipa_mincho_ = nullptr;
 HANDLE LoadPrivateFont(const wchar_t *font_name) {
   wchar_t w_path[MAX_PATH] = {};
   const DWORD char_size =
-      ::GetModuleFileNameW(nullptr, w_path, ARRAYSIZE(w_path));
+      ::GetModuleFileNameW(nullptr, w_path, std::size(w_path));
   const DWORD get_module_file_name_error = ::GetLastError();
   if (char_size == 0) {
     LOG(ERROR) << "GetModuleFileNameW failed.  error = "
                << get_module_file_name_error;
     return nullptr;
-  } else if (char_size == ARRAYSIZE(w_path)) {
+  } else if (char_size == std::size(w_path)) {
     LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
     return nullptr;
   }

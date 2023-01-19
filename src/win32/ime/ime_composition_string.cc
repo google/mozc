@@ -32,6 +32,9 @@
 #include <ime.h>
 #include <strsafe.h>
 
+#include <string>
+#include <vector>
+
 #include "google/protobuf/stubs/common.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -146,7 +149,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   // Since the Mozc server does not support clause information for the
   // result string, we always declare the result string to be one segment.
   // TODO(yukawa): Set clause after b/3135804 is implemented.
-  static_assert(arraysize(result_reading_clause_) >= 2,
+  static_assert(std::size(result_reading_clause_) >= 2,
                 "|result_reading_clause_| must has at least 2 elements.");
   info.dwResultClauseLen =
       sizeof(result_clause_[0]) + sizeof(result_clause_[1]);
@@ -171,7 +174,7 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     // Since the Mozc server does not return clause information for the
     // result string, we always declare the result string to be one segment.
     // TODO(yukawa): Set clause after b/3135804 is implemented.
-    static_assert(arraysize(result_reading_clause_) >= 2,
+    static_assert(std::size(result_reading_clause_) >= 2,
                   "|result_reading_clause_| must has at least 2 elements.");
     info.dwResultReadClauseLen =
         sizeof(result_reading_clause_[0]) + sizeof(result_reading_clause_[1]);

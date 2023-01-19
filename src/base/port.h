@@ -98,10 +98,6 @@ typedef std::uint64_t uint64;
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifndef arraysize
-#define arraysize(array) ABSL_ARRAYSIZE(array)
-#endif  // arraysize
-
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;      \
   void operator=(const TypeName&) = delete
