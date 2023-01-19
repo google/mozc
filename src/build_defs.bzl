@@ -31,6 +31,19 @@
 cc_(library|binary|test) wrappers to add :macro dependency.
 :macro defines attributes for each platforms so required macros are defined by
 depending on it.
+
+Macro naming guideline:
+
+Language tools (cc, objc, java, etc): language_mozc_artifact, e.g.
+  - cc_mozc_library
+  - objc_mozc_test
+
+Otherwise, add mozc_ as a prefix, e.g.:
+  - mozc_macos_application
+  - mozc_select
+
+See also: https://bazel.build/rules/bzl-style#rules
+
 """
 
 load("//bazel:stubs.bzl", "register_extension_info")
@@ -379,7 +392,7 @@ def _tweak_strings(name, strings):
         tweaked_strings.append(string_name)
     return tweaked_strings
 
-def macos_mozc_application(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
+def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .app for macOS.
 
     Args:
@@ -408,11 +421,11 @@ def macos_mozc_application(name, bundle_name, infoplists, strings = [], bundle_i
     )
 
 def macos_application_mozc(**kwargs):
-    """Deprecated, use macos_mozc_application.
+    """Deprecated, use mozc_macos_application.
     """
-    macos_mozc_application(**kwargs)
+    mozc_macos_application(**kwargs)
 
-def macos_mozc_bundle(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
+def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .bundle for macOS.
 
     Args:
@@ -441,9 +454,9 @@ def macos_mozc_bundle(name, bundle_name, infoplists, strings = [], bundle_id = N
     )
 
 def macos_bundle_mozc(**kwargs):
-    """Deprecated, use macos_mozc_bundle
+    """Deprecated, use mozc_macos_bundle
     """
-    macos_mozc_bundle(**kwargs)
+    mozc_macos_bundle(**kwargs)
 
 def _get_value(args):
     for arg in args:
