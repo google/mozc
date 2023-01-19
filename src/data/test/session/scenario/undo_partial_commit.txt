@@ -64,7 +64,7 @@ EXPECT_PREEDIT	わたしの
 EXPECT_IN_ALL_CANDIDATE_WORDS	わたし
 
 
-# Case 3: Multiple-Undo scenario, which isn't implemented yet.
+# Case 3: Multiple undo
 
 # Send keys "watasino" to get composition "わたしの"
 RESET_CONTEXT
@@ -82,23 +82,19 @@ EXPECT_PREEDIT	しの
 EXPECT_IN_ALL_CANDIDATE_WORDS	しの
 
 # 2nd commit
-SEND_KEY	LEFT
-EXPECT_PREEDIT	しの
-EXPECT_IN_ALL_CANDIDATE_WORDS	し
-SUBMIT_CANDIDATE	0
+SUBMIT_CANDIDATE_BY_VALUE	し
 EXPECT_PREEDIT	の
 EXPECT_IN_ALL_CANDIDATE_WORDS	の
 
 # 1st Undo for 2nd commit works.
 SEND_KEY	CTRL BACKSPACE
 EXPECT_PREEDIT	しの
-EXPECT_IN_ALL_CANDIDATE_WORDS	し
+EXPECT_IN_ALL_CANDIDATE_WORDS	しの
 
-# 2nd Undo for 1st commit doesn't work yet.
+# 2nd Undo for 1st commit
 SEND_KEY	CTRL BACKSPACE
-EXPECT_PREEDIT	しの
-EXPECT_IN_ALL_CANDIDATE_WORDS	し
-# ↑ Ideally "わたしの"
+EXPECT_PREEDIT	わたしの
+EXPECT_IN_ALL_CANDIDATE_WORDS	わた
 
 
 # Case 4: Once any operations are performed, Undo operation should be ignored.

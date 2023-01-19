@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_H_
 
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <string>
 
@@ -285,7 +286,9 @@ class Session : public SessionInterface {
   mozc::EngineInterface *engine_;
 
   std::unique_ptr<ImeContext> context_;
-  std::unique_ptr<ImeContext> prev_context_;
+
+  // Undo stack. *begin is the oldest, and *back is the newest.
+  std::deque<std::unique_ptr<ImeContext>> undo_contexts_;
 
   void InitContext(ImeContext *context) const;
 
