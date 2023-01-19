@@ -40,6 +40,7 @@
 // clang-format on
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
@@ -272,7 +273,7 @@ bool ExtractParams(LayoutManager *layout, int compatibility_mode,
     const commands::RendererCommand::CandidateForm &form =
         app_info.candidate_form();
 
-    const uint32 candidate_style_bits = form.style_bits();
+    const uint32_t candidate_style_bits = form.style_bits();
 
     const bool has_candidate_pos_style_bit =
         ((candidate_style_bits & CandidateForm::CANDIDATEPOS) ==
@@ -1745,7 +1746,7 @@ bool LayoutManager::LayoutCompositionWindow(
     }
   }
 
-  const uint32 style_bits = composition_form.style_bits();
+  const uint32_t style_bits = composition_form.style_bits();
 
   // Check the availability of optional fields.
   // Note that currently we always use |current_position| field even when

@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -405,7 +406,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   bitmap_info.color_palette[0] = kBackgroundColor;  // black
   bitmap_info.color_palette[1] = kForegroundColor;  // white
 
-  uint8 *buffer = nullptr;
+  uint8_t *buffer = nullptr;
   CBitmap dib;
   dib.CreateDIBSection(
       nullptr, reinterpret_cast<const BITMAPINFO *>(&bitmap_info),
@@ -616,10 +617,10 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
 
   // GDI native alpha image is Premultiplied BGRA.
   struct PBGRA {
-    uint8 b;
-    uint8 g;
-    uint8 r;
-    uint8 a;
+    uint8_t b;
+    uint8_t g;
+    uint8_t r;
+    uint8_t a;
   };
 
   BITMAPINFO bitmap_info = {};

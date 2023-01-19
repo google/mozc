@@ -29,10 +29,6 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#include <cstdint>
-
-#include "absl/strings/str_format.h"
-
 #if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
@@ -54,6 +50,7 @@
 #endif  // __APPLE__
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <cstdlib>
 #include <ios>
 #include <map>
@@ -83,6 +80,7 @@
 #endif  // OS_WIN
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "absl/strings/str_format.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -224,8 +222,9 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_->set_product_version(Version::GetMozcVersion());
 
 #ifdef OS_WIN
-  ipc_path_info_->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
-  ipc_path_info_->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
+  ipc_path_info_->set_process_id(
+      static_cast<uint32_t>(::GetCurrentProcessId()));
+  ipc_path_info_->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
 #else   // OS_WIN
   ipc_path_info_->set_process_id(static_cast<uint32_t>(getpid()));
   ipc_path_info_->set_thread_id(0);

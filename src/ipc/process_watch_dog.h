@@ -30,11 +30,11 @@
 #ifndef MOZC_IPC_PROCESS_WATCH_DOG_H_
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
-#include <cstdint>
 #ifndef OS_WIN
 #include <sys/types.h>
 #endif  // !OS_WIN
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -71,8 +71,8 @@ class ProcessWatchDog : public Thread {
   };
 
 #ifdef OS_WIN
-  typedef uint32 ProcessID;
-  typedef uint32 ThreadID;
+  typedef uint32_t ProcessID;
+  typedef uint32_t ThreadID;
 #else   // OS_WIN
   typedef pid_t ProcessID;
   // Linux/Mac has no way to export ThreadID to other process.

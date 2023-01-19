@@ -34,6 +34,7 @@
 #include <Windows.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 #include "base/const.h"
@@ -207,18 +208,18 @@ class ScopedReleaseMutex {
   HANDLE pipe_handle_;
 };
 
-uint32 GetServerProcessIdImpl(HANDLE handle) {
+uint32_t GetServerProcessIdImpl(HANDLE handle) {
   ULONG pid = 0;
   if (::GetNamedPipeServerProcessId(handle, &pid) == 0) {
     const DWORD get_named_pipe_server_process_id_error = ::GetLastError();
     LOG(ERROR) << "GetNamedPipeServerProcessId failed: "
                << get_named_pipe_server_process_id_error;
-    return static_cast<uint32>(-1);  // always deny the connection
+    return static_cast<uint32_t>(-1);  // always deny the connection
   }
 
   VLOG(1) << "Got server ProcessID: " << pid;
 
-  return static_cast<uint32>(pid);
+  return static_cast<uint32_t>(pid);
 }
 
 void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
@@ -430,8 +431,8 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 }  // namespace
 
-IPCServer::IPCServer(const std::string &name, int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+                     int32_t timeout)
     : connected_(false),
       pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
@@ -744,7 +745,7 @@ IPCClient::~IPCClient() {}
 bool IPCClient::Connected() const { return connected_; }
 
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32 timeout) {
+                     int32_t timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";

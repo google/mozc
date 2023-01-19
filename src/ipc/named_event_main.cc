@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <string>
 
 #include "base/init_mozc.h"
@@ -37,8 +38,8 @@
 
 ABSL_FLAG(bool, listener, true, "listener mode");
 ABSL_FLAG(bool, notifier, false, "notifier mode");
-ABSL_FLAG(int32, timeout, -1, "timeout (msec)");
-ABSL_FLAG(int32, pid, -1, "process id");
+ABSL_FLAG(int32_t, timeout, -1, "timeout (msec)");
+ABSL_FLAG(int32_t, pid, -1, "process id");
 ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {

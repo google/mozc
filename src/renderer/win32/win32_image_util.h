@@ -33,6 +33,7 @@
 #include <windows.h>
 
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,7 +49,7 @@ namespace win32 {
 // When we enable Skia as a back-end of graphics system, we might want to
 // migrate to Skia's pixel format instead of our own ones.
 struct RGBColor {
-  typedef uint8 ValueType;
+  typedef uint8_t ValueType;
   ValueType r;
   ValueType g;
   ValueType b;
@@ -65,7 +66,7 @@ struct RGBColor {
 // When we enable Skia as a back-end of graphics system, we might want to
 // migrate to Skia's pixel format instead of our own ones.
 struct ARGBColor {
-  typedef uint8 ValueType;
+  typedef uint8_t ValueType;
   ValueType a;
   ValueType r;
   ValueType g;

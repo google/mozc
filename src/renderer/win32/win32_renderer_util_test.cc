@@ -38,6 +38,8 @@
 #include <atlmisc.h>
 // clang-format on
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
@@ -184,7 +186,7 @@ class AppInfoUtil {
     app_info->set_ui_visibilities(visibility);
     app_info->set_process_id(1234);
     app_info->set_thread_id(5678);
-    app_info->set_target_window_handle(reinterpret_cast<uint32>(hwnd));
+    app_info->set_target_window_handle(reinterpret_cast<uint32_t>(hwnd));
     app_info->set_input_framework(ApplicationInfo::IMM32);
   }
 
@@ -210,7 +212,7 @@ class AppInfoUtil {
     font->set_face_name(face_name);
   }
 
-  static void SetCompositionForm(ApplicationInfo *app_info, uint32 style_bits,
+  static void SetCompositionForm(ApplicationInfo *app_info, uint32_t style_bits,
                                  int x, int y, int left, int top, int right,
                                  int bottom) {
     CompositionForm *form = app_info->mutable_composition_form();
@@ -225,7 +227,7 @@ class AppInfoUtil {
     area->set_bottom(bottom);
   }
 
-  static void SetCandidateForm(ApplicationInfo *app_info, uint32 style_bits,
+  static void SetCandidateForm(ApplicationInfo *app_info, uint32_t style_bits,
                                int x, int y, int left, int top, int right,
                                int bottom) {
     CandidateForm *form = app_info->mutable_candidate_form();
@@ -246,7 +248,7 @@ class AppInfoUtil {
     CaretInfo *info = app_info->mutable_caret_info();
     info->set_blinking(blinking);
     info->set_target_window_handle(
-        reinterpret_cast<uint32>(target_window_handle));
+        reinterpret_cast<uint32_t>(target_window_handle));
     Rectangle *rect = info->mutable_caret_rect();
     rect->set_left(left);
     rect->set_top(top);
@@ -255,7 +257,7 @@ class AppInfoUtil {
   }
 
   static void SetCompositionTarget(ApplicationInfo *app_info, int position,
-                                   int x, int y, uint32 line_height, int left,
+                                   int x, int y, uint32_t line_height, int left,
                                    int top, int right, int bottom) {
     CharacterPosition *char_pos = app_info->mutable_composition_target();
     char_pos->set_position(position);
@@ -754,7 +756,7 @@ class Win32RendererUtilTest : public testing::Test {
     ApplicationInfo *app = command->mutable_application_info();
     app->set_process_id(1234);
     app->set_thread_id(5678);
-    app->set_target_window_handle(reinterpret_cast<uint32>(hwnd));
+    app->set_target_window_handle(reinterpret_cast<uint32_t>(hwnd));
     WinLogFont *font = app->mutable_composition_font();
     font->set_height(-45);
     font->set_width(0);
@@ -3182,7 +3184,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFontIssue2935480) {
 // We should consider the case where two or more style bits are specified
 // at the same time.
 TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlagIssue3200425) {
-  constexpr uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
+  constexpr uint32_t kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
 
   constexpr int kCursorOffsetX = 0;
 

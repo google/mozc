@@ -32,6 +32,8 @@
 // skip all if not Android
 #ifdef OS_ANDROID
 
+#include <cstdint>
+
 #include "base/thread.h"
 #include "ipc/ipc.h"
 
@@ -44,8 +46,8 @@ constexpr int kInvalidSocket = -1;
 }  // namespace
 
 // Server
-IPCServer::IPCServer(const std::string &name, int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+                     int32_t timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   // do nothing
 }

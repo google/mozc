@@ -31,6 +31,7 @@
 #include <objbase.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 
 #include "base/file_stream.h"
@@ -56,8 +57,8 @@ namespace {
 constexpr int kErrorLevelSuccess = 0;
 constexpr int kErrorLevelFail = 1;
 
-constexpr uint32 kMaxBitmapWidth = 16384;
-constexpr uint32 kMaxBitmapHeight = 16384;
+constexpr uint32_t kMaxBitmapWidth = 16384;
+constexpr uint32_t kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
   std::wstring wide_src;
@@ -65,22 +66,22 @@ bool ConvertMain() {
   std::unique_ptr<Gdiplus::Bitmap> image(
       Gdiplus::Bitmap::FromFile(wide_src.c_str()));
 
-  const uint32 width_original = image->GetWidth();
+  const uint32_t width_original = image->GetWidth();
   if (width_original > kMaxBitmapWidth) {
     LOG(ERROR) << "Too long width: " << width_original;
     return false;
   }
-  const int32 width = static_cast<int32>(width_original);
+  const int32_t width = static_cast<int32_t>(width_original);
 
-  const uint32 height_original = image->GetHeight();
+  const uint32_t height_original = image->GetHeight();
   if (height_original > kMaxBitmapHeight) {
     LOG(ERROR) << "Too long height: " << height_original;
     return false;
   }
-  const int32 height = static_cast<int32>(height_original);
+  const int32_t height = static_cast<int32_t>(height_original);
 
-  const uint32 num_pixels = static_cast<uint32>(width * height);
-  const uint32 pixel_data_bytes = num_pixels * 4;
+  const uint32_t num_pixels = static_cast<uint32_t>(width * height);
+  const uint32_t pixel_data_bytes = num_pixels * 4;
 
   // Use <pshpack2.h> header to match the actual file BMP file format,
   // which uses 2 byte packing.  Include <poppack.h> to restore the
@@ -88,22 +89,22 @@ bool ConvertMain() {
   // c.f. https://msdn.microsoft.com/en-us/library/2e70t5y1.aspx
 #include <pshpack2.h>  // NOLINT
   struct PBGR32Bitmap {
-    uint16 file_signature;
-    uint32 file_size;
-    uint16 reserved1;
-    uint16 reserved2;
-    uint32 pixel_data_offset;
-    uint32 header_size;
-    int32 width;
-    int32 height;
-    uint16 num_planes;
-    uint16 bit_count;
-    uint32 compression;
-    uint32 pixel_data_size;
-    int32 pixel_per_meter_x;
-    int32 pixel_per_meter_y;
-    uint32 num_pallete;
-    uint32 important_color;
+    uint16_t file_signature;
+    uint32_t file_size;
+    uint16_t reserved1;
+    uint16_t reserved2;
+    uint32_t pixel_data_offset;
+    uint32_t header_size;
+    int32_t width;
+    int32_t height;
+    uint16_t num_planes;
+    uint16_t bit_count;
+    uint32_t compression;
+    uint32_t pixel_data_size;
+    int32_t pixel_per_meter_x;
+    int32_t pixel_per_meter_y;
+    uint32_t num_pallete;
+    uint32_t important_color;
   };
 #include <poppack.h>  // NOLINT
 
@@ -131,9 +132,9 @@ bool ConvertMain() {
       Gdiplus::Color color;
       image->GetPixel(x, height - y - 1, &color);
       const size_t index = (y * width + x) * 4;
-      output_file << static_cast<uint8>(color.GetB() / 255.0 * color.GetA());
-      output_file << static_cast<uint8>(color.GetG() / 255.0 * color.GetA());
-      output_file << static_cast<uint8>(color.GetR() / 255.0 * color.GetA());
+      output_file << static_cast<uint8_t>(color.GetB() / 255.0 * color.GetA());
+      output_file << static_cast<uint8_t>(color.GetG() / 255.0 * color.GetA());
+      output_file << static_cast<uint8_t>(color.GetR() / 255.0 * color.GetA());
       output_file << color.GetA();
     }
   }
