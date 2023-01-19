@@ -98,14 +98,6 @@ typedef std::uint64_t uint64;
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&) = delete;      \
-  void operator=(const TypeName&) = delete
-
-#define DISALLOW_IMPLICIT_CONSTRUCTORS(TypeName) \
-  TypeName() = delete;                           \
-  DISALLOW_COPY_AND_ASSIGN(TypeName)
-
 #define AS_STRING(x) AS_STRING_INTERNAL(x)
 #define AS_STRING_INTERNAL(x) #x
 

@@ -120,6 +120,11 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
       UserDictionary *dictionary)
       : dictionary_(dictionary) {}
 
+  UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand(
+      const UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &) = delete;
+  UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &operator=(
+      const UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &) = delete;
+
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     if (storage->GetProto().dictionaries_size() != 1) {
       return false;
@@ -130,9 +135,6 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
 
  private:
   std::unique_ptr<UserDictionary> dictionary_;
-
-  DISALLOW_COPY_AND_ASSIGN(
-      UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand);
 };
 
 class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
