@@ -36,6 +36,7 @@
 #include <atlcom.h>
 #include <msctf.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -95,7 +96,7 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
                   std::size(buffer), 0) != 1) {
     return VirtualKey::FromVirtualKey(wparam);
   }
-  const uint32 ucs2 = buffer[0];
+  const uint32_t ucs2 = buffer[0];
   if (ucs2 == L' ') {
     return VirtualKey::FromVirtualKey(VK_SPACE);
   }
@@ -114,7 +115,8 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
 }
 
 bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
-                    bool *open, uint32 *logical_mode, uint32 *visible_mode) {
+                    bool *open, uint32_t *logical_mode,
+                    uint32_t *visible_mode) {
   DCHECK(text_service);
   DCHECK(context);
   DCHECK(open);
@@ -187,8 +189,8 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   }
 
   bool open = false;
-  uint32 logical_mode = 0;
-  uint32 visible_mode = 0;
+  uint32_t logical_mode = 0;
+  uint32_t visible_mode = 0;
   if (!GetOpenAndMode(text_service, context, &open, &logical_mode,
                       &visible_mode)) {
     *eaten = FALSE;
@@ -335,8 +337,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   }
 
   bool open = false;
-  uint32 logical_mode = 0;
-  uint32 visible_mode = 0;
+  uint32_t logical_mode = 0;
+  uint32_t visible_mode = 0;
   if (!GetOpenAndMode(text_service, context, &open, &logical_mode,
                       &visible_mode)) {
     *eaten = FALSE;

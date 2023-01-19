@@ -29,6 +29,7 @@
 
 #include "win32/tip/tip_thread_context.h"
 
+#include <cstdint>
 #include <limits>
 #include <memory>
 
@@ -55,7 +56,7 @@ class TipThreadContext::InternalState {
   InternalState() : input_mode_manager(GetConfig()), focus_revision(0) {}
   TipInputModeManager input_mode_manager;
   std::unique_ptr<FocusHierarchyObserver> focus_hierarchy_observer;
-  int32 focus_revision;
+  int32_t focus_revision;
 };
 
 TipThreadContext::TipThreadContext() : state_(new InternalState) {}
@@ -78,12 +79,12 @@ void TipThreadContext::InitializeFocusHierarchyObserver() {
   }
 }
 
-int32 TipThreadContext::GetFocusRevision() const {
+int32_t TipThreadContext::GetFocusRevision() const {
   return state_->focus_revision;
 }
 
 void TipThreadContext::IncrementFocusRevision() {
-  if (state_->focus_revision < std::numeric_limits<int32>::max()) {
+  if (state_->focus_revision < std::numeric_limits<int32_t>::max()) {
     state_->focus_revision++;
   } else {
     state_->focus_revision = 0;

@@ -36,6 +36,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -246,7 +247,7 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
  public:
   AsyncSwitchInputModeEditSessionImpl(CComPtr<TipTextService> text_service,
                                       CComPtr<ITfContext> context, bool open,
-                                      uint32 native_mode)
+                                      uint32_t native_mode)
       : text_service_(text_service),
         context_(context),
         open_(open),
@@ -328,11 +329,11 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
   bool open_;
-  uint32 native_mode_;
+  uint32_t native_mode_;
 };
 
 bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
-                            bool open, uint32 native_mode) {
+                            bool open, uint32_t native_mode) {
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
@@ -543,7 +544,7 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
   return TipEditSession::OnOutputReceivedSync(text_service, context, output);
 }
 
-bool IsCandidateFocused(const Output &output, uint32 candidate_id) {
+bool IsCandidateFocused(const Output &output, uint32_t candidate_id) {
   if (!output.has_candidates()) {
     return false;
   }
@@ -552,7 +553,7 @@ bool IsCandidateFocused(const Output &output, uint32 candidate_id) {
   if (!candidates.has_focused_index()) {
     return false;
   }
-  const uint32 focused_index = candidates.focused_index();
+  const uint32_t focused_index = candidates.focused_index();
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
     const Candidate &candidate = candidates.candidate(i);
     if (candidate.index() != focused_index) {
@@ -857,7 +858,7 @@ bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
   switch (type) {
     case SessionCommand::HIGHLIGHT_CANDIDATE:
     case SessionCommand::SELECT_CANDIDATE: {
-      const int32 candidate_id = static_cast<int32>(lparam);
+      const int32_t candidate_id = static_cast<int32_t>(lparam);
       TipPrivateContext *private_context =
           text_service->GetPrivateContext(context);
       if (private_context == nullptr) {
@@ -998,7 +999,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
 }
 
 bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
-                                          uint32 mozc_mode) {
+                                          uint32_t mozc_mode) {
   commands::CompositionMode mode =
       static_cast<commands::CompositionMode>(mozc_mode);
 
@@ -1040,7 +1041,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
     return false;
   }
 
-  uint32 native_mode = 0;
+  uint32_t native_mode = 0;
   if (!ConversionModeUtil::ToNativeMode(
           mode, private_context->input_behavior().prefer_kana_input,
           &native_mode)) {

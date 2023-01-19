@@ -32,6 +32,8 @@
 
 #include <msctf.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -75,7 +77,7 @@ class TipTextService : public IUnknown {
 
   // Updates the language bar as needed.  Does nothing if the language bar is
   // not available.
-  virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) = 0;
+  virtual void UpdateLangbar(bool enabled, uint32_t mozc_mode) = 0;
 
   // Returns true if the language bar is initialized.
   virtual bool IsLangbarInitialized() const = 0;

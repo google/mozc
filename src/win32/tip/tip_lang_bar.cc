@@ -29,6 +29,8 @@
 
 #include "win32/tip/tip_lang_bar.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win_util.h"
@@ -410,7 +412,7 @@ HRESULT TipLangBar::UninitLangBar() {
   return result;
 }
 
-HRESULT TipLangBar::UpdateMenu(bool enabled, uint32 composition_mode) {
+HRESULT TipLangBar::UpdateMenu(bool enabled, uint32_t composition_mode) {
   HRESULT result = S_OK;
 
   const UINT menu_id = GetItemId(composition_mode);

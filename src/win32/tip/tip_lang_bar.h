@@ -40,6 +40,8 @@
 #include <ctffunc.h>
 #include <msctf.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -93,7 +95,7 @@ class TipLangBar {
   HRESULT UninitLangBar();
 
   // Updates the selected menu in the language bar.
-  HRESULT UpdateMenu(bool enabled, uint32 composition_mode);
+  HRESULT UpdateMenu(bool enabled, uint32_t composition_mode);
 
   // Returns true if this instance is already initialized.
   bool IsInitialized() const;

@@ -32,11 +32,12 @@
 #include <Ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <VersionHelpers.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>
-#include <VersionHelpers.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -1141,7 +1142,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     PostMessageW(task_window_handle_, kUpdateUIMessage, 0, 0);
   }
 
-  virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) {
+  virtual void UpdateLangbar(bool enabled, uint32_t mozc_mode) {
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 

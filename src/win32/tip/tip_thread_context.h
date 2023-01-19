@@ -32,6 +32,7 @@
 
 #include <Windows.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -57,7 +58,7 @@ class TipThreadContext {
 
   void InitializeFocusHierarchyObserver();
 
-  int32 GetFocusRevision() const;
+  int32_t GetFocusRevision() const;
   void IncrementFocusRevision();
 
  private:

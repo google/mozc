@@ -31,6 +31,8 @@
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 
 #include <msctf.h>
+
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -105,7 +107,7 @@ class TipEditSession {
   // Begins an async edit session to change input mode specified by
   // |native_mode|.
   static bool SwitchInputModeAsync(TipTextService *text_service,
-                                   uint32 mozc_mode);
+                                   uint32_t mozc_mode);
 
   // Begins a sync edit session to retrieve the text from |range|.
   static bool GetTextSync(TipTextService *text_service, ITfRange *range,

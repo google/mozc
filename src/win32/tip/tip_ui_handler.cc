@@ -35,6 +35,8 @@
 #include <atlcom.h>
 #include <msctf.h>
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
@@ -93,7 +95,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
       open ? static_cast<CompositionMode>(
                  input_mode_manager->GetEffectiveConversionMode())
            : commands::DIRECT;
-  text_service->UpdateLangbar(!disabled, static_cast<uint32>(mozc_mode));
+  text_service->UpdateLangbar(!disabled, static_cast<uint32_t>(mozc_mode));
 }
 
 bool UpdateInternal(TipTextService *text_service, ITfContext *context,
