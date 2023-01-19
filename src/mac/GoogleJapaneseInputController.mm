@@ -36,6 +36,7 @@
 
 #include <unistd.h>
 
+#include <cstdint>
 #include <cstdlib>
 #include <set>
 
@@ -770,7 +771,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
   rendererCommand_->set_visible(true);
 
   NSRect preeditRect = NSZeroRect;
-  const int32 position = rendererCommand_->output().candidates().position();
+  const int32_t position = rendererCommand_->output().candidates().position();
   // Some applications throws error when we call attributesForCharacterIndex.
   DLOG(INFO) << "attributesForCharacterIndex: " << position;
   @try {

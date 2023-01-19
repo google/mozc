@@ -32,6 +32,8 @@
 #import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 
+#include <cstdint>
+
 #include "protocol/commands.pb.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
@@ -43,7 +45,7 @@ struct TestCase {
   NSString *characters;
   NSString *unmodCharacters;
   int flags;
-  uint16 keyCode;
+  uint16_t keyCode;
   std::string expected;
 };
 
@@ -53,7 +55,7 @@ class KeyCodeMapTest : public testing::Test {
 
   void KanaMode() { keyCodeMap_.inputMode = KANA; }
 
-  bool CreateKeyEvent(NSString *characters, NSString *unmodCharacters, int flags, uint16 keyCode,
+  bool CreateKeyEvent(NSString *characters, NSString *unmodCharacters, int flags, uint16_t keyCode,
                       KeyEvent *mozcKeyEvent) {
     if (mozcKeyEvent == nullptr) {
       return false;

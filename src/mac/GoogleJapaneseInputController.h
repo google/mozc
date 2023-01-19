@@ -30,6 +30,7 @@
 #import <InputMethodKit/InputMethodKit.h>
 #import "mac/common.h"
 
+#include <cstdint>
 #include <string>
 
 // For mozc::commands::CompositionMode
@@ -101,7 +102,7 @@ class RendererInterface;
 
   // |lastKeyDownTime_| and |lastKeyCode_| are used to handle double tapping.
   NSTimeInterval lastKeyDownTime_;
-  uint16 lastKeyCode_;
+  uint16_t lastKeyCode_;
 
   // |candidateController_| controls the candidate windows.
   mozc::renderer::RendererInterface *candidateController_;
