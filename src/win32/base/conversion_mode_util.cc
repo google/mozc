@@ -35,22 +35,24 @@
 #include <windows.h>
 #endif  // OS_WIN
 
+#include <cstdint>
+
 #include "base/logging.h"
 
 namespace {
-constexpr uint32 kAlphaNumeric = 0x0;
-constexpr uint32 kNative = 0x1;
-constexpr uint32 kKatakana = 0x2;
-constexpr uint32 kLanguage = 0x3;
-constexpr uint32 kFullShape = 0x8;
-constexpr uint32 kRoman = 0x10;
-constexpr uint32 kCharCode = 0x20;
-constexpr uint32 kHanjiConvert = 0x40;
-constexpr uint32 kSoftKeyboard = 0x80;
-constexpr uint32 kNoConversion = 0x100;
-constexpr uint32 kEUDC = 0x200;
-constexpr uint32 kSymbol = 0x400;
-constexpr uint32 kFixed = 0x800;
+constexpr uint32_t kAlphaNumeric = 0x0;
+constexpr uint32_t kNative = 0x1;
+constexpr uint32_t kKatakana = 0x2;
+constexpr uint32_t kLanguage = 0x3;
+constexpr uint32_t kFullShape = 0x8;
+constexpr uint32_t kRoman = 0x10;
+constexpr uint32_t kCharCode = 0x20;
+constexpr uint32_t kHanjiConvert = 0x40;
+constexpr uint32_t kSoftKeyboard = 0x80;
+constexpr uint32_t kNoConversion = 0x100;
+constexpr uint32_t kEUDC = 0x200;
+constexpr uint32_t kSymbol = 0x400;
+constexpr uint32_t kFixed = 0x800;
 
 #if defined(OS_WIN)
 // Check the equality of constans if header files are available.
@@ -107,7 +109,7 @@ static_assert(kFixed == TF_CONVERSIONMODE_FIXED, "Renaming Check");
 
 // Returns true if the specified bits are set in the |flag| with
 // unsetting the bits in the |flag|.
-bool TestAndClearBits(uint32 *flag, uint32 bits) {
+bool TestAndClearBits(uint32_t *flag, uint32_t bits) {
   const bool result = ((*flag & bits) != 0);
   *flag &= ~bits;
   return result;
@@ -118,7 +120,7 @@ namespace mozc {
 namespace win32 {
 bool ConversionModeUtil::ToNativeMode(mozc::commands::CompositionMode mode,
                                       bool kana_lock_enabled_in_hiragana_mode,
-                                      uint32 *flag) {
+                                      uint32_t *flag) {
   // b/2189944.
   // Built-in MS-IME and ATOK (as of 22.0.1.0) seem to specify IME_CMODE_ROMAN
   // flag even if the input mode is Half-width Alphanumeric.
@@ -180,7 +182,7 @@ bool ConversionModeUtil::ToNativeMode(mozc::commands::CompositionMode mode,
   return true;
 }
 
-bool ConversionModeUtil::ToMozcMode(uint32 flag,
+bool ConversionModeUtil::ToMozcMode(uint32_t flag,
                                     mozc::commands::CompositionMode *mode) {
   if (mode == nullptr) {
     LOG(ERROR) << "|mode| is nullptr";
@@ -299,14 +301,14 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
     return false;
   }
 
-  uint32 logical_native_mode = 0;
+  uint32_t logical_native_mode = 0;
   if (!ConversionModeUtil::ToNativeMode(status.comeback_mode(),
                                         kana_lock_enabled_in_hiragana_mode,
                                         &logical_native_mode)) {
     return false;
   }
 
-  uint32 visible_native_mode = 0;
+  uint32_t visible_native_mode = 0;
   if (!ConversionModeUtil::ToNativeMode(status.mode(),
                                         kana_lock_enabled_in_hiragana_mode,
                                         &visible_native_mode)) {
@@ -327,7 +329,7 @@ bool ConversionModeUtil::ConvertStatusFromMozcToNative(
 
 bool ConversionModeUtil::GetMozcModeFromNativeMode(
     DWORD imm32_mode, mozc::commands::CompositionMode *mozc_mode) {
-  const uint32 native_mode = static_cast<uint32>(imm32_mode);
+  const uint32_t native_mode = static_cast<uint32_t>(imm32_mode);
   *mozc_mode = mozc::commands::HIRAGANA;
   if (!ConversionModeUtil::ToMozcMode(native_mode, mozc_mode)) {
     return false;

@@ -29,6 +29,8 @@
 
 #include "renderer/unix/infolist_window.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
@@ -53,9 +55,9 @@ using mozc::renderer::RendererStyleHandler;
 
 namespace {
 RGBA StyleColorToRGBA(const RendererStyle::RGBAColor &rgbacolor) {
-  const RGBA rgba = {static_cast<uint8>(rgbacolor.r()),
-                     static_cast<uint8>(rgbacolor.g()),
-                     static_cast<uint8>(rgbacolor.b()), 0xFF};
+  const RGBA rgba = {static_cast<uint8_t>(rgbacolor.r()),
+                     static_cast<uint8_t>(rgbacolor.g()),
+                     static_cast<uint8_t>(rgbacolor.b()), 0xFF};
   return rgba;
 }
 }  // namespace

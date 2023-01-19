@@ -37,6 +37,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 
+#include <cstdint>
 #include <vector>
 
 #include "base/port.h"
@@ -49,7 +50,7 @@ class AccessibleObject {
  public:
   AccessibleObject();
   explicit AccessibleObject(ATL::CComPtr<IAccessible> container);
-  AccessibleObject(ATL::CComPtr<IAccessible> container, int32 child_id);
+  AccessibleObject(ATL::CComPtr<IAccessible> container, int32_t child_id);
 
   AccessibleObjectInfo GetInfo() const;
   std::vector<AccessibleObject> GetChildren() const;
@@ -63,7 +64,7 @@ class AccessibleObject {
 
  private:
   ATL::CComPtr<IAccessible> container_;
-  int32 child_id_;
+  int32_t child_id_;
   bool valid_;
 };
 

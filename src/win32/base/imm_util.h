@@ -31,6 +31,8 @@
 #define MOZC_WIN32_BASE_IMM_UTIL_H_
 
 #include <windows.h>
+
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -75,7 +77,7 @@ class ImeUtil {
   // Returns true if "MSCTF.AsmCacheReady.<desktop name><session #>" event does
   // not exist.
   // Otherwise returns false.
-  static bool WaitForAsmCacheReady(uint32 timeout_msec);
+  static bool WaitForAsmCacheReady(uint32_t timeout_msec);
 
   // Activates the IMM32 version of Google Japanese Input for all existing
   // applications running in the current session.

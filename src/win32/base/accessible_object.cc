@@ -34,6 +34,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 
+#include <cstdint>
 #include <string>
 
 #include "base/util.h"
@@ -212,7 +213,7 @@ AccessibleObjectInfo GetInfo(const ATL::CComVariant &role,
   return info;
 }
 
-CComVariant GetChildId(int32 child_id) {
+CComVariant GetChildId(int32_t child_id) {
   CComVariant variant;
   variant.vt = VT_I4;
   variant.lVal = child_id;
@@ -229,7 +230,7 @@ AccessibleObject::AccessibleObject(CComPtr<IAccessible> container)
       valid_(container != nullptr) {}
 
 AccessibleObject::AccessibleObject(CComPtr<IAccessible> container,
-                                   int32 child_id)
+                                   int32_t child_id)
     : container_(container),
       child_id_(child_id),
       valid_(container != nullptr) {}

@@ -29,6 +29,7 @@
 
 #include "win32/base/keyboard.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -39,7 +40,7 @@ namespace win32 {
 namespace {
 
 BYTE ParseVirtualKey(UINT combined_virtual_key) {
-  const uint16 loword = LOWORD(combined_virtual_key);
+  const uint16_t loword = LOWORD(combined_virtual_key);
   if (loword <= 0xff) {
     return loword;
   }

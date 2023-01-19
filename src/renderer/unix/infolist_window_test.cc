@@ -29,6 +29,7 @@
 
 #include "renderer/unix/infolist_window.h"
 
+#include <cstdint>
 #include <string>
 
 #include "renderer/unix/cairo_factory_mock.h"
@@ -91,9 +92,9 @@ MATCHER_P(RGBAEq, expected_rgba, "The expected RGBA does not match") {
 }
 
 RGBA StyleColorToRGBA(const RendererStyle::RGBAColor &rgbacolor) {
-  const RGBA rgba = {static_cast<uint8>(rgbacolor.r()),
-                     static_cast<uint8>(rgbacolor.g()),
-                     static_cast<uint8>(rgbacolor.b()), 0xFF};
+  const RGBA rgba = {static_cast<uint8_t>(rgbacolor.r()),
+                     static_cast<uint8_t>(rgbacolor.g()),
+                     static_cast<uint8_t>(rgbacolor.b()), 0xFF};
   return rgba;
 }
 }  // namespace

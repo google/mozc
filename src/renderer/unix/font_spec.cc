@@ -29,6 +29,8 @@
 
 #include "renderer/unix/font_spec.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
@@ -49,9 +51,9 @@ PangoAttrList *CreateAttrListByScaleColor(const RGBA &color, double scale) {
 }
 
 RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
-  RGBA result = {static_cast<uint8>(rgba.r()), static_cast<uint8>(rgba.g()),
-                 static_cast<uint8>(rgba.b()),
-                 static_cast<uint8>(rgba.a() * 255.0)};
+  RGBA result = {static_cast<uint8_t>(rgba.r()), static_cast<uint8_t>(rgba.g()),
+                 static_cast<uint8_t>(rgba.b()),
+                 static_cast<uint8_t>(rgba.a() * 255.0)};
   return result;
 }
 }  // namespace
@@ -85,7 +87,7 @@ void FontSpec::ReleaseFontSpec() {
     DLOG(ERROR) << "Font spec is not initilaized.";
     return;
   }
-  for (uint32 i = 0; i < fonts_.size(); ++i) {
+  for (uint32_t i = 0; i < fonts_.size(); ++i) {
     pango_font_description_free(fonts_[i].font);
     pango_attr_list_unref(fonts_[i].attributes);
   }

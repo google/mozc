@@ -29,6 +29,7 @@
 
 #include "renderer/unix/candidate_window.h"
 
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -92,13 +93,13 @@ MATCHER_P(RGBAEq, expected_rgba, "The expected RGBA does not match") {
          (arg.blue == expected_rgba.blue) && (arg.alpha == expected_rgba.alpha);
 }
 
-void SetTestCandidates(uint32 count, bool has_value, bool has_shortcut,
+void SetTestCandidates(uint32_t count, bool has_value, bool has_shortcut,
                        bool has_description, bool has_prefix, bool has_suffix,
                        commands::Candidates *candidates) {
   candidates->Clear();
   candidates->set_size(count);
 
-  for (uint32 i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count; ++i) {
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
     candidate->set_index(i);
     candidate->set_id(i * 0x10);

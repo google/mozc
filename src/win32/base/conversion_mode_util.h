@@ -34,6 +34,8 @@
 
 #include <Windows.h>  // for DWORD
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 
@@ -53,13 +55,13 @@ class ConversionModeUtil {
   // flag.
   static bool ToNativeMode(mozc::commands::CompositionMode mode,
                            bool kana_lock_enabled_in_hiragana_mode,
-                           uint32 *flag);
+                           uint32_t *flag);
 
   // Converts combination of TF_CONVERSIONMODE_* to corresponding |mode|.
   // This function ignores TF_CONVERSIONMODE_ROMAN flag.
   // This his behavior is the same to that of MS-IME 98 or later.
   // http://support.microsoft.com/kb/419357
-  static bool ToMozcMode(uint32 flag, mozc::commands::CompositionMode *mode);
+  static bool ToMozcMode(uint32_t flag, mozc::commands::CompositionMode *mode);
 
   // A variant of ToNativeMode but takes mozc::commands::Status.
   // |logical_imm32_mode| is the conversion mode that should be reported to

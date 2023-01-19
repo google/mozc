@@ -35,6 +35,7 @@
 #include <msctf.h>
 // clang-format on
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -69,9 +70,9 @@ class TestableKeyEventHandler : public KeyEventHandler {
 
 const BYTE kPressed = 0x80;
 const BYTE kToggled = 0x01;
-LPARAM CreateLParam(uint16 repeat_count, uint8 scan_code, bool is_extended_key,
-                    bool has_context_code, bool is_previous_state_down,
-                    bool is_in_transition_state) {
+LPARAM CreateLParam(uint16_t repeat_count, uint8_t scan_code,
+                    bool is_extended_key, bool has_context_code,
+                    bool is_previous_state_down, bool is_in_transition_state) {
   DWORD value = 0;
   value |= repeat_count;
   value |= (static_cast<DWORD>(scan_code) << 16);
@@ -110,7 +111,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   virtual bool ForceTerminateServer(const std::string &name) { return true; }
 
-  virtual bool WaitServer(uint32 pid) { return true; }
+  virtual bool WaitServer(uint32_t pid) { return true; }
 
   virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
     LOG(ERROR) << static_cast<int>(type);
@@ -142,11 +143,11 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     start_server_result_ = result;
   }
 
-  void set_server_protocol_version(uint32 server_protocol_version) {
+  void set_server_protocol_version(uint32_t server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
   }
 
-  uint32 set_server_protocol_version() const {
+  uint32_t set_server_protocol_version() const {
     return server_protocol_version_;
   }
 
@@ -158,7 +159,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   IPCClientFactoryMock *factory_;
   bool start_server_result_;
   bool start_server_called_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string response_;
   std::map<int, int> error_map_;
 };

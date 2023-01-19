@@ -29,6 +29,7 @@
 
 #include "win32/base/indicator_visibility_tracker.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/clock.h"
@@ -40,7 +41,7 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const uint64 kWaitDuration = 500;  // msec
+const uint64_t kWaitDuration = 500;  // msec
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
 
 class IndicatorVisibilityTrackerTest : public testing::Test {
@@ -54,7 +55,7 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
 
   virtual void TearDown() { Clock::SetClockForUnitTest(nullptr); }
 
-  void PutForwardMilliseconds(uint64 milli_sec) {
+  void PutForwardMilliseconds(uint64_t milli_sec) {
     clock_mock_->PutClockForwardByTicks(milli_sec);
   }
 

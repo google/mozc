@@ -40,6 +40,7 @@
 
 #include <safeint.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -78,7 +79,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     RGBQUAD color_palette[2];
   };
 
-  uint8 *src_dib_buffer = nullptr;
+  uint8_t *src_dib_buffer = nullptr;
   CBitmap src_dib;
 
   // Step 1. Create a src black-and-white DIB as follows.
@@ -180,7 +181,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     // Background pixel: should be 0, which has null effect in XOR operation.
     info.color_palette[1] = ToRGBQuad(0);
 
-    uint8 *xor_dib_buffer = nullptr;
+    uint8_t *xor_dib_buffer = nullptr;
     xor_dib.CreateDIBSection(
         nullptr, reinterpret_cast<const BITMAPINFO *>(&info), DIB_RGB_COLORS,
         reinterpret_cast<void **>(&xor_dib_buffer), nullptr, 0);
@@ -212,12 +213,12 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     // 4-byte alignment. Here we need to do alignment conversion.
     const size_t mask_buffer_stride = (bitmap_width + 0x0f) / 16 * 2;
     const size_t mask_buffer_size = mask_buffer_stride * bitmap_width;
-    std::unique_ptr<uint8[]> mask_buffer(new uint8[mask_buffer_size]);
+    std::unique_ptr<uint8_t[]> mask_buffer(new uint8_t[mask_buffer_size]);
     for (size_t y = 0; y < bitmap_height; ++y) {
       for (size_t x = 0; x < bitmap_width; ++x) {
-        const uint8 *src_line_start =
+        const uint8_t *src_line_start =
             src_dib_buffer + src_bmp_info.bmWidthBytes * y;
-        uint8 *dest_line_start = mask_buffer.get() + mask_buffer_stride * y;
+        uint8_t *dest_line_start = mask_buffer.get() + mask_buffer_stride * y;
         ::memcpy(dest_line_start, src_line_start, mask_buffer_stride);
       }
     }
