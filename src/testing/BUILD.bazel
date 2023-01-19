@@ -60,7 +60,7 @@ genrule(
         "--output " +
         "$@"
     ),
-    exec_tools = ["//build_tools:embed_pathname"],
+    tools = ["//build_tools:embed_pathname"],
 )
 
 cc_library_mozc(

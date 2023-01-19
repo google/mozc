@@ -156,5 +156,5 @@ genrule(
     srcs = ["//data/usage_stats:stats.def"],
     outs = ["usage_stats_list.h"],
     cmd = "$(location :gen_stats_list) $(SRCS) > $@",
-    exec_tools = [":gen_stats_list"],
+    tools = [":gen_stats_list"],
 )

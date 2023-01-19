@@ -229,7 +229,7 @@ genrule(
     outs = ["init_kanamap.h"],
     cmd = ("$(location :generate_mapping) --mapname=KanaMap" +
            " --result_type='const char *' --filename $< > $@"),
-    exec_tools = [":generate_mapping"],
+    tools = [":generate_mapping"],
 )
 
 genrule(
@@ -238,7 +238,7 @@ genrule(
     outs = ["init_specialkeymap.h"],
     cmd = ("$(location :generate_mapping) --mapname=SpecialKeyMap" +
            " --result_type=KeyEvent::SpecialKey --filename $< > $@"),
-    exec_tools = [":generate_mapping"],
+    tools = [":generate_mapping"],
 )
 
 genrule(
@@ -248,7 +248,7 @@ genrule(
     cmd = ("$(location :generate_mapping) --mapname=SpecialCharMap" +
            " --key_type=unichar --result_type=KeyEvent::SpecialKey" +
            " --filename $< > $@"),
-    exec_tools = [":generate_mapping"],
+    tools = [":generate_mapping"],
 )
 
 objc_library_mozc(
@@ -350,9 +350,9 @@ genrule(
            " --input $<" +
            " --version_file $(location //base:mozc_version_txt)" +
            " --build_type dev"),  # or stable.
-    exec_tools = [
-        "//build_tools:tweak_macinstaller_script",
+    tools = [
         "//base:mozc_version_txt",
+        "//build_tools:tweak_macinstaller_script",
     ],
 )
 
@@ -367,9 +367,9 @@ genrule(
            " --input $<" +
            " --version_file $(location //base:mozc_version_txt)" +
            " --build_type dev"),  # or stable.
-    exec_tools = [
-        "//build_tools:tweak_macinstaller_script",
+    tools = [
         "//base:mozc_version_txt",
+        "//build_tools:tweak_macinstaller_script",
     ],
 )
 
@@ -404,7 +404,7 @@ genrule(
     ),
     outs = ["installer.zip"],
     cmd = "$(location :zip_files) --inputs $(SRCS) --output $@",
-    exec_tools = [
+    tools = [
         ":zip_files",
     ],
 )
@@ -421,8 +421,8 @@ genrule(
     srcs = [":zipped_installer_files"],
     outs = ["tweaked_installer.zip"],
     cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
-    exec_tools = [":tweak_installer_files"],
     tags = ["manual"],
+    tools = [":tweak_installer_files"],
 )
 
 py_binary_mozc(
@@ -452,10 +452,10 @@ genrule(
            " --version_file $(location //base:mozc_version_txt)" +
            " --auto_updater_dir " + AUTO_UPDATER_DIR +
            " --build_type dev"),  # or stable
-    exec_tools = [
+    tags = ["manual"],
+    tools = [
         ":build_installer",
         "//base:mozc_version_txt",
         "//build_tools:tweak_pkgproj",
     ],
-    tags = ["manual"],
 )

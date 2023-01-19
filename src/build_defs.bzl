@@ -204,7 +204,7 @@ def mozc_infoplist(name, srcs = [], outs = []):
                " --input $(location " + srcs[0] + ")" +
                " --version_file $(location //base:mozc_version_txt)" +
                " --branding " + BRANDING),
-        exec_tools = ["//build_tools:tweak_info_plist"],
+        tools = ["//build_tools:tweak_info_plist"],
     )
 
 def infoplist_mozc(**kwargs):
@@ -221,7 +221,7 @@ def mozc_infoplist_strings(name, srcs = [], outs = []):
                " --output $@" +
                " --input $(location " + srcs[0] + ")" +
                " --branding " + BRANDING),
-        exec_tools = ["//build_tools:tweak_info_plist_strings"],
+        tools = ["//build_tools:tweak_info_plist_strings"],
     )
 
 def infoplist_strings_mozc(**kwargs):

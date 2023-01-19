@@ -58,7 +58,7 @@ genrule(
            " --ibus_mozc_path=" + IBUS_MOZC_PATH +
            " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
            " > $@"),
-    exec_tools = [":gen_mozc_xml_main"],
+    tools = [":gen_mozc_xml_main"],
 )
 
 genrule(
@@ -70,7 +70,7 @@ genrule(
            " --ibus_mozc_path=" + IBUS_MOZC_PATH +
            " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
            " > $@"),
-    exec_tools = [":gen_mozc_xml_main"],
+    tools = [":gen_mozc_xml_main"],
 )
 
 cc_library_mozc(

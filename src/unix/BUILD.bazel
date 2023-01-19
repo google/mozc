@@ -75,7 +75,7 @@ genrule(
     ),
     outs = ["icons.zip"],
     cmd = "$(location :build_icons) --inputs $(SRCS) --output $@",
-    exec_tools = [":build_icons"],
+    tools = [":build_icons"],
 )
 
 py_binary_mozc(
@@ -106,7 +106,7 @@ genrule(
         "--emacs_client_dir \"" + EMACS_MOZC_CLIENT_DIR + "\"",
         "--emacs_helper_dir \"" + EMACS_MOZC_HELPER_DIR + "\"",
     ]),
-    exec_tools = [":build_package"],
+    tools = [":build_package"],
 )
 
 py_binary_mozc(

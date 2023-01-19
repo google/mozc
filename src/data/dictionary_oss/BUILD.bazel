@@ -106,7 +106,7 @@ genrule(
            "--strict --output $@ " +
            "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
-    exec_tools = ["//dictionary:gen_aux_dictionary"],
+    tools = ["//dictionary:gen_aux_dictionary"],
 )
 
 genrule(
@@ -119,7 +119,7 @@ genrule(
     cmd = ("$(location //dictionary:gen_filtered_dictionary) --output $@ " +
            "--filter_tsv $(location //data/oss:dictionary_filter.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
-    exec_tools = ["//dictionary:gen_filtered_dictionary"],
+    tools = ["//dictionary:gen_filtered_dictionary"],
 )
 
 evaluation(
