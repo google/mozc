@@ -197,7 +197,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
       }
       int64_t int_value;
       if (!NumberUtil::SafeStrToInt64(value.asString(), &int_value)) {
-        DLOG(ERROR) << "value is not convertible to int64: "
+        DLOG(ERROR) << "value is not convertible to int64_t: "
                     << Json::FastWriter().write(value);
         return false;
       }
@@ -221,7 +221,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
       }
       uint64_t uint_value;
       if (!NumberUtil::SafeStrToUInt64(value.asString(), &uint_value)) {
-        DLOG(ERROR) << "value is not convertible to uint64: "
+        DLOG(ERROR) << "value is not convertible to uint64_t: "
                     << Json::FastWriter().write(value);
         return false;
       }
@@ -326,7 +326,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           result = false;
         } else if (!NumberUtil::SafeStrToInt64(value[i].asString(),
                                                &int_value)) {
-          DLOG(ERROR) << "value is not convertible to int64: "
+          DLOG(ERROR) << "value is not convertible to int64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
@@ -356,7 +356,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           result = false;
         } else if (!NumberUtil::SafeStrToUInt64(value[i].asString(),
                                                 &uint_value)) {
-          DLOG(ERROR) << "value is not convertible to uint64: "
+          DLOG(ERROR) << "value is not convertible to uint64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {

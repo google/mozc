@@ -55,7 +55,7 @@ using mozc::dictionary::PosMatcher;
 namespace mozc {
 namespace {
 
-// A random access iterator over uint32 array that increments a pointer by N:
+// A random access iterator over uint32_t array that increments a pointer by N:
 // iter     -> array[0]
 // iter + 1 -> array[N]
 // iter + 2 -> array[2 * N]
@@ -173,7 +173,7 @@ class Uint32ArrayIterator
 // +------------------+
 // | ...              |
 //
-// Here, each element is of uint32 type.  Each of actual string values are
+// Here, each element is of uint32_t type.  Each of actual string values are
 // stored in |single_kanji_string_array| at its index.
 bool LookupKanjiList(absl::string_view single_kanji_token_array,
                      const SerializedStringArray &single_kanji_string_array,
@@ -189,7 +189,7 @@ bool LookupKanjiList(absl::string_view single_kanji_token_array,
   const auto iter =
       std::lower_bound(Uint32ArrayIterator<2>(token_array), end, key,
                        [&single_kanji_string_array](
-                           uint32 index, const std::string &target_key) {
+                           uint32_t index, const std::string &target_key) {
                          return single_kanji_string_array[index] < target_key;
                        });
   if (iter == end || single_kanji_string_array[iter[0]] != key) {
@@ -227,9 +227,9 @@ bool LookupKanjiList(absl::string_view single_kanji_token_array,
 // +-------------------------+
 // | ...                     |
 //
-// Here, each element is of uint32 type.  Actual strings of target and original
-// are stored in |variant_string_array|, while strings of variant type are
-// stored in |variant_type|.
+// Here, each element is of uint32_t type.  Actual strings of target and
+// original are stored in |variant_string_array|, while strings of variant type
+// are stored in |variant_type|.
 void GenerateDescription(absl::string_view variant_token_array,
                          const SerializedStringArray &variant_string_array,
                          const SerializedStringArray &variant_type,
@@ -242,7 +242,7 @@ void GenerateDescription(absl::string_view variant_token_array,
   const Uint32ArrayIterator<3> end(token_array + token_array_size);
   const auto iter = std::lower_bound(
       Uint32ArrayIterator<3>(token_array), end, key,
-      [&variant_string_array](uint32 index, const std::string &target_key) {
+      [&variant_string_array](uint32_t index, const std::string &target_key) {
         return variant_string_array[index] < target_key;
       });
   if (iter == end || variant_string_array[iter[0]] != key) {
@@ -376,8 +376,8 @@ SingleKanjiRewriter::SingleKanjiRewriter(
       &single_kanji_token_array_, &string_array_data, &variant_type_array_data,
       &variant_token_array_, &variant_string_array_data,
       &noun_prefix_token_array_data, &noun_prefix_string_array_data);
-  // Single Kanji token array is an array of uint32.  Its size must be multiple
-  // of 2; see the comment above LookupKanjiList.
+  // Single Kanji token array is an array of uint32_t.  Its size must be
+  // multiple of 2; see the comment above LookupKanjiList.
   DCHECK_EQ(0, single_kanji_token_array_.size() % (2 * sizeof(uint32_t)));
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   single_kanji_string_array_.Set(string_array_data);
@@ -385,7 +385,7 @@ SingleKanjiRewriter::SingleKanjiRewriter(
   DCHECK(SerializedStringArray::VerifyData(variant_type_array_data));
   variant_type_array_.Set(variant_type_array_data);
 
-  // Variant token array is an array of uint32.  Its size must be multiple
+  // Variant token array is an array of uint32_t.  Its size must be multiple
   // of 3; see the comment above GenerateDescription.
   DCHECK_EQ(0, variant_token_array_.size() % (3 * sizeof(uint32_t)));
   DCHECK(SerializedStringArray::VerifyData(variant_string_array_data));

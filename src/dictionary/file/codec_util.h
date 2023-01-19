@@ -45,10 +45,10 @@ namespace filecodec_util {
 // which the code is executed.
 void WriteInt32(int32_t value, std::ostream *ofs);
 
-// Reads an int32 value written by the above WriteInt32() from the memory block
-// starting at |ptr|.  Therefore, 1) |ptr| must be aligned at 32-bit boundary,
-// and 2) at least 4 bytes are accessible memory region.  After the value is
-// read, |ptr| is advanced by sizeof(int32) == 4 bytes.
+// Reads an int32_t value written by the above WriteInt32() from the memory
+// block starting at |ptr|.  Therefore, 1) |ptr| must be aligned at 32-bit
+// boundary, and 2) at least 4 bytes are accessible memory region.  After the
+// value is read, |ptr| is advanced by sizeof(int32_t) == 4 bytes.
 int32_t ReadInt32ThenAdvance(const char **ptr);
 
 // Rounds up |length| to the least upper bound of multiple of 4.  E.g.,

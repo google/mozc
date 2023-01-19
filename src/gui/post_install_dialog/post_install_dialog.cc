@@ -34,6 +34,7 @@
 #endif  // OS_WIN
 
 #include <QtGui>
+#include <cstdint>
 
 #include "base/logging.h"
 #include "base/process.h"
@@ -86,7 +87,7 @@ void PostInstallDialog::reject() {
 
 void PostInstallDialog::ApplySettings() {
 #ifdef OS_WIN
-  uint32 flags = SetupUtil::NONE;
+  uint32_t flags = SetupUtil::NONE;
   if (setAsDefaultCheckBox->isChecked()) {
     flags |= SetupUtil::IME_DEFAULT;
   }

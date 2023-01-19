@@ -85,7 +85,7 @@ class ZeroBitIndexIterator {
 // TODO(hidehiko): Support XMM and 64-bits popcount for 64bits architectures.
 inline int BitCount1(uint32_t x) { return __builtin_popcount(x); }
 #else   // __GNUC__
-int BitCount1(uint32 x) {
+int BitCount1(uint32_t x) {
   x = ((x & 0xaaaaaaaa) >> 1) + (x & 0x55555555);
   x = ((x & 0xcccccccc) >> 2) + (x & 0x33333333);
   x = ((x >> 4) + x) & 0x0f0f0f0f;

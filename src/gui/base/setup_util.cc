@@ -29,11 +29,10 @@
 
 #include "gui/base/setup_util.h"
 
-#include <cstdint>
-
 #ifdef OS_WIN
 #include <algorithm>
 #endif  // OS_WIN
+#include <cstdint>
 
 #include "base/logging.h"
 #include "dictionary/user_dictionary_storage.h"
@@ -103,7 +102,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   // create UserDictionary if the current user dictionary is empty
   if (!storage_->Exists().ok()) {
     const std::string kUserdictionaryName = "User Dictionary 1";
-    uint64 dic_id = 0;
+    uint64_t dic_id = 0;
     if (!storage_->CreateDictionary(kUserdictionaryName, &dic_id)) {
       LOG(ERROR) << "Failed to create a new dictionary.";
       return false;
@@ -112,7 +111,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
 
   // Import MS-IME's dictionary to a unique dictionary labeled
   // as "MS-IME"
-  uint64 dic_id = 0;
+  uint64_t dic_id = 0;
   const std::string kMsimeUserdictionaryName = "MS-IME User Dictionary";
   for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
     if (storage_->dictionaries(i).name() == kMsimeUserdictionaryName) {

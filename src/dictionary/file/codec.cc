@@ -88,7 +88,7 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
   DCHECK(ofs);
   const std::string &name = section.name;
   // name should be encoded
-  // uint64 needs just 8 bytes.
+  // uint64_t needs just 8 bytes.
   DCHECK_EQ(8, name.size());
   if (VLOG_IS_ON(1)) {
     std::string escaped;
@@ -119,7 +119,7 @@ absl::Status DictionaryFileCodec::ReadSections(
   if (image == nullptr) {
     return absl::InvalidArgumentError("codec.cc: Image is nullptr");
   }
-  // At least 12 bytes (3 * int32) are required.
+  // At least 12 bytes (3 * int32_t) are required.
   if (length < 12) {
     return absl::FailedPreconditionError(
         absl::StrCat("codec.cc: Insufficient data size: ", length, " bytes"));
@@ -143,7 +143,7 @@ absl::Status DictionaryFileCodec::ReadSections(
   for (int section_index = 0;; ++section_index) {
     // Each section has the following format:
     // +-----------+-------------+-----------------+---------------+
-    // |   int32   |   char[8]   | char[data_size] | up to 3 bytes |
+    // |  int32_t  |   char[8]   | char[data_size] | up to 3 bytes |
     // | data_size | fingerprint |      data       |   padding     |
     // +-----------+-------------+-----------------+---------------+
     // ^                         <- - - - padded_data_size - - - - >

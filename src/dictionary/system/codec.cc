@@ -93,7 +93,7 @@ constexpr int kValueTrieIdMax = 0x3fffff;
 // Unused for now.
 // We are using from 0x00~0xfa for the Kanji, Hiragana and Katakana.
 // Please see the comments for EncodeValue for details.
-// const uint8 kValueCharMarkReserved = 0xfb;
+// const uint8_t kValueCharMarkReserved = 0xfb;
 // ASCII character.
 constexpr uint8_t kValueCharMarkAscii = 0xfc;
 // UCS4 character 0x??00.

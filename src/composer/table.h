@@ -191,7 +191,7 @@ class TableManager {
 
  private:
   // Table caches.
-  // Key uint32 is calculated hash and unique for
+  // Key uint32_t is calculated hash and unique for
   //  commands::Request::SpecialRomanjiTable
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
