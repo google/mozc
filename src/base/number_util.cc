@@ -466,7 +466,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
     }
   }
 
-  // Following conversions require uint64 number.
+  // Following conversions require uint64_t number.
   uint64_t n;
   if (!SafeStrToUInt64(input_num, &n)) {
     return converted;
@@ -570,7 +570,7 @@ inline uint64_t StrToUint64(const char *c_str, char **end_ptr, int base) {
 #endif  // OS_WIN
 }
 
-// Converts a string which describes a number into an uint64 value in |base|
+// Converts a string which describes a number into an uint64_t value in |base|
 // radix.  Does not convert octal or hexadecimal strings with "0" or "0x"
 // suffixes.
 bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64_t *value) {
@@ -601,7 +601,7 @@ bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64_t *value) {
   char *end_ptr = nullptr;
   errno = 0;
   *value = StrToUint64(buf, &end_ptr, base);
-  if (errno != 0 || end_ptr == buf) {  // Failed to parse uint64.
+  if (errno != 0 || end_ptr == buf) {  // Failed to parse uint64_t.
     return false;
   }
   // Trailing white spaces are allowed.
@@ -681,7 +681,7 @@ bool SafeUnaryNegation(uint64_t src, int64_t *dest) {
   int64_t tmp = 0;
   if (!SafeCast(src, &tmp)) {
     if (src == 0x8000000000000000ul) {
-      // This is an exceptional case. |src| isn't in the range of int64,
+      // This is an exceptional case. |src| isn't in the range of int64_t,
       // but |-src| is in the range.
       *dest = std::numeric_limits<int64_t>::min();
       return true;

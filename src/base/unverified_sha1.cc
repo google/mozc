@@ -196,10 +196,10 @@ class PaddedMessageIterator {
   size_t message_index_;
 };
 
-// Converts a character to uint32 bit pattern by prepending 0's while keeping
+// Converts a character to uint32_t bit pattern by prepending 0's while keeping
 // the original bit pattern in lowest 8 bits.
 uint32_t CharToUint32(char c) {
-  // In case char is signed, we need to first convert c to uint8; see the
+  // In case char is signed, we need to first convert c to uint8_t; see the
   // following example:
   //
   // signed char c = -1;

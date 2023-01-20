@@ -64,7 +64,7 @@ namespace mozc {
 // iterator.
 //
 // * Binary format
-// The former block of size 4 + 8 * N bytes is an array of uint32 (in little
+// The former block of size 4 + 8 * N bytes is an array of uint32_t (in little
 // endian order) storing the array size and offset and length of each string;
 // see the diagram below.  These data can be used to extract strings from the
 // latter block.
@@ -259,8 +259,8 @@ class SerializedStringArray {
   static bool VerifyData(absl::string_view data);
 
   // Creates a byte image of |strs| in |buffer| and returns the memory block in
-  // |buffer| pointing to the image.  Note that uint32 array is used for buffer
-  // to align data at 4 byte boundary.
+  // |buffer| pointing to the image.  Note that uint32_t array is used for
+  // buffer to align data at 4 byte boundary.
   static absl::string_view SerializeToBuffer(
       const std::vector<absl::string_view> &strs,
       std::unique_ptr<uint32_t[]> *buffer);

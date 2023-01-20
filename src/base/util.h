@@ -381,7 +381,7 @@ class Util {
   // Returns true if all characters of `str` are JIS X 0208.
   static bool IsJisX0208(absl::string_view str);
 
-  // Serializes uint64 into a string of eight byte.
+  // Serializes uint64_t into a string of eight byte.
   static std::string SerializeUint64(uint64_t x);
 
   // Deserializes a string serialized by SerializeUint64.  Returns false if the

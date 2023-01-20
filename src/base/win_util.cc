@@ -43,6 +43,7 @@
 #include <atlbase.h>
 
 #include <clocale>
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -172,11 +173,11 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   return true;
 }
 
-uint32 WinUtil::EncodeWindowHandle(HWND window_handle) {
-  return static_cast<uint32>(reinterpret_cast<uintptr_t>(window_handle));
+uint32_t WinUtil::EncodeWindowHandle(HWND window_handle) {
+  return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(window_handle));
 }
 
-HWND WinUtil::DecodeWindowHandle(uint32 window_handle_value) {
+HWND WinUtil::DecodeWindowHandle(uint32_t window_handle_value) {
   return reinterpret_cast<HWND>(static_cast<uintptr_t>(window_handle_value));
 }
 
@@ -532,7 +533,7 @@ bool WinUtil::IsProcessSandboxed() {
 bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
                                       const wchar_t *parameters) {
   const auto result =
-      static_cast<uint32>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
+      static_cast<uint32_t>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
           0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."

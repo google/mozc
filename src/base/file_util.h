@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <ios>
 #include <string>
 #include <vector>
@@ -63,7 +64,7 @@
 namespace mozc {
 
 #if defined(OS_WIN)
-using FileTimeStamp = uint64;
+using FileTimeStamp = uint64_t;
 #else   // OS_WIN
 using FileTimeStamp = time_t;
 #endif  // OS_WIN

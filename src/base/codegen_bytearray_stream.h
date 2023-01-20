@@ -43,6 +43,7 @@
 #define MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <ios>
 #include <memory>
 #include <ostream>
@@ -60,11 +61,11 @@
 
 #ifdef OS_WIN
 // Visual C++ does not support string literals longer than 65535 characters
-// so integer arrays (e.g. arrays of uint64) are used to represent byte arrays
+// so integer arrays (e.g. arrays of uint64_t) are used to represent byte arrays
 // on Windows.
 //
 // The generated code looks like:
-//   const uint64 kVAR_data_wordtype[] = {
+//   const uint64_t kVAR_data_wordtype[] = {
 //       0x0123456789ABCDEF, ...
 //   };
 //   const char * const kVAR_data =
@@ -127,7 +128,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   static constexpr size_t kDefaultInternalBufferSize =
       4000 * 1024;  // 4 mega chars
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64);
+  static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64_t);
 #else   // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   static constexpr size_t kNumOfBytesOnOneLine = 20;
 #endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
@@ -154,10 +155,9 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   size_t output_count_;
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  uint64 word_buffer_;
+  uint64_t word_buffer_;
 #endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 };
-
 
 class CodeGenByteArrayOutputStream : public std::ostream {
  public:

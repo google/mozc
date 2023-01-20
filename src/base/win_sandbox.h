@@ -36,6 +36,7 @@
 #include <AccCtrl.h>
 #include <Windows.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -146,7 +147,7 @@ class WinSandbox {
     TokenLevel primary_level;
     TokenLevel impersonation_level;
     IntegrityLevel integrity_level;
-    uint32 creation_flags;
+    uint32_t creation_flags;
     bool use_locked_down_job;
     bool allow_ui_operation;
     bool in_system_dir;

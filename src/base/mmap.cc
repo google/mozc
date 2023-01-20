@@ -41,6 +41,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <cstring>
 
 #include "base/logging.h"
@@ -59,7 +60,7 @@ Mmap::Mmap() : text_(nullptr), size_(0) {}
 
 bool Mmap::Open(const char *filename, const char *mode) {
   Close();
-  uint32 mode1, mode2, mode3, mode4;
+  uint32_t mode1, mode2, mode3, mode4;
   if (strcmp(mode, "r") == 0) {
     mode1 = GENERIC_READ;
     mode2 = PAGE_READONLY;

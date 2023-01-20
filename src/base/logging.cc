@@ -71,7 +71,7 @@ ABSL_FLAG(bool, logtostderr, false,
     .OnUpdate([] {
       mozc::Logging::SetLogToStderr(absl::GetFlag(FLAGS_logtostderr));
     });
-ABSL_FLAG(int32, v, 0, "verbose level");
+ABSL_FLAG(int32_t, v, 0, "verbose level");
 
 namespace mozc {
 
@@ -120,10 +120,10 @@ std::string Logging::GetLogMessageHeader() {
 #elif defined(__APPLE__)
 #ifdef __LP64__
   return absl::StrCat(timestamp, ::getpid(), " ",
-                      reinterpret_cast<uint64>(pthread_self()));
+                      reinterpret_cast<uint64_t>(pthread_self()));
 #else   // __LP64__
   return absl::StrCat(timestamp, ::getpid(), " ", ::getpid(),
-                      reinterpret_cast<uint32>(pthread_self()));
+                      reinterpret_cast<uint32_t>(pthread_self()));
 #endif  // __LP64__
 #elif defined(OS_WIN)
   return absl::StrCat(timestamp, ::GetCurrentProcessId(), " ",

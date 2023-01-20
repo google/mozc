@@ -130,7 +130,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
   }
 
   // At this point, |current_offset| is the byte length of the whole binary
-  // image.  Allocate a necessary buffer as uint32 array.
+  // image.  Allocate a necessary buffer as uint32_t array.
   buffer->reset(new uint32_t[(current_offset + 3) / 4]);
 
   (*buffer)[0] = static_cast<uint32_t>(strs.size());
