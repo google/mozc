@@ -816,7 +816,6 @@ cc_library_mozc(
 bzl_library(
     name = "evalution_bzl",
     srcs = ["evaluation.bzl"],
-    parse_tests = False,
     visibility = ["//visibility:private"],
     deps = ["//:build_defs_bzl"],
 )
