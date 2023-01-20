@@ -31,8 +31,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_mozc_binary",
-    "cc_mozc_library",
+    "mozc_cc_binary",
+    "mozc_cc_library",
     "mozc_select",
 )
 load(
@@ -42,8 +42,8 @@ load(
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
-def cc_qt_library_mozc(name, deps = [], **kwargs):
-    cc_mozc_library(
+def mozc_cc_qt_library(name, deps = [], **kwargs):
+    mozc_cc_library(
         name = name,
         deps = deps + mozc_select(
             default = ["//third_party/qt:qt_native"],
@@ -53,13 +53,13 @@ def cc_qt_library_mozc(name, deps = [], **kwargs):
         **kwargs
     )
 
-def cc_mozc_qt_library(**kwargs):
-    """Deprecated, use cc_qt_library_mozc.
+def cc_qt_library_mozc(**kwargs):
+    """Deprecated, use mozc_cc_qt_library.
     """
-    cc_qt_library_mozc(**kwargs)
+    mozc_cc_qt_library(**kwargs)
 
-def cc_mozc_qt_binary(name, deps = [], **kwargs):
-    cc_mozc_binary(
+def mozc_cc_qt_binary(name, deps = [], **kwargs):
+    mozc_cc_binary(
         name = name,
         deps = deps + mozc_select(
             default = ["//third_party/qt:qt_native"],
@@ -70,9 +70,9 @@ def cc_mozc_qt_binary(name, deps = [], **kwargs):
     )
 
 def cc_qt_binary_mozc(**kwargs):
-    """Deprecated, use cc_mozc_qt_binary.
+    """Deprecated, use mozc_cc_qt_binary.
     """
-    cc_mozc_qt_binary(**kwargs)
+    mozc_cc_qt_binary(**kwargs)
 
 def mozc_qt_moc(name, srcs, outs):
     native.genrule(
@@ -170,6 +170,6 @@ def mozc_macos_qt_application(name, bundle_name, deps):
     )
 
 def macos_qt_application_mozc(**kwargs):
-    """Deprecated, use macos_mozc_qt_application.
+    """Deprecated, use mozc_macos_qt_application.
     """
     mozc_macos_qt_application(**kwargs)

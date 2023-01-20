@@ -32,13 +32,9 @@ cc_(library|binary|test) wrappers to add :macro dependency.
 :macro defines attributes for each platforms so required macros are defined by
 depending on it.
 
-Macro naming guideline:
-
-Language tools (cc, objc, java, etc): language_mozc_artifact, e.g.
-  - cc_mozc_library
-  - objc_mozc_test
-
-Otherwise, add mozc_ as a prefix, e.g.:
+Macro naming guideline: Use mozc_ as a prefix, e.g.:
+  - mozc_cc_library
+  - mozc_objc_test
   - mozc_macos_application
   - mozc_select
 
@@ -53,7 +49,7 @@ load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
-def cc_mozc_library(deps = [], copts = [], **kwargs):
+def mozc_cc_library(deps = [], copts = [], **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
@@ -64,21 +60,21 @@ def cc_mozc_library(deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
-    extension = "cc_mozc_library",
+    extension = "mozc_cc_library",
     label_regex_for_dep = "{extension_name}",
 )
 
 def cc_library_mozc(**kwargs):
-    """Deprecated, use cc_mozc_library.
+    """Deprecated, use mozc_cc_library.
     """
-    cc_mozc_library(**kwargs)
+    mozc_cc_library(**kwargs)
 
 register_extension_info(
     extension = "cc_library_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_mozc_binary(deps = [], copts = [], **kwargs):
+def mozc_cc_binary(deps = [], copts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
@@ -89,21 +85,21 @@ def cc_mozc_binary(deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
-    extension = "cc_mozc_binary",
+    extension = "mozc_cc_binary",
     label_regex_for_dep = "{extension_name}",
 )
 
 def cc_binary_mozc(**kwargs):
-    """Deprecated, use cc_mozc_binary.
+    """Deprecated, use mozc_cc_binary.
     """
-    cc_mozc_binary(**kwargs)
+    mozc_cc_binary(**kwargs)
 
 register_extension_info(
     extension = "cc_binary_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_mozc_test(name, tags = [], deps = [], copts = [], **kwargs):
+def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
     """cc_test wrapper adding //:macro dependecny.
 
     Args:
@@ -136,21 +132,21 @@ def cc_mozc_test(name, tags = [], deps = [], copts = [], **kwargs):
         )
 
 register_extension_info(
-    extension = "cc_mozc_test",
+    extension = "mozc_cc_test",
     label_regex_for_dep = "{extension_name}",
 )
 
 def cc_test_mozc(**kwargs):
-    """ Deprecated, use cc_mozc_test.
+    """ Deprecated, use mozc_cc_test.
     """
-    cc_mozc_test(**kwargs)
+    mozc_cc_test(**kwargs)
 
 register_extension_info(
     extension = "cc_test_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_mozc_library(name, srcs, srcs_version = "PY3", **kwargs):
+def mozc_py_library(name, srcs, srcs_version = "PY3", **kwargs):
     """py_library wrapper generating import-modified python scripts for iOS."""
     pytype_strict_library(
         name = name,
@@ -160,24 +156,24 @@ def py_mozc_library(name, srcs, srcs_version = "PY3", **kwargs):
     )
 
 register_extension_info(
-    extension = "py_mozc_library",
+    extension = "mozc_py_library",
     label_regex_for_dep = "{extension_name}",
 )
 
 def py_library_mozc(**kwargs):
-    """Deprecated, use py_mozc_library.
+    """Deprecated, use mozc_py_library.
     """
-    py_mozc_library(**kwargs)
+    mozc_py_library(**kwargs)
 
 register_extension_info(
     extension = "py_library_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_mozc_binary(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
+def mozc_py_binary(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
-    To use this rule, corresponding py_library_mozc needs to be defined to
+    To use this rule, corresponding mozc_py_library needs to be defined to
     generate iOS sources.
     """
     pytype_strict_binary(
@@ -193,14 +189,14 @@ def py_mozc_binary(name, srcs, python_version = "PY3", srcs_version = "PY3", tes
     )
 
 register_extension_info(
-    extension = "py_mozc_binary",
+    extension = "mozc_py_binary",
     label_regex_for_dep = "{extension_name}",
 )
 
 def py_binary_mozc(**kwargs):
-    """Deprecated, use py_mozc_binary.
+    """Deprecated, use mozc_py_binary.
     """
-    py_mozc_binary(**kwargs)
+    mozc_py_binary(**kwargs)
 
 register_extension_info(
     extension = "py_binary_mozc",
@@ -242,7 +238,7 @@ def infoplist_strings_mozc(**kwargs):
     """
     mozc_infoplist_strings(**kwargs)
 
-def objc_mozc_library(
+def mozc_objc_library(
         name,
         srcs = [],
         hdrs = [],
@@ -270,12 +266,12 @@ def objc_mozc_library(
         deps = deps + [
             "//:macro",
             proto_deps_name,
-        ] + select_mozc(
+        ] + mozc_select(
             macos = sdk_frameworks_deps,
             oss_macos = [],
         ),
         copts = copts + ["-funsigned-char", "-std=c++17"],
-        sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
+        sdk_frameworks = mozc_select(oss_macos = sdk_frameworks),
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
@@ -285,9 +281,9 @@ def objc_mozc_library(
     )
 
 def objc_library_mozc(**kwargs):
-    """ deprecated, use objc_mozc_library.
+    """ deprecated, use mozc_objc_library.
     """
-    objc_mozc_library(**kwargs)
+    mozc_objc_library(**kwargs)
 
 def _run_test_impl(ctx):
     """Rule to run executables (e.g. apple_binary) as test."""
@@ -334,8 +330,8 @@ _run_test = rule(
     test = True,
 )
 
-def objc_mozc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
-    objc_mozc_library(
+def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
+    mozc_objc_library(
         name = name + "_lib",
         testonly = 1,
         srcs = srcs,
@@ -364,15 +360,15 @@ def objc_mozc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
     )
 
 def objc_test_mozc(**kwargs):
-    """Deprecated, use objc_mozc_test.
+    """Deprecated, use mozc_objc_test.
     """
-    objc_mozc_test(**kwargs)
+    mozc_objc_test(**kwargs)
 
 def _tweak_infoplists(name, infoplists):
     tweaked_infoplists = []
     for i, plist in enumerate(infoplists):
         plist_name = "%s_plist%d" % (name, i)
-        infoplist_mozc(
+        mozc_infoplist(
             name = plist_name,
             srcs = [plist],
             outs = [plist.replace(".plist", "_tweaked.plist")],
@@ -384,7 +380,7 @@ def _tweak_strings(name, strings):
     tweaked_strings = []
     for i, string in enumerate(strings):
         string_name = "%s_string%d" % (name, i)
-        infoplist_strings_mozc(
+        mozc_infoplist_strings(
             name = string_name,
             srcs = [string],
             outs = ["tweaked/" + string],
