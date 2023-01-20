@@ -113,7 +113,7 @@ class WinAPITestHelper {
 
 #define DEFINE_HOOK(module_name, original_proc, new_proc)             \
   ::mozc::WinAPITestHelper::MakeHookRequest<decltype(original_proc)>( \
-      module_name, AS_STRING(original_proc), new_proc)
+      module_name, #original_proc, new_proc)
 
 }  // namespace mozc
 

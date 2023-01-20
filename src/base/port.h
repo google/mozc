@@ -98,8 +98,5 @@ typedef std::uint64_t uint64;
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-#define AS_STRING(x) AS_STRING_INTERNAL(x)
-#define AS_STRING_INTERNAL(x) #x
-
 
 #endif  // MOZC_BASE_PORT_H_
