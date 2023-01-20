@@ -384,7 +384,7 @@ bool SessionHandlerInterpreter::GetCandidateIdByValue(
   const Output &output = LastOutput();
 
   auto find_id = [&value](const CandidateList &candidate_list,
-                          uint32 *id) -> bool {
+                          uint32_t *id) -> bool {
     for (const CandidateWord &candidate : candidate_list.candidates()) {
       if (candidate.has_value() && candidate.value() == value) {
         *id = candidate.id();

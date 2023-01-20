@@ -2779,21 +2779,21 @@ void Session::OutputKey(commands::Command *command) const {
 
 namespace {
 // return
-// ((key_code == static_cast<uint32>('.') ||
+// ((key_code == static_cast<uint32_t>('.') ||
 //       key_string == "." || key_string == "．" ||
 //   key_string == "。" || key_string == "｡") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_KUTEN)) ||
-// ((key_code == static_cast<uint32>(',') ||
+// ((key_code == static_cast<uint32_t>(',') ||
 //       key_string == "," || key_string == "，" ||
 //   key_string == "、" || key_string == "､") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_TOUTEN)) ||
-// ((key_code == static_cast<uint32>('?') ||
+// ((key_code == static_cast<uint32_t>('?') ||
 //   key_string == "?" || key_string == "？") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
-// ((key_code == static_cast<uint32>('!') ||
+// ((key_code == static_cast<uint32_t>('!') ||
 //   key_string == "!" || key_string == "！") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));

@@ -58,7 +58,7 @@ uint32_t GenerateRandomSeed() {
 }  // namespace
 
 ABSL_FLAG(uint32_t, random_seed, GenerateRandomSeed(),
-          "Random seed value. This value will be interpreted as uint32.");
+          "Random seed value. This value will be interpreted as uint32_t.");
 ABSL_FLAG(bool, set_mobile_request, false,
           "If true, set commands::Request to the mobine one.");
 

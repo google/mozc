@@ -53,8 +53,8 @@ class StorageInterface;
 // of Registry (Storage Interface) with sqlite
 //
 // Example:
-//  uint64 timestamp = 0;
-//  CHECK(Registry::Lookup<uint64>("timestamp", &timestamp));
+//  uint64_t timestamp = 0;
+//  CHECK(Registry::Lookup<uint64_t>("timestamp", &timestamp));
 //
 //  string value = "hello world";
 //  CHECK(Registry::Insert<string>("hello", value));

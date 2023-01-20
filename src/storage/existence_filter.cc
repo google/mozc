@@ -79,7 +79,7 @@ class ExistenceFilter::BlockBitmap {
   // Usage:
   //    char** ptr;
   //    size_t bytes;
-  //    for (uint32 iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
+  //    for (uint32_t iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
   //      Process(*ptr, bytes);
   //    }
   bool GetMutableFragment(uint32_t *iter, char ***ptr, size_t *size);

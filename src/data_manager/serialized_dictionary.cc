@@ -201,7 +201,7 @@ void SerializedDictionary::CompileToFiles(
     const std::map<std::string, TokenList> &dic,
     const std::string &output_token_array,
     const std::string &output_string_array) {
-  std::unique_ptr<uint32[]> buf1, buf2;
+  std::unique_ptr<uint32_t[]> buf1, buf2;
   const std::pair<absl::string_view, absl::string_view> data =
       Compile(dic, &buf1, &buf2);
   CHECK(VerifyData(data.first, data.second));
