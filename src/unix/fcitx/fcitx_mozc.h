@@ -78,6 +78,7 @@ public:
     FcitxMozc ( FcitxInstance* instance,
                 MozcConnectionInterface *connection,
                 MozcResponseParser *parser );
+    FcitxMozc(const FcitxMozc &) = delete;
     virtual ~FcitxMozc();
 
     bool process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up);
@@ -164,8 +165,6 @@ private:
     FcitxUIMenu toolMenu;
     std::string description;
     std::string title;
-
-    DISALLOW_COPY_AND_ASSIGN ( FcitxMozc );
 };
 
 }  // namespace fcitx

@@ -91,6 +91,7 @@ class MozcConnectionInterface {
 
 class MozcConnection : public MozcConnectionInterface {
  public:
+  MozcConnection(const MozcConnection &) = delete;
   static const int kNoSession;
 
   static MozcConnection *CreateMozcConnection();
@@ -143,8 +144,6 @@ class MozcConnection : public MozcConnectionInterface {
   // We should delete client_ before deleting client_factory_.
   std::unique_ptr<mozc::IPCClientFactoryInterface> client_factory_;
   std::unique_ptr<mozc::client::ClientInterface> client_;
-
-  DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };
 
 }  // namespace fcitx

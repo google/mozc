@@ -50,6 +50,10 @@ struct SurroundingTextInfo {
 
 class SurroundingTextUtil {
  public:
+  SurroundingTextUtil() = delete;
+  SurroundingTextUtil(const SurroundingTextUtil &) = delete;
+  SurroundingTextUtil &operator=(const SurroundingTextUtil &) = delete;
+
   // Calculates |from| - |to| and stores the result into |delta| with
   // checking integer overflow.
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
@@ -73,9 +77,6 @@ class SurroundingTextUtil {
       const std::string &selected_text,
       unsigned int cursor_pos,
       unsigned int *anchor_pos);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SurroundingTextUtil);
 };
 
 bool GetSurroundingText(FcitxInstance* instance,

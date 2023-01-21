@@ -57,14 +57,13 @@ class MozcConnection {
   static const int kNoSession;
 
   MozcConnection();
+  MozcConnection(const MozcConnection &) = delete;
   virtual ~MozcConnection();
 
   mozc::client::ClientInterface *CreateClient();
 
  private:
   mozc::IPCClientFactoryInterface *client_factory_;
-
-  DISALLOW_COPY_AND_ASSIGN(MozcConnection);
 };
 
 }  // namespace fcitx

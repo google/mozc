@@ -55,6 +55,7 @@ class MozcEngine;
 class MozcResponseParser {
  public:
   MozcResponseParser(MozcEngine *engine);
+  MozcResponseParser(const MozcResponseParser &) = delete;
   ~MozcResponseParser();
 
   // Parses a response from Mozc server and sets persed information on
@@ -79,8 +80,6 @@ class MozcResponseParser {
                     InputContext *ic) const;
 
   MozcEngine *engine_;
-
-  DISALLOW_COPY_AND_ASSIGN(MozcResponseParser);
 };
 
 }  // namespace fcitx

@@ -54,6 +54,7 @@ class MozcState : public InputContextProperty {
   // This constructor is used by unittests.
   MozcState(InputContext *ic, mozc::client::ClientInterface *client,
             MozcEngine *engine);
+  MozcState(const MozcState &) = delete;
   virtual ~MozcState();
 
   void UpdatePreeditMethod();
@@ -160,8 +161,6 @@ class MozcState : public InputContextProperty {
   std::string url_;  // URL to be opened by a browser.
   std::string description_;
   std::string title_;
-
-  DISALLOW_COPY_AND_ASSIGN(MozcState);
 };
 
 }  // namespace fcitx

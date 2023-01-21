@@ -61,6 +61,7 @@ class MozcResponseParser
 {
 public:
     MozcResponseParser();
+    MozcResponseParser(const MozcResponseParser &) = delete;
     ~MozcResponseParser();
 
     // Parses a response from Mozc server and sets persed information on fcitx_mozc
@@ -86,8 +87,6 @@ private:
                         FcitxMozc *fcitx_mozc ) const;
 
     bool use_annotation_;
-
-    DISALLOW_COPY_AND_ASSIGN ( MozcResponseParser );
 };
 
 }  // namespace fcitx

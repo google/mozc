@@ -90,7 +90,7 @@ const struct CompositionModeInfo {
         mozc::commands::HALF_KATAKANA,
     },
 };
-const size_t kNumCompositionModes = arraysize(kPropCompositionModes);
+const size_t kNumCompositionModes = FCITX_ARRAY_SIZE(kPropCompositionModes);
 
 MozcModeSubAction::MozcModeSubAction(MozcEngine *engine,
                                      mozc::commands::CompositionMode mode)

@@ -46,6 +46,7 @@ namespace fcitx {
 class KeyEventHandler {
  public:
   KeyEventHandler();
+  KeyEventHandler(const KeyEventHandler &) = delete;
 
   // Converts a key event came from fcitx to commands::KeyEvent. This is a
   // stateful method. It stores modifier keys states since ibus doesn't send
@@ -70,8 +71,6 @@ class KeyEventHandler {
   std::set<uint32> currently_pressed_modifiers_;
   // Pending modifier keys.
   std::set<mozc::commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyEventHandler);
 };
 
 }  // namespace fcitx

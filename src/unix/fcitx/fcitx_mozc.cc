@@ -94,12 +94,12 @@ const struct CompositionMode
         mozc::commands::HALF_KATAKANA,
     },
 };
-const size_t kNumCompositionModes = arraysize ( kPropCompositionModes );
+const size_t kNumCompositionModes = FCITX_ARRAY_SIZE ( kPropCompositionModes );
 
 // This array must correspond with the CompositionMode enum in the
 // mozc/session/command.proto file.
 static_assert (
-    mozc::commands::NUM_OF_COMPOSITIONS == arraysize ( kPropCompositionModes ),
+    mozc::commands::NUM_OF_COMPOSITIONS == FCITX_ARRAY_SIZE ( kPropCompositionModes ),
     "number of modes must match" );
 
 }  // namespace
