@@ -126,6 +126,8 @@ class MozcEngine final : public InputMethodEngineV2 {
 
   void SyncData(bool force);
 
+  bool deactivating() const { return deactivating_; }
+
  private:
   Instance *instance_;
   std::unique_ptr<MozcConnection> connection_;
@@ -136,9 +138,11 @@ class MozcEngine final : public InputMethodEngineV2 {
 
   SimpleAction configToolAction_, dictionaryToolAction_, addWordAction_,
       aboutAction_;
+  SimpleAction separatorAction_;
   Menu toolMenu_;
   MozcEngineConfig config_;
   uint64 lastSyncTime_;
+  bool deactivating_ = false;
 
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());
 };

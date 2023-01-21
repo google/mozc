@@ -356,7 +356,9 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
   // We should check the mode field first since the response for a
   // SWITCH_INPUT_MODE request only contains mode and id fields.
   if (response.has_mode()) {
-    mozc_state->SetCompositionMode(response.mode());
+    mozc_state->SetCompositionMode(
+        response.mode(), !engine_->deactivating() &&
+                             engine_->instance()->inputMethod(ic) == "mozc");
   }
 
   if (!response.consumed()) {

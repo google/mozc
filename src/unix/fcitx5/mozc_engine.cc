@@ -152,6 +152,20 @@ MozcEngine::MozcEngine(Instance *instance)
     i++;
   }
 
+  separatorAction_.setSeparator(true);
+  instance_->userInterfaceManager().registerAction("mozc-separator",
+                                                   &separatorAction_);
+
+  SemanticVersion version;
+  version.setMajor(5);
+  version.setMinor(0);
+  version.setPatch(22);
+  // Where we fix the support for separator
+  if (auto fcitxVersion = SemanticVersion::parse(Instance::version());
+      fcitxVersion && *fcitxVersion >= version) {
+    toolMenu_.addAction(&separatorAction_);
+  }
+
   instance_->userInterfaceManager().registerAction("mozc-tool-config",
                                                    &configToolAction_);
   configToolAction_.setShortText(_("Configuration Tool"));
@@ -213,8 +227,10 @@ void MozcEngine::activate(const fcitx::InputMethodEntry &,
 void MozcEngine::deactivate(const fcitx::InputMethodEntry &,
                             fcitx::InputContextEvent &event) {
   auto ic = event.inputContext();
+  deactivating_ = true;
   auto mozc_state = mozcState(ic);
   mozc_state->FocusOut();
+  deactivating_ = false;
 }
 void MozcEngine::keyEvent(const InputMethodEntry &entry, KeyEvent &event) {
   auto mozc_state = mozcState(event.inputContext());
