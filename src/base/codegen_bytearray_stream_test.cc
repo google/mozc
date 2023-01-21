@@ -43,7 +43,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace {
 
@@ -61,7 +61,7 @@ class CodeGenByteArrayStreamTest : public testing::Test {
                              const std::string &body) {
     // clang-format off
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-    return "const uint64 k" + var_name_base + "_data_wordtype[] = {\n" +
+    return "const uint64_t k" + var_name_base + "_data_wordtype[] = {\n" +
              body +
            "};\n"
            "const char * const k" + var_name_base + "_data = "

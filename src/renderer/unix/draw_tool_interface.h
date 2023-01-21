@@ -32,6 +32,8 @@
 
 #include <gtk/gtk.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -63,11 +65,11 @@ class DrawToolInterface {
 
   // Draws rectangle with specified color.
   virtual void FrameRect(const Rect &rect, const RGBA &color,
-                         const uint32 line_width) = 0;
+                         const uint32_t line_width) = 0;
 
   // Draws line with specified color.
   virtual void DrawLine(const Point &from, const Point &to, const RGBA &color,
-                        const uint32 line_width) = 0;
+                        const uint32_t line_width) = 0;
 };
 }  // namespace gtk
 }  // namespace renderer

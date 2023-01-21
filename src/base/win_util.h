@@ -33,10 +33,11 @@
 #if defined(OS_WIN)
 #include <windows.h>
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -82,8 +83,8 @@ class WinUtil {
   static bool IsDLLSynchronizationHeld(bool *lock_held);
 
   // Encapsulates the process of converting HWND into a fixed-size integer.
-  static uint32 EncodeWindowHandle(HWND window_handle);
-  static HWND DecodeWindowHandle(uint32 window_handle_value);
+  static uint32_t EncodeWindowHandle(HWND window_handle);
+  static HWND DecodeWindowHandle(uint32_t window_handle_value);
 
   // Compares |lhs| with |rhs| by CompareStringOrdinal API and returns the
   // result.  If |ignore_case| is true, this function uses system upper-case
@@ -179,6 +180,8 @@ class WinUtil {
 class ScopedCOMInitializer {
  public:
   ScopedCOMInitializer();
+  ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
+  ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
   ScopedCOMInitializer::~ScopedCOMInitializer();
 
   // Returns the error code from CoInitialize(nullptr)
@@ -187,9 +190,6 @@ class ScopedCOMInitializer {
 
  protected:
   HRESULT hr_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ScopedCOMInitializer);
 };
 
 }  // namespace mozc

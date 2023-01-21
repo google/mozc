@@ -38,7 +38,7 @@
 #include "renderer/unix/font_spec_interface.h"
 #include "renderer/unix/pango_wrapper_interface.h"
 #include "renderer/unix/text_renderer_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace renderer {
@@ -49,6 +49,8 @@ class TextRendererTest;
 class TextRenderer : public TextRendererInterface {
  public:
   explicit TextRenderer(FontSpecInterface *font_spec);
+  TextRenderer(const TextRenderer &) = delete;
+  TextRenderer &operator=(const TextRenderer &) = delete;
   virtual ~TextRenderer() {}
 
   virtual void Initialize(GdkDrawable *drawable);
@@ -80,8 +82,6 @@ class TextRenderer : public TextRendererInterface {
                                      PangoLayoutWrapperInterface *layout);
   std::unique_ptr<FontSpecInterface> font_spec_;
   std::unique_ptr<PangoWrapperInterface> pango_;
-
-  DISALLOW_COPY_AND_ASSIGN(TextRenderer);
 };
 
 }  // namespace gtk

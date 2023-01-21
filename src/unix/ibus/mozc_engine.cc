@@ -68,16 +68,18 @@
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
 
+namespace mozc {
+namespace ibus {
 namespace {
 
 // The ID for candidates which are not associated with texts.
-const int32 kBadCandidateId = -1;
+const int32_t kBadCandidateId = -1;
 
 // Default UI locale
 constexpr char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
-const uint64 kSyncDataInterval = 5 * 60;
+const uint64_t kSyncDataInterval = 5 * 60;
 
 const char *kUILocaleEnvNames[] = {
     "LC_ALL",
@@ -100,15 +102,9 @@ std::string GetMessageLocale() {
   return kMozcDefaultUILocale;
 }
 
-}  // namespace
-
-namespace mozc {
-namespace ibus {
-
-namespace {
 struct SurroundingTextInfo {
   SurroundingTextInfo() : relative_selected_length(0) {}
-  int32 relative_selected_length;
+  int32_t relative_selected_length;
   std::string preceding_text;
   std::string selection_text;
   std::string following_text;
@@ -253,7 +249,7 @@ void MozcEngine::CandidateClicked(IbusEngineWrapper *engine, uint index,
   if (index >= unique_candidate_ids_.size()) {
     return;
   }
-  const int32 id = unique_candidate_ids_[index];
+  const int32_t id = unique_candidate_ids_[index];
   if (id == kBadCandidateId) {
     return;
   }
@@ -497,7 +493,7 @@ bool MozcEngine::UpdateCandidateIDMapping(const commands::Output &output) {
   const commands::Candidates &candidates = output.candidates();
   for (int i = 0; i < candidates.candidate_size(); ++i) {
     if (candidates.candidate(i).has_id()) {
-      const int32 id = candidates.candidate(i).id();
+      const int32_t id = candidates.candidate(i).id();
       unique_candidate_ids_.push_back(id);
     } else {
       // The parent node of the cascading window does not have an id since the
@@ -523,7 +519,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64 current_time = Clock::GetTime();
+  const uint64_t current_time = Clock::GetTime();
   if (force || (current_time >= last_sync_time_ &&
                 current_time - last_sync_time_ >= kSyncDataInterval)) {
     VLOG(1) << "Syncing data";
@@ -622,7 +618,7 @@ bool MozcEngine::ExecuteCallback(IbusEngineWrapper *engine,
     // offset should be a negative value to delete preceding text.
     // For backward selection (that is, |relative_selected_length < 0|),
     // IBus and/or some applications seem to expect |offset == 0| somehow.
-    const int32 offset =
+    const int32_t offset =
         surrounding_text_info.relative_selected_length > 0
             ? -surrounding_text_info
                    .relative_selected_length  // forward selection

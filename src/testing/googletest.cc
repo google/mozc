@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#include "testing/base/public/googletest.h"
+#include "testing/googletest.h"
 
 #ifdef OS_WIN
 #include <windows.h>

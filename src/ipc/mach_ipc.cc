@@ -34,6 +34,7 @@
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
 
+#include <cstdint>
 #include <map>
 
 #include "base/logging.h"
@@ -212,7 +213,7 @@ void IPCClient::Init(const std::string &name,
 }
 
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32 timeout) {
+                     int32_t timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   MachPortManagerInterface *manager = mach_port_manager_;
   if (manager == nullptr) {
@@ -344,8 +345,8 @@ bool IPCClient::Connected() const {
 }
 
 // Server implementation
-IPCServer::IPCServer(const std::string &name, int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+                     int32_t timeout)
     : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.

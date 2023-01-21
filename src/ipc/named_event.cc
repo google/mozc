@@ -36,14 +36,14 @@
 #ifdef OS_WIN
 #include <Sddl.h>
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/types.h>
-#endif
+#endif  // OS_WIN
 
 #include <algorithm>
 #include <cstdio>
@@ -86,7 +86,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   event_name += name;
 #ifdef OS_WIN
   return event_name;
-#else
+#else   // OS_WIN
   // To maximze mozc portability, (especailly on BSD including OSX),
   // makes the length of path name shorter than 14byte.
   // Please see the following man page for detail:
@@ -100,7 +100,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   absl::SNPrintF(buf, kEventPathLength, "/%x",
                  static_cast<uint64_t>(Hash::Fingerprint(event_name)));
   return buf;
-#endif
+#endif  // OS_WIN
 }
 
 #ifdef OS_WIN
@@ -355,5 +355,5 @@ bool NamedEventNotifier::Notify() {
 
   return true;
 }
-#endif
+#endif  // OS_WIN
 }  // namespace mozc

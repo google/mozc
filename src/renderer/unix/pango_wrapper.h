@@ -40,6 +40,8 @@ namespace gtk {
 class PangoLayoutWrapper : public PangoLayoutWrapperInterface {
  public:
   explicit PangoLayoutWrapper(PangoContext *context);
+  PangoLayoutWrapper(const PangoLayoutWrapper &) = delete;
+  PangoLayoutWrapper &operator=(const PangoLayoutWrapper &) = delete;
   virtual ~PangoLayoutWrapper();
   virtual void SetText(const std::string &text);
   virtual void SetAlignment(PangoAlignment align);
@@ -52,12 +54,13 @@ class PangoLayoutWrapper : public PangoLayoutWrapperInterface {
 
  private:
   PangoLayout *layout_;
-  DISALLOW_COPY_AND_ASSIGN(PangoLayoutWrapper);
 };
 
 class PangoWrapper : public PangoWrapperInterface {
  public:
   explicit PangoWrapper(GdkDrawable *drawable);
+  PangoWrapper(const PangoWrapper &) = delete;
+  PangoWrapper &operator=(const PangoWrapper &) = delete;
   virtual ~PangoWrapper();
   virtual void RendererDrawLayout(PangoLayoutWrapperInterface *layout, int x,
                                   int y);
@@ -69,7 +72,6 @@ class PangoWrapper : public PangoWrapperInterface {
   PangoRenderer *renderer_;
   PangoContext *context_;
   GdkGC *gc_;
-  DISALLOW_COPY_AND_ASSIGN(PangoWrapper);
 };
 }  // namespace gtk
 }  // namespace renderer

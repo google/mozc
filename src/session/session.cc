@@ -31,9 +31,11 @@
 
 #include "session/session.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/clock.h"
@@ -67,6 +69,9 @@ namespace session {
 namespace {
 
 using ::mozc::usage_stats::UsageStats;
+
+// Maximum size of multiple undo stack.
+const size_t kMultipleUndoMaxSize = 10;
 
 // Set input mode if the current input mode is not the given mode.
 void SwitchInputMode(const transliteration::TransliterationType mode,
@@ -237,24 +242,33 @@ void Session::InitContext(ImeContext *context) const {
 }
 
 void Session::PushUndoContext() {
-  // TODO(komatsu): Support multiple undo.
-  prev_context_ = std::make_unique<ImeContext>();
-  InitContext(prev_context_.get());
-  ImeContext::CopyContext(*context_, prev_context_.get());
+  // Copy the current context and push it to the undo stack.
+  auto prev_context = std::make_unique<ImeContext>();
+  InitContext(prev_context.get());
+  ImeContext::CopyContext(*context_, prev_context.get());
+  undo_contexts_.push_back(std::move(prev_context));
+  // If the stack size exceeds the limitation, purge the oldest entries.
+  const size_t max_context_size =
+      context_->GetRequest().decoder_experiment_params().undo_partial_commit()
+          ? kMultipleUndoMaxSize
+          : 1;
+  while (undo_contexts_.size() > max_context_size) {
+    undo_contexts_.pop_front();
+  }
+  DCHECK_LE(undo_contexts_.size(), max_context_size);
 }
 
 void Session::PopUndoContext() {
-  // TODO(komatsu): Support multiple undo.
   if (!HasUndoContext()) {
     return;
   }
-  context_.swap(prev_context_);
-  prev_context_.reset();
+  context_.swap(undo_contexts_.back());
+  undo_contexts_.pop_back();
 }
 
-void Session::ClearUndoContext() { prev_context_.reset(); }
+void Session::ClearUndoContext() { undo_contexts_.clear(); }
 
-bool Session::HasUndoContext() const { return prev_context_ != nullptr; }
+bool Session::HasUndoContext() const { return !undo_contexts_.empty(); }
 
 void Session::MaybeSetUndoStatus(commands::Command *command) const {
   if (HasUndoContext()) {
@@ -2765,21 +2779,21 @@ void Session::OutputKey(commands::Command *command) const {
 
 namespace {
 // return
-// ((key_code == static_cast<uint32>('.') ||
+// ((key_code == static_cast<uint32_t>('.') ||
 //       key_string == "." || key_string == "．" ||
 //   key_string == "。" || key_string == "｡") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_KUTEN)) ||
-// ((key_code == static_cast<uint32>(',') ||
+// ((key_code == static_cast<uint32_t>(',') ||
 //       key_string == "," || key_string == "，" ||
 //   key_string == "、" || key_string == "､") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_TOUTEN)) ||
-// ((key_code == static_cast<uint32>('?') ||
+// ((key_code == static_cast<uint32_t>('?') ||
 //   key_string == "?" || key_string == "？") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
-// ((key_code == static_cast<uint32>('!') ||
+// ((key_code == static_cast<uint32_t>('!') ||
 //   key_string == "!" || key_string == "！") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));

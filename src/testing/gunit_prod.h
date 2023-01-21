@@ -27,10 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
-#define MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
+#ifndef MOZC_TESTING_GUNIT_PROD_H_
+#define MOZC_TESTING_GUNIT_PROD_H_
 
-#include <gtest/gtest.h>
-#include "testing/base/public/googletest.h"
+// The following macro is originally defined in <gtest/gtest_prod.h>.
+// Here we use a private copy instead to avoid dependency on
+// <gtest/gtest_prod.h> from production code.
+#ifndef FRIEND_TEST
+#define FRIEND_TEST(test_case_name, test_name) \
+  friend class test_case_name##_##test_name##_Test
+#endif  // FRIEND_TEST
 
-#endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
+#endif  // MOZC_TESTING_GUNIT_PROD_H_

@@ -46,6 +46,10 @@ namespace tsf {
 // A utility class to handle ITfRange object.
 class TipRangeUtil {
  public:
+  TipRangeUtil() = delete;
+  TipRangeUtil(const TipRangeUtil &) = delete;
+  TipRangeUtil &operator=(const TipRangeUtil &) = delete;
+
   // Sets the specified |range| into |context|.
   // Returns the general result code.
   static HRESULT SetSelection(ITfContext *context, TfEditCookie edit_cookie,
@@ -79,9 +83,6 @@ class TipRangeUtil {
   static HRESULT GetTextExt(ITfContextView *context_view,
                             TfEditCookie read_cookie, ITfRange *range,
                             RECT *rect, bool *clipped);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipRangeUtil);
 };
 
 }  // namespace tsf

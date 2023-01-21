@@ -43,12 +43,14 @@
 // clang-format on
 
 #include <limits>
+#include <string>
 
 #include "base/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_resource.h"
+#include "absl/base/macros.h"
 
 namespace mozc {
 namespace win32 {
@@ -817,6 +819,8 @@ HRESULT TipLangBarToggleButton::Init(
   if (SUCCEEDED(array.Init(instance, &menu_for_disabled, 1))) {
     menu_data_for_disabled_ = *array.data(0);
   }
+  // TODO(yuryu): Change ABSL_ARRAYSIZE to std::size when we upgrade to a  C++17
+  // compiler.
   wchar_t buffer[ABSL_ARRAYSIZE(menu_data_for_disabled_.text_)];
   ::LoadString(instance, string_id, buffer, std::size(buffer));
   description_for_enabled_ = buffer;

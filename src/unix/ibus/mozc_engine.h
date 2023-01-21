@@ -30,6 +30,7 @@
 #ifndef MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 #define MOZC_UNIX_IBUS_MOZC_ENGINE_H_
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <vector>
@@ -37,9 +38,9 @@
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/gunit_prod.h"
-#include "unix/ibus/engine_interface.h"
+#include "testing/gunit_prod.h"
 #include "unix/ibus/candidate_window_handler.h"
+#include "unix/ibus/engine_interface.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_config.h"
 #include "unix/ibus/ibus_wrapper.h"
@@ -133,7 +134,7 @@ class MozcEngine : public EngineInterface {
   CandidateWindowHandlerInterface *GetCandidateWindowHandler(
       IbusEngineWrapper *engine);
 
-  uint64 last_sync_time_;
+  uint64_t last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
   std::unique_ptr<client::ClientInterface> client_;
   std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
@@ -149,7 +150,7 @@ class MozcEngine : public EngineInterface {
   config::Config::PreeditMethod preedit_method_;
 
   // Unique IDs of candidates that are currently shown.
-  std::vector<int32> unique_candidate_ids_;
+  std::vector<int32_t> unique_candidate_ids_;
   IbusConfig ibus_config_;
 
   friend class LaunchToolTest;

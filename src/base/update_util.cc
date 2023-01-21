@@ -57,10 +57,10 @@ bool UpdateUtil::WriteActiveUsageInfo() {
                           sizeof(kDidRunValue));
   RegCloseKey(key);
   return ERROR_SUCCESS == result;
-#else
+#else   // OS_WIN
   // TODO(mazda): Implement Mac version
   return false;
-#endif
+#endif  // OS_WIN
 }
 
 }  // namespace mozc

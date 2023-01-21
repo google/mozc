@@ -29,6 +29,7 @@
 
 #include "renderer/unix/infolist_window.h"
 
+#include <cstdint>
 #include <string>
 
 #include "renderer/unix/cairo_factory_mock.h"
@@ -36,8 +37,8 @@
 #include "renderer/unix/draw_tool_mock.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "renderer/unix/text_renderer_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -91,9 +92,9 @@ MATCHER_P(RGBAEq, expected_rgba, "The expected RGBA does not match") {
 }
 
 RGBA StyleColorToRGBA(const RendererStyle::RGBAColor &rgbacolor) {
-  const RGBA rgba = {static_cast<uint8>(rgbacolor.r()),
-                     static_cast<uint8>(rgbacolor.g()),
-                     static_cast<uint8>(rgbacolor.b()), 0xFF};
+  const RGBA rgba = {static_cast<uint8_t>(rgbacolor.r()),
+                     static_cast<uint8_t>(rgbacolor.g()),
+                     static_cast<uint8_t>(rgbacolor.b()), 0xFF};
   return rgba;
 }
 }  // namespace

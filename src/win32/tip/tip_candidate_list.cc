@@ -54,6 +54,8 @@ class CandidateStringImpl : public ITfCandidateString {
  public:
   CandidateStringImpl(ULONG index, const std::wstring &value)
       : index_(index), value_(value) {}
+  CandidateStringImpl(const CandidateStringImpl &) = delete;
+  CandidateStringImpl &operator=(const CandidateStringImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
@@ -108,14 +110,14 @@ class CandidateStringImpl : public ITfCandidateString {
   TipRefCount ref_count_;
   const ULONG index_;
   const std::wstring value_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateStringImpl);
 };
 
 class EnumTfCandidatesImpl : public IEnumTfCandidates {
  public:
   explicit EnumTfCandidatesImpl(const std::vector<std::wstring> &candidates)
       : candidates_(candidates), current_(0) {}
+  EnumTfCandidatesImpl(const EnumTfCandidatesImpl &) = delete;
+  EnumTfCandidatesImpl &operator=(const EnumTfCandidatesImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
@@ -203,8 +205,6 @@ class EnumTfCandidatesImpl : public IEnumTfCandidates {
 
   std::vector<std::wstring> candidates_;
   size_t current_;
-
-  DISALLOW_COPY_AND_ASSIGN(EnumTfCandidatesImpl);
 };
 
 class CandidateListImpl : public ITfCandidateList {
@@ -212,6 +212,8 @@ class CandidateListImpl : public ITfCandidateList {
   CandidateListImpl(const std::vector<std::wstring> &candidates,
                     TipCandidateListCallback *callback)
       : candidates_(candidates), callback_(callback) {}
+  CandidateListImpl(const CandidateListImpl &) = delete;
+  CandidateListImpl &operator=(const CandidateListImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
@@ -293,8 +295,6 @@ class CandidateListImpl : public ITfCandidateList {
   TipRefCount ref_count_;
   std::vector<std::wstring> candidates_;
   std::unique_ptr<TipCandidateListCallback> callback_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateListImpl);
 };
 
 }  // namespace

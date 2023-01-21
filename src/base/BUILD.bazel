@@ -383,7 +383,7 @@ genrule(
         " --jisx0208file=$(location //data/unicode:JIS0208.TXT)" +
         " --output=$@"
     ),
-    exec_tools = [":gen_character_set"],
+    tools = [":gen_character_set"],
     visibility = ["//visibility:private"],
 )
 
@@ -473,7 +473,6 @@ cc_test_mozc(
     deps = [
         ":japanese_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -944,7 +943,7 @@ genrule(
     ],
     outs = ["config_file_stream_data.inc"],
     cmd = "$(location :gen_config_file_stream_data) --output=$@ $(SRCS)",
-    exec_tools = [":gen_config_file_stream_data"],
+    tools = [":gen_config_file_stream_data"],
     visibility = ["//visibility:private"],
 )
 
@@ -1003,7 +1002,7 @@ genrule(
         ' --output="$(OUTS)"' +
         " --target_platform=" + TARGET_PLATFORM
     ),
-    exec_tools = ["//build_tools:mozc_version"],
+    tools = ["//build_tools:mozc_version"],
     visibility = ["//:__subpackages__"],
 )
 
@@ -1020,7 +1019,7 @@ genrule(
         " --input=$(location version_def_template.h) --output=$(OUTS)" +
         " --branding=Mozc"
     ),
-    exec_tools = ["//build_tools:replace_version"],
+    tools = ["//build_tools:replace_version"],
     visibility = ["//visibility:private"],
 )
 
@@ -1459,7 +1458,7 @@ genrule(
     srcs = ["embedded_file.h"],
     outs = ["embedded_file_test_data.inc"],
     cmd = "$(location //build_tools:embed_file) --input=$< --name=kEmbeddedFileTestData --output=$@",
-    exec_tools = ["//build_tools:embed_file"],
+    tools = ["//build_tools:embed_file"],
 )
 
 cc_test_mozc(

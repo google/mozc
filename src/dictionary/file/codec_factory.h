@@ -40,14 +40,15 @@ namespace dictionary {
 
 class DictionaryFileCodecFactory {
  public:
+  DictionaryFileCodecFactory() = delete;
+  DictionaryFileCodecFactory(const DictionaryFileCodecFactory &) = delete;
+  DictionaryFileCodecFactory &operator=(const DictionaryFileCodecFactory &) =
+      delete;
   // Returns the singleton instance.
   static DictionaryFileCodecInterface *GetCodec();
 
   // For dependency injectin in unit tests.
   static void SetCodec(DictionaryFileCodecInterface *codec);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(DictionaryFileCodecFactory);
 };
 
 }  // namespace dictionary

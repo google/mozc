@@ -30,7 +30,7 @@
 #include "renderer/renderer_style_handler.h"
 
 #include "protocol/renderer_style.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace renderer {

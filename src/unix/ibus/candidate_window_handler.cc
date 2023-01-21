@@ -146,7 +146,7 @@ bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
 
   // Do not set thread_id returned from ::pthread_self() because:
   // 1. the returned value is valid only in the caller process.
-  // 2. the returned value may exceed uint32.
+  // 2. the returned value may exceed uint32_t.
   // TODO(team): Consider to use ::gettid()
 
   // Set InputFramework type

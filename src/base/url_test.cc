@@ -35,7 +35,7 @@
 #include <vector>
 
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_split.h"
 
 namespace mozc {

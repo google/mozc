@@ -38,8 +38,8 @@
 #include "base/file_util_mock.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 #include "absl/strings/match.h"
 
 namespace mozc {

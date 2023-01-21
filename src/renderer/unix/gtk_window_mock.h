@@ -33,7 +33,7 @@
 #include <gtk/gtk.h>
 
 #include "renderer/unix/gtk_window_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

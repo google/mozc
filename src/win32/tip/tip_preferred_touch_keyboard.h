@@ -40,13 +40,15 @@ namespace tsf {
 
 class TipPreferredTouchKeyboard {
  public:
+  TipPreferredTouchKeyboard() = delete;
+  TipPreferredTouchKeyboard(const TipPreferredTouchKeyboard&) = delete;
+  TipPreferredTouchKeyboard& operator=(const TipPreferredTouchKeyboard&) =
+      delete;
+
   // Returns a COM object that implements ITfFnGetPreferredTouchKeyboardLayout.
   // Caller must maintain the reference count.
   static IUnknown* New();
   static const IID& GetIID();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipPreferredTouchKeyboard);
 };
 
 }  // namespace tsf

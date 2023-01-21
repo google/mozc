@@ -44,6 +44,8 @@ namespace gtk {
 class UnixRenderer : public RendererInterface {
  public:
   explicit UnixRenderer(WindowManagerInterface *window_manager);
+  UnixRenderer(const UnixRenderer &) = delete;
+  UnixRenderer &operator=(const UnixRenderer &) = delete;
   virtual ~UnixRenderer();
   virtual bool Activate();
   virtual bool IsAvailable() const;
@@ -54,8 +56,6 @@ class UnixRenderer : public RendererInterface {
 
  private:
   std::unique_ptr<WindowManagerInterface> window_manager_;
-
-  DISALLOW_COPY_AND_ASSIGN(UnixRenderer);
 };
 
 }  // namespace gtk

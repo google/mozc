@@ -60,7 +60,7 @@ genrule(
         "--output " +
         "$@"
     ),
-    exec_tools = ["//build_tools:embed_pathname"],
+    tools = ["//build_tools:embed_pathname"],
 )
 
 cc_library_mozc(
@@ -71,7 +71,7 @@ cc_library_mozc(
 cc_library_mozc(
     name = "gunit_main_internal",
     testonly = True,
-    srcs = ["base/internal/gtest_main.cc"],
+    srcs = ["gtest_main.cc"],
     visibility = ["//visibility:private"],
     deps = [
         ":googletest",
@@ -89,9 +89,9 @@ cc_library_mozc(
     name = "gunit_main",
     testonly = True,
     hdrs = [
-        "base/public/gmock.h",
-        "base/public/googletest.h",
-        "base/public/gunit.h",
+        "gmock.h",
+        "googletest.h",
+        "gunit.h",
     ],
     deps = [
         ":gunit",
@@ -111,14 +111,14 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "gunit_prod",
-    hdrs = ["base/public/gunit_prod.h"],
+    hdrs = ["gunit_prod.h"],
 )
 
 cc_library_mozc(
     name = "testing_util",
     testonly = True,
-    srcs = ["base/public/testing_util.cc"],
-    hdrs = ["base/public/testing_util.h"],
+    srcs = ["testing_util.cc"],
+    hdrs = ["testing_util.h"],
     deps = [
         ":gunit",
         "//base",
@@ -135,8 +135,8 @@ cc_library_mozc(
     testonly = True,
     srcs = [],
     hdrs = [
-        "base/public/gmock.h",
-        "base/public/gunit.h",
+        "gmock.h",
+        "gunit.h",
     ],
     deps = [
         ":googletest",
@@ -148,12 +148,12 @@ cc_library_mozc(
     name = "googletest",
     testonly = True,
     srcs = select_mozc(
-        client = ["base/internal/googletest.cc"],
+        client = ["googletest.cc"],
         linux = [],
-        oss = ["base/internal/googletest.cc"],
+        oss = ["googletest.cc"],
     ),
     hdrs = [
-        "base/public/googletest.h",
+        "googletest.h",
     ],
     deps = select_mozc(
         client = [
@@ -182,8 +182,8 @@ cc_library_mozc(
 cc_library_mozc(
     name = "mozctest",
     testonly = True,
-    srcs = ["base/public/mozctest.cc"],
-    hdrs = ["base/public/mozctest.h"],
+    srcs = ["mozctest.cc"],
+    hdrs = ["mozctest.h"],
     visibility = [
         "//:__subpackages__",
     ],

@@ -37,7 +37,7 @@
 
 #include "base/port.h"
 #include "base/serialized_string_array.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

@@ -45,6 +45,8 @@ class ClientPool {
   typedef mozc::client::Client Client;
 
   ClientPool();
+  ClientPool(const ClientPool&) = delete;
+  ClientPool& operator=(const ClientPool&) = delete;
   virtual ~ClientPool() {}
 
   // Returns a new session ID, which is not used in this pool.
@@ -61,8 +63,6 @@ class ClientPool {
  private:
   mozc::storage::LruCache<int, std::shared_ptr<Client>> lru_cache_;
   int next_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(ClientPool);
 };
 
 }  // namespace emacs

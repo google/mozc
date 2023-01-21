@@ -55,6 +55,9 @@ class Candidate;
 
 class SessionOutput {
  public:
+  SessionOutput(const SessionOutput &) = delete;
+  SessionOutput &operator=(const SessionOutput &) = delete;
+
   // Fill the Candidates_Candidate protobuf with the contents of candidate.
   static void FillCandidate(const Segment &segment, const Candidate &candidate,
                             commands::Candidates_Candidate *candidate_proto);
@@ -138,9 +141,6 @@ class SessionOutput {
   // Fill the Result protobuf with cursor offset.
   static void FillCursorOffsetResult(int32_t cursor_offset,
                                      commands::Result *result_proto);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SessionOutput);
 };
 
 }  // namespace session

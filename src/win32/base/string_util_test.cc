@@ -30,8 +30,8 @@
 #include "win32/base/string_util.h"
 #include <string>
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {

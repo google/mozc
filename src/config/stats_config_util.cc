@@ -44,6 +44,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #ifdef __APPLE__
 #include <fstream>
 #include <string>
@@ -187,7 +188,7 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
     return kDefaultValue;
   }
 
-  uint32 value = kDefaultValue;
+  uint32_t value = kDefaultValue;
   if (!ifs.read(reinterpret_cast<char *>(&value), sizeof(value))) {
     return kDefaultValue;
   }
@@ -206,7 +207,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   return true;
 #else   // CHANNEL_DEV
   absl::MutexLock l(&mutex_);
-  const uint32 value = static_cast<uint32>(val);
+  const uint32_t value = static_cast<uint32_t>(val);
 
   if (FileUtil::FileExists(config_file_).ok()) {
     ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write

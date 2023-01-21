@@ -32,11 +32,12 @@
 #include <Ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <VersionHelpers.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>
-#include <VersionHelpers.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -133,7 +134,7 @@ const GUID kTipFunctionProvider = {
     0x4a08,
     {0x9e, 0x1d, 0xb, 0xef, 0x62, 0x8b, 0x5f, 0x0e}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr char kHelpUrl[] = "https://github.com/google/mozc";
 constexpr char kLogFileName[] = "Mozc_tsf_ui.log";
@@ -167,7 +168,7 @@ const GUID kTipFunctionProvider = {
     0x4ca0,
     {0xbb, 0xe4, 0x32, 0xfe, 0x8, 0xc1, 0x48, 0xf4}};
 
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 HRESULT SpawnTool(const std::string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
@@ -252,11 +253,11 @@ struct CComPtrHash {
     //     need to check _M_X64 first.
 #if defined(_M_X64)
     constexpr size_t kUnusedBits = 3;  // assuming 8-byte aligned
-#elif defined(_M_IX86)
+#elif defined(_M_IX86)                 // defined(_M_X64)
     constexpr size_t kUnusedBits = 2;  // assuming 4-byte aligned
-#else
+#else                                  // defined(_M_IX86)
 #error "unsupported platform"
-#endif
+#endif  // defined(_M_IX86)
     // Compress the data by shifting unused bits.
     return reinterpret_cast<size_t>(value.p) >> kUnusedBits;
   }
@@ -276,6 +277,8 @@ class CompositionSinkImpl : public ITfCompositionSink {
  public:
   CompositionSinkImpl(TipTextService *text_service, ITfContext *context)
       : text_service_(text_service), context_(context) {}
+  CompositionSinkImpl(const CompositionSinkImpl &) = delete;
+  CompositionSinkImpl &operator=(const CompositionSinkImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -321,8 +324,6 @@ class CompositionSinkImpl : public ITfCompositionSink {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositionSinkImpl);
 };
 
 void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
@@ -389,6 +390,9 @@ const PreserveKeyItem kPreservedKeyItems[] = {
 
 class UpdateUiEditSessionImpl : public ITfEditSession {
  public:
+  UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
+  UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
+
   // This destructor is non-virtual because the instance of this class is
   // deleted by and only by "delete this" in the Release method.
   ~UpdateUiEditSessionImpl() {}
@@ -453,8 +457,6 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-
-  DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSessionImpl);
 };
 
 bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
@@ -497,6 +499,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
         thread_context_(nullptr),
         task_window_handle_(nullptr),
         renderer_callback_window_handle_(nullptr) {}
+
+  TipTextServiceImpl(const TipTextServiceImpl &) = delete;
+  TipTextServiceImpl &operator=(const TipTextServiceImpl &) = delete;
 
   static bool OnDllProcessAttach(HMODULE module_handle) {
     if (!RegisterWindowClass(module_handle, kTaskWindowClassName,
@@ -1137,7 +1142,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     PostMessageW(task_window_handle_, kUpdateUIMessage, 0, 0);
   }
 
-  virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) {
+  virtual void UpdateLangbar(bool enabled, uint32_t mozc_mode) {
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 
@@ -1750,8 +1755,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   std::unique_ptr<TipThreadContext> thread_context_;
   HWND task_window_handle_;
   HWND renderer_callback_window_handle_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipTextServiceImpl);
 };
 
 }  // namespace

@@ -38,15 +38,15 @@ namespace mozc {
 
 class Url {
  public:
+  Url() = delete;
+  Url(const Url &) = delete;
+  Url &operator=(const Url &) = delete;
+
   // Composes a URL for an uninstallation survey.  Note that we should set
   // version because, in Mac OS, we can not get mozc version from uninstaller
   // binary.
   static bool GetUninstallationSurveyUrl(const std::string &version,
                                          std::string *url);
-
-  // should never be allocated.
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Url);
 };
 
 }  // namespace mozc

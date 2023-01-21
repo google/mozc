@@ -31,7 +31,7 @@
 
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 

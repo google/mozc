@@ -35,7 +35,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace config {
@@ -101,11 +101,13 @@ namespace internal {
 class scoped_usage_stats_enabler {
  public:
   scoped_usage_stats_enabler();
+  scoped_usage_stats_enabler(const scoped_usage_stats_enabler &) = delete;
+  scoped_usage_stats_enabler &operator=(const scoped_usage_stats_enabler &) =
+      delete;
   ~scoped_usage_stats_enabler();
 
  private:
   std::unique_ptr<mozc::config::StatsConfigUtilMock> stats_config_util_;
-  DISALLOW_COPY_AND_ASSIGN(scoped_usage_stats_enabler);
 };
 
 }  // namespace usage_stats

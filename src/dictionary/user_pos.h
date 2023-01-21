@@ -181,6 +181,8 @@ class UserPos : public UserPosInterface {
   // data must outlive this instance.
   UserPos(absl::string_view token_array_data,
           absl::string_view string_array_data);
+  UserPos(const UserPos &) = delete;
+  UserPos &operator=(const UserPos &) = delete;
   ~UserPos() override;
 
   // Implementation of UserPosInterface.
@@ -199,8 +201,6 @@ class UserPos : public UserPosInterface {
  private:
   absl::string_view token_array_data_;
   SerializedStringArray string_array_;
-
-  DISALLOW_COPY_AND_ASSIGN(UserPos);
 };
 
 }  // namespace dictionary

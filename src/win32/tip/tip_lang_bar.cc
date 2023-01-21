@@ -29,6 +29,8 @@
 
 #include "win32/tip/tip_lang_bar.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win_util.h"
@@ -82,7 +84,7 @@ const GUID kTipLangBarItem_HelpMenu = {
     0x4666,
     {0x9b, 0x89, 0x4f, 0x23, 0x69, 0x9b, 0x22, 0x3}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {FC8E2486-F5BA-4863-91C3-8D166B454604}
 const GUID kTipLangBarItem_Button = {
@@ -105,7 +107,7 @@ const GUID kTipLangBarItem_HelpMenu = {
     0x400e,
     {0x82, 0x18, 0x89, 0x6f, 0x22, 0xa7, 0x0, 0x11}};
 
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr bool kShowInTaskbar = true;
 
@@ -410,7 +412,7 @@ HRESULT TipLangBar::UninitLangBar() {
   return result;
 }
 
-HRESULT TipLangBar::UpdateMenu(bool enabled, uint32 composition_mode) {
+HRESULT TipLangBar::UpdateMenu(bool enabled, uint32_t composition_mode) {
   HRESULT result = S_OK;
 
   const UINT menu_id = GetItemId(composition_mode);

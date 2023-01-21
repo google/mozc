@@ -43,9 +43,9 @@
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_util.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 

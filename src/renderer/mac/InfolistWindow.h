@@ -47,6 +47,8 @@ namespace mac {
 class InfolistWindow : public RendererBaseWindow {
  public:
   InfolistWindow();
+  InfolistWindow(const InfolistWindow &) = delete;
+  InfolistWindow &operator=(const InfolistWindow &) = delete;
   virtual ~InfolistWindow();
   void SetSendCommandInterface(client::SendCommandInterface *send_command_interface);
   void SetCandidates(const commands::Candidates &candidates);
@@ -62,7 +64,6 @@ class InfolistWindow : public RendererBaseWindow {
   bool visible_;
   void ResetView();
   mozc::client::SendCommandInterface *command_sender_;
-  DISALLOW_COPY_AND_ASSIGN(InfolistWindow);
 };
 
 }  // namespace mozc::renderer::mac

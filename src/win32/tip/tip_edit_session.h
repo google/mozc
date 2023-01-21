@@ -31,6 +31,8 @@
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_H_
 
 #include <msctf.h>
+
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -49,6 +51,10 @@ class TipTextService;
 // Utility functions to begin edit session for various purposes.
 class TipEditSession {
  public:
+  TipEditSession() = delete;
+  TipEditSession(const TipEditSession &) = delete;
+  TipEditSession &operator=(const TipEditSession &) = delete;
+
   // Begins a sync edit session with |new_output| to update the context. Note
   // that sync edit session is guaranteed to be capable only in key event
   // handler and ITfFnReconversion::QueryRange. In other cases, you should use
@@ -101,7 +107,7 @@ class TipEditSession {
   // Begins an async edit session to change input mode specified by
   // |native_mode|.
   static bool SwitchInputModeAsync(TipTextService *text_service,
-                                   uint32 mozc_mode);
+                                   uint32_t mozc_mode);
 
   // Begins a sync edit session to retrieve the text from |range|.
   static bool GetTextSync(TipTextService *text_service, ITfRange *range,
@@ -110,9 +116,6 @@ class TipEditSession {
   // Begins an async edit session to set |text| to |range|.
   static bool SetTextAsync(TipTextService *text_service,
                            const std::wstring &text, ITfRange *range);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSession);
 };
 
 }  // namespace tsf

@@ -49,15 +49,19 @@ using ATL::CComPtr;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Google Japanese Input: GetPreferredTouchKeyboardLayout Function";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Mozc: GetPreferredTouchKeyboardLayout Function";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetPreferredTouchKeyboardLayoutImpl
     : public ITfFnGetPreferredTouchKeyboardLayout {
  public:
   GetPreferredTouchKeyboardLayoutImpl() {}
+  GetPreferredTouchKeyboardLayoutImpl(
+      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
+  GetPreferredTouchKeyboardLayoutImpl &operator=(
+      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
 
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
@@ -117,8 +121,6 @@ class GetPreferredTouchKeyboardLayoutImpl
   }
 
   TipRefCount ref_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(GetPreferredTouchKeyboardLayoutImpl);
 };
 
 }  // namespace

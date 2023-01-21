@@ -42,6 +42,8 @@ namespace mozc {
 // files in data/dictionary, such as dictionary.txt, id.def, etc.
 class DataManagerInterface {
  public:
+  DataManagerInterface(const DataManagerInterface &) = delete;
+  DataManagerInterface &operator=(const DataManagerInterface &) = delete;
   virtual ~DataManagerInterface() = default;
 
   // Returns data set for UserPos.
@@ -148,9 +150,6 @@ class DataManagerInterface {
 
  protected:
   DataManagerInterface() = default;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DataManagerInterface);
 };
 
 }  // namespace mozc

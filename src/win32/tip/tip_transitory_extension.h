@@ -54,6 +54,10 @@ namespace tsf {
 // http://blogs.msdn.com/b/tsfaware/archive/2007/05/21/transitory-extensions.aspx
 class TipTransitoryExtension {
  public:
+  TipTransitoryExtension() = delete;
+  TipTransitoryExtension(const TipTransitoryExtension &) = delete;
+  TipTransitoryExtension &operator=(const TipTransitoryExtension &) = delete;
+
   // Returns the parent (full-text-store) document manager if exists.
   // Returns |document_manager| otherwise.
   static ATL::CComPtr<ITfDocumentMgr> ToParentDocumentIfExists(
@@ -62,9 +66,6 @@ class TipTransitoryExtension {
   // Returns the parent (full-text-store) context if exists.
   // Returns |context| otherwise.
   static ATL::CComPtr<ITfContext> ToParentContextIfExists(ITfContext *context);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipTransitoryExtension);
 };
 
 }  // namespace tsf

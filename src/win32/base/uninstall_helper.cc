@@ -37,6 +37,7 @@
 #include <objbase.h>
 #include <strsafe.h>
 
+#include <cstdint>
 #include <iomanip>
 #include <map>
 #include <memory>
@@ -83,7 +84,7 @@ constexpr DWORD kMaxValueNameLength = 16383;
 // Timeout value used by a work around against b/5765783.
 // Note that the following timeout threshold is not well tested.
 // TODO(yukawa): Investigate the best timeout threshold. b/6165722
-constexpr uint32 kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
+constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
 
 // Converts an unsigned integer to a wide string.
 std::wstring utow(unsigned int i) {

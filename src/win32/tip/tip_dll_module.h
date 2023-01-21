@@ -40,6 +40,10 @@ namespace tsf {
 
 class TipDllModule {
  public:
+  TipDllModule() = delete;
+  TipDllModule(const TipDllModule&) = delete;
+  TipDllModule& operator=(const TipDllModule&) = delete;
+
   // Increases and decreases the reference count to this module.
   // This reference count is used for preventing Windows from unloading
   // this module.
@@ -52,9 +56,6 @@ class TipDllModule {
   static HMODULE module_handle();
 
   static void InitForUnitTest();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipDllModule);
 };
 
 }  // namespace tsf

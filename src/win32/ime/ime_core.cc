@@ -34,6 +34,7 @@
 #include <ime.h>
 // clang-format on
 
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -699,7 +700,7 @@ BOOL ImeCore::IMEOff(HIMC himc, bool generate_message) {
   return (message_queue.Send() ? TRUE : FALSE);
 }
 
-BOOL ImeCore::HighlightCandidate(HIMC himc, int32 candidate_index,
+BOOL ImeCore::HighlightCandidate(HIMC himc, int32_t candidate_index,
                                  bool generate_message) {
   if (!IsInputContextInitialized(himc)) {
     return FALSE;
@@ -710,7 +711,7 @@ BOOL ImeCore::HighlightCandidate(HIMC himc, int32 candidate_index,
     return FALSE;
   }
 
-  int32 next_candidate_id = 0;
+  int32_t next_candidate_id = 0;
   {
     commands::Output last_output;
     if (!context.GetLastOutput(&last_output)) {
@@ -725,7 +726,7 @@ BOOL ImeCore::HighlightCandidate(HIMC himc, int32 candidate_index,
     // Stop sending HIGHLIGHT_CANDIDATE if the given candidate is already
     // selected.  If the |last_output| does not have focused candidate,
     // HIGHLIGHT_CANDIDATE is always be sent.
-    int32 focused_candidate_id = 0;
+    int32_t focused_candidate_id = 0;
     if (OutputUtil::GetFocusedCandidateId(last_output, &focused_candidate_id) &&
         (next_candidate_id == focused_candidate_id)) {
       // Already highlighted.
@@ -757,7 +758,7 @@ BOOL ImeCore::CloseCandidate(HIMC himc, bool generate_message) {
     return FALSE;
   }
 
-  int32 focused_candidate_id = 0;
+  int32_t focused_candidate_id = 0;
   {
     commands::Output last_output;
     if (!context.GetLastOutput(&last_output)) {

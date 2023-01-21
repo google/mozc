@@ -140,7 +140,7 @@
       'target_name': 'googletest_lib',
       'type': 'static_library',
       'sources': [
-        'base/internal/googletest.cc',
+        'googletest.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -152,7 +152,7 @@
       'target_name': 'gtest_main',
       'type': 'static_library',
       'sources': [
-        'base/internal/gtest_main.cc',
+        'gtest_main.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base',
@@ -197,7 +197,7 @@
       'target_name': 'testing_util',
       'type': 'static_library',
       'sources': [
-        'base/public/testing_util.cc',
+        'testing_util.cc',
       ],
       'dependencies': [
         '../base/base.gyp:base_core',
@@ -209,7 +209,7 @@
       'target_name': 'mozctest',
       'type': 'static_library',
       'sources': [
-        'base/public/mozctest.cc',
+        'mozctest.cc',
       ],
       'dependencies': [
         '../base/absl.gyp:absl_status',

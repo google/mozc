@@ -36,7 +36,7 @@
 #include <SystemConfiguration/SystemConfiguration.h>
 #include "base/mac_util.h"
 #include "base/scoped_cftyperef.h"
-#endif
+#endif  // __APPLE__
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -145,7 +145,7 @@ class MacProxyManager : public ProxyManagerInterface {
 #ifdef OS_IOS
     scoped_cftyperef<CFDictionaryRef> proxy_settings(
         CFNetworkCopySystemProxySettings());
-#else
+#else   // OS_IOS
     scoped_cftyperef<CFDictionaryRef> proxy_settings(
         SCDynamicStoreCopyProxies(nullptr));
 #endif  // OS_IOS
@@ -245,9 +245,9 @@ ProxyManagerInterface *GetProxyManager() {
   if (g_proxy_manager == nullptr) {
 #ifdef __APPLE__
     return Singleton<MacProxyManager>::get();
-#else
+#else   // __APPLE__
     return Singleton<DummyProxyManager>::get();
-#endif
+#endif  // __APPLE__
   } else {
     return g_proxy_manager;
   }

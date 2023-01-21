@@ -32,6 +32,8 @@
 
 #include <msctf.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -75,7 +77,7 @@ class TipTextService : public IUnknown {
 
   // Updates the language bar as needed.  Does nothing if the language bar is
   // not available.
-  virtual void UpdateLangbar(bool enabled, uint32 mozc_mode) = 0;
+  virtual void UpdateLangbar(bool enabled, uint32_t mozc_mode) = 0;
 
   // Returns true if the language bar is initialized.
   virtual bool IsLangbarInitialized() const = 0;
@@ -84,12 +86,12 @@ class TipTextService : public IUnknown {
 class TipTextServiceFactory {
  public:
   static TipTextService *Create();
+  TipTextServiceFactory() = delete;
+  TipTextServiceFactory(const TipTextServiceFactory &) = delete;
+  TipTextServiceFactory &operator=(const TipTextServiceFactory &) = delete;
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipTextServiceFactory);
 };
 
 }  // namespace tsf

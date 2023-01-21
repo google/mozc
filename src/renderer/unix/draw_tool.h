@@ -31,6 +31,7 @@
 #define MOZC_RENDERER_UNIX_DRAW_TOOL_H_
 #include <gtk/gtk.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -46,16 +47,18 @@ class DrawToolTest;
 class DrawTool : public DrawToolInterface {
  public:
   explicit DrawTool() {}
+  DrawTool(const DrawTool &) = delete;
+  DrawTool &operator=(const DrawTool &) = delete;
   virtual ~DrawTool() {}
   virtual void Save();
   virtual void Restore();
   virtual void FillRect(const Rect &rect, const RGBA &color);
 
   virtual void FrameRect(const Rect &rect, const RGBA &color,
-                         const uint32 line_width);
+                         const uint32_t line_width);
 
   virtual void DrawLine(const Point &from, const Point &to, const RGBA &color,
-                        const uint32 line_width);
+                        const uint32_t line_width);
 
   // DrawTool class takes ownership of CairoWrapper.
   virtual void Reset(CairoWrapperInterface *cairo);
@@ -64,7 +67,6 @@ class DrawTool : public DrawToolInterface {
   friend class DrawToolTest;
   void SetColor(const RGBA &color);
   std::unique_ptr<CairoWrapperInterface> cairo_;
-  DISALLOW_COPY_AND_ASSIGN(DrawTool);
 };
 
 }  // namespace gtk

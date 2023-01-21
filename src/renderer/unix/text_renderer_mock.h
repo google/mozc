@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_UNIX_TEXT_RENDERER_MOCK_H_
 
 #include "renderer/unix/text_renderer_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

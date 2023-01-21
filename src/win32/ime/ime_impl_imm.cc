@@ -35,7 +35,9 @@
 #include <ime.h>
 #include <strsafe.h>
 
+#include <cstdint>
 #include <limits>
+#include <string>
 
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
@@ -170,21 +172,21 @@ static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
   }
 }
 
-int32 GetContextRevision() {
+int32_t GetContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return 0;
   }
   const uintptr_t raw_value =
       reinterpret_cast<uintptr_t>(::TlsGetValue(g_context_revision_tls_index));
-  return static_cast<int32>(raw_value);
+  return static_cast<int32_t>(raw_value);
 }
 
 void IncrementContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return;
   }
-  int32 revision = GetContextRevision();
-  if (revision < std::numeric_limits<int32>::max()) {
+  int32_t revision = GetContextRevision();
+  if (revision < std::numeric_limits<int32_t>::max()) {
     ++revision;
   } else {
     revision = 0;
@@ -603,7 +605,7 @@ BOOL WINAPI NotifyIME(HIMC himc, DWORD action, DWORD index, DWORD value) {
       if (candidate_window_index != 0) {
         return FALSE;
       }
-      const int32 candidate_index = static_cast<int32>(value);
+      const int32_t candidate_index = static_cast<int32_t>(value);
       return mozc::win32::ImeCore::HighlightCandidate(himc, candidate_index,
                                                       generate_message);
     }

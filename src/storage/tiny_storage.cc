@@ -29,12 +29,11 @@
 
 #include "storage/tiny_storage.h"
 
-#include <cstdint>
-
 #ifdef OS_WIN
 #include <Windows.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <cstring>
 #include <ios>
 #include <map>
@@ -91,6 +90,8 @@ bool IsInvalid(const std::string &key, const std::string &value, size_t size) {
 class TinyStorageImpl : public StorageInterface {
  public:
   TinyStorageImpl();
+  TinyStorageImpl(const TinyStorageImpl &) = delete;
+  TinyStorageImpl &operator=(const TinyStorageImpl &) = delete;
   ~TinyStorageImpl() override;
 
   bool Open(const std::string &filename) override;
@@ -105,13 +106,11 @@ class TinyStorageImpl : public StorageInterface {
   std::string filename_;
   bool should_sync_;
   std::map<std::string, std::string> dic_;
-
-  DISALLOW_COPY_AND_ASSIGN(TinyStorageImpl);
 };
 
 TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {
   // the each entry consumes at most
-  // sizeof(uint32) * 2 (key/value length) +
+  // sizeof(uint32_t) * 2 (key/value length) +
   // kMaxKeySize + kMaxValueSize
   DCHECK_GT(kMaxFileSize, kMaxElementSize * (kMaxKeySize + kMaxValueSize +
                                              sizeof(uint32_t) * 2));
@@ -219,9 +218,10 @@ bool TinyStorageImpl::Open(const std::string &filename) {
 }
 
 // Format of storage:
-// |magic(uint32 file_size ^ kStorageVersion)|version(uint32)|size(uint32)|
-// |key_size(uint32)|key(variable length)|
-// |value_size(uint32)|value(variable length)| ...
+// |magic(uint32_t file_size ^
+// kStorageVersion)|version(uint32_t)|size(uint32_t)|
+// |key_size(uint32_t)|key(variable length)|
+// |value_size(uint32_t)|value(variable length)| ...
 bool TinyStorageImpl::Sync() {
   if (!should_sync_) {
     VLOG(2) << "Already synced";

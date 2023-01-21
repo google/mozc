@@ -33,6 +33,7 @@
 #include <InputScope.h>
 #include <Windows.h>
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -96,9 +97,11 @@ class TipInputModeManager : public TipInputModeManagerImpl {
     Config();
     bool use_global_mode;
   };
-  typedef uint32 NotifyActionSet;
+  typedef uint32_t NotifyActionSet;
 
   explicit TipInputModeManager(const Config &config);
+  TipInputModeManager(const TipInputModeManager &) = delete;
+  TipInputModeManager &operator=(const TipInputModeManager &) = delete;
   ~TipInputModeManager();
 
   // Functions to access embedded IndicatorVisibilityTracker.
@@ -130,8 +133,6 @@ class TipInputModeManager : public TipInputModeManagerImpl {
  private:
   class InternalState;
   std::unique_ptr<InternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipInputModeManager);
 };
 
 }  // namespace tsf

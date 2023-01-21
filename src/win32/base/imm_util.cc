@@ -36,6 +36,7 @@
 #include <strsafe.h>
 #include <windows.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -59,7 +60,7 @@ namespace {
 // this value is determined to be:
 // - smaller than the default time-out used in IsHungAppWindow API.
 // - similar to the same timeout used by TSF.
-constexpr uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
+constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   const UINT num_element =
@@ -247,7 +248,7 @@ bool ImeUtil::ActivateForCurrentSession() {
 
 // Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to
 // work around b/5765783.
-bool ImeUtil::WaitForAsmCacheReady(uint32 timeout_msec) {
+bool ImeUtil::WaitForAsmCacheReady(uint32_t timeout_msec) {
   std::wstring event_name;
   if (Util::Utf8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
                        &event_name) == 0) {

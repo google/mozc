@@ -45,6 +45,10 @@ class TipTextService;
 
 class TipUiElementImmersive {
  public:
+  TipUiElementImmersive() = delete;
+  TipUiElementImmersive(const TipUiElementImmersive &) = delete;
+  TipUiElementImmersive &operator=(const TipUiElementImmersive &) = delete;
+
   // Returns a ITfUIElement object based of the given parameters. Caller must
   // maintain the reference count of the object returned.
   static ITfUIElement *New(TipTextService *text_service, ITfContext *contxt,
@@ -55,9 +59,6 @@ class TipUiElementImmersive {
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiElementImmersive);
 };
 
 }  // namespace tsf

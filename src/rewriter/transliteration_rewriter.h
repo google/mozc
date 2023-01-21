@@ -44,6 +44,8 @@ namespace mozc {
 class TransliterationRewriter : public RewriterInterface {
  public:
   explicit TransliterationRewriter(const dictionary::PosMatcher &pos_matcher);
+  TransliterationRewriter(const TransliterationRewriter &) = delete;
+  TransliterationRewriter &operator=(const TransliterationRewriter &) = delete;
   ~TransliterationRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
@@ -68,8 +70,6 @@ class TransliterationRewriter : public RewriterInterface {
                                   Segments *segments) const;
 
   const uint16_t unknown_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(TransliterationRewriter);
 };
 
 }  // namespace mozc

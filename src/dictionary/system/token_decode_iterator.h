@@ -48,6 +48,8 @@ namespace dictionary {
 
 class TokenDecodeIterator {
  public:
+  TokenDecodeIterator(const TokenDecodeIterator &) = delete;
+  TokenDecodeIterator &operator=(const TokenDecodeIterator &) = delete;
   TokenDecodeIterator(const SystemDictionaryCodecInterface *codec,
                       const storage::louds::LoudsTrie &value_trie,
                       const uint32_t *frequent_pos, absl::string_view key,
@@ -87,8 +89,6 @@ class TokenDecodeIterator {
 
   TokenInfo token_info_;
   Token token_;
-
-  DISALLOW_COPY_AND_ASSIGN(TokenDecodeIterator);
 };
 
 // Implementation is inlined for performance.

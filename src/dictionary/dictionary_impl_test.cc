@@ -50,8 +50,8 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

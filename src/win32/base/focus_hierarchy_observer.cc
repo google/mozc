@@ -331,6 +331,10 @@ class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
     return new FocusHierarchyObserverImpl();
   }
 
+  FocusHierarchyObserverImpl(const FocusHierarchyObserverImpl &) = delete;
+  FocusHierarchyObserverImpl &operator=(const FocusHierarchyObserverImpl &) =
+      delete;
+
  private:
   FocusHierarchyObserverImpl() {}
 
@@ -373,14 +377,15 @@ class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
     }
     return self->root_window_name();
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FocusHierarchyObserverImpl);
 };
 
 class FocusHierarchyObserverNullImpl : public FocusHierarchyObserver {
  public:
   FocusHierarchyObserverNullImpl() {}
+  FocusHierarchyObserverNullImpl(const FocusHierarchyObserverNullImpl &) =
+      delete;
+  FocusHierarchyObserverNullImpl &operator=(
+      const FocusHierarchyObserverNullImpl &) = delete;
   virtual ~FocusHierarchyObserverNullImpl() {}
 
  private:
@@ -394,9 +399,6 @@ class FocusHierarchyObserverNullImpl : public FocusHierarchyObserver {
     return std::vector<WindowInfo>();
   }
   virtual std::string GetRootWindowName() const { return ""; }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FocusHierarchyObserverNullImpl);
 };
 
 }  // namespace

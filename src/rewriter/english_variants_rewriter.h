@@ -34,7 +34,7 @@
 #include <vector>
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 
 namespace mozc {

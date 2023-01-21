@@ -33,9 +33,9 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "renderer/unix/window_manager_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 using testing::_;
 using testing::Return;

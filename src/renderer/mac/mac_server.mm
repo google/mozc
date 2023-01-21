@@ -27,12 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#import "renderer/mac/mac_server.h"
+
 #import <Cocoa/Cocoa.h>
 
 #include <Carbon/Carbon.h>
 #include <pthread.h>
 
-#include "renderer/mac/mac_server.h"
+#include <iterator>
+#include <string>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -58,7 +61,7 @@ MacServer::MacServer(int argc, const char **argv) : argc_(argc), argv_(argv) {
   pthread_cond_init(&event_, nullptr);
   EventHandlerUPP handler = ::NewEventHandlerUPP(EventHandler);
   EventTypeSpec spec[] = {{kEventClassApplication, 0}};
-  ::InstallEventHandler(GetApplicationEventTarget(), handler, arraysize(spec), spec, this, nullptr);
+  ::InstallEventHandler(GetApplicationEventTarget(), handler, std::size(spec), spec, this, nullptr);
 }
 
 bool MacServer::AsyncExecCommand(absl::string_view proto_message) {
@@ -97,6 +100,6 @@ int MacServer::StartMessageLoop() {
 }
 
 void MacServer::Init() { NSApplicationLoad(); }
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc

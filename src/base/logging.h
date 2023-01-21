@@ -79,6 +79,9 @@ class NullLogStream;
 
 class Logging {
  public:
+  Logging() = delete;
+  Logging(const Logging &) = delete;
+  Logging &operator=(const Logging &) = delete;
   // Initializes log stream with the output file path and --logtostderr.
   static void InitLogStream(const std::string &log_file_path);
 
@@ -122,9 +125,6 @@ class Logging {
   static const char *GetEndColorEscapeSequence();
 
   static void SetLogToStderr(bool log_to_stderr);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Logging);
 };
 
 // Finalizer to flush/delete working log stream.

@@ -30,19 +30,20 @@
 #include "base/win_sandbox.h"
 
 #include "base/scoped_handle.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {
 
 class TestableWinSandbox : public WinSandbox {
  public:
+  TestableWinSandbox() = delete;
+  TestableWinSandbox(const TestableWinSandbox&) = delete;
+  TestableWinSandbox& operator=(const TestableWinSandbox&) = delete;
+
   // Change access rights.
   using WinSandbox::GetSDDL;
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TestableWinSandbox);
 };
 
 void VerifySidContained(const std::vector<Sid> sids,

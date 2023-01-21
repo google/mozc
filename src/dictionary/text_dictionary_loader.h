@@ -38,7 +38,7 @@
 
 #include "base/port.h"
 #include "dictionary/dictionary_token.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/strings/string_view.h"
 // for FRIEND_TEST
 

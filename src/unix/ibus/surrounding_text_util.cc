@@ -30,6 +30,7 @@
 #include "unix/ibus/surrounding_text_util.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <string>
 
@@ -41,25 +42,25 @@
 namespace mozc {
 namespace ibus {
 
-bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32 *delta) {
+bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32_t *delta) {
   DCHECK(delta);
 
-  static_assert(sizeof(int64) >= sizeof(uint),
-                "int64 must be sufficient to store a uint value.");
-  static_assert(sizeof(int64) == sizeof(llabs(0)),
+  static_assert(sizeof(int64_t) >= sizeof(uint),
+                "int64_t must be sufficient to store a uint value.");
+  static_assert(sizeof(int64_t) == sizeof(llabs(0)),
                 "|llabs(0)| must returns a 64-bit integer.");
-  const int64 kInt32AbsMax =
-      llabs(static_cast<int64>(std::numeric_limits<int32>::max()));
-  const int64 kInt32AbsMin =
-      llabs(static_cast<int64>(std::numeric_limits<int32>::min()));
-  const int64 kInt32SafeAbsMax = std::min(kInt32AbsMax, kInt32AbsMin);
+  const int64_t kInt32AbsMax =
+      llabs(static_cast<int64_t>(std::numeric_limits<int32_t>::max()));
+  const int64_t kInt32AbsMin =
+      llabs(static_cast<int64_t>(std::numeric_limits<int32_t>::min()));
+  const int64_t kInt32SafeAbsMax = std::min(kInt32AbsMax, kInt32AbsMin);
 
-  const int64 diff = static_cast<int64>(from) - static_cast<int64>(to);
+  const int64_t diff = static_cast<int64_t>(from) - static_cast<int64_t>(to);
   if (llabs(diff) > kInt32SafeAbsMax) {
     return false;
   }
 
-  *delta = static_cast<int32>(diff);
+  *delta = static_cast<int32_t>(diff);
   return true;
 }
 

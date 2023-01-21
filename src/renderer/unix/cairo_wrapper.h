@@ -42,6 +42,8 @@ namespace gtk {
 class CairoWrapper : public CairoWrapperInterface {
  public:
   explicit CairoWrapper(GdkWindow *window);
+  CairoWrapper(const CairoWrapper &) = delete;
+  CairoWrapper &operator=(const CairoWrapper &) = delete;
   virtual ~CairoWrapper();
 
   virtual void Save();
@@ -56,7 +58,6 @@ class CairoWrapper : public CairoWrapperInterface {
 
  private:
   cairo_t *cairo_context_;
-  DISALLOW_COPY_AND_ASSIGN(CairoWrapper);
 };
 
 }  // namespace gtk

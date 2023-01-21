@@ -38,13 +38,16 @@ namespace mozc {
 
 class Version {
  public:
+  Version(const Version &) = delete;
+  Version &operator=(const Version &) = delete;
+
   // Get current mozc version (former called MOZC_VERSION)
   static std::string GetMozcVersion();
 
 #ifdef OS_WIN
   // Get current mozc version (former called MOZC_VERSION) by std::wstring
   static std::wstring GetMozcVersionW();
-#endif
+#endif  // OS_WIN
 
   static int GetMozcVersionMajor();
   static int GetMozcVersionMinor();
@@ -57,9 +60,6 @@ class Version {
   // CompareVersion("1.2.3.4", "5.2.3.4") => true
   // CompareVersion("1.25.3.4", "1.2.3.4") => false
   static bool CompareVersion(const std::string &lhs, const std::string &rhs);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(Version);
 };
 
 }  // namespace mozc

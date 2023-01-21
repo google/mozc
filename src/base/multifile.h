@@ -48,6 +48,8 @@ class InputMultiFile {
   // filenames must be separated by comma(s), e.g., "foo.txt,hoge.txt".
   explicit InputMultiFile(const std::string& filenames,
                           std::ios_base::openmode mode = std::ios_base::in);
+  InputMultiFile(const InputMultiFile&) = delete;
+  InputMultiFile& operator=(const InputMultiFile&) = delete;
   ~InputMultiFile();
 
   // Reads one line. Returns false after reading all the lines.
@@ -60,8 +62,6 @@ class InputMultiFile {
   const std::ios_base::openmode mode_;
   std::vector<std::string>::iterator next_iter_;
   std::unique_ptr<InputFileStream> ifs_;
-
-  DISALLOW_COPY_AND_ASSIGN(InputMultiFile);
 };
 
 }  // namespace mozc

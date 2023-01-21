@@ -41,8 +41,8 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
@@ -78,6 +78,8 @@ class CollocationRewriterTest : public ::testing::Test {
   };
 
   CollocationRewriterTest() = default;
+  CollocationRewriterTest(const CollocationRewriterTest &) = delete;
+  CollocationRewriterTest &operator=(const CollocationRewriterTest &) = delete;
   ~CollocationRewriterTest() override = default;
 
   void SetUp() override {
@@ -134,7 +136,6 @@ class CollocationRewriterTest : public ::testing::Test {
 
  private:
   std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
-  DISALLOW_COPY_AND_ASSIGN(CollocationRewriterTest);
 };
 
 TEST_F(CollocationRewriterTest, NekowoKaitai) {

@@ -33,8 +33,8 @@
 #include <utility>
 
 #include "data_manager/data_manager_test_base.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace testing {

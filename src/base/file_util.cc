@@ -29,10 +29,6 @@
 
 #include "base/file_util.h"
 
-#include <cstring>
-#include <ios>
-#include <iterator>
-
 #ifdef OS_WIN
 #include <KtmW32.h>
 #include <Windows.h>
@@ -42,7 +38,11 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
+#include <ios>
+#include <iterator>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -672,7 +672,7 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
     return WinUtil::ErrorToCanonicalStatus(
         last_error, absl::StrCat("GetFileAttributesEx(", filename, ") failed"));
   }
-  return (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
+  return (static_cast<uint64_t>(info.ftLastWriteTime.dwHighDateTime) << 32) +
          info.ftLastWriteTime.dwLowDateTime;
 #else   // !OS_WIN
   struct stat stat_info;

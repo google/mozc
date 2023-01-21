@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "win32/base/deleter.h"
+
+#include <cstdint>
 
 #include "protocol/commands.pb.h"
-#include "win32/base/deleter.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
 
@@ -41,11 +43,13 @@ namespace win32 {
 namespace {
 
 const BYTE kPressed = 0x80;
-const uint64 kOutputId = 0x12345678;
+const uint64_t kOutputId = 0x12345678;
 
 class KeyboardMock : public Win32KeyboardInterface {
  public:
   KeyboardMock() {}
+  KeyboardMock(const KeyboardMock &) = delete;
+  KeyboardMock &operator=(const KeyboardMock &) = delete;
 
   virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) {
     return keyboard_state.IsPressed(VK_KANA);
@@ -104,7 +108,6 @@ class KeyboardMock : public Win32KeyboardInterface {
   KeyboardStatus key_state_;
   KeyboardStatus async_key_state_;
   std::vector<INPUT> last_send_input_data_;
-  DISALLOW_COPY_AND_ASSIGN(KeyboardMock);
 };
 
 }  // namespace

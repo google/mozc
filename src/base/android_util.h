@@ -38,12 +38,16 @@
 #include "base/port.h"
 
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 
 class AndroidUtil {
  public:
+  AndroidUtil() = delete;
+  AndroidUtil(const AndroidUtil &) = delete;
+  AndroidUtil &operator=(const AndroidUtil &) = delete;
+
   // Frequently used property names.
   static const char kSystemPropertyOsVersion[];
   static const char kSystemPropertyModel[];
@@ -84,8 +88,6 @@ class AndroidUtil {
 
   static std::map<std::string, std::string> property_cache;
   static std::set<std::string> undefined_keys;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(AndroidUtil);
 };
 
 }  // namespace mozc

@@ -37,7 +37,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
@@ -156,12 +156,12 @@ class SystemPreferenceInterface {
 // This class implements SystemPreferenceInterface for unit tests.
 class SystemPreferenceFactory {
  public:
+  SystemPreferenceFactory() = delete;
+  SystemPreferenceFactory(const SystemPreferenceFactory &) = delete;
+  SystemPreferenceFactory &operator=(const SystemPreferenceFactory &) = delete;
   // Returns an instance of WindowPositionEmulator. Caller must delete
   // the instance.
   static SystemPreferenceInterface *CreateMock(const LOGFONTW &gui_font);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SystemPreferenceFactory);
 };
 
 // This interface is designed to hook API calls for unit test.
@@ -175,6 +175,9 @@ class WorkingAreaInterface {
 
 class WorkingAreaFactory {
  public:
+  WorkingAreaFactory() = delete;
+  WorkingAreaFactory(const WorkingAreaFactory &) = delete;
+  WorkingAreaFactory &operator=(const WorkingAreaFactory &) = delete;
   // Returns an instance of WorkingAreaInterface. Caller must delete
   // the instance.
   static WorkingAreaInterface *Create();
@@ -182,9 +185,6 @@ class WorkingAreaFactory {
   // Returns an instance of WorkingAreaInterface. Caller must delete
   // the instance.
   static WorkingAreaInterface *CreateMock(const RECT &working_area);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WorkingAreaFactory);
 };
 
 // This interface is designed to hook API calls for unit test.
@@ -277,6 +277,8 @@ enum CompatibilityMode {
 class LayoutManager {
  public:
   LayoutManager();
+  LayoutManager(const LayoutManager &) = delete;
+  LayoutManager &operator=(const LayoutManager &) = delete;
   ~LayoutManager();
 
   // A special constructor for unit tests.  You can set a mock object which
@@ -427,8 +429,6 @@ class LayoutManager {
 
   std::unique_ptr<SystemPreferenceInterface> system_preference_;
   std::unique_ptr<WindowPositionInterface> window_position_;
-
-  DISALLOW_COPY_AND_ASSIGN(LayoutManager);
 };
 
 }  // namespace win32

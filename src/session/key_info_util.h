@@ -45,6 +45,10 @@ class Config;
 
 class KeyInfoUtil {
  public:
+  KeyInfoUtil() = delete;
+  KeyInfoUtil(const KeyInfoUtil &) = delete;
+  KeyInfoUtil &operator=(const KeyInfoUtil &) = delete;
+
   // Returns a sorted list of KeyInformation that is assigned in DIRECT mode.
   static std::vector<KeyInformation> ExtractSortedDirectModeKeys(
       const config::Config &config);
@@ -53,9 +57,6 @@ class KeyInfoUtil {
   // sorted.
   static bool ContainsKey(const std::vector<KeyInformation> &sorted_keys,
                           const commands::KeyEvent &key_event);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyInfoUtil);
 };
 
 }  // namespace mozc

@@ -48,6 +48,9 @@ namespace win32 {
 // to be used in a dynamic link libraries (DLLs).
 class Win32RendererClient {
  public:
+  Win32RendererClient() = delete;
+  Win32RendererClient(const Win32RendererClient&) = delete;
+  Win32RendererClient& operator=(const Win32RendererClient&) = delete;
   // Must be called when the DLL is loaded.
   static void OnModuleLoaded(HMODULE module_handle);
   // Must be called when the DLL is unloaded.
@@ -57,9 +60,6 @@ class Win32RendererClient {
   // Passes the |command| to the renderer. This function returns
   // asynchronously and only the last call will be used.
   static void OnUpdated(const commands::RendererCommand &command);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Win32RendererClient);
 };
 
 }  // namespace win32

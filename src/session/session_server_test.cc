@@ -35,8 +35,8 @@
 
 #include "base/scheduler.h"
 #include "base/system_util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {

@@ -29,8 +29,6 @@
 
 #include "base/clock.h"
 
-#include <cstdint>
-
 #ifdef OS_WIN
 #include <Windows.h>
 #include <time.h>
@@ -40,6 +38,8 @@
 #endif  // __APPLE__
 #include <sys/time.h>
 #endif  // OS_WIN
+
+#include <cstdint>
 
 #include "base/singleton.h"
 #include "absl/time/clock.h"
@@ -81,11 +81,11 @@ class ClockImpl : public ClockInterface {
     // This number is calculated as follows.
     // ((1970 - 1601) * 365 + 89) * 24 * 60 * 60 * 1000000
     // 89 is the number of leap years between 1970 and 1601.
-    const uint64 kDeltaEpochInMicroSecs = 11644473600000000ULL;
+    const uint64_t kDeltaEpochInMicroSecs = 11644473600000000ULL;
     // Convert file time to unix epoch
     time_value.QuadPart -= kDeltaEpochInMicroSecs;
-    *sec = static_cast<uint64>(time_value.QuadPart / 1000000UL);
-    *usec = static_cast<uint32>(time_value.QuadPart % 1000000UL);
+    *sec = static_cast<uint64_t>(time_value.QuadPart / 1000000UL);
+    *usec = static_cast<uint32_t>(time_value.QuadPart % 1000000UL);
 #else   // OS_WIN
     struct timeval tv;
     gettimeofday(&tv, nullptr);
@@ -96,7 +96,7 @@ class ClockImpl : public ClockInterface {
 
   uint64_t GetTime() override {
 #ifdef OS_WIN
-    return static_cast<uint64>(_time64(nullptr));
+    return static_cast<uint64_t>(_time64(nullptr));
 #else   // OS_WIN
     return static_cast<uint64_t>(time(nullptr));
 #endif  // OS_WIN
@@ -112,12 +112,12 @@ class ClockImpl : public ClockInterface {
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
     // available.
     const BOOL result = ::QueryPerformanceFrequency(&timestamp);
-    return static_cast<uint64>(timestamp.QuadPart);
+    return static_cast<uint64_t>(timestamp.QuadPart);
 #elif defined(__APPLE__)
     static mach_timebase_info_data_t timebase_info;
     mach_timebase_info(&timebase_info);
-    return static_cast<uint64>(1.0e9 * timebase_info.denom /
-                               timebase_info.numer);
+    return static_cast<uint64_t>(1.0e9 * timebase_info.denom /
+                                 timebase_info.numer);
 #elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     return 1000000uLL;
 #else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
@@ -132,9 +132,9 @@ class ClockImpl : public ClockInterface {
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
     // available.
     const BOOL result = ::QueryPerformanceCounter(&timestamp);
-    return static_cast<uint64>(timestamp.QuadPart);
+    return static_cast<uint64_t>(timestamp.QuadPart);
 #elif defined(__APPLE__)
-    return static_cast<uint64>(mach_absolute_time());
+    return static_cast<uint64_t>(mach_absolute_time());
 #elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     uint64_t sec;
     uint32_t usec;

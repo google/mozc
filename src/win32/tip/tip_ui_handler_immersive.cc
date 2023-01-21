@@ -82,12 +82,12 @@ using UiElementMap = std::unordered_map<ITfUIElement *, HWND>;
 class ThreadLocalInfo {
  public:
   ThreadLocalInfo() {}
+  ThreadLocalInfo(const ThreadLocalInfo &) = delete;
+  ThreadLocalInfo &operator=(const ThreadLocalInfo &) = delete;
   UiElementMap *ui_element_map() { return &ui_element_map_; }
 
  private:
   UiElementMap ui_element_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(ThreadLocalInfo);
 };
 
 ThreadLocalInfo *GetThreadLocalInfo() {

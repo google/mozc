@@ -29,7 +29,6 @@
 
 #include "gui/base/singleton_window_helper.h"
 
-#include <cstdint>
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -37,6 +36,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <ios>
 #include <memory>
 #include <string>
@@ -122,7 +122,7 @@ SingletonWindowHelper::~SingletonWindowHelper() {}
 bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;
 #ifdef OS_WIN
-  window_info.set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
+  window_info.set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
 #else   // OS_WIN
   window_info.set_process_id(static_cast<uint32_t>(getpid()));
 #endif  // OS_WIN

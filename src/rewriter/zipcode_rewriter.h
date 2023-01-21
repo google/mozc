@@ -41,6 +41,8 @@ namespace mozc {
 class ZipcodeRewriter : public RewriterInterface {
  public:
   explicit ZipcodeRewriter(const dictionary::PosMatcher *pos_matcher);
+  ZipcodeRewriter(const ZipcodeRewriter &) = delete;
+  ZipcodeRewriter &operator=(const ZipcodeRewriter &) = delete;
   ~ZipcodeRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
@@ -56,8 +58,6 @@ class ZipcodeRewriter : public RewriterInterface {
                        Segment *segment) const;
 
   const dictionary::PosMatcher *pos_matcher_;
-
-  DISALLOW_COPY_AND_ASSIGN(ZipcodeRewriter);
 };
 
 }  // namespace mozc

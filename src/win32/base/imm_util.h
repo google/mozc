@@ -31,6 +31,8 @@
 #define MOZC_WIN32_BASE_IMM_UTIL_H_
 
 #include <windows.h>
+
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -40,6 +42,9 @@ namespace win32 {
 
 class ImeUtil {
  public:
+  ImeUtil(const ImeUtil&) = delete;
+  ImeUtil& operator=(const ImeUtil&) = delete;
+
   // Returns true if Google Japanese Input is selected as the default IME.
   static bool IsDefault();
 
@@ -72,15 +77,12 @@ class ImeUtil {
   // Returns true if "MSCTF.AsmCacheReady.<desktop name><session #>" event does
   // not exist.
   // Otherwise returns false.
-  static bool WaitForAsmCacheReady(uint32 timeout_msec);
+  static bool WaitForAsmCacheReady(uint32_t timeout_msec);
 
   // Activates the IMM32 version of Google Japanese Input for all existing
   // applications running in the current session.
   // Returns true if the operation completed successfully.
   static bool ActivateForCurrentSession();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ImeUtil);
 };
 
 }  // namespace win32

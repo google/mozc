@@ -29,11 +29,13 @@
 
 #include "renderer/unix/font_spec.h"
 
+#include <cstdint>
+
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/unix/const.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::Return;
@@ -46,9 +48,9 @@ namespace gtk {
 namespace {
 
 RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
-  RGBA result = {static_cast<uint8>(rgba.r()), static_cast<uint8>(rgba.g()),
-                 static_cast<uint8>(rgba.b()),
-                 static_cast<uint8>(rgba.a() * 255.0)};
+  RGBA result = {static_cast<uint8_t>(rgba.r()), static_cast<uint8_t>(rgba.g()),
+                 static_cast<uint8_t>(rgba.b()),
+                 static_cast<uint8_t>(rgba.a() * 255.0)};
   return result;
 }
 

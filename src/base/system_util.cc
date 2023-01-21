@@ -628,7 +628,7 @@ std::string GetObjectNameAsString(HANDLE handle) {
   return result;
 }
 
-bool GetCurrentSessionId(uint32 *session_id) {
+bool GetCurrentSessionId(uint32_t *session_id) {
   DCHECK(session_id);
   *session_id = 0;
   DWORD id = 0;
@@ -636,9 +636,9 @@ bool GetCurrentSessionId(uint32 *session_id) {
     LOG(ERROR) << "cannot get session id: " << ::GetLastError();
     return false;
   }
-  static_assert(sizeof(DWORD) == sizeof(uint32),
-                "DWORD and uint32 must be equivalent");
-  *session_id = static_cast<uint32>(id);
+  static_assert(sizeof(DWORD) == sizeof(uint32_t),
+                "DWORD and uint32_t must be equivalent");
+  *session_id = static_cast<uint32_t>(id);
   return true;
 }
 
@@ -671,7 +671,7 @@ std::string GetProcessWindowStationName() {
 }
 
 std::string GetSessionIdString() {
-  uint32 session_id = 0;
+  uint32_t session_id = 0;
   if (!GetCurrentSessionId(&session_id)) {
     return "";
   }
@@ -866,9 +866,9 @@ std::string SystemUtil::GetOSVersionString() {
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
     ret += ".";
-    ret += std::to_string(static_cast<uint32>(osvi.dwMajorVersion));
+    ret += std::to_string(static_cast<uint32_t>(osvi.dwMajorVersion));
     ret += ".";
-    ret += std::to_string(static_cast<uint32>(osvi.dwMinorVersion));
+    ret += std::to_string(static_cast<uint32_t>(osvi.dwMinorVersion));
     ret += "." + std::to_string(osvi.wServicePackMajor);
     ret += "." + std::to_string(osvi.wServicePackMinor);
   } else {
@@ -908,7 +908,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 
 #if defined(__APPLE__)
   int mib[] = {CTL_HW, HW_MEMSIZE};
-  uint64 total_memory = 0;
+  uint64_t total_memory = 0;
   size_t size = sizeof(total_memory);
   const int error =
       sysctl(mib, std::size(mib), &total_memory, &size, nullptr, 0);

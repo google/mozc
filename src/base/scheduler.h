@@ -56,6 +56,9 @@ class Timer;
 
 class Scheduler {
  public:
+  Scheduler() = delete;
+  Scheduler(const Scheduler &) = delete;
+  Scheduler &operator=(const Scheduler &) = delete;
   // simple container class for the job setting to be scheduled.
   class JobSetting {
    public:
@@ -125,7 +128,6 @@ class Scheduler {
 
  private:
   // should never be allocated.
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Scheduler);
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_SCHEDULER_H_

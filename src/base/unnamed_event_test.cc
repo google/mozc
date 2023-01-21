@@ -33,7 +33,7 @@
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {
@@ -42,6 +42,9 @@ class UnnamedEventNotifierThread : public Thread {
  public:
   UnnamedEventNotifierThread(UnnamedEvent *event, int timeout)
       : event_(event), timeout_(timeout) {}
+  UnnamedEventNotifierThread(const UnnamedEventNotifierThread &) = delete;
+  UnnamedEventNotifierThread &operator=(const UnnamedEventNotifierThread &) =
+      delete;
 
  public:
   void Run() override {
@@ -53,8 +56,6 @@ class UnnamedEventNotifierThread : public Thread {
  private:
   UnnamedEvent *event_;
   int timeout_;
-
-  DISALLOW_COPY_AND_ASSIGN(UnnamedEventNotifierThread);
 };
 
 TEST(UnnamedEventTest, UnnamedEventTest) {

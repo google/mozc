@@ -54,6 +54,10 @@ namespace tsf {
 // A stateless utility to render candidate UI for immersive mode applications.
 class TipUiRendererImmersive {
  public:
+  TipUiRendererImmersive() = delete;
+  TipUiRendererImmersive(const TipUiRendererImmersive &) = delete;
+  TipUiRendererImmersive &operator=(const TipUiRendererImmersive &) = delete;
+
   // Returns bitmap handle where candidate UI image is rendered.
   // Caller will have the ownership of the returned object.
   // |size| contains the bitmap size and |left_align_offset| contains the
@@ -63,9 +67,6 @@ class TipUiRendererImmersive {
                         const renderer::win32::TextRenderer *text_renderer,
                         renderer::TableLayout *table_layout, SIZE *size,
                         int *left_align_offset);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiRendererImmersive);
 };
 
 }  // namespace tsf

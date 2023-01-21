@@ -72,6 +72,9 @@ class KeyExpansionTable {
     }
   }
 
+  KeyExpansionTable(const KeyExpansionTable &) = delete;
+  KeyExpansionTable &operator=(const KeyExpansionTable &) = delete;
+
   // Add expanding data of the given key.
   void Add(char key, const std::string &data) {
     for (size_t i = 0; i < data.length(); ++i) {
@@ -98,8 +101,6 @@ class KeyExpansionTable {
 
   // 256x256 (key -> value) bit map matrix.
   uint32_t table_[256][256 / 32];
-
-  DISALLOW_COPY_AND_ASSIGN(KeyExpansionTable);
 };
 
 }  // namespace dictionary

@@ -56,15 +56,18 @@ namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kSearchCandidateProviderName[] = L"Mozc";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
  public:
   GetLinguisticAlternatesImpl(TipTextService *text_service,
                               TipQueryProvider *provider)
       : text_service_(text_service), provider_(provider) {}
+  GetLinguisticAlternatesImpl(const GetLinguisticAlternatesImpl &) = delete;
+  GetLinguisticAlternatesImpl &operator=(const GetLinguisticAlternatesImpl &) =
+      delete;
 
  private:
   // The IUnknown interface methods.
@@ -136,8 +139,6 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   std::unique_ptr<TipQueryProvider> provider_;
-
-  DISALLOW_COPY_AND_ASSIGN(GetLinguisticAlternatesImpl);
 };
 
 }  // namespace

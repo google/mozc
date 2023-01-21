@@ -111,6 +111,8 @@ class IndicatorWindow::WindowImpl
   WindowImpl() : alpha_(255), dpi_scaling_(GetDPIScaling()) {
     sprites_.resize(commands::NUM_OF_COMPOSITIONS);
   }
+  WindowImpl(const WindowImpl &) = delete;
+  WindowImpl &operator=(const WindowImpl &) = delete;
 
   BEGIN_MSG_MAP_EX(WindowImpl)
   MSG_WM_CREATE(OnCreate)
@@ -312,8 +314,6 @@ class IndicatorWindow::WindowImpl
   BYTE alpha_;
   double dpi_scaling_;
   std::vector<Sprite> sprites_;
-
-  DISALLOW_COPY_AND_ASSIGN(WindowImpl);
 };
 
 IndicatorWindow::IndicatorWindow() : impl_(new WindowImpl) {}

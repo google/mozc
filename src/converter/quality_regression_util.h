@@ -73,6 +73,8 @@ class QualityRegressionUtil {
   };
 
   explicit QualityRegressionUtil(ConverterInterface *converter);
+  QualityRegressionUtil(const QualityRegressionUtil &) = delete;
+  QualityRegressionUtil &operator=(const QualityRegressionUtil &) = delete;
   virtual ~QualityRegressionUtil();
 
   // Pase |filename| and save the all test items into |outputs|.
@@ -93,8 +95,6 @@ class QualityRegressionUtil {
   std::unique_ptr<commands::Request> request_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<Segments> segments_;
-
-  DISALLOW_COPY_AND_ASSIGN(QualityRegressionUtil);
 };
 
 }  // namespace quality_regression

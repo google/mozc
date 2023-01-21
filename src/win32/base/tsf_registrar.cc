@@ -37,6 +37,7 @@
 #include <objbase.h>
 
 #include <memory>
+#include <string>
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -52,8 +53,6 @@ namespace {
 
 // Defines the constant strings used in the TsfRegistrar::RegisterCOMServer()
 // function and the TsfRegistrar::UnregisterCOMServer() function.
-// We define these strings as WCHAR arrays to retrieve the size of this
-// string with the ARRAYSIZE() macro.
 const wchar_t kTipInfoKeyPrefix[] = L"CLSID\\";
 const wchar_t kTipInProcServer32[] = L"InProcServer32";
 const wchar_t kTipThreadingModel[] = L"ThreadingModel";

@@ -274,6 +274,10 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         window_(window_handle),
         window_visible_(false) {}
 
+  TipImmersiveUiElementImpl(const TipImmersiveUiElementImpl &) = delete;
+  TipImmersiveUiElementImpl &operator=(const TipImmersiveUiElementImpl &) =
+      delete;
+
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
   // TODO(yukawa): put "final" keyword to the class declaration when C++11
@@ -479,6 +483,9 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   // which is an observer for exclusively read the date from the text store.
   class UpdateUiEditSession : public ITfEditSession {
    public:
+    UpdateUiEditSession(const UpdateUiEditSession &) = delete;
+    UpdateUiEditSession &operator=(const UpdateUiEditSession &) = delete;
+
     // Destructor is kept as non-virtual because this class is designed to be
     // destroyed only by "delete this" in Release() method.
     // TODO(yukawa): put "final" keyword to the class declaration when C++11
@@ -502,8 +509,6 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     CComPtr<TipTextService> text_service_;
     CComPtr<ITfContext> context_;
     CComPtr<TipImmersiveUiElementImpl> ui_element_;
-
-    DISALLOW_COPY_AND_ASSIGN(UpdateUiEditSession);
   };
 
   // The ITfUIElement interface methods
@@ -566,7 +571,6 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   TableLayout table_layout_;
   CRect target_rect_;
   Output output_;
-  DISALLOW_COPY_AND_ASSIGN(TipImmersiveUiElementImpl);
 };
 
 HWND GetOwnerWindow(ITfContext *context) {
@@ -588,12 +592,12 @@ using WindowMap = std::unordered_map<HWND, TipImmersiveUiElementImpl *>;
 class ThreadLocalInfo {
  public:
   ThreadLocalInfo() {}
+  ThreadLocalInfo(const ThreadLocalInfo &) = delete;
+  ThreadLocalInfo &operator=(const ThreadLocalInfo &) = delete;
   WindowMap *window_map() { return &window_map_; }
 
  private:
   WindowMap window_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(ThreadLocalInfo);
 };
 
 ThreadLocalInfo *GetThreadLocalInfo() {

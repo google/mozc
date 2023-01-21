@@ -41,7 +41,7 @@
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "absl/container/btree_set.h"
 
 namespace mozc {
@@ -77,6 +77,8 @@ class KeyMapManager {
   KeyMapManager();
   // Decoder should explicitly set the keymap.
   explicit KeyMapManager(config::Config::SessionKeymap keymap);
+  KeyMapManager(const KeyMapManager &) = delete;
+  KeyMapManager &operator=(const KeyMapManager &) = delete;
   ~KeyMapManager();
 
   config::Config::SessionKeymap GetKeymap() const { return keymap_; }
@@ -210,8 +212,6 @@ class KeyMapManager {
   // enabled only if prediction is shown. Otherwise, inherit from
   // keymap_conversion
   keymap::KeyMap<keymap::ConversionState> keymap_prediction_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyMapManager);
 };
 
 }  // namespace keymap

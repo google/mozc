@@ -27,12 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/ime/ime_core.h"
+
 // clang-format off
 #include <windows.h>
 #include <ime.h>
 #include <msctf.h>
 // clang-format on
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -42,11 +45,10 @@
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
-#include "win32/ime/ime_core.h"
 
 namespace mozc {
 namespace win32 {
@@ -74,7 +76,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   virtual bool ForceTerminateServer(const std::string &name) { return true; }
 
-  virtual bool WaitServer(uint32 pid) { return true; }
+  virtual bool WaitServer(uint32_t pid) { return true; }
 
   virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
     LOG(ERROR) << static_cast<int>(type);
@@ -106,11 +108,11 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     start_server_result_ = result;
   }
 
-  void set_server_protocol_version(uint32 server_protocol_version) {
+  void set_server_protocol_version(uint32_t server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
   }
 
-  uint32 set_server_protocol_version() const {
+  uint32_t set_server_protocol_version() const {
     return server_protocol_version_;
   }
 
@@ -122,7 +124,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   IPCClientFactoryMock *factory_;
   bool start_server_result_;
   bool start_server_called_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string response_;
   std::map<int, int> error_map_;
 };

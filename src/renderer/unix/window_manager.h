@@ -40,7 +40,7 @@
 #include "renderer/unix/gtk_window_interface.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
 #include "renderer/unix/window_manager_interface.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace renderer {
@@ -52,6 +52,8 @@ class WindowManager : public WindowManagerInterface {
   explicit WindowManager(GtkWindowInterface *main_window,
                          GtkWindowInterface *infolist_window,
                          GtkWrapperInterface *gtk);
+  WindowManager(const WindowManager &) = delete;
+  WindowManager &operator=(const WindowManager &) = delete;
   virtual ~WindowManager();
 
   virtual void Initialize();
@@ -98,7 +100,6 @@ class WindowManager : public WindowManagerInterface {
   std::unique_ptr<GtkWrapperInterface> gtk_;
   client::SendCommandInterface *send_command_interface_;
   std::string previous_font_description_;
-  DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
 
 }  // namespace gtk

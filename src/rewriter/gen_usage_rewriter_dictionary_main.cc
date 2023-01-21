@@ -49,7 +49,7 @@
 // SerializedStringArray.
 //
 // ** Base conjugation suffix
-// Array of uint32 indices to the string array for base forms of conjugation
+// Array of uint32_t indices to the string array for base forms of conjugation
 // suffixes.  Value and key suffixes are stored as follows:
 //
 // | value_suffix[0] | key_suffix[0] | value_suffix[1] | key_suffix[1] |...
@@ -63,7 +63,7 @@
 //
 // ** Conjugation suffix index
 //
-// Array of uint32 indices sorted in ascending order.  This array represents a
+// Array of uint32_t indices sorted in ascending order.  This array represents a
 // partition of the conjugation suffix, where the range [array[i], array[i + 1])
 // of conjugation suffix data stores the suffix information of i-th conjugation
 // type.
@@ -71,7 +71,7 @@
 // ** Usage item array
 
 // This is an array of usage dictionary entries.  Each entry consists of 5
-// uint32 values and has the following layout:
+// uint32_t values and has the following layout:
 //
 // +=============================+
 // | Usage ID (4 byte)           |

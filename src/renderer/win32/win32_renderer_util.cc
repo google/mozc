@@ -40,6 +40,7 @@
 // clang-format on
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
@@ -51,6 +52,7 @@
 #include "base/win_util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
+#include "absl/base/macros.h"
 
 namespace mozc {
 namespace renderer {
@@ -271,7 +273,7 @@ bool ExtractParams(LayoutManager *layout, int compatibility_mode,
     const commands::RendererCommand::CandidateForm &form =
         app_info.candidate_form();
 
-    const uint32 candidate_style_bits = form.style_bits();
+    const uint32_t candidate_style_bits = form.style_bits();
 
     const bool has_candidate_pos_style_bit =
         ((candidate_style_bits & CandidateForm::CANDIDATEPOS) ==
@@ -636,6 +638,9 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
       : logical_to_physical_point_for_per_monitor_dpi_(
             GetLogicalToPhysicalPointForPerMonitorDPI()) {}
 
+  NativeWindowPositionAPI(const NativeWindowPositionAPI &) = delete;
+  NativeWindowPositionAPI &operator=(const NativeWindowPositionAPI &) = delete;
+
   virtual ~NativeWindowPositionAPI() {}
 
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
@@ -718,8 +723,8 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     }
     wchar_t class_name_buffer[1024] = {};
     const size_t num_copied_without_null = ::GetClassNameW(
-        window_handle, class_name_buffer, ARRAYSIZE(class_name_buffer));
-    if (num_copied_without_null >= (ARRAYSIZE(class_name_buffer) - 1)) {
+        window_handle, class_name_buffer, std::size(class_name_buffer));
+    if (num_copied_without_null >= (std::size(class_name_buffer) - 1)) {
       DLOG(ERROR) << "buffer length is insufficient.";
       return false;
     }
@@ -749,8 +754,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 
   const LogicalToPhysicalPointForPerMonitorDPIFunc
       logical_to_physical_point_for_per_monitor_dpi_;
-
-  DISALLOW_COPY_AND_ASSIGN(NativeWindowPositionAPI);
 };
 
 struct WindowInfo {
@@ -799,6 +802,9 @@ class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
  public:
   WindowPositionEmulatorImpl() {}
+  WindowPositionEmulatorImpl(const WindowPositionEmulatorImpl &) = delete;
+  WindowPositionEmulatorImpl &operator=(const WindowPositionEmulatorImpl &) =
+      delete;
   virtual ~WindowPositionEmulatorImpl() {}
 
   // This method is not const to implement Win32WindowInterface.
@@ -938,8 +944,6 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   std::map<HWND, WindowInfo> window_map_;
   std::map<HWND, HWND> root_map_;
-
-  DISALLOW_COPY_AND_ASSIGN(WindowPositionEmulatorImpl);
 };
 
 bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
@@ -1742,7 +1746,7 @@ bool LayoutManager::LayoutCompositionWindow(
     }
   }
 
-  const uint32 style_bits = composition_form.style_bits();
+  const uint32_t style_bits = composition_form.style_bits();
 
   // Check the availability of optional fields.
   // Note that currently we always use |current_position| field even when
@@ -2444,7 +2448,7 @@ int LayoutManager::GetCompatibilityMode(
         L"OperaWindowClass",
         L"QWidget",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
+    for (size_t i = 0; i < std::size(kUseCandidateFormForSuggest); ++i) {
       if (kUseCandidateFormForSuggest[i] == class_name) {
         mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
         break;
@@ -2458,7 +2462,7 @@ int LayoutManager::GetCompatibilityMode(
         L"SunAwtDialog",
         L"SunAwtFrame",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
+    for (size_t i = 0; i < std::size(kUseLocalCoord); ++i) {
       if (kUseLocalCoord[i] == class_name) {
         mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
         break;
@@ -2471,7 +2475,7 @@ int LayoutManager::GetCompatibilityMode(
         L"SunAwtDialog",
         L"SunAwtFrame",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
+    for (size_t i = 0; i < std::size(kIgnoreDefaultCompositionForm); ++i) {
       if (kIgnoreDefaultCompositionForm[i] == class_name) {
         mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
         break;
@@ -2484,7 +2488,7 @@ int LayoutManager::GetCompatibilityMode(
         L"Emacs",
         L"MEADOW",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
+    for (size_t i = 0; i < std::size(kShowInfolistImmediately); ++i) {
       if (kShowInfolistImmediately[i] == class_name) {
         mode |= SHOW_INFOLIST_IMMEDIATELY;
         break;

@@ -33,7 +33,7 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 using ssize_t = SSIZE_T;
-#else
+#else  // OS_WIN
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -94,11 +94,11 @@ bool Send(int socket, const char *buf, size_t buf_size, int timeout) {
   while (buf_left > 0) {
 #if defined(OS_WIN)
     constexpr int kFlag = 0;
-#elif defined(__APPLE__)
+#elif defined(__APPLE__)  // defined(OS_WIN)
     constexpr int kFlag = SO_NOSIGPIPE;
-#else
+#else                     // defined(__APPLE__)
     constexpr int kFlag = MSG_NOSIGNAL;
-#endif
+#endif                    // defined(__APPLE__)
     const ssize_t read_size = ::send(socket, buf, buf_left, kFlag);
     if (read_size < 0) {
       LOG(ERROR) << "an error occurred during sending";
@@ -114,10 +114,10 @@ void CloseSocket(int client_socket) {
 #ifdef OS_WIN
   ::closesocket(client_socket);
   ::shutdown(client_socket, SD_BOTH);
-#else
+#else   // OS_WIN
   ::close(client_socket);
   ::shutdown(client_socket, SHUT_RDWR);
-#endif
+#endif  // OS_WIN
 }
 
 // Standalone RPCServer.
@@ -140,7 +140,7 @@ class RPCServer {
     flags |= FD_CLOEXEC;
     CHECK_EQ(::fcntl(server_socket_, F_SETFD, flags), 0)
         << "fctl(F_SETFD) failed";
-#endif
+#endif  // !OS_WIN
 
     ::memset(&sin, 0, sizeof(sin));
     sin.sin_port = htons(absl::GetFlag(FLAGS_port));
@@ -337,12 +337,12 @@ class ScopedWSAData {
 #ifdef OS_WIN
     WSADATA wsaData;
     CHECK_EQ(::WSAStartup(MAKEWORD(2, 1), &wsaData), 0) << "WSAStartup failed";
-#endif
+#endif  // OS_WIN
   }
   ~ScopedWSAData() {
 #ifdef OS_WIN
     ::WSACleanup();
-#endif
+#endif  // OS_WIN
   }
 };
 }  // namespace

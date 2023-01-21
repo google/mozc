@@ -37,7 +37,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
 
 namespace mozc {
@@ -80,15 +80,14 @@ std::string GetInput(const Table &table, const std::string &key) {
 class TableTest : public ::testing::Test {
  protected:
   TableTest() = default;
+  TableTest(const TableTest &) = delete;
+  TableTest &operator=(const TableTest &) = delete;
   ~TableTest() override = default;
 
   void SetUp() override { config::ConfigHandler::GetDefaultConfig(&config_); }
 
   const testing::MockDataManager mock_data_manager_;
   config::Config config_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TableTest);
 };
 
 TEST_F(TableTest, LookUp) {

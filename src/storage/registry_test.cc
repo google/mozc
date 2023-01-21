@@ -33,8 +33,8 @@
 #include <string>
 
 #include "base/system_util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
@@ -45,33 +45,33 @@ TEST(RegistryTest, TinyStorageTest) {
 
   {
     uint64_t value = 20;
-    EXPECT_TRUE(Registry::Insert("uint64", value));
+    EXPECT_TRUE(Registry::Insert("uint64_t", value));
     uint64_t expected = 0;
-    EXPECT_TRUE(Registry::Lookup("uint64", &expected));
+    EXPECT_TRUE(Registry::Lookup("uint64_t", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
     uint32_t value = 20;
-    EXPECT_TRUE(Registry::Insert("uint32", value));
+    EXPECT_TRUE(Registry::Insert("uint32_t", value));
     uint32_t expected = 0;
-    EXPECT_TRUE(Registry::Lookup("uint32", &expected));
+    EXPECT_TRUE(Registry::Lookup("uint32_t", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
     uint16_t value = 20;
-    EXPECT_TRUE(Registry::Insert("uint16", value));
+    EXPECT_TRUE(Registry::Insert("uint16_t", value));
     uint16_t expected = 0;
-    EXPECT_TRUE(Registry::Lookup("uint16", &expected));
+    EXPECT_TRUE(Registry::Lookup("uint16_t", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
     uint8_t value = 20;
-    EXPECT_TRUE(Registry::Insert("uint8", value));
+    EXPECT_TRUE(Registry::Insert("uint8_t", value));
     uint8_t expected = 0;
-    EXPECT_TRUE(Registry::Lookup("uint8", &expected));
+    EXPECT_TRUE(Registry::Lookup("uint8_t", &expected));
     EXPECT_EQ(expected, value);
   }
 

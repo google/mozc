@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_UNIX_WINDOW_MANAGER_MOCK_H_
 
 #include "renderer/unix/window_manager_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

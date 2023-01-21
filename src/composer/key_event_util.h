@@ -46,6 +46,10 @@ typedef uint64_t KeyInformation;
 // This is pure static class.
 class KeyEventUtil {
  public:
+  KeyEventUtil() = delete;
+  KeyEventUtil(const KeyEventUtil &) = delete;
+  KeyEventUtil &operator=(const KeyEventUtil &) = delete;
+
   static uint32_t GetModifiers(const commands::KeyEvent &key_event);
 
   // |Modifiers(16bit)|SpecialKey(16bit)|Unicode(32bit)|
@@ -93,9 +97,6 @@ class KeyEventUtil {
   static bool IsLowerAlphabet(const commands::KeyEvent &key_event);
   static bool IsUpperAlphabet(const commands::KeyEvent &key_event);
   static bool IsNumpadKey(const commands::KeyEvent &key_event);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyEventUtil);
 };
 
 }  // namespace mozc

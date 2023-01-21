@@ -33,7 +33,7 @@
 #include <string>
 #include <utility>
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace {
 

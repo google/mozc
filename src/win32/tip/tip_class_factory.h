@@ -43,6 +43,8 @@ namespace tsf {
 class TipClassFactory : public IClassFactory {
  public:
   TipClassFactory();
+  TipClassFactory(const TipClassFactory &) = delete;
+  TipClassFactory &operator=(const TipClassFactory &) = delete;
 
   // IUnknown methods
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
@@ -58,8 +60,6 @@ class TipClassFactory : public IClassFactory {
 
  private:
   TipRefCount ref_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipClassFactory);
 };
 
 }  // namespace tsf

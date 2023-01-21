@@ -117,6 +117,8 @@ class VKBackBasedDeleter {
   };
 
   VKBackBasedDeleter();
+  VKBackBasedDeleter(const VKBackBasedDeleter &) = delete;
+  VKBackBasedDeleter &operator=(const VKBackBasedDeleter &) = delete;
   ~VKBackBasedDeleter();
 
   // For unit test only.
@@ -150,8 +152,6 @@ class VKBackBasedDeleter {
   std::unique_ptr<Win32KeyboardInterface> keyboard_;
   std::unique_ptr<InputState> pending_ime_state_;
   std::unique_ptr<mozc::commands::Output> pending_output_;
-
-  DISALLOW_COPY_AND_ASSIGN(VKBackBasedDeleter);
 };
 
 }  // namespace win32

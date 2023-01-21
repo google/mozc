@@ -96,7 +96,7 @@ T *Singleton<T>::instance_ = nullptr;
 //
 //   using ClockSingleton = SingletonMockable<ClockInterface, ClockImpl>;
 //
-//   uint64 Clock::GetTime() {
+//   uint64_t Clock::GetTime() {
 //     return ClockSingleton::Get()->GetTime();
 //   }
 //

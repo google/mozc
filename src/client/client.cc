@@ -31,7 +31,6 @@
 
 #include "client/client.h"
 
-#include <cstdint>
 
 #ifdef OS_WIN
 #include <Windows.h>
@@ -40,6 +39,7 @@
 #endif  // OS_WIN
 
 #include <cstddef>
+#include <cstdint>
 #include <ios>
 #include <memory>
 #include <ostream>
@@ -118,7 +118,7 @@ void Client::InitRequestForSvsJapanese(bool use_svs) {
   request_ = std::make_unique<commands::Request>();
 
   commands::DecoderExperimentParams params;
-  uint32 variation_types = params.variation_character_types();
+  uint32_t variation_types = params.variation_character_types();
   if (use_svs) {
     variation_types |= commands::DecoderExperimentParams::SVS_JAPANESE;
   } else {
@@ -466,8 +466,8 @@ bool Client::CreateSession() {
   DCHECK(info);
 
 #ifdef OS_WIN
-  info->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
-  info->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
+  info->set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
+  info->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
 #else   // OS_WIN
   info->set_process_id(static_cast<uint32_t>(getpid()));
   info->set_thread_id(0);

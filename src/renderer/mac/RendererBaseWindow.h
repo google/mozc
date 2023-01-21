@@ -32,6 +32,8 @@
 
 #include <Cocoa/Cocoa.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -39,11 +41,13 @@ namespace renderer {
 namespace mac {
 class RendererBaseWindow {
  public:
+  RendererBaseWindow(const RendererBaseWindow &) = delete;
+  RendererBaseWindow &operator=(const RendererBaseWindow &) = delete;
   Size GetWindowSize() const;
   virtual void Hide();
   virtual void Show();
   virtual void MoveWindow(const NSPoint &point);
-  virtual void ResizeWindow(int32 width, int32 height);
+  virtual void ResizeWindow(int32_t width, int32_t height);
   virtual bool IsVisible();
   virtual void SetWindowLevel(NSInteger window_level);
 
@@ -58,7 +62,6 @@ class RendererBaseWindow {
  private:
   virtual void ResetView();
   NSInteger window_level_;
-  DISALLOW_COPY_AND_ASSIGN(RendererBaseWindow);
 };
 
 }  // namespace mozc::renderer::mac

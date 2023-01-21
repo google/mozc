@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "testing/base/public/mozctest.h"
+#include "testing/mozctest.h"
 
 #include <cstdlib>
 #include <string>
@@ -38,7 +38,7 @@
 #include "base/logging.h"
 #include "base/status.h"
 #include "base/system_util.h"
-#include "testing/base/public/googletest.h"
+#include "testing/googletest.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

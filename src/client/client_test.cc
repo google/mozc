@@ -42,7 +42,7 @@
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -170,6 +170,8 @@ class TestServerLauncher : public ServerLauncherInterface {
 class ClientTest : public testing::Test {
  protected:
   ClientTest() : version_diff_(0) {}
+  ClientTest(const ClientTest &) = delete;
+  ClientTest &operator=(const ClientTest &) = delete;
 
   void SetUp() override {
     client_factory_ = std::make_unique<IPCClientFactoryMock>();
@@ -223,9 +225,6 @@ class ClientTest : public testing::Test {
   std::unique_ptr<Client> client_;
   TestServerLauncher *server_launcher_;
   int version_diff_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ClientTest);
 };
 
 TEST_F(ClientTest, ConnectionError) {
@@ -755,6 +754,8 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
 class SessionPlaybackTest : public testing::Test {
  protected:
   SessionPlaybackTest() = default;
+  SessionPlaybackTest(const SessionPlaybackTest &) = delete;
+  SessionPlaybackTest &operator=(const SessionPlaybackTest &) = delete;
   ~SessionPlaybackTest() override = default;
 
   void SetUp() override {
@@ -798,9 +799,6 @@ class SessionPlaybackTest : public testing::Test {
   std::unique_ptr<IPCClientMock> ipc_client_;
   std::unique_ptr<Client> client_;
   SessionPlaybackTestServerLauncher *server_launcher_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SessionPlaybackTest);
 };
 
 // b/2797557

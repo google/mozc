@@ -278,7 +278,7 @@ genrule(
         "$(location //data/rules:third_party_pos_map.def) " +
         "--output=$@"
     ),
-    exec_tools = [":gen_pos_map"],
+    tools = [":gen_pos_map"],
 )
 
 cc_library_mozc(
@@ -613,7 +613,7 @@ genrule(
     outs = ["pos_matcher.h"],
     cmd = ("$(location :gen_pos_matcher_code) " + "--pos_matcher_rule_file=$< " +
            "--output_pos_matcher_h=$@"),
-    exec_tools = [":gen_pos_matcher_code"],
+    tools = [":gen_pos_matcher_code"],
     visibility = [
         "//visibility:private",
     ],
@@ -794,6 +794,6 @@ genrule(
                    " --jigyosyo $(location @zip_code_jigyosyo//:JIGYOSYO.CSV)"),
         )
     ),
-    exec_tools = [":gen_zip_code_seed"],
+    tools = [":gen_zip_code_seed"],
     visibility = ["//:__subpackages__"],
 )

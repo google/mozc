@@ -81,7 +81,7 @@ bool BasicCodeGenByteArrayStreamBuf::OpenVarDef(
   }
   var_name_base_ = var_name_base;
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  *output_stream_ << "const uint64 k" << var_name_base_
+  *output_stream_ << "const uint64_t k" << var_name_base_
                   << "_data_wordtype[] = {\n";
   output_stream_format_flags_ = output_stream_->flags();
   // Set the output format in the form of "0x000012340000ABCD".

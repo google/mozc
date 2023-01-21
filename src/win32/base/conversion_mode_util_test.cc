@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/base/conversion_mode_util.h"
+
 #if defined(OS_WIN)
 // clang-format off
 #include <windows.h>
@@ -34,32 +36,33 @@
 // clang-format on
 #endif  // OS_WIN
 
+#include <cstdint>
+
 #include "protocol/commands.pb.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-#include "win32/base/conversion_mode_util.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {
 #if !defined(OS_WIN)
 // Use the same naming convention to emulate imm32.h.
-const uint32 IME_CMODE_ALPHANUMERIC = 0x0;
-const uint32 IME_CMODE_NATIVE = 0x1;
-const uint32 IME_CMODE_KATAKANA = 0x2;
-const uint32 IME_CMODE_LANGUAGE = 0x3;
-const uint32 IME_CMODE_FULLSHAPE = 0x8;
-const uint32 IME_CMODE_ROMAN = 0x10;
-const uint32 IME_CMODE_CHARCODE = 0x20;
-const uint32 IME_CMODE_HANJACONVERT = 0x40;
-const uint32 IME_CMODE_SOFTKBD = 0x80;
-const uint32 IME_CMODE_NOCONVERSION = 0x100;
-const uint32 IME_CMODE_EUDC = 0x200;
-const uint32 IME_CMODE_SYMBOL = 0x400;
-const uint32 IME_CMODE_SYMBOL = 0x800;
+const uint32_t IME_CMODE_ALPHANUMERIC = 0x0;
+const uint32_t IME_CMODE_NATIVE = 0x1;
+const uint32_t IME_CMODE_KATAKANA = 0x2;
+const uint32_t IME_CMODE_LANGUAGE = 0x3;
+const uint32_t IME_CMODE_FULLSHAPE = 0x8;
+const uint32_t IME_CMODE_ROMAN = 0x10;
+const uint32_t IME_CMODE_CHARCODE = 0x20;
+const uint32_t IME_CMODE_HANJACONVERT = 0x40;
+const uint32_t IME_CMODE_SOFTKBD = 0x80;
+const uint32_t IME_CMODE_NOCONVERSION = 0x100;
+const uint32_t IME_CMODE_EUDC = 0x200;
+const uint32_t IME_CMODE_SYMBOL = 0x400;
+const uint32_t IME_CMODE_SYMBOL = 0x800;
 #endif  // !OS_WIN
 
 TEST(ConversionModeUtilTest, ToNativeMode) {
-  uint32 native_code = 0;
+  uint32_t native_code = 0;
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, false,
@@ -98,7 +101,7 @@ TEST(ConversionModeUtilTest, ToNativeMode) {
 }
 
 TEST(ConversionModeUtilTest, ToNativeModeWithKanaLocked) {
-  uint32 native_code = 0;
+  uint32_t native_code = 0;
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, true,

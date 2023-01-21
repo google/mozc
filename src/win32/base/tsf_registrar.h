@@ -40,6 +40,10 @@ namespace win32 {
 // Registers Mozc as a text input processor or unregister.
 class TsfRegistrar {
  public:
+  TsfRegistrar() = delete;
+  TsfRegistrar(const TsfRegistrar &) = delete;
+  TsfRegistrar &operator=(const TsfRegistrar &) = delete;
+
   // Registers the DLL specified with |path| as a COM server.
   static HRESULT RegisterCOMServer(const wchar_t *path, DWORD path_length);
 
@@ -72,9 +76,6 @@ class TsfRegistrar {
   // Enables or disables the text input processor profile.
   // The caller is responsible for initializing COM before call this function.
   static HRESULT SetProfileEnabled(BOOL enable);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TsfRegistrar);
 };
 }  // namespace win32
 }  // namespace mozc

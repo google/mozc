@@ -53,6 +53,8 @@ class UserDictionarySession {
   class UndoCommand;
 
   explicit UserDictionarySession(const std::string &filepath);
+  UserDictionarySession(const UserDictionarySession &) = delete;
+  UserDictionarySession &operator=(const UserDictionarySession &) = delete;
   ~UserDictionarySession();
 
   const UserDictionaryStorage &storage() const;
@@ -143,8 +145,6 @@ class UserDictionarySession {
   std::unique_ptr<mozc::UserDictionaryStorage> storage_;
   std::string default_dictionary_name_;
   std::deque<UndoCommand *> undo_history_;
-
-  DISALLOW_COPY_AND_ASSIGN(UserDictionarySession);
 };
 
 }  // namespace user_dictionary

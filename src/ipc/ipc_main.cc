@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <cstring>
 #include <iostream>  // NOLINT
 #include <string>
@@ -44,8 +45,8 @@ ABSL_FLAG(bool, test, false, "automatic test mode");
 ABSL_FLAG(bool, server, false, "invoke as server mode");
 ABSL_FLAG(bool, client, false, "invoke as client mode");
 ABSL_FLAG(std::string, server_path, "", "server path");
-ABSL_FLAG(int32, num_threads, 10, "number of threads");
-ABSL_FLAG(int32, num_requests, 100, "number of requests");
+ABSL_FLAG(int32_t, num_threads, 10, "number of threads");
+ABSL_FLAG(int32_t, num_requests, 100, "number of requests");
 
 namespace mozc {
 
@@ -68,7 +69,7 @@ class MultiConnections : public Thread {
 
 class EchoServer : public IPCServer {
  public:
-  EchoServer(const std::string &path, int32 num_connections, int32 timeout)
+  EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
       : IPCServer(path, num_connections, timeout) {}
   bool Process(absl::string_view input, std::string *output) override {
     output->assign(input.data(), input.size());

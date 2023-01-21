@@ -29,7 +29,7 @@
 
 #include "dictionary/system/key_expansion_table.h"
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace dictionary {

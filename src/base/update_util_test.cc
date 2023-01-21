@@ -34,7 +34,7 @@
 #ifdef OS_WIN
 #include "base/win_api_test_helper.h"
 #endif  // OS_WIN
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

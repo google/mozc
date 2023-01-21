@@ -29,6 +29,7 @@
 
 #include "renderer/unix/candidate_window.h"
 
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -42,8 +43,8 @@
 #include "renderer/unix/draw_tool_mock.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "renderer/unix/text_renderer_mock.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -92,13 +93,13 @@ MATCHER_P(RGBAEq, expected_rgba, "The expected RGBA does not match") {
          (arg.blue == expected_rgba.blue) && (arg.alpha == expected_rgba.alpha);
 }
 
-void SetTestCandidates(uint32 count, bool has_value, bool has_shortcut,
+void SetTestCandidates(uint32_t count, bool has_value, bool has_shortcut,
                        bool has_description, bool has_prefix, bool has_suffix,
                        commands::Candidates *candidates) {
   candidates->Clear();
   candidates->set_size(count);
 
-  for (uint32 i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count; ++i) {
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
     candidate->set_index(i);
     candidate->set_id(i * 0x10);

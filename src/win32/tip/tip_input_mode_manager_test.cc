@@ -29,8 +29,8 @@
 
 #include "win32/tip/tip_input_mode_manager.h"
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {

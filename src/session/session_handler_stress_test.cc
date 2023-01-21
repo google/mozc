@@ -43,8 +43,8 @@
 #include "session/request_test_util.h"
 #include "session/session_handler.h"
 #include "session/session_handler_tool.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace {
@@ -58,7 +58,7 @@ uint32_t GenerateRandomSeed() {
 }  // namespace
 
 ABSL_FLAG(uint32_t, random_seed, GenerateRandomSeed(),
-          "Random seed value. This value will be interpreted as uint32.");
+          "Random seed value. This value will be interpreted as uint32_t.");
 ABSL_FLAG(bool, set_mobile_request, false,
           "If true, set commands::Request to the mobine one.");
 

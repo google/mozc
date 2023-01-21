@@ -38,8 +38,8 @@
 
 #include "base/port.h"
 #include "converter/quality_regression_util.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 

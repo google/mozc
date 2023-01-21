@@ -42,14 +42,14 @@ namespace tsf {
 class TipRefCount {
  public:
   TipRefCount();
+  TipRefCount(const TipRefCount&) = delete;
+  TipRefCount& operator=(const TipRefCount&) = delete;
   ~TipRefCount();
   ULONG AddRefImpl();
   ULONG ReleaseImpl();
 
  private:
   volatile LONG reference_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipRefCount);
 };
 
 }  // namespace tsf

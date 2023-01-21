@@ -32,13 +32,15 @@
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
+
+#include <cstdint>
 #include <string>
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "absl/flags/flag.h"
 
-ABSL_FLAG(int32, sleep_time, 30, "sleep 30 sec");
+ABSL_FLAG(int32_t, sleep_time, 30, "sleep 30 sec");
 ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
@@ -54,9 +56,9 @@ int main(int argc, char **argv) {
 
 #ifdef OS_WIN
   ::Sleep(absl::GetFlag(FLAGS_sleep_time) * 1000);
-#else
+#else   // OS_WIN
   ::sleep(absl::GetFlag(FLAGS_sleep_time));
-#endif
+#endif  // OS_WIN
 
   mutex.UnLock();
 

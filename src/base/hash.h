@@ -40,6 +40,9 @@ namespace mozc {
 
 class Hash {
  public:
+  Hash() = delete;
+  Hash(const Hash&) = delete;
+  Hash& operator=(const Hash&) = delete;
   // Calculates 64-bit fingerprint.
   static uint64_t Fingerprint(absl::string_view str);
   static uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed);
@@ -81,9 +84,6 @@ class Hash {
         absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
         seed);
   }
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Hash);
 };
 
 }  // namespace mozc

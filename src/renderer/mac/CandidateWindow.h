@@ -50,6 +50,8 @@ namespace mac {
 class CandidateWindow : public RendererBaseWindow {
  public:
   CandidateWindow();
+  CandidateWindow(const CandidateWindow &) = delete;
+  CandidateWindow &operator=(const CandidateWindow &) = delete;
   virtual ~CandidateWindow();
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
@@ -60,7 +62,6 @@ class CandidateWindow : public RendererBaseWindow {
   void InitWindow();
   void ResetView();
   mozc::client::SendCommandInterface *command_sender_;
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };
 
 }  // namespace mac

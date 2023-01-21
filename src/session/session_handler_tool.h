@@ -50,6 +50,8 @@ namespace session {
 class SessionHandlerTool {
  public:
   explicit SessionHandlerTool(std::unique_ptr<EngineInterface> engine);
+  SessionHandlerTool(const SessionHandlerTool &) = delete;
+  SessionHandlerTool &operator=(const SessionHandlerTool &) = delete;
   ~SessionHandlerTool();
 
   bool CreateSession();
@@ -91,8 +93,6 @@ class SessionHandlerTool {
   UserDataManagerInterface *data_manager_;
   std::unique_ptr<SessionHandlerInterface> handler_;
   std::string callback_text_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionHandlerTool);
 };
 
 class SessionHandlerInterpreter {

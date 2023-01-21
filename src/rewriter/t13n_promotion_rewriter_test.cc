@@ -40,8 +40,8 @@
 #include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/request_test_util.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

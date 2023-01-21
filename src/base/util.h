@@ -381,7 +381,7 @@ class Util {
   // Returns true if all characters of `str` are JIS X 0208.
   static bool IsJisX0208(absl::string_view str);
 
-  // Serializes uint64 into a string of eight byte.
+  // Serializes uint64_t into a string of eight byte.
   static std::string SerializeUint64(uint64_t x);
 
   // Deserializes a string serialized by SerializeUint64.  Returns false if the
@@ -416,6 +416,8 @@ class Util {
 class ConstChar32Iterator {
  public:
   explicit ConstChar32Iterator(absl::string_view utf8_string);
+  ConstChar32Iterator(const ConstChar32Iterator &) = delete;
+  ConstChar32Iterator &operator=(const ConstChar32Iterator &) = delete;
   char32_t Get() const;
   void Next();
   bool Done() const;
@@ -424,8 +426,6 @@ class ConstChar32Iterator {
   absl::string_view utf8_string_;
   char32_t current_;
   bool done_;
-
-  DISALLOW_COPY_AND_ASSIGN(ConstChar32Iterator);
 };
 
 // Const reverse iterator implementation to traverse on a (utf8) string as a
@@ -440,6 +440,9 @@ class ConstChar32Iterator {
 class ConstChar32ReverseIterator {
  public:
   explicit ConstChar32ReverseIterator(absl::string_view utf8_string);
+  ConstChar32ReverseIterator(const ConstChar32ReverseIterator &) = delete;
+  ConstChar32ReverseIterator &operator=(const ConstChar32ReverseIterator &) =
+      delete;
   char32_t Get() const;
   void Next();
   bool Done() const;
@@ -448,19 +451,18 @@ class ConstChar32ReverseIterator {
   absl::string_view utf8_string_;
   char32_t current_;
   bool done_;
-
-  DISALLOW_COPY_AND_ASSIGN(ConstChar32ReverseIterator);
 };
 
 // Actual definitions of delimiter classes.
 class SingleDelimiter {
  public:
   explicit SingleDelimiter(const char *delim) : delim_(*delim) {}
+  SingleDelimiter(const SingleDelimiter &) = delete;
+  SingleDelimiter &operator=(const SingleDelimiter &) = delete;
   bool Contains(char c) const { return c == delim_; }
 
  private:
   const char delim_;
-  DISALLOW_COPY_AND_ASSIGN(SingleDelimiter);
 };
 
 class MultiDelimiter {
@@ -468,6 +470,8 @@ class MultiDelimiter {
   static constexpr size_t kTableSize = UCHAR_MAX / 8;
 
   explicit MultiDelimiter(const char *delim);
+  MultiDelimiter(const MultiDelimiter &) = delete;
+  MultiDelimiter &operator=(const MultiDelimiter &) = delete;
 
   bool Contains(char c) const {
     const unsigned char uc = static_cast<unsigned char>(c);
@@ -479,7 +483,6 @@ class MultiDelimiter {
   // n-th bit is set to 1 if the delimiters contain a character whose unsigned
   // char code is n.
   unsigned char lookup_table_[kTableSize];
-  DISALLOW_COPY_AND_ASSIGN(MultiDelimiter);
 };
 
 // Declarations of the partial specializations of SplitIterator for two options.
@@ -488,6 +491,8 @@ template <typename Delimiter>
 class SplitIterator<Delimiter, SkipEmpty> {
  public:
   SplitIterator(absl::string_view s, const char *delim);
+  SplitIterator(const SplitIterator &) = delete;
+  SplitIterator &operator=(const SplitIterator &) = delete;
   absl::string_view Get() const {
     return absl::string_view(sp_begin_, sp_len_);
   }
@@ -499,14 +504,14 @@ class SplitIterator<Delimiter, SkipEmpty> {
   const Delimiter delim_;
   const char *sp_begin_;
   absl::string_view::size_type sp_len_;
-
-  DISALLOW_COPY_AND_ASSIGN(SplitIterator);
 };
 
 template <typename Delimiter>
 class SplitIterator<Delimiter, AllowEmpty> {
  public:
   SplitIterator(absl::string_view s, const char *delim);
+  SplitIterator(const SplitIterator &) = delete;
+  SplitIterator &operator=(const SplitIterator &) = delete;
   absl::string_view Get() const {
     return absl::string_view(sp_begin_, sp_len_);
   }
@@ -519,8 +524,6 @@ class SplitIterator<Delimiter, AllowEmpty> {
   absl::string_view::size_type sp_len_;
   const Delimiter delim_;
   bool done_;
-
-  DISALLOW_COPY_AND_ASSIGN(SplitIterator);
 };
 }  // namespace mozc
 

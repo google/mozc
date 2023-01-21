@@ -46,6 +46,9 @@ namespace win32 {
 // TODO(yukawa): Add unit test for this class.
 class OmahaUtil {
  public:
+  OmahaUtil(const OmahaUtil &) = delete;
+  OmahaUtil &operator=(const OmahaUtil &) = delete;
+
   // Writes the channel name specified by |value| for Omaha.
   // Returns true if the operation completed successfully.
   static bool WriteChannel(const std::wstring &value);
@@ -67,9 +70,6 @@ class OmahaUtil {
   // Clears the registry entry for the channel name.
   // Returns true if the operation completed successfully.
   static bool ClearChannel();
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(OmahaUtil);
 };
 }  // namespace win32
 }  // namespace mozc

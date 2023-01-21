@@ -44,12 +44,11 @@ namespace session {
 class SessionObserverInterface {
  public:
   SessionObserverInterface() {}
+  SessionObserverInterface(const SessionObserverInterface&) = delete;
+  SessionObserverInterface& operator=(const SessionObserverInterface&) = delete;
   virtual ~SessionObserverInterface() {}
 
   virtual void EvalCommandHandler(const commands::Command &command) = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SessionObserverInterface);
 };
 
 }  // namespace session

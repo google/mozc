@@ -50,6 +50,8 @@ class InfolistWindow;
 class CandidateController : public RendererInterface {
  public:
   CandidateController();
+  CandidateController(const CandidateController &) = delete;
+  CandidateController &operator=(const CandidateController &) = delete;
   ~CandidateController();
   virtual bool Activate();
   virtual bool IsAvailable() const;
@@ -70,8 +72,6 @@ class CandidateController : public RendererInterface {
   CandidateWindow *cascading_window_;
   InfolistWindow *infolist_window_;
   mozc::commands::RendererCommand command_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateController);
 };
 
 }  // namespace mac

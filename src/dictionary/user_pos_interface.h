@@ -45,6 +45,9 @@ namespace mozc {
 // executables.
 class PosListProviderInterface {
  public:
+  PosListProviderInterface(const PosListProviderInterface &) = delete;
+  PosListProviderInterface &operator=(const PosListProviderInterface &) =
+      delete;
   virtual ~PosListProviderInterface() = default;
 
   // Sets posssible list of POS which Mozc can handle.
@@ -52,9 +55,6 @@ class PosListProviderInterface {
 
  protected:
   PosListProviderInterface() = default;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(PosListProviderInterface);
 };
 
 // Interface of the helper class used by POS.
@@ -94,6 +94,8 @@ class UserPosInterface : public PosListProviderInterface {
     }
   };
 
+  UserPosInterface(const UserPosInterface &) = delete;
+  UserPosInterface &operator=(const UserPosInterface &) = delete;
   ~UserPosInterface() override = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
@@ -116,9 +118,6 @@ class UserPosInterface : public PosListProviderInterface {
 
  protected:
   UserPosInterface() = default;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(UserPosInterface);
 };
 
 }  // namespace mozc

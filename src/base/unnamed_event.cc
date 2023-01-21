@@ -91,11 +91,12 @@ class ScopedPthreadMutexLock {
   explicit ScopedPthreadMutexLock(pthread_mutex_t *mutex) : mutex_(mutex) {
     pthread_mutex_lock(mutex_);
   }
+  ScopedPthreadMutexLock(const ScopedPthreadMutexLock &) = delete;
+  ScopedPthreadMutexLock &operator=(const ScopedPthreadMutexLock &) = delete;
   ~ScopedPthreadMutexLock() { pthread_mutex_unlock(mutex_); }
 
  private:
   pthread_mutex_t *mutex_;
-  DISALLOW_COPY_AND_ASSIGN(ScopedPthreadMutexLock);
 };
 }  // namespace
 

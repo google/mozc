@@ -34,7 +34,7 @@
 
 #include "base/port.h"
 #include "converter/node.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/container/btree_set.h"
 
 namespace mozc {

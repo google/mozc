@@ -34,6 +34,7 @@
 #include <Windows.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 #include "base/const.h"
@@ -153,25 +154,22 @@ class IPCClientMutexBase {
 class ConverterClientMutex : public IPCClientMutexBase {
  public:
   ConverterClientMutex() : IPCClientMutexBase("converter") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ConverterClientMutex);
+  ConverterClientMutex(const ConverterClientMutex &) = delete;
+  ConverterClientMutex &operator=(const ConverterClientMutex &) = delete;
 };
 
 class RendererClientMutex : public IPCClientMutexBase {
  public:
   RendererClientMutex() : IPCClientMutexBase("renderer") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(RendererClientMutex);
+  RendererClientMutex(const RendererClientMutex &) = delete;
+  RendererClientMutex &operator=(const RendererClientMutex &) = delete;
 };
 
 class FallbackClientMutex : public IPCClientMutexBase {
  public:
   FallbackClientMutex() : IPCClientMutexBase("fallback") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FallbackClientMutex);
+  FallbackClientMutex(const FallbackClientMutex &) = delete;
+  FallbackClientMutex &operator=(const FallbackClientMutex &) = delete;
 };
 
 // In Mozc client, we should support different IPC channels (client-converter
@@ -192,6 +190,9 @@ HANDLE GetClientMutex(const std::string &ipc_name) {
 // RAII class for calling ReleaseMutex in destructor.
 class ScopedReleaseMutex {
  public:
+  ScopedReleaseMutex() = delete;
+  ScopedReleaseMutex(const ScopedReleaseMutex &) = delete;
+  ScopedReleaseMutex &operator=(const ScopedReleaseMutex &) = delete;
   explicit ScopedReleaseMutex(HANDLE handle) : pipe_handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
@@ -205,22 +206,20 @@ class ScopedReleaseMutex {
 
  private:
   HANDLE pipe_handle_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedReleaseMutex);
 };
 
-uint32 GetServerProcessIdImpl(HANDLE handle) {
+uint32_t GetServerProcessIdImpl(HANDLE handle) {
   ULONG pid = 0;
   if (::GetNamedPipeServerProcessId(handle, &pid) == 0) {
     const DWORD get_named_pipe_server_process_id_error = ::GetLastError();
     LOG(ERROR) << "GetNamedPipeServerProcessId failed: "
                << get_named_pipe_server_process_id_error;
-    return static_cast<uint32>(-1);  // always deny the connection
+    return static_cast<uint32_t>(-1);  // always deny the connection
   }
 
   VLOG(1) << "Got server ProcessID: " << pid;
 
-  return static_cast<uint32>(pid);
+  return static_cast<uint32_t>(pid);
 }
 
 void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
@@ -240,7 +239,7 @@ IPCErrorType WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event,
   const HANDLE events[] = {quit_event,
                            GetEventHandleFromOverlapped(overlapped)};
   const DWORD wait_result =
-      ::WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, timeout);
+      ::WaitForMultipleObjects(std::size(events), events, FALSE, timeout);
   const DWORD wait_error = ::GetLastError();
   // Clear the I/O operation if still exists.
   if (!HasOverlappedIoCompleted(overlapped)) {
@@ -432,8 +431,8 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 }  // namespace
 
-IPCServer::IPCServer(const std::string &name, int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+                     int32_t timeout)
     : connected_(false),
       pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
@@ -746,7 +745,7 @@ IPCClient::~IPCClient() {}
 bool IPCClient::Connected() const { return connected_; }
 
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32 timeout) {
+                     int32_t timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";

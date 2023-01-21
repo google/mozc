@@ -31,9 +31,9 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_select",
 )
 load(
     "//:config.bzl",
@@ -42,10 +42,10 @@ load(
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
-def cc_qt_library_mozc(name, deps = [], **kwargs):
-    cc_library_mozc(
+def mozc_cc_qt_library(name, deps = [], **kwargs):
+    mozc_cc_library(
         name = name,
-        deps = deps + select_mozc(
+        deps = deps + mozc_select(
             default = ["//third_party/qt:qt_native"],
             oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@qt_mac//:qt_mac"],
@@ -53,10 +53,15 @@ def cc_qt_library_mozc(name, deps = [], **kwargs):
         **kwargs
     )
 
-def cc_qt_binary_mozc(name, deps = [], **kwargs):
-    cc_binary_mozc(
+def cc_qt_library_mozc(**kwargs):
+    """Deprecated, use mozc_cc_qt_library.
+    """
+    mozc_cc_qt_library(**kwargs)
+
+def mozc_cc_qt_binary(name, deps = [], **kwargs):
+    mozc_cc_binary(
         name = name,
-        deps = deps + select_mozc(
+        deps = deps + mozc_select(
             default = ["//third_party/qt:qt_native"],
             oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@qt_mac//:qt_mac"],
@@ -64,62 +69,82 @@ def cc_qt_binary_mozc(name, deps = [], **kwargs):
         **kwargs
     )
 
-def qt_moc_mozc(name, srcs, outs):
+def cc_qt_binary_mozc(**kwargs):
+    """Deprecated, use mozc_cc_qt_binary.
+    """
+    mozc_cc_qt_binary(**kwargs)
+
+def mozc_qt_moc(name, srcs, outs):
     native.genrule(
         name = name,
         srcs = srcs,
         outs = outs,
-        cmd = select_mozc(
+        cmd = mozc_select(
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
             oss_linux = "$(location @qt_linux//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
         ),
-        tools = select_mozc(
+        tools = mozc_select(
             default = ["//third_party/qt:moc"],
             oss_linux = ["@qt_linux//:bin/moc"],
             oss_macos = ["@qt_mac//:bin/moc"],
         ),
     )
 
-def qt_uic_mozc(name, srcs, outs):
+def qt_moc_mozc(**kwargs):
+    """Deprecated, use mozc_qt_moc.
+    """
+    mozc_qt_moc(**kwargs)
+
+def mozc_qt_uic(name, srcs, outs):
     native.genrule(
         name = name,
         srcs = srcs,
         outs = outs,
-        cmd = select_mozc(
+        cmd = mozc_select(
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
             oss_linux = "$(location @qt_linux//:bin/uic) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:bin/uic) -o $@ $(SRCS)",
         ),
-        tools = select_mozc(
+        tools = mozc_select(
             default = ["//third_party/qt:uic"],
             oss_linux = ["@qt_linux//:bin/uic"],
             oss_macos = ["@qt_mac//:bin/uic"],
         ),
     )
 
-def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
+def qt_uic_mozc(**kwargs):
+    """Deprecated. Use mozc_qt_uic.
+    """
+    mozc_qt_uic(**kwargs)
+
+def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
     native.genrule(
         name = name,
         srcs = [qrc_file] + srcs,
         outs = outs,
-        cmd = select_mozc(
+        cmd = mozc_select(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
             oss_linux = "$(location @qt_linux//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
             oss_macos = "$(location @qt_mac//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
-        tools = select_mozc(
+        tools = mozc_select(
             default = ["//third_party/qt:rcc"],
             oss_linux = ["@qt_linux//:bin/rcc"],
             oss_macos = ["@qt_mac//:bin/rcc"],
         ),
     )
 
-def macos_qt_application_mozc(name, bundle_name, deps):
+def qt_rcc_mozc(**kwargs):
+    """Deprecated, use mozc_qt_rcc.
+    """
+    mozc_qt_rcc(**kwargs)
+
+def mozc_macos_qt_application(name, bundle_name, deps):
     macos_application(
         name = name,
         tags = ["manual"],
-        additional_contents = select_mozc(
+        additional_contents = mozc_select(
             default = {},
             oss = {"@qt_mac//:libqcocoa": "Resources"},
         ),
@@ -133,7 +158,7 @@ def macos_qt_application_mozc(name, bundle_name, deps):
             "//gui:qt_conf",
         ],
         visibility = ["//:__subpackages__"],
-        deps = deps + select_mozc(
+        deps = deps + mozc_select(
             default = [],
             oss = [
                 "@qt_mac//:QtCore_mac",
@@ -143,3 +168,8 @@ def macos_qt_application_mozc(name, bundle_name, deps):
             ],
         ),
     )
+
+def macos_qt_application_mozc(**kwargs):
+    """Deprecated, use mozc_macos_qt_application.
+    """
+    mozc_macos_qt_application(**kwargs)

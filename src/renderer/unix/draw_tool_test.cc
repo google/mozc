@@ -28,11 +28,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/unix/draw_tool.h"
+
+#include <cstdint>
+
 #include "base/coordinates.h"
 #include "renderer/unix/cairo_wrapper_mock.h"
 #include "renderer/unix/const.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::_;
 using ::testing::Expectation;
@@ -87,7 +90,7 @@ TEST(DrawToolTest, FrameRectTest) {
 
   const RGBA color = {0x10, 0x20, 0x30, 0x40};
   const Rect rect(10, 20, 30, 40);
-  const uint32 line_width = 3;
+  const uint32_t line_width = 3;
 
   Expectation set_source_rgba_expectation = EXPECT_CALL(
       *mock, SetSourceRGBA(color.red / 255.0, color.green / 255.0,
@@ -111,7 +114,7 @@ TEST(DrawToolTest, DrawLineTest) {
   draw_tool.Reset(mock);
 
   const RGBA color = {0x10, 0x20, 0x30, 0x40};
-  const uint32 line_width = 3;
+  const uint32_t line_width = 3;
   const Point from(10, 20);
   const Point to(15, 25);
 

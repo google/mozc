@@ -63,6 +63,10 @@ struct TipSurroundingTextInfo {
 
 class TipSurroundingText {
  public:
+  TipSurroundingText() = delete;
+  TipSurroundingText(const TipSurroundingText &) = delete;
+  TipSurroundingText &operator=(const TipSurroundingText &) = delete;
+
   // Returns true when succeeds to retrieve surrounding text information
   // from the context specified by |context|.
   // Caveats: This method internally depends on synchronous edit session.
@@ -98,9 +102,6 @@ class TipSurroundingText {
   static bool DeletePrecedingText(TipTextService *text_service,
                                   ITfContext *context,
                                   size_t num_characters_to_be_deleted_in_ucs4);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipSurroundingText);
 };
 
 class TipSurroundingTextUtil {

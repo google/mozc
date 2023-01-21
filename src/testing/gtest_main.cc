@@ -28,9 +28,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+#ifdef OS_WIN
+#include <crtdbg.h>
+#endif  // OS_WIN
+
 #include "base/init_mozc.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 int main(int argc, char **argv) {
@@ -40,10 +44,10 @@ int main(int argc, char **argv) {
   mozc::InitTestFlags();
   testing::InitGoogleTest(&argc, argv);
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
   _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
   _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
-#endif  // OS_WINDOWS
+#endif  // OS_WIN
 
   // Without this flag, ::RaiseException makes the job stuck.
   // See b/2805521 for details.

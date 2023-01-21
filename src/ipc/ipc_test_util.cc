@@ -62,14 +62,14 @@ bool TestMachPortManager::GetMachPort(const std::string &name,
 bool TestMachPortManager::IsServerRunning(const std::string &name) const {
   return true;
 }
-#endif
+#endif  // __APPLE__
 
 IPCClientInterface *IPCClientFactoryOnMemory::NewClient(
     const std::string &name, const std::string &path_name) {
   IPCClient *new_client = new IPCClient(name, path_name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);
-#endif
+#endif  // __APPLE__
   return new_client;
 }
 
@@ -78,7 +78,7 @@ IPCClientInterface *IPCClientFactoryOnMemory::NewClient(
   IPCClient *new_client = new IPCClient(name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);
-#endif
+#endif  // __APPLE__
   return new_client;
 }
 }  // namespace mozc

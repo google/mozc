@@ -43,9 +43,9 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
@@ -124,6 +124,10 @@ std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
 }  // namespace
 
 class LruStorageTest : public ::testing::Test {
+ public:
+  LruStorageTest(const LruStorageTest &) = delete;
+  LruStorageTest &operator=(const LruStorageTest &) = delete;
+
  protected:
   LruStorageTest() {}
 
@@ -141,9 +145,6 @@ class LruStorageTest : public ::testing::Test {
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                               "LruStorageTest_test.db");
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(LruStorageTest);
 };
 
 TEST_F(LruStorageTest, LruStorageTest) {

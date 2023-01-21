@@ -34,6 +34,7 @@
 #include <windows.h>  // windows.h must be included before strsafe.h
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 
 #include "google/protobuf/stubs/common.h"
@@ -56,21 +57,21 @@ using ::msl::utilities::SafeSubtract;
 
 // Since IMM32 uses DWORD rather than size_t for data size in data structures,
 // relevant data size are stored into DWORD constants here.
-static_assert(sizeof(DWORD) <= std::numeric_limits<int32>::max(),
+static_assert(sizeof(DWORD) <= std::numeric_limits<int32_t>::max(),
               "Check DWORD size.");
 
 constexpr DWORD kSizeOfDWORD = static_cast<DWORD>(sizeof(DWORD));
 
-static_assert(sizeof(wchar_t) <= std::numeric_limits<int32>::max(),
+static_assert(sizeof(wchar_t) <= std::numeric_limits<int32_t>::max(),
               "Check wchar_t size.");
 constexpr DWORD kSizeOfWCHAR = static_cast<DWORD>(sizeof(wchar_t));
 
-static_assert(sizeof(CANDIDATEINFO) <= std::numeric_limits<int32>::max(),
+static_assert(sizeof(CANDIDATEINFO) <= std::numeric_limits<int32_t>::max(),
               "Check CANDIDATEINFO size.");
 constexpr DWORD kSizeOfCANDIDATEINFO =
     static_cast<DWORD>(sizeof(CANDIDATEINFO));
 
-static_assert(sizeof(CANDIDATELIST) <= std::numeric_limits<int32>::max(),
+static_assert(sizeof(CANDIDATELIST) <= std::numeric_limits<int32_t>::max(),
               "Check CANDIDATELIST size.");
 constexpr DWORD kSizeOfCANDIDATELIST =
     static_cast<DWORD>(sizeof(CANDIDATELIST));
@@ -80,9 +81,9 @@ static_assert(sizeof(CANDIDATELIST) > sizeof(DWORD),
 constexpr DWORD kSizeOfCANDIDATELISTHeader =
     static_cast<DWORD>(sizeof(CANDIDATELIST) - sizeof(DWORD));
 
-static_assert((static_cast<int64>(sizeof(CANDIDATEINFO)) +
-               static_cast<int64>(sizeof(CANDIDATELIST))) <
-              std::numeric_limits<int32>::max(),
+static_assert((static_cast<int64_t>(sizeof(CANDIDATEINFO)) +
+               static_cast<int64_t>(sizeof(CANDIDATELIST))) <
+                  std::numeric_limits<int32_t>::max(),
               "Check CANDIDATEINFO + CANDIDATELIST size.");
 constexpr DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
     static_cast<DWORD>(sizeof(CANDIDATEINFO) + sizeof(CANDIDATELIST));

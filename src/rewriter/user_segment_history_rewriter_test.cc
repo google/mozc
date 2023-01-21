@@ -50,9 +50,9 @@
 #include "request/conversion_request.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
@@ -114,6 +114,11 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
 class UserSegmentHistoryRewriterTest : public ::testing::Test {
  protected:
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
+
+  UserSegmentHistoryRewriterTest(const UserSegmentHistoryRewriterTest &) =
+      delete;
+  UserSegmentHistoryRewriterTest &operator=(
+      const UserSegmentHistoryRewriterTest &) = delete;
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
@@ -177,7 +182,6 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
   PosMatcher pos_matcher_;
   std::unique_ptr<const PosGroup> pos_group_;
-  DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };
 
 TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {

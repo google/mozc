@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "win32/ime/ime_composition_string.h"
+
+#include <cstdint>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "win32/ime/ime_composition_string.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {
@@ -43,10 +45,10 @@ const char *kValueList[kNumCandidates] = {
     "Beta", "ベータ", "BETA",   "beta",  "β",          "Β",    "㌼",
     "Beta", "べーた", "ベータ", "be-ta", "ｂｅ－ｔａ", "ﾍﾞｰﾀ",
 };
-const int32 kValueLengths[kNumCandidates] = {
+const int32_t kValueLengths[kNumCandidates] = {
     4, 3, 4, 4, 1, 1, 1, 4, 3, 3, 5, 5, 4,
 };
-const int32 kIDs[kNumCandidates] = {
+const int32_t kIDs[kNumCandidates] = {
     0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -7, -11,
 };
 
@@ -231,9 +233,9 @@ void FillOutputForConversion(commands::Output *output, int focused_index,
   DCHECK_NE(nullptr, output);
   output->Clear();
 
-  const int32 focused_value_length = kValueLengths[focused_index];
+  const int32_t focused_value_length = kValueLengths[focused_index];
   const char *focused_value = kValueList[focused_index];
-  const int32 focused_id = kIDs[focused_index];
+  const int32_t focused_id = kIDs[focused_index];
 
   output->set_mode(commands::HIRAGANA);
   output->set_consumed(true);

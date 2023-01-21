@@ -46,7 +46,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {

@@ -32,6 +32,7 @@
 #include <Windows.h>
 #include <winnt.h>
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <type_traits>
@@ -175,7 +176,7 @@ class PortableExecutableImage {
 
     // TODO(yukawa): Validate if this memory range is safe to be accessed.
     return reinterpret_cast<const T *>(
-        reinterpret_cast<const uint8 *>(module_handle_) + offset);
+        reinterpret_cast<const uint8_t *>(module_handle_) + offset);
   }
 
   bool IsValid() const { return !is_invalid_image_; }

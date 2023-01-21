@@ -35,7 +35,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
 // for FRIEND_TEST()
@@ -64,6 +64,9 @@ struct LayoutProfileInfo {
 // current user after Google Japanese Input is uninstalled.
 class UninstallHelper {
  public:
+  UninstallHelper(const UninstallHelper &) = delete;
+  UninstallHelper &operator=(const UninstallHelper &) = delete;
+
   // Returns true if IME environment for the current user is successfully
   // cleaned up and restored.  This function ensures following things.
   //  - 'Preload' key maintains consistency with containing at least one
@@ -126,8 +129,6 @@ class UninstallHelper {
   FRIEND_TEST(UninstallHelperTest, BasicCaseForWin8);
   FRIEND_TEST(UninstallHelperTest, LoadKeyboardProfilesTest);
   FRIEND_TEST(UninstallHelperTest, ComposeProfileStringForVistaTest);
-
-  DISALLOW_COPY_AND_ASSIGN(UninstallHelper);
 };
 }  // namespace win32
 }  // namespace mozc

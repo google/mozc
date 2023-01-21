@@ -99,7 +99,7 @@ def evaluation(name, outs, data_file, data_type, engine_type, test_files, base_f
                "--test_files='%s' " % ",".join(test_file_locations) +
                "--data_file=$(location %s) " % data_file +
                "--data_type=%s --engine_type=%s > $@" % (data_type, engine_type)),
-        exec_tools = ["//converter:quality_regression_main"],
+        tools = ["//converter:quality_regression_main"],
     )
 
     native.genrule(
@@ -115,5 +115,5 @@ def evaluation(name, outs, data_file, data_type, engine_type, test_files, base_f
                "--data_type=%s " % data_type +
                "--input $(location %s) --output $@ " % evaluation_name +
                "--base $(location %s)" % base_file),
-        exec_tools = ["//converter:quality_regression"],
+        tools = ["//converter:quality_regression"],
     )

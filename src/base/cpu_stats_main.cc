@@ -48,6 +48,8 @@ namespace {
 class DummyThread : public mozc::Thread {
  public:
   DummyThread() {}
+  DummyThread(const DummyThread&) = delete;
+  DummyThread& operator=(const DummyThread&) = delete;
   void Run() override {
     volatile uint64_t n = 0;
     while (true) {
@@ -55,9 +57,6 @@ class DummyThread : public mozc::Thread {
       --n;
     }
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DummyThread);
 };
 }  // namespace
 

@@ -54,14 +54,13 @@ using ::mozc::protobuf::RepeatedPtrField;
 
 class UserDictionarySession::UndoCommand {
  public:
+  UndoCommand(const UndoCommand &) = delete;
+  UndoCommand &operator=(const UndoCommand &) = delete;
   virtual ~UndoCommand() {}
   virtual bool RunUndo(mozc::UserDictionaryStorage *storage) = 0;
 
  protected:
   UndoCommand() {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(UndoCommand);
 };
 
 namespace {
@@ -70,6 +69,9 @@ namespace {
 class UndoCreateDictionaryCommand : public UserDictionarySession::UndoCommand {
  public:
   UndoCreateDictionaryCommand() {}
+  UndoCreateDictionaryCommand(const UndoCreateDictionaryCommand &) = delete;
+  UndoCreateDictionaryCommand &operator=(const UndoCreateDictionaryCommand &) =
+      delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     if (storage->GetProto().dictionaries_size() == 0) {
@@ -79,9 +81,6 @@ class UndoCreateDictionaryCommand : public UserDictionarySession::UndoCommand {
     storage->GetProto().mutable_dictionaries()->RemoveLast();
     return true;
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(UndoCreateDictionaryCommand);
 };
 
 class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
@@ -89,6 +88,9 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
   // This instance takes the ownership of the given dictionary.
   UndoDeleteDictionaryCommand(int index, UserDictionary *dictionary)
       : index_(index), dictionary_(dictionary) {}
+  UndoDeleteDictionaryCommand(const UndoDeleteDictionaryCommand &) = delete;
+  UndoDeleteDictionaryCommand &operator=(const UndoDeleteDictionaryCommand &) =
+      delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     if (dictionary_ == nullptr) {
@@ -108,8 +110,6 @@ class UndoDeleteDictionaryCommand : public UserDictionarySession::UndoCommand {
  private:
   int index_;
   std::unique_ptr<UserDictionary> dictionary_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoDeleteDictionaryCommand);
 };
 
 class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
@@ -119,6 +119,11 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
   explicit UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand(
       UserDictionary *dictionary)
       : dictionary_(dictionary) {}
+
+  UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand(
+      const UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &) = delete;
+  UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &operator=(
+      const UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand &) = delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     if (storage->GetProto().dictionaries_size() != 1) {
@@ -130,9 +135,6 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
 
  private:
   std::unique_ptr<UserDictionary> dictionary_;
-
-  DISALLOW_COPY_AND_ASSIGN(
-      UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand);
 };
 
 class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
@@ -140,6 +142,9 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
   UndoRenameDictionaryCommand(uint64_t dictionary_id,
                               const std::string &original_name)
       : dictionary_id_(dictionary_id), original_name_(original_name) {}
+  UndoRenameDictionaryCommand(const UndoRenameDictionaryCommand &) = delete;
+  UndoRenameDictionaryCommand &operator=(const UndoRenameDictionaryCommand &) =
+      delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     UserDictionary *dictionary =
@@ -156,14 +161,14 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
  private:
   uint64_t dictionary_id_;
   std::string original_name_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoRenameDictionaryCommand);
 };
 
 class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
  public:
   explicit UndoAddEntryCommand(uint64_t dictionary_id)
       : dictionary_id_(dictionary_id) {}
+  UndoAddEntryCommand(const UndoAddEntryCommand &) = delete;
+  UndoAddEntryCommand &operator=(const UndoAddEntryCommand &) = delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     UserDictionary *dictionary =
@@ -179,8 +184,6 @@ class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
 
  private:
   uint64_t dictionary_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoAddEntryCommand);
 };
 
 class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
@@ -190,6 +193,8 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
       : dictionary_id_(dictionary_id),
         index_(index),
         original_entry_(original_entry) {}
+  UndoEditEntryCommand(const UndoEditEntryCommand &) = delete;
+  UndoEditEntryCommand &operator=(const UndoEditEntryCommand &) = delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     UserDictionary *dictionary =
@@ -208,8 +213,6 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
   uint64_t dictionary_id_;
   int index_;
   UserDictionary::Entry original_entry_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoEditEntryCommand);
 };
 
 struct DeleteEntryComparator {
@@ -230,6 +233,8 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
     std::sort(deleted_entries_.begin(), deleted_entries_.end(),
               DeleteEntryComparator());
   }
+  UndoDeleteEntryCommand(const UndoDeleteEntryCommand &) = delete;
+  UndoDeleteEntryCommand &operator=(const UndoDeleteEntryCommand &) = delete;
   ~UndoDeleteEntryCommand() override {
     for (size_t i = 0; i < deleted_entries_.size(); ++i) {
       delete deleted_entries_[i].second;
@@ -288,8 +293,6 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
  private:
   uint64_t dictionary_id_;
   std::vector<std::pair<int, UserDictionary::Entry *>> deleted_entries_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoDeleteEntryCommand);
 };
 
 class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
@@ -297,6 +300,9 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
   UndoImportFromStringCommand(uint64_t dictionary_id, int original_num_entries)
       : dictionary_id_(dictionary_id),
         original_num_entries_(original_num_entries) {}
+  UndoImportFromStringCommand(const UndoImportFromStringCommand &) = delete;
+  UndoImportFromStringCommand &operator=(const UndoImportFromStringCommand &) =
+      delete;
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
     UserDictionary *dictionary =
@@ -317,8 +323,6 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
  private:
   uint64_t dictionary_id_;
   int original_num_entries_;
-
-  DISALLOW_COPY_AND_ASSIGN(UndoImportFromStringCommand);
 };
 
 // The limit of the number of commands remembered by the session for undo.
@@ -404,6 +408,9 @@ class ScopedUserDictionaryLocker {
       : storage_(storage) {
     is_locked_ = storage_->Lock();
   }
+  ScopedUserDictionaryLocker(const ScopedUserDictionaryLocker &) = delete;
+  ScopedUserDictionaryLocker &operator=(const ScopedUserDictionaryLocker &) =
+      delete;
   ~ScopedUserDictionaryLocker() {
     if (is_locked_) {
       storage_->UnLock();
@@ -415,8 +422,6 @@ class ScopedUserDictionaryLocker {
  private:
   mozc::UserDictionaryStorage *storage_;
   bool is_locked_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedUserDictionaryLocker);
 };
 }  // namespace
 

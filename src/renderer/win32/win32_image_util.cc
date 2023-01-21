@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -118,6 +119,9 @@ class Balloon {
         bounding_rect_(GetBalloonBoundingRect(
             left, top, width, height, balloon_tail_height, balloon_tail_width,
             balloon_tail)) {}
+
+  Balloon(const Balloon &) = delete;
+  Balloon &operator=(const Balloon &) = delete;
 
   void RenderPixel(int x, int y, SubdivisionalPixel *pixel) const {
     {
@@ -353,7 +357,6 @@ class Balloon {
   const RGBColor inside_color_;
   const BalloonImage::BalloonImageInfo::TailDirection balloon_tail_;
   const Rect bounding_rect_;
-  DISALLOW_COPY_AND_ASSIGN(Balloon);
 };
 
 Rect GetBoundingRect(double left, double top, double width, double height) {
@@ -403,7 +406,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   bitmap_info.color_palette[0] = kBackgroundColor;  // black
   bitmap_info.color_palette[1] = kForegroundColor;  // white
 
-  uint8 *buffer = nullptr;
+  uint8_t *buffer = nullptr;
   CBitmap dib;
   dib.CreateDIBSection(
       nullptr, reinterpret_cast<const BITMAPINFO *>(&bitmap_info),
@@ -614,10 +617,10 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
 
   // GDI native alpha image is Premultiplied BGRA.
   struct PBGRA {
-    uint8 b;
-    uint8 g;
-    uint8 r;
-    uint8 a;
+    uint8_t b;
+    uint8_t g;
+    uint8_t r;
+    uint8_t a;
   };
 
   BITMAPINFO bitmap_info = {};

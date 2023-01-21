@@ -27,11 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "unix/ibus/surrounding_text_util.h"
+
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 
-#include "testing/base/public/gunit.h"
-#include "unix/ibus/surrounding_text_util.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace ibus {
@@ -64,7 +66,7 @@ TEST(SurroundingTextUtilTest, GetSafeDelta) {
 
   EXPECT_TRUE(
       SurroundingTextUtil::GetSafeDelta(0, kSafeInt32MaxAsUint, &delta));
-  EXPECT_EQ(-static_cast<int64>(kSafeInt32MaxAsUint), delta);
+  EXPECT_EQ(-static_cast<int64_t>(kSafeInt32MaxAsUint), delta);
   EXPECT_GE(abs(delta), 0);
 
   // The result exceeds int32_t.

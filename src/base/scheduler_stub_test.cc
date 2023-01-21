@@ -29,7 +29,7 @@
 
 #include "base/scheduler_stub.h"
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

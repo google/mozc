@@ -29,10 +29,13 @@
 
 #include "base/win_util.h"
 
+#include <cstdint>
+#include <string>
+
 #include "base/system_util.h"
 #include "base/util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 
@@ -96,7 +99,7 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
 }
 
 TEST(WinUtilTest, WindowHandleTest) {
-  // Should round-trip as long as the handle value is in uint32 range.
+  // Should round-trip as long as the handle value is in uint32_t range.
   const HWND k32bitSource =
       reinterpret_cast<HWND>(static_cast<uintptr_t>(0x1234));
   EXPECT_EQ(k32bitSource, WinUtil::DecodeWindowHandle(

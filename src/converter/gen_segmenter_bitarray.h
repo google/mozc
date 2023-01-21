@@ -40,14 +40,14 @@ namespace mozc {
 class SegmenterBitarrayGenerator {
  public:
   typedef bool (*IsBoundaryFunc)(uint16_t rid, uint16_t lid);
+  SegmenterBitarrayGenerator(const SegmenterBitarrayGenerator &) = delete;
+  SegmenterBitarrayGenerator &operator=(const SegmenterBitarrayGenerator &) =
+      delete;
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc func,
                                const std::string &output_size_info,
                                const std::string &output_ltable,
                                const std::string &output_rtable,
                                const std::string &output_bitarray);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SegmenterBitarrayGenerator);
 };
 
 }  // namespace mozc

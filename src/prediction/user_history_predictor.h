@@ -49,7 +49,7 @@
 #include "storage/lru_cache.h"
 #include "absl/strings/string_view.h"
 // for FRIEND_TEST
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 

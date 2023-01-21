@@ -41,6 +41,8 @@ class NodeAllocator {
  public:
   NodeAllocator()
       : node_freelist_(1024), max_nodes_size_(8192), node_count_(0) {}
+  NodeAllocator(const NodeAllocator &) = delete;
+  NodeAllocator &operator=(const NodeAllocator &) = delete;
   ~NodeAllocator() {}
 
   Node *NewNode() {
@@ -69,8 +71,6 @@ class NodeAllocator {
   FreeList<Node> node_freelist_;
   size_t max_nodes_size_;
   size_t node_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(NodeAllocator);
 };
 
 }  // namespace mozc

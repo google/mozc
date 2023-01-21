@@ -39,6 +39,7 @@
 // clang-format on
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -50,9 +51,9 @@
 #include "base/util.h"
 #include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 using ::std::max;
 using ::std::min;
@@ -201,7 +202,7 @@ class BalloonImageTest : public ::testing::Test,
       return false;
     }
 
-    std::unique_ptr<uint8[]> codesc_buffer(new uint8[codecs_buffer_size]);
+    std::unique_ptr<uint8_t[]> codesc_buffer(new uint8_t[codecs_buffer_size]);
     Gdiplus::ImageCodecInfo *codecs =
         reinterpret_cast<Gdiplus::ImageCodecInfo *>(codesc_buffer.get());
 
@@ -230,12 +231,12 @@ class BalloonImageTest : public ::testing::Test,
 
   static void UninitGdiplus() { Gdiplus::GdiplusShutdown(gdiplus_token_); }
 
-  static int32 ColorToInteger(RGBColor color) {
-    return static_cast<int32>(color.r) << 16 |
-           static_cast<int32>(color.g) << 8 | static_cast<int32>(color.b);
+  static int32_t ColorToInteger(RGBColor color) {
+    return static_cast<int32_t>(color.r) << 16 |
+           static_cast<int32_t>(color.g) << 8 | static_cast<int32_t>(color.b);
   }
 
-  static RGBColor IntegerToColor(int32 color) {
+  static RGBColor IntegerToColor(int32_t color) {
     return RGBColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
   }
 

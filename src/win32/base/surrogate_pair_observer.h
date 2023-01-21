@@ -65,6 +65,8 @@ class SurrogatePairObserver {
   };
 
   SurrogatePairObserver();
+  SurrogatePairObserver(const SurrogatePairObserver &) = delete;
+  SurrogatePairObserver &operator=(const SurrogatePairObserver &) = delete;
 
   ClientAction OnTestKeyEvent(const VirtualKey &virtual_key, bool is_keydown);
   ClientAction OnKeyEvent(const VirtualKey &virtual_key, bool is_keydown);
@@ -85,8 +87,6 @@ class SurrogatePairObserver {
   ObservationState state_;
   wchar_t surrogate_high_;
   wchar_t surrogate_low_;
-
-  DISALLOW_COPY_AND_ASSIGN(SurrogatePairObserver);
 };
 
 }  // namespace win32

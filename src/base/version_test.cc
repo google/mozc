@@ -30,7 +30,7 @@
 #include "base/version.h"
 
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 
 // Import the generated version_def.h.

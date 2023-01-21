@@ -40,8 +40,8 @@
 #include "base/util.h"
 #include "net/json_util_test.pb.h"
 #include "net/jsoncpp.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/testing_util.h"
+#include "testing/gunit.h"
+#include "testing/testing_util.h"
 
 namespace mozc {
 namespace net {

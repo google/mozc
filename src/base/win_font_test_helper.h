@@ -40,6 +40,10 @@ namespace mozc {
 
 class WinFontTestHelper {
  public:
+  WinFontTestHelper() = delete;
+  WinFontTestHelper(const WinFontTestHelper&) = delete;
+  WinFontTestHelper& operator=(const WinFontTestHelper&) = delete;
+
   // Returns true when private fonts are successfully initialized for unit test.
   static bool Initialize();
   // Uninitializes the private fonts.
@@ -49,9 +53,6 @@ class WinFontTestHelper {
   static std::string GetIPAexGothicFontName();
   // Returns the font face name of IPAex-Mincho.
   static std::string GetIPAexMinchoFontName();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WinFontTestHelper);
 };
 
 }  // namespace mozc

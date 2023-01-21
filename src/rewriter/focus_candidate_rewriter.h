@@ -47,6 +47,8 @@ struct CounterSuffixEntry;
 class FocusCandidateRewriter : public RewriterInterface {
  public:
   explicit FocusCandidateRewriter(const DataManagerInterface *data_manager);
+  FocusCandidateRewriter(const FocusCandidateRewriter &) = delete;
+  FocusCandidateRewriter &operator=(const FocusCandidateRewriter &) = delete;
   ~FocusCandidateRewriter() override;
 
   // Changed the focus of "segment_index"-th segment to be "candidate_index".
@@ -86,8 +88,6 @@ class FocusCandidateRewriter : public RewriterInterface {
 
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;
-
-  DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);
 };
 
 }  // namespace mozc

@@ -718,7 +718,7 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
   CPenHandle prev_pen(dc.SelectPen(static_cast<HPEN>(GetStockObject(DC_PEN))));
   for (size_t i = 0, y = footer_rect.Top(); i < kFooterSeparatorHeight;
        y++, i++) {
-    if (i < ARRAYSIZE(kFooterSeparatorColors)) {
+    if (i < std::size(kFooterSeparatorColors)) {
       dc.SetDCPenColor(kFooterSeparatorColors[i]);
       dc.MoveTo(footer_rect.Left(), y, nullptr);
       dc.LineTo(footer_rect.Right(), y);
@@ -740,8 +740,8 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
          GetRValue(kFooterBottomColor) << 8, GetGValue(kFooterBottomColor) << 8,
          GetBValue(kFooterBottomColor) << 8, 0xff00}};
     GRADIENT_RECT indices[] = {{0, 1}};
-    dc.GradientFill(&vertices[0], ARRAYSIZE(vertices), &indices[0],
-                    ARRAYSIZE(indices), GRADIENT_FILL_RECT_V);
+    dc.GradientFill(&vertices[0], std::size(vertices), &indices[0],
+                    std::size(indices), GRADIENT_FILL_RECT_V);
   }
 
   int left_used = 0;

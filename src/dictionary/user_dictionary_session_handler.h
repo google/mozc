@@ -47,6 +47,9 @@ class UserDictionarySession;
 class UserDictionarySessionHandler {
  public:
   UserDictionarySessionHandler();
+  UserDictionarySessionHandler(const UserDictionarySessionHandler &) = delete;
+  UserDictionarySessionHandler &operator=(
+      const UserDictionarySessionHandler &) = delete;
   ~UserDictionarySessionHandler();
 
   bool Evaluate(const UserDictionaryCommand &command,
@@ -123,8 +126,6 @@ class UserDictionarySessionHandler {
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,
                                     UserDictionaryCommandStatus *status);
   uint64_t CreateNewSessionId() const;
-
-  DISALLOW_COPY_AND_ASSIGN(UserDictionarySessionHandler);
 };
 
 }  // namespace user_dictionary

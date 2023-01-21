@@ -32,6 +32,8 @@
 
 #include <windows.h>
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "win32/base/immdev.h"
 
@@ -58,7 +60,7 @@ struct PrivateContext {
   bool Initialize();
   bool Uninitialize();
   bool Validate() const;
-  uint32 magic_number;
+  uint32_t magic_number;
   DWORD thread_id;
   InputState *ime_state;
   InputBehavior *ime_behavior;

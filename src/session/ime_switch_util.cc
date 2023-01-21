@@ -52,6 +52,9 @@ class ImeSwitchUtilImpl {
     ReloadConfig(config);
   }
 
+  ImeSwitchUtilImpl(const ImeSwitchUtilImpl &) = delete;
+  ImeSwitchUtilImpl &operator=(const ImeSwitchUtilImpl &) = delete;
+
   bool IsDirectModeCommand(const commands::KeyEvent &key) const {
     return KeyInfoUtil::ContainsKey(direct_mode_keys_, key);
   }
@@ -62,8 +65,6 @@ class ImeSwitchUtilImpl {
 
  private:
   std::vector<KeyInformation> direct_mode_keys_;
-
-  DISALLOW_COPY_AND_ASSIGN(ImeSwitchUtilImpl);
 };
 
 }  // namespace

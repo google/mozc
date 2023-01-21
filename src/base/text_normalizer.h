@@ -48,6 +48,10 @@ class TextNormalizer {
     kAll = 2,  // All normalizations.
   };
 
+  TextNormalizer() = delete;
+  TextNormalizer(const TextNormalizer&) = delete;
+  TextNormalizer& operator=(const TextNormalizer&) = delete;
+
   // Normalizes `input` with all configurations.
   static std::string NormalizeTextWithFlag(absl::string_view input, Flag flag);
 
@@ -60,9 +64,6 @@ class TextNormalizer {
   // Returns false and keeps output as is, if no character is normalized.
   static bool NormalizeTextToSvs(absl::string_view input, std::string *output);
   static std::string NormalizeTextToSvs(absl::string_view input);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);
 };
 
 }  // namespace mozc

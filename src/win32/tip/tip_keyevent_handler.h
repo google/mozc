@@ -48,6 +48,9 @@ class TipTextService;
 // IMM32-based keyevent messages.
 class TipKeyeventHandler {
  public:
+  TipKeyeventHandler() = delete;
+  TipKeyeventHandler(const TipKeyeventHandler &) = delete;
+  TipKeyeventHandler &operator=(const TipKeyeventHandler &) = delete;
   static HRESULT OnTestKeyDown(TipTextService *text_service,
                                ITfContext *context, WPARAM wparam,
                                LPARAM lparam, BOOL *eaten);
@@ -57,9 +60,6 @@ class TipKeyeventHandler {
                              WPARAM wparam, LPARAM lparam, BOOL *eaten);
   static HRESULT OnKeyUp(TipTextService *text_service, ITfContext *context,
                          WPARAM wparam, LPARAM lparam, BOOL *eaten);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TipKeyeventHandler);
 };
 
 }  // namespace tsf

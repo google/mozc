@@ -46,6 +46,9 @@ namespace mozc {
 // TODO(peria): Enable to replace SystemUtil class to be used in tests.
 class SystemUtil {
  public:
+  SystemUtil() = delete;
+  SystemUtil(const SystemUtil &) = delete;
+  SystemUtil &operator=(const SystemUtil &) = delete;
   // return "~/.mozc" for Unix/Mac
   // return "%USERPROFILE%\\AppData\\LocalLow\\"
   //        "Google\\Google Japanese Input" for Windows Vista and later.
@@ -166,9 +169,6 @@ class SystemUtil {
 
   // retrieve total physical memory. returns 0 if any error occurs.
   static uint64_t GetTotalPhysicalMemory();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SystemUtil);
 };
 
 }  // namespace mozc

@@ -53,6 +53,8 @@ namespace {
 class TipQueryProviderImpl : public TipQueryProvider {
  public:
   explicit TipQueryProviderImpl(ClientInterface *client) : client_(client) {}
+  TipQueryProviderImpl(const TipQueryProviderImpl &) = delete;
+  TipQueryProviderImpl &operator=(const TipQueryProviderImpl &) = delete;
 
  private:
   // The TipQueryProvider interface methods.
@@ -131,8 +133,6 @@ class TipQueryProviderImpl : public TipQueryProvider {
 
   TipRefCount ref_count_;
   std::unique_ptr<client::ClientInterface> client_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipQueryProviderImpl);
 };
 
 }  // namespace

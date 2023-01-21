@@ -43,6 +43,10 @@ class Output;
 // TODO(yukawa): Consider to move this class under client/*.
 class OutputUtil {
  public:
+  OutputUtil() = delete;
+  OutputUtil(const OutputUtil &) = delete;
+  OutputUtil &operator=(const OutputUtil &) = delete;
+
   // Converts a candidate id into candidate index.
   // Returns true if a valid candidate index is returned in |candidate_index|.
   static bool GetCandidateIndexById(const mozc::commands::Output &output,
@@ -59,9 +63,6 @@ class OutputUtil {
   // Returns true if a valid candidate index is returned in |candidate_index|.
   static bool GetFocusedCandidateId(const mozc::commands::Output &output,
                                     int32_t *mozc_candidate_id);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(OutputUtil);
 };
 
 }  // namespace mozc

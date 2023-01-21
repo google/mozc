@@ -61,6 +61,8 @@ inline uint32_t BitsToWords(uint32_t bits) {
 class ExistenceFilter::BlockBitmap {
  public:
   BlockBitmap(uint32_t length, bool is_mutable);
+  BlockBitmap(const BlockBitmap &) = delete;
+  BlockBitmap &operator=(const BlockBitmap &) = delete;
   ~BlockBitmap();
   void Clear();
   bool Get(uint32_t index) const;
@@ -77,7 +79,7 @@ class ExistenceFilter::BlockBitmap {
   // Usage:
   //    char** ptr;
   //    size_t bytes;
-  //    for (uint32 iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
+  //    for (uint32_t iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
   //      Process(*ptr, bytes);
   //    }
   bool GetMutableFragment(uint32_t *iter, char ***ptr, size_t *size);
@@ -94,8 +96,6 @@ class ExistenceFilter::BlockBitmap {
   uint32_t num_blocks_;
   uint32_t bytes_in_last_;
   const bool is_mutable_;
-
-  DISALLOW_COPY_AND_ASSIGN(BlockBitmap);
 };
 
 ExistenceFilter::BlockBitmap::BlockBitmap(uint32_t length, bool is_mutable)

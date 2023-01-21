@@ -89,6 +89,8 @@ namespace {
 // Wrapper class for pos id printing
 class PosIdPrintUtil {
  public:
+  PosIdPrintUtil(const PosIdPrintUtil &) = delete;
+  PosIdPrintUtil &operator=(const PosIdPrintUtil &) = delete;
   static std::string IdToString(int id) {
     return Singleton<PosIdPrintUtil>::get()->IdToStringInternal(id);
   }
@@ -110,7 +112,6 @@ class PosIdPrintUtil {
   std::unique_ptr<internal::PosIdPrinter> pos_id_printer_;
 
   friend class Singleton<PosIdPrintUtil>;
-  DISALLOW_COPY_AND_ASSIGN(PosIdPrintUtil);
 };
 
 std::string SegmentTypeToString(Segment::SegmentType type) {

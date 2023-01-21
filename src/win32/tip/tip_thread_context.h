@@ -32,6 +32,7 @@
 
 #include <Windows.h>
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -48,6 +49,8 @@ class TipInputModeManager;
 class TipThreadContext {
  public:
   TipThreadContext();
+  TipThreadContext(const TipThreadContext &) = delete;
+  TipThreadContext &operator=(const TipThreadContext &) = delete;
   ~TipThreadContext();
 
   TipInputModeManager *GetInputModeManager();
@@ -55,14 +58,12 @@ class TipThreadContext {
 
   void InitializeFocusHierarchyObserver();
 
-  int32 GetFocusRevision() const;
+  int32_t GetFocusRevision() const;
   void IncrementFocusRevision();
 
  private:
   class InternalState;
   std::unique_ptr<InternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipThreadContext);
 };
 
 }  // namespace tsf

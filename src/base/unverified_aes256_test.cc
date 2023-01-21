@@ -31,8 +31,8 @@
 
 #include <cstdint>
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace internal {
@@ -44,6 +44,10 @@ using ::testing::AssertionSuccess;
 
 class TestableUnverifiedAES256 : public UnverifiedAES256 {
  public:
+  TestableUnverifiedAES256() = delete;
+  TestableUnverifiedAES256(const TestableUnverifiedAES256&) = delete;
+  TestableUnverifiedAES256& operator=(const TestableUnverifiedAES256&) = delete;
+
   // Change access rights:
   using UnverifiedAES256::InverseTransformECB;
   using UnverifiedAES256::InvMixColumns;
@@ -54,9 +58,6 @@ class TestableUnverifiedAES256 : public UnverifiedAES256 {
   using UnverifiedAES256::ShiftRows;
   using UnverifiedAES256::SubBytes;
   using UnverifiedAES256::TransformECB;
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TestableUnverifiedAES256);
 };
 
 template <size_t kArraySize>

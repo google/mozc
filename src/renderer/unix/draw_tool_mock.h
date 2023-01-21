@@ -30,8 +30,10 @@
 #ifndef MOZC_RENDERER_UNIX_DRAW_TOOL_MOCK_H_
 #define MOZC_RENDERER_UNIX_DRAW_TOOL_MOCK_H_
 
+#include <cstdint>
+
 #include "renderer/unix/draw_tool_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {
@@ -44,10 +46,10 @@ class DrawToolMock : public DrawToolInterface {
   MOCK_METHOD(void, Restore, ());
   MOCK_METHOD(void, FillRect, (const Rect &rect, const RGBA &color));
   MOCK_METHOD(void, FrameRect,
-              (const Rect &rect, const RGBA &color, const uint32 line_width));
+              (const Rect &rect, const RGBA &color, const uint32_t line_width));
   MOCK_METHOD(void, DrawLine,
               (const Point &from, const Point &to, const RGBA &color,
-               const uint32 line_width));
+               const uint32_t line_width));
 };
 
 }  // namespace gtk

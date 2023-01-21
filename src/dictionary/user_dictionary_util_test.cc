@@ -33,9 +33,9 @@
 #include <string>
 
 #include "base/util.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/testing_util.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
+#include "testing/testing_util.h"
 
 namespace mozc {
 

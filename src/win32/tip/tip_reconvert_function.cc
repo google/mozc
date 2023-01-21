@@ -60,14 +60,17 @@ namespace {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kReconvertFunctionDisplayName[] =
     L"Google Japanese Input: Reconversion Function";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kReconvertFunctionDisplayName[] = L"Mozc: Reconversion Function";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class CandidateListCallbackImpl : public TipCandidateListCallback {
  public:
   CandidateListCallbackImpl(TipTextService *text_service, ITfRange *range)
       : text_service_(text_service), range_(range) {}
+  CandidateListCallbackImpl(const CandidateListCallbackImpl &) = delete;
+  CandidateListCallbackImpl &operator=(const CandidateListCallbackImpl &) =
+      delete;
 
  private:
   // TipCandidateListCallback overrides:
@@ -77,14 +80,14 @@ class CandidateListCallbackImpl : public TipCandidateListCallback {
 
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfRange> range_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateListCallbackImpl);
 };
 
 class ReconvertFunctionImpl : public ITfFnReconversion {
  public:
   explicit ReconvertFunctionImpl(TipTextService *text_service)
       : text_service_(text_service) {}
+  ReconvertFunctionImpl(const ReconvertFunctionImpl &) = delete;
+  ReconvertFunctionImpl &operator=(const ReconvertFunctionImpl &) = delete;
   ~ReconvertFunctionImpl() {}
 
   // The IUnknown interface methods.
@@ -218,8 +221,6 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
 
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
-
-  DISALLOW_COPY_AND_ASSIGN(ReconvertFunctionImpl);
 };
 
 }  // namespace

@@ -41,7 +41,7 @@
 #include "dictionary/system/codec_interface.h"
 #include "request/conversion_request.h"
 #include "storage/louds/louds_trie_builder.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 using mozc::storage::louds::LoudsTrie;
 using mozc::storage::louds::LoudsTrieBuilder;

@@ -46,7 +46,7 @@
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
-#include "testing/base/public/googletest.h"
+#include "testing/googletest.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 

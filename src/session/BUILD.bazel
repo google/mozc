@@ -346,7 +346,6 @@ cc_library_mozc(
         "//engine:engine_builder_interface",
         "//engine:user_data_manager_interface",
         "//engine:engine_interface",
-        "//session/internal:ime_context",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
@@ -770,7 +769,7 @@ genrule(
     ),
     outs = ["session_stress_test_data.h"],
     cmd = "$(location :gen_session_stress_test_data) --input $(SRCS) --output $@",
-    exec_tools = [":gen_session_stress_test_data"],
+    tools = [":gen_session_stress_test_data"],
 )
 
 cc_library_mozc(

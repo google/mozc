@@ -31,8 +31,8 @@
 
 #include "base/system_util.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 using testing::_;

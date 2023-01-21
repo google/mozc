@@ -32,7 +32,6 @@ load("//bazel:stubs.bzl", "bzl_library")
 bzl_library(
     name = "qt_bzl",
     srcs = ["qt.bzl"],
-    parse_tests = False,
     visibility = ["//visibility:private"],
     deps = [
         "//:build_defs_bzl",
@@ -44,6 +43,5 @@ bzl_library(
 bzl_library(
     name = "stubs_bzl",
     srcs = ["stubs.bzl"],
-    parse_tests = False,
     visibility = ["//visibility:private"],
 )

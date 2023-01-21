@@ -36,6 +36,7 @@
 #include <wincrypt.h>
 // clang-format on
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -51,7 +52,7 @@
 namespace mozc {
 namespace {
 
-const uint64 kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
+const uint64_t kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
 
 class ScopedSCHandle {
  public:

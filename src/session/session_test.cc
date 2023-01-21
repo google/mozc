@@ -57,8 +57,8 @@
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/str_format.h"
@@ -2687,6 +2687,117 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     EXPECT_PREEDIT("cand1-1cand2-1cand3-2", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
   }
+}
+
+TEST_P(SessionTest, MultipleUndo) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session.set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  {  // Create segments
+    InsertCharacterChars("key1key2key3", &session, &command);
+    ConversionRequest request;
+    SetComposer(&session, &request);
+
+    Segment::Candidate *candidate;
+    Segment *segment;
+
+    segment = segments.add_segment();
+    segment->set_key("key1");
+    candidate = segment->add_candidate();
+    candidate->value = "cand1-1";
+    candidate = segment->add_candidate();
+    candidate->value = "cand1-2";
+
+    segment = segments.add_segment();
+    segment->set_key("key2");
+    candidate = segment->add_candidate();
+    candidate->value = "cand2-1";
+    candidate = segment->add_candidate();
+    candidate->value = "cand2-2";
+
+    segment = segments.add_segment();
+    segment->set_key("key3");
+    candidate = segment->add_candidate();
+    candidate->value = "cand3-1";
+    candidate = segment->add_candidate();
+    candidate->value = "cand3-2";
+  }
+
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  command.Clear();
+  session.Convert(&command);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+
+  // Commit 1st and 2nd segment
+  segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+  segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+  segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+  EXPECT_CALL(converter, CommitSegments(_, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_id(1);
+  session.CommitCandidate(&command);
+  EXPECT_PREEDIT("cand2-1cand3-1", command);
+  EXPECT_RESULT("cand1-2", command);
+  segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+  segments.mutable_segment(1)->set_segment_type(Segment::SUBMITTED);
+  segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+  EXPECT_CALL(converter, CommitSegments(_, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+  command.Clear();
+  command.mutable_input()->mutable_command()->set_id(1);
+  session.CommitCandidate(&command);
+  EXPECT_PREEDIT("cand3-1", command);
+  EXPECT_RESULT("cand2-2", command);
+  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+
+  // Undo to revive 2nd commit.
+  command.Clear();
+  session.Undo(&command);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_TRUE(command.output().has_deletion_range());
+  EXPECT_EQ(-7, command.output().deletion_range().offset());
+  EXPECT_EQ(7, command.output().deletion_range().length());
+  EXPECT_PREEDIT("cand2-1cand3-1", command);
+  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+
+  // Try undoing against the 1st commit.
+  command.Clear();
+  session.Undo(&command);
+  if (GetParam().decoder_experiment_params().undo_partial_commit()) {
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(-7, command.output().deletion_range().offset());
+    EXPECT_EQ(7, command.output().deletion_range().length());
+    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+  } else {
+    // Multiple undo is unsupported.
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_PREEDIT("cand2-1cand3-1", command);
+  }
+  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+
+  // No further undo available.
+  command.Clear();
+  session.Undo(&command);
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_FALSE(command.output().has_deletion_range());
 }
 
 TEST_P(SessionTest, UndoOrRewindUndo) {
@@ -9817,7 +9928,7 @@ TEST_P(SessionTest, SetConfig) {
 
   EXPECT_EQ(&session.context_->GetConfig(), &config);
   // SetConfig() resets undo context.
-  EXPECT_FALSE(session.prev_context_);
+  EXPECT_TRUE(session.undo_contexts_.empty());
 }
 
 }  // namespace session

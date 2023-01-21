@@ -153,6 +153,8 @@ bool GetTokenPrimaryGroupSidStringW(const HANDLE hToken, PWSTR *pwszSidString) {
 class ScopedLocalFreeInvoker {
  public:
   explicit ScopedLocalFreeInvoker(void *address) : address_(address) {}
+  ScopedLocalFreeInvoker(const ScopedLocalFreeInvoker &) = delete;
+  ScopedLocalFreeInvoker &operator=(const ScopedLocalFreeInvoker &) = delete;
   ~ScopedLocalFreeInvoker() {
     if (address_ != nullptr) {
       ::LocalFree(address_);
@@ -162,8 +164,6 @@ class ScopedLocalFreeInvoker {
 
  private:
   void *address_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedLocalFreeInvoker);
 };
 
 bool GetUserSid(std::wstring *token_user_sid,
@@ -560,6 +560,8 @@ namespace {
 class LockedDownJob {
  public:
   LockedDownJob() : job_handle_(nullptr) {}
+  LockedDownJob(const LockedDownJob &) = delete;
+  LockedDownJob &operator=(const LockedDownJob &) = delete;
 
   ~LockedDownJob() {
     if (job_handle_ != nullptr) {
@@ -624,8 +626,6 @@ class LockedDownJob {
 
  private:
   HANDLE job_handle_;
-
-  DISALLOW_COPY_AND_ASSIGN(LockedDownJob);
 };
 
 bool CreateSuspendedRestrictedProcess(std::unique_ptr<wchar_t[]> *command_line,

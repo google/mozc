@@ -66,6 +66,8 @@ class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
                        TipTextService *text_service, ITfContext *context)
       : delegate_(TipUiElementDelegateFactory::Create(text_service, context,
                                                       ToDelegateType(type))) {}
+  TipCandidateListImpl(const TipCandidateListImpl &) = delete;
+  TipCandidateListImpl &operator=(const TipCandidateListImpl &) = delete;
 
  private:
   ~TipCandidateListImpl() {}
@@ -179,7 +181,6 @@ class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
 
   TipRefCount ref_count_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
-  DISALLOW_COPY_AND_ASSIGN(TipCandidateListImpl);
 };
 
 class TipIndicatorImpl : public ITfToolTipUIElement {
@@ -188,6 +189,8 @@ class TipIndicatorImpl : public ITfToolTipUIElement {
       : delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
+  TipIndicatorImpl(const TipIndicatorImpl &) = delete;
+  TipIndicatorImpl &operator=(const TipIndicatorImpl &) = delete;
 
  private:
   ~TipIndicatorImpl() {}
@@ -248,7 +251,6 @@ class TipIndicatorImpl : public ITfToolTipUIElement {
 
   TipRefCount ref_count_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
-  DISALLOW_COPY_AND_ASSIGN(TipIndicatorImpl);
 };
 
 }  // namespace

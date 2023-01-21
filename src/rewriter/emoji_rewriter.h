@@ -75,6 +75,8 @@ class EmojiRewriter : public RewriterInterface {
   using IteratorRange = std::pair<EmojiDataIterator, EmojiDataIterator>;
 
   explicit EmojiRewriter(const DataManagerInterface &data_manager);
+  EmojiRewriter(const EmojiRewriter &) = delete;
+  EmojiRewriter &operator=(const EmojiRewriter &) = delete;
   ~EmojiRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
@@ -120,8 +122,6 @@ class EmojiRewriter : public RewriterInterface {
 
   absl::string_view token_array_data_;
   SerializedStringArray string_array_;
-
-  DISALLOW_COPY_AND_ASSIGN(EmojiRewriter);
 };
 
 }  // namespace mozc

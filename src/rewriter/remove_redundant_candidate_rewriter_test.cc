@@ -32,7 +32,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {

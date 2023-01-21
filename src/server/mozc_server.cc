@@ -31,7 +31,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
+#endif  // OS_WIN
 
 #include <cstddef>
 #include <memory>
@@ -71,7 +71,7 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
   // Make sure that mozc_server exits all after other processes.
   ::SetProcessShutdownParameters(0x100, SHUTDOWN_NORETRY);
-#endif
+#endif  // OS_WIN
 
   // call GetRunLevel before mozc::InitMozc().
   // mozc::InitMozc() will do all static initialization and may access
@@ -117,7 +117,7 @@ int MozcServer::Run() {
     // On Windows, ShutdownSessionCallback is not called intentionally in order
     // to avoid crashes oritinates from it. See b/2696087.
     g_session_server->Loop();
-#else
+#else   // defined(OS_WIN)
     // Create a new thread.
     // We can't call Loop() as Loop() doesn't make a thread.
     // We have to make a thread here so that ShutdownSessionCallback()
@@ -126,7 +126,7 @@ int MozcServer::Run() {
 
     // Wait until the session server thread finishes.
     g_session_server->Wait();
-#endif
+#endif  // defined(OS_WIN)
   }
 
   return 0;

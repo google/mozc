@@ -43,6 +43,10 @@ namespace session {
 
 class SessionUsageStatsUtil {
  public:
+  SessionUsageStatsUtil() = delete;
+  SessionUsageStatsUtil(const SessionUsageStatsUtil &) = delete;
+  SessionUsageStatsUtil &operator=(const SessionUsageStatsUtil &) = delete;
+
   // Returns true if the key is in input::context.  This function can be called
   // multiple times if there are multiple target keys.  It is not efficient, but
   // acceptable because the size of the experimental_features is very small,
@@ -52,9 +56,6 @@ class SessionUsageStatsUtil {
   static void AddSendKeyInputStats(const mozc::commands::Input &input);
   static void AddSendKeyOutputStats(const mozc::commands::Output &output);
   static void AddSendCommandInputStats(const mozc::commands::Input &input);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SessionUsageStatsUtil);
 };
 
 }  // namespace session

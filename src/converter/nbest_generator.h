@@ -87,6 +87,8 @@ class NBestGenerator {
       const dictionary::PosMatcher *pos_matcher, const Lattice *lattice,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
+  NBestGenerator(const NBestGenerator &) = delete;
+  NBestGenerator &operator=(const NBestGenerator &) = delete;
   ~NBestGenerator();
 
   // Reset the iterator status.
@@ -117,6 +119,8 @@ class NBestGenerator {
   class Agenda {
    public:
     Agenda() {}
+    Agenda(const Agenda &) = delete;
+    Agenda &operator=(const Agenda &) = delete;
     ~Agenda() {}
 
     const QueueElement *Top() const { return priority_queue_.front(); }
@@ -129,8 +133,6 @@ class NBestGenerator {
 
    private:
     std::vector<const QueueElement *> priority_queue_;
-
-    DISALLOW_COPY_AND_ASSIGN(Agenda);
   };
 
   int InsertTopResult(const ConversionRequest &request,
@@ -176,8 +178,6 @@ class NBestGenerator {
   BoundaryCheckMode check_mode_ = STRICT;
 
   BoundaryChecker boundary_checker_ = nullptr;
-
-  DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };
 
 }  // namespace mozc

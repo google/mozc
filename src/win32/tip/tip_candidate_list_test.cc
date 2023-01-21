@@ -38,8 +38,8 @@
 #include <string>
 #include <vector>
 
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
@@ -61,6 +61,8 @@ class TipCandidateListTest : public testing::Test {
 class MockCallbackResult {
  public:
   MockCallbackResult() : on_finalize_called_(false), index_(0) {}
+  MockCallbackResult(const MockCallbackResult &) = delete;
+  MockCallbackResult &operator=(const MockCallbackResult &) = delete;
 
   void Reset() {
     on_finalize_called_ = false;
@@ -84,13 +86,14 @@ class MockCallbackResult {
   bool on_finalize_called_;
   size_t index_;
   std::wstring candidate_;
-  DISALLOW_COPY_AND_ASSIGN(MockCallbackResult);
 };
 
 class MockCallback : public TipCandidateListCallback {
  public:
   // Does not take ownership of |result|.
   explicit MockCallback(MockCallbackResult *result) : result_(result) {}
+  MockCallback(const MockCallback &) = delete;
+  MockCallback &operator=(const MockCallback &) = delete;
 
  private:
   // TipCandidateListCallback overrides:
@@ -99,7 +102,6 @@ class MockCallback : public TipCandidateListCallback {
   }
 
   MockCallbackResult *result_;
-  DISALLOW_COPY_AND_ASSIGN(MockCallback);
 };
 
 std::wstring ToWStr(const CComBSTR &bstr) {

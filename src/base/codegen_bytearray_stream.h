@@ -43,6 +43,7 @@
 #define MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <ios>
 #include <memory>
 #include <ostream>
@@ -56,15 +57,15 @@
 // platform.
 #error \
     "base/codegen_bytearray_stream.h shouldn't be used from android platform."
-#endif
+#endif  // OS_ANDROID
 
 #ifdef OS_WIN
 // Visual C++ does not support string literals longer than 65535 characters
-// so integer arrays (e.g. arrays of uint64) are used to represent byte arrays
+// so integer arrays (e.g. arrays of uint64_t) are used to represent byte arrays
 // on Windows.
 //
 // The generated code looks like:
-//   const uint64 kVAR_data_wordtype[] = {
+//   const uint64_t kVAR_data_wordtype[] = {
 //       0x0123456789ABCDEF, ...
 //   };
 //   const char * const kVAR_data =
@@ -91,6 +92,10 @@ enum StreamOwner {
 
 class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  public:
+  BasicCodeGenByteArrayStreamBuf(const BasicCodeGenByteArrayStreamBuf &) =
+      delete;
+  BasicCodeGenByteArrayStreamBuf &operator=(
+      const BasicCodeGenByteArrayStreamBuf &) = delete;
   typedef std::char_traits<char> traits_type;
 
   // Args:
@@ -123,17 +128,17 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
   static constexpr size_t kDefaultInternalBufferSize =
       4000 * 1024;  // 4 mega chars
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64);
-#else
+  static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64_t);
+#else   // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   static constexpr size_t kNumOfBytesOnOneLine = 20;
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   // Converts a raw byte stream to C source code.
   void WriteBytes(const char *begin, const char *end);
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   void WriteWordBuffer();
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   size_t internal_output_buffer_size_;
   std::unique_ptr<char[]> internal_output_buffer_;
@@ -143,19 +148,16 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   std::ios_base::fmtflags output_stream_format_flags_;
   char output_stream_format_fill_;
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   bool is_open_;
   std::string var_name_base_;
   size_t output_count_;
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  uint64 word_buffer_;
-#endif
-
-  DISALLOW_COPY_AND_ASSIGN(BasicCodeGenByteArrayStreamBuf);
+  uint64_t word_buffer_;
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 };
-
 
 class CodeGenByteArrayOutputStream : public std::ostream {
  public:
@@ -165,6 +167,11 @@ class CodeGenByteArrayOutputStream : public std::ostream {
   //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
   CodeGenByteArrayOutputStream(std::ostream *output_stream,
                                codegenstream::StreamOwner own_output_stream);
+
+  CodeGenByteArrayOutputStream(const CodeGenByteArrayOutputStream &) = delete;
+
+  CodeGenByteArrayOutputStream &operator=(
+      const CodeGenByteArrayOutputStream &) = delete;
 
   // Writes the beginning of a variable definition.
   // A call to |OpenVarDef| must precede any output to the instance.
@@ -177,8 +184,6 @@ class CodeGenByteArrayOutputStream : public std::ostream {
 
  private:
   BasicCodeGenByteArrayStreamBuf streambuf_;
-
-  DISALLOW_COPY_AND_ASSIGN(CodeGenByteArrayOutputStream);
 };
 
 }  // namespace mozc

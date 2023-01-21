@@ -60,6 +60,9 @@ class StateTable {
     idarray_.resize(size);
   }
 
+  StateTable(const StateTable &) = delete;
+  StateTable &operator=(const StateTable &) = delete;
+
   // |str| is an 1-dimensional row (or column) represented in byte array.
   void Add(uint16_t id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
@@ -114,8 +117,6 @@ class StateTable {
   std::vector<std::string> idarray_;
   std::vector<uint16_t> compressed_table_;
   size_t compressed_size_;
-
-  DISALLOW_COPY_AND_ASSIGN(StateTable);
 };
 }  // namespace
 

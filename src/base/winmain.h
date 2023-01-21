@@ -79,6 +79,9 @@ class WinCommandLine {
     ::LocalFree(argvw);
   }
 
+  WinCommandLine(const WinCommandLine &) = delete;
+  WinCommandLine &operator=(const WinCommandLine &) = delete;
+
   virtual ~WinCommandLine() {
     for (int i = 0; i < argc_; ++i) {
       delete[] argv_[i];
@@ -93,8 +96,6 @@ class WinCommandLine {
  private:
   int argc_;
   char **argv_;
-
-  DISALLOW_COPY_AND_ASSIGN(WinCommandLine);
 };
 }  // namespace mozc
 // force to use WinMain.
@@ -128,7 +129,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       ::RegCloseKey(hKey);
     }
   }
-#endif
+#endif  // !MOZC_NO_LOGGING
 
   mozc::WinCommandLine cmd;
   int argc = cmd.argc();

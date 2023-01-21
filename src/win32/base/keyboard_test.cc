@@ -28,8 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "win32/base/keyboard.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace win32 {
@@ -41,6 +41,8 @@ const BYTE kToggled = 0x01;
 class ImeKeyboardTest : public testing::Test {
  protected:
   ImeKeyboardTest() : japanese_keyboard_layout_(nullptr) {}
+  ImeKeyboardTest(const ImeKeyboardTest&) = delete;
+  ImeKeyboardTest& operator=(const ImeKeyboardTest&) = delete;
 
   virtual ~ImeKeyboardTest() {}
 
@@ -75,7 +77,6 @@ class ImeKeyboardTest : public testing::Test {
 
  private:
   HKL japanese_keyboard_layout_;
-  DISALLOW_COPY_AND_ASSIGN(ImeKeyboardTest);
 };
 
 TEST_F(ImeKeyboardTest, CheckQKeyWithKanaLock) {

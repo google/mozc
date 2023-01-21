@@ -199,6 +199,9 @@ class GdiTextRenderer : public TextRenderer {
     OnThemeChanged();
   }
 
+  GdiTextRenderer(const GdiTextRenderer &) = delete;
+  GdiTextRenderer &operator=(const GdiTextRenderer &) = delete;
+
   virtual ~GdiTextRenderer() {}
 
  private:
@@ -273,8 +276,6 @@ class GdiTextRenderer : public TextRenderer {
   };
   std::unique_ptr<RenderInfo[]> render_info_;
   mutable CDC mem_dc_;
-
-  DISALLOW_COPY_AND_ASSIGN(GdiTextRenderer);
 };
 
 class DirectWriteTextRenderer : public TextRenderer {
@@ -302,6 +303,8 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
     return new DirectWriteTextRenderer(d2d_factory, dwrite_factory, interop);
   }
+  DirectWriteTextRenderer(const DirectWriteTextRenderer &) = delete;
+  DirectWriteTextRenderer &operator=(const DirectWriteTextRenderer &) = delete;
   virtual ~DirectWriteTextRenderer() {}
 
  private:
@@ -531,8 +534,6 @@ class DirectWriteTextRenderer : public TextRenderer {
   mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
   CComPtr<IDWriteGdiInterop> dwrite_interop_;
   std::vector<RenderInfo> render_info_;
-
-  DISALLOW_COPY_AND_ASSIGN(DirectWriteTextRenderer);
 };
 
 }  // namespace

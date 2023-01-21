@@ -89,7 +89,7 @@ class MacUtil {
   // the window specified by |name| and |owner|.
   static bool IsSuppressSuggestionWindow(const std::string &name,
                                          const std::string &owner);
-#endif
+#endif  // !OS_IOS
 
  private:
   MacUtil() {}

@@ -48,7 +48,7 @@
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

@@ -32,7 +32,7 @@
 #include <string>
 
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

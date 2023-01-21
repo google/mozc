@@ -32,9 +32,9 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <semaphore.h>
-#endif
+#endif  // OS_WIN
 
 #include <string>
 
@@ -88,13 +88,12 @@ namespace mozc {
 // Util class for Named Event
 class NamedEventUtil {
  public:
+  NamedEventUtil(const NamedEventUtil &) = delete;
+  NamedEventUtil &operator=(const NamedEventUtil &) = delete;
   // return real event name
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.<name>.event
   static const std::string GetEventPath(const char *name);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NamedEventUtil);
 };
 
 class NamedEventListener {
@@ -136,10 +135,10 @@ class NamedEventListener {
 
 #ifdef OS_WIN
   HANDLE handle_;
-#else
+#else   // OS_WIN
   sem_t *sem_;
   std::string key_filename_;
-#endif
+#endif  // OS_WIN
 };
 
 class NamedEventNotifier {
@@ -159,9 +158,9 @@ class NamedEventNotifier {
  private:
 #ifdef OS_WIN
   HANDLE handle_;
-#else
+#else   // OS_WIN
   sem_t *sem_;
-#endif
+#endif  // OS_WIN
 };
 }  // namespace mozc
 

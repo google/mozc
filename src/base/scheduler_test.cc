@@ -38,7 +38,7 @@
 #include "base/logging.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

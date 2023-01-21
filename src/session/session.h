@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_H_
 
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <string>
 
@@ -40,7 +41,7 @@
 #include "composer/composer.h"
 #include "session/session_interface.h"
 // for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -64,6 +65,8 @@ class ImeContext;
 class Session : public SessionInterface {
  public:
   explicit Session(EngineInterface *engine);
+  Session(const Session &) = delete;
+  Session &operator=(const Session &) = delete;
   ~Session() override;
 
   bool SendKey(mozc::commands::Command *command) override;
@@ -268,7 +271,7 @@ class Session : public SessionInterface {
   // For unittest only
   mozc::composer::Composer *get_internal_composer_only_for_unittest();
 
-  const ImeContext &context() const override;
+  const ImeContext &context() const;
 
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);
@@ -283,7 +286,9 @@ class Session : public SessionInterface {
   mozc::EngineInterface *engine_;
 
   std::unique_ptr<ImeContext> context_;
-  std::unique_ptr<ImeContext> prev_context_;
+
+  // Undo stack. *begin is the oldest, and *back is the newest.
+  std::deque<std::unique_ptr<ImeContext>> undo_contexts_;
 
   void InitContext(ImeContext *context) const;
 
@@ -395,8 +400,6 @@ class Session : public SessionInterface {
 
   // Commits the raw text of the composition.
   bool CommitRawText(commands::Command *command);
-
-  DISALLOW_COPY_AND_ASSIGN(Session);
 };
 
 }  // namespace session

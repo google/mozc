@@ -228,7 +228,7 @@ genrule(
     ],
     outs = ["client_quality_test_data.inc"],
     cmd = "$(location :gen_client_quality_test_data) $(SRCS) > $@",
-    exec_tools = [":gen_client_quality_test_data"],
+    tools = [":gen_client_quality_test_data"],
 )
 
 cc_binary_mozc(

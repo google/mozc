@@ -40,6 +40,10 @@ namespace win32 {
 
 class WindowUtil {
  public:
+  WindowUtil() = delete;
+  WindowUtil(const WindowUtil&) = delete;
+  WindowUtil& operator=(const WindowUtil&) = delete;
+
   // Returns the window class name of |window_handle|.
   // Returns an empty string when fails to retrieve the class name.
   static std::wstring GetWindowClassName(HWND window_handle);
@@ -48,9 +52,6 @@ class WindowUtil {
   // successfully configured to receive an incoming message from lower
   // integrity processes.
   static bool ChangeMessageFilter(HWND window_handle, UINT message);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WindowUtil);
 };
 
 }  // namespace win32

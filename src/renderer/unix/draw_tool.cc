@@ -29,6 +29,8 @@
 
 #include "renderer/unix/draw_tool.h"
 
+#include <cstdint>
+
 #include "base/coordinates.h"
 #include "renderer/unix/cairo_wrapper.h"
 #include "renderer/unix/const.h"
@@ -58,7 +60,7 @@ void DrawTool::FillRect(const Rect &rect, const RGBA &color) {
 }
 
 void DrawTool::FrameRect(const Rect &rect, const RGBA &color,
-                         const uint32 line_width) {
+                         const uint32_t line_width) {
   SetColor(color);
   cairo_->SetLineWidth(static_cast<double>(line_width));
   cairo_->Rectangle(rect.origin.x, rect.origin.y, rect.size.width,
@@ -67,7 +69,7 @@ void DrawTool::FrameRect(const Rect &rect, const RGBA &color,
 }
 
 void DrawTool::DrawLine(const Point &from, const Point &to, const RGBA &color,
-                        const uint32 line_width) {
+                        const uint32_t line_width) {
   SetColor(color);
   cairo_->SetLineWidth(static_cast<double>(line_width));
   cairo_->MoveTo(from.x, from.y);

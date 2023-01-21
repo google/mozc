@@ -96,6 +96,8 @@ class CompositionLineWindow
   END_MSG_MAP()
 
   CompositionLineWindow() {}
+  CompositionLineWindow(const CompositionLineWindow &) = delete;
+  CompositionLineWindow &operator=(const CompositionLineWindow &) = delete;
   ~CompositionLineWindow() {}
 
   LRESULT OnCreate(LPCREATESTRUCT create_struct) {
@@ -180,12 +182,14 @@ class CompositionLineWindow
   CFont font_;
   CPen dotted_pen_;
   CPen highlighted_pen_;
-  DISALLOW_COPY_AND_ASSIGN(CompositionLineWindow);
 };
 
 class CompositionWindowListImpl : public CompositionWindowList {
  public:
   CompositionWindowListImpl() {}
+  CompositionWindowListImpl(const CompositionWindowListImpl &) = delete;
+  CompositionWindowListImpl &operator=(const CompositionWindowListImpl &) =
+      delete;
   virtual ~CompositionWindowListImpl() { Destroy(); }
 
   virtual void UpdateLayout(
@@ -247,7 +251,6 @@ class CompositionWindowListImpl : public CompositionWindowList {
 
  private:
   std::vector<CompositionLineWindow *> line_windows_;
-  DISALLOW_COPY_AND_ASSIGN(CompositionWindowListImpl);
 };
 }  // namespace
 

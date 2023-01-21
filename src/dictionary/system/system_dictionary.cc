@@ -183,6 +183,8 @@ class TokenScanIterator {
     int tokens_offset;
   };
 
+  TokenScanIterator(const TokenScanIterator &) = delete;
+  TokenScanIterator &operator=(const TokenScanIterator &) = delete;
   TokenScanIterator(const SystemDictionaryCodecInterface *codec,
                     const BitVectorBasedArray &token_array)
       : codec_(codec),
@@ -244,9 +246,6 @@ class TokenScanIterator {
   int offset_;
   int tokens_offset_;
   int index_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TokenScanIterator);
 };
 
 struct ReverseLookupResult {
@@ -263,6 +262,8 @@ struct ReverseLookupResult {
 class SystemDictionary::ReverseLookupCache {
  public:
   ReverseLookupCache() {}
+  ReverseLookupCache(const ReverseLookupCache &) = delete;
+  ReverseLookupCache &operator=(const ReverseLookupCache &) = delete;
 
   bool IsAvailable(const absl::btree_set<int> &id_set) const {
     for (absl::btree_set<int>::const_iterator itr = id_set.begin();
@@ -275,13 +276,12 @@ class SystemDictionary::ReverseLookupCache {
   }
 
   std::multimap<int, ReverseLookupResult> results;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ReverseLookupCache);
 };
 
 class SystemDictionary::ReverseLookupIndex {
  public:
+  ReverseLookupIndex(const ReverseLookupIndex &) = delete;
+  ReverseLookupIndex &operator=(const ReverseLookupIndex &) = delete;
   ReverseLookupIndex(const SystemDictionaryCodecInterface *codec,
                      const BitVectorBasedArray &token_array) {
     // Gets id size.
@@ -367,8 +367,6 @@ class SystemDictionary::ReverseLookupIndex {
   // Use scoped array for reducing memory consumption as possible.
   std::unique_ptr<ReverseLookupResultArray[]> index_;
   size_t index_size_;
-
-  DISALLOW_COPY_AND_ASSIGN(ReverseLookupIndex);
 };
 
 struct SystemDictionary::PredictiveLookupSearchState {

@@ -42,6 +42,8 @@ struct ThreadInternalState;
 class Thread {
  public:
   Thread();
+  Thread(const Thread &) = delete;
+  Thread &operator=(const Thread &) = delete;
   virtual ~Thread();
 
   virtual void Run() = 0;
@@ -61,8 +63,6 @@ class Thread {
 #endif  // OS_WIN
 
   std::unique_ptr<ThreadInternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(Thread);
 };
 
 class ThreadJoiner final {

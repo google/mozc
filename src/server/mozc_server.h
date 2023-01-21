@@ -40,11 +40,11 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
 
 class MozcServer {
  public:
+  MozcServer() = delete;
+  MozcServer(const MozcServer &) = delete;
+  MozcServer &operator=(const MozcServer &) = delete;
   static int Run();
   static int Finalize();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(MozcServer);
 };
 
 }  // namespace server

@@ -285,12 +285,12 @@ absl::Status Connector::Init(const char *connection_data,
   rows_ = std::make_unique<Row[]>(rsize);
   for (size_t i = 0; i < rsize; ++i) {
     // Each row is formatted as follows:
-    // +-------------------+-------------+------------+------------+---------+
-    // |      uint16       |   uint16    |   uint8[]  |  uint8[]   | uint8[] |
-    // | compact_bits_size | values_size | chunk_bits |compact_bits| values  |
-    // +-------------------+-------------+------------+------------+---------+
+    // +-------------------+-------------+------------+------------+-----------+
+    // |     uint16_t      |  uint16_t   | uint8_t[]  | uint8_t[]  | uint8_t[] |
+    // | compact_bits_size | values_size | chunk_bits |compact_bits| values    |
+    // +-------------------+-------------+------------+------------+-----------+
     // ^
-    // |ptr| points to here now.  Every uint8[] block needs to be aligned at
+    // |ptr| points to here now.  Every uint8_t[] block needs to be aligned at
     // 32-bit boundary.
     VALIDATE_SIZE(ptr, 2, "Compact bits size of row ", i, "/", rsize);
     const uint16_t compact_bits_size = *reinterpret_cast<const uint16_t *>(ptr);

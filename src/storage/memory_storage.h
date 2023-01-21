@@ -39,10 +39,10 @@ namespace storage {
 // This class might be useful for other test cases.
 class MemoryStorage {
  public:
+  MemoryStorage() = delete;
+  MemoryStorage(const MemoryStorage&) = delete;
+  MemoryStorage& operator=(const MemoryStorage&) = delete;
   static StorageInterface *New();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(MemoryStorage);
 };
 
 }  // namespace storage

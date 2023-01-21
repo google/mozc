@@ -59,6 +59,9 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
 class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
  public:
   IPCClientFactoryOnMemory() {}
+  IPCClientFactoryOnMemory(const IPCClientFactoryOnMemory &) = delete;
+  IPCClientFactoryOnMemory &operator=(const IPCClientFactoryOnMemory &) =
+      delete;
 
   IPCClientInterface *NewClient(const std::string &name,
                                 const std::string &path_name) override;
@@ -73,7 +76,6 @@ class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
 #ifdef __APPLE__
   TestMachPortManager mach_manager_;
 #endif  // __APPLE__
-  DISALLOW_COPY_AND_ASSIGN(IPCClientFactoryOnMemory);
 };
 }  // namespace mozc
 #endif  // MOZC_IPC_IPC_TEST_UTIL_H_

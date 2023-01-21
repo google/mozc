@@ -38,6 +38,10 @@ namespace mozc {
 
 class Process {
  public:
+  Process() = delete;
+  Process(const Process &) = delete;
+  Process &operator=(const Process &) = delete;
+
   // Opens the URL with the default browser.  If this function is not
   // supported on the OS or failed, false is returned.
   static bool OpenBrowser(const std::string &url);
@@ -87,9 +91,6 @@ class Process {
 
   // Launches an error message dialog.
   static bool LaunchErrorMessageDialog(const std::string &type);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Process);
 };
 
 }  // namespace mozc

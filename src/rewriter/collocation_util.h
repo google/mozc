@@ -41,6 +41,10 @@ namespace mozc {
 
 class CollocationUtil {
  public:
+  CollocationUtil() = delete;
+  CollocationUtil(const CollocationUtil &) = delete;
+  CollocationUtil &operator=(const CollocationUtil &) = delete;
+
   // Gets normalized script
   // Removes or rewrites some symbols.
   // for example:
@@ -56,8 +60,6 @@ class CollocationUtil {
   // Removes characters for normalizing.
   static void RemoveExtraCharacters(const absl::string_view input,
                                     bool remove_number, std::string *output);
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(CollocationUtil);
 };
 
 }  // namespace mozc

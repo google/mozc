@@ -292,7 +292,6 @@ cc_library_mozc(
 bzl_library(
     name = "mozc_data_bzl",
     srcs = ["mozc_data.bzl"],
-    parse_tests = False,
     visibility = ["//visibility:private"],
 )
 

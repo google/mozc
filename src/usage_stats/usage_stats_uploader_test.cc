@@ -40,8 +40,8 @@
 #include "base/system_util.h"
 #include "base/version.h"
 #include "storage/registry.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 

@@ -35,7 +35,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {
@@ -71,6 +71,6 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
   } else {
     LOG(ERROR) << "cannot execute fork";
   }
-#endif  // OS_WIN
+#endif  // !OS_WIN
 }
 }  // namespace mozc

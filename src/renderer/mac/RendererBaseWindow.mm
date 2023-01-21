@@ -31,6 +31,8 @@
 #include <Cocoa/Cocoa.h>
 #include <objc/message.h>
 
+#include <cstdint>
+
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/mac_util.h"
@@ -108,7 +110,7 @@ void RendererBaseWindow::MoveWindow(const NSPoint &point) {
   [window_ setFrame:rect display:FALSE];
 }
 
-void RendererBaseWindow::ResizeWindow(int32 width, int32 height) {
+void RendererBaseWindow::ResizeWindow(int32_t width, int32_t height) {
   NSRect rect = [window_ frame];
   rect.size.width = width;
   rect.size.height = height;

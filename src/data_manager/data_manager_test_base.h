@@ -37,7 +37,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 
@@ -60,6 +60,8 @@ class DataManagerTestBase : public ::testing::Test {
                       // The following is used in typing model test.
                       const std::vector<std::pair<std::string, std::string>>
                           &typing_model_files);
+  DataManagerTestBase(const DataManagerTestBase &) = delete;
+  DataManagerTestBase &operator=(const DataManagerTestBase &) = delete;
   ~DataManagerTestBase() override;
 
   void RunAllTests();
@@ -84,8 +86,6 @@ class DataManagerTestBase : public ::testing::Test {
   const std::vector<std::string> dictionary_files_;
   const std::vector<std::string> suggestion_filter_files_;
   const std::vector<std::pair<std::string, std::string>> typing_model_files_;
-
-  DISALLOW_COPY_AND_ASSIGN(DataManagerTestBase);
 };
 
 }  // namespace mozc

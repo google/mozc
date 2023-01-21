@@ -99,6 +99,8 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   END_MSG_MAP()
 
   CandidateWindow();
+  CandidateWindow(const CandidateWindow &) = delete;
+  CandidateWindow &operator=(const CandidateWindow &) = delete;
   ~CandidateWindow();
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
@@ -153,8 +155,6 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   int indicator_width_;
   bool metrics_changed_;
   bool mouse_moving_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindow);
 };
 
 }  // namespace win32

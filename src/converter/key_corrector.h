@@ -44,8 +44,10 @@ class KeyCorrector {
     KANA,
   };
 
-  KeyCorrector(const std::string &key, InputMode mode, size_t history_size);
   KeyCorrector();
+  KeyCorrector(const std::string &key, InputMode mode, size_t history_size);
+  KeyCorrector(const KeyCorrector &) = delete;
+  KeyCorrector &operator=(const KeyCorrector &) = delete;
   virtual ~KeyCorrector();
 
   InputMode mode() const;
@@ -157,8 +159,6 @@ class KeyCorrector {
   std::string original_key_;
   std::vector<size_t> alignment_;
   std::vector<size_t> rev_alignment_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyCorrector);
 };
 
 }  // namespace mozc

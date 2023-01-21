@@ -29,8 +29,6 @@
 
 #include "base/cpu_stats.h"
 
-#include <cstdint>
-
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -43,6 +41,8 @@
 #include <sys/time.h>
 #endif  // __APPLE__
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/port.h"
 
@@ -50,14 +50,14 @@ namespace mozc {
 namespace {
 
 #ifdef OS_WIN
-uint64 FileTimeToInt64(const FILETIME &file_time) {
-  return (static_cast<uint64>(file_time.dwHighDateTime) << 32) |
-         (static_cast<uint64>(file_time.dwLowDateTime));
+uint64_t FileTimeToInt64(const FILETIME &file_time) {
+  return (static_cast<uint64_t>(file_time.dwHighDateTime) << 32) |
+         (static_cast<uint64_t>(file_time.dwLowDateTime));
 }
 #endif  // OS_WIN
 
 #ifdef __APPLE__
-uint64 TimeValueTToInt64(const time_value_t &time_value) {
+uint64_t TimeValueTToInt64(const time_value_t &time_value) {
   return 1000000ULL * time_value.seconds + time_value.microseconds;
 }
 #endif  // __APPLE__
@@ -102,9 +102,9 @@ float CPUStats::GetSystemCPULoad() {
 
   // kernel_time includes Kernel idle time, so no need to
   // include cpu_time as total_times
-  const uint64 total_times =
+  const uint64_t total_times =
       FileTimeToInt64(kernel_time) + FileTimeToInt64(user_time);
-  const uint64 cpu_times = total_times - FileTimeToInt64(idle_time);
+  const uint64_t cpu_times = total_times - FileTimeToInt64(idle_time);
 #endif  // OS_WIN
 
 #ifdef __APPLE__
@@ -117,10 +117,10 @@ float CPUStats::GetSystemCPULoad() {
     return 0.0;
   }
 
-  const uint64 cpu_times = cpu_info.cpu_ticks[CPU_STATE_NICE] +
-                           cpu_info.cpu_ticks[CPU_STATE_SYSTEM] +
-                           cpu_info.cpu_ticks[CPU_STATE_USER];
-  const uint64 total_times = cpu_times + cpu_info.cpu_ticks[CPU_STATE_IDLE];
+  const uint64_t cpu_times = cpu_info.cpu_ticks[CPU_STATE_NICE] +
+                             cpu_info.cpu_ticks[CPU_STATE_SYSTEM] +
+                             cpu_info.cpu_ticks[CPU_STATE_USER];
+  const uint64_t total_times = cpu_times + cpu_info.cpu_ticks[CPU_STATE_IDLE];
 
 #endif  // __APPLE__
 
@@ -148,9 +148,9 @@ float CPUStats::GetCurrentProcessCPULoad() {
     return 0.0;
   }
 
-  const uint64 total_times =
+  const uint64_t total_times =
       FileTimeToInt64(current_file_time) - FileTimeToInt64(create_time);
-  const uint64 cpu_times =
+  const uint64_t cpu_times =
       FileTimeToInt64(kernel_time) + FileTimeToInt64(user_time);
 #endif  // OS_WIN
 
@@ -172,9 +172,9 @@ float CPUStats::GetCurrentProcessCPULoad() {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
 
-  const uint64 total_times = 1000000ULL * tv.tv_sec + tv.tv_usec;
-  const uint64 cpu_times = TimeValueTToInt64(task_times_info.user_time) +
-                           TimeValueTToInt64(task_times_info.system_time);
+  const uint64_t total_times = 1000000ULL * tv.tv_sec + tv.tv_usec;
+  const uint64_t cpu_times = TimeValueTToInt64(task_times_info.user_time) +
+                             TimeValueTToInt64(task_times_info.system_time);
 #endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)

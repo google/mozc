@@ -31,6 +31,15 @@
 cc_(library|binary|test) wrappers to add :macro dependency.
 :macro defines attributes for each platforms so required macros are defined by
 depending on it.
+
+Macro naming guideline: Use mozc_ as a prefix, e.g.:
+  - mozc_cc_library
+  - mozc_objc_test
+  - mozc_macos_application
+  - mozc_select
+
+See also: https://bazel.build/rules/bzl-style#rules
+
 """
 
 load("//bazel:stubs.bzl", "register_extension_info")
@@ -40,7 +49,7 @@ load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
-def cc_library_mozc(deps = [], copts = [], **kwargs):
+def mozc_cc_library(deps = [], copts = [], **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
@@ -51,11 +60,21 @@ def cc_library_mozc(deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
+    extension = "mozc_cc_library",
+    label_regex_for_dep = "{extension_name}",
+)
+
+def cc_library_mozc(**kwargs):
+    """Deprecated, use mozc_cc_library.
+    """
+    mozc_cc_library(**kwargs)
+
+register_extension_info(
     extension = "cc_library_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_binary_mozc(deps = [], copts = [], **kwargs):
+def mozc_cc_binary(deps = [], copts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
@@ -66,11 +85,21 @@ def cc_binary_mozc(deps = [], copts = [], **kwargs):
     )
 
 register_extension_info(
+    extension = "mozc_cc_binary",
+    label_regex_for_dep = "{extension_name}",
+)
+
+def cc_binary_mozc(**kwargs):
+    """Deprecated, use mozc_cc_binary.
+    """
+    mozc_cc_binary(**kwargs)
+
+register_extension_info(
     extension = "cc_binary_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_test_mozc(name, tags = [], deps = [], copts = [], **kwargs):
+def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
     """cc_test wrapper adding //:macro dependecny.
 
     Args:
@@ -103,11 +132,21 @@ def cc_test_mozc(name, tags = [], deps = [], copts = [], **kwargs):
         )
 
 register_extension_info(
+    extension = "mozc_cc_test",
+    label_regex_for_dep = "{extension_name}",
+)
+
+def cc_test_mozc(**kwargs):
+    """ Deprecated, use mozc_cc_test.
+    """
+    mozc_cc_test(**kwargs)
+
+register_extension_info(
     extension = "cc_test_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_library_mozc(name, srcs, srcs_version = "PY3", **kwargs):
+def mozc_py_library(name, srcs, srcs_version = "PY3", **kwargs):
     """py_library wrapper generating import-modified python scripts for iOS."""
     pytype_strict_library(
         name = name,
@@ -117,14 +156,24 @@ def py_library_mozc(name, srcs, srcs_version = "PY3", **kwargs):
     )
 
 register_extension_info(
+    extension = "mozc_py_library",
+    label_regex_for_dep = "{extension_name}",
+)
+
+def py_library_mozc(**kwargs):
+    """Deprecated, use mozc_py_library.
+    """
+    mozc_py_library(**kwargs)
+
+register_extension_info(
     extension = "py_library_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
+def mozc_py_binary(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
-    To use this rule, corresponding py_library_mozc needs to be defined to
+    To use this rule, corresponding mozc_py_library needs to be defined to
     generate iOS sources.
     """
     pytype_strict_binary(
@@ -140,11 +189,21 @@ def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", tes
     )
 
 register_extension_info(
+    extension = "mozc_py_binary",
+    label_regex_for_dep = "{extension_name}",
+)
+
+def py_binary_mozc(**kwargs):
+    """Deprecated, use mozc_py_binary.
+    """
+    mozc_py_binary(**kwargs)
+
+register_extension_info(
     extension = "py_binary_mozc",
     label_regex_for_dep = "{extension_name}",
 )
 
-def infoplist_mozc(name, srcs = [], outs = []):
+def mozc_infoplist(name, srcs = [], outs = []):
     native.genrule(
         name = name,
         srcs = srcs + ["//base:mozc_version_txt"],
@@ -154,10 +213,15 @@ def infoplist_mozc(name, srcs = [], outs = []):
                " --input $(location " + srcs[0] + ")" +
                " --version_file $(location //base:mozc_version_txt)" +
                " --branding " + BRANDING),
-        exec_tools = ["//build_tools:tweak_info_plist"],
+        tools = ["//build_tools:tweak_info_plist"],
     )
 
-def infoplist_strings_mozc(name, srcs = [], outs = []):
+def infoplist_mozc(**kwargs):
+    """Deprecated, use mozc_infoplist.
+    """
+    mozc_infoplist(**kwargs)
+
+def mozc_infoplist_strings(name, srcs = [], outs = []):
     native.genrule(
         name = name,
         srcs = srcs,
@@ -166,10 +230,15 @@ def infoplist_strings_mozc(name, srcs = [], outs = []):
                " --output $@" +
                " --input $(location " + srcs[0] + ")" +
                " --branding " + BRANDING),
-        exec_tools = ["//build_tools:tweak_info_plist_strings"],
+        tools = ["//build_tools:tweak_info_plist_strings"],
     )
 
-def objc_library_mozc(
+def infoplist_strings_mozc(**kwargs):
+    """Deprecated, use mozc_infoplist_strings.
+    """
+    mozc_infoplist_strings(**kwargs)
+
+def mozc_objc_library(
         name,
         srcs = [],
         hdrs = [],
@@ -197,12 +266,12 @@ def objc_library_mozc(
         deps = deps + [
             "//:macro",
             proto_deps_name,
-        ] + select_mozc(
+        ] + mozc_select(
             macos = sdk_frameworks_deps,
             oss_macos = [],
         ),
         copts = copts + ["-funsigned-char", "-std=c++17"],
-        sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
+        sdk_frameworks = mozc_select(oss_macos = sdk_frameworks),
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
@@ -210,6 +279,11 @@ def objc_library_mozc(
         tags = tags + ["manual"],
         **kwargs
     )
+
+def objc_library_mozc(**kwargs):
+    """ deprecated, use mozc_objc_library.
+    """
+    mozc_objc_library(**kwargs)
 
 def _run_test_impl(ctx):
     """Rule to run executables (e.g. apple_binary) as test."""
@@ -256,8 +330,8 @@ _run_test = rule(
     test = True,
 )
 
-def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
-    objc_library_mozc(
+def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
+    mozc_objc_library(
         name = name + "_lib",
         testonly = 1,
         srcs = srcs,
@@ -272,8 +346,8 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
         testonly = 1,
         minimum_os_version = "10.13",
         platform_type = "macos",
-        sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
-        deps = [name + "_lib"] + select_mozc(
+        sdk_frameworks = mozc_select(oss_macos = sdk_frameworks),
+        deps = [name + "_lib"] + mozc_select(
             macos = sdk_frameworks_deps,
             oss_macos = [],
         ),
@@ -282,14 +356,19 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
 
     _run_test(
         name = name,
-        tests = select_mozc(macos = [name + "_bin"]),
+        tests = mozc_select(macos = [name + "_bin"]),
     )
+
+def objc_test_mozc(**kwargs):
+    """Deprecated, use mozc_objc_test.
+    """
+    mozc_objc_test(**kwargs)
 
 def _tweak_infoplists(name, infoplists):
     tweaked_infoplists = []
     for i, plist in enumerate(infoplists):
         plist_name = "%s_plist%d" % (name, i)
-        infoplist_mozc(
+        mozc_infoplist(
             name = plist_name,
             srcs = [plist],
             outs = [plist.replace(".plist", "_tweaked.plist")],
@@ -301,7 +380,7 @@ def _tweak_strings(name, strings):
     tweaked_strings = []
     for i, string in enumerate(strings):
         string_name = "%s_string%d" % (name, i)
-        infoplist_strings_mozc(
+        mozc_infoplist_strings(
             name = string_name,
             srcs = [string],
             outs = ["tweaked/" + string],
@@ -309,7 +388,7 @@ def _tweak_strings(name, strings):
         tweaked_strings.append(string_name)
     return tweaked_strings
 
-def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
+def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .app for macOS.
 
     Args:
@@ -337,7 +416,12 @@ def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_i
         **kwargs
     )
 
-def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
+def macos_application_mozc(**kwargs):
+    """Deprecated, use mozc_macos_application.
+    """
+    mozc_macos_application(**kwargs)
+
+def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .bundle for macOS.
 
     Args:
@@ -365,13 +449,18 @@ def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = N
         **kwargs
     )
 
+def macos_bundle_mozc(**kwargs):
+    """Deprecated, use mozc_macos_bundle
+    """
+    mozc_macos_bundle(**kwargs)
+
 def _get_value(args):
     for arg in args:
         if arg != None:
             return arg
     return None
 
-def select_mozc(
+def mozc_select(
         default = [],
         client = None,
         oss = None,
@@ -425,3 +514,8 @@ def select_mozc(
         "//bazel/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
         "//conditions:default": default,
     })
+
+def select_mozc(**kwargs):
+    """Deprecated, use mozc_select.
+    """
+    return mozc_select(**kwargs)

@@ -48,6 +48,10 @@ class Config;
 // KeyInfoUtil::ContainsKey instead.
 class ImeSwitchUtil {
  public:
+  ImeSwitchUtil() = delete;
+  ImeSwitchUtil(const ImeSwitchUtil &) = delete;
+  ImeSwitchUtil &operator=(const ImeSwitchUtil &) = delete;
+
   // Returns true if 'key' is assigned for any command in direct mode.
   // We want to know this configuration before starting mozc server,
   // because we use this config to start mozc server.
@@ -58,7 +62,6 @@ class ImeSwitchUtil {
 
  private:
   // Should never be allocated.
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ImeSwitchUtil);
 };
 
 }  // namespace config

@@ -44,9 +44,9 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {

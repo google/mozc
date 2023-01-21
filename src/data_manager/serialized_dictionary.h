@@ -54,9 +54,9 @@ namespace mozc {
 //   string value;  // Surface form
 //   string description;
 //   string additional_description;
-//   uint16 lid;
-//   uint16 rid;
-//   int16 cost;
+//   uint16_t lid;
+//   uint16_t rid;
+//   int16_t cost;
 // }
 //
 // * Prerequisite

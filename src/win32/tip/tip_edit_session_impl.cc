@@ -36,6 +36,7 @@
 #include <atlcom.h>
 #include <msctf.h>
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -378,7 +379,7 @@ HRESULT UpdateComposition(TipTextService *text_service, ITfContext *context,
     }
     // |output.preedit().cursor()| is in the unit of UTF-32. We need to convert
     // it to UTF-16 for TSF.
-    const uint32 cursor_pos_utf16 = Util::WideCharsLen(
+    const uint32_t cursor_pos_utf16 = Util::WideCharsLen(
         Util::Utf8SubString(preedit_text, 0, preedit.cursor()));
 
     result = cursor_range->Collapse(write_cookie, TF_ANCHOR_START);
@@ -430,7 +431,7 @@ HRESULT UpdatePrivateContext(TipTextService *text_service, ITfContext *context,
       TipInputModeManager::kNotifySystemConversionMode) {
     const CompositionMode mozc_mode = static_cast<CompositionMode>(
         input_mode_manager->GetEffectiveConversionMode());
-    uint32 native_mode = 0;
+    uint32_t native_mode = 0;
     if (ConversionModeUtil::ToNativeMode(
             mozc_mode, private_context->input_behavior().prefer_kana_input,
             &native_mode)) {

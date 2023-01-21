@@ -79,7 +79,7 @@ const GUID kImeLangBarItem_HelpMenu = {
     0x473d,
     {0x83, 0x45, 0xc6, 0x5b, 0x2c, 0x02, 0xcd, 0xc8}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {E44F4C58-12E2-43FC-A7A3-367BE56BFB65}
 const GUID kImeLangBarItem_Button = {
@@ -96,7 +96,7 @@ const GUID kImeLangBarItem_ToolButton = {
 const GUID kImeLangBarItem_HelpMenu = {
     0x8963bf4d, 0x4cc, 0x4b17, {0xa6, 0xfd, 0xc2, 0x4e, 0x6, 0xc, 0xad, 0x98}};
 
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr bool kShowInTaskbar = true;
 

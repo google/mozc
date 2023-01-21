@@ -29,8 +29,8 @@
 
 #include "renderer/unix/text_renderer.h"
 #include "renderer/unix/pango_wrapper_interface.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 using ::testing::Expectation;
 using ::testing::Return;

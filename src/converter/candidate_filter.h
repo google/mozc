@@ -54,6 +54,8 @@ class CandidateFilter {
       const dictionary::PosMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
+  CandidateFilter(const CandidateFilter &) = delete;
+  CandidateFilter &operator=(const CandidateFilter &) = delete;
   ~CandidateFilter();
 
   enum ResultType {
@@ -89,8 +91,6 @@ class CandidateFilter {
   std::set<std::string> seen_;
   const Segment::Candidate *top_candidate_;
   bool apply_suggestion_filter_for_exact_match_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateFilter);
 };
 
 }  // namespace converter

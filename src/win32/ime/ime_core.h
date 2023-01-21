@@ -32,11 +32,12 @@
 
 #include <windows.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "win32/base/immdev.h"
 #include "win32/base/keyevent_handler.h"
@@ -161,7 +162,7 @@ class ImeCore {
   // the input context.  If |generate_message| is false, this function will not
   // generate any UI message.
   // Returns true if the operation completed successfully.
-  static BOOL HighlightCandidate(HIMC himc, int32 candidate_index,
+  static BOOL HighlightCandidate(HIMC himc, int32_t candidate_index,
                                  bool generate_message);
 
   // This function sends SELECT_CANDIDATE command to the server and updates the

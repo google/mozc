@@ -45,6 +45,9 @@ namespace tsf {
 class TipEnumDisplayAttributes : public IEnumTfDisplayAttributeInfo {
  public:
   TipEnumDisplayAttributes();
+  TipEnumDisplayAttributes(const TipEnumDisplayAttributes &) = delete;
+  TipEnumDisplayAttributes &operator=(const TipEnumDisplayAttributes &) =
+      delete;
   virtual ~TipEnumDisplayAttributes();
 
   // IUnknown
@@ -64,8 +67,6 @@ class TipEnumDisplayAttributes : public IEnumTfDisplayAttributeInfo {
  private:
   TipRefCount ref_count_;
   LONG index_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipEnumDisplayAttributes);
 };
 
 }  // namespace tsf

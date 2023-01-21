@@ -30,6 +30,8 @@
 #ifndef MOZC_RENDERER_UNIX_CONST_H_
 #define MOZC_RENDERER_UNIX_CONST_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -38,7 +40,7 @@ namespace gtk {
 
 struct RGBA {
   // The range of following variables are [0x00, 0xFF].
-  uint8 red, green, blue, alpha;
+  uint8_t red, green, blue, alpha;
 };
 
 // Following colors are used for window rendereing.

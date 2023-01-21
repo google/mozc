@@ -48,6 +48,8 @@ class SessionObserverInterface;
 class SessionObserverHandler {
  public:
   SessionObserverHandler();
+  SessionObserverHandler(const SessionObserverHandler &) = delete;
+  SessionObserverHandler &operator=(const SessionObserverHandler &) = delete;
   virtual ~SessionObserverHandler();
 
   void AddObserver(SessionObserverInterface *observer);
@@ -55,8 +57,6 @@ class SessionObserverHandler {
 
  private:
   std::vector<SessionObserverInterface *> observers_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionObserverHandler);
 };
 
 }  // namespace session

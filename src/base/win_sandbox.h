@@ -36,6 +36,7 @@
 #include <AccCtrl.h>
 #include <Windows.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -58,6 +59,10 @@ class Sid {
 
 class WinSandbox {
  public:
+  WinSandbox() = delete;
+  WinSandbox(const WinSandbox &) = delete;
+  WinSandbox &operator=(const WinSandbox &) = delete;
+
   // This emum is not compatible with the same name enum in Chromium sandbox
   // library.  This num has INTEGRITY_LEVEL_MEDIUM_PLUS and lacks of
   // INTEGRITY_LEVEL_MEDIUM_LOW and INTEGRITY_LEVEL_BELOW_LOW, which are not
@@ -142,7 +147,7 @@ class WinSandbox {
     TokenLevel primary_level;
     TokenLevel impersonation_level;
     IntegrityLevel integrity_level;
-    uint32 creation_flags;
+    uint32_t creation_flags;
     bool use_locked_down_job;
     bool allow_ui_operation;
     bool in_system_dir;
@@ -199,9 +204,6 @@ class WinSandbox {
                               const std::wstring &token_user_sid,
                               const std::wstring &token_primary_group_sid,
                               bool is_windows_8_or_later);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WinSandbox);
 };
 
 }  // namespace mozc

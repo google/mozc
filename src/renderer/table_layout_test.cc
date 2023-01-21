@@ -29,7 +29,7 @@
 
 #include "renderer/table_layout.h"
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace renderer {

@@ -30,7 +30,7 @@
 #include "session/session_observer_handler.h"
 #include "protocol/commands.pb.h"
 #include "session/session_observer_interface.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace session {
@@ -38,6 +38,8 @@ namespace session {
 class SessionObserverMock : public SessionObserverInterface {
  public:
   SessionObserverMock() : eval_count_(0) {}
+  SessionObserverMock(const SessionObserverMock &) = delete;
+  SessionObserverMock &operator=(const SessionObserverMock &) = delete;
   ~SessionObserverMock() override {}
 
   void EvalCommandHandler(const commands::Command &command) override {
@@ -52,7 +54,6 @@ class SessionObserverMock : public SessionObserverInterface {
  private:
   int eval_count_;
   commands::Command command_;
-  DISALLOW_COPY_AND_ASSIGN(SessionObserverMock);
 };
 
 TEST(SessionObserverHandlerTest, ObserverTest) {

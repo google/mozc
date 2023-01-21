@@ -36,7 +36,7 @@
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {

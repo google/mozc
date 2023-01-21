@@ -31,7 +31,7 @@
 #define MOZC_RENDERER_UNIX_GTK_WRAPPER_MOCK_H_
 
 #include "renderer/unix/gtk_wrapper_interface.h"
-#include "testing/base/public/gmock.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

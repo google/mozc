@@ -35,8 +35,8 @@
 #include <string>
 
 #include "base/port.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {

@@ -45,7 +45,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "absl/base/attributes.h"
 //  for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 
@@ -66,6 +66,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const dictionary::PosMatcher *pos_matcher,
       const dictionary::PosGroup *pos_group,
       const SuggestionFilter *suggestion_filter);
+  ImmutableConverterImpl(const ImmutableConverterImpl &) = delete;
+  ImmutableConverterImpl &operator=(const ImmutableConverterImpl &) = delete;
   ~ImmutableConverterImpl() override = default;
 
   ABSL_MUST_USE_RESULT bool ConvertForRequest(
@@ -205,8 +207,6 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   // Cache for transition cost.
   const int32_t last_to_first_name_transition_cost_;
-
-  DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);
 };
 
 }  // namespace mozc

@@ -67,6 +67,10 @@ namespace mozc {
 //   WinAPITestHelper::RestoreHook(restore_info);
 class WinAPITestHelper {
  public:
+  WinAPITestHelper() = delete;
+  WinAPITestHelper(const WinAPITestHelper &) = delete;
+  WinAPITestHelper &operator=(const WinAPITestHelper &) = delete;
+
   // An opaque data to restore API hook.
   class RestoreInfo;
   typedef RestoreInfo *RestoreInfoHandle;
@@ -105,14 +109,11 @@ class WinAPITestHelper {
   // is called.
   // Note: This method is not thread-safe.
   static void RestoreHook(RestoreInfoHandle backup_info);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WinAPITestHelper);
 };
 
 #define DEFINE_HOOK(module_name, original_proc, new_proc)             \
   ::mozc::WinAPITestHelper::MakeHookRequest<decltype(original_proc)>( \
-      module_name, AS_STRING(original_proc), new_proc)
+      module_name, #original_proc, new_proc)
 
 }  // namespace mozc
 

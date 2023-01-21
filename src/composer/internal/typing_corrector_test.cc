@@ -43,7 +43,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "session/request_test_util.h"
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -270,6 +270,9 @@ class CostTableForTest {
     }
   }
 
+  CostTableForTest(const CostTableForTest &) = delete;
+  CostTableForTest &operator=(const CostTableForTest &) = delete;
+
   void InsertCharacter(TypingCorrector *corrector,
                        absl::string_view key) const {
     corrector->InsertCharacter(key, table_.find(key)->second);
@@ -284,8 +287,6 @@ class CostTableForTest {
     event->set_key_code(key_code);
     event->set_probability(probability);
   }
-
-  DISALLOW_COPY_AND_ASSIGN(CostTableForTest);
 };
 
 class TypingCorrectorTest : public ::testing::Test {

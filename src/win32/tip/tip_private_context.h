@@ -60,6 +60,8 @@ class TipUiElementManager;
 class TipPrivateContext {
  public:
   TipPrivateContext(DWORD text_edit_sink_cookie, DWORD text_layout_sink_cookie);
+  TipPrivateContext(const TipPrivateContext &) = delete;
+  TipPrivateContext &operator=(const TipPrivateContext &) = delete;
   ~TipPrivateContext();
 
   void EnsureInitialized();
@@ -80,8 +82,6 @@ class TipPrivateContext {
  private:
   class InternalState;
   std::unique_ptr<InternalState> state_;
-
-  DISALLOW_COPY_AND_ASSIGN(TipPrivateContext);
 };
 
 }  // namespace tsf

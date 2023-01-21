@@ -32,7 +32,7 @@
 #include <iterator>
 #include <string>
 
-#include "testing/base/public/gunit.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 
@@ -103,10 +103,29 @@ TEST(JapaneseUtilTest, RomanjiToHiragana) {
       {"kk", "っk"},
       {"xyz", "xyz"},
   };
-  for (size_t i = 0; i < std::size(kTestCases); ++i) {
+  for (const auto &test_case : kTestCases) {
     std::string actual;
-    japanese_util::RomanjiToHiragana(kTestCases[i].input, &actual);
-    EXPECT_EQ(kTestCases[i].expected, actual);
+    japanese_util::RomanjiToHiragana(test_case.input, &actual);
+    EXPECT_EQ(test_case.expected, actual);
+  }
+}
+
+TEST(JapaneseUtilTest, HiraganaToRomaji) {
+  struct {
+    const char *input;
+    const char *expected;
+  } kTestCases[] = {
+      {"わたしのなまえはたかはしのりゆきです",
+       "watasinonamaehatakahasinoriyukidesu"},
+      {"まじっすかまじやべぇ", "mazissukamaziyabexe"},
+      {"おっっっ", "oxtuxtuxtu"},
+      {"おっっっと", "oxtuxtutto"},
+      {"xyz", "xyz"},
+  };
+  for (const auto &test_case : kTestCases) {
+    std::string actual;
+    japanese_util::HiraganaToRomanji(test_case.input, &actual);
+    EXPECT_EQ(test_case.expected, actual);
   }
 }
 
@@ -147,11 +166,11 @@ TEST(JapaneseUtilTest, FullWidthAndHalfWidth) {
   // spaces
   japanese_util::FullWidthToHalfWidth(" 　",
                                       &output);  // Half- and full-width spaces
-  EXPECT_EQ("  ", output);                     // 2 half-width spaces
+  EXPECT_EQ("  ", output);                       // 2 half-width spaces
 
   japanese_util::HalfWidthToFullWidth(" 　",
                                       &output);  // Half- and full-width spaces
-  EXPECT_EQ("　　", output);                   // 2 full-width spaces
+  EXPECT_EQ("　　", output);                     // 2 full-width spaces
 
   // Spaces are treated as Ascii here
   // Half- and full-width spaces

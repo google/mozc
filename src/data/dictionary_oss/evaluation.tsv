@@ -230,6 +230,10 @@ OK:	にだんかいにんしょう	二段階認証	Conversion Expected	二段階
 OK:	ひともうけ	一儲け	Conversion Expected	一儲け	2.28.4880
 OK:	ひゃっきん	百均	Conversion Expected	百均	2.28.4880
 FAILED:	すげかえれば	すげ変えれば	Conversion Expected 2	挿げ替えれば	2.28.4880
+OK:	たいせつ	大切	Conversion Expected 9	堆雪	2.28.4960
+OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
+OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
+OK:	はいたしょり	排他処理	Conversion Expected	排他処理	2.28.4960
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695

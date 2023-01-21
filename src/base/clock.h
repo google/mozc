@@ -59,6 +59,10 @@ class ClockInterface {
 
 class Clock {
  public:
+  Clock() = delete;
+  Clock(const Clock &) = delete;
+  Clock &operator=(const Clock &) = delete;
+
   // Gets the current time using gettimeofday-like functions.
   // sec: number of seconds from epoch
   // usec: micro-second passed: [0,1000000)
@@ -92,9 +96,6 @@ class Clock {
   // this method.  Set to nullptr to restore the default clock.  This method
   // doesn't take the ownership of |clock|.
   static void SetClockForUnitTest(ClockInterface *clock);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Clock);
 };
 
 }  // namespace mozc

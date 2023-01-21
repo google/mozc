@@ -52,6 +52,8 @@ class ExistenceFilter {
   // 'k' is the number of hash values to use per insert/lookup
   // k must be less than 8
   ExistenceFilter(uint32_t m, uint32_t n, int k);
+  ExistenceFilter(const ExistenceFilter &) = delete;
+  ExistenceFilter &operator=(const ExistenceFilter &) = delete;
   ~ExistenceFilter();
 
   static ExistenceFilter *CreateOptimal(size_t size_in_bytes,
@@ -94,8 +96,6 @@ class ExistenceFilter {
   const uint32_t vec_size_;           // size of bitmap (in bits)
   const uint32_t expected_nelts_;     // expected number of inserts
   const int32_t num_hashes_;          // number of hashes per lookup
-
-  DISALLOW_COPY_AND_ASSIGN(ExistenceFilter);
 };
 
 }  // namespace storage

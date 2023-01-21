@@ -47,10 +47,11 @@ class RewriterImpl : public MergerRewriter {
                const DataManagerInterface *data_manager,
                const dictionary::PosGroup *pos_group,
                const dictionary::DictionaryInterface *dictionary);
+  RewriterImpl(const RewriterImpl &) = delete;
+  RewriterImpl &operator=(const RewriterImpl &) = delete;
 
  private:
   const dictionary::PosMatcher pos_matcher_;
-  DISALLOW_COPY_AND_ASSIGN(RewriterImpl);
 };
 
 }  // namespace mozc

@@ -36,6 +36,7 @@
 #include <atlstr.h>
 #include <msctf.h>
 
+#include <cstdint>
 #include <unordered_map>
 
 #include "protocol/commands.pb.h"
@@ -129,7 +130,7 @@ HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
 
   const Output &output = private_context->last_output();
 
-  uint32 existence_bits = kNoneWindow;
+  uint32_t existence_bits = kNoneWindow;
   if (output.has_candidates() && output.candidates().has_category()) {
     switch (output.candidates().category()) {
       case commands::SUGGESTION:

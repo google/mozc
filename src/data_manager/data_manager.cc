@@ -243,9 +243,9 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     if (!suffix_keys.Init(suffix_key_array_data_) ||
         !suffix_values.Init(suffix_value_array_data_) ||
         suffix_keys.size() != suffix_values.size() ||
-        // Suffix token array is an array of triple (lid, rid, cost) of uint32,
-        // so it contains N = 3 * |suffix_keys.size()| uint32 elements.
-        // Therefore, its byte length must be 4 * N bytes.
+        // Suffix token array is an array of triple (lid, rid, cost) of
+        // uint32_t, so it contains N = 3 * |suffix_keys.size()| uint32_t
+        // elements. Therefore, its byte length must be 4 * N bytes.
         suffix_token_array_data_.size() != 4 * 3 * suffix_keys.size()) {
       LOG(ERROR) << "Suffix dictionary data is broken";
       return Status::DATA_BROKEN;

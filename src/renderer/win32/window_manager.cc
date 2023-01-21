@@ -30,6 +30,7 @@
 #include "renderer/win32/window_manager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -56,7 +57,7 @@ using WTL::CRect;
 
 namespace {
 
-constexpr uint32 kHideWindowDelay = 500;  // msec
+constexpr uint32_t kHideWindowDelay = 500;  // msec
 const POINT kInvalidMousePosition = {-65535, -65535};
 
 }  // namespace
@@ -358,21 +359,22 @@ void WindowManager::UpdateLayoutIMM32(
     // If SHOW_INFOLIST_IMMEDIATELY flag is set, we should show the InfoList
     // without delay. See the comment of SHOW_INFOLIST_IMMEDIATELY in
     // win32_renderer_util.h or b/5824433 for details.
-    uint32 maximum_delay = std::numeric_limits<int32>::max();
+    uint32_t maximum_delay = std::numeric_limits<int32_t>::max();
     if ((mode & SHOW_INFOLIST_IMMEDIATELY) == SHOW_INFOLIST_IMMEDIATELY) {
       maximum_delay = 0;
     }
 
-    const uint32 hide_window_delay = std::min(maximum_delay, kHideWindowDelay);
+    const uint32_t hide_window_delay =
+        std::min(maximum_delay, kHideWindowDelay);
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
       const int focused_row =
           candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        const uint32 raw_delay =
-            std::max(static_cast<uint32>(0),
+        const uint32_t raw_delay =
+            std::max(static_cast<uint32_t>(0),
                      command.output().candidates().usages().delay());
-        const uint32 delay = std::min(maximum_delay, raw_delay);
+        const uint32_t delay = std::min(maximum_delay, raw_delay);
         infolist_window_->DelayShow(delay);
       } else {
         infolist_window_->DelayHide(hide_window_delay);

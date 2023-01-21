@@ -47,6 +47,8 @@ class QtIpcServer : public IPCServer {
   using Callback = std::function<void(std::string)>;
 
   QtIpcServer();
+  QtIpcServer(const QtIpcServer&) = delete;
+  QtIpcServer& operator=(const QtIpcServer&) = delete;
   ~QtIpcServer() override;
 
   bool Process(absl::string_view request, std::string *response) override;
@@ -55,7 +57,6 @@ class QtIpcServer : public IPCServer {
 
  private:
   Callback callback_;
-  DISALLOW_COPY_AND_ASSIGN(QtIpcServer);
 };
 
 }  // namespace renderer

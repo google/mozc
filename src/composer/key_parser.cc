@@ -59,7 +59,7 @@ class KeyParserData {
 
  private:
   void InitData() {
-    //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32>(' '));
+    //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32_t>(' '));
     VLOG(1) << "Init KeyParser Data";
 
     modifiers_map_["ctrl"] = {KeyEvent::CTRL};

@@ -41,6 +41,8 @@ namespace dictionary {
 class PosGroup {
  public:
   explicit PosGroup(const uint8_t *lid_group) : lid_group_(lid_group) {}
+  PosGroup(const PosGroup &) = delete;
+  PosGroup &operator=(const PosGroup &) = delete;
   ~PosGroup() {}
 
   // Returns grouped pos id based on an array pre-generated from
@@ -51,7 +53,6 @@ class PosGroup {
 
  private:
   const uint8_t *const lid_group_;
-  DISALLOW_COPY_AND_ASSIGN(PosGroup);
 };
 
 }  // namespace dictionary

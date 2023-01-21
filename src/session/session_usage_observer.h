@@ -54,6 +54,8 @@ namespace session {
 class SessionUsageObserver : public SessionObserverInterface {
  public:
   SessionUsageObserver();
+  SessionUsageObserver(const SessionUsageObserver &) = delete;
+  SessionUsageObserver &operator=(const SessionUsageObserver &) = delete;
   ~SessionUsageObserver() override;
 
   void EvalCommandHandler(const commands::Command &command) override;
@@ -111,8 +113,6 @@ class SessionUsageObserver : public SessionObserverInterface {
   // A vector is used for storing multi touch event.
   // Because it will not be so large, reallocation will rarely happen.
   std::vector<commands::Input_TouchEvent> last_touchevents_;
-
-  DISALLOW_COPY_AND_ASSIGN(SessionUsageObserver);
 };
 }  // namespace session
 }  // namespace mozc

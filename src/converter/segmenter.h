@@ -49,6 +49,8 @@ class Segmenter {
             const uint16_t *l_table, const uint16_t *r_table,
             size_t bitarray_num_bytes, const char *bitarray_data,
             const uint16_t *boundary_data);
+  Segmenter(const Segmenter &) = delete;
+  Segmenter &operator=(const Segmenter &) = delete;
   ~Segmenter();
 
   bool IsBoundary(const Node &lnode, const Node &rnode,
@@ -65,8 +67,6 @@ class Segmenter {
   const size_t bitarray_num_bytes_;
   const char *bitarray_data_;
   const uint16_t *boundary_data_;
-
-  DISALLOW_COPY_AND_ASSIGN(Segmenter);
 };
 
 }  // namespace mozc
