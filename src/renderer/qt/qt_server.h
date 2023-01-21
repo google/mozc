@@ -45,6 +45,8 @@ class QtServer : public QObject {
 
  public:
   QtServer();
+  QtServer(const QtServer&) = delete;
+  QtServer& operator=(const QtServer&) = delete;
   ~QtServer() override;
 
   int StartServer(int argc, char** argv);
@@ -72,8 +74,6 @@ class QtServer : public QObject {
 
   // From RendererServer
   uint32_t timeout_;
-
-  DISALLOW_COPY_AND_ASSIGN(QtServer);
 };
 
 }  // namespace renderer

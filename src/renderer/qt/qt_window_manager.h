@@ -47,6 +47,8 @@ namespace renderer {
 class QtWindowManager {
  public:
   QtWindowManager();
+  QtWindowManager(const QtWindowManager &) = delete;
+  QtWindowManager &operator=(const QtWindowManager &) = delete;
   ~QtWindowManager() = default;
 
   void Initialize();
@@ -92,8 +94,6 @@ class QtWindowManager {
   RendererStyle style_;
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
-
-  DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };
 
 }  // namespace renderer
