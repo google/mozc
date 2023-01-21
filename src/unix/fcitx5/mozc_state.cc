@@ -279,12 +279,17 @@ void MozcState::FocusIn() {
 }
 
 // This function is called when the ic loses focus.
-void MozcState::FocusOut() {
+void MozcState::FocusOut(const InputContextEvent& event) {
   VLOG(1) << "MozcState::FocusOut()";
   std::string error;
   mozc::commands::Output raw_response;
-  if (TrySendCommand(mozc::commands::SessionCommand::REVERT, &raw_response,
-                     &error)) {
+
+  const auto command =
+      (event.type() == EventType::InputContextSwitchInputMethod)
+          ? mozc::commands::SessionCommand::SUBMIT
+          : mozc::commands::SessionCommand::REVERT;
+
+  if (TrySendCommand(command, &raw_response, &error)) {
     parser_->ParseResponse(raw_response, ic_);
   }
   ClearAll();  // just in case.

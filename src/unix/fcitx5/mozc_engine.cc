@@ -229,7 +229,7 @@ void MozcEngine::deactivate(const fcitx::InputMethodEntry &,
   auto ic = event.inputContext();
   deactivating_ = true;
   auto mozc_state = mozcState(ic);
-  mozc_state->FocusOut();
+  mozc_state->FocusOut(event);
   deactivating_ = false;
 }
 void MozcEngine::keyEvent(const InputMethodEntry &entry, KeyEvent &event) {
