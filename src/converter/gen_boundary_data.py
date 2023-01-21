@@ -30,7 +30,7 @@
 
 """A tool to generate boundary data.
 
-Bounday data binary image is an array of uint16 whose length is 2N, where N is
+Bounday data binary image is an array of uint16_t whose length is 2N, where N is
 the number of POS IDs including special POS.  The array has the following
 structure:
 

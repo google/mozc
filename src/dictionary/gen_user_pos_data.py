@@ -55,7 +55,7 @@ def OutputUserPosData(user_pos_data, output_token_array, output_string_array):
     for user_pos, conjugation_list in sorted(user_pos_data):
       user_pos_index = string_index[ToString(user_pos)]
       for value_suffix, key_suffix, conjugation_id in conjugation_list:
-        # One entry is serialized to 8 byte (four uint16 components).
+        # One entry is serialized to 8 byte (four uint16_t components).
         f.write(struct.pack('<H', user_pos_index))
         f.write(struct.pack('<H', string_index[ToString(value_suffix)]))
         f.write(struct.pack('<H', string_index[ToString(key_suffix)]))

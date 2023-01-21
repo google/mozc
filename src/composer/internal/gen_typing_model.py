@@ -35,19 +35,19 @@ Usage:
 
 Output file format:
   +----------------------------------------------------+
-  | unique characters array size (4 bytes, uint32)     |
+  | unique characters array size (4 bytes, uint32_t)   |
   +----------------------------------------------------+
   | unique characters array (variable length, char[])  |
   +----------------------------------------------------+
   | padding (0 - 3 bytes)                              |
   +----------------------------------------------------+
-  | cost array size (4 bytes, uint32)                  |
+  | cost array size (4 bytes, uint32_t)                |
   +----------------------------------------------------+
-  | cost array (variable length, uint8[])              |
+  | cost array (variable length, uint8_t[])            |
   +----------------------------------------------------+
   | padding (0 - 3 bytes)                              |
   +----------------------------------------------------+
-  | mapping table (variable length, int32[])           |
+  | mapping table (variable length, int32_t[])         |
   +----------------------------------------------------+
 """
 
