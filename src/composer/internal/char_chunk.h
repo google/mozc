@@ -103,8 +103,6 @@ class CharChunk final {
 
   bool ShouldInsertNewChunk(const CompositionInput &input) const;
   void AddInput(std::string *input);
-  void AddConvertedChar(std::string *input);
-  void AddInputAndConvertedChar(std::string *key, std::string *converted_char);
   void AddCompositionInput(CompositionInput *input);
 
   void SetTransliterator(Transliterators::Transliterator transliterator);
@@ -155,6 +153,8 @@ class CharChunk final {
   bool AddInputInternal(std::string *input);
 
  private:
+  void AddInputAndConvertedChar(CompositionInput *composition_input);
+
   const Table *table_;
 
   // There are four variables to represent a composing text:

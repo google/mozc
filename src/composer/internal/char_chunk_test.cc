@@ -220,81 +220,77 @@ TEST(CharChunkTest, GetLength) {
   EXPECT_EQ(2, chunk3.GetLength(Transliterators::HALF_ASCII));
 }
 
-TEST(CharChunkTest, AddInputAndConvertedChar) {
+TEST(CharChunkTest, AddCompositionInput) {
   Table table;
   table.AddRule("す゛", "ず", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
-  std::string key = "m";
-  std::string value = "も";
-  chunk1.AddInputAndConvertedChar(&key, &value);
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
+  CompositionInput input;
+  input.InitFromRawAndConv("m", "も", false);
+  chunk1.AddCompositionInput(&input);
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   EXPECT_EQ("m", chunk1.raw());
   EXPECT_EQ("も", chunk1.pending());
   EXPECT_TRUE(chunk1.conversion().empty());
 
-  key = "r";
-  value = "す";
-  chunk1.AddInputAndConvertedChar(&key, &value);
+  input.InitFromRawAndConv("r", "す", false);
+  chunk1.AddCompositionInput(&input);
   // The input values are not used.
-  EXPECT_EQ("r", key);
-  EXPECT_EQ("す", value);
+  EXPECT_EQ("r", input.raw());
+  EXPECT_EQ("す", input.conversion());
   // The chunk remains the previous value.
   EXPECT_EQ("m", chunk1.raw());
   EXPECT_EQ("も", chunk1.pending());
   EXPECT_TRUE(chunk1.conversion().empty());
 
   CharChunk chunk2(Transliterators::CONVERSION_STRING, &table);
-  // key == "r", value == "す";
-  chunk2.AddInputAndConvertedChar(&key, &value);
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
+  // raw == "r", conversion == "す";
+  chunk2.AddCompositionInput(&input);
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   EXPECT_EQ("r", chunk2.raw());
   EXPECT_EQ("す", chunk2.pending());
   EXPECT_TRUE(chunk2.conversion().empty());
 
-  key = "@";
-  value = "゛";
-  chunk2.AddInputAndConvertedChar(&key, &value);
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
+  input.InitFromRawAndConv("@", "゛", false);
+  chunk2.AddCompositionInput(&input);
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   EXPECT_EQ("r@", chunk2.raw());
   EXPECT_TRUE(chunk2.pending().empty());
   EXPECT_EQ("ず", chunk2.conversion());
 
-  key = "h";
-  value = "く";
-  chunk2.AddInputAndConvertedChar(&key, &value);
+  input.InitFromRawAndConv("h", "く", false);
+  chunk2.AddCompositionInput(&input);
   // The input values are not used.
-  EXPECT_EQ("h", key);
-  EXPECT_EQ("く", value);
+  EXPECT_EQ("h", input.raw());
+  EXPECT_EQ("く", input.conversion());
   // The chunk remains the previous value.
   EXPECT_EQ("r@", chunk2.raw());
   EXPECT_TRUE(chunk2.pending().empty());
   EXPECT_EQ("ず", chunk2.conversion());
 }
 
-TEST(CharChunkTest, AddInputAndConvertedCharWithHalfAscii) {
+TEST(CharChunkTest, AddCompositionInputWithHalfAscii) {
   Table table;
   table.AddRule("-", "ー", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
-  std::string key = "-";
-  std::string value = "-";
-  chunk1.AddInputAndConvertedChar(&key, &value);
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
+  CompositionInput input;
+  input.InitFromRawAndConv("-", "-", false);
+  chunk1.AddCompositionInput(&input);
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   EXPECT_EQ("-", chunk1.raw());
   EXPECT_EQ("-", chunk1.pending());
   EXPECT_TRUE(chunk1.conversion().empty());
 
-  key = "-";
-  value = "-";
-  chunk1.AddInputAndConvertedChar(&key, &value);
+  input.InitFromRawAndConv("-", "-", false);
+  chunk1.AddCompositionInput(&input);
   // The input values are not used.
-  EXPECT_EQ("-", key);
-  EXPECT_EQ("-", value);
+  EXPECT_EQ("-", input.raw());
+  EXPECT_EQ("-", input.conversion());
   // The chunk remains the previous value.
   EXPECT_EQ("-", chunk1.raw());
   EXPECT_EQ("-", chunk1.pending());
@@ -302,9 +298,9 @@ TEST(CharChunkTest, AddInputAndConvertedCharWithHalfAscii) {
 
   CharChunk chunk2(Transliterators::CONVERSION_STRING, &table);
   // key == "-", value == "-";
-  chunk2.AddInputAndConvertedChar(&key, &value);
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(value.empty());
+  chunk2.AddCompositionInput(&input);
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   EXPECT_EQ("-", chunk2.raw());
   EXPECT_EQ("-", chunk2.pending());
   EXPECT_TRUE(chunk2.conversion().empty());
@@ -935,7 +931,7 @@ TEST(CharChunkTest, ShouldInsertNewChunk) {
   }
 }
 
-TEST(CharChunkTest, AddCompositionInput) {
+TEST(CharChunkTest, AddInputCompositionWithConvertedChar) {
   Table table;
   table.AddRuleWithAttributes("na", "[NA]", "", NO_TABLE_ATTRIBUTE);
   table.AddRuleWithAttributes("a", "[A]", "", NEW_CHUNK);
@@ -1029,12 +1025,12 @@ TEST(CharChunkTest, Issue2190364) {
   table.AddRule("ち゛", "ぢ", "");
 
   CharChunk chunk(Transliterators::FULL_ASCII, &table);
-  std::string key = "a";
-  std::string converted_char = "ち";
-  chunk.AddInputAndConvertedChar(&key, &converted_char);
+  CompositionInput input;
+  input.InitFromRawAndConv("a", "ち", false);
+  chunk.AddCompositionInput(&input);
 
-  EXPECT_TRUE(key.empty());
-  EXPECT_TRUE(converted_char.empty());
+  EXPECT_TRUE(input.raw().empty());
+  EXPECT_TRUE(input.conversion().empty());
   // "ち" can be "ぢ", so it should be appendable.
   EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, &table));
 
@@ -1045,7 +1041,7 @@ TEST(CharChunkTest, Issue2190364) {
   }
 
   // Space input makes the internal state of chunk, but it is not consumed.
-  key = " ";
+  std::string key = " ";
   chunk.AddInput(&key);
   EXPECT_EQ(" ", key);
   EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, &table));
@@ -1115,8 +1111,7 @@ TEST(CharChunkTest, Issue2819580) {
     }
   }
 
-  // Test for reported situation (ny).
-  // AddInputAndConvertedChar ver.
+  // Test for reported situation (ny) inputs with raw and conversion.
   {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
 
@@ -1129,9 +1124,9 @@ TEST(CharChunkTest, Issue2819580) {
       chunk.AddInput(&input);
     }
     {
-      std::string input("a");
-      std::string converted("a");
-      chunk.AddInputAndConvertedChar(&input, &converted);
+      CompositionInput input;
+      input.InitFromRawAndConv("a", "a", false);
+      chunk.AddCompositionInput(&input);
     }
     {
       std::string result;
@@ -1578,22 +1573,21 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
     ASSERT_EQ(Transliterators::RAW_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
 
-    std::string input = "t";
-    std::string conv = "[ka]";
-    chunk.AddInputAndConvertedChar(&input, &conv);
-    EXPECT_TRUE(input.empty());
-    EXPECT_TRUE(conv.empty());
+    CompositionInput input;
+    input.InitFromRawAndConv("t", "[ka]", false);
+    chunk.AddCompositionInput(&input);
+    EXPECT_TRUE(input.raw().empty());
+    EXPECT_TRUE(input.conversion().empty());
     EXPECT_EQ("t", chunk.raw());
     EXPECT_EQ("[ka]", chunk.pending());
     EXPECT_EQ(Transliterators::RAW_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
 
     // "GA" - The first attribute (default behavior) is used.
-    input = "!";
-    conv = "@";
-    chunk.AddInputAndConvertedChar(&input, &conv);
-    EXPECT_TRUE(input.empty());
-    EXPECT_TRUE(conv.empty());
+    input.InitFromRawAndConv("!", "@", false);
+    chunk.AddCompositionInput(&input);
+    EXPECT_TRUE(input.raw().empty());
+    EXPECT_TRUE(input.conversion().empty());
     EXPECT_EQ("t!", chunk.raw());
     EXPECT_EQ("", chunk.pending());
     EXPECT_EQ("[ga]", chunk.conversion());
@@ -1604,22 +1598,21 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
   {  // "SA" - kConvT12r is set if NO_TRANSLITERATION is specified.
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    std::string input = "x";
-    std::string conv = "[sa]";
-    chunk.AddInputAndConvertedChar(&input, &conv);
-    EXPECT_TRUE(input.empty());
-    EXPECT_TRUE(conv.empty());
+    CompositionInput input;
+    input.InitFromRawAndConv("x", "[sa]", false);
+    chunk.AddCompositionInput(&input);
+    EXPECT_TRUE(input.raw().empty());
+    EXPECT_TRUE(input.conversion().empty());
     EXPECT_EQ("x", chunk.raw());
     EXPECT_EQ("[sa]", chunk.pending());
     EXPECT_EQ(Transliterators::CONVERSION_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
 
     // "ZA" - The first attribute (NO_TRANSLITERATION) is used.
-    input = "!";
-    conv = "@";
-    chunk.AddInputAndConvertedChar(&input, &conv);
-    EXPECT_TRUE(input.empty());
-    EXPECT_TRUE(conv.empty());
+    input.InitFromRawAndConv("!", "@", false);
+    chunk.AddCompositionInput(&input);
+    EXPECT_TRUE(input.raw().empty());
+    EXPECT_TRUE(input.conversion().empty());
     EXPECT_EQ("x!", chunk.raw());
     EXPECT_EQ("", chunk.pending());
     EXPECT_EQ("[za]", chunk.conversion());

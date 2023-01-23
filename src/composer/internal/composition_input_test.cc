@@ -103,18 +103,6 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_TRUE(input2.conversion().empty());
     EXPECT_TRUE(input2.has_conversion());
   }
-
-  {  // Mutable conversion
-    ASSERT_TRUE(input.Empty());
-    EXPECT_FALSE(input.has_conversion());
-    EXPECT_TRUE(input.mutable_conversion()->empty());
-    EXPECT_TRUE(input.has_conversion());
-    input.mutable_conversion()->assign("mutable_conversion");
-    EXPECT_EQ(input.conversion(), "mutable_conversion");
-
-    ASSERT_FALSE(input2.Empty());
-    EXPECT_TRUE(input2.has_conversion());
-  }
 }
 
 }  // namespace composer
