@@ -1522,6 +1522,66 @@ TEST_F(CompositionTest, TwelveKeysInput) {
   EXPECT_EQ(GetString(*composition_), "なぼひはははは");
 }
 
+TEST_F(CompositionTest, SpecialKeysInput) {
+  table_->AddRule("{*}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("{*}", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 0);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "お");
+}
+
+TEST_F(CompositionTest, SpecialKeysInputWithReplacedKey) {
+  table_->AddRule("r", "", "{r}");
+  table_->AddRule("{r}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("r", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 0);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "お");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 1);
+}
+
+TEST_F(CompositionTest, SpecialKeysInputWithLeadingPendingKey) {
+  table_->AddRule("{*}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("q", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "q");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 1);
+
+  SetInput("{*}", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "q");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 2);
+  EXPECT_EQ(pos, 1);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "qお");
+}
+
 TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
   table_->AddRule("4", "", "[ta]");
   table_->AddRule("[to]4", "", "[x]{#1}");
