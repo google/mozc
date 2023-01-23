@@ -60,11 +60,12 @@ class CompositionInput final {
   bool Empty() const;
 
   const std::string &raw() const { return raw_; }
+  void clear_raw() { raw_.clear(); }
   std::string *mutable_raw() { return &raw_; }
   void set_raw(const std::string &raw) { raw_ = raw; }
 
   const std::string &conversion() const;
-  std::string *mutable_conversion();
+  void clear_conversion();
   void set_conversion(const std::string &conversion);
 
   bool has_conversion() const { return has_conversion_; }

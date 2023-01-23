@@ -52,7 +52,8 @@ def _ParseOptions():
   parser.add_option(
       '--output_token_array',
       dest='output_token_array',
-      help='Output uint32 array for lid, rid and cost.')
+      help='Output uint32_t array for lid, rid and cost.',
+  )
   return parser.parse_args()[0]
 
 
@@ -92,7 +93,7 @@ def main():
   serialized_string_array_builder.SerializeToFile(
       list(entry[1] for entry in result), opts.output_value_array)
 
-  # Write a sequence of (lid, rid, cost) to uint32 array:
+  # Write a sequence of (lid, rid, cost) to uint32_t array:
   #   {lid[0], rid[0], cost[0], lid[1], rid[1], cost[1], ...}
   # So the final array has 3 * len(result) elements.
   with open(opts.output_token_array, 'wb') as f:

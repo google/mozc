@@ -704,8 +704,9 @@ TEST_F(TableTest, MobileMode) {
       entry = table.LookUpPrefix("し*", &key_length, &fixed);
       EXPECT_EQ(entry->input(), "し*");
       EXPECT_EQ(entry->result(), "");
-      // U+000F and U+000E are shift in/out characters.
-      EXPECT_EQ(entry->pending(), "\u000F*\u000Eじ");
+      // U+F001 is a Unicode PUA character converted from "{*}".
+      // This codepoint may be changed when the table data is updated.
+      EXPECT_EQ(entry->pending(), "\uF001じ");
       EXPECT_EQ(key_length, 4);
       EXPECT_TRUE(fixed);
     }
@@ -721,8 +722,9 @@ TEST_F(TableTest, MobileMode) {
     size_t key_length = 0;
     bool fixed = false;
     entry = table.LookUpPrefix("2", &key_length, &fixed);
-    // "{?}" is to be replaced by "\u000F?\u000E".
-    EXPECT_EQ(entry->pending(), "\u000F?\u000Ea");
+    // U+F000 is a Unicode PUA character converted from "{?}".
+    // This codepoint may be changed when the table data is updated.
+    EXPECT_EQ(entry->pending(), "\uF000a");
   }
 
   {
@@ -920,13 +922,13 @@ TEST_F(TableTest, SpecialKeys) {
     EXPECT_TRUE(nullptr == entry);
 
     std::string key;
-    key = Table::ParseSpecialKey("x{#1}y");
+    key = table.ParseSpecialKey("x{#1}y");
     entry = table.LookUp(key);
     ASSERT_TRUE(nullptr != entry);
     EXPECT_EQ(entry->input(), key);
     EXPECT_EQ(entry->result(), "X1Y");
 
-    key = Table::ParseSpecialKey("x{#2}y");
+    key = table.ParseSpecialKey("x{#2}y");
     entry = table.LookUp(key);
     ASSERT_TRUE(nullptr != entry);
     EXPECT_EQ(entry->input(), key);
@@ -941,9 +943,10 @@ TEST_F(TableTest, SpecialKeys) {
 
   {
     // "{{}" is replaced with "{".
-    // "{*}" is replaced with "\u000F*\u000E".
+    // "{}" is replaced with U+F000.
+    // {b} = U+F001, {d} = U+F002, {e} = U+F003, {{-} = U+F004.
     Table table;
-    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\u000F\u000E");
+    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\uF000");
     EXPECT_EQ(table.AddRule("{", "", "")->input(), "{");
     EXPECT_EQ(table.AddRule("}", "", "")->input(), "}");
     EXPECT_EQ(table.AddRule("{{}", "", "")->input(), "{");
@@ -954,27 +957,29 @@ TEST_F(TableTest, SpecialKeys) {
     EXPECT_EQ(table.AddRule("a}", "", "")->input(), "a}");
     EXPECT_EQ(table.AddRule("}a", "", "")->input(), "}a");
     EXPECT_EQ(table.AddRule("a}a", "", "")->input(), "a}a");
-    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\u000Fb\u000Ec");
+    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\uF001c");
     EXPECT_EQ(table.AddRule("a{b}c{d}{e}", "", "")->input(),
-              "a\u000Fb\u000Ec\u000Fd\u000E\u000Fe\u000E");
+              "a\uF001c\uF002\uF003");
     EXPECT_EQ(table.AddRule("}-{", "", "")->input(), "}-{");
     EXPECT_EQ(table.AddRule("a{bc", "", "")->input(), "a{bc");
 
     // This is not a fixed specification, but a current behavior.
-    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\u000F{-\u000E}");
+    // "{{-}" is treated as a special key.
+    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\uF004}");
   }
 }
 
 TEST_F(TableTest, DeleteSpecialKey) {
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{!}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{bcd}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a{bc}d")), "ad");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}ab{cd}")), "ab");
+  const Table table;
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{!}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{bcd}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a{bc}d")), "ad");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}ab{cd}")), "ab");
 
   // Invalid patterns
   //   "\u000F" = parsed-"{"
@@ -986,17 +991,18 @@ TEST_F(TableTest, DeleteSpecialKey) {
 }
 
 TEST_F(TableTest, TrimLeadingpecialKey) {
-  std::string input = Table::ParseSpecialKey("{!}ab");
+  const Table table;
+  std::string input = table.ParseSpecialKey("{!}ab");
   EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
   EXPECT_EQ(input, "ab");
 
-  input = Table::ParseSpecialKey("{!}{?}ab");
+  input = table.ParseSpecialKey("{!}{?}ab");
   EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, Table::ParseSpecialKey("{?}ab"));
+  EXPECT_EQ(input, table.ParseSpecialKey("{?}ab"));
 
-  input = Table::ParseSpecialKey("a{!}b");
+  input = table.ParseSpecialKey("a{!}b");
   EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, Table::ParseSpecialKey("a{!}b"));
+  EXPECT_EQ(input, table.ParseSpecialKey("a{!}b"));
 
   // Invalid patterns
   //   "\u000F" = parsed-"{"

@@ -77,13 +77,13 @@ message KeyEvent {
     UP = 8;
     DOWN = 9;
     ESCAPE = 10;
-    DEL = 11;  // not DELETE because DELETE is reserved in MSVC
+    // Not DELETE because DELETE is reserved in MSVC.
+    DEL = 11;  // GUI label is "Delete".
     BACKSPACE = 12;
     HENKAN = 13;
     MUHENKAN = 14;
-    KANA = 15;  // VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
-    // TODO(toshiyuki): It is better to rename this to HIRAGANA
-    // In Windows, we have Katakana and it may confusing.
+    // VK_DBE_HIRAGANA(Win), kVK_JIS_Kana(Mac)
+    KANA = 15;  // GUI label is "Hiragana".
     HOME = 16;
     END = 17;
     TAB = 18;
@@ -133,7 +133,7 @@ message KeyEvent {
     DIVIDE = 62;      // Numpad [/]
     EQUALS = 63;      // Numpad [=]
     TEXT_INPUT = 64;  // Meta key event representing any text input.
-    HANKAKU = 65;
+    HANKAKU = 65;     // GUI label is "Hankaku/Zenkaku".
     KANJI = 66;
     KATAKANA = 67;  // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;

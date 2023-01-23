@@ -54,21 +54,6 @@
       ],
     },
     {
-      'target_name': 'session_server_test',
-      'type': 'executable',
-      'sources': [
-        'session_server_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'session.gyp:session',
-        'session.gyp:session_server',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'session_test',
       'type': 'executable',
       'sources': [
@@ -152,7 +137,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base_test.gyp:clock_mock',
-        '../base/base_test.gyp:scheduler_stub',
         '../client/client.gyp:client_mock',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:stats_config_util',
@@ -341,7 +325,6 @@
         'session_internal_test',
         'session_module_test',
         'session_regression_test',
-        'session_server_test',
         'session_test',
         'session_watch_dog_test',
       ],

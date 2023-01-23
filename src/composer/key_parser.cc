@@ -31,6 +31,7 @@
 
 #include "composer/key_parser.h"
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -232,6 +233,29 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
   }
 
   return true;
+}
+
+std::string KeyParser::GetSpecialKeyString(KeyEvent::SpecialKey key) {
+  // Handles exceptional rules that cannot convert from the enum value.
+  switch (key) {
+    case KeyEvent::DEL:
+      return "delete";
+    case KeyEvent::KANA:
+      return "hiragana";
+    case KeyEvent::HANKAKU:
+      return "hankaku/zenkaku";
+    default:
+      // Do nothing.
+      break;
+  }
+
+  // Transforms the enum value in string by removing '_' and using lower case.
+  // e.g. "PAGE_UP" -> "pageup".
+  std::string name = KeyEvent::SpecialKey_Name(key);
+  // Idiom to remove '_' from `name` (e.g. "PAGE_UP" -> "PAGEUP").
+  name.erase(std::remove(name.begin(), name.end(), '_'), name.end());
+  Util::LowerString(&name);
+  return name;
 }
 
 }  // namespace mozc

@@ -44,7 +44,7 @@ def _ParseOption():
 
 
 def _FormatAsUint64LittleEndian(s):
-  """Formats a string as uint64 value in little endian order."""
+  """Formats a string as uint64_t value in little endian order."""
   for _ in range(len(s), 8):
     s += b'\0'
   s = s[::-1]  # Reverse the string
@@ -56,13 +56,15 @@ def main():
   with open(opts.input, 'rb') as infile:
     with open(opts.output, 'wb') as outfile:
       outfile.write(
-          ('#ifdef MOZC_EMBEDDED_FILE_%(name)s\n'
-           '#error "%(name)s was already included or defined elsewhere"\n'
-           '#else\n'
-           '#define MOZC_EMBEDDED_FILE_%(name)s\n'
-           'const uint64 %(name)s_data[] = {\n' % {
-               'name': opts.name
-           }).encode('utf-8'))
+          (
+              '#ifdef MOZC_EMBEDDED_FILE_%(name)s\n'
+              '#error "%(name)s was already included or defined elsewhere"\n'
+              '#else\n'
+              '#define MOZC_EMBEDDED_FILE_%(name)s\n'
+              'const uint64_t %(name)s_data[] = {\n'
+              % {'name': opts.name}
+          ).encode('utf-8')
+      )
 
       while True:
         chunk = infile.read(8)

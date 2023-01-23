@@ -32,14 +32,14 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 exports_files(["mozc.el"])
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "mozc_emacs_helper",
     srcs = ["mozc_emacs_helper.cc"],
     copts = [
@@ -63,7 +63,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_emacs_helper_lib",
     srcs = [
         "client_pool.cc",
@@ -92,7 +92,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "mozc_emacs_helper_lib_test",
     size = "small",
     srcs = ["mozc_emacs_helper_lib_test.cc"],

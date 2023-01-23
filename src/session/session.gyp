@@ -87,6 +87,8 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../client/client.gyp:client',
+        '../base/absl.gyp:absl_synchronization',
+        '../base/absl.gyp:absl_time',
       ],
     },
     {

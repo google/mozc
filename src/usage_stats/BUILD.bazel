@@ -32,9 +32,9 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -54,7 +54,7 @@ proto_library(
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "usage_stats",
     srcs = [
         "usage_stats.cc",
@@ -72,7 +72,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "usage_stats_test",
     size = "small",
     srcs = ["usage_stats_test.cc"],
@@ -93,7 +93,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "usage_stats_uploader",
     srcs = [
         "usage_stats_uploader.cc",
@@ -107,7 +107,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "usage_stats_uploader_test",
     size = "small",
     srcs = ["usage_stats_uploader_test.cc"],
@@ -128,7 +128,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "usage_stats_testing_util",
     testonly = True,
     srcs = ["usage_stats_testing_util.cc"],
@@ -146,7 +146,7 @@ cc_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_stats_list",
     srcs = ["gen_stats_list.py"],
 )

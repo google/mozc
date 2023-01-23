@@ -31,7 +31,9 @@
 
 #include "composer/table.h"
 
+#include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <istream>  // NOLINT
 #include <map>
 #include <memory>
@@ -53,6 +55,7 @@
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -101,8 +104,20 @@ constexpr char k50KeysHiraganaTableFile[] =
     "system://50keys-hiragana.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
+
+// Use [U+F000, U+F8FF] to represent special keys (e.g. {!}, {abc}).
+// The range of Unicode PUA is [U+E000, U+F8FF], and we use them from U+F000.
+// * The range of [U+E000, U+F000) is used for user defined PUA characters.
+// * The users can still use [U+F000, U+F8FF] for their user dictionary.
+//   but, they should not use them for composing rules.
+constexpr char32_t kSpecialKeyBegin = 0xF000;
+constexpr char32_t kSpecialKeyEnd = 0xF8FF;
+
+// U+000F and U+000E are used as fallback for special keys that are not
+// registered in the table. "{abc}" is converted to "\u000Fabc\u000E".
 constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
 constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
+
 }  // namespace
 
 // ========================================
@@ -363,8 +378,8 @@ const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
     return nullptr;
   }
 
-  const std::string input = ParseSpecialKey(escaped_input);
-  const std::string pending = ParseSpecialKey(escaped_pending);
+  const std::string input = RegisterSpecialKey(escaped_input);
+  const std::string pending = RegisterSpecialKey(escaped_pending);
   if (IsLoopingEntry(input, pending)) {
     LOG(WARNING) << "Entry " << input << " " << output << " " << pending
                  << " is removed, since the rule is looping";
@@ -581,10 +596,10 @@ bool FindBlock(const std::string &input, const std::string &open,
 
   return true;
 }
-}  // namespace
 
-// static
-std::string Table::ParseSpecialKey(const std::string &input) {
+using OnKeyFound = std::function<std::string(const std::string &)>;
+
+std::string ParseBlock(const std::string &input, const OnKeyFound &callback) {
   std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;
@@ -602,16 +617,53 @@ std::string Table::ParseSpecialKey(const std::string &input) {
       // "{{}" is treated as "{".
       output.append("{");
     } else {
-      // "{abc}" is replaced with "<kSpecialKeyOpen>abc<kSpecialKeyClose>".
-      output.append(kSpecialKeyOpen);
-      output.append(key);
-      output.append(kSpecialKeyClose);
+      output.append(callback(key));
     }
 
     cursor = close_pos + 1;
   }
   return output;
 }
+
+}  // namespace
+
+std::string Table::RegisterSpecialKey(const std::string &input) {
+  OnKeyFound callback = [&](const std::string &key) {
+    if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
+      return it->second;  // existing entry
+    }
+    char32_t keycode = kSpecialKeyBegin + special_key_map_.size();
+    if (keycode > kSpecialKeyEnd) {
+      // 2304 (0x900 = [Begin, End]) is the max size of special keys.
+      keycode = kSpecialKeyEnd;
+      LOG(WARNING) << "The size of special keys exceeded: " << key;
+    }
+    // New special key is replaced with a Unicode PUA and registered.
+    std::string special_key;
+    Util::Ucs4ToUtf8(keycode, &special_key);
+    special_key_map_[key] = special_key;
+    return special_key;
+  };
+  return ParseBlock(input, callback);
+}
+
+std::string Table::ParseSpecialKey(const std::string &input) const {
+  OnKeyFound callback = [&](const std::string &key) {
+    if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
+      return it->second;  // existing entry
+    }
+    // Unregistered key is replaced with the fallback format.
+    LOG(WARNING) << "Unregistered special key: " << key;
+    return kSpecialKeyOpen + key + kSpecialKeyClose;
+  };
+  return ParseBlock(input, callback);
+}
+
+namespace {
+bool IsSpecialKey(char32_t c) {
+  return (kSpecialKeyBegin <= c && c <= kSpecialKeyEnd);
+}
+}  // namespace
 
 // static
 std::string Table::DeleteSpecialKey(const std::string &input) {
@@ -629,11 +681,30 @@ std::string Table::DeleteSpecialKey(const std::string &input) {
     // The size of kSpecialKeyClose is 1.
     cursor = close_pos + 1;
   }
-  return output;
+
+  // Delete Unicode PUA characters converted from special keys.
+  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(output);
+  auto last =
+      std::remove_if(codepoints.begin(), codepoints.end(), IsSpecialKey);
+  if (last == codepoints.end()) {
+    return output;
+  }
+  codepoints.erase(last, codepoints.end());
+  return Util::CodepointsToUtf8(codepoints);
 }
 
 // static
 bool Table::TrimLeadingSpecialKey(std::string *input) {
+  // Check if the first character is a Unicode PUA converted from a special key.
+  char32_t first_char;
+  absl::string_view rest;
+  Util::SplitFirstChar32(*input, &first_char, &rest);
+  if (IsSpecialKey(first_char)) {
+    input->erase(0, input->size() - rest.size());
+    return true;
+  }
+
+  // Check if the input starts from open and close of a special key.
   if (!absl::StartsWith(*input, kSpecialKeyOpen)) {
     return false;
   }

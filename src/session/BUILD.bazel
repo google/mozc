@@ -445,32 +445,14 @@ cc_library_mozc(
     deps = [
         ":session_handler",
         ":session_usage_observer",
-        "//base",
         "//base:logging",
         "//base:port",
-        "//base:scheduler",
         "//engine:engine_factory",
         "//ipc",
         "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//usage_stats:usage_stats_uploader",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_test_mozc(
-    name = "session_server_test",
-    size = "small",
-    srcs = ["session_server_test.cc"],
-    requires_full_emulation = False,
-    tags = ["no_android"],
-    deps = [
-        ":session_server",
-        "//base",
-        "//base:scheduler",
-        "//base:system_util",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -547,16 +529,16 @@ cc_library_mozc(
     srcs = ["session_watch_dog.cc"],
     hdrs = ["session_watch_dog.h"],
     deps = [
-        "//base",
         "//base:clock",
         "//base:cpu_stats",
         "//base:logging",
         "//base:port",
         "//base:system_util",
         "//base:thread",
-        "//base:unnamed_event",
         "//client",
         "//client:client_interface",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -585,12 +567,10 @@ cc_library_mozc(
     hdrs = ["session_usage_observer.h"],
     deps = [
         ":session_observer_interface",
-        "//base",
         "//base:clock",
         "//base:logging",
         "//base:number_util",
         "//base:port",
-        "//base:scheduler",
         "//config:stats_config_util",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
@@ -608,11 +588,8 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":session_usage_observer",
-        "//base",
         "//base:clock_mock",
         "//base:logging",
-        "//base:scheduler",
-        "//base:scheduler_stub",
         "//base:system_util",
         "//base:util",
         "//config:stats_config_util",

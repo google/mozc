@@ -37,11 +37,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/double_array.h"
 #include "base/port.h"
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -268,14 +266,14 @@ class Util {
   // when |size| is larger than |RAND_MAX|.
   // TODO(yukawa): Improve the granularity.
   // TODO(yukawa): Clarify the semantics when |size| is 0 or smaller.
-  static int Random(int size);
+  ABSL_DEPRECATED("Use absl::Uniform()") static int Random(int size);
 
   // Set the seed of Util::Random().
-  static void SetRandomSeed(uint32_t seed);
+  ABSL_DEPRECATED("Use absl::BitGen") static void SetRandomSeed(uint32_t seed);
 
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
-  static void Sleep(uint32_t msec);
+  ABSL_DEPRECATED("Use absl::SleepFor()") static void Sleep(uint32_t msec);
 
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area

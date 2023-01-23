@@ -222,4 +222,94 @@ TEST(KeyParserTest, Combination) {
   EXPECT_FALSE(KeyParser::ParseKey("muhenkan backspace", &key_event));
 }
 
+TEST(KeyParserTest, GetSpecialKeyString) {
+  // Strings are defined in gui/config_dialog/keybinding_editor.cc
+  EXPECT_EQ(KeyEvent::NUM_SPECIALKEYS, 77);
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::ON), "on");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::OFF), "off");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::LEFT), "left");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::DOWN), "down");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::UP), "up");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::RIGHT), "right");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::ENTER), "enter");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::ESCAPE), "escape");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::DEL), "delete");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::BACKSPACE), "backspace");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::HENKAN), "henkan");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::MUHENKAN), "muhenkan");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::KANA), "hiragana");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::KATAKANA), "katakana");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::EISU), "eisu");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::HOME), "home");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::END), "end");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::SPACE), "space");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::TEXT_INPUT), "textinput");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::TAB), "tab");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::PAGE_UP), "pageup");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::PAGE_DOWN), "pagedown");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::INSERT), "insert");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::HANKAKU),
+            "hankaku/zenkaku");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::KANJI), "kanji");
+
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F1), "f1");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F2), "f2");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F3), "f3");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F4), "f4");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F5), "f5");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F6), "f6");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F7), "f7");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F8), "f8");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F9), "f9");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F10), "f10");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F11), "f11");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F12), "f12");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F13), "f13");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F14), "f14");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F15), "f15");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F16), "f16");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F17), "f17");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F18), "f18");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F19), "f19");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F20), "f20");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F21), "f21");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F22), "f22");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F23), "f23");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::F24), "f24");
+
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD0), "numpad0");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD1), "numpad1");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD2), "numpad2");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD3), "numpad3");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD4), "numpad4");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD5), "numpad5");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD6), "numpad6");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD7), "numpad7");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD8), "numpad8");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::NUMPAD9), "numpad9");
+
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::MULTIPLY), "multiply");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::ADD), "add");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::SEPARATOR), "separator");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::SUBTRACT), "subtract");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::DECIMAL), "decimal");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::DIVIDE), "divide");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::EQUALS), "equals");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::COMMA), "comma");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::CLEAR), "clear");
+
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_LEFT),
+            "virtualleft");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_RIGHT),
+            "virtualright");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_ENTER),
+            "virtualenter");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_UP),
+            "virtualup");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::VIRTUAL_DOWN),
+            "virtualdown");
+  EXPECT_EQ(KeyParser::GetSpecialKeyString(KeyEvent::UNDEFINED_KEY),
+            "undefinedkey");
+}
+
 }  // namespace mozc

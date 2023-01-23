@@ -63,11 +63,11 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
   r"""Format data into C++ style array.
 
   Visual C++ does not support string literals longer than 65535 characters
-  so integer arrays (e.g. arrays of uint64) are used to represent byte arrays
+  so integer arrays (e.g. arrays of uint64_t) are used to represent byte arrays
   on Windows.
 
   The generated code looks like:
-    const uint64 kVAR_data_wordtype[] = {
+    const uint64_t kVAR_data_wordtype[] = {
         0x0123456789ABCDEF, ...
     };
     const char * const kVAR_data =
@@ -85,14 +85,13 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
   Args:
     data: original data to be formatted.
     variable_name: the core name of variables.
-    target_compiler: the target compiler which will compile the formatted
-      code.
+    target_compiler: the target compiler which will compile the formatted code.
     stream: output stream.
   """
 
   # To accept "target_compiler = None", check target_compiler itself first.
   if target_compiler and target_compiler.startswith('msvs'):
-    stream.write('const uint64 k%s_data_wordtype[] = {\n' % variable_name)
+    stream.write('const uint64_t k%s_data_wordtype[] = {\n' % variable_name)
 
     for word_index in range(0, len(data), 8):
       word_chunk = data[word_index:word_index + 8].ljust(8, '\x00')

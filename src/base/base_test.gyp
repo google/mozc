@@ -59,7 +59,6 @@
         'cpu_stats_test.cc',
         'process_mutex_test.cc',
         'stopwatch_test.cc',
-        'unnamed_event_test.cc',
       ],
       'conditions': [
         ['OS=="mac"', {
@@ -265,20 +264,6 @@
         'test_size': 'small',
       },
     },
-    {  # Extract this test from base_test since it takes too long time.
-      'target_name': 'scheduler_test',
-      'type': 'executable',
-      'sources': [
-        'scheduler_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-      ],
-      'variables': {
-        'test_size': 'medium',
-      },
-    },
     {
       'target_name': 'obfuscator_support_test',
       'type': 'executable',
@@ -330,27 +315,6 @@
       'variables': {
         'test_size': 'small',
       },
-    },
-    {
-      'target_name': 'scheduler_stub',
-      'type': 'static_library',
-      'sources': [
-        'scheduler_stub.cc',
-      ],
-      'dependencies': [
-        'base.gyp:base',
-      ],
-    },
-    {
-      'target_name': 'scheduler_stub_test',
-      'type': 'executable',
-      'sources': [
-        'scheduler_stub_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'scheduler_stub',
-      ],
     },
     {
       'target_name': 'multifile_test',
@@ -443,8 +407,6 @@
         'multifile_test',
         'number_util_test',
         'obfuscator_support_test',
-        'scheduler_stub_test',
-        'scheduler_test',
         'serialized_string_array_test',
         'system_util_test',
         'trie_test',

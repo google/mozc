@@ -141,8 +141,13 @@ class Table {
   const TypingModel *typing_model() const;
 
   // Parse special key strings escaped with the pair of "{" and "}"
+  // and register them to be used by ParseSpecialKey().
+  // Also returns the parsed string.
+  std::string RegisterSpecialKey(const std::string &input);
+
+  // Parse special key strings escaped with the pair of "{" and "}"
   // and return the parsed string.
-  static std::string ParseSpecialKey(const std::string &input);
+  std::string ParseSpecialKey(const std::string &input) const;
 
   // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
   // return the trimmed visible string.
@@ -164,10 +169,13 @@ class Table {
   void DeleteEntry(const Entry *entry);
   void ResetEntrySet();
 
-  typedef Trie<const Entry *> EntryTrie;
+  using EntryTrie = Trie<const Entry *>;
   std::unique_ptr<EntryTrie> entries_;
-  typedef absl::flat_hash_set<const Entry *> EntrySet;
+  using EntrySet = absl::flat_hash_set<const Entry *>;
   EntrySet entry_set_;
+
+  using SpecialKeyMap = absl::flat_hash_map<std::string, std::string>;
+  SpecialKeyMap special_key_map_;
 
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.

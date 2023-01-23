@@ -36,7 +36,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scheduler.h"
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"

@@ -71,8 +71,6 @@ test_suite(
         ":number_util_test_android",
         ":obfuscator_support_test_android",
         ":process_mutex_test_android",
-        ":scheduler_stub_test_android",
-        ":scheduler_test_android",
         ":serialized_string_array_test_android",
         ":singleton_test_android",
         ":stopwatch_test_android",
@@ -80,7 +78,6 @@ test_suite(
         ":text_normalizer_test_android",
         ":thread_test_android",
         ":trie_test_android",
-        ":unnamed_event_test_android",
         ":url_test_android",
         ":version_test_android",
         # Disabled tests due to errors.
@@ -283,33 +280,6 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "unnamed_event",
-    srcs = ["unnamed_event.cc"],
-    hdrs = ["unnamed_event.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":port",
-        ":scoped_handle",
-    ],
-)
-
-cc_test_mozc(
-    name = "unnamed_event_test",
-    size = "small",
-    srcs = ["unnamed_event_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":logging",
-        ":port",
-        ":thread",
-        ":unnamed_event",
-        ":util",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_library_mozc(
     name = "thread",
     srcs = ["thread.cc"],
     hdrs = ["thread.h"],
@@ -487,10 +457,9 @@ cc_library_mozc(
         "//:__subpackages__",
     ],
     deps = [
-        ":double_array_def",
-        ":japanese_util",
         ":logging",
         ":port",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/status",
@@ -1166,62 +1135,6 @@ cc_binary_mozc(
         ":logging",
         ":util",
         "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-cc_library_mozc(
-    name = "scheduler",
-    srcs = [
-        "scheduler.cc",
-    ],
-    hdrs = ["scheduler.h"],
-    deps = [
-        ":clock",
-        ":logging",
-        ":port",
-        ":singleton",
-        ":thread",
-        ":unnamed_event",
-        ":util",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
-cc_test_mozc(
-    name = "scheduler_test",
-    size = "small",
-    srcs = ["scheduler_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":logging",
-        ":scheduler",
-        ":unnamed_event",
-        ":util",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_library_mozc(
-    name = "scheduler_stub",
-    testonly = True,
-    srcs = ["scheduler_stub.cc"],
-    hdrs = ["scheduler_stub.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":port",
-        ":scheduler",
-    ],
-)
-
-cc_test_mozc(
-    name = "scheduler_stub_test",
-    size = "small",
-    srcs = ["scheduler_stub_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":scheduler_stub",
-        "//testing:gunit_main",
     ],
 )
 

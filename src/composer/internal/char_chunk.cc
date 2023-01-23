@@ -311,8 +311,26 @@ bool CharChunk::AddInputInternal(std::string *input) {
       // The prefix characters are not contained in the table, fallback
       // operation is performed.
       if (pending_.empty()) {
-        // Conversion data was not found.
-        AddConvertedChar(input);
+        // Conversion data was not found. Add one character to the chunk.
+        const size_t one_char_len = Util::OneCharLen(input->data());
+        raw_.append(*input, 0, one_char_len);
+        conversion_.append(*input, 0, one_char_len);
+        input->erase(0, one_char_len);
+      }
+      return kNoLoop;
+    }
+
+    if (used_key_length == pending_.size()) {
+      // If the `input` starts with a special key (e.g. "{!}"),
+      // and it is not used for this chunk and the next chunk,
+      // that special key is removed.
+      size_t used_length = 0;
+      bool next_fixed = false;
+      const Entry *next_entry =
+          table_->LookUpPrefix(*input, &used_length, &next_fixed);
+      const bool no_entry = (next_entry == nullptr && used_length == 0);
+      if (no_entry && Table::TrimLeadingSpecialKey(input)) {
+        return kLoop;
       }
       return kNoLoop;
     }
@@ -328,7 +346,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
     // Conversion data had only pending.
 
     // Move used input characters to CharChunk data.
-    DCHECK_GE(used_key_length, pending_.size());
+    DCHECK_GT(used_key_length, pending_.size());
     const size_t used_input_length = used_key_length - pending_.size();
     const std::string used_input_chars(*input, 0, used_input_length);
     raw_.append(used_input_chars);
@@ -382,29 +400,18 @@ void CharChunk::AddInput(std::string *input) {
   }
 }
 
-void CharChunk::AddConvertedChar(std::string *input) {
-  // TODO(komatsu) Nice to make "string Util::PopOneChar(string *str);".
-  const absl::string_view first_char = Util::Utf8SubString(*input, 0, 1);
-  conversion_.append(first_char.data(), first_char.size());
-  raw_.append(first_char.data(), first_char.size());
-  Util::Utf8SubString(*input, 1, std::string::npos, input);
+void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {
   local_length_cache_ = std::string::npos;
-}
-
-void CharChunk::AddInputAndConvertedChar(std::string *key,
-                                         std::string *converted_char) {
-  local_length_cache_ = std::string::npos;
-  // If this chunk is empty, the key and converted_char are simply
-  // copied.
+  // If this chunk is empty, the raw and conversion are simply copied.
   if (raw_.empty() && pending_.empty() && conversion_.empty()) {
-    raw_ = *key;
-    key->clear();
-    pending_ = *converted_char;
-    // TODO(komatsu): We should check if the |converted_char| is
+    raw_ = input->raw();
+    input->clear_raw();
+    pending_ = input->conversion();
+    // TODO(komatsu): We should check if the `conversion` is
     // really ambiguous or not, otherwise the last character of the
     // preedit on Kana input is always dropped.
-    ambiguous_ = *converted_char;
-    converted_char->clear();
+    ambiguous_ = input->conversion();
+    input->clear_conversion();
 
     // If this entry is the first entry, the table attributes are
     // applied to this chunk.
@@ -415,19 +422,19 @@ void CharChunk::AddInputAndConvertedChar(std::string *key,
     return;
   }
 
-  const std::string input = pending_ + *converted_char;
+  const std::string key_input = pending_ + input->conversion();
   size_t key_length = 0;
   bool fixed = false;
-  const Entry *entry = table_->LookUpPrefix(input, &key_length, &fixed);
+  const Entry *entry = table_->LookUpPrefix(key_input, &key_length, &fixed);
   if (entry == nullptr) {
-    // Do not modify this char_chunk, all key and converted_char
-    // values will be used by the next char_chunk.
+    // Do not modify this char_chunk, all `raw` and `conversion`
+    // values of `input` will be used by the next char_chunk.
     return;
   }
 
   // The whole input string was used.
-  if (key_length == input.size()) {
-    raw_.append(*key);
+  if (key_length == key_input.size()) {
+    raw_.append(input->raw());
     if (fixed) {
       conversion_.append(entry->result());
       pending_ = entry->pending();
@@ -437,29 +444,28 @@ void CharChunk::AddInputAndConvertedChar(std::string *key,
       pending_ = entry->result();
       ambiguous_ = entry->result();
     }
-    key->clear();
-    converted_char->clear();
+    input->clear_raw();
+    input->clear_conversion();
     return;
   }
 
-  // The following key_length == pending_.size() means the new key and
-  // and converted_char does not affect at all.  Do not any thing here
-  // and a new char_chunk will be made for the new key and
-  // converted_char.
+  // The following key_length == pending_.size() means the new `raw` and
+  // and `conversion` of `input` does not affect at all.  Do not any thing here
+  // and a new char_chunk will be made for `input`.
   if (key_length == pending_.size()) {
     return;
   }
 
-  // The input is partially used.
-  raw_.append(*key);
+  // The `input` is partially used.
+  raw_.append(input->raw());
   conversion_.append(entry->result());
   pending_ = entry->pending();
-  // While the whole key is used in this char_chunk, the
-  // converted_char is separated to this char_chunk and the next
+  // While the whole `raw` is used in this char_chunk, the
+  // `conversion` is separated to this char_chunk and the next
   // char_chunk.  This is not a preferred behavior, but there is no
   // better way to work around this limitation.
-  key->clear();
-  converted_char->assign(input, key_length, input.size() - key_length);
+  input->clear_raw();
+  input->set_conversion(key_input.substr(key_length));
 }
 
 bool CharChunk::ShouldCommit() const {
@@ -485,7 +491,7 @@ bool CharChunk::ShouldInsertNewChunk(const CompositionInput &input) const {
 void CharChunk::AddCompositionInput(CompositionInput *input) {
   local_length_cache_ = std::string::npos;
   if (input->has_conversion()) {
-    AddInputAndConvertedChar(input->mutable_raw(), input->mutable_conversion());
+    AddInputAndConvertedChar(input);
     return;
   }
 

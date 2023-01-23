@@ -60,16 +60,6 @@ std::string GetRawString(const Composition& composition) {
   return output;
 }
 
-void SetInput(const std::string& raw, const std::string& conversion,
-              const bool is_new_input, CompositionInput* input) {
-  input->Clear();
-  input->set_raw(raw);
-  if (!conversion.empty()) {
-    input->set_conversion(conversion);
-  }
-  input->set_is_new_input(is_new_input);
-}
-
 size_t InsertCharacters(const std::string& input, size_t pos,
                         Composition* composition) {
   for (size_t i = 0; i < input.size(); ++i) {
@@ -177,6 +167,16 @@ class CompositionTest : public testing::Test {
     composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
+  void SetInput(const std::string& raw, const std::string& conversion,
+                const bool is_new_input, CompositionInput* input) {
+    input->Clear();
+    input->set_raw(table_->ParseSpecialKey(raw));
+    if (!conversion.empty()) {
+      input->set_conversion(conversion);
+    }
+    input->set_is_new_input(is_new_input);
+  }
+
   std::unique_ptr<Table> table_;
   std::unique_ptr<Composition> composition_;
 };
@@ -237,10 +237,10 @@ TEST_F(CompositionTest, GetChunkLength) {
 
     const int conv_length =
         chunk->GetLength(Transliterators::CONVERSION_STRING);
-    EXPECT_EQ(test.expected_conv_length, conv_length);
+    EXPECT_EQ(conv_length, test.expected_conv_length);
 
     const int raw_length = chunk->GetLength(Transliterators::RAW_STRING);
-    EXPECT_EQ(test.expected_raw_length, raw_length);
+    EXPECT_EQ(raw_length, test.expected_raw_length);
   }
 }
 
@@ -257,13 +257,13 @@ bool TestGetChunkAt(Composition* comp,
   auto it = comp->GetChunkAt(index, transliterator, &inner_position);
   if (it == comp->GetCharChunkList().end()) {
     EXPECT_TRUE(expected_it == it);
-    EXPECT_EQ(expected_inner_position, inner_position);
+    EXPECT_EQ(inner_position, expected_inner_position);
   } else {
     std::string result, expected_result;
-    EXPECT_EQ((*expected_it)->conversion(), (*it)->conversion());
-    EXPECT_EQ((*expected_it)->pending(), (*it)->pending());
-    EXPECT_EQ((*expected_it)->raw(), (*it)->raw());
-    EXPECT_EQ(expected_inner_position, inner_position);
+    EXPECT_EQ((*it)->conversion(), (*expected_it)->conversion());
+    EXPECT_EQ((*it)->pending(), (*expected_it)->pending());
+    EXPECT_EQ((*it)->raw(), (*expected_it)->raw());
+    EXPECT_EQ(inner_position, expected_inner_position);
   }
   return true;
 }
@@ -326,13 +326,13 @@ TEST_F(CompositionTest, GetString) {
   // Test RAW mode
   composition_->SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
   composition_->GetString(&composition);
-  EXPECT_EQ("akykittatty", composition);
+  EXPECT_EQ(composition, "akykittatty");
 
   // Test CONVERSION mode
   composition_->SetDisplayMode(dummy_position,
                                Transliterators::CONVERSION_STRING);
   composition_->GetString(&composition);
-  EXPECT_EQ("あkyきったっty", composition);
+  EXPECT_EQ(composition, "あkyきったっty");
 }
 
 TEST_F(CompositionTest, GetStringWithDisplayMode) {
@@ -343,11 +343,11 @@ TEST_F(CompositionTest, GetStringWithDisplayMode) {
   std::string composition;
   composition_->GetStringWithTransliterator(Transliterators::CONVERSION_STRING,
                                             &composition);
-  EXPECT_EQ("もずく", composition);
+  EXPECT_EQ(composition, "もずく");
 
   composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                             &composition);
-  EXPECT_EQ("mozc", composition);
+  EXPECT_EQ(composition, "mozc");
 }
 
 TEST_F(CompositionTest, SplitRawChunk) {
@@ -382,14 +382,14 @@ TEST_F(CompositionTest, SplitRawChunk) {
         right_orig_chunk.SplitChunk(Transliterators::RAW_STRING, test.position);
 
     if (left_new_chunk != nullptr) {
-      EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
-      EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
-      EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());
+      EXPECT_EQ(left_new_chunk->conversion(), test.expected_left_conversion);
+      EXPECT_EQ(left_new_chunk->pending(), test.expected_left_pending);
+      EXPECT_EQ(left_new_chunk->raw(), test.expected_left_raw);
     }
 
-    EXPECT_EQ(test.expected_right_conversion, right_orig_chunk.conversion());
-    EXPECT_EQ(test.expected_right_pending, right_orig_chunk.pending());
-    EXPECT_EQ(test.expected_right_raw, right_orig_chunk.raw());
+    EXPECT_EQ(right_orig_chunk.conversion(), test.expected_right_conversion);
+    EXPECT_EQ(right_orig_chunk.pending(), test.expected_right_pending);
+    EXPECT_EQ(right_orig_chunk.raw(), test.expected_right_raw);
   }
 }
 
@@ -425,14 +425,14 @@ TEST_F(CompositionTest, SplitConversionChunk) {
         Transliterators::CONVERSION_STRING, test.position);
 
     if (left_new_chunk != nullptr) {
-      EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
-      EXPECT_EQ(test.expected_left_pending, left_new_chunk->pending());
-      EXPECT_EQ(test.expected_left_raw, left_new_chunk->raw());
+      EXPECT_EQ(left_new_chunk->conversion(), test.expected_left_conversion);
+      EXPECT_EQ(left_new_chunk->pending(), test.expected_left_pending);
+      EXPECT_EQ(left_new_chunk->raw(), test.expected_left_raw);
     }
 
-    EXPECT_EQ(test.expected_right_conversion, right_orig_chunk.conversion());
-    EXPECT_EQ(test.expected_right_pending, right_orig_chunk.pending());
-    EXPECT_EQ(test.expected_right_raw, right_orig_chunk.raw());
+    EXPECT_EQ(right_orig_chunk.conversion(), test.expected_right_conversion);
+    EXPECT_EQ(right_orig_chunk.pending(), test.expected_right_pending);
+    EXPECT_EQ(right_orig_chunk.raw(), test.expected_right_raw);
   }
 }
 
@@ -440,10 +440,10 @@ TEST_F(CompositionTest, GetLength) {
   table_->AddRule("a", "A", "");
   table_->AddRule("ka", "K", "");
 
-  EXPECT_EQ(0, composition_->GetLength());
+  EXPECT_EQ(composition_->GetLength(), 0);
 
   InsertCharacters("aka", 0, composition_.get());
-  EXPECT_EQ(2, composition_->GetLength());
+  EXPECT_EQ(composition_->GetLength(), 2);
 }
 
 TEST_F(CompositionTest, MaybeSplitChunkAt) {
@@ -468,7 +468,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
       raw_comp.SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
       raw_comp.MaybeSplitChunkAt(test.position);
       const size_t raw_chunks_size = raw_comp.GetCharChunkList().size();
-      EXPECT_EQ(test.expected_raw_chunks_size, raw_chunks_size);
+      EXPECT_EQ(raw_chunks_size, test.expected_raw_chunks_size);
     }
 
     {  // Test CONVERSION mode
@@ -478,7 +478,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
                                Transliterators::CONVERSION_STRING);
       conv_comp.MaybeSplitChunkAt(test.position);
       const size_t conv_chunks_size = conv_comp.GetCharChunkList().size();
-      EXPECT_EQ(test.expected_conv_chunks_size, conv_chunks_size);
+      EXPECT_EQ(conv_chunks_size, test.expected_conv_chunks_size);
     }
   }
 }
@@ -528,31 +528,31 @@ TEST_F(CompositionTest, DeleteAt) {
             GetDeletedString(Transliterators::CONVERSION_STRING, -1));
 
   // "akykittatty" is the original string
-  EXPECT_EQ("kykittatty", GetDeletedString(Transliterators::RAW_STRING, 0));
-  EXPECT_EQ("aykittatty", GetDeletedString(Transliterators::RAW_STRING, 1));
-  EXPECT_EQ("akkittatty", GetDeletedString(Transliterators::RAW_STRING, 2));
-  EXPECT_EQ("akyittatty", GetDeletedString(Transliterators::RAW_STRING, 3));
-  EXPECT_EQ("akykttatty", GetDeletedString(Transliterators::RAW_STRING, 4));
-  EXPECT_EQ("akykitatty", GetDeletedString(Transliterators::RAW_STRING, 5));
-  EXPECT_EQ("akykitatty", GetDeletedString(Transliterators::RAW_STRING, 6));
-  EXPECT_EQ("akykitttty", GetDeletedString(Transliterators::RAW_STRING, 7));
-  EXPECT_EQ("akykittaty", GetDeletedString(Transliterators::RAW_STRING, 8));
-  EXPECT_EQ("akykittaty", GetDeletedString(Transliterators::RAW_STRING, 9));
-  EXPECT_EQ("akykittatt", GetDeletedString(Transliterators::RAW_STRING, 10));
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 0), "kykittatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 1), "aykittatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 2), "akkittatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 3), "akyittatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 4), "akykttatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 5), "akykitatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 6), "akykitatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 7), "akykitttty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 8), "akykittaty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 9), "akykittaty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 10), "akykittatt");
   // end
-  EXPECT_EQ("akykittatty", GetDeletedString(Transliterators::RAW_STRING, 11));
-  EXPECT_EQ("akykittatty", GetDeletedString(Transliterators::RAW_STRING, -1));
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 11), "akykittatty");
+  EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, -1), "akykittatty");
 }
 
 TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
   using ChunkData = std::vector<std::pair<std::string, std::string>>;
-  auto init_chunk = [](Composition *composition, const ChunkData &data) {
+  auto init_chunk = [&](Composition *composition, const ChunkData &data) {
     composition->Erase();
     CharChunkList::iterator it = composition->MaybeSplitChunkAt(0);
     for (const auto &item : data) {
       CharChunk *chunk = composition->InsertChunk(it)->get();
-      chunk->set_raw(Table::ParseSpecialKey(item.first));
-      chunk->set_pending(Table::ParseSpecialKey(item.second));
+      chunk->set_raw(table_->ParseSpecialKey(item.first));
+      chunk->set_pending(table_->ParseSpecialKey(item.second));
     }
   };
 
@@ -566,8 +566,8 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     composition_->DeleteAt(0);
     std::string composition;
     composition_->GetString(&composition);
-    EXPECT_EQ("3", composition);
-    EXPECT_EQ(1, composition_->GetCharChunkList().size());
+    EXPECT_EQ(composition, "3");
+    EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
   }
   {
     init_chunk(composition_.get(), {{"1", "{1}"}, {"2", "{2}2"}, {"3", "3"}});
@@ -575,15 +575,15 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     composition_->DeleteAt(1);
     std::string composition;
     composition_->GetString(&composition);
-    EXPECT_EQ("2", composition);
+    EXPECT_EQ(composition, "2");
     const CharChunkList &chunks = composition_->GetCharChunkList();
-    EXPECT_EQ(2, chunks.size());
+    EXPECT_EQ(chunks.size(), 2);
     const CharChunk &chunk0 = **(chunks.begin());
-    EXPECT_EQ("1", chunk0.raw());
-    EXPECT_EQ(Table::ParseSpecialKey("{1}"), chunk0.pending());
+    EXPECT_EQ(chunk0.raw(), "1");
+    EXPECT_EQ(chunk0.pending(), table_->ParseSpecialKey("{1}"));
     const CharChunk &chunk1 = **(std::next(chunks.begin()));
-    EXPECT_EQ("2", chunk1.raw());
-    EXPECT_EQ(Table::ParseSpecialKey("{2}2"), chunk1.pending());
+    EXPECT_EQ(chunk1.raw(), "2");
+    EXPECT_EQ(chunk1.pending(), table_->ParseSpecialKey("{2}2"));
   }
 
   {
@@ -595,8 +595,8 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     // 0-th character is "2".
     // As "{1}" is a character between the head and "2", it is removed.
     // All "2{2}" is also removed because they are in the same chunk.
-    EXPECT_EQ("3", composition);
-    EXPECT_EQ(1, composition_->GetCharChunkList().size());
+    EXPECT_EQ(composition, "3");
+    EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
   }
 
   {
@@ -605,9 +605,9 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     composition_->DeleteAt(0);
     std::string composition;
     composition_->GetString(&composition);
-    EXPECT_EQ("", composition);
-    EXPECT_EQ(1, composition_->GetCharChunkList().size());
-    EXPECT_EQ("3", (*composition_->GetCharChunkList().begin())->raw());
+    EXPECT_EQ(composition, "");
+    EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+    EXPECT_EQ((*composition_->GetCharChunkList().begin())->raw(), "3");
   }
 }
 
@@ -704,17 +704,15 @@ TEST_F(CompositionTest, InsertAt) {
 }
 
 TEST_F(CompositionTest, GetExpandedStrings) {
-  Table table;
-  InitTable(&table);
-  composition_->SetTable(&table);
+  InitTable(table_.get());
   InitComposition(composition_.get());
 
   // a ky ki tta tty
   std::string base;
   std::set<std::string> expanded;
   composition_->GetExpandedStrings(&base, &expanded);
-  EXPECT_EQ("あkyきったっ", base);
-  EXPECT_EQ(2, expanded.size());
+  EXPECT_EQ(base, "あkyきったっ");
+  EXPECT_EQ(expanded.size(), 2);
   // You cannot use EXPECT_NE here because it causes compile error in gtest
   // when the compiler is Visual C++. b/5655673
   EXPECT_TRUE(expanded.find("ちぃ") != expanded.end());
@@ -727,91 +725,95 @@ TEST_F(CompositionTest, ConvertPosition) {
   // Test against http://b/1550597
 
   // Invalid positions.
-  EXPECT_EQ(0, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                             Transliterators::CONVERSION_STRING,
-                                             Transliterators::RAW_STRING));
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(0, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(1, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(0, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
-  EXPECT_EQ(0, composition_->ConvertPosition(
-                   static_cast<size_t>(-1), Transliterators::RAW_STRING,
-                   Transliterators::CONVERSION_STRING));
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(1, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(static_cast<size_t>(-1),
+                                          Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(0, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(1, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(0, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(static_cast<size_t>(-1),
+                                          Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(1, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            0);
 
   AppendChunk("ね", "", "ne", composition_.get());
   AppendChunk("っと", "", "tto", composition_.get());
 
   // "|ねっと" -> "|netto"
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(0, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(0, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            0);
   // "ね|っと" -> "ne|tto"
-  EXPECT_EQ(2,
-            composition_->ConvertPosition(1, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(1, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            2);
   // "ねっ|と" -> "net|to"
-  EXPECT_EQ(3,
-            composition_->ConvertPosition(2, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(2, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            3);
   // "ねっと|" -> "netto|"
-  EXPECT_EQ(5,
-            composition_->ConvertPosition(3, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(3, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            5);
 
   // Invalid positions.
-  EXPECT_EQ(5, composition_->ConvertPosition(static_cast<size_t>(-1),
-                                             Transliterators::CONVERSION_STRING,
-                                             Transliterators::RAW_STRING));
-  EXPECT_EQ(5,
-            composition_->ConvertPosition(4, Transliterators::CONVERSION_STRING,
-                                          Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(static_cast<size_t>(-1),
+                                          Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            5);
+  EXPECT_EQ(composition_->ConvertPosition(4, Transliterators::CONVERSION_STRING,
+                                          Transliterators::RAW_STRING),
+            5);
 
   // "|netto" -> "|ねっと"
-  EXPECT_EQ(0,
-            composition_->ConvertPosition(0, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(0, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            0);
   // "n|etto" -> "ね|っと"
-  EXPECT_EQ(1,
-            composition_->ConvertPosition(1, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(1, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            1);
   // "ne|tto" -> "ね|っと"
-  EXPECT_EQ(1,
-            composition_->ConvertPosition(2, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(2, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            1);
   // "net|to" -> "ねっ|と"
-  EXPECT_EQ(2,
-            composition_->ConvertPosition(3, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(3, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            2);
   // "nett|o" -> "ねっと|"
-  EXPECT_EQ(3,
-            composition_->ConvertPosition(4, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(4, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            3);
   // "netto|" -> "ねっと|"
-  EXPECT_EQ(3,
-            composition_->ConvertPosition(5, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(5, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            3);
   // Invalid positions.
-  EXPECT_EQ(3, composition_->ConvertPosition(
-                   static_cast<size_t>(-1), Transliterators::RAW_STRING,
-                   Transliterators::CONVERSION_STRING));
-  EXPECT_EQ(3,
-            composition_->ConvertPosition(6, Transliterators::RAW_STRING,
-                                          Transliterators::CONVERSION_STRING));
+  EXPECT_EQ(composition_->ConvertPosition(static_cast<size_t>(-1),
+                                          Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            3);
+  EXPECT_EQ(composition_->ConvertPosition(6, Transliterators::RAW_STRING,
+                                          Transliterators::CONVERSION_STRING),
+            3);
 
   size_t inner_position;
   auto chunk_it =
       composition_->GetChunkAt(5, Transliterators::RAW_STRING, &inner_position);
 
-  EXPECT_EQ("tto", (*chunk_it)->raw());
-  EXPECT_EQ(3, inner_position);
+  EXPECT_EQ((*chunk_it)->raw(), "tto");
+  EXPECT_EQ(inner_position, 3);
 }
 
 TEST_F(CompositionTest, SetDisplayMode) {
@@ -822,34 +824,32 @@ TEST_F(CompositionTest, SetDisplayMode) {
   size_t inner_position;
   auto chunk_it = composition_->GetChunkAt(
       0, Transliterators::CONVERSION_STRING, &inner_position);
-  EXPECT_EQ("mo", (*chunk_it)->raw());
-  EXPECT_EQ(0, inner_position);
+  EXPECT_EQ((*chunk_it)->raw(), "mo");
+  EXPECT_EQ(inner_position, 0);
   chunk_it = composition_->GetChunkAt(1, Transliterators::CONVERSION_STRING,
                                       &inner_position);
-  EXPECT_EQ("mo", (*chunk_it)->raw());
-  EXPECT_EQ(1, inner_position);
+  EXPECT_EQ((*chunk_it)->raw(), "mo");
+  EXPECT_EQ(inner_position, 1);
   chunk_it = composition_->GetChunkAt(2, Transliterators::CONVERSION_STRING,
                                       &inner_position);
-  EXPECT_EQ("zu", (*chunk_it)->raw());
-  EXPECT_EQ(1, inner_position);
+  EXPECT_EQ((*chunk_it)->raw(), "zu");
+  EXPECT_EQ(inner_position, 1);
   chunk_it = composition_->GetChunkAt(3, Transliterators::CONVERSION_STRING,
                                       &inner_position);
-  EXPECT_EQ("ku", (*chunk_it)->raw());
-  EXPECT_EQ(1, inner_position);
+  EXPECT_EQ((*chunk_it)->raw(), "ku");
+  EXPECT_EQ(inner_position, 1);
 
-  EXPECT_EQ(6, composition_->SetDisplayMode(1, Transliterators::RAW_STRING));
-  EXPECT_EQ(
-      3, composition_->SetDisplayMode(2, Transliterators::CONVERSION_STRING));
-  EXPECT_EQ(6, composition_->SetDisplayMode(2, Transliterators::RAW_STRING));
+  EXPECT_EQ(composition_->SetDisplayMode(1, Transliterators::RAW_STRING), 6);
+  EXPECT_EQ(composition_->SetDisplayMode(2, Transliterators::CONVERSION_STRING),
+            3);
+  EXPECT_EQ(composition_->SetDisplayMode(2, Transliterators::RAW_STRING), 6);
 }
 
 TEST_F(CompositionTest, GetStringWithTrimMode) {
-  Table table;
-  table.AddRule("ka", "か", "");
-  table.AddRule("n", "ん", "");
+  table_->AddRule("ka", "か", "");
+  table_->AddRule("n", "ん", "");
   // This makes the above rule ambiguous.
-  table.AddRule("na", "な", "");
-  composition_->SetTable(&table);
+  table_->AddRule("na", "な", "");
 
   std::string output_empty;
   composition_->GetStringWithTrimMode(TRIM, &output_empty);
@@ -862,22 +862,20 @@ TEST_F(CompositionTest, GetStringWithTrimMode) {
 
   std::string output_trim;
   composition_->GetStringWithTrimMode(TRIM, &output_trim);
-  EXPECT_EQ("か", output_trim);
+  EXPECT_EQ(output_trim, "か");
 
   std::string output_asis;
   composition_->GetStringWithTrimMode(ASIS, &output_asis);
-  EXPECT_EQ("かn", output_asis);
+  EXPECT_EQ(output_asis, "かn");
 
   std::string output_fix;
   composition_->GetStringWithTrimMode(FIX, &output_asis);
-  EXPECT_EQ("かん", output_asis);
+  EXPECT_EQ(output_asis, "かん");
 }
 
 TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
-  Table table;
-  table.AddRule("す゛", "ず", "");
-  table.AddRule("く゛", "ぐ", "");
-  composition_->SetTable(&table);
+  table_->AddRule("す゛", "ず", "");
+  table_->AddRule("く゛", "ぐ", "");
 
   size_t pos = 0;
   pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
@@ -888,24 +886,22 @@ TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
 
   std::string comp_str;
   composition_->GetString(&comp_str);
-  EXPECT_EQ("もずく!", comp_str);
+  EXPECT_EQ(comp_str, "もずく!");
 
   std::string comp_ascii_str;
   composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                             &comp_ascii_str);
-  EXPECT_EQ("mr@h!", comp_ascii_str);
+  EXPECT_EQ(comp_ascii_str, "mr@h!");
 }
 
 TEST_F(CompositionTest, InsertKeyForN) {
-  Table table;
-  table.AddRule("a", "[A]", "");
-  table.AddRule("n", "[N]", "");
-  table.AddRule("nn", "[N]", "");
-  table.AddRule("na", "[NA]", "");
-  table.AddRule("nya", "[NYA]", "");
-  table.AddRule("ya", "[YA]", "");
-  table.AddRule("ka", "[KA]", "");
-  composition_->SetTable(&table);
+  table_->AddRule("a", "[A]", "");
+  table_->AddRule("n", "[N]", "");
+  table_->AddRule("nn", "[N]", "");
+  table_->AddRule("na", "[NA]", "");
+  table_->AddRule("nya", "[NYA]", "");
+  table_->AddRule("ya", "[YA]", "");
+  table_->AddRule("ka", "[KA]", "");
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "n");
@@ -916,74 +912,66 @@ TEST_F(CompositionTest, InsertKeyForN) {
 
   std::string comp_str;
   composition_->GetString(&comp_str);
-  EXPECT_EQ("ny[NYA]", comp_str);
+  EXPECT_EQ(comp_str, "ny[NYA]");
 }
 
 TEST_F(CompositionTest, GetStringWithDisplayModeForKana) {
-  Table table;
-  // Empty table is OK.
-  composition_->SetTable(&table);
-
   size_t pos = 0;
   pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
 
   std::string comp_str;
   composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                             &comp_str);
-  EXPECT_EQ("m", comp_str);
+  EXPECT_EQ(comp_str, "m");
 }
 
 TEST_F(CompositionTest, InputMode) {
-  Table table;
-  table.AddRule("a", "あ", "");
-  table.AddRule("ka", "か", "");
-  composition_->SetTable(&table);
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "k");
 
   std::string result;
   composition_->GetString(&result);
-  EXPECT_EQ("k", result);
+  EXPECT_EQ(result, "k");
 
   composition_->SetInputMode(Transliterators::FULL_KATAKANA);
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
   // If a vowel and a consonant were typed with different
   // transliterators, these characters should not be combined.
-  EXPECT_EQ("kア", result);
+  EXPECT_EQ(result, "kア");
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
   pos = composition_->InsertAt(pos, "k");
   composition_->GetString(&result);
-  EXPECT_EQ("kアk", result);
+  EXPECT_EQ(result, "kアk");
 
   composition_->SetInputMode(Transliterators::HIRAGANA);
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
-  EXPECT_EQ("kアkあ", result);
+  EXPECT_EQ(result, "kアkあ");
 
-  EXPECT_EQ(Transliterators::CONVERSION_STRING,
-            composition_->GetTransliterator(0));
-  EXPECT_EQ(Transliterators::CONVERSION_STRING,
-            composition_->GetTransliterator(1));
-  EXPECT_EQ(Transliterators::FULL_KATAKANA, composition_->GetTransliterator(2));
-  EXPECT_EQ(Transliterators::HALF_ASCII, composition_->GetTransliterator(3));
-  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(4));
-  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(5));
-  EXPECT_EQ(Transliterators::HIRAGANA, composition_->GetTransliterator(10));
+  EXPECT_EQ(composition_->GetTransliterator(0),
+            Transliterators::CONVERSION_STRING);
+  EXPECT_EQ(composition_->GetTransliterator(1),
+            Transliterators::CONVERSION_STRING);
+  EXPECT_EQ(composition_->GetTransliterator(2), Transliterators::FULL_KATAKANA);
+  EXPECT_EQ(composition_->GetTransliterator(3), Transliterators::HALF_ASCII);
+  EXPECT_EQ(composition_->GetTransliterator(4), Transliterators::HIRAGANA);
+  EXPECT_EQ(composition_->GetTransliterator(5), Transliterators::HIRAGANA);
+  EXPECT_EQ(composition_->GetTransliterator(10), Transliterators::HIRAGANA);
 }
 
 TEST_F(CompositionTest, SetTable) {
-  Table table;
-  table.AddRule("a", "あ", "");
-  table.AddRule("ka", "か", "");
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("ka", "か", "");
 
   Table table2;
   table2.AddRule("a", "あ", "");
   table2.AddRule("ka", "か", "");
 
-  composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HIRAGANA);
 
   size_t pos = 0;
@@ -991,60 +979,56 @@ TEST_F(CompositionTest, SetTable) {
 
   std::string result;
   composition_->GetString(&result);
-  EXPECT_EQ("ｋ", result);
+  EXPECT_EQ(result, "ｋ");
 
   composition_->SetTable(&table2);
 
   pos = composition_->InsertAt(pos, "a");
   composition_->GetString(&result);
-  EXPECT_EQ("ｋあ", result);
+  EXPECT_EQ(result, "ｋあ");
 }
 
 TEST_F(CompositionTest, Transliterator) {
-  Table table;
-  table.AddRule("a", "あ", "");
-  composition_->SetTable(&table);
+  table_->AddRule("a", "あ", "");
 
   // Insert "a" which is converted to "あ".
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "a");
-  EXPECT_EQ(1, pos);
+  EXPECT_EQ(pos, 1);
   std::string result;
   composition_->GetString(&result);
-  EXPECT_EQ("あ", result);
+  EXPECT_EQ(result, "あ");
 
   // Set transliterator for Half Ascii.
   composition_->SetTransliterator(0, pos, Transliterators::HALF_ASCII);
   composition_->GetString(&result);
-  EXPECT_EQ("a", result);
+  EXPECT_EQ(result, "a");
 
   // Insert "a" again.
   pos = composition_->InsertAt(pos, "a");
-  EXPECT_EQ(2, pos);
+  EXPECT_EQ(pos, 2);
   result.clear();
   composition_->GetString(&result);
-  EXPECT_EQ("aあ", result);
+  EXPECT_EQ(result, "aあ");
 
   // Set transliterator for Full Katakana.
   composition_->SetTransliterator(0, pos, Transliterators::FULL_KATAKANA);
   composition_->GetString(&result);
-  EXPECT_EQ("アア", result);
+  EXPECT_EQ(result, "アア");
 }
 
 TEST_F(CompositionTest, HalfAsciiTransliterator) {
-  Table table;
-  table.AddRule("-", "ー", "");
-  composition_->SetTable(&table);
+  table_->AddRule("-", "ー", "");
   composition_->SetInputMode(Transliterators::HALF_ASCII);
 
   size_t pos = 0;
   pos = composition_->InsertKeyAndPreeditAt(pos, "-", "-");
-  EXPECT_EQ(1, pos);
-  EXPECT_EQ("-", GetString(*composition_));
+  EXPECT_EQ(pos, 1);
+  EXPECT_EQ(GetString(*composition_), "-");
 
   pos = composition_->InsertKeyAndPreeditAt(pos, "-", "-");
-  EXPECT_EQ(2, pos);
-  EXPECT_EQ("--", GetString(*composition_));
+  EXPECT_EQ(pos, 2);
+  EXPECT_EQ(GetString(*composition_), "--");
 }
 
 TEST_F(CompositionTest, ShouldCommit) {
@@ -1074,29 +1058,24 @@ TEST_F(CompositionTest, ShouldCommit) {
 
   pos = composition_->InsertAt(pos, "a");
   EXPECT_FALSE(composition_->ShouldCommit());
-  EXPECT_EQ("[KA][X][TA][TA]", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "[KA][X][TA][TA]");
 }
 
 TEST_F(CompositionTest, Issue2190364) {
   // This is a unittest against http://b/2190364
-  Table table;
-  composition_->SetTable(&table);
-
   size_t pos = 0;
 
   composition_->SetInputMode(Transliterators::FULL_ASCII);
   pos = composition_->InsertKeyAndPreeditAt(pos, "a", "ち");
-  EXPECT_EQ("ａ", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "ａ");
 
   pos = composition_->InsertAt(pos, " ");
-  EXPECT_EQ("ａ　", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "ａ　");
 }
 
 TEST_F(CompositionTest, Issue1817410) {
   // This is a unittest against http://b/2190364
-  Table table;
-  table.AddRule("ss", "っ", "s");
-  composition_->SetTable(&table);
+  table_->AddRule("ss", "っ", "s");
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "s");
@@ -1104,47 +1083,48 @@ TEST_F(CompositionTest, Issue1817410) {
 
   std::string preedit;
   composition_->GetString(&preedit);
-  EXPECT_EQ("っs", preedit);
+  EXPECT_EQ(preedit, "っs");
 
-  EXPECT_EQ(0, composition_->ConvertPosition(0, Transliterators::LOCAL,
-                                             Transliterators::HALF_ASCII));
-  EXPECT_EQ(1, composition_->ConvertPosition(1, Transliterators::LOCAL,
-                                             Transliterators::HALF_ASCII));
-  EXPECT_EQ(2, composition_->ConvertPosition(2, Transliterators::LOCAL,
-                                             Transliterators::HALF_ASCII));
+  EXPECT_EQ(composition_->ConvertPosition(0, Transliterators::LOCAL,
+                                          Transliterators::HALF_ASCII),
+            0);
+  EXPECT_EQ(composition_->ConvertPosition(1, Transliterators::LOCAL,
+                                          Transliterators::HALF_ASCII),
+            1);
+  EXPECT_EQ(composition_->ConvertPosition(2, Transliterators::LOCAL,
+                                          Transliterators::HALF_ASCII),
+            2);
 
   {  // "s|s"
     size_t inner_position;
     auto chunk_it =
         composition_->GetChunkAt(1, Transliterators::LOCAL, &inner_position);
-    EXPECT_EQ(1, inner_position);
-    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::LOCAL));
+    EXPECT_EQ(inner_position, 1);
+    EXPECT_EQ((*chunk_it)->GetLength(Transliterators::LOCAL), 2);
 
-    EXPECT_EQ(0,
-              composition_->GetPosition(Transliterators::HALF_ASCII, chunk_it));
-    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::HALF_ASCII));
+    EXPECT_EQ(composition_->GetPosition(Transliterators::HALF_ASCII, chunk_it),
+              0);
+    EXPECT_EQ((*chunk_it)->GetLength(Transliterators::HALF_ASCII), 2);
   }
 
   {  // "ss|"
     size_t inner_position;
     auto chunk_it =
         composition_->GetChunkAt(2, Transliterators::LOCAL, &inner_position);
-    EXPECT_EQ(2, inner_position);
-    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::LOCAL));
+    EXPECT_EQ(inner_position, 2);
+    EXPECT_EQ((*chunk_it)->GetLength(Transliterators::LOCAL), 2);
 
-    EXPECT_EQ(0,
-              composition_->GetPosition(Transliterators::HALF_ASCII, chunk_it));
-    EXPECT_EQ(2, (*chunk_it)->GetLength(Transliterators::HALF_ASCII));
+    EXPECT_EQ(composition_->GetPosition(Transliterators::HALF_ASCII, chunk_it),
+              0);
+    EXPECT_EQ((*chunk_it)->GetLength(Transliterators::HALF_ASCII), 2);
   }
 }
 
 TEST_F(CompositionTest, Issue2209634) {
   // This is a unittest against http://b/2209634
   // "q@" becomes "qた@".
-  Table table;
-  table.AddRule("q", "", "た");
-  table.AddRule("た@", "だ", "");
-  composition_->SetTable(&table);
+  table_->AddRule("q", "", "た");
+  table_->AddRule("た@", "だ", "");
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
 
@@ -1154,18 +1134,16 @@ TEST_F(CompositionTest, Issue2209634) {
 
   std::string preedit;
   composition_->GetString(&preedit);
-  EXPECT_EQ("q@", preedit);
+  EXPECT_EQ(preedit, "q@");
 }
 
 TEST_F(CompositionTest, Issue2330530) {
   // This is a unittest against http://b/2330530
   // "Win" + Numpad7 becomes "Win77" instead of "Win7".
-  Table table;
-  table.AddRule("wi", "うぃ", "");
-  table.AddRule("i", "い", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  composition_->SetTable(&table);
+  table_->AddRule("wi", "うぃ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
 
   composition_->SetInputMode(Transliterators::HALF_ASCII);
 
@@ -1176,25 +1154,22 @@ TEST_F(CompositionTest, Issue2330530) {
 
   std::string preedit;
   composition_->GetString(&preedit);
-  EXPECT_EQ("Win", preedit);
+  EXPECT_EQ(preedit, "Win");
 
   pos = composition_->InsertKeyAndPreeditAt(pos, "7", "7");
   composition_->GetString(&preedit);
-  EXPECT_EQ("Win7", preedit);
+  EXPECT_EQ(preedit, "Win7");
 }
 
 TEST_F(CompositionTest, Issue2819580) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
-  Table table;
-  table.AddRule("po", "ぽ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
-  table.AddRule("byo", "びょ", "");
-
-  composition_->SetTable(&table);
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_->SetInputMode(Transliterators::HIRAGANA);
 
@@ -1204,28 +1179,25 @@ TEST_F(CompositionTest, Issue2819580) {
   {
     std::string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    EXPECT_EQ("ｎｙ", output);
+    EXPECT_EQ(output, "ｎｙ");
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    EXPECT_EQ("ｎｙ", output);
+    EXPECT_EQ(output, "ｎｙ");
 
     composition_->GetStringWithTrimMode(TRIM, &output);
-    EXPECT_EQ("", output);
+    EXPECT_EQ(output, "");
   }
 }
 
 TEST_F(CompositionTest, Issue2990253) {
   // SplitChunk fails.
   // Ambiguous text is left in rhs CharChunk invalidly.
-  Table table;
-  table.AddRule("po", "ぽ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
-  table.AddRule("byo", "びょ", "");
-
-  composition_->SetTable(&table);
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_->SetInputMode(Transliterators::HIRAGANA);
 
@@ -1237,31 +1209,27 @@ TEST_F(CompositionTest, Issue2990253) {
   {
     std::string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    EXPECT_EQ("んｂｙ", output);
+    EXPECT_EQ(output, "んｂｙ");
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    EXPECT_EQ("んｂｙ", output);
+    EXPECT_EQ(output, "んｂｙ");
 
     composition_->GetStringWithTrimMode(TRIM, &output);
     // doubtful result. should be "ん"
     // May relate to http://b/2990358
-    EXPECT_EQ("んｂ", output);
+    EXPECT_EQ(output, "んｂ");
   }
 }
 
 TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText1) {
   // http://b/2990358
   // Test for mainly Composition::InsertAt()
-
-  Table table;
-  table.AddRule("po", "ぽ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
-  table.AddRule("byo", "びょ", "");
-
-  composition_->SetTable(&table);
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   composition_->SetInputMode(Transliterators::HIRAGANA);
 
@@ -1275,13 +1243,13 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText1) {
   {
     std::string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    EXPECT_EQ("んびょ", output);
+    EXPECT_EQ(output, "んびょ");
 
     composition_->GetStringWithTrimMode(ASIS, &output);
-    EXPECT_EQ("んびょ", output);
+    EXPECT_EQ(output, "んびょ");
 
     composition_->GetStringWithTrimMode(TRIM, &output);
-    EXPECT_EQ("んびょ", output);
+    EXPECT_EQ(output, "んびょ");
   }
 }
 
@@ -1289,10 +1257,8 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText2) {
   // http://b/2990358
   // Test for mainly Composition::InsertKeyAndPreeditAt()
 
-  Table table;
-  table.AddRule("す゛", "ず", "");
-  table.AddRule("く゛", "ぐ", "");
-  composition_->SetTable(&table);
+  table_->AddRule("す゛", "ず", "");
+  table_->AddRule("く゛", "ぐ", "");
 
   size_t pos = 0;
   pos = composition_->InsertKeyAndPreeditAt(pos, "m", "も");
@@ -1303,26 +1269,25 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText2) {
 
   std::string comp_str;
   composition_->GetString(&comp_str);
-  EXPECT_EQ("もずく!", comp_str);
+  EXPECT_EQ(comp_str, "もずく!");
 
   std::string comp_ascii_str;
   composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                             &comp_ascii_str);
-  EXPECT_EQ("mr@h!", comp_ascii_str);
+  EXPECT_EQ(comp_ascii_str, "mr@h!");
 }
 
 TEST_F(CompositionTest, CombinePendingChunks) {
-  Table table;
-  table.AddRule("po", "ぽ", "");
-  table.AddRule("n", "ん", "");
-  table.AddRule("na", "な", "");
-  table.AddRule("ya", "や", "");
-  table.AddRule("nya", "にゃ", "");
-  table.AddRule("byo", "びょ", "");
+  table_->AddRule("po", "ぽ", "");
+  table_->AddRule("n", "ん", "");
+  table_->AddRule("na", "な", "");
+  table_->AddRule("ya", "や", "");
+  table_->AddRule("nya", "にゃ", "");
+  table_->AddRule("byo", "びょ", "");
 
   {
     // empty chunks + "n" -> empty chunks + "n"
-    Composition comp(&table);
+    Composition comp(table_.get());
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1333,15 +1298,15 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     CompositionInput input;
     SetInput("n", "", false, &input);
     comp.CombinePendingChunks(chunk_it, input);
-    EXPECT_EQ("", (*chunk_it)->pending());
-    EXPECT_EQ("", (*chunk_it)->conversion());
-    EXPECT_EQ("", (*chunk_it)->raw());
-    EXPECT_EQ("", (*chunk_it)->ambiguous());
+    EXPECT_EQ((*chunk_it)->pending(), "");
+    EXPECT_EQ((*chunk_it)->conversion(), "");
+    EXPECT_EQ((*chunk_it)->raw(), "");
+    EXPECT_EQ((*chunk_it)->ambiguous(), "");
   }
   {
     // [x] + "n" -> [x] + "n"
     // No combination performed.
-    Composition comp(&table);
+    Composition comp(table_.get());
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1353,15 +1318,15 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     SetInput("n", "", false, &input);
 
     comp.CombinePendingChunks(chunk_it, input);
-    EXPECT_EQ("", (*chunk_it)->pending());
-    EXPECT_EQ("", (*chunk_it)->conversion());
-    EXPECT_EQ("", (*chunk_it)->raw());
-    EXPECT_EQ("", (*chunk_it)->ambiguous());
+    EXPECT_EQ((*chunk_it)->pending(), "");
+    EXPECT_EQ((*chunk_it)->conversion(), "");
+    EXPECT_EQ((*chunk_it)->raw(), "");
+    EXPECT_EQ((*chunk_it)->ambiguous(), "");
   }
   {
     // Append "a" to [n][y] -> [ny] + "a"
     // Combination performed.
-    Composition comp(&table);
+    Composition comp(table_.get());
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1374,16 +1339,15 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     SetInput("a", "", false, &input);
 
     comp.CombinePendingChunks(chunk_it, input);
-    EXPECT_EQ("ny", (*chunk_it)->pending());
-    EXPECT_EQ("", (*chunk_it)->conversion());
-    EXPECT_EQ("ny", (*chunk_it)->raw());
-    EXPECT_EQ("んy", (*chunk_it)->ambiguous());
+    EXPECT_EQ((*chunk_it)->pending(), "ny");
+    EXPECT_EQ((*chunk_it)->conversion(), "");
+    EXPECT_EQ((*chunk_it)->raw(), "ny");
+    EXPECT_EQ((*chunk_it)->ambiguous(), "んy");
   }
   {
     // Append "a" to [x][n][y] -> [x][ny] + "a"
     // Combination performed.
-    Composition comp(&table);
-    comp.SetTable(&table);
+    Composition comp(table_.get());
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1397,17 +1361,17 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     SetInput("a", "", false, &input);
 
     comp.CombinePendingChunks(chunk_it, input);
-    EXPECT_EQ("ny", (*chunk_it)->pending());
-    EXPECT_EQ("", (*chunk_it)->conversion());
-    EXPECT_EQ("ny", (*chunk_it)->raw());
-    EXPECT_EQ("んy", (*chunk_it)->ambiguous());
+    EXPECT_EQ((*chunk_it)->pending(), "ny");
+    EXPECT_EQ((*chunk_it)->conversion(), "");
+    EXPECT_EQ((*chunk_it)->raw(), "ny");
+    EXPECT_EQ((*chunk_it)->ambiguous(), "んy");
   }
 
   {
     // Append "a" of conversion value to [x][n][y] -> [x][ny] + "a"
     // Combination performed.  If composition input contains a
     // conversion, the conversion is used rather than a raw value.
-    Composition comp(&table);
+    Composition comp(table_.get());
     comp.SetInputMode(Transliterators::HIRAGANA);
 
     size_t pos = 0;
@@ -1421,22 +1385,19 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     SetInput("x", "a", false, &input);
 
     comp.CombinePendingChunks(chunk_it, input);
-    EXPECT_EQ("ny", (*chunk_it)->pending());
-    EXPECT_EQ("", (*chunk_it)->conversion());
-    EXPECT_EQ("ny", (*chunk_it)->raw());
+    EXPECT_EQ((*chunk_it)->pending(), "ny");
+    EXPECT_EQ((*chunk_it)->conversion(), "");
+    EXPECT_EQ((*chunk_it)->raw(), "ny");
   }
 }
 
 TEST_F(CompositionTest, NewChunkBehaviors) {
-  Table table;
-  table.AddRule("n", "", "ん");
-  table.AddRule("na", "", "な");
-  table.AddRuleWithAttributes("a", "", "あ", NEW_CHUNK);
-  table.AddRule("ん*", "", "猫");
-  table.AddRule("*", "", "");
-  table.AddRule("ん#", "", "猫");
-
-  composition_->SetTable(&table);
+  table_->AddRule("n", "", "ん");
+  table_->AddRule("na", "", "な");
+  table_->AddRuleWithAttributes("a", "", "あ", NEW_CHUNK);
+  table_->AddRule("ん*", "", "猫");
+  table_->AddRule("*", "", "");
+  table_->AddRule("ん#", "", "猫");
 
   CompositionInput input;
   {
@@ -1446,7 +1407,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("a", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("nあ", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "nあ");
   }
   {
     size_t pos = 0;
@@ -1455,7 +1416,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("a", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("な", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "な");
   }
 
   {
@@ -1465,7 +1426,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("*", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("猫", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "猫");
   }
   {
     size_t pos = 0;
@@ -1474,7 +1435,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("*", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("猫", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "猫");
   }
 
   {
@@ -1484,7 +1445,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("#", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("n#", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "n#");
   }
   {
     size_t pos = 0;
@@ -1493,7 +1454,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("#", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("猫", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "猫");
   }
 
   {
@@ -1503,7 +1464,7 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("1", "", true, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ("n1", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "n1");
   }
   {
     size_t pos = 0;
@@ -1512,30 +1473,21 @@ TEST_F(CompositionTest, NewChunkBehaviors) {
     pos = composition_->InsertInput(pos, input);
     SetInput("1", "", false, &input);
     pos = composition_->InsertInput(pos, input);
-    EXPECT_EQ(
-        "ん"
-        "1",
-        GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "ん1");
   }
 }
 
 TEST_F(CompositionTest, TwelveKeysInput) {
   // Simulates flick + toggle input mode.
 
-  Table table;
-  table.AddRule("n", "", "ん");
-  table.AddRule("na", "", "な");
-  table.AddRule("a", "", "あ");
-  table.AddRule("*", "", "");
-  table.AddRule("ほ*", "", "ぼ");
-  table.AddRuleWithAttributes("7", "", "は", NEW_CHUNK);
-  table.AddRule(
-      "は"
-      "7",
-      "", "ひ");
-  table.AddRule("ひ*", "", "び");
-
-  composition_->SetTable(&table);
+  table_->AddRule("n", "", "ん");
+  table_->AddRule("na", "", "な");
+  table_->AddRule("a", "", "あ");
+  table_->AddRule("*", "", "");
+  table_->AddRule("ほ*", "", "ぼ");
+  table_->AddRuleWithAttributes("7", "", "は", NEW_CHUNK);
+  table_->AddRule("は7", "", "ひ");
+  table_->AddRule("ひ*", "", "び");
 
   CompositionInput input;
   size_t pos = 0;
@@ -1567,7 +1519,67 @@ TEST_F(CompositionTest, TwelveKeysInput) {
   SetInput("7", "は", false, &input);
   pos = composition_->InsertInput(pos, input);
 
-  EXPECT_EQ("なぼひはははは", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "なぼひはははは");
+}
+
+TEST_F(CompositionTest, SpecialKeysInput) {
+  table_->AddRule("{*}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("{*}", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 0);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "お");
+}
+
+TEST_F(CompositionTest, SpecialKeysInputWithReplacedKey) {
+  table_->AddRule("r", "", "{r}");
+  table_->AddRule("{r}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("r", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 0);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "お");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 1);
+}
+
+TEST_F(CompositionTest, SpecialKeysInputWithLeadingPendingKey) {
+  table_->AddRule("{*}j", "お", "");
+
+  CompositionInput input;
+  size_t pos = 0;
+
+  SetInput("q", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "q");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 1);
+  EXPECT_EQ(pos, 1);
+
+  SetInput("{*}", "", true, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "q");
+  EXPECT_EQ(composition_->GetCharChunkList().size(), 2);
+  EXPECT_EQ(pos, 1);
+
+  SetInput("j", "", false, &input);
+  pos = composition_->InsertInput(pos, input);
+  EXPECT_EQ(GetString(*composition_), "qお");
 }
 
 TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
@@ -1583,56 +1595,56 @@ TEST_F(CompositionTest, DifferentRulesForSamePendingWithSpecialKeys) {
     composition_->Erase();
     size_t pos = 0;
     pos = composition_->InsertAt(pos, "[to]4");
-    EXPECT_EQ(3, pos);
-    EXPECT_EQ("[x]", GetString(*composition_));
-    EXPECT_EQ("[to]4", GetRawString(*composition_));
+    EXPECT_EQ(pos, 3);
+    EXPECT_EQ(GetString(*composition_), "[x]");
+    EXPECT_EQ(GetRawString(*composition_), "[to]4");
 
     pos = composition_->InsertAt(pos, "4");
-    EXPECT_EQ(4, pos);
-    EXPECT_EQ("[ta]", GetString(*composition_));
-    EXPECT_EQ("[to]44", GetRawString(*composition_));
+    EXPECT_EQ(pos, 4);
+    EXPECT_EQ(GetString(*composition_), "[ta]");
+    EXPECT_EQ(GetRawString(*composition_), "[to]44");
   }
 
   {
     composition_->Erase();
     size_t pos = 0;
     pos = composition_->InsertAt(pos, "[to]4");
-    EXPECT_EQ(3, pos);
-    EXPECT_EQ("[x]", GetString(*composition_));
-    EXPECT_EQ("[to]4", GetRawString(*composition_));
+    EXPECT_EQ(pos, 3);
+    EXPECT_EQ(GetString(*composition_), "[x]");
+    EXPECT_EQ(GetRawString(*composition_), "[to]4");
 
     pos = composition_->InsertAt(pos, "*");
-    EXPECT_EQ(3, pos);
-    EXPECT_EQ("[x]", GetString(*composition_));
-    EXPECT_EQ("[to]4*", GetRawString(*composition_));
+    EXPECT_EQ(pos, 3);
+    EXPECT_EQ(GetString(*composition_), "[x]");
+    EXPECT_EQ(GetRawString(*composition_), "[to]4*");
   }
 
   {
     composition_->Erase();
     size_t pos = 0;
     pos = composition_->InsertAt(pos, "[tu]*");
-    EXPECT_EQ(3, pos);
-    EXPECT_EQ("[x]", GetString(*composition_));
-    EXPECT_EQ("[tu]*", GetRawString(*composition_));
+    EXPECT_EQ(pos, 3);
+    EXPECT_EQ(GetString(*composition_), "[x]");
+    EXPECT_EQ(GetRawString(*composition_), "[tu]*");
 
     pos = composition_->InsertAt(pos, "*");
-    EXPECT_EQ(4, pos);
-    EXPECT_EQ("[tu]", GetString(*composition_));
-    EXPECT_EQ("[tu]**", GetRawString(*composition_));
+    EXPECT_EQ(pos, 4);
+    EXPECT_EQ(GetString(*composition_), "[tu]");
+    EXPECT_EQ(GetRawString(*composition_), "[tu]**");
   }
 
   {
     composition_->Erase();
     size_t pos = 0;
     pos = composition_->InsertAt(pos, "[tu]*");
-    EXPECT_EQ(3, pos);
-    EXPECT_EQ("[x]", GetString(*composition_));
-    EXPECT_EQ("[tu]*", GetRawString(*composition_));
+    EXPECT_EQ(pos, 3);
+    EXPECT_EQ(GetString(*composition_), "[x]");
+    EXPECT_EQ(GetRawString(*composition_), "[tu]*");
 
     pos = composition_->InsertAt(pos, "*");
-    EXPECT_EQ(4, pos);
-    EXPECT_EQ("[tu]", GetString(*composition_));
-    EXPECT_EQ("[tu]**", GetRawString(*composition_));
+    EXPECT_EQ(pos, 4);
+    EXPECT_EQ(GetString(*composition_), "[tu]");
+    EXPECT_EQ(GetRawString(*composition_), "[tu]**");
   }
 }
 
@@ -1645,71 +1657,67 @@ TEST_F(CompositionTest, LoopingRuleFor12KeysWithSpecialKeys) {
 
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("a", GetString(*composition_));
-  EXPECT_EQ("2", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "a");
+  EXPECT_EQ(GetRawString(*composition_), "2");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("b", GetString(*composition_));
-  EXPECT_EQ("22", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "b");
+  EXPECT_EQ(GetRawString(*composition_), "22");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("c", GetString(*composition_));
-  EXPECT_EQ("222", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "c");
+  EXPECT_EQ(GetRawString(*composition_), "222");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("2", GetString(*composition_));
-  EXPECT_EQ("2222", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "2");
+  EXPECT_EQ(GetRawString(*composition_), "2222");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("a", GetString(*composition_));
-  EXPECT_EQ("22222", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "a");
+  EXPECT_EQ(GetRawString(*composition_), "22222");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("b", GetString(*composition_));
-  EXPECT_EQ("222222", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "b");
+  EXPECT_EQ(GetRawString(*composition_), "222222");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("c", GetString(*composition_));
-  EXPECT_EQ("2222222", GetRawString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "c");
+  EXPECT_EQ(GetRawString(*composition_), "2222222");
 }
 
 TEST_F(CompositionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  Table table;
-  table.AddRule("ss", "っ", "s");
-  table.AddRule("shi", "し", "");
+  table_->AddRule("ss", "っ", "s");
+  table_->AddRule("shi", "し", "");
 
-  composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "s");
   pos = composition_->InsertAt(pos, "s");
   pos = composition_->InsertAt(pos, "h");
-  EXPECT_EQ(3, pos);
+  EXPECT_EQ(pos, 3);
 
   std::string output;
   composition_->GetStringWithTrimMode(FIX, &output);
-  EXPECT_EQ("っｓｈ", output);
+  EXPECT_EQ(output, "っｓｈ");
 }
 
 TEST_F(CompositionTest, GrassHack) {
-  Table table;
-  table.AddRule("ww", "っ", "w");
-  table.AddRule("we", "うぇ", "");
-  table.AddRule("www", "w", "ww");
+  table_->AddRule("ww", "っ", "w");
+  table_->AddRule("we", "うぇ", "");
+  table_->AddRule("www", "w", "ww");
 
-  composition_->SetTable(&table);
   composition_->SetInputMode(Transliterators::HIRAGANA);
   size_t pos = 0;
   pos = composition_->InsertAt(pos, "w");
   pos = composition_->InsertAt(pos, "w");
   pos = composition_->InsertAt(pos, "w");
 
-  EXPECT_EQ("ｗｗｗ", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "ｗｗｗ");
 
   pos = composition_->InsertAt(pos, "e");
-  EXPECT_EQ("ｗっうぇ", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "ｗっうぇ");
 }
 
 TEST_F(CompositionTest, RulesForFirstKeyEvents) {
@@ -1724,7 +1732,7 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
   {
     SetInput("a", "", true, &input);
     composition_->InsertInput(0, input);
-    EXPECT_EQ("[A]", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "[A]");
   }
 
   {
@@ -1732,7 +1740,7 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
     CompositionInput input;
     SetInput("anaa", "", true, &input);
     composition_->InsertInput(0, input);
-    EXPECT_EQ("[A][NA][A]", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "[A][NA][A]");
   }
 
   {
@@ -1744,17 +1752,17 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
 
     SetInput("a", "", true, &input);
     composition_->InsertInput(position_an, input);
-    EXPECT_EQ("[A]n[A]", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "[A]n[A]");
 
     // This input should be treated as a part of "NA".
     SetInput("a", "", false, &input);
     composition_->InsertInput(position_an, input);
-    EXPECT_EQ("[A][NA][A]", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "[A][NA][A]");
 
     std::string raw_t13n;
     composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                               &raw_t13n);
-    EXPECT_EQ("anaa", raw_t13n);
+    EXPECT_EQ(raw_t13n, "anaa");
   }
 
   {
@@ -1766,12 +1774,12 @@ TEST_F(CompositionTest, RulesForFirstKeyEvents) {
 
     SetInput("ni", "", true, &input);
     composition_->InsertInput(position_an, input);
-    EXPECT_EQ("[A]n[NI]", GetString(*composition_));
+    EXPECT_EQ(GetString(*composition_), "[A]n[NI]");
 
     std::string raw_t13n;
     composition_->GetStringWithTransliterator(Transliterators::RAW_STRING,
                                               &raw_t13n);
-    EXPECT_EQ("anni", raw_t13n);
+    EXPECT_EQ(raw_t13n, "anni");
   }
 }
 
@@ -1788,7 +1796,7 @@ TEST_F(CompositionTest, NoTransliteration) {
   composition_->SetInputMode(Transliterators::FULL_KATAKANA);
 
   InsertCharacters("01kkassatta", 0, composition_.get());
-  EXPECT_EQ("０1ッカっさった", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "０1ッカっさった");
 }
 
 TEST_F(CompositionTest, NoTransliterationIssue3497962) {
@@ -1802,10 +1810,10 @@ TEST_F(CompositionTest, NoTransliterationIssue3497962) {
 
   int pos = 0;
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("a", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "a");
 
   pos = composition_->InsertAt(pos, "2");
-  EXPECT_EQ("b", GetString(*composition_));
+  EXPECT_EQ(GetString(*composition_), "b");
 }
 
 TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
@@ -1825,8 +1833,8 @@ TEST_F(CompositionTest, Copy) {
   AppendChunk("く", "", "c", &src);
 
   EXPECT_EQ(table_.get(), src.table());
-  EXPECT_EQ(Transliterators::FULL_KATAKANA, src.input_t12r());
-  EXPECT_EQ(3, src.chunks().size());
+  EXPECT_EQ(src.input_t12r(), Transliterators::FULL_KATAKANA);
+  EXPECT_EQ(src.chunks().size(), 3);
 
   const Composition copy(src);
   EXPECT_TRUE(IsCompositionEqual(src, copy));

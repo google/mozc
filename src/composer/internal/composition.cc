@@ -98,7 +98,13 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
   }
 
   CharChunkList::iterator right_chunk = MaybeSplitChunkAt(pos);
+  while (right_chunk != chunks_.end() &&
+         (*right_chunk)->GetLength(input_t12r_) == 0) {
+    ++right_chunk;
+  }
+
   CharChunkList::iterator left_chunk = GetInsertionChunk(right_chunk);
+
   CombinePendingChunks(left_chunk, input);
 
   CompositionInput mutable_input = input;
@@ -466,7 +472,7 @@ bool Composition::IsToggleable(size_t position) const {
   if (it == chunks_.end()) {
     return false;
   }
-  return absl::StartsWith((*it)->pending(), Table::ParseSpecialKey("{?}"));
+  return absl::StartsWith((*it)->pending(), table_->ParseSpecialKey("{?}"));
 }
 
 }  // namespace composer

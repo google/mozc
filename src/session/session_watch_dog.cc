@@ -42,8 +42,9 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
-#include "base/unnamed_event.h"
 #include "client/client_interface.h"
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -54,7 +55,7 @@ const int32_t kPingTimeout = 5 * 1000;      // 5 sec for Ping
 
 // number of trials for ping
 const int32_t kPingTrial = 3;
-const int32_t kPingInterval = 1000;
+constexpr absl::Duration kPingInterval = absl::Seconds(1);
 
 // Average CPU load for last 1min.
 // If the load > kMinimumAllCPULoad, don't send Cleanup
@@ -66,13 +67,9 @@ constexpr float kMinimumLatestCPULoad = 0.66f;
 }  // namespace
 
 SessionWatchDog::SessionWatchDog(int32_t interval_sec)
-    : interval_sec_(interval_sec),
-      client_(nullptr),
-      cpu_stats_(nullptr),
-      event_(new UnnamedEvent) {
+    : interval_sec_(interval_sec), client_(nullptr), cpu_stats_(nullptr) {
   // allow [1..600].
   interval_sec_ = std::max(1, std::min(interval_sec_, 600));
-  DCHECK(event_->IsAvailable()) << "Unnamed event is not available";
 }
 
 SessionWatchDog::~SessionWatchDog() { Terminate(); }
@@ -90,11 +87,7 @@ void SessionWatchDog::Terminate() {
     return;
   }
 
-  if (!event_->Notify()) {
-    LOG(ERROR) << "UnnamedEvent::Notify() failed";
-    Thread::Terminate();
-  }
-
+  terminate_.Notify();
   Join();
 }
 
@@ -111,11 +104,6 @@ void SessionWatchDog::Run() {
     VLOG(2) << "default cpu_stats is used";
     cpu_stats_impl = std::make_unique<CPUStats>();
     cpu_stats_ = cpu_stats_impl.get();
-  }
-
-  if (!event_->IsAvailable()) {
-    LOG(ERROR) << "Unnamed event is not available";
-    return;
   }
 
   // CPU load check
@@ -143,7 +131,8 @@ void SessionWatchDog::Run() {
 
   while (true) {
     VLOG(1) << "Start sleeping " << idle_interval_msec;
-    if (event_->Wait(idle_interval_msec)) {
+    if (terminate_.WaitForNotificationWithTimeout(
+            absl::Milliseconds(idle_interval_msec))) {
       VLOG(1) << "Received stop signal";
       return;
     }
@@ -151,7 +140,8 @@ void SessionWatchDog::Run() {
 
     int32_t cpu_loads_index = 0;
     for (int n = 0; n < cpu_check_interval_msec; n += cpu_check_duration_msec) {
-      if (event_->Wait(cpu_check_duration_msec)) {
+      if (terminate_.WaitForNotificationWithTimeout(
+              absl::Milliseconds(cpu_check_duration_msec))) {
         VLOG(1) << "Received stop signal";
         return;
       }
@@ -195,7 +185,7 @@ void SessionWatchDog::Run() {
     client_->Reset();
     client_->set_timeout(kPingTimeout);
     for (int i = 0; i < kPingTrial; ++i) {
-      if (event_->Wait(kPingInterval)) {
+      if (terminate_.WaitForNotificationWithTimeout(kPingInterval)) {
         VLOG(1) << "Received stop signal";
         return;
       }
@@ -209,7 +199,7 @@ void SessionWatchDog::Run() {
     }
 
     if (failed) {
-      if (event_->Wait(100)) {
+      if (terminate_.WaitForNotificationWithTimeout(absl::Milliseconds(100))) {
         VLOG(1) << "Parent thread is already terminated";
         return;
       }

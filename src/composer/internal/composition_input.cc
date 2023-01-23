@@ -99,10 +99,9 @@ const std::string &CompositionInput::conversion() const {
   }
 }
 
-std::string *CompositionInput::mutable_conversion() {
-  has_conversion_ = true;
-  // If has_conversion_ was false, conversion_ should be empty.
-  return &conversion_;
+void CompositionInput::clear_conversion() {
+  has_conversion_ = false;
+  conversion_.clear();
 }
 
 void CompositionInput::set_conversion(const std::string &conversion) {

@@ -448,10 +448,10 @@ void Composer::InsertCharacter(const std::string &key) {
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
   switch (internal_command) {
     case REWIND:
-      InsertCharacter(Table::ParseSpecialKey("{<}"));
+      InsertCharacter(composition_.table()->ParseSpecialKey("{<}"));
       break;
     case STOP_KEY_TOGGLING:
-      InsertCharacter(Table::ParseSpecialKey("{!}"));
+      InsertCharacter(composition_.table()->ParseSpecialKey("{!}"));
       break;
     default:
       LOG(ERROR) << "Unknown command : " << internal_command;
