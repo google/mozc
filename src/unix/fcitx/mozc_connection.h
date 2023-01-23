@@ -31,6 +31,7 @@
 #ifndef MOZC_UNIX_FCITX_MOZC_CONNECTION_H_
 #define MOZC_UNIX_FCITX_MOZC_CONNECTION_H_
 
+#include <cstdint>
 #include <string>
 #include <memory>
 
@@ -65,13 +66,13 @@ class MozcConnectionInterface {
   virtual ~MozcConnectionInterface();
 
   virtual bool TrySendKeyEvent(FcitxInstance* instance,
-                               FcitxKeySym sym, uint32 keycode, uint32 state,
+                               FcitxKeySym sym, uint32_t keycode, uint32_t state,
                                mozc::commands::CompositionMode composition_mode,
                                bool layout_is_jp,
                                bool is_key_up,
                                mozc::commands::Output *out,
                                std::string *out_error) const = 0;
-  virtual bool TrySendClick(int32 unique_id,
+  virtual bool TrySendClick(int32_t unique_id,
                             mozc::commands::Output *out,
                             std::string *out_error) const = 0;
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
@@ -102,7 +103,7 @@ class MozcConnection : public MozcConnectionInterface {
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
   virtual bool TrySendKeyEvent(FcitxInstance* instance,
-                               FcitxKeySym sym, uint32 keycode, uint32 state,
+                               FcitxKeySym sym, uint32_t keycode, uint32_t state,
                                mozc::commands::CompositionMode composition_mode,
                                bool layout_is_jp,
                                bool is_key_up,
@@ -110,7 +111,7 @@ class MozcConnection : public MozcConnectionInterface {
                                std::string *out_error) const;
 
   // Sends 'mouse click on the candidate window' event to the server.
-  virtual bool TrySendClick(int32 unique_id,
+  virtual bool TrySendClick(int32_t unique_id,
                             mozc::commands::Output *out,
                             std::string *out_error) const;
 

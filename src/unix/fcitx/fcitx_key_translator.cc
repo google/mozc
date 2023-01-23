@@ -35,7 +35,7 @@
 namespace {
 
 const struct SpecialKeyMap {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::SpecialKey to;
 } special_key_map[] = {
   {FcitxKey_VoidSymbol, mozc::commands::KeyEvent::NO_SPECIALKEY},
@@ -129,7 +129,7 @@ const struct SpecialKeyMap {
 };
 
 const struct ModifierKeyMap {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::ModifierKey to;
 } modifier_key_map[] = {
   {FcitxKey_Shift_L, mozc::commands::KeyEvent::LEFT_SHIFT},
@@ -142,7 +142,7 @@ const struct ModifierKeyMap {
 };
 
 const struct ModifierMaskMap {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::ModifierKey to;
 } modifier_mask_map[] = {
   {FcitxKeyState_Shift, mozc::commands::KeyEvent::SHIFT},
@@ -152,7 +152,7 @@ const struct ModifierMaskMap {
 
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
 const struct KanaMap {
-  uint32 code;
+  uint32_t code;
   const char *no_shift;
   const char *shift;
 } kana_map_jp[] = {
@@ -364,8 +364,8 @@ KeyTranslator::~KeyTranslator() {
 
 // TODO(nona): Fix 'Shift-0' behavior b/4338394
 bool KeyTranslator::Translate(FcitxKeySym keyval,
-                              uint32 keycode,
-                              uint32 modifiers,
+                              uint32_t keycode,
+                              uint32_t modifiers,
                               config::Config::PreeditMethod method,
                               bool layout_is_jp,
                               commands::KeyEvent *out_event) const {
@@ -450,27 +450,27 @@ void KeyTranslator::Init() {
   }
 }
 
-bool KeyTranslator::IsModifierKey(uint32 keyval,
-                                  uint32 keycode,
-                                  uint32 modifiers) const {
+bool KeyTranslator::IsModifierKey(uint32_t keyval,
+                                  uint32_t keycode,
+                                  uint32_t modifiers) const {
   return modifier_key_map_.find(keyval) != modifier_key_map_.end();
 }
 
-bool KeyTranslator::IsSpecialKey(uint32 keyval,
-                                 uint32 keycode,
-                                 uint32 modifiers) const {
+bool KeyTranslator::IsSpecialKey(uint32_t keyval,
+                                 uint32_t keycode,
+                                 uint32_t modifiers) const {
   return special_key_map_.find(keyval) != special_key_map_.end();
 }
 
-bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(uint32 keyval,
-                                                   uint32 keycode,
-                                                   uint32 modifiers) {
+bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(uint32_t keyval,
+                                                   uint32_t keycode,
+                                                   uint32_t modifiers) {
   return ((modifiers & FcitxKeyState_Shift) && (keyval == FcitxKey_Hiragana_Katakana));
 }
 
-bool KeyTranslator::IsKanaAvailable(uint32 keyval,
-                                    uint32 keycode,
-                                    uint32 modifiers,
+bool KeyTranslator::IsKanaAvailable(uint32_t keyval,
+                                    uint32_t keycode,
+                                    uint32_t modifiers,
                                     bool layout_is_jp,
                                     std::string *out) const {
   if ((modifiers & FcitxKeyState_Ctrl) || (modifiers & FcitxKeyState_Alt)) {
@@ -504,14 +504,14 @@ bool KeyTranslator::IsKanaAvailable(uint32 keyval,
 // TODO(nona): resolve S-'0' problem (b/4338394).
 // TODO(nona): Current printable detection is weak. To enhance accuracy, use xkb
 // key map
-bool KeyTranslator::IsPrintable(uint32 keyval, uint32 keycode, uint32 modifiers) {
+bool KeyTranslator::IsPrintable(uint32_t keyval, uint32_t keycode, uint32_t modifiers) {
   if ((modifiers & FcitxKeyState_Ctrl) || (modifiers & FcitxKeyState_Alt)) {
     return false;
   }
   return IsAscii(keyval, keycode, modifiers);
 }
 
-bool KeyTranslator::IsAscii(uint32 keyval, uint32 keycode, uint32 modifiers) {
+bool KeyTranslator::IsAscii(uint32_t keyval, uint32_t keycode, uint32_t modifiers) {
   return (keyval > FcitxKey_space &&
           // Note: Space key (0x20) is a special key in Mozc.
           keyval <= FcitxKey_asciitilde);  // 0x7e.

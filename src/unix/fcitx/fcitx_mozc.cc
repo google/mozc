@@ -145,7 +145,7 @@ FcitxMozc::~FcitxMozc()
 
 // This function is called from SCIM framework when users press or release a
 // key.
-bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up)
+bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32_t keycode, uint32_t state, bool layout_is_jp, bool is_key_up)
 {
     std::string error;
     mozc::commands::Output raw_response;
@@ -163,7 +163,7 @@ bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state
 // window.
 void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
 {
-    int32 *id = (int32*) candWord->priv;
+    int32_t *id = (int32_t*) candWord->priv;
 
     if ( *id == kBadCandidateId )
     {

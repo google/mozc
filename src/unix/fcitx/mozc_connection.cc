@@ -93,7 +93,7 @@ void MozcConnection::UpdatePreeditMethod() {
 
 bool MozcConnection::TrySendKeyEvent(
     FcitxInstance* instance,
-    FcitxKeySym sym, uint32 keycode, uint32 state,
+    FcitxKeySym sym, uint32_t keycode, uint32_t state,
     mozc::commands::CompositionMode composition_mode,
     bool layout_is_jp,
     bool is_key_up,
@@ -138,7 +138,7 @@ bool MozcConnection::TrySendKeyEvent(
   return true;
 }
 
-bool MozcConnection::TrySendClick(int32 unique_id,
+bool MozcConnection::TrySendClick(int32_t unique_id,
                                   mozc::commands::Output *out,
                                   std::string *out_error) const {
   DCHECK(out);

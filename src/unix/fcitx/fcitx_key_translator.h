@@ -31,6 +31,7 @@
 #ifndef MOZC_UNIX_FCITX_FCITX_KEY_TRANSLATOR_H_
 #define MOZC_UNIX_FCITX_FCITX_KEY_TRANSLATOR_H_
 
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string>
@@ -56,46 +57,46 @@ public:
   // Converts scim_key into Mozc key code and stores them on out_translated.
   // scim_key must satisfy the following precondition: CanConvert(scim_key)
   bool Translate(FcitxKeySym keyval,
-                 uint32 keycode,
-                 uint32 modifiers,
+                 uint32_t keycode,
+                 uint32_t modifiers,
                  mozc::config::Config::PreeditMethod method,
                  bool layout_is_jp,
                  mozc::commands::KeyEvent *out_event) const;
 
 private:
-  typedef std::map<uint32, commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef std::map<uint32, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<uint32, std::pair<std::string, std::string> > KanaMap;
+  typedef std::map<uint32_t, commands::KeyEvent::SpecialKey> SpecialKeyMap;
+  typedef std::map<uint32_t, commands::KeyEvent::ModifierKey> ModifierKeyMap;
+  typedef std::map<uint32_t, std::pair<std::string, std::string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(uint32 keyval,
-                     uint32 keycode,
-                     uint32 modifiers) const;
+  bool IsModifierKey(uint32_t keyval,
+                     uint32_t keycode,
+                     uint32_t modifiers) const;
 
   // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(uint32 keyval,
-                    uint32 keycode,
-                    uint32 modifiers) const;
+  bool IsSpecialKey(uint32_t keyval,
+                    uint32_t keycode,
+                    uint32_t modifiers) const;
 
   // Returns true iff |keyval| is a key with a kana assigned.
-  bool IsKanaAvailable(uint32 keyval,
-                       uint32 keycode,
-                       uint32 modifiers,
+  bool IsKanaAvailable(uint32_t keyval,
+                       uint32_t keycode,
+                       uint32_t modifiers,
                        bool layout_is_jp,
                        std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
-  static bool IsAscii(uint32 keyval,
-                      uint32 keycode,
-                      uint32 modifiers);
+  static bool IsAscii(uint32_t keyval,
+                      uint32_t keycode,
+                      uint32_t modifiers);
 
   // Returns true iff key is printable.
-  static bool IsPrintable(uint32 keyval, uint32 keycode, uint32 modifiers);
+  static bool IsPrintable(uint32_t keyval, uint32_t keycode, uint32_t modifiers);
 
   // Returns true iff key is HiraganaKatakana with shift modifier.
-  static bool IsHiraganaKatakanaKeyWithShift(uint32 keyval,
-                                             uint32 keycode,
-                                             uint32 modifiers);
+  static bool IsHiraganaKatakanaKeyWithShift(uint32_t keyval,
+                                             uint32_t keycode,
+                                             uint32_t modifiers);
 
   // Initializes private fields.
   void Init();

@@ -206,8 +206,8 @@ INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _s
     FCITX_UNUSED(_sym);
     FCITX_UNUSED(_state);
     FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);
-    uint32 keycode = FcitxInputStateGetKeyCode(input);
-    uint32 state = FcitxInputStateGetKeyState(input);
+    uint32_t keycode = FcitxInputStateGetKeyCode(input);
+    uint32_t state = FcitxInputStateGetKeyState(input);
     bool result = mozcState->mozc->process_key_event(sym, keycode, state, CheckLayout(instance), false);
     if (!result)
         return IRV_TO_PROCESS;
@@ -228,8 +228,8 @@ INPUT_RETURN_VALUE FcitxMozcDoReleaseInput(void* arg, FcitxKeySym _sym, unsigned
     }
 
     FcitxKeySym sym = (FcitxKeySym) FcitxInputStateGetKeySym(input);
-    uint32 keycode = FcitxInputStateGetKeyCode(input);
-    uint32 state = FcitxInputStateGetKeyState(input);
+    uint32_t keycode = FcitxInputStateGetKeyCode(input);
+    uint32_t state = FcitxInputStateGetKeyState(input);
     bool result = mozcState->mozc->process_key_event(sym, keycode, state, CheckLayout(instance), true);
     if (!result)
         return IRV_TO_PROCESS;

@@ -45,7 +45,7 @@ namespace {
 // Returns a position that determines a preedit cursor position _AND_ top-left
 // position of a candidate window. Note that we can't set these two positions
 // independently. That's a SCIM's limitation.
-uint32 GetCursorPosition(const mozc::commands::Output &response) {
+uint32_t GetCursorPosition(const mozc::commands::Output &response) {
     if (!response.has_preedit()) {
         return 0;
     }
@@ -155,7 +155,7 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output& response,
         // offset should be a negative value to delete preceding text.
         // For backward selection (that is, |relative_selected_length < 0|),
         // IBus and/or some applications seem to expect |offset == 0| somehow.
-        const int32 offset = surrounding_text_info.relative_selected_length > 0
+        const int32_t offset = surrounding_text_info.relative_selected_length > 0
             ? -surrounding_text_info.relative_selected_length  // forward selection
             : 0;                         // backward selection
         range->set_offset(offset);
@@ -292,7 +292,7 @@ void MozcResponseParser::ParseCandidates(
         FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
     }
 
-    std::map<int32, std::pair<std::string, std::string> > usage_map;
+    std::map<int32_t, std::pair<std::string, std::string> > usage_map;
     if (candidates.has_usages()) {
         const commands::InformationList& usages = candidates.usages();
         for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -314,7 +314,7 @@ void MozcResponseParser::ParseCandidates(
     }
     for (int i = 0; i < candidates.candidate_size(); ++i) {
         const commands::Candidates::Candidate& candidate = candidates.candidate(i);
-        const uint32 index = candidate.index();
+        const uint32_t index = candidate.index();
         FcitxMessageType type;
         if (focused_index != -1 && index == focused_index) {
             local_index = i;
@@ -322,7 +322,7 @@ void MozcResponseParser::ParseCandidates(
         } else {
             type = MSG_OTHER;
         }
-        int32* id = (int32*) fcitx_utils_malloc0(sizeof(int32));
+        int32_t* id = (int32_t*) fcitx_utils_malloc0(sizeof(int32_t));
         FcitxCandidateWord candWord;
         candWord.callback = FcitxMozcGetCandidateWord;
         candWord.extraType = MSG_OTHER;
@@ -357,7 +357,7 @@ void MozcResponseParser::ParseCandidates(
             type = MSG_FIRSTCAND;
 
             if (candidate.has_information_id()) {
-                std::map<int32, std::pair<std::string, std::string> >::iterator it =
+                std::map<int32_t, std::pair<std::string, std::string> >::iterator it =
                     usage_map.find(candidate.information_id());
                 if (it != usage_map.end()) {
                     fcitx_mozc->SetUsage(it->second.first, it->second.second);
@@ -374,7 +374,7 @@ void MozcResponseParser::ParseCandidates(
         candWord.strWord = strdup(value.c_str());
 
         if (candidate.has_id()) {
-            const int32 cid = candidate.id();
+            const int32_t cid = candidate.id();
             DCHECK_NE(kBadCandidateId, cid) << "Unexpected id is passed.";
             *id = cid;
         } else {
@@ -409,7 +409,7 @@ static int GetRawCursorPos(const char * str, int upos)
 
 
 void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
-                                      uint32 position,
+                                      uint32_t position,
                                       FcitxMozc *fcitx_mozc) const {
     PreeditInfo *info = new PreeditInfo;
     std::string s;

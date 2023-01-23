@@ -31,6 +31,7 @@
 #ifndef MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 #define MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 
+#include <cstdint>
 #include "base/port.h"
 
 namespace mozc
@@ -83,7 +84,7 @@ private:
     void ParseCandidates ( const mozc::commands::Candidates &candidates,
                            FcitxMozc *fcitx_mozc ) const;
     void ParsePreedit ( const mozc::commands::Preedit &preedit,
-                        uint32 position,
+                        uint32_t position,
                         FcitxMozc *fcitx_mozc ) const;
 
     bool use_annotation_;

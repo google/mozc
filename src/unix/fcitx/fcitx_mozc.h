@@ -30,6 +30,7 @@
 #ifndef MOZC_UNIX_FCITX_FCITX_MOZC_H_
 #define MOZC_UNIX_FCITX_FCITX_MOZC_H_
 
+#include <cstdint>
 #include <memory>
 
 #include <fcitx/instance.h>
@@ -52,7 +53,7 @@ namespace mozc
 
 namespace fcitx
 {
-const int32 kBadCandidateId = -12345;
+const int32_t kBadCandidateId = -12345;
 class IMEngineFactory;
 class MozcConnectionInterface;
 class MozcResponseParser;
@@ -66,7 +67,7 @@ struct PreeditItem {
 // Preedit string and its attributes.
 struct PreeditInfo
 {
-    uint32 cursor_pos;
+    uint32_t cursor_pos;
     
     std::vector<PreeditItem> preedit;
 };
@@ -81,7 +82,7 @@ public:
     FcitxMozc(const FcitxMozc &) = delete;
     virtual ~FcitxMozc();
 
-    bool process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up);
+    bool process_key_event (FcitxKeySym sym, uint32_t keycode, uint32_t state, bool layout_is_jp, bool is_key_up);
     void select_candidate ( FcitxCandidateWord* candWord );
     void resetim();
     void reset();

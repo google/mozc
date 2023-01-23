@@ -51,12 +51,12 @@ class AdditionalModifiersData {
     data_[commands::KeyEvent::LEFT_SHIFT] = commands::KeyEvent::SHIFT;
     data_[commands::KeyEvent::RIGHT_SHIFT] = commands::KeyEvent::SHIFT;
   }
-  const std::map<uint32, commands::KeyEvent::ModifierKey> &data() {
+  const std::map<uint32_t, commands::KeyEvent::ModifierKey> &data() {
     return data_;
   }
 
  private:
-  std::map<uint32, commands::KeyEvent::ModifierKey> data_;
+  std::map<uint32_t, commands::KeyEvent::ModifierKey> data_;
 };
 
 // TODO(hsumita): Moves this function into member functions of
@@ -65,13 +65,13 @@ void AddAdditionalModifiers(
     std::set<commands::KeyEvent::ModifierKey> *modifier_keys_set) {
   DCHECK(modifier_keys_set);
 
-  const std::map<uint32, commands::KeyEvent::ModifierKey> &data =
+  const std::map<uint32_t, commands::KeyEvent::ModifierKey> &data =
       Singleton<AdditionalModifiersData>::get()->data();
 
   // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
   for (std::set<commands::KeyEvent::ModifierKey>::const_iterator it =
            modifier_keys_set->begin(); it != modifier_keys_set->end(); ++it) {
-    std::map<uint32, commands::KeyEvent::ModifierKey>::const_iterator item =
+    std::map<uint32_t, commands::KeyEvent::ModifierKey>::const_iterator item =
         data.find(*it);
     if (item != data.end()) {
       modifier_keys_set->insert(item->second);
@@ -98,7 +98,7 @@ KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
 }
 
 bool KeyEventHandler::GetKeyEvent(
-    FcitxKeySym keyval, uint32 keycode, uint32 modifiers,
+    FcitxKeySym keyval, uint32_t keycode, uint32_t modifiers,
     config::Config::PreeditMethod preedit_method,
     bool layout_is_jp, bool is_key_up, commands::KeyEvent *key) {
   DCHECK(key);
@@ -119,7 +119,7 @@ void KeyEventHandler::Clear() {
   modifiers_to_be_sent_.clear();
 }
 
-bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32 keyval,
+bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32_t keyval,
                                        commands::KeyEvent *key_event) {
   // Manage modifier key event.
   // Modifier key event is sent on key up if non-modifier key has not been

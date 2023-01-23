@@ -33,6 +33,7 @@
 
 #include <set>
 #include <memory>
+#include <cstdint>
 
 #include "base/port.h"
 #include "protocol/config.pb.h"
@@ -50,7 +51,7 @@ class KeyEventHandler {
   // Converts a key event came from fcitx to commands::KeyEvent. This is a
   // stateful method. It stores modifier keys states since ibus doesn't send
   // an enough information about the modifier keys.
-  bool GetKeyEvent(FcitxKeySym keyval, uint32 keycode, uint32 modifiers,
+  bool GetKeyEvent(FcitxKeySym keyval, uint32_t keycode, uint32_t modifiers,
                    config::Config::PreeditMethod preedit_method,
                    bool layout_is_jp, bool is_key_up, commands::KeyEvent *key);
 
@@ -60,14 +61,14 @@ class KeyEventHandler {
  private:
 
   // Manages modifier keys. Returns false if it should not be sent to server.
-  bool ProcessModifiers(bool is_key_up, uint32 keyval,
+  bool ProcessModifiers(bool is_key_up, uint32_t keyval,
                         commands::KeyEvent *key_event);
 
   std::unique_ptr<KeyTranslator> key_translator_;
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.
-  std::set<uint32> currently_pressed_modifiers_;
+  std::set<uint32_t> currently_pressed_modifiers_;
   // Pending modifier keys.
   std::set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
 };
