@@ -43,7 +43,6 @@
         'process.cc',
         'process_mutex.cc',
         'run_level.cc',
-        'scheduler.cc',
         'stopwatch.cc',
         'unnamed_event.cc',
       ],

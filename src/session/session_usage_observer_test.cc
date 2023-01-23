@@ -36,8 +36,6 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/logging.h"
-#include "base/scheduler.h"
-#include "base/scheduler_stub.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
@@ -64,25 +62,15 @@ class SessionUsageObserverTest : public testing::Test {
 
     Clock::SetClockForUnitTest(nullptr);
 
-    scheduler_stub_ = std::make_unique<SchedulerStub>();
-    Scheduler::SetSchedulerHandler(scheduler_stub_.get());
-
     stats_config_util_mock_ = std::make_unique<config::StatsConfigUtilMock>();
     config::StatsConfigUtil::SetHandler(stats_config_util_mock_.get());
   }
 
   void TearDown() override {
     Clock::SetClockForUnitTest(nullptr);
-    Scheduler::SetSchedulerHandler(nullptr);
     config::StatsConfigUtil::SetHandler(nullptr);
 
     UsageStats::ClearAllStatsForTest();
-  }
-
-  void EnsureSave() const {
-    // Make sure to save stats.
-    constexpr uint32_t kWaitngUsecForEnsureSave = 10 * 60 * 1000;
-    scheduler_stub_->PutClockForward(kWaitngUsecForEnsureSave);
   }
 
   void SetDoubleValueStats(uint32_t num, double total, double square_total,
@@ -113,7 +101,6 @@ class SessionUsageObserverTest : public testing::Test {
                         event_stats->mutable_time_length_stats());
   }
 
-  std::unique_ptr<SchedulerStub> scheduler_stub_;
   std::unique_ptr<config::StatsConfigUtilMock> stats_config_util_mock_;
 };
 
@@ -434,7 +421,6 @@ TEST_F(SessionUsageObserverTest, LogTouchEvent) {
 
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardStats");
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
-  EnsureSave();
 
   // Does not store usage stats anymore.
   Stats stats;
@@ -570,7 +556,6 @@ TEST_F(SessionUsageObserverTest, LogTouchEventPasswordField) {
 
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardStats");
   EXPECT_STATS_NOT_EXIST("VirtualKeyboardMissStats");
-  EnsureSave();
 
   // Does not store usage stats anymore.
   Stats stats;
