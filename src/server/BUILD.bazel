@@ -32,10 +32,10 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "macos_application_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_macos_application",
+    "mozc_select",
 )
 load(
     "//:config.bzl",
@@ -45,12 +45,12 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "mozc_server",
     deps = [":mozc_server_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_server_lib",
     srcs = [
         "mozc_server.cc",
@@ -75,10 +75,10 @@ cc_library_mozc(
         "//session",
         "//session:session_server",
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(windows = ["//base:winmain"]),
+    ] + mozc_select(windows = ["//base:winmain"]),
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "mozc_rpc_server_main",
     srcs = ["mozc_rpc_server_main.cc"],
     deps = [
@@ -96,7 +96,7 @@ cc_binary_mozc(
     ],
 )
 
-macos_application_mozc(
+mozc_macos_application(
     name = "mozc_server_macos",
     app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",

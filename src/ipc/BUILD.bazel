@@ -32,16 +32,16 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "select_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_select",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc",
     srcs = [
         "ipc.cc",
@@ -65,7 +65,7 @@ cc_library_mozc(
         "//base:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(
+    ] + mozc_select(
         ios = ["//base:mac_util"],
     ),
 )
@@ -81,7 +81,7 @@ cc_proto_library(
     deps = [":ipc_proto"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_path_manager",
     srcs = ["ipc_path_manager.cc"],
     hdrs = ["ipc_path_manager.h"],
@@ -104,18 +104,18 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
-    ] + select_mozc(
+    ] + mozc_select(
         ios = ["//base:mac_util"],
     ),
 )
 
 ##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "ipc_path_manager_main",
+## mozc_cc_binary(name = "ipc_path_manager_main",
 ##           srcs = ["ipc_path_manager_main.cc",],
 ##           deps = [":ipc_path_manager",
 ##                   "//base:base",])
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ipc_path_manager_test",
     size = "small",
     srcs = ["ipc_path_manager_test.cc"],
@@ -137,7 +137,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_mock",
     testonly = True,
     srcs = ["ipc_mock.cc"],
@@ -149,7 +149,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_test_util",
     srcs = ["ipc_test_util.cc"],
     hdrs = ["ipc_test_util.h"],
@@ -160,7 +160,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ipc_test",
     size = "small",
     srcs = ["ipc_test.cc"],
@@ -180,14 +180,14 @@ cc_test_mozc(
 )
 
 ##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "ipc_main",
+## mozc_cc_binary(name = "ipc_main",
 ##           srcs = ["ipc_main.cc",],
 ##           deps = [":ipc",
 ##                   "//base:base",],
 ##           copts = ["$(STACK_FRAME_UNLIMITED)"]  # ipc_main.cc
 ##           )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "named_event",
     srcs = ["named_event.cc"],
     hdrs = ["named_event.h"],
@@ -203,12 +203,12 @@ cc_library_mozc(
 )
 
 ##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "named_event_main",
+## mozc_cc_binary(name = "named_event_main",
 ##           srcs = ["named_event_main.cc",],
 ##           deps = [":named_event",
 ##                   "//base:base",])
 
-cc_test_mozc(
+mozc_cc_test(
     name = "named_event_test",
     size = "small",
     srcs = ["named_event_test.cc"],
@@ -226,7 +226,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "process_watch_dog",
     srcs = ["process_watch_dog.cc"],
     hdrs = ["process_watch_dog.h"],
@@ -246,7 +246,7 @@ cc_library_mozc(
 # cannot depend on the library
 #   //ipc:ipc: Found an inverse include path.
 # See http://go/cxx-layering-faq
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_hdr",
     textual_hdrs = ["ipc.h"],
     visibility = ["//visibility:private"],
@@ -256,7 +256,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "process_watch_dog_test",
     size = "small",
     srcs = ["process_watch_dog_test.cc"],

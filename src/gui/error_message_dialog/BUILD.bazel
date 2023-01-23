@@ -29,24 +29,24 @@
 
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "macos_qt_application_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_macos_qt_application",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_error_message_dialog",
     srcs = ["error_message_dialog.h"],
     outs = ["moc_error_message_dialog.cc"],
 )
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_error_message_dialog",
     srcs = [
         "error_message_dialog_en.qm",
@@ -59,7 +59,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_error_message_dialog",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "error_message_dialog",
     srcs = [
         "error_message_dialog.cc",
@@ -86,7 +86,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "error_message_dialog_main_lib",
     srcs = ["error_message_dialog_main.cc"],
     deps = [
@@ -96,12 +96,12 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "error_message_dialog_main",
     deps = [":error_message_dialog_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "error_message_dialog_macos",
     bundle_name = "ErrorMessageDialog",
     deps = [":error_message_dialog_main_lib"],

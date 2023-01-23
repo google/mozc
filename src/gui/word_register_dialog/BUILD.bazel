@@ -29,31 +29,31 @@
 
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "macos_qt_application_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
-    "qt_uic_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_macos_qt_application",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
+    "mozc_qt_uic",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_word_register_dialog",
     srcs = ["word_register_dialog.h"],
     outs = ["moc_word_register_dialog.cc"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_word_register_dialog",
     srcs = ["word_register_dialog.ui"],
     outs = ["ui_word_register_dialog.h"],
 )
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_word_register_dialog",
     srcs = [
         "word_register_dialog_en.qm",
@@ -66,7 +66,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_word_register_dialog",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "word_register_dialog",
     srcs = [
         "word_register_dialog.cc",
@@ -99,7 +99,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "word_register_dialog_main_lib",
     srcs = ["word_register_dialog_main.cc"],
     deps = [
@@ -109,12 +109,12 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "word_register_dialog_main",
     deps = [":word_register_dialog_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "word_register_dialog_macos",
     bundle_name = "WordRegisterDialog",
     deps = [":word_register_dialog_main_lib"],

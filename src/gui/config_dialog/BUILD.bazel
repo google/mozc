@@ -29,19 +29,19 @@
 
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "macos_qt_application_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
-    "qt_uic_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_macos_qt_application",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
+    "mozc_qt_uic",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_character_form_editor",
     srcs = [
         "character_form_editor.h",
@@ -49,7 +49,7 @@ qt_moc_mozc(
     outs = ["moc_character_form_editor.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_combobox_delegate",
     srcs = [
         "combobox_delegate.h",
@@ -57,7 +57,7 @@ qt_moc_mozc(
     outs = ["moc_combobox_delegate.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_config_dialog",
     srcs = [
         "config_dialog.h",
@@ -65,7 +65,7 @@ qt_moc_mozc(
     outs = ["moc_config_dialog.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_generic_table_editor",
     srcs = [
         "generic_table_editor.h",
@@ -73,7 +73,7 @@ qt_moc_mozc(
     outs = ["moc_generic_table_editor.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_keybinding_editor",
     srcs = [
         "keybinding_editor.h",
@@ -81,7 +81,7 @@ qt_moc_mozc(
     outs = ["moc_keybinding_editor.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_keybinding_editor_delegate",
     srcs = [
         "keybinding_editor_delegate.h",
@@ -89,7 +89,7 @@ qt_moc_mozc(
     outs = ["moc_keybinding_editor_delegate.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_keymap_editor",
     srcs = [
         "keymap_editor.h",
@@ -97,7 +97,7 @@ qt_moc_mozc(
     outs = ["moc_keymap_editor.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_roman_table_editor",
     srcs = [
         "roman_table_editor.h",
@@ -105,7 +105,7 @@ qt_moc_mozc(
     outs = ["moc_roman_table_editor.cc"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_config_dialog",
     srcs = [
         "config_dialog.ui",
@@ -113,7 +113,7 @@ qt_uic_mozc(
     outs = ["ui_config_dialog.h"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_generic_table_editor",
     srcs = [
         "generic_table_editor.ui",
@@ -121,7 +121,7 @@ qt_uic_mozc(
     outs = ["ui_generic_table_editor.h"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_keybinding_editor",
     srcs = [
         "keybinding_editor.ui",
@@ -129,7 +129,7 @@ qt_uic_mozc(
     outs = ["ui_keybinding_editor.h"],
 )
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_config_dialog",
     srcs = [
         "config_dialog_en.qm",
@@ -144,7 +144,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_config_dialog",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "combobox_delegate",
     srcs = [
         "combobox_delegate.cc",
@@ -155,7 +155,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "config_dialog",
     srcs = [
         "character_form_editor.cc",
@@ -214,7 +214,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "config_dialog_main_lib",
     srcs = ["config_dialog_main.cc"],
     deps = [
@@ -224,12 +224,12 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "config_dialog_main",
     deps = [":config_dialog_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "config_dialog_macos",
     bundle_name = "ConfigDialog",
     deps = [":config_dialog_main_lib"],

@@ -32,13 +32,13 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "transliteration",
     srcs = ["transliteration.cc"],
     hdrs = ["transliteration.h"],
@@ -48,7 +48,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "transliteration_test",
     size = "small",
     srcs = ["transliteration_test.cc"],
