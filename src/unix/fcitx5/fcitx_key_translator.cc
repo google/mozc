@@ -37,7 +37,7 @@ namespace fcitx {
 namespace {
 
 const struct {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::SpecialKey to;
 } special_key_map[] = {
     {FcitxKey_VoidSymbol, mozc::commands::KeyEvent::NO_SPECIALKEY},
@@ -131,7 +131,7 @@ const struct {
 };
 
 const struct {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::ModifierKey to;
 } modifier_key_map[] = {
     {FcitxKey_Shift_L, mozc::commands::KeyEvent::LEFT_SHIFT},
@@ -144,7 +144,7 @@ const struct {
 };
 
 const struct {
-  uint32 from;
+  uint32_t from;
   mozc::commands::KeyEvent::ModifierKey to;
 } modifier_mask_map[] = {
     {static_cast<uint32_t>(KeyState::Shift), mozc::commands::KeyEvent::SHIFT},
@@ -154,7 +154,7 @@ const struct {
 
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
 const struct {
-  uint32 code;
+  uint32_t code;
   const char *no_shift;
   const char *shift;
 } kana_map_jp[] =
@@ -361,7 +361,7 @@ KeyTranslator::KeyTranslator() { Init(); }
 KeyTranslator::~KeyTranslator() {}
 
 // TODO(nona): Fix 'Shift-0' behavior b/4338394
-bool KeyTranslator::Translate(KeySym keyval, uint32 keycode,
+bool KeyTranslator::Translate(KeySym keyval, uint32_t keycode,
                               KeyStates modifiers,
                               mozc::config::Config::PreeditMethod method,
                               bool layout_is_jp,
@@ -457,24 +457,24 @@ void KeyTranslator::Init() {
   }
 }
 
-bool KeyTranslator::IsModifierKey(KeySym keyval, uint32 keycode,
+bool KeyTranslator::IsModifierKey(KeySym keyval, uint32_t keycode,
                                   KeyStates modifiers) const {
   return modifier_key_map_.find(keyval) != modifier_key_map_.end();
 }
 
-bool KeyTranslator::IsSpecialKey(KeySym keyval, uint32 keycode,
+bool KeyTranslator::IsSpecialKey(KeySym keyval, uint32_t keycode,
                                  KeyStates modifiers) const {
   return special_key_map_.find(keyval) != special_key_map_.end();
 }
 
 bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(KeySym keyval,
-                                                   uint32 keycode,
+                                                   uint32_t keycode,
                                                    KeyStates modifiers) {
   return ((modifiers & KeyState::Shift) &&
           (keyval == FcitxKey_Hiragana_Katakana));
 }
 
-bool KeyTranslator::IsKanaAvailable(KeySym keyval, uint32 keycode,
+bool KeyTranslator::IsKanaAvailable(KeySym keyval, uint32_t keycode,
                                     KeyStates modifiers, bool layout_is_jp,
                                     std::string *out) const {
   if ((modifiers & KeyState::Ctrl) || (modifiers & KeyState::Alt)) {
@@ -508,7 +508,7 @@ bool KeyTranslator::IsKanaAvailable(KeySym keyval, uint32 keycode,
 // TODO(nona): resolve S-'0' problem (b/4338394).
 // TODO(nona): Current printable detection is weak. To enhance accuracy, use xkb
 // key map
-bool KeyTranslator::IsPrintable(KeySym keyval, uint32 keycode,
+bool KeyTranslator::IsPrintable(KeySym keyval, uint32_t keycode,
                                 KeyStates modifiers) {
   if ((modifiers & KeyState::Ctrl) || (modifiers & KeyState::Alt)) {
     return false;
@@ -516,7 +516,7 @@ bool KeyTranslator::IsPrintable(KeySym keyval, uint32 keycode,
   return IsAscii(keyval, keycode, modifiers);
 }
 
-bool KeyTranslator::IsAscii(KeySym keyval, uint32 keycode,
+bool KeyTranslator::IsAscii(KeySym keyval, uint32_t keycode,
                             KeyStates modifiers) {
   return (keyval > FcitxKey_space &&
           // Note: Space key (0x20) is a special key in Mozc.

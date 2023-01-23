@@ -43,7 +43,7 @@
 #include "protocol/commands.pb.h"
 
 namespace fcitx {
-const int32 kBadCandidateId = -12345;
+const int32_t kBadCandidateId = -12345;
 class MozcConnectionInterface;
 class MozcResponseParser;
 class KeyTranslator;
@@ -60,7 +60,7 @@ class MozcState : public InputContextProperty {
 
   void UpdatePreeditMethod();
 
-  bool ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
+  bool ProcessKeyEvent(KeySym sym, uint32_t keycode, KeyStates state,
                        bool layout_is_jp, bool is_key_up);
   void SelectCandidate(int idx);
   void Reset();
@@ -110,7 +110,7 @@ class MozcState : public InputContextProperty {
   // response is stored on 'out' (and 'out_error' is not modified). If the IPC
   // fails, returns false and the error message is stored on 'out_error'. In
   // this case, 'out' is not modified.
-  bool TrySendKeyEvent(InputContext *ic, KeySym sym, uint32 keycode,
+  bool TrySendKeyEvent(InputContext *ic, KeySym sym, uint32_t keycode,
                        KeyStates state,
                        mozc::commands::CompositionMode composition_mode,
                        bool layout_is_jp, bool is_key_up,
@@ -118,7 +118,7 @@ class MozcState : public InputContextProperty {
                        std::string *out_error) const;
 
   // Sends 'mouse click on the candidate window' event to the server.
-  bool TrySendClick(int32 unique_id, mozc::commands::Output *out,
+  bool TrySendClick(int32_t unique_id, mozc::commands::Output *out,
                     std::string *out_error) const;
 
   // Sends composition mode to the server.

@@ -53,12 +53,12 @@ class AdditionalModifiersData {
     data_[mozc::commands::KeyEvent::RIGHT_SHIFT] =
         mozc::commands::KeyEvent::SHIFT;
   }
-  const std::map<uint32, mozc::commands::KeyEvent::ModifierKey> &data() {
+  const std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey> &data() {
     return data_;
   }
 
  private:
-  std::map<uint32, mozc::commands::KeyEvent::ModifierKey> data_;
+  std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey> data_;
 };
 
 // TODO(hsumita): Moves this function into member functions of
@@ -67,14 +67,14 @@ void AddAdditionalModifiers(
     std::set<mozc::commands::KeyEvent::ModifierKey> *modifier_keys_set) {
   DCHECK(modifier_keys_set);
 
-  const std::map<uint32, mozc::commands::KeyEvent::ModifierKey> &data =
+  const std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey> &data =
       mozc::Singleton<AdditionalModifiersData>::get()->data();
 
   // Adds MODIFIER if there are (LEFT|RIGHT)_MODIFIER like LEFT_SHIFT.
   for (std::set<mozc::commands::KeyEvent::ModifierKey>::const_iterator it =
            modifier_keys_set->begin();
        it != modifier_keys_set->end(); ++it) {
-    std::map<uint32, mozc::commands::KeyEvent::ModifierKey>::const_iterator
+    std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey>::const_iterator
         item = data.find(*it);
     if (item != data.end()) {
       modifier_keys_set->insert(item->second);
@@ -101,7 +101,7 @@ KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
 }
 
 bool KeyEventHandler::GetKeyEvent(
-    KeySym keyval, uint32 keycode, KeyStates modifiers,
+    KeySym keyval, uint32_t keycode, KeyStates modifiers,
     mozc::config::Config::PreeditMethod preedit_method, bool layout_is_jp,
     bool is_key_up, mozc::commands::KeyEvent *key) {
   DCHECK(key);
@@ -122,7 +122,7 @@ void KeyEventHandler::Clear() {
   modifiers_to_be_sent_.clear();
 }
 
-bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32 keyval,
+bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint32_t keyval,
                                        mozc::commands::KeyEvent *key_event) {
   // Manage modifier key event.
   // Modifier key event is sent on key up if non-modifier key has not been

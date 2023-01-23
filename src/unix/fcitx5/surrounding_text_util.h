@@ -43,7 +43,7 @@ class AddonInstance;
 struct SurroundingTextInfo {
   SurroundingTextInfo() : relative_selected_length(0) {}
 
-  int32 relative_selected_length;
+  int32_t relative_selected_length;
   std::string preceding_text;
   std::string selection_text;
   std::string following_text;
@@ -59,7 +59,7 @@ class SurroundingTextUtil {
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
   // integer overflow, that is, |delta| is in a safe range.
   // Returns false otherwise.
-  static bool GetSafeDelta(unsigned int from, unsigned int to, int32 *delta);
+  static bool GetSafeDelta(unsigned int from, unsigned int to, int32_t *delta);
 
   // Returns true if
   // 1. |surrounding_text| contains |selected_text|

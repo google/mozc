@@ -53,7 +53,7 @@ namespace {
 // Returns a position that determines a preedit cursor position _AND_ top-left
 // position of a candidate window. Note that we can't set these two positions
 // independently. That's a SCIM's limitation.
-uint32 GetCursorPosition(const mozc::commands::Output &response) {
+uint32_t GetCursorPosition(const mozc::commands::Output &response) {
   if (!response.has_preedit()) {
     return 0;
   }
@@ -117,7 +117,7 @@ class MozcCandidateList final : public CandidateList,
       focused_index = candidates.focused_index();
     }
 
-    std::map<int32, std::pair<std::string, std::string>> usage_map;
+    std::map<int32_t, std::pair<std::string, std::string>> usage_map;
     if (candidates.has_usages()) {
       const mozc::commands::InformationList &usages = candidates.usages();
       for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -133,7 +133,7 @@ class MozcCandidateList final : public CandidateList,
     for (int i = 0; i < candidates.candidate_size(); ++i) {
       const mozc::commands::Candidates::Candidate &candidate =
           candidates.candidate(i);
-      const uint32 index = candidate.index();
+      const uint32_t index = candidate.index();
 
       std::string value;
       if (use_annotation && candidate.has_annotation() &&
@@ -188,7 +188,7 @@ class MozcCandidateList final : public CandidateList,
         labels_.emplace_back();
       }
 
-      int32 id = kBadCandidateId;
+      int32_t id = kBadCandidateId;
       if (candidate.has_id()) {
         id = candidate.id();
         DCHECK_NE(kBadCandidateId, id) << "Unexpected id is passed.";
@@ -332,7 +332,7 @@ void MozcResponseParser::ExecuteCallback(const mozc::commands::Output &response,
     // offset should be a negative value to delete preceding text.
     // For backward selection (that is, |relative_selected_length < 0|),
     // IBus and/or some applications seem to expect |offset == 0| somehow.
-    const int32 offset =
+    const int32_t offset =
         surrounding_text_info.relative_selected_length > 0
             ? -surrounding_text_info
                    .relative_selected_length  // forward selection
@@ -441,7 +441,8 @@ void MozcResponseParser::ParseCandidates(
 }
 
 void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
-                                      uint32 position, InputContext *ic) const {
+                                      uint32_t position,
+                                      InputContext *ic) const {
   auto mozc_state = engine_->mozcState(ic);
   Text preedit_text;
   std::string s;

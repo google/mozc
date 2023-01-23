@@ -141,7 +141,7 @@ class MozcEngine final : public InputMethodEngineV2 {
   SimpleAction separatorAction_;
   Menu toolMenu_;
   MozcEngineConfig config_;
-  uint64 lastSyncTime_;
+  uint64_t lastSyncTime_;
   bool deactivating_ = false;
 
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());

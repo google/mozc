@@ -51,34 +51,36 @@ class KeyTranslator {
   virtual ~KeyTranslator();
 
   // Converts fcitx key into Mozc key code and stores them on out_translated.
-  bool Translate(KeySym keyval, uint32 keycode, KeyStates modifiers,
+  bool Translate(KeySym keyval, uint32_t keycode, KeyStates modifiers,
                  mozc::config::Config::PreeditMethod method, bool layout_is_jp,
                  mozc::commands::KeyEvent *out_event) const;
 
  private:
-  typedef std::map<uint32, mozc::commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef std::map<uint32, mozc::commands::KeyEvent::ModifierKey>
+  typedef std::map<uint32_t, mozc::commands::KeyEvent::SpecialKey>
+      SpecialKeyMap;
+  typedef std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey>
       ModifierKeyMap;
-  typedef std::map<uint32, std::pair<std::string, std::string>> KanaMap;
+  typedef std::map<uint32_t, std::pair<std::string, std::string>> KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(KeySym keyval, uint32 keycode, KeyStates modifiers) const;
+  bool IsModifierKey(KeySym keyval, uint32_t keycode,
+                     KeyStates modifiers) const;
 
   // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(KeySym keyval, uint32 keycode, KeyStates modifiers) const;
+  bool IsSpecialKey(KeySym keyval, uint32_t keycode, KeyStates modifiers) const;
 
   // Returns true iff |keyval| is a key with a kana assigned.
-  bool IsKanaAvailable(KeySym keyval, uint32 keycode, KeyStates modifiers,
+  bool IsKanaAvailable(KeySym keyval, uint32_t keycode, KeyStates modifiers,
                        bool layout_is_jp, std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
-  static bool IsAscii(KeySym keyval, uint32 keycode, KeyStates modifiers);
+  static bool IsAscii(KeySym keyval, uint32_t keycode, KeyStates modifiers);
 
   // Returns true iff key is printable.
-  static bool IsPrintable(KeySym keyval, uint32 keycode, KeyStates modifiers);
+  static bool IsPrintable(KeySym keyval, uint32_t keycode, KeyStates modifiers);
 
   // Returns true iff key is HiraganaKatakana with shift modifier.
-  static bool IsHiraganaKatakanaKeyWithShift(KeySym keyval, uint32 keycode,
+  static bool IsHiraganaKatakanaKeyWithShift(KeySym keyval, uint32_t keycode,
                                              KeyStates modifiers);
 
   // Initializes private fields.

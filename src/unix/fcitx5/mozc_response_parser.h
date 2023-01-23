@@ -76,7 +76,7 @@ class MozcResponseParser {
                    InputContext *ic) const;
   void ParseCandidates(const mozc::commands::Candidates &candidates,
                        InputContext *ic) const;
-  void ParsePreedit(const mozc::commands::Preedit &preedit, uint32 position,
+  void ParsePreedit(const mozc::commands::Preedit &preedit, uint32_t position,
                     InputContext *ic) const;
 
   MozcEngine *engine_;

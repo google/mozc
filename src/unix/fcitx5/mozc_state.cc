@@ -92,7 +92,7 @@ void MozcState::UpdatePreeditMethod() {
 }
 
 bool MozcState::TrySendKeyEvent(
-    InputContext* ic, KeySym sym, uint32 keycode, KeyStates state,
+    InputContext* ic, KeySym sym, uint32_t keycode, KeyStates state,
     mozc::commands::CompositionMode composition_mode, bool layout_is_jp,
     bool is_key_up, mozc::commands::Output* out, std::string* out_error) const {
   DCHECK(out);
@@ -135,7 +135,7 @@ bool MozcState::TrySendKeyEvent(
   return true;
 }
 
-bool MozcState::TrySendClick(int32 unique_id, mozc::commands::Output* out,
+bool MozcState::TrySendClick(int32_t unique_id, mozc::commands::Output* out,
                              std::string* out_error) const {
   DCHECK(out);
   DCHECK(out_error);
@@ -188,7 +188,7 @@ bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
 }
 
 // This function is called when users press or release a key.
-bool MozcState::ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
+bool MozcState::ProcessKeyEvent(KeySym sym, uint32_t keycode, KeyStates state,
                                 bool layout_is_jp, bool is_key_up) {
   auto normalized_key = Key(sym, state).normalize();
   if (displayUsage_) {
@@ -225,7 +225,7 @@ bool MozcState::ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
 
 // This function is called from SCIM framework when users click the candidate
 // window.
-void MozcState::SelectCandidate(int32 id) {
+void MozcState::SelectCandidate(int32_t id) {
   if (id == kBadCandidateId) {
     LOG(ERROR) << "The clicked candidate doesn't have unique ID.";
     return;
