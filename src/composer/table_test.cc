@@ -704,8 +704,9 @@ TEST_F(TableTest, MobileMode) {
       entry = table.LookUpPrefix("し*", &key_length, &fixed);
       EXPECT_EQ(entry->input(), "し*");
       EXPECT_EQ(entry->result(), "");
-      // U+000F and U+000E are shift in/out characters.
-      EXPECT_EQ(entry->pending(), "\u000F*\u000Eじ");
+      // U+F001 is a Unicode PUA character converted from "{*}".
+      // This codepoint may be changed when the table data is updated.
+      EXPECT_EQ(entry->pending(), "\uF001じ");
       EXPECT_EQ(key_length, 4);
       EXPECT_TRUE(fixed);
     }
@@ -721,8 +722,9 @@ TEST_F(TableTest, MobileMode) {
     size_t key_length = 0;
     bool fixed = false;
     entry = table.LookUpPrefix("2", &key_length, &fixed);
-    // "{?}" is to be replaced by "\u000F?\u000E".
-    EXPECT_EQ(entry->pending(), "\u000F?\u000Ea");
+    // U+F000 is a Unicode PUA character converted from "{?}".
+    // This codepoint may be changed when the table data is updated.
+    EXPECT_EQ(entry->pending(), "\uF000a");
   }
 
   {
@@ -941,9 +943,10 @@ TEST_F(TableTest, SpecialKeys) {
 
   {
     // "{{}" is replaced with "{".
-    // "{*}" is replaced with "\u000F*\u000E".
+    // "{}" is replaced with U+F000.
+    // {b} = U+F001, {d} = U+F002, {e} = U+F003, {{-} = U+F004.
     Table table;
-    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\u000F\u000E");
+    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\uF000");
     EXPECT_EQ(table.AddRule("{", "", "")->input(), "{");
     EXPECT_EQ(table.AddRule("}", "", "")->input(), "}");
     EXPECT_EQ(table.AddRule("{{}", "", "")->input(), "{");
@@ -954,14 +957,15 @@ TEST_F(TableTest, SpecialKeys) {
     EXPECT_EQ(table.AddRule("a}", "", "")->input(), "a}");
     EXPECT_EQ(table.AddRule("}a", "", "")->input(), "}a");
     EXPECT_EQ(table.AddRule("a}a", "", "")->input(), "a}a");
-    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\u000Fb\u000Ec");
+    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\uF001c");
     EXPECT_EQ(table.AddRule("a{b}c{d}{e}", "", "")->input(),
-              "a\u000Fb\u000Ec\u000Fd\u000E\u000Fe\u000E");
+              "a\uF001c\uF002\uF003");
     EXPECT_EQ(table.AddRule("}-{", "", "")->input(), "}-{");
     EXPECT_EQ(table.AddRule("a{bc", "", "")->input(), "a{bc");
 
     // This is not a fixed specification, but a current behavior.
-    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\u000F{-\u000E}");
+    // "{{-}" is treated as a special key.
+    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\uF004}");
   }
 }
 
