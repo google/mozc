@@ -45,7 +45,6 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "absl/container/btree_set.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -90,14 +89,15 @@ TypingCorrector::TypingCorrector(const Table *table,
   Reset();
 }
 
-void TypingCorrector::InsertCharacter(
-    const absl::string_view key, const ProbableKeyEvents &probable_key_events) {
-  raw_key_.append(key.data(), key.size());
+void TypingCorrector::InsertCharacter(const CompositionInput &input) {
+  const std::string &key = input.raw();
+  const ProbableKeyEvents &probable_key_events = input.probable_key_events();
+  raw_key_.append(key);
   if (!IsAvailable() || probable_key_events.empty()) {
     // If this corrector is not available or no ProbableKeyEvent is available,
     // just append |key| to each corrections.
     for (size_t i = 0; i < top_n_.size(); ++i) {
-      top_n_[i].first.append(key.data(), key.size());
+      top_n_[i].first.append(key);
     }
     return;
   }
@@ -175,7 +175,7 @@ void TypingCorrector::GetQueriesForPrediction(
   // So "shamoji" creates typing corrected input "syamoji", and
   // "syamoji" creates typing corrected query "しゃもじ", which
   // can be created from "shamoji".
-  // 2nd exmple is "かいしゃ" from "kaish".
+  // 2nd example is "かいしゃ" from "kaish".
   // The raw input "kaish" and typing corrected input "kaisy"
   // create identical queries "かいしゃ", "かいしゅ" and "かいしょ".
   // So here is the same situation as 1st example.
@@ -197,9 +197,8 @@ void TypingCorrector::GetQueriesForPrediction(
     if (raw_expanded.empty()) {
       raw_queries.insert(raw_base);
     } else {
-      for (std::set<std::string>::iterator it = raw_expanded.begin();
-           it != raw_expanded.end(); ++it) {
-        raw_queries.insert(raw_base + *it);
+      for (const std::string &raw : raw_expanded) {
+        raw_queries.insert(raw_base + raw);
       }
     }
   }

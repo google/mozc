@@ -435,7 +435,7 @@ bool Composer::ProcessCompositionInput(const CompositionInput &input) {
 
   position_ = composition_.InsertInput(position_, input);
   is_new_input_ = false;
-  typing_corrector_.InsertCharacter(input.raw(), input.probable_key_events());
+  typing_corrector_.InsertCharacter(input);
   return true;
 }
 
