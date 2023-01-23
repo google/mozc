@@ -142,7 +142,7 @@ class Table {
 
   // Parse special key strings escaped with the pair of "{" and "}"
   // and return the parsed string.
-  static std::string ParseSpecialKey(const std::string &input);
+  std::string ParseSpecialKey(const std::string &input) const;
 
   // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
   // return the trimmed visible string.

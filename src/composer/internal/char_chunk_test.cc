@@ -648,13 +648,13 @@ TEST(CharChunkTest, TrimHeadSpecialKey) {
   table.AddRule("い{!}", "い", "");
   table.AddRule("う{!}", "う", "");
 
-  std::string input(Table::ParseSpecialKey("ああ{!}{!}あ{!}"));
+  std::string input(table.ParseSpecialKey("ああ{!}{!}あ{!}"));
   {
     // Check a normal behavior. "ああ{!}" is converted to "い".
     CharChunk chunk(Transliterators::HIRAGANA, &table);
     chunk.AddInput(&input);
-    EXPECT_EQ(input, Table::ParseSpecialKey("{!}あ{!}"));
-    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("ああ{!}"));
+    EXPECT_EQ(input, table.ParseSpecialKey("{!}あ{!}"));
+    EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("ああ{!}"));
     EXPECT_EQ(chunk.conversion(), "い");
     EXPECT_EQ(chunk.pending(), "");
     EXPECT_EQ(chunk.ambiguous(), "");
@@ -666,7 +666,7 @@ TEST(CharChunkTest, TrimHeadSpecialKey) {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
     chunk.AddInput(&input);
     EXPECT_EQ(input, "");
-    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("あ{!}"));
+    EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("あ{!}"));
     EXPECT_EQ(chunk.conversion(), "あ");
     EXPECT_EQ(chunk.pending(), "");
     EXPECT_EQ(chunk.ambiguous(), "");
@@ -1353,7 +1353,7 @@ TEST(CharChunkTest, SpecialKeys) {
 
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    chunk.set_raw(Table::ParseSpecialKey("[x]{#1}4"));
+    chunk.set_raw(table.ParseSpecialKey("[x]{#1}4"));
     chunk.set_conversion("");
     chunk.set_pending("[ta]");
 
@@ -1391,7 +1391,7 @@ TEST(CharChunkTest, SpecialKeys) {
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.set_raw("[tu]*");
     chunk.set_conversion("");
-    chunk.set_pending(Table::ParseSpecialKey("[x]{#2}"));
+    chunk.set_pending(table.ParseSpecialKey("[x]{#2}"));
 
     std::string result;
     chunk.AppendResult(Transliterators::RAW_STRING, &result);
@@ -1425,10 +1425,11 @@ TEST(CharChunkTest, SpecialKeys) {
 }
 
 TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
+  Table table;
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
-    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
     std::unique_ptr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0);
@@ -1442,7 +1443,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
-    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
     std::unique_ptr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1);
@@ -1454,7 +1455,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
-    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
     std::unique_ptr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2);
@@ -1466,7 +1467,7 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
     CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
-    chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
+    chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
     std::unique_ptr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3);

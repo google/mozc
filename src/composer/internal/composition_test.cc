@@ -546,13 +546,13 @@ TEST_F(CompositionTest, DeleteAt) {
 
 TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
   using ChunkData = std::vector<std::pair<std::string, std::string>>;
-  auto init_chunk = [](Composition *composition, const ChunkData &data) {
+  auto init_chunk = [&](Composition *composition, const ChunkData &data) {
     composition->Erase();
     CharChunkList::iterator it = composition->MaybeSplitChunkAt(0);
     for (const auto &item : data) {
       CharChunk *chunk = composition->InsertChunk(it)->get();
-      chunk->set_raw(Table::ParseSpecialKey(item.first));
-      chunk->set_pending(Table::ParseSpecialKey(item.second));
+      chunk->set_raw(table_->ParseSpecialKey(item.first));
+      chunk->set_pending(table_->ParseSpecialKey(item.second));
     }
   };
 
@@ -580,10 +580,10 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     EXPECT_EQ(2, chunks.size());
     const CharChunk &chunk0 = **(chunks.begin());
     EXPECT_EQ("1", chunk0.raw());
-    EXPECT_EQ(Table::ParseSpecialKey("{1}"), chunk0.pending());
+    EXPECT_EQ(table_->ParseSpecialKey("{1}"), chunk0.pending());
     const CharChunk &chunk1 = **(std::next(chunks.begin()));
     EXPECT_EQ("2", chunk1.raw());
-    EXPECT_EQ(Table::ParseSpecialKey("{2}2"), chunk1.pending());
+    EXPECT_EQ(table_->ParseSpecialKey("{2}2"), chunk1.pending());
   }
 
   {

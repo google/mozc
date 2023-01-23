@@ -466,7 +466,7 @@ bool Composition::IsToggleable(size_t position) const {
   if (it == chunks_.end()) {
     return false;
   }
-  return absl::StartsWith((*it)->pending(), Table::ParseSpecialKey("{?}"));
+  return absl::StartsWith((*it)->pending(), table_->ParseSpecialKey("{?}"));
 }
 
 }  // namespace composer

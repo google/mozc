@@ -583,8 +583,7 @@ bool FindBlock(const std::string &input, const std::string &open,
 }
 }  // namespace
 
-// static
-std::string Table::ParseSpecialKey(const std::string &input) {
+std::string Table::ParseSpecialKey(const std::string &input) const {
   std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;

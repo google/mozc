@@ -920,13 +920,13 @@ TEST_F(TableTest, SpecialKeys) {
     EXPECT_TRUE(nullptr == entry);
 
     std::string key;
-    key = Table::ParseSpecialKey("x{#1}y");
+    key = table.ParseSpecialKey("x{#1}y");
     entry = table.LookUp(key);
     ASSERT_TRUE(nullptr != entry);
     EXPECT_EQ(entry->input(), key);
     EXPECT_EQ(entry->result(), "X1Y");
 
-    key = Table::ParseSpecialKey("x{#2}y");
+    key = table.ParseSpecialKey("x{#2}y");
     entry = table.LookUp(key);
     ASSERT_TRUE(nullptr != entry);
     EXPECT_EQ(entry->input(), key);
@@ -966,15 +966,16 @@ TEST_F(TableTest, SpecialKeys) {
 }
 
 TEST_F(TableTest, DeleteSpecialKey) {
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{!}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{bcd}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a{bc}d")), "ad");
-  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}ab{cd}")), "ab");
+  const Table table;
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{!}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{bcd}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a{bc}d")), "ad");
+  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}ab{cd}")), "ab");
 
   // Invalid patterns
   //   "\u000F" = parsed-"{"
@@ -986,17 +987,18 @@ TEST_F(TableTest, DeleteSpecialKey) {
 }
 
 TEST_F(TableTest, TrimLeadingpecialKey) {
-  std::string input = Table::ParseSpecialKey("{!}ab");
+  const Table table;
+  std::string input = table.ParseSpecialKey("{!}ab");
   EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
   EXPECT_EQ(input, "ab");
 
-  input = Table::ParseSpecialKey("{!}{?}ab");
+  input = table.ParseSpecialKey("{!}{?}ab");
   EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, Table::ParseSpecialKey("{?}ab"));
+  EXPECT_EQ(input, table.ParseSpecialKey("{?}ab"));
 
-  input = Table::ParseSpecialKey("a{!}b");
+  input = table.ParseSpecialKey("a{!}b");
   EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, Table::ParseSpecialKey("a{!}b"));
+  EXPECT_EQ(input, table.ParseSpecialKey("a{!}b"));
 
   // Invalid patterns
   //   "\u000F" = parsed-"{"
