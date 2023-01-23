@@ -37,10 +37,10 @@
 
 #include "base/port.h"
 #include "base/thread.h"
+#include "absl/synchronization/notification.h"
 
 namespace mozc {
 class CPUStatsInterface;
-class UnnamedEvent;
 namespace client {
 class ClientInterface;
 }
@@ -88,7 +88,7 @@ class SessionWatchDog : public Thread {
   int32_t interval_sec_;
   client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
-  std::unique_ptr<UnnamedEvent> event_;
+  absl::Notification terminate_;
 };
 
 }  // namespace mozc

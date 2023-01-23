@@ -78,7 +78,6 @@ test_suite(
         ":text_normalizer_test_android",
         ":thread_test_android",
         ":trie_test_android",
-        ":unnamed_event_test_android",
         ":url_test_android",
         ":version_test_android",
         # Disabled tests due to errors.
@@ -276,33 +275,6 @@ cc_test_mozc(
     deps = [
         ":codegen_bytearray_stream",
         ":port",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_library_mozc(
-    name = "unnamed_event",
-    srcs = ["unnamed_event.cc"],
-    hdrs = ["unnamed_event.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":port",
-        ":scoped_handle",
-    ],
-)
-
-cc_test_mozc(
-    name = "unnamed_event_test",
-    size = "small",
-    srcs = ["unnamed_event_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":logging",
-        ":port",
-        ":thread",
-        ":unnamed_event",
-        ":util",
         "//testing:gunit_main",
     ],
 )

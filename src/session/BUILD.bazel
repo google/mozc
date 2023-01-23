@@ -529,16 +529,16 @@ cc_library_mozc(
     srcs = ["session_watch_dog.cc"],
     hdrs = ["session_watch_dog.h"],
     deps = [
-        "//base",
         "//base:clock",
         "//base:cpu_stats",
         "//base:logging",
         "//base:port",
         "//base:system_util",
         "//base:thread",
-        "//base:unnamed_event",
         "//client",
         "//client:client_interface",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 

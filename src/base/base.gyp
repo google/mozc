@@ -44,7 +44,6 @@
         'process_mutex.cc',
         'run_level.cc',
         'stopwatch.cc',
-        'unnamed_event.cc',
       ],
       'dependencies': [
         'base_core',
