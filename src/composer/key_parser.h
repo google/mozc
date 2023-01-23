@@ -50,6 +50,9 @@ class KeyParser {
                        commands::KeyEvent *key_event);
   static bool ParseKeyVector(const std::vector<std::string> &keys,
                              commands::KeyEvent *key_event);
+
+  // Returns corresponding string of SpecialKey (e.g. PAGE_UP → pageup).
+  static std::string GetSpecialKeyString(commands::KeyEvent::SpecialKey key);
 };
 
 }  // namespace mozc

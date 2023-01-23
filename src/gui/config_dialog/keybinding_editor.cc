@@ -57,6 +57,7 @@ namespace mozc {
 namespace gui {
 
 namespace {
+// LINT.IfChange
 static const auto *kQtKeyModifierNonRequiredTable =
     new std::map<const int, const char *>({
         {Qt::Key_Escape, "Escape"},
@@ -121,6 +122,7 @@ static const auto *kQtKeyModifierNonRequiredTable =
         {Qt::Key_Hangul_Hanja, "OFF"},
 #endif  // OS_LINUX
     });
+// LINT.ThenChange(//composer/key_parser_test.cc)
 
 #ifdef OS_WIN
 struct WinVirtualKeyEntry {
