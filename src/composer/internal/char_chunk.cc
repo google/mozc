@@ -320,6 +320,21 @@ bool CharChunk::AddInputInternal(std::string *input) {
       return kNoLoop;
     }
 
+    if (used_key_length == pending_.size()) {
+      // If the `input` starts with a special key (e.g. "{!}"),
+      // and it is not used for this chunk and the next chunk,
+      // that special key is removed.
+      size_t used_length = 0;
+      bool next_fixed = false;
+      const Entry *next_entry =
+          table_->LookUpPrefix(*input, &used_length, &next_fixed);
+      const bool no_entry = (next_entry == nullptr && used_length == 0);
+      if (no_entry && Table::TrimLeadingSpecialKey(input)) {
+        return kLoop;
+      }
+      return kNoLoop;
+    }
+
     if (used_key_length < pending_.size()) {
       // Do not modify this char_chunk, all key characters will be used
       // by the next char_chunk.
@@ -331,7 +346,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
     // Conversion data had only pending.
 
     // Move used input characters to CharChunk data.
-    DCHECK_GE(used_key_length, pending_.size());
+    DCHECK_GT(used_key_length, pending_.size());
     const size_t used_input_length = used_key_length - pending_.size();
     const std::string used_input_chars(*input, 0, used_input_length);
     raw_.append(used_input_chars);

@@ -647,6 +647,7 @@ TEST(CharChunkTest, TrimHeadSpecialKey) {
   table.AddRule("あ{!}", "あ", "");
   table.AddRule("い{!}", "い", "");
   table.AddRule("う{!}", "う", "");
+  table.AddRule("{#}え", "え", "");
 
   std::string input(table.ParseSpecialKey("ああ{!}{!}あ{!}"));
   {
@@ -669,6 +670,46 @@ TEST(CharChunkTest, TrimHeadSpecialKey) {
     EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("あ{!}"));
     EXPECT_EQ(chunk.conversion(), "あ");
     EXPECT_EQ(chunk.pending(), "");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
+
+  // {?} is an unused special key.
+  input = table.ParseSpecialKey("い{?}あ");
+  {
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, table.ParseSpecialKey("{?}あ"));
+    EXPECT_EQ(chunk.raw(), "い");
+    EXPECT_EQ(chunk.conversion(), "");
+    EXPECT_EQ(chunk.pending(), "い");
+    EXPECT_EQ(chunk.ambiguous(), "");
+
+    // {?} is trimed because it is not used by any rules.
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, "");
+    EXPECT_EQ(chunk.raw(), "いあ");
+    EXPECT_EQ(chunk.conversion(), "");
+    EXPECT_EQ(chunk.pending(), "う");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
+
+  // {#} is a used special key for "{#}え".
+  input = table.ParseSpecialKey("い{#}え");
+  {
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, table.ParseSpecialKey("{#}え"));
+    EXPECT_EQ(chunk.raw(), "い");
+    EXPECT_EQ(chunk.conversion(), "");
+    EXPECT_EQ(chunk.pending(), "い");
+    EXPECT_EQ(chunk.ambiguous(), "");
+
+    // No input is used for this already filled chunk.
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, table.ParseSpecialKey("{#}え"));
+    EXPECT_EQ(chunk.raw(), "い");
+    EXPECT_EQ(chunk.conversion(), "");
+    EXPECT_EQ(chunk.pending(), "い");
     EXPECT_EQ(chunk.ambiguous(), "");
   }
 }
