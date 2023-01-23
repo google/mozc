@@ -37,12 +37,9 @@
 #include <utility>
 #include <vector>
 
-#include "base/double_array.h"
 #include "base/port.h"
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

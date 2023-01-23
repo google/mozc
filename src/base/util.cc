@@ -66,18 +66,15 @@
 #include <utility>
 #include <vector>
 
-#include "base/double_array.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 
 namespace mozc {
 

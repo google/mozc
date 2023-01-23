@@ -457,8 +457,6 @@ cc_library_mozc(
         "//:__subpackages__",
     ],
     deps = [
-        ":double_array_def",
-        ":japanese_util",
         ":logging",
         ":port",
         "@com_google_absl//absl/base:core_headers",
