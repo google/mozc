@@ -113,6 +113,7 @@
         'gen_character_set#host',
         'hash',
         'singleton',
+        'absl.gyp:absl_random',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',

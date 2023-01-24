@@ -462,9 +462,11 @@ mozc_cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/numeric:bits",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -476,15 +478,12 @@ mozc_cc_test(
     ],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
-        ":file_util",
         ":logging",
-        ":number_util",
         ":port",
         ":util",
         "//testing:gunit_main",
-        "//testing:mozctest",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
