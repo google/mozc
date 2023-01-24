@@ -109,6 +109,7 @@ cc_library(
 bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
+    test_size = "small",
     visibility = ["//:__subpackages__"],
     deps = [
         ":config_bzl",
@@ -123,6 +124,7 @@ bzl_library(
 bzl_library(
     name = "config_bzl",
     srcs = ["config.bzl"],
+    test_size = "small",
     visibility = ["//:__subpackages__"],
 )
 
