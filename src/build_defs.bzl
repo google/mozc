@@ -256,6 +256,8 @@ def mozc_objc_library(
         name = proto_deps_name,
         deps = proto_deps,
         copts = copts + ["-funsigned-char"],
+        visibility = ["//visibility:private"],
+        tags = ["manual"],
     )
     sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
     native.objc_library(
@@ -279,6 +281,11 @@ def mozc_objc_library(
         tags = tags + ["manual"],
         **kwargs
     )
+
+register_extension_info(
+    extension = "mozc_objc_library",
+    label_regex_for_dep = "{extension_name}",
+)
 
 def objc_library_mozc(**kwargs):
     """ deprecated, use mozc_objc_library.
@@ -337,6 +344,7 @@ def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
         srcs = srcs,
         deps = deps,
         alwayslink = 1,
+        visibility = ["//visibility:private"],
         **kwargs
     )
 
@@ -351,6 +359,7 @@ def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
             macos = sdk_frameworks_deps,
             oss_macos = [],
         ),
+        visibility = ["//visibility:private"],
         tags = ["manual"],
     )
 
@@ -358,6 +367,11 @@ def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
         name = name,
         tests = mozc_select(macos = [name + "_bin"]),
     )
+
+register_extension_info(
+    extension = "mozc_objc_test",
+    label_regex_for_dep = "{extension_name}",
+)
 
 def objc_test_mozc(**kwargs):
     """Deprecated, use mozc_objc_test.
