@@ -1,12 +1,12 @@
 load(
     "//:build_defs.bzl",
     "cc_binary_mozc",
-    "cc_library_mozc",
+    "mozc_cc_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_connection",
     srcs = ["mozc_connection.cc"],
     hdrs = ["mozc_connection.h"],
@@ -21,7 +21,7 @@ cc_library_mozc(
     ]
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_engine",
     srcs = [
         "mozc_engine.cc",
@@ -52,7 +52,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "fcitx_key_util",
     srcs = [
         "fcitx_key_event_handler.cc",
@@ -71,7 +71,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "surrounding_text_util",
     srcs = [
         "surrounding_text_util.cc",
