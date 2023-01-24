@@ -68,19 +68,15 @@ pkg_config_repository(
 )
 
 # Fcitx
-new_local_repository(
-    name = "fcitx",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
-    build_file = "BUILD.fcitx.bazel",
+pkg_config_repository(
+  name = "fcitx",
+  packages = ["fcitx"],
 )
 
 # Fcitx 5
-new_local_repository(
-    name = "fcitx5",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
-    build_file = "BUILD.fcitx5.bazel",
+pkg_config_repository(
+  name = "fcitx5",
+  packages = ["Fcitx5Module", "Fcitx5Core"],
 )
 
 # Japanese Usage Dictionary
