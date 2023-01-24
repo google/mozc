@@ -30,34 +30,23 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/file_util.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/request_test_util.h"
-#include "session/session_handler.h"
 #include "session/session_handler_tool.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 
-namespace {
-
-uint32_t GenerateRandomSeed() {
-  uint32_t seed = 0;
-  mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed), sizeof(seed));
-  return seed;
-}
-
-}  // namespace
-
-ABSL_FLAG(uint32_t, random_seed, GenerateRandomSeed(),
+ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
           "Random seed value. This value will be interpreted as uint32_t.");
 ABSL_FLAG(bool, set_mobile_request, false,
           "If true, set commands::Request to the mobine one.");
@@ -76,10 +65,12 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   constexpr size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
-  const uint32_t random_seed = absl::GetFlag(FLAGS_random_seed);
-  LOG(INFO) << "Random seed: " << random_seed;
-  session::RandomKeyEventsGenerator::InitSeed(random_seed);
-  Util::SetRandomSeed(random_seed);
+  session::RandomKeyEventsGenerator generator;
+  if (absl::GetFlag(FLAGS_random_seed).has_value()) {
+    const uint32_t random_seed = absl::GetFlag(FLAGS_random_seed).value();
+    LOG(INFO) << "Random seed: " << random_seed;
+    generator = session::RandomKeyEventsGenerator(std::seed_seq{random_seed});
+  }
 
   if (absl::GetFlag(FLAGS_set_mobile_request)) {
     commands::Request request;
@@ -89,7 +80,7 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
 
   while (keyevents_size < kMaxEventSize) {
     keys.clear();
-    session::RandomKeyEventsGenerator::GenerateSequence(&keys);
+    generator.GenerateSequence(&keys);
     for (size_t i = 0; i < keys.size(); ++i) {
       ++keyevents_size;
       EXPECT_TRUE(client.TestSendKey(keys[i], &output));

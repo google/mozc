@@ -180,6 +180,7 @@
         'random_keyevents_generator.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:japanese_util',
         '../protocol/protocol.gyp:commands_proto',

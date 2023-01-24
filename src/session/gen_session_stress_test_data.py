@@ -50,11 +50,14 @@ def GenerateHeader(input_file, output_file):
       output.append(line)
 
   with open(output_file, 'w', encoding='utf-8') as f:
-    f.write('const char *kTestSentences[] = {\n')
+    f.write('#include "absl/strings/string_view.h"\n\n')
+    f.write('namespace {\n')
+    f.write('const absl::string_view kTestSentences[] = {\n')
     for line in output:
       escaped = line.replace('\\', '\\\\').replace('"', '\\"')
       f.write(' "%s",\n' % escaped)
     f.write('};\n')
+    f.write('}  // namespace\n')
 
 
 def main():
