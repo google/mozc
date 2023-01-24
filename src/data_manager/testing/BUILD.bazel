@@ -29,8 +29,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 load(
     "//data_manager:mozc_data.bzl",
@@ -42,7 +42,7 @@ package(default_visibility = ["//visibility:public"])
 # MOCK
 MOZC_DATASET_MAGIC_NUMBER = "\\x4D\\x4F\\x43\\x4B"
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mock_data_manager",
     testonly = True,
     srcs = [
@@ -62,7 +62,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "mock_data_manager_test",
     size = "medium",
     srcs = [

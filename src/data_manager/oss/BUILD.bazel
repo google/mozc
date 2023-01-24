@@ -29,8 +29,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 load(
     "//data_manager:mozc_data.bzl",
@@ -93,7 +93,7 @@ mozc_dataset(
     zero_query_number_def = "//data/zero_query:zero_query_number.def",
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "oss_data_manager",
     srcs = [
         "oss_data_manager.cc",
@@ -112,7 +112,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "oss_data_manager_test",
     size = "large",
     srcs = [

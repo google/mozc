@@ -29,16 +29,16 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "select_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_select",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_builder_interface",
     hdrs = ["engine_builder_interface.h"],
     deps = [
@@ -49,7 +49,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_builder",
     srcs = ["engine_builder.cc"],
     hdrs = ["engine_builder.h"],
@@ -68,7 +68,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "engine_builder_test",
     srcs = ["engine_builder_test.cc"],
     data = [
@@ -87,7 +87,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
@@ -99,7 +99,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine",
     srcs = [
         "engine.cc",
@@ -149,7 +149,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_mock",
     testonly = 1,
     hdrs = ["engine_mock.h"],
@@ -159,7 +159,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_stub",
     testonly = True,
     hdrs = ["engine_stub.h"],
@@ -167,17 +167,17 @@ cc_library_mozc(
     deps = [":engine_interface"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "engine_factory",
     hdrs = ["engine_factory.h"],
-    deps = select_mozc(
+    deps = mozc_select(
         android = [":android_engine_factory"],
         default = [":google_engine_factory"],
         oss = [":oss_engine_factory"],
     ),
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "engine_factory_test",
     srcs = ["engine_factory_test.cc"],
     requires_full_emulation = False,
@@ -191,7 +191,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "eval_engine_factory",
     srcs = ["eval_engine_factory.cc"],
     hdrs = ["eval_engine_factory.h"],
@@ -205,7 +205,7 @@ cc_library_mozc(
 
 filegroup(
     name = "eval_engine_data",
-    srcs = select_mozc(
+    srcs = mozc_select(
         default = [
             "//data_manager/android:mozc.data",
             "//data_manager/google:mozc.data",
@@ -217,7 +217,7 @@ filegroup(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "google_engine_factory",
     hdrs = ["google_engine_factory.h"],
     tags = ["manual"],
@@ -234,7 +234,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "android_engine_factory",
     hdrs = ["android_engine_factory.h"],
     tags = ["manual"],
@@ -249,7 +249,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "oss_engine_factory",
     hdrs = ["oss_engine_factory.h"],
     visibility = ["//evaluation:__subpackages__"],
@@ -260,7 +260,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mock_data_engine_factory",
     testonly = True,
     srcs = ["mock_data_engine_factory.cc"],
@@ -278,7 +278,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_data_manager_mock",
     testonly = 1,
     hdrs = ["user_data_manager_mock.h"],
@@ -291,7 +291,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_data_manager_interface",
     hdrs = ["user_data_manager_interface.h"],
     visibility = [
@@ -300,7 +300,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "minimal_engine",
     srcs = ["minimal_engine.cc"],
     hdrs = ["minimal_engine.h"],

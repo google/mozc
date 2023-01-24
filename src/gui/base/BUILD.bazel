@@ -29,20 +29,20 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
+    "mozc_cc_library",
 )
 load(
     "//bazel:qt.bzl",
-    "cc_qt_library_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
+    "mozc_cc_qt_library",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "encoding_util",
     srcs = ["encoding_util.cc"],
     hdrs = [
@@ -56,7 +56,7 @@ cc_library_mozc(
     ],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "base_files",
     srcs = ["window_title_modifier.h"],
     outs = ["moc_window_title_modifier.cc"],
@@ -67,7 +67,7 @@ exports_files([
     "tr_ja.qm",
 ])
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_tr",
     srcs = [
         "tr_en.qm",
@@ -78,7 +78,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_tr",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "gui_base",
     srcs = [
         "debug_util.cc",
@@ -109,7 +109,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "msime_user_dictionary_importer",
     srcs = [
         "msime_user_dictionary_importer.cc",
@@ -123,7 +123,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "setup_util",
     srcs = [
         "setup_util.cc",
@@ -144,7 +144,7 @@ cc_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "singleton_window_helper",
     srcs = [
         "singleton_window_helper.cc",

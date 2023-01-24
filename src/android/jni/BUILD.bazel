@@ -34,9 +34,9 @@
 # Usage:
 # % blaze --blazerc android/blazerc build --config=android_arm android/jni:libmozc.so
 
-load("//:build_defs.bzl", "cc_library_mozc")
+load("//:build_defs.bzl", "mozc_cc_library")
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_lib_without_spellchecker",
     srcs = ["mozcjni.cc"],
     visibility = ["//:__pkg__"],
@@ -60,7 +60,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_lib",
     visibility = ["//:__pkg__"],
     deps = [

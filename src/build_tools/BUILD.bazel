@@ -32,20 +32,20 @@
 
 load(
     "//:build_defs.bzl",
-    "py_binary_mozc",
-    "py_library_mozc",
+    "mozc_py_binary",
+    "mozc_py_library",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-py_library_mozc(
+mozc_py_library(
     name = "replace_macros_lib",
     srcs = ["replace_macros.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "replace_macros",
     srcs = ["replace_macros.py"],
     deps = [":replace_macros_lib"],
@@ -63,7 +63,7 @@ py_test(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "code_generator_util",
     srcs = ["code_generator_util.py"],
 )
@@ -80,12 +80,12 @@ py_test(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "mozc_version_lib",
     srcs = ["mozc_version.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "mozc_version",
     srcs = ["mozc_version.py"],
     deps = [":mozc_version_lib"],
@@ -103,61 +103,61 @@ py_test(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "replace_version",
     srcs = ["replace_version.py"],
     deps = [":mozc_version_lib"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "util",
     srcs = ["util.py"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "zlib_util_lib",
     srcs = ["zlib_util.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "zlib_util",
     srcs = ["zlib_util.py"],
     deps = [":zlib_util_lib"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "embed_pathname_lib",
     srcs = ["embed_pathname.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "embed_pathname",
     srcs = ["embed_pathname.py"],
     deps = [":embed_pathname_lib"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "embed_file_lib",
     srcs = ["embed_file.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "embed_file",
     srcs = ["embed_file.py"],
     deps = [":embed_file_lib"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "serialized_string_array_builder",
     srcs = ["serialized_string_array_builder.py"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "tweak_data",
     srcs = ["tweak_data.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "tweak_info_plist",
     srcs = ["tweak_info_plist.py"],
     deps = [
@@ -166,7 +166,7 @@ py_binary_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "tweak_info_plist_strings",
     srcs = ["tweak_info_plist_strings.py"],
     deps = [
@@ -174,13 +174,13 @@ py_binary_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "tweak_macinstaller_script",
     srcs = ["tweak_macinstaller_script.py"],
     deps = [":mozc_version_lib"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "tweak_pkgproj",
     srcs = ["tweak_pkgproj.py"],
     deps = [":mozc_version_lib"],
