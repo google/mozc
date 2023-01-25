@@ -38,12 +38,13 @@
 
 #include "base/logging.h"
 #include "base/mac_util.h"
-#include "base/util.h"
 #include "client/client_mock.h"
 #include "protocol/candidates.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 @interface MockIMKServer : IMKServer <ServerCallback> {
   // The controller which accepts user's clicks
@@ -597,7 +598,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaReconvert) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -626,7 +627,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -654,7 +655,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep more than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) * 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -680,7 +681,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep more than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) * 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -690,7 +691,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -718,7 +719,7 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -730,7 +731,7 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
             mock_mozc_client_->called_SendCommandWithContext().type());
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -758,7 +759,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -770,7 +771,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
             mock_mozc_client_->called_SendCommandWithContext().type());
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -782,7 +783,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
             mock_mozc_client_->called_SendCommandWithContext().type());
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Kana-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Kana, controller_, mock_client_));
@@ -804,7 +805,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapEisuCommitRawText) {
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
-  mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
+  absl::SleepFor(absl::Seconds(GetDoubleTapInterval()) / 2);
 
   // Send Eisu-key.
   EXPECT_EQ(YES, SendKeyEvent(kVK_JIS_Eisu, controller_, mock_client_));

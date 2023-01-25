@@ -156,10 +156,10 @@ mozc_objc_test(
         ":keycode_map",
         "//base:logging",
         "//base:mac_util",
-        "//base:util",
         "//client:client_mock",
         "//renderer:renderer_interface",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
