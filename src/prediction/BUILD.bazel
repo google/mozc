@@ -103,7 +103,6 @@ mozc_cc_test(
     deps = [
         ":user_history_predictor",
         "//base:clock_mock",
-        "//base:encryptor",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -127,6 +126,7 @@ mozc_cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ],
 )
 

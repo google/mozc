@@ -163,6 +163,7 @@
         'session_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
         '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',

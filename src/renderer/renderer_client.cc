@@ -41,12 +41,12 @@
 #include "base/run_level.h"
 #include "base/system_util.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
 
 #ifdef __APPLE__
 #include "base/mac_util.h"
@@ -60,9 +60,9 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-constexpr int kIPCTimeout = 100;                   // 100 msec
-constexpr int kRendererWaitTimeout = 30 * 1000;    // 30 sec
-constexpr int kRendererWaitSleepTime = 10 * 1000;  // 10 sec
+constexpr int kIPCTimeout = 100;                 // 100 msec
+constexpr int kRendererWaitTimeout = 30 * 1000;  // 30 sec
+constexpr absl::Duration kRendererWaitSleepTime = absl::Seconds(10);  // 10 sec
 constexpr size_t kMaxErrorTimes = 5;
 constexpr uint64_t kRetryIntervalTime = 30;  // 30 sec
 constexpr char kServiceName[] = "renderer";
@@ -195,7 +195,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
       }
     } else {
       LOG(ERROR) << "cannot make NamedEventListener ";
-      Util::Sleep(kRendererWaitSleepTime);
+      absl::SleepFor(kRendererWaitSleepTime);
       FlushPendingCommand();
       renderer_status_ = RendererLauncher::RENDERER_READY;
       error_times_ = 0;

@@ -46,6 +46,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_time',
         '../base/base_test.gyp:clock_mock',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',

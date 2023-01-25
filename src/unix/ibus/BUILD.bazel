@@ -384,6 +384,7 @@ mozc_cc_library(
         "//base:thread",
         "//base:util",
         "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ] + mozc_select(
         linux = [
             "//third_party/libxcb",

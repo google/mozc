@@ -320,6 +320,7 @@
       ],
       'dependencies': [
         '../../base/absl.gyp:absl_synchronization',
+        '../../base/absl.gyp:absl_time',
         '../../base/base.gyp:base',
         'xcb_build_environment',
       ],

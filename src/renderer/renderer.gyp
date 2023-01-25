@@ -84,6 +84,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
@@ -116,6 +117,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_time',
         '../ipc/ipc.gyp:ipc_test_util',
         '../testing/testing.gyp:gtest_main',
         'renderer_client',

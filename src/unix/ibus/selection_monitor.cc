@@ -42,6 +42,8 @@
 #include "base/thread.h"
 #include "base/util.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace ibus {
@@ -498,7 +500,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
     if (Thread::IsRunning()) {
       QueryQuit();
       // TODO(yukawa): Add Wait method to mozc::Thread.
-      Util::Sleep(100);
+      absl::SleepFor(absl::Milliseconds(100));
     }
   }
 
