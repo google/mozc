@@ -680,11 +680,10 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":suppression_dictionary",
-        "//base",
         "//base:logging",
         "//base:thread",
-        "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 

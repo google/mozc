@@ -37,6 +37,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        "../base/absl.gyp:absl_time",
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
         'config.gyp:config_handler',

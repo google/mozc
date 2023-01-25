@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdint>
 #ifdef OS_WIN
 #include <sddl.h>
 #include <shlobj.h>
@@ -37,6 +36,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 
@@ -56,10 +56,11 @@
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-
 #ifdef OS_WIN
 #include "base/win_sandbox.h"
 #endif  // OS_WIN
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace client {
@@ -70,7 +71,7 @@ constexpr char kServerName[] = "session";
 constexpr uint32_t kServerWaitTimeout = 20000;  // 20 sec
 
 // for every 1000m sec, check server
-constexpr uint32_t kRetryIntervalForServer = 1000;
+constexpr absl::Duration kRetryIntervalForServer = absl::Milliseconds(1000);
 
 // Try 20 times to check mozc_server is running
 constexpr uint32_t kTrial = 20;
@@ -215,7 +216,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   } else {
     // maybe another process is trying to launch mozc_server.
     LOG(ERROR) << "cannot make NamedEventListener ";
-    Util::Sleep(kRetryIntervalForServer);
+    absl::SleepFor(kRetryIntervalForServer);
   }
 
   // Try to connect mozc_server just in case.
@@ -223,7 +224,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     if (client->PingServer()) {
       return true;
     }
-    Util::Sleep(kRetryIntervalForServer);
+    absl::SleepFor(kRetryIntervalForServer);
   }
 
   LOG(ERROR) << kProductNameInEnglish << " cannot be launched";

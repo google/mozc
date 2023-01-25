@@ -83,6 +83,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/time",
     ] + mozc_select(
         ios = [
             "//base:mac_process",
@@ -150,11 +151,11 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//session:random_keyevents_generator",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -163,7 +164,6 @@ mozc_cc_binary(
     srcs = ["client_scenario_test_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
@@ -178,6 +178,7 @@ mozc_cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 

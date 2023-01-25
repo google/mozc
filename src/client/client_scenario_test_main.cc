@@ -54,6 +54,8 @@
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(int32_t, key_duration, 10, "Key duration (msec)");
@@ -140,13 +142,13 @@ int Loop(std::istream *input) {
   while (ReadKeys(input, &keys, &answer)) {
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      Util::Sleep(absl::GetFlag(FLAGS_key_duration));
+      absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_key_duration)));
 
       if (absl::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();
-        Util::Sleep(10);
+        absl::SleepFor(absl::Milliseconds(10));
       }
 
       VLOG(2) << "Sending to Server: " << keys[i].DebugString();

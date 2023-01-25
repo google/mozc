@@ -47,11 +47,12 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 // TODO(taku)
 // 1. multi-thread testing
@@ -113,7 +114,7 @@ int main(int argc, char **argv) {
     mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      mozc::Util::Sleep(absl::GetFlag(FLAGS_key_duration));
+      absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_key_duration)));
       keyevents_size++;
       if (keyevents_size % 100 == 0) {
         std::cout << keyevents_size << " key events finished" << std::endl;
@@ -127,7 +128,7 @@ int main(int argc, char **argv) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();
-        mozc::Util::Sleep(10);
+        absl::SleepFor(absl::Milliseconds(10));
       }
 
       VLOG(2) << "Sending to Server: " << keys[i].DebugString();
