@@ -593,9 +593,7 @@ message DecoderExperimentParams {
 
   reserved 10;  // Deprecated cancel_segment_model_penalty_for_prediction
 
-  // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
-  // letters.
-  optional bool enable_environmental_filter_rewriter = 11 [default = true];
+  reserved 11;  // Deprecated enable_environmental_filter_rewriter
 
   // Enable multiple undo for partial commit.
   optional bool undo_partial_commit = 12 [default = false];

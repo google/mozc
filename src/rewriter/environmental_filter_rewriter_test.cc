@@ -401,19 +401,6 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
   }
 }
 
-TEST_F(EnvironmentalFilterRewriterTest, FlagTest) {
-  commands::Request request;
-  request.mutable_decoder_experiment_params()
-      ->set_enable_environmental_filter_rewriter(false);
-  ConversionRequest conversion_request;
-  conversion_request.set_request(&request);
-
-  Segments segments;
-  segments.Clear();
-  AddSegment("test", "test", &segments);
-  EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
-}
-
 TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   Segments segments;
   const ConversionRequest request;

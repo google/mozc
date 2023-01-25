@@ -455,14 +455,6 @@ INSTANTIATE_TEST_SUITE_P(
                              request.mutable_decoder_experiment_params()
                                  ->set_enable_new_spatial_scoring(true);
                              return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             // set false, beccause default is true.
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_environmental_filter_rewriter(
-                                     false);
-                             return request;
                            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
