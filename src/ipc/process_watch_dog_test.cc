@@ -34,8 +34,9 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "testing/gunit.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -59,14 +60,14 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
   pid_t pid = fork();
   if (pid == 0) {
     // Child;
-    Util::Sleep(2000);
+    absl::SleepFor(absl::Seconds(2));
     exit(0);
   } else if (pid > 0) {
     TestProcessWatchDog dog;
     dog.StartWatchDog();
     dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
               ProcessWatchDog::UnknownThreadID, -1);
-    Util::Sleep(4000);
+    absl::SleepFor(absl::Seconds(4));
     dog.StopWatchDog();
   } else {
     LOG(ERROR) << "cannot execute fork";

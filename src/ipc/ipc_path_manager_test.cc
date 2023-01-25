@@ -49,6 +49,8 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -141,7 +143,7 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
 
   // Modify the saved file explicitly.
   EXPECT_TRUE(manager->path_mutex_->UnLock());
-  Util::Sleep(1000);  // msec
+  absl::SleepFor(absl::Seconds(1));
   std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   ASSERT_OK(FileUtil::SetContents(filename, "foobar"));

@@ -42,6 +42,8 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace {
 
@@ -76,7 +78,7 @@ class MultiConnections : public mozc::Thread {
 #endif  // __APPLE__
 
   void Run() override {
-    mozc::Util::Sleep(2000);
+    absl::SleepFor(absl::Seconds(2));
     for (int i = 0; i < kNumRequests; ++i) {
       mozc::IPCClient con(kServerAddress, "");
 #ifdef __APPLE__

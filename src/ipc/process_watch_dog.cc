@@ -39,8 +39,9 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/scoped_handle.h"
-#include "base/util.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -295,7 +296,7 @@ void ProcessWatchDog::Run() {
       }
     }
 
-    Util::Sleep(250);
+    absl::SleepFor(absl::Milliseconds(250));
     {
       absl::MutexLock l(&mutex_);
       if (process_id_ == UnknownProcessID) {
