@@ -29,11 +29,12 @@
 
 #include "base/singleton.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "base/thread.h"
-#include "base/util.h"
 #include "testing/gunit.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -50,7 +51,7 @@ class ThreadInstance {
   ThreadInstance() {
     // Wait two secs to test the singleton
     // can safely block the initialization procedure.
-    Util::Sleep(2000);  // wait 2sec
+    absl::SleepFor(absl::Seconds(2));
     ++g_counter;
   }
 };

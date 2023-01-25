@@ -299,8 +299,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":thread",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -330,8 +330,8 @@ mozc_cc_test(
     deps = [
         ":singleton",
         ":thread",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -802,6 +802,7 @@ mozc_cc_library(
         ":util",
         ":win_util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ] + mozc_select(macos = ["mac_process"]),
 )
 
@@ -856,10 +857,10 @@ mozc_cc_test(
         ":file_util",
         ":process_mutex",
         ":system_util",
-        ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -1167,8 +1168,8 @@ mozc_cc_binary(
         ":init_mozc",
         ":port",
         ":thread",
-        ":util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -1202,8 +1203,8 @@ mozc_cc_binary(
     deps = [
         ":init_mozc",
         ":stopwatch",
-        ":util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 

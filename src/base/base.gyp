@@ -49,6 +49,7 @@
         'base_core',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',
+        'absl.gyp:absl_time',
       ],
       'conditions': [
         ['OS=="mac"', {
