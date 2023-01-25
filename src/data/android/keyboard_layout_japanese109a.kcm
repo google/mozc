@@ -122,61 +122,61 @@ key YEN {
 key Q {
   label: 'Q'
   base: 'q'
-  shift: 'Q'
+  shift, capslock: 'Q'
 }
 
 key W {
   label: 'W'
   base: 'w'
-  shift: 'W'
+  shift, capslock: 'W'
 }
 
 key E {
   label: 'E'
   base: 'e'
-  shift: 'E'
+  shift, capslock: 'E'
 }
 
 key R {
   label: 'R'
   base: 'r'
-  shift: 'R'
+  shift, capslock: 'R'
 }
 
 key T {
   label: 'T'
   base: 't'
-  shift: 'T'
+  shift, capslock: 'T'
 }
 
 key Y {
   label: 'Y'
   base: 'y'
-  shift: 'Y'
+  shift, capslock: 'Y'
 }
 
 key U {
   label: 'U'
   base: 'u'
-  shift: 'U'
+  shift, capslock: 'U'
 }
 
 key I {
   label: 'I'
   base: 'i'
-  shift: 'I'
+  shift, capslock: 'I'
 }
 
 key O {
   label: 'O'
   base: 'o'
-  shift: 'O'
+  shift, capslock: 'O'
 }
 
 key P {
   label: 'P'
   base: 'p'
-  shift: 'P'
+  shift, capslock: 'P'
 }
 
 key LEFT_BRACKET {
@@ -194,55 +194,55 @@ key RIGHT_BRACKET {
 key A {
   label: 'A'
   base: 'a'
-  shift: 'A'
+  shift, capslock: 'A'
 }
 
 key S {
   label: 'S'
   base: 's'
-  shift: 'S'
+  shift, capslock: 'S'
 }
 
 key D {
   label: 'D'
   base: 'd'
-  shift: 'D'
+  shift, capslock: 'D'
 }
 
 key F {
   label: 'F'
   base: 'f'
-  shift: 'F'
+  shift, capslock: 'F'
 }
 
 key G {
   label: 'G'
   base: 'g'
-  shift: 'G'
+  shift, capslock: 'G'
 }
 
 key H {
   label: 'H'
   base: 'h'
-  shift: 'H'
+  shift, capslock: 'H'
 }
 
 key J {
   label: 'J'
   base: 'j'
-  shift: 'J'
+  shift, capslock: 'J'
 }
 
 key K {
   label: 'K'
   base: 'k'
-  shift: 'K'
+  shift, capslock: 'K'
 }
 
 key L {
   label: 'L'
   base: 'l'
-  shift: 'L'
+  shift, capslock: 'L'
 }
 
 key SEMICOLON {
@@ -266,43 +266,43 @@ key BACKSLASH {
 key Z {
   label: 'Z'
   base: 'z'
-  shift: 'Z'
+  shift, capslock: 'Z'
 }
 
 key X {
   label: 'X'
   base: 'x'
-  shift: 'X'
+  shift, capslock: 'X'
 }
 
 key C {
   label: 'C'
   base: 'c'
-  shift: 'C'
+  shift, capslock: 'C'
 }
 
 key V {
   label: 'V'
   base: 'v'
-  shift: 'V'
+  shift, capslock: 'V'
 }
 
 key B {
   label: 'B'
   base: 'b'
-  shift: 'B'
+  shift, capslock: 'B'
 }
 
 key N {
   label: 'N'
   base: 'n'
-  shift: 'N'
+  shift, capslock: 'N'
 }
 
 key M {
   label: 'M'
   base: 'm'
-  shift: 'M'
+  shift, capslock: 'M'
 }
 
 key COMMA {
