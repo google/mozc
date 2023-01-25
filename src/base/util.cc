@@ -1477,24 +1477,4 @@ bool Util::IsAcceptableCharacterAsCandidate(char32_t letter) {
   return true;
 }
 
-absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
-  switch (error_number) {
-    case 0:
-      return absl::StatusCode::kOk;
-    case EACCES:
-      return absl::StatusCode::kPermissionDenied;
-    case ENOENT:
-      return absl::StatusCode::kNotFound;
-    case EEXIST:
-      return absl::StatusCode::kAlreadyExists;
-    default:
-      return absl::StatusCode::kUnknown;
-  }
-}
-
-absl::Status Util::ErrnoToCanonicalStatus(int error_number,
-                                          absl::string_view message) {
-  return absl::Status(ErrnoToCanonicalCode(error_number),
-                      absl::StrCat(message, ": errno=", error_number));
-}
 }  // namespace mozc

@@ -39,7 +39,6 @@
 
 #include "base/port.h"
 #include "absl/base/attributes.h"
-#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -393,13 +392,6 @@ class Util {
 
   // Checks endian-ness at runtime.
   static bool IsLittleEndian();
-
-  // Converts `errno` to absl::StatusCode.
-  static absl::StatusCode ErrnoToCanonicalCode(int error_number);
-
-  // Converts `errno` to absl::Status.
-  static absl::Status ErrnoToCanonicalStatus(int error_number,
-                                             absl::string_view message);
 
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than
