@@ -40,13 +40,12 @@ namespace session {
 
 // This is not a deterministic test.
 TEST(RandomKeyEventsGeneratorTest, BasicTest) {
-  RandomKeyEventsGenerator generator;
-  generator.PrepareForMemoryLeakTest();
+  RandomKeyEventsGenerator::PrepareForMemoryLeakTest();
 
   std::vector<mozc::commands::KeyEvent> keys;
   for (int i = 0; i < 1000; ++i) {
     keys.clear();
-    generator.GenerateSequence(&keys);
+    RandomKeyEventsGenerator::GenerateSequence(&keys);
     EXPECT_TRUE(!keys.empty());
   }
 }

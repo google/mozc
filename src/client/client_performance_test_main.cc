@@ -50,8 +50,6 @@
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");
@@ -71,10 +69,11 @@ class TestSentenceGenerator {
   }
 
   TestSentenceGenerator() {
-    const absl::Span<const absl::string_view> sentences =
-        session::RandomKeyEventsGenerator::GetTestSentences();
-    CHECK(!sentences.empty());
-    const size_t size = std::min<size_t>(200, sentences.size());
+    size_t size = 0;
+    const char **sentences =
+        session::RandomKeyEventsGenerator::GetTestSentences(&size);
+    CHECK_GT(size, 0);
+    size = std::min<size_t>(200, size);
 
     for (size_t i = 0; i < size; ++i) {
       std::string output;

@@ -43,6 +43,7 @@
 #include <ostream>
 #include <vector>
 
+#include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -108,9 +109,8 @@ int main(int argc, char **argv) {
   // Currently, we cannot detect the server crash out of
   // client library, as client automatically re-lahches the server.
 
-  mozc::session::RandomKeyEventsGenerator key_events_generator;
   while (true) {
-    key_events_generator.GenerateSequence(&keys);
+    mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
       mozc::Util::Sleep(absl::GetFlag(FLAGS_key_duration));
