@@ -124,7 +124,9 @@ void SetUseActualConverterForRealtimeConversion(
   conversion_request->set_use_actual_converter_for_realtime_conversion(
       absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
   if (request.mixed_conversion()) {  // i.e., mobile request
-    conversion_request->set_use_actual_converter_for_realtime_conversion(false);
+    conversion_request->set_use_actual_converter_for_realtime_conversion(
+        request.decoder_experiment_params()
+            .use_actual_converter_for_realtime_conversion());
   }
 }
 
