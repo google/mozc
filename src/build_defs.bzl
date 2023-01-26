@@ -129,6 +129,13 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
             # So that "blaze test ..." does not contain this target.
             # Otherwise it is too slow.
             tags = ["manual", "notap"],
+            # Only build/test when building for linux or android.
+            target_compatible_with = select({
+                "@platforms//os:android": [],
+                "@platforms//os:linux": [],
+                "//conditions:default": ["@platforms//:incompatible"],
+            }),
+            visibility = ["//visibility:private"],
         )
 
 register_extension_info(
