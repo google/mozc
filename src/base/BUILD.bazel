@@ -1424,3 +1424,25 @@ mozc_cc_library(
         ":logging",
     ],
 )
+
+mozc_cc_library(
+    name = "thread2",
+    srcs = ["thread2.cc"],
+    hdrs = ["thread2.h"],
+    deps = [
+        ":thread",
+        "@com_google_absl//absl/functional:bind_front",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+mozc_cc_test(
+    name = "thread2_test",
+    srcs = ["thread2_test.cc"],
+    deps = [
+        ":thread2",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)

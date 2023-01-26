@@ -105,6 +105,7 @@
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',
+        'thread2.cc',
         'util.cc',
         'win_util.cc',
       ],
