@@ -41,16 +41,15 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_proto_library(
-    name = "user_history_predictor_cc_proto",
-    deps = [":user_history_predictor_proto"],
-)
-
 proto_library(
     name = "user_history_predictor_proto",
     srcs = ["user_history_predictor.proto"],
-    cc_api_version = 2,
     visibility = ["//visibility:private"],
+)
+
+cc_proto_library(
+    name = "user_history_predictor_cc_proto",
+    deps = [":user_history_predictor_proto"],
 )
 
 mozc_cc_library(

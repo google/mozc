@@ -74,7 +74,6 @@ mozc_cc_library(
 proto_library(
     name = "ipc_proto",
     srcs = ["ipc.proto"],
-    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 
@@ -293,7 +292,6 @@ mozc_cc_test(
 proto_library(
     name = "window_info_proto",
     srcs = ["window_info.proto"],
-    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 
