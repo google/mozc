@@ -68,6 +68,7 @@ proto_library(
     srcs = [
         "commands.proto",
     ],
+    cc_api_version = 2,
     deps = [
         ":candidates_proto",
         ":config_proto",
@@ -119,6 +120,7 @@ java_lite_proto_library(
 proto_library(
     name = "config_proto",
     srcs = ["config.proto"],
+    cc_api_version = 2,
 )
 
 jspb_proto_library(
@@ -133,6 +135,7 @@ proto_library(
         "renderer_command.proto",
         "renderer_style.proto",
     ],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
     deps = [":commands_proto"],
 )
@@ -147,6 +150,7 @@ proto_library(
     srcs = [
         "candidates.proto",
     ],
+    cc_api_version = 2,
 )
 
 jspb_proto_library(
@@ -158,6 +162,7 @@ jspb_proto_library(
 proto_library(
     name = "state_proto",
     srcs = ["state.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
     deps = [
         ":candidates_proto",
@@ -168,6 +173,7 @@ proto_library(
 proto_library(
     name = "user_dictionary_storage_proto",
     srcs = ["user_dictionary_storage.proto"],
+    cc_api_version = 2,
 )
 
 jspb_proto_library(
@@ -179,6 +185,7 @@ jspb_proto_library(
 proto_library(
     name = "segmenter_data_proto",
     srcs = ["segmenter_data.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 
@@ -190,5 +197,6 @@ cc_proto_library(
 proto_library(
     name = "engine_builder_proto",
     srcs = ["engine_builder.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )

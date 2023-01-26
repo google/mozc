@@ -135,6 +135,7 @@ mozc_cc_library(
 proto_library(
     name = "dataset_proto",
     srcs = ["dataset.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 

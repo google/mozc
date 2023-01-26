@@ -32,6 +32,7 @@
 
 load(
     "//:build_defs.bzl",
+    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_select",
@@ -73,6 +74,7 @@ mozc_cc_library(
 proto_library(
     name = "ipc_proto",
     srcs = ["ipc.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 
@@ -109,11 +111,18 @@ mozc_cc_library(
     ),
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## mozc_cc_binary(name = "ipc_path_manager_main",
-##           srcs = ["ipc_path_manager_main.cc",],
-##           deps = [":ipc_path_manager",
-##                   "//base:base",])
+mozc_cc_binary(
+    name = "ipc_path_manager_main",
+    srcs = ["ipc_path_manager_main.cc"],
+    deps = [
+        ":ipc_path_manager",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
 mozc_cc_test(
     name = "ipc_path_manager_test",
@@ -144,7 +153,6 @@ mozc_cc_library(
     hdrs = ["ipc_mock.h"],
     deps = [
         ":ipc",
-        "//base",
         "//base:version",
     ],
 )
@@ -155,7 +163,6 @@ mozc_cc_library(
     hdrs = ["ipc_test_util.h"],
     deps = [
         ":ipc",
-        "//base",
         "//base:logging",
     ],
 )
@@ -179,13 +186,19 @@ mozc_cc_test(
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## mozc_cc_binary(name = "ipc_main",
-##           srcs = ["ipc_main.cc",],
-##           deps = [":ipc",
-##                   "//base:base",],
-##           copts = ["$(STACK_FRAME_UNLIMITED)"]  # ipc_main.cc
-##           )
+mozc_cc_binary(
+    name = "ipc_main",
+    srcs = ["ipc_main.cc"],
+    copts = ["$(STACK_FRAME_UNLIMITED)"],  # ipc_main.cc
+    deps = [
+        ":ipc",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "//base:thread",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
 mozc_cc_library(
     name = "named_event",
@@ -203,11 +216,17 @@ mozc_cc_library(
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## mozc_cc_binary(name = "named_event_main",
-##           srcs = ["named_event_main.cc",],
-##           deps = [":named_event",
-##                   "//base:base",])
+mozc_cc_binary(
+    name = "named_event_main",
+    srcs = ["named_event_main.cc"],
+    deps = [
+        ":named_event",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
 mozc_cc_test(
     name = "named_event_test",
@@ -252,6 +271,7 @@ mozc_cc_library(
     deps = [
         "//base:port",
         "//base:scoped_handle",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -273,6 +293,7 @@ mozc_cc_test(
 proto_library(
     name = "window_info_proto",
     srcs = ["window_info.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 

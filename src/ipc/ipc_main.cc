@@ -29,7 +29,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include <iostream>  // NOLINT
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -52,10 +52,9 @@ namespace mozc {
 
 class MultiConnections : public Thread {
  public:
-  void Run() {
-    char buf[8192];
+  void Run() override {
     for (int i = 0; i < absl::GetFlag(FLAGS_num_requests); ++i) {
-      mozc::IPCClient con(FLAGS_server_address,
+      mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
       std::string input = "testtesttesttest";
@@ -80,7 +79,7 @@ class EchoServer : public IPCServer {
 class EchoServerThread : public Thread {
  public:
   explicit EchoServerThread(EchoServer *con) : con_(con) {}
-  virtual void Run() { con_->Loop(); }
+  void Run() override { con_->Loop(); }
 
  private:
   EchoServer *con_;
@@ -106,7 +105,7 @@ int main(int argc, char **argv) {
       cons[i].Join();
     }
 
-    mozc::IPCClient kill(FLAGS_server_address,
+    mozc::IPCClient kill(absl::GetFlag(FLAGS_server_address),
                          absl::GetFlag(FLAGS_server_path));
     const std::string kill_cmd = "kill";
     std::string output;
@@ -123,11 +122,10 @@ int main(int argc, char **argv) {
   } else if (absl::GetFlag(FLAGS_client)) {
     std::string line;
     std::string response;
-    while (getline(cin, line)) {
-      mozc::IPCClient con(FLAGS_server_address,
+    while (std::getline(std::cin, line)) {
+      mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
-      size_t response_size = sizeof(response);
       CHECK(con.Call(line, &response, 1000));
       std::cout << "Request: " << line << std::endl;
       std::cout << "Response: " << response << std::endl;

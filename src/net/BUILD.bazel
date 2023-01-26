@@ -108,6 +108,7 @@ proto_library(
     name = "json_util_test_proto",
     testonly = True,
     srcs = ["json_util_test.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 

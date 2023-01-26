@@ -49,6 +49,7 @@ cc_proto_library(
 proto_library(
     name = "user_history_predictor_proto",
     srcs = ["user_history_predictor.proto"],
+    cc_api_version = 2,
     visibility = ["//visibility:private"],
 )
 
