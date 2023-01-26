@@ -68,7 +68,7 @@ namespace {
 
 using ::mozc::config::CharacterFormManager;
 
-const Transliterators::Transliterator GetTransliterator(
+Transliterators::Transliterator GetTransliterator(
     transliteration::TransliterationType comp_mode) {
   switch (comp_mode) {
     case transliteration::HALF_ASCII:
@@ -385,7 +385,7 @@ void Composer::ApplyTemporaryInputMode(const std::string &input,
   }
 
   // Input is an ASCII code.
-  // we use first character to determin temporary input mode.
+  // we use first character to determine temporary input mode.
   const char key = input[0];
   const bool alpha_with_shift = (!caps_locked && ('A' <= key && key <= 'Z')) ||
                                 (caps_locked && ('a' <= key && key <= 'z'));
@@ -446,12 +446,17 @@ void Composer::InsertCharacter(const std::string &key) {
 }
 
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
+  CompositionInput input;
   switch (internal_command) {
     case REWIND:
-      InsertCharacter(composition_.table()->ParseSpecialKey("{<}"));
+      input.InitFromRaw(composition_.table()->ParseSpecialKey("{<}"),
+                        is_new_input_);
+      ProcessCompositionInput(input);
       break;
     case STOP_KEY_TOGGLING:
-      InsertCharacter(composition_.table()->ParseSpecialKey("{!}"));
+      input.InitFromRaw(composition_.table()->ParseSpecialKey("{!}"),
+                        is_new_input_);
+      ProcessCompositionInput(input);
       break;
     default:
       LOG(ERROR) << "Unknown command : " << internal_command;

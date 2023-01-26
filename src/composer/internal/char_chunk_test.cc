@@ -1056,7 +1056,6 @@ TEST(CharChunkTest, AddInputCompositionWithConvertedChar) {
     EXPECT_EQ("", chunk.conversion());
     EXPECT_EQ("n", chunk.pending());
     EXPECT_EQ("a", input.raw());
-    EXPECT_FALSE(input.has_conversion());
   }
 }
 

@@ -46,7 +46,6 @@ TEST(CompositionInputTest, BasicTest) {
   {  // Initial status.
     EXPECT_TRUE(input.Empty());
     EXPECT_TRUE(input.raw().empty());
-    EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_TRUE(input.probable_key_events().empty());
     EXPECT_FALSE(input.is_new_input());
@@ -73,7 +72,6 @@ TEST(CompositionInputTest, BasicTest) {
 
     EXPECT_FALSE(input.Empty());
     EXPECT_EQ(input.raw(), "raw");
-    EXPECT_TRUE(input.has_conversion());
     EXPECT_EQ(input.conversion(), "conversion");
     EXPECT_EQ(input.probable_key_events().size(), 2);
     EXPECT_TRUE(input.is_new_input());
@@ -85,23 +83,15 @@ TEST(CompositionInputTest, BasicTest) {
     input.Clear();
     EXPECT_TRUE(input.Empty());
     EXPECT_TRUE(input.raw().empty());
-    EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_TRUE(input.probable_key_events().empty());
     EXPECT_FALSE(input.is_new_input());
 
     EXPECT_FALSE(input2.Empty());
     EXPECT_EQ(input2.raw(), "raw");
-    EXPECT_TRUE(input2.has_conversion());
     EXPECT_EQ(input2.conversion(), "conversion");
     EXPECT_EQ(input2.probable_key_events().size(), 2);
     EXPECT_TRUE(input2.is_new_input());
-  }
-
-  {  // Empty conversion string is also a value value.
-    input2.set_conversion("");
-    EXPECT_TRUE(input2.conversion().empty());
-    EXPECT_TRUE(input2.has_conversion());
   }
 }
 

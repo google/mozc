@@ -36,16 +36,15 @@
 #include <string>
 
 #include "base/port.h"
+#include "composer/internal/char_chunk.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {
 
-class CharChunk;
 using CharChunkList = std::list<std::unique_ptr<CharChunk>>;
-
-class CompositionInput;
-class Table;
 
 enum TrimMode {
   TRIM,  // "かn" => "か"

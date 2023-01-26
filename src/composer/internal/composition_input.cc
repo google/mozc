@@ -76,37 +76,24 @@ void CompositionInput::InitFromRawAndConv(const std::string &raw,
 void CompositionInput::Clear() {
   raw_.clear();
   conversion_.clear();
-  has_conversion_ = false;
   probable_key_events_.Clear();
   is_new_input_ = false;
 }
 
 bool CompositionInput::Empty() const {
-  if (has_conversion()) {
-    return raw().empty() && conversion().empty();
-  } else {
-    return raw().empty();
-  }
+  return raw().empty() && conversion().empty();
 }
 
 const std::string &CompositionInput::conversion() const {
-  if (has_conversion_) {
-    return conversion_;
-  } else {
-    LOG(WARNING) << "conversion is not set.";
-    static const std::string *kEmptyString = new std::string();
-    return *kEmptyString;
-  }
+  return conversion_;
 }
 
 void CompositionInput::clear_conversion() {
-  has_conversion_ = false;
   conversion_.clear();
 }
 
 void CompositionInput::set_conversion(const std::string &conversion) {
   conversion_ = conversion;
-  has_conversion_ = true;
 }
 
 }  // namespace composer

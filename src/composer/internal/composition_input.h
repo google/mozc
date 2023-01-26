@@ -68,8 +68,6 @@ class CompositionInput final {
   void clear_conversion();
   void set_conversion(const std::string &conversion);
 
-  bool has_conversion() const { return has_conversion_; }
-
   const ProbableKeyEvents &probable_key_events() const {
     return probable_key_events_;
   }
@@ -84,7 +82,6 @@ class CompositionInput final {
   std::string raw_;
   std::string conversion_;
   ProbableKeyEvents probable_key_events_;
-  bool has_conversion_ = false;
   bool is_new_input_ = false;
 };
 

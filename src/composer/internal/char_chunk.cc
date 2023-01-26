@@ -81,8 +81,8 @@ bool GetFromPending(const Table *table, const std::string &key,
 
   std::vector<const Entry *> entries;
   table->LookUpPredictiveAll(key, &entries);
-  for (size_t i = 0; i < entries.size(); ++i) {
-    if (!entries[i]->result().empty()) {
+  for (const Entry *entry : entries) {
+    if (!entry->result().empty()) {
       // skip rules with result, because this causes too many results.
       // for example, if we have
       //  'k' -> 'っ', 'k'
@@ -91,8 +91,7 @@ bool GetFromPending(const Table *table, const std::string &key,
       // So here we stop calling recursion.
       return false;
     }
-    if (!GetFromPending(table, entries[i]->pending(), recursion_count - 1,
-                        result)) {
+    if (!GetFromPending(table, entry->pending(), recursion_count - 1, result)) {
       return false;
     }
   }
@@ -229,21 +228,20 @@ void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
   }
   std::vector<const Entry *> entries;
   table_->LookUpPredictiveAll(pending_, &entries);
-  for (size_t i = 0; i < entries.size(); ++i) {
-    if (!entries[i]->result().empty()) {
-      results->insert(Table::DeleteSpecialKey(entries[i]->result()));
+  for (const Entry *entry : entries) {
+    if (!entry->result().empty()) {
+      results->insert(Table::DeleteSpecialKey(entry->result()));
     }
-    if (entries[i]->pending().empty()) {
+    if (entry->pending().empty()) {
       continue;
     }
     absl::btree_set<std::string> loop_result;
-    if (!GetFromPending(table_, entries[i]->pending(), kMaxRecursion,
+    if (!GetFromPending(table_, entry->pending(), kMaxRecursion,
                         &loop_result)) {
       continue;
     }
-    for (absl::btree_set<std::string>::const_iterator itr = loop_result.begin();
-         itr != loop_result.end(); ++itr) {
-      results->insert(Table::DeleteSpecialKey(*itr));
+    for (const std::string &result : loop_result) {
+      results->insert(Table::DeleteSpecialKey(result));
     }
   }
 }
@@ -490,7 +488,7 @@ bool CharChunk::ShouldInsertNewChunk(const CompositionInput &input) const {
 
 void CharChunk::AddCompositionInput(CompositionInput *input) {
   local_length_cache_ = std::string::npos;
-  if (input->has_conversion()) {
+  if (!input->conversion().empty()) {
     AddInputAndConvertedChar(input);
     return;
   }
