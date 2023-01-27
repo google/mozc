@@ -553,7 +553,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
   }
 
   CompositionInput input;
-  if (!input.Init(key, config_->use_typing_correction(), is_new_input_)) {
+  if (!input.Init(key, is_new_input_)) {
     return false;
   }
 

@@ -38,22 +38,20 @@ namespace mozc {
 namespace composer {
 
 bool CompositionInput::Init(const commands::KeyEvent &key_event,
-                            bool use_typing_correction, bool is_new_input) {
-  std::string raw;
+                            bool is_new_input) {
   if (key_event.has_key_code()) {
-    Util::Ucs4ToUtf8(key_event.key_code(), &raw);
+    Util::Ucs4ToUtf8(key_event.key_code(), &raw_);
   } else if (key_event.has_key_string()) {
-    raw = key_event.key_string();
+    raw_ = key_event.key_string();
   } else {
     LOG(WARNING) << "input is empty";
     return false;
   }
-  set_raw(raw);
 
   if (key_event.has_key_string()) {
     set_conversion(key_event.key_string());
   }
-  if (use_typing_correction) {
+  if (!key_event.probable_key_event().empty()) {
     set_probable_key_events(key_event.probable_key_event());
   }
   set_is_new_input(is_new_input);

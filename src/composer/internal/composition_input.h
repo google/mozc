@@ -50,8 +50,8 @@ class CompositionInput final {
 
   ~CompositionInput() = default;
 
-  bool Init(const commands::KeyEvent &key_event, bool use_typing_correction,
-            bool is_new_input);
+  // Initializes with KeyEvent.
+  bool Init(const commands::KeyEvent &key_event, bool is_new_input);
   void InitFromRaw(const std::string &raw, bool is_new_input);
   void InitFromRawAndConv(const std::string &raw, const std::string &conversion,
                           bool is_new_input);
