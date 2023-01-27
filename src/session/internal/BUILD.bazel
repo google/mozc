@@ -45,7 +45,6 @@ mozc_cc_library(
     deps = [
         ":key_event_transformer",
         ":keymap",
-        ":keymap_factory",
         "//base",
         "//base:logging",
         "//base:port",
@@ -81,21 +80,6 @@ mozc_cc_library(
         "//testing:gunit_prod",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
-    name = "keymap_factory",
-    srcs = [
-        "keymap_factory.cc",
-    ],
-    hdrs = ["keymap_factory.h"],
-    deps = [
-        ":keymap",
-        "//base",
-        "//base:port",
-        "//config:config_handler",
-        "//protocol:config_cc_proto",
     ],
 )
 
@@ -157,7 +141,6 @@ mozc_cc_test(
     deps = [
         ":ime_context",
         ":keymap",
-        ":keymap_factory",
         ":keymap_interface",
         "//composer",
         "//composer:key_parser",
@@ -187,7 +170,6 @@ mozc_cc_test(
     ],
     deps = [
         ":keymap",
-        ":keymap_factory",
         "//base:config_file_stream",
         "//base:system_util",
         "//composer:key_parser",
@@ -197,23 +179,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-mozc_cc_test(
-    name = "keymap_factory_test",
-    size = "small",
-    srcs = [
-        "keymap_factory_test.cc",
-    ],
-    deps = [
-        ":keymap",
-        ":keymap_factory",
-        "//composer:key_parser",
-        "//config:config_handler",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//testing:gunit_main",
     ],
 )
 

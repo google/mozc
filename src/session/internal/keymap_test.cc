@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap-inl.h"
-#include "session/internal/keymap_factory.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/container/btree_set.h"
@@ -52,6 +51,13 @@
 
 namespace mozc {
 namespace keymap {
+namespace {
+config::Config GetDefaultConfig(config::Config::SessionKeymap keymap) {
+  config::Config config;
+  config.set_session_keymap(keymap);
+  return config;
+}
+}  // namespace
 
 class KeyMapTest : public testing::Test {
  protected:
@@ -417,26 +423,24 @@ TEST_F(KeyMapTest, ShiftTabToConvertPrev) {
   ConversionState::Commands conv_command;
 
   {  // MSIME
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
+
     KeyParser::ParseKey("Shift Tab", &key_event);
-    EXPECT_TRUE(manager->GetCommandConversion(key_event, &conv_command));
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
   }
 
   {  // Kotoeri
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI);
+    KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
     KeyParser::ParseKey("Shift Tab", &key_event);
-    EXPECT_TRUE(manager->GetCommandConversion(key_event, &conv_command));
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
   }
 
   {  // ATOK
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
+    KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
     KeyParser::ParseKey("Shift Tab", &key_event);
-    EXPECT_TRUE(manager->GetCommandConversion(key_event, &conv_command));
+    EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
   }
 }
@@ -447,26 +451,24 @@ TEST_F(KeyMapTest, LaunchToolTest) {
   PrecompositionState::Commands conv_command;
 
   {  // ATOK
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
+    KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
 
     KeyParser::ParseKey("Ctrl F7", &key_event);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(key_event, &conv_command));
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
     EXPECT_EQ(PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG, conv_command);
 
     KeyParser::ParseKey("Ctrl F12", &key_event);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(key_event, &conv_command));
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
     EXPECT_EQ(PrecompositionState::LAUNCH_CONFIG_DIALOG, conv_command);
   }
 
   // http://b/3432829
   // MS-IME does not have the key-binding "Ctrl F7" in precomposition mode.
   {
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
     KeyParser::ParseKey("Ctrl F7", &key_event);
-    EXPECT_FALSE(manager->GetCommandPrecomposition(key_event, &conv_command));
+    EXPECT_FALSE(manager.GetCommandPrecomposition(key_event, &conv_command));
   }
 }
 
@@ -475,26 +477,24 @@ TEST_F(KeyMapTest, Undo) {
   commands::KeyEvent key_event;
 
   {  // ATOK
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
+    KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
+
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(key_event, &command));
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
     EXPECT_EQ(PrecompositionState::UNDO, command);
   }
   {  // MSIME
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(key_event, &command));
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
     EXPECT_EQ(PrecompositionState::UNDO, command);
   }
   {  // KOTOERI
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI);
+    KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
 
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(key_event, &command));
+    EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
     EXPECT_EQ(PrecompositionState::UNDO, command);
   }
 }
@@ -505,52 +505,51 @@ TEST_F(KeyMapTest, Reconvert) {
   commands::KeyEvent key_event;
 
   {  // ATOK
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::ATOK);
+    KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
 
     KeyParser::ParseKey("Shift Henkan", &key_event);
-    EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
+    EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
     EXPECT_TRUE(
-        manager->GetCommandPrecomposition(key_event, &precomposition_command));
+        manager.GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
   {  // MSIME
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
     KeyParser::ParseKey("Henkan", &key_event);
-    EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
+    EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
     EXPECT_TRUE(
-        manager->GetCommandPrecomposition(key_event, &precomposition_command));
+        manager.GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
   {  // KOTOERI
-    KeyMapManager *manager =
-        KeyMapFactory::GetKeyMapManager(config::Config::KOTOERI);
+    KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
 
     KeyParser::ParseKey("Ctrl Shift r", &key_event);
-    EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
+    EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
     EXPECT_TRUE(
-        manager->GetCommandPrecomposition(key_event, &precomposition_command));
+        manager.GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
 }
 
 TEST_F(KeyMapTest, Initialize) {
+  config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
   ConversionState::Commands conv_command;
 
   {  // ATOK
-    KeyMapManager manager(config::Config::ATOK);
+    KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_WIDTH_EXPAND, conv_command);
   }
   {  // MSIME
-    KeyMapManager manager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
+    keymap_setting = config::Config::MSIME;
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
@@ -613,20 +612,18 @@ TEST_F(KeyMapTest, ZeroQuerySuggestion) {
 
 TEST_F(KeyMapTest, CapsLock) {
   // MSIME
-  KeyMapManager *manager =
-      KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+  KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
   commands::KeyEvent key_event;
   KeyParser::ParseKey("CAPS a", &key_event);
 
   ConversionState::Commands conv_command;
-  EXPECT_TRUE(manager->GetCommandConversion(key_event, &conv_command));
+  EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
   EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
 }
 
 TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
   // MSIME
-  KeyMapManager *manager =
-      KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
+  KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
   commands::KeyEvent key_event;
   CompositionState::Commands composition_command;
@@ -634,12 +631,12 @@ TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
   // "Ctrl CAPS H" means that Ctrl and H key are pressed w/o shift key.
   // See the description in command.proto.
   KeyParser::ParseKey("Ctrl CAPS H", &key_event);
-  EXPECT_TRUE(manager->GetCommandComposition(key_event, &composition_command));
+  EXPECT_TRUE(manager.GetCommandComposition(key_event, &composition_command));
   EXPECT_EQ(CompositionState::BACKSPACE, composition_command);
 
   // "Ctrl CAPS h" means that Ctrl, Shift and H key are pressed.
   KeyParser::ParseKey("Ctrl CAPS h", &key_event);
-  EXPECT_FALSE(manager->GetCommandComposition(key_event, &composition_command));
+  EXPECT_FALSE(manager.GetCommandComposition(key_event, &composition_command));
 }
 
 // InputModeX is not supported on MacOSX.
@@ -652,13 +649,13 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
   ConversionState::Commands conv_command;
 
   {  // MSIME
-    KeyMapManager manager(config::Config::MSIME);
+    KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::INPUT_MODE_HIRAGANA, conv_command);
   }
   {  // CHROMEOS
-    KeyMapManager manager(config::Config::CHROMEOS);
+    KeyMapManager manager(GetDefaultConfig(config::Config::CHROMEOS));
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
   }

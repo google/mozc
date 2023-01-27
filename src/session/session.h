@@ -57,6 +57,10 @@ namespace composer {
 class Table;
 }  // namespace composer
 
+namespace keymap {
+class KeyMapManager;
+}  // namespace keymap
+
 class EngineInterface;
 
 namespace session {
@@ -245,6 +249,9 @@ class Session : public SessionInterface {
   bool ReportBug(mozc::commands::Command *command);
 
   void SetConfig(const mozc::config::Config *config) override;
+
+  void SetKeyMapManager(
+      const mozc::keymap::KeyMapManager *key_map_manager) override;
 
   void SetRequest(const mozc::commands::Request *request) override;
 

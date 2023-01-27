@@ -53,7 +53,6 @@
         '../transliteration/transliteration.gyp:transliteration',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:keymap',
-        'session_base.gyp:keymap_factory',
         'session_base.gyp:session_usage_stats_util',
         'session_internal',
       ],
@@ -111,6 +110,7 @@
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         ':session_watch_dog',
+        'session_base.gyp:keymap',
       ],
       'conditions': [
         ['target_platform=="iOS"', {

@@ -106,7 +106,6 @@
           '<(PRODUCT_DIR)/libkey_event_util.a',
           '<(PRODUCT_DIR)/libkey_parser.a',
           '<(PRODUCT_DIR)/libkeymap.a',
-          '<(PRODUCT_DIR)/libkeymap_factory.a',
           '<(PRODUCT_DIR)/liblattice.a',
           '<(PRODUCT_DIR)/liblouds.a',
           '<(PRODUCT_DIR)/liblouds_trie.a',

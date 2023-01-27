@@ -724,6 +724,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SessionTest, TestOfTestForSetup) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
+  keymap::KeyMapManager key_map_manager(config);
   EXPECT_FALSE(config.has_use_auto_conversion())
       << "Global config should be initialized for each test fixture.";
 
@@ -735,6 +736,7 @@ TEST_P(SessionTest, TestOfTestForSetup) {
 
     Session session(&engine);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     SendKey("a", &session, &command);
@@ -4829,7 +4831,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4844,7 +4848,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4875,7 +4881,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4891,7 +4899,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4925,7 +4935,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4942,7 +4954,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4977,7 +4991,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -4990,7 +5006,9 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5029,7 +5047,9 @@ TEST_P(SessionTest, InsertSpaceWithCustomKeyBinding) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5075,7 +5095,9 @@ TEST_P(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5120,7 +5142,10 @@ TEST_P(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5165,7 +5190,9 @@ TEST_P(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -5214,7 +5241,9 @@ TEST_P(SessionTest, InsertSpaceInDirectMode) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -5278,7 +5307,9 @@ TEST_P(SessionTest, InsertSpaceInCompositionMode) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5329,7 +5360,9 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
 
   {
     InitSessionToConversionWithAiueo(&session, &converter);
@@ -6162,8 +6195,10 @@ TEST_P(SessionTest, Issue2282319) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   InitSessionToPrecomposition(&session);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
 
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
@@ -6196,8 +6231,10 @@ TEST_P(SessionTest, Issue2297060) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   InitSessionToPrecomposition(&session);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
 
   commands::Command command;
   EXPECT_TRUE(SendKey("Ctrl Space", &session, &command));
@@ -6425,7 +6462,9 @@ TEST_P(SessionTest, SendKeyDirectInputStateTest) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToDirect(&session);
   commands::Command command;
 
@@ -6576,7 +6615,9 @@ TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
   // In MSIME keymap, Hiragana is assigned for
   // ImputModeHiragana in Precomposition.
@@ -6913,7 +6954,9 @@ TEST_P(SessionTest, Issue5742293) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -7206,7 +7249,9 @@ TEST_P(SessionTest, KeitaiInputToggle) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
+  keymap::KeyMapManager key_map_manager(config);
   session.SetConfig(&config);
+  session.SetKeyMapManager(&key_map_manager);
 
   InitSessionToPrecomposition(&session, *mobile_request_);
   commands::Command command;
@@ -7343,7 +7388,9 @@ TEST_P(SessionTest, KeitaiInputFlick) {
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
     InsertCharacterCodeAndString('6', "は", &session, &command);
     InsertCharacterCodeAndString('3', "し", &session, &command);
@@ -7356,7 +7403,9 @@ TEST_P(SessionTest, KeitaiInputFlick) {
 
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     SendKey("6", &session, &command);
@@ -7371,7 +7420,9 @@ TEST_P(SessionTest, KeitaiInputFlick) {
 
   {
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
     SendKey("1", &session, &command);
@@ -9122,7 +9173,9 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Precomposition and deactivate IME
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9140,7 +9193,9 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Composition and deactivate IME
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9160,7 +9215,9 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Suggestion and deactivate IME
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9187,7 +9244,9 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Conversion and deactivate IME
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
 
     commands::Command command;
@@ -9205,7 +9264,9 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
   {  // Cancel of Reverse conversion and deactivate IME
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -9266,7 +9327,9 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
      // Basically this is unusual because there is no character to be canceled
      // when Precomposition state.
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9284,7 +9347,9 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
 
   {  // Cancel of Composition in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9302,7 +9367,9 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
 
   {  // Cancel of Conversion in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9320,7 +9387,9 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
 
   {  // Cancel of Reverse conversion in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9379,7 +9448,9 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 
   {  // Cancel of Precomposition and deactivate IME in password field.
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9406,7 +9477,9 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 
   {  // Cancel of Composition and deactivate IME in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9433,7 +9506,9 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 
   {  // Cancel of Conversion and deactivate IME in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
@@ -9459,7 +9534,9 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 
   {  // Cancel of Reverse conversion and deactivate IME in password field
     Session session(&engine);
+    keymap::KeyMapManager key_map_manager(config);
     session.SetConfig(&config);
+    session.SetKeyMapManager(&key_map_manager);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 

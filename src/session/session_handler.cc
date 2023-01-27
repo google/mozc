@@ -41,6 +41,7 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "session/internal/keymap.h"
 #include "absl/flags/flag.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
@@ -148,6 +149,7 @@ void SessionHandler::Init(
   table_manager_ = std::make_unique<composer::TableManager>();
   request_ = std::make_unique<commands::Request>();
   config_ = std::make_unique<config::Config>();
+  key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
 
   if (absl::GetFlag(FLAGS_restricted)) {
     VLOG(1) << "Server starts with restricted mode";
@@ -224,11 +226,20 @@ void SessionHandler::UpdateSessions(const config::Config &config,
       data_manager != nullptr
           ? table_manager_->GetTable(*new_request, *new_config, *data_manager)
           : nullptr;
+  auto new_key_map_manager =
+      keymap::KeyMapManager::IsSameKeyMapManagerApplicable(*config_,
+                                                           *new_config)
+          ? nullptr
+          : std::make_unique<keymap::KeyMapManager>(*new_config);
+
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != nullptr; element = element->next) {
     if (element->value != nullptr) {
       element->value->SetConfig(new_config.get());
+      if (new_key_map_manager) {
+        element->value->SetKeyMapManager(new_key_map_manager.get());
+      }
       element->value->SetRequest(new_request.get());
       if (table != nullptr) {
         element->value->SetTable(table);
@@ -237,9 +248,12 @@ void SessionHandler::UpdateSessions(const config::Config &config,
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
       *new_config);
-  // Now no references to the current config/request should exist.
-  // We can destroy them here.
+  // Now no references to the current config/key_map_manager/request
+  // should exist. We can destroy them here.
   config_ = std::move(new_config);
+  if (new_key_map_manager) {
+    key_map_manager_ = std::move(new_key_map_manager);
+  }
   request_ = std::move(new_request);
 }
 

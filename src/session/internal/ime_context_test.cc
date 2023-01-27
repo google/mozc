@@ -41,7 +41,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
-#include "session/internal/keymap_factory.h"
 #include "session/internal/keymap_interface.h"
 #include "session/session_converter.h"
 #include "testing/googletest.h"
@@ -100,17 +99,6 @@ TEST(ImeContextTest, BasicTest) {
 
   context.mutable_output()->set_id(1414);
   EXPECT_EQ(1414, context.output().id());
-
-  // Get/Set keymap
-  context.set_keymap(config::Config::ATOK);
-  EXPECT_EQ(config::Config::ATOK, context.keymap());
-  context.set_keymap(config::Config::MSIME);
-  EXPECT_EQ(config::Config::MSIME, context.keymap());
-
-  // Set keymp via SetConfig.
-  config.set_session_keymap(config::Config::KOTOERI);
-  context.SetConfig(&config);
-  EXPECT_EQ(config::Config::KOTOERI, context.keymap());
 }
 
 TEST(ImeContextTest, CopyContext) {
@@ -119,7 +107,8 @@ TEST(ImeContextTest, CopyContext) {
   table.AddRule("n", "ん", "");
   table.AddRule("na", "な", "");
   const commands::Request request;
-  const config::Config config;
+  config::Config config;
+  config.set_session_keymap(config::Config::CHROMEOS);
 
   MockConverter converter;
 
@@ -146,6 +135,8 @@ TEST(ImeContextTest, CopyContext) {
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
     source.mutable_composer()->InsertCharacter("n");
+
+    source.SetConfig(&config);
 
     std::string composition;
     source.composer().GetStringForSubmission(&composition);
@@ -205,40 +196,6 @@ TEST(ImeContextTest, CopyContext) {
 
     EXPECT_EQ(kQuick, destination.composer().source_text());
   }
-}
-
-TEST(ImeContextTest, CustomKeymap) {
-  ImeContext context;
-
-  // Init config with custom keymap.  It will be set later.
-  config::Config config;
-  const std::string custom_keymap_table =
-      "status\tkey\tcommand\n"
-      "Precomposition\tCtrl a\tUndo\n";
-  config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
-
-  // Set composer
-  const commands::Request request;
-  context.set_composer(std::make_unique<Composer>(nullptr, &request, &config));
-
-  // Set converter
-  MockConverter converter;
-  context.set_converter(
-      std::make_unique<SessionConverter>(&converter, &request, &config));
-
-  // Set config.
-  context.SetConfig(&config);
-
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context.keymap());
-
-  commands::KeyEvent key_event;
-  KeyParser::ParseKey("Ctrl a", &key_event);
-
-  keymap::PrecompositionState::Commands command;
-  keymap->GetCommandPrecomposition(key_event, &command);
-  EXPECT_EQ(keymap::PrecompositionState::UNDO, command);
 }
 
 }  // namespace session

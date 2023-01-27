@@ -450,6 +450,39 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   EXPECT_COUNT_STATS("SessionAllEvent", 3);
 }
 
+TEST_F(SessionHandlerTest, KeyMapTest) {
+  config::Config config;
+  config::ConfigHandler::GetStoredConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+  const keymap::KeyMapManager *msime_keymap;
+
+  SessionHandler handler(CreateMockDataEngine());
+
+  uint64_t session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SET_CONFIG);
+    input->mutable_config()->set_session_keymap(config::Config::MSIME);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    msime_keymap = handler.key_map_manager_.get();
+  }
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SET_CONFIG);
+    input->mutable_config()->set_session_keymap(config::Config::KOTOERI);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    // As different keymap is set, the handler's kaymap manager should be
+    // updated.
+    EXPECT_NE(msime_keymap, handler.key_map_manager_.get());
+  }
+}
+
 TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   // Tests if sync is called for the following input commands.
   commands::Input::CommandType command_types[] = {

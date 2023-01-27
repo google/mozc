@@ -35,7 +35,7 @@
 #include "base/logging.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
-#include "session/internal/keymap_factory.h"
+#include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -46,7 +46,7 @@ using ::mozc::commands::Request;
 ImeContext::ImeContext()
     : request_(&Request::default_instance()),
       config_(&config::ConfigHandler::DefaultConfig()),
-      keymap_(config::ConfigHandler::GetDefaultKeyMap()) {}
+      key_map_manager_(nullptr) {}
 
 ImeContext::~ImeContext() = default;
 
@@ -81,15 +81,26 @@ void ImeContext::SetConfig(const config::Config *config) {
   composer_->SetConfig(config_);
 
   key_event_transformer_.ReloadConfig(*config_);
-
-  keymap_ = config->session_keymap();
-  keymap::KeyMapFactory::GetKeyMapManager(keymap_);
-  keymap::KeyMapFactory::ReloadConfig(*config_);
 }
 
 const config::Config &ImeContext::GetConfig() const {
   DCHECK(config_);
   return *config_;
+}
+
+void ImeContext::SetKeyMapManager(
+    const keymap::KeyMapManager *key_map_manager) {
+  DCHECK(key_map_manager);
+  key_map_manager_ = key_map_manager;
+}
+
+const keymap::KeyMapManager &ImeContext::GetKeyMapManager() const {
+  if (key_map_manager_) {
+    return *key_map_manager_;
+  }
+  static keymap::KeyMapManager *void_key_map_manager =
+      new keymap::KeyMapManager();
+  return *void_key_map_manager;
 }
 
 // static
@@ -107,6 +118,7 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
 
   dest->SetRequest(src.request_);
   dest->SetConfig(src.config_);
+  dest->SetKeyMapManager(&src.GetKeyMapManager());
 
   *dest->mutable_client_capability() = src.client_capability();
   *dest->mutable_application_info() = src.application_info();

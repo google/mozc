@@ -184,7 +184,6 @@ mozc_cc_library(
         "//session/internal:ime_context",
         "//session/internal:key_event_transformer",
         "//session/internal:keymap",
-        "//session/internal:keymap_factory",
         "//session/internal:session_output",
         "//testing:gunit_prod",
         "//transliteration",
@@ -349,6 +348,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
+        "//session/internal:keymap",
         "//storage:lru_cache",
         "//testing:gunit_prod",
         "//usage_stats",
@@ -493,7 +493,6 @@ mozc_cc_binary(
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_client_main.cc
     deps = [
         ":session",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
@@ -506,6 +505,7 @@ mozc_cc_binary(
         "//engine:engine_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//session/internal:keymap",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
     ],

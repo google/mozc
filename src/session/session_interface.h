@@ -36,6 +36,7 @@
 
 #include "base/port.h"
 #include "protocol/config.pb.h"
+#include "session/internal/keymap.h"
 
 namespace mozc {
 
@@ -64,6 +65,11 @@ class SessionInterface {
   virtual bool SendCommand(commands::Command *command) = 0;
 
   virtual void SetConfig(const config::Config *config) = 0;
+
+  // Set KeyMapManager.
+  // The KeyMapManager is a derivative information calculated from Config so
+  // usually this method is called at the same time as SetConfig.
+  virtual void SetKeyMapManager(const keymap::KeyMapManager *key_map_manager) {}
 
   // Set Request. Currently, this is especial for session::Session.
   virtual void SetRequest(const commands::Request *request) {}
