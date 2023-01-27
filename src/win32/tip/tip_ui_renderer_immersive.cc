@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 // clang-format on
@@ -53,7 +54,6 @@ namespace {
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
-using WTL::CRect;
 
 using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;

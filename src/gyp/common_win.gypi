@@ -313,6 +313,7 @@
       '_WIN32',
       '_WIN32_WINNT=0x0601',
       '_WINDOWS',
+      '_WTL_NO_WTYPES',  # TODO(yuryu): Remove after upgrading to WTL 10.
     ],
     'include_dirs': [
       '<(abs_depth)',

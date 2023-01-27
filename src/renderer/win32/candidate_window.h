@@ -35,6 +35,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>
@@ -106,9 +107,9 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void OnDestroy();
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
-  void OnLButtonDown(UINT nFlags, WTL::CPoint point);
-  void OnLButtonUp(UINT nFlags, WTL::CPoint point);
-  void OnMouseMove(UINT nFlags, WTL::CPoint point);
+  void OnLButtonDown(UINT nFlags, CPoint point);
+  void OnLButtonUp(UINT nFlags, CPoint point);
+  void OnMouseMove(UINT nFlags, CPoint point);
   void OnPaint(WTL::CDCHandle dc);
   void OnPrintClient(WTL::CDCHandle dc, UINT uFlags);
   void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
@@ -138,7 +139,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   void DrawFrame(WTL::CDCHandle dc);
 
   // Handles candidate selection by mouse.
-  void HandleMouseEvent(UINT nFlags, const WTL::CPoint &point,
+  void HandleMouseEvent(UINT nFlags, const CPoint &point,
                         bool close_candidatewindow);
 
   // Even though the candidate window supports limited mouse operations, we

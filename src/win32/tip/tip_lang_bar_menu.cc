@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
@@ -63,7 +64,6 @@ using WTL::CDC;
 using WTL::CIcon;
 using WTL::CMenu;
 using WTL::CMenuItemInfo;
-using WTL::CSize;
 
 constexpr int kDefaultDPI = 96;
 

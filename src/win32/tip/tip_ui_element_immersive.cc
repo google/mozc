@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlcom.h>
 #include <atlapp.h>
 #include <atlmisc.h>
@@ -73,9 +74,6 @@ using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
 using WTL::CPaintDC;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 
 using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;
@@ -226,7 +224,7 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
 }
 
 CRect ToCRect(const Rect &rect) {
-  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+  return CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
 }
 
 // Returns the smallest index of the given candidate list which satisfies

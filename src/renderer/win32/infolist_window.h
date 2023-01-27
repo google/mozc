@@ -35,6 +35,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>

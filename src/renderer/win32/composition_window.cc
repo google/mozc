@@ -34,6 +34,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlcrack.h>
 #include <atlgdi.h>
@@ -64,9 +65,6 @@ using WTL::CMemoryDC;
 using WTL::CPaintDC;
 using WTL::CPen;
 using WTL::CPenHandle;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 
 namespace {
 // As Discussed in b/2317702, UI windows are disabled by default because it is
