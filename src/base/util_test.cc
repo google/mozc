@@ -931,6 +931,7 @@ TEST(UtilTest, IsBracketPairText) {
   EXPECT_TRUE(Util::IsBracketPairText("［］"));
   EXPECT_TRUE(Util::IsBracketPairText("｛｝"));
   EXPECT_TRUE(Util::IsBracketPairText("｢｣"));
+  EXPECT_TRUE(Util::IsBracketPairText("〝〟"));
 
   // Open bracket and close brakcet don't match.
   EXPECT_FALSE(Util::IsBracketPairText("(]"));

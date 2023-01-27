@@ -982,7 +982,7 @@ bool Util::IsBracketPairText(absl::string_view input) {
       *new absl::flat_hash_set<absl::string_view>{
           "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
           "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
-          "〚〛", "（）", "［］", "｛｝", "｢｣",
+          "〚〛", "（）", "［］", "｛｝", "｢｣", "〝〟",
       };
   return kBracketPairText.contains(input);
 }
