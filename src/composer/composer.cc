@@ -249,6 +249,7 @@ Composer::Composer(const Table *table, const commands::Request *request,
       max_length_(kMaxPreeditLength),
       request_(request),
       config_(config),
+      table_(table),
       is_new_input_(true) {
   SetInputMode(transliteration::HIRAGANA);
   if (config_ == nullptr) {
@@ -281,8 +282,8 @@ void Composer::ReloadConfig() {
 bool Composer::Empty() const { return (GetLength() == 0); }
 
 void Composer::SetTable(const Table *table) {
+  table_ = table;
   composition_.SetTable(table);
-
   typing_corrector_.SetTable(table);
 }
 
@@ -449,13 +450,11 @@ void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
   CompositionInput input;
   switch (internal_command) {
     case REWIND:
-      input.InitFromRaw(composition_.table()->ParseSpecialKey("{<}"),
-                        is_new_input_);
+      input.InitFromRaw(table_->ParseSpecialKey("{<}"), is_new_input_);
       ProcessCompositionInput(input);
       break;
     case STOP_KEY_TOGGLING:
-      input.InitFromRaw(composition_.table()->ParseSpecialKey("{!}"),
-                        is_new_input_);
+      input.InitFromRaw(table_->ParseSpecialKey("{!}"), is_new_input_);
       ProcessCompositionInput(input);
       break;
     default:
@@ -553,7 +552,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
   }
 
   CompositionInput input;
-  if (!input.Init(key, is_new_input_)) {
+  if (!input.Init(*table_, key, is_new_input_)) {
     return false;
   }
 

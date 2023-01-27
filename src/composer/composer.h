@@ -286,6 +286,7 @@ class Composer final {
 
   const commands::Request *request_;
   const config::Config *config_;
+  const Table *table_;
 
   // Timestamp of last modified.
   int64_t timestamp_msec_ = 0;

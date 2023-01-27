@@ -110,7 +110,6 @@ mozc_cc_library(
         "//base:port",
         "//base:trie",
         "//base:util",
-        "//composer/internal:composition_input",
         "//composer/internal:typing_model",
         "//config:config_handler",
         "//data_manager:data_manager_interface",
