@@ -3258,5 +3258,110 @@ TEST_F(ComposerTest, SimultaneousInput) {
   ASSERT_TRUE(InsertKeyWithMode("l", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ("れいか→", GetPreedit(composer_.get()));
 }
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey1) {
+  table_->AddRule("{henkan}", "あ", "");
+
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+}
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey2) {
+  table_->AddRule("{henkan}j", "お", "");
+
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おお", GetPreedit(composer_.get()));
+}
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey3) {
+  table_->AddRule("j", "", "と");
+  table_->AddRule("と{henkan}", "お", "");
+  table_->AddRule("{henkan}j", "お", "");
+
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+}
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey4) {
+  table_->AddRule("j", "", "と");
+  table_->AddRule("と{henkan}", "お", "");
+  table_->AddRule("{henkan}j", "お", "");
+
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("と", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+}
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey5) {
+  table_->AddRule("r", "", "{*}");
+  table_->AddRule("{*}j", "お", "");
+
+  ASSERT_TRUE(InsertKeyWithMode("r", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("", GetPreedit(composer_.get()));
+
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+}
+
+TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
+  table_->AddRule("{!}", "", "");  // no-op
+  table_->AddRule("{henkan}{!}", "", "");  // no-op
+  table_->AddRule("j", "", "と");
+  table_->AddRule("と{!}", "と", "");
+  table_->AddRule("{henkan}j", "お", "");
+  table_->AddRule("と{henkan}", "お", "");
+
+  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
+  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  composer_->set_timeout_threshold_msec(50);
+
+  // "j"
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("と", GetPreedit(composer_.get()));
+
+  // "j{henkan}"
+  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("お", GetPreedit(composer_.get()));
+
+  // "j{henkan}j"
+  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おと", GetPreedit(composer_.get()));
+
+  // "j{henkan}j{!}{henkan}"
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おと", GetPreedit(composer_.get()));
+
+  // "j{henkan}j{!}{henkan}{!}j"
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おとと", GetPreedit(composer_.get()));
+
+  // "j{henkan}j{!}{henkan}{!}j{!}{henkan}"
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おとと", GetPreedit(composer_.get()));
+
+  // "j{henkan}j{!}{henkan}{!}j{!}{henkan}j"
+  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("おととお", GetPreedit(composer_.get()));
+}
 }  // namespace composer
 }  // namespace mozc
