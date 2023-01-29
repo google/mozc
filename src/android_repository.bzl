@@ -46,13 +46,15 @@ android_ndk_setup()
 """
 
 NDK_SETUP_TEMPLATE = """
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+
 def android_ndk_setup():
     {rule}
 """
 
 def _android_repository_impl(repository_ctx):
     if repository_ctx.os.environ.get("ANDROID_NDK_HOME"):
-        rule = "native.android_ndk_repository(name=\"androidndk\")"
+        rule = "android_ndk_repository(name=\"androidndk\")"
     else:
         rule = "pass"
     repository_ctx.file("BUILD.bazel", "")
