@@ -37,8 +37,9 @@
 #include "base/init_mozc.h"
 #include "base/port.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(int32_t, iterations, 1000, "number of iterations");
 ABSL_FLAG(int32_t, polling_duration, 1000, "duration period in msec");
@@ -47,7 +48,7 @@ ABSL_FLAG(int32_t, dummy_threads_size, 0, "number of dummy threads");
 namespace {
 class DummyThread : public mozc::Thread {
  public:
-  DummyThread() {}
+  DummyThread() = default;
   DummyThread(const DummyThread&) = delete;
   DummyThread& operator=(const DummyThread&) = delete;
   void Run() override {
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < absl::GetFlag(FLAGS_iterations); ++i) {
     std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
               << stats.GetCurrentProcessCPULoad() << std::endl;
-    mozc::Util::Sleep(absl::GetFlag(FLAGS_polling_duration));
+    absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_polling_duration)));
   }
 
   return 0;

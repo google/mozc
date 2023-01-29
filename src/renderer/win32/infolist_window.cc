@@ -54,9 +54,6 @@ using WTL::CDCHandle;
 using WTL::CMemoryDC;
 using WTL::CPaintDC;
 using WTL::CPenHandle;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 
 using mozc::commands::Candidates;
 using mozc::commands::Information;

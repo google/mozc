@@ -32,15 +32,15 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dictionary_file",
     srcs = ["dictionary_file.cc"],
     hdrs = ["dictionary_file.h"],
@@ -56,7 +56,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dictionary_file_builder",
     srcs = ["dictionary_file_builder.cc"],
     hdrs = ["dictionary_file_builder.h"],
@@ -71,7 +71,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dictionary_file_test",
     size = "small",
     srcs = ["dictionary_file_test.cc"],
@@ -88,7 +88,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec_interface",
     hdrs = ["codec_interface.h"],
     deps = [
@@ -98,7 +98,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec_util",
     srcs = ["codec_util.cc"],
     hdrs = ["codec_util.h"],
@@ -111,7 +111,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec",
     srcs = ["codec.cc"],
     hdrs = ["codec.h"],
@@ -128,7 +128,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec_factory",
     srcs = ["codec_factory.cc"],
     hdrs = [
@@ -145,13 +145,13 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "section",
     hdrs = ["section.h"],
     visibility = ["//visibility:private"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "codec_test",
     size = "small",
     srcs = ["codec_test.cc"],

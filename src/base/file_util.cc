@@ -188,7 +188,7 @@ absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
 #else   // !OS_WIN
   if (::mkdir(path.c_str(), 0700) != 0) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(err, "mkdir failed");
+    return absl::ErrnoToStatus(err, "mkdir failed");
   }
   return absl::OkStatus();
 #endif  // OS_WIN
@@ -212,7 +212,7 @@ absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #else   // !OS_WIN
   if (::rmdir(dirname.c_str()) != 0) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(err, "rmdir failed");
+    return absl::ErrnoToStatus(err, "rmdir failed");
   }
   return absl::OkStatus();
 #endif  // OS_WIN
@@ -293,8 +293,7 @@ absl::Status FileUtilImpl::FileExists(const std::string &filename) const {
     return absl::OkStatus();
   }
   const int err = errno;
-  return Util::ErrnoToCanonicalStatus(err,
-                                      absl::StrCat("Cannot stat ", filename));
+  return absl::ErrnoToStatus(err, absl::StrCat("Cannot stat ", filename));
 #endif  // OS_WIN
 }
 
@@ -323,8 +322,7 @@ absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
                : absl::NotFoundError("Path exists but it's not a directory");
   }
   const int err = errno;
-  return Util::ErrnoToCanonicalStatus(err,
-                                      absl::StrCat("Cannot stat ", dirname));
+  return absl::ErrnoToStatus(err, absl::StrCat("Cannot stat ", dirname));
 #endif  // OS_WIN
 }
 
@@ -679,8 +677,7 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
   struct stat stat_info;
   if (::stat(filename.c_str(), &stat_info)) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(
-        err, absl::StrCat("stat failed: ", filename));
+    return absl::ErrnoToStatus(err, absl::StrCat("stat failed: ", filename));
   }
   return stat_info.st_mtime;
 #endif  // OS_WIN
@@ -692,14 +689,12 @@ absl::Status FileUtil::GetContents(const std::string &filename,
   InputFileStream ifs(filename, mode | std::ios::ate);
   if (ifs.fail()) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(err,
-                                        absl::StrCat("Cannot open ", filename));
+    return absl::ErrnoToStatus(err, absl::StrCat("Cannot open ", filename));
   }
   const ptrdiff_t size = ifs.tellg();
   if (size == -1) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(
-        err, absl::StrCat("tellg failed: ", filename));
+    return absl::ErrnoToStatus(err, absl::StrCat("tellg failed: ", filename));
   }
   ifs.seekg(0, std::ios_base::beg);
   if (mode & std::ios::binary) {
@@ -716,9 +711,8 @@ absl::Status FileUtil::GetContents(const std::string &filename,
   ifs.close();
   if (ifs.fail()) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(
-        err,
-        absl::StrCat("Cannot read ", filename, " of size ", size, " bytes"));
+    return absl::ErrnoToStatus(err, absl::StrCat("Cannot read ", filename,
+                                                 " of size ", size, " bytes"));
   }
   return absl::OkStatus();
 }
@@ -738,14 +732,13 @@ absl::Status FileUtil::SetContents(const std::string &filename,
   OutputFileStream ofs(filename, mode);
   if (ofs.fail()) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(err,
-                                        absl::StrCat("Cannot open ", filename));
+    return absl::ErrnoToStatus(err, absl::StrCat("Cannot open ", filename));
   }
   ofs << content;
   ofs.close();
   if (ofs.fail()) {
     const int err = errno;
-    return Util::ErrnoToCanonicalStatus(
+    return absl::ErrnoToStatus(
         err,
         absl::StrCat("Cannot write ", content.size(), " bytes to ", filename));
   }

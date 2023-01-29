@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlcom.h>
 #include <atlapp.h>
 #include <atlmisc.h>
@@ -59,7 +60,6 @@ namespace {
 using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CWindow;
-using WTL::CRect;
 
 using ::mozc::commands::Output;
 using ::mozc::commands::Preedit;

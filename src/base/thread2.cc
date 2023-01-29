@@ -27,39 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_SESSION_INTERNAL_KEYMAP_FACTORY_H_
-#define MOZC_SESSION_INTERNAL_KEYMAP_FACTORY_H_
+#include "base/thread2.h"
 
 #include <memory>
-#include <vector>
 
-#include "protocol/config.pb.h"
+#include "base/thread.h"
 
 namespace mozc {
-namespace keymap {
 
-class KeyMapManager;
+Thread2::Thread2() noexcept = default;
+Thread2::~Thread2() = default;
+Thread2::Thread2(Thread2 &&) noexcept = default;
+Thread2 &Thread2::operator=(Thread2 &&) noexcept = default;
 
-class KeyMapFactory {
- public:
-  KeyMapFactory() = delete;
-  ~KeyMapFactory() = delete;
+void Thread2::Join() { thread_->Join(); }
 
-  // Returns KeyMapManager corresponding keymap and custom rule stored in
-  // config.  Note, keymap might be different from config.session_keymap.
-  static KeyMapManager *GetKeyMapManager(
-      const config::Config::SessionKeymap keymap);
-
-  // Reload the custom keymap.
-  static void ReloadConfig(const config::Config &config);
-
- private:
-  friend class TestKeyMapFactoryProxy;
-  using KeyMapManagerList = std::vector<std::unique_ptr<KeyMapManager>>;
-  static KeyMapManagerList &GetKeyMaps();
-};
-
-}  // namespace keymap
 }  // namespace mozc
-
-#endif  // MOZC_SESSION_INTERNAL_KEYMAP_FACTORY_H_

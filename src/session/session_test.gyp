@@ -147,7 +147,6 @@
         'session.gyp:session_handler',
         'session.gyp:session_usage_observer',
         'session_base.gyp:keymap',
-        'session_base.gyp:keymap_factory',
         'session_base.gyp:output_util',
         'session_base.gyp:session_usage_stats_util',
       ],
@@ -163,6 +162,7 @@
         'session_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
         '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
@@ -197,7 +197,6 @@
         'internal/candidate_list_test.cc',
         'internal/ime_context_test.cc',
         'internal/keymap_test.cc',
-        'internal/keymap_factory_test.cc',
         'internal/session_output_test.cc',
         'internal/key_event_transformer_test.cc',
       ],

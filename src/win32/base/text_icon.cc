@@ -33,6 +33,7 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 // clang-format off
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
@@ -61,8 +62,6 @@ using ::WTL::CFont;
 using ::WTL::CFontHandle;
 using ::WTL::CIconHandle;
 using ::WTL::CLogFont;
-using ::WTL::CRect;
-using ::WTL::CSize;
 
 RGBQUAD ToRGBQuad(DWORD color_ref) {
   const RGBQUAD rgbquad = {GetBValue(color_ref), GetGValue(color_ref),

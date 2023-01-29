@@ -32,11 +32,11 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec_interface",
     hdrs = ["codec_interface.h"],
     visibility = ["//visibility:private"],
@@ -46,7 +46,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codec",
     srcs = ["codec.cc"],
     hdrs = [
@@ -66,7 +66,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "codec_test",
     size = "small",
     srcs = ["codec_test.cc"],
@@ -83,7 +83,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "token_decode_iterator",
     hdrs = ["token_decode_iterator.h"],
     visibility = ["//visibility:private"],
@@ -100,7 +100,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "system_dictionary",
     srcs = ["system_dictionary.cc"],
     hdrs = ["system_dictionary.h"],
@@ -131,7 +131,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "value_dictionary",
     srcs = [
         "value_dictionary.cc",
@@ -155,7 +155,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "system_dictionary_builder",
     srcs = [
         "system_dictionary_builder.cc",
@@ -185,13 +185,13 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "words_info",
     hdrs = ["words_info.h"],
     visibility = ["//visibility:private"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "system_dictionary_test",
     size = "large",
     srcs = [
@@ -226,7 +226,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "value_dictionary_test",
     size = "medium",
     srcs = ["value_dictionary_test.cc"],
@@ -245,7 +245,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],
     deps = [
@@ -254,7 +254,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "key_expansion_table_test",
     size = "small",
     srcs = ["key_expansion_table_test.cc"],

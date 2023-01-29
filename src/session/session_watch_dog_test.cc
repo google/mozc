@@ -36,11 +36,12 @@
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "client/client_mock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -107,15 +108,15 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
 
   watchdog.Start("SessionWatchDogTest");  // start
 
-  mozc::Util::Sleep(100);
+  absl::SleepFor(absl::Milliseconds(100));
   EXPECT_TRUE(watchdog.IsRunning());
   EXPECT_EQ(kInterval, watchdog.interval());
 
-  mozc::Util::Sleep(5500);  // 5.5 sec
+  absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
   EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
 
-  mozc::Util::Sleep(5000);  // 10.5 sec
+  absl::SleepFor(absl::Milliseconds(5000));  // 10.5 sec
 
   EXPECT_EQ(10, client.GetFunctionCallCount("Cleanup"));
 
@@ -146,10 +147,10 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
 
   watchdog.Start("SessionWatchDogCPUStatsTest");  // start
 
-  mozc::Util::Sleep(100);
+  absl::SleepFor(absl::Milliseconds(100));
   EXPECT_TRUE(watchdog.IsRunning());
   EXPECT_EQ(kInterval, watchdog.interval());
-  mozc::Util::Sleep(5500);  // 5.5 sec
+  absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
   // not called
   EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
@@ -161,7 +162,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   }
   stats.SetCPULoads(cpu_loads);
 
-  mozc::Util::Sleep(5000);  // 5 sec
+  absl::SleepFor(absl::Milliseconds(5000));  // 5 sec
   // called
   EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
 

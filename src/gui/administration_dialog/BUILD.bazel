@@ -29,30 +29,30 @@
 
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
-    "qt_uic_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
+    "mozc_qt_uic",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_administration_dialog",
     srcs = ["administration_dialog.h"],
     outs = ["moc_administration_dialog.cc"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_administration_dialog",
     srcs = ["administration_dialog.ui"],
     outs = ["ui_administration_dialog.h"],
 )
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_administration_dialog",
     srcs = [
         "administration_dialog_en.qm",
@@ -65,7 +65,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_administration_dialog",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "administration_dialog",
     srcs = [
         "administration_dialog.cc",
@@ -91,7 +91,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "administration_dialog_main",
     srcs = ["administration_dialog_main.cc"],
     deps = [

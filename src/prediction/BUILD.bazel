@@ -32,19 +32,14 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
-
-cc_proto_library(
-    name = "user_history_predictor_cc_proto",
-    deps = [":user_history_predictor_proto"],
-)
 
 proto_library(
     name = "user_history_predictor_proto",
@@ -52,13 +47,18 @@ proto_library(
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+cc_proto_library(
+    name = "user_history_predictor_cc_proto",
+    deps = [":user_history_predictor_proto"],
+)
+
+mozc_cc_library(
     name = "predictor_interface",
     hdrs = ["predictor_interface.h"],
     deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_history_predictor",
     srcs = ["user_history_predictor.cc"],
     hdrs = ["user_history_predictor.h"],
@@ -94,7 +94,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "user_history_predictor_test",
     size = "small",
     timeout = "moderate",
@@ -103,7 +103,6 @@ cc_test_mozc(
     deps = [
         ":user_history_predictor",
         "//base:clock_mock",
-        "//base:encryptor",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -127,10 +126,11 @@ cc_test_mozc(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dictionary_predictor",
     srcs = [
         "dictionary_predictor.cc",
@@ -168,7 +168,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dictionary_predictor_test",
     size = "small",
     timeout = "moderate",
@@ -220,7 +220,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "predictor",
     srcs = ["predictor.cc"],
     hdrs = ["predictor.h"],
@@ -239,7 +239,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "predictor_test",
     srcs = ["predictor_test.cc"],
     requires_full_emulation = False,
@@ -267,7 +267,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "suggestion_filter",
     srcs = ["suggestion_filter.cc"],
     hdrs = ["suggestion_filter.h"],
@@ -281,7 +281,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "zero_query_dict",
     hdrs = ["zero_query_dict.h"],
     visibility = ["//visibility:private"],
@@ -292,7 +292,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "zero_query_dict_test",
     srcs = ["zero_query_dict_test.cc"],
     requires_full_emulation = False,
@@ -306,7 +306,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_suggestion_filter_main",
     srcs = ["gen_suggestion_filter_main.cc"],
     deps = [
@@ -323,7 +323,7 @@ cc_binary_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_zero_query_util",
     srcs = ["gen_zero_query_util.py"],
     deps = [
@@ -332,19 +332,19 @@ py_library_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_zero_query_number_data_lib",
     srcs = ["gen_zero_query_number_data.py"],
     deps = [":gen_zero_query_util"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
     deps = [":gen_zero_query_util"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_zero_query_data_lib",
     srcs = ["gen_zero_query_data.py"],
     deps = [
@@ -353,7 +353,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
     deps = [
@@ -362,7 +362,7 @@ py_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "number_decoder",
     srcs = ["number_decoder.cc"],
     hdrs = [
@@ -376,7 +376,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "number_decoder_test",
     srcs = ["number_decoder_test.cc"],
     deps = [

@@ -68,7 +68,7 @@ namespace {
 
 using ::mozc::config::CharacterFormManager;
 
-const Transliterators::Transliterator GetTransliterator(
+Transliterators::Transliterator GetTransliterator(
     transliteration::TransliterationType comp_mode) {
   switch (comp_mode) {
     case transliteration::HALF_ASCII:
@@ -249,6 +249,7 @@ Composer::Composer(const Table *table, const commands::Request *request,
       max_length_(kMaxPreeditLength),
       request_(request),
       config_(config),
+      table_(table),
       is_new_input_(true) {
   SetInputMode(transliteration::HIRAGANA);
   if (config_ == nullptr) {
@@ -281,8 +282,8 @@ void Composer::ReloadConfig() {
 bool Composer::Empty() const { return (GetLength() == 0); }
 
 void Composer::SetTable(const Table *table) {
+  table_ = table;
   composition_.SetTable(table);
-
   typing_corrector_.SetTable(table);
 }
 
@@ -385,7 +386,7 @@ void Composer::ApplyTemporaryInputMode(const std::string &input,
   }
 
   // Input is an ASCII code.
-  // we use first character to determin temporary input mode.
+  // we use first character to determine temporary input mode.
   const char key = input[0];
   const bool alpha_with_shift = (!caps_locked && ('A' <= key && key <= 'Z')) ||
                                 (caps_locked && ('a' <= key && key <= 'z'));
@@ -435,7 +436,7 @@ bool Composer::ProcessCompositionInput(const CompositionInput &input) {
 
   position_ = composition_.InsertInput(position_, input);
   is_new_input_ = false;
-  typing_corrector_.InsertCharacter(input.raw(), input.probable_key_events());
+  typing_corrector_.InsertCharacter(input);
   return true;
 }
 
@@ -446,12 +447,15 @@ void Composer::InsertCharacter(const std::string &key) {
 }
 
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
+  CompositionInput input;
   switch (internal_command) {
     case REWIND:
-      InsertCharacter(composition_.table()->ParseSpecialKey("{<}"));
+      input.InitFromRaw(table_->ParseSpecialKey("{<}"), is_new_input_);
+      ProcessCompositionInput(input);
       break;
     case STOP_KEY_TOGGLING:
-      InsertCharacter(composition_.table()->ParseSpecialKey("{!}"));
+      input.InitFromRaw(table_->ParseSpecialKey("{!}"), is_new_input_);
+      ProcessCompositionInput(input);
       break;
     default:
       LOG(ERROR) << "Unknown command : " << internal_command;
@@ -548,7 +552,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
   }
 
   CompositionInput input;
-  if (!input.Init(key, config_->use_typing_correction(), is_new_input_)) {
+  if (!input.Init(*table_, key, is_new_input_)) {
     return false;
   }
 

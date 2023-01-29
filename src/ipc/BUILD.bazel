@@ -32,16 +32,17 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_select",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc",
     srcs = [
         "ipc.cc",
@@ -65,7 +66,7 @@ cc_library_mozc(
         "//base:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(
+    ] + mozc_select(
         ios = ["//base:mac_util"],
     ),
 )
@@ -81,7 +82,7 @@ cc_proto_library(
     deps = [":ipc_proto"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_path_manager",
     srcs = ["ipc_path_manager.cc"],
     hdrs = ["ipc_path_manager.h"],
@@ -104,18 +105,25 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
-    ] + select_mozc(
+    ] + mozc_select(
         ios = ["//base:mac_util"],
     ),
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "ipc_path_manager_main",
-##           srcs = ["ipc_path_manager_main.cc",],
-##           deps = [":ipc_path_manager",
-##                   "//base:base",])
+mozc_cc_binary(
+    name = "ipc_path_manager_main",
+    srcs = ["ipc_path_manager_main.cc"],
+    deps = [
+        ":ipc_path_manager",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ipc_path_manager_test",
     size = "small",
     srcs = ["ipc_path_manager_test.cc"],
@@ -124,7 +132,6 @@ cc_test_mozc(
         ":ipc",
         ":ipc_cc_proto",
         ":ipc_path_manager",
-        "//base",
         "//base:file_util",
         "//base:port",
         "//base:process_mutex",
@@ -134,33 +141,32 @@ cc_test_mozc(
         "//base:version",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_mock",
     testonly = True,
     srcs = ["ipc_mock.cc"],
     hdrs = ["ipc_mock.h"],
     deps = [
         ":ipc",
-        "//base",
         "//base:version",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_test_util",
     srcs = ["ipc_test_util.cc"],
     hdrs = ["ipc_test_util.h"],
     deps = [
         ":ipc",
-        "//base",
         "//base:logging",
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ipc_test",
     size = "small",
     srcs = ["ipc_test.cc"],
@@ -169,25 +175,31 @@ cc_test_mozc(
     deps = [
         ":ipc",
         ":ipc_test_util",
-        "//base",
         "//base:port",
         "//base:system_util",
         "//base:thread",
         "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "ipc_main",
-##           srcs = ["ipc_main.cc",],
-##           deps = [":ipc",
-##                   "//base:base",],
-##           copts = ["$(STACK_FRAME_UNLIMITED)"]  # ipc_main.cc
-##           )
+mozc_cc_binary(
+    name = "ipc_main",
+    srcs = ["ipc_main.cc"],
+    copts = ["$(STACK_FRAME_UNLIMITED)"],  # ipc_main.cc
+    deps = [
+        ":ipc",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "//base:thread",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
-cc_library_mozc(
+mozc_cc_library(
     name = "named_event",
     srcs = ["named_event.cc"],
     hdrs = ["named_event.h"],
@@ -199,45 +211,50 @@ cc_library_mozc(
         "//base:system_util",
         "//base:util",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "named_event_main",
-##           srcs = ["named_event_main.cc",],
-##           deps = [":named_event",
-##                   "//base:base",])
+mozc_cc_binary(
+    name = "named_event_main",
+    srcs = ["named_event_main.cc"],
+    deps = [
+        ":named_event",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:port",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
 
-cc_test_mozc(
+mozc_cc_test(
     name = "named_event_test",
     size = "small",
     srcs = ["named_event_test.cc"],
     requires_full_emulation = False,
     deps = [
         ":named_event",
-        "//base",
         "//base:clock",
         "//base:port",
         "//base:system_util",
         "//base:thread",
-        "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "process_watch_dog",
     srcs = ["process_watch_dog.cc"],
     hdrs = ["process_watch_dog.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:scoped_handle",
         "//base:thread",
-        "//base:util",
         "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -246,30 +263,29 @@ cc_library_mozc(
 # cannot depend on the library
 #   //ipc:ipc: Found an inverse include path.
 # See http://go/cxx-layering-faq
-cc_library_mozc(
+mozc_cc_library(
     name = "ipc_hdr",
     textual_hdrs = ["ipc.h"],
     visibility = ["//visibility:private"],
     deps = [
         "//base:port",
         "//base:scoped_handle",
+        "@com_google_absl//absl/strings",
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "process_watch_dog_test",
     size = "small",
     srcs = ["process_watch_dog_test.cc"],
     requires_full_emulation = False,
     deps = [
         ":process_watch_dog",
-        "//base",
         "//base:clock",
         "//base:logging",
         "//base:port",
-        "//base:process",
-        "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 

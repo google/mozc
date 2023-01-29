@@ -39,8 +39,8 @@
 
 #include "base/port.h"
 #include "absl/base/attributes.h"
-#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -256,8 +256,12 @@ class Util {
 
   // Generate a random sequence. It uses secure method if possible, or Random()
   // as a fallback method.
+  ABSL_DEPRECATED("Use the overload with absl::Span")
   static void GetRandomSequence(char *buf, size_t buf_size);
+  static void GetRandomSequence(absl::Span<char> buf);
+  ABSL_DEPRECATED("Use the overload with absl::Span")
   static void GetRandomAsciiSequence(char *buf, size_t buf_size);
+  static void GetRandomAsciiSequence(absl::Span<char> buf);
 
   // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
@@ -388,13 +392,6 @@ class Util {
 
   // Checks endian-ness at runtime.
   static bool IsLittleEndian();
-
-  // Converts `errno` to absl::StatusCode.
-  static absl::StatusCode ErrnoToCanonicalCode(int error_number);
-
-  // Converts `errno` to absl::Status.
-  static absl::Status ErrnoToCanonicalStatus(int error_number,
-                                             absl::string_view message);
 
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than

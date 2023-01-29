@@ -29,13 +29,12 @@
 
 #include "config/config_handler.h"
 
-#include <cstdint>
-
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
 
 #include <atomic>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -55,6 +54,8 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace config {
@@ -499,7 +500,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // 250 msec is good enough to crash the code if it is not guarded by
   // the lock, but feel free to change the duration.  It is basically an
   // arbitrary number.
-  constexpr uint32_t kTestDurationMSec = 250;  // 250 msec
+  constexpr auto kTestDuration = absl::Milliseconds(250);
   constexpr size_t kNumSetThread = 2;
   constexpr size_t kNumGetThread = 4;
   {
@@ -524,7 +525,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
           absl::StrFormat("GetConfigThread%d", static_cast<int>(i)));
     }
     // Wait for a while to see if everything goes well.
-    Util::Sleep(kTestDurationMSec);
+    absl::SleepFor(kTestDuration);
     // Destructors of |SetConfigThread| and |GetConfigThread| will take
     // care of their background threads (in a blocking way).
     set_threads.clear();

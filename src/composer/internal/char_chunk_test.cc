@@ -640,7 +640,7 @@ TEST(CharChunkTest, CaseSensitive) {
   EXPECT_TRUE(chunk.pending().empty());
 }
 
-TEST(CharChunkTest, TrimHeadSpecialKey) {
+TEST(CharChunkTest, TrimLeadingSpecialKey) {
   Table table;
   table.AddRule("ああ", "", "い");
   table.AddRule("いあ", "", "う");
@@ -712,6 +712,59 @@ TEST(CharChunkTest, TrimHeadSpecialKey) {
     EXPECT_EQ(chunk.pending(), "い");
     EXPECT_EQ(chunk.ambiguous(), "");
   }
+}
+
+TEST(CharChunkTest, LeadingSpecialKey) {
+  Table table;
+  table.AddRule("{!}あ", "い", "");
+
+  std::string input(table.ParseSpecialKey("{!}"));
+
+  CharChunk chunk(Transliterators::HIRAGANA, &table);
+  chunk.AddInput(&input);
+  EXPECT_EQ(input, "");
+  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{!}"));
+  EXPECT_EQ(chunk.conversion(), "");
+  EXPECT_EQ(chunk.pending(), table.ParseSpecialKey("{!}"));
+  EXPECT_EQ(chunk.ambiguous(), "");
+
+  input = "あ";
+  chunk.AddInput(&input);
+  EXPECT_EQ(input, "");
+  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{!}あ"));
+  EXPECT_EQ(chunk.conversion(), "い");
+  EXPECT_EQ(chunk.pending(), "");
+  EXPECT_EQ(chunk.ambiguous(), "");
+}
+
+TEST(CharChunkTest, LeadingSpecialKey2) {
+  Table table;
+  table.AddRule("{henkan}", "", "{r}");
+  table.AddRule("{r}j", "お", "");
+
+  size_t used_length = 0;
+  bool fixed = false;
+  table.LookUpPrefix(table.ParseSpecialKey("{r}j"), &used_length, &fixed);
+  EXPECT_EQ(used_length, 4);
+  EXPECT_TRUE(fixed);
+
+  std::string input(table.ParseSpecialKey("{henkan}"));
+
+  CharChunk chunk(Transliterators::HIRAGANA, &table);
+  chunk.AddInput(&input);
+  EXPECT_EQ(input, "");
+  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{henkan}"));
+  EXPECT_EQ(chunk.conversion(), "");
+  EXPECT_EQ(chunk.pending(), table.ParseSpecialKey("{r}"));
+  EXPECT_EQ(chunk.ambiguous(), "");
+
+  input = "j";
+  chunk.AddInput(&input);
+  EXPECT_EQ(input, "");
+  EXPECT_EQ(chunk.raw(), table.ParseSpecialKey("{henkan}j"));
+  EXPECT_EQ(chunk.conversion(), "お");
+  EXPECT_EQ(chunk.pending(), "");
+  EXPECT_EQ(chunk.ambiguous(), "");
 }
 
 TEST(CharChunkTest, AlphanumericOfSSH) {
@@ -1056,7 +1109,6 @@ TEST(CharChunkTest, AddInputCompositionWithConvertedChar) {
     EXPECT_EQ("", chunk.conversion());
     EXPECT_EQ("n", chunk.pending());
     EXPECT_EQ("a", input.raw());
-    EXPECT_FALSE(input.has_conversion());
   }
 }
 

@@ -29,19 +29,19 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
+    "mozc_cc_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
 # Dummy rule for header files.
-cc_library_mozc(
+mozc_cc_library(
     name = "protobuf",
     hdrs = ["protobuf.h"],
     deps = [],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "descriptor",
     hdrs = ["descriptor.h"],
     visibility = ["//:__subpackages__"],
@@ -51,7 +51,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "message",
     hdrs = ["message.h"],
     visibility = ["//:__subpackages__"],
@@ -61,7 +61,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "zero_copy_stream_impl",
     hdrs = ["zero_copy_stream_impl.h"],
     visibility = ["//:__subpackages__"],
@@ -71,7 +71,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "repeated_field",
     hdrs = ["repeated_field.h"],
     visibility = ["//:__subpackages__"],
@@ -81,7 +81,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "text_format",
     hdrs = ["text_format.h"],
     visibility = ["//:__subpackages__"],

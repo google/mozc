@@ -29,12 +29,12 @@
 
 load(
     "//:build_defs.bzl",
-    "macos_application_mozc",
-    "macos_bundle_mozc",
-    "objc_library_mozc",
-    "objc_test_mozc",
-    "py_binary_mozc",
-    "select_mozc",
+    "mozc_macos_application",
+    "mozc_macos_bundle",
+    "mozc_objc_library",
+    "mozc_objc_test",
+    "mozc_py_binary",
+    "mozc_select",
 )
 load(
     "//:config.bzl",
@@ -44,9 +44,9 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-macos_application_mozc(
+mozc_macos_application(
     name = "mozc_macos",
-    additional_contents = select_mozc(
+    additional_contents = mozc_select(
         default = {},
         macos = {
             "//renderer:mozc_renderer_macos": "Resources",
@@ -83,12 +83,12 @@ macos_application_mozc(
     deps = ["mozc_macos_main_lib"],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "common",
     hdrs = ["common.h"],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
     sdk_frameworks = ["InputMethodKit"],
@@ -107,7 +107,7 @@ objc_library_mozc(
     ],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "imk_controller",
     srcs = [
         "GoogleJapaneseInputController.mm",
@@ -146,7 +146,7 @@ objc_library_mozc(
     ],
 )
 
-objc_test_mozc(
+mozc_objc_test(
     name = "imk_controller_test",
     srcs = ["GoogleJapaneseInputController_test.mm"],
     proto_deps = ["//protocol:candidates_cc_proto"],
@@ -156,14 +156,14 @@ objc_test_mozc(
         ":keycode_map",
         "//base:logging",
         "//base:mac_util",
-        "//base:util",
         "//client:client_mock",
         "//renderer:renderer_interface",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
@@ -177,7 +177,7 @@ objc_library_mozc(
     ],
 )
 
-objc_test_mozc(
+mozc_objc_test(
     name = "imk_server_test",
     srcs = ["GoogleJapaneseInputServer_test.mm"],
     proto_deps = ["//protocol:commands_cc_proto"],
@@ -188,7 +188,7 @@ objc_test_mozc(
     ],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "keycode_map",
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
@@ -205,7 +205,7 @@ objc_library_mozc(
     ],
 )
 
-objc_test_mozc(
+mozc_objc_test(
     name = "keycode_map_test",
     srcs = ["KeyCodeMap_test.mm"],
     sdk_frameworks = [
@@ -217,7 +217,7 @@ objc_test_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "generate_mapping",
     srcs = ["generate_mapping.py"],
     test_lib = False,
@@ -251,7 +251,7 @@ genrule(
     tools = [":generate_mapping"],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "activate_pane_lib",
     srcs = ["ActivatePane/ActivatePane.mm"],
     hdrs = ["ActivatePane/ActivatePane.h"],
@@ -263,7 +263,7 @@ objc_library_mozc(
     tags = ["manual"],
 )
 
-macos_bundle_mozc(
+mozc_macos_bundle(
     name = "activate_pane",
     bundle_name = "ActivatePane",
     infoplists = ["ActivatePane/Info.plist"],
@@ -274,7 +274,7 @@ macos_bundle_mozc(
     deps = ["activate_pane_lib"],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "dev_confirm_pane_lib",
     srcs = ["DevConfirmPane/DevConfirmPane.mm"],
     hdrs = ["DevConfirmPane/DevConfirmPane.h"],
@@ -286,7 +286,7 @@ objc_library_mozc(
     tags = ["manual"],
 )
 
-macos_bundle_mozc(
+mozc_macos_bundle(
     name = "dev_confirm_pane",
     bundle_name = "DevConfirmPane",
     infoplists = ["DevConfirmPane/Info.plist"],
@@ -297,7 +297,7 @@ macos_bundle_mozc(
     deps = ["dev_confirm_pane_lib"],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "uninstaller_main_lib",
     srcs = [
         "Uninstaller/DialogsController.mm",
@@ -325,9 +325,9 @@ objc_library_mozc(
     ],
 )
 
-macos_application_mozc(
+mozc_macos_application(
     name = "uninstaller_macos",
-    bundle_name = "Uninstall" + select_mozc(
+    bundle_name = "Uninstall" + mozc_select(
         default = "GoogleJapaneseInput",
         oss = "Mozc",
     ),
@@ -373,7 +373,7 @@ genrule(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "zip_files",
     srcs = ["zip_files.py"],
     test_lib = False,
@@ -385,7 +385,7 @@ genrule(
     srcs = [
         ":tweak_preflight",
         ":tweak_postflight",
-    ] + select_mozc(
+    ] + mozc_select(
         # For both macos and oss_macos
         macos = [
             ":activate_pane",
@@ -393,7 +393,7 @@ genrule(
             ":mozc_macos",
             ":uninstaller_macos",
         ],
-    ) + select_mozc(
+    ) + mozc_select(
         # For oss_macos only
         oss_macos = [
             "//gui/config_dialog:config_dialog_macos",
@@ -409,7 +409,7 @@ genrule(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "tweak_installer_files",
     srcs = ["tweak_installer_files.py"],
     test_lib = False,
@@ -425,7 +425,7 @@ genrule(
     tools = [":tweak_installer_files"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "build_installer",
     srcs = ["build_installer.py"],
     test_lib = False,
@@ -437,7 +437,7 @@ AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
 
 genrule(
     name = "installer_oss_macos",
-    srcs = [":tweaked_installer_files"] + select_mozc(
+    srcs = [":tweaked_installer_files"] + mozc_select(
         oss_macos = [
             "installer/Mozc_template.pkgproj",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",

@@ -29,16 +29,16 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "spellchecker_service_interface",
     srcs = ["spellchecker_service_factory.cc"],
     hdrs = ["spellchecker_service_interface.h"],
@@ -50,7 +50,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "spellchecker_service_registration",
     srcs = ["spellchecker_service_registration.cc"],
     hdrs = ["spellchecker_service_interface.h"],
@@ -65,7 +65,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "spellchecker_service",
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
@@ -91,7 +91,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "spellchecker_service_main",
     srcs = ["spellchecker_service_main.cc"],
     deps = [
@@ -107,7 +107,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "spellchecker_service_test",
     size = "small",
     srcs = ["spellchecker_service_test.cc"],
@@ -125,7 +125,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "rulebased_filter",
     srcs = ["rulebased_filter.cc"],
     hdrs = ["rulebased_filter.h"],
@@ -146,7 +146,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "rulebased_filter_test",
     size = "small",
     srcs = ["rulebased_filter_test.cc"],

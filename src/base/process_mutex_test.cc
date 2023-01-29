@@ -39,11 +39,12 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -78,17 +79,17 @@ TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   if (pid == 0) {  // child process
     ProcessMutex m(kName);
     EXPECT_TRUE(m.Lock());
-    Util::Sleep(3000);
+    absl::SleepFor(absl::Seconds(3));
     EXPECT_TRUE(m.UnLock());
     ::exit(0);
   } else if (pid > 0) {  // parent process
     ProcessMutex m(kName);
-    Util::Sleep(1000);
+    absl::SleepFor(absl::Seconds(1));
 
     // kName should be locked by child
     EXPECT_FALSE(m.Lock());
 
-    Util::Sleep(5000);
+    absl::SleepFor(absl::Seconds(5));
 
     // child process already finished, so now we can lock
     EXPECT_TRUE(m.Lock());

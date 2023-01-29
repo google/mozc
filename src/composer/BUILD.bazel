@@ -29,16 +29,16 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "composer",
     srcs = ["composer.cc"],
     hdrs = ["composer.h"],
@@ -71,7 +71,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "composer_test",
     size = "small",
     srcs = ["composer_test.cc"],
@@ -97,7 +97,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "table",
     srcs = ["table.cc"],
     hdrs = ["table.h"],
@@ -110,7 +110,6 @@ cc_library_mozc(
         "//base:port",
         "//base:trie",
         "//base:util",
-        "//composer/internal:composition_input",
         "//composer/internal:typing_model",
         "//config:config_handler",
         "//data_manager:data_manager_interface",
@@ -122,7 +121,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "type_corrected_query",
     hdrs = ["type_corrected_query.h"],
     visibility = [
@@ -131,7 +130,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "composer_main",
     srcs = ["composer_main.cc"],
     deps = [
@@ -147,7 +146,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "table_test",
     size = "small",
     srcs = ["table_test.cc"],
@@ -163,7 +162,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "key_event_util",
     srcs = ["key_event_util.cc"],
     hdrs = ["key_event_util.h"],
@@ -175,7 +174,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "key_event_util_test",
     size = "small",
     srcs = ["key_event_util_test.cc"],
@@ -191,7 +190,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "key_parser",
     srcs = ["key_parser.cc"],
     hdrs = ["key_parser.h"],
@@ -205,7 +204,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "key_parser_test",
     size = "small",
     srcs = ["key_parser_test.cc"],

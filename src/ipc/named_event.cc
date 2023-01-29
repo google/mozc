@@ -29,10 +29,6 @@
 
 #include "ipc/named_event.h"
 
-#include <cstdint>
-
-#include "absl/strings/str_format.h"
-
 #ifdef OS_WIN
 #include <Sddl.h>
 #include <Windows.h>
@@ -46,6 +42,7 @@
 #endif  // OS_WIN
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 
@@ -58,6 +55,9 @@
 #ifdef OS_WIN
 #include "base/win_sandbox.h"
 #endif  // OS_WIN
+#include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -248,7 +248,7 @@ bool NamedEventNotifier::Notify() {
   return true;
 }
 
-#else  // OS_WIN
+#else   // OS_WIN
 
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), sem_(SEM_FAILED) {
@@ -299,7 +299,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
   constexpr int kWaitMsec = 200;
 
   while (inifinite || msec > 0) {
-    Util::Sleep(kWaitMsec);
+    absl::SleepFor(absl::Milliseconds(kWaitMsec));
 
     if (!IsProcessAlive(pid)) {
       return NamedEventListener::PROCESS_SIGNALED;

@@ -29,27 +29,29 @@
 
 #include "base/thread.h"
 
-#include "base/util.h"
 #include "testing/gunit.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
 
 class TestThread : public Thread {
  public:
-  explicit TestThread(int time) : time_(time), invoked_(false) {}
+  explicit TestThread(absl::Duration sleep_for)
+      : sleep_for_(sleep_for), invoked_(false) {}
   ~TestThread() override = default;
 
   void Run() override {
     invoked_ = true;
-    Util::Sleep(time_);
+    absl::SleepFor(sleep_for_);
   }
 
   bool invoked() const { return invoked_; }
   void clear_invoked() { invoked_ = false; }
 
  private:
-  int time_;
+  absl::Duration sleep_for_;
   bool invoked_;
 };
 
@@ -57,7 +59,7 @@ class TestThread : public Thread {
 
 TEST(ThreadTest, BasicThreadTest) {
   {
-    TestThread t(1000);
+    TestThread t(absl::Seconds(1));
     t.Start("BasicThreadTest");
     EXPECT_TRUE(t.IsRunning());
     t.Join();
@@ -66,29 +68,29 @@ TEST(ThreadTest, BasicThreadTest) {
   }
 
   {
-    TestThread t(1000);
+    TestThread t(absl::Seconds(1));
     t.clear_invoked();
     t.Start("BasicThreadTest");
 
-    Util::Sleep(3000);
+    absl::SleepFor(absl::Seconds(3));
     EXPECT_FALSE(t.IsRunning());
     EXPECT_TRUE(t.invoked());
     t.Join();
   }
 
   {
-    TestThread t(3000);
+    TestThread t(absl::Seconds(3));
     t.Start("BasicThreadTest");
-    Util::Sleep(1000);
+    absl::SleepFor(absl::Seconds(1));
     t.Terminate();
-    Util::Sleep(100);
+    absl::SleepFor(absl::Milliseconds(100));
     EXPECT_FALSE(t.IsRunning());
   }
 }
 
 TEST(ThreadTest, RestartTest) {
   {
-    TestThread t(1000);
+    TestThread t(absl::Seconds(1));
     t.clear_invoked();
     t.Start("RestartTest");
     EXPECT_TRUE(t.IsRunning());

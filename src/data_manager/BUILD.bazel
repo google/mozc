@@ -30,17 +30,17 @@
 load("//bazel:stubs.bzl", "bzl_library")
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
+    "mozc_select",
 )
 
 package(default_visibility = ["//visibility:public"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "data_manager_interface",
     hdrs = ["data_manager_interface.h"],
     deps = [
@@ -49,7 +49,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "data_manager",
     srcs = [
         "data_manager.cc",
@@ -72,7 +72,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "data_manager_test_base",
     testonly = True,
     srcs = [
@@ -101,7 +101,7 @@ cc_library_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_connection_data_lib",
     srcs = ["gen_connection_data.py"],
     deps = [
@@ -109,7 +109,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_connection_data",
     srcs = ["gen_connection_data.py"],
     deps = [
@@ -118,7 +118,7 @@ py_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "connection_file_reader",
     srcs = ["connection_file_reader.cc"],
     hdrs = ["connection_file_reader.h"],
@@ -144,7 +144,7 @@ cc_proto_library(
     deps = [":dataset_proto"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dataset_writer",
     srcs = ["dataset_writer.cc"],
     hdrs = ["dataset_writer.h"],
@@ -160,7 +160,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dataset_writer_test",
     srcs = ["dataset_writer_test.cc"],
     requires_full_emulation = False,
@@ -178,7 +178,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "dataset_writer_main",
     srcs = ["dataset_writer_main.cc"],
     deps = [
@@ -196,7 +196,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dataset_reader",
     srcs = ["dataset_reader.cc"],
     hdrs = ["dataset_reader.h"],
@@ -210,7 +210,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dataset_reader_test",
     srcs = ["dataset_reader_test.cc"],
     requires_full_emulation = False,
@@ -225,13 +225,13 @@ cc_test_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_data_version_lib",
     srcs = ["gen_data_version.py"],
     visibility = ["//visibility:private"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_data_version",
     srcs = ["gen_data_version.py"],
     visibility = [
@@ -241,7 +241,7 @@ py_binary_mozc(
     deps = [":gen_data_version_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "serialized_dictionary",
     srcs = ["serialized_dictionary.cc"],
     hdrs = ["serialized_dictionary.h"],
@@ -258,7 +258,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "serialized_dictionary_test",
     srcs = ["serialized_dictionary_test.cc"],
     requires_full_emulation = False,
@@ -271,11 +271,11 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "pos_list_provider",
     srcs = ["pos_list_provider.cc"],
     hdrs = ["pos_list_provider.h"],
-    textual_hdrs = select_mozc(
+    textual_hdrs = mozc_select(
         android = ["//data_manager/android:pos_list.h"],
         client = ["//data_manager/google:pos_list.h"],
         default = [],
@@ -292,10 +292,11 @@ cc_library_mozc(
 bzl_library(
     name = "mozc_data_bzl",
     srcs = ["mozc_data.bzl"],
+    test_size = "small",
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "emoji_data",
     hdrs = ["emoji_data.h"],
     deps = [

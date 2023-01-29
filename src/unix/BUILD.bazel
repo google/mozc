@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "py_binary_mozc", "select_mozc")
+load("//:build_defs.bzl", "mozc_py_binary", "mozc_select")
 load(
     "//:config.bzl",
     "EMACS_MOZC_CLIENT_DIR",
@@ -58,7 +58,7 @@ genrule(
         "//data/images/unix:48x48/hiragana.png",
         "//data/images/unix:48x48/katakana_full.png",
         "//data/images/unix:48x48/katakana_half.png",
-    ] + select_mozc(
+    ] + mozc_select(
         default = [
             "//data/images/unix:ui-dictionary.png",
             "//data/images/unix:ui-properties.png",
@@ -78,7 +78,7 @@ genrule(
     tools = [":build_icons"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "build_icons",
     srcs = ["build_icons.py"],
 )
@@ -109,7 +109,7 @@ genrule(
     tools = [":build_package"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "build_package",
     srcs = ["build_package.py"],
     deps = ["//build_tools:util"],

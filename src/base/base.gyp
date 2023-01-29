@@ -49,6 +49,7 @@
         'base_core',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',
+        'absl.gyp:absl_time',
       ],
       'conditions': [
         ['OS=="mac"', {
@@ -104,6 +105,7 @@
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',
+        'thread2.cc',
         'util.cc',
         'win_util.cc',
       ],
@@ -113,6 +115,7 @@
         'gen_character_set#host',
         'hash',
         'singleton',
+        'absl.gyp:absl_random',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',

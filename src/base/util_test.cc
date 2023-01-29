@@ -29,6 +29,9 @@
 
 #include "base/util.h"
 
+#include <algorithm>
+#include <array>
+#include <cctype>
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -42,16 +45,12 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_stream.h"
-#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "testing/mozctest.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -932,6 +931,7 @@ TEST(UtilTest, IsBracketPairText) {
   EXPECT_TRUE(Util::IsBracketPairText("［］"));
   EXPECT_TRUE(Util::IsBracketPairText("｛｝"));
   EXPECT_TRUE(Util::IsBracketPairText("｢｣"));
+  EXPECT_TRUE(Util::IsBracketPairText("〝〟"));
 
   // Open bracket and close brakcet don't match.
   EXPECT_FALSE(Util::IsBracketPairText("(]"));
@@ -1742,6 +1742,30 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
     uint64_t v;
     EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }
+}
+
+TEST(UtilTest, GetRandomSequence) {
+  Util::GetRandomSequence({});
+
+  // Sufficiently large so it's highly unlikely to have only one value.
+  std::array<char, 256> buf = {};
+  Util::GetRandomSequence(absl::MakeSpan(buf));
+  const auto first = buf[0];
+  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
+                           [first](char c) { return c != first; }));
+}
+
+TEST(UtilTest, GetRandomAsciiSequence) {
+  Util::GetRandomAsciiSequence({});
+
+  // Sufficiently large so it's highly unlikely to have only one value.
+  std::array<char, 1024> buf = {};
+  Util::GetRandomAsciiSequence(absl::MakeSpan(buf));
+  const auto first = buf[0];
+  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
+                           [first](char c) { return c != first; }));
+  EXPECT_TRUE(std::all_of(buf.begin(), buf.end(),
+                          [](char c) -> bool { return isprint(c); }));
 }
 
 }  // namespace mozc

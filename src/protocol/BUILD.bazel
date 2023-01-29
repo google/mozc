@@ -33,36 +33,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_proto_library(
-    name = "user_dictionary_storage_cc_proto",
-    deps = [":user_dictionary_storage_proto"],
-)
-
-cc_proto_library(
-    name = "candidates_cc_proto",
-    deps = [":candidates_proto"],
-)
-
-cc_proto_library(
-    name = "config_cc_proto",
-    deps = [":config_proto"],
-)
-
-cc_proto_library(
-    name = "engine_builder_cc_proto",
-    deps = [":engine_builder_proto"],
-)
-
-cc_proto_library(
-    name = "commands_cc_proto",
-    deps = [":commands_proto"],
-)
-
-cc_proto_library(
-    name = "state_cc_proto",
-    deps = ["state_proto"],
-)
-
 proto_library(
     name = "commands_proto",
     srcs = [
@@ -74,6 +44,11 @@ proto_library(
         ":engine_builder_proto",
         ":user_dictionary_storage_proto",
     ],
+)
+
+cc_proto_library(
+    name = "commands_cc_proto",
+    deps = [":commands_proto"],
 )
 
 jspb_proto_library(
@@ -121,6 +96,11 @@ proto_library(
     srcs = ["config.proto"],
 )
 
+cc_proto_library(
+    name = "config_cc_proto",
+    deps = [":config_proto"],
+)
+
 jspb_proto_library(
     name = "config_jspb_proto",
     visibility = [],
@@ -149,6 +129,11 @@ proto_library(
     ],
 )
 
+cc_proto_library(
+    name = "candidates_cc_proto",
+    deps = [":candidates_proto"],
+)
+
 jspb_proto_library(
     name = "candidates_jspb_proto",
     visibility = [],
@@ -165,9 +150,19 @@ proto_library(
     ],
 )
 
+cc_proto_library(
+    name = "state_cc_proto",
+    deps = ["state_proto"],
+)
+
 proto_library(
     name = "user_dictionary_storage_proto",
     srcs = ["user_dictionary_storage.proto"],
+)
+
+cc_proto_library(
+    name = "user_dictionary_storage_cc_proto",
+    deps = [":user_dictionary_storage_proto"],
 )
 
 jspb_proto_library(
@@ -191,4 +186,9 @@ proto_library(
     name = "engine_builder_proto",
     srcs = ["engine_builder.proto"],
     visibility = ["//visibility:private"],
+)
+
+cc_proto_library(
+    name = "engine_builder_cc_proto",
+    deps = [":engine_builder_proto"],
 )

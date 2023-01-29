@@ -33,6 +33,7 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
+#include <atltypes.h>
 #include <d2d1.h>
 #include <dwrite.h>
 #include <objbase.h>
@@ -56,14 +57,11 @@ using WTL::CDCHandle;
 using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 
 namespace {
 
-WTL::CRect ToCRect(const Rect &rect) {
-  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+CRect ToCRect(const Rect &rect) {
+  return CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
 }
 
 COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {

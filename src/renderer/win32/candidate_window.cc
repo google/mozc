@@ -54,9 +54,6 @@ using WTL::CDCHandle;
 using WTL::CMemoryDC;
 using WTL::CPaintDC;
 using WTL::CPenHandle;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 
 namespace {
 
@@ -98,8 +95,8 @@ const COLORREF kFooterBottomColor = RGB(0xee, 0xee, 0xee);
 // ------------------------------------------------------------------------
 // Utility functions
 // ------------------------------------------------------------------------
-WTL::CRect ToCRect(const Rect &rect) {
-  return WTL::CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
+CRect ToCRect(const Rect &rect) {
+  return CRect(rect.Left(), rect.Top(), rect.Right(), rect.Bottom());
 }
 
 // Returns the smallest index of the given candidate list which satisfies
@@ -307,7 +304,7 @@ void CandidateWindow::OnGetMinMaxInfo(MINMAXINFO *min_max_info) {
   SetMsgHandled(TRUE);
 }
 
-void CandidateWindow::HandleMouseEvent(UINT nFlags, const WTL::CPoint &point,
+void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint &point,
                                        bool close_candidatewindow) {
   if (send_command_interface_ == nullptr) {
     LOG(ERROR) << "send_command_interface_ is nullptr";
@@ -344,7 +341,7 @@ void CandidateWindow::OnLButtonUp(UINT nFlags, CPoint point) {
   HandleMouseEvent(nFlags, point, true);
 }
 
-void CandidateWindow::OnMouseMove(UINT nFlags, WTL::CPoint point) {
+void CandidateWindow::OnMouseMove(UINT nFlags, CPoint point) {
   // Window manager sometimes generates WM_MOUSEMOVE message when the contents
   // under the mouse cursor has been changed (e.g. the window is moved) so that
   // the mouse handler can change its cursor image based on the contents to

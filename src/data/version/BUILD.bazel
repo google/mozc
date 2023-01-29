@@ -46,6 +46,7 @@ exports_files(
 bzl_library(
     name = "mozc_version_template_bzl",
     srcs = ["mozc_version_template.bzl"],
+    test_size = "small",
     visibility = ["//visibility:private"],
 )
 

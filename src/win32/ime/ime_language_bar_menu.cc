@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
@@ -57,7 +58,6 @@ namespace {
 using ::WTL::CBitmap;
 using ::WTL::CDC;
 using ::WTL::CIcon;
-using ::WTL::CSize;
 
 using ::mozc::WinUtil;
 using ::mozc::win32::TextIcon;

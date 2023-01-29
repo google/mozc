@@ -29,14 +29,14 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
+    "mozc_cc_library",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "conversion_request",
     srcs = ["conversion_request.cc"],
     hdrs = ["conversion_request.h"],

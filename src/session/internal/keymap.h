@@ -68,25 +68,18 @@ class KeyMap : public KeyMapInterface<typename T::Commands> {
   KeyToCommandMap keymap_;
 };
 
-// A manager of key mapping rule for a SessionKeymap.
-// When running as a decoder, an instance is always tied to
-// an immutable `SessionKeymap`, which is set by the constructors.
+// A manager of key mapping rule for a Config.
+// The instance is created based on a Config through the constructor,
+// and the instance is immutable (If the config is updated after the instance
+// creation, this instance is unchanged).
 class KeyMapManager {
  public:
-  // Default ctor for GUI config editor. keymap is NONE.
+  // Default ctor. keymap is NONE.
   KeyMapManager();
-  // Decoder should explicitly set the keymap.
-  explicit KeyMapManager(config::Config::SessionKeymap keymap);
+  explicit KeyMapManager(const config::Config &config);
   KeyMapManager(const KeyMapManager &) = delete;
   KeyMapManager &operator=(const KeyMapManager &) = delete;
   ~KeyMapManager();
-
-  config::Config::SessionKeymap GetKeymap() const { return keymap_; }
-
-  // Reloads the key map by using given configuration.
-  // `keymap_` is immutable so `config.session_keymap` must be identical to it.
-  // Right now `config.custom_keymap_table` is the only reloaded content.
-  bool ReloadConfig(const config::Config &config);
 
   bool GetCommandDirect(const commands::KeyEvent &key_event,
                         DirectInputState::Commands *command) const;
@@ -138,6 +131,11 @@ class KeyMapManager {
   // Return the file name bound with the keymap enum.
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
 
+  // Returns true if both `new_config` and `old_config`
+  // can use the same KeyMapManager.
+  static bool IsSameKeyMapManagerApplicable(const config::Config &old_config,
+                                            const config::Config &new_config);
+
  private:
   friend class KeyMapTest;
   FRIEND_TEST(KeyMapTest, AddRule);
@@ -154,6 +152,11 @@ class KeyMapManager {
   bool LoadStream(std::istream *ifs);
   bool LoadStreamWithErrors(std::istream *ifs,
                             std::vector<std::string> *errors);
+  // Applies "primary" SessionKeymap, like MSIME or KOTOERI.
+  // TODO(matsuzakit): Add ApplyOverlaySessionKeyMap, which is for
+  // overlay/additional keymaps.
+  bool ApplyPrimarySessionKeymap(config::Config::SessionKeymap keymap,
+                                 const std::string &custom_keymap_table);
 
   // Add a command bound with state and key_event.
   bool AddCommand(const std::string &state_name,
@@ -179,8 +182,6 @@ class KeyMapManager {
 
   static const bool kInputModeXCommandSupported;
 
-  // The SessionKeymap which this instance represents.
-  const config::Config::SessionKeymap keymap_;
   std::map<std::string, DirectInputState::Commands> command_direct_map_;
   std::map<std::string, PrecompositionState::Commands>
       command_precomposition_map_;

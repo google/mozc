@@ -33,27 +33,31 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "composer/key_parser.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {
 
-bool CompositionInput::Init(const commands::KeyEvent &key_event,
-                            bool use_typing_correction, bool is_new_input) {
-  std::string raw;
+bool CompositionInput::Init(const Table &table,
+                            const commands::KeyEvent &key_event,
+                            bool is_new_input) {
   if (key_event.has_key_code()) {
-    Util::Ucs4ToUtf8(key_event.key_code(), &raw);
+    Util::Ucs4ToUtf8(key_event.key_code(), &raw_);
   } else if (key_event.has_key_string()) {
-    raw = key_event.key_string();
+    raw_ = key_event.key_string();
+  } else if (key_event.has_special_key()) {
+    raw_ = table.ParseSpecialKey(
+        "{" + KeyParser::GetSpecialKeyString(key_event.special_key()) + "}");
   } else {
     LOG(WARNING) << "input is empty";
     return false;
   }
-  set_raw(raw);
 
   if (key_event.has_key_string()) {
     set_conversion(key_event.key_string());
   }
-  if (use_typing_correction) {
+  if (!key_event.probable_key_event().empty()) {
     set_probable_key_events(key_event.probable_key_event());
   }
   set_is_new_input(is_new_input);
@@ -76,37 +80,24 @@ void CompositionInput::InitFromRawAndConv(const std::string &raw,
 void CompositionInput::Clear() {
   raw_.clear();
   conversion_.clear();
-  has_conversion_ = false;
   probable_key_events_.Clear();
   is_new_input_ = false;
 }
 
 bool CompositionInput::Empty() const {
-  if (has_conversion()) {
-    return raw().empty() && conversion().empty();
-  } else {
-    return raw().empty();
-  }
+  return raw().empty() && conversion().empty();
 }
 
 const std::string &CompositionInput::conversion() const {
-  if (has_conversion_) {
-    return conversion_;
-  } else {
-    LOG(WARNING) << "conversion is not set.";
-    static const std::string *kEmptyString = new std::string();
-    return *kEmptyString;
-  }
+  return conversion_;
 }
 
 void CompositionInput::clear_conversion() {
-  has_conversion_ = false;
   conversion_.clear();
 }
 
 void CompositionInput::set_conversion(const std::string &conversion) {
   conversion_ = conversion;
-  has_conversion_ = true;
 }
 
 }  // namespace composer

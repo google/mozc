@@ -39,7 +39,6 @@
 #include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/password_manager.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -64,6 +63,8 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -486,7 +487,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 
     // sync
     predictor->Sync();
-    Util::Sleep(500);
+    absl::SleepFor(absl::Milliseconds(500));
   }
 
   // reload
@@ -1122,13 +1123,13 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     SetUpInputForConversionWithHistory("きょうと", "たろうは", "太郎は",
                                        composer_.get(), &segments);
     AddCandidate(1, "京都", &segments);
-    Util::Sleep(2000);
+    absl::SleepFor(absl::Seconds(2));
     predictor->Finish(*convreq_, &segments);
 
     SetUpInputForConversionWithHistory("おおさか", "たろうは", "太郎は",
                                        composer_.get(), &segments);
     AddCandidate(1, "大阪", &segments);
-    Util::Sleep(2000);
+    absl::SleepFor(absl::Seconds(2));
     predictor->Finish(*convreq_, &segments);
 
     // Zero query suggestion is disabled.
@@ -1254,7 +1255,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   SetUpInputForSuggestion("ほんをよま", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  Util::Sleep(1000);
+  absl::SleepFor(absl::Seconds(1));
 
   // Add new entry "たろうはよしこに/太郎は良子に"
   segments.Clear();
@@ -1330,7 +1331,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   SetUpInputForSuggestion("ほんをよま", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  Util::Sleep(1000);
+  absl::SleepFor(absl::Seconds(1));
 
   // Add new entry "たろうはよしこに/太郎は良子に"
   segments.Clear();
@@ -1373,7 +1374,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
 
   segments.Clear();
 
-  Util::Sleep(1000);
+  absl::SleepFor(absl::Seconds(1));
 
   SetUpInputForConversion("らーめんは", composer_.get(), &segments);
   AddCandidate(0, "ラーメンは", &segments);
@@ -1479,7 +1480,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
 
   predictor->Finish(*convreq_, &segments);
 
-  Util::Sleep(2000);
+  absl::SleepFor(absl::Seconds(2));
 
   segments.Clear();
 

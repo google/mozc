@@ -52,9 +52,6 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 
-using WTL::CPoint;
-using WTL::CRect;
-
 namespace {
 
 constexpr uint32_t kHideWindowDelay = 500;  // msec

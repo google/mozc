@@ -29,8 +29,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "select_mozc",
+    "mozc_cc_library",
+    "mozc_select",
 )
 
 package(
@@ -63,12 +63,12 @@ genrule(
     tools = ["//build_tools:embed_pathname"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozc_data_dir_header",
     hdrs = ["mozc_data_dir.h"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gunit_main_internal",
     testonly = True,
     srcs = ["gtest_main.cc"],
@@ -78,14 +78,14 @@ cc_library_mozc(
         ":gunit",
         "//base",
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
+    ] + mozc_select(
         client = ["//base:init_mozc"],
         linux = [],
         oss = ["//base:init_mozc"],
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gunit_main",
     testonly = True,
     hdrs = [
@@ -97,7 +97,7 @@ cc_library_mozc(
         ":gunit",
         ":googletest",
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
+    ] + mozc_select(
         default = ["//testing/base/public:gunit_main"],
         linux = ["//testing/base/public:gunit_main"],
         macos = [
@@ -109,12 +109,12 @@ cc_library_mozc(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gunit_prod",
     hdrs = ["gunit_prod.h"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "testing_util",
     testonly = True,
     srcs = ["testing_util.cc"],
@@ -130,7 +130,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gunit",
     testonly = True,
     srcs = [],
@@ -144,10 +144,10 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "googletest",
     testonly = True,
-    srcs = select_mozc(
+    srcs = mozc_select(
         client = ["googletest.cc"],
         linux = [],
         oss = ["googletest.cc"],
@@ -155,7 +155,7 @@ cc_library_mozc(
     hdrs = [
         "googletest.h",
     ],
-    deps = select_mozc(
+    deps = mozc_select(
         client = [
             ":mozc_data_dir_header",
             "//base",
@@ -179,7 +179,7 @@ cc_library_mozc(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mozctest",
     testonly = True,
     srcs = ["mozctest.cc"],

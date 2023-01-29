@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
@@ -71,8 +72,6 @@ using ::mozc::renderer::win32::internal::TextLabel;
 using ::WTL::CBitmap;
 using ::WTL::CDC;
 using ::WTL::CLogFont;
-using ::WTL::CPoint;
-using ::WTL::CSize;
 
 namespace mozc {
 namespace renderer {

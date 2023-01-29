@@ -57,7 +57,6 @@
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap-inl.h"
 #include "session/internal/keymap.h"
-#include "session/internal/keymap_factory.h"
 #include "session/internal/session_output.h"
 #include "session/session_converter.h"
 #include "session/session_usage_stats_util.h"
@@ -234,6 +233,7 @@ void Session::InitContext(ImeContext *context) const {
   context->mutable_client_context()->Clear();
 
   context->SetConfig(&context->GetConfig());
+  context->SetKeyMapManager(&context->GetKeyMapManager());
 
 #if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_LINUX) || \
     defined(OS_WASM)
@@ -420,8 +420,7 @@ bool Session::TestSendKey(commands::Command *command) {
   const ImeContext::State state =
       GetEffectiveStateForTestSendKey(key, context_->state());
 
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
 
   // Direct input
   if (state == ImeContext::DIRECT) {
@@ -540,8 +539,7 @@ bool Session::SendKey(commands::Command *command) {
 
 bool Session::SendKeyDirectInputState(commands::Command *command) {
   keymap::DirectInputState::Commands key_command;
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   if (!keymap->GetCommandDirect(command->input().key(), &key_command)) {
     return EchoBackAndClearUndoContext(command);
   }
@@ -572,8 +570,7 @@ bool Session::SendKeyDirectInputState(commands::Command *command) {
 
 bool Session::SendKeyPrecompositionState(commands::Command *command) {
   keymap::PrecompositionState::Commands key_command;
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
       context_->converter().CheckState(SessionConverterInterface::SUGGESTION)
           ? keymap->GetCommandZeroQuerySuggestion(command->input().key(),
@@ -666,8 +663,7 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
 
 bool Session::SendKeyCompositionState(commands::Command *command) {
   keymap::CompositionState::Commands key_command;
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
       context_->converter().CheckState(SessionConverterInterface::SUGGESTION)
           ? keymap->GetCommandSuggestion(command->input().key(), &key_command)
@@ -809,8 +805,7 @@ bool Session::SendKeyCompositionState(commands::Command *command) {
 
 bool Session::SendKeyConversionState(commands::Command *command) {
   keymap::ConversionState::Commands key_command;
-  const keymap::KeyMapManager *keymap =
-      keymap::KeyMapFactory::GetKeyMapManager(context_->keymap());
+  const keymap::KeyMapManager *keymap = &context_->GetKeyMapManager();
   const bool result =
       context_->converter().CheckState(SessionConverterInterface::PREDICTION)
           ? keymap->GetCommandPrediction(command->input().key(), &key_command)
@@ -1152,6 +1147,11 @@ void Session::SetConfig(const config::Config *config) {
 void Session::SetRequest(const commands::Request *request) {
   ClearUndoContext();
   context_->SetRequest(request);
+}
+
+void Session::SetKeyMapManager(
+    const mozc::keymap::KeyMapManager *key_map_manager) {
+  context_->SetKeyMapManager(key_map_manager);
 }
 
 bool Session::GetStatus(commands::Command *command) {

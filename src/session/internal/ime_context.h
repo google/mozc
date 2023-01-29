@@ -42,6 +42,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/key_event_transformer.h"
+#include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
@@ -92,16 +93,14 @@ class ImeContext final {
   State state() const { return state_; }
   void set_state(State state) { state_ = state; }
 
-  // Returns the current keymap.  This might be temporary and different from
-  // the keymap in the config.
-  config::Config::SessionKeymap keymap() const { return keymap_; }
-  void set_keymap(config::Config::SessionKeymap keymap) { keymap_ = keymap; }
-
   void SetRequest(const commands::Request *request);
   const commands::Request &GetRequest() const;
 
   void SetConfig(const config::Config *config);
   const config::Config &GetConfig() const;
+
+  void SetKeyMapManager(const keymap::KeyMapManager *key_map_manager);
+  const keymap::KeyMapManager &GetKeyMapManager() const;
 
   const commands::Capability &client_capability() const {
     return client_capability_;
@@ -145,9 +144,9 @@ class ImeContext final {
 
   const commands::Request *request_;
   const config::Config *config_;
+  const keymap::KeyMapManager *key_map_manager_;
 
   State state_ = NONE;
-  config::Config::SessionKeymap keymap_;
   commands::Capability client_capability_;
   commands::ApplicationInfo application_info_;
   commands::Context client_context_;

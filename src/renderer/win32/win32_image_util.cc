@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
@@ -63,9 +64,6 @@ using ::WTL::CDC;
 using ::WTL::CFont;
 using ::WTL::CFontHandle;
 using ::WTL::CLogFont;
-using ::WTL::CPoint;
-using ::WTL::CRect;
-using ::WTL::CSize;
 
 Rect GetBalloonBoundingRect(
     double left, double top, double width, double height,

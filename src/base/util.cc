@@ -29,9 +29,6 @@
 
 #include "base/util.h"
 
-#include <cerrno>
-#include <cstdint>
-
 #ifdef OS_WIN
 // clang-format off
 #include <Windows.h>
@@ -53,7 +50,9 @@
 #endif  // !OS_WIN
 
 #include <algorithm>
+#include <cerrno>
 #include <cstdarg>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -70,11 +69,13 @@
 #include "base/port.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
+#include "absl/random/random.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -859,63 +860,30 @@ bool Util::ChopReturns(std::string *line) {
   return false;
 }
 
-namespace {
-bool GetSecureRandomSequence(char *buf, size_t buf_size) {
-  memset(buf, '\0', buf_size);
-#ifdef OS_WIN
-  HCRYPTPROV hprov;
-  if (!::CryptAcquireContext(&hprov, nullptr, nullptr, PROV_RSA_FULL,
-                             CRYPT_VERIFYCONTEXT)) {
-    return false;
-  }
-  if (!::CryptGenRandom(hprov, static_cast<DWORD>(buf_size),
-                        reinterpret_cast<BYTE *>(buf))) {
-    ::CryptReleaseContext(hprov, 0);
-    return false;
-  }
-  ::CryptReleaseContext(hprov, 0);
-  return true;
-#endif  // OS_WIN
-
-#if defined(OS_CHROMEOS)
-  // Accessing "/dev/urandom" is not allowed in "ime" sandbox. Returns false to
-  // use the self-implemented random number instead.
-  return false;
-#endif  // OS_CHROMEOS
-
-  // Use non blocking interface on Linux.
-  // Mac also have /dev/urandom (although it's identical with /dev/random)
-  std::ifstream ifs("/dev/urandom", std::ios::binary);
-  if (!ifs) {
-    return false;
-  }
-  ifs.read(buf, buf_size);
-  return true;
-}
-}  // namespace
-
 void Util::GetRandomSequence(char *buf, size_t buf_size) {
-  if (GetSecureRandomSequence(buf, buf_size)) {
-    return;
-  }
-  for (size_t i = 0; i < buf_size; ++i) {
-    buf[i] = static_cast<char>(Util::Random(256));
-  }
+  GetRandomSequence(absl::MakeSpan(buf, buf_size));
+}
+
+void Util::GetRandomSequence(absl::Span<char> buf) {
+  absl::BitGen gen;
+  std::generate(buf.begin(), buf.end(), [&]() -> char {
+    return static_cast<char>(absl::Uniform<unsigned char>(gen));
+  });
 }
 
 void Util::GetRandomAsciiSequence(char *buf, size_t buf_size) {
-  // We use this map to convert a random byte value to an ascii character.
-  // Its size happens to be 64, which is just one fourth of the number of
-  // values that can be represented by a single byte value. This accidental
-  // coincidence makes implementation of the method quite simple.
+  GetRandomAsciiSequence(absl::MakeSpan(buf, buf_size));
+}
+
+void Util::GetRandomAsciiSequence(absl::Span<char> buf) {
   constexpr char kCharMap[] =
       "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
-  GetRandomSequence(buf, buf_size);
-  for (size_t i = 0; i < buf_size; ++i) {
-    // The size of kCharMap is just one fourth of 256. So we don't need to
-    // care if probability distribution over the characters is biased.
-    buf[i] = kCharMap[static_cast<unsigned char>(buf[i]) % 64];
-  }
+  absl::BitGen gen;
+  std::generate(buf.begin(), buf.end(), [&]() -> char {
+    // std::size includes the last null character so we need size - 1.
+    const size_t char_count = std::size(kCharMap) - 1;
+    return kCharMap[absl::Uniform<size_t>(gen, 0, char_count)];
+  });
 }
 
 int Util::Random(int size) {
@@ -1014,7 +982,7 @@ bool Util::IsBracketPairText(absl::string_view input) {
       *new absl::flat_hash_set<absl::string_view>{
           "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
           "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
-          "〚〛", "（）", "［］", "｛｝", "｢｣",
+          "〚〛", "（）", "［］", "｛｝", "｢｣", "〝〟",
       };
   return kBracketPairText.contains(input);
 }
@@ -1509,24 +1477,4 @@ bool Util::IsAcceptableCharacterAsCandidate(char32_t letter) {
   return true;
 }
 
-absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
-  switch (error_number) {
-    case 0:
-      return absl::StatusCode::kOk;
-    case EACCES:
-      return absl::StatusCode::kPermissionDenied;
-    case ENOENT:
-      return absl::StatusCode::kNotFound;
-    case EEXIST:
-      return absl::StatusCode::kAlreadyExists;
-    default:
-      return absl::StatusCode::kUnknown;
-  }
-}
-
-absl::Status Util::ErrnoToCanonicalStatus(int error_number,
-                                          absl::string_view message) {
-  return absl::Status(ErrnoToCanonicalCode(error_number),
-                      absl::StrCat(message, ": errno=", error_number));
-}
 }  // namespace mozc

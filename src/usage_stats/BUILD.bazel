@@ -39,6 +39,12 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
+proto_library(
+    name = "usage_stats_proto",
+    srcs = ["usage_stats.proto"],
+    visibility = ["//visibility:private"],
+)
+
 cc_proto_library(
     name = "usage_stats_cc_proto",
     visibility = [
@@ -46,12 +52,6 @@ cc_proto_library(
         "//session:__pkg__",
     ],
     deps = [":usage_stats_proto"],
-)
-
-proto_library(
-    name = "usage_stats_proto",
-    srcs = ["usage_stats.proto"],
-    visibility = ["//visibility:private"],
 )
 
 mozc_cc_library(

@@ -447,23 +447,22 @@ commands::Request GetMobileRequest() {
 // Makes sure that the results are not changed by experiment params.
 INSTANTIATE_TEST_SUITE_P(
     TestForExperimentParams, SessionHandlerScenarioTestForRequest,
-    ::testing::Combine(::testing::ValuesIn(kScenariosForExperimentParams),
-                       ::testing::Values(
-                           GetMobileRequest(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_new_spatial_scoring(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             // set false, beccause default is true.
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_environmental_filter_rewriter(
-                                     false);
-                             return request;
-                           }())));
+    ::testing::Combine(
+        ::testing::ValuesIn(kScenariosForExperimentParams),
+        ::testing::Values(
+            GetMobileRequest(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_new_spatial_scoring(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_use_actual_converter_for_realtime_conversion(true);
+              return request;
+            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.

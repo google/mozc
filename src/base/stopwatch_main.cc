@@ -34,17 +34,18 @@
 
 #include "base/init_mozc.h"
 #include "base/stopwatch.h"
-#include "base/util.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
-ABSL_FLAG(int32_t, sleep_time, 1000, "sleep time");
+ABSL_FLAG(int32_t, sleep_time, 1000, "sleep time (msec)");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::Stopwatch stopwatch;
   stopwatch.Start();
-  mozc::Util::Sleep(absl::GetFlag(FLAGS_sleep_time));
+  absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_sleep_time)));
   stopwatch.Stop();
   std::cout << stopwatch.GetElapsedMicroseconds() << std::endl;
 

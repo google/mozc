@@ -29,19 +29,19 @@
 
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "macos_qt_application_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
-    "qt_uic_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_macos_qt_application",
+    "mozc_qt_moc",
+    "mozc_qt_rcc",
+    "mozc_qt_uic",
 )
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_dictionary_content_table_widget",
     srcs = [
         "dictionary_content_table_widget.h",
@@ -49,7 +49,7 @@ qt_moc_mozc(
     outs = ["moc_dictionary_content_table_widget.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_dictionary_tool",
     srcs = [
         "dictionary_tool.h",
@@ -57,7 +57,7 @@ qt_moc_mozc(
     outs = ["moc_dictionary_tool.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_find_dialog",
     srcs = [
         "find_dialog.h",
@@ -65,7 +65,7 @@ qt_moc_mozc(
     outs = ["moc_find_dialog.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_import_dialog",
     srcs = [
         "import_dialog.h",
@@ -73,7 +73,7 @@ qt_moc_mozc(
     outs = ["moc_import_dialog.cc"],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_zero_width_splitter",
     srcs = [
         "zero_width_splitter.h",
@@ -81,7 +81,7 @@ qt_moc_mozc(
     outs = ["moc_zero_width_splitter.cc"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_dictionary_tool",
     srcs = [
         "dictionary_tool.ui",
@@ -89,7 +89,7 @@ qt_uic_mozc(
     outs = ["ui_dictionary_tool.h"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_find_dialog",
     srcs = [
         "find_dialog.ui",
@@ -97,7 +97,7 @@ qt_uic_mozc(
     outs = ["ui_find_dialog.h"],
 )
 
-qt_uic_mozc(
+mozc_qt_uic(
     name = "uic_import_dialog",
     srcs = [
         "import_dialog.ui",
@@ -105,7 +105,7 @@ qt_uic_mozc(
     outs = ["ui_import_dialog.h"],
 )
 
-qt_rcc_mozc(
+mozc_qt_rcc(
     name = "qrc_dictionary_tool",
     srcs = [
         "dictionary_tool_en.qm",
@@ -118,7 +118,7 @@ qt_rcc_mozc(
     qrc_name = "qrc_dictionary_tool",
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "dictionary_tool",
     srcs = [
         "dictionary_content_table_widget.cc",
@@ -174,7 +174,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "dictionary_tool_main_lib",
     srcs = ["dictionary_tool_main.cc"],
     deps = [
@@ -185,12 +185,12 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "dictionary_tool_main",
     deps = [":dictionary_tool_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "dictionary_tool_macos",
     bundle_name = "DictionaryTool",
     deps = [":dictionary_tool_main_lib"],

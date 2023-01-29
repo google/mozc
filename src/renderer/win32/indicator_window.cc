@@ -34,6 +34,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlwin.h>
 #include <atlapp.h>
 #include <atlcrack.h>
@@ -63,8 +64,6 @@ using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
 using WTL::CLogFont;
-using WTL::CPoint;
-using WTL::CSize;
 
 using ::mozc::commands::Status;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;

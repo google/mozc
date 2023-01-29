@@ -29,18 +29,18 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_select",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "client_interface",
     hdrs = ["client_interface.h"],
     deps = [
@@ -50,7 +50,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "client",
     srcs = [
         "client.cc",
@@ -59,7 +59,7 @@ cc_library_mozc(
     hdrs = [
         "client.h",
     ],
-    local_defines = select_mozc(
+    local_defines = mozc_select(
         linux = ["MOZC_USE_SVS_JAPANESE"],
         oss = ["MOZC_USE_SVS_JAPANESE"],
     ),
@@ -83,7 +83,8 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
         "@com_google_absl//absl/base:core_headers",
-    ] + select_mozc(
+        "@com_google_absl//absl/time",
+    ] + mozc_select(
         ios = [
             "//base:mac_process",
             "//base:mac_util",
@@ -91,7 +92,7 @@ cc_library_mozc(
     ),
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "client_test",
     size = "small",
     srcs = ["client_test.cc"],
@@ -112,7 +113,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "client_mock",
     testonly = True,
     srcs = ["client_mock.cc"],
@@ -127,7 +128,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "server_launcher_main",
     srcs = ["server_launcher_main.cc"],
     deps = [
@@ -140,7 +141,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "client_stress_test_main",
     srcs = ["client_stress_test_main.cc"],
     deps = [
@@ -150,20 +151,19 @@ cc_binary_mozc(
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//session:random_keyevents_generator",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "client_scenario_test_main",
     srcs = ["client_scenario_test_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
@@ -178,10 +178,11 @@ cc_binary_mozc(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "client_performance_test_main",
     srcs = ["client_performance_test_main.cc"],
     deps = [
@@ -204,7 +205,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "ping_server_main",
     srcs = ["ping_server_main.cc"],
     deps = [
@@ -216,7 +217,7 @@ cc_binary_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_client_quality_test_data",
     srcs = ["gen_client_quality_test_data.py"],
 )
@@ -231,7 +232,7 @@ genrule(
     tools = [":gen_client_quality_test_data"],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "client_quality_test_main",
     srcs = [
         "client_quality_test_main.cc",

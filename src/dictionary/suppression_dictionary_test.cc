@@ -34,9 +34,10 @@
 
 #include "base/logging.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace dictionary {
@@ -116,12 +117,12 @@ class DictionaryLoaderThread : public Thread {
       const std::string value = "value" + std::to_string(i);
       EXPECT_TRUE(dic_->AddEntry(key, value));
 #ifdef OS_IOS
-      // Sleep only for 1 msec. On iOS, Util::Sleep takes a very longer time
+      // Sleep only for 1 msec. On iOS, sleep takes a very longer time
       // like 30 times compaired with MacOS. This should be a temporary
       // solution.
-      Util::Sleep(1);
-#else  // OS_IOS
-      Util::Sleep(5);
+      absl::SleepFor(absl::Milliseconds(1));
+#else   // OS_IOS
+      absl::SleepFor(absl::Milliseconds(5));
 #endif  // OS_IOS
     }
   }

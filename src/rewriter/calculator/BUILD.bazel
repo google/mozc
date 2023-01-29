@@ -32,13 +32,13 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "calculator",
     srcs = ["calculator.cc"],
     hdrs = ["calculator_interface.h"],
@@ -55,7 +55,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "calculator_mock",
     testonly = True,
     srcs = ["calculator_mock.cc"],
@@ -67,7 +67,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "calculator_test",
     size = "small",
     srcs = ["calculator_test.cc"],

@@ -391,12 +391,6 @@ EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
 
 bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
                                           Segments *segments) const {
-  if (!request.request()
-           .decoder_experiment_params()
-           .enable_environmental_filter_rewriter()) {
-    return false;
-  }
-
   DCHECK(segments);
   const std::vector<AdditionalRenderableCharacterGroup> nonrenderable_groups =
       GetNonrenderableGroups(

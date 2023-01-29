@@ -31,6 +31,8 @@
 
 #include <utility>
 
+#include "composer/key_parser.h"
+#include "composer/table.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -46,7 +48,6 @@ TEST(CompositionInputTest, BasicTest) {
   {  // Initial status.
     EXPECT_TRUE(input.Empty());
     EXPECT_TRUE(input.raw().empty());
-    EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_TRUE(input.probable_key_events().empty());
     EXPECT_FALSE(input.is_new_input());
@@ -73,7 +74,6 @@ TEST(CompositionInputTest, BasicTest) {
 
     EXPECT_FALSE(input.Empty());
     EXPECT_EQ(input.raw(), "raw");
-    EXPECT_TRUE(input.has_conversion());
     EXPECT_EQ(input.conversion(), "conversion");
     EXPECT_EQ(input.probable_key_events().size(), 2);
     EXPECT_TRUE(input.is_new_input());
@@ -85,25 +85,52 @@ TEST(CompositionInputTest, BasicTest) {
     input.Clear();
     EXPECT_TRUE(input.Empty());
     EXPECT_TRUE(input.raw().empty());
-    EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_TRUE(input.probable_key_events().empty());
     EXPECT_FALSE(input.is_new_input());
 
     EXPECT_FALSE(input2.Empty());
     EXPECT_EQ(input2.raw(), "raw");
-    EXPECT_TRUE(input2.has_conversion());
     EXPECT_EQ(input2.conversion(), "conversion");
     EXPECT_EQ(input2.probable_key_events().size(), 2);
     EXPECT_TRUE(input2.is_new_input());
   }
-
-  {  // Empty conversion string is also a value value.
-    input2.set_conversion("");
-    EXPECT_TRUE(input2.conversion().empty());
-    EXPECT_TRUE(input2.has_conversion());
-  }
 }
 
+TEST(CompositionInputTest, SpecialKeys) {
+  CompositionInput input;
+  constexpr bool new_input = true;
+
+  Table table;
+  table.AddRule("{henkan}", "", "!");
+
+  {
+    // key event with a special key
+    // special key is escaped as a command key wrapped with {}.
+    commands::KeyEvent key;
+    key.set_special_key(commands::KeyEvent::HENKAN);
+    input.Init(table, key, new_input);
+
+    EXPECT_EQ(input.raw(), "\uF000");  // U+F000 represents "{henkan}".
+  }
+  {
+    // key event with a key code and a special key.
+    // This is not an expected case.
+    commands::KeyEvent key;
+    key.set_key_code('a');
+    key.set_special_key(commands::KeyEvent::HENKAN);
+    input.Init(table, key, new_input);
+    EXPECT_EQ(input.raw(), "a");
+  }
+  {
+    // key event with a key string and a special key.
+    // This is not an expected case.
+    commands::KeyEvent key;
+    key.set_key_string("あ");
+    key.set_special_key(commands::KeyEvent::HENKAN);
+    input.Init(table, key, new_input);
+    EXPECT_EQ(input.raw(), "あ");
+  }
+}
 }  // namespace composer
 }  // namespace mozc

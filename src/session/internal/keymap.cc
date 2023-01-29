@@ -71,12 +71,31 @@ const bool KeyMapManager::kInputModeXCommandSupported = false;
 const bool KeyMapManager::kInputModeXCommandSupported = true;
 #endif  // __APPLE__
 
-KeyMapManager::KeyMapManager() : KeyMapManager(config::Config::NONE) {}
+bool KeyMapManager::IsSameKeyMapManagerApplicable(
+    const config::Config &old_config, const config::Config &new_config) {
+  if (&old_config == &new_config) {
+    return true;
+  }
+  if (old_config.session_keymap() != new_config.session_keymap()) {
+    return false;
+  }
+  // TODO(matsuzakit): Add overlay_keymap check.
+  if (old_config.session_keymap() == config::Config::CUSTOM &&
+      old_config.custom_keymap_table() != new_config.custom_keymap_table()) {
+    return false;
+  }
+  return true;
+}
 
-KeyMapManager::KeyMapManager(const config::Config::SessionKeymap keymap)
-    : keymap_(keymap) {
+KeyMapManager::KeyMapManager() {
   InitCommandData();
-  Initialize();
+  ApplyPrimarySessionKeymap(config::ConfigHandler::GetDefaultKeyMap(), "");
+}
+
+KeyMapManager::KeyMapManager(const config::Config &config) {
+  InitCommandData();
+  ApplyPrimarySessionKeymap(config.session_keymap(),
+                            config.custom_keymap_table());
 }
 
 KeyMapManager::~KeyMapManager() {}
@@ -91,53 +110,36 @@ void KeyMapManager::Reset() {
   keymap_prediction_.Clear();
 }
 
-// TODO(matsuzakit): Will clean up soon.
-bool KeyMapManager::Initialize() {
-  // Clear the previous keymaps.
-  Reset();
-
-  const char *keymap_file = GetKeyMapFileName(keymap_);
-  if (keymap_ != config::Config::CUSTOM && keymap_file != nullptr &&
-      LoadFile(keymap_file)) {
-    return true;
-  }
-
-  const char *default_keymapfile =
-      GetKeyMapFileName(config::ConfigHandler::GetDefaultKeyMap());
-  return LoadFile(default_keymapfile);
-}
-
-bool KeyMapManager::ReloadConfig(const config::Config &config) {
-  // Clear the previous keymaps.
-  Reset();
-
-  if (keymap_ != config::Config::CUSTOM) {
-    return true;
-  }
-
-  const std::string &custom_keymap_table = config.custom_keymap_table();
-
-  if (custom_keymap_table.empty()) {
+bool KeyMapManager::ApplyPrimarySessionKeymap(
+    const config::Config::SessionKeymap keymap,
+    const std::string &custom_keymap_table) {
+  const char *keymap_file = GetKeyMapFileName(keymap);
+  if ((keymap == config::Config::CUSTOM && custom_keymap_table.empty()) ||
+      keymap_file == nullptr) {
+    // Exceptional case; fallback to default key map.
     LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-    const char *default_keymapfile =
-        GetKeyMapFileName(config::ConfigHandler::GetDefaultKeyMap());
-    return LoadFile(default_keymapfile);
-  }
-
+    return LoadFile(
+        GetKeyMapFileName(config::ConfigHandler::GetDefaultKeyMap()));
+  } else if (keymap != config::Config::CUSTOM) {
+    // For non-custom keymap, load and apply an embedded keymap tsv file.
+    return LoadFile(keymap_file);
+  } else {
+    // For custom keymap, apply keymap in the config message.
 #ifndef MOZC_NO_LOGGING
-  // make a copy of keymap file just for debugging
-  const char *keymap_file = GetKeyMapFileName(keymap_);
-  const std::string filename = ConfigFileStream::GetFileName(keymap_file);
-  OutputFileStream ofs(filename);
-  if (ofs) {
-    ofs << "# This is a copy of keymap table for debugging." << std::endl;
-    ofs << "# Nothing happens when you edit this file manually." << std::endl;
-    ofs << custom_keymap_table;
-  }
+    // make a copy of keymap file just for debugging
+    const char *keymap_file = GetKeyMapFileName(keymap);
+    const std::string filename = ConfigFileStream::GetFileName(keymap_file);
+    OutputFileStream ofs(filename);
+    if (ofs) {
+      ofs << "# This is a copy of keymap table for debugging." << std::endl;
+      ofs << "# Nothing happens when you edit this file manually." << std::endl;
+      ofs << custom_keymap_table;
+    }
 #endif  // MOZC_NO_LOGGING
 
-  std::istringstream ifs(custom_keymap_table);
-  return LoadStream(&ifs);
+    std::istringstream ifs(custom_keymap_table);
+    return LoadStream(&ifs);
+  }
 }
 
 // static

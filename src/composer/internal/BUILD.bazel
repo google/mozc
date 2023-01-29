@@ -29,23 +29,23 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "transliterator_interface",
     hdrs = ["transliterator_interface.h"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "char_chunk",
     srcs = [
         "char_chunk.cc",
@@ -64,7 +64,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "transliterators",
     srcs = [
         "transliterators.cc",
@@ -81,7 +81,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "transliterators_test",
     size = "small",
     srcs = [
@@ -95,7 +95,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "char_chunk_test",
     size = "small",
     srcs = [
@@ -112,7 +112,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "composition_input",
     srcs = ["composition_input.cc"],
     hdrs = ["composition_input.h"],
@@ -122,11 +122,13 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//base/protobuf:repeated_field",
+        "//composer:key_parser",
+        "//composer:table",
         "//protocol:commands_cc_proto",
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "composition_input_test",
     size = "small",
     srcs = [
@@ -135,11 +137,13 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":composition_input",
+        "//composer:key_parser",
+        "//composer:table",
         "//testing:gunit_main",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "composition",
     srcs = [
         "composition.cc",
@@ -160,7 +164,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "composition_test",
     size = "small",
     srcs = [
@@ -179,7 +183,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "composition_main",
     srcs = ["composition_main.cc"],
     deps = [
@@ -190,7 +194,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "converter",
     srcs = ["converter.cc"],
     hdrs = ["converter.h"],
@@ -201,7 +205,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "converter_test",
     size = "small",
     srcs = ["converter_test.cc"],
@@ -214,7 +218,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mode_switching_handler",
     srcs = ["mode_switching_handler.cc"],
     hdrs = ["mode_switching_handler.h"],
@@ -225,7 +229,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "mode_switching_handler_test",
     size = "small",
     srcs = ["mode_switching_handler_test.cc"],
@@ -237,7 +241,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "converter_main",
     srcs = ["converter_main.cc"],
     deps = [
@@ -248,18 +252,18 @@ cc_binary_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_typing_model_lib",
     srcs = ["gen_typing_model.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
     deps = [":gen_typing_model_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "typing_model",
     srcs = ["typing_model.cc"],
     hdrs = ["typing_model.h"],
@@ -273,7 +277,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "typing_model_test",
     size = "small",
     srcs = ["typing_model_test.cc"],
@@ -287,7 +291,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "typing_corrector",
     srcs = [
         "typing_corrector.cc",
@@ -312,7 +316,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "typing_corrector_test",
     size = "small",
     srcs = ["typing_corrector_test.cc"],

@@ -39,10 +39,11 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -62,7 +63,7 @@ class NamedEventListenerThread : public Thread {
   }
 
   void Run() override {
-    Util::Sleep(initial_wait_msec_);
+    absl::SleepFor(absl::Milliseconds(initial_wait_msec_));
     for (size_t i = 0; i < max_num_wait_; ++i) {
       const bool result = listener_.Wait(wait_msec_);
       const uint64_t ticks = Clock::GetTicks();
@@ -102,7 +103,7 @@ class NamedEventTest : public testing::Test {
 TEST_F(NamedEventTest, NamedEventBasicTest) {
   NamedEventListenerThread listener(kName, 0, 50, 100);
   listener.Start("NamedEventBasicTest");
-  Util::Sleep(200);
+  absl::SleepFor(absl::Milliseconds(200));
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
   const uint64_t notify_ticks = Clock::GetTicks();
@@ -152,7 +153,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
     listeners[i]->Start("NamedEventMultipleListenerTest");
   }
 
-  Util::Sleep(200);
+  absl::SleepFor(absl::Milliseconds(200));
 
   // all |kNumRequests| listener events should be raised
   // at once with single notifier event

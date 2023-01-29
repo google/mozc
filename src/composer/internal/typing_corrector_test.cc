@@ -33,6 +33,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/singleton.h"
@@ -275,7 +276,10 @@ class CostTableForTest {
 
   void InsertCharacter(TypingCorrector *corrector,
                        absl::string_view key) const {
-    corrector->InsertCharacter(key, table_.find(key)->second);
+    CompositionInput input;
+    input.InitFromRaw({key.data(), key.size()}, /*is_new_input=*/false);
+    input.set_probable_key_events(table_.find(key)->second);
+    corrector->InsertCharacter(input);
   }
 
  private:
@@ -477,12 +481,15 @@ TEST_F(TypingCorrectorTest, SupportNonAscii) {
       {"む", 0.15},
       {"も", 0.01},
   };
-  for (size_t i = 0; i < std::size(key_data); ++i) {
+  for (const ProbableKeyData &data : key_data) {
     ProbableKeyEvent *event = events.Add();
-    event->set_key_code(Util::Utf8ToUcs4(key_data[i].str));
-    event->set_probability(key_data[i].prob);
+    event->set_key_code(Util::Utf8ToUcs4(data.str));
+    event->set_probability(data.prob);
   }
-  corrector.InsertCharacter("め", events);
+  CompositionInput input;
+  input.InitFromRaw("め", /*is_new_input=*/false);
+  input.set_probable_key_events(std::move(events));
+  corrector.InsertCharacter(input);
   std::vector<TypeCorrectedQuery> queries;
   // No model cost should be looked up.
   corrector.GetQueriesForPrediction(&queries);

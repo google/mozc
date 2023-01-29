@@ -413,7 +413,7 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
                                        const CompositionInput &input) {
   // Combine |**it| and |**(--it)| into |**it| as long as possible.
   const std::string &next_input =
-      input.has_conversion() ? input.conversion() : input.raw();
+      input.conversion().empty() ? input.raw() : input.conversion();
 
   while (it != chunks_.begin()) {
     CharChunkList::iterator left_it = it;
@@ -437,9 +437,8 @@ CharChunkList::iterator Composition::InsertChunk(
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
 
 bool Composition::ShouldCommit() const {
-  for (CharChunkList::const_iterator it = chunks_.begin(); it != chunks_.end();
-       ++it) {
-    if (!(*it)->ShouldCommit()) {
+  for (const std::unique_ptr<CharChunk> &chunk : chunks_) {
+    if (!chunk->ShouldCommit()) {
       return false;
     }
   }

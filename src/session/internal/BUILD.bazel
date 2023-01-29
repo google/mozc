@@ -32,20 +32,19 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ime_context",
     srcs = ["ime_context.cc"],
     hdrs = ["ime_context.h"],
     deps = [
         ":key_event_transformer",
         ":keymap",
-        ":keymap_factory",
         "//base",
         "//base:logging",
         "//base:port",
@@ -57,7 +56,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "keymap",
     srcs = [
         "keymap.cc",
@@ -84,22 +83,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
-    name = "keymap_factory",
-    srcs = [
-        "keymap_factory.cc",
-    ],
-    hdrs = ["keymap_factory.h"],
-    deps = [
-        ":keymap",
-        "//base",
-        "//base:port",
-        "//config:config_handler",
-        "//protocol:config_cc_proto",
-    ],
-)
-
-cc_library_mozc(
+mozc_cc_library(
     name = "key_event_transformer",
     srcs = ["key_event_transformer.cc"],
     hdrs = ["key_event_transformer.h"],
@@ -117,7 +101,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "candidate_list",
     srcs = ["candidate_list.cc"],
     hdrs = ["candidate_list.h"],
@@ -129,7 +113,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_output",
     srcs = ["session_output.cc"],
     hdrs = ["session_output.h"],
@@ -149,7 +133,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ime_context_test",
     size = "small",
     timeout = "moderate",
@@ -157,7 +141,6 @@ cc_test_mozc(
     deps = [
         ":ime_context",
         ":keymap",
-        ":keymap_factory",
         ":keymap_interface",
         "//composer",
         "//composer:key_parser",
@@ -172,14 +155,14 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "keymap_interface",
     hdrs = ["keymap_interface.h"],
     visibility = ["//visibility:private"],
     deps = ["//base:port"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "keymap_test",
     size = "small",
     srcs = [
@@ -187,7 +170,6 @@ cc_test_mozc(
     ],
     deps = [
         ":keymap",
-        ":keymap_factory",
         "//base:config_file_stream",
         "//base:system_util",
         "//composer:key_parser",
@@ -200,24 +182,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
-    name = "keymap_factory_test",
-    size = "small",
-    srcs = [
-        "keymap_factory_test.cc",
-    ],
-    deps = [
-        ":keymap",
-        ":keymap_factory",
-        "//composer:key_parser",
-        "//config:config_handler",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_test_mozc(
+mozc_cc_test(
     name = "key_event_transformer_test",
     size = "small",
     srcs = ["key_event_transformer_test.cc"],
@@ -232,7 +197,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "candidate_list_test",
     size = "small",
     srcs = ["candidate_list_test.cc"],
@@ -242,7 +207,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_output_test",
     size = "small",
     timeout = "moderate",

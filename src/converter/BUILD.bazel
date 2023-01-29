@@ -30,18 +30,18 @@
 load("//bazel:stubs.bzl", "bzl_library")
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
 )
 
 package(default_visibility = [
     "//:__subpackages__",
 ])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "segments",
     srcs = [
         "segments.cc",
@@ -62,7 +62,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "segments_test",
     size = "small",
     srcs = ["segments_test.cc"],
@@ -80,7 +80,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "segments_matchers",
     testonly = 1,
     srcs = ["segments_matchers.h"],
@@ -92,7 +92,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "segments_matchers_test",
     srcs = ["segments_matchers_test.cc"],
     deps = [
@@ -101,7 +101,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "node",
     hdrs = ["node.h"],
     visibility = [
@@ -115,7 +115,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "node_allocator",
     hdrs = ["node_allocator.h"],
     visibility = [
@@ -131,7 +131,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "node_list_builder",
     hdrs = ["node_list_builder.h"],
     deps = [
@@ -149,7 +149,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "connector",
     srcs = ["connector.cc"],
     hdrs = ["connector.h"],
@@ -167,7 +167,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "connector_test",
     srcs = ["connector_test.cc"],
     data = [
@@ -186,7 +186,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "nbest_generator",
     srcs = [
         "nbest_generator.cc",
@@ -211,7 +211,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "nbest_generator_test",
     srcs = [
         "nbest_generator_test.cc",
@@ -247,7 +247,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "candidate_filter",
     srcs = [
         "candidate_filter.cc",
@@ -271,7 +271,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "candidate_filter_test",
     size = "small",
     srcs = ["candidate_filter_test.cc"],
@@ -296,7 +296,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "segmenter",
     srcs = ["segmenter.cc"],
     hdrs = ["segmenter.h"],
@@ -310,7 +310,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "lattice",
     srcs = [
         "lattice.cc",
@@ -330,7 +330,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "lattice_test",
     size = "small",
     srcs = ["lattice_test.cc"],
@@ -345,7 +345,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "immutable_converter_interface",
     srcs = ["immutable_converter_interface.cc"],
     hdrs = ["immutable_converter_interface.h"],
@@ -359,7 +359,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "immutable_converter_no_factory",
     srcs = [
         "immutable_converter.cc",
@@ -400,7 +400,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "immutable_converter_test",
     size = "small",
     srcs = [
@@ -439,7 +439,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "converter_interface",
     hdrs = ["converter_interface.h"],
     deps = [
@@ -452,7 +452,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "converter_util",
     srcs = ["converter_util.cc"],
     hdrs = ["converter_util.h"],
@@ -463,7 +463,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "converter",
     srcs = [
         "converter.cc",
@@ -500,7 +500,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "converter_test",
     size = "small",
     timeout = "moderate",
@@ -562,7 +562,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "converter_regression_test",
     size = "medium",
     srcs = ["converter_regression_test.cc"],
@@ -589,7 +589,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "pos_id_printer",
     srcs = ["pos_id_printer.cc"],
     hdrs = ["pos_id_printer.h"],
@@ -603,7 +603,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "pos_id_printer_test",
     size = "small",
     srcs = ["pos_id_printer_test.cc"],
@@ -620,7 +620,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "converter_main",
     testonly = True,
     srcs = ["converter_main.cc"],
@@ -660,7 +660,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gen_segmenter_bitarray",
     srcs = ["gen_segmenter_bitarray.cc"],
     hdrs = ["gen_segmenter_bitarray.h"],
@@ -678,33 +678,33 @@ cc_library_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_segmenter_code_lib",
     srcs = ["gen_segmenter_code.py"],
     visibility = ["//visibility:private"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_segmenter_code",
     srcs = ["gen_segmenter_code.py"],
     visibility = ["//data_manager:__subpackages__"],
     deps = [":gen_segmenter_code_lib"],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_boundary_data_lib",
     srcs = ["gen_boundary_data.py"],
     visibility = ["//visibility:private"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
     visibility = ["//data_manager:__subpackages__"],
     deps = [":gen_boundary_data_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "key_corrector",
     srcs = ["key_corrector.cc"],
     hdrs = ["key_corrector.h"],
@@ -718,7 +718,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "key_corrector_test",
     size = "small",
     srcs = ["key_corrector_test.cc"],
@@ -731,7 +731,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "converter_mock",
     testonly = True,
     hdrs = ["converter_mock.h"],
@@ -741,18 +741,18 @@ cc_library_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_quality_regression_test_data_lib",
     srcs = ["gen_quality_regression_test_data.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_quality_regression_test_data",
     srcs = ["gen_quality_regression_test_data.py"],
     deps = [":gen_quality_regression_test_data_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "quality_regression_util",
     srcs = ["quality_regression_util.cc"],
     hdrs = ["quality_regression_util.h"],
@@ -776,7 +776,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "quality_regression_main",
     srcs = ["quality_regression_main.cc"],
     deps = [
@@ -789,13 +789,13 @@ cc_binary_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "quality_regression",
     srcs = ["quality_regression.py"],
     deps = ["//build_tools:mozc_version_lib"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "quality_regression_test_lib",
     testonly = True,
     srcs = ["quality_regression_test_lib.cc"],
@@ -816,6 +816,6 @@ cc_library_mozc(
 bzl_library(
     name = "evalution_bzl",
     srcs = ["evaluation.bzl"],
+    test_size = "small",
     visibility = ["//visibility:private"],
-    deps = ["//:build_defs_bzl"],
 )

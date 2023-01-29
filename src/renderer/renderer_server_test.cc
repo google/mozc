@@ -35,7 +35,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "ipc/ipc_test_util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
@@ -44,6 +43,8 @@
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace renderer {
@@ -139,7 +140,7 @@ TEST_F(RendererServerTest, IPCTest) {
 
   // listning event
   server->StartServer();
-  Util::Sleep(1000);
+  absl::SleepFor(absl::Seconds(1));
 
   DummyRendererLauncher launcher;
   RendererClient client;

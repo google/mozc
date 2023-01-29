@@ -27,16 +27,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "cc_library_mozc", "select_mozc")
+load("//:build_defs.bzl", "mozc_cc_library", "mozc_select")
 load("//:config.bzl", "BRANDING")
 load(
     "//bazel:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "macos_qt_application_mozc",
+    "mozc_cc_qt_binary",
+    "mozc_cc_qt_library",
+    "mozc_macos_qt_application",
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "prelauncher_lib",
     srcs = ["prelauncher_libmain.cc"],
     deps = [
@@ -44,12 +44,12 @@ cc_library_mozc(
         "//client:client_interface",
         "//renderer:renderer_client",
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
+    ] + mozc_select(
         macos = ["//base:mac_util"],
     ),
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "mozc_tool_lib",
     srcs = [
         "mozc_tool_libmain.cc",
@@ -80,10 +80,10 @@ cc_qt_library_mozc(
         "//gui/post_install_dialog",
         "//gui/set_default_dialog",
         "//gui/word_register_dialog",
-    ] + select_mozc(macos = [":prelauncher_lib"]),
+    ] + mozc_select(macos = [":prelauncher_lib"]),
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "mozc_tool_main_lib",
     srcs = ["mozc_tool_main.cc"],
     deps = [
@@ -93,19 +93,19 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
+mozc_cc_qt_binary(
     name = "mozc_tool",
     visibility = ["//:__subpackages__"],
     deps = [":mozc_tool_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "mozc_tool_macos",
     bundle_name = "MozcTool",
     deps = [":mozc_tool_main_lib"],
 )
 
-macos_qt_application_mozc(
+mozc_macos_qt_application(
     name = "mozc_prelauncher_macos",
     bundle_name = BRANDING + "Prelauncher",
     deps = [":mozc_tool_main_lib"],

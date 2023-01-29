@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlstr.h>
 #include <atlwin.h>
@@ -78,8 +79,6 @@ namespace {
 using ATL::CRegKey;
 using ATL::CStringA;
 using ATL::CWindow;
-using WTL::CPoint;
-using WTL::CRect;
 
 using ::mozc::renderer::win32::Win32RendererClient;
 

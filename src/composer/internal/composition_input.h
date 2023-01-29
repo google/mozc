@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/protobuf/repeated_field.h"
+#include "composer/table.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -50,7 +51,10 @@ class CompositionInput final {
 
   ~CompositionInput() = default;
 
-  bool Init(const commands::KeyEvent &key_event, bool use_typing_correction,
+  // Initializes with KeyEvent.
+  // If KeyEvent has a special key (e.g. Henkan),
+  // it is used as an input of a command key. (e.g. "{henkan}").
+  bool Init(const Table &table, const commands::KeyEvent &key_event,
             bool is_new_input);
   void InitFromRaw(const std::string &raw, bool is_new_input);
   void InitFromRawAndConv(const std::string &raw, const std::string &conversion,
@@ -68,8 +72,6 @@ class CompositionInput final {
   void clear_conversion();
   void set_conversion(const std::string &conversion);
 
-  bool has_conversion() const { return has_conversion_; }
-
   const ProbableKeyEvents &probable_key_events() const {
     return probable_key_events_;
   }
@@ -84,7 +86,6 @@ class CompositionInput final {
   std::string raw_;
   std::string conversion_;
   ProbableKeyEvents probable_key_events_;
-  bool has_conversion_ = false;
   bool is_new_input_ = false;
 };
 

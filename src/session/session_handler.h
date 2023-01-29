@@ -59,6 +59,10 @@ class Command;
 class Request;
 }  // namespace commands
 
+namespace keymap {
+class KeyMapManager;
+}  // namespace keymap
+
 namespace session {
 class SessionInterface;
 class SessionObserverHandler;
@@ -99,6 +103,7 @@ class SessionHandler : public SessionHandlerInterface {
 
  private:
   FRIEND_TEST(SessionHandlerTest, StorageTest);
+  FRIEND_TEST(SessionHandlerTest, KeyMapTest);
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, session::SessionInterface *>;
@@ -169,6 +174,7 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<composer::TableManager> table_manager_;
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;
+  std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
 
 };
 

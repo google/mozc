@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
@@ -101,9 +102,6 @@ using WTL::CDC;
 using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
-using WTL::CPoint;
-using WTL::CRect;
-using WTL::CSize;
 using WTL::PrintTo;
 
 constexpr int kDefaultFontHeightInPixel = 18;

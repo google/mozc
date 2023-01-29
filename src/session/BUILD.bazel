@@ -32,11 +32,11 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_select",
 )
 
 package(default_visibility = [
@@ -65,7 +65,7 @@ test_suite(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_converter",
     srcs = ["session_converter.cc"],
     hdrs = ["session_converter.h"],
@@ -95,7 +95,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_converter_test",
     size = "small",
     timeout = "moderate",
@@ -130,7 +130,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_converter_stress_test",
     size = "large",
     srcs = ["session_converter_stress_test.cc"],
@@ -154,7 +154,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session",
     srcs = [
         "session.cc",
@@ -184,7 +184,6 @@ cc_library_mozc(
         "//session/internal:ime_context",
         "//session/internal:key_event_transformer",
         "//session/internal:keymap",
-        "//session/internal:keymap_factory",
         "//session/internal:session_output",
         "//testing:gunit_prod",
         "//transliteration",
@@ -193,7 +192,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_test",
     size = "large",
     srcs = [
@@ -236,7 +235,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_regression_test",
     size = "large",
     srcs = [
@@ -273,7 +272,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_observer_handler",
     srcs = ["session_observer_handler.cc"],
     hdrs = ["session_observer_handler.h"],
@@ -286,7 +285,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_observer_handler_test",
     size = "small",
     srcs = ["session_observer_handler_test.cc"],
@@ -299,7 +298,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_handler",
     srcs = [
         "common.h",
@@ -307,7 +306,7 @@ cc_library_mozc(
         "session_interface.h",
     ],
     hdrs = ["session_handler.h"],
-    deps = select_mozc(
+    deps = mozc_select(
         android = [
             "//spelling:spellchecker_service_interface",
         ],
@@ -349,6 +348,7 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
+        "//session/internal:keymap",
         "//storage:lru_cache",
         "//testing:gunit_prod",
         "//usage_stats",
@@ -356,7 +356,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_handler_test_util",
     testonly = True,
     srcs = [
@@ -365,7 +365,7 @@ cc_library_mozc(
         "session_handler_test_util.cc",
     ],
     hdrs = ["session_handler_test_util.h"],
-    deps = select_mozc(
+    deps = mozc_select(
         android = [
             "//spelling:spellchecker_service_interface",
             "//spelling:spellchecker_service_registration",
@@ -403,7 +403,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_handler_test",
     size = "large",
     srcs = [
@@ -435,7 +435,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_server",
     srcs = [
         "common.h",
@@ -456,7 +456,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "request_test_util",
     srcs = ["request_test_util.cc"],
     hdrs = ["request_test_util.h"],
@@ -472,7 +472,7 @@ cc_library_mozc(
     # testonly = True
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "request_test_util_test",
     size = "small",
     srcs = ["request_test_util_test.cc"],
@@ -484,7 +484,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "session_client_main",
     srcs = [
         "session_client_main.cc",
@@ -493,7 +493,6 @@ cc_binary_mozc(
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_client_main.cc
     deps = [
         ":session",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
@@ -506,12 +505,13 @@ cc_binary_mozc(
         "//engine:engine_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//session/internal:keymap",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "session_server_main",
     srcs = ["session_server_main.cc"],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_server_main.cc
@@ -524,7 +524,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_watch_dog",
     srcs = ["session_watch_dog.cc"],
     hdrs = ["session_watch_dog.h"],
@@ -542,7 +542,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_watch_dog_test",
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
@@ -550,18 +550,17 @@ cc_test_mozc(
     tags = ["no_android"],
     deps = [
         ":session_watch_dog",
-        "//base",
         "//base:cpu_stats",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "//client:client_mock",
         "//testing:gunit_main",
         "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_usage_observer",
     srcs = ["session_usage_observer.cc"],
     hdrs = ["session_usage_observer.h"],
@@ -581,7 +580,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_usage_observer_test",
     size = "small",
     srcs = ["session_usage_observer_test.cc"],
@@ -603,7 +602,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ime_switch_util",
     srcs = ["ime_switch_util.cc"],
     hdrs = ["ime_switch_util.h"],
@@ -616,7 +615,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ime_switch_util_test",
     size = "small",
     srcs = ["ime_switch_util_test.cc"],
@@ -634,7 +633,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "key_info_util",
     srcs = ["key_info_util.cc"],
     hdrs = ["key_info_util.h"],
@@ -654,7 +653,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "key_info_util_test",
     size = "small",
     srcs = ["key_info_util_test.cc"],
@@ -670,7 +669,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "output_util",
     srcs = ["output_util.cc"],
     hdrs = ["output_util.h"],
@@ -683,7 +682,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "output_util_test",
     size = "small",
     srcs = ["output_util_test.cc"],
@@ -698,7 +697,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_usage_stats_util",
     srcs = ["session_usage_stats_util.cc"],
     hdrs = ["session_usage_stats_util.h"],
@@ -716,7 +715,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_usage_stats_util_test",
     size = "small",
     srcs = ["session_usage_stats_util_test.cc"],
@@ -732,14 +731,14 @@ cc_test_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_session_stress_test_data",
     srcs = ["gen_session_stress_test_data.py"],
 )
 
 genrule(
     name = "session_stress_test_data",
-    srcs = select_mozc(
+    srcs = mozc_select(
         oss = [
             "//data/test/quality_regression_test:oss.tsv",
         ],
@@ -749,7 +748,7 @@ genrule(
     tools = [":gen_session_stress_test_data"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "random_keyevents_generator",
     srcs = [
         "random_keyevents_generator.cc",
@@ -770,7 +769,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "random_keyevents_generator_test",
     size = "small",
     srcs = ["random_keyevents_generator_test.cc"],
@@ -783,7 +782,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_handler_stress_test",
     size = "large",
     srcs = [
@@ -806,7 +805,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_handler_tool",
     srcs = ["session_handler_tool.cc"],
     hdrs = ["session_handler_tool.h"],
@@ -841,7 +840,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "session_handler_main",
     srcs = ["session_handler_main.cc"],
     deps = [
@@ -856,7 +855,7 @@ cc_binary_mozc(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(
+    ] + mozc_select(
         default = [
             "//data_manager/android:android_data_manager",
             "//data_manager/google:google_data_manager",
@@ -865,7 +864,7 @@ cc_binary_mozc(
     ),
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "session_handler_scenario_test",
     size = "large",
     srcs = ["session_handler_scenario_test.cc"],
@@ -903,7 +902,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_handler_interface",
     hdrs = ["session_handler_interface.h"],
     visibility = [
@@ -915,7 +914,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_converter_interface",
     hdrs = ["session_converter_interface.h"],
     visibility = ["//session/internal:__pkg__"],
@@ -929,7 +928,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "session_observer_interface",
     hdrs = ["session_observer_interface.h"],
     visibility = ["//visibility:private"],

@@ -36,6 +36,7 @@
 
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
+#include "composer/internal/composition_input.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
@@ -77,13 +78,12 @@ class TypingCorrector final {
   // Resets to the default state.
   void Reset();
 
-  // Inserts a character, represented by a key or a ProbableKeyEvents,
+  // Inserts a character, represented by a key or a ProbableKeyEvents in input,
   // and performs online typing correction.
   // If |probable_key_events| is non-empty, |key| is ignored.
   // If |probable_key_events| is empty, |key| is used instead assuming that
   // the probability is 1.0.
-  void InsertCharacter(const absl::string_view key,
-                       const ProbableKeyEvents &probable_key_events);
+  void InsertCharacter(const CompositionInput &input);
 
   // Extracts type-corrected queries for prediction.
   void GetQueriesForPrediction(std::vector<TypeCorrectedQuery> *queries) const;

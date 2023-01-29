@@ -29,14 +29,14 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "objc_library_mozc",
-    "objc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
-    "select_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_objc_library",
+    "mozc_objc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
+    "mozc_select",
 )
 load(
     "//:config.bzl",
@@ -88,7 +88,7 @@ test_suite(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "base",
     hdrs = [
         "compiler_specific.h",
@@ -110,13 +110,13 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "compiler_specific",
     hdrs = ["compiler_specific.h"],
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
@@ -124,7 +124,7 @@ cc_library_mozc(
     visibility = ["//:__subpackages__"],
     deps = [
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
+    ] + mozc_select(
         client = [
             ":file_util",
             ":logging",
@@ -141,14 +141,14 @@ cc_library_mozc(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "init_mozc",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
     visibility = ["//:__subpackages__"],
     deps = [
         "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
+    ] + mozc_select(
         client = [
             ":file_util",
             ":logging",
@@ -167,10 +167,10 @@ cc_library_mozc(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "port",
     hdrs = ["port.h"],
-    deps = select_mozc(
+    deps = mozc_select(
         default = [
             "//base:base",
             "//base:port",
@@ -179,7 +179,7 @@ cc_library_mozc(
     ),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "const",
     hdrs = ["const.h"],
     visibility = [
@@ -188,29 +188,29 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "scoped_handle",
     srcs = ["scoped_handle.cc"],
     hdrs = ["scoped_handle.h"],
     visibility = ["//:__subpackages__"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "freelist",
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
     deps = [":port"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "logging",
     srcs = ["logging.cc"],
     hdrs = ["logging.h"],
-    linkopts = select_mozc(
+    linkopts = mozc_select(
         # Android requires linking logging library.
         android = ["-llog"],
     ),
-    deps = select_mozc(
+    deps = mozc_select(
         default = [
             "//base",
             "//base:logging_extensions",
@@ -244,7 +244,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "logging_test",
     size = "small",
     srcs = ["logging_test.cc"],
@@ -255,7 +255,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "codegen_bytearray_stream",
     srcs = ["codegen_bytearray_stream.cc"],
     hdrs = ["codegen_bytearray_stream.h"],
@@ -265,7 +265,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "codegen_bytearray_stream_test",
     size = "small",
     srcs = ["codegen_bytearray_stream_test.cc"],
@@ -279,7 +279,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "thread",
     srcs = ["thread.cc"],
     hdrs = ["thread.h"],
@@ -290,7 +290,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "thread_test",
     size = "small",
     srcs = [
@@ -299,12 +299,12 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":thread",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "win_util",
     hdrs = ["win_util.h"],
     visibility = ["//:__subpackages__"],
@@ -314,7 +314,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "singleton",
     srcs = ["singleton.cc"],
     hdrs = ["singleton.h"],
@@ -322,7 +322,7 @@ cc_library_mozc(
     deps = ["@com_google_absl//absl/base"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "singleton_test",
     size = "small",
     srcs = ["singleton_test.cc"],
@@ -330,12 +330,12 @@ cc_test_mozc(
     deps = [
         ":singleton",
         ":thread",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_character_set",
     srcs = ["gen_character_set.py"],
 )
@@ -357,7 +357,7 @@ genrule(
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "double_array_def",
     hdrs = ["double_array.h"],
     deps = [
@@ -365,7 +365,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "japanese_util_rule",
     srcs = ["japanese_util_rule.cc"],
     hdrs = ["japanese_util_rule.h"],
@@ -373,7 +373,7 @@ cc_library_mozc(
     deps = [":double_array_def"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "hash",
     srcs = ["hash.cc"],
     hdrs = ["hash.h"],
@@ -383,7 +383,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "hash_test",
     srcs = ["hash_test.cc"],
     requires_full_emulation = False,
@@ -394,7 +394,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "clock",
     srcs = ["clock.cc"],
     hdrs = ["clock.h"],
@@ -405,7 +405,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "clock_test",
     srcs = ["clock_test.cc"],
     requires_full_emulation = False,
@@ -417,7 +417,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "japanese_util",
     srcs = [
         "japanese_util.cc",
@@ -433,7 +433,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "japanese_util_test",
     size = "small",
     srcs = [
@@ -446,7 +446,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "util",
     srcs = [
         "util.cc",
@@ -462,13 +462,15 @@ cc_library_mozc(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/numeric:bits",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "util_test",
     size = "small",
     srcs = [
@@ -476,19 +478,16 @@ cc_test_mozc(
     ],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
-        ":file_util",
         ":logging",
-        ":number_util",
         ":port",
         ":util",
         "//testing:gunit_main",
-        "//testing:mozctest",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "file_stream",
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
@@ -496,7 +495,7 @@ cc_library_mozc(
     deps = ["@com_google_absl//absl/strings"],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "text_converter_compiler",
     srcs = ["text_converter_compiler.cc"],
     tags = ["manual"],
@@ -513,7 +512,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "number_util",
     srcs = ["number_util.cc"],
     hdrs = ["number_util.h"],
@@ -530,7 +529,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "number_util_test",
     size = "small",
     srcs = ["number_util_test.cc"],
@@ -542,7 +541,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "trie",
     hdrs = ["trie.h"],
     visibility = ["//:__subpackages__"],
@@ -554,7 +553,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "trie_test",
     size = "small",
     srcs = ["trie_test.cc"],
@@ -566,7 +565,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "text_normalizer",
     srcs = ["text_normalizer.cc"],
     hdrs = ["text_normalizer.h"],
@@ -578,7 +577,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "text_normalizer_test",
     size = "small",
     srcs = ["text_normalizer_test.cc"],
@@ -590,7 +589,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "clock_mock",
     testonly = True,
     srcs = ["clock_mock.cc"],
@@ -606,7 +605,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "clock_mock_test",
     size = "small",
     srcs = ["clock_mock_test.cc"],
@@ -618,14 +617,14 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "bitarray",
     hdrs = ["bitarray.h"],
     visibility = ["//:__subpackages__"],
     deps = [":port"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "bitarray_test",
     size = "small",
     srcs = ["bitarray_test.cc"],
@@ -637,7 +636,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "mmap",
     srcs = ["mmap.cc"],
     hdrs = ["mmap.h"],
@@ -649,7 +648,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "mmap_test",
     size = "small",
     srcs = ["mmap_test.cc"],
@@ -663,7 +662,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "environ",
     srcs = ["environ.cc"],
     hdrs = ["environ.h"],
@@ -673,13 +672,13 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "environ_mock",
     hdrs = ["environ_mock.h"],
     deps = [":environ"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "file_util",
     srcs = ["file_util.cc"],
     hdrs = ["file_util.h"],
@@ -700,7 +699,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "file_util_mock",
     hdrs = ["file_util_mock.h"],
     deps = [
@@ -710,7 +709,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "file_util_mock_test",
     size = "small",
     srcs = ["file_util_mock_test.cc"],
@@ -721,7 +720,7 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "file_util_test",
     size = "small",
     srcs = ["file_util_test.cc"],
@@ -738,11 +737,11 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "system_util",
-    srcs = ["system_util.cc"] + select_mozc(android = ["android_util.cc"]),
-    hdrs = ["system_util.h"] + select_mozc(android = ["android_util.h"]),
-    local_defines = select_mozc(
+    srcs = ["system_util.cc"] + mozc_select(android = ["android_util.cc"]),
+    hdrs = ["system_util.h"] + mozc_select(android = ["android_util.h"]),
+    local_defines = mozc_select(
         linux = [
             "MOZC_DOCUMENT_DIR=\\\"" + LINUX_MOZC_DOCUMENT_DIR + "\\\"",
             "MOZC_SERVER_DIR=\\\"" + LINUX_MOZC_SERVER_DIR + "\\\"",
@@ -759,7 +758,7 @@ cc_library_mozc(
         ":win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
-    ] + select_mozc(
+    ] + mozc_select(
         android = [
             # android_util.h includes this for FRIEND_TEST
             "//testing:gunit_prod",
@@ -768,7 +767,7 @@ cc_library_mozc(
     ),
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "system_util_test",
     srcs = ["system_util_test.cc"],
     requires_full_emulation = False,
@@ -785,7 +784,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "process",
     srcs = ["process.cc"],
     hdrs = ["process.h"],
@@ -803,13 +802,14 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(macos = ["mac_process"]),
+        "@com_google_absl//absl/time",
+    ] + mozc_select(macos = ["mac_process"]),
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "mac_process",
-    srcs = select_mozc(macos = ["mac_process.mm"]),
-    hdrs = select_mozc(macos = ["mac_process.h"]),
+    srcs = mozc_select(macos = ["mac_process.mm"]),
+    hdrs = mozc_select(macos = ["mac_process.h"]),
     sdk_frameworks = ["Cocoa"],
     deps = [
         ":const",
@@ -819,7 +819,7 @@ objc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "process_main",
     srcs = ["process_main.cc"],
     deps = [
@@ -830,7 +830,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "process_mutex",
     srcs = ["process_mutex.cc"],
     hdrs = ["process_mutex.h"],
@@ -847,7 +847,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "process_mutex_test",
     size = "small",
     srcs = ["process_mutex_test.cc"],
@@ -857,14 +857,14 @@ cc_test_mozc(
         ":file_util",
         ":process_mutex",
         ":system_util",
-        ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "run_level",
     srcs = [
         "run_level.cc",
@@ -883,7 +883,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "run_level_main",
     srcs = ["run_level_main.cc"],
     deps = [
@@ -893,12 +893,12 @@ cc_binary_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_config_file_stream_data_lib",
     srcs = ["gen_config_file_stream_data.py"],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_config_file_stream_data",
     srcs = ["gen_config_file_stream_data.py"],
     deps = [":gen_config_file_stream_data_lib"],
@@ -916,7 +916,7 @@ genrule(
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "config_file_stream",
     srcs = [
         "config_file_stream.cc",
@@ -935,7 +935,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "config_file_stream_test",
     size = "small",
     srcs = ["config_file_stream_test.cc"],
@@ -949,7 +949,7 @@ cc_test_mozc(
     ],
 )
 
-TARGET_PLATFORM = select_mozc(
+TARGET_PLATFORM = mozc_select(
     android = "Android",
     chromiumos = "ChromeOS",
     default = "",
@@ -992,7 +992,7 @@ genrule(
     visibility = ["//visibility:private"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "version",
     srcs = [
         "version.cc",
@@ -1011,7 +1011,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "version_test",
     size = "small",
     srcs = ["version_test.cc"],
@@ -1024,7 +1024,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "obfuscator_support",
     srcs = [
         "unverified_aes256.cc",
@@ -1045,7 +1045,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "obfuscator_support_test",
     size = "small",
     srcs = [
@@ -1063,7 +1063,7 @@ cc_test_mozc(
 
 # TODO(team): encryptor.cc and password_manager.cc are mutually dependent and
 # cannot be decoupled.  Fix this issue.
-cc_library_mozc(
+mozc_cc_library(
     name = "encryptor",
     srcs = [
         "encryptor.cc",
@@ -1088,10 +1088,10 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/strings:str_format",
-    ] + select_mozc(ios = [":mac_util"]),
+    ] + mozc_select(ios = [":mac_util"]),
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "encryptor_test",
     size = "small",
     srcs = [
@@ -1109,7 +1109,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "encryptor_main",
     srcs = ["encryptor_main.cc"],
     visibility = ["//visibility:private"],
@@ -1125,7 +1125,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "password_manager_main",
     srcs = ["password_manager_main.cc"],
     visibility = ["//visibility:private"],
@@ -1138,7 +1138,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "cpu_stats",
     srcs = ["cpu_stats.cc"],
     hdrs = ["cpu_stats.h"],
@@ -1149,7 +1149,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "cpu_stats_test",
     size = "small",
     srcs = ["cpu_stats_test.cc"],
@@ -1160,7 +1160,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "cpu_stats_main",
     srcs = ["cpu_stats_main.cc"],
     deps = [
@@ -1168,12 +1168,12 @@ cc_binary_mozc(
         ":init_mozc",
         ":port",
         ":thread",
-        ":util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "stopwatch",
     srcs = ["stopwatch.cc"],
     hdrs = ["stopwatch.h"],
@@ -1184,7 +1184,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "stopwatch_test",
     size = "small",
     srcs = ["stopwatch_test.cc"],
@@ -1197,18 +1197,18 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "stopwatch_main",
     srcs = ["stopwatch_main.cc"],
     deps = [
         ":init_mozc",
         ":stopwatch",
-        ":util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "url",
     srcs = ["url.cc"],
     hdrs = ["url.h"],
@@ -1222,7 +1222,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "url_test",
     size = "small",
     srcs = ["url_test.cc"],
@@ -1235,7 +1235,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "multifile",
     srcs = ["multifile.cc"],
     hdrs = ["multifile.h"],
@@ -1249,7 +1249,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "multifile_test",
     size = "small",
     srcs = ["multifile_test.cc"],
@@ -1266,12 +1266,12 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "coordinates",
     hdrs = ["coordinates.h"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "crash_report_handler",
     srcs = ["crash_report_handler.cc"],
     hdrs = ["crash_report_handler.h"],
@@ -1285,7 +1285,7 @@ cc_library_mozc(
     ],
 )
 
-objc_library_mozc(
+mozc_objc_library(
     name = "mac_util",
     srcs = [
         "mac_util.mm",
@@ -1307,7 +1307,7 @@ objc_library_mozc(
     ],
 )
 
-objc_test_mozc(
+mozc_objc_test(
     name = "mac_util_test",
     srcs = ["mac_util_test.mm"],
     deps = [
@@ -1317,7 +1317,7 @@ objc_test_mozc(
 )
 
 # Only for macOS.
-cc_binary_mozc(
+mozc_cc_binary(
     name = "mac_util_main",
     srcs = [
         "mac_util.h",
@@ -1329,10 +1329,10 @@ cc_binary_mozc(
         ":util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(ios = [":mac_util"]),
+    ] + mozc_select(ios = [":mac_util"]),
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "winmain",
     hdrs = ["winmain.h"],
     visibility = [
@@ -1346,7 +1346,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "win_api_test_helper",
     hdrs = ["win_api_test_helper.h"],
     visibility = [
@@ -1356,7 +1356,7 @@ cc_library_mozc(
     deps = [":port"],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "embedded_file",
     hdrs = ["embedded_file.h"],
     visibility = ["//:__subpackages__"],
@@ -1374,7 +1374,7 @@ genrule(
     tools = ["//build_tools:embed_file"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "embedded_file_test",
     srcs = [
         "embedded_file_test.cc",
@@ -1391,7 +1391,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "serialized_string_array",
     srcs = ["serialized_string_array.cc"],
     hdrs = ["serialized_string_array.h"],
@@ -1405,7 +1405,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "serialized_string_array_test",
     srcs = ["serialized_string_array_test.cc"],
     requires_full_emulation = False,
@@ -1417,10 +1417,32 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "status",
     hdrs = ["status.h"],
     deps = [
         ":logging",
+    ],
+)
+
+mozc_cc_library(
+    name = "thread2",
+    srcs = ["thread2.cc"],
+    hdrs = ["thread2.h"],
+    deps = [
+        ":thread",
+        "@com_google_absl//absl/functional:bind_front",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+mozc_cc_test(
+    name = "thread2_test",
+    srcs = ["thread2_test.cc"],
+    deps = [
+        ":thread2",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )

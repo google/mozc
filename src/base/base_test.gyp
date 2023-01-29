@@ -76,6 +76,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'absl.gyp:absl_status',
+        'absl.gyp:absl_time',
         'base.gyp:base',
         'base.gyp:codegen_bytearray_stream#host',
         'clock_mock',
@@ -107,6 +108,7 @@
         'singleton_test.cc',
         'text_normalizer_test.cc',
         'thread_test.cc',
+        'thread2_test.cc',
         'version_test.cc',
       ],
       'conditions': [
@@ -119,6 +121,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'absl.gyp:absl_strings',
+        'absl.gyp:absl_time',
         'base.gyp:base_core',
         'base.gyp:version',
       ],

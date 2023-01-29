@@ -32,11 +32,11 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "louds",
     srcs = ["louds.cc"],
     hdrs = ["louds.h"],
@@ -47,7 +47,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "louds_test",
     srcs = ["louds_test.cc"],
     deps = [
@@ -59,7 +59,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "louds_trie",
     srcs = ["louds_trie.cc"],
     hdrs = ["louds_trie.h"],
@@ -74,7 +74,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "louds_trie_builder",
     srcs = ["louds_trie_builder.cc"],
     hdrs = ["louds_trie_builder.h"],
@@ -87,7 +87,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "louds_trie_test",
     size = "small",
     srcs = ["louds_trie_test.cc"],
@@ -100,7 +100,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "bit_vector_based_array",
     srcs = ["bit_vector_based_array.cc"],
     hdrs = ["bit_vector_based_array.h"],
@@ -115,7 +115,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "bit_vector_based_array_builder",
     srcs = ["bit_vector_based_array_builder.cc"],
     hdrs = ["bit_vector_based_array_builder.h"],
@@ -130,7 +130,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "bit_vector_based_array_test",
     size = "small",
     srcs = ["bit_vector_based_array_test.cc"],
@@ -142,7 +142,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "simple_succinct_bit_vector_index",
     srcs = ["simple_succinct_bit_vector_index.cc"],
     hdrs = ["simple_succinct_bit_vector_index.h"],
@@ -155,7 +155,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "simple_succinct_bit_vector_index_test",
     size = "small",
     srcs = ["simple_succinct_bit_vector_index_test.cc"],
@@ -165,7 +165,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "bit_stream",
     srcs = ["bit_stream.cc"],
     hdrs = ["bit_stream.h"],
@@ -176,7 +176,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "bit_stream_test",
     size = "small",
     srcs = ["bit_stream_test.cc"],

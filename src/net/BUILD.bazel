@@ -29,8 +29,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
-    "cc_test_mozc",
+    "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package_group(
@@ -42,7 +42,7 @@ package_group(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "jsoncpp",
     hdrs = ["jsoncpp.h"],
     tags = ["manual"],
@@ -52,7 +52,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "jsonpath",
     srcs = ["jsonpath.cc"],
     hdrs = ["jsonpath.h"],
@@ -68,7 +68,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "jsonpath_test",
     srcs = ["jsonpath_test.cc"],
     requires_full_emulation = False,
@@ -79,7 +79,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "json_util",
     srcs = ["json_util.cc"],
     hdrs = ["json_util.h"],
@@ -97,13 +97,6 @@ cc_library_mozc(
     ],
 )
 
-cc_proto_library(
-    name = "json_util_test_cc_proto",
-    testonly = True,
-    visibility = ["//visibility:private"],
-    deps = [":json_util_test_proto"],
-)
-
 proto_library(
     name = "json_util_test_proto",
     testonly = True,
@@ -112,13 +105,13 @@ proto_library(
 )
 
 cc_proto_library(
-    name = "json_util_test_proto_cc_proto",
+    name = "json_util_test_cc_proto",
     testonly = True,
     visibility = ["//visibility:private"],
     deps = [":json_util_test_proto"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "json_util_test",
     srcs = ["json_util_test.cc"],
     requires_full_emulation = False,

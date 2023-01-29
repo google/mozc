@@ -33,6 +33,7 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
+#include <atltypes.h>
 #include <atlapp.h>
 #include <atlstr.h>
 #include <atlmisc.h>
@@ -53,8 +54,6 @@
 
 namespace mozc {
 namespace win32 {
-using WTL::CPoint;
-using WTL::CRect;
 
 typedef mozc::commands::RendererCommand RendererCommand;
 typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;

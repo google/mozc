@@ -30,7 +30,7 @@
 # Description:
 #   Declaration of package_group for visibility managing.
 
-load("//:build_defs.bzl", "select_mozc")
+load("//:build_defs.bzl", "mozc_select")
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = [
@@ -62,7 +62,7 @@ config_setting(
 # Don't depend on this directly. Use cc_(library|binary|test)_mozc rule instead.
 cc_library(
     name = "macro",
-    defines = select_mozc(
+    defines = mozc_select(
         android = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
@@ -109,6 +109,7 @@ cc_library(
 bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
+    test_size = "small",
     visibility = ["//:__subpackages__"],
     deps = [
         ":config_bzl",
@@ -123,12 +124,13 @@ bzl_library(
 bzl_library(
     name = "config_bzl",
     srcs = ["config.bzl"],
+    test_size = "small",
     visibility = ["//:__subpackages__"],
 )
 
 filegroup(
     name = "package",
-    srcs = select_mozc(
+    srcs = mozc_select(
         default = [],
         linux = ["//unix:package"],
         macos = [

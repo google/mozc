@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 13
+// Next ID: 14
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -593,12 +593,14 @@ message DecoderExperimentParams {
 
   reserved 10;  // Deprecated cancel_segment_model_penalty_for_prediction
 
-  // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
-  // letters.
-  optional bool enable_environmental_filter_rewriter = 11 [default = true];
+  reserved 11;  // Deprecated enable_environmental_filter_rewriter
 
   // Enable multiple undo for partial commit.
   optional bool undo_partial_commit = 12 [default = false];
+
+  // Use actual converter for realtime conversion.
+  optional bool use_actual_converter_for_realtime_conversion = 13
+      [default = false];
 }
 
 // Clients' request to the server.

@@ -74,6 +74,7 @@
         'suppression_dictionary_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
         '../testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:suppression_dictionary',

@@ -29,6 +29,8 @@
 
 #include "base/process.h"
 
+#include "absl/time/time.h"
+
 #ifdef OS_WIN
 #include <Windows.h>
 #else  // OS_WIN
@@ -282,7 +284,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
   constexpr int kPollingDuration = 250;
   int left_time = timeout < 0 ? 1 : timeout;
   while (left_time > 0) {
-    Util::Sleep(kPollingDuration);
+    absl::SleepFor(absl::Milliseconds(kPollingDuration));
     if (::kill(processe_id, 0) != 0) {
       if (errno == EPERM) {
         return false;  // access defined

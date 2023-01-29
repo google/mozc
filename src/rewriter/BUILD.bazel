@@ -32,16 +32,16 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
-    "cc_library_mozc",
-    "cc_test_mozc",
-    "py_binary_mozc",
-    "py_library_mozc",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_py_binary",
+    "mozc_py_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
+mozc_cc_library(
     name = "rewriter_interface",
     textual_hdrs = ["rewriter_interface.h"],
     deps = [
@@ -50,7 +50,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "merger_rewriter_test",
     size = "small",
     srcs = ["merger_rewriter_test.cc"],
@@ -71,7 +71,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "collocation_rewriter",
     srcs = [
         "collocation_rewriter.cc",
@@ -97,7 +97,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "collocation_rewriter_test",
     srcs = ["collocation_rewriter_test.cc"],
     requires_full_emulation = False,
@@ -115,7 +115,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_segment_history_rewriter",
     srcs = ["user_segment_history_rewriter.cc"],
     hdrs = ["user_segment_history_rewriter.h"],
@@ -146,7 +146,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "user_segment_history_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -179,7 +179,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_boundary_history_rewriter",
     srcs = ["user_boundary_history_rewriter.cc"],
     hdrs = ["user_boundary_history_rewriter.h"],
@@ -205,7 +205,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "user_boundary_history_rewriter_test",
     size = "small",
     srcs = ["user_boundary_history_rewriter_test.cc"],
@@ -227,7 +227,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "date_rewriter",
     srcs = ["date_rewriter.cc"],
     hdrs = ["date_rewriter.h"],
@@ -256,7 +256,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "date_rewriter_test",
     size = "small",
     srcs = ["date_rewriter_test.cc"],
@@ -284,7 +284,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "number_rewriter",
     srcs = [
         "number_rewriter.cc",
@@ -313,7 +313,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "number_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -338,7 +338,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "small_letter_rewriter",
     srcs = ["small_letter_rewriter.cc"],
     hdrs = ["small_letter_rewriter.h"],
@@ -353,7 +353,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "small_letter_rewriter_test",
     size = "small",
     srcs = ["small_letter_rewriter_test.cc"],
@@ -368,7 +368,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "transliteration_rewriter",
     srcs = [
         "transliteration_rewriter.cc",
@@ -394,7 +394,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "transliteration_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -425,7 +425,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "language_aware_rewriter",
     srcs = [
         "language_aware_rewriter.cc",
@@ -451,7 +451,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "language_aware_rewriter_test",
     size = "small",
     srcs = ["language_aware_rewriter_test.cc"],
@@ -481,7 +481,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "version_rewriter",
     srcs = ["version_rewriter.cc"],
     hdrs = ["version_rewriter.h"],
@@ -499,7 +499,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "version_rewriter_test",
     size = "small",
     srcs = ["version_rewriter_test.cc"],
@@ -518,7 +518,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "symbol_rewriter",
     srcs = ["symbol_rewriter.cc"],
     hdrs = ["symbol_rewriter.h"],
@@ -545,7 +545,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "symbol_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -570,7 +570,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "emoticon_rewriter",
     srcs = ["emoticon_rewriter.cc"],
     hdrs = ["emoticon_rewriter.h"],
@@ -593,7 +593,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "emoticon_rewriter_test",
     size = "small",
     srcs = ["emoticon_rewriter_test.cc"],
@@ -616,7 +616,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "variants_rewriter",
     srcs = ["variants_rewriter.cc"],
     hdrs = ["variants_rewriter.h"],
@@ -638,7 +638,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "variants_rewriter_test",
     size = "small",
     srcs = ["variants_rewriter_test.cc"],
@@ -661,7 +661,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "english_variants_rewriter",
     srcs = ["english_variants_rewriter.cc"],
     hdrs = ["english_variants_rewriter.h"],
@@ -680,7 +680,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "english_variants_rewriter_test",
     size = "small",
     srcs = ["english_variants_rewriter_test.cc"],
@@ -698,7 +698,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "fortune_rewriter",
     srcs = ["fortune_rewriter.cc"],
     hdrs = ["fortune_rewriter.h"],
@@ -716,7 +716,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "fortune_rewriter_test",
     size = "small",
     srcs = ["fortune_rewriter_test.cc"],
@@ -734,7 +734,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dice_rewriter",
     srcs = ["dice_rewriter.cc"],
     hdrs = ["dice_rewriter.h"],
@@ -751,7 +751,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dice_rewriter_test",
     size = "small",
     srcs = ["dice_rewriter_test.cc"],
@@ -768,7 +768,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "calculator_rewriter",
     srcs = ["calculator_rewriter.cc"],
     hdrs = ["calculator_rewriter.h"],
@@ -789,7 +789,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "calculator_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -818,7 +818,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "unicode_rewriter",
     srcs = ["unicode_rewriter.cc"],
     hdrs = ["unicode_rewriter.h"],
@@ -837,7 +837,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "unicode_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -862,7 +862,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "user_dictionary_rewriter",
     srcs = ["user_dictionary_rewriter.cc"],
     hdrs = ["user_dictionary_rewriter.h"],
@@ -879,7 +879,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "user_dictionary_rewriter_test",
     size = "small",
     srcs = ["user_dictionary_rewriter_test.cc"],
@@ -898,7 +898,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "dictionary_generator",
     srcs = [
         "dictionary_generator.cc",
@@ -918,7 +918,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "dictionary_generator_test",
     size = "small",
     srcs = ["dictionary_generator_test.cc"],
@@ -930,7 +930,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_symbol_rewriter_dictionary_main",
     srcs = ["gen_symbol_rewriter_dictionary_main.cc"],
     deps = [
@@ -951,7 +951,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_emoticon_rewriter_data",
     srcs = ["gen_emoticon_rewriter_data.cc"],
     deps = [
@@ -968,7 +968,7 @@ cc_binary_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_emoji_rewriter_data_lib",
     srcs = ["gen_emoji_rewriter_data.py"],
     deps = [
@@ -977,7 +977,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
     deps = [
@@ -987,7 +987,7 @@ py_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "emoji_rewriter",
     srcs = ["emoji_rewriter.cc"],
     hdrs = ["emoji_rewriter.h"],
@@ -1011,7 +1011,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "emoji_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -1039,7 +1039,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "single_kanji_rewriter",
     srcs = ["single_kanji_rewriter.cc"],
     hdrs = ["single_kanji_rewriter.h"],
@@ -1065,7 +1065,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_single_kanji_rewriter_data_lib",
     srcs = ["gen_single_kanji_rewriter_data.py"],
     deps = [
@@ -1074,7 +1074,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
     deps = [
@@ -1084,7 +1084,7 @@ py_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_single_kanji_noun_prefix_data",
     srcs = ["gen_single_kanji_noun_prefix_data.cc"],
     deps = [
@@ -1095,7 +1095,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "single_kanji_rewriter_test",
     size = "small",
     srcs = ["single_kanji_rewriter_test.cc"],
@@ -1118,7 +1118,7 @@ cc_test_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_counter_suffix_array_lib",
     srcs = ["gen_counter_suffix_array.py"],
     deps = [
@@ -1127,7 +1127,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
     deps = [
@@ -1137,7 +1137,7 @@ py_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "focus_candidate_rewriter",
     srcs = [
         "focus_candidate_rewriter.cc",
@@ -1160,7 +1160,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "focus_candidate_rewriter_test",
     size = "small",
     srcs = ["focus_candidate_rewriter_test.cc"],
@@ -1180,7 +1180,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "zipcode_rewriter",
     srcs = [
         "zipcode_rewriter.cc",
@@ -1201,7 +1201,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "zipcode_rewriter_test",
     size = "small",
     srcs = [
@@ -1225,7 +1225,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "t13n_promotion_rewriter",
     srcs = ["t13n_promotion_rewriter.cc"],
     hdrs = ["t13n_promotion_rewriter.h"],
@@ -1243,7 +1243,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "t13n_promotion_rewriter_test",
     size = "small",
     srcs = ["t13n_promotion_rewriter_test.cc"],
@@ -1263,7 +1263,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "command_rewriter",
     srcs = ["command_rewriter.cc"],
     hdrs = ["command_rewriter.h"],
@@ -1281,7 +1281,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "command_rewriter_test",
     size = "small",
     srcs = ["command_rewriter_test.cc"],
@@ -1300,7 +1300,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "environmental_filter_rewriter",
     srcs = ["environmental_filter_rewriter.cc"],
     hdrs = ["environmental_filter_rewriter.h"],
@@ -1320,7 +1320,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "environmental_filter_rewriter_test",
     size = "small",
     srcs = ["environmental_filter_rewriter_test.cc"],
@@ -1342,7 +1342,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "remove_redundant_candidate_rewriter",
     srcs = ["remove_redundant_candidate_rewriter.cc"],
     hdrs = ["remove_redundant_candidate_rewriter.h"],
@@ -1355,7 +1355,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "remove_redundant_candidate_rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -1371,7 +1371,7 @@ cc_test_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_usage_rewriter_dictionary_main",
     srcs = ["gen_usage_rewriter_dictionary_main.cc"],
     deps = [
@@ -1387,7 +1387,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "usage_rewriter",
     srcs = [
         "usage_rewriter.cc",
@@ -1414,7 +1414,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "usage_rewriter_test",
     size = "small",
     srcs = ["usage_rewriter_test.cc"],
@@ -1441,7 +1441,7 @@ cc_test_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_reading_correction_data_lib",
     srcs = ["gen_reading_correction_data.py"],
     deps = [
@@ -1450,7 +1450,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
     deps = [
@@ -1460,27 +1460,23 @@ py_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "correction_rewriter",
     srcs = ["correction_rewriter.cc"],
     hdrs = ["correction_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base",
         "//base:logging",
         "//base:serialized_string_array",
-        "//base:util",
-        "//config:config_handler",
         "//converter:segments",
         "//data_manager:data_manager_interface",
-        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "correction_rewriter_test",
     size = "small",
     srcs = ["correction_rewriter_test.cc"],
@@ -1500,7 +1496,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "a11y_description_rewriter",
     srcs = ["a11y_description_rewriter.cc"],
     hdrs = ["a11y_description_rewriter.h"],
@@ -1515,7 +1511,7 @@ cc_library_mozc(
     ],
 )
 
-py_library_mozc(
+mozc_py_library(
     name = "gen_a11y_description_rewriter_data_lib",
     srcs = ["gen_a11y_description_rewriter_data.py"],
     deps = [
@@ -1524,7 +1520,7 @@ py_library_mozc(
     ],
 )
 
-py_binary_mozc(
+mozc_py_binary(
     name = "gen_a11y_description_rewriter_data",
     srcs = ["gen_a11y_description_rewriter_data.py"],
     deps = [
@@ -1534,7 +1530,7 @@ py_binary_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "a11y_description_rewriter_test",
     size = "small",
     srcs = ["a11y_description_rewriter_test.cc"],
@@ -1548,7 +1544,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "rewriter",
     srcs = [
         "rewriter.cc",
@@ -1600,7 +1596,7 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "rewriter_test",
     size = "small",
     timeout = "moderate",
@@ -1622,7 +1618,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "collocation_util",
     srcs = ["collocation_util.cc"],
     hdrs = ["collocation_util.h"],
@@ -1634,7 +1630,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "collocation_util_test",
     size = "small",
     srcs = ["collocation_util_test.cc"],
@@ -1646,7 +1642,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "gen_existence_data",
     srcs = ["gen_existence_data.cc"],
     hdrs = ["gen_existence_data.h"],
@@ -1659,7 +1655,7 @@ cc_library_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_collocation_data_main",
     srcs = ["gen_collocation_data_main.cc"],
     deps = [
@@ -1671,7 +1667,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_binary_mozc(
+mozc_cc_binary(
     name = "gen_collocation_suppression_data_main",
     srcs = ["gen_collocation_suppression_data_main.cc"],
     deps = [
@@ -1685,7 +1681,7 @@ cc_binary_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "number_compound_util",
     srcs = [
         "number_compound_util.cc",
@@ -1702,7 +1698,7 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "merger_rewriter",
     hdrs = ["merger_rewriter.h"],
     visibility = ["//visibility:private"],
@@ -1717,7 +1713,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "number_compound_util_test",
     srcs = ["number_compound_util_test.cc"],
     requires_full_emulation = False,
@@ -1732,14 +1728,14 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "rewriter_util",
     srcs = ["rewriter_util.cc"],
     hdrs = ["rewriter_util.h"],
     deps = ["//converter:segments"],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "rewriter_util_test",
     srcs = ["rewriter_util_test.cc"],
     deps = [
@@ -1751,7 +1747,7 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "ivs_variants_rewriter",
     srcs = ["ivs_variants_rewriter.cc"],
     hdrs = ["ivs_variants_rewriter.h"],
@@ -1763,7 +1759,7 @@ cc_library_mozc(
     ],
 )
 
-cc_test_mozc(
+mozc_cc_test(
     name = "ivs_variants_rewriter_test",
     srcs = ["ivs_variants_rewriter_test.cc"],
     deps = [
