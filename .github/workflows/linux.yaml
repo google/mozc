@@ -25,9 +25,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
-          #
-          # Unset the Android NDK setting to skip the unnecessary configuration.
-          echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
 
       - name: build
         working-directory: ./src
