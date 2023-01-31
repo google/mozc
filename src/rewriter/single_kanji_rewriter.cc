@@ -260,7 +260,7 @@ void GenerateDescription(absl::string_view variant_token_array,
 // Add single kanji variants description to existing candidates,
 // because if we have candidates with same value, the lower ranked candidate
 // will be removed.
-void AddDescriptionForExsistingCandidates(
+void AddDescriptionForExistingCandidates(
     absl::string_view variant_token_array,
     const SerializedStringArray &variant_string_array,
     const SerializedStringArray &variant_type, Segment *segment) {
@@ -397,7 +397,7 @@ SingleKanjiRewriter::SingleKanjiRewriter(
       noun_prefix_token_array_data, noun_prefix_string_array_data);
 }
 
-SingleKanjiRewriter::~SingleKanjiRewriter() {}
+SingleKanjiRewriter::~SingleKanjiRewriter() = default;
 
 int SingleKanjiRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -421,7 +421,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
                             .variation_character_types() &
                         commands::DecoderExperimentParams::SVS_JAPANESE);
   for (size_t i = 0; i < segments_size; ++i) {
-    AddDescriptionForExsistingCandidates(
+    AddDescriptionForExistingCandidates(
         variant_token_array_, variant_string_array_, variant_type_array_,
         segments->mutable_conversion_segment(i));
 
