@@ -452,9 +452,7 @@ TEST_F(EmojiRewriterTest, FullDataTest) {
     SetSegment("3じ", "3ji", &segments);
     EXPECT_TRUE(full_data_rewriter_->Rewrite(convreq_, &segments));
   }
-  // U+31 U+20E3 (KEYCAP 1)
-  // Since emoji_rewriter does not support multi-codepoint characters,
-  // Rewrite function returns false though ideally it should be supported.
+  // U+31 U+FE0F U+20E3 (KEYCAP 1)
   {
     Segments segments;
     SetSegment("１", "1", &segments);
