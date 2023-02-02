@@ -77,7 +77,7 @@ TEST(SingletonTest, BasicTest) {
   TestInstance *t3 = Singleton<TestInstance>::get();
   EXPECT_EQ(t1, t2);
   EXPECT_EQ(t2, t3);
-  EXPECT_EQ(1, g_counter);
+  EXPECT_EQ(g_counter, 1);
 }
 
 TEST(SingletonTest, ThreadTest) {
@@ -100,7 +100,7 @@ TEST(SingletonTest, ThreadTest) {
   test2.Join();
   test3.Join();
 
-  EXPECT_EQ(1, g_counter);
+  EXPECT_EQ(g_counter, 1);
 
   // three instances must be the same.
   EXPECT_EQ(test1.get(), test2.get());
@@ -125,7 +125,7 @@ TEST(SingletonTest, Reset) {
   }
   {
     auto *ptr = Singleton<ValueHolder>::get();
-    EXPECT_EQ(12345, ptr->value_);
+    EXPECT_EQ(ptr->value_, 12345);
     EXPECT_FALSE(dtor_called);
   }
   {
@@ -133,7 +133,7 @@ TEST(SingletonTest, Reset) {
     EXPECT_TRUE(dtor_called);
     auto *ptr = Singleton<ValueHolder>::get();
     // Reconstructed value, so the it's not equal to 12345.
-    EXPECT_EQ(0, ptr->value_);
+    EXPECT_EQ(ptr->value_, 0);
   }
 }
 

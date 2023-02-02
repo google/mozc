@@ -71,8 +71,8 @@ TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {
   const uint64_t elapsed_time2 = stopwatch.GetElapsedMilliseconds();
   PutForwardNanoseconds(kWaitNanoseconds);
   const uint64_t elapsed_time3 = stopwatch.GetElapsedMilliseconds();
-  EXPECT_EQ(elapsed_time1, elapsed_time2);
-  EXPECT_EQ(elapsed_time1, elapsed_time3);
+  EXPECT_EQ(elapsed_time2, elapsed_time1);
+  EXPECT_EQ(elapsed_time3, elapsed_time1);
 }
 
 TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
@@ -82,9 +82,9 @@ TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
   PutForwardNanoseconds(kWaitNanoseconds);
   stopwatch.Stop();
 
-  EXPECT_EQ(kWaitNanoseconds, stopwatch.GetElapsedNanoseconds());
-  EXPECT_EQ(kWaitNanoseconds / 1000, stopwatch.GetElapsedMicroseconds());
-  EXPECT_EQ(kWaitNanoseconds / 1000000, stopwatch.GetElapsedMilliseconds());
+  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(), kWaitNanoseconds);
+  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(), kWaitNanoseconds / 1000);
+  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(), kWaitNanoseconds / 1000000);
 }
 
 TEST_F(StopwatchTest, RestartTest) {
@@ -101,9 +101,9 @@ TEST_F(StopwatchTest, RestartTest) {
   stopwatch.Stop();
 
   constexpr uint64_t kExpected = kWaitNanoseconds1 + kWaitNanoseconds3;
-  EXPECT_EQ(kExpected, stopwatch.GetElapsedNanoseconds());
-  EXPECT_EQ(kExpected / 1000, stopwatch.GetElapsedMicroseconds());
-  EXPECT_EQ(kExpected / 1000000, stopwatch.GetElapsedMilliseconds());
+  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(), kExpected);
+  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(), kExpected / 1000);
+  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(), kExpected / 1000000);
 }
 
 TEST_F(StopwatchTest, ResetTest) {
@@ -118,9 +118,9 @@ TEST_F(StopwatchTest, ResetTest) {
   PutForwardNanoseconds(kWaitNanoseconds2);
   stopwatch.Stop();
 
-  EXPECT_EQ(kWaitNanoseconds2, stopwatch.GetElapsedNanoseconds());
-  EXPECT_EQ(kWaitNanoseconds2 / 1000, stopwatch.GetElapsedMicroseconds());
-  EXPECT_EQ(kWaitNanoseconds2 / 1000000, stopwatch.GetElapsedMilliseconds());
+  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(), kWaitNanoseconds2);
+  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(), kWaitNanoseconds2 / 1000);
+  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(), kWaitNanoseconds2 / 1000000);
 }
 
 }  // namespace mozc

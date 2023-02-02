@@ -94,9 +94,9 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string decrypted(input.data(), input.size());
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &input));
-    EXPECT_EQ(encrypted, input);
+    EXPECT_EQ(input, encrypted);
     EXPECT_TRUE(Encryptor::DecryptString(key2, &input));
-    EXPECT_EQ(decrypted, input);
+    EXPECT_EQ(input, decrypted);
   }
   {
     const std::string password(kTestData[1].password,
@@ -115,9 +115,9 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string decrypted(input.data(), input.size());
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &input));
-    EXPECT_EQ(encrypted, input);
+    EXPECT_EQ(input, encrypted);
     EXPECT_TRUE(Encryptor::DecryptString(key2, &input));
-    EXPECT_EQ(decrypted, input);
+    EXPECT_EQ(input, decrypted);
   }
   {
     const std::string password(kTestData[2].password,
@@ -136,9 +136,9 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string decrypted(input.data(), input.size());
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &input));
-    EXPECT_EQ(encrypted, input);
+    EXPECT_EQ(input, encrypted);
     EXPECT_TRUE(Encryptor::DecryptString(key2, &input));
-    EXPECT_EQ(decrypted, input);
+    EXPECT_EQ(input, decrypted);
   }
   {
     const std::string password(kTestData[3].password,
@@ -157,9 +157,9 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string decrypted(input.data(), input.size());
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &input));
-    EXPECT_EQ(encrypted, input);
+    EXPECT_EQ(input, encrypted);
     EXPECT_TRUE(Encryptor::DecryptString(key2, &input));
-    EXPECT_EQ(decrypted, input);
+    EXPECT_EQ(input, decrypted);
   }
 }
 
@@ -169,9 +169,9 @@ TEST(EncryptorTest, BasicTest) {
   EXPECT_FALSE(key.IsAvailable());
   EXPECT_TRUE(key.DeriveFromPassword("test"));
   EXPECT_TRUE(key.IsAvailable());
-  EXPECT_EQ(16, key.block_size());
-  EXPECT_EQ(256, key.key_size());
-  EXPECT_EQ(16, key.iv_size());
+  EXPECT_EQ(key.block_size(), 16);
+  EXPECT_EQ(key.key_size(), 256);
+  EXPECT_EQ(key.iv_size(), 16);
 }
 
 TEST(EncryptorTest, EncryptBatch) {
@@ -201,15 +201,15 @@ TEST(EncryptorTest, EncryptBatch) {
     std::string encrypted(original.data(), original.size());
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &encrypted));
-    EXPECT_EQ(0, encrypted.size() % key1.block_size());
+    EXPECT_EQ(encrypted.size() % key1.block_size(), 0);
     EXPECT_NE(encrypted, original);
 
     std::string encrypted3(encrypted.data(), encrypted.size());
     std::string encrypted4(encrypted.data(), encrypted.size());
 
     EXPECT_TRUE(Encryptor::DecryptString(key2, &encrypted));
-    EXPECT_EQ(original.size(), encrypted.size());
-    EXPECT_EQ(original, encrypted);
+    EXPECT_EQ(encrypted.size(), original.size());
+    EXPECT_EQ(encrypted, original);
 
     // wrong key
     Encryptor::DecryptString(key3, &encrypted3);

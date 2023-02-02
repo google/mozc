@@ -87,9 +87,9 @@ TEST(WinSandboxTest, GetSidsToDisable) {
 
   EXPECT_TRUE(non_admin.size() == interactive.size());
 
-  EXPECT_EQ(0, restricted_same_access.size());
+  EXPECT_EQ(restricted_same_access.size(), 0);
 
-  EXPECT_EQ(0, unprotect.size());
+  EXPECT_EQ(unprotect.size(), 0);
 }
 
 TEST(WinSandboxTest, GetPrivilegesToDisable) {
@@ -114,8 +114,8 @@ TEST(WinSandboxTest, GetPrivilegesToDisable) {
   const std::vector<LUID> unprotect = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
-  EXPECT_EQ(0, restricted_same_access.size());
-  EXPECT_EQ(0, unprotect.size());
+  EXPECT_EQ(restricted_same_access.size(), 0);
+  EXPECT_EQ(unprotect.size(), 0);
 }
 
 TEST(WinSandboxTest, GetSidsToRestrict) {
@@ -139,7 +139,7 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
   const std::vector<Sid> unprotect = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_UNPROTECTED);
 
-  EXPECT_EQ(1, lockdown.size());
+  EXPECT_EQ(lockdown.size(), 1);
   VerifySidContained(lockdown, WinNullSid);
 
   VerifySidContained(limited, WinBuiltinUsersSid);
@@ -160,111 +160,98 @@ std::wstring GetSDDLForWin8(WinSandbox::ObjectSecurityType type) {
 }
 
 TEST(WinSandboxTest, GetSDDLForSharablePipe) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForVista(WinSandbox::kSharablePipe));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
-      L"(A;;GA;;;S-8)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForWin8(WinSandbox::kSharablePipe));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kSharablePipe),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
+            L"S:(ML;;NX;;;LW)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kSharablePipe),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
+            L"(A;;GA;;;S-8)"
+            L"S:(ML;;NX;;;LW)");
 }
 
 TEST(WinSandboxTest, GetSDDLForLooseSharablePipe) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
-      L"(A;;GA;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForVista(WinSandbox::kLooseSharablePipe));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
-      L"(A;;GA;;;S-8)(A;;GA;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForWin8(WinSandbox::kLooseSharablePipe));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kLooseSharablePipe),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
+            L"(A;;GA;;;RC)"
+            L"S:(ML;;NX;;;LW)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kLooseSharablePipe),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
+            L"(A;;GA;;;S-8)(A;;GA;;;RC)"
+            L"S:(ML;;NX;;;LW)");
 }
 
 TEST(WinSandboxTest, GetSDDLForSharableEvent) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForVista(WinSandbox::kSharableEvent));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)"
-      L"(A;;GX;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForWin8(WinSandbox::kSharableEvent));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kSharableEvent),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
+            L"S:(ML;;NX;;;LW)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kSharableEvent),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)"
+            L"(A;;GX;;;RC)"
+            L"S:(ML;;NX;;;LW)");
 }
 
 TEST(WinSandboxTest, GetSDDLForSharableMutex) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForVista(WinSandbox::kSharableMutex));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)"
-      L"(A;;GX;;;RC)"
-      L"S:(ML;;NX;;;LW)",
-      GetSDDLForWin8(WinSandbox::kSharableMutex));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kSharableMutex),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GX;;;RC)"
+            L"S:(ML;;NX;;;LW)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kSharableMutex),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GX;;;AC)(A;;GA;;;S-8)"
+            L"(A;;GX;;;RC)"
+            L"S:(ML;;NX;;;LW)");
 }
 
 TEST(WinSandboxTest, GetSDDLForSharableFileForRead) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GR;;;RC)"
-      L"S:(ML;;NWNX;;;LW)",
-      GetSDDLForVista(WinSandbox::kSharableFileForRead));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GR;;;AC)(A;;GA;;;S-8)"
-      L"(A;;GR;;;RC)"
-      L"S:(ML;;NWNX;;;LW)",
-      GetSDDLForWin8(WinSandbox::kSharableFileForRead));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kSharableFileForRead),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;GR;;;RC)"
+            L"S:(ML;;NWNX;;;LW)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kSharableFileForRead),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GR;;;AC)(A;;GA;;;S-8)"
+            L"(A;;GR;;;RC)"
+            L"S:(ML;;NWNX;;;LW)");
 }
 
 TEST(WinSandboxTest, GetSDDLForIPCServerProcess) {
   EXPECT_EQ(
+      GetSDDLForVista(WinSandbox::kIPCServerProcess),
       L"O:S-8"
       L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;0x1000;;;RC)",
-      GetSDDLForVista(WinSandbox::kIPCServerProcess));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x1000;;;AC)(A;;GA;;;S-8)"
-      L"(A;;0x1000;;;RC)",
-      GetSDDLForWin8(WinSandbox::kIPCServerProcess));
+      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)(A;;0x1000;;;RC)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kIPCServerProcess),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x1000;;;AC)(A;;GA;;;S-8)"
+            L"(A;;0x1000;;;RC)");
 }
 
 TEST(WinSandboxTest, GetSDDLForPrivateObject) {
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
-      GetSDDLForVista(WinSandbox::kPrivateObject));
-  EXPECT_EQ(
-      L"O:S-8"
-      L"G:S-9"
-      L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)",
-      GetSDDLForWin8(WinSandbox::kPrivateObject));
+  EXPECT_EQ(GetSDDLForVista(WinSandbox::kPrivateObject),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)");
+  EXPECT_EQ(GetSDDLForWin8(WinSandbox::kPrivateObject),
+            L"O:S-8"
+            L"G:S-9"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)");
 }
 
 }  // namespace

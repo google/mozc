@@ -99,7 +99,7 @@ TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
     std::unique_ptr<char[]> buf(new char[kData.size() + 1]);
     ifs->read(buf.get(), kData.size());
     buf.get()[kData.size()] = '\0';
-    EXPECT_EQ(kData, buf.get());
+    EXPECT_EQ(buf.get(), kData);
     EXPECT_TRUE(IsEof(ifs.get()));
   }
 
@@ -124,13 +124,13 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   ConfigFileStream::AtomicUpdate(prefixed_filename, contents);
   EXPECT_OK(FileUtil::FileExists(filename));
   EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
-  EXPECT_EQ(contents, GetFileData(filename));
+  EXPECT_EQ(GetFileData(filename), contents);
 
   const std::string new_contents = "246\n4\n6";
   ConfigFileStream::AtomicUpdate(prefixed_filename, new_contents);
   EXPECT_OK(FileUtil::FileExists(filename));
   EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
-  EXPECT_EQ(new_contents, GetFileData(filename));
+  EXPECT_EQ(GetFileData(filename), new_contents);
 
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
@@ -158,7 +158,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     ifs->read(buf.get(), kBinaryDataSize);
     // Check if all the data are loaded as binary mode.
     for (size_t i = 0; i < kBinaryDataSize; ++i) {
-      EXPECT_EQ(static_cast<int>(kBinaryData[i]), static_cast<int>(buf[i]));
+      EXPECT_EQ(static_cast<int>(buf[i]), static_cast<int>(kBinaryData[i]));
     }
     EXPECT_TRUE(IsEof(ifs.get()));
   }

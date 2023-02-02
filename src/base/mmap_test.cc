@@ -65,13 +65,13 @@ TEST(MmapTest, MmapTest) {
       memcpy(mmap.begin(), buf.get(), kFileNameSize[i]);
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(buf[j], mmap[j]);
+        EXPECT_EQ(mmap[j], buf[j]);
       }
 
       memset(mmap.begin(), 0, kFileNameSize[i]);
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(0, mmap[j]);
+        EXPECT_EQ(mmap[j], 0);
       }
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
@@ -79,7 +79,7 @@ TEST(MmapTest, MmapTest) {
       }
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(buf[j], mmap[j]);
+        EXPECT_EQ(mmap[j], buf[j]);
       }
     }
 
@@ -88,7 +88,7 @@ TEST(MmapTest, MmapTest) {
       Mmap mmap;
       EXPECT_TRUE(mmap.Open(filename.c_str(), "r"));
       for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(buf[j], mmap[j]);
+        EXPECT_EQ(mmap[j], buf[j]);
       }
     }
 
@@ -100,11 +100,11 @@ TEST(MmapTest, MaybeMLockTest) {
   const size_t data_len = 32;
   std::unique_ptr<void, void (*)(void*)> addr(malloc(data_len), &free);
   if (Mmap::IsMLockSupported()) {
-    ASSERT_EQ(0, Mmap::MaybeMLock(addr.get(), data_len));
-    EXPECT_EQ(0, Mmap::MaybeMUnlock(addr.get(), data_len));
+    ASSERT_EQ(Mmap::MaybeMLock(addr.get(), data_len), 0);
+    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), data_len), 0);
   } else {
-    EXPECT_EQ(-1, Mmap::MaybeMLock(addr.get(), data_len));
-    EXPECT_EQ(-1, Mmap::MaybeMUnlock(addr.get(), data_len));
+    EXPECT_EQ(Mmap::MaybeMLock(addr.get(), data_len), -1);
+    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), data_len), -1);
   }
 }
 

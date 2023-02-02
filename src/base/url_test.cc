@@ -76,8 +76,8 @@ TEST(UrlTest, UninstallationSurveyUrl) {
   Url::GetUninstallationSurveyUrl("0.1.2.3", &url);
   const std::optional<ParsedUrl> parsed = ParseUrl(url);
   ASSERT_TRUE(parsed.has_value()) << "Unexpected URL format: " << url;
-  EXPECT_EQ(kSurveyBaseUrl, parsed->base_url);
-  EXPECT_EQ(4, parsed->params.size());
+  EXPECT_EQ(parsed->base_url, kSurveyBaseUrl);
+  EXPECT_EQ(parsed->params.size(), 4);
   EXPECT_TRUE(FindEncodedParam(parsed->params, "contact_type", "surveyime"));
   EXPECT_TRUE(FindEncodedParam(parsed->params, "hl", "jp"));
   EXPECT_TRUE(FindEncodedParam(parsed->params, "format", "inproduct"));
@@ -89,8 +89,8 @@ TEST(UrlTest, UninstallationSurveyUrlWithNoVersion) {
   Url::GetUninstallationSurveyUrl("", &url);
   const std::optional<ParsedUrl> parsed = ParseUrl(url);
   ASSERT_TRUE(parsed.has_value()) << "Unexpected URL format: " << url;
-  EXPECT_EQ(kSurveyBaseUrl, parsed->base_url);
-  EXPECT_EQ(3, parsed->params.size());
+  EXPECT_EQ(parsed->base_url, kSurveyBaseUrl);
+  EXPECT_EQ(parsed->params.size(), 3);
   EXPECT_TRUE(FindEncodedParam(parsed->params, "contact_type", "surveyime"));
   EXPECT_TRUE(FindEncodedParam(parsed->params, "hl", "jp"));
   EXPECT_TRUE(FindEncodedParam(parsed->params, "format", "inproduct"));

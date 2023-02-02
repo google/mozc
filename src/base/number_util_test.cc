@@ -43,51 +43,51 @@ namespace mozc {
 namespace {
 
 TEST(NumberUtilTest, SimpleAtoi) {
-  EXPECT_EQ(0, NumberUtil::SimpleAtoi("0"));
-  EXPECT_EQ(123, NumberUtil::SimpleAtoi("123"));
-  EXPECT_EQ(-1, NumberUtil::SimpleAtoi("-1"));
+  EXPECT_EQ(NumberUtil::SimpleAtoi("0"), 0);
+  EXPECT_EQ(NumberUtil::SimpleAtoi("123"), 123);
+  EXPECT_EQ(NumberUtil::SimpleAtoi("-1"), -1);
 
   // Invalid cases return 0.
-  EXPECT_EQ(0, NumberUtil::SimpleAtoi("abc"));
-  EXPECT_EQ(0, NumberUtil::SimpleAtoi("a1"));
-  EXPECT_EQ(0, NumberUtil::SimpleAtoi("1 a"));
+  EXPECT_EQ(NumberUtil::SimpleAtoi("abc"), 0);
+  EXPECT_EQ(NumberUtil::SimpleAtoi("a1"), 0);
+  EXPECT_EQ(NumberUtil::SimpleAtoi("1 a"), 0);
 }
 
 TEST(NumberUtilTest, SafeStrToInt16) {
   int16_t value = 0x4321;
 
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("+0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" \t\r\n\v\f-0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("012345", &value));
-  EXPECT_EQ(12345, value);
+  EXPECT_EQ(value, 12345);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-012345", &value));
-  EXPECT_EQ(-12345, value);
+  EXPECT_EQ(value, -12345);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
-  EXPECT_EQ(std::numeric_limits<int16_t>::min(), value);
+  EXPECT_EQ(value, std::numeric_limits<int16_t>::min());
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
-  EXPECT_EQ(std::numeric_limits<int16_t>::max(), value);
+  EXPECT_EQ(value, std::numeric_limits<int16_t>::max());
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("2 ", &value));
-  EXPECT_EQ(2, value);
+  EXPECT_EQ(value, 2);
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt16("0x1234", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToInt16("-32769", &value));
@@ -102,52 +102,52 @@ TEST(NumberUtilTest, SafeStrToInt16) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt16(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToInt16(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt16(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt16(absl::string_view(kString + 7, 4), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeStrToInt32) {
   int32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("+0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" \t\r\n\v\f-0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("012345678", &value));
-  EXPECT_EQ(12345678, value);
+  EXPECT_EQ(value, 12345678);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-012345678", &value));
-  EXPECT_EQ(-12345678, value);
+  EXPECT_EQ(value, -12345678);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-2147483648", &value));
-  EXPECT_EQ(std::numeric_limits<int32_t>::min(), value);
+  EXPECT_EQ(value, std::numeric_limits<int32_t>::min());
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("2147483647", &value));
-  EXPECT_EQ(std::numeric_limits<int32_t>::max(), value);
+  EXPECT_EQ(value, std::numeric_limits<int32_t>::max());
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" 1", &value));
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("2 ", &value));
-  EXPECT_EQ(2, value);
+  EXPECT_EQ(value, 2);
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt32("0x1234", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToInt32("-2147483649", &value));
@@ -162,15 +162,15 @@ TEST(NumberUtilTest, SafeStrToInt32) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt32(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToInt32(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt32(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt32(absl::string_view(kString + 7, 4), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeStrToInt64) {
@@ -178,31 +178,31 @@ TEST(NumberUtilTest, SafeStrToInt64) {
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("+0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64(" \t\r\n\v\f-0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("012345678", &value));
-  EXPECT_EQ(12345678, value);
+  EXPECT_EQ(value, 12345678);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-012345678", &value));
-  EXPECT_EQ(-12345678, value);
+  EXPECT_EQ(value, -12345678);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-9223372036854775808", &value));
-  EXPECT_EQ(std::numeric_limits<int64_t>::min(), value);
+  EXPECT_EQ(value, std::numeric_limits<int64_t>::min());
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("9223372036854775807", &value));
-  EXPECT_EQ(std::numeric_limits<int64_t>::max(), value);
+  EXPECT_EQ(value, std::numeric_limits<int64_t>::max());
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt64("-9223372036854775809",  // overflow
                                           &value));
@@ -218,39 +218,39 @@ TEST(NumberUtilTest, SafeStrToInt64) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt64(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToInt64(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToInt64(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeStrToUInt16) {
   uint16_t value = 0xBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16("012345", &value));
-  EXPECT_EQ(12345, value);
+  EXPECT_EQ(value, 12345);
 
   value = 0xBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16("65535", &value));
-  EXPECT_EQ(65535u, value);  // max of 16-bit unsigned integer
+  EXPECT_EQ(value, 65535u);  // max of 16-bit unsigned integer
 
   value = 0xBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16(" 1", &value));
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   value = 0xBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16("2 ", &value));
-  EXPECT_EQ(2, value);
+  EXPECT_EQ(value, 2);
 
   EXPECT_FALSE(NumberUtil::SafeStrToUInt16("-0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt16("0x1234", &value));
@@ -265,42 +265,42 @@ TEST(NumberUtilTest, SafeStrToUInt16) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt16(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToUInt16(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt16(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt16(absl::string_view(kString + 7, 4), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeStrToUInt32) {
   uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("012345678", &value));
-  EXPECT_EQ(12345678, value);
+  EXPECT_EQ(value, 12345678);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("4294967295", &value));
-  EXPECT_EQ(4294967295u, value);  // max of 32-bit unsigned integer
+  EXPECT_EQ(value, 4294967295u);  // max of 32-bit unsigned integer
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32(" 1", &value));
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("2 ", &value));
-  EXPECT_EQ(2, value);
+  EXPECT_EQ(value, 2);
 
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("-0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("0x1234", &value));
@@ -315,43 +315,43 @@ TEST(NumberUtilTest, SafeStrToUInt32) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt32(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToUInt32(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt32(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt32(absl::string_view(kString + 7, 4), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeHexStrToUInt32) {
   uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(
       NumberUtil::SafeHexStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("0ABCDE", &value));
-  EXPECT_EQ(0xABCDE, value);
+  EXPECT_EQ(value, 0xABCDE);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("0abcde", &value));
-  EXPECT_EQ(0xABCDE, value);
+  EXPECT_EQ(value, 0xABCDE);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("FFFFFFFF", &value));
-  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+  EXPECT_EQ(value, 0xFFFFFFFF);  // max of 32-bit unsigned integer
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("ffffffff", &value));
-  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+  EXPECT_EQ(value, 0xFFFFFFFF);  // max of 32-bit unsigned integer
 
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32("-0", &value));
   EXPECT_FALSE(
@@ -365,10 +365,10 @@ TEST(NumberUtilTest, SafeHexStrToUInt32) {
   const char *kString = "123 abc 5x";
   EXPECT_TRUE(
       NumberUtil::SafeHexStrToUInt32(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(291, value);
+  EXPECT_EQ(value, 291);
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(absl::string_view(kString + 4, 3),
                                              &value));
-  EXPECT_EQ(2748, value);
+  EXPECT_EQ(value, 2748);
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(absl::string_view(kString + 8, 2),
                                               &value));
 }
@@ -377,20 +377,20 @@ TEST(NumberUtilTest, SafeOctStrToUInt32) {
   uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(
       NumberUtil::SafeOctStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("012345", &value));
-  EXPECT_EQ(012345, value);
+  EXPECT_EQ(value, 012345);
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("37777777777", &value));
-  EXPECT_EQ(0xFFFFFFFF, value);  // max of 32-bit unsigned integer
+  EXPECT_EQ(value, 0xFFFFFFFF);  // max of 32-bit unsigned integer
 
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("-0", &value));
   EXPECT_FALSE(
@@ -404,10 +404,10 @@ TEST(NumberUtilTest, SafeOctStrToUInt32) {
   const char *kString = "123 456 789";
   EXPECT_TRUE(
       NumberUtil::SafeOctStrToUInt32(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(83, value);
+  EXPECT_EQ(value, 83);
   EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 4, 3),
                                              &value));
-  EXPECT_EQ(302, value);
+  EXPECT_EQ(value, 302);
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 8, 3),
                                               &value));
 }
@@ -416,11 +416,11 @@ TEST(NumberUtilTest, SafeStrToUInt64) {
   uint64_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("0", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("012345678", &value));
-  EXPECT_EQ(12345678, value);
+  EXPECT_EQ(value, 12345678);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("18446744073709551615", &value));
   EXPECT_EQ(uint64_t{18446744073709551615u},
             value);  // max of 64-bit unsigned integer
@@ -438,33 +438,33 @@ TEST(NumberUtilTest, SafeStrToUInt64) {
   const char *kString = "123 abc 789";
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt64(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(123, value);
+  EXPECT_EQ(value, 123);
   EXPECT_FALSE(
       NumberUtil::SafeStrToUInt64(absl::string_view(kString + 4, 3), &value));
   EXPECT_TRUE(
       NumberUtil::SafeStrToUInt64(absl::string_view(kString + 8, 3), &value));
-  EXPECT_EQ(789, value);
+  EXPECT_EQ(value, 789);
 }
 
 TEST(NumberUtilTest, SafeStrToDouble) {
   double value = 1.0;
 
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("-0", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("1.0e1", &value));
-  EXPECT_EQ(10.0, value);
+  EXPECT_EQ(value, 10.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("-5.0e-1", &value));
-  EXPECT_EQ(-0.5, value);
+  EXPECT_EQ(value, -0.5);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble(".0", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0.", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0.0", &value));
-  EXPECT_EQ(0.0, value);
+  EXPECT_EQ(value, 0.0);
   // Approximate representation of max of double.  The value checking is done by
   // EXPECT_DOUBLE_EQ as the result might be very slightly different on some
   // platforms.
@@ -476,7 +476,7 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   // It seems that the Android libc doesn't accept hex format, so disable it.
 #ifndef OS_ANDROID
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
-  EXPECT_EQ(static_cast<double>(0x1234), value);
+  EXPECT_EQ(value, static_cast<double>(0x1234));
 #endif  // OS_ANDROID
 
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("1.0e309", &value));   // overflow
@@ -490,10 +490,10 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   const char *kString = "0.01 3.1415 double";
   EXPECT_TRUE(
       NumberUtil::SafeStrToDouble(absl::string_view(kString, 4), &value));
-  EXPECT_EQ(0.01, value);
+  EXPECT_EQ(value, 0.01);
   EXPECT_TRUE(
       NumberUtil::SafeStrToDouble(absl::string_view(kString + 5, 6), &value));
-  EXPECT_EQ(3.1415, value);
+  EXPECT_EQ(value, 3.1415);
   EXPECT_FALSE(
       NumberUtil::SafeStrToDouble(absl::string_view(kString + 12, 6), &value));
 }
@@ -582,7 +582,7 @@ TEST(NumberUtilTest, KanjiNumberToArabicNumber) {
   for (size_t i = 0; i < std::size(inputs); ++i) {
     std::string arabic;
     NumberUtil::KanjiNumberToArabicNumber(inputs[i], &arabic);
-    EXPECT_EQ(expects[i], arabic);
+    EXPECT_EQ(arabic, expects[i]);
   }
 }
 
@@ -641,8 +641,8 @@ TEST(NumberUtilTest, NormalizeNumbers) {
     std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_data[i][0], true,
                                              &kanji_output, &arabic_output));
-    EXPECT_EQ(success_data[i][1], kanji_output);
-    EXPECT_EQ(success_data[i][2], arabic_output);
+    EXPECT_EQ(kanji_output, success_data[i][1]);
+    EXPECT_EQ(arabic_output, success_data[i][2]);
   }
 
   // An element has input, expected Kanji output, and expected Arabic output.
@@ -660,8 +660,8 @@ TEST(NumberUtilTest, NormalizeNumbers) {
     std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_notrim_data[i][0], false,
                                              &kanji_output, &arabic_output));
-    EXPECT_EQ(success_notrim_data[i][1], kanji_output);
-    EXPECT_EQ(success_notrim_data[i][2], arabic_output);
+    EXPECT_EQ(kanji_output, success_notrim_data[i][1]);
+    EXPECT_EQ(arabic_output, success_notrim_data[i][2]);
   }
 
   // Test data expected to fail
@@ -698,9 +698,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string suffix = "dummy_text_suffix";
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("一", kanji_output);
-    EXPECT_EQ("1", arabic_output);
-    EXPECT_EQ("個", suffix);
+    EXPECT_EQ(kanji_output, "一");
+    EXPECT_EQ(arabic_output, "1");
+    EXPECT_EQ(suffix, "個");
   }
 
   {
@@ -708,9 +708,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string arabic_output, kanji_output, suffix;
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("一万二十五", kanji_output);
-    EXPECT_EQ("10025", arabic_output);
-    EXPECT_EQ("個", suffix);
+    EXPECT_EQ(kanji_output, "一万二十五");
+    EXPECT_EQ(arabic_output, "10025");
+    EXPECT_EQ(suffix, "個");
   }
 
   {
@@ -718,9 +718,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string arabic_output, kanji_output, suffix;
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("二百三五万一", kanji_output);
-    EXPECT_EQ("2350001", arabic_output);
-    EXPECT_EQ("番目", suffix);
+    EXPECT_EQ(kanji_output, "二百三五万一");
+    EXPECT_EQ(arabic_output, "2350001");
+    EXPECT_EQ(suffix, "番目");
   }
 
   {
@@ -743,9 +743,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string arabic_output, kanji_output, suffix;
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("零", kanji_output);
-    EXPECT_EQ("0", arabic_output);
-    EXPECT_EQ("セット", suffix);
+    EXPECT_EQ(kanji_output, "零");
+    EXPECT_EQ(arabic_output, "0");
+    EXPECT_EQ(suffix, "セット");
   }
 
   {
@@ -753,9 +753,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string arabic_output, kanji_output, suffix;
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("九〇", kanji_output);
-    EXPECT_EQ("90", arabic_output);
-    EXPECT_EQ("ぷよ", suffix);
+    EXPECT_EQ(kanji_output, "九〇");
+    EXPECT_EQ(arabic_output, "90");
+    EXPECT_EQ(suffix, "ぷよ");
   }
 
   {
@@ -763,9 +763,9 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     std::string arabic_output, kanji_output, suffix;
     EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
         input, true, &kanji_output, &arabic_output, &suffix));
-    EXPECT_EQ("三五", kanji_output);
-    EXPECT_EQ("35", arabic_output);
-    EXPECT_EQ("$", suffix);
+    EXPECT_EQ(kanji_output, "三五");
+    EXPECT_EQ(arabic_output, "35");
+    EXPECT_EQ(suffix, "$");
   }
 
   {
@@ -784,19 +784,19 @@ TEST(NumberUtilTest, ArabicToWideArabicTest) {
   output.clear();
   EXPECT_TRUE(NumberUtil::ArabicToWideArabic(arabic, &output));
   ASSERT_EQ(output.size(), 2);
-  EXPECT_EQ("一二三四五", output[0].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
-  EXPECT_EQ("１２３４５", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::DEFAULT_STYLE, output[1].style);
+  EXPECT_EQ(output[0].value, "一二三四五");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_KANJI_ARABIC);
+  EXPECT_EQ(output[1].value, "１２３４５");
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::DEFAULT_STYLE);
 
   arabic = "00123";
   output.clear();
   EXPECT_TRUE(NumberUtil::ArabicToWideArabic(arabic, &output));
   ASSERT_EQ(output.size(), 2);
-  EXPECT_EQ("〇〇一二三", output[0].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
-  EXPECT_EQ("００１２３", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::DEFAULT_STYLE, output[1].style);
+  EXPECT_EQ(output[0].value, "〇〇一二三");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_KANJI_ARABIC);
+  EXPECT_EQ(output[1].value, "００１２３");
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::DEFAULT_STYLE);
 
   arabic = "abcde";
   output.clear();
@@ -821,10 +821,10 @@ TEST(NumberUtilTest, ArabicToWideArabicTest) {
   arabic = "18446744073709551616";  // UINT_MAX + 1
   EXPECT_TRUE(NumberUtil::ArabicToWideArabic(arabic, &output));
   ASSERT_EQ(2, output.size());
-  EXPECT_EQ("一八四四六七四四〇七三七〇九五五一六一六", output[0].value);
-  EXPECT_EQ("１８４４６７４４０７３７０９５５１６１６", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_KANJI_ARABIC, output[0].style);
-  EXPECT_EQ(NumberUtil::NumberString::DEFAULT_STYLE, output[1].style);
+  EXPECT_EQ(output[0].value, "一八四四六七四四〇七三七〇九五五一六一六");
+  EXPECT_EQ(output[1].value, "１８４４６７４４０７３７０９５５１６１６");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_KANJI_ARABIC);
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::DEFAULT_STYLE);
 }
 
 namespace {
@@ -923,11 +923,11 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
     output.clear();
     EXPECT_TRUE(NumberUtil::ArabicToSeparatedArabic(arabic, &output));
     ASSERT_EQ(output.size(), 2);
-    EXPECT_EQ(kSuccess[i][1], output[0].value);
+    EXPECT_EQ(output[0].value, kSuccess[i][1]);
     EXPECT_EQ(NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH,
               output[0].style);
     if (kSuccess[i][2]) {
-      EXPECT_EQ(kSuccess[i][2], output[1].value);
+      EXPECT_EQ(output[1].value, kSuccess[i][2]);
       EXPECT_EQ(NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH,
                 output[1].style);
     }
@@ -959,14 +959,14 @@ TEST(NumberUtilTest, ArabicToOtherFormsTest) {
   EXPECT_TRUE(NumberUtil::ArabicToOtherForms(arabic, &output));
   ASSERT_EQ(output.size(), 3);
 
-  EXPECT_EQ("Ⅴ", output[0].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL, output[0].style);
+  EXPECT_EQ(output[0].value, "Ⅴ");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL);
 
-  EXPECT_EQ("ⅴ", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_ROMAN_SMALL, output[1].style);
+  EXPECT_EQ(output[1].value, "ⅴ");
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::NUMBER_ROMAN_SMALL);
 
-  EXPECT_EQ("⑤", output[2].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_CIRCLED, output[2].style);
+  EXPECT_EQ(output[2].value, "⑤");
+  EXPECT_EQ(output[2].style, NumberUtil::NumberString::NUMBER_CIRCLED);
 
   arabic = "0123456789";
   output.clear();
@@ -1012,21 +1012,21 @@ TEST(NumberUtilTest, ArabicToOtherRadixesTest) {
   output.clear();
   EXPECT_TRUE(NumberUtil::ArabicToOtherRadixes(arabic, &output));
   ASSERT_EQ(output.size(), 2);
-  EXPECT_EQ("010", output[0].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_OCT, output[0].style);
-  EXPECT_EQ("0b1000", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_BIN, output[1].style);
+  EXPECT_EQ(output[0].value, "010");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_OCT);
+  EXPECT_EQ(output[1].value, "0b1000");
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::NUMBER_BIN);
 
   arabic = "16";
   output.clear();
   EXPECT_TRUE(NumberUtil::ArabicToOtherRadixes(arabic, &output));
   ASSERT_EQ(output.size(), 3);
-  EXPECT_EQ("0x10", output[0].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_HEX, output[0].style);
-  EXPECT_EQ("020", output[1].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_OCT, output[1].style);
-  EXPECT_EQ("0b10000", output[2].value);
-  EXPECT_EQ(NumberUtil::NumberString::NUMBER_BIN, output[2].style);
+  EXPECT_EQ(output[0].value, "0x10");
+  EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_HEX);
+  EXPECT_EQ(output[1].value, "020");
+  EXPECT_EQ(output[1].style, NumberUtil::NumberString::NUMBER_OCT);
+  EXPECT_EQ(output[2].value, "0b10000");
+  EXPECT_EQ(output[2].style, NumberUtil::NumberString::NUMBER_BIN);
 
   arabic = "asdf0123456789";
   output.clear();

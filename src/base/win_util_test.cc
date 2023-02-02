@@ -102,8 +102,9 @@ TEST(WinUtilTest, WindowHandleTest) {
   // Should round-trip as long as the handle value is in uint32_t range.
   const HWND k32bitSource =
       reinterpret_cast<HWND>(static_cast<uintptr_t>(0x1234));
-  EXPECT_EQ(k32bitSource, WinUtil::DecodeWindowHandle(
-                              WinUtil::EncodeWindowHandle(k32bitSource)));
+  EXPECT_EQ(
+      WinUtil::DecodeWindowHandle(WinUtil::EncodeWindowHandle(k32bitSource)),
+      k32bitSource);
 
 #if defined(_M_X64)
   // OK to drop higher 32-bit.
@@ -111,8 +112,9 @@ TEST(WinUtilTest, WindowHandleTest) {
       reinterpret_cast<HWND>(static_cast<uintptr_t>(0xf0f1f2f3e4e5e6e7ULL));
   const HWND k64bitExpected =
       reinterpret_cast<HWND>(static_cast<uintptr_t>(0x00000000e4e5e6e7ULL));
-  EXPECT_EQ(k64bitExpected, WinUtil::DecodeWindowHandle(
-                                WinUtil::EncodeWindowHandle(k64bitSource)));
+  EXPECT_EQ(
+      WinUtil::DecodeWindowHandle(WinUtil::EncodeWindowHandle(k64bitSource)),
+      k64bitExpected);
 #endif  // _M_X64
 }
 
@@ -159,8 +161,8 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
     const std::wstring test_string2(kTestBuffer,
                                     kTestBuffer + std::size(kTestBuffer));
 
-    EXPECT_EQ(3, test_string1.size());
-    EXPECT_EQ(4, test_string2.size());
+    EXPECT_EQ(test_string1.size(), 3);
+    EXPECT_EQ(test_string2.size(), 4);
     EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
   }
   {
@@ -169,8 +171,8 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
     const std::wstring test_string2(kTestBuffer,
                                     kTestBuffer + std::size(kTestBuffer));
 
-    EXPECT_EQ(3, test_string1.size());
-    EXPECT_EQ(8, test_string2.size());
+    EXPECT_EQ(test_string1.size(), 3);
+    EXPECT_EQ(test_string2.size(), 8);
     EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
   }
 }

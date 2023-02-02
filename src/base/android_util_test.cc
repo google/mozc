@@ -47,17 +47,17 @@ TEST(AndroidUtilTest, GetSystemProperty) {
                     AndroidUtil::kSystemPropertyModel, ""));
 
   // Invalid cases.
-  EXPECT_EQ("", AndroidUtil::GetSystemProperty("INVALID_KEY", ""));
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID_KEY", ""), "");
   // Check cache.
-  EXPECT_EQ("", AndroidUtil::GetSystemProperty("INVALID_KEY", ""));
-  EXPECT_EQ("", AndroidUtil::GetSystemProperty("INVALID=KEY", ""));
-  EXPECT_EQ("", AndroidUtil::GetSystemProperty("", ""));
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID_KEY", ""), "");
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID=KEY", ""), "");
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("", ""), "");
   // Check default value.
-  EXPECT_EQ("FAIL", AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL"));
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL"), "FAIL");
   // Check fail cache.
-  EXPECT_EQ("FAIL", AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL"));
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL"), "FAIL");
   // Default value should not be cached.
-  EXPECT_EQ("FAIL2", AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL2"));
+  EXPECT_EQ(AndroidUtil::GetSystemProperty("INVALID_KEY", "FAIL2"), "FAIL2");
 }
 
 TEST(AndroidUtilTest, ParseLine_valid) {
@@ -79,8 +79,8 @@ TEST(AndroidUtilTest, ParseLine_valid) {
     SCOPED_TRACE(testcase.lhs);
     SCOPED_TRACE(testcase.rhs);
     EXPECT_TRUE(AndroidUtil::ParseLine(testcase.line, &lhs, &rhs));
-    EXPECT_EQ(testcase.lhs, lhs);
-    EXPECT_EQ(testcase.rhs, rhs);
+    EXPECT_EQ(lhs, testcase.lhs);
+    EXPECT_EQ(rhs, testcase.rhs);
   }
 }
 

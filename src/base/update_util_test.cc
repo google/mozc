@@ -129,14 +129,13 @@ TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   EXPECT_TRUE(UpdateUtil::WriteActiveUsageInfo());
   ASSERT_TRUE(call_result().reg_create_key_ex_called);
-  EXPECT_EQ(HKEY_CURRENT_USER, call_result().created_key);
-  EXPECT_EQ(
-      L"Software\\Google\\Update\\ClientState"
-      L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}",
-      call_result().created_key_path);
+  EXPECT_EQ(call_result().created_key, HKEY_CURRENT_USER);
+  EXPECT_EQ(call_result().created_key_path,
+            L"Software\\Google\\Update\\ClientState"
+            L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}");
   ASSERT_TRUE(call_result().reg_set_value_ex_called);
-  EXPECT_EQ(L"dr", call_result().written_value_name);
-  EXPECT_EQ(L"1", call_result().written_value);
+  EXPECT_EQ(call_result().written_value_name, L"dr");
+  EXPECT_EQ(call_result().written_value, L"1");
   ASSERT_TRUE(call_result().reg_close_key_called);
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());

@@ -42,26 +42,26 @@ namespace {
 TEST(BitArray, BitArraySizeTest) {
   {
     BitArray array(0);
-    EXPECT_EQ(0, array.size());
-    EXPECT_EQ(4, array.array_size());
+    EXPECT_EQ(array.size(), 0);
+    EXPECT_EQ(array.array_size(), 4);
   }
 
   {
     BitArray array(5);
-    EXPECT_EQ(5, array.size());
-    EXPECT_EQ(4, array.array_size());
+    EXPECT_EQ(array.size(), 5);
+    EXPECT_EQ(array.array_size(), 4);
   }
 
   {
     BitArray array(32);
-    EXPECT_EQ(32, array.size());
-    EXPECT_EQ(8, array.array_size());
+    EXPECT_EQ(array.size(), 32);
+    EXPECT_EQ(array.array_size(), 8);
   }
 
   {
     BitArray array(100);
-    EXPECT_EQ(100, array.size());
-    EXPECT_EQ(16, array.array_size());
+    EXPECT_EQ(array.size(), 100);
+    EXPECT_EQ(array.array_size(), 16);
   }
 }
 
@@ -73,7 +73,7 @@ TEST(BitArray, BitArrayTest) {
 
     // set array
     BitArray array(size);
-    EXPECT_EQ(size, array.size());
+    EXPECT_EQ(array.size(), size);
     std::vector<int> target(size);
     for (size_t j = 0; j < size; ++j) {
       const bool v = (Util::Random(2) == 0);
@@ -90,8 +90,8 @@ TEST(BitArray, BitArrayTest) {
 
     // verify
     for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ((target[j] != 0), BitArray::GetValue(data, j));
-      EXPECT_EQ((target[j] != 0), array.get(j));
+      EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
+      EXPECT_EQ(array.get(j), (target[j] != 0));
     }
   }
 }

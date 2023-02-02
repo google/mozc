@@ -63,7 +63,7 @@ class SerializedStringArrayTest : public ::testing::Test {
 TEST_F(SerializedStringArrayTest, DefaultConstructor) {
   SerializedStringArray a;
   EXPECT_TRUE(a.empty());
-  EXPECT_EQ(0, a.size());
+  EXPECT_EQ(a.size(), 0);
 }
 
 TEST_F(SerializedStringArrayTest, EmptyArray) {
@@ -73,7 +73,7 @@ TEST_F(SerializedStringArrayTest, EmptyArray) {
   SerializedStringArray a;
   ASSERT_TRUE(a.Init(data));
   EXPECT_TRUE(a.empty());
-  EXPECT_EQ(0, a.size());
+  EXPECT_EQ(a.size(), 0);
 }
 
 constexpr char kTestData[] =
@@ -90,7 +90,7 @@ TEST_F(SerializedStringArrayTest, SerializeToBuffer) {
   const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
       {"Hello", "Mozc", "google"}, &buf);
   const absl::string_view expected(kTestData, std::size(kTestData) - 1);
-  EXPECT_EQ(expected, actual);
+  EXPECT_EQ(actual, expected);
 }
 
 TEST_F(SerializedStringArrayTest, Basic) {
@@ -102,20 +102,20 @@ TEST_F(SerializedStringArrayTest, Basic) {
   SerializedStringArray a;
   ASSERT_TRUE(a.Init(data));
   ASSERT_EQ(3, a.size());
-  EXPECT_EQ("Hello", a[0]);
-  EXPECT_EQ("Mozc", a[1]);
-  EXPECT_EQ("google", a[2]);
+  EXPECT_EQ(a[0], "Hello");
+  EXPECT_EQ(a[1], "Mozc");
+  EXPECT_EQ(a[2], "google");
 
   SerializedStringArray b;
   b.Set(a.data());
   ASSERT_EQ(3, b.size());
-  EXPECT_EQ("Hello", b[0]);
-  EXPECT_EQ("Mozc", b[1]);
-  EXPECT_EQ("google", b[2]);
+  EXPECT_EQ(b[0], "Hello");
+  EXPECT_EQ(b[1], "Mozc");
+  EXPECT_EQ(b[2], "google");
 
   a.clear();
   EXPECT_TRUE(a.empty());
-  EXPECT_EQ(0, a.size());
+  EXPECT_EQ(a.size(), 0);
 }
 
 TEST_F(SerializedStringArrayTest, Iterator) {
@@ -129,15 +129,15 @@ TEST_F(SerializedStringArrayTest, Iterator) {
   {
     auto iter = a.begin();
     ASSERT_NE(a.end(), iter);
-    EXPECT_EQ("Hello", *iter);
+    EXPECT_EQ(*iter, "Hello");
     ++iter;
     ASSERT_NE(a.end(), iter);
-    EXPECT_EQ("Mozc", *iter);
+    EXPECT_EQ(*iter, "Mozc");
     ++iter;
     ASSERT_NE(a.end(), iter);
-    EXPECT_EQ("google", *iter);
+    EXPECT_EQ(*iter, "google");
     ++iter;
-    EXPECT_EQ(a.end(), iter);
+    EXPECT_EQ(iter, a.end());
   }
   EXPECT_TRUE(std::binary_search(a.begin(), a.end(), "Hello"));
   EXPECT_TRUE(std::binary_search(a.begin(), a.end(), "Mozc"));
