@@ -46,7 +46,7 @@ enum ModalResult {
 
 - (BOOL)waitForModalWindow:(NSWindow *)window {
   [window center];
-  uint result = [[NSApplication sharedApplication] runModalForWindow:window];
+  NSModalResponse result = [[NSApplication sharedApplication] runModalForWindow:window];
   [window orderOut:nil];
   return result != DIALOG_CANCEL;
 }
