@@ -503,29 +503,29 @@ std::string GetDeletedString(Transliterators::Transliterator t12r,
 
 TEST_F(CompositionTest, DeleteAt) {
   // "あkyきったっty" is the original string
-  EXPECT_EQ("kyきったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 0));
-  EXPECT_EQ("あyきったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 1));
-  EXPECT_EQ("あkきったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 2));
-  EXPECT_EQ("あkyったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 3));
-  EXPECT_EQ("あkyきたっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 4));
-  EXPECT_EQ("あkyきっっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 5));
-  EXPECT_EQ("あkyきったty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 6));
-  EXPECT_EQ("あkyきったっy",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 7));
-  EXPECT_EQ("あkyきったっt",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 8));
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 0),
+            "kyきったっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 1),
+            "あyきったっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 2),
+            "あkきったっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 3),
+            "あkyったっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 4),
+            "あkyきたっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 5),
+            "あkyきっっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 6),
+            "あkyきったty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 7),
+            "あkyきったっy");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 8),
+            "あkyきったっt");
   // end
-  EXPECT_EQ("あkyきったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, 9));
-  EXPECT_EQ("あkyきったっty",
-            GetDeletedString(Transliterators::CONVERSION_STRING, -1));
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, 9),
+            "あkyきったっty");
+  EXPECT_EQ(GetDeletedString(Transliterators::CONVERSION_STRING, -1),
+            "あkyきったっty");
 
   // "akykittatty" is the original string
   EXPECT_EQ(GetDeletedString(Transliterators::RAW_STRING, 0), "kykittatty");
@@ -546,11 +546,11 @@ TEST_F(CompositionTest, DeleteAt) {
 
 TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
   using ChunkData = std::vector<std::pair<std::string, std::string>>;
-  auto init_chunk = [&](Composition *composition, const ChunkData &data) {
+  auto init_chunk = [&](Composition* composition, const ChunkData& data) {
     composition->Erase();
     CharChunkList::iterator it = composition->MaybeSplitChunkAt(0);
-    for (const auto &item : data) {
-      CharChunk *chunk = composition->InsertChunk(it)->get();
+    for (const auto& item : data) {
+      CharChunk* chunk = composition->InsertChunk(it)->get();
       chunk->set_raw(table_->ParseSpecialKey(item.first));
       chunk->set_pending(table_->ParseSpecialKey(item.second));
     }
@@ -576,12 +576,12 @@ TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
     std::string composition;
     composition_->GetString(&composition);
     EXPECT_EQ(composition, "2");
-    const CharChunkList &chunks = composition_->GetCharChunkList();
+    const CharChunkList& chunks = composition_->GetCharChunkList();
     EXPECT_EQ(chunks.size(), 2);
-    const CharChunk &chunk0 = **(chunks.begin());
+    const CharChunk& chunk0 = **(chunks.begin());
     EXPECT_EQ(chunk0.raw(), "1");
     EXPECT_EQ(chunk0.pending(), table_->ParseSpecialKey("{1}"));
-    const CharChunk &chunk1 = **(std::next(chunks.begin()));
+    const CharChunk& chunk1 = **(std::next(chunks.begin()));
     EXPECT_EQ(chunk1.raw(), "2");
     EXPECT_EQ(chunk1.pending(), table_->ParseSpecialKey("{2}2"));
   }
@@ -647,60 +647,60 @@ std::string GetInsertedString(Transliterators::Transliterator t12r,
 
 TEST_F(CompositionTest, InsertAt) {
   // "あkyきったっty" is the original string
-  EXPECT_EQ("いあkyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 0, "i"));
-  EXPECT_EQ("あいkyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 1, "i"));
-  EXPECT_EQ("あきyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 2, "i"));
-  EXPECT_EQ("あきぃきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 3, "i"));
-  EXPECT_EQ("あkyきいったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 4, "i"));
-  EXPECT_EQ("あkyきっいたっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 5, "i"));
-  EXPECT_EQ("あkyきったっちぃ",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
-  EXPECT_EQ("yあkyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 0, "y"));
-  EXPECT_EQ("あykyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 1, "y"));
-  EXPECT_EQ("あkyyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 2, "y"));
-  EXPECT_EQ("あkyyきったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 3, "y"));
-  EXPECT_EQ("あkyきyったっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 4, "y"));
-  EXPECT_EQ("あkyきっyたっty",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 5, "y"));
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 0, "i"),
+            "いあkyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 1, "i"),
+            "あいkyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 2, "i"),
+            "あきyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 3, "i"),
+            "あきぃきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 4, "i"),
+            "あkyきいったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 5, "i"),
+            "あkyきっいたっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"),
+            "あkyきったっちぃ");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 0, "y"),
+            "yあkyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 1, "y"),
+            "あykyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 2, "y"),
+            "あkyyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 3, "y"),
+            "あkyyきったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 4, "y"),
+            "あkyきyったっty");
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 5, "y"),
+            "あkyきっyたっty");
   // end
-  EXPECT_EQ("あkyきったっちぃ",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 9, "i"),
+            "あkyきったっちぃ");
   // end
-  EXPECT_EQ("あkyきったっtyy",
-            GetInsertedString(Transliterators::CONVERSION_STRING, 9, "y"));
+  EXPECT_EQ(GetInsertedString(Transliterators::CONVERSION_STRING, 9, "y"),
+            "あkyきったっtyy");
 
   // "akykittatty" is the original string
-  EXPECT_EQ("iakykittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 0, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 0, "i"),
+            "iakykittatty");
 
-  EXPECT_EQ("aikykittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 1, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 1, "i"),
+            "aikykittatty");
 
-  EXPECT_EQ("akiykittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 2, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 2, "i"),
+            "akiykittatty");
 
-  EXPECT_EQ("akyikittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 3, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 3, "i"),
+            "akyikittatty");
 
-  EXPECT_EQ("akykiittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 4, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 4, "i"),
+            "akykiittatty");
 
-  EXPECT_EQ("akykiittatty",
-            GetInsertedString(Transliterators::RAW_STRING, 5, "i"));
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 5, "i"),
+            "akykiittatty");
 
-  EXPECT_EQ("akykittattyi",
-            GetInsertedString(Transliterators::RAW_STRING, 11, "i"));  // end
+  EXPECT_EQ(GetInsertedString(Transliterators::RAW_STRING, 11, "i"),
+            "akykittattyi");  // end
 }
 
 TEST_F(CompositionTest, GetExpandedStrings) {

@@ -102,7 +102,7 @@ namespace {
   return ::testing::AssertionSuccess();
 }
 
-#define EXPECT_EQ_KEY_EVENT(expected, actual) \
+#define EXPECT_EQ_KEY_EVENT(actual, expected) \
   EXPECT_PRED_FORMAT2(CompareKeyEvent, expected, actual)
 }  // namespace
 
@@ -110,28 +110,28 @@ TEST(KeyEventUtilTest, GetModifiers) {
   KeyEvent key_event;
 
   KeyParser::ParseKey("a", &key_event);
-  EXPECT_EQ(0, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), 0);
 
   KeyParser::ParseKey("Alt", &key_event);
-  EXPECT_EQ(KeyEvent::ALT, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::ALT);
 
   KeyParser::ParseKey("Ctrl", &key_event);
-  EXPECT_EQ(KeyEvent::CTRL, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::CTRL);
 
   KeyParser::ParseKey("Shift", &key_event);
-  EXPECT_EQ(KeyEvent::SHIFT, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::SHIFT);
 
   KeyParser::ParseKey("Caps", &key_event);
-  EXPECT_EQ(KeyEvent::CAPS, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::CAPS);
 
   KeyParser::ParseKey("LeftAlt RightAlt", &key_event);
-  EXPECT_EQ((KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT),
-            KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event),
+            (KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT));
 
   KeyParser::ParseKey("LeftAlt Ctrl RightShift", &key_event);
-  EXPECT_EQ((KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::CTRL |
-             KeyEvent::SHIFT | KeyEvent::RIGHT_SHIFT),
-            KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event),
+            (KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::CTRL |
+             KeyEvent::SHIFT | KeyEvent::RIGHT_SHIFT));
 }
 
 TEST(KeyEventUtilTest, GetKeyInformation) {
@@ -163,7 +163,7 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
     expected |= static_cast<uint64_t>(KeyEventUtil::GetModifiers(key_event))
                 << 48;
 
-    EXPECT_EQ(expected, output);
+    EXPECT_EQ(output, expected);
   }
 
   constexpr uint32_t kEscapeKeyCode = 27;
@@ -184,8 +184,8 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
     ASSERT_EQ('H', key_event.key_code());
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
-    EXPECT_EQ(0, normalized_key_event.modifier_keys_size());
-    EXPECT_EQ('h', normalized_key_event.key_code());
+    EXPECT_EQ(normalized_key_event.modifier_keys_size(), 0);
+    EXPECT_EQ(normalized_key_event.key_code(), 'h');
   }
 
   {  // Removes left_shift
@@ -195,7 +195,7 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
               KeyEventUtil::GetModifiers(key_event));
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
-    EXPECT_EQ(1, normalized_key_event.modifier_keys_size());
+    EXPECT_EQ(normalized_key_event.modifier_keys_size(), 1);
     ASSERT_EQ(KeyEvent::SHIFT,
               KeyEventUtil::GetModifiers(normalized_key_event));
   }
@@ -209,10 +209,10 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
     ASSERT_EQ('H', key_event.key_code());
 
     KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
-    EXPECT_EQ(1, normalized_key_event.modifier_keys_size());
-    EXPECT_EQ(KeyEvent::SHIFT,
-              KeyEventUtil::GetModifiers(normalized_key_event));
-    EXPECT_EQ('h', normalized_key_event.key_code());
+    EXPECT_EQ(normalized_key_event.modifier_keys_size(), 1);
+    EXPECT_EQ(KeyEventUtil::GetModifiers(normalized_key_event),
+              KeyEvent::SHIFT);
+    EXPECT_EQ(normalized_key_event.key_code(), 'h');
   }
 }
 
@@ -243,7 +243,7 @@ TEST(KeyEventUtilTest, NormalizeNumpadKey) {
     KeyParser::ParseKey(data.from, &key_event_from);
     KeyParser::ParseKey(data.to, &key_event_to);
     KeyEventUtil::NormalizeNumpadKey(key_event_from, &key_event_normalized);
-    EXPECT_EQ_KEY_EVENT(key_event_to, key_event_normalized);
+    EXPECT_EQ_KEY_EVENT(key_event_normalized, key_event_to);
   }
 }
 
@@ -264,7 +264,7 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
 
   KeyParser::ParseKey("a", &key_event);
   EXPECT_TRUE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
-  EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::TEXT_INPUT) << 32, key);
+  EXPECT_EQ(key, static_cast<KeyInformation>(KeyEvent::TEXT_INPUT) << 32);
 }
 
 TEST(KeyEventUtilTest, RemoveModifiers) {
@@ -312,7 +312,7 @@ TEST(KeyEventUtilTest, RemoveModifiers) {
 
     KeyEvent removed_key_event;
     KeyEventUtil::RemoveModifiers(input, remove_modifiers, &removed_key_event);
-    EXPECT_EQ_KEY_EVENT(output, removed_key_event);
+    EXPECT_EQ_KEY_EVENT(removed_key_event, output);
   }
 }
 
@@ -472,14 +472,14 @@ TEST(KeyEventUtilTest, IsModifiers) {
     const IsModifiersTestData &data = kIsModifiersTestData[i];
     SCOPED_TRACE(absl::StrFormat("index: %d", static_cast<int>(i)));
 
-    EXPECT_EQ(data.is_alt, KeyEventUtil::IsAlt(data.modifiers));
-    EXPECT_EQ(data.is_ctrl, KeyEventUtil::IsCtrl(data.modifiers));
-    EXPECT_EQ(data.is_shift, KeyEventUtil::IsShift(data.modifiers));
-    EXPECT_EQ(data.is_alt_ctrl, KeyEventUtil::IsAltCtrl(data.modifiers));
-    EXPECT_EQ(data.is_alt_shift, KeyEventUtil::IsAltShift(data.modifiers));
-    EXPECT_EQ(data.is_ctrl_shift, KeyEventUtil::IsCtrlShift(data.modifiers));
-    EXPECT_EQ(data.is_alt_ctrl_shift,
-              KeyEventUtil::IsAltCtrlShift(data.modifiers));
+    EXPECT_EQ(KeyEventUtil::IsAlt(data.modifiers), data.is_alt);
+    EXPECT_EQ(KeyEventUtil::IsCtrl(data.modifiers), data.is_ctrl);
+    EXPECT_EQ(KeyEventUtil::IsShift(data.modifiers), data.is_shift);
+    EXPECT_EQ(KeyEventUtil::IsAltCtrl(data.modifiers), data.is_alt_ctrl);
+    EXPECT_EQ(KeyEventUtil::IsAltShift(data.modifiers), data.is_alt_shift);
+    EXPECT_EQ(KeyEventUtil::IsCtrlShift(data.modifiers), data.is_ctrl_shift);
+    EXPECT_EQ(KeyEventUtil::IsAltCtrlShift(data.modifiers),
+              data.is_alt_ctrl_shift);
   }
 }
 
@@ -506,8 +506,8 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
     KeyParser::ParseKey(data.key, &key_event);
-    EXPECT_EQ(data.is_lower, KeyEventUtil::IsLowerAlphabet(key_event));
-    EXPECT_EQ(data.is_upper, KeyEventUtil::IsUpperAlphabet(key_event));
+    EXPECT_EQ(KeyEventUtil::IsLowerAlphabet(key_event), data.is_lower);
+    EXPECT_EQ(KeyEventUtil::IsUpperAlphabet(key_event), data.is_upper);
   }
 }
 
@@ -527,7 +527,7 @@ TEST(KeyEventUtilTest, IsNumpadKey) {
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
     KeyParser::ParseKey(data.key, &key_event);
-    EXPECT_EQ(data.is_numpad_key, KeyEventUtil::IsNumpadKey(key_event));
+    EXPECT_EQ(KeyEventUtil::IsNumpadKey(key_event), data.is_numpad_key);
   }
 }
 
