@@ -71,7 +71,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   const PosMatcher &pos_matcher() { return pos_matcher_; }
 
   static void InitSegments(absl::string_view key, absl::string_view value,
-                    Segments *segments) {
+                           Segments *segments) {
     Segment *segment = segments->add_segment();
     segment->set_key(key);
 
@@ -285,6 +285,27 @@ TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
   EXPECT_EQ(1, segments.segment(0).candidates_size());
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
   EXPECT_TRUE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
-  EXPECT_FALSE(Contains(segments, "\uFA19"));  // 神 CJK compat ideograph.
+  EXPECT_FALSE(Contains(segments, "\uFA19"));       // 神 CJK compat ideograph.
+}
+
+TEST_F(SingleKanjiRewriterTest, EmptySegments) {
+  SingleKanjiRewriter rewriter(*data_manager_);
+
+  Segments segments;
+
+  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
+}
+
+TEST_F(SingleKanjiRewriterTest, EmptyCandidates) {
+  SingleKanjiRewriter rewriter(*data_manager_);
+
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("み");
+
+  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+  EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 }
 }  // namespace mozc

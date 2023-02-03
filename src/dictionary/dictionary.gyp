@@ -41,6 +41,7 @@
         'dictionary_base.gyp:suppression_dictionary',
         'dictionary_base.gyp:user_dictionary',
         'dictionary_impl',
+        'single_kanji_dictionary',
         'suffix_dictionary',
         'system/system_dictionary.gyp:system_dictionary',
         'system/system_dictionary.gyp:value_dictionary',
@@ -56,6 +57,19 @@
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
+      ],
+    },
+    {
+      'target_name': 'single_kanji_dictionary',
+      'type': 'static_library',
+      'sources': [
+        'single_kanji_dictionary.cc',
+      ],
+      'dependencies': [
+        '../base/absl.gyp:absl_strings',
+        '../base/base.gyp:base',
+        '../base/base.gyp:serialized_string_array',
+        '../data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
     {
