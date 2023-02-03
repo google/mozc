@@ -48,15 +48,15 @@ TEST(ClockTest, TimeTestWithMock) {
   Clock::SetClockForUnitTest(&clock_mock);
 
   // GetTime
-  { EXPECT_EQ(kTestSeconds, Clock::GetTime()); }
+  { EXPECT_EQ(Clock::GetTime(), kTestSeconds); }
 
   // GetTimeOfDay
   {
     uint64_t current_sec;
     uint32_t current_usec;
     Clock::GetTimeOfDay(&current_sec, &current_usec);
-    EXPECT_EQ(kTestSeconds, current_sec);
-    EXPECT_EQ(kTestMicroSeconds, current_usec);
+    EXPECT_EQ(current_sec, kTestSeconds);
+    EXPECT_EQ(current_usec, kTestMicroSeconds);
   }
 
   // GetAbslTime
@@ -66,13 +66,13 @@ TEST(ClockTest, TimeTestWithMock) {
     const absl::TimeZone &tz = Clock::GetTimeZone();
     const absl::CivilSecond cs = absl::ToCivilSecond(at, tz);
 
-    EXPECT_EQ(2020, cs.year());
-    EXPECT_EQ(12, cs.month());
-    EXPECT_EQ(23, cs.day());
-    EXPECT_EQ(13, cs.hour());
-    EXPECT_EQ(24, cs.minute());
-    EXPECT_EQ(35, cs.second());
-    EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
+    EXPECT_EQ(cs.year(), 2020);
+    EXPECT_EQ(cs.month(), 12);
+    EXPECT_EQ(cs.day(), 23);
+    EXPECT_EQ(cs.hour(), 13);
+    EXPECT_EQ(cs.minute(), 24);
+    EXPECT_EQ(cs.second(), 35);
+    EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::wednesday);
   }
 
   // GetAbslTime + offset
@@ -82,13 +82,13 @@ TEST(ClockTest, TimeTestWithMock) {
     const absl::Time at = Clock::GetAbslTime();
     const absl::TimeZone &tz = Clock::GetTimeZone();
     const absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset_seconds;
-    EXPECT_EQ(2024, cs.year());
-    EXPECT_EQ(2, cs.month());
-    EXPECT_EQ(23, cs.day());
-    EXPECT_EQ(23, cs.hour());
-    EXPECT_EQ(11, cs.minute());
-    EXPECT_EQ(15, cs.second());
-    EXPECT_EQ(absl::Weekday::friday, absl::GetWeekday(cs));
+    EXPECT_EQ(cs.year(), 2024);
+    EXPECT_EQ(cs.month(), 2);
+    EXPECT_EQ(cs.day(), 23);
+    EXPECT_EQ(cs.hour(), 23);
+    EXPECT_EQ(cs.minute(), 11);
+    EXPECT_EQ(cs.second(), 15);
+    EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::friday);
   }
 
   // GetFrequency / GetTicks
@@ -96,9 +96,9 @@ TEST(ClockTest, TimeTestWithMock) {
     constexpr uint64_t kFrequency = 12345;
     constexpr uint64_t kTicks = 54321;
     clock_mock.SetFrequency(kFrequency);
-    EXPECT_EQ(kFrequency, Clock::GetFrequency());
+    EXPECT_EQ(Clock::GetFrequency(), kFrequency);
     clock_mock.SetTicks(kTicks);
-    EXPECT_EQ(kTicks, Clock::GetTicks());
+    EXPECT_EQ(Clock::GetTicks(), kTicks);
   }
 
   // Restore the default clock
@@ -137,7 +137,7 @@ TEST(ClockTest, TimeZone) {
       + offset->tm_hour * 60 * 60  // hour offset from 00 am.
       + offset->tm_min * 60;  // minute offset.
 
-  EXPECT_EQ(absl_offset, tm_offset);
+  EXPECT_EQ(tm_offset, absl_offset);
 }
 
 }  // namespace

@@ -39,7 +39,7 @@
 namespace mozc {
 
 TEST(VersionTest, BasicTest) {
-  EXPECT_EQ(version::kMozcVersion, Version::GetMozcVersion());
+  EXPECT_EQ(Version::GetMozcVersion(), version::kMozcVersion);
 }
 
 TEST(VersionTest, VersionNumberTest) {

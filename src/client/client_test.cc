@@ -259,12 +259,12 @@ TEST_F(ClientTest, SendKey) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::SEND_KEY, input.type());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::SEND_KEY);
 }
 
 TEST_F(ClientTest, SendKeyWithContext) {
@@ -286,15 +286,15 @@ TEST_F(ClientTest, SendKeyWithContext) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKeyWithContext(key_event, context, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::SEND_KEY, input.type());
-  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
-  EXPECT_EQ(kFollowingText, input.context().following_text());
-  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::SEND_KEY);
+  EXPECT_EQ(input.context().preceding_text(), kPrecedingText);
+  EXPECT_EQ(input.context().following_text(), kFollowingText);
+  EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
 TEST_F(ClientTest, TestSendKey) {
@@ -312,12 +312,12 @@ TEST_F(ClientTest, TestSendKey) {
 
   commands::Output output;
   EXPECT_TRUE(client_->TestSendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::TEST_SEND_KEY, input.type());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::TEST_SEND_KEY);
 }
 
 TEST_F(ClientTest, TestSendKeyWithContext) {
@@ -340,15 +340,15 @@ TEST_F(ClientTest, TestSendKeyWithContext) {
 
   commands::Output output;
   EXPECT_TRUE(client_->TestSendKeyWithContext(key_event, context, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::TEST_SEND_KEY, input.type());
-  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
-  EXPECT_EQ(kFollowingText, input.context().following_text());
-  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::TEST_SEND_KEY);
+  EXPECT_EQ(input.context().preceding_text(), kPrecedingText);
+  EXPECT_EQ(input.context().following_text(), kFollowingText);
+  EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
 TEST_F(ClientTest, SendCommand) {
@@ -368,8 +368,8 @@ TEST_F(ClientTest, SendCommand) {
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::SEND_COMMAND, input.type());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::SEND_COMMAND);
 }
 
 TEST_F(ClientTest, SendCommandWithContext) {
@@ -395,11 +395,11 @@ TEST_F(ClientTest, SendCommandWithContext) {
 
   commands::Input input;
   GetGeneratedInput(&input);
-  EXPECT_EQ(mock_id, input.id());
-  EXPECT_EQ(commands::Input::SEND_COMMAND, input.type());
-  EXPECT_EQ(kPrecedingText, input.context().preceding_text());
-  EXPECT_EQ(kFollowingText, input.context().following_text());
-  EXPECT_EQ(kSuppressSuggestion, input.context().suppress_suggestion());
+  EXPECT_EQ(input.id(), mock_id);
+  EXPECT_EQ(input.type(), commands::Input::SEND_COMMAND);
+  EXPECT_EQ(input.context().preceding_text(), kPrecedingText);
+  EXPECT_EQ(input.context().following_text(), kFollowingText);
+  EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
 }
 
 TEST_F(ClientTest, SetConfig) {
@@ -423,8 +423,8 @@ TEST_F(ClientTest, GetConfig) {
   config::Config config;
   EXPECT_TRUE(client_->GetConfig(&config));
 
-  EXPECT_EQ(2, config.verbose_level());
-  EXPECT_EQ(true, config.incognito_mode());
+  EXPECT_EQ(config.verbose_level(), 2);
+  EXPECT_EQ(config.incognito_mode(), true);
 }
 
 TEST_F(ClientTest, EnableCascadingWindow) {
@@ -639,24 +639,24 @@ TEST_F(ClientTest, TranslateProtoBufToMozcToolArgTest) {
 
   // If no value is set, we expect to return false
   EXPECT_FALSE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
-  EXPECT_EQ("", mode);
+  EXPECT_EQ(mode, "");
 
   // If NO_TOOL is set, we  expect to return false
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
   EXPECT_FALSE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
-  EXPECT_EQ("", mode);
+  EXPECT_EQ(mode, "");
 
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
-  EXPECT_EQ("config_dialog", mode);
+  EXPECT_EQ(mode, "config_dialog");
 
   output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
   EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
-  EXPECT_EQ("dictionary_tool", mode);
+  EXPECT_EQ(mode, "dictionary_tool");
 
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
   EXPECT_TRUE(client::Client::TranslateProtoBufToMozcToolArg(output, &mode));
-  EXPECT_EQ("word_register_dialog", mode);
+  EXPECT_EQ(mode, "word_register_dialog");
 }
 
 TEST_F(ClientTest, InitRequestForSvsJapaneseTest) {
@@ -816,11 +816,11 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(1, history.size());
+  EXPECT_EQ(history.size(), 1);
 
   mock_output.Clear();
   mock_output.set_id(mock_id);
@@ -830,11 +830,11 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest) {
   EXPECT_FALSE(mock_output.has_mode());
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // history should be reset.
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(0, history.size());
+  EXPECT_EQ(history.size(), 0);
 }
 
 // b/2797557
@@ -855,18 +855,18 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::HIRAGANA, output.mode());
+  EXPECT_EQ(output.mode(), commands::HIRAGANA);
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::HIRAGANA, output.mode());
+  EXPECT_EQ(output.mode(), commands::HIRAGANA);
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(2, history.size());
+  EXPECT_EQ(history.size(), 2);
 
   mock_output.Clear();
   mock_output.set_id(mock_id);
@@ -875,20 +875,20 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   mock_output.mutable_result()->set_value("output");
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   client_->GetHistoryInputs(&history);
 #ifdef __APPLE__
   // history is reset, but initializer should be added because the last mode
   // is not DIRECT.
   // TODO(team): fix b/10250883 to remove this special treatment.
-  EXPECT_EQ(1, history.size());
+  EXPECT_EQ(history.size(), 1);
   // Implicit IMEOn key must be added. See b/2797557 and b/>10250883.
-  EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
-  EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
-  EXPECT_EQ(commands::HIRAGANA, history[0].key().mode());
+  EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
+  EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
+  EXPECT_EQ(history[0].key().mode(), commands::HIRAGANA);
 #else   // __APPLE__
   // history is reset, but initializer is not required.
-  EXPECT_EQ(0, history.size());
+  EXPECT_EQ(history.size(), 0);
 #endif  // __APPLE__
 }
 
@@ -909,18 +909,18 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
   commands::Output output;
   // Send key twice
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::DIRECT, output.mode());
+  EXPECT_EQ(output.mode(), commands::DIRECT);
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::DIRECT, output.mode());
+  EXPECT_EQ(output.mode(), commands::DIRECT);
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(2, history.size());
+  EXPECT_EQ(history.size(), 2);
 
   mock_output.Clear();
   mock_output.set_id(mock_id);
@@ -929,11 +929,11 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithDirectTest) {
   mock_output.mutable_result()->set_value("output");
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // history is reset, and initializer should not be added.
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(0, history.size());
+  EXPECT_EQ(history.size(), 0);
 }
 
 TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
@@ -951,14 +951,14 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(2, history.size());
+  EXPECT_EQ(history.size(), 2);
 
   // Invalid id
   const int new_id = 456;
@@ -969,11 +969,11 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
 #ifndef DEBUG
   // PlaybackHistory and push history
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(3, history.size());
+  EXPECT_EQ(history.size(), 3);
 #else   // DEBUG
   // PlaybackHistory, dump history(including reset), and add last input
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(1, history.size());
+  EXPECT_EQ(history.size(), 1);
 #endif  // DEBUG
 }
 
@@ -993,27 +993,27 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   mock_output.set_mode(commands::DIRECT);
   SetMockOutput(mock_output);
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::DIRECT, output.mode());
+  EXPECT_EQ(output.mode(), commands::DIRECT);
 
   mock_output.set_mode(commands::FULL_KATAKANA);
   SetMockOutput(mock_output);
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   EXPECT_TRUE(output.has_mode());
-  EXPECT_EQ(commands::FULL_KATAKANA, output.mode());
+  EXPECT_EQ(output.mode(), commands::FULL_KATAKANA);
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(3, history.size());
+  EXPECT_EQ(history.size(), 3);
 
   mock_output.Clear();
   mock_output.set_id(mock_id);
@@ -1022,18 +1022,18 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   mock_output.mutable_result()->set_value("output");
   SetMockOutput(mock_output);
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
   client_->GetHistoryInputs(&history);
 #ifdef __APPLE__
   // history is reset, but initializer should be added.
   // TODO(team): fix b/10250883 to remove this special treatment.
-  EXPECT_EQ(1, history.size());
-  EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
-  EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
-  EXPECT_EQ(commands::FULL_KATAKANA, history[0].key().mode());
+  EXPECT_EQ(history.size(), 1);
+  EXPECT_EQ(history[0].type(), commands::Input::SEND_KEY);
+  EXPECT_EQ(history[0].key().special_key(), commands::KeyEvent::ON);
+  EXPECT_EQ(history[0].key().mode(), commands::FULL_KATAKANA);
 #else   // __APPLE__
   // history is reset, but initializer is not required.
-  EXPECT_EQ(0, history.size());
+  EXPECT_EQ(history.size(), 0);
 #endif  // __APPLE__
 }
 
@@ -1051,24 +1051,24 @@ TEST_F(SessionPlaybackTest, ConsumedTest) {
 
   commands::Output output;
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   std::vector<commands::Input> history;
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(2, history.size());
+  EXPECT_EQ(history.size(), 2);
 
   mock_output.set_consumed(false);
   SetMockOutput(mock_output);
 
   EXPECT_TRUE(client_->SendKey(key_event, &output));
-  EXPECT_EQ(mock_output.consumed(), output.consumed());
+  EXPECT_EQ(output.consumed(), mock_output.consumed());
 
   // Do not push unconsumed input
   client_->GetHistoryInputs(&history);
-  EXPECT_EQ(2, history.size());
+  EXPECT_EQ(history.size(), 2);
 }
 }  // namespace client
 }  // namespace mozc

@@ -156,33 +156,33 @@ TEST(FileUtilTest, HideFile) {
   EXPECT_NE(FALSE,
             ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
   EXPECT_TRUE(FileUtil::HideFile(filename));
-  EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
-            ::GetFileAttributesW(wfilename.c_str()));
+  EXPECT_EQ(::GetFileAttributesW(wfilename.c_str()),
+            FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED);
 
-  EXPECT_NE(FALSE,
-            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
+  EXPECT_NE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE),
+            FALSE);
   EXPECT_TRUE(FileUtil::HideFile(filename));
-  EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE,
-            ::GetFileAttributesW(wfilename.c_str()));
+  EXPECT_EQ(::GetFileAttributesW(wfilename.c_str()),
+            FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE);
 
-  EXPECT_NE(FALSE,
-            ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
+  EXPECT_NE(::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL),
+            FALSE);
   EXPECT_TRUE(FileUtil::HideFileWithExtraAttributes(filename,
                                                     FILE_ATTRIBUTE_TEMPORARY));
-  EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_TEMPORARY,
-            ::GetFileAttributesW(wfilename.c_str()));
+  EXPECT_EQ(::GetFileAttributesW(wfilename.c_str()),
+            FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+                FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_TEMPORARY);
 
   EXPECT_NE(FALSE,
             ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_ARCHIVE));
   EXPECT_TRUE(FileUtil::HideFileWithExtraAttributes(filename,
                                                     FILE_ATTRIBUTE_TEMPORARY));
-  EXPECT_EQ(FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+  EXPECT_EQ(::GetFileAttributesW(wfilename.c_str()),
+            FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
                 FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE |
-                FILE_ATTRIBUTE_TEMPORARY,
-            ::GetFileAttributesW(wfilename.c_str()));
+                FILE_ATTRIBUTE_TEMPORARY);
 
   ASSERT_OK(FileUtil::Unlink(filename));
 }
@@ -309,8 +309,8 @@ TEST(FileUtilTest, CopyFile) {
     absl::StatusOr<bool> s = FileUtil::IsEqualFile(from, to);
     EXPECT_OK(s);
     EXPECT_TRUE(*s);
-    EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wfrom.c_str()));
-    EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
+    EXPECT_EQ(::GetFileAttributesW(wfrom.c_str()), kData.from_attributes);
+    EXPECT_EQ(::GetFileAttributesW(wto.c_str()), kData.from_attributes);
 
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL));
@@ -343,7 +343,7 @@ TEST(FileUtilTest, AtomicRename) {
   {
     absl::StatusOr<std::string> content = FileUtil::GetContents(to);
     ASSERT_OK(content);
-    EXPECT_EQ("test", *content);
+    EXPECT_EQ(*content, "test");
   }
 
   EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
@@ -394,7 +394,7 @@ TEST(FileUtilTest, AtomicRename) {
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
     EXPECT_OK(FileUtil::AtomicRename(from, to));
-    EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
+    EXPECT_EQ(::GetFileAttributesW(wto.c_str()), kData.from_attributes);
     EXPECT_FALSE(FileUtil::FileExists(from).ok());
     EXPECT_OK(FileUtil::FileExists(to));
 
@@ -436,68 +436,68 @@ TEST(FileUtilTest, CreateHardLink) {
 
 TEST(FileUtilTest, JoinPath) {
   EXPECT_TRUE(FileUtil::JoinPath({}).empty());
-  EXPECT_EQ("foo", FileUtil::JoinPath({"foo"}));
-  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar"}));
-  EXPECT_EQ("foo" SP "bar" SP "baz", FileUtil::JoinPath({"foo", "bar", "baz"}));
+  EXPECT_EQ(FileUtil::JoinPath({"foo"}), "foo");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar"}), "foo" SP "bar");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar", "baz"}), "foo" SP "bar" SP "baz");
 
   // Some path components end with delimiter.
-  EXPECT_EQ("foo" SP "bar" SP "baz",
-            FileUtil::JoinPath({"foo" SP, "bar", "baz"}));
-  EXPECT_EQ("foo" SP "bar" SP "baz",
-            FileUtil::JoinPath({"foo", "bar" SP, "baz"}));
-  EXPECT_EQ("foo" SP "bar" SP "baz" SP,
-            FileUtil::JoinPath({"foo", "bar", "baz" SP}));
+  EXPECT_EQ(FileUtil::JoinPath({"foo" SP, "bar", "baz"}),
+            "foo" SP "bar" SP "baz");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar" SP, "baz"}),
+            "foo" SP "bar" SP "baz");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar", "baz" SP}),
+            "foo" SP "bar" SP "baz" SP);
 
   // Containing empty strings.
   EXPECT_TRUE(FileUtil::JoinPath({"", "", ""}).empty());
-  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"", "foo", "bar"}));
-  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "", "bar"}));
-  EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar", ""}));
+  EXPECT_EQ(FileUtil::JoinPath({"", "foo", "bar"}), "foo" SP "bar");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "", "bar"}), "foo" SP "bar");
+  EXPECT_EQ(FileUtil::JoinPath({"foo", "bar", ""}), "foo" SP "bar");
 }
 
 TEST(FileUtilTest, Dirname) {
-  EXPECT_EQ(SP "foo", FileUtil::Dirname(SP "foo" SP "bar"));
-  EXPECT_EQ(SP "foo" SP "bar",
-            FileUtil::Dirname(SP "foo" SP "bar" SP "foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname("foo.txt"));
-  EXPECT_EQ("", FileUtil::Dirname(SP));
+  EXPECT_EQ(FileUtil::Dirname(SP "foo" SP "bar"), SP "foo");
+  EXPECT_EQ(FileUtil::Dirname(SP "foo" SP "bar" SP "foo.txt"),
+            SP "foo" SP "bar");
+  EXPECT_EQ(FileUtil::Dirname("foo.txt"), "");
+  EXPECT_EQ(FileUtil::Dirname(SP), "");
 }
 
 TEST(FileUtilTest, Basename) {
-  EXPECT_EQ("bar", FileUtil::Basename(SP "foo" SP "bar"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename(SP "foo" SP "bar" SP "foo.txt"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("foo.txt"));
-  EXPECT_EQ("foo.txt", FileUtil::Basename("." SP "foo.txt"));
-  EXPECT_EQ(".foo.txt", FileUtil::Basename("." SP ".foo.txt"));
-  EXPECT_EQ("", FileUtil::Basename(SP));
-  EXPECT_EQ("", FileUtil::Basename("foo" SP "bar" SP "buz" SP));
+  EXPECT_EQ(FileUtil::Basename(SP "foo" SP "bar"), "bar");
+  EXPECT_EQ(FileUtil::Basename(SP "foo" SP "bar" SP "foo.txt"), "foo.txt");
+  EXPECT_EQ(FileUtil::Basename("foo.txt"), "foo.txt");
+  EXPECT_EQ(FileUtil::Basename("." SP "foo.txt"), "foo.txt");
+  EXPECT_EQ(FileUtil::Basename("." SP ".foo.txt"), ".foo.txt");
+  EXPECT_EQ(FileUtil::Basename(SP), "");
+  EXPECT_EQ(FileUtil::Basename("foo" SP "bar" SP "buz" SP), "");
 }
 
 #undef SP
 
 TEST(FileUtilTest, NormalizeDirectorySeparator) {
 #ifdef OS_WIN
-  EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("\\foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("/foo\\bar"));
-  EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("\\foo/bar"));
-  EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("/foo/bar"));
-  EXPECT_EQ("\\foo\\bar\\",
-            FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"));
-  EXPECT_EQ("\\foo\\bar\\", FileUtil::NormalizeDirectorySeparator("/foo/bar/"));
-  EXPECT_EQ("", FileUtil::NormalizeDirectorySeparator(""));
-  EXPECT_EQ("\\", FileUtil::NormalizeDirectorySeparator("/"));
-  EXPECT_EQ("\\", FileUtil::NormalizeDirectorySeparator("\\"));
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "\\foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "\\foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
+            "\\foo\\bar\\");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"), "\\foo\\bar\\");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "\\");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
 #else   // OS_WIN
-  EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("\\foo\\bar"));
-  EXPECT_EQ("/foo\\bar", FileUtil::NormalizeDirectorySeparator("/foo\\bar"));
-  EXPECT_EQ("\\foo/bar", FileUtil::NormalizeDirectorySeparator("\\foo/bar"));
-  EXPECT_EQ("/foo/bar", FileUtil::NormalizeDirectorySeparator("/foo/bar"));
-  EXPECT_EQ("\\foo\\bar\\",
-            FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"));
-  EXPECT_EQ("/foo/bar/", FileUtil::NormalizeDirectorySeparator("/foo/bar/"));
-  EXPECT_EQ("", FileUtil::NormalizeDirectorySeparator(""));
-  EXPECT_EQ("/", FileUtil::NormalizeDirectorySeparator("/"));
-  EXPECT_EQ("\\", FileUtil::NormalizeDirectorySeparator("\\"));
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "/foo\\bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo/bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar"), "/foo/bar");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar\\"),
+            "\\foo\\bar\\");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo/bar/"), "/foo/bar/");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "/");
+  EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
 #endif  // OS_WIN
 }
 
@@ -533,29 +533,29 @@ TEST(FileUtilTest, GetAndSetContents) {
   ASSERT_OK(FileUtil::SetContents(filename, "test"));
   FileUnlinker unlinker(filename);
   EXPECT_OK(FileUtil::GetContents(filename, &content));
-  EXPECT_EQ("test", content);
+  EXPECT_EQ(content, "test");
 
   // Overwrite test.
   ASSERT_OK(FileUtil::SetContents(filename, "more tests!"));
   EXPECT_OK(FileUtil::GetContents(filename, &content));
-  EXPECT_EQ("more tests!", content);
+  EXPECT_EQ(content, "more tests!");
 
   // Text mode write.
   ASSERT_OK(FileUtil::SetContents(filename, "test\ntest\n", std::ios::out));
   EXPECT_OK(FileUtil::GetContents(filename, &content));
 #ifdef OS_WIN
-  EXPECT_EQ("test\r\ntest\r\n", content);
+  EXPECT_EQ(content, "test\r\ntest\r\n");
 #else   // OS_WIN
-  EXPECT_EQ("test\ntest\n", content);
+  EXPECT_EQ(content, "test\ntest\n");
 #endif  // OS_WIN
 
   // Text mode read.
   ASSERT_OK(FileUtil::SetContents(filename, "test\r\ntest\r\n"));
   EXPECT_OK(FileUtil::GetContents(filename, &content, std::ios::in));
 #ifdef OS_WIN
-  EXPECT_EQ("test\ntest\n", content);
+  EXPECT_EQ(content, "test\ntest\n");
 #else   // OS_WIN
-  EXPECT_EQ("test\r\ntest\r\n", content);
+  EXPECT_EQ(content, "test\r\ntest\r\n");
 #endif  // OS_WIN
 }
 

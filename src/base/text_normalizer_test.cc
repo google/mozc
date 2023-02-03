@@ -40,49 +40,49 @@ TEST(TextNormalizerTest, NormalizeText) {
   std::string output;
 
   output = TextNormalizer::NormalizeText("めかぶ");
-  EXPECT_EQ("めかぶ", output);
+  EXPECT_EQ(output, "めかぶ");
 
   output = TextNormalizer::NormalizeText("ゔぁいおりん");
-  EXPECT_EQ("ゔぁいおりん", output);
+  EXPECT_EQ(output, "ゔぁいおりん");
 
   // "〜" is U+301C
   output = TextNormalizer::NormalizeText("ぐ〜ぐる");
 #ifdef OS_WIN
-  EXPECT_EQ("ぐ～ぐる", output);  // "～" is U+FF5E
+  EXPECT_EQ(output, "ぐ～ぐる");  // "～" is U+FF5E
 #else                             // OS_WIN
-  EXPECT_EQ("ぐ〜ぐる", output);  // "〜" is U+301C
+  EXPECT_EQ(output, "ぐ〜ぐる");  // "〜" is U+301C
 #endif                            // OS_WIN
 
   // "〜" is U+301C
   output =
       TextNormalizer::NormalizeTextWithFlag("ぐ〜ぐる", TextNormalizer::kAll);
-  EXPECT_EQ("ぐ～ぐる", output);  // "～" is U+FF5E
+  EXPECT_EQ(output, "ぐ～ぐる");  // "～" is U+FF5E
 
   output =
       TextNormalizer::NormalizeTextWithFlag("ぐ〜ぐる", TextNormalizer::kNone);
-  EXPECT_EQ("ぐ〜ぐる", output);  // "～" is U+301C
+  EXPECT_EQ(output, "ぐ〜ぐる");  // "～" is U+301C
 
   // "−" is U+2212
   output = TextNormalizer::NormalizeText("１−２−３");
 #ifdef OS_WIN
-  EXPECT_EQ("１－２－３", output);  // "－" is U+FF0D
+  EXPECT_EQ(output, "１－２－３");  // "－" is U+FF0D
 #else                               // OS_WIN
-  EXPECT_EQ("１−２−３", output);  // "−" is U+2212
+  EXPECT_EQ(output, "１−２−３");  // "−" is U+2212
 #endif                              // OS_WIN
 
   // "−" is U+2212
   output =
       TextNormalizer::NormalizeTextWithFlag("１−２−３", TextNormalizer::kAll);
-  EXPECT_EQ("１－２－３", output);  // "－" is U+FF0D
+  EXPECT_EQ(output, "１－２－３");  // "－" is U+FF0D
 
   output =
       TextNormalizer::NormalizeTextWithFlag("１−２−３", TextNormalizer::kNone);
-  EXPECT_EQ("１−２−３", output);  // "−" is U+2212
+  EXPECT_EQ(output, "１−２−３");  // "−" is U+2212
 
   // "¥" is U+00A5
   output = TextNormalizer::NormalizeText("¥298");
   // U+00A5 is no longer normalized.
-  EXPECT_EQ("¥298", output);
+  EXPECT_EQ(output, "¥298");
 }
 
 TEST(TextNormalizerTest, NormalizeTextToSvs) {

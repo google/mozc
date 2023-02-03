@@ -47,7 +47,7 @@ TEST(EmbeddedFileTest, Basic) {
   const absl::StatusOr<std::string> expected = FileUtil::GetContents(
       testing::GetSourceFileOrDie({"base", "embedded_file.h"}));
   ASSERT_OK(expected);
-  EXPECT_EQ(*expected, LoadEmbeddedFile(kEmbeddedFileTestData));
+  EXPECT_EQ(LoadEmbeddedFile(kEmbeddedFileTestData), *expected);
 }
 
 }  // namespace

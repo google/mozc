@@ -38,6 +38,7 @@
       'type': 'executable',
       'sources': [
         'dictionary_impl_test.cc',
+        'single_kanji_dictionary_test.cc',
         'suffix_dictionary_test.cc',
         'user_dictionary_importer_test.cc',
         'user_dictionary_session_handler_test.cc',

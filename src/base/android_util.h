@@ -60,8 +60,8 @@ class AndroidUtil {
   // returns |default_value|.
   // Typical usage :
   //   EXPECT_EQ(
-  //     "Nexus One",
-  //     AndroidUtil::GetSystemProperty(kAndroidSystemPropertyModel));
+  //     AndroidUtil::GetSystemProperty(kAndroidSystemPropertyModel),
+  //     "Nexus One");
   // Note : Using ::popen("getprop [property name]", "r") is better solution
   // but currently popen seems to be unstable.
   static std::string GetSystemProperty(const std::string &key,

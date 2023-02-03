@@ -230,10 +230,32 @@ OK:	にだんかいにんしょう	二段階認証	Conversion Expected	二段階
 OK:	ひともうけ	一儲け	Conversion Expected	一儲け	2.28.4880
 OK:	ひゃっきん	百均	Conversion Expected	百均	2.28.4880
 FAILED:	すげかえれば	すげ変えれば	Conversion Expected 2	挿げ替えれば	2.28.4880
+OK:	こうじょ	控除	Conversion Expected 19	扣除	2.28.5000
+OK:	りゅうこうごたいしょう	流行語大賞	Conversion Expected	流行語大賞	2.28.5000
+OK:	たんろくでんち	単６電池	Conversion Expected 2	単6電池	2.28.5000
+OK:	もうご	もう五	Conversion Expected 9	妄語	2.28.4990
+FAILED:	おんじゅ	オン樹	Conversion Expected 9	飲酒	2.28.4990
+OK:	ふもうご	不妄語	Conversion Expected 9	不妄語	2.28.5000
+FAILED:	ふおんじゅ	不穏樹	Conversion Expected 9	不飲酒	2.28.4990
+OK:	ぜんざいさん	全財産	Conversion Expected	全財産	2.28.5000
+FAILED:	きこう	機構	Conversion Expected 9	貴行	2.28.4990
+OK:	さぶすく	サブスク	Conversion Expected	サブスク	2.28.5000
+OK:	ばうんしゃ	馬運車	Conversion Expected	馬運車	2.28.5000
+OK:	しんしょかいふうざい	信書開封罪	Conversion Expected	信書開封罪	2.28.5000
+OK:	あいしんかくら	愛新覚羅	Conversion Expected	愛新覚羅	2.28.5000
+OK:	らのべ	ラノベ	Conversion Expected	ラノベ	2.28.5000
+OK:	こんせ	今世	Conversion Expected 9	今世	2.28.5000
+OK:	こんぜ	今世	Conversion Expected 9	今世	2.28.5000
+OK:	こんせい	今世	Conversion Expected 9	今世	2.28.5000
+FAILED:	ふくじょし	服女子	Conversion Expected 2	副助詞	2.28.4990
+FAILED:	らっぷ	ラップ	Conversion Expected 9	乱舞	2.28.4990
+OK:	こきゅう	呼吸	Conversion Expected 9	枯朽	2.28.5000
+OK:	こうばいりょくへいか	購買力平価	Conversion Expected	購買力平価	2.28.5000
 OK:	たいせつ	大切	Conversion Expected 9	堆雪	2.28.4960
 OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
 OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
 OK:	はいたしょり	排他処理	Conversion Expected	排他処理	2.28.4960
+OK:	じきしょうそう	時期尚早	Conversion Expected	時期尚早	2.28.5000
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695

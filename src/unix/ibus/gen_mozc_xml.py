@@ -61,11 +61,13 @@ CPP_FOOTER = """}  // namespace
 
 
 def GetXmlElement(key, value):
+  if key == 'composition_mode':
+    return '  <!-- %s : %s -->' % (key, value)
   return '  <%s>%s</%s>' % (key, value, key)
 
 
 def GetTextProtoElement(key, value):
-  if isinstance(value, int):
+  if isinstance(value, int) or key == 'composition_mode':
     return '  %s : %s' % (key, value)
   return '  %s : "%s"' % (key, value)
 

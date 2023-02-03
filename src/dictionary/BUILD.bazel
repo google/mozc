@@ -767,6 +767,36 @@ mozc_cc_library(
     ],
 )
 
+mozc_cc_library(
+    name = "single_kanji_dictionary",
+    srcs = ["single_kanji_dictionary.cc"],
+    hdrs = ["single_kanji_dictionary.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//base",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:text_normalizer",
+        "//base:util",
+        "//data_manager:data_manager_interface",
+        "//data_manager:serialized_dictionary",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "single_kanji_dictionary_test",
+    size = "small",
+    srcs = ["single_kanji_dictionary_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":single_kanji_dictionary",
+        "//base:system_util",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit_main",
+    ],
+)
+
 mozc_py_binary(
     name = "gen_zip_code_seed",
     srcs = [

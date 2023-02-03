@@ -191,9 +191,9 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG(WARNING) << "test: " << DebugString();
 
 #ifdef MOZC_NO_LOGGING
-  EXPECT_EQ(0, g_counter);
+  EXPECT_EQ(g_counter, 0);
 #else  // MOZC_NO_LOGGING
-  EXPECT_EQ(3, g_counter);
+  EXPECT_EQ(g_counter, 3);
 #endif  // MOZC_NO_LOGGING
 
   g_counter = 0;
@@ -202,9 +202,9 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG_IF(WARNING, true) << "test: " << DebugString();
 
 #ifdef MOZC_NO_LOGGING
-  EXPECT_EQ(0, g_counter);
+  EXPECT_EQ(g_counter, 0);
 #else  // MOZC_NO_LOGGING
-  EXPECT_EQ(3, g_counter);
+  EXPECT_EQ(g_counter, 3);
 #endif  // MOZC_NO_LOGGING
 
   g_counter = 0;
@@ -212,7 +212,7 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG_IF(ERROR, false) << "test: " << DebugString();
   LOG_IF(WARNING, false) << "test: " << DebugString();
 
-  EXPECT_EQ(0, g_counter);
+  EXPECT_EQ(g_counter, 0);
 }
 
 }  // namespace

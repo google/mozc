@@ -101,14 +101,14 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
       ofs << line << std::endl;
     }
   }
-  EXPECT_EQ(kNumLines, expected_lines.size());
+  EXPECT_EQ(expected_lines.size(), kNumLines);
 
   // Read lines
   InputMultiFile multfile(path);
   std::string line;
   for (int i = 0; i < kNumLines; ++i) {
     EXPECT_TRUE(multfile.ReadLine(&line));
-    EXPECT_EQ(expected_lines[i], line);
+    EXPECT_EQ(line, expected_lines[i]);
   }
   EXPECT_FALSE(multfile.ReadLine(&line));  // Check if no more lines remain
   EXPECT_FALSE(multfile.ReadLine(&line));
@@ -140,7 +140,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
       }
     }
   }
-  EXPECT_EQ(kNumLinesPerFile * kNumFile, expected_lines.size());
+  EXPECT_EQ(expected_lines.size(), kNumLinesPerFile * kNumFile);
 
   // Read lines
   std::string joined_path = absl::StrJoin(paths, ",");
@@ -148,7 +148,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   std::string line;
   for (int i = 0; i < kNumFile * kNumLinesPerFile; ++i) {
     EXPECT_TRUE(multfile.ReadLine(&line));
-    EXPECT_EQ(expected_lines[i], line);
+    EXPECT_EQ(line, expected_lines[i]);
   }
   EXPECT_FALSE(multfile.ReadLine(&line));  // Check if no more lines remain
   EXPECT_FALSE(multfile.ReadLine(&line));

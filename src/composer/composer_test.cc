@@ -163,19 +163,19 @@ TEST_F(ComposerTest, Reset) {
 
   composer_->SetInputMode(transliteration::HALF_ASCII);
 
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetOutputMode());
+  EXPECT_EQ(composer_->GetOutputMode(), transliteration::HIRAGANA);
   composer_->SetOutputMode(transliteration::HALF_ASCII);
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetOutputMode());
+  EXPECT_EQ(composer_->GetOutputMode(), transliteration::HALF_ASCII);
 
   composer_->SetInputFieldType(commands::Context::PASSWORD);
   composer_->Reset();
 
   EXPECT_TRUE(composer_->Empty());
   // The input mode ramains as the previous mode.
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
-  EXPECT_EQ(commands::Context::PASSWORD, composer_->GetInputFieldType());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
+  EXPECT_EQ(composer_->GetInputFieldType(), commands::Context::PASSWORD);
   // The output mode should be reset.
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetOutputMode());
+  EXPECT_EQ(composer_->GetOutputMode(), transliteration::HIRAGANA);
 }
 
 TEST_F(ComposerTest, ResetInputMode) {
@@ -186,7 +186,7 @@ TEST_F(ComposerTest, ResetInputMode) {
   composer_->ResetInputMode();
 
   EXPECT_FALSE(composer_->Empty());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 }
 
 TEST_F(ComposerTest, Empty) {
@@ -201,22 +201,22 @@ TEST_F(ComposerTest, EnableInsert) {
   composer_->set_max_length(6);
 
   composer_->InsertCharacter("mozuk");
-  EXPECT_EQ(5, composer_->GetLength());
+  EXPECT_EQ(composer_->GetLength(), 5);
 
   EXPECT_TRUE(composer_->EnableInsert());
   composer_->InsertCharacter("u");
-  EXPECT_EQ(6, composer_->GetLength());
+  EXPECT_EQ(composer_->GetLength(), 6);
 
   EXPECT_FALSE(composer_->EnableInsert());
   composer_->InsertCharacter("!");
-  EXPECT_EQ(6, composer_->GetLength());
+  EXPECT_EQ(composer_->GetLength(), 6);
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("mozuku", result);
+  EXPECT_EQ(result, "mozuku");
 
   composer_->Backspace();
-  EXPECT_EQ(5, composer_->GetLength());
+  EXPECT_EQ(composer_->GetLength(), 5);
   EXPECT_TRUE(composer_->EnableInsert());
 }
 
@@ -224,32 +224,32 @@ TEST_F(ComposerTest, BackSpace) {
   composer_->InsertCharacter("abc");
 
   composer_->Backspace();
-  EXPECT_EQ(2, composer_->GetLength());
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetLength(), 2);
+  EXPECT_EQ(composer_->GetCursor(), 2);
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ab", result);
+  EXPECT_EQ(result, "ab");
 
   result.clear();
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ab", result);
+  EXPECT_EQ(result, "ab");
 
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 0);
 
   composer_->Backspace();
-  EXPECT_EQ(2, composer_->GetLength());
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetLength(), 2);
+  EXPECT_EQ(composer_->GetCursor(), 0);
   result.clear();
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ab", result);
+  EXPECT_EQ(result, "ab");
 
   composer_->Backspace();
-  EXPECT_EQ(2, composer_->GetLength());
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetLength(), 2);
+  EXPECT_EQ(composer_->GetCursor(), 0);
   result.clear();
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ab", result);
+  EXPECT_EQ(result, "ab");
 }
 
 TEST_F(ComposerTest, OutputMode) {
@@ -267,17 +267,17 @@ TEST_F(ComposerTest, OutputMode) {
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("あいう", output);
+  EXPECT_EQ(output, "あいう");
 
   composer_->SetOutputMode(transliteration::FULL_ASCII);
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ａｉｕ", output);
+  EXPECT_EQ(output, "ａｉｕ");
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ａｉｕあいう", output);
+  EXPECT_EQ(output, "ａｉｕあいう");
 }
 
 TEST_F(ComposerTest, OutputMode2) {
@@ -293,18 +293,18 @@ TEST_F(ComposerTest, OutputMode2) {
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("あいう", output);
+  EXPECT_EQ(output, "あいう");
 
   composer_->MoveCursorLeft();
   composer_->SetOutputMode(transliteration::FULL_ASCII);
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ａｉｕ", output);
+  EXPECT_EQ(output, "ａｉｕ");
 
   composer_->InsertCharacter("a");
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ａｉｕあいう", output);
+  EXPECT_EQ(output, "ａｉｕあいう");
 }
 
 TEST_F(ComposerTest, GetTransliterations) {
@@ -318,12 +318,12 @@ TEST_F(ComposerTest, GetTransliterations) {
 
   transliteration::Transliterations transliterations;
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
-  EXPECT_EQ("あ", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("ア", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("a", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ａ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ｱ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations.size(), transliteration::NUM_T13N_TYPES);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "あ");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "ア");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "a");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ａ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ｱ");
 
   composer_->Reset();
   ASSERT_TRUE(composer_->Empty());
@@ -331,13 +331,13 @@ TEST_F(ComposerTest, GetTransliterations) {
 
   composer_->InsertCharacter("!");
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
+  EXPECT_EQ(transliterations.size(), transliteration::NUM_T13N_TYPES);
   // NOTE(komatsu): The duplication will be handled by the session layer.
-  EXPECT_EQ("！", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("！", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("!", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("！", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("!", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "！");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "！");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "!");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "！");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "!");
 
   composer_->Reset();
   ASSERT_TRUE(composer_->Empty());
@@ -345,19 +345,19 @@ TEST_F(ComposerTest, GetTransliterations) {
 
   composer_->InsertCharacter("aIu");
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
-  EXPECT_EQ("あいう", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("アイウ", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("aIu", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("AIU", transliterations[transliteration::HALF_ASCII_UPPER]);
-  EXPECT_EQ("aiu", transliterations[transliteration::HALF_ASCII_LOWER]);
-  EXPECT_EQ("Aiu", transliterations[transliteration::HALF_ASCII_CAPITALIZED]);
-  EXPECT_EQ("ａＩｕ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ＡＩＵ", transliterations[transliteration::FULL_ASCII_UPPER]);
-  EXPECT_EQ("ａｉｕ", transliterations[transliteration::FULL_ASCII_LOWER]);
-  EXPECT_EQ("Ａｉｕ",
-            transliterations[transliteration::FULL_ASCII_CAPITALIZED]);
-  EXPECT_EQ("ｱｲｳ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations.size(), transliteration::NUM_T13N_TYPES);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "あいう");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "アイウ");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "aIu");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII_UPPER], "AIU");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII_LOWER], "aiu");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII_CAPITALIZED], "Aiu");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ａＩｕ");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII_UPPER], "ＡＩＵ");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII_LOWER], "ａｉｕ");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII_CAPITALIZED], "Ａｉｕ"
+            );
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ｱｲｳ");
 
   // Transliterations for quote marks.  This is a test against
   // http://b/1581367
@@ -367,8 +367,8 @@ TEST_F(ComposerTest, GetTransliterations) {
 
   composer_->InsertCharacter("'\"`");
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ("'\"`", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("’”｀", transliterations[transliteration::FULL_ASCII]);
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "'\"`");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "’”｀");
 }
 
 TEST_F(ComposerTest, GetSubTransliterations) {
@@ -381,56 +381,56 @@ TEST_F(ComposerTest, GetSubTransliterations) {
 
   transliteration::Transliterations transliterations;
   composer_->GetSubTransliterations(0, 2, &transliterations);
-  EXPECT_EQ("かん", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("カン", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("kan", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ｋａｎ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ｶﾝ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "かん");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "カン");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "kan");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ｋａｎ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ｶﾝ");
 
   transliterations.clear();
   composer_->GetSubTransliterations(1, 1, &transliterations);
-  EXPECT_EQ("ん", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("ン", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("n", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ｎ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ﾝ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "ん");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "ン");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "n");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ｎ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ﾝ");
 
   transliterations.clear();
   composer_->GetSubTransliterations(2, 1, &transliterations);
-  EXPECT_EQ("な", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("ナ", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("na", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ｎａ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ﾅ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "な");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "ナ");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "na");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ｎａ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ﾅ");
 
   // Invalid position
   transliterations.clear();
   composer_->GetSubTransliterations(5, 3, &transliterations);
-  EXPECT_EQ("", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "");
 
   // Invalid size
   transliterations.clear();
   composer_->GetSubTransliterations(0, 999, &transliterations);
-  EXPECT_EQ("かんな", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("カンナ", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("kanna", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ｋａｎｎａ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ｶﾝﾅ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "かんな");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "カンナ");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "kanna");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ｋａｎｎａ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ｶﾝﾅ");
 
   // Dakuon case
   transliterations.clear();
   composer_->EditErase();
   composer_->InsertCharacter("dankann");
   composer_->GetSubTransliterations(0, 3, &transliterations);
-  EXPECT_EQ("だんか", transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ("ダンカ", transliterations[transliteration::FULL_KATAKANA]);
-  EXPECT_EQ("danka", transliterations[transliteration::HALF_ASCII]);
-  EXPECT_EQ("ｄａｎｋａ", transliterations[transliteration::FULL_ASCII]);
-  EXPECT_EQ("ﾀﾞﾝｶ", transliterations[transliteration::HALF_KATAKANA]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], "だんか");
+  EXPECT_EQ(transliterations[transliteration::FULL_KATAKANA], "ダンカ");
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "danka");
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ｄａｎｋａ");
+  EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ﾀﾞﾝｶ");
 }
 
 TEST_F(ComposerTest, GetStringFunctions) {
@@ -443,19 +443,19 @@ TEST_F(ComposerTest, GetStringFunctions) {
   composer_->InsertCharacter("!kan");
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("！かｎ", preedit);
+  EXPECT_EQ(preedit, "！かｎ");
 
   std::string submission;
   composer_->GetStringForSubmission(&submission);
-  EXPECT_EQ("！かｎ", submission);
+  EXPECT_EQ(submission, "！かｎ");
 
   std::string conversion;
   composer_->GetQueryForConversion(&conversion);
-  EXPECT_EQ("!かん", conversion);
+  EXPECT_EQ(conversion, "!かん");
 
   std::string prediction;
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_EQ("!か", prediction);
+  EXPECT_EQ(prediction, "!か");
 
   // Query: "kas"
   composer_->EditErase();
@@ -463,21 +463,21 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("かｓ", preedit);
+  EXPECT_EQ(preedit, "かｓ");
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  EXPECT_EQ("かｓ", submission);
+  EXPECT_EQ(submission, "かｓ");
 
   // Pending chars should remain.  This is a test against
   // http://b/1799399
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  EXPECT_EQ("かs", conversion);
+  EXPECT_EQ(conversion, "かs");
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_EQ("か", prediction);
+  EXPECT_EQ(prediction, "か");
 
   // Query: "s"
   composer_->EditErase();
@@ -485,19 +485,19 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ｓ", preedit);
+  EXPECT_EQ(preedit, "ｓ");
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  EXPECT_EQ("ｓ", submission);
+  EXPECT_EQ(submission, "ｓ");
 
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  EXPECT_EQ("s", conversion);
+  EXPECT_EQ(conversion, "s");
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_EQ("s", prediction);
+  EXPECT_EQ(prediction, "s");
 
   // Query: "sk"
   composer_->EditErase();
@@ -505,19 +505,19 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   preedit.clear();
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ｓｋ", preedit);
+  EXPECT_EQ(preedit, "ｓｋ");
 
   submission.clear();
   composer_->GetStringForSubmission(&submission);
-  EXPECT_EQ("ｓｋ", submission);
+  EXPECT_EQ(submission, "ｓｋ");
 
   conversion.clear();
   composer_->GetQueryForConversion(&conversion);
-  EXPECT_EQ("sk", conversion);
+  EXPECT_EQ(conversion, "sk");
 
   prediction.clear();
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_EQ("sk", prediction);
+  EXPECT_EQ(prediction, "sk");
 }
 
 TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
@@ -534,7 +534,7 @@ TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
     constexpr char kInput[] = "hello";
     composer_->InsertCharacter(kInput);
     composer_->GetQueryForPrediction(&prediction);
-    EXPECT_EQ(kInput, prediction);
+    EXPECT_EQ(prediction, kInput);
   }
   prediction.clear();
   composer_->EditErase();
@@ -542,7 +542,7 @@ TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
     constexpr char kInput[] = "hello!";
     composer_->InsertCharacter(kInput);
     composer_->GetQueryForPrediction(&prediction);
-    EXPECT_EQ(kInput, prediction);
+    EXPECT_EQ(prediction, kInput);
   }
 }
 
@@ -559,14 +559,14 @@ TEST_F(ComposerTest, GetQueryForPredictionFullAscii) {
   {
     composer_->InsertCharacter("ｈｅｌｌｏ");
     composer_->GetQueryForPrediction(&prediction);
-    EXPECT_EQ("hello", prediction);
+    EXPECT_EQ(prediction, "hello");
   }
   prediction.clear();
   composer_->EditErase();
   {
     composer_->InsertCharacter("ｈｅｌｌｏ！");
     composer_->GetQueryForPrediction(&prediction);
-    EXPECT_EQ("hello!", prediction);
+    EXPECT_EQ(prediction, "hello!");
   }
 }
 
@@ -586,8 +586,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
     composer_->InsertCharacter("us");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("う", base);
-    EXPECT_EQ(7, expanded.size());
+    EXPECT_EQ(base, "う");
+    EXPECT_EQ(expanded.size(), 7);
     // We can't use EXPECT_NE for iterator
     EXPECT_TRUE(expanded.end() != expanded.find("s"));
     EXPECT_TRUE(expanded.end() != expanded.find("っ"));
@@ -618,8 +618,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     composer_->InsertCharacter("_$");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("い", base);
-    EXPECT_EQ(2, expanded.size());
+    EXPECT_EQ(base, "い");
+    EXPECT_EQ(expanded.size(), 2);
     EXPECT_TRUE(expanded.end() != expanded.find("と"));
     EXPECT_TRUE(expanded.end() != expanded.find("ど"));
   }
@@ -630,8 +630,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     composer_->InsertCharacter("_$*");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("い", base);
-    EXPECT_EQ(1, expanded.size());
+    EXPECT_EQ(base, "い");
+    EXPECT_EQ(expanded.size(), 1);
     EXPECT_TRUE(expanded.end() != expanded.find("ど"));
   }
   {
@@ -641,8 +641,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     composer_->InsertCharacter("_x*");
     composer_->GetQueriesForPrediction(&base, &expanded);
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("い", base);
-    EXPECT_EQ(1, expanded.size());
+    EXPECT_EQ(base, "い");
+    EXPECT_EQ(expanded.size(), 1);
     EXPECT_TRUE(expanded.end() != expanded.find("っ"));
   }
 }
@@ -659,28 +659,28 @@ TEST_F(ComposerTest, GetStringFunctionsForN) {
   composer_->InsertCharacter("nynyan");
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", preedit);
+  EXPECT_EQ(preedit, "ｎｙ［ＮＹＡ］ｎ");
 
   std::string submission;
   composer_->GetStringForSubmission(&submission);
-  EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", submission);
+  EXPECT_EQ(submission, "ｎｙ［ＮＹＡ］ｎ");
 
   std::string conversion;
   composer_->GetQueryForConversion(&conversion);
-  EXPECT_EQ("ny[NYA][N]", conversion);
+  EXPECT_EQ(conversion, "ny[NYA][N]");
 
   std::string prediction;
   composer_->GetQueryForPrediction(&prediction);
-  EXPECT_EQ("ny[NYA]", prediction);
+  EXPECT_EQ(prediction, "ny[NYA]");
 
   composer_->InsertCharacter("ka");
   std::string conversion2;
   composer_->GetQueryForConversion(&conversion2);
-  EXPECT_EQ("ny[NYA][N][KA]", conversion2);
+  EXPECT_EQ(conversion2, "ny[NYA][N][KA]");
 
   std::string prediction2;
   composer_->GetQueryForPrediction(&prediction2);
-  EXPECT_EQ("ny[NYA][N][KA]", prediction2);
+  EXPECT_EQ(prediction2, "ny[NYA][N][KA]");
 }
 
 TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
@@ -706,18 +706,18 @@ TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
       composer_->InsertCharacter(key);
       if (test_data.ascii_expected) {
         composer_->GetStringForPreedit(&converted);
-        EXPECT_EQ(key, converted);
+        EXPECT_EQ(converted, key);
         composer_->GetStringForSubmission(&converted);
-        EXPECT_EQ(key, converted);
+        EXPECT_EQ(converted, key);
       } else {
         // Expected result is FULL_WIDTH form.
         // Typically the result is a full-width form of the key,
         // but some characters are not.
         // So here we checks only the character form.
         composer_->GetStringForPreedit(&converted);
-        EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType(converted));
+        EXPECT_EQ(Util::GetFormType(converted), Util::FULL_WIDTH);
         composer_->GetStringForSubmission(&converted);
-        EXPECT_EQ(Util::FULL_WIDTH, Util::GetFormType(converted));
+        EXPECT_EQ(Util::GetFormType(converted), Util::FULL_WIDTH);
       }
     }
   }
@@ -730,11 +730,11 @@ TEST_F(ComposerTest, InsertCommandCharacter) {
   composer_->SetInputMode(transliteration::HALF_ASCII);
 
   composer_->InsertCommandCharacter(Composer::REWIND);
-  EXPECT_EQ("REWIND", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "REWIND");
 
   composer_->Reset();
   composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
-  EXPECT_EQ("STOP", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "STOP");
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
@@ -746,21 +746,21 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ", preedit);
+  EXPECT_EQ(preedit, "あ");
 
   // Half width "A" will be inserted.
   key.set_key_code('A');
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あA", preedit);
+  EXPECT_EQ(preedit, "あA");
 
   // Half width "a" will be inserted.
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あAa", preedit);
+  EXPECT_EQ(preedit, "あAa");
 
   // Reset() should revert the previous input mode (Hiragana).
   composer_->Reset();
@@ -768,7 +768,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ", preedit);
+  EXPECT_EQ(preedit, "あ");
 
   // Typing "A" temporarily switch the input mode.  The input mode
   // should be reverted back after reset.
@@ -776,12 +776,12 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あア", preedit);
+  EXPECT_EQ(preedit, "あア");
 
   key.set_key_code('A');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あアA", preedit);
+  EXPECT_EQ(preedit, "あアA");
 
   // Reset() should revert the previous input mode (Katakana).
   composer_->Reset();
@@ -789,7 +789,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ア", preedit);
+  EXPECT_EQ(preedit, "ア");
 }
 
 namespace {
@@ -807,21 +807,21 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithUcs4KeyCode) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ(kYama, preedit);
+  EXPECT_EQ(preedit, kYama);
 
   // Input "山" as key_code which is converted to "川".
   table_->AddRule(kYama, kKawa, "");
   composer_->Reset();
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ(kKawa, preedit);
+  EXPECT_EQ(preedit, kKawa);
 
   // Input ("山", "空") as (key_code, key_string) which is treated as "空".
   key.set_key_string(kSora);
   composer_->Reset();
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ(kSora, preedit);
+  EXPECT_EQ(preedit, kSora);
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithoutKeyCode) {
@@ -834,12 +834,12 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithoutKeyCode) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ(kYama, preedit);
+  EXPECT_EQ(preedit, kYama);
 
   transliteration::Transliterations transliterations;
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ(kYama, transliterations[transliteration::HIRAGANA]);
-  EXPECT_EQ(kYama, transliterations[transliteration::HALF_ASCII]);
+  EXPECT_EQ(transliterations[transliteration::HIRAGANA], kYama);
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], kYama);
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
@@ -852,7 +852,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ", preedit);
+  EXPECT_EQ(preedit, "あ");
 
   // Full width "０" will be inserted.
   key.set_key_code('0');
@@ -860,7 +860,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ０", preedit);
+  EXPECT_EQ(preedit, "あ０");
 
   // Half width "0" will be inserted.
   key.set_key_code('0');
@@ -869,7 +869,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ０0", preedit);
+  EXPECT_EQ(preedit, "あ０0");
 
   // Full width "0" will be inserted.
   key.set_key_code('0');
@@ -878,7 +878,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ０0０", preedit);
+  EXPECT_EQ(preedit, "あ０0０");
 
   // Half width "-" will be inserted.
   key.set_key_code('-');
@@ -887,7 +887,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ０0０-", preedit);
+  EXPECT_EQ(preedit, "あ０0０-");
 
   // Full width "−" (U+2212) will be inserted.
   key.set_key_code('-');
@@ -896,7 +896,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   composer_->InsertCharacterKeyEvent(key);
 
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("あ０0０-−", preedit);  // The last hyphen is U+2212.
+  EXPECT_EQ(preedit, "あ０0０-−");  // The last hyphen is U+2212.
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
@@ -907,29 +907,29 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   {
     // "a" → "あ" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("a", commands::HIRAGANA, composer_.get()));
-    EXPECT_EQ("あ", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あ");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
     // "aI" → "あI" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("I", commands::HIRAGANA, composer_.get()));
-    EXPECT_EQ("あI", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あI");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     // "u" → "あIu" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("u", commands::HALF_ASCII, composer_.get()));
-    EXPECT_EQ("あIu", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あIu");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     // [shift] → "あIu" (Hiragana)
     EXPECT_TRUE(
         InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
-    EXPECT_EQ("あIu", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あIu");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
     // "u" → "あIuう" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("u", commands::HIRAGANA, composer_.get()));
-    EXPECT_EQ("あIuう", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あIuう");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
   composer_ =
@@ -938,35 +938,35 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   {
     // "a" → "あ" (Hiragana)
     EXPECT_TRUE(InsertKeyWithMode("a", commands::HIRAGANA, composer_.get()));
-    EXPECT_EQ("あ", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あ");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
     // "i" (Katakana) → "あイ" (Katakana)
     EXPECT_TRUE(
         InsertKeyWithMode("i", commands::FULL_KATAKANA, composer_.get()));
-    EXPECT_EQ("あイ", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あイ");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
     // SetInputMode(Alphanumeric) → "あイ" (Alphanumeric)
     composer_->SetInputMode(transliteration::HALF_ASCII);
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     // [shift] → "あイ" (Alphanumeric) - Nothing happens.
     EXPECT_TRUE(
         InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
-    EXPECT_EQ("あイ", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あイ");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     // "U" → "あイ" (Alphanumeric)
     EXPECT_TRUE(InsertKeyWithMode("U", commands::HALF_ASCII, composer_.get()));
-    EXPECT_EQ("あイU", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あイU");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     // [shift] → "あイU" (Alphanumeric) - Nothing happens.
     EXPECT_TRUE(
         InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
-    EXPECT_EQ("あイU", GetPreedit(composer_.get()));
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(GetPreedit(composer_.get()), "あイU");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
   }
 }
 
@@ -1120,17 +1120,17 @@ TEST_F(ComposerTest, FullWidthCharRulesb31444698) {
 
   // Test if "11" is transliterated to "い"
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "い");
 
   composer_->Reset();
 
   // b/31444698.  Test if "かか" is transliterated to "き"
   ASSERT_TRUE(InsertKeyWithMode("か", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("か", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "か");
   ASSERT_TRUE(InsertKeyWithMode("か", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("き", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "き");
 }
 
 TEST_F(ComposerTest, Copy) {
@@ -1143,7 +1143,7 @@ TEST_F(ComposerTest, Copy) {
 
     std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    EXPECT_EQ("", src_composition);
+    EXPECT_EQ(src_composition, "");
 
     Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
@@ -1156,7 +1156,7 @@ TEST_F(ComposerTest, Copy) {
     composer_->InsertCharacter("n");
     std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    EXPECT_EQ("あｎ", src_composition);
+    EXPECT_EQ(src_composition, "あｎ");
 
     Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
@@ -1167,7 +1167,7 @@ TEST_F(ComposerTest, Copy) {
 
     std::string src_composition;
     composer_->GetQueryForConversion(&src_composition);
-    EXPECT_EQ("あん", src_composition);
+    EXPECT_EQ(src_composition, "あん");
 
     Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
@@ -1184,7 +1184,7 @@ TEST_F(ComposerTest, Copy) {
     InsertKey("a", composer_.get());
     std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    EXPECT_EQ("AaAAあ", src_composition);
+    EXPECT_EQ(src_composition, "AaAAあ");
 
     Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
@@ -1200,7 +1200,7 @@ TEST_F(ComposerTest, Copy) {
     composer_->InsertCharacter("M");
     std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
-    EXPECT_EQ("M", src_composition);
+    EXPECT_EQ(src_composition, "M");
 
     Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
@@ -1225,7 +1225,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("あAaああ", preedit);
+    EXPECT_EQ(preedit, "あAaああ");
   }
 
   {  // Revert back to the previous input mode.
@@ -1243,8 +1243,8 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("アAaアア", preedit);
-    EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+    EXPECT_EQ(preedit, "アAaアア");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
   }
 
   {  // Multiple shifted characters
@@ -1261,7 +1261,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("AAあAa", preedit);
+    EXPECT_EQ(preedit, "AAあAa");
   }
 
   {  // Multiple shifted characters #2
@@ -1275,7 +1275,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("D&D2a", preedit);
+    EXPECT_EQ(preedit, "D&D2a");
   }
 
   {  // Full-witdh alphanumeric
@@ -1286,7 +1286,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("Ａａ", preedit);
+    EXPECT_EQ(preedit, "Ａａ");
   }
 
   {  // Half-witdh alphanumeric
@@ -1297,7 +1297,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("Aa", preedit);
+    EXPECT_EQ(preedit, "Aa");
   }
 }
 
@@ -1308,23 +1308,23 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   composer_->Reset();
   composer_->SetInputMode(transliteration::HIRAGANA);
   InsertKey("K", composer_.get());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
   InsertKey("A", composer_.get());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
   InsertKey("T", composer_.get());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
   InsertKey("a", composer_.get());
   // See the below comment.
-  // EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  // EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   InsertKey("k", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   InsertKey("A", composer_.get());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
   InsertKey("n", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   InsertKey("a", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
@@ -1333,9 +1333,9 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   // to avoid complecated implementation.  Unless this is a problem
   // for users, this difference probably remains.
   //
-  // EXPECT_EQ("カタカな", preedit);
+  // EXPECT_EQ(preedit, "カタカな");
 
-  EXPECT_EQ("カＴあｋアな", preedit);
+  EXPECT_EQ(preedit, "カＴあｋアな");
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
@@ -1351,16 +1351,16 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     InsertKey("h", composer_.get());
     InsertKey("t", composer_.get());
     InsertKey("t", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
     InsertKey("p", composer_.get());
 
     std::string preedit;
     composer_->GetStringForPreedit(&preedit);
-    EXPECT_EQ("http", preedit);
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(preedit, "http");
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     composer_->Reset();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
   composer_ =
@@ -1372,17 +1372,17 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     InsertKey("o", composer_.get());
     InsertKey("g", composer_.get());
     InsertKey("l", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
     InsertKey("e", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    EXPECT_EQ("google", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
+    EXPECT_EQ(GetPreedit(composer_.get()), "google");
 
     InsertKey("a", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    EXPECT_EQ("googleあ", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
+    EXPECT_EQ(GetPreedit(composer_.get()), "googleあ");
 
     composer_->Reset();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
   {  // google in full-width alphanumeric mode.
@@ -1392,40 +1392,40 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     InsertKey("o", composer_.get());
     InsertKey("g", composer_.get());
     InsertKey("l", composer_.get());
-    EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
     InsertKey("e", composer_.get());
-    EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
-    EXPECT_EQ("ｇｏｏｇｌｅ", GetPreedit(composer_.get()));
+    EXPECT_EQ(GetPreedit(composer_.get()), "ｇｏｏｇｌｅ");
 
     InsertKey("a", composer_.get());
-    EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
-    EXPECT_EQ("ｇｏｏｇｌｅａ", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
+    EXPECT_EQ(GetPreedit(composer_.get()), "ｇｏｏｇｌｅａ");
 
     composer_->Reset();
-    EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
     // Reset to Hiragana mode
     composer_->SetInputMode(transliteration::HIRAGANA);
   }
 
   {  // Google
     InsertKey("G", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
     InsertKey("o", composer_.get());
     InsertKey("o", composer_.get());
     InsertKey("g", composer_.get());
     InsertKey("l", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
     InsertKey("e", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
-    EXPECT_EQ("Google", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
+    EXPECT_EQ(GetPreedit(composer_.get()), "Google");
 
     InsertKey("a", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
-    EXPECT_EQ("Googlea", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
+    EXPECT_EQ(GetPreedit(composer_.get()), "Googlea");
 
     composer_->Reset();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 
   config_->set_shift_key_mode_switch(Config::OFF);
@@ -1438,17 +1438,17 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     InsertKey("o", composer_.get());
     InsertKey("g", composer_.get());
     InsertKey("l", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
     InsertKey("e", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    EXPECT_EQ("Google", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
+    EXPECT_EQ(GetPreedit(composer_.get()), "Google");
 
     InsertKey("a", composer_.get());
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
-    EXPECT_EQ("Googleあ", GetPreedit(composer_.get()));
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
+    EXPECT_EQ(GetPreedit(composer_.get()), "Googleあ");
 
     composer_->Reset();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 }
 
@@ -1485,7 +1485,7 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ｈっｔｐ：・・", preedit);
+  EXPECT_EQ(preedit, "ｈっｔｐ：・・");
 }
 
 TEST_F(ComposerTest, AutoIMETurnOffKana) {
@@ -1521,7 +1521,7 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("ｈっｔｐ：・・", preedit);
+  EXPECT_EQ(preedit, "ｈっｔｐ：・・");
 }
 
 TEST_F(ComposerTest, KanaPrediction) {
@@ -1529,19 +1529,19 @@ TEST_F(ComposerTest, KanaPrediction) {
   {
     std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    EXPECT_EQ("か", preedit);
+    EXPECT_EQ(preedit, "か");
   }
   composer_->InsertCharacterKeyAndPreedit("\\", "ー");
   {
     std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    EXPECT_EQ("かー", preedit);
+    EXPECT_EQ(preedit, "かー");
   }
   composer_->InsertCharacterKeyAndPreedit(",", "、");
   {
     std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
-    EXPECT_EQ("かー、", preedit);
+    EXPECT_EQ(preedit, "かー、");
   }
 }
 
@@ -1555,12 +1555,12 @@ TEST_F(ComposerTest, KanaTransliteration) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("くいりりら", preedit);
+  EXPECT_EQ(preedit, "くいりりら");
 
   transliteration::Transliterations transliterations;
   composer_->GetTransliterations(&transliterations);
-  EXPECT_EQ(transliteration::NUM_T13N_TYPES, transliterations.size());
-  EXPECT_EQ("hello", transliterations[transliteration::HALF_ASCII]);
+  EXPECT_EQ(transliterations.size(), transliteration::NUM_T13N_TYPES);
+  EXPECT_EQ(transliterations[transliteration::HALF_ASCII], "hello");
 }
 
 TEST_F(ComposerTest, SetOutputMode) {
@@ -1574,18 +1574,18 @@ TEST_F(ComposerTest, SetOutputMode) {
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("もず", output);
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(output, "もず");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->SetOutputMode(transliteration::HALF_ASCII);
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("mozu", output);
-  EXPECT_EQ(4, composer_->GetCursor());
+  EXPECT_EQ(output, "mozu");
+  EXPECT_EQ(composer_->GetCursor(), 4);
 
   composer_->SetOutputMode(transliteration::HALF_KATAKANA);
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ﾓｽﾞ", output);
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(output, "ﾓｽﾞ");
+  EXPECT_EQ(composer_->GetCursor(), 3);
 }
 
 TEST_F(ComposerTest, UpdateInputMode) {
@@ -1593,93 +1593,93 @@ TEST_F(ComposerTest, UpdateInputMode) {
   table_->AddRule("i", "い", "");
 
   InsertKey("A", composer_.get());
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   InsertKey("I", composer_.get());
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   InsertKey("a", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   InsertKey("i", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   composer_->SetInputMode(transliteration::FULL_ASCII);
   InsertKey("a", composer_.get());
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   InsertKey("i", composer_.get());
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("AIあいａｉ", output);
+  EXPECT_EQ(output, "AIあいａｉ");
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
   // "|AIあいａｉ"
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|Iあいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   // "AI|あいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあ|いａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   // "AIあい|ａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあいａ|ｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   // "AIあいａｉ|"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   // "AIあいａ|ｉ"
   composer_->MoveCursorLeft();
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   // "|AIあいａｉ"
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|Iあいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   // "A|あいａｉ"
   composer_->Delete();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aあ|いａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   // "A|いａｉ"
   composer_->Backspace();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aいａｉ|"
   composer_->MoveCursorToEnd();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aいａ|ｉ"
   composer_->MoveCursorLeft();
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   // "Aいａｉ|"
   composer_->MoveCursorToEnd();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 }
 
 TEST_F(ComposerTest, DisabledUpdateInputMode) {
@@ -1692,27 +1692,27 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   table_->AddRule("i", "い", "");
 
   InsertKey("A", composer_.get());
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   InsertKey("I", composer_.get());
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   InsertKey("a", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   InsertKey("i", composer_.get());
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   composer_->SetInputMode(transliteration::FULL_ASCII);
   InsertKey("a", composer_.get());
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   InsertKey("i", composer_.get());
-  EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_ASCII);
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("AIあいａｉ", output);
+  EXPECT_EQ(output, "AIあいａｉ");
 
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
 
@@ -1721,67 +1721,67 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
 
   // "|AIあいａｉ"
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|Iあいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AI|あいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあ|いａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあい|ａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあいａ|ｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあいａｉ|"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "AIあいａ|ｉ"
   composer_->MoveCursorLeft();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "|AIあいａｉ"
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|Iあいａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|あいａｉ"
   composer_->Delete();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aあ|いａｉ"
   composer_->MoveCursorRight();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "A|いａｉ"
   composer_->Backspace();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aいａｉ|"
   composer_->MoveCursorToEnd();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aいａ|ｉ"
   composer_->MoveCursorLeft();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   // "Aいａｉ|"
   composer_->MoveCursorToEnd();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 }
 
 TEST_F(ComposerTest, TransformCharactersForNumbers) {
@@ -1795,7 +1795,7 @@ TEST_F(ComposerTest, TransformCharactersForNumbers) {
 
   query = "ー１";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("−１", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "−１");  // The hyphen is U+2212.
 
   query = "ーー１";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
@@ -1844,54 +1844,54 @@ TEST_F(ComposerTest, TransformCharactersForNumbers) {
 
   query = "１、０";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("１，０", query);
+  EXPECT_EQ(query, "１，０");
 
   query = "０。５";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("０．５", query);
+  EXPECT_EQ(query, "０．５");
 
   query = "ー１、０００。５";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("−１，０００．５", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "−１，０００．５");  // The hyphen is U+2212.
 
   query = "０３ー";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("０３−", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "０３−");  // The hyphen is U+2212.
 
   query = "０３ーーーーー";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("０３−−−−−", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "０３−−−−−");  // The hyphen is U+2212.
 
   query = "ｘー（ー１）＞ーｘ";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("ｘ−（−１）＞−ｘ", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "ｘ−（−１）＞−ｘ");  // The hyphen is U+2212.
 
   query = "１＊ー２／ー３ーー４";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("１＊−２／−３−−４", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "１＊−２／−３−−４");  // The hyphen is U+2212.
 
   query = "ＡーＺ";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("Ａ−Ｚ", query);  // The hyphen is U+2212.
+  EXPECT_EQ(query, "Ａ−Ｚ");  // The hyphen is U+2212.
 
   query = "もずく、うぉーきんぐ。";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
 
   query = "えー２、９８０円！月々たった、２、９８０円？";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("えー２，９８０円！月々たった、２，９８０円？", query);
+  EXPECT_EQ(query, "えー２，９８０円！月々たった、２，９８０円？");
 
   query = "およそ、３。１４１５９。";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("およそ、３．１４１５９．", query);
+  EXPECT_EQ(query, "およそ、３．１４１５９．");
 
   query = "１００、";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("１００，", query);
+  EXPECT_EQ(query, "１００，");
 
   query = "１００。";
   EXPECT_TRUE(Composer::TransformCharactersForNumbers(&query));
-  EXPECT_EQ("１００．", query);
+  EXPECT_EQ(query, "１００．");
 }
 
 TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
@@ -1919,7 +1919,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("3.14", result);
+    EXPECT_EQ(result, "3.14");
   }
 
   {
@@ -1930,7 +1930,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("３.１４", result);
+    EXPECT_EQ(result, "３.１４");
   }
 
   {
@@ -1941,7 +1941,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("3．14", result);
+    EXPECT_EQ(result, "3．14");
   }
 
   {
@@ -1952,7 +1952,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     composer_->InsertCharacter("3.14");
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("３．１４", result);
+    EXPECT_EQ(result, "３．１４");
   }
 }
 
@@ -1975,79 +1975,79 @@ TEST_F(ComposerTest, ComposingWithcharactertransform) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
+    EXPECT_EQ(result, "−１，０００．５");  // The hyphen is U+2212.
   }
   {
     std::string result;
     composer_->GetStringForSubmission(&result);
-    EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
+    EXPECT_EQ(result, "−１，０００．５");  // The hyphen is U+2212.
   }
   {
     std::string result;
     composer_->GetQueryForConversion(&result);
-    EXPECT_EQ("-1,000.5", result);
+    EXPECT_EQ(result, "-1,000.5");
   }
   {
     std::string result;
     composer_->GetQueryForPrediction(&result);
-    EXPECT_EQ("-1,000.5", result);
+    EXPECT_EQ(result, "-1,000.5");
   }
   {
     std::string left, focused, right;
     // Right edge
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，０００．５", left);  // The hyphen is U+2212.
+    EXPECT_EQ(left, "−１，０００．５");  // The hyphen is U+2212.
     EXPECT_TRUE(focused.empty());
     EXPECT_TRUE(right.empty());
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，０００．", left);  // The hyphen is U+2212.
-    EXPECT_EQ("５", focused);
+    EXPECT_EQ(left, "−１，０００．");  // The hyphen is U+2212.
+    EXPECT_EQ(focused, "５");
     EXPECT_TRUE(right.empty());
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，０００", left);  // The hyphen is U+2212.
-    EXPECT_EQ("．", focused);
-    EXPECT_EQ("５", right);
+    EXPECT_EQ(left, "−１，０００");  // The hyphen is U+2212.
+    EXPECT_EQ(focused, "．");
+    EXPECT_EQ(right, "５");
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，００", left);  // The hyphen is U+2212.
-    EXPECT_EQ("０", focused);
-    EXPECT_EQ("．５", right);
+    EXPECT_EQ(left, "−１，００");  // The hyphen is U+2212.
+    EXPECT_EQ(focused, "０");
+    EXPECT_EQ(right, "．５");
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，０", left);  // The hyphen is U+2212.
-    EXPECT_EQ("０", focused);
-    EXPECT_EQ("０．５", right);
+    EXPECT_EQ(left, "−１，０");  // The hyphen is U+2212.
+    EXPECT_EQ(focused, "０");
+    EXPECT_EQ(right, "０．５");
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１，", left);  // The hyphen is U+2212.
-    EXPECT_EQ("０", focused);
-    EXPECT_EQ("００．５", right);
+    EXPECT_EQ(left, "−１，");  // The hyphen is U+2212.
+    EXPECT_EQ(focused, "０");
+    EXPECT_EQ(right, "００．５");
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−１", left);
-    EXPECT_EQ("，", focused);
-    EXPECT_EQ("０００．５", right);
+    EXPECT_EQ(left, "−１");
+    EXPECT_EQ(focused, "，");
+    EXPECT_EQ(right, "０００．５");
 
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
-    EXPECT_EQ("−", left);  // U+2212.
-    EXPECT_EQ("１", focused);
-    EXPECT_EQ("，０００．５", right);
+    EXPECT_EQ(left, "−");  // U+2212.
+    EXPECT_EQ(focused, "１");
+    EXPECT_EQ(right, "，０００．５");
 
     // Left edge
     composer_->MoveCursorLeft();
     composer_->GetPreedit(&left, &focused, &right);
     EXPECT_TRUE(left.empty());
-    EXPECT_EQ("−", focused);  // U+2212.
-    EXPECT_EQ("１，０００．５", right);
+    EXPECT_EQ(focused, "−");  // U+2212.
+    EXPECT_EQ(right, "１，０００．５");
   }
 }
 
@@ -2057,15 +2057,15 @@ TEST_F(ComposerTest, AlphanumericOfSSH) {
   table_->AddRule("ss", "[X]", "s");
   table_->AddRule("sha", "[SHA]", "");
   composer_->InsertCharacter("ssh");
-  EXPECT_EQ("［Ｘ］ｓｈ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "［Ｘ］ｓｈ");
 
   std::string query;
   composer_->GetQueryForConversion(&query);
-  EXPECT_EQ("[X]sh", query);
+  EXPECT_EQ(query, "[X]sh");
 
   transliteration::Transliterations t13ns;
   composer_->GetTransliterations(&t13ns);
-  EXPECT_EQ("ssh", t13ns[transliteration::HALF_ASCII]);
+  EXPECT_EQ(t13ns[transliteration::HALF_ASCII], "ssh");
 }
 
 TEST_F(ComposerTest, Issue2190364) {
@@ -2079,30 +2079,30 @@ TEST_F(ComposerTest, Issue2190364) {
   EXPECT_TRUE(composer_->InsertCharacterKeyEvent(key));
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("a", output);
+  EXPECT_EQ(output, "a");
 
   // Insertion of a space and backspace it should not change the composition.
   composer_->InsertCharacter(" ");
   output.clear();
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("a ", output);
+  EXPECT_EQ(output, "a ");
 
   composer_->Backspace();
   output.clear();
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("a", output);
+  EXPECT_EQ(output, "a");
 
   // Toggle the input mode to HIRAGANA, the preedit should not be changed.
   composer_->ToggleInputMode();
   output.clear();
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("a", output);
+  EXPECT_EQ(output, "a");
 
   // "a" should be converted to "ち" on Hiragana input mode.
   EXPECT_TRUE(composer_->InsertCharacterKeyEvent(key));
   output.clear();
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("aち", output);
+  EXPECT_EQ(output, "aち");
 }
 
 TEST_F(ComposerTest, Issue1817410) {
@@ -2114,19 +2114,19 @@ TEST_F(ComposerTest, Issue1817410) {
 
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("っｓ", preedit);
+  EXPECT_EQ(preedit, "っｓ");
 
   std::string t13n;
   composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 2, &t13n);
-  EXPECT_EQ("ss", t13n);
+  EXPECT_EQ(t13n, "ss");
 
   t13n.clear();
   composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 1, &t13n);
-  EXPECT_EQ("s", t13n);
+  EXPECT_EQ(t13n, "s");
 
   t13n.clear();
   composer_->GetSubTransliteration(transliteration::HALF_ASCII, 1, 1, &t13n);
-  EXPECT_EQ("s", t13n);
+  EXPECT_EQ(t13n, "s");
 }
 
 TEST_F(ComposerTest, Issue2272745) {
@@ -2134,18 +2134,18 @@ TEST_F(ComposerTest, Issue2272745) {
   // A temporary input mode remains when a composition is canceled.
   {
     InsertKey("G", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     composer_->Backspace();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
   composer_->Reset();
   {
     InsertKey("G", composer_.get());
-    EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
     composer_->EditErase();
-    EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+    EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
   }
 }
 
@@ -2155,10 +2155,10 @@ TEST_F(ComposerTest, Isue2555503) {
   InsertKey("a", composer_.get());
   composer_->SetInputMode(transliteration::FULL_KATAKANA);
   InsertKey("i", composer_.get());
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 
   composer_->Backspace();
-  EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::FULL_KATAKANA);
 }
 
 TEST_F(ComposerTest, Issue2819580Case1) {
@@ -2174,7 +2174,7 @@ TEST_F(ComposerTest, Issue2819580Case1) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ny", result);
+  EXPECT_EQ(result, "ny");
 }
 
 TEST_F(ComposerTest, Issue2819580Case2) {
@@ -2193,7 +2193,7 @@ TEST_F(ComposerTest, Issue2819580Case2) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ぽny", result);
+  EXPECT_EQ(result, "ぽny");
 }
 
 TEST_F(ComposerTest, Issue2819580Case3) {
@@ -2210,7 +2210,7 @@ TEST_F(ComposerTest, Issue2819580Case3) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("zny", result);
+  EXPECT_EQ(result, "zny");
 }
 
 TEST_F(ComposerTest, Issue2797991Case1) {
@@ -2228,7 +2228,7 @@ TEST_F(ComposerTest, Issue2797991Case1) {
 
   std::string result;
   composer_->GetStringForPreedit(&result);
-  EXPECT_EQ("C:\\Wi", result);
+  EXPECT_EQ(result, "C:\\Wi");
 }
 
 TEST_F(ComposerTest, Issue2797991Case2) {
@@ -2245,7 +2245,7 @@ TEST_F(ComposerTest, Issue2797991Case2) {
 
   std::string result;
   composer_->GetStringForPreedit(&result);
-  EXPECT_EQ("C:Wi", result);
+  EXPECT_EQ(result, "C:Wi");
 }
 
 TEST_F(ComposerTest, Issue2797991Case3) {
@@ -2263,7 +2263,7 @@ TEST_F(ComposerTest, Issue2797991Case3) {
   InsertKeyWithMode("i", commands::HIRAGANA, composer_.get());
   std::string result;
   composer_->GetStringForPreedit(&result);
-  EXPECT_EQ("C:\\Wiい", result);
+  EXPECT_EQ(result, "C:\\Wiい");
 }
 
 TEST_F(ComposerTest, Issue2797991Case4) {
@@ -2281,7 +2281,7 @@ TEST_F(ComposerTest, Issue2797991Case4) {
 
   std::string result;
   composer_->GetStringForPreedit(&result);
-  EXPECT_EQ("c:\\Wi", result);
+  EXPECT_EQ(result, "c:\\Wi");
 }
 
 TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
@@ -2299,7 +2299,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("いイいイ", result);
+    EXPECT_EQ(result, "いイいイ");
   }
   composer_->Reset();
   {
@@ -2316,7 +2316,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("いIiI", result);
+    EXPECT_EQ(result, "いIiI");
   }
 }
 
@@ -2336,7 +2336,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       std::string result;
       composer_->GetStringForPreedit(&result);
-      EXPECT_EQ("Ｉ", result);
+      EXPECT_EQ(result, "Ｉ");
     }
 
     {
@@ -2345,7 +2345,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       std::string result;
       composer_->GetStringForPreedit(&result);
-      EXPECT_EQ("I", result);
+      EXPECT_EQ(result, "I");
     }
 
     {
@@ -2354,7 +2354,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       std::string result;
       composer_->GetStringForPreedit(&result);
-      EXPECT_EQ("イ", result);
+      EXPECT_EQ(result, "イ");
     }
 
     {
@@ -2363,7 +2363,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       std::string result;
       composer_->GetStringForPreedit(&result);
-      EXPECT_EQ("ｲ", result);
+      EXPECT_EQ(result, "ｲ");
     }
 
     {
@@ -2372,7 +2372,7 @@ TEST_F(ComposerTest,
       InsertKey("I", composer_.get());
       std::string result;
       composer_->GetStringForPreedit(&result);
-      EXPECT_EQ("イ", result);
+      EXPECT_EQ(result, "イ");
     }
   }
 }
@@ -2399,7 +2399,7 @@ TEST_F(ComposerTest, DeletingAlphanumericPartShouldQuitToggleAlphanumericMode) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("いGoogle", result);
+    EXPECT_EQ(result, "いGoogle");
   }
 
   composer_->Backspace();
@@ -2412,7 +2412,7 @@ TEST_F(ComposerTest, DeletingAlphanumericPartShouldQuitToggleAlphanumericMode) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("い", result);
+    EXPECT_EQ(result, "い");
   }
 
   InsertKey("i", composer_.get());
@@ -2420,7 +2420,7 @@ TEST_F(ComposerTest, DeletingAlphanumericPartShouldQuitToggleAlphanumericMode) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("いい", result);
+    EXPECT_EQ(result, "いい");
   }
 }
 
@@ -2438,35 +2438,35 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("い", result);
+    EXPECT_EQ(result, "い");
   }
 
   composer_->MoveCursorLeft();
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("い", result);
+    EXPECT_EQ(result, "い");
   }
 
   InsertKey("G", composer_.get());
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("Gい", result);
+    EXPECT_EQ(result, "Gい");
   }
 
   composer_->MoveCursorRight();
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("Gい", result);
+    EXPECT_EQ(result, "Gい");
   }
 
   InsertKey("G", composer_.get());
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいG", result);
+    EXPECT_EQ(result, "GいG");
   }
 
   composer_->MoveCursorLeft();
@@ -2474,7 +2474,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいいG", result);
+    EXPECT_EQ(result, "GいいG");
   }
 
   composer_->MoveCursorRight();
@@ -2482,7 +2482,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいいGi", result);
+    EXPECT_EQ(result, "GいいGi");
   }
 
   InsertKey("G", composer_.get());
@@ -2490,7 +2490,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいいGiGi", result);
+    EXPECT_EQ(result, "GいいGiGi");
   }
 
   composer_->Backspace();
@@ -2500,7 +2500,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいいGi", result);
+    EXPECT_EQ(result, "GいいGi");
   }
 
   InsertKey("G", composer_.get());
@@ -2510,7 +2510,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("GいいGiGGi", result);
+    EXPECT_EQ(result, "GいいGiGGi");
   }
 
   composer_->Backspace();
@@ -2524,7 +2524,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("Gい", result);
+    EXPECT_EQ(result, "Gい");
   }
 
   composer_->Backspace();
@@ -2534,7 +2534,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   {
     std::string result;
     composer_->GetStringForPreedit(&result);
-    EXPECT_EQ("Gi", result);
+    EXPECT_EQ(result, "Gi");
   }
 }
 
@@ -2613,7 +2613,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
     const bool result = composer_->ShouldCommitHead(&length_to_commit);
     if (test_data.expected_return) {
       EXPECT_TRUE(result);
-      EXPECT_EQ(test_data.expected_commit_length, length_to_commit);
+      EXPECT_EQ(length_to_commit, test_data.expected_commit_length);
     } else {
       EXPECT_FALSE(result);
     }
@@ -2622,31 +2622,31 @@ TEST_F(ComposerTest, ShouldCommitHead) {
 
 TEST_F(ComposerTest, CursorMovements) {
   composer_->InsertCharacter("mozuku");
-  EXPECT_EQ(6, composer_->GetLength());
-  EXPECT_EQ(6, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetLength(), 6);
+  EXPECT_EQ(composer_->GetCursor(), 6);
 
   composer_->MoveCursorRight();
-  EXPECT_EQ(6, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 6);
   composer_->MoveCursorLeft();
-  EXPECT_EQ(5, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 5);
 
   composer_->MoveCursorToBeginning();
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 0);
   composer_->MoveCursorLeft();
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 0);
   composer_->MoveCursorRight();
-  EXPECT_EQ(1, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 1);
 
   composer_->MoveCursorTo(0);
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 0);
   composer_->MoveCursorTo(6);
-  EXPECT_EQ(6, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 6);
   composer_->MoveCursorTo(3);
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 3);
   composer_->MoveCursorTo(10);
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 3);
   composer_->MoveCursorTo(-1);
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(composer_->GetCursor(), 3);
 }
 
 TEST_F(ComposerTest, SourceText) {
@@ -2654,14 +2654,14 @@ TEST_F(ComposerTest, SourceText) {
   composer_->InsertCharacterPreedit("mozc");
   composer_->mutable_source_text()->assign("MOZC");
   EXPECT_FALSE(composer_->Empty());
-  EXPECT_EQ("mozc", GetPreedit(composer_.get()));
-  EXPECT_EQ("MOZC", composer_->source_text());
+  EXPECT_EQ(GetPreedit(composer_.get()), "mozc");
+  EXPECT_EQ(composer_->source_text(), "MOZC");
 
   composer_->Backspace();
   composer_->Backspace();
   EXPECT_FALSE(composer_->Empty());
-  EXPECT_EQ("mo", GetPreedit(composer_.get()));
-  EXPECT_EQ("MOZC", composer_->source_text());
+  EXPECT_EQ(GetPreedit(composer_.get()), "mo");
+  EXPECT_EQ(composer_->source_text(), "MOZC");
 
   composer_->Reset();
   EXPECT_TRUE(composer_->Empty());
@@ -2673,31 +2673,31 @@ TEST_F(ComposerTest, DeleteAt) {
   table_->AddRule("zu", "ず", "");
 
   composer_->InsertCharacter("z");
-  EXPECT_EQ("ｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(1, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "ｚ");
+  EXPECT_EQ(composer_->GetCursor(), 1);
   composer_->DeleteAt(0);
-  EXPECT_EQ("", GetPreedit(composer_.get()));
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "");
+  EXPECT_EQ(composer_->GetCursor(), 0);
 
   composer_->InsertCharacter("mmoz");
-  EXPECT_EQ("ｍもｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "ｍもｚ");
+  EXPECT_EQ(composer_->GetCursor(), 3);
   composer_->DeleteAt(0);
-  EXPECT_EQ("もｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もｚ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
   composer_->InsertCharacter("u");
-  EXPECT_EQ("もず", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もず");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->InsertCharacter("m");
-  EXPECT_EQ("もずｍ", GetPreedit(composer_.get()));
-  EXPECT_EQ(3, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もずｍ");
+  EXPECT_EQ(composer_->GetCursor(), 3);
   composer_->DeleteAt(1);
-  EXPECT_EQ("もｍ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もｍ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
   composer_->InsertCharacter("o");
-  EXPECT_EQ("もも", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もも");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 }
 
 TEST_F(ComposerTest, DeleteRange) {
@@ -2705,45 +2705,45 @@ TEST_F(ComposerTest, DeleteRange) {
   table_->AddRule("zu", "ず", "");
 
   composer_->InsertCharacter("z");
-  EXPECT_EQ("ｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(1, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "ｚ");
+  EXPECT_EQ(composer_->GetCursor(), 1);
 
   composer_->DeleteRange(0, 1);
-  EXPECT_EQ("", GetPreedit(composer_.get()));
-  EXPECT_EQ(0, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "");
+  EXPECT_EQ(composer_->GetCursor(), 0);
 
   composer_->InsertCharacter("mmozmoz");
-  EXPECT_EQ("ｍもｚもｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(5, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "ｍもｚもｚ");
+  EXPECT_EQ(composer_->GetCursor(), 5);
 
   composer_->DeleteRange(0, 3);
-  EXPECT_EQ("もｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もｚ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->InsertCharacter("u");
-  EXPECT_EQ("もず", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もず");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->InsertCharacter("xyz");
   composer_->MoveCursorToBeginning();
   composer_->InsertCharacter("mom");
-  EXPECT_EQ("もｍもずｘｙｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もｍもずｘｙｚ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->DeleteRange(2, 3);
   // "もｍ|ｙｚ"
-  EXPECT_EQ("もｍｙｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もｍｙｚ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->InsertCharacter("o");
   // "もも|ｙｚ"
-  EXPECT_EQ("ももｙｚ", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "ももｙｚ");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 
   composer_->DeleteRange(2, 1000);
   // "もも|"
-  EXPECT_EQ("もも", GetPreedit(composer_.get()));
-  EXPECT_EQ(2, composer_->GetCursor());
+  EXPECT_EQ(GetPreedit(composer_.get()), "もも");
+  EXPECT_EQ(composer_->GetCursor(), 2);
 }
 
 TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
@@ -2757,13 +2757,13 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
   table_->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   composer_->InsertCharacter("2");
-  EXPECT_EQ("a", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "a");
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("a", result);
+  EXPECT_EQ(result, "a");
   result.clear();
   composer_->GetQueryForPrediction(&result);
-  EXPECT_EQ("a", result);
+  EXPECT_EQ(result, "a");
 }
 
 TEST_F(ComposerTest, InsertCharacterPreedit) {
@@ -3008,18 +3008,18 @@ TEST_F(ComposerTest, GetRawString) {
 
   std::string output;
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("さしみ", output);
+  EXPECT_EQ(output, "さしみ");
 
   std::string raw_string;
   composer_->GetRawString(&raw_string);
-  EXPECT_EQ("sashimi", raw_string);
+  EXPECT_EQ(raw_string, "sashimi");
 
   std::string raw_sub_string;
   composer_->GetRawSubString(0, 2, &raw_sub_string);
-  EXPECT_EQ("sashi", raw_sub_string);
+  EXPECT_EQ(raw_sub_string, "sashi");
 
   composer_->GetRawSubString(1, 1, &raw_sub_string);
-  EXPECT_EQ("shi", raw_sub_string);
+  EXPECT_EQ(raw_sub_string, "shi");
 }
 
 TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
@@ -3028,44 +3028,44 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
 
   composer_->SetPreeditTextForTestOnly("も");
 
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("も", output);
+  EXPECT_EQ(output, "も");
 
   composer_->GetStringForSubmission(&output);
-  EXPECT_EQ("も", output);
+  EXPECT_EQ(output, "も");
 
   composer_->GetQueryForConversion(&output);
-  EXPECT_EQ("も", output);
+  EXPECT_EQ(output, "も");
 
   composer_->GetQueryForPrediction(&output);
-  EXPECT_EQ("も", output);
+  EXPECT_EQ(output, "も");
 
   composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ("も", output);
+  EXPECT_EQ(output, "も");
   EXPECT_TRUE(expanded.empty());
 
   composer_->Reset();
 
   composer_->SetPreeditTextForTestOnly("mo");
 
-  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HALF_ASCII);
 
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("mo", output);
+  EXPECT_EQ(output, "mo");
 
   composer_->GetStringForSubmission(&output);
-  EXPECT_EQ("mo", output);
+  EXPECT_EQ(output, "mo");
 
   composer_->GetQueryForConversion(&output);
-  EXPECT_EQ("mo", output);
+  EXPECT_EQ(output, "mo");
 
   composer_->GetQueryForPrediction(&output);
-  EXPECT_EQ("mo", output);
+  EXPECT_EQ(output, "mo");
 
   composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ("mo", output);
+  EXPECT_EQ(output, "mo");
 
   EXPECT_TRUE(expanded.empty());
 
@@ -3073,22 +3073,22 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
 
   composer_->SetPreeditTextForTestOnly("ｍ");
 
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("ｍ", output);
+  EXPECT_EQ(output, "ｍ");
 
   composer_->GetStringForSubmission(&output);
-  EXPECT_EQ("ｍ", output);
+  EXPECT_EQ(output, "ｍ");
 
   composer_->GetQueryForConversion(&output);
-  EXPECT_EQ("m", output);
+  EXPECT_EQ(output, "m");
 
   composer_->GetQueryForPrediction(&output);
-  EXPECT_EQ("m", output);
+  EXPECT_EQ(output, "m");
 
   composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ("m", output);
+  EXPECT_EQ(output, "m");
 
   EXPECT_TRUE(expanded.empty());
 
@@ -3096,22 +3096,22 @@ TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
 
   composer_->SetPreeditTextForTestOnly("もｚ");
 
-  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+  EXPECT_EQ(composer_->GetInputMode(), transliteration::HIRAGANA);
 
   composer_->GetStringForPreedit(&output);
-  EXPECT_EQ("もｚ", output);
+  EXPECT_EQ(output, "もｚ");
 
   composer_->GetStringForSubmission(&output);
-  EXPECT_EQ("もｚ", output);
+  EXPECT_EQ(output, "もｚ");
 
   composer_->GetQueryForConversion(&output);
-  EXPECT_EQ("もz", output);
+  EXPECT_EQ(output, "もz");
 
   composer_->GetQueryForPrediction(&output);
-  EXPECT_EQ("もz", output);
+  EXPECT_EQ(output, "もz");
 
   composer_->GetQueriesForPrediction(&output, &expanded);
-  EXPECT_EQ("もz", output);
+  EXPECT_EQ(output, "もz");
 
   EXPECT_TRUE(expanded.empty());
 }
@@ -3126,20 +3126,20 @@ TEST_F(ComposerTest, IsToggleable) {
   EXPECT_FALSE(composer_->IsToggleable());
 
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
   EXPECT_TRUE(composer_->IsToggleable());
 
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "い");
   EXPECT_TRUE(composer_->IsToggleable());
 
   composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
-  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "い");
   EXPECT_FALSE(composer_->IsToggleable());
 
   composer_->Reset();
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
   composer_->SetNewInput();
   EXPECT_FALSE(composer_->IsToggleable());
 }
@@ -3154,31 +3154,31 @@ TEST_F(ComposerTest, CheckTimeout) {
   constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
   mozc::ScopedClockMock clock(kBaseSeconds, 0);
 
-  EXPECT_EQ(0, composer_->timeout_threshold_msec());
+  EXPECT_EQ(composer_->timeout_threshold_msec(), 0);
 
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
   clock->PutClockForward(3, 0);  // +3.0 sec
 
   // Because the threshold is not set, STOP_KEY_TOGGLING is not sent.
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "い");
 
   // Set the threshold time.
   composer_->Reset();
   composer_->set_timeout_threshold_msec(1000);
 
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
   clock->PutClockForward(3, 0);  // +3.0 sec
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("ああ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "ああ");
 
   clock->PutClockForward(0, 700'000);  // +0.7 sec
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あい", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あい");
 }
 
 TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
@@ -3200,25 +3200,25 @@ TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
   key_event.set_key_code('1');
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
   clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
   timestamp_msec += 3000;              // +3.0 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
-  EXPECT_EQ("ああ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "ああ");
 
   clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
   timestamp_msec += 700;               // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
-  EXPECT_EQ("あああ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あああ");
 
   clock->PutClockForward(3, 0);  // +3.0 sec in the global clock
   timestamp_msec += 100;         // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
-  EXPECT_EQ("ああい", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "ああい");
 }
 
 TEST_F(ComposerTest, SimultaneousInput) {
@@ -3235,51 +3235,51 @@ TEST_F(ComposerTest, SimultaneousInput) {
   composer_->set_timeout_threshold_msec(50);
 
   ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "い");
 
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("れ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "れ");
 
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("れい", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "れい");
 
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("れいか", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "れいか");
 
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("z", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("れいかｚ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "れいかｚ");
 
   // Even after timeout, normal conversions work.
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("l", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("れいか→", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "れいか→");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey1) {
   table_->AddRule("{henkan}", "あ", "");
 
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey2) {
   table_->AddRule("{henkan}j", "お", "");
 
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "");
 
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おお", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おお");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey3) {
@@ -3288,10 +3288,10 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey3) {
   table_->AddRule("{henkan}j", "お", "");
 
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "");
 
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey4) {
@@ -3300,10 +3300,10 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey4) {
   table_->AddRule("{henkan}j", "お", "");
 
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("と", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "と");
 
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey5) {
@@ -3311,10 +3311,10 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey5) {
   table_->AddRule("{*}j", "お", "");
 
   ASSERT_TRUE(InsertKeyWithMode("r", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "");
 
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
@@ -3331,37 +3331,37 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
 
   // "j"
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("と", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "と");
 
   // "j{henkan}"
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("お", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "お");
 
   // "j{henkan}j"
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おと", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おと");
 
   // "j{henkan}j{!}{henkan}"
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おと", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おと");
 
   // "j{henkan}j{!}{henkan}{!}j"
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おとと", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おとと");
 
   // "j{henkan}j{!}{henkan}{!}j{!}{henkan}"
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おとと", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おとと");
 
   // "j{henkan}j{!}{henkan}{!}j{!}{henkan}j"
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
-  EXPECT_EQ("おととお", GetPreedit(composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "おととお");
 }
 }  // namespace composer
 }  // namespace mozc

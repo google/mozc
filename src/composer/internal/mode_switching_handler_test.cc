@@ -46,55 +46,55 @@ TEST(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("google", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("Google", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("Chrome", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("chrome", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("Android", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(
       handler.GetModeSwitchingRule("android", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
 
   EXPECT_TRUE(handler.GetModeSwitchingRule("http", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
 
   EXPECT_TRUE(handler.GetModeSwitchingRule("www.", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
 
   EXPECT_TRUE(handler.GetModeSwitchingRule("\\\\", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
 
   EXPECT_TRUE(handler.GetModeSwitchingRule("C:\\", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
 
   // Normal text should return false.
   EXPECT_FALSE(
       handler.GetModeSwitchingRule("foobar", &display_mode, &input_mode));
-  EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, display_mode);
-  EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, input_mode);
+  EXPECT_EQ(display_mode, ModeSwitchingHandler::NO_CHANGE);
+  EXPECT_EQ(input_mode, ModeSwitchingHandler::NO_CHANGE);
 }
 
 TEST(ModeSwitchingHandlerTest, IsDriveLetter) {

@@ -79,7 +79,7 @@ TEST(ConverterTest, Converter) {
     const TestCase &test = test_cases[i];
     std::string output;
     converter.Convert(test.input, &output);
-    EXPECT_EQ(test.expected_output, output);
+    EXPECT_EQ(output, test.expected_output);
   }
 }
 

@@ -16,18 +16,18 @@
 # 1. We exclude regional indicator symbols since they are not useful for users.
 # 2. Some emoji has a column "絵文字" as a temporary Japanese name.
 # TODO(hsumita): Fill correct Japanese name for (2).
-23 20E3	#⃣	しゃーぷ しゃーぷだいやる かこみすうじ #	HASH KEY	絵文字	シャープダイヤル ＃ ＃	E0.6
-2A 20E3	*⃣	かこみすうじ *		絵文字		E2.0
-30 20E3	0⃣	０ かこみすうじ 0	KEYCAP 0	絵文字	0 0 四角数字0	E0.6
-31 20E3	1⃣	１ かこみすうじ 1	KEYCAP 1	絵文字	1 1 四角数字1	E0.6
-32 20E3	2⃣	２ かこみすうじ 2	KEYCAP 2	絵文字	2 2 四角数字2	E0.6
-33 20E3	3⃣	３ かこみすうじ 3	KEYCAP 3	絵文字	3 3 四角数字3	E0.6
-34 20E3	4⃣	４ かこみすうじ 4	KEYCAP 4	絵文字	4 4 四角数字4	E0.6
-35 20E3	5⃣	５ かこみすうじ 5	KEYCAP 5	絵文字	5 5 四角数字5	E0.6
-36 20E3	6⃣	６ かこみすうじ 6	KEYCAP 6	絵文字	6 6 四角数字6	E0.6
-37 20E3	7⃣	７ かこみすうじ 7	KEYCAP 7	絵文字	7 7 四角数字7	E0.6
-38 20E3	8⃣	８ かこみすうじ 8	KEYCAP 8	絵文字	8 8 四角数字8	E0.6
-39 20E3	9⃣	９ かこみすうじ 9	KEYCAP 9	絵文字	9 9 四角数字9	E0.6
+23 FE0F 20E3	#️⃣	しゃーぷ しゃーぷだいやる かこみすうじ #	HASH KEY	絵文字	シャープダイヤル ＃ ＃	E0.6
+2A FE0F 20E3	*️⃣	かこみすうじ *		絵文字		E2.0
+30 FE0F 20E3	0️⃣	０ かこみすうじ 0	KEYCAP 0	絵文字	0 0 四角数字0	E0.6
+31 FE0F 20E3	1️⃣	１ かこみすうじ 1	KEYCAP 1	絵文字	1 1 四角数字1	E0.6
+32 FE0F 20E3	2️⃣	２ かこみすうじ 2	KEYCAP 2	絵文字	2 2 四角数字2	E0.6
+33 FE0F 20E3	3️⃣	３ かこみすうじ 3	KEYCAP 3	絵文字	3 3 四角数字3	E0.6
+34 FE0F 20E3	4️⃣	４ かこみすうじ 4	KEYCAP 4	絵文字	4 4 四角数字4	E0.6
+35 FE0F 20E3	5️⃣	５ かこみすうじ 5	KEYCAP 5	絵文字	5 5 四角数字5	E0.6
+36 FE0F 20E3	6️⃣	６ かこみすうじ 6	KEYCAP 6	絵文字	6 6 四角数字6	E0.6
+37 FE0F 20E3	7️⃣	７ かこみすうじ 7	KEYCAP 7	絵文字	7 7 四角数字7	E0.6
+38 FE0F 20E3	8️⃣	８ かこみすうじ 8	KEYCAP 8	絵文字	8 8 四角数字8	E0.6
+39 FE0F 20E3	9️⃣	９ かこみすうじ 9	KEYCAP 9	絵文字	9 9 四角数字9	E0.6
 A9	©	Cまーく こぴーらいと ちょさくけん ちょさくけんまーく きごう		絵文字		E0.6
 AE	®	あーるまーく とうろくしょうひょう とうろくしょうひょうまーく きごう		絵文字		E0.6
 203C	‼	！！ ！ ! えくすくらめーしょんまーく びっくりまーく にじゅうかんたんふ やくもの きごう	DOUBLE EXCLAMATION MARK	絵文字	exclamation×2 「！！」	E0.6
