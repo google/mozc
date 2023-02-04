@@ -143,7 +143,7 @@ def qt_rcc_mozc(**kwargs):
 def mozc_macos_qt_application(name, bundle_name, deps):
     macos_application(
         name = name,
-        tags = ["manual"],
+        tags = ["manual", "notap"],
         additional_contents = mozc_select(
             default = {},
             oss = {"@qt_mac//:libqcocoa": "Resources"},
