@@ -332,7 +332,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 
   test.ClearUsagestatsValue();
@@ -340,7 +340,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHighInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
@@ -363,7 +363,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -372,7 +372,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   test.ClearUsagestatsValue();
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
@@ -387,7 +387,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -396,7 +396,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMediumInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
@@ -418,7 +418,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -427,7 +427,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   test.ClearUsagestatsValue();
   EXPECT_TRUE(StatsConfigUtil::SetEnabled(false));
@@ -442,7 +442,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -451,7 +451,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLowInDevChannel) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledNeverFailsForRunLevelMedium) {
@@ -487,7 +487,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 
   // Check if SetEnabled(false) works as expected.
@@ -496,7 +496,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelHigh) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKCU_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientState));
   test.GetUsagestatsValue(kHKLM_ClientState, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
 }
 
@@ -520,7 +520,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -529,7 +529,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   test.ClearUsagestatsValue();
   EXPECT_FALSE(StatsConfigUtil::SetEnabled(false));
@@ -544,7 +544,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -553,7 +553,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelMedium) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 }
 
 TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
@@ -584,7 +584,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -593,7 +593,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 1);
@@ -602,7 +602,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(1, value);
+  EXPECT_EQ(value, 1);
 
   test.ClearUsagestatsValue();
   test.SetUsagestatsValue(kHKLM_ClientStateMedium, 0);
@@ -611,7 +611,7 @@ TEST(StatsConfigUtilTestWin, SetEnabledForRunLevelLow) {
   EXPECT_FALSE(test.HasUsagestatsValue(kHKLM_ClientState));
   EXPECT_TRUE(test.HasUsagestatsValue(kHKLM_ClientStateMedium));
   test.GetUsagestatsValue(kHKLM_ClientStateMedium, &value);
-  EXPECT_EQ(0, value);
+  EXPECT_EQ(value, 0);
 }
 
 TEST(StatsConfigUtilTestWin, IsEnabled) {
@@ -675,7 +675,7 @@ TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
   FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);
-  EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
+  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
   ConfigHandler::Reload();
 #ifdef CHANNEL_DEV
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());

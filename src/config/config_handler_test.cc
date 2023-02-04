@@ -108,7 +108,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
-  EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
+  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
   ASSERT_TRUE(ConfigHandler::Reload())
       << "failed to reload: " << ConfigHandler::GetConfigFileName();
 
@@ -125,8 +125,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
   output2->mutable_general_config()->set_last_modified_time(0);
-  EXPECT_EQ(input.DebugString(), output.DebugString());
-  EXPECT_EQ(input.DebugString(), output2->DebugString());
+  EXPECT_EQ(output.DebugString(), input.DebugString());
+  EXPECT_EQ(output2->DebugString(), input.DebugString());
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
@@ -142,8 +142,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
   output2->mutable_general_config()->set_last_modified_time(0);
-  EXPECT_EQ(input.DebugString(), output.DebugString());
-  EXPECT_EQ(input.DebugString(), output2->DebugString());
+  EXPECT_EQ(output.DebugString(), input.DebugString());
+  EXPECT_EQ(output2->DebugString(), input.DebugString());
 
 #if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   input.Clear();
@@ -210,22 +210,22 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     // Check post-condition.
     output.Clear();
     EXPECT_TRUE(ConfigHandler::GetConfig(&output));
-    EXPECT_EQ(expected, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
-    EXPECT_EQ(expected, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetStoredConfig(&output);
-    EXPECT_EQ(stored_config_value, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), stored_config_value);
 
     // Reload and check.
     ASSERT_TRUE(ConfigHandler::Reload())
         << "failed to reload: " << ConfigHandler::GetConfigFileName();
     output.Clear();
     EXPECT_TRUE(ConfigHandler::GetConfig(&output));
-    EXPECT_EQ(expected, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
-    EXPECT_EQ(expected, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetStoredConfig(&output);
-    EXPECT_EQ(stored_config_value, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), stored_config_value);
 
     // Unset imposed config.
     input.Clear();
@@ -233,11 +233,11 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     // Check post-condition.
     output.Clear();
     EXPECT_TRUE(ConfigHandler::GetConfig(&output));
-    EXPECT_EQ(stored_config_value, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), stored_config_value);
     ConfigHandler::GetConfig(&output);
-    EXPECT_EQ(stored_config_value, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), stored_config_value);
     ConfigHandler::GetStoredConfig(&output);
-    EXPECT_EQ(stored_config_value, output.incognito_mode());
+    EXPECT_EQ(output.incognito_mode(), stored_config_value);
   }
 }
 
@@ -264,7 +264,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   // After SetConfigFileName called, settings are set as default.
   Config updated_config;
   ConfigHandler::GetConfig(&updated_config);
-  EXPECT_EQ(default_incognito_mode, updated_config.incognito_mode());
+  EXPECT_EQ(updated_config.incognito_mode(), default_incognito_mode);
 }
 
 #if !defined(OS_ANDROID)
@@ -367,7 +367,7 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
 TEST_F(ConfigHandlerTest, DefaultConfig) {
   Config config;
   ConfigHandler::GetDefaultConfig(&config);
-  EXPECT_EQ(config.DebugString(), ConfigHandler::DefaultConfig().DebugString());
+  EXPECT_EQ(ConfigHandler::DefaultConfig().DebugString(), config.DebugString());
 }
 
 class SetConfigThread final : public Thread {
