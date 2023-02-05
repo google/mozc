@@ -82,11 +82,11 @@ TEST(ConnectorTest, CompareWithRawData) {
     std::shuffle(data.begin(), data.end(), urbg);
     for (size_t i = 0; i < data.size(); ++i) {
       int actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
-      EXPECT_EQ(data[i].cost, actual);
+      EXPECT_EQ(actual, data[i].cost);
 
       // Cache hit case.
       actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
-      EXPECT_EQ(data[i].cost, actual);
+      EXPECT_EQ(actual, data[i].cost);
     }
   }
 }

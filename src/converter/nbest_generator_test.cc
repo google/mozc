@@ -224,18 +224,18 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
     // The best route is calculated in ImmutalbeConverter with boundary check.
     // So, the top result should be inserted, but other candidates will be cut
     // due to boundary check between "する".
-    ASSERT_EQ(1, result_segment.candidates_size());
-    EXPECT_EQ("進行", result_segment.candidate(0).value);
+    ASSERT_EQ(result_segment.candidates_size(), 1);
+    EXPECT_EQ(result_segment.candidate(0).value, "進行");
   }
 
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_MID);
     Segment result_segment;
     GatherCandidates(10, request, nbest_generator.get(), &result_segment);
-    ASSERT_EQ(3, result_segment.candidates_size());
-    EXPECT_EQ("進行", result_segment.candidate(0).value);
-    EXPECT_EQ("信仰", result_segment.candidate(1).value);
-    EXPECT_EQ("深耕", result_segment.candidate(2).value);
+    ASSERT_EQ(result_segment.candidates_size(), 3);
+    EXPECT_EQ(result_segment.candidate(0).value, "進行");
+    EXPECT_EQ(result_segment.candidate(1).value, "信仰");
+    EXPECT_EQ(result_segment.candidate(2).value, "深耕");
   }
 }
 
@@ -274,8 +274,8 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
     GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     // Top result should be inserted, but other candidates will be cut
     // due to boundary check.
-    ASSERT_EQ(1, result_segment.candidates_size());
-    EXPECT_EQ("私の名前は中ノです", result_segment.candidate(0).value);
+    ASSERT_EQ(result_segment.candidates_size(), 1);
+    EXPECT_EQ(result_segment.candidate(0).value, "私の名前は中ノです");
   }
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
@@ -283,7 +283,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
     GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     // We can get several candidates.
     ASSERT_LT(1, result_segment.candidates_size());
-    EXPECT_EQ("私の名前は中ノです", result_segment.candidate(0).value);
+    EXPECT_EQ(result_segment.candidate(0).value, "私の名前は中ノです");
   }
 }
 
@@ -323,8 +323,8 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   ASSERT_LE(1, result_segment.candidates_size());
 
   const Segment::Candidate &top_cand = result_segment.candidate(0);
-  EXPECT_EQ(kInput, top_cand.key);
-  EXPECT_EQ("東京か名古屋に行きたい", top_cand.value);
+  EXPECT_EQ(top_cand.key, kInput);
+  EXPECT_EQ(top_cand.value, "東京か名古屋に行きたい");
 
   std::vector<absl::string_view> keys, values, content_keys, content_values;
   for (Segment::Candidate::InnerSegmentIterator iter(&top_cand); !iter.Done();
@@ -334,31 +334,31 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
     content_keys.push_back(iter.GetContentKey());
     content_values.push_back(iter.GetContentValue());
   }
-  ASSERT_EQ(3, keys.size());
-  ASSERT_EQ(3, values.size());
-  ASSERT_EQ(3, content_keys.size());
-  ASSERT_EQ(3, content_values.size());
+  ASSERT_EQ(keys.size(), 3);
+  ASSERT_EQ(values.size(), 3);
+  ASSERT_EQ(content_keys.size(), 3);
+  ASSERT_EQ(content_values.size(), 3);
 
   // Inner segment 0
-  EXPECT_EQ("とうきょうか", keys[0]);
-  EXPECT_EQ("東京か", values[0]);
-  EXPECT_EQ("とうきょう", content_keys[0]);
-  EXPECT_EQ("東京", content_values[0]);
+  EXPECT_EQ(keys[0], "とうきょうか");
+  EXPECT_EQ(values[0], "東京か");
+  EXPECT_EQ(content_keys[0], "とうきょう");
+  EXPECT_EQ(content_values[0], "東京");
 
   // Inner segment 1
-  EXPECT_EQ("なごやに", keys[1]);
-  EXPECT_EQ("名古屋に", values[1]);
-  EXPECT_EQ("なごや", content_keys[1]);
-  EXPECT_EQ("名古屋", content_values[1]);
+  EXPECT_EQ(keys[1], "なごやに");
+  EXPECT_EQ(values[1], "名古屋に");
+  EXPECT_EQ(content_keys[1], "なごや");
+  EXPECT_EQ(content_values[1], "名古屋");
 
   // Inner segment 2: In the original segment, "行きたい" has the form
   // "行き" (content word) + "たい" (functional).  However, since "行き" is
   // Yougen, our rule for inner segment boundary doesn't handle it as a content
   // value.  Thus, "行きたい" becomes the content value.
-  EXPECT_EQ("いきたい", keys[2]);
-  EXPECT_EQ("行きたい", values[2]);
-  EXPECT_EQ("いきたい", content_keys[2]);
-  EXPECT_EQ("行きたい", content_values[2]);
+  EXPECT_EQ(keys[2], "いきたい");
+  EXPECT_EQ(values[2], "行きたい");
+  EXPECT_EQ(content_keys[2], "いきたい");
+  EXPECT_EQ(content_values[2], "行きたい");
 }
 
 }  // namespace mozc

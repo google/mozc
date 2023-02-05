@@ -44,20 +44,20 @@ TEST(KeyCorrectorTest, KeyCorrectorBasicTest) {
 
   {
     KeyCorrector corrector("", KeyCorrector::KANA, 0);
-    EXPECT_EQ(KeyCorrector::KANA, corrector.mode());
+    EXPECT_EQ(corrector.mode(), KeyCorrector::KANA);
     EXPECT_FALSE(corrector.IsAvailable());
   }
 
   {
     KeyCorrector corrector("", KeyCorrector::ROMAN, 0);
-    EXPECT_EQ(KeyCorrector::ROMAN, corrector.mode());
+    EXPECT_EQ(corrector.mode(), KeyCorrector::ROMAN);
     EXPECT_FALSE(corrector.IsAvailable());
   }
 
   {
     KeyCorrector corrector("てすと", KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("てすと", corrector.original_key());
+    EXPECT_EQ(corrector.original_key(), "てすと");
     corrector.Clear();
     EXPECT_FALSE(corrector.IsAvailable());
   }
@@ -67,12 +67,12 @@ TEST(KeyCorrectorTest, KeyCorrectorKanaTest) {
   const std::string input = "みんあであそぼう";
   KeyCorrector corrector(input, KeyCorrector::KANA, 0);
   EXPECT_FALSE(corrector.IsAvailable());
-  EXPECT_EQ("", corrector.corrected_key());
-  EXPECT_EQ("", corrector.original_key());
+  EXPECT_EQ(corrector.corrected_key(), "");
+  EXPECT_EQ(corrector.original_key(), "");
 
-  EXPECT_EQ(KeyCorrector::InvalidPosition(), corrector.GetCorrectedPosition(0));
+  EXPECT_EQ(corrector.GetCorrectedPosition(0), KeyCorrector::InvalidPosition());
 
-  EXPECT_EQ(KeyCorrector::InvalidPosition(), corrector.GetOriginalPosition(0));
+  EXPECT_EQ(corrector.GetOriginalPosition(0), KeyCorrector::InvalidPosition());
 }
 
 TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
@@ -80,37 +80,37 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
     const std::string input = "ん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("ん", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "ん");
   }
 
   {
     const std::string input = "かん";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("かん", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "かん");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "かに";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("かに", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "かに");
   }
 
   {
     const std::string input = "かｍ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("かｍ", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "かｍ");
   }
 
   {
     const std::string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
@@ -118,153 +118,153 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanTest) {
     const std::string input = "んあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("んあであそぼう", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "んあであそぼう");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "こんかいのみんあはこんんでた";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんかいのみんなはこんでた", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんかいのみんなはこんでた");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "みんあみんいみんうみんえみんおみんんか";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("みんなみんにみんぬみんねみんのみんか",
-              corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(),
+              "みんなみんにみんぬみんねみんのみんか");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちは", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちは");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "こんんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちは", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちは");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "しぜんんお";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("しぜんの", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "しぜんの");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "あんんんたい";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("あんんんたい", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "あんんんたい");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "せにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("せんよう", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "せんよう");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "せにゃうせにゅうせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("せんやうせんゆうせんよう", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "せんやうせんゆうせんよう");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "おんあのここんいちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("おんなのここんにちは", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "おんなのここんにちは");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("きって", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "きって");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "きっっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("きっっって", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "きっっって");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "きっっっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("きっっっ", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "きっっっ");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "っっ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("っっ", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "っっ");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "しｍばし";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("しんばし", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "しんばし");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "しｍはししｍぱしー";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("しｍはししんぱしー", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "しｍはししんぱしー");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "ちゅごく";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("ちゅうごく", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "ちゅうごく");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 
   {
     const std::string input = "きゅきゅしゃ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("きゅうきゅうしゃ", corrector.corrected_key());
-    EXPECT_EQ(input, corrector.original_key());
+    EXPECT_EQ(corrector.corrected_key(), "きゅうきゅうしゃ");
+    EXPECT_EQ(corrector.original_key(), input);
   }
 }
 
@@ -273,85 +273,85 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanPositionTest) {
     const std::string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
 
-    EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
-    EXPECT_EQ(1, corrector.GetCorrectedPosition(1));
+    EXPECT_EQ(corrector.GetCorrectedPosition(0), 0);
+    EXPECT_EQ(corrector.GetCorrectedPosition(1), 1);
 
-    EXPECT_EQ(3, corrector.GetCorrectedPosition(3));
-    EXPECT_EQ(6, corrector.GetCorrectedPosition(6));
+    EXPECT_EQ(corrector.GetCorrectedPosition(3), 3);
+    EXPECT_EQ(corrector.GetCorrectedPosition(6), 6);
 
-    EXPECT_EQ(9, corrector.GetCorrectedPosition(9));
-    EXPECT_EQ(12, corrector.GetCorrectedPosition(12));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(30));
+    EXPECT_EQ(corrector.GetCorrectedPosition(9), 9);
+    EXPECT_EQ(corrector.GetCorrectedPosition(12), 12);
+    EXPECT_EQ(corrector.GetCorrectedPosition(30),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(0, corrector.GetOriginalPosition(0));
-    EXPECT_EQ(1, corrector.GetOriginalPosition(1));
+    EXPECT_EQ(corrector.GetOriginalPosition(0), 0);
+    EXPECT_EQ(corrector.GetOriginalPosition(1), 1);
 
-    EXPECT_EQ(3, corrector.GetOriginalPosition(3));
-    EXPECT_EQ(6, corrector.GetOriginalPosition(6));
+    EXPECT_EQ(corrector.GetOriginalPosition(3), 3);
+    EXPECT_EQ(corrector.GetOriginalPosition(6), 6);
 
-    EXPECT_EQ(9, corrector.GetOriginalPosition(9));
-    EXPECT_EQ(12, corrector.GetOriginalPosition(12));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalPosition(30));
+    EXPECT_EQ(corrector.GetOriginalPosition(9), 9);
+    EXPECT_EQ(corrector.GetOriginalPosition(12), 12);
+    EXPECT_EQ(corrector.GetOriginalPosition(30),
+              KeyCorrector::InvalidPosition());
   }
 
   {
     const std::string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちは", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちは");
 
-    EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(1));
+    EXPECT_EQ(corrector.GetCorrectedPosition(0), 0);
+    EXPECT_EQ(corrector.GetCorrectedPosition(1),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(3));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(6));
+    EXPECT_EQ(corrector.GetCorrectedPosition(3),
+              KeyCorrector::InvalidPosition());
+    EXPECT_EQ(corrector.GetCorrectedPosition(6),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(6, corrector.GetCorrectedPosition(9));
-    EXPECT_EQ(9, corrector.GetCorrectedPosition(12));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(30));
+    EXPECT_EQ(corrector.GetCorrectedPosition(9), 6);
+    EXPECT_EQ(corrector.GetCorrectedPosition(12), 9);
+    EXPECT_EQ(corrector.GetCorrectedPosition(30),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(0, corrector.GetOriginalPosition(0));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalPosition(1));
+    EXPECT_EQ(corrector.GetOriginalPosition(0), 0);
+    EXPECT_EQ(corrector.GetOriginalPosition(1),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalPosition(3));
-    EXPECT_EQ(9, corrector.GetOriginalPosition(6));
+    EXPECT_EQ(corrector.GetOriginalPosition(3),
+              KeyCorrector::InvalidPosition());
+    EXPECT_EQ(corrector.GetOriginalPosition(6), 9);
 
-    EXPECT_EQ(12, corrector.GetOriginalPosition(9));
-    EXPECT_EQ(15, corrector.GetOriginalPosition(12));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalPosition(30));
+    EXPECT_EQ(corrector.GetOriginalPosition(9), 12);
+    EXPECT_EQ(corrector.GetOriginalPosition(12), 15);
+    EXPECT_EQ(corrector.GetOriginalPosition(30),
+              KeyCorrector::InvalidPosition());
   }
 
   {
     const std::string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
 
-    EXPECT_EQ(0, corrector.GetCorrectedPosition(0));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetCorrectedPosition(3));
-    EXPECT_EQ(6, corrector.GetCorrectedPosition(9));
-    EXPECT_EQ(9, corrector.GetCorrectedPosition(12));
-    EXPECT_EQ(21, corrector.GetCorrectedPosition(24));
-    EXPECT_EQ(24, corrector.GetCorrectedPosition(27));
+    EXPECT_EQ(corrector.GetCorrectedPosition(0), 0);
+    EXPECT_EQ(corrector.GetCorrectedPosition(3),
+              KeyCorrector::InvalidPosition());
+    EXPECT_EQ(corrector.GetCorrectedPosition(9), 6);
+    EXPECT_EQ(corrector.GetCorrectedPosition(12), 9);
+    EXPECT_EQ(corrector.GetCorrectedPosition(24), 21);
+    EXPECT_EQ(corrector.GetCorrectedPosition(27), 24);
 
-    EXPECT_EQ(0, corrector.GetOriginalPosition(0));
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalPosition(3));
-    EXPECT_EQ(9, corrector.GetOriginalPosition(6));
-    EXPECT_EQ(27, corrector.GetOriginalPosition(24));
-    EXPECT_EQ(24, corrector.GetOriginalPosition(21));
+    EXPECT_EQ(corrector.GetOriginalPosition(0), 0);
+    EXPECT_EQ(corrector.GetOriginalPosition(3),
+              KeyCorrector::InvalidPosition());
+    EXPECT_EQ(corrector.GetOriginalPosition(6), 9);
+    EXPECT_EQ(corrector.GetOriginalPosition(24), 27);
+    EXPECT_EQ(corrector.GetOriginalPosition(21), 24);
   }
 }
 
@@ -373,19 +373,19 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     const std::string input = "みんあであそぼう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("みんなであそぼう", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "みんなであそぼう");
 
     const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ("みんなであそぼう", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "みんなであそぼう");
 
     output = corrector.GetCorrectedPrefix(3, &length);
-    EXPECT_EQ("んなであそぼう", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "んなであそぼう");
 
     output = corrector.GetCorrectedPrefix(6, &length);
-    EXPECT_EQ("なであそぼう", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "なであそぼう");
 
     output = corrector.GetCorrectedPrefix(9, &length);
     // same
@@ -396,13 +396,13 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     const std::string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちは", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちは");
 
     const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ("こんにちは", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "こんにちは");
 
     output = corrector.GetCorrectedPrefix(3, &length);
     EXPECT_TRUE(nullptr == output);
@@ -418,13 +418,13 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     const std::string input = "こんんにちはせにょう";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちはせんよう", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちはせんよう");
 
     const char *output = nullptr;
     size_t length = 0;
 
     output = corrector.GetCorrectedPrefix(0, &length);
-    EXPECT_EQ("こんにちはせんよう", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "こんにちはせんよう");
 
     output = corrector.GetCorrectedPrefix(3, &length);
     EXPECT_TRUE(nullptr == output);
@@ -433,7 +433,7 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanCorrectedPrefixTest) {
     EXPECT_TRUE(nullptr == output);
 
     output = corrector.GetCorrectedPrefix(9, &length);
-    EXPECT_EQ("にちはせんよう", std::string(output, length));
+    EXPECT_EQ(std::string(output, length), "にちはせんよう");
   }
 }
 
@@ -442,53 +442,53 @@ TEST(KeyCorrectorTest, KeyCorrectorRomanGetOriginalOffsetTest) {
     const std::string input = "てすと";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ(3, corrector.GetOriginalOffset(0, 3));
-    EXPECT_EQ(6, corrector.GetOriginalOffset(0, 6));
-    EXPECT_EQ(9, corrector.GetOriginalOffset(0, 9));
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 3), 3);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 6), 6);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 9), 9);
 
-    EXPECT_EQ(3, corrector.GetOriginalOffset(3, 3));
-    EXPECT_EQ(6, corrector.GetOriginalOffset(3, 6));
+    EXPECT_EQ(corrector.GetOriginalOffset(3, 3), 3);
+    EXPECT_EQ(corrector.GetOriginalOffset(3, 6), 6);
   }
 
   {
     const std::string input = "みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ(3, corrector.GetOriginalOffset(0, 3));
-    EXPECT_EQ(6, corrector.GetOriginalOffset(0, 6));
-    EXPECT_EQ(9, corrector.GetOriginalOffset(0, 9));
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 3), 3);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 6), 6);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 9), 9);
   }
 
   {
     const std::string input = "きっって";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ(12, corrector.GetOriginalOffset(0, 9));
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 9), 12);
   }
 
   {
     const std::string input = "こんんにちは";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ("こんにちは", corrector.corrected_key());
+    EXPECT_EQ(corrector.corrected_key(), "こんにちは");
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalOffset(0, 3));
-    EXPECT_EQ(9, corrector.GetOriginalOffset(0, 6));
-    EXPECT_EQ(12, corrector.GetOriginalOffset(0, 9));
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 3),
+              KeyCorrector::InvalidPosition());
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 6), 9);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 9), 12);
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalOffset(3, 3));
+    EXPECT_EQ(corrector.GetOriginalOffset(3, 3),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalOffset(3, 6));
+    EXPECT_EQ(corrector.GetOriginalOffset(3, 6),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(KeyCorrector::InvalidPosition(),
-              corrector.GetOriginalOffset(6, 3));
+    EXPECT_EQ(corrector.GetOriginalOffset(6, 3),
+              KeyCorrector::InvalidPosition());
 
-    EXPECT_EQ(3, corrector.GetOriginalOffset(9, 3));
+    EXPECT_EQ(corrector.GetOriginalOffset(9, 3), 3);
 
-    EXPECT_EQ(6, corrector.GetOriginalOffset(9, 6));
+    EXPECT_EQ(corrector.GetOriginalOffset(9, 6), 6);
   }
 }
 
@@ -512,9 +512,9 @@ TEST(KeyCorrectorTest, UCS4Test) {
     const std::string input = "😁みんあ";
     KeyCorrector corrector(input, KeyCorrector::ROMAN, 0);
     EXPECT_TRUE(corrector.IsAvailable());
-    EXPECT_EQ(7, corrector.GetOriginalOffset(0, 7));
-    EXPECT_EQ(10, corrector.GetOriginalOffset(0, 10));
-    EXPECT_EQ(13, corrector.GetOriginalOffset(0, 13));
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 7), 7);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 10), 10);
+    EXPECT_EQ(corrector.GetOriginalOffset(0, 13), 13);
   }
 }
 
