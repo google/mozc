@@ -163,17 +163,17 @@ TEST_F(UserPosTest, SwapToken) {
   using std::swap;
   swap(token1, token2);
 
-  EXPECT_EQ("key2", token1.key);
-  EXPECT_EQ("value2", token1.value);
-  EXPECT_EQ(2, token1.id);
-  EXPECT_EQ(2, token1.attributes);
-  EXPECT_EQ("comment2", token1.comment);
+  EXPECT_EQ(token1.key, "key2");
+  EXPECT_EQ(token1.value, "value2");
+  EXPECT_EQ(token1.id, 2);
+  EXPECT_EQ(token1.attributes, 2);
+  EXPECT_EQ(token1.comment, "comment2");
 
-  EXPECT_EQ("key1", token2.key);
-  EXPECT_EQ("value1", token2.value);
-  EXPECT_EQ(1, token2.id);
-  EXPECT_EQ(1, token2.attributes);
-  EXPECT_EQ("comment1", token2.comment);
+  EXPECT_EQ(token2.key, "key1");
+  EXPECT_EQ(token2.value, "value1");
+  EXPECT_EQ(token2.id, 1);
+  EXPECT_EQ(token2.attributes, 1);
+  EXPECT_EQ(token2.comment, "comment1");
 }
 
 TEST_F(UserPosTest, Attributes) {

@@ -95,25 +95,25 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     loader->Load(filename, "");
     const std::vector<std::unique_ptr<Token>> &tokens = loader->tokens();
 
-    EXPECT_EQ(3, tokens.size());
+    EXPECT_EQ(tokens.size(), 3);
 
-    EXPECT_EQ("key_test1", tokens[0]->key);
-    EXPECT_EQ("value_test1", tokens[0]->value);
-    EXPECT_EQ(0, tokens[0]->lid);
-    EXPECT_EQ(0, tokens[0]->rid);
-    EXPECT_EQ(1, tokens[0]->cost);
+    EXPECT_EQ(tokens[0]->key, "key_test1");
+    EXPECT_EQ(tokens[0]->value, "value_test1");
+    EXPECT_EQ(tokens[0]->lid, 0);
+    EXPECT_EQ(tokens[0]->rid, 0);
+    EXPECT_EQ(tokens[0]->cost, 1);
 
-    EXPECT_EQ("foo", tokens[1]->key);
-    EXPECT_EQ("bar", tokens[1]->value);
-    EXPECT_EQ(1, tokens[1]->lid);
-    EXPECT_EQ(2, tokens[1]->rid);
-    EXPECT_EQ(3, tokens[1]->cost);
+    EXPECT_EQ(tokens[1]->key, "foo");
+    EXPECT_EQ(tokens[1]->value, "bar");
+    EXPECT_EQ(tokens[1]->lid, 1);
+    EXPECT_EQ(tokens[1]->rid, 2);
+    EXPECT_EQ(tokens[1]->cost, 3);
 
-    EXPECT_EQ("buz", tokens[2]->key);
-    EXPECT_EQ("foobar", tokens[2]->value);
-    EXPECT_EQ(10, tokens[2]->lid);
-    EXPECT_EQ(20, tokens[2]->rid);
-    EXPECT_EQ(30, tokens[2]->cost);
+    EXPECT_EQ(tokens[2]->key, "buz");
+    EXPECT_EQ(tokens[2]->value, "foobar");
+    EXPECT_EQ(tokens[2]->lid, 10);
+    EXPECT_EQ(tokens[2]->rid, 20);
+    EXPECT_EQ(tokens[2]->cost, 30);
 
     loader->Clear();
     EXPECT_TRUE(loader->tokens().empty());
@@ -124,19 +124,19 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     loader->LoadWithLineLimit(filename, "", 2);
     const std::vector<std::unique_ptr<Token>> &tokens = loader->tokens();
 
-    EXPECT_EQ(2, tokens.size());
+    EXPECT_EQ(tokens.size(), 2);
 
-    EXPECT_EQ("key_test1", tokens[0]->key);
-    EXPECT_EQ("value_test1", tokens[0]->value);
-    EXPECT_EQ(0, tokens[0]->lid);
-    EXPECT_EQ(0, tokens[0]->rid);
-    EXPECT_EQ(1, tokens[0]->cost);
+    EXPECT_EQ(tokens[0]->key, "key_test1");
+    EXPECT_EQ(tokens[0]->value, "value_test1");
+    EXPECT_EQ(tokens[0]->lid, 0);
+    EXPECT_EQ(tokens[0]->rid, 0);
+    EXPECT_EQ(tokens[0]->cost, 1);
 
-    EXPECT_EQ("foo", tokens[1]->key);
-    EXPECT_EQ("bar", tokens[1]->value);
-    EXPECT_EQ(1, tokens[1]->lid);
-    EXPECT_EQ(2, tokens[1]->rid);
-    EXPECT_EQ(3, tokens[1]->cost);
+    EXPECT_EQ(tokens[1]->key, "foo");
+    EXPECT_EQ(tokens[1]->value, "bar");
+    EXPECT_EQ(tokens[1]->lid, 1);
+    EXPECT_EQ(tokens[1]->rid, 2);
+    EXPECT_EQ(tokens[1]->cost, 3);
 
     loader->Clear();
     EXPECT_TRUE(loader->tokens().empty());
@@ -148,7 +148,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     loader->Load(filename, "");
     loader->Load(filename, "");
     const std::vector<std::unique_ptr<Token>> &tokens = loader->tokens();
-    EXPECT_EQ(3, tokens.size());
+    EXPECT_EQ(tokens.size(), 3);
   }
 
   EXPECT_OK(FileUtil::Unlink(filename));
@@ -161,9 +161,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, ""));
-    EXPECT_EQ(100, token.lid);
-    EXPECT_EQ(200, token.rid);
-    EXPECT_EQ(Token::NONE, token.attributes);
+    EXPECT_EQ(token.lid, 100);
+    EXPECT_EQ(token.rid, 200);
+    EXPECT_EQ(token.attributes, Token::NONE);
   }
 
   {
@@ -171,9 +171,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "SPELLING_CORRECTION"));
-    EXPECT_EQ(100, token.lid);
-    EXPECT_EQ(200, token.rid);
-    EXPECT_EQ(Token::SPELLING_CORRECTION, token.attributes);
+    EXPECT_EQ(token.lid, 100);
+    EXPECT_EQ(token.rid, 200);
+    EXPECT_EQ(token.attributes, Token::SPELLING_CORRECTION);
   }
 
   {
@@ -181,9 +181,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ZIP_CODE"));
-    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.lid);
-    EXPECT_EQ(pos_matcher_.GetZipcodeId(), token.rid);
-    EXPECT_EQ(Token::NONE, token.attributes);
+    EXPECT_EQ(token.lid, pos_matcher_.GetZipcodeId());
+    EXPECT_EQ(token.rid, pos_matcher_.GetZipcodeId());
+    EXPECT_EQ(token.attributes, Token::NONE);
   }
 
   {
@@ -191,9 +191,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_TRUE(loader->RewriteSpecialToken(&token, "ENGLISH:RATED"));
-    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.lid);
-    EXPECT_EQ(pos_matcher_.GetIsolatedWordId(), token.rid);
-    EXPECT_EQ(Token::NONE, token.attributes);
+    EXPECT_EQ(token.lid, pos_matcher_.GetIsolatedWordId());
+    EXPECT_EQ(token.rid, pos_matcher_.GetIsolatedWordId());
+    EXPECT_EQ(token.attributes, Token::NONE);
   }
 
   {
@@ -201,9 +201,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
     token.lid = 100;
     token.rid = 200;
     EXPECT_FALSE(loader->RewriteSpecialToken(&token, "foo"));
-    EXPECT_EQ(100, token.lid);
-    EXPECT_EQ(200, token.rid);
-    EXPECT_EQ(Token::NONE, token.attributes);
+    EXPECT_EQ(token.lid, 100);
+    EXPECT_EQ(token.rid, 200);
+    EXPECT_EQ(token.attributes, Token::NONE);
   }
 }
 
@@ -222,7 +222,7 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   {
     std::unique_ptr<TextDictionaryLoader> loader = CreateTextDictionaryLoader();
     loader->Load(filename, "");
-    EXPECT_EQ(6, loader->tokens().size());
+    EXPECT_EQ(loader->tokens().size(), 6);
   }
 }
 
@@ -243,11 +243,11 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   loader->Load(dic_filename, reading_correction_filename);
   const std::vector<std::unique_ptr<Token>> &tokens = loader->tokens();
   ASSERT_EQ(tokens.size(), 4);
-  EXPECT_EQ("foobar_error", tokens[3]->key);
-  EXPECT_EQ("foobar", tokens[3]->value);
-  EXPECT_EQ(10, tokens[3]->lid);
-  EXPECT_EQ(20, tokens[3]->rid);
-  EXPECT_EQ(30 + 2302, tokens[3]->cost);
+  EXPECT_EQ(tokens[3]->key, "foobar_error");
+  EXPECT_EQ(tokens[3]->value, "foobar");
+  EXPECT_EQ(tokens[3]->lid, 10);
+  EXPECT_EQ(tokens[3]->rid, 20);
+  EXPECT_EQ(tokens[3]->cost, 30 + 2302);
 }
 
 }  // namespace dictionary

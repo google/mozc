@@ -275,7 +275,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   }
 
   void CheckDecoded() const {
-    EXPECT_EQ(source_tokens_.size(), decoded_tokens_.size());
+    EXPECT_EQ(decoded_tokens_.size(), source_tokens_.size());
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
       EXPECT_TRUE(source_tokens_[i].token != nullptr);
       EXPECT_TRUE(decoded_tokens_[i].token != nullptr);
@@ -283,27 +283,27 @@ class SystemDictionaryCodecTest : public ::testing::Test {
       EXPECT_EQ(source_tokens_[i].token->attributes,
                 decoded_tokens_[i].token->attributes);
 
-      EXPECT_EQ(source_tokens_[i].pos_type, decoded_tokens_[i].pos_type);
+      EXPECT_EQ(decoded_tokens_[i].pos_type, source_tokens_[i].pos_type);
       if (source_tokens_[i].pos_type == TokenInfo::DEFAULT_POS) {
-        EXPECT_EQ(source_tokens_[i].token->lid, decoded_tokens_[i].token->lid);
-        EXPECT_EQ(source_tokens_[i].token->rid, decoded_tokens_[i].token->rid);
+        EXPECT_EQ(decoded_tokens_[i].token->lid, source_tokens_[i].token->lid);
+        EXPECT_EQ(decoded_tokens_[i].token->rid, source_tokens_[i].token->rid);
       } else if (source_tokens_[i].pos_type == TokenInfo::FREQUENT_POS) {
-        EXPECT_EQ(source_tokens_[i].id_in_frequent_pos_map,
-                  decoded_tokens_[i].id_in_frequent_pos_map);
+        EXPECT_EQ(decoded_tokens_[i].id_in_frequent_pos_map,
+                  source_tokens_[i].id_in_frequent_pos_map);
       }
 
       if (source_tokens_[i].cost_type == TokenInfo::DEFAULT_COST) {
-        EXPECT_EQ(source_tokens_[i].token->cost,
-                  decoded_tokens_[i].token->cost);
+        EXPECT_EQ(decoded_tokens_[i].token->cost,
+                  source_tokens_[i].token->cost);
       } else {  // small cost
         EXPECT_NEAR(source_tokens_[i].token->cost,
                     decoded_tokens_[i].token->cost, 256);
       }
 
-      EXPECT_EQ(source_tokens_[i].value_type, decoded_tokens_[i].value_type);
+      EXPECT_EQ(decoded_tokens_[i].value_type, source_tokens_[i].value_type);
       if (source_tokens_[i].value_type == TokenInfo::DEFAULT_VALUE) {
-        EXPECT_EQ(source_tokens_[i].id_in_value_trie,
-                  decoded_tokens_[i].id_in_value_trie);
+        EXPECT_EQ(decoded_tokens_[i].id_in_value_trie,
+                  source_tokens_[i].id_in_value_trie);
       }
     }
   }
@@ -354,7 +354,7 @@ TEST_F(SystemDictionaryCodecTest, FactoryTest) {
   SystemDictionaryCodecFactory::SetCodec(mock.get());
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
-  EXPECT_EQ("Mock", codec->GetSectionNameForKey());
+  EXPECT_EQ(codec->GetSectionNameForKey(), "Mock");
 }
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
@@ -364,12 +364,12 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecKanaTest) {
   std::string encoded;
   codec->EncodeKey(original, &encoded);
   // hiragana should be encoded in 1 byte
-  EXPECT_EQ(2, encoded.size());
-  EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
+  EXPECT_EQ(encoded.size(), 2);
+  EXPECT_EQ(codec->GetEncodedKeyLength(original), encoded.size());
   std::string decoded;
   codec->DecodeKey(encoded, &decoded);
-  EXPECT_EQ(original, decoded);
-  EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
+  EXPECT_EQ(decoded, original);
+  EXPECT_EQ(codec->GetDecodedKeyLength(encoded), decoded.size());
 }
 
 TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
@@ -379,12 +379,12 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
   std::string encoded;
   codec->EncodeKey(original, &encoded);
   // middle dot and prolonged sound should be encoded in 1 byte
-  EXPECT_EQ(2, encoded.size());
-  EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
+  EXPECT_EQ(encoded.size(), 2);
+  EXPECT_EQ(codec->GetEncodedKeyLength(original), encoded.size());
   std::string decoded;
   codec->DecodeKey(encoded, &decoded);
-  EXPECT_EQ(original, decoded);
-  EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
+  EXPECT_EQ(decoded, original);
+  EXPECT_EQ(codec->GetDecodedKeyLength(encoded), decoded.size());
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
@@ -399,7 +399,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
     EXPECT_TRUE(IsExpectedEncodedSize(c, encoded));
     std::string decoded;
     codec->DecodeValue(encoded, &decoded);
-    EXPECT_EQ(original, decoded) << "failed at: " << static_cast<uint32_t>(c);
+    EXPECT_EQ(decoded, original) << "failed at: " << static_cast<uint32_t>(c);
   }
 }
 
@@ -410,10 +410,10 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecKanaTest) {
   std::string encoded;
   codec->EncodeValue(original, &encoded);
   // kana should be encoded in 1 byte
-  EXPECT_EQ(2, encoded.size());
+  EXPECT_EQ(encoded.size(), 2);
   std::string decoded;
   codec->DecodeValue(encoded, &decoded);
-  EXPECT_EQ(original, decoded);
+  EXPECT_EQ(decoded, original);
 }
 
 TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
@@ -423,10 +423,10 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecAsciiTest) {
   std::string encoded;
   codec->EncodeValue(original, &encoded);
   // ascii should be encoded in 2 bytes
-  EXPECT_EQ(8, encoded.size());
+  EXPECT_EQ(encoded.size(), 8);
   std::string decoded;
   codec->DecodeValue(encoded, &decoded);
-  EXPECT_EQ(original, decoded);
+  EXPECT_EQ(decoded, original);
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenDefaultPosTest) {
@@ -650,7 +650,7 @@ TEST_F(SystemDictionaryCodecTest, UCS4CharactersTest) {
   EXPECT_GT(encoded.size(), 0);
   std::string decoded;
   codec->DecodeValue(encoded, &decoded);
-  EXPECT_EQ(ucs4_including, decoded);
+  EXPECT_EQ(decoded, ucs4_including);
 }
 
 TEST_F(SystemDictionaryCodecTest, TokenSameValueTest) {
@@ -733,9 +733,9 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
         reinterpret_cast<const unsigned char *>(encoded.data()) + offset,
         &value_id, &read_byte));
     if (source_tokens_[read_num].value_type == TokenInfo::DEFAULT_VALUE) {
-      EXPECT_EQ(source_tokens_[read_num].id_in_value_trie, value_id);
+      EXPECT_EQ(value_id, source_tokens_[read_num].id_in_value_trie);
     } else {
-      EXPECT_EQ(-1, value_id);
+      EXPECT_EQ(value_id, -1);
     }
     offset += read_byte;
     ++read_num;
@@ -743,7 +743,7 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
       break;
     }
   }
-  EXPECT_EQ(source_tokens_.size(), read_num);
+  EXPECT_EQ(read_num, source_tokens_.size());
 }
 
 TEST_F(SystemDictionaryCodecTest, CodecTest) {
@@ -775,9 +775,9 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
           reinterpret_cast<const unsigned char *>(encoded.data()) + offset,
           &value_id, &read_byte));
       if (source_tokens_[read_num].value_type == TokenInfo::DEFAULT_VALUE) {
-        EXPECT_EQ(source_tokens_[read_num].id_in_value_trie, value_id);
+        EXPECT_EQ(value_id, source_tokens_[read_num].id_in_value_trie);
       } else {
-        EXPECT_EQ(-1, value_id);
+        EXPECT_EQ(value_id, -1);
       }
       offset += read_byte;
       ++read_num;
@@ -785,7 +785,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
         break;
       }
     }
-    EXPECT_EQ(source_tokens_.size(), read_num);
+    EXPECT_EQ(read_num, source_tokens_.size());
   }
   {  // Value
     std::string original;
@@ -802,7 +802,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     codec->EncodeValue(original, &encoded);
     std::string decoded;
     codec->DecodeValue(encoded, &decoded);
-    EXPECT_EQ(original, decoded);
+    EXPECT_EQ(decoded, original);
   }
   {  // Key
     std::string original;
@@ -816,11 +816,11 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     }
     std::string encoded;
     codec->EncodeKey(original, &encoded);
-    EXPECT_EQ(encoded.size(), codec->GetEncodedKeyLength(original));
+    EXPECT_EQ(codec->GetEncodedKeyLength(original), encoded.size());
     std::string decoded;
     codec->DecodeKey(encoded, &decoded);
-    EXPECT_EQ(original, decoded);
-    EXPECT_EQ(decoded.size(), codec->GetDecodedKeyLength(encoded));
+    EXPECT_EQ(decoded, original);
+    EXPECT_EQ(codec->GetDecodedKeyLength(encoded), decoded.size());
   }
 }
 

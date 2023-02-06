@@ -97,8 +97,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     Clear();
     command_->set_type(UserDictionaryCommand::CREATE_SESSION);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
     EXPECT_TRUE(status_->has_session_id());
     EXPECT_NE(0, status_->session_id());
     return status_->session_id();
@@ -109,8 +109,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     command_->set_type(UserDictionaryCommand::DELETE_SESSION);
     command_->set_session_id(session_id);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
   }
 
   uint64_t CreateUserDictionary(uint64_t session_id, const std::string &name) {
@@ -119,8 +119,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     command_->set_session_id(session_id);
     command_->set_dictionary_name(name);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
     EXPECT_TRUE(status_->has_dictionary_id());
     return status_->dictionary_id();
   }
@@ -139,8 +139,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     entry->set_pos(pos);
     entry->set_comment(comment);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
   }
 
   RepeatedPtrField<UserDictionary::Entry> GetAllUserDictionaryEntries(
@@ -165,12 +165,12 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
       command_->add_entry_index(indices[i]);
     }
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
-    EXPECT_EQ(indices.size(), status_->entries_size());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
+    EXPECT_EQ(status_->entries_size(), indices.size());
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
     return status_->entries();
   }
 
@@ -181,8 +181,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     command_->set_session_id(session_id);
     command_->set_dictionary_id(dictionary_id);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
     EXPECT_TRUE(status_->has_entry_size());
     return status_->entry_size();
   }
@@ -237,7 +237,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
                            UserDictionary::NOUN, "");
     AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word2",
                            UserDictionary::NOUN, "");
-    ASSERT_EQ(2, GetUserDictionaryEntrySize(session_id, dictionary_id));
+    ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 2);
     DeleteSession(session_id);
   }
   // Test CLEAR_STORAGE command.
@@ -245,8 +245,8 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
     Clear();
     command_->set_type(UserDictionaryCommand::CLEAR_STORAGE);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-    EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-              status_->status());
+    EXPECT_EQ(status_->status(),
+              (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
   }
   // After the command invocation, storage becomes empty.
   {
@@ -270,14 +270,14 @@ TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {
   Clear();
   command_->set_type(UserDictionaryCommand::DELETE_SESSION);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::INVALID_ARGUMENT, status_->status());
+  EXPECT_EQ(status_->status(), UserDictionaryCommandStatus::INVALID_ARGUMENT);
 
   // Test for invalid session id.
   Clear();
   command_->set_type(UserDictionaryCommand::DELETE_SESSION);
   command_->set_session_id(0);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_SESSION_ID, status_->status());
+  EXPECT_EQ(status_->status(), UserDictionaryCommandStatus::UNKNOWN_SESSION_ID);
 
   // Test for valid session.
   DeleteSession(session_id);
@@ -287,7 +287,7 @@ TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {
   command_->set_type(UserDictionaryCommand::DELETE_SESSION);
   command_->set_session_id(session_id);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_SESSION_ID, status_->status());
+  EXPECT_EQ(status_->status(), UserDictionaryCommandStatus::UNKNOWN_SESSION_ID);
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateTwice) {
@@ -302,7 +302,7 @@ TEST_F(UserDictionarySessionHandlerTest, CreateTwice) {
   command_->set_type(UserDictionaryCommand::DELETE_SESSION);
   command_->set_session_id(session_id1);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_SESSION_ID, status_->status());
+  EXPECT_EQ(status_->status(), UserDictionaryCommandStatus::UNKNOWN_SESSION_ID);
 
   DeleteSession(session_id2);
 }
@@ -466,8 +466,8 @@ TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
   command_->set_dictionary_id(kInvalidDictionaryId);
   command_->add_entry_index(0);
   EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID,
-            status_->status());
+  EXPECT_EQ(status_->status(),
+            (UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID));
 
   // Invalid entry index
   Clear();
@@ -477,8 +477,8 @@ TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
   command_->add_entry_index(0);
   command_->add_entry_index(3);
   EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE,
-            status_->status());
+  EXPECT_EQ(status_->status(),
+            (UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE));
 
   // Invalid entry index
   Clear();
@@ -488,8 +488,8 @@ TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
   command_->add_entry_index(0);
   command_->add_entry_index(-1);
   EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE,
-            status_->status());
+  EXPECT_EQ(status_->status(),
+            (UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE));
 
   DeleteSession(session_id);
 }
@@ -555,8 +555,8 @@ TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
       "  dictionaries: < name: \"dictionary3\" >\n"
       ">",
       *status_);
-  EXPECT_EQ(dictionary_id1, status_->storage().dictionaries(0).id());
-  EXPECT_EQ(dictionary_id2, status_->storage().dictionaries(1).id());
+  EXPECT_EQ(status_->storage().dictionaries(0).id(), dictionary_id1);
+  EXPECT_EQ(status_->storage().dictionaries(1).id(), dictionary_id2);
 
   // Dictionary renaming without dictionary_id or new name should be failed.
   Clear();
@@ -591,7 +591,7 @@ TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
       "  dictionaries: < name: \"dictionary3\" >\n"
       ">",
       *status_);
-  EXPECT_EQ(dictionary_id2, status_->storage().dictionaries(0).id());
+  EXPECT_EQ(status_->storage().dictionaries(0).id(), dictionary_id2);
 
   // Dictionary deletion without dictionary id should be failed.
   Clear();
@@ -626,7 +626,7 @@ TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
       "  dictionaries: < name: \"abcde\" >\n"
       ">",
       *status_);
-  EXPECT_NE(dictionary_id2, status_->storage().dictionaries(0).id());
+  EXPECT_NE(status_->storage().dictionaries(0).id(), dictionary_id2);
 
   DeleteSession(session_id);
 }
@@ -639,7 +639,7 @@ TEST_F(UserDictionarySessionHandlerTest, AddEntry) {
   // Add an entry.
   AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word",
                          UserDictionary::NOUN, "");
-  ASSERT_EQ(1, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 1);
   GetAllUserDictionaryEntries(session_id, dictionary_id);
   EXPECT_PROTO_PEQ(
       "entries: <\n"
@@ -675,17 +675,17 @@ TEST_F(UserDictionarySessionHandlerTest, AddEntry) {
 TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   const uint64_t session_id = CreateSession();
   const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
-  ASSERT_EQ(0, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 0);
 
   // Add an entry.
   AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word",
                          UserDictionary::NOUN, "");
-  ASSERT_EQ(1, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 1);
 
   // Add another entry.
   AddUserDictionaryEntry(session_id, dictionary_id, "reading2", "word2",
                          UserDictionary::NOUN, "");
-  ASSERT_EQ(2, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 2);
   GetAllUserDictionaryEntries(session_id, dictionary_id);
   EXPECT_PROTO_PEQ(
       "entries: <\n"
@@ -714,7 +714,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_EQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
 
-  ASSERT_EQ(2, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 2);
   GetAllUserDictionaryEntries(session_id, dictionary_id);
   EXPECT_PROTO_PEQ(
       "entries: <\n"
@@ -786,7 +786,7 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
 TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
   const uint64_t session_id = CreateSession();
   const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
-  ASSERT_EQ(0, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 0);
 
   // Add entries.
   AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word",
@@ -799,7 +799,7 @@ TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
                          UserDictionary::NOUN, "");
   AddUserDictionaryEntry(session_id, dictionary_id, "reading5", "word5",
                          UserDictionary::NOUN, "");
-  ASSERT_EQ(5, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 5);
 
   // Delete the second and fourth entries.
   Clear();
@@ -809,8 +809,8 @@ TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
   command_->add_entry_index(1);
   command_->add_entry_index(3);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
-  EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            status_->status());
+  EXPECT_EQ(status_->status(),
+            (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
   ASSERT_EQ(3, GetUserDictionaryEntrySize(session_id, dictionary_id));
   GetAllUserDictionaryEntries(session_id, dictionary_id);
   EXPECT_PROTO_PEQ(
@@ -838,7 +838,7 @@ TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
   command_->add_entry_index(0);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_EQ("status: INVALID_ARGUMENT", *status_);
-  ASSERT_EQ(3, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 3);
 
   Clear();
   command_->set_type(UserDictionaryCommand::GET_ENTRIES);
@@ -846,7 +846,7 @@ TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
   command_->set_dictionary_id(dictionary_id);
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_EQ("status: INVALID_ARGUMENT", *status_);
-  ASSERT_EQ(3, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 3);
 
   DeleteSession(session_id);
 }
@@ -866,10 +866,10 @@ TEST_F(UserDictionarySessionHandlerTest, ImportData1) {
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
   ASSERT_TRUE(status_->has_dictionary_id());
-  EXPECT_EQ(dictionary_id, status_->dictionary_id());
+  EXPECT_EQ(status_->dictionary_id(), dictionary_id);
 
   // Make sure the size of the data.
-  ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 4);
 
   DeleteSession(session_id);
 }
@@ -889,7 +889,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportData2) {
   const uint64_t dictionary_id = status_->dictionary_id();
 
   // Make sure the size of the data.
-  ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 4);
 
   DeleteSession(session_id);
 }
@@ -947,7 +947,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   const uint64_t dictionary_id = status_->dictionary_id();
 
   // Make sure the size of the data.
-  ASSERT_EQ(6, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(GetUserDictionaryEntrySize(session_id, dictionary_id), 6);
 
   DeleteSession(session_id);
 }

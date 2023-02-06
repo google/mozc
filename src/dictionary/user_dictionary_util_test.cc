@@ -109,7 +109,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "abc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_FALSE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(golden.DebugString(), input.DebugString());
+    EXPECT_EQ(input.DebugString(), golden.DebugString());
   }
 
   {
@@ -117,7 +117,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "abc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(golden.DebugString(), input.DebugString());
+    EXPECT_EQ(input.DebugString(), golden.DebugString());
   }
 
   {
@@ -125,7 +125,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "ab\tc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(golden.DebugString(), input.DebugString());
+    EXPECT_EQ(input.DebugString(), golden.DebugString());
   }
 
   {
@@ -133,38 +133,38 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           UserDictionary::NOUN, "ab\tc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(golden.DebugString(), input.DebugString());
+    EXPECT_EQ(input.DebugString(), golden.DebugString());
   }
 }
 
 TEST(UserDictionaryUtilTest, TestSanitize) {
   std::string str(10, '\t');
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 5));
-  EXPECT_EQ("", str);
+  EXPECT_EQ(str, "");
 
   str = "ab\tc";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 10));
-  EXPECT_EQ("abc", str);
+  EXPECT_EQ(str, "abc");
 
   str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 3));
-  EXPECT_EQ("か", str);
+  EXPECT_EQ(str, "か");
 
   str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 4));
-  EXPECT_EQ("か", str);
+  EXPECT_EQ(str, "か");
 
   str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 5));
-  EXPECT_EQ("か", str);
+  EXPECT_EQ(str, "か");
 
   str = "かしゆか";
   EXPECT_TRUE(UserDictionaryUtil::Sanitize(&str, 6));
-  EXPECT_EQ("かし", str);
+  EXPECT_EQ(str, "かし");
 
   str = "かしゆか";
   EXPECT_FALSE(UserDictionaryUtil::Sanitize(&str, 100));
-  EXPECT_EQ("かしゆか", str);
+  EXPECT_EQ(str, "かしゆか");
 }
 
 TEST(UserDictionaryUtilTest, ValidateEntry) {
@@ -323,11 +323,11 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
 
-  EXPECT_EQ(0, UserDictionaryUtil::GetUserDictionaryIndexById(storage, 1));
-  EXPECT_EQ(1, UserDictionaryUtil::GetUserDictionaryIndexById(storage, 2));
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryIndexById(storage, 1), 0);
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryIndexById(storage, 2), 1);
 
   // Return -1 for a failing case.
-  EXPECT_EQ(-1, UserDictionaryUtil::GetUserDictionaryIndexById(storage, -1));
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryIndexById(storage, -1), -1);
 }
 
 TEST(UserDictionaryUtilTest, CreateDictionary) {
@@ -344,25 +344,25 @@ TEST(UserDictionaryUtilTest, CreateDictionary) {
     storage.add_dictionaries();
   }
 
-  EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED,
-            UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
-                                                 &dictionary_id));
+  EXPECT_EQ(UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
+                                                 &dictionary_id),
+            UserDictionaryCommandStatus::DICTIONARY_SIZE_LIMIT_EXCEEDED);
 
   storage.Clear();
-  EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_ERROR,
-            UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
-                                                 nullptr));
+  EXPECT_EQ(
+      UserDictionaryUtil::CreateDictionary(&storage, "new dictionary", nullptr),
+      UserDictionaryCommandStatus::UNKNOWN_ERROR);
 
-  ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
-                                                 &dictionary_id));
+  ASSERT_EQ(UserDictionaryUtil::CreateDictionary(&storage, "new dictionary",
+                                                 &dictionary_id),
+            UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 
   EXPECT_PROTO_PEQ(
       "dictionaries <\n"
       "  name: \"new dictionary\"\n"
       ">\n",
       storage);
-  EXPECT_EQ(dictionary_id, storage.dictionaries(0).id());
+  EXPECT_EQ(storage.dictionaries(0).id(), dictionary_id);
 }
 
 TEST(UserDictionaryUtilTest, DeleteDictionary) {
@@ -374,9 +374,9 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   int original_index;
   ASSERT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, &original_index,
                                                    nullptr));
-  EXPECT_EQ(0, original_index);
-  ASSERT_EQ(1, storage.dictionaries_size());
-  EXPECT_EQ(2, storage.dictionaries(0).id());
+  EXPECT_EQ(original_index, 0);
+  ASSERT_EQ(storage.dictionaries_size(), 1);
+  EXPECT_EQ(storage.dictionaries(0).id(), 2);
 
   // Deletion for unknown dictionary should fail.
   storage.Clear();
@@ -392,9 +392,9 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   UserDictionary *deleted_dictionary;
   EXPECT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, nullptr,
                                                    &deleted_dictionary));
-  ASSERT_EQ(1, storage.dictionaries_size());
-  EXPECT_EQ(2, storage.dictionaries(0).id());
-  EXPECT_EQ(1, deleted_dictionary->id());
+  ASSERT_EQ(storage.dictionaries_size(), 1);
+  EXPECT_EQ(storage.dictionaries(0).id(), 2);
+  EXPECT_EQ(deleted_dictionary->id(), 1);
 
   // Delete to avoid memoary leaking.
   delete deleted_dictionary;

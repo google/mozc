@@ -456,7 +456,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
           expected.find(kKeyValues[i].key) != expected.end();
       const std::pair<std::string, std::string> entry(kKeyValues[i].key,
                                                       kKeyValues[i].value);
-      EXPECT_EQ(to_be_found, result.find(entry) != result.end());
+      EXPECT_EQ(result.find(entry) != result.end(), to_be_found);
     }
   }
 }

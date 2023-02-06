@@ -343,7 +343,7 @@ TEST_F(DictionaryImplTest, LookupComment) {
   // If key or value is "comment", UserDictionaryStub returns
   // "UserDictionaryStub" as comment.
   EXPECT_TRUE(d->LookupComment("key", "comment", convreq_, &comment));
-  EXPECT_EQ("UserDictionaryStub", comment);
+  EXPECT_EQ(comment, "UserDictionaryStub");
 }
 
 }  // namespace dictionary
