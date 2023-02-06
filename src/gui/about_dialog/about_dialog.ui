@@ -108,7 +108,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Copyright © 2021 Google Inc. All rights reserved.</string>
+        <string>Copyright © 2023 Google Inc. All rights reserved.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
