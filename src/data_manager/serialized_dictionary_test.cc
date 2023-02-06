@@ -71,17 +71,17 @@ TEST_F(SerializedDictionaryTest, Compile) {
 
   SerializedStringArray string_array;
   ASSERT_TRUE(string_array.Init(string_array_data_));
-  ASSERT_EQ(10, string_array.size());
-  EXPECT_EQ("", string_array[0]);
-  EXPECT_EQ("adesc1", string_array[1]);
-  EXPECT_EQ("adesc2", string_array[2]);
-  EXPECT_EQ("desc1", string_array[3]);
-  EXPECT_EQ("desc2", string_array[4]);
-  EXPECT_EQ("key1", string_array[5]);
-  EXPECT_EQ("key2", string_array[6]);
-  EXPECT_EQ("value1", string_array[7]);
-  EXPECT_EQ("value2", string_array[8]);
-  EXPECT_EQ("value3", string_array[9]);
+  ASSERT_EQ(string_array.size(), 10);
+  EXPECT_EQ(string_array[0], "");
+  EXPECT_EQ(string_array[1], "adesc1");
+  EXPECT_EQ(string_array[2], "adesc2");
+  EXPECT_EQ(string_array[3], "desc1");
+  EXPECT_EQ(string_array[4], "desc2");
+  EXPECT_EQ(string_array[5], "key1");
+  EXPECT_EQ(string_array[6], "key2");
+  EXPECT_EQ(string_array[7], "value1");
+  EXPECT_EQ(string_array[8], "value2");
+  EXPECT_EQ(string_array[9], "value3");
 
   // Recall that entries are sorted first by key then by cost.
   constexpr char kExpectedTokenArray[] =
@@ -113,45 +113,45 @@ TEST_F(SerializedDictionaryTest, Compile) {
       "\xd0\x07"          // cost = 2000
       "\x00\x00";         // padding
   ASSERT_EQ(
-      std::string(kExpectedTokenArray, std::size(kExpectedTokenArray) - 1),
-      token_array_data_);
+      token_array_data_,
+      std::string(kExpectedTokenArray, std::size(kExpectedTokenArray) - 1));
 }
 
 TEST_F(SerializedDictionaryTest, Iterator) {
   SerializedDictionary dic(token_array_data_, string_array_data_);
   auto iter = dic.begin();
 
-  ASSERT_NE(dic.end(), iter);
-  EXPECT_EQ("key1", iter.key());
-  EXPECT_EQ("value2", iter.value());
-  EXPECT_EQ("desc2", iter.description());
-  EXPECT_EQ("adesc2", iter.additional_description());
-  EXPECT_EQ(50, iter.lid());
-  EXPECT_EQ(60, iter.rid());
-  EXPECT_EQ(2000, iter.cost());
+  ASSERT_NE(iter, dic.end());
+  EXPECT_EQ(iter.key(), "key1");
+  EXPECT_EQ(iter.value(), "value2");
+  EXPECT_EQ(iter.description(), "desc2");
+  EXPECT_EQ(iter.additional_description(), "adesc2");
+  EXPECT_EQ(iter.lid(), 50);
+  EXPECT_EQ(iter.rid(), 60);
+  EXPECT_EQ(iter.cost(), 2000);
 
   ++iter;
-  ASSERT_NE(dic.end(), iter);
-  EXPECT_EQ("key1", iter.key());
-  EXPECT_EQ("value1", iter.value());
-  EXPECT_EQ("desc1", iter.description());
-  EXPECT_EQ("adesc1", iter.additional_description());
-  EXPECT_EQ(10, iter.lid());
-  EXPECT_EQ(20, iter.rid());
-  EXPECT_EQ(3000, iter.cost());
+  ASSERT_NE(iter, dic.end());
+  EXPECT_EQ(iter.key(), "key1");
+  EXPECT_EQ(iter.value(), "value1");
+  EXPECT_EQ(iter.description(), "desc1");
+  EXPECT_EQ(iter.additional_description(), "adesc1");
+  EXPECT_EQ(iter.lid(), 10);
+  EXPECT_EQ(iter.rid(), 20);
+  EXPECT_EQ(iter.cost(), 3000);
 
   ++iter;
-  ASSERT_NE(dic.end(), iter);
-  EXPECT_EQ("key2", iter.key());
-  EXPECT_EQ("value3", iter.value());
+  ASSERT_NE(iter, dic.end());
+  EXPECT_EQ(iter.key(), "key2");
+  EXPECT_EQ(iter.value(), "value3");
   EXPECT_TRUE(iter.description().empty());
   EXPECT_TRUE(iter.additional_description().empty());
-  EXPECT_EQ(50, iter.lid());
-  EXPECT_EQ(60, iter.rid());
-  EXPECT_EQ(2000, iter.cost());
+  EXPECT_EQ(iter.lid(), 50);
+  EXPECT_EQ(iter.rid(), 60);
+  EXPECT_EQ(iter.cost(), 2000);
 
   ++iter;
-  EXPECT_EQ(dic.end(), iter);
+  EXPECT_EQ(iter, dic.end());
 }
 
 TEST_F(SerializedDictionaryTest, EqualRange) {
@@ -159,22 +159,22 @@ TEST_F(SerializedDictionaryTest, EqualRange) {
   {
     auto range = dic.equal_range("key1");
     ASSERT_NE(range.first, range.second);
-    EXPECT_EQ("key1", range.first.key());
-    EXPECT_EQ("value2", range.first.value());
+    EXPECT_EQ(range.first.key(), "key1");
+    EXPECT_EQ(range.first.value(), "value2");
 
     ++range.first;
     ASSERT_NE(range.first, range.second);
-    EXPECT_EQ("key1", range.first.key());
-    EXPECT_EQ("value1", range.first.value());
+    EXPECT_EQ(range.first.key(), "key1");
+    EXPECT_EQ(range.first.value(), "value1");
 
     ++range.first;
-    EXPECT_EQ(range.first, range.second);
+    EXPECT_EQ(range.second, range.first);
   }
   {
     auto range = dic.equal_range("key2");
     ASSERT_NE(range.first, range.second);
-    EXPECT_EQ("key2", range.first.key());
-    EXPECT_EQ("value3", range.first.value());
+    EXPECT_EQ(range.first.key(), "key2");
+    EXPECT_EQ(range.first.value(), "value3");
 
     ++range.first;
     EXPECT_EQ(range.first, range.second);
