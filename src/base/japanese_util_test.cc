@@ -120,6 +120,11 @@ TEST(JapaneseUtilTest, HiraganaToRomaji) {
       {"まじっすかまじやべぇ", "mazissukamaziyabexe"},
       {"おっっっ", "oxtuxtuxtu"},
       {"おっっっと", "oxtuxtutto"},
+      {"らーめん", "ra-men"},
+      {"かんな", "kanna"},
+      {"かんnな", "kannna"},
+      {"はんにゃ", "hannya"},
+      {"はんnにゃ", "hannnya"},
       {"xyz", "xyz"},
   };
   for (const auto &test_case : kTestCases) {
