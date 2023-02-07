@@ -969,27 +969,10 @@ message Input {
     SEND_COMMAND = 5;
 
     // Config accessors.
-    // There are three configurations.
-    // Stored config, Imposed config, One-shot config.
-    // Stored config : Set by SET_CONFIG command.
-    // Its lifetime is permanent (stored into a storage).
-    // GET_CONFIG returns stored config.
-    // Imposed config : Set by SET_IMPOSED_CONFIG. Its lifetime is the
-    // same as the process (*not* stored into a storage as opposed to Stored
-    // config).
-    // Imposed config is prioritized over Stored config.
-    // Only the values explicitly set are effective and override ones in Stored
-    // config. In typical usage, most fields are not set.
-    // GET_CONFIG's result is *not* affected by imposed config
-    // (stored config returns).
-    // One-shot config : Set by each key events.
-    // It is effective while the key event is processed.
-    // This is prioritized over Imposed config.
-    // Like as Imposed config, some fields can be omitted.
-    // TODO(matsuzakit): Rename (GET|SET)_CONFIG to (GET|SET)_STORED_CONFIG
     GET_CONFIG = 6;
     SET_CONFIG = 7;
-    SET_IMPOSED_CONFIG = 22;
+    reserved 22;
+    reserved "SET_IMPOSED_CONFIG";
 
     // Set client's request
     SET_REQUEST = 17;
