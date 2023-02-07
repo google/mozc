@@ -65,6 +65,29 @@ bool GetMachPortName(const std::string &name, std::string *port_name) {
   return false;
 }
 
+const char *GetBootstrapError(kern_return_t value) {
+  switch (value) {
+    case BOOTSTRAP_SUCCESS:  // 0
+      return "success (0)";
+    case BOOTSTRAP_NOT_PRIVILEGED:  // 1100
+      return "not previleged (1100)";
+    case BOOTSTRAP_NAME_IN_USE:  // 1101
+      return "name in use (1101)";
+    case BOOTSTRAP_UNKNOWN_SERVICE:  // 1102
+      return "unknown_service (1102)";
+    case BOOTSTRAP_SERVICE_ACTIVE:  // 1103
+      return "service active (1103)";
+    case BOOTSTRAP_BAD_COUNT:  // 1104
+      return "bad count (1104)";
+    case BOOTSTRAP_NO_MEMORY:  // 1105
+      return "no memory (1105)";
+    case BOOTSTRAP_NO_CHILDREN:  // 1106
+      return "no children (1106)";
+    default:
+      return "unknown";
+  }
+}
+
 // The default port manager for clients: using bootstrap_look_up.
 // Please take care of calling this manager because bootstrap_look_up
 // automatically starts the server processes.  We want to delay
@@ -78,10 +101,15 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
       return false;
     }
 
-    kern_return_t kr = bootstrap_look_up(
-        bootstrap_port, const_cast<char *>(port_name.c_str()), port);
+    const kern_return_t kr =
+        bootstrap_look_up(bootstrap_port, port_name.c_str(), port);
+    if (kr != BOOTSTRAP_SUCCESS) {
+      LOG(ERROR) << "bootstrap_look_up(" << port_name
+                 << ") failed: " << GetBootstrapError(kr);
+      return false;
+    }
 
-    return kr == BOOTSTRAP_SUCCESS;
+    return true;
   }
 
   virtual bool IsServerRunning(const std::string &name) const {
@@ -149,7 +177,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
       return false;
     }
 
-    DLOG(INFO) << "\"" << port_name << "\"";
+    DLOG(INFO) << "port_name: \"" << port_name << "\"";
 
     std::map<std::string, mach_port_t>::const_iterator it =
         mach_ports_.find(port_name);
@@ -158,10 +186,15 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
       return true;
     }
 
-    kern_return_t kr = bootstrap_check_in(
-        bootstrap_port, const_cast<char *>(port_name.c_str()), port);
+    const kern_return_t kr =
+        bootstrap_check_in(bootstrap_port, port_name.c_str(), port);
     mach_ports_[port_name] = *port;
-    return kr == BOOTSTRAP_SUCCESS;
+    if (kr != BOOTSTRAP_SUCCESS) {
+      LOG(ERROR) << "bootstrap_check_in(" << port_name
+                 << ") failed: " << GetBootstrapError(kr);
+      return false;
+    }
+    return true;
   }
 
   // In the server side, it always return "true" because the caller
@@ -388,6 +421,8 @@ void IPCServer::Loop() {
   // Obtain the server port
   mach_port_t server_port;
   if (manager == nullptr || !manager->GetMachPort(name_, &server_port)) {
+    LOG(ERROR) << "manager: " << (manager ? "exist" : "nullptr");
+    LOG(ERROR) << "name_: " << name_;
     LOG(ERROR) << "Failed to reserve the port.";
     return;
   }
