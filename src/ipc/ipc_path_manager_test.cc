@@ -105,11 +105,11 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_GT(manager->GetServerProtocolVersion(), 0);
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
-  EXPECT_EQ(t.path(), path);
+  EXPECT_EQ(path, t.path());
 #ifdef OS_LINUX
   // On Linux, |path| should be abstract (see man unix(7) for details.)
   ASSERT_FALSE(path.empty());
-  EXPECT_EQ('\0', path[0]);
+  EXPECT_EQ(path[0], '\0');
 #endif  // OS_LINUX
 }
 
@@ -157,9 +157,9 @@ TEST_F(IPCPathManagerTest, PathNameTest) {
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
   const ipc::IPCPathInfo original_path = *(manager->ipc_path_info_);
-  EXPECT_EQ(IPC_PROTOCOL_VERSION, original_path.protocol_version());
+  EXPECT_EQ(original_path.protocol_version(), IPC_PROTOCOL_VERSION);
   // Checks that versions are same.
-  EXPECT_EQ(Version::GetMozcVersion(), original_path.product_version());
+  EXPECT_EQ(original_path.product_version(), Version::GetMozcVersion());
   EXPECT_TRUE(original_path.has_key());
   EXPECT_TRUE(original_path.has_process_id());
   EXPECT_TRUE(original_path.has_thread_id());
@@ -168,10 +168,10 @@ TEST_F(IPCPathManagerTest, PathNameTest) {
   EXPECT_TRUE(manager->LoadPathName());
 
   const ipc::IPCPathInfo loaded_path = *(manager->ipc_path_info_);
-  EXPECT_EQ(original_path.protocol_version(), loaded_path.protocol_version());
-  EXPECT_EQ(original_path.product_version(), loaded_path.product_version());
-  EXPECT_EQ(original_path.key(), loaded_path.key());
-  EXPECT_EQ(original_path.process_id(), loaded_path.process_id());
-  EXPECT_EQ(original_path.thread_id(), loaded_path.thread_id());
+  EXPECT_EQ(loaded_path.protocol_version(), original_path.protocol_version());
+  EXPECT_EQ(loaded_path.product_version(), original_path.product_version());
+  EXPECT_EQ(loaded_path.key(), original_path.key());
+  EXPECT_EQ(loaded_path.process_id(), original_path.process_id());
+  EXPECT_EQ(loaded_path.thread_id(), original_path.thread_id());
 }
 }  // namespace mozc
