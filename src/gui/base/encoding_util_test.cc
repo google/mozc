@@ -96,7 +96,7 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
     EncodingUtil::SjisToUtf8(sjis, &actual);
     std::string expected;
     ASSERT_TRUE(Convert(sjis, &expected));
-    EXPECT_EQ(expected, actual);
+    EXPECT_EQ(actual, expected);
   }
 }
 
@@ -105,8 +105,8 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
 TEST(EncodingUtilTest, Issue2190350) {
   std::string result = "";
   EncodingUtil::SjisToUtf8("\x82\xA0", &result);
-  EXPECT_EQ(3, result.length());
-  EXPECT_EQ("あ", result);
+  EXPECT_EQ(result.length(), 3);
+  EXPECT_EQ(result, "あ");
 }
 
 TEST(EncodingUtilTest, ValidSJIS) {
@@ -131,7 +131,7 @@ TEST(EncodingUtilTest, ValidSJIS) {
   for (const auto& tc : kTestCases) {
     std::string actual;
     EncodingUtil::SjisToUtf8(tc.sjis, &actual);
-    EXPECT_EQ(tc.utf8, actual);
+    EXPECT_EQ(actual, tc.utf8);
   }
 }
 
