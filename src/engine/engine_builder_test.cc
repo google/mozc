@@ -72,12 +72,12 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     request_.set_file_path(mock_data_path_);
     request_.set_magic_number(kMockMagicNumber);
     builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
     builder_.Wait();
     ASSERT_TRUE(builder_.HasResponse());
     builder_.GetResponse(&response_);
-    EXPECT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
+    EXPECT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
   }
   Clear();
   {
@@ -94,12 +94,12 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     request_.set_install_location(install_path);
     request_.set_magic_number(kMockMagicNumber);
     builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
     builder_.Wait();
     ASSERT_TRUE(builder_.HasResponse());
     builder_.GetResponse(&response_);
-    EXPECT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
+    EXPECT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
     // Verify |src_path| was copied.
     EXPECT_OK(FileUtil::FileExists(src_path));
     EXPECT_OK(FileUtil::FileExists(install_path));
@@ -123,20 +123,20 @@ TEST_F(EngineBuilderTest, AsyncBuildWithoutInstall) {
     request_.set_file_path(mock_data_path_);
     request_.set_magic_number(kMockMagicNumber);
     builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
     builder_.Wait();
 
     // Builder should be ready now.
     ASSERT_TRUE(builder_.HasResponse());
     builder_.GetResponse(&response_);
-    ASSERT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
 
     // Build an engine and verify its predictor type (desktop or mobile).
     auto engine = builder_.BuildFromPreparedData();
     ASSERT_TRUE(engine);
-    EXPECT_EQ(test_case.predictor_name,
-              engine->GetPredictor()->GetPredictorName());
+    EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
+              test_case.predictor_name);
 
     // Cannot build twice.
     engine = builder_.BuildFromPreparedData();
@@ -170,14 +170,14 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
     request_.set_install_location(install_path);
     request_.set_magic_number(kMockMagicNumber);
     builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
     builder_.Wait();
 
     // Builder should be ready now.
     ASSERT_TRUE(builder_.HasResponse());
     builder_.GetResponse(&response_);
-    ASSERT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
+    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
 
     // |tmp_src| should be copied to |install_path|.
     ASSERT_OK(FileUtil::FileExists(tmp_src));
@@ -186,8 +186,8 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
     // Build an engine and verify its predictor type (desktop or mobile).
     auto engine = builder_.BuildFromPreparedData();
     ASSERT_TRUE(engine);
-    EXPECT_EQ(test_case.predictor_name,
-              engine->GetPredictor()->GetPredictorName());
+    EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
+              test_case.predictor_name);
 
     // Cannot build twice.
     engine = builder_.BuildFromPreparedData();
@@ -202,13 +202,13 @@ TEST_F(EngineBuilderTest, FailureCaseDataBroken) {
       testing::GetSourceFileOrDie({"engine", "engine_builder_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
   builder_.PrepareAsync(request_, &response_);
-  ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+  ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
   builder_.Wait();
 
   ASSERT_TRUE(builder_.HasResponse());
   builder_.GetResponse(&response_);
-  ASSERT_EQ(EngineReloadResponse::DATA_BROKEN, response_.status());
+  ASSERT_EQ(response_.status(), EngineReloadResponse::DATA_BROKEN);
 }
 
 TEST_F(EngineBuilderTest, FailureCaseFileDoesNotExist) {
@@ -217,13 +217,13 @@ TEST_F(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   request_.set_file_path("file_does_not_exist");
   request_.set_magic_number(kMockMagicNumber);
   builder_.PrepareAsync(request_, &response_);
-  ASSERT_EQ(EngineReloadResponse::ACCEPTED, response_.status());
+  ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
   builder_.Wait();
 
   ASSERT_TRUE(builder_.HasResponse());
   builder_.GetResponse(&response_);
-  ASSERT_EQ(EngineReloadResponse::MMAP_FAILURE, response_.status());
+  ASSERT_EQ(response_.status(), EngineReloadResponse::MMAP_FAILURE);
 }
 
 }  // namespace

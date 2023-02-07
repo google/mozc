@@ -41,9 +41,9 @@ TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
   PredictorInterface *predictor = engine->GetPredictor();
 #ifdef OS_ANDROID
-  EXPECT_EQ("MobilePredictor", predictor->GetPredictorName());
+  EXPECT_EQ(predictor->GetPredictorName(), "MobilePredictor");
 #else   // OS_ANDROID
-  EXPECT_EQ("DefaultPredictor", predictor->GetPredictorName());
+  EXPECT_EQ(predictor->GetPredictorName(), "DefaultPredictor");
 #endif  // OS_ANDROID
 }
 
