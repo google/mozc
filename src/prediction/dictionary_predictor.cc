@@ -322,23 +322,38 @@ class DictionaryPredictor::PredictiveLookupCallback
 
  private:
   // When the key is number, number token will be noisy if
+  // - the key predicts number ("十月[10がつ]" for the key, "1")
   // - the value predicts number ("12時" for the key, "1")
   // - the value contains long suffix ("101匹わんちゃん" for the key, "101")
   bool IsNoisyNumberToken(absl::string_view key, const Token &token) const {
     const auto orig_key = absl::ClippedSubstr(key, 0, original_key_len_);
-    if (!absl::StartsWith(token.value, orig_key) ||
-        !NumberUtil::IsArabicNumber(orig_key)) {
+    if (!NumberUtil::IsArabicNumber(orig_key)) {
       return false;
     }
-    absl::string_view suffix(token.value.data() + orig_key.size(),
-                             token.value.size() - orig_key.size());
-    if (suffix.empty()) {
+    const absl::string_view key_suffix(token.key.data() + orig_key.size(),
+                                       token.key.size() - orig_key.size());
+    if (key_suffix.empty()) {
       return false;
     }
-    if (Util::GetFirstScriptType(suffix) == Util::NUMBER) {
+    if (Util::GetFirstScriptType(key_suffix) == Util::NUMBER) {
+      // If the key is "1", the token "10がつ" is noisy because the suffix
+      // starts from a number. i.e. "0がつ".
       return true;
     }
-    return Util::CharsLen(suffix) >= 3;
+
+    if (!absl::StartsWith(token.value, orig_key)) {
+      return false;
+    }
+
+    const absl::string_view value_suffix(token.value.data() + orig_key.size(),
+                                         token.value.size() - orig_key.size());
+    if (value_suffix.empty()) {
+      return false;
+    }
+    if (Util::GetFirstScriptType(value_suffix) == Util::NUMBER) {
+      return true;
+    }
+    return Util::CharsLen(value_suffix) >= 3;
   }
 };
 
