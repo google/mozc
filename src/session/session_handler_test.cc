@@ -413,36 +413,62 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
 TEST_F(SessionHandlerTest, ConfigTest) {
   config::Config config;
   config::ConfigHandler::GetStoredConfig(&config);
-  config.set_incognito_mode(false);
-  config::ConfigHandler::SetConfig(config);
-
   SessionHandler handler(CreateMockDataEngine());
+
+  {
+    // Set KOTOERI keymap
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_type(commands::Input::SET_CONFIG);
+    config.set_session_keymap(config::Config::KOTOERI);
+    *input->mutable_config() = config;
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    config::ConfigHandler::GetStoredConfig(&config);
+    EXPECT_EQ(config::Config::KOTOERI,
+              command.output().config().session_keymap());
+  }
 
   uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
-
   {
+    // KOTOERI doesn't assign anything to ctrl+shift+space (precomposition) so
+    // SEND_KEY shouldn't consume it.
     commands::Command command;
     commands::Input *input = command.mutable_input();
     input->set_id(session_id);
-    input->set_type(commands::Input::GET_CONFIG);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::SPACE);
+    input->mutable_key()->add_modifier_keys(commands::KeyEvent::SHIFT);
+    input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(command.input().id(), command.output().id());
-    EXPECT_FALSE(command.output().config().incognito_mode());
+    EXPECT_FALSE(command.output().consumed());
   }
-
   {
+    // Set ATOK keymap
+    // The existing Session should apply it immediately.
     commands::Command command;
     commands::Input *input = command.mutable_input();
     input->set_id(session_id);
     input->set_type(commands::Input::SET_CONFIG);
-    config.set_incognito_mode(true);
+    config.set_session_keymap(config::Config::ATOK);
     *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.input().id(), command.output().id());
-    EXPECT_TRUE(command.output().config().incognito_mode());
     config::ConfigHandler::GetStoredConfig(&config);
-    EXPECT_TRUE(config.incognito_mode());
+    EXPECT_EQ(config::Config::ATOK, command.output().config().session_keymap());
+  }
+  {
+    // ATOK assigns a function to ctrl+f7 (precomposition) (KOTOERI doesn't) so
+    // TEST_SEND_KEY should consume it.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::F7);
+    input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
+              command.output().launch_tool_mode());
   }
 
   EXPECT_COUNT_STATS("SetConfig", 1);

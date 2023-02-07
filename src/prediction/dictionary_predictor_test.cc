@@ -4042,16 +4042,22 @@ TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
 }
 
 TEST_F(DictionaryPredictorTest, DoNotPredictNoisyNumberEntries) {
-  testing::MockDataManager data_manager;
-
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      new MockDataAndPredictor());
-  data_and_predictor->Init(
-      CreateSystemDictionaryFromDataManager(data_manager).value().release(),
-      CreateSuffixDictionaryFromDataManager(data_manager));
-
-  const TestableDictionaryPredictor *predictor =
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
+
+  {
+    MockDictionary *mock = data_and_predictor->mutable_dictionary();
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("1"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({{"1", "一"},
+                                                     {"1じ", "一時"},
+                                                     {"1じ", "1時"},
+                                                     {"10じ", "10時"},
+                                                     {"10じ", "十時"},
+                                                     {"1じすぎ", "1時過ぎ"},
+                                                     {"19じ", "19時"}}));
+  }
 
   Segments segments;
   composer_->SetInputMode(transliteration::HALF_ASCII);
@@ -4060,9 +4066,15 @@ TEST_F(DictionaryPredictorTest, DoNotPredictNoisyNumberEntries) {
 
   predictor->PredictForRequest(*convreq_for_prediction_, &segments);
 
-  // These words are in test dictionary, but should not be looked up here.
+  // These words are in mock dictionary, but should not be looked up here.
+  EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "10時"));
+  EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "十時"));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "1時過ぎ"));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "19時"));
+
+  EXPECT_TRUE(FindCandidateByValue(segments.conversion_segment(0), "一"));
+  EXPECT_TRUE(FindCandidateByValue(segments.conversion_segment(0), "一時"));
+  EXPECT_TRUE(FindCandidateByValue(segments.conversion_segment(0), "1時"));
 }
 
 }  // namespace mozc

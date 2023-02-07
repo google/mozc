@@ -55,19 +55,19 @@ class PosIdPrinterTest : public ::testing::Test {
 };
 
 TEST_F(PosIdPrinterTest, BasicIdTest) {
-  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*", pos_id_printer_->IdToString(1934));
-  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*,使用", pos_id_printer_->IdToString(1935));
-  EXPECT_EQ("BOS/EOS,*,*,*,*,*,*", pos_id_printer_->IdToString(0));
+  EXPECT_EQ(pos_id_printer_->IdToString(1934), "名詞,サ変接続,*,*,*,*,*");
+  EXPECT_EQ(pos_id_printer_->IdToString(1935), "名詞,サ変接続,*,*,*,*,*,使用");
+  EXPECT_EQ(pos_id_printer_->IdToString(0), "BOS/EOS,*,*,*,*,*,*");
 }
 
 TEST_F(PosIdPrinterTest, InvalidId) {
-  EXPECT_EQ("", pos_id_printer_->IdToString(-1));
+  EXPECT_EQ(pos_id_printer_->IdToString(-1), "");
 }
 
 TEST_F(PosIdPrinterTest, NullInput) {
   PosIdPrinter pos_id_printer(nullptr);
-  EXPECT_EQ("", pos_id_printer.IdToString(-1));
-  EXPECT_EQ("", pos_id_printer.IdToString(1934));
+  EXPECT_EQ(pos_id_printer.IdToString(-1), "");
+  EXPECT_EQ(pos_id_printer.IdToString(1934), "");
 }
 
 }  // namespace internal

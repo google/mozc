@@ -329,7 +329,8 @@ NamedEventNotifier::NamedEventNotifier(const char *name) : sem_(SEM_FAILED) {
   const std::string key_filename = NamedEventUtil::GetEventPath(name);
   sem_ = ::sem_open(key_filename.c_str(), 0);
   if (sem_ == SEM_FAILED) {
-    LOG(ERROR) << "sem_open failed: " << ::strerror(errno);
+    LOG(ERROR) << "sem_open(" << key_filename
+               << ") failed: " << ::strerror(errno);
   }
 }
 

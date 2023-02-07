@@ -433,7 +433,7 @@ def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_i
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
         # https://github.com/bazelbuild/bazel/issues/12897
-        tags = tags + ["manual"],
+        tags = tags + ["manual", "notap"],
         **kwargs
     )
 
@@ -466,7 +466,7 @@ def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = N
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
         # https://github.com/bazelbuild/bazel/issues/12897
-        tags = tags + ["manual"],
+        tags = tags + ["manual", "notap"],
         **kwargs
     )
 

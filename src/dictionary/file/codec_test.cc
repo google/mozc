@@ -136,15 +136,15 @@ TEST_F(CodecTest, FactoryTest) {
   {
     absl::StatusOr<std::string> content = FileUtil::GetContents(test_file_);
     ASSERT_OK(content);
-    EXPECT_EQ("placeholder value", *content);
+    EXPECT_EQ(*content, "placeholder value");
   }
   {
-    EXPECT_EQ(0, sections.size());
+    EXPECT_EQ(sections.size(), 0);
     EXPECT_TRUE(codec->ReadSections(nullptr, 0, &sections).ok());
-    EXPECT_EQ(1, sections.size());
-    EXPECT_EQ("placeholder name", sections[0].name);
+    EXPECT_EQ(sections.size(), 1);
+    EXPECT_EQ(sections[0].name, "placeholder name");
   }
-  { EXPECT_EQ("placeholder section name", codec->GetSectionName("test")); }
+  { EXPECT_EQ(codec->GetSectionName("test"), "placeholder section name"); }
 }
 
 TEST_F(CodecTest, DefaultTest) {

@@ -64,7 +64,7 @@ TEST_F(SingleKanjiDictionaryTest, GenerateDescription) {
   std::string description;
   // variant of "亜".
   EXPECT_TRUE(dictionary.GenerateDescription("亞", &description));
-  EXPECT_EQ("亜の旧字体", description);
+  EXPECT_EQ(description, "亜の旧字体");
 
   // no entry
   EXPECT_FALSE(dictionary.GenerateDescription("あ", &description));

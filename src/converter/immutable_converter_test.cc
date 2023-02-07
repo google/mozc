@@ -191,9 +191,9 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   segment->set_key(kRequestKey);
   EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
                                                                     &segments));
-  EXPECT_EQ(1, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 1);
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
-  EXPECT_EQ(kRequestKey, segments.segment(0).key());
+  EXPECT_EQ(segments.segment(0).key(), kRequestKey);
 }
 
 TEST(ImmutableConverterTest, DummyCandidatesCost) {
@@ -281,8 +281,8 @@ TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
     segment = segments.add_segment();
     segment->set_key("いか");
 
-    EXPECT_EQ(1, segments.history_segments_size());
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.history_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
   }
 
   Lattice lattice;
@@ -303,7 +303,7 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
     Segment *segment = segments.add_segment();
     segment->set_key("よろしくおねがいしま");
 
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
   }
 
   Lattice lattice;
@@ -348,25 +348,25 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
     content_keys.push_back(iter.GetContentKey());
     content_values.push_back(iter.GetContentValue());
   }
-  ASSERT_EQ(3, keys.size());
-  EXPECT_EQ("わたしの", keys[0]);
-  EXPECT_EQ("なまえは", keys[1]);
-  EXPECT_EQ("なかのです", keys[2]);
+  ASSERT_EQ(keys.size(), 3);
+  EXPECT_EQ(keys[0], "わたしの");
+  EXPECT_EQ(keys[1], "なまえは");
+  EXPECT_EQ(keys[2], "なかのです");
 
-  ASSERT_EQ(3, values.size());
-  EXPECT_EQ("私の", values[0]);
-  EXPECT_EQ("名前は", values[1]);
-  EXPECT_EQ("中ノです", values[2]);
+  ASSERT_EQ(values.size(), 3);
+  EXPECT_EQ(values[0], "私の");
+  EXPECT_EQ(values[1], "名前は");
+  EXPECT_EQ(values[2], "中ノです");
 
   ASSERT_EQ(3, content_keys.size());
-  EXPECT_EQ("わたし", content_keys[0]);
-  EXPECT_EQ("なまえ", content_keys[1]);
-  EXPECT_EQ("なかの", content_keys[2]);
+  EXPECT_EQ(content_keys[0], "わたし");
+  EXPECT_EQ(content_keys[1], "なまえ");
+  EXPECT_EQ(content_keys[2], "なかの");
 
-  ASSERT_EQ(3, content_values.size());
-  EXPECT_EQ("私", content_values[0]);
-  EXPECT_EQ("名前", content_values[1]);
-  EXPECT_EQ("中ノ", content_values[2]);
+  ASSERT_EQ(content_values.size(), 3);
+  EXPECT_EQ(content_values[0], "私");
+  EXPECT_EQ(content_values[1], "名前");
+  EXPECT_EQ(content_values[2], "中ノ");
 }
 
 TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
@@ -454,10 +454,10 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
-  EXPECT_EQ(0, segments.history_segments_size());
-  ASSERT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(segments.history_segments_size(), 0);
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
-  EXPECT_EQ(kRequestKey, segments.segment(0).key());
+  EXPECT_EQ(segments.segment(0).key(), kRequestKey);
 }
 
 namespace {
@@ -473,7 +473,7 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   segment->set_key(kRequestKey);
   EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
       conversion_request, &segments));
-  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
   EXPECT_LT(0, segments.segment(0).candidates_size());
   bool includes_only_first = false;
   const std::string &segment_key = segments.segment(0).key();
@@ -536,7 +536,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
     segment->set_key(kRequestKeys[testcase]);
     EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
         conversion_request, &segments));
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_LT(0, segments.segment(0).candidates_size());
     const std::string &segment_key = segments.segment(0).key();
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {

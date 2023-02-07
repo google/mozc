@@ -178,7 +178,7 @@ TEST_F(NamedEventTest, NamedEventPathLengthTest) {
 #ifndef OS_WIN
   const std::string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not includeing terminating null.
-  EXPECT_EQ(13, name_path.length());
+  EXPECT_EQ(name_path.length(), 13);
 #endif  // OS_WIN
 }
 

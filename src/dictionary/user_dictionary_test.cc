@@ -804,7 +804,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     user_dic->LookupPrefix(kKey, convreq_, &callback);
     const std::vector<Token> &tokens = callback.tokens();
     for (size_t i = 0; i < tokens.size(); ++i) {
-      EXPECT_EQ("default", tokens[i].value);
+      EXPECT_EQ(tokens[i].value, "default");
     }
   }
   {
@@ -885,24 +885,24 @@ TEST_F(UserDictionaryTest, LookupComment) {
   comment = "prev comment";
   EXPECT_FALSE(
       dic->LookupComment("comment_key1", "comment_value2", convreq_, &comment));
-  EXPECT_EQ("prev comment", comment);
+  EXPECT_EQ(comment, "prev comment");
 
   // Usual case: single key-value pair with comment.
   EXPECT_TRUE(
       dic->LookupComment("comment_key2", "comment_value2", convreq_, &comment));
-  EXPECT_EQ("comment", comment);
+  EXPECT_EQ(comment, "comment");
 
   // There exist two entries having the same key, value and POS.  Since POS is
   // irrelevant to comment lookup, the first nonempty comment should be found.
   EXPECT_TRUE(
       dic->LookupComment("comment_key3", "comment_value3", convreq_, &comment));
-  EXPECT_EQ("comment1", comment);
+  EXPECT_EQ(comment, "comment1");
 
   // White-space only comments should be cleared.
   EXPECT_FALSE(
       dic->LookupComment("comment_key4", "comment_value4", convreq_, &comment));
   // The previous comment should remain.
-  EXPECT_EQ("comment1", comment);
+  EXPECT_EQ(comment, "comment1");
 
   // Comment should be found iff key and value match.
   EXPECT_TRUE(LookupComment(*dic, "comment_key", "mismatching_value").empty());

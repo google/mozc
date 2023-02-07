@@ -237,9 +237,8 @@ void SessionHandler::UpdateSessions(const config::Config &config,
        element != nullptr; element = element->next) {
     if (element->value != nullptr) {
       element->value->SetConfig(new_config.get());
-      if (new_key_map_manager) {
-        element->value->SetKeyMapManager(new_key_map_manager.get());
-      }
+      element->value->SetKeyMapManager(
+          (new_key_map_manager ? new_key_map_manager : key_map_manager_).get());
       element->value->SetRequest(new_request.get());
       if (table != nullptr) {
         element->value->SetTable(table);
@@ -583,8 +582,10 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     session->set_application_info(command->input().application_info());
   }
 
-  // Ensure the onmemory config is same as the locally stored one
-  // because the local data could be changed by sync.
+  // The created session has not been fully initialized yet.
+  // SetConfig() will complete the initialization by setting information
+  // (e.g., config, request, keymap, ...) to all the sessions,
+  // including the newly created one.
   {
     config::Config config;
     config::ConfigHandler::GetConfig(&config);

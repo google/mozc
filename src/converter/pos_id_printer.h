@@ -42,11 +42,10 @@ namespace mozc {
 namespace internal {
 
 // Example:
-//  PosIdPrinter pos_id_printer(InputFileStream("id.def"));
-//  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*",
-//            pos_id_printer.IdToString(1934));
-//  EXPECT_EQ("",
-//            pos_id_printer.IdToString(-1));  // invalid id
+// PosIdPrinter pos_id_printer(InputFileStream("id.def"));
+// EXPECT_EQ(pos_id_printer.IdToString(1934), "名詞,サ変接続,*,*,*,*,*");
+// EXPECT_EQ(pos_id_printer.IdToString(-1),  // invalid id
+//           "");
 class PosIdPrinter {
  public:
   PosIdPrinter(const PosIdPrinter&) = delete;

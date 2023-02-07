@@ -114,7 +114,7 @@ TEST(DatasetWriterTest, Write) {
   expected.append(Util::SerializeUint64(expected.size() + 8));
 
   // Compare the results.
-  EXPECT_EQ(expected, actual);
+  EXPECT_EQ(actual, expected);
 }
 
 }  // namespace

@@ -170,7 +170,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
   auto connector = std::move(status_or_connector).value();
 
-  EXPECT_EQ(expected_resolution_, connector->GetResolution());
+  EXPECT_EQ(connector->GetResolution(), expected_resolution_);
   for (ConnectionFileReader reader(connection_txt_file_); !reader.done();
        reader.Next()) {
     // Randomly sample test entries because connection data have several
@@ -183,7 +183,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
     const int actual_cost = connector->GetTransitionCost(
         reader.rid_of_left_node(), reader.lid_of_right_node());
     if (cost == Connector::kInvalidCost) {
-      EXPECT_EQ(cost, actual_cost);
+      EXPECT_EQ(actual_cost, cost);
     } else {
       EXPECT_TRUE(cost == actual_cost ||
                   (cost - cost % expected_resolution_) == actual_cost)
@@ -282,7 +282,7 @@ void DataManagerTestBase::TypingModelTest() {
   for (const auto &key_and_fname : typing_model_files_) {
     std::string content;
     ASSERT_OK(FileUtil::GetContents(key_and_fname.second, &content));
-    EXPECT_EQ(content, data_manager_->GetTypingModel(key_and_fname.first));
+    EXPECT_EQ(data_manager_->GetTypingModel(key_and_fname.first), content);
   }
 }
 

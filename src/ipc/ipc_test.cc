@@ -90,8 +90,8 @@ class MultiConnections : public mozc::Thread {
       input += GenRandomString(size);
       std::string output;
       ASSERT_TRUE(con.Call(input, &output, 1000));
-      EXPECT_EQ(input.size(), output.size());
-      EXPECT_EQ(input, output);
+      EXPECT_EQ(output.size(), input.size());
+      EXPECT_EQ(output, input);
     }
   }
 

@@ -1,4 +1,4 @@
-How to build Mozc on OS X
+How to build Mozc on macOS
 =========================
 
 [![macOS](https://github.com/google/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/macos.yaml)
@@ -23,10 +23,11 @@ Building on Mac requires the following software.
 
   * Xcode
   * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
-  * [Qt 5](https://download.qt.io/official_releases/qt/) for GUI
+  * [Qt 5](https://download.qt.io/official_releases/qt/) for GUI (e.g. qtbase [5.15.8](https://download.qt.io/official_releases/qt/5.15/5.15.8/submodules/))
   * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
 
-If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
+To build the installer (target: `package`), you need both Qt and Packages.
+To build other targets, you may not need to install them.
 
 ### Build Qt
 
@@ -43,9 +44,27 @@ make
 
 ## Bazel build
 
+### Build installer
+
+```
+cd ~/work/mozc/src
+MOZC_QT_PATH=/Users/mozc/myqt bazel build package --config oss_macos -c opt
+open bazel-bin/mac/Mozc.pkg
+```
+You can use `MOZC_QT_PATH` to specificy the Qt5 directory.
+
+### Unittests
+
+```
+bazel test ... --config oss_macos -c dbg -- -net/... -third_party/...
+```
+
+See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.
+
+
 ### Edit src/config.bzl
 
-Modify variables in `src/config.bzl` to fit your environment.
+You can modify variables in `src/config.bzl` to fit your environment.
 Note: `~` does not represent the home directory.
 The exact path should be specified (e.g. `MACOS_QT_PATH = "/Users/mozc/myqt"`).
 
@@ -58,22 +77,6 @@ This command reverts the above change.
 ```
 git update-index --no-assume-unchanged src/config.bzl
 ```
-
-### Build installer
-
-```
-cd ~/work/mozc/src
-bazel build package --config macos -c opt
-open bazel-bin/mac/Mozc.pkg
-```
-
-### Unittests
-
-```
-bazel test ... --config oss_macos -c dbg -- -net/... -third_party/...
-```
-
-See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.
 
 -----
 
@@ -111,16 +114,6 @@ Make sure the path to python3.
 
 ```
 python3 -m pip install six
-```
-
-### Apply a patch to GYP
-
-The upstream GYP may or may not work on macOS for Mozc.
-You probably need to apply the following patch to GYP.
-
-```
-cd src\third_party\gyp
-git apply ..\..\gyp\gyp.patch
 ```
 
 ### Build main converter and composition UI.

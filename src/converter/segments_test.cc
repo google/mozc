@@ -47,14 +47,14 @@ namespace mozc {
 TEST(SegmentsTest, BasicTest) {
   Segments segments;
 
-  EXPECT_EQ(0, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 0);
 
   constexpr int kSegmentsSize = 5;
   Segment *seg[kSegmentsSize];
   for (int i = 0; i < kSegmentsSize; ++i) {
-    EXPECT_EQ(i, segments.segments_size());
+    EXPECT_EQ(segments.segments_size(), i);
     seg[i] = segments.push_back_segment();
-    EXPECT_EQ(i + 1, segments.segments_size());
+    EXPECT_EQ(segments.segments_size(), i + 1);
   }
 
   const std::string output = segments.DebugString();
@@ -67,23 +67,23 @@ TEST(SegmentsTest, BasicTest) {
   EXPECT_FALSE(segments.resized());
 
   segments.set_max_history_segments_size(10);
-  EXPECT_EQ(10, segments.max_history_segments_size());
+  EXPECT_EQ(segments.max_history_segments_size(), 10);
 
   segments.set_max_history_segments_size(5);
-  EXPECT_EQ(5, segments.max_history_segments_size());
+  EXPECT_EQ(segments.max_history_segments_size(), 5);
 
   for (int i = 0; i < kSegmentsSize; ++i) {
-    EXPECT_EQ(seg[i], segments.mutable_segment(i));
+    EXPECT_EQ(segments.mutable_segment(i), seg[i]);
   }
 
   segments.pop_back_segment();
-  EXPECT_EQ(seg[3], segments.mutable_segment(3));
+  EXPECT_EQ(segments.mutable_segment(3), seg[3]);
 
   segments.pop_front_segment();
-  EXPECT_EQ(seg[1], segments.mutable_segment(0));
+  EXPECT_EQ(segments.mutable_segment(0), seg[1]);
 
   segments.Clear();
-  EXPECT_EQ(0, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 0);
 
   for (int i = 0; i < kSegmentsSize; ++i) {
     seg[i] = segments.push_back_segment();
@@ -91,22 +91,22 @@ TEST(SegmentsTest, BasicTest) {
 
   // erase
   segments.erase_segment(1);
-  EXPECT_EQ(seg[0], segments.mutable_segment(0));
-  EXPECT_EQ(seg[2], segments.mutable_segment(1));
+  EXPECT_EQ(segments.mutable_segment(0), seg[0]);
+  EXPECT_EQ(segments.mutable_segment(1), seg[2]);
 
   segments.erase_segments(1, 2);
-  EXPECT_EQ(seg[0], segments.mutable_segment(0));
-  EXPECT_EQ(seg[4], segments.mutable_segment(1));
+  EXPECT_EQ(segments.mutable_segment(0), seg[0]);
+  EXPECT_EQ(segments.mutable_segment(1), seg[4]);
 
-  EXPECT_EQ(2, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 2);
 
   segments.erase_segments(0, 1);
-  EXPECT_EQ(1, segments.segments_size());
-  EXPECT_EQ(seg[4], segments.mutable_segment(0));
+  EXPECT_EQ(segments.segments_size(), 1);
+  EXPECT_EQ(segments.mutable_segment(0), seg[4]);
 
   // insert
   seg[1] = segments.insert_segment(1);
-  EXPECT_EQ(seg[1], segments.mutable_segment(1));
+  EXPECT_EQ(segments.mutable_segment(1), seg[1]);
 
   segments.Clear();
   for (int i = 0; i < kSegmentsSize; ++i) {
@@ -122,17 +122,17 @@ TEST(SegmentsTest, BasicTest) {
               segments.mutable_conversion_segment(i));
   }
 
-  EXPECT_EQ(2, segments.history_segments_size());
-  EXPECT_EQ(3, segments.conversion_segments_size());
+  EXPECT_EQ(segments.history_segments_size(), 2);
+  EXPECT_EQ(segments.conversion_segments_size(), 3);
 
-  EXPECT_EQ(seg[2], segments.mutable_conversion_segment(0));
-  EXPECT_EQ(seg[0], segments.mutable_history_segment(0));
+  EXPECT_EQ(segments.mutable_conversion_segment(0), seg[2]);
+  EXPECT_EQ(segments.mutable_history_segment(0), seg[0]);
 
   segments.clear_history_segments();
-  EXPECT_EQ(3, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 3);
 
   segments.clear_conversion_segments();
-  EXPECT_EQ(0, segments.segments_size());
+  EXPECT_EQ(segments.segments_size(), 0);
 }
 
 TEST(CandidateTest, BasicTest) {
@@ -143,18 +143,18 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_EQ(segment.key(), str);
 
   segment.set_segment_type(Segment::FIXED_BOUNDARY);
-  EXPECT_EQ(Segment::FIXED_BOUNDARY, segment.segment_type());
+  EXPECT_EQ(segment.segment_type(), Segment::FIXED_BOUNDARY);
 
   constexpr int kCandidatesSize = 5;
   Segment::Candidate *cand[kCandidatesSize];
   for (int i = 0; i < kCandidatesSize; ++i) {
-    EXPECT_EQ(i, segment.candidates_size());
+    EXPECT_EQ(segment.candidates_size(), i);
     cand[i] = segment.push_back_candidate();
-    EXPECT_EQ(i + 1, segment.candidates_size());
+    EXPECT_EQ(segment.candidates_size(), i + 1);
   }
 
   for (int i = 0; i < kCandidatesSize; ++i) {
-    EXPECT_EQ(cand[i], segment.mutable_candidate(i));
+    EXPECT_EQ(segment.mutable_candidate(i), cand[i]);
   }
 
   for (int i = 0; i < kCandidatesSize; ++i) {
@@ -171,16 +171,16 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_FALSE(segment.is_valid_index(-kMetaCandidatesSize - 1));
 
   segment.pop_back_candidate();
-  EXPECT_EQ(cand[3], segment.mutable_candidate(3));
+  EXPECT_EQ(segment.mutable_candidate(3), cand[3]);
 
   segment.pop_front_candidate();
-  EXPECT_EQ(cand[1], segment.mutable_candidate(0));
+  EXPECT_EQ(segment.mutable_candidate(0), cand[1]);
 
   // Pop functions against empty candidates should not raise a runtime error.
   segment.Clear();
   segment.pop_back_candidate();
   segment.pop_front_candidate();
-  EXPECT_EQ(0, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 0);
 
   for (int i = 0; i < kCandidatesSize; ++i) {
     cand[i] = segment.push_back_candidate();
@@ -188,57 +188,57 @@ TEST(CandidateTest, BasicTest) {
 
   // erase
   segment.erase_candidate(1);
-  EXPECT_EQ(cand[0], segment.mutable_candidate(0));
-  EXPECT_EQ(cand[2], segment.mutable_candidate(1));
+  EXPECT_EQ(segment.mutable_candidate(0), cand[0]);
+  EXPECT_EQ(segment.mutable_candidate(1), cand[2]);
 
   segment.erase_candidates(1, 2);
-  EXPECT_EQ(cand[0], segment.mutable_candidate(0));
-  EXPECT_EQ(cand[4], segment.mutable_candidate(1));
-  EXPECT_EQ(2, segment.candidates_size());
+  EXPECT_EQ(segment.mutable_candidate(0), cand[0]);
+  EXPECT_EQ(segment.mutable_candidate(1), cand[4]);
+  EXPECT_EQ(segment.candidates_size(), 2);
 
   // insert
   cand[1] = segment.insert_candidate(1);
-  EXPECT_EQ(cand[1], segment.mutable_candidate(1));
-  EXPECT_EQ(cand[4], segment.mutable_candidate(2));
+  EXPECT_EQ(segment.mutable_candidate(1), cand[1]);
+  EXPECT_EQ(segment.mutable_candidate(2), cand[4]);
 
   // insert with a candidate
   auto c0 = std::make_unique<Segment::Candidate>();
   c0->value = "c0";
   segment.insert_candidate(1, std::move(c0));
-  EXPECT_EQ(cand[0], segment.mutable_candidate(0));
-  EXPECT_EQ("c0", segment.candidate(1).value);
-  EXPECT_EQ(cand[1], segment.mutable_candidate(2));
+  EXPECT_EQ(segment.mutable_candidate(0), cand[0]);
+  EXPECT_EQ(segment.candidate(1).value, "c0");
+  EXPECT_EQ(segment.mutable_candidate(2), cand[1]);
 
   // insert multiple candidates
   std::vector<std::unique_ptr<Segment::Candidate>> cand_vec;
   cand[2] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
   cand[3] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
   segment.insert_candidates(2, std::move(cand_vec));
-  EXPECT_EQ("c0", segment.candidate(1).value);
-  EXPECT_EQ(cand[2], segment.mutable_candidate(2));
-  EXPECT_EQ(cand[3], segment.mutable_candidate(3));
-  EXPECT_EQ(cand[1], segment.mutable_candidate(4));
-  EXPECT_EQ(cand[4], segment.mutable_candidate(5));
+  EXPECT_EQ(segment.candidate(1).value, "c0");
+  EXPECT_EQ(segment.mutable_candidate(2), cand[2]);
+  EXPECT_EQ(segment.mutable_candidate(3), cand[3]);
+  EXPECT_EQ(segment.mutable_candidate(4), cand[1]);
+  EXPECT_EQ(segment.mutable_candidate(5), cand[4]);
 
   // insert candidate with index out of the range.
   segment.Clear();
-  EXPECT_EQ(0, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 0);
   auto c3 = std::make_unique<Segment::Candidate>();
   segment.insert_candidate(-1, std::move(c3));  // less than lower
-  EXPECT_EQ(1, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 1);
   auto c4 = std::make_unique<Segment::Candidate>();
   segment.insert_candidate(5, std::move(c4));  // more than upper
-  EXPECT_EQ(2, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 2);
 
   // insert candidates with index out of the range.
   segment.Clear();
-  EXPECT_EQ(0, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 0);
   std::vector<std::unique_ptr<Segment::Candidate>> cand_vec2(2);
   segment.insert_candidates(-1, std::move(cand_vec2));  // less than lower
-  EXPECT_EQ(2, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 2);
   std::vector<std::unique_ptr<Segment::Candidate>> cand_vec3(3);
   segment.insert_candidates(5, std::move(cand_vec3));  // more than upper
-  EXPECT_EQ(5, segment.candidates_size());
+  EXPECT_EQ(segment.candidates_size(), 5);
 
   // move
   segment.Clear();
@@ -247,9 +247,9 @@ TEST(CandidateTest, BasicTest) {
   }
 
   segment.move_candidate(2, 0);
-  EXPECT_EQ(cand[2], segment.mutable_candidate(0));
-  EXPECT_EQ(cand[0], segment.mutable_candidate(1));
-  EXPECT_EQ(cand[1], segment.mutable_candidate(2));
+  EXPECT_EQ(segment.mutable_candidate(0), cand[2]);
+  EXPECT_EQ(segment.mutable_candidate(1), cand[0]);
+  EXPECT_EQ(segment.mutable_candidate(2), cand[1]);
 }
 
 TEST(CandidateTest, IsValid) {
@@ -296,7 +296,7 @@ TEST(CandidateTest, IsValid) {
 
 TEST(SegmentsTest, RevertEntryTest) {
   Segments segments;
-  EXPECT_EQ(0, segments.revert_entries_size());
+  EXPECT_EQ(segments.revert_entries_size(), 0);
 
   constexpr int kSize = 10;
   for (int i = 0; i < kSize; ++i) {
@@ -305,18 +305,18 @@ TEST(SegmentsTest, RevertEntryTest) {
     e->id = i;
   }
 
-  EXPECT_EQ(kSize, segments.revert_entries_size());
+  EXPECT_EQ(segments.revert_entries_size(), kSize);
 
   for (int i = 0; i < kSize; ++i) {
     {
       const Segments::RevertEntry &e = segments.revert_entry(i);
-      EXPECT_EQ(std::string("test") + std::to_string(i), e.key);
-      EXPECT_EQ(i, e.id);
+      EXPECT_EQ(e.key, std::string("test") + std::to_string(i));
+      EXPECT_EQ(e.id, i);
     }
     {
       Segments::RevertEntry *e = segments.mutable_revert_entry(i);
-      EXPECT_EQ(std::string("test") + std::to_string(i), e->key);
-      EXPECT_EQ(i, e->id);
+      EXPECT_EQ(e->key, std::string("test") + std::to_string(i));
+      EXPECT_EQ(e->id, i);
     }
   }
 
@@ -328,21 +328,21 @@ TEST(SegmentsTest, RevertEntryTest) {
 
   for (int i = 0; i < kSize; ++i) {
     const Segments::RevertEntry &e = segments.revert_entry(i);
-    EXPECT_EQ(std::string("test2") + std::to_string(i), e.key);
-    EXPECT_EQ(kSize - i, e.id);
+    EXPECT_EQ(e.key, std::string("test2") + std::to_string(i));
+    EXPECT_EQ(e.id, kSize - i);
   }
 
   {
     const Segments::RevertEntry &src = segments.revert_entry(0);
     Segments::RevertEntry dest = src;
-    EXPECT_EQ(src.revert_entry_type, dest.revert_entry_type);
-    EXPECT_EQ(src.id, dest.id);
-    EXPECT_EQ(src.timestamp, dest.timestamp);
-    EXPECT_EQ(src.key, dest.key);
+    EXPECT_EQ(dest.revert_entry_type, src.revert_entry_type);
+    EXPECT_EQ(dest.id, src.id);
+    EXPECT_EQ(dest.timestamp, src.timestamp);
+    EXPECT_EQ(dest.key, src.key);
   }
 
   segments.clear_revert_entries();
-  EXPECT_EQ(0, segments.revert_entries_size());
+  EXPECT_EQ(segments.revert_entries_size(), 0);
 }
 
 TEST(SegmentsTest, CopyTest) {
@@ -362,18 +362,18 @@ TEST(SegmentsTest, CopyTest) {
       candidate->key = absl::StrFormat("candidate_%d", i);
     }
   }
-  EXPECT_EQ(kSegmentsSize, src.segments_size());
-  EXPECT_EQ(kCandidatesSize, src.segment(0).candidates_size());
+  EXPECT_EQ(src.segments_size(), kSegmentsSize);
+  EXPECT_EQ(src.segment(0).candidates_size(), kCandidatesSize);
 
   Segments dest = src;
-  EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
-  EXPECT_EQ(src.resized(), dest.resized());
+  EXPECT_EQ(dest.max_history_segments_size(), src.max_history_segments_size());
+  EXPECT_EQ(dest.resized(), src.resized());
 
-  EXPECT_EQ(kSegmentsSize, dest.segments_size());
-  EXPECT_EQ(kCandidatesSize, dest.segment(0).candidates_size());
+  EXPECT_EQ(dest.segments_size(), kSegmentsSize);
+  EXPECT_EQ(dest.segment(0).candidates_size(), kCandidatesSize);
 
   for (int i = 0; i < kSegmentsSize; ++i) {
-    EXPECT_EQ(src.segment(i).key(), dest.segment(i).key());
+    EXPECT_EQ(dest.segment(i).key(), src.segment(i).key());
     for (int j = 0; j < kCandidatesSize; ++j) {
       EXPECT_EQ(src.segment(i).candidate(j).key,
                 dest.segment(i).candidate(j).key);
@@ -387,29 +387,29 @@ TEST(CandidateTest, functional_key) {
 
   candidate.key = "testfoobar";
   candidate.content_key = "test";
-  EXPECT_EQ("foobar", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "foobar");
 
   candidate.key = "testfoo";
   candidate.content_key = "test";
-  EXPECT_EQ("foo", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "foo");
 
   // This is unexpected key/context_key.
   // This method doesn't check the prefix part.
   candidate.key = "abcdefg";
   candidate.content_key = "test";
-  EXPECT_EQ("efg", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "efg");
 
   candidate.key = "test";
   candidate.content_key = "test";
-  EXPECT_EQ("", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "");
 
   candidate.key = "test";
   candidate.content_key = "testfoobar";
-  EXPECT_EQ("", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "");
 
   candidate.key = "";
   candidate.content_key = "";
-  EXPECT_EQ("", candidate.functional_key());
+  EXPECT_EQ(candidate.functional_key(), "");
 }
 
 TEST(CandidateTest, functional_value) {
@@ -418,29 +418,29 @@ TEST(CandidateTest, functional_value) {
 
   candidate.value = "testfoobar";
   candidate.content_value = "test";
-  EXPECT_EQ("foobar", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "foobar");
 
   candidate.value = "testfoo";
   candidate.content_value = "test";
-  EXPECT_EQ("foo", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "foo");
 
   // This is unexpected value/context_value.
   // This method doesn't check the prefix part.
   candidate.value = "abcdefg";
   candidate.content_value = "test";
-  EXPECT_EQ("efg", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "efg");
 
   candidate.value = "test";
   candidate.content_value = "test";
-  EXPECT_EQ("", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "");
 
   candidate.value = "test";
   candidate.content_value = "testfoobar";
-  EXPECT_EQ("", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "");
 
   candidate.value = "";
   candidate.content_value = "";
-  EXPECT_EQ("", candidate.functional_value());
+  EXPECT_EQ(candidate.functional_value(), "");
 }
 
 TEST(CandidateTest, InnerSegmentIterator) {
@@ -474,20 +474,20 @@ TEST(CandidateTest, InnerSegmentIterator) {
     }
 
     ASSERT_EQ(2, keys.size());
-    EXPECT_EQ("test", keys[0]);
-    EXPECT_EQ("foobar", keys[1]);
+    EXPECT_EQ(keys[0], "test");
+    EXPECT_EQ(keys[1], "foobar");
 
     ASSERT_EQ(2, values.size());
-    EXPECT_EQ("red", values[0]);
-    EXPECT_EQ("greenblue", values[1]);
+    EXPECT_EQ(values[0], "red");
+    EXPECT_EQ(values[1], "greenblue");
 
     ASSERT_EQ(2, content_keys.size());
-    EXPECT_EQ("test", content_keys[0]);
-    EXPECT_EQ("foo", content_keys[1]);
+    EXPECT_EQ(content_keys[0], "test");
+    EXPECT_EQ(content_keys[1], "foo");
 
     ASSERT_EQ(2, content_values.size());
-    EXPECT_EQ("red", content_values[0]);
-    EXPECT_EQ("green", content_values[1]);
+    EXPECT_EQ(content_values[0], "red");
+    EXPECT_EQ(content_values[1], "green");
   }
 }
 
@@ -505,27 +505,27 @@ TEST(SegmentTest, Copy) {
 
   // Test copy constructor.
   Segment dest(src);
-  EXPECT_EQ(src.key(), dest.key());
-  EXPECT_EQ(src.segment_type(), dest.segment_type());
-  EXPECT_EQ(src.candidate(0).key, dest.candidate(0).key);
-  EXPECT_EQ(src.candidate(1).key, dest.candidate(1).key);
-  EXPECT_EQ(src.meta_candidate(0).key, dest.meta_candidate(0).key);
+  EXPECT_EQ(dest.key(), src.key());
+  EXPECT_EQ(dest.segment_type(), src.segment_type());
+  EXPECT_EQ(dest.candidate(0).key, src.candidate(0).key);
+  EXPECT_EQ(dest.candidate(1).key, src.candidate(1).key);
+  EXPECT_EQ(dest.meta_candidate(0).key, src.meta_candidate(0).key);
 
   // Test copy assignment.
   dest.add_candidate()->key = "dummy";
   dest.add_candidate()->key = "dummy";
   dest = src;
-  EXPECT_EQ(src.key(), dest.key());
-  EXPECT_EQ(src.segment_type(), dest.segment_type());
-  EXPECT_EQ(src.candidate(0).key, dest.candidate(0).key);
-  EXPECT_EQ(src.candidate(1).key, dest.candidate(1).key);
-  EXPECT_EQ(src.meta_candidate(0).key, dest.meta_candidate(0).key);
+  EXPECT_EQ(dest.key(), src.key());
+  EXPECT_EQ(dest.segment_type(), src.segment_type());
+  EXPECT_EQ(dest.candidate(0).key, src.candidate(0).key);
+  EXPECT_EQ(dest.candidate(1).key, src.candidate(1).key);
+  EXPECT_EQ(dest.meta_candidate(0).key, src.meta_candidate(0).key);
 }
 
 TEST(SegmentTest, MetaCandidateTest) {
   Segment segment;
 
-  EXPECT_EQ(0, segment.meta_candidates_size());
+  EXPECT_EQ(segment.meta_candidates_size(), 0);
 
   constexpr int kCandidatesSize = 5;
   std::vector<std::string> values;
@@ -535,43 +535,43 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   // add_meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
-    EXPECT_EQ(i, segment.meta_candidates_size());
+    EXPECT_EQ(segment.meta_candidates_size(), i);
     Segment::Candidate *cand = segment.add_meta_candidate();
     cand->value = values[i];
-    EXPECT_EQ(i + 1, segment.meta_candidates_size());
+    EXPECT_EQ(segment.meta_candidates_size(), i + 1);
   }
 
   // mutable_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     const int meta_idx = -static_cast<int>(i) - 1;
     Segment::Candidate *cand = segment.mutable_candidate(meta_idx);
-    EXPECT_EQ(values[i], cand->value);
+    EXPECT_EQ(cand->value, values[i]);
   }
 
   // mutable_meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     Segment::Candidate *cand = segment.mutable_meta_candidate(i);
-    EXPECT_EQ(values[i], cand->value);
+    EXPECT_EQ(cand->value, values[i]);
   }
 
   // candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     const int meta_idx = -static_cast<int>(i) - 1;
     const Segment::Candidate &cand = segment.candidate(meta_idx);
-    EXPECT_EQ(values[i], cand.value);
+    EXPECT_EQ(cand.value, values[i]);
   }
 
   // meta_candidate()
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     const Segment::Candidate &cand = segment.meta_candidate(i);
-    EXPECT_EQ(values[i], cand.value);
+    EXPECT_EQ(cand.value, values[i]);
   }
 
   // mutable_meta_candidates
   {
     std::vector<Segment::Candidate> *meta_candidates =
         segment.mutable_meta_candidates();
-    EXPECT_EQ(kCandidatesSize, meta_candidates->size());
+    EXPECT_EQ(meta_candidates->size(), kCandidatesSize);
     Segment::Candidate cand;
     cand.Init();
     cand.value = "Test";
@@ -582,14 +582,14 @@ TEST(SegmentTest, MetaCandidateTest) {
   {
     const std::vector<Segment::Candidate> &meta_candidates =
         segment.meta_candidates();
-    EXPECT_EQ(kCandidatesSize + 1, meta_candidates.size());
+    EXPECT_EQ(meta_candidates.size(), kCandidatesSize + 1);
     for (size_t i = 0; i < kCandidatesSize; ++i) {
-      EXPECT_EQ(values[i], meta_candidates[i].value);
+      EXPECT_EQ(meta_candidates[i].value, values[i]);
     }
-    EXPECT_EQ("Test", meta_candidates[kCandidatesSize].value);
+    EXPECT_EQ(meta_candidates[kCandidatesSize].value, "Test");
   }
   // clear
   segment.clear_meta_candidates();
-  EXPECT_EQ(0, segment.meta_candidates_size());
+  EXPECT_EQ(segment.meta_candidates_size(), 0);
 }
 }  // namespace mozc

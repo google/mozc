@@ -74,13 +74,13 @@ TEST(DictionaryFileTest, Basic) {
     ASSERT_TRUE(df.OpenFromFile(dfn).ok());
     int len;
     const char *ptr = df.GetSection("sec1", &len);
-    EXPECT_EQ(10, len);
+    EXPECT_EQ(len, 10);
     std::string content(ptr, len);
-    EXPECT_EQ("0123456789", content);
+    EXPECT_EQ(content, "0123456789");
     ptr = df.GetSection("sec2", &len);
-    EXPECT_EQ(10, len);
+    EXPECT_EQ(len, 10);
     content.assign(ptr, len);
-    EXPECT_EQ("9876543210", content);
+    EXPECT_EQ(content, "9876543210");
     ptr = df.GetSection("sec3", &len);
     EXPECT_TRUE(ptr == nullptr);
   }

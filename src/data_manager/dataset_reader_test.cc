@@ -73,9 +73,9 @@ TEST(DataSetReaderTest, ValidData) {
 
   absl::string_view data;
   EXPECT_TRUE(r.Get("google", &data));
-  EXPECT_EQ(kGoogle, data);
+  EXPECT_EQ(data, kGoogle);
   EXPECT_TRUE(r.Get("mozc", &data));
-  EXPECT_EQ(kMozc, data);
+  EXPECT_EQ(data, kMozc);
 
   EXPECT_FALSE(r.Get("", &data));
   EXPECT_FALSE(r.Get("foo", &data));

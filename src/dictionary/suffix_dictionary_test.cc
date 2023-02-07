@@ -73,7 +73,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);
-      EXPECT_EQ(Token::SUFFIX_DICTIONARY, token.attributes);
+      EXPECT_EQ(token.attributes, Token::SUFFIX_DICTIONARY);
     }
   }
   {
@@ -88,7 +88,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);
-      EXPECT_EQ(Token::SUFFIX_DICTIONARY, token.attributes);
+      EXPECT_EQ(token.attributes, Token::SUFFIX_DICTIONARY);
     }
   }
 }

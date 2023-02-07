@@ -64,96 +64,96 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
 
   manager->ClearHistory();
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("012"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("012"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("["));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("["), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("/"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("/"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("・"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("・"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("。"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("。"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("、"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("、"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("\\"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("\\"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::NO_CONVERSION,
-            manager->GetConversionCharacterForm("ABC012ほげ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("ABC012ほげ"),
+            config::Config::NO_CONVERSION);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("012"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("["));
+  EXPECT_EQ(manager->GetConversionCharacterForm("["),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("/"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("/"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("・"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("・"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("。"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("。"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("、"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("、"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("\\"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("\\"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::NO_CONVERSION,
-            manager->GetConversionCharacterForm("ABC012ほげ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("ABC012ほげ"),
+            config::Config::NO_CONVERSION);
 
   std::string output;
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertPreeditString("[]・。、", &output);
-  EXPECT_EQ("［］・。、", output);
+  EXPECT_EQ(output, "［］・。、");
 
   manager->ConvertPreeditString(".!@#$%^&", &output);
-  EXPECT_EQ("．！＠＃＄％＾＆", output);
+  EXPECT_EQ(output, "．！＠＃＄％＾＆");
 
   manager->ConvertPreeditString("京都東京ABCｲﾝﾀｰﾈｯﾄ012", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット０１２", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット０１２");
 
   manager->ConvertPreeditString("グーグルABCｲﾝﾀｰﾈｯﾄ012あいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネット０１２あいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネット０１２あいう");
 
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("[京都]{東京}ABC!インターネット", &output);
-  EXPECT_EQ("［京都］｛東京｝ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "［京都］｛東京｝ＡＢＣ！インターネット");
 
   manager->ConvertConversionString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertConversionString("[]・。、", &output);
-  EXPECT_EQ("［］・。、", output);
+  EXPECT_EQ(output, "［］・。、");
 
   manager->ConvertConversionString(".!@#$%^&", &output);
-  EXPECT_EQ("．！＠＃＄％＾＆", output);
+  EXPECT_EQ(output, "．！＠＃＄％＾＆");
 
   manager->ConvertConversionString("京都東京ABCｲﾝﾀｰﾈｯﾄ012", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット０１２", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット０１２");
 
   manager->ConvertConversionString("グーグルABCｲﾝﾀｰﾈｯﾄ012あいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネット０１２あいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネット０１２あいう");
 
   manager->ConvertConversionString("[京都]{東京}ABC!インターネット", &output);
-  EXPECT_EQ("［京都］｛東京｝ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "［京都］｛東京｝ＡＢＣ！インターネット");
 
   // Set
   manager->SetCharacterForm("カタカナ", config::Config::HALF_WIDTH);
@@ -166,112 +166,112 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
   manager->SetCharacterForm("\\", config::Config::HALF_WIDTH);
 
   // retry
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("012"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("012"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("["));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("["), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("/"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("/"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("・"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("・"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("。"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("。"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("、"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("、"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("\\"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("\\"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::NO_CONVERSION,
-            manager->GetConversionCharacterForm("ABC012ほげ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("ABC012ほげ"),
+            config::Config::NO_CONVERSION);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::HALF_WIDTH,
-            manager->GetConversionCharacterForm("012"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::HALF_WIDTH);
 
-  EXPECT_EQ(config::Config::HALF_WIDTH,
-            manager->GetConversionCharacterForm("["));
+  EXPECT_EQ(manager->GetConversionCharacterForm("["),
+            config::Config::HALF_WIDTH);
 
-  EXPECT_EQ(config::Config::HALF_WIDTH,
-            manager->GetConversionCharacterForm("/"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("/"),
+            config::Config::HALF_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("・"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("・"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("。"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("。"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("、"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("、"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::HALF_WIDTH,
-            manager->GetConversionCharacterForm("\\"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("\\"),
+            config::Config::HALF_WIDTH);
 
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertPreeditString("[]・。、", &output);
-  EXPECT_EQ("［］・。、", output);
+  EXPECT_EQ(output, "［］・。、");
 
   manager->ConvertPreeditString(".!@#$%^&", &output);
-  EXPECT_EQ("．！＠＃＄％＾＆", output);
+  EXPECT_EQ(output, "．！＠＃＄％＾＆");
 
   manager->ConvertPreeditString("京都東京ABCｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("グーグルABCｲﾝﾀｰﾈｯﾄあいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネットあいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネットあいう");
 
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("[京都]{東京}ABC!インターネット", &output);
-  EXPECT_EQ("［京都］｛東京｝ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "［京都］｛東京｝ＡＢＣ！インターネット");
 
   manager->ConvertConversionString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertConversionString("[]・。、", &output);
-  EXPECT_EQ("[]・。、", output);
+  EXPECT_EQ(output, "[]・。、");
 
   manager->ConvertConversionString(".!@#$%^&", &output);
   // ".!@#$%^&" will be "．！@#$%^&" by preference, but this is not
   // consistent form. so we do not convert this.
-  EXPECT_EQ(".!@#$%^&", output);
+  EXPECT_EQ(output, ".!@#$%^&");
 
   // However we can convert separately.
   manager->ConvertConversionString(".!", &output);
   // "．！"
-  EXPECT_EQ("．！", output);
+  EXPECT_EQ(output, "．！");
   manager->ConvertConversionString("@#$%^&", &output);
-  EXPECT_EQ("@#$%^&", output);
+  EXPECT_EQ(output, "@#$%^&");
 
   manager->ConvertConversionString("京都東京ABCｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertConversionString("グーグルABCｲﾝﾀｰﾈｯﾄあいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネットあいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネットあいう");
 
   manager->ConvertConversionString("[京都]{東京}ABC!インターネット", &output);
   // "[京都]{東京}ABC!インターネット" will be
   // "[京都]{東京}ＡＢＣ！インターネット" by preference and this is
   // not consistent
-  EXPECT_EQ("[京都]{東京}ABC!インターネット", output);
+  EXPECT_EQ(output, "[京都]{東京}ABC!インターネット");
 
   // we can convert separately
   // "[京都]{東京}ＡＢＣ！インターネット"
   manager->ConvertConversionString("[京都]{東京}", &output);
-  EXPECT_EQ("[京都]{東京}", output);
+  EXPECT_EQ(output, "[京都]{東京}");
 
   manager->ConvertConversionString("ABC!インターネット", &output);
-  EXPECT_EQ("ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "ＡＢＣ！インターネット");
 
   // reset
   manager->SetCharacterForm("カタカナ", config::Config::FULL_WIDTH);
@@ -283,92 +283,92 @@ TEST_F(CharacterFormManagerTest, DefaultTest) {
   manager->SetCharacterForm("、", config::Config::FULL_WIDTH);
   manager->SetCharacterForm("\\", config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetPreeditCharacterForm("012"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("012"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("["));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("["), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("/"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("/"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("・"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("・"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("。"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("。"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("、"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("、"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH, manager->GetPreeditCharacterForm("\\"));
+  EXPECT_EQ(manager->GetPreeditCharacterForm("\\"), config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::NO_CONVERSION,
-            manager->GetConversionCharacterForm("ABC012ほげ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("ABC012ほげ"),
+            config::Config::NO_CONVERSION);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("カタカナ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("カタカナ"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("012"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("012"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("["));
+  EXPECT_EQ(manager->GetConversionCharacterForm("["),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("/"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("/"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("・"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("・"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("。"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("。"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::FULL_WIDTH,
-            manager->GetConversionCharacterForm("、"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("、"),
+            config::Config::FULL_WIDTH);
 
-  EXPECT_EQ(config::Config::NO_CONVERSION,
-            manager->GetConversionCharacterForm("ABC012ほげ"));
+  EXPECT_EQ(manager->GetConversionCharacterForm("ABC012ほげ"),
+            config::Config::NO_CONVERSION);
 
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertPreeditString("[]・。、", &output);
-  EXPECT_EQ("［］・。、", output);
+  EXPECT_EQ(output, "［］・。、");
 
   manager->ConvertPreeditString(".!@#$%^&", &output);
-  EXPECT_EQ("．！＠＃＄％＾＆", output);
+  EXPECT_EQ(output, "．！＠＃＄％＾＆");
 
   manager->ConvertPreeditString("京都東京ABCｲﾝﾀｰﾈｯﾄ012", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット０１２", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット０１２");
 
   manager->ConvertPreeditString("グーグルABCｲﾝﾀｰﾈｯﾄ012あいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネット０１２あいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネット０１２あいう");
 
   manager->ConvertPreeditString("京都東京ABCインターネット", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット");
 
   manager->ConvertPreeditString("[京都]{東京}ABC!インターネット", &output);
-  EXPECT_EQ("［京都］｛東京｝ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "［京都］｛東京｝ＡＢＣ！インターネット");
 
   manager->ConvertConversionString("ｲﾝﾀｰﾈｯﾄ", &output);
-  EXPECT_EQ("インターネット", output);
+  EXPECT_EQ(output, "インターネット");
 
   manager->ConvertConversionString("[]・。、", &output);
-  EXPECT_EQ("［］・。、", output);
+  EXPECT_EQ(output, "［］・。、");
 
   manager->ConvertConversionString(".!@#$%^&", &output);
-  EXPECT_EQ("．！＠＃＄％＾＆", output);
+  EXPECT_EQ(output, "．！＠＃＄％＾＆");
 
   manager->ConvertConversionString("京都東京ABCｲﾝﾀｰﾈｯﾄ012", &output);
-  EXPECT_EQ("京都東京ＡＢＣインターネット０１２", output);
+  EXPECT_EQ(output, "京都東京ＡＢＣインターネット０１２");
 
   manager->ConvertConversionString("グーグルABCｲﾝﾀｰﾈｯﾄ012あいう", &output);
-  EXPECT_EQ("グーグルＡＢＣインターネット０１２あいう", output);
+  EXPECT_EQ(output, "グーグルＡＢＣインターネット０１２あいう");
 
   manager->ConvertConversionString("[京都]{東京}ABC!インターネット", &output);
-  EXPECT_EQ("［京都］｛東京｝ＡＢＣ！インターネット", output);
+  EXPECT_EQ(output, "［京都］｛東京｝ＡＢＣ！インターネット");
 }
 
 TEST_F(CharacterFormManagerTest, MixedFormTest) {
@@ -382,12 +382,12 @@ TEST_F(CharacterFormManagerTest, MixedFormTest) {
 
   std::string output;
   manager->ConvertConversionString("1.23", &output);
-  EXPECT_EQ("1.23", output);
+  EXPECT_EQ(output, "1.23");
 
   manager->ConvertPreeditString("1.23", &output);
   // The period is half width here
   // because require_consistent_conversion_ is false.
-  EXPECT_EQ("１.２３", output);
+  EXPECT_EQ(output, "１.２３");
 }
 
 TEST_F(CharacterFormManagerTest, GroupTest) {
@@ -404,27 +404,27 @@ TEST_F(CharacterFormManagerTest, GroupTest) {
     manager->AddConversionRule("!@#$%^&*()-=", config::Config::FULL_WIDTH);
     manager->AddConversionRule("!@#$%^&*()-=", config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("["));
+    EXPECT_EQ(manager->GetConversionCharacterForm("["),
+              config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("["));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("["),
+              config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetPreeditCharacterForm("ア"));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("ア"),
+              config::Config::HALF_WIDTH);
 
     manager->SetCharacterForm("[", config::Config::FULL_WIDTH);
     manager->SetCharacterForm("ア", config::Config::FULL_WIDTH);
     manager->SetCharacterForm("@", config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("["));
+    EXPECT_EQ(manager->GetConversionCharacterForm("["),
+              config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("["));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("["),
+              config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetPreeditCharacterForm("ア"));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("ア"),
+              config::Config::HALF_WIDTH);
   }
 
   {
@@ -434,14 +434,14 @@ TEST_F(CharacterFormManagerTest, GroupTest) {
     manager->AddConversionRule("[]", config::Config::LAST_FORM);
     manager->AddConversionRule("!@#$%^&*()-=", config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,  // default
-              manager->GetConversionCharacterForm("["));
+    EXPECT_EQ(manager->GetConversionCharacterForm("["),
+              config::Config::FULL_WIDTH);  // default
 
     // same group
     manager->SetCharacterForm("]", config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("["));
+    EXPECT_EQ(manager->GetConversionCharacterForm("["),
+              config::Config::HALF_WIDTH);
   }
 
   {
@@ -451,26 +451,26 @@ TEST_F(CharacterFormManagerTest, GroupTest) {
     manager->AddConversionRule("[](){}", config::Config::LAST_FORM);
     manager->AddConversionRule("!@#$%^&*-=", config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("{"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("}"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("("));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm(")"));
+    EXPECT_EQ(manager->GetConversionCharacterForm("{"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("}"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("("),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm(")"),
+              config::Config::FULL_WIDTH);
 
     // same group
     manager->SetCharacterForm(")", config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("{"));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("}"));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("("));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm(")"));
+    EXPECT_EQ(manager->GetConversionCharacterForm("{"),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("}"),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("("),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm(")"),
+              config::Config::HALF_WIDTH);
   }
 
   {
@@ -481,44 +481,44 @@ TEST_F(CharacterFormManagerTest, GroupTest) {
     manager->AddPreeditRule("[](){}", config::Config::FULL_WIDTH);
     manager->AddConversionRule("!@#$%^&*-=", config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("{"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("}"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm("("));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetConversionCharacterForm(")"));
+    EXPECT_EQ(manager->GetConversionCharacterForm("{"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("}"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("("),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm(")"),
+              config::Config::FULL_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("{"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("}"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("("));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm(")"));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("{"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm("}"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm("("),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm(")"),
+              config::Config::FULL_WIDTH);
 
     // same group
     manager->SetCharacterForm(")", config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("{"));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("}"));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm("("));
-    EXPECT_EQ(config::Config::HALF_WIDTH,
-              manager->GetConversionCharacterForm(")"));
+    EXPECT_EQ(manager->GetConversionCharacterForm("{"),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("}"),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm("("),
+              config::Config::HALF_WIDTH);
+    EXPECT_EQ(manager->GetConversionCharacterForm(")"),
+              config::Config::HALF_WIDTH);
 
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("{"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("}"));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm("("));
-    EXPECT_EQ(config::Config::FULL_WIDTH,
-              manager->GetPreeditCharacterForm(")"));
+    EXPECT_EQ(manager->GetPreeditCharacterForm("{"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm("}"),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm("("),
+              config::Config::FULL_WIDTH);
+    EXPECT_EQ(manager->GetPreeditCharacterForm(")"),
+              config::Config::FULL_WIDTH);
   }
 }
 
@@ -600,7 +600,7 @@ TEST_F(CharacterFormManagerTest, InvalidStringTest) {
   // "る<invalid>る"
   manager->ConvertConversionString("\xE3\x82\x8B\x88\xE3\x82\x8B", &output);
 
-  EXPECT_EQ("るる", output);
+  EXPECT_EQ(output, "るる");
 }
 
 }  // namespace config

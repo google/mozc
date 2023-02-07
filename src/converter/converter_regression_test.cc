@@ -92,11 +92,11 @@ TEST_F(ConverterRegressionTest, Regression3323108) {
   Segments segments;
 
   EXPECT_TRUE(converter->StartConversion(&segments, "ここではきものをぬぐ"));
-  EXPECT_EQ(3, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 3);
   const ConversionRequest default_request;
   EXPECT_TRUE(converter->ResizeSegment(&segments, default_request, 1, 2));
-  EXPECT_EQ(2, segments.conversion_segments_size());
-  EXPECT_EQ("きものをぬぐ", segments.conversion_segment(1).key());
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
+  EXPECT_EQ(segments.conversion_segment(1).key(), "きものをぬぐ");
 }
 
 }  // namespace

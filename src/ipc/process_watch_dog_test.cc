@@ -48,7 +48,7 @@ class TestProcessWatchDog : public ProcessWatchDog {
   void Signaled(ProcessWatchDog::SignalType type) override {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
     const uint64_t diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(2, diff);  // allow 1-sec error
+    EXPECT_EQ(diff, 2);  // allow 1-sec error
   }
 };
 

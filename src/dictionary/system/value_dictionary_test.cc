@@ -179,8 +179,8 @@ TEST_F(ValueDictionaryTest, LookupExact) {
 
   CollectTokenCallback callback;
   dictionary->LookupExact("war", convreq_, &callback);
-  ASSERT_EQ(1, callback.tokens().size());
-  EXPECT_EQ("war", callback.tokens()[0].value);
+  ASSERT_EQ(callback.tokens().size(), 1);
+  EXPECT_EQ(callback.tokens()[0].value, "war");
 }
 
 }  // namespace dictionary
