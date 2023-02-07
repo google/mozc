@@ -432,11 +432,11 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   EXPECT_TRUE(CreateSession(&handler, &session_id));
   {
     // KOTOERI doesn't assign anything to ctrl+shift+space (precomposition) so
-    // TEST_SEND_KEY shouldn't consume it.
+    // SEND_KEY shouldn't consume it.
     commands::Command command;
     commands::Input *input = command.mutable_input();
     input->set_id(session_id);
-    input->set_type(commands::Input::TEST_SEND_KEY);
+    input->set_type(commands::Input::SEND_KEY);
     input->mutable_key()->set_special_key(commands::KeyEvent::SPACE);
     input->mutable_key()->add_modifier_keys(commands::KeyEvent::SHIFT);
     input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
@@ -463,11 +463,12 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     commands::Command command;
     commands::Input *input = command.mutable_input();
     input->set_id(session_id);
-    input->set_type(commands::Input::TEST_SEND_KEY);
+    input->set_type(commands::Input::SEND_KEY);
     input->mutable_key()->set_special_key(commands::KeyEvent::F7);
     input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_TRUE(command.output().consumed());
+    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
+              command.output().launch_tool_mode());
   }
 
   EXPECT_COUNT_STATS("SetConfig", 1);
