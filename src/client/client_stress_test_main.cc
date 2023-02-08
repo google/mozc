@@ -46,7 +46,6 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"

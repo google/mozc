@@ -43,7 +43,6 @@
 #include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"

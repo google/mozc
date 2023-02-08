@@ -112,12 +112,8 @@ class SessionHandler : public SessionHandlerInterface {
   void Init(std::unique_ptr<EngineInterface> engine,
             std::unique_ptr<EngineBuilderInterface> engine_builder);
 
-  // Updates all the sessions by UpdateSessions() with given |config|.
-  // Stored or imporsed configs are not updated.
-  // Intented to be called with the value from ConfigHandler::GetConfig()
-  // (except for testing code).
-  void SetConfig(const config::Config &config);
   // Updates the stored config, if the |command| contains the config.
+  // TODO(b/267705984): Rename to "MaybeUpdateConfig" later.
   void MaybeUpdateStoredConfig(commands::Command *command);
 
   bool CreateSession(commands::Command *command);
@@ -133,9 +129,9 @@ class SessionHandler : public SessionHandlerInterface {
   // Reloads all the sessions.
   // Before that, UpdateSessions() is called to update them.
   bool Reload(commands::Command *command);
+  // TODO(b/267705984): Rename to "Get/SetConfig" later.
   bool GetStoredConfig(commands::Command *command);
   bool SetStoredConfig(commands::Command *command);
-  bool SetImposedConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
   // Sets the given config, request, and delivertive information

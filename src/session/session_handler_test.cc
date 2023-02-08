@@ -267,6 +267,45 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
+TEST_F(SessionHandlerTest, CreateSession_Config) {
+  // Setting ATOK to ConfigHandler before all other initializations.
+  //  Not using SET_CONFIG command
+  // because we're emulating the behavior of initial launch of Mozc
+  // decoder, where SET_CONFIG isn't sent.
+  config::Config config;
+  config.set_session_keymap(config::Config::ATOK);
+  config::ConfigHandler::SetConfig(config);
+
+  SessionHandler handler(CreateMockDataEngine());
+
+  // The created session should be using ATOK keymap.
+  uint64_t session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  {
+    // Move to PRECOMPOSITION mode.
+    // On Windows, its initial mode is DIRECT.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::ON);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+  }
+  {
+    // Check if the config in ConfigHandler is respected
+    // even without SET_CONFIG command.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::F7);
+    input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
+              command.output().launch_tool_mode());
+  }
+}
+
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   const int32_t interval_time = 10;  // 10 sec
   absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
@@ -430,6 +469,16 @@ TEST_F(SessionHandlerTest, ConfigTest) {
 
   uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
+  {
+    // Move to PRECOMPOSITION mode.
+    // On Windows, its initial mode is DIRECT.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::ON);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+  }
   {
     // KOTOERI doesn't assign anything to ctrl+shift+space (precomposition) so
     // SEND_KEY shouldn't consume it.

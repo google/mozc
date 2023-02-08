@@ -47,7 +47,6 @@
 #if defined(__APPLE__) || defined(OS_IOS)
 #include "base/mac_util.h"
 #endif  // __APPLE__ || OS_IOS
-#include "base/port.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
