@@ -148,7 +148,7 @@ void SessionHandler::Init(
       std::make_unique<user_dictionary::UserDictionarySessionHandler>();
   table_manager_ = std::make_unique<composer::TableManager>();
   request_ = std::make_unique<commands::Request>();
-  config_ = std::make_unique<config::Config>();
+  config_ = config::ConfigHandler::GetConfig();
   key_map_manager_ = std::make_unique<keymap::KeyMapManager>(*config_);
 
   if (absl::GetFlag(FLAGS_restricted)) {
@@ -169,8 +169,6 @@ void SessionHandler::Init(
   session_watch_dog_ = std::make_unique<SessionWatchDog>(
       absl::GetFlag(FLAGS_watch_dog_interval));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-
-  config_ = config::ConfigHandler::GetConfig();
 
   // allow [2..128] sessions
   max_session_size_ =
