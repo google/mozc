@@ -470,6 +470,16 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
   {
+    // Move to PRECOMPOSITION mode.
+    // On Windows, its initial mode is DIRECT.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::ON);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+  }
+  {
     // KOTOERI doesn't assign anything to ctrl+shift+space (precomposition) so
     // SEND_KEY shouldn't consume it.
     commands::Command command;
