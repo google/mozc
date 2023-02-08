@@ -37,7 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

@@ -40,7 +40,6 @@
 #include "base/init_mozc.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"

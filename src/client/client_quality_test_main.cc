@@ -41,7 +41,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/multifile.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "evaluation/scorer.h"
