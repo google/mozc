@@ -41,7 +41,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
-#include "renderer/unix/const.h"
 #include "unix/ibus/ibus_wrapper.h"
 #include "absl/strings/string_view.h"
 

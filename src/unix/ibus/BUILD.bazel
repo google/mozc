@@ -337,7 +337,6 @@ mozc_cc_library(
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
-        "//renderer:unix_const",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         linux = [
