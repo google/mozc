@@ -50,6 +50,7 @@ mozc_cc_library(
     name = "renderer_client",
     srcs = ["renderer_client.cc"],
     hdrs = ["renderer_client.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":renderer_interface",
         "//base",
@@ -184,6 +185,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "renderer_interface",
     hdrs = ["renderer_interface.h"],
+    visibility = ["//visibility:public"],
 )
 
 mozc_cc_library(
@@ -196,6 +198,7 @@ mozc_cc_library(
     name = "renderer_mock",
     testonly = True,
     hdrs = ["renderer_mock.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":renderer_interface",
         "//testing:gunit",
