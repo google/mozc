@@ -43,6 +43,7 @@ package(default_visibility = [
 mozc_cc_library(
     name = "client_interface",
     hdrs = ["client_interface.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -62,6 +63,7 @@ mozc_cc_library(
         linux = ["MOZC_USE_SVS_JAPANESE"],
         oss = ["MOZC_USE_SVS_JAPANESE"],
     ),
+    visibility = ["//visibility:public"],
     deps = [
         ":client_interface",
         "//base",
@@ -79,6 +81,7 @@ mozc_cc_library(
         "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//session:ime_switch_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
@@ -97,10 +100,11 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":client",
-        "//base",
         "//base:logging",
         "//base:number_util",
         "//base:version",
+        "//composer:key_parser",
+        "//config:config_handler",
         "//ipc:ipc_mock",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -115,6 +119,7 @@ mozc_cc_library(
     testonly = True,
     srcs = ["client_mock.cc"],
     hdrs = ["client_mock.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":client_interface",
         "//base",
@@ -143,7 +148,6 @@ mozc_cc_binary(
     srcs = ["client_stress_test_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:file_stream",
         "//base:init_mozc",
         "//base:logging",
@@ -182,7 +186,6 @@ mozc_cc_binary(
     srcs = ["client_performance_test_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:file_stream",
         "//base:init_mozc",
         "//base:japanese_util",
@@ -190,7 +193,6 @@ mozc_cc_binary(
         "//base:singleton",
         "//base:stopwatch",
         "//base:util",
-        "//composer:key_parser",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//session:random_keyevents_generator",

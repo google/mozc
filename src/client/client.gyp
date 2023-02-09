@@ -46,6 +46,7 @@
         '../ipc/ipc.gyp:ipc',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
+        '../session/session_base.gyp:ime_switch_util',
       ],
       'export_dependent_settings': [
         '../protocol/protocol.gyp:commands_proto',

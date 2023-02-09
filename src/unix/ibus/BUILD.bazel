@@ -209,7 +209,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//renderer:renderer_client",
-        "//session:ime_switch_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -337,7 +336,6 @@ mozc_cc_library(
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
-        "//renderer:unix_const",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         linux = [

@@ -58,6 +58,8 @@ class ClientMock : public client::ClientInterface {
   bool SendCommandWithContext(const commands::SessionCommand &argument,
                               const commands::Context &context,
                               commands::Output *output) override;
+
+  bool IsDirectModeCommand(const commands::KeyEvent &key) const override;
   bool GetConfig(config::Config *config) override;
   bool SetConfig(const config::Config &config) override;
   bool ClearUserHistory() override;

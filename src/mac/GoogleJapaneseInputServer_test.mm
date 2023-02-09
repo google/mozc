@@ -70,14 +70,14 @@ class GoogleJapaneseInputServerTest : public testing::Test {
 
 - (void)sendCommand:(mozc::commands::SessionCommand &)command {
   ASSERT_NE((void *)0, expectedCommand_);
-  EXPECT_EQ(expectedCommand_->DebugString(), command.DebugString());
+  EXPECT_EQ(command.DebugString(), expectedCommand_->DebugString());
   ++numSendData_;
 }
 
 - (void)outputResult:(mozc::commands::Output *)data {
-  ASSERT_NE((void *)0, data);
-  ASSERT_NE((void *)0, expectedData_);
-  EXPECT_EQ(expectedData_->DebugString(), data->DebugString());
+  ASSERT_NE(data, (void *)0);
+  ASSERT_NE(expectedData_, (void *)0);
+  EXPECT_EQ(data->DebugString(), expectedData_->DebugString());
   ++numOutputResult_;
 }
 @end
@@ -94,7 +94,7 @@ TEST_F(GoogleJapaneseInputServerTest, sendData) {
 
   std::string commandData = command.SerializeAsString();
   [server_ sendData:[NSData dataWithBytes:commandData.data() length:commandData.size()]];
-  EXPECT_EQ(1, controller.numSendData);
+  EXPECT_EQ(controller.numSendData, 1);
 }
 
 TEST_F(GoogleJapaneseInputServerTest, outputResult) {
@@ -110,5 +110,5 @@ TEST_F(GoogleJapaneseInputServerTest, outputResult) {
 
   std::string outputData = output.SerializeAsString();
   [server_ outputResult:[NSData dataWithBytes:outputData.data() length:outputData.size()]];
-  EXPECT_EQ(1, controller.numOutputResult);
+  EXPECT_EQ(controller.numOutputResult, 1);
 }

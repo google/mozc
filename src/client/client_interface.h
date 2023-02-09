@@ -151,6 +151,9 @@ class ClientInterface {
   // If you really want to ensure the connection,
   // call EnsureConnection() in advance.
 
+  // Return true if the key is consumed in the direct mode.
+  virtual bool IsDirectModeCommand(const commands::KeyEvent &key) const = 0;
+
   // Get/Set config data
   virtual bool GetConfig(config::Config *config) = 0;
   virtual bool SetConfig(const config::Config &config) = 0;

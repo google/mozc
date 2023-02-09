@@ -243,8 +243,8 @@ TEST(JsonUtilTest, EmptyTest) {
   Json::Value json_value;
   EXPECT_TRUE(JsonUtil::ProtobufMessageToJsonValue(msg, &json_value));
   Json::Value expected_value = GetDefaultExpectedValue();
-  EXPECT_EQ(Json::FastWriter().write(expected_value),
-            Json::FastWriter().write(json_value));
+  EXPECT_EQ(Json::FastWriter().write(json_value),
+            Json::FastWriter().write(expected_value));
   TestMsg new_msg;
   FillRequiredFields(&msg);
   EXPECT_TRUE(JsonUtil::JsonValueToProtobufMessage(json_value, &new_msg));
@@ -599,8 +599,8 @@ TEST(JsonUtilTest, SubMsgTest) {
     expected_value["sub_message"] = GetDefaultSubMessageExpectedValue();
     expected_value["sub_message"]["double_value"] = 100.0;
     expected_value["sub_message"]["float_value"] = 200.0;
-    EXPECT_EQ(Json::FastWriter().write(expected_value),
-              Json::FastWriter().write(value));
+    EXPECT_EQ(Json::FastWriter().write(value),
+              Json::FastWriter().write(expected_value));
     TestMsg new_msg;
     EXPECT_TRUE(JsonUtil::JsonValueToProtobufMessage(value, &new_msg));
     FillRequiredFields(&msg);
@@ -628,8 +628,8 @@ TEST(JsonUtilTest, SubMsgTest) {
     expected_value["repeated_sub_message"].append(sub_value1);
     expected_value["repeated_sub_message"].append(sub_value2);
     expected_value["repeated_sub_message"].append(sub_value3);
-    EXPECT_EQ(Json::FastWriter().write(expected_value),
-              Json::FastWriter().write(value));
+    EXPECT_EQ(Json::FastWriter().write(value),
+              Json::FastWriter().write(expected_value));
     TestMsg new_msg;
     EXPECT_TRUE(JsonUtil::JsonValueToProtobufMessage(value, &new_msg));
     FillRequiredFields(&msg);
@@ -672,8 +672,8 @@ TEST(JsonUtilTest, CombinedTest) {
   repeated_sub_value2["repeated_enum_value"].append("ENUM_C");
   repeated_sub_value2["repeated_enum_value"].append("ENUM_A");
   expected_value["repeated_sub_message"].append(repeated_sub_value2);
-  EXPECT_EQ(Json::FastWriter().write(expected_value),
-            Json::FastWriter().write(value));
+  EXPECT_EQ(Json::FastWriter().write(value),
+            Json::FastWriter().write(expected_value));
   TestMsg new_msg;
   EXPECT_TRUE(JsonUtil::JsonValueToProtobufMessage(value, &new_msg));
   FillRequiredFields(&msg);
@@ -696,38 +696,38 @@ TEST(JsonUtilTest, JsonParseTest) {
   // signed int 32
   EXPECT_FALSE(ParseToMessage("{\"int32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"int32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.int32_value());
+  EXPECT_EQ(msg.int32_value(), std::numeric_limits<int32_t>::min());
   EXPECT_TRUE(ParseToMessage("{\"int32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.int32_value());
+  EXPECT_EQ(msg.int32_value(), std::numeric_limits<int32_t>::max());
   EXPECT_FALSE(ParseToMessage("{\"int32_value\": 2147483648}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"sint32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"sint32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.sint32_value());
+  EXPECT_EQ(msg.sint32_value(), std::numeric_limits<int32_t>::min());
   EXPECT_TRUE(ParseToMessage("{\"sint32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.sint32_value());
+  EXPECT_EQ(msg.sint32_value(), std::numeric_limits<int32_t>::max());
   EXPECT_FALSE(ParseToMessage("{\"sint32_value\": 2147483648}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.sfixed32_value());
+  EXPECT_EQ(msg.sfixed32_value(), std::numeric_limits<int32_t>::min());
   EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.sfixed32_value());
+  EXPECT_EQ(msg.sfixed32_value(), std::numeric_limits<int32_t>::max());
   EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": 2147483648}", &msg));
 
   // unsigned int 32
   EXPECT_FALSE(ParseToMessage("{\"uint32_value\": -1}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 0}", &msg));
-  EXPECT_EQ(0, msg.uint32_value());
+  EXPECT_EQ(msg.uint32_value(), 0);
   EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 4294967295}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint32_t>::max(), msg.uint32_value());
+  EXPECT_EQ(msg.uint32_value(), std::numeric_limits<uint32_t>::max());
   EXPECT_FALSE(ParseToMessage("{\"uint32_value\": 4294967296}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": -1}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 0}", &msg));
-  EXPECT_EQ(0, msg.fixed32_value());
+  EXPECT_EQ(msg.fixed32_value(), 0);
   EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 4294967295}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint32_t>::max(), msg.fixed32_value());
+  EXPECT_EQ(msg.fixed32_value(), std::numeric_limits<uint32_t>::max());
   EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": 4294967296}", &msg));
 
   // signed int 64
@@ -735,10 +735,10 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"int64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"int64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.int64_value());
+  EXPECT_EQ(msg.int64_value(), std::numeric_limits<int64_t>::min());
   EXPECT_TRUE(
       ParseToMessage("{\"int64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.int64_value());
+  EXPECT_EQ(msg.int64_value(), std::numeric_limits<int64_t>::max());
   EXPECT_FALSE(
       ParseToMessage("{\"int64_value\": \"9223372036854775808\"}", &msg));
 
@@ -746,10 +746,10 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"sint64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"sint64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.sint64_value());
+  EXPECT_EQ(msg.sint64_value(), std::numeric_limits<int64_t>::min());
   EXPECT_TRUE(
       ParseToMessage("{\"sint64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.sint64_value());
+  EXPECT_EQ(msg.sint64_value(), std::numeric_limits<int64_t>::max());
   EXPECT_FALSE(
       ParseToMessage("{\"sint64_value\": \"9223372036854775808\"}", &msg));
 
@@ -757,29 +757,29 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"sfixed64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"sfixed64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.sfixed64_value());
+  EXPECT_EQ(msg.sfixed64_value(), std::numeric_limits<int64_t>::min());
   EXPECT_TRUE(
       ParseToMessage("{\"sfixed64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.sfixed64_value());
+  EXPECT_EQ(msg.sfixed64_value(), std::numeric_limits<int64_t>::max());
   EXPECT_FALSE(
       ParseToMessage("{\"sfixed64_value\": \"9223372036854775808\"}", &msg));
 
   // unsigned int 64
   EXPECT_FALSE(ParseToMessage("{\"uint64_value\": \"-1\"}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"uint64_value\": \"0\"}", &msg));
-  EXPECT_EQ(0, msg.uint64_value());
+  EXPECT_EQ(msg.uint64_value(), 0);
   EXPECT_TRUE(
       ParseToMessage("{\"uint64_value\": \"18446744073709551615\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint64_t>::max(), msg.uint64_value());
+  EXPECT_EQ(msg.uint64_value(), std::numeric_limits<uint64_t>::max());
   EXPECT_FALSE(
       ParseToMessage("{\"uint64_value\": \"18446744073709551616\"}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"fixed64_value\": \"-1\"}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"fixed64_value\": \"0\"}", &msg));
-  EXPECT_EQ(0, msg.fixed64_value());
+  EXPECT_EQ(msg.fixed64_value(), 0);
   EXPECT_TRUE(
       ParseToMessage("{\"fixed64_value\": \"18446744073709551615\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint64_t>::max(), msg.fixed64_value());
+  EXPECT_EQ(msg.fixed64_value(), std::numeric_limits<uint64_t>::max());
   EXPECT_FALSE(
       ParseToMessage("{\"fixed64_value\": \"18446744073709551616\"}", &msg));
 }

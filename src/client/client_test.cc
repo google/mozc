@@ -38,6 +38,8 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/version.h"
+#include "composer/key_parser.h"
+#include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -399,6 +401,200 @@ TEST_F(ClientTest, SendCommandWithContext) {
   EXPECT_EQ(input.context().preceding_text(), kPrecedingText);
   EXPECT_EQ(input.context().following_text(), kFollowingText);
   EXPECT_EQ(input.context().suppress_suggestion(), kSuppressSuggestion);
+}
+
+TEST_F(ClientTest, IsDirectModeCommandPresetTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  config::Config config = config::ConfigHandler::DefaultConfig();
+  config.set_session_keymap(config::Config::ATOK);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("EISU", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ON", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    // Reconcersion
+    commands::KeyEvent key;
+    KeyParser::ParseKey("Shift HENKAN", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+
+  config.set_session_keymap(config::Config::MSIME);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("EISU", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ON", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+
+  config.set_session_keymap(config::Config::KOTOERI);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("EISU", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ON", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    // Reconcersion
+    commands::KeyEvent key;
+    KeyParser::ParseKey("Ctrl Shift r", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+}
+
+TEST_F(ClientTest, IsDirectModeCommandDefaultTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  config::Config config = config::ConfigHandler::DefaultConfig();
+  config.set_session_keymap(config::Config::NONE);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    // HENKAN key in MSIME is TurnOn key while it's not in KOTOERI.
+    if (config::ConfigHandler::GetDefaultKeyMap() == config::Config::MSIME) {
+      EXPECT_TRUE(client_->IsDirectModeCommand(key));
+    } else {
+      EXPECT_FALSE(client_->IsDirectModeCommand(key));
+    }
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("EISU", &key);
+    if (config::ConfigHandler::GetDefaultKeyMap() == config::Config::MSIME) {
+      EXPECT_TRUE(client_->IsDirectModeCommand(key));
+    } else {
+      EXPECT_FALSE(client_->IsDirectModeCommand(key));
+    }
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ON", &key);
+    key.set_special_key(commands::KeyEvent::ON);
+    if (config::ConfigHandler::GetDefaultKeyMap() == config::Config::CHROMEOS) {
+      EXPECT_FALSE(client_->IsDirectModeCommand(key));
+    } else {
+      EXPECT_TRUE(client_->IsDirectModeCommand(key));
+    }
+  }
+}
+
+TEST_F(ClientTest, IsDirectModeCommandFailureTest) {
+  // As SetupConnection is not called, SetConfig fails to update the config.
+
+  config::Config config = config::ConfigHandler::DefaultConfig();
+  config.set_session_keymap(config::Config::ATOK);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    // Make sure that the keymap is not updated with no connections.
+    // "Shift HENKAN" is not a direct mode command in the default keymap.
+    commands::KeyEvent key;
+    KeyParser::ParseKey("Shift HENKAN", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
+}
+
+TEST_F(ClientTest, IsDirectModeCommandCustomTest) {
+  const int mock_id = 123;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  commands::Output mock_output;
+  mock_output.set_id(mock_id);
+  mock_output.set_consumed(true);
+  SetMockOutput(mock_output);
+
+  config::Config config = config::ConfigHandler::DefaultConfig();
+
+  const std::string custom_keymap_table =
+      "status\tkey\tcommand\n"
+      "DirectInput\tHenkan\tIMEOn\n"
+      "DirectInput\tCtrl j\tIMEOn\n"
+      "DirectInput\tCtrl k\tIMEOff\n"
+      "DirectInput\tCtrl l\tLaunchWordRegisterDialog\n"
+      "Precomposition\tCtrl m\tIMEOn\n";
+
+  config.set_session_keymap(config::Config::CUSTOM);
+  config.set_custom_keymap_table(custom_keymap_table);
+  client_->SetConfig(config);
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("HENKAN", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("EISU", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ctrl j", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ctrl k", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ctrl l", &key);
+    EXPECT_TRUE(client_->IsDirectModeCommand(key));
+  }
+  {
+    commands::KeyEvent key;
+    KeyParser::ParseKey("ctrl m", &key);
+    EXPECT_FALSE(client_->IsDirectModeCommand(key));
+  }
 }
 
 TEST_F(ClientTest, SetConfig) {

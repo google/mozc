@@ -78,6 +78,7 @@ MockConstBoolImplementation(IsValidRunLevel, void);
 MockBoolImplementation(EnsureConnection, void);
 MockBoolImplementation(EnsureSession, void);
 MockBoolImplementation(CheckVersionOrRestartServer, void);
+MockConstBoolImplementation(IsDirectModeCommand, const commands::KeyEvent &key);
 MockBoolImplementation(ClearUserHistory, void);
 MockBoolImplementation(ClearUserPrediction, void);
 MockBoolImplementation(ClearUnusedUserPrediction, void);

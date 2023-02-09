@@ -150,7 +150,7 @@ TEST_F(KeyCodeMapTest, NormaKeyEvent) {
     const TestCase &testCase = kKeyEventTestCases[i];
     event.Clear();
     EXPECT_TRUE(CreateKeyEventFromTestCase(testCase, &event));
-    EXPECT_EQ(testCase.expected, event.DebugString()) << testCase.title;
+    EXPECT_EQ(event.DebugString(), testCase.expected) << testCase.title;
   }
 }
 
@@ -162,7 +162,7 @@ TEST_F(KeyCodeMapTest, KanaEvent) {
     const TestCase &testCase = kKanaTypingTestCases[i];
     event.Clear();
     EXPECT_TRUE(CreateKeyEventFromTestCase(testCase, &event));
-    EXPECT_EQ(testCase.expected, event.DebugString()) << testCase.title;
+    EXPECT_EQ(event.DebugString(), testCase.expected) << testCase.title;
   }
 }
 
@@ -176,7 +176,7 @@ TEST_F(KeyCodeMapTest, Modifiers) {
   // Release the shift key -> emit Shift-key event
   event.Clear();
   EXPECT_TRUE(CreateKeyEvent(nil, nil, 0, kVK_Shift, &event));
-  EXPECT_EQ("modifier_keys: SHIFT\n", event.DebugString());
+  EXPECT_EQ(event.DebugString(), "modifier_keys: SHIFT\n");
 
   // Press shift key
   event.Clear();
@@ -193,7 +193,7 @@ TEST_F(KeyCodeMapTest, Modifiers) {
   // Release control key -> emit Control + Shift
   event.Clear();
   EXPECT_TRUE(CreateKeyEvent(nil, nil, 0, kVK_Control, &event));
-  EXPECT_EQ("modifier_keys: SHIFT\nmodifier_keys: CTRL\n", event.DebugString());
+  EXPECT_EQ(event.DebugString(), "modifier_keys: SHIFT\nmodifier_keys: CTRL\n");
 
   // Press control key
   event.Clear();
@@ -202,7 +202,7 @@ TEST_F(KeyCodeMapTest, Modifiers) {
   // Press a -> emit \C-a
   event.Clear();
   EXPECT_TRUE(CreateKeyEvent(@"a", nil, NSControlKeyMask, kVK_ANSI_A, &event));
-  EXPECT_EQ("key_code: 97\nmodifier_keys: CTRL\n", event.DebugString());
+  EXPECT_EQ(event.DebugString(), "key_code: 97\nmodifier_keys: CTRL\n");
 
   // Release control key -> Doesn't emit any key events
   event.Clear();

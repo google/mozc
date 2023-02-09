@@ -211,6 +211,10 @@ bool SessionHandler::StartWatchDog() {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
+void SessionHandler::SetConfig(const config::Config &config) {
+  UpdateSessions(config, *request_);
+}
+
 void SessionHandler::UpdateSessions(const config::Config &config,
                                     const commands::Request &request) {
   auto new_config = std::make_unique<config::Config>(config);
@@ -294,14 +298,19 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
 
 bool SessionHandler::GetStoredConfig(commands::Command *command) {
   VLOG(1) << "Getting stored config";
+  // Use GetStoredConfig instead of GetConfig because GET_CONFIG
+  // command should return raw stored config, which is not
+  // affected by imposed config.
   if (!config::ConfigHandler::GetStoredConfig(
           command->mutable_output()->mutable_config())) {
     LOG(WARNING) << "cannot get config";
     return false;
   }
+
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
-  UpdateSessions(command->output().config(), *request_);
+  SetConfig(*config::ConfigHandler::GetConfig());
+
   return true;
 }
 
@@ -316,6 +325,21 @@ bool SessionHandler::SetStoredConfig(commands::Command *command) {
   MaybeUpdateStoredConfig(command);
 
   UsageStats::IncrementCount("SetConfig");
+  return true;
+}
+
+bool SessionHandler::SetImposedConfig(commands::Command *command) {
+  VLOG(1) << "Setting imposed config";
+  if (!command->input().has_config()) {
+    LOG(WARNING) << "config is empty";
+    return false;
+  }
+
+  const mozc::config::Config &config = command->input().config();
+  config::ConfigHandler::SetImposedConfig(config);
+
+  Reload(command);
+
   return true;
 }
 
@@ -372,6 +396,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       break;
     case commands::Input::SET_CONFIG:
       eval_succeeded = SetStoredConfig(command);
+      break;
+    case commands::Input::SET_IMPOSED_CONFIG:
+      eval_succeeded = SetImposedConfig(command);
       break;
     case commands::Input::SET_REQUEST:
       eval_succeeded = SetRequest(command);
@@ -557,7 +584,11 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // SetConfig() will complete the initialization by setting information
   // (e.g., config, request, keymap, ...) to all the sessions,
   // including the newly created one.
-  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
+  {
+    config::Config config;
+    config::ConfigHandler::GetConfig(&config);
+    SetConfig(config);
+  }
 
   // session is not empty.
   last_session_empty_time_ = 0;
