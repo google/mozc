@@ -50,7 +50,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
-#include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
@@ -381,8 +380,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
   }
 
   VLOG(2) << key.DebugString();
-  if (!property_handler_->IsActivated() &&
-      !config::ImeSwitchUtil::IsDirectModeCommand(key)) {
+  if (!property_handler_->IsActivated() && !client_->IsDirectModeCommand(key)) {
     return false;
   }
 

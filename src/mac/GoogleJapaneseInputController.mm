@@ -55,7 +55,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
-#include "session/ime_switch_util.h"
 
 using mozc::commands::Candidates;
 using mozc::commands::Capability;
@@ -67,7 +66,6 @@ using mozc::commands::Preedit;
 using mozc::commands::RendererCommand;
 using mozc::commands::SessionCommand;
 using mozc::config::Config;
-using mozc::config::ImeSwitchUtil;
 using mozc::kProductNameInEnglish;
 using mozc::MacProcess;
 
@@ -919,7 +917,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 
   // If the key event is turn on event, the key event has to be sent
   // to the server anyway.
-  if (mode_ == mozc::commands::DIRECT && !ImeSwitchUtil::IsDirectModeCommand(keyEvent)) {
+  if (mode_ == mozc::commands::DIRECT && !mozcClient_->IsDirectModeCommand(keyEvent)) {
     // Yen sign special hack: although the current mode is DIRECT,
     // backslash is sent instead of yen sign for JIS yen key with no
     // modifiers.  This behavior is based on the configuration.
