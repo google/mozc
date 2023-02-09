@@ -59,6 +59,7 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/ime_switch_util.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
@@ -508,6 +509,10 @@ bool Client::DeleteSession() {
   return true;
 }
 
+bool Client::IsDirectModeCommand(const commands::KeyEvent &key) const {
+  return config::ImeSwitchUtil::IsDirectModeCommand(key);
+}
+
 bool Client::GetConfig(config::Config *config) {
   commands::Input input;
   InitInput(&input);
@@ -538,6 +543,7 @@ bool Client::SetConfig(const config::Config &config) {
     return false;
   }
 
+  config::ImeSwitchUtil::ReloadConfig(config);
   return true;
 }
 
