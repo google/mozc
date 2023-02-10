@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "client/client_interface.h"
+#include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"
@@ -256,6 +257,8 @@ class Client : public ClientInterface {
   uint32_t server_process_id_;
   std::string server_product_version_;
   std::vector<commands::Input> history_inputs_;
+  // List of key combinations used in the direct input mode.
+  std::vector<KeyInformation> direct_mode_keys_;
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;
   commands::Capability client_capability_;
