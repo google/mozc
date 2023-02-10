@@ -51,8 +51,8 @@ class WindowUtilTest : public testing::Test {
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
         preedit_rect, window_size_, zero_point_offset_, working_area_);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
   void VerifyMainWindowWithTargetPoint(int target_point_x, int target_point_y,
@@ -61,8 +61,8 @@ class WindowUtilTest : public testing::Test {
     Point target_point(target_point_x, target_point_y);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
         target_point, window_size_, zero_point_offset_, working_area_);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
   void VerifyMainWindowWithTargetPointAndPreeditHorizontal(
@@ -75,8 +75,8 @@ class WindowUtilTest : public testing::Test {
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
             target_point, preedit_rect, window_size_, zero_point_offset_,
             working_area_, false);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
   void VerifyMainWindowWithTargetPointAndPreeditVertical(
@@ -89,8 +89,8 @@ class WindowUtilTest : public testing::Test {
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
             target_point, preedit_rect, window_size_, zero_point_offset_,
             working_area_, true);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
   void VerifyCascadingWindow(int row_left, int row_top, int row_width,
@@ -99,8 +99,8 @@ class WindowUtilTest : public testing::Test {
     Rect selected_row(row_left, row_top, row_width, row_height);
     Rect result = WindowUtil::GetWindowRectForCascadingWindow(
         selected_row, window_size_, zero_point_offset_, working_area_);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
   void VerifyInfolistWindow(int infolist_width, int infolist_height,
@@ -113,8 +113,8 @@ class WindowUtilTest : public testing::Test {
                         candidate_height);
     Rect result = WindowUtil::GetWindowRectForInfolistWindow(
         window_size, candidate_rect, working_area_);
-    EXPECT_EQ(expected_left, result.Left()) << message;
-    EXPECT_EQ(expected_top, result.Top()) << message;
+    EXPECT_EQ(result.Left(), expected_left) << message;
+    EXPECT_EQ(result.Top(), expected_top) << message;
   }
 
  private:
@@ -213,27 +213,27 @@ TEST_F(WindowUtilTest, MonitorErrors) {
   Rect result = WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
       preedit_rect, window_size, zero_point_offset, working_area);
   // It doesn't apply edge across processing.
-  EXPECT_EQ(49, result.Left());
-  EXPECT_EQ(57, result.Top());
+  EXPECT_EQ(result.Left(), 49);
+  EXPECT_EQ(result.Top(), 57);
 
   result = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
       target_point, window_size, zero_point_offset, working_area);
   // It doesn't apply edge across processing.
-  EXPECT_EQ(49, result.Left());
-  EXPECT_EQ(57, result.Top());
+  EXPECT_EQ(result.Left(), 49);
+  EXPECT_EQ(result.Top(), 57);
 
   // Same as cascading window.
   result = WindowUtil::GetWindowRectForCascadingWindow(
       preedit_rect, window_size, zero_point_offset, working_area);
-  EXPECT_EQ(69, result.Left());
-  EXPECT_EQ(52, result.Top());
+  EXPECT_EQ(result.Left(), 69);
+  EXPECT_EQ(result.Top(), 52);
 
   // Same as infolist window.
   Rect candidate_rect(50, 32, 20, 5);
   result = WindowUtil::GetWindowRectForInfolistWindow(
       window_size, candidate_rect, working_area);
-  EXPECT_EQ(70, result.Left());
-  EXPECT_EQ(32, result.Top());
+  EXPECT_EQ(result.Left(), 70);
+  EXPECT_EQ(result.Top(), 32);
 }
 
 }  // namespace renderer

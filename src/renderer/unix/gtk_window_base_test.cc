@@ -109,14 +109,14 @@ TEST_F(GtkWindowBaseTest, GetWindowWidgetTest) {
   GtkWrapperMock *mock = GetGtkMock();
   GtkWindowBase window(mock);
 
-  EXPECT_EQ(kDummyWindow, window.GetWindowWidget());
+  EXPECT_EQ(window.GetWindowWidget(), kDummyWindow);
 }
 
 TEST_F(GtkWindowBaseTest, GetCanvasWidgetTest) {
   GtkWrapperMock *mock = GetGtkMock();
   GtkWindowBase window(mock);
 
-  EXPECT_EQ(kDummyCanvas, window.GetCanvasWidget());
+  EXPECT_EQ(window.GetCanvasWidget(), kDummyCanvas);
 }
 
 TEST_F(GtkWindowBaseTest, GetWindowPosTest) {
@@ -130,8 +130,8 @@ TEST_F(GtkWindowBaseTest, GetWindowPosTest) {
 
   GtkWindowBase window(mock);
   Point actual_pos = window.GetWindowPos();
-  EXPECT_EQ(expected_pos.x, actual_pos.x);
-  EXPECT_EQ(expected_pos.y, actual_pos.y);
+  EXPECT_EQ(actual_pos.x, expected_pos.x);
+  EXPECT_EQ(actual_pos.y, expected_pos.y);
 }
 
 TEST_F(GtkWindowBaseTest, GetWindowSizeTest) {
@@ -146,8 +146,8 @@ TEST_F(GtkWindowBaseTest, GetWindowSizeTest) {
   GtkWindowBase window(mock);
   Size actual_size = window.GetWindowSize();
 
-  EXPECT_EQ(expected_size.width, actual_size.width);
-  EXPECT_EQ(expected_size.height, actual_size.height);
+  EXPECT_EQ(actual_size.width, expected_size.width);
+  EXPECT_EQ(actual_size.height, expected_size.height);
 }
 
 TEST_F(GtkWindowBaseTest, GetWindowRectTest) {
@@ -166,10 +166,10 @@ TEST_F(GtkWindowBaseTest, GetWindowRectTest) {
   GtkWindowBase window(mock);
   Rect actual_rect = window.GetWindowRect();
 
-  EXPECT_EQ(expected_rect.origin.x, actual_rect.origin.x);
-  EXPECT_EQ(expected_rect.origin.y, actual_rect.origin.y);
-  EXPECT_EQ(expected_rect.size.width, actual_rect.size.width);
-  EXPECT_EQ(expected_rect.size.height, actual_rect.size.height);
+  EXPECT_EQ(actual_rect.origin.x, expected_rect.origin.x);
+  EXPECT_EQ(actual_rect.origin.y, expected_rect.origin.y);
+  EXPECT_EQ(actual_rect.size.width, expected_rect.size.width);
+  EXPECT_EQ(actual_rect.size.height, expected_rect.size.height);
 }
 
 TEST_F(GtkWindowBaseTest, IsActiveTest) {
@@ -241,7 +241,7 @@ TEST_F(GtkWindowBaseTest, LeftRightTest) {
 
     OverriddenCallTestableGtkWindowBase window(mock);
     EXPECT_CALL(window, OnMouseLeftDown(PointEq(expected_pos)));
-    EXPECT_EQ(TRUE, window.OnMouseDown(kDummyWindow, &event));
+    EXPECT_TRUE(window.OnMouseDown(kDummyWindow, &event));
   }
   {
     SCOPED_TRACE("Right button is pressed, then call OnMouseRightDown");
@@ -254,7 +254,7 @@ TEST_F(GtkWindowBaseTest, LeftRightTest) {
 
     OverriddenCallTestableGtkWindowBase window(mock);
     EXPECT_CALL(window, OnMouseRightDown(PointEq(expected_pos)));
-    EXPECT_EQ(TRUE, window.OnMouseDown(kDummyWindow, &event));
+    EXPECT_TRUE(window.OnMouseDown(kDummyWindow, &event));
   }
   {
     SCOPED_TRACE("Left button is released, then call OnMouseLeftUp");
@@ -267,7 +267,7 @@ TEST_F(GtkWindowBaseTest, LeftRightTest) {
 
     OverriddenCallTestableGtkWindowBase window(mock);
     EXPECT_CALL(window, OnMouseLeftUp(PointEq(expected_pos)));
-    EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+    EXPECT_TRUE(window.OnMouseUp(kDummyWindow, &event));
   }
   {
     SCOPED_TRACE("Right button is released, then call OnMouseRightUp");
@@ -280,7 +280,7 @@ TEST_F(GtkWindowBaseTest, LeftRightTest) {
 
     OverriddenCallTestableGtkWindowBase window(mock);
     EXPECT_CALL(window, OnMouseRightUp(PointEq(expected_pos)));
-    EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+    EXPECT_TRUE(window.OnMouseUp(kDummyWindow, &event));
   }
   {
     SCOPED_TRACE("Other button is ignored and return 0");
@@ -299,7 +299,7 @@ TEST_F(GtkWindowBaseTest, LeftRightTest) {
       EXPECT_CALL(window, OnMouseRightDown(_)).Times(0);
       EXPECT_CALL(window, OnMouseRightUp(_)).Times(0);
 
-      EXPECT_EQ(TRUE, window.OnMouseUp(kDummyWindow, &event));
+      EXPECT_TRUE(window.OnMouseUp(kDummyWindow, &event));
     }
   }
 }

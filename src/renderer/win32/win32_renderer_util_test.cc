@@ -142,6 +142,11 @@ const wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
               (layout).exclude_region());                           \
   } while (false)
 
+static CPoint ToCPoint(const POINT &point) { return CPoint(point.x, point.y); }
+static CRect ToCRect(const RECT &rect) {
+  return CRect(rect.left, rect.top, rect.right, rect.bottom);
+}
+
 WindowPositionEmulator *CreateWindowEmulator(const std::wstring &class_name,
                                              const RECT &window_rect,
                                              const POINT &client_area_offset,
@@ -839,13 +844,13 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
     layout_mgr.GetPointInPhysicalCoords(hwnd, kOuterPoint, &dest);
 
     // Should be the same position because DPI scaling is 100%.
-    EXPECT_EQ(kOuterPoint, dest);
+    EXPECT_EQ(dest, kOuterPoint);
 
     // Conversion from an inner point should be calculated by API.
     layout_mgr.GetPointInPhysicalCoords(hwnd, kInnerPoint, &dest);
 
     // Should be the same position because DPI scaling is 100%.
-    EXPECT_EQ(kInnerPoint, dest);
+    EXPECT_EQ(dest, kInnerPoint);
   }
 
   // Check DPI scale: 200%
@@ -861,13 +866,13 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
     layout_mgr.GetPointInPhysicalCoords(hwnd, kOuterPoint, &dest);
 
     // Should be doubled because DPI scaling is 200%.
-    EXPECT_EQ(CPoint(20, 600), dest);
+    EXPECT_EQ(dest, CPoint(20, 600));
 
     // Conversion from an inner point should be calculated by API.
     layout_mgr.GetPointInPhysicalCoords(hwnd, kInnerPoint, &dest);
 
     // Should be doubled because DPI scaling is 200%.
-    EXPECT_EQ(CPoint(2200, 1200), dest);
+    EXPECT_EQ(dest, CPoint(2200, 1200));
   }
 }
 
@@ -892,13 +897,13 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
     layout_mgr.GetRectInPhysicalCoords(hwnd, kOuterRect, &dest);
 
     // Should be the same rectangle because DPI scaling is 100%.
-    EXPECT_EQ(kOuterRect, dest);
+    EXPECT_EQ(dest, kOuterRect);
 
     // Conversion from an inner rectangle should be calculated by API.
     layout_mgr.GetRectInPhysicalCoords(hwnd, kInnerRect, &dest);
 
     // Should be the same rectangle because DPI scaling is 100%.
-    EXPECT_EQ(kInnerRect, dest);
+    EXPECT_EQ(dest, kInnerRect);
   }
 
   // Check DPI scale: 200%
@@ -914,13 +919,13 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
     layout_mgr.GetRectInPhysicalCoords(hwnd, kOuterRect, &dest);
 
     // Should be doubled because DPI scaling is 200%.
-    EXPECT_EQ(CRect(20, 600, 2220, 1260), dest);
+    EXPECT_EQ(ToCRect(dest), CRect(20, 600, 2220, 1260));
 
     // Conversion from an inner rectangle should be calculated by API.
     layout_mgr.GetRectInPhysicalCoords(hwnd, kInnerRect, &dest);
 
     // Should be doubled because DPI scaling is 200%.
-    EXPECT_EQ(CRect(2200, 1200, 2140, 1260), dest);
+    EXPECT_EQ(ToCRect(dest), CRect(2200, 1200, 2140, 1260));
   }
 }
 
@@ -1012,18 +1017,18 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     EXPECT_FALSE(emulator->ClientToScreen(nullptr, &point));
 
     EXPECT_TRUE(emulator->GetWindowRect(hwnd, &rect));
-    EXPECT_EQ(kWindowRect, rect);
+    EXPECT_EQ(rect, kWindowRect);
 
     EXPECT_TRUE(emulator->GetClientRect(hwnd, &rect));
-    EXPECT_EQ(CRect(CPoint(0, 0), kClientSize), rect);
+    EXPECT_EQ(ToCRect(rect), CRect(CPoint(0, 0), kClientSize));
 
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
-    EXPECT_EQ(kWindowRect.TopLeft() + kClientOffset, point);
+    EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
 
     std::wstring class_name;
     EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(kWindowClassName, class_name);
+    EXPECT_EQ(class_name, kWindowClassName);
   }
 
   // Interestingly, the following results are independent of DPI scaling.
@@ -1043,18 +1048,18 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     EXPECT_FALSE(emulator->ClientToScreen(nullptr, &point));
 
     EXPECT_TRUE(emulator->GetWindowRect(hwnd, &rect));
-    EXPECT_EQ(kWindowRect, rect);
+    EXPECT_EQ(rect, kWindowRect);
 
     EXPECT_TRUE(emulator->GetClientRect(hwnd, &rect));
-    EXPECT_EQ(CRect(CPoint(0, 0), kClientSize), rect);
+    EXPECT_EQ(ToCRect(rect), CRect(CPoint(0, 0), kClientSize));
 
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
-    EXPECT_EQ(kWindowRect.TopLeft() + kClientOffset, point);
+    EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
 
     std::wstring class_name;
     EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(kWindowClassName, class_name);
+    EXPECT_EQ(class_name, kWindowClassName);
   }
 }
 
@@ -1070,7 +1075,7 @@ TEST_F(Win32RendererUtilTest, HorizontalProportional) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 4);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1081,10 +1086,10 @@ TEST_F(Win32RendererUtilTest, HorizontalProportional) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 199,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
-  EXPECT_EQ(0, line_layouts[0].line_length);
-  EXPECT_EQ(0, line_layouts[0].text.size());
-  EXPECT_EQ(0, line_layouts[0].character_positions.size());
+  EXPECT_EQ(line_layouts.size(), 4);
+  EXPECT_EQ(line_layouts[0].line_length, 0);
+  EXPECT_EQ(line_layouts[0].text.size(), 0);
+  EXPECT_EQ(line_layouts[0].character_positions.size(), 0);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1128,7 +1133,7 @@ TEST_F(Win32RendererUtilTest, VerticalProportional) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 4);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1139,10 +1144,10 @@ TEST_F(Win32RendererUtilTest, VerticalProportional) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 199,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
-  EXPECT_EQ(0, line_layouts[0].line_length);
-  EXPECT_EQ(0, line_layouts[0].text.size());
-  EXPECT_EQ(0, line_layouts[0].character_positions.size());
+  EXPECT_EQ(line_layouts.size(), 4);
+  EXPECT_EQ(line_layouts[0].line_length, 0);
+  EXPECT_EQ(line_layouts[0].text.size(), 0);
+  EXPECT_EQ(line_layouts[0].character_positions.size(), 0);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1186,7 +1191,7 @@ TEST_F(Win32RendererUtilTest, HorizontalMonospaced) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 4);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1197,10 +1202,10 @@ TEST_F(Win32RendererUtilTest, HorizontalMonospaced) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 199,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
-  EXPECT_EQ(0, line_layouts[0].line_length);
-  EXPECT_EQ(0, line_layouts[0].text.size());
-  EXPECT_EQ(0, line_layouts[0].character_positions.size());
+  EXPECT_EQ(line_layouts.size(), 4);
+  EXPECT_EQ(line_layouts[0].line_length, 0);
+  EXPECT_EQ(line_layouts[0].text.size(), 0);
+  EXPECT_EQ(line_layouts[0].character_positions.size(), 0);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1244,7 +1249,7 @@ TEST_F(Win32RendererUtilTest, VerticalMonospaced) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 4);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1255,10 +1260,10 @@ TEST_F(Win32RendererUtilTest, VerticalMonospaced) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 199,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(4, line_layouts.size());
-  EXPECT_EQ(0, line_layouts[0].line_length);
-  EXPECT_EQ(0, line_layouts[0].text.size());
-  EXPECT_EQ(0, line_layouts[0].character_positions.size());
+  EXPECT_EQ(line_layouts.size(), 4);
+  EXPECT_EQ(line_layouts[0].line_length, 0);
+  EXPECT_EQ(line_layouts[0].text.size(), 0);
+  EXPECT_EQ(line_layouts[0].character_positions.size(), 0);
   EXPECT_EQ(line_layouts[0].line_width, line_layouts[1].line_width);
   EXPECT_EQ(line_layouts[1].line_width, line_layouts[2].line_width);
   EXPECT_EQ(line_layouts[2].line_width, line_layouts[3].line_width);
@@ -1301,13 +1306,13 @@ TEST_F(Win32RendererUtilTest, HorizontalProportionalCompositeGlyph) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(1, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 1);
 
   // CalcLayoutWithTextWrapping does not support composition glyph.
   EXPECT_GT(line_layouts[0].character_positions[0].length, 0);
-  EXPECT_EQ(line_layouts[0].character_positions[1].begin +
-                line_layouts[0].character_positions[1].length,
-            line_layouts[0].line_length);
+  EXPECT_EQ(line_layouts[0].line_length,
+            line_layouts[0].character_positions[1].begin +
+                line_layouts[0].character_positions[1].length);
 }
 
 TEST_F(Win32RendererUtilTest, VerticalProportionalCompositeGlyph) {
@@ -1320,13 +1325,13 @@ TEST_F(Win32RendererUtilTest, VerticalProportionalCompositeGlyph) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(1, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 1);
 
   // CalcLayoutWithTextWrapping does not support composition glyph.
   EXPECT_GT(line_layouts[0].character_positions[0].length, 0);
-  EXPECT_EQ(line_layouts[0].character_positions[1].begin +
-                line_layouts[0].character_positions[1].length,
-            line_layouts[0].line_length);
+  EXPECT_EQ(line_layouts[0].line_length,
+            line_layouts[0].character_positions[1].begin +
+                line_layouts[0].character_positions[1].length);
 }
 
 TEST_F(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph) {
@@ -1340,7 +1345,7 @@ TEST_F(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(1, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 1);
 
   // CalcLayoutWithTextWrapping does not support composition glyph.
   EXPECT_GT(line_layouts[0].character_positions[0].length, 0);
@@ -1360,7 +1365,7 @@ TEST_F(Win32RendererUtilTest, VerticalMonospacedCompositeGlyph) {
   result = LayoutManager::CalcLayoutWithTextWrapping(logfont, message, 200, 100,
                                                      &line_layouts);
   EXPECT_TRUE(result);
-  EXPECT_EQ(1, line_layouts.size());
+  EXPECT_EQ(line_layouts.size(), 1);
 
   // CalcLayoutWithTextWrapping does not support composition glyph.
   EXPECT_GT(line_layouts[0].character_positions[0].length, 0);
@@ -1396,7 +1401,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -1407,12 +1412,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -1425,21 +1430,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(36, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(36, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(190, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(190, 48));
     EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(196, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(457, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(196, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(457, 48));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(466, 48), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(646, 48), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(466, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(646, 48));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(1238, 697, 1238, 648, 1839, 697,
@@ -1516,7 +1521,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -1527,18 +1532,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(135, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(171, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(135, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(171, 48));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(180, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(241, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(180, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(241, 48));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
   }
 
@@ -1551,18 +1556,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(84, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(84, 48));
     EXPECT_TRUE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(90, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(351, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(90, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(351, 48));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(360, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(540, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(360, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(540, 48));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -1641,7 +1646,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -1652,12 +1657,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -1670,18 +1675,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 36), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 36));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 45), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 190), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 45));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 190));
     EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(50, 196), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(50, 376), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(50, 196));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(50, 376));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -1694,15 +1699,15 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(2, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 2);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 81), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 81));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 90), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 270), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 90));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 270));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
   }
 
@@ -1781,7 +1786,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -1792,18 +1797,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Goo";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 135), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 171), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 135));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 171));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(50, 180), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(50, 268), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(50, 180));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(50, 268));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
   }
 
@@ -1816,18 +1821,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "gle日本語入力のTe";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 57), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 57));
     EXPECT_TRUE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 63), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 324), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 63));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 324));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(50, 333), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(50, 386), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(50, 333));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(50, 386));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -1840,12 +1845,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "stです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 127), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 127));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -1922,7 +1927,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -1933,12 +1938,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(0, 53), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 53), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 53));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -1951,21 +1956,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(0, 53), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(36, 53), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(36, 53));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 53), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(192, 53), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(192, 53));
     EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(197, 53), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(458, 53), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(197, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(458, 53));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(467, 53), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(646, 53), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(467, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(646, 53));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
 
@@ -2042,7 +2047,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -2053,18 +2058,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(0, 53), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 53), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 53));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(135, 53), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(171, 53), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(135, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(171, 53));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(180, 53), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(242, 53), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(180, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(242, 53));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
   }
 
@@ -2077,18 +2082,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(0, 53), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(85, 53), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(85, 53));
     EXPECT_TRUE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(90, 53), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(351, 53), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(90, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(351, 53));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(360, 53), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(539, 53), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(360, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(539, 53));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -2167,7 +2172,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -2178,12 +2183,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -2196,18 +2201,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 36), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 36));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 45), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 192), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 45));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 192));
     EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(55, 197), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(55, 377), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(55, 197));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(55, 377));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -2220,15 +2225,15 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(2, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 2);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 81), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 81));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 90), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 269), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 90));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 269));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
   }
 
@@ -2307,7 +2312,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -2318,18 +2323,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 135), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 171), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 135));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 171));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(55, 180), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(55, 242), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(55, 180));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(55, 242));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
   }
 
@@ -2342,18 +2347,18 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "ogle日本語入力のT";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 85), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 85));
     EXPECT_TRUE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 90), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 351), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 90));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 351));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(55, 360), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(55, 388), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(55, 360));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(55, 388));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
   }
 
@@ -2366,12 +2371,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "estです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 151), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 151));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -2449,7 +2454,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(1, layouts.size());
+  ASSERT_EQ(layouts.size(), 1);
 
   // The first line
   {
@@ -2460,24 +2465,24 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(5, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 5);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(135, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(171, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(135, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(171, 48));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(180, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(325, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(180, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(325, 48));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(331, 48), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(592, 48), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(331, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(592, 48));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
-    EXPECT_EQ(CPoint(601, 48), layout.marker_layouts[4].from);
-    EXPECT_EQ(CPoint(781, 48), layout.marker_layouts[4].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].from), CPoint(601, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].to), CPoint(781, 48));
     EXPECT_FALSE(layout.marker_layouts[4].highlighted);
   }
 }
@@ -2507,7 +2512,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(1, layouts.size());
+  ASSERT_EQ(layouts.size(), 1);
 
   // The first line
   {
@@ -2518,24 +2523,24 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(5, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 5);
 
-    EXPECT_EQ(CPoint(0, 53), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 53), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 53));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(135, 53), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(171, 53), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(135, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(171, 53));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(180, 53), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(327, 53), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(180, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(327, 53));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(332, 53), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(593, 53), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(332, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(593, 53));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
-    EXPECT_EQ(CPoint(602, 53), layout.marker_layouts[4].from);
-    EXPECT_EQ(CPoint(781, 53), layout.marker_layouts[4].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].from), CPoint(602, 53));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].to), CPoint(781, 53));
     EXPECT_FALSE(layout.marker_layouts[4].highlighted);
   }
 }
@@ -2567,7 +2572,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -2578,21 +2583,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 135), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 171), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 135));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 171));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(50, 180), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(50, 325), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(50, 180));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(50, 325));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(50, 331), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(50, 376), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(50, 331));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(50, 376));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
 
@@ -2605,15 +2610,15 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(2, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 2);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 216), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 216));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 225), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 360), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 225));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 360));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
   }
 
@@ -2626,12 +2631,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "す";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 45), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 45));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 }
@@ -2663,7 +2668,7 @@ TEST_F(Win32RendererUtilTest,
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -2674,21 +2679,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 126), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 126));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 135), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 171), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 135));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 171));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(55, 180), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(55, 327), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(55, 180));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(55, 327));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(55, 332), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(55, 377), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(55, 332));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(55, 377));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
 
@@ -2701,15 +2706,15 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(2, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 2);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 216), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 216));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(55, 225), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(55, 359), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(55, 225));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(55, 359));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
   }
 
@@ -2722,12 +2727,12 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "す";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(55, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(55, 45), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(55, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(55, 45));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 }
@@ -2755,7 +2760,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2786,7 +2791,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2819,7 +2824,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2851,7 +2856,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2883,7 +2888,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2, layouts.size());
+    ASSERT_EQ(layouts.size(), 2);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2924,7 +2929,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2957,7 +2962,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -2992,7 +2997,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -3026,7 +3031,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(1, layouts.size());
+    ASSERT_EQ(layouts.size(), 1);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -3060,7 +3065,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
                                                 &candidate_layout);
     EXPECT_TRUE(result);
 
-    ASSERT_EQ(2, layouts.size());
+    ASSERT_EQ(layouts.size(), 2);
 
     {
       const CompositionWindowLayout &layout = layouts.at(0);
@@ -3104,11 +3109,12 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesHorizontalPreedit) {
   EXPECT_TRUE(result);
 
   // Suggest window should be aligned to the last composition window.
-  EXPECT_EQ(layouts.rbegin()->window_position_in_screen_coordinate.left,
-            candidate_layout.position().x);
-  EXPECT_EQ(layouts.rbegin()->window_position_in_screen_coordinate.bottom,
-            candidate_layout.position().y);
-  EXPECT_EQ(CRect(1193, 599, 2003, 707), candidate_layout.exclude_region());
+  EXPECT_EQ(candidate_layout.position().x,
+            layouts.rbegin()->window_position_in_screen_coordinate.left);
+  EXPECT_EQ(candidate_layout.position().y,
+            layouts.rbegin()->window_position_in_screen_coordinate.bottom);
+  EXPECT_EQ(ToCRect(candidate_layout.exclude_region()),
+            CRect(1193, 599, 2003, 707));
 }
 
 // Check if suggest window does not hide preedit.
@@ -3140,11 +3146,12 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
   // Suggest window should be aligned to the first composition window.
   // TODO(yukawa): Use the last composition window when vertical candidate
   //   window is implemented.
-  EXPECT_EQ(layouts.begin()->window_position_in_screen_coordinate.left,
-            candidate_layout.position().x);
-  EXPECT_EQ(layouts.begin()->window_position_in_screen_coordinate.top,
-            candidate_layout.position().y);
-  EXPECT_EQ(CRect(1978, 927, 2034, 1062), candidate_layout.exclude_region());
+  EXPECT_EQ(candidate_layout.position().x,
+            layouts.begin()->window_position_in_screen_coordinate.left);
+  EXPECT_EQ(candidate_layout.position().y,
+            layouts.begin()->window_position_in_screen_coordinate.top);
+  EXPECT_EQ(ToCRect(candidate_layout.exclude_region()),
+            CRect(1978, 927, 2034, 1062));
 }
 
 TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFontIssue2935480) {
@@ -3173,9 +3180,9 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFontIssue2935480) {
   EXPECT_TRUE(result);
 
   // Underline should be stripped.
-  ASSERT_EQ(2, layouts.size());
-  EXPECT_EQ(0, layouts[0].log_font.lfUnderline);
-  EXPECT_EQ(0, layouts[1].log_font.lfUnderline);
+  ASSERT_EQ(layouts.size(), 2);
+  EXPECT_EQ(layouts[0].log_font.lfUnderline, 0);
+  EXPECT_EQ(layouts[1].log_font.lfUnderline, 0);
 }
 
 // Some applications such as MIEFS use CompositionForm::RECT as a bit flag.
@@ -3213,7 +3220,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlagIssue3200425) {
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout);
   EXPECT_TRUE(result);
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -3224,12 +3231,12 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlagIssue3200425) {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(126, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(126, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -3242,21 +3249,21 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlagIssue3200425) {
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(36, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(36, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(190, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(190, 48));
     EXPECT_TRUE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(196, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(457, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(196, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(457, 48));
     EXPECT_FALSE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(466, 48), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(646, 48), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(466, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(646, 48));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(1238, 697, 1238, 648, 1839, 697,
@@ -3358,7 +3365,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
   default_font.lfHeight = 18;
   default_font.lfWidth = 0;
 
-  ASSERT_EQ(2, layouts.size());
+  ASSERT_EQ(layouts.size(), 2);
 
   // The first line
   {
@@ -3369,24 +3376,24 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
       constexpr char kMsg[] = "これは、Google日本語入力のTest";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(5, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 5);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(42, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(42, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 17), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(57, 17), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(57, 17));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(60, 17), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(108, 17), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(60, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(108, 17));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(110, 17), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(197, 17), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(110, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(197, 17));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
-    EXPECT_EQ(CPoint(200, 17), layout.marker_layouts[4].from);
-    EXPECT_EQ(CPoint(229, 17), layout.marker_layouts[4].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].from), CPoint(200, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].to), CPoint(229, 17));
     EXPECT_FALSE(layout.marker_layouts[4].highlighted);
   }
 
@@ -3399,12 +3406,12 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
       constexpr char kMsg[] = "です";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(30, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(30, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -3470,7 +3477,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveCompositionIssue3239031) {
   default_font.lfHeight = 18;
   default_font.lfWidth = 0;
 
-  ASSERT_EQ(1, layouts.size());
+  ASSERT_EQ(layouts.size(), 1);
 
   // The first line
   {
@@ -3481,24 +3488,24 @@ TEST_F(Win32RendererUtilTest, CrescentEveCompositionIssue3239031) {
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(5, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 5);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(42, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(42, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 17), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(57, 17), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(57, 17));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(60, 17), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(108, 17), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(60, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(108, 17));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(110, 17), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(197, 17), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(110, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(197, 17));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
-    EXPECT_EQ(CPoint(200, 17), layout.marker_layouts[4].from);
-    EXPECT_EQ(CPoint(259, 17), layout.marker_layouts[4].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].from), CPoint(200, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[4].to), CPoint(259, 17));
     EXPECT_FALSE(layout.marker_layouts[4].highlighted);
   }
 
@@ -3580,7 +3587,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32CompositionIssue3433099) {
   default_font.lfHeight = 18;
   default_font.lfWidth = 0;
 
-  ASSERT_EQ(3, layouts.size());
+  ASSERT_EQ(layouts.size(), 3);
 
   // The first line
   {
@@ -3591,18 +3598,18 @@ TEST_F(Win32RendererUtilTest, MSInfo32CompositionIssue3433099) {
       constexpr char kMsg[] = "これは、Google";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(3, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 3);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(42, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(42, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(45, 17), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(57, 17), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(45, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(57, 17));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(60, 17), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(108, 17), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(60, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(108, 17));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
   }
 
@@ -3615,15 +3622,15 @@ TEST_F(Win32RendererUtilTest, MSInfo32CompositionIssue3433099) {
       constexpr char kMsg[] = "日本語入力のTes";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(2, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 2);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(87, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(87, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(90, 17), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(114, 17), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(90, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(114, 17));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
   }
 
@@ -3636,12 +3643,12 @@ TEST_F(Win32RendererUtilTest, MSInfo32CompositionIssue3433099) {
       constexpr char kMsg[] = "tです";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(1, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 1);
 
-    EXPECT_EQ(CPoint(0, 17), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(35, 17), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 17));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(35, 17));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
   }
 
@@ -3672,7 +3679,7 @@ TEST_F(Win32RendererUtilTest,
   EXPECT_TRUE(
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout));
 
-  ASSERT_EQ(1, layouts.size());
+  ASSERT_EQ(layouts.size(), 1);
 
   // The first line
   {
@@ -3683,21 +3690,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(0, 48), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(81, 48), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(0, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(81, 48));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(90, 48), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(171, 48), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(90, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(171, 48));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(180, 48), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(261, 48), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(180, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(261, 48));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(270, 48), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(360, 48), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(270, 48));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(360, 48));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
 
@@ -3729,7 +3736,7 @@ TEST_F(Win32RendererUtilTest,
   EXPECT_TRUE(
       layout_mgr.LayoutCompositionWindow(command, &layouts, &candidate_layout));
 
-  ASSERT_EQ(1, layouts.size());
+  ASSERT_EQ(layouts.size(), 1);
 
   // The first line
   {
@@ -3740,21 +3747,21 @@ TEST_F(Win32RendererUtilTest,
       constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
       mozc::Util::Utf8ToWide(kMsg, &msg);
-      EXPECT_EQ(msg, layout.text);
+      EXPECT_EQ(layout.text, msg);
     }
-    ASSERT_EQ(4, layout.marker_layouts.size());
+    ASSERT_EQ(layout.marker_layouts.size(), 4);
 
-    EXPECT_EQ(CPoint(50, 0), layout.marker_layouts[0].from);
-    EXPECT_EQ(CPoint(50, 81), layout.marker_layouts[0].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].from), CPoint(50, 0));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[0].to), CPoint(50, 81));
     EXPECT_FALSE(layout.marker_layouts[0].highlighted);
-    EXPECT_EQ(CPoint(50, 90), layout.marker_layouts[1].from);
-    EXPECT_EQ(CPoint(50, 171), layout.marker_layouts[1].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].from), CPoint(50, 90));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[1].to), CPoint(50, 171));
     EXPECT_FALSE(layout.marker_layouts[1].highlighted);
-    EXPECT_EQ(CPoint(50, 180), layout.marker_layouts[2].from);
-    EXPECT_EQ(CPoint(50, 261), layout.marker_layouts[2].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].from), CPoint(50, 180));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[2].to), CPoint(50, 261));
     EXPECT_TRUE(layout.marker_layouts[2].highlighted);
-    EXPECT_EQ(CPoint(50, 270), layout.marker_layouts[3].from);
-    EXPECT_EQ(CPoint(50, 360), layout.marker_layouts[3].to);
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].from), CPoint(50, 270));
+    EXPECT_EQ(ToCPoint(layout.marker_layouts[3].to), CPoint(50, 360));
     EXPECT_FALSE(layout.marker_layouts[3].highlighted);
   }
 
@@ -4040,7 +4047,7 @@ TEST_F(Win32RendererUtilTest, PidginIndicator) {
 
   IndicatorWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &layout));
-  EXPECT_EQ(CRect(56, 651, 57, 667), layout.window_rect);
+  EXPECT_EQ(ToCRect(layout.window_rect), CRect(56, 651, 57, 667));
   EXPECT_FALSE(layout.is_vertical);
 }
 
@@ -4323,7 +4330,7 @@ TEST_F(Win32RendererUtilTest, WordpadVistaIndicator) {
 
   IndicatorWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &layout));
-  EXPECT_EQ(CRect(693, 596, 694, 613), layout.window_rect);
+  EXPECT_EQ(ToCRect(layout.window_rect), CRect(693, 596, 694, 613));
   EXPECT_FALSE(layout.is_vertical);
 }
 
@@ -4926,7 +4933,7 @@ TEST_F(Win32RendererUtilTest, Emacs22) {
   // WM_IME_CONTROL/IMC_SETCOMPOSITIONWINDOW even when a user is not
   // typing. So we need to show InfoList without delay.  b/5824433.
   const int mode = layout_mgr.GetCompatibilityMode(app_info);
-  EXPECT_EQ(SHOW_INFOLIST_IMMEDIATELY, mode & SHOW_INFOLIST_IMMEDIATELY);
+  EXPECT_EQ(mode & SHOW_INFOLIST_IMMEDIATELY, SHOW_INFOLIST_IMMEDIATELY);
 }
 
 // Meadow 3.0 / GNU Emacs 22.3.1
@@ -4975,7 +4982,7 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
   // WM_IME_CONTROL/IMC_SETCOMPOSITIONWINDOW even when a user is not
   // typing. So we need to show InfoList without delay.  b/5824433.
   const int mode = layout_mgr.GetCompatibilityMode(app_info);
-  EXPECT_EQ(SHOW_INFOLIST_IMMEDIATELY, mode & SHOW_INFOLIST_IMMEDIATELY);
+  EXPECT_EQ(mode & SHOW_INFOLIST_IMMEDIATELY, SHOW_INFOLIST_IMMEDIATELY);
 }
 
 // Firefox 47.0a1 (2016-02-28)

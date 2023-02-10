@@ -36,17 +36,17 @@ namespace renderer {
 
 #define EXPECT_SIZE_EQ(expect_width, expect_height, actual_size) \
   do {                                                           \
-    EXPECT_EQ((expect_width), (actual_size).width);              \
-    EXPECT_EQ((expect_height), (actual_size).height);            \
+    EXPECT_EQ((actual_size).width, (expect_width));              \
+    EXPECT_EQ((actual_size).height, (expect_height));            \
   } while (false)
 
 #define EXPECT_RECT_EQ(expect_left, expect_top, expect_width, expect_height, \
                        actual_rect)                                          \
   do {                                                                       \
-    EXPECT_EQ((expect_left), (actual_rect).origin.x);                        \
-    EXPECT_EQ((expect_top), (actual_rect).origin.y);                         \
-    EXPECT_EQ((expect_width), (actual_rect).Width());                        \
-    EXPECT_EQ((expect_height), (actual_rect).Height());                      \
+    EXPECT_EQ((actual_rect).origin.x, (expect_left));                        \
+    EXPECT_EQ((actual_rect).origin.y, (expect_top));                         \
+    EXPECT_EQ((actual_rect).Width(), (expect_width));                        \
+    EXPECT_EQ((actual_rect).Height(), (expect_height));                      \
   } while (false)
 
 enum COLUMN_TYPE {
@@ -190,22 +190,22 @@ TEST(TableLayoutTest, VScrollIndicatorPositions) {
   EXPECT_RECT_EQ(1, 0, 10, 100, layout.GetVScrollBarRect());
 
   Rect indicatorRect = layout.GetVScrollIndicatorRect(0, 5, kCandidatesTotal);
-  EXPECT_EQ(vscrollBarRect.Left(), indicatorRect.Left());
-  EXPECT_EQ(vscrollBarRect.Right(), indicatorRect.Right());
-  EXPECT_EQ(0, indicatorRect.Top());
-  EXPECT_EQ(static_cast<int>(100.0 * 6 / 15 + 0.5), indicatorRect.Bottom());
+  EXPECT_EQ(indicatorRect.Left(), vscrollBarRect.Left());
+  EXPECT_EQ(indicatorRect.Right(), vscrollBarRect.Right());
+  EXPECT_EQ(indicatorRect.Top(), 0);
+  EXPECT_EQ(indicatorRect.Bottom(), static_cast<int>(100.0 * 6 / 15 + 0.5));
 
   indicatorRect = layout.GetVScrollIndicatorRect(5, 10, kCandidatesTotal);
-  EXPECT_EQ(vscrollBarRect.Left(), indicatorRect.Left());
-  EXPECT_EQ(vscrollBarRect.Right(), indicatorRect.Right());
-  EXPECT_EQ(static_cast<int>(100.0 * 5 / 15 + 0.5), indicatorRect.Top());
-  EXPECT_EQ(static_cast<int>(100.0 * 11 / 15 + 0.5), indicatorRect.Bottom());
+  EXPECT_EQ(indicatorRect.Left(), vscrollBarRect.Left());
+  EXPECT_EQ(indicatorRect.Right(), vscrollBarRect.Right());
+  EXPECT_EQ(indicatorRect.Top(), static_cast<int>(100.0 * 5 / 15 + 0.5));
+  EXPECT_EQ(indicatorRect.Bottom(), static_cast<int>(100.0 * 11 / 15 + 0.5));
 
   indicatorRect = layout.GetVScrollIndicatorRect(10, 14, kCandidatesTotal);
-  EXPECT_EQ(vscrollBarRect.Left(), indicatorRect.Left());
-  EXPECT_EQ(vscrollBarRect.Right(), indicatorRect.Right());
-  EXPECT_EQ(static_cast<int>(100.0 * 10 / 15 + 0.5), indicatorRect.Top());
-  EXPECT_EQ(100, indicatorRect.Bottom());
+  EXPECT_EQ(indicatorRect.Left(), vscrollBarRect.Left());
+  EXPECT_EQ(indicatorRect.Right(), vscrollBarRect.Right());
+  EXPECT_EQ(indicatorRect.Top(), static_cast<int>(100.0 * 10 / 15 + 0.5));
+  EXPECT_EQ(indicatorRect.Bottom(), 100);
 }
 
 TEST(TableLayoutTest, VScrollVerySmallIndicator) {

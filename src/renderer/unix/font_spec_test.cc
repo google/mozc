@@ -73,14 +73,15 @@ class FontSpecTest : public testing::Test {
   void ExpectAlignment(const TestableFontSpec &font_spec,
                        const PangoAlignment &expected,
                        FontSpecInterface::FONT_TYPE font_type) {
-    EXPECT_EQ(expected, font_spec.GetFontAlignment(font_type));
+    EXPECT_EQ(font_spec.GetFontAlignment(font_type), expected);
   }
 
   void ExpectFontDescription(const TestableFontSpec &font_spec,
                              const std::string &expected,
                              FontSpecInterface::FONT_TYPE font_type) {
-    EXPECT_EQ(expected, pango_font_description_to_string(
-                            font_spec.GetFontDescription(font_type)));
+    EXPECT_EQ(pango_font_description_to_string(
+                  font_spec.GetFontDescription(font_type)),
+              expected);
   }
 
   void ExpectFontAttribute(const TestableFontSpec &font_spec, const RGBA &color,

@@ -305,26 +305,26 @@ TEST_P(BalloonImageTest, TestImpl) {
   CBitmap dib = TestableBalloonImage::CreateInternal(
       info, &actual_tail_offset, &actual_size, &actual_buffer);
 
-  EXPECT_EQ(tail["output"]["tail_offset_x"].asInt(), actual_tail_offset.x);
-  EXPECT_EQ(tail["output"]["tail_offset_y"].asInt(), actual_tail_offset.y);
+  EXPECT_EQ(actual_tail_offset.x, tail["output"]["tail_offset_x"].asInt());
+  EXPECT_EQ(actual_tail_offset.y, tail["output"]["tail_offset_y"].asInt());
 
   std::wstring wide_path;
   Util::Utf8ToWide(expected_image_path, &wide_path);
 
   Gdiplus::Bitmap bitmap(wide_path.c_str());
 
-  ASSERT_EQ(bitmap.GetWidth(), actual_size.cx);
-  ASSERT_EQ(bitmap.GetHeight(), actual_size.cy);
+  ASSERT_EQ(actual_size.cx, bitmap.GetWidth());
+  ASSERT_EQ(actual_size.cy, bitmap.GetHeight());
 
   for (size_t y = 0; y < actual_size.cy; ++y) {
     for (size_t x = 0; x < actual_size.cx; ++x) {
       ARGBColor argb = actual_buffer[y * actual_size.cx + x];
       Gdiplus::Color color;
-      ASSERT_EQ(Gdiplus::Ok, bitmap.GetPixel(x, y, &color));
-      EXPECT_EQ(color.GetA(), argb.a) << "(x, y): (" << x << ", " << y << ")";
-      EXPECT_EQ(color.GetR(), argb.r) << "(x, y): (" << x << ", " << y << ")";
-      EXPECT_EQ(color.GetG(), argb.g) << "(x, y): (" << x << ", " << y << ")";
-      EXPECT_EQ(color.GetB(), argb.b) << "(x, y): (" << x << ", " << y << ")";
+      ASSERT_EQ(bitmap.GetPixel(x, y, &color), Gdiplus::Ok);
+      EXPECT_EQ(argb.a, color.GetA()) << "(x, y): (" << x << ", " << y << ")";
+      EXPECT_EQ(argb.r, color.GetR()) << "(x, y): (" << x << ", " << y << ")";
+      EXPECT_EQ(argb.g, color.GetG()) << "(x, y): (" << x << ", " << y << ")";
+      EXPECT_EQ(argb.b, color.GetB()) << "(x, y): (" << x << ", " << y << ")";
     }
   }
 }
@@ -344,34 +344,34 @@ TEST(SubdivisionalPixelTest, BasicTest) {
   const RGBColor kGreen(0, 255, 0);
 
   SubdivisionalPixel sub_pixel;
-  EXPECT_EQ(0.0, sub_pixel.GetCoverage())
+  EXPECT_EQ(sub_pixel.GetCoverage(), 0.0)
       << "Should be zero for an empty pixel";
-  EXPECT_EQ(RGBColor::kBlack, sub_pixel.GetPixelColor())
+  EXPECT_EQ(sub_pixel.GetPixelColor(), RGBColor::kBlack)
       << "Should be black for an empty pixel";
 
   // SetSubdivisionalPixel sets only sub-pixel specified.
   sub_pixel.SetSubdivisionalPixel(SubdivisionalPixel::Fraction2D(0, 0),
                                   RGBColor::kWhite);
   EXPECT_NEAR(1.0 / 255.0, sub_pixel.GetCoverage(), 0.1);
-  EXPECT_EQ(RGBColor::kWhite, sub_pixel.GetPixelColor());
+  EXPECT_EQ(sub_pixel.GetPixelColor(), RGBColor::kWhite);
 
   sub_pixel.SetColorToFilledPixels(kGreen);
   EXPECT_NEAR(1.0 / 255.0, sub_pixel.GetCoverage(), 0.1);
-  EXPECT_EQ(kGreen, sub_pixel.GetPixelColor());
+  EXPECT_EQ(sub_pixel.GetPixelColor(), kGreen);
 
   // SetPixel sets all the sub-pixels.
   sub_pixel.SetPixel(kBlue);
   EXPECT_NEAR(1.0, sub_pixel.GetCoverage(), 0.01);
-  EXPECT_EQ(kBlue, sub_pixel.GetPixelColor());
+  EXPECT_EQ(sub_pixel.GetPixelColor(), kBlue);
 
   sub_pixel.SetSubdivisionalPixel(SubdivisionalPixel::Fraction2D(0, 0),
                                   RGBColor::kWhite);
   EXPECT_NEAR(1.0, sub_pixel.GetCoverage(), 0.01);
-  EXPECT_EQ(1, sub_pixel.GetPixelColor().r);
+  EXPECT_EQ(sub_pixel.GetPixelColor().r, 1);
 
   sub_pixel.SetColorToFilledPixels(kBlue);
   EXPECT_NEAR(1.0, sub_pixel.GetCoverage(), 0.01);
-  EXPECT_EQ(kBlue, sub_pixel.GetPixelColor());
+  EXPECT_EQ(sub_pixel.GetPixelColor(), kBlue);
 }
 
 TEST(SubdivisionalPixelTest, IteratorTest) {
@@ -390,7 +390,7 @@ TEST(SubdivisionalPixelTest, IteratorTest) {
     EXPECT_GE(1.0, it.GetY());
     ++count;
   }
-  EXPECT_EQ(SubdivisionalPixel::kTotalPixels, count);
+  EXPECT_EQ(count, SubdivisionalPixel::kTotalPixels);
 }
 
 TEST(GaussianBlurTest, NoBlurTest) {
@@ -400,8 +400,8 @@ TEST(GaussianBlurTest, NoBlurTest) {
   struct Source {
     Source() : call_count_(0) {}
     double operator()(int x, int y) const {
-      EXPECT_EQ(0, x);
-      EXPECT_EQ(0, y);
+      EXPECT_EQ(x, 0);
+      EXPECT_EQ(y, 0);
       ++call_count_;
       return 1.0;
     }
@@ -409,8 +409,8 @@ TEST(GaussianBlurTest, NoBlurTest) {
   };
 
   Source source;
-  EXPECT_EQ(1.0, blur.Apply(0, 0, source));
-  EXPECT_EQ(1, source.call_count_);
+  EXPECT_EQ(blur.Apply(0, 0, source), 1.0);
+  EXPECT_EQ(source.call_count_, 1);
 }
 
 TEST(GaussianBlurTest, InvalidParamBlurTest) {
@@ -421,8 +421,8 @@ TEST(GaussianBlurTest, InvalidParamBlurTest) {
   struct Source {
     Source() : call_count_(0) {}
     double operator()(int x, int y) const {
-      EXPECT_EQ(0, x);
-      EXPECT_EQ(0, y);
+      EXPECT_EQ(x, 0);
+      EXPECT_EQ(y, 0);
       ++call_count_;
       return 1.0;
     }
@@ -430,8 +430,8 @@ TEST(GaussianBlurTest, InvalidParamBlurTest) {
   };
 
   Source source;
-  EXPECT_EQ(1.0, blur.Apply(0, 0, source));
-  EXPECT_EQ(1, source.call_count_);
+  EXPECT_EQ(blur.Apply(0, 0, source), 1.0);
+  EXPECT_EQ(source.call_count_, 1);
 }
 
 TEST(GaussianBlurTest, NormalBlurTest) {
@@ -452,7 +452,7 @@ TEST(GaussianBlurTest, NormalBlurTest) {
   Source source(blur.cutoff_length());
   EXPECT_NEAR(1.0, blur.Apply(0, 0, source), 0.1);
   const size_t matrix_length = blur.cutoff_length() * 2 + 1;
-  EXPECT_EQ(matrix_length * matrix_length, source.call_count_);
+  EXPECT_EQ(source.call_count_, matrix_length * matrix_length);
 }
 
 TEST(SafeFrameBufferTest, BasicTest) {
@@ -463,31 +463,31 @@ TEST(SafeFrameBufferTest, BasicTest) {
   constexpr int kHeight = 100;
   SafeFrameBuffer buffer(Rect(kLeft, kTop, kWidth, kHeight));
 
-  EXPECT_EQ(kTransparent, buffer.GetPixel(kLeft, kTop))
+  EXPECT_EQ(buffer.GetPixel(kLeft, kTop), kTransparent)
       << "Initial color should be transparent";
   buffer.SetPixel(kLeft, kTop, ARGBColor::kWhite);
-  EXPECT_EQ(ARGBColor::kWhite, buffer.GetPixel(kLeft, kTop));
+  EXPECT_EQ(buffer.GetPixel(kLeft, kTop), ARGBColor::kWhite);
 
   buffer.SetPixel(kLeft + kWidth, kTop, ARGBColor::kWhite);
-  EXPECT_EQ(kTransparent, buffer.GetPixel(kLeft + kWidth, kTop))
+  EXPECT_EQ(buffer.GetPixel(kLeft + kWidth, kTop), kTransparent)
       << "(left + width) is outside.";
 
   buffer.SetPixel(kLeft, kTop + kHeight, ARGBColor::kWhite);
-  EXPECT_EQ(kTransparent, buffer.GetPixel(kLeft, kTop + kHeight))
+  EXPECT_EQ(buffer.GetPixel(kLeft, kTop + kHeight), kTransparent)
       << "(top + height) is outside.";
 
   buffer.SetPixel(kLeft - 10, kTop - 10, ARGBColor::kWhite);
-  EXPECT_EQ(kTransparent, buffer.GetPixel(kLeft - 10, kTop - 10))
+  EXPECT_EQ(buffer.GetPixel(kLeft - 10, kTop - 10), kTransparent)
       << "Outside pixel should be kept as transparent.";
 }
 
 TEST(TextLabelTest, BoundingBoxTest) {
   const TextLabel label(-10.5, -5.1, 10.5, 5.0, "text", "font name", 10,
                         RGBColor::kWhite);
-  EXPECT_EQ(-11, label.bounding_rect().Left());
-  EXPECT_EQ(-6, label.bounding_rect().Top());
-  EXPECT_EQ(0, label.bounding_rect().Right());
-  EXPECT_EQ(0, label.bounding_rect().Bottom());
+  EXPECT_EQ(label.bounding_rect().Left(), -11);
+  EXPECT_EQ(label.bounding_rect().Top(), -6);
+  EXPECT_EQ(label.bounding_rect().Right(), 0);
+  EXPECT_EQ(label.bounding_rect().Bottom(), 0);
 }
 
 }  // namespace

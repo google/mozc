@@ -38,16 +38,16 @@ namespace renderer {
 TEST(RendererStyleHandlerTest, SetAndGetRendererStyleTest1) {
   RendererStyle style;
   style.set_window_border(99);
-  EXPECT_EQ(true, RendererStyleHandler::SetRendererStyle(style));
+  EXPECT_TRUE(RendererStyleHandler::SetRendererStyle(style));
   RendererStyle style2;
-  EXPECT_NE(99, style2.window_border());
-  EXPECT_EQ(true, RendererStyleHandler::GetRendererStyle(&style2));
-  EXPECT_EQ(99, style2.window_border());
+  EXPECT_NE(style2.window_border(), 99);
+  EXPECT_TRUE(RendererStyleHandler::GetRendererStyle(&style2));
+  EXPECT_EQ(style2.window_border(), 99);
 }
 TEST(RendererStyleHandlerTest, GetDefaultRendererStyleTest) {
   RendererStyle style;
   RendererStyleHandler::GetDefaultRendererStyle(&style);
-  EXPECT_EQ(true, style.has_window_border());
+  EXPECT_TRUE(style.has_window_border());
 }
 }  // namespace renderer
 }  // namespace mozc

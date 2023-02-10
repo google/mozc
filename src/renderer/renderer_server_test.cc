@@ -152,12 +152,12 @@ TEST_F(RendererServerTest, IPCTest) {
 
   // renderer is called via IPC
   client.ExecCommand(command);
-  EXPECT_EQ(1, renderer.counter());
+  EXPECT_EQ(renderer.counter(), 1);
 
   client.ExecCommand(command);
   client.ExecCommand(command);
   client.ExecCommand(command);
-  EXPECT_EQ(4, renderer.counter());
+  EXPECT_EQ(renderer.counter(), 4);
 
   // Gracefully shutdown the server.
   renderer.Shutdown();
