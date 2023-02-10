@@ -371,6 +371,7 @@
             '../data/keymap/kotoeri.tsv',
             '../data/keymap/mobile.tsv',
             '../data/keymap/ms-ime.tsv',
+            '../data/keymap/overlay_henkan_muhenkan_to_ime_on_off.tsv',
             '../data/preedit/12keys-halfwidthascii.tsv',
             '../data/preedit/12keys-hiragana.tsv',
             '../data/preedit/12keys-hiragana_intuitive.tsv',

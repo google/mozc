@@ -31,6 +31,7 @@
 
 #include "session/internal/keymap.h"
 
+#include <algorithm>
 #include <istream>
 #include <map>
 #include <memory>
@@ -44,6 +45,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/protobuf/protobuf.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
 #include "composer/key_parser.h"
@@ -60,9 +62,12 @@ namespace {
 static constexpr char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
 static constexpr char kATOKKeyMapFile[] = "system://atok.tsv";
 static constexpr char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
+// keymap.tsv is a write-only file for debugging purposes.
 static constexpr char kCustomKeyMapFile[] = "user://keymap.tsv";
 static constexpr char kMobileKeyMapFile[] = "system://mobile.tsv";
 static constexpr char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
+static constexpr char kOverlayHenkanMuhenkanToImeOnOffKeyMapFile[] =
+    "system://overlay_henkan_muhenkan_to_ime_on_off.tsv";
 }  // namespace
 
 #if defined(__APPLE__)
@@ -71,6 +76,7 @@ const bool KeyMapManager::kInputModeXCommandSupported = false;
 const bool KeyMapManager::kInputModeXCommandSupported = true;
 #endif  // __APPLE__
 
+// static
 bool KeyMapManager::IsSameKeyMapManagerApplicable(
     const config::Config &old_config, const config::Config &new_config) {
   if (&old_config == &new_config) {
@@ -79,7 +85,12 @@ bool KeyMapManager::IsSameKeyMapManagerApplicable(
   if (old_config.session_keymap() != new_config.session_keymap()) {
     return false;
   }
-  // TODO(matsuzakit): Add overlay_keymap check.
+  if (!std::equal(old_config.overlay_keymaps().begin(),
+                  old_config.overlay_keymaps().end(),
+                  new_config.overlay_keymaps().begin(),
+                  new_config.overlay_keymaps().end())) {
+    return false;
+  }
   if (old_config.session_keymap() == config::Config::CUSTOM &&
       old_config.custom_keymap_table() != new_config.custom_keymap_table()) {
     return false;
@@ -90,12 +101,14 @@ bool KeyMapManager::IsSameKeyMapManagerApplicable(
 KeyMapManager::KeyMapManager() {
   InitCommandData();
   ApplyPrimarySessionKeymap(config::ConfigHandler::GetDefaultKeyMap(), "");
+  // No overlay keymap is set.
 }
 
 KeyMapManager::KeyMapManager(const config::Config &config) {
   InitCommandData();
   ApplyPrimarySessionKeymap(config.session_keymap(),
                             config.custom_keymap_table());
+  ApplyOverlaySessionKeymap(config.overlay_keymaps());
 }
 
 KeyMapManager::~KeyMapManager() {}
@@ -142,6 +155,18 @@ bool KeyMapManager::ApplyPrimarySessionKeymap(
   }
 }
 
+void KeyMapManager::ApplyOverlaySessionKeymap(
+    const ::mozc::protobuf::RepeatedField<int> &overlay_keymaps) {
+  for (const auto &overlay : overlay_keymaps) {
+    const char *overlay_keymap_file =
+        GetKeyMapFileName(static_cast<config::Config::SessionKeymap>(overlay));
+    DLOG(INFO) << "Overlay keymap " << overlay_keymap_file;
+    if (overlay_keymap_file != nullptr) {
+      LoadFile(overlay_keymap_file);
+    }
+  }
+}
+
 // static
 const char *KeyMapManager::GetKeyMapFileName(
     const config::Config::SessionKeymap keymap) {
@@ -158,6 +183,9 @@ const char *KeyMapManager::GetKeyMapFileName(
       return kChromeOsKeyMapFile;
     case config::Config::CUSTOM:
       return kCustomKeyMapFile;
+    case config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF:
+      return kOverlayHenkanMuhenkanToImeOnOffKeyMapFile;
+    case config::Config::OVERLAY_FOR_TEST:
     case config::Config::NONE:
     default:
       // should not appear here.

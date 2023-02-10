@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "base/protobuf/protobuf.h"
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
@@ -143,6 +144,7 @@ class KeyMapManager {
   FRIEND_TEST(KeyMapTest, LoadStreamWithErrors);
   FRIEND_TEST(KeyMapTest, AddCommand);
   FRIEND_TEST(KeyMapTest, ZeroQuerySuggestion);
+  FRIEND_TEST(KeyMapTest, IsReloadConfigRequired);
 
   void Reset();
   void InitCommandData();
@@ -153,10 +155,11 @@ class KeyMapManager {
   bool LoadStreamWithErrors(std::istream *ifs,
                             std::vector<std::string> *errors);
   // Applies "primary" SessionKeymap, like MSIME or KOTOERI.
-  // TODO(matsuzakit): Add ApplyOverlaySessionKeyMap, which is for
-  // overlay/additional keymaps.
   bool ApplyPrimarySessionKeymap(config::Config::SessionKeymap keymap,
                                  const std::string &custom_keymap_table);
+  // Applies "overlay" SessionKeymaps, like OVERLAY_HENKAN_TO_IME_ON.
+  void ApplyOverlaySessionKeymap(
+      const ::mozc::protobuf::RepeatedField<int> &overlay_keymaps);
 
   // Add a command bound with state and key_event.
   bool AddCommand(const std::string &state_name,
