@@ -254,7 +254,6 @@
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../client/client.gyp:client_mock',
-        '../../composer/composer.gyp:key_event_util',
         '../../protocol/protocol.gyp:commands_proto',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',

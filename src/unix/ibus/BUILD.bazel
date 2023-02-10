@@ -308,7 +308,6 @@ mozc_cc_test(
         "//base/protobuf",
         "//client",
         "//client:client_mock",
-        "//composer:key_event_util",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

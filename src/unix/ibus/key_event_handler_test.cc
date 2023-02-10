@@ -35,7 +35,6 @@
 #include "base/clock.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -384,7 +383,8 @@ TEST_F(KeyEventHandlerTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Shift_L, &key));
   EXPECT_NO_MODIFIERS_PRESSED();
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
-  EXPECT_EQ(commands::KeyEvent::SHIFT, KeyEventUtil::GetModifiers(key));
+  EXPECT_EQ(key.modifier_keys_size(), 1);
+  EXPECT_EQ(key.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // Shift down => Ctrl down => Shift up => Alt down => Ctrl up => Alt up
   key.Clear();
@@ -401,9 +401,10 @@ TEST_F(KeyEventHandlerTest, ProcessModifiers) {
   EXPECT_TRUE(ProcessKey(true, IBUS_Alt_L, &key));
   EXPECT_NO_MODIFIERS_PRESSED();
   EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
-  EXPECT_EQ((commands::KeyEvent::ALT | commands::KeyEvent::CTRL |
-             commands::KeyEvent::SHIFT),
-            KeyEventUtil::GetModifiers(key));
+  EXPECT_EQ(key.modifier_keys_size(), 3);
+  EXPECT_EQ(key.modifier_keys(0) | key.modifier_keys(1) | key.modifier_keys(2),
+            commands::KeyEvent::SHIFT | commands::KeyEvent::CTRL |
+                commands::KeyEvent::ALT);
 }
 
 TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
