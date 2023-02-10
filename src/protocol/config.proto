@@ -126,6 +126,8 @@ message Config {
     KOTOERI = 3;
     MOBILE = 4;
     CHROMEOS = 5;
+    OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF = 100;
+    OVERLAY_FOR_TEST = 10000;
   }
   optional SessionKeymap session_keymap = 41 [default = NONE];
 
@@ -282,6 +284,12 @@ message Config {
   // a SessionCommand::STOP_KEY_TOGGLING is prepended to the next key input.
   // If the value is 0, STOP_KEY_TOGGLING is not sent.
   optional int32 composing_timeout_threshold_msec = 67 [default = 0];
+
+  // The keymaps which are loaded on top of `session_keymap`.
+  // Overlay keymaps are prioritized over `session_keymap`.
+  // They are used to partially modify the session keymap, for example
+  // using Henkan key as IME_ON.
+  repeated SessionKeymap overlay_keymaps = 68 [packed = true];
 
   //////////////////////////////////////////////////////////////
   //

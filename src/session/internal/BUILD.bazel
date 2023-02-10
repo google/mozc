@@ -72,6 +72,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:util",
+        "//base/protobuf",
         "//composer:key_event_util",
         "//composer:key_parser",
         "//config:config_handler",

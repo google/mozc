@@ -66,6 +66,6 @@
     ],
 
     # glob command to get files.
-    'glob': '<(python) <(abs_depth)/gyp/glob_files.py --include',
+    'glob': '<(python) <(abs_depth)/gyp/glob_files.py',
   },
 }

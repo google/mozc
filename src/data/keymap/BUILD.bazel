@@ -37,5 +37,6 @@ filegroup(
         "kotoeri.tsv",
         "mobile.tsv",
         "ms-ime.tsv",
+        "overlay_henkan_muhenkan_to_ime_on_off.tsv",
     ],
 )

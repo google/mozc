@@ -49,6 +49,8 @@
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");
@@ -68,11 +70,10 @@ class TestSentenceGenerator {
   }
 
   TestSentenceGenerator() {
-    size_t size = 0;
-    const char **sentences =
-        session::RandomKeyEventsGenerator::GetTestSentences(&size);
-    CHECK_GT(size, 0);
-    size = std::min<size_t>(200, size);
+    const absl::Span<const char *> sentences =
+        session::RandomKeyEventsGenerator::GetTestSentences();
+    CHECK(!sentences.empty());
+    const size_t size = std::min<size_t>(200, sentences.size());
 
     for (size_t i = 0; i < size; ++i) {
       std::string output;
@@ -109,7 +110,7 @@ class TestScenarioInterface {
     CHECK(client_.NoOperation()) << "Server is not responding";
   }
 
-  virtual ~TestScenarioInterface() {}
+  virtual ~TestScenarioInterface() = default;
 
  protected:
   virtual void IMEOn() {

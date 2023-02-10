@@ -43,10 +43,11 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:version',
+        '../config/config.gyp:config_handler',
         '../ipc/ipc.gyp:ipc',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
-        '../session/session_base.gyp:ime_switch_util',
+        '../session/session_base.gyp:key_info_util',
       ],
       'export_dependent_settings': [
         '../protocol/protocol.gyp:commands_proto',

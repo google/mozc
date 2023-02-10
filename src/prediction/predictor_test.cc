@@ -71,8 +71,8 @@ class CheckCandSizeDictionaryPredictor : public PredictorInterface {
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
-    EXPECT_EQ(expected_cand_size_,
-              request.max_dictionary_prediction_candidates_size());
+    EXPECT_EQ(request.max_dictionary_prediction_candidates_size(),
+              expected_cand_size_);
     return true;
   }
 
@@ -95,11 +95,11 @@ class CheckCandSizeUserHistoryPredictor : public PredictorInterface {
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
-    EXPECT_EQ(expected_cand_size_,
-              request.max_user_history_prediction_candidates_size());
+    EXPECT_EQ(request.max_user_history_prediction_candidates_size(),
+              expected_cand_size_);
     EXPECT_EQ(
-        expected_cand_size_for_zero_query_,
-        request.max_user_history_prediction_candidates_size_for_zero_query());
+        request.max_user_history_prediction_candidates_size_for_zero_query(),
+        expected_cand_size_for_zero_query_);
     return true;
   }
 

@@ -1,0 +1,9 @@
+# Overlay to use Henkan as IMEOn key, and Muhenkan as IMEOff key
+Composition	Henkan	IMEOn
+Conversion	Henkan	IMEOn
+DirectInput	Henkan	IMEOn
+Precomposition	Henkan	IMEOn
+
+Composition	Muhenkan	IMEOff
+Conversion	Muhenkan	IMEOff
+Precomposition	Muhenkan	IMEOff

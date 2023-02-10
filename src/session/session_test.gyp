@@ -176,7 +176,6 @@
       'target_name': 'session_key_handling_test',
       'type': 'executable',
       'sources': [
-        'ime_switch_util_test.cc',
         'key_info_util_test.cc',
       ],
       'dependencies': [
@@ -184,7 +183,7 @@
         '../config/config.gyp:config_handler',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
-        'session_base.gyp:ime_switch_util',
+        'session_base.gyp:key_info_util',
       ],
       'variables': {
         'test_size': 'small',

@@ -56,10 +56,11 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/ime_switch_util.h"
+#include "session/key_info_util.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
@@ -104,6 +105,11 @@ Client::Client()
       last_mode_(commands::DIRECT) {
   response_.reserve(kResultBufferSize);
   client_factory_ = IPCClientFactory::GetIPCClientFactory();
+
+  // Initialize direct_mode_keys_
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
 
 #ifdef MOZC_USE_SVS_JAPANESE
   InitRequestForSvsJapanese(true);
@@ -510,7 +516,7 @@ bool Client::DeleteSession() {
 }
 
 bool Client::IsDirectModeCommand(const commands::KeyEvent &key) const {
-  return config::ImeSwitchUtil::IsDirectModeCommand(key);
+  return KeyInfoUtil::ContainsKey(direct_mode_keys_, key);
 }
 
 bool Client::GetConfig(config::Config *config) {
@@ -543,7 +549,7 @@ bool Client::SetConfig(const config::Config &config) {
     return false;
   }
 
-  config::ImeSwitchUtil::ReloadConfig(config);
+  direct_mode_keys_ = KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   return true;
 }
 

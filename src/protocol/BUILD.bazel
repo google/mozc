@@ -29,9 +29,7 @@
 
 load("//bazel:stubs.bzl", "jspb_proto_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//visibility:public"])
 
 proto_library(
     name = "commands_proto",
@@ -53,41 +51,31 @@ cc_proto_library(
 
 jspb_proto_library(
     name = "commands_jspb_proto",
-    visibility = [],
     deps = [":commands_proto"],
 )
 
-# Proto library for Android Java.
-JAVA_PROTO_VISIBILITY = [
-]
-
 java_lite_proto_library(
     name = "candidates_java_proto_lite",
-    visibility = JAVA_PROTO_VISIBILITY,
     deps = [":candidates_proto"],
 )
 
 java_lite_proto_library(
     name = "commands_java_proto_lite",
-    visibility = JAVA_PROTO_VISIBILITY,
     deps = [":commands_proto"],
 )
 
 java_lite_proto_library(
     name = "config_java_proto_lite",
-    visibility = JAVA_PROTO_VISIBILITY,
     deps = [":config_proto"],
 )
 
 java_lite_proto_library(
     name = "engine_builder_java_proto_lite",
-    visibility = JAVA_PROTO_VISIBILITY,
     deps = [":engine_builder_proto"],
 )
 
 java_lite_proto_library(
     name = "user_dictionary_storage_java_proto_lite",
-    visibility = JAVA_PROTO_VISIBILITY,
     deps = [":user_dictionary_storage_proto"],
 )
 
@@ -103,7 +91,6 @@ cc_proto_library(
 
 jspb_proto_library(
     name = "config_jspb_proto",
-    visibility = [],
     deps = [":config_proto"],
 )
 
@@ -113,7 +100,6 @@ proto_library(
         "renderer_command.proto",
         "renderer_style.proto",
     ],
-    visibility = ["//visibility:private"],
     deps = [":commands_proto"],
 )
 
@@ -124,9 +110,7 @@ cc_proto_library(
 
 proto_library(
     name = "candidates_proto",
-    srcs = [
-        "candidates.proto",
-    ],
+    srcs = ["candidates.proto"],
 )
 
 cc_proto_library(
@@ -136,14 +120,12 @@ cc_proto_library(
 
 jspb_proto_library(
     name = "candidates_jspb_proto",
-    visibility = [],
     deps = [":candidates_proto"],
 )
 
 proto_library(
     name = "state_proto",
     srcs = ["state.proto"],
-    visibility = ["//visibility:private"],
     deps = [
         ":candidates_proto",
         ":commands_proto",
@@ -167,14 +149,12 @@ cc_proto_library(
 
 jspb_proto_library(
     name = "user_dictionary_storage_jspb_proto",
-    visibility = [],
     deps = [":user_dictionary_storage_proto"],
 )
 
 proto_library(
     name = "segmenter_data_proto",
     srcs = ["segmenter_data.proto"],
-    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
@@ -185,7 +165,6 @@ cc_proto_library(
 proto_library(
     name = "engine_builder_proto",
     srcs = ["engine_builder.proto"],
-    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(

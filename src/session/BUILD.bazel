@@ -46,7 +46,6 @@ package(default_visibility = [
 test_suite(
     name = "android_test",
     tests = [
-        ":ime_switch_util_test_android",
         ":key_info_util_test_android",
         ":output_util_test_android",
         ":random_keyevents_generator_test_android",
@@ -603,37 +602,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "ime_switch_util",
-    srcs = ["ime_switch_util.cc"],
-    hdrs = ["ime_switch_util.h"],
-    deps = [
-        ":key_info_util",
-        "//base:port",
-        "//base:singleton",
-        "//config:config_handler",
-        "//protocol:config_cc_proto",
-    ],
-)
-
-mozc_cc_test(
-    name = "ime_switch_util_test",
-    size = "small",
-    srcs = ["ime_switch_util_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":ime_switch_util",
-        "//base",
-        "//base:system_util",
-        "//composer:key_parser",
-        "//config:config_handler",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//session/internal:keymap",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
     name = "key_info_util",
     srcs = ["key_info_util.cc"],
     hdrs = ["key_info_util.h"],
@@ -765,7 +733,10 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//session/internal:keymap",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/random:distributions",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -776,7 +747,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":random_keyevents_generator",
-        "//base",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
@@ -793,15 +763,13 @@ mozc_cc_test(
     deps = [
         ":random_keyevents_generator",
         ":request_test_util",
-        ":session_handler",
         ":session_handler_tool",
-        "//base:file_util",
         "//base:port",
-        "//base:util",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 

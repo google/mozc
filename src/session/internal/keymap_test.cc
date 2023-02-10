@@ -267,6 +267,22 @@ TEST_F(KeyMapTest, GetCommandKeyStub) {
   EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
 }
 
+TEST_F(KeyMapTest, GetCommand_overlay) {
+  config::Config config;
+  config.set_session_keymap(config::Config::MSIME);
+  config.add_overlay_keymaps(
+      config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF);
+  KeyMapManager manager(config);
+  {
+    commands::KeyEvent key_event;
+    key_event.set_special_key(commands::KeyEvent::HENKAN);
+    DirectInputState::Commands command;
+    EXPECT_TRUE(manager.GetCommandDirect(key_event, &command));
+    // MSIME defines HENKAN as Reconvert, but the overlay defines it as IME_ON.
+    EXPECT_EQ(DirectInputState::Commands::IME_ON, command);
+  }
+}
+
 TEST_F(KeyMapTest, GetKeyMapFileName) {
   EXPECT_STREQ("system://atok.tsv",
                KeyMapManager::GetKeyMapFileName(config::Config::ATOK));
@@ -658,6 +674,87 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
     KeyMapManager manager(GetDefaultConfig(config::Config::CHROMEOS));
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
+  }
+}
+
+TEST_F(KeyMapTest, IsSameKeyMapManagerApplicable) {
+  {
+    // Current: CHROMEOS + []
+    // Sending config: CHROMEOS + []
+    // Expectation: True
+
+    // CHROMEOS + []
+    config::Config configChromeOs1;
+    configChromeOs1.set_session_keymap(config::Config::CHROMEOS);
+    config::Config configChromeOs2;
+    configChromeOs2.set_session_keymap(config::Config::CHROMEOS);
+
+    EXPECT_TRUE(KeyMapManager::IsSameKeyMapManagerApplicable(configChromeOs1,
+                                                             configChromeOs2));
+  }
+  {
+    // Current: CHROMEOS + []
+    // Sending config: CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF]
+    // Expectation: False
+
+    // CHROMEOS + []
+    config::Config configChromeOs;
+    configChromeOs.set_session_keymap(config::Config::CHROMEOS);
+    // CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF]
+    config::Config configChromeOs_henkan;
+    configChromeOs_henkan.set_session_keymap(config::Config::CHROMEOS);
+    configChromeOs_henkan.add_overlay_keymaps(
+        config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF);
+
+    EXPECT_FALSE(KeyMapManager::IsSameKeyMapManagerApplicable(
+        configChromeOs, configChromeOs_henkan));
+  }
+  {
+    // Current: CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF,
+    // OVERLAY_FOR_TEST]
+    // Sending config: CHROMEOS + [OVERLAY_FOR_TEST]
+    // Expectation: False
+
+    // CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF, OVERLAY_FOR_TEST]
+    config::Config configChromeOs_henkan_muhenkan;
+    configChromeOs_henkan_muhenkan.set_session_keymap(config::Config::CHROMEOS);
+    configChromeOs_henkan_muhenkan.add_overlay_keymaps(
+        config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF);
+    configChromeOs_henkan_muhenkan.add_overlay_keymaps(
+        config::Config::OVERLAY_FOR_TEST);
+    // CHROMEOS + [OVERLAY_FOR_TEST]
+    config::Config configChromeOs_muhenkan;
+    configChromeOs_muhenkan.set_session_keymap(config::Config::CHROMEOS);
+    configChromeOs_muhenkan.add_overlay_keymaps(
+        config::Config::OVERLAY_FOR_TEST);
+
+    EXPECT_FALSE(KeyMapManager::IsSameKeyMapManagerApplicable(
+        configChromeOs_henkan_muhenkan, configChromeOs_muhenkan));
+  }
+  {
+    // Current: CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF,
+    // OVERLAY_FOR_TEST]
+    // Sending config: CHROMEOS +
+    // [OVERLAY_FOR_TEST, OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF]
+    // Expectation: False (must be ordering aware)
+
+    // CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF, OVERLAY_FOR_TEST]
+    config::Config configChromeOs_henkan_muhenkan;
+    configChromeOs_henkan_muhenkan.set_session_keymap(config::Config::CHROMEOS);
+    configChromeOs_henkan_muhenkan.add_overlay_keymaps(
+        config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF);
+    configChromeOs_henkan_muhenkan.add_overlay_keymaps(
+        config::Config::OVERLAY_FOR_TEST);
+    // CHROMEOS + [OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF, OVERLAY_FOR_TEST]
+    config::Config configChromeOs_muhenkan_henkan;
+    configChromeOs_muhenkan_henkan.set_session_keymap(config::Config::CHROMEOS);
+    configChromeOs_muhenkan_henkan.add_overlay_keymaps(
+        config::Config::OVERLAY_FOR_TEST);
+    configChromeOs_muhenkan_henkan.add_overlay_keymaps(
+        config::Config::OVERLAY_HENKAN_MUHENKAN_TO_IME_ON_OFF);
+
+    EXPECT_FALSE(KeyMapManager::IsSameKeyMapManagerApplicable(
+        configChromeOs_henkan_muhenkan, configChromeOs_muhenkan_henkan));
   }
 }
 

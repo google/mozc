@@ -67,6 +67,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/random/random.h"
@@ -434,30 +435,18 @@ void Util::CapitalizeString(std::string *str) {
 }
 
 bool Util::IsLowerAscii(absl::string_view s) {
-  for (absl::string_view::const_iterator iter = s.begin(); iter != s.end();
-       ++iter) {
-    if (!islower(*iter)) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(s, absl::ascii_islower);
 }
 
 bool Util::IsUpperAscii(absl::string_view s) {
-  for (absl::string_view::const_iterator iter = s.begin(); iter != s.end();
-       ++iter) {
-    if (!isupper(*iter)) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(s, absl::ascii_isupper);
 }
 
 bool Util::IsCapitalizedAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
-  if (isupper(*s.begin())) {
+  if (absl::ascii_isupper(s.front())) {
     return IsLowerAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
@@ -467,10 +456,10 @@ bool Util::IsLowerOrUpperAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
-  if (islower(*s.begin())) {
+  if (absl::ascii_islower(s.front())) {
     return IsLowerAscii(absl::ClippedSubstr(s, 1));
   }
-  if (isupper(*s.begin())) {
+  if (absl::ascii_isupper(s.front())) {
     return IsUpperAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
@@ -480,7 +469,7 @@ bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
-  if (isupper(*s.begin())) {
+  if (absl::ascii_isupper(s.front())) {
     return IsLowerOrUpperAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
@@ -1360,12 +1349,7 @@ Util::FormType Util::GetFormType(const std::string &str) {
 }
 
 bool Util::IsAscii(absl::string_view str) {
-  for (const char c : str) {
-    if (!absl::ascii_isascii(c)) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(str, absl::ascii_isascii);
 }
 
 namespace {

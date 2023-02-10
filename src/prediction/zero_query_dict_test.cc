@@ -90,91 +90,91 @@ std::unique_ptr<uint32_t[]> InitTestZeroQueryDict(ZeroQueryDict *dict) {
 }
 
 void ExpectIterPointsToElem0(ZeroQueryDict::iterator iter) {
-  EXPECT_EQ(4, iter.key_index());    // Index to "あ"
-  EXPECT_EQ(0, iter.value_index());  // Index to ""
-  EXPECT_EQ(ZERO_QUERY_EMOJI, iter.type());
-  EXPECT_EQ("あ", iter.key());
-  EXPECT_EQ("", iter.value());
-  EXPECT_EQ(4, *iter);    // Index to "あ"
-  EXPECT_EQ(4, iter[0]);  // Index to "あ"
-  EXPECT_EQ(4, iter[1]);  // Index to "あ"
-  EXPECT_EQ(4, iter[2]);  // Index to "あ"
-  EXPECT_EQ(5, iter[3]);  // Index to "ああ"
+  EXPECT_EQ(iter.key_index(), 4);    // Index to "あ"
+  EXPECT_EQ(iter.value_index(), 0);  // Index to ""
+  EXPECT_EQ(iter.type(), ZERO_QUERY_EMOJI);
+  EXPECT_EQ(iter.key(), "あ");
+  EXPECT_EQ(iter.value(), "");
+  EXPECT_EQ(*iter, 4);    // Index to "あ"
+  EXPECT_EQ(iter[0], 4);  // Index to "あ"
+  EXPECT_EQ(iter[1], 4);  // Index to "あ"
+  EXPECT_EQ(iter[2], 4);  // Index to "あ"
+  EXPECT_EQ(iter[3], 5);  // Index to "ああ"
 }
 
 void ExpectIterPointsToElem1(ZeroQueryDict::iterator iter) {
-  EXPECT_EQ(4, iter.key_index());    // Index to "あ"
-  EXPECT_EQ(2, iter.value_index());  // Index to "❕"
-  EXPECT_EQ(ZERO_QUERY_EMOJI, iter.type());
-  EXPECT_EQ("あ", iter.key());
-  EXPECT_EQ("❕", iter.value());
-  EXPECT_EQ(4, *iter);    // Index to "あ"
-  EXPECT_EQ(4, iter[0]);  // Index to "あ"
-  EXPECT_EQ(4, iter[1]);  // Index to "あ"
-  EXPECT_EQ(5, iter[2]);  // Index to "ああ"
+  EXPECT_EQ(iter.key_index(), 4);    // Index to "あ"
+  EXPECT_EQ(iter.value_index(), 2);  // Index to "❕"
+  EXPECT_EQ(iter.type(), ZERO_QUERY_EMOJI);
+  EXPECT_EQ(iter.key(), "あ");
+  EXPECT_EQ(iter.value(), "❕");
+  EXPECT_EQ(*iter, 4);    // Index to "あ"
+  EXPECT_EQ(iter[0], 4);  // Index to "あ"
+  EXPECT_EQ(iter[1], 4);  // Index to "あ"
+  EXPECT_EQ(iter[2], 5);  // Index to "ああ"
 }
 
 void ExpectIterPointsToElem2(ZeroQueryDict::iterator iter) {
-  EXPECT_EQ(4, iter.key_index());    // Index to "あ"
-  EXPECT_EQ(3, iter.value_index());  // Index to "❣"
-  EXPECT_EQ(ZERO_QUERY_NONE, iter.type());
-  EXPECT_EQ("あ", iter.key());
-  EXPECT_EQ("❣", iter.value());
-  EXPECT_EQ(4, *iter);    // Index to "あ"
-  EXPECT_EQ(4, iter[0]);  // Index to "あ"
-  EXPECT_EQ(5, iter[1]);  // Index to "ああ"
+  EXPECT_EQ(iter.key_index(), 4);    // Index to "あ"
+  EXPECT_EQ(iter.value_index(), 3);  // Index to "❣"
+  EXPECT_EQ(iter.type(), ZERO_QUERY_NONE);
+  EXPECT_EQ(iter.key(), "あ");
+  EXPECT_EQ(iter.value(), "❣");
+  EXPECT_EQ(*iter, 4);    // Index to "あ"
+  EXPECT_EQ(iter[0], 4);  // Index to "あ"
+  EXPECT_EQ(iter[1], 5);  // Index to "ああ"
 }
 
 void ExpectIterPointsToElem3(ZeroQueryDict::iterator iter) {
-  EXPECT_EQ(5, iter.key_index());    // Index to "ああ"
-  EXPECT_EQ(1, iter.value_index());  // Index to "( •̀ㅁ•́;)"
-  EXPECT_EQ(ZERO_QUERY_EMOTICON, iter.type());
-  EXPECT_EQ("ああ", iter.key());
-  EXPECT_EQ("( •̀ㅁ•́;)", iter.value());
-  EXPECT_EQ(5, iter[0]);  // Index to "ああ"
+  EXPECT_EQ(iter.key_index(), 5);    // Index to "ああ"
+  EXPECT_EQ(iter.value_index(), 1);  // Index to "( •̀ㅁ•́;)"
+  EXPECT_EQ(iter.type(), ZERO_QUERY_EMOTICON);
+  EXPECT_EQ(iter.key(), "ああ");
+  EXPECT_EQ(iter.value(), "( •̀ㅁ•́;)");
+  EXPECT_EQ(iter[0], 5);  // Index to "ああ"
 }
 
 TEST(ZeroQueryDictTest, IterateForwardByPreIncrement) {
   ZeroQueryDict dict;
   const auto buf = InitTestZeroQueryDict(&dict);
   ZeroQueryDict::iterator iter = dict.begin();
-  ASSERT_NE(dict.end(), iter);
+  ASSERT_NE(iter, dict.end());
   ExpectIterPointsToElem0(iter);
-  ASSERT_NE(dict.end(), ++iter);
+  ASSERT_NE(++iter, dict.end());
   ExpectIterPointsToElem1(iter);
-  ASSERT_NE(dict.end(), ++iter);
+  ASSERT_NE(++iter, dict.end());
   ExpectIterPointsToElem2(iter);
-  ASSERT_NE(dict.end(), ++iter);
+  ASSERT_NE(++iter, dict.end());
   ExpectIterPointsToElem3(iter);
-  ASSERT_EQ(dict.end(), ++iter);
+  ASSERT_EQ(++iter, dict.end());
 }
 
 TEST(ZeroQueryDictTest, IterateForwardByPostIncrement) {
   ZeroQueryDict dict;
   const auto buf = InitTestZeroQueryDict(&dict);
   ZeroQueryDict::iterator iter = dict.begin();
-  ASSERT_NE(dict.end(), iter);
+  ASSERT_NE(iter, dict.end());
   ExpectIterPointsToElem0(iter++);
-  ASSERT_NE(dict.end(), iter);
+  ASSERT_NE(iter, dict.end());
   ExpectIterPointsToElem1(iter++);
-  ASSERT_NE(dict.end(), iter);
+  ASSERT_NE(iter, dict.end());
   ExpectIterPointsToElem2(iter++);
-  ASSERT_NE(dict.end(), iter);
+  ASSERT_NE(iter, dict.end());
   ExpectIterPointsToElem3(iter++);
-  ASSERT_EQ(dict.end(), iter);
+  ASSERT_EQ(iter, dict.end());
 }
 
 TEST(ZeroQueryDictTest, IterateBackwardByPreDecrement) {
   ZeroQueryDict dict;
   const auto buf = InitTestZeroQueryDict(&dict);
   ZeroQueryDict::iterator iter = dict.end();
-  ASSERT_NE(dict.begin(), --iter);
+  ASSERT_NE(--iter, dict.begin());
   ExpectIterPointsToElem3(iter);
-  ASSERT_NE(dict.begin(), --iter);
+  ASSERT_NE(--iter, dict.begin());
   ExpectIterPointsToElem2(iter);
-  ASSERT_NE(dict.begin(), --iter);
+  ASSERT_NE(--iter, dict.begin());
   ExpectIterPointsToElem1(iter);
-  ASSERT_EQ(dict.begin(), --iter);
+  ASSERT_EQ(--iter, dict.begin());
   ExpectIterPointsToElem0(iter);
 }
 
@@ -182,14 +182,14 @@ TEST(ZeroQueryDictTest, IterateBackwardByPostDecrement) {
   ZeroQueryDict dict;
   const auto buf = InitTestZeroQueryDict(&dict);
   ZeroQueryDict::iterator iter = dict.end();
-  EXPECT_EQ(dict.end(), iter--);
-  ASSERT_NE(dict.begin(), iter);
+  EXPECT_EQ(iter--, dict.end());
+  ASSERT_NE(iter, dict.begin());
   ExpectIterPointsToElem3(iter--);
-  ASSERT_NE(dict.begin(), iter);
+  ASSERT_NE(iter, dict.begin());
   ExpectIterPointsToElem2(iter--);
-  ASSERT_NE(dict.begin(), iter);
+  ASSERT_NE(iter, dict.begin());
   ExpectIterPointsToElem1(iter--);
-  ASSERT_EQ(dict.begin(), iter);
+  ASSERT_EQ(iter, dict.begin());
   ExpectIterPointsToElem0(iter);
 }
 
@@ -198,16 +198,16 @@ TEST(ZeroQueryDict, EqualRange) {
   const auto buf = InitTestZeroQueryDict(&dict);
 
   auto range = dict.equal_range("あ");
-  EXPECT_EQ(dict.begin(), range.first);
-  EXPECT_EQ(dict.begin() + 3, range.second);
+  EXPECT_EQ(range.first, dict.begin());
+  EXPECT_EQ(range.second, dict.begin() + 3);
 
   range = dict.equal_range("ああ");
-  EXPECT_EQ(dict.begin() + 3, range.first);
-  EXPECT_EQ(dict.begin() + 4, range.second);
+  EXPECT_EQ(range.first, dict.begin() + 3);
+  EXPECT_EQ(range.second, dict.begin() + 4);
 
   range = dict.equal_range("This key is not found");
-  EXPECT_EQ(dict.end(), range.first);
-  EXPECT_EQ(dict.end(), range.second);
+  EXPECT_EQ(range.first, dict.end());
+  EXPECT_EQ(range.second, dict.end());
 }
 
 }  // namespace

@@ -82,13 +82,11 @@ mozc_cc_binary(
     name = "mozc_rpc_server_main",
     srcs = ["mozc_rpc_server_main.cc"],
     deps = [
-        "//base",
         "//base:init_mozc",
         "//base:singleton",
         "//base:system_util",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
-        "//session",
         "//session:random_keyevents_generator",
         "//session:session_handler",
         "//session:session_usage_observer",

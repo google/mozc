@@ -30,17 +30,21 @@
 
 """Script to glob files for GYP build.
 
-glob_files.py --include "*.txt" --exclude "exclude.txt"
+glob_files.py "*.txt" --exclude "exclude.txt"
+glob_files.py "*.cc" --base "absl/**" --exclude "*wrapper.cc" --notest
 """
 
 import argparse
 import glob
+import os
 
 
 def _ParseArguments():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--include', nargs='+')
+  parser.add_argument('include', nargs='+')
+  parser.add_argument('--base', default='')
   parser.add_argument('--exclude', nargs='+', default=[])
+  parser.add_argument('--notest', action='store_true')
   return parser.parse_args()
 
 
@@ -49,12 +53,15 @@ def main():
   includes = []
   excludes = []
   for include in args.include:
-    a = glob.glob(include)
-    includes.extend(a)
+    includes.extend(glob.glob(os.path.join(args.base, include), recursive=True))
   for exclude in args.exclude:
-    excludes.extend(glob.glob(exclude))
+    excludes.extend(glob.glob(os.path.join(args.base, exclude), recursive=True))
 
-  for file in list(set(includes) - set(excludes)):
+  for file in sorted(list(set(includes) - set(excludes))):
+    if args.notest:
+      basename = os.path.splitext(file)[0]
+      if basename.endswith('_test') or basename.endswith('_benchmark'):
+        continue
     print(file)
 
 
