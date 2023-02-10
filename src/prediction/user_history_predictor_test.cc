@@ -429,7 +429,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       Segments segments;
       SetUpInputForSuggestion("てすと", composer_.get(), &segments);
       EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ(0, segments.segment(0).candidates_size());
+      EXPECT_EQ(segments.segment(0).candidates_size(), 0);
     }
 
     // Nothing happen
@@ -437,7 +437,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       Segments segments;
       SetUpInputForSuggestion("てすと", composer_.get(), &segments);
       EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ(0, segments.segment(0).candidates_size());
+      EXPECT_EQ(segments.segment(0).candidates_size(), 0);
     }
 
     // Insert two items
@@ -451,14 +451,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       segments.Clear();
       SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
       EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
                   Segment::Candidate::USER_HISTORY_PREDICTOR);
 
       segments.Clear();
       SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
       EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
                   Segment::Candidate::USER_HISTORY_PREDICTOR);
     }
@@ -523,25 +523,25 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // reproducesd
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     // Exact Match
     segments.Clear();
     SetUpInputForSuggestion("わたしのなまえはなかのです", composer_.get(),
                             &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("わたしのなまえはなかのです", composer_.get(),
                             &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("こんにちはさようなら", composer_.get(), &segments);
@@ -556,12 +556,12 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
       config_->set_history_learning_level(config::Config::READ_ONLY);
       SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
       segments.Clear();
       SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
       config_->set_history_learning_level(config::Config::DEFAULT_HISTORY);
     }
 
@@ -636,7 +636,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
       SCOPED_TRACE(segments.segment(0).candidate(i).value);
       EXPECT_EQ(
-          1, expected_candidates.erase(segments.segment(0).candidate(i).value));
+          expected_candidates.erase(segments.segment(0).candidate(i).value), 1);
     }
   }
 }
@@ -663,14 +663,14 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 
       SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-      EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+      EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
 
       segments.Clear();
       SetUpInputForPrediction("わたしの", composer_.get(), &segments);
       EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-      EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-      EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+      EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+      EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
     }
 
     // sync
@@ -708,29 +708,29 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
     // reproducesd
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-    EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+    EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
 
     segments.Clear();
     SetUpInputForPrediction("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-    EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+    EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
 
     // Exact Match
     segments.Clear();
     SetUpInputForSuggestion("わたしのなまえはなかのです", composer_.get(),
                             &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-    EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+    EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
 
     segments.Clear();
     SetUpInputForSuggestion("わたしのなまえはなかのです", composer_.get(),
                             &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-    EXPECT_EQ(kDescription, segments.segment(0).candidate(0).description);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+    EXPECT_EQ(segments.segment(0).candidate(0).description, kDescription);
 
     // clear
     predictor->ClearAllHistory();
@@ -797,12 +797,12 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
 
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("ひろすえ", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("広末涼子", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "広末涼子");
 
     predictor->ClearUnusedHistory();
     WaitForSyncer(predictor);
@@ -810,7 +810,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
     segments.Clear();
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("ひろすえ", composer_.get(), &segments);
@@ -826,7 +826,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorUnusedHistoryTest) {
 
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
     segments.Clear();
     SetUpInputForSuggestion("ひろすえ", composer_.get(), &segments);
@@ -847,7 +847,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   // Before Revert, Suggest works
   SetUpInputForSuggestion("わたしの", composer_.get(), &segments2);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments2));
-  EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
   // Call revert here
   predictor->Revert(&segments);
@@ -856,10 +856,10 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorRevertTest) {
   SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
 
   EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(0, segments.segment(0).candidates_size());
+  EXPECT_EQ(segments.segment(0).candidates_size(), 0);
 
   EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(0, segments.segment(0).candidates_size());
+  EXPECT_EQ(segments.segment(0).candidates_size(), 0);
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorClearTest) {
@@ -915,17 +915,17 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   segments.Clear();
   SetUpInputForPrediction("わたしの", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(2, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("私の名前は中野です。", segments.segment(0).candidate(1).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 2);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "私の名前は中野です。");
 
   segments.Clear();
   SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
 
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(2, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("私の名前は中野です。", segments.segment(0).candidate(1).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 2);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "私の名前は中野です。");
 }
 
 TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
@@ -965,7 +965,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   SetUpInputForPrediction("あ", composer_.get(), &segments);  // "あ"
   ASSERT_TRUE(predictor->PredictForRequest(*convreq_, &segments))
       << segments.DebugString();
-  EXPECT_EQ("亜", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "亜");
 
   segments.Clear();
 
@@ -1002,8 +1002,8 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   SetUpInputForPrediction("おつかれ", composer_.get(), &segments);
   ASSERT_TRUE(predictor->PredictForRequest(*convreq_, &segments))
       << segments.DebugString();
-  EXPECT_EQ("お疲れ様です", segments.segment(0).candidate(0).value);
-  EXPECT_EQ("お疲れ様です。", segments.segment(0).candidate(1).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "お疲れ様です");
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "お疲れ様です。");
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
@@ -1024,14 +1024,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
   SetUpInputForPrediction("わたしの", composer_.get(), &segments);
 
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 
   segments.Clear();
   SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は中野です", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
 }
 
 namespace {
@@ -1076,16 +1076,16 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
       // Suggestion
       SetUpInputForSuggestion(first_char, composer_.get(), &segments);
       AddCandidate(0, first_char, &segments);
-      EXPECT_EQ(kTestCases[i].expected_result,
-                predictor->PredictForRequest(*convreq_, &segments))
+      EXPECT_EQ(predictor->PredictForRequest(*convreq_, &segments),
+                kTestCases[i].expected_result)
           << "Suggest from " << first_char;
     }
     segments.Clear();
     {
       // Prediction
       SetUpInputForPrediction(first_char, composer_.get(), &segments);
-      EXPECT_EQ(kTestCases[i].expected_result,
-                predictor->PredictForRequest(*convreq_, &segments))
+      EXPECT_EQ(predictor->PredictForRequest(*convreq_, &segments),
+                kTestCases[i].expected_result)
           << "Predict from " << first_char;
     }
   }
@@ -1143,8 +1143,8 @@ TEST_F(UserHistoryPredictorTest, ZeroQuerySuggestionTest) {
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
     ASSERT_EQ(2, segments.segments_size());
     // last-pushed segment is "大阪"
-    EXPECT_EQ("大阪", segments.segment(1).candidate(0).value);
-    EXPECT_EQ("おおさか", segments.segment(1).candidate(0).key);
+    EXPECT_EQ(segments.segment(1).candidate(0).value, "大阪");
+    EXPECT_EQ(segments.segment(1).candidate(0).key, "おおさか");
     EXPECT_TRUE(segments.segment(1).candidate(0).source_info &
                 Segment::Candidate::USER_HISTORY_PREDICTOR);
 
@@ -1272,7 +1272,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsMultiInput) {
   segments.Clear();
   SetUpInputForSuggestion("たろうは", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ("太郎は良子に", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "太郎は良子に");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1348,7 +1348,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
   segments.Clear();
   SetUpInputForSuggestion("たろうは", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ("太郎は良子に", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "太郎は良子に");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1395,7 +1395,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   SetUpInputForSuggestion("とうきょうは、", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  EXPECT_EQ("東京は、日本です", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "東京は、日本です");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1444,13 +1444,13 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
 
   SetUpInputForSuggestion("えど(", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ("江戸(東京", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "江戸(東京");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  EXPECT_EQ("江戸(東京", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "江戸(東京");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1509,7 +1509,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
   SetUpInputForSuggestion("「やま」は", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  EXPECT_EQ("「山」は高い", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "「山」は高い");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1532,8 +1532,8 @@ TEST_F(UserHistoryPredictorTest, Regression2843775) {
   SetUpInputForSuggestion("そうです", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
-  EXPECT_EQ("そうです。よろしくお願いします",
-            segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value,
+            "そうです。よろしくお願いします");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
@@ -1575,9 +1575,8 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    EXPECT_EQ(std::string::npos,
-              segments.segment(0).candidate(i).value.find(
-                  "猛獣"));  // "猛獣" should not be found
+    EXPECT_EQ(segments.segment(0).candidate(i).value.find("猛獣"),
+              std::string::npos);  // "猛獣" should not be found
   }
 
   segments.Clear();
@@ -1586,8 +1585,8 @@ TEST_F(UserHistoryPredictorTest, DuplicateString) {
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 
   for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
-    EXPECT_EQ(std::string::npos,
-              segments.segment(0).candidate(i).value.find("ライオン（微生物"));
+    EXPECT_EQ(segments.segment(0).candidate(i).value.find("ライオン（微生物"),
+              std::string::npos);
   }
 }
 
@@ -1652,26 +1651,26 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
-  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("test", ""));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("test", ""),
+            UserHistoryPredictor::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("", ""));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("", ""),
+            UserHistoryPredictor::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::LEFT_EMPTY_MATCH,
-            UserHistoryPredictor::GetMatchType("", "test"));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("", "test"),
+            UserHistoryPredictor::LEFT_EMPTY_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::NO_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "bar"));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "bar"),
+            UserHistoryPredictor::NO_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::EXACT_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "foo"));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "foo"),
+            UserHistoryPredictor::EXACT_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::LEFT_PREFIX_MATCH,
-            UserHistoryPredictor::GetMatchType("foo", "foobar"));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foo", "foobar"),
+            UserHistoryPredictor::LEFT_PREFIX_MATCH);
 
-  EXPECT_EQ(UserHistoryPredictor::RIGHT_PREFIX_MATCH,
-            UserHistoryPredictor::GetMatchType("foobar", "foo"));
+  EXPECT_EQ(UserHistoryPredictor::GetMatchType("foobar", "foo"),
+            UserHistoryPredictor::RIGHT_PREFIX_MATCH);
 }
 
 TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
@@ -1726,22 +1725,25 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
-  EXPECT_EQ(123, UserHistoryPredictor::StringToUint32(
-                     UserHistoryPredictor::Uint32ToString(123)));
+  EXPECT_EQ(UserHistoryPredictor::StringToUint32(
+                UserHistoryPredictor::Uint32ToString(123)),
+            123);
 
-  EXPECT_EQ(12141, UserHistoryPredictor::StringToUint32(
-                       UserHistoryPredictor::Uint32ToString(12141)));
+  EXPECT_EQ(UserHistoryPredictor::StringToUint32(
+                UserHistoryPredictor::Uint32ToString(12141)),
+            12141);
 
   for (uint32_t i = 0; i < 10000; ++i) {
-    EXPECT_EQ(i, UserHistoryPredictor::StringToUint32(
-                     UserHistoryPredictor::Uint32ToString(i)));
+    EXPECT_EQ(UserHistoryPredictor::StringToUint32(
+                  UserHistoryPredictor::Uint32ToString(i)),
+              i);
   }
 
   // invalid input
-  EXPECT_EQ(0, UserHistoryPredictor::StringToUint32(""));
+  EXPECT_EQ(UserHistoryPredictor::StringToUint32(""), 0);
 
   // not 4byte
-  EXPECT_EQ(0, UserHistoryPredictor::StringToUint32("abcdef"));
+  EXPECT_EQ(UserHistoryPredictor::StringToUint32("abcdef"), 0);
 }
 
 TEST_F(UserHistoryPredictorTest, GetScore) {
@@ -1930,10 +1932,10 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
       if (entry == nullptr) {
         break;
       }
-      EXPECT_EQ(expected[n], entry);
+      EXPECT_EQ(entry, expected[n]);
       --n;
     }
-    EXPECT_EQ(-1, n);
+    EXPECT_EQ(n, -1);
   }
 
   {
@@ -1944,7 +1946,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
       entry->set_value("test");
       queue.Push(entry);
     }
-    EXPECT_EQ(1, queue.size());
+    EXPECT_EQ(queue.size(), 1);
 
     for (int i = 0; i < 5; ++i) {
       UserHistoryPredictor::Entry *entry = queue.NewEntry();
@@ -1953,7 +1955,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
       queue.Push(entry);
     }
 
-    EXPECT_EQ(2, queue.size());
+    EXPECT_EQ(queue.size(), 2);
   }
 }
 
@@ -2217,7 +2219,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     UserHistoryStorage storage(filename);
     ASSERT_TRUE(storage.Load());
     // Only the new entries are loaded.
-    EXPECT_EQ(10, storage.GetProto().entries_size());
+    EXPECT_EQ(storage.GetProto().entries_size(), 10);
     for (const auto &entry : storage.GetProto().entries()) {
       EXPECT_TRUE(absl::StartsWith(entry.key(), "new_"));
       EXPECT_TRUE(absl::StartsWith(entry.value(), "new_"));
@@ -2239,7 +2241,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     ASSERT_TRUE(file_storage.Load(&content));
     user_history_predictor::UserHistory modified_history;
     ASSERT_TRUE(modified_history.ParseFromString(content));
-    EXPECT_EQ(10, modified_history.entries_size());
+    EXPECT_EQ(modified_history.entries_size(), 10);
     for (const auto &entry : storage.GetProto().entries()) {
       EXPECT_TRUE(absl::StartsWith(entry.key(), "new_"));
       EXPECT_TRUE(absl::StartsWith(entry.value(), "new_"));
@@ -2289,8 +2291,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
     EXPECT_TRUE(LoadStorage(predictor, storage));
 
     // Only the valid entries are loaded.
-    EXPECT_EQ(9, storage.GetProto().entries_size());
-    EXPECT_EQ(0, EntrySize(*predictor));
+    EXPECT_EQ(storage.GetProto().entries_size(), 9);
+    EXPECT_EQ(EntrySize(*predictor), 0);
   }
 }
 
@@ -2368,26 +2370,26 @@ TEST_F(UserHistoryPredictorTest, GetRomanMisspelledKey) {
   config_->set_preedit_method(config::Config::ROMAN);
 
   seg->set_key("");
-  EXPECT_EQ("",
-            UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments));
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments),
+            "");
 
   seg->set_key("おねがいしまうs");
-  EXPECT_EQ("onegaisimaus",
-            UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments));
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments),
+            "onegaisimaus");
 
   seg->set_key("おねがいします");
-  EXPECT_EQ("",
-            UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments));
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments),
+            "");
 
   config_->set_preedit_method(config::Config::KANA);
 
   seg->set_key("おねがいしまうs");
-  EXPECT_EQ("",
-            UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments));
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments),
+            "");
 
   seg->set_key("おねがいします");
-  EXPECT_EQ("",
-            UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments));
+  EXPECT_EQ(UserHistoryPredictor::GetRomanMisspelledKey(*convreq_, segments),
+            "");
 }
 
 TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
@@ -2445,9 +2447,9 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(
-        kTests1[i].expect_result,
         predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "あｋ", "あ",
-                               expanded.get(), &entry, nullptr, &results))
+                               expanded.get(), &entry, nullptr, &results),
+        kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
 
@@ -2464,9 +2466,9 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
-    EXPECT_EQ(kTests2[i].expect_result,
-              predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "", "",
-                                     expanded.get(), &entry, nullptr, &results))
+    EXPECT_EQ(predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "", "",
+                                     expanded.get(), &entry, nullptr, &results),
+              kTests2[i].expect_result)
         << kTests2[i].entry_key;
   }
 }
@@ -2497,9 +2499,9 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(
-        kTests1[i].expect_result,
         predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "あし", "あ",
-                               expanded.get(), &entry, nullptr, &results))
+                               expanded.get(), &entry, nullptr, &results),
+        kTests1[i].expect_result)
         << kTests1[i].entry_key;
   }
 
@@ -2515,9 +2517,9 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
-    EXPECT_EQ(kTests2[i].expect_result,
-              predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "し", "",
-                                     expanded.get(), &entry, nullptr, &results))
+    EXPECT_EQ(predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "し", "",
+                                     expanded.get(), &entry, nullptr, &results),
+              kTests2[i].expect_result)
         << kTests2[i].entry_key;
   }
 }
@@ -2552,9 +2554,9 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   };
 
   for (size_t i = 0; i < std::size(kTests1); ++i) {
-    EXPECT_EQ(kTests1[i].expect_type,
-              UserHistoryPredictor::GetMatchTypeFromInput(
-                  "あ", "あ", expanded.get(), kTests1[i].target))
+    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+                  "あ", "あ", expanded.get(), kTests1[i].target),
+              kTests1[i].expect_type)
         << kTests1[i].target;
   }
 
@@ -2572,9 +2574,9 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   };
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
-    EXPECT_EQ(kTests2[i].expect_type,
-              UserHistoryPredictor::GetMatchTypeFromInput(
-                  "", "", expanded.get(), kTests2[i].target))
+    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+                  "", "", expanded.get(), kTests2[i].target),
+              kTests2[i].expect_type)
         << kTests2[i].target;
   }
 }
@@ -2608,9 +2610,9 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   };
 
   for (size_t i = 0; i < std::size(kTests1); ++i) {
-    EXPECT_EQ(kTests1[i].expect_type,
-              UserHistoryPredictor::GetMatchTypeFromInput(
-                  "あし", "あ", expanded.get(), kTests1[i].target))
+    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+                  "あし", "あ", expanded.get(), kTests1[i].target),
+              kTests1[i].expect_type)
         << kTests1[i].target;
   }
 
@@ -2629,9 +2631,9 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   };
 
   for (size_t i = 0; i < std::size(kTests2); ++i) {
-    EXPECT_EQ(kTests2[i].expect_type,
-              UserHistoryPredictor::GetMatchTypeFromInput(
-                  "し", "", expanded.get(), kTests2[i].target))
+    EXPECT_EQ(UserHistoryPredictor::GetMatchTypeFromInput(
+                  "し", "", expanded.get(), kTests2[i].target),
+              kTests2[i].expect_type)
         << kTests2[i].target;
   }
 }
@@ -2684,14 +2686,14 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   std::unique_ptr<Trie<std::string>> expanded;
   UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments, &input_key,
                                                 &base, &expanded);
-  EXPECT_EQ("ぐーｇ", input_key);
-  EXPECT_EQ("ぐー", base);
+  EXPECT_EQ(input_key, "ぐーｇ");
+  EXPECT_EQ(base, "ぐー");
   EXPECT_TRUE(expanded != nullptr);
   std::string value;
   size_t key_length = 0;
   bool has_subtrie = false;
   EXPECT_TRUE(expanded->LookUpPrefix("ぐ", &value, &key_length, &has_subtrie));
-  EXPECT_EQ("ぐ", value);
+  EXPECT_EQ(value, "ぐ");
 }
 
 namespace {
@@ -2756,15 +2758,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("ｎ", input_key);
-    EXPECT_EQ("", base);
+    EXPECT_EQ(input_key, "ｎ");
+    EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_TRUE(
         expanded->LookUpPrefix("な", &value, &key_length, &has_subtrie));
-    EXPECT_EQ("な", value);
+    EXPECT_EQ(value, "な");
   }
 
   composer_->Reset();
@@ -2777,8 +2779,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("ん", input_key);
-    EXPECT_EQ("ん", base);
+    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
   }
 
@@ -2792,8 +2794,8 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("ん", input_key);
-    EXPECT_EQ("ん", base);
+    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded == nullptr);
   }
 
@@ -2807,15 +2809,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("んｎ", input_key);
-    EXPECT_EQ("ん", base);
+    EXPECT_EQ(input_key, "んｎ");
+    EXPECT_EQ(base, "ん");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_TRUE(
         expanded->LookUpPrefix("な", &value, &key_length, &has_subtrie));
-    EXPECT_EQ("な", value);
+    EXPECT_EQ(value, "な");
   }
 }
 
@@ -2832,15 +2834,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("ん", input_key);
-    EXPECT_EQ("", base);
+    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_TRUE(
         expanded->LookUpPrefix("ん", &value, &key_length, &has_subtrie));
-    EXPECT_EQ("ん", value);
+    EXPECT_EQ(value, "ん");
   }
 }
 
@@ -2857,15 +2859,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("ん", input_key);
-    EXPECT_EQ("", base);
+    EXPECT_EQ(input_key, "ん");
+    EXPECT_EQ(base, "");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_TRUE(
         expanded->LookUpPrefix("ん", &value, &key_length, &has_subtrie));
-    EXPECT_EQ("ん", value);
+    EXPECT_EQ(value, "ん");
   }
 }
 
@@ -2883,15 +2885,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
     std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
-    EXPECT_EQ("あか", input_key);
-    EXPECT_EQ("あ", base);
+    EXPECT_EQ(input_key, "あか");
+    EXPECT_EQ(base, "あ");
     EXPECT_TRUE(expanded != nullptr);
     std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_TRUE(
         expanded->LookUpPrefix("が", &value, &key_length, &has_subtrie));
-    EXPECT_EQ("が", value);
+    EXPECT_EQ(value, "が");
   }
 }
 
@@ -3007,22 +3009,22 @@ TEST_F(UserHistoryPredictorTest, EraseNextEntries) {
   e.add_next_entries()->set_entry_fp(100);
 
   UserHistoryPredictor::EraseNextEntries(1234, &e);
-  EXPECT_EQ(5, e.next_entries_size());
+  EXPECT_EQ(e.next_entries_size(), 5);
 
   UserHistoryPredictor::EraseNextEntries(30, &e);
-  ASSERT_EQ(4, e.next_entries_size());
+  ASSERT_EQ(e.next_entries_size(), 4);
   for (size_t i = 0; i < 4; ++i) {
-    EXPECT_NE(30, e.next_entries(i).entry_fp());
+    EXPECT_NE(e.next_entries(i).entry_fp(), 30);
   }
 
   UserHistoryPredictor::EraseNextEntries(10, &e);
-  ASSERT_EQ(2, e.next_entries_size());
+  ASSERT_EQ(e.next_entries_size(), 2);
   for (size_t i = 0; i < 2; ++i) {
-    EXPECT_NE(10, e.next_entries(i).entry_fp());
+    EXPECT_NE(e.next_entries(i).entry_fp(), 10);
   }
 
   UserHistoryPredictor::EraseNextEntries(100, &e);
-  EXPECT_EQ(0, e.next_entries_size());
+  EXPECT_EQ(e.next_entries_size(), 0);
 }
 
 TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
@@ -3045,9 +3047,9 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   // The method should return NOT_FOUND for key-value pairs not in the chain.
   for (size_t i = 0; i < entries.size(); ++i) {
     std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(UserHistoryPredictor::NOT_FOUND,
-              predictor->RemoveNgramChain("hoge", "HOGE", entries[i], &dummy1,
-                                          0, &dummy2, 0));
+    EXPECT_EQ(predictor->RemoveNgramChain("hoge", "HOGE", entries[i], &dummy1,
+                                          0, &dummy2, 0),
+              UserHistoryPredictor::NOT_FOUND);
   }
   // Moreover, all nodes and links should be kept.
   for (size_t i = 0; i < entries.size(); ++i) {
@@ -3061,8 +3063,8 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // removed.
     std::vector<absl::string_view> dummy1, dummy2;
     EXPECT_EQ(
-        UserHistoryPredictor::DONE,
-        predictor->RemoveNgramChain("abc", "ABC", a, &dummy1, 0, &dummy2, 0));
+        predictor->RemoveNgramChain("abc", "ABC", a, &dummy1, 0, &dummy2, 0),
+        UserHistoryPredictor::DONE);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3073,8 +3075,8 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // Try deleting the chain for "a". Since this is the head of the chain, the
     // function returns TAIL and nothing should be removed.
     std::vector<absl::string_view> dummy1, dummy2;
-    EXPECT_EQ(UserHistoryPredictor::TAIL,
-              predictor->RemoveNgramChain("a", "A", a, &dummy1, 0, &dummy2, 0));
+    EXPECT_EQ(predictor->RemoveNgramChain("a", "A", a, &dummy1, 0, &dummy2, 0),
+              UserHistoryPredictor::TAIL);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3085,8 +3087,8 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
     // Further delete the chain for "ab".  Now all the links should be removed.
     std::vector<absl::string_view> dummy1, dummy2;
     EXPECT_EQ(
-        UserHistoryPredictor::DONE,
-        predictor->RemoveNgramChain("ab", "AB", a, &dummy1, 0, &dummy2, 0));
+        predictor->RemoveNgramChain("ab", "AB", a, &dummy1, 0, &dummy2, 0),
+        UserHistoryPredictor::DONE);
     for (size_t i = 0; i < entries.size(); ++i) {
       EXPECT_FALSE(entries[i]->removed());
     }
@@ -3723,24 +3725,24 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
 
   SetUpInputForSuggestion("わたし", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   SetUpInputForPrediction("わたしの", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   SetUpInputForPrediction("わたしのな", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
@@ -3763,27 +3765,27 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
 
   SetUpInputForSuggestion("わたし", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(2, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 2);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
-  EXPECT_EQ("私の名前は", segments.segment(0).candidate(1).value);
+  EXPECT_EQ(segments.segment(0).candidate(1).value, "私の名前は");
   EXPECT_TRUE(segments.segment(0).candidate(1).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   SetUpInputForPrediction("わたしの", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
 
   SetUpInputForPrediction("わたしのな", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
-  EXPECT_EQ("私の名前は", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は");
   EXPECT_TRUE(segments.segment(0).candidate(0).source_info &
               Segment::Candidate::USER_HISTORY_PREDICTOR);
   segments.Clear();
@@ -3836,7 +3838,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
     segments.Clear();
     SetUpInputForSuggestion("ございま", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", segments));
 
     // Zero query from "ございます" -> "！"
@@ -3846,7 +3848,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
     SetUpInputForSuggestionWithHistory("", "ございます", "ございます",
                                        composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("！", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "！");
   }
 
   predictor->ClearAllHistory();
@@ -3917,7 +3919,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
     segments.Clear();
     SetUpInputForSuggestion("ございま", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ございます");
     EXPECT_FALSE(
         FindCandidateByValue("ございます！よろしくお願いします", segments));
 
@@ -3946,13 +3948,13 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
     segments.Clear();
     SetUpInputForSuggestion("ございま", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", segments));
 
     segments.Clear();
     SetUpInputForSuggestion("ございます", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", segments));
   }
 
@@ -3992,16 +3994,16 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
     segments.Clear();
     SetUpInputForSuggestion("ございます", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます！",
-              segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              "ございます！");
     EXPECT_FALSE(
         FindCandidateByValue("ございます！よろしくお願いします", segments));
 
     segments.Clear();
     SetUpInputForSuggestion("ございます!", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます！",
-              segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              "ございます！");
     EXPECT_FALSE(
         FindCandidateByValue("ございます！よろしくお願いします", segments));
   }
@@ -4023,7 +4025,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
     segments.Clear();
     SetUpInputForSuggestion("ございます", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ("ございます", segments.conversion_segment(0).candidate(0).value);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "ございます");
     EXPECT_FALSE(FindCandidateByValue("ございます！", segments));
     EXPECT_FALSE(
         FindCandidateByValue("ございます！よろしくお願いします", segments));
@@ -4107,7 +4109,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   bool found_takahashi = false;
   for (const auto *elem = predictor->dic_->Head(); elem != nullptr;
        elem = elem->next) {
-    EXPECT_EQ(std::string::npos, elem->value.value().find("中野"));
+    EXPECT_EQ(elem->value.value().find("中野"), std::string::npos);
     if (elem->value.value().find("高橋")) {
       found_takahashi = true;
     }
@@ -4166,25 +4168,25 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
     convreq_->set_max_user_history_prediction_candidates_size(2);
     MakeSegmentsForSuggestion("てすと", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(2, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 2);
 
     MakeSegmentsForPrediction("てすと", &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(2, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 2);
   }
   {
     convreq_->set_max_user_history_prediction_candidates_size(3);
     SetUpInputForSuggestion("てすと", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(3, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 3);
 
     SetUpInputForPrediction("てすと", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(3, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 3);
   }
 
   {
@@ -4192,13 +4194,13 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
     convreq_->set_max_user_history_prediction_candidates_size(4);
     SetUpInputForSuggestion("てすと", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(3, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 3);
 
     SetUpInputForPrediction("てすと", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(3, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 3);
   }
 }
 
@@ -4238,13 +4240,13 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
   {
     SetUpInputForSuggestion("かお", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(2, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 2);
 
     SetUpInputForPrediction("かお", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.segments_size());
-    EXPECT_EQ(2, segments.segment(0).candidates_size());
+    EXPECT_EQ(segments.segments_size(), 1);
+    EXPECT_EQ(segments.segment(0).candidates_size(), 2);
   }
 
   // prediction candidates for zero query
@@ -4252,14 +4254,14 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
     SetUpInputForSuggestionWithHistory("", "てすと", "てすと", composer_.get(),
                                        &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
 
     SetUpInputForPredictionWithHistory("", "てすと", "てすと", composer_.get(),
                                        &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    EXPECT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
 

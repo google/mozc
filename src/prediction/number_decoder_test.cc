@@ -135,7 +135,7 @@ TEST(NumberDecoderTest, Decode) {
   for (const auto &data : kTestDataList) {
     std::vector<mozc::NumberDecoder::Result> results;
     const bool ret = decoder.Decode(data.key, &results);
-    EXPECT_EQ(!data.expected.empty(), ret) << data.key;
+    EXPECT_EQ(ret, !data.expected.empty()) << data.key;
     EXPECT_THAT(results, ::testing::UnorderedElementsAreArray(data.expected))
         << data.key;
   }
