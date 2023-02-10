@@ -234,8 +234,6 @@
       'sources': [
         '<(absl_srcdir)/synchronization/barrier.cc',
         '<(absl_srcdir)/synchronization/blocking_counter.cc',
-        '<(absl_srcdir)/synchronization/blocking_counter.cc',
-        '<(absl_srcdir)/synchronization/internal/create_thread_identity.cc',
         '<(absl_srcdir)/synchronization/internal/create_thread_identity.cc',
         '<(absl_srcdir)/synchronization/internal/graphcycles.cc',
         '<(absl_srcdir)/synchronization/internal/per_thread_sem.cc',

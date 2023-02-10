@@ -179,7 +179,6 @@
         '../../client/client.gyp:client',
         '../../protocol/protocol.gyp:commands_proto',
         '../../protocol/protocol.gyp:renderer_proto',
-        '../../session/session_base.gyp:ime_switch_util',
         'candidate_window_handler',
         'gen_ibus_mozc_files',
         'ibus_config_proto',
