@@ -31,34 +31,50 @@
 #define MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_
 
 #include <cstdint>
+#include <random>
 #include <vector>
 
 #include "base/port.h"
 #include "protocol/commands.pb.h"
+#include "absl/random/random.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace session {
 class RandomKeyEventsGenerator {
  public:
+  RandomKeyEventsGenerator() = default;
+  // Initialize with seed.
+  explicit RandomKeyEventsGenerator(std::seed_seq &&);
+
   // Load all data to avoid a increse of memory usage
   // during memory leak tests.
-  static void PrepareForMemoryLeakTest();
+  void PrepareForMemoryLeakTest();
+
+  // Generate a random test keyevents sequence for desktop
+  void GenerateSequence(std::vector<commands::KeyEvent> *keys);
+
+  // Generate a random test keyevents sequence for mobile
+  void GenerateMobileSequence(bool create_probable_key_events,
+                              std::vector<commands::KeyEvent> *keys);
 
   // return test sentence set embedded in RandomKeyEventsGenerator.
   // Example:
-  // const char **sentences = GetTestSentences(&size);
-  // const char *s = sentences[10];
-  static const char **GetTestSentences(size_t *test_size);
+  // const absl::Span<const char *> sentences =
+  //     RandomKeyEventsGenerator::GetTestSentences();
+  // const absl::string_view s = sentences[10];
+  static absl::Span<const char *> GetTestSentences();
 
-  // Generate a random test keyevents sequence for desktop
-  static void GenerateSequence(std::vector<commands::KeyEvent> *keys);
+ private:
+  uint32_t GetRandomAsciiKey();
+  void TypeRawKeys(absl::string_view romaji, bool create_probable_key_events,
+                   std::vector<commands::KeyEvent> *keys);
+  void GenerateMobileSequenceInternal(absl::string_view sentence,
+                                      bool create_probable_key_events,
+                                      std::vector<commands::KeyEvent> *keys);
 
-  // Initialize random seed for this module.
-  static void InitSeed(uint32_t seed);
-
-  // Generate a random test keyevents sequence for mobile
-  static void GenerateMobileSequence(bool create_probable_key_events,
-                                     std::vector<commands::KeyEvent> *keys);
+  absl::BitGen gen_;
 };
 }  // namespace session
 }  // namespace mozc

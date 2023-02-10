@@ -150,7 +150,6 @@ mozc_cc_binary(
     srcs = ["client_stress_test_main.cc"],
     deps = [
         ":client",
-        "//base:file_stream",
         "//base:init_mozc",
         "//base:logging",
         "//protocol:renderer_cc_proto",
@@ -199,7 +198,9 @@ mozc_cc_binary(
         "//protocol:commands_cc_proto",
         "//session:random_keyevents_generator",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

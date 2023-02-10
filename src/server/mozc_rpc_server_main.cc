@@ -364,9 +364,10 @@ int main(int argc, char *argv[]) {
   if (absl::GetFlag(FLAGS_client)) {
     mozc::RPCClient client;
     CHECK(client.CreateSession());
+    mozc::session::RandomKeyEventsGenerator key_events_generator;
     for (int n = 0; n < absl::GetFlag(FLAGS_client_test_size); ++n) {
       std::vector<mozc::commands::KeyEvent> keys;
-      mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
+      key_events_generator.GenerateSequence(&keys);
       for (size_t i = 0; i < keys.size(); ++i) {
         LOG(INFO) << "Sending to Server: " << keys[i].Utf8DebugString();
         mozc::commands::Output output;

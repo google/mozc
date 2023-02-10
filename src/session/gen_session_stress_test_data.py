@@ -50,11 +50,14 @@ def GenerateHeader(input_file, output_file):
       output.append(line)
 
   with open(output_file, 'w', encoding='utf-8') as f:
+    f.write('namespace {\n')
+    # TODO(yuryu): Change to absl::string_view when we drop msvc 2017.
     f.write('const char *kTestSentences[] = {\n')
     for line in output:
       escaped = line.replace('\\', '\\\\').replace('"', '\\"')
       f.write(' "%s",\n' % escaped)
     f.write('};\n')
+    f.write('}  // namespace\n')
 
 
 def main():
