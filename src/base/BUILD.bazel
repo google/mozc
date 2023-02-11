@@ -49,11 +49,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-exports_files([
-    "client.h",
-    "util.h",
-])
-
 # Test suite needs to have exact test names,
 # because android tests are tagged "manual".
 test_suite(
