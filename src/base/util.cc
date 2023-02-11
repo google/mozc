@@ -860,21 +860,6 @@ void Util::GetRandomSequence(absl::Span<char> buf) {
   });
 }
 
-void Util::GetRandomAsciiSequence(char *buf, size_t buf_size) {
-  GetRandomAsciiSequence(absl::MakeSpan(buf, buf_size));
-}
-
-void Util::GetRandomAsciiSequence(absl::Span<char> buf) {
-  constexpr char kCharMap[] =
-      "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
-  absl::BitGen gen;
-  std::generate(buf.begin(), buf.end(), [&]() -> char {
-    // std::size includes the last null character so we need size - 1.
-    const size_t char_count = std::size(kCharMap) - 1;
-    return kCharMap[absl::Uniform<size_t>(gen, 0, char_count)];
-  });
-}
-
 int Util::Random(int size) {
   DLOG_IF(FATAL, size < 0) << "|size| should be positive or 0. size: " << size;
   // Caveat: RAND_MAX is likely to be too small to achieve fine-grained

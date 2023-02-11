@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -1751,19 +1750,6 @@ TEST(UtilTest, GetRandomSequence) {
   const auto first = buf[0];
   EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
                            [first](char c) { return c != first; }));
-}
-
-TEST(UtilTest, GetRandomAsciiSequence) {
-  Util::GetRandomAsciiSequence({});
-
-  // Sufficiently large so it's highly unlikely to have only one value.
-  std::array<char, 1024> buf = {};
-  Util::GetRandomAsciiSequence(absl::MakeSpan(buf));
-  const auto first = buf[0];
-  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
-                           [first](char c) { return c != first; }));
-  EXPECT_TRUE(std::all_of(buf.begin(), buf.end(),
-                          [](char c) -> bool { return isprint(c); }));
 }
 
 }  // namespace mozc

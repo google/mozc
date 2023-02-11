@@ -259,9 +259,6 @@ class Util {
   ABSL_DEPRECATED("Use the overload with absl::Span")
   static void GetRandomSequence(char *buf, size_t buf_size);
   static void GetRandomSequence(absl::Span<char> buf);
-  ABSL_DEPRECATED("Use the overload with absl::Span")
-  static void GetRandomAsciiSequence(char *buf, size_t buf_size);
-  static void GetRandomAsciiSequence(absl::Span<char> buf);
 
   // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
