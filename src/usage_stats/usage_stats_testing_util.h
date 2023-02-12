@@ -32,10 +32,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
 
 #include "base/port.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace config {
@@ -47,28 +47,28 @@ namespace usage_stats {
 namespace internal {
 ::testing::AssertionResult ExpectStatsExist(const char *name_string,
                                             const char *param_string,
-                                            const std::string &name,
+                                            absl::string_view name,
                                             bool expected);
 
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
-                                            const std::string &name,
+                                            absl::string_view name,
                                             uint32_t expected);
 
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
-                                              const std::string &name,
+                                              absl::string_view name,
                                               int32_t expected);
 
 ::testing::AssertionResult ExpectBooleanStats(const char *name_string,
                                               const char *expected_string,
-                                              const std::string &name,
+                                              absl::string_view name,
                                               bool expected);
 
 ::testing::AssertionResult ExpectTimingStats(
     const char *name_string, const char *expected_total_string,
     const char *expected_num_string, const char *expected_min_string,
-    const char *expected_max_string, const std::string &name,
+    const char *expected_max_string, absl::string_view name,
     uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
     uint32_t expected_max);
 }  // namespace internal
