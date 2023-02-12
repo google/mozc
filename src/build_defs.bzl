@@ -249,32 +249,18 @@ def mozc_objc_library(
         name,
         srcs = [],
         hdrs = [],
-        textual_hdrs = [],
         deps = [],
-        proto_deps = [],
         copts = [],
         sdk_frameworks = [],
         tags = [],
         **kwargs):
-    # Because proto_library cannot be in deps of objc_library,
-    # cc_library as a wrapper is necessary as a workaround.
-    proto_deps_name = name + "_proto_deps"
-    native.cc_library(
-        name = proto_deps_name,
-        deps = proto_deps,
-        copts = copts + ["-funsigned-char"],
-        visibility = ["//visibility:private"],
-        tags = ["manual"],
-    )
     sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
-        textual_hdrs = textual_hdrs + proto_deps,
         deps = deps + [
             "//:macro",
-            proto_deps_name,
         ] + mozc_select(
             macos = sdk_frameworks_deps,
             oss_macos = [],

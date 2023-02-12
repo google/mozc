@@ -119,11 +119,6 @@ mozc_objc_library(
         "English.lproj/Config.xib",
         "Japanese.lproj/Config.xib",
     ],
-    proto_deps = [
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//protocol:renderer_cc_proto",
-    ],
     tags = ["manual"],
     textual_hdrs = [
         "GoogleJapaneseInputControllerInterface.h",
@@ -140,6 +135,9 @@ mozc_objc_library(
         "//base:util",
         "//client",
         "//ipc",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "@com_google_absl//absl/base",
     ],
@@ -148,7 +146,6 @@ mozc_objc_library(
 mozc_objc_test(
     name = "imk_controller_test",
     srcs = ["GoogleJapaneseInputController_test.mm"],
-    proto_deps = ["//protocol:candidates_cc_proto"],
     sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_controller",
@@ -156,6 +153,7 @@ mozc_objc_test(
         "//base:logging",
         "//base:mac_util",
         "//client:client_mock",
+        "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
         "//testing:gunit_main",
         "@com_google_absl//absl/time",
@@ -166,12 +164,12 @@ mozc_objc_library(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
-    proto_deps = ["//protocol:commands_cc_proto"],
     tags = ["manual"],
     deps = [
         ":common",
         "//base:const",
         "//base:logging",
+        "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
     ],
 )
@@ -179,10 +177,10 @@ mozc_objc_library(
 mozc_objc_test(
     name = "imk_server_test",
     srcs = ["GoogleJapaneseInputServer_test.mm"],
-    proto_deps = ["//protocol:commands_cc_proto"],
     sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_server",
+        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
 )
@@ -191,7 +189,6 @@ mozc_objc_library(
     name = "keycode_map",
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
-    proto_deps = ["//protocol:commands_cc_proto"],
     tags = ["manual"],
     textual_hdrs = [
         ":init_kanamap",
@@ -200,6 +197,7 @@ mozc_objc_library(
     ],
     deps = [
         "//base:logging",
+        "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
     ],
 )
@@ -212,6 +210,7 @@ mozc_objc_test(
     ],
     deps = [
         ":keycode_map",
+        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
 )
