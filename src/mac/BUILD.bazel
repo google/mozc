@@ -339,9 +339,10 @@ mozc_macos_application(
 
 genrule(
     name = "tweak_preflight",
-    srcs = [
-        "installer/preflight_template.sh",
-    ],
+    srcs = mozc_select(
+        default = ["installer/preflight_template.sh"],
+        oss = ["installer/preflight_template.sh"],
+    ),
     outs = ["preflight.sh"],
     cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
            " --output $@" +
@@ -356,9 +357,10 @@ genrule(
 
 genrule(
     name = "tweak_postflight",
-    srcs = [
-        "installer/postflight_template.sh",
-    ],
+    srcs = mozc_select(
+        default = ["installer/postflight_template.sh"],
+        oss = ["installer/postflight_template.sh"],
+    ),
     outs = ["postflight.sh"],
     cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
            " --output $@" +
@@ -392,7 +394,13 @@ genrule(
             ":uninstaller_macos",
         ],
     ) + mozc_select(
-        # For oss_macos only
+        # For macos or oss_macos only
+        macos = [
+            "installer/distribution.xml",
+            "installer/InstallerSections.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+        ],
         oss_macos = [
             "//gui/config_dialog:config_dialog_macos",
             "//gui/dictionary_tool:dictionary_tool_macos",
@@ -429,7 +437,10 @@ genrule(
     name = "productbuild_files",
     srcs = [":zipped_installer_files"],
     outs = ["productbuild_files.zip"],
-    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@",
+    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@" + mozc_select(
+        default = " --noqt",
+        oss_macos = " --oss",
+    ),
     tags = ["manual"],
     tools = [":tweak_installer_files"],
 )
@@ -447,11 +458,7 @@ AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
 genrule(
     name = "installer_oss_macos",
     srcs = [":tweaked_installer_files"] + mozc_select(
-        oss_macos = [
-            "installer/Mozc_template.pkgproj",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
-        ],
+        oss_macos = ["installer/Mozc_template.pkgproj"],
     ),
     outs = ["Mozc.pkg"],
     cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +

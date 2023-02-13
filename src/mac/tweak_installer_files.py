@@ -47,6 +47,8 @@ def ParseArguments() -> argparse.Namespace:
   parser.add_argument('--input')
   parser.add_argument('--output')
   parser.add_argument('--productbuild', action='store_true')
+  parser.add_argument('--noqt', action='store_true')
+  parser.add_argument('--oss', action='store_true')
   parser.add_argument('--work_dir')
   return parser.parse_args()
 
@@ -121,14 +123,19 @@ def TweakQtApps(top_dir: str) -> None:
     SymlinkQtFrameworks(app_dir)
 
 
-def TweakForProductbuild(top_dir: str) -> None:
+def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
   """Tweak file paths for the productbuild command."""
   orig_dir = os.getcwd()
   os.chdir(top_dir)
 
-  name = 'Mozc'
-  folder = 'Mozc'
-  domain = 'org.mozc'
+  if oss:
+    name = 'Mozc'
+    folder = 'Mozc'
+    domain = 'org.mozc'
+  else:
+    name = 'GoogleJapaneseInput'
+    folder = 'GoogleJapaneseInput.localized'
+    domain = 'com.google'
 
   renames = [
       (f'Uninstall{name}.app', f'root/Applications/{folder}/'),
@@ -147,11 +154,11 @@ def TweakForProductbuild(top_dir: str) -> None:
       ('postflight.sh', 'scripts/postinstall'),
       ('preflight.sh', 'scripts/preinstall'),
   ]
-  # Qt apps
-  renames += [
-      ('ConfigDialog.app', f'root/Applications/{folder}/'),
-      ('DictionaryTool.app', f'root/Applications/{folder}/'),
-  ]
+  if tweak_qt:
+    renames += [
+        ('ConfigDialog.app', f'root/Applications/{folder}/'),
+        ('DictionaryTool.app', f'root/Applications/{folder}/'),
+    ]
 
   for src, dst in renames:
     if dst.endswith('/'):
@@ -172,10 +179,14 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
 
   # The zip file should contain the 'installer' directory.
   util.RunOrDie(['unzip', '-q', args.input, '-d', work_dir])
-  TweakQtApps(top_dir)
+
+  tweak_qt = not args.noqt
+
+  if tweak_qt:
+    TweakQtApps(top_dir)
 
   if args.productbuild:
-    TweakForProductbuild(top_dir)
+    TweakForProductbuild(top_dir, tweak_qt, args.oss)
 
   # Create a zip file with the zip command.
   # It's not easy to contain symlinks with shutil.make_archive.
