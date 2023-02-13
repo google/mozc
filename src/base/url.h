@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -45,7 +46,7 @@ class Url {
   // Composes a URL for an uninstallation survey.  Note that we should set
   // version because, in Mac OS, we can not get mozc version from uninstaller
   // binary.
-  static bool GetUninstallationSurveyUrl(const std::string &version,
+  static bool GetUninstallationSurveyUrl(absl::string_view version,
                                          std::string *url);
 };
 

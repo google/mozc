@@ -557,6 +557,7 @@ mozc_cc_test(
     deps = [
         ":trie",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1214,7 +1215,7 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
-        ":version",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1227,6 +1228,7 @@ mozc_cc_test(
         ":url",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )

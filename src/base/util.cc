@@ -285,8 +285,7 @@ void Util::SplitStringToUtf8Graphemes(absl::string_view str,
   *graphemes = std::move(new_graphemes);
 }
 
-void Util::SplitCSV(const std::string &input,
-                    std::vector<std::string> *output) {
+void Util::SplitCSV(absl::string_view input, std::vector<std::string> *output) {
   std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
   memcpy(str, input.data(), input.size());
@@ -475,7 +474,7 @@ bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
   return false;
 }
 
-void Util::StripWhiteSpaces(const std::string &input, std::string *output) {
+void Util::StripWhiteSpaces(absl::string_view input, std::string *output) {
   *output = std::string(absl::StripAsciiWhitespace(input));
 }
 
@@ -830,7 +829,7 @@ void Util::StripUtf8Bom(std::string *line) {
   *line = std::string(absl::StripPrefix(*line, kUtf8Bom));
 }
 
-bool Util::IsUtf16Bom(const std::string &line) {
+bool Util::IsUtf16Bom(absl::string_view line) {
   static constexpr char kUtf16LeBom[] = "\xff\xfe";
   static constexpr char kUtf16BeBom[] = "\xfe\xff";
   if (line.size() >= 2 &&
@@ -961,7 +960,7 @@ bool Util::IsBracketPairText(absl::string_view input) {
   return kBracketPairText.contains(input);
 }
 
-bool Util::IsFullWidthSymbolInHalfWidthKatakana(const std::string &input) {
+bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
@@ -980,7 +979,7 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(const std::string &input) {
   return true;
 }
 
-bool Util::IsHalfWidthKatakanaSymbol(const std::string &input) {
+bool Util::IsHalfWidthKatakanaSymbol(absl::string_view input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0xFF61:  // FULLSTOP "｡"
@@ -999,7 +998,7 @@ bool Util::IsHalfWidthKatakanaSymbol(const std::string &input) {
   return true;
 }
 
-bool Util::IsKanaSymbolContained(const std::string &input) {
+bool Util::IsKanaSymbolContained(absl::string_view input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
@@ -1024,7 +1023,7 @@ bool Util::IsKanaSymbolContained(const std::string &input) {
   return false;
 }
 
-bool Util::IsEnglishTransliteration(const std::string &value) {
+bool Util::IsEnglishTransliteration(absl::string_view value) {
   for (size_t i = 0; i < value.size(); ++i) {
     if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x27 ||
         value[i] == 0x2D ||
@@ -1040,7 +1039,7 @@ bool Util::IsEnglishTransliteration(const std::string &value) {
 }
 
 // URL
-void Util::EncodeUri(const std::string &input, std::string *output) {
+void Util::EncodeUri(absl::string_view input, std::string *output) {
   constexpr char kDigits[] = "0123456789ABCDEF";
   const char *begin = input.data();
   const char *end = input.data() + input.size();
@@ -1057,7 +1056,7 @@ void Util::EncodeUri(const std::string &input, std::string *output) {
   }
 }
 
-void Util::DecodeUri(const std::string &input, std::string *output) {
+void Util::DecodeUri(absl::string_view input, std::string *output) {
   output->clear();
   const char *p = input.data();
   const char *end = input.data() + input.size();
@@ -1291,7 +1290,7 @@ Util::ScriptType Util::GetFirstScriptType(absl::string_view str) {
   return GetScriptType(str.data(), str.data() + str.size(), &mblen);
 }
 
-Util::ScriptType Util::GetScriptTypeWithoutSymbols(const std::string &str) {
+Util::ScriptType Util::GetScriptTypeWithoutSymbols(absl::string_view str) {
   return GetScriptTypeInternal(str, true);
 }
 
@@ -1318,7 +1317,7 @@ bool Util::ContainsScriptType(absl::string_view str, ScriptType type) {
 }
 
 // return the Form Type of string
-Util::FormType Util::GetFormType(const std::string &str) {
+Util::FormType Util::GetFormType(absl::string_view str) {
   // TODO(hidehiko): get rid of using FORM_TYPE_SIZE.
   FormType result = FORM_TYPE_SIZE;
 

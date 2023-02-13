@@ -658,7 +658,7 @@ TEST(UtilTest, CodepointsToUtf8) {
   }
 }
 
-void VerifyUtf8ToUcs4(const std::string &text, char32_t expected_ucs4,
+void VerifyUtf8ToUcs4(absl::string_view text, char32_t expected_ucs4,
                       size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
