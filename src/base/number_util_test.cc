@@ -373,45 +373,6 @@ TEST(NumberUtilTest, SafeHexStrToUInt32) {
                                               &value));
 }
 
-TEST(NumberUtilTest, SafeOctStrToUInt32) {
-  uint32_t value = 0xDEADBEEF;
-
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("0", &value));
-  EXPECT_EQ(value, 0);
-
-  value = 0xDEADBEEF;
-  EXPECT_TRUE(
-      NumberUtil::SafeOctStrToUInt32(" \t\r\n\v\f0 \t\r\n\v\f", &value));
-  EXPECT_EQ(value, 0);
-
-  value = 0xDEADBEEF;
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("012345", &value));
-  EXPECT_EQ(value, 012345);
-
-  value = 0xDEADBEEF;
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("37777777777", &value));
-  EXPECT_EQ(value, 0xFFFFFFFF);  // max of 32-bit unsigned integer
-
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("-0", &value));
-  EXPECT_FALSE(
-      NumberUtil::SafeOctStrToUInt32("40000000000", &value));  // overflow
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("9AB", &value));
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("0.", &value));
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(".0", &value));
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("", &value));
-
-  // Test for absl::string_view input.
-  const char *kString = "123 456 789";
-  EXPECT_TRUE(
-      NumberUtil::SafeOctStrToUInt32(absl::string_view(kString, 3), &value));
-  EXPECT_EQ(value, 83);
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 4, 3),
-                                             &value));
-  EXPECT_EQ(value, 302);
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 8, 3),
-                                              &value));
-}
-
 TEST(NumberUtilTest, SafeStrToUInt64) {
   uint64_t value = 0xDEADBEEF;
 

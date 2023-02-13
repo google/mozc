@@ -154,7 +154,6 @@ class NumberUtil {
   static bool SafeStrToUInt32(absl::string_view str, uint32_t *value);
   static bool SafeStrToUInt64(absl::string_view str, uint64_t *value);
   static bool SafeHexStrToUInt32(absl::string_view str, uint32_t *value);
-  static bool SafeOctStrToUInt32(absl::string_view str, uint32_t *value);
 
   // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.

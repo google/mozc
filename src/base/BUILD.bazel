@@ -514,7 +514,6 @@ mozc_cc_library(
     hdrs = ["number_util.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":double_array_def",
         ":japanese_util",
         ":japanese_util_rule",
         ":logging",
