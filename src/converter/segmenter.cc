@@ -29,7 +29,9 @@
 
 #include "converter/segmenter.h"
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 
 #include "base/bitarray.h"
 #include "base/logging.h"
@@ -39,7 +41,7 @@
 
 namespace mozc {
 
-Segmenter *Segmenter::CreateFromDataManager(
+std::unique_ptr<Segmenter> Segmenter::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
   size_t l_num_elements = 0;
   size_t r_num_elements = 0;
@@ -51,8 +53,9 @@ Segmenter *Segmenter::CreateFromDataManager(
   data_manager.GetSegmenterData(&l_num_elements, &r_num_elements, &l_table,
                                 &r_table, &bitarray_num_bytes, &bitarray_data,
                                 &boundary_data);
-  return new Segmenter(l_num_elements, r_num_elements, l_table, r_table,
-                       bitarray_num_bytes, bitarray_data, boundary_data);
+  return std::make_unique<Segmenter>(l_num_elements, r_num_elements, l_table,
+                                     r_table, bitarray_num_bytes, bitarray_data,
+                                     boundary_data);
 }
 
 Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
@@ -73,7 +76,7 @@ Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
   CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_num_bytes_ * 8);
 }
 
-Segmenter::~Segmenter() {}
+Segmenter::~Segmenter() = default;
 
 bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
                            bool is_single_segment) const {
@@ -105,8 +108,7 @@ bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
 bool Segmenter::IsBoundary(uint16_t rid, uint16_t lid) const {
   const uint32_t bitarray_index =
       l_table_[rid] + l_num_elements_ * r_table_[lid];
-  return BitArray::GetValue(reinterpret_cast<const char *>(bitarray_data_),
-                            bitarray_index);
+  return BitArray::GetValue(bitarray_data_, bitarray_index);
 }
 
 int32_t Segmenter::GetPrefixPenalty(uint16_t lid) const {

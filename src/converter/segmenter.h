@@ -30,18 +30,18 @@
 #ifndef MOZC_CONVERTER_SEGMENTER_H_
 #define MOZC_CONVERTER_SEGMENTER_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 
-#include "base/port.h"
+#include "converter/node.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 
-class DataManagerInterface;
-struct Node;
-
 class Segmenter {
  public:
-  static Segmenter *CreateFromDataManager(
+  static std::unique_ptr<Segmenter> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
   // This class does not take the ownership of pointer parameters.

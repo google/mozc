@@ -242,8 +242,8 @@ class MockDataAndPredictor {
 
     connector_ = Connector::CreateFromDataManager(data_manager_).value();
 
-    segmenter_.reset(Segmenter::CreateFromDataManager(data_manager_));
-    CHECK(segmenter_.get());
+    segmenter_ = Segmenter::CreateFromDataManager(data_manager_);
+    CHECK(segmenter_);
 
     pos_group_ = std::make_unique<PosGroup>(data_manager_.GetPosGroupData());
     suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));

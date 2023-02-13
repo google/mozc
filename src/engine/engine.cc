@@ -228,7 +228,7 @@ absl::Status Engine::Init(
   }
   connector_ = *std::move(status_or_connector);
 
-  segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager));
+  segmenter_ = Segmenter::CreateFromDataManager(*data_manager);
   RETURN_IF_NULL(segmenter_);
 
   pos_group_ = std::make_unique<PosGroup>(data_manager->GetPosGroupData());

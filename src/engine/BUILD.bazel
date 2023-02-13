@@ -116,7 +116,6 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
-        "//base",
         "//base:logging",
         "//base:port",
         "//converter",
