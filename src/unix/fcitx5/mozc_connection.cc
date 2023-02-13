@@ -37,7 +37,6 @@
 #include "client/client.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
-#include "session/ime_switch_util.h"
 
 namespace fcitx {
 

@@ -16,7 +16,6 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
         "//client:client",
-        "//session:ime_switch_util",
         "//protocol:commands_cc_proto",
     ]
 )

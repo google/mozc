@@ -44,7 +44,6 @@
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../ipc/ipc.gyp:ipc',
-        '../../session/session_base.gyp:ime_switch_util',
         '../../protocol/protocol.gyp:commands_proto',
     ],
   },

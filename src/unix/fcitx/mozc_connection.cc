@@ -37,7 +37,6 @@
 #include "client/client.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
-#include "session/ime_switch_util.h"
 #include "unix/fcitx/fcitx_key_event_handler.h"
 #include "unix/fcitx/surrounding_text_util.h"
 
@@ -115,7 +114,7 @@ bool MozcConnection::TrySendKeyEvent(
       return false;
 
   if ((composition_mode == mozc::commands::DIRECT) &&
-      !mozc::config::ImeSwitchUtil::IsDirectModeCommand(event)) {
+      !client_->IsDirectModeCommand(event)) {
     VLOG(1) << "In DIRECT mode. Not consumed.";
     return false;  // not consumed.
   }
