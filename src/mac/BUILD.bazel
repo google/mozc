@@ -445,6 +445,7 @@ genrule(
     tools = [":tweak_installer_files"],
 )
 
+# Binary for Packages (i.e. packagesbuild command)
 mozc_py_binary(
     name = "build_installer",
     srcs = ["build_installer.py"],
@@ -474,4 +475,27 @@ genrule(
         "//base:mozc_version_txt",
         "//build_tools:tweak_pkgproj",
     ],
+)
+
+# Binary for default tools (i.e. pkgbuild and productbuild commands)
+mozc_py_binary(
+    name = "build_package",
+    srcs = ["build_package.py"],
+    test_lib = False,
+    deps = ["//build_tools:util"],
+)
+
+genrule(
+    name = "package_macos",
+    srcs = [":productbuild_files"],
+    outs = ["Mozc2.pkg"],
+    cmd = "$(location :build_package) --input $(location :productbuild_files) --output $@" +
+          mozc_select(
+              default = "",
+              oss = " --oss",
+          ),
+    exec_compatible_with = ["@platforms//os:macos"],
+    # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.
+    tags = ["manual"],
+    tools = [":build_package"],
 )
