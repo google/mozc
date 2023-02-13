@@ -162,7 +162,6 @@ mozc_cc_library(
         "//base:singleton",
         "//base:thread",
         "//base:util",
-        "//config:config_handler",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "//usage_stats",

@@ -474,10 +474,6 @@ bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
   return false;
 }
 
-void Util::StripWhiteSpaces(absl::string_view input, std::string *output) {
-  *output = std::string(absl::StripAsciiWhitespace(input));
-}
-
 namespace {
 
 // Table of UTF-8 character lengths, based on first byte

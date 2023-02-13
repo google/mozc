@@ -298,64 +298,6 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
   }
 }
 
-TEST(UtilTest, StripWhiteSpaces) {
-  // basic scenario.
-  {
-    const std::string input = "  foo   ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // no space means just copy.
-  {
-    const std::string input = "foo";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // tabs and linebreaks are also spaces.
-  {
-    const std::string input = " \tfoo\n";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // spaces in the middle remains.
-  {
-    const std::string input = " foo bar baz ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo bar baz");
-  }
-
-  // all spaces means clear out output.
-  {
-    const std::string input = " \v \r ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_TRUE(output.empty());
-  }
-
-  // empty input.
-  {
-    const std::string input = "";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_TRUE(output.empty());
-  }
-
-  // one character.
-  {
-    const std::string input = "a";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "a");
-  }
-}
-
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
     std::vector<std::string> output;

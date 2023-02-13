@@ -54,6 +54,7 @@
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -97,7 +98,7 @@ class UserDictionaryFileManager {
   UserDictionaryFileManager &operator=(const UserDictionaryFileManager &) =
       delete;
 
-  const std::string GetFileName() {
+  std::string GetFileName() {
     absl::MutexLock l(&mutex_);
     if (filename_.empty()) {
       return UserDictionaryUtil::GetUserDictionaryFileName();
@@ -192,8 +193,10 @@ class UserDictionary::TokensIndex {
           user_pos_->GetTokens(
               reading, entry.value(),
               UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
+          const absl::string_view comment =
+              absl::StripAsciiWhitespace(entry.comment());
           for (auto &token : tokens) {
-            Util::StripWhiteSpaces(entry.comment(), &token.comment);
+            token.comment = std::string(comment);
             if (is_shortcuts &&
                 token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
               // Words fed by Android shortcut are registered as SUGGESTION_ONLY

@@ -160,11 +160,6 @@ class Util {
   // ASCII, or 2) capitalized.
   static bool IsUpperOrCapitalizedAscii(absl::string_view s);
 
-  // Strips the leading/trailing white spaces from the input and stores it to
-  // the output.  If the input does not have such white spaces, this method just
-  // copies the input into the output.  It clears the output always.
-  static void StripWhiteSpaces(absl::string_view input, std::string *output);
-
   static size_t OneCharLen(const char *src);
 
   // Returns the lengths of [src, src+size] encoded in UTF8.
