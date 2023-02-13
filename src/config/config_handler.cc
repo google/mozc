@@ -193,7 +193,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
 
   ConfigHandler::SetMetaData(&output_config);
 
-  VLOG(1) << "Setting new config: " << filename_;
+  LOG(INFO) << "Setting new config: " << filename_;
   ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
 
 #ifdef DEBUG
