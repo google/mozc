@@ -233,19 +233,19 @@ class EmojiRewriterTest : public ::testing::Test {
 
 TEST_F(EmojiRewriterTest, Capability) {
   request_.set_emoji_rewriter_capability(Request::NOT_AVAILABLE);
-  EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::NOT_AVAILABLE);
 
   request_.set_emoji_rewriter_capability(Request::CONVERSION);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::CONVERSION);
 
   request_.set_emoji_rewriter_capability(Request::PREDICTION);
-  EXPECT_EQ(RewriterInterface::PREDICTION, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::PREDICTION);
 
   request_.set_emoji_rewriter_capability(Request::SUGGESTION);
-  EXPECT_EQ(RewriterInterface::SUGGESTION, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::SUGGESTION);
 
   request_.set_emoji_rewriter_capability(Request::ALL);
-  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::ALL);
 }
 
 TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
@@ -257,22 +257,22 @@ TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
   Segments segments;
   SetSegment("neko", "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(0, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 0);
 
   SetSegment("Neko", "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(1, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 1);
   EXPECT_TRUE(HasExpectedCandidate(segments, "CAT"));
 
   SetSegment("Nezumi", "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(2, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 2);
   EXPECT_TRUE(HasExpectedCandidate(segments, "MOUSE"));
   EXPECT_TRUE(HasExpectedCandidate(segments, "RAT"));
 
   SetSegment(kEmoji, "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(9, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 9);
 }
 
 TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
@@ -285,22 +285,22 @@ TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {
   Segments segments;
   SetSegment("test", "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(0, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 0);
 
   SetSegment("Neko", "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(0, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 0);
   EXPECT_FALSE(HasExpectedCandidate(segments, "CAT"));
 
   SetSegment("Nezumi", "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(0, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 0);
   EXPECT_FALSE(HasExpectedCandidate(segments, "MOUSE"));
   EXPECT_FALSE(HasExpectedCandidate(segments, "RAT"));
 
   SetSegment(kEmoji, "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  EXPECT_EQ(0, CountEmojiCandidates(segments));
+  EXPECT_EQ(CountEmojiCandidates(segments), 0);
 }
 
 TEST_F(EmojiRewriterTest, CheckDescription) {
@@ -321,7 +321,7 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
       continue;
     }
-    EXPECT_EQ(std::string::npos, description.find("[全]"))
+    EXPECT_EQ(description.find("[全]"), std::string::npos)
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
   }
 }
@@ -349,7 +349,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
   }
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
 
-  ASSERT_EQ(1, segments.segments_size());
+  ASSERT_EQ(segments.segments_size(), 1);
   const Segment &segment = segments.segment(0);
   ASSERT_LE(kExpectPosition, segment.candidates_size());
   for (int i = 0; i < kExpectPosition; ++i) {
@@ -357,7 +357,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
   }
   const Segment::Candidate &candidate = segment.candidate(kExpectPosition);
   EXPECT_TRUE(EmojiRewriter::IsEmojiCandidate(candidate));
-  EXPECT_EQ("CAT", candidate.value);
+  EXPECT_EQ(candidate.value, "CAT");
 }
 
 TEST_F(EmojiRewriterTest, CheckUsageStats) {

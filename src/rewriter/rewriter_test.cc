@@ -94,9 +94,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
-    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
 #else  // OS_ANDROID
-    EXPECT_EQ(2, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 2);
 #endif  // OS_ANDROID
     seg->clear_candidates();
   }
@@ -107,9 +107,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
 #ifdef OS_ANDROID
-    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
 #else  // OS_ANDROID
-    EXPECT_EQ(1, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 1);
 #endif  // OS_ANDROID
     seg->clear_candidates();
   }
@@ -126,7 +126,7 @@ TEST_F(RewriterTest, EmoticonsAboveSymbols) {
   Segment::Candidate *candidate = seg->add_candidate();
   seg->set_key(kKey);
   candidate->value = kKey;
-  EXPECT_EQ(1, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 1);
   EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
   EXPECT_LT(1, seg->candidates_size());
 
@@ -139,8 +139,8 @@ TEST_F(RewriterTest, EmoticonsAboveSymbols) {
       symbol_index = i;
     }
   }
-  EXPECT_NE(-1, emoticon_index);
-  EXPECT_NE(-1, symbol_index);
+  EXPECT_NE(emoticon_index, -1);
+  EXPECT_NE(symbol_index, -1);
   EXPECT_LT(emoticon_index, symbol_index);
 }
 

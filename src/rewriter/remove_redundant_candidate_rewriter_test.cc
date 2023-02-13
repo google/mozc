@@ -47,7 +47,7 @@ TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
 
   const ConversionRequest default_request;
   EXPECT_TRUE(rewriter.Rewrite(default_request, &segments));
-  EXPECT_EQ(0, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 0);
 }
 
 TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
@@ -62,7 +62,7 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
 
   const ConversionRequest default_request;
   EXPECT_FALSE(rewriter.Rewrite(default_request, &segments));
-  EXPECT_EQ(1, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 1);
 }
 
 TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
@@ -70,11 +70,11 @@ TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   ConversionRequest convreq;
   commands::Request request;
   convreq.set_request(&request);
-  { EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(convreq)); }
+  { EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::NOT_AVAILABLE); }
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 }
 }  // namespace mozc

@@ -172,7 +172,7 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
 
   // "猫を飼いたい" should be promoted.
   EXPECT_TRUE(Rewrite(&segments));
-  EXPECT_EQ("猫を飼いたい", GetTopValue(segments)) << segments.DebugString();
+  EXPECT_EQ(GetTopValue(segments), "猫を飼いたい") << segments.DebugString();
 }
 
 TEST_F(CollocationRewriterTest, MagurowoKaitai) {
@@ -209,7 +209,7 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
 
   // "マグロを解体" should be promoted.
   EXPECT_TRUE(Rewrite(&segments));
-  EXPECT_EQ("マグロを解体", GetTopValue(segments)) << segments.DebugString();
+  EXPECT_EQ(GetTopValue(segments), "マグロを解体") << segments.DebugString();
 }
 
 TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
@@ -251,7 +251,7 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
 
   // "猫を飼いたい" should be promoted.
   EXPECT_TRUE(Rewrite(&segments));
-  EXPECT_EQ("猫をすごく飼いたい", GetTopValue(segments))
+  EXPECT_EQ(GetTopValue(segments), "猫をすごく飼いたい")
       << segments.DebugString();
 }
 
@@ -292,7 +292,7 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
   MakeSegments(kSegments, &segments);
 
   EXPECT_FALSE(Rewrite(&segments));
-  EXPECT_NE("猫をすごく飼いたい", GetTopValue(segments))
+  EXPECT_NE(GetTopValue(segments), "猫をすごく飼いたい")
       << segments.DebugString();
 }
 
@@ -335,7 +335,7 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
 
   // "猫を飼いたい" should NOT be promoted.
   EXPECT_FALSE(Rewrite(&segments));
-  EXPECT_NE("猫を飼いたい", GetTopValue(segments)) << segments.DebugString();
+  EXPECT_NE(GetTopValue(segments), "猫を飼いたい") << segments.DebugString();
 }
 
 TEST_F(CollocationRewriterTest, ImmuneToInvalidSegments) {

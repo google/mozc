@@ -39,40 +39,40 @@ namespace {
 TEST(CollocationUtilTest, GetNormalizedScript) {
   std::string result;
   CollocationUtil::GetNormalizedScript("あいうえお", true, &result);
-  EXPECT_EQ("あいうえお", result);
+  EXPECT_EQ(result, "あいうえお");
 
   CollocationUtil::GetNormalizedScript("あいうえお", false, &result);
-  EXPECT_EQ("あいうえお", result);
+  EXPECT_EQ(result, "あいうえお");
 
   CollocationUtil::GetNormalizedScript("1個", true, &result);
-  EXPECT_EQ("個", result);
+  EXPECT_EQ(result, "個");
   CollocationUtil::GetNormalizedScript("1個", false, &result);
-  EXPECT_EQ("1個", result);
+  EXPECT_EQ(result, "1個");
 
   CollocationUtil::GetNormalizedScript("１個", true, &result);
-  EXPECT_EQ("個", result);
+  EXPECT_EQ(result, "個");
   CollocationUtil::GetNormalizedScript("１個", false, &result);
-  EXPECT_EQ("１個", result);
+  EXPECT_EQ(result, "１個");
 
   CollocationUtil::GetNormalizedScript("", true, &result);
-  EXPECT_EQ("", result);
+  EXPECT_EQ(result, "");
   CollocationUtil::GetNormalizedScript("", false, &result);
-  EXPECT_EQ("", result);
+  EXPECT_EQ(result, "");
 
   CollocationUtil::GetNormalizedScript("＄", true, &result);
-  EXPECT_EQ("", result);
+  EXPECT_EQ(result, "");
   CollocationUtil::GetNormalizedScript("＄", false, &result);
-  EXPECT_EQ("", result);
+  EXPECT_EQ(result, "");
 
   CollocationUtil::GetNormalizedScript("等々", true, &result);
-  EXPECT_EQ("等々", result);
+  EXPECT_EQ(result, "等々");
   CollocationUtil::GetNormalizedScript("等々", false, &result);
-  EXPECT_EQ("等々", result);
+  EXPECT_EQ(result, "等々");
 
   CollocationUtil::GetNormalizedScript("％%％", true, &result);
-  EXPECT_EQ("%%%", result);
+  EXPECT_EQ(result, "%%%");
   CollocationUtil::GetNormalizedScript("％%％", false, &result);
-  EXPECT_EQ("%%%", result);
+  EXPECT_EQ(result, "%%%");
 }
 
 }  // namespace

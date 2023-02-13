@@ -128,19 +128,19 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRight) {
   AddCandidate(seg4, "}");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
-  EXPECT_EQ("｣", seg4->candidate(0).content_value);
+  EXPECT_EQ(seg4->candidate(0).content_value, "｣");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-  EXPECT_EQ(")", seg4->candidate(0).content_value);
+  EXPECT_EQ(seg4->candidate(0).content_value, ")");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 2));
-  EXPECT_EQ("]", seg4->candidate(0).content_value);
+  EXPECT_EQ(seg4->candidate(0).content_value, "]");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 3));
-  EXPECT_EQ("}", seg4->candidate(0).content_value);
+  EXPECT_EQ(seg4->candidate(0).content_value, "}");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
-  EXPECT_EQ("｣", seg4->candidate(0).content_value);
+  EXPECT_EQ(seg4->candidate(0).content_value, "｣");
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeft) {
@@ -166,19 +166,19 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeft) {
 
   // right to left
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 3, 0));
-  EXPECT_EQ("｢", seg1->candidate(0).content_value);
+  EXPECT_EQ(seg1->candidate(0).content_value, "｢");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 3, 1));
-  EXPECT_EQ("(", seg1->candidate(0).content_value);
+  EXPECT_EQ(seg1->candidate(0).content_value, "(");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 3, 2));
-  EXPECT_EQ("[", seg1->candidate(0).content_value);
+  EXPECT_EQ(seg1->candidate(0).content_value, "[");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 3, 3));
-  EXPECT_EQ("{", seg1->candidate(0).content_value);
+  EXPECT_EQ(seg1->candidate(0).content_value, "{");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 3, 0));
-  EXPECT_EQ("｢", seg1->candidate(0).content_value);
+  EXPECT_EQ(seg1->candidate(0).content_value, "｢");
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
@@ -209,20 +209,20 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
   AddCandidate(seg[6], "}");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
-  EXPECT_EQ("｣", seg[6]->candidate(0).content_value);
-  EXPECT_EQ("｣", seg[4]->candidate(0).content_value);
+  EXPECT_EQ(seg[6]->candidate(0).content_value, "｣");
+  EXPECT_EQ(seg[4]->candidate(0).content_value, "｣");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-  EXPECT_EQ(")", seg[6]->candidate(0).content_value);
-  EXPECT_EQ("｣", seg[4]->candidate(0).content_value);
+  EXPECT_EQ(seg[6]->candidate(0).content_value, ")");
+  EXPECT_EQ(seg[4]->candidate(0).content_value, "｣");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 2, 0));
-  EXPECT_EQ(")", seg[6]->candidate(0).content_value);
-  EXPECT_EQ("｣", seg[4]->candidate(0).content_value);
+  EXPECT_EQ(seg[6]->candidate(0).content_value, ")");
+  EXPECT_EQ(seg[4]->candidate(0).content_value, "｣");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 2, 1));
-  EXPECT_EQ(")", seg[6]->candidate(0).content_value);
-  EXPECT_EQ(")", seg[4]->candidate(0).content_value);
+  EXPECT_EQ(seg[6]->candidate(0).content_value, ")");
+  EXPECT_EQ(seg[4]->candidate(0).content_value, ")");
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
@@ -253,20 +253,20 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
   AddCandidate(seg[6], "}");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 6, 0));
-  EXPECT_EQ("｢", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("｢", seg[2]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "｢");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "｢");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 6, 1));
-  EXPECT_EQ("(", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("｢", seg[2]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "(");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "｢");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 4, 0));
-  EXPECT_EQ("(", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("｢", seg[2]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "(");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "｢");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 4, 1));
-  EXPECT_EQ("(", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("(", seg[2]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "(");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "(");
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
@@ -280,7 +280,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   seg[0]->set_key("「");
   // set meta candidates
   {
-    EXPECT_EQ(0, seg[0]->meta_candidates_size());
+    EXPECT_EQ(seg[0]->meta_candidates_size(), 0);
     std::vector<Segment::Candidate> *meta_cands =
         seg[0]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
@@ -291,7 +291,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
     }
     meta_cands->at(transliteration::HALF_KATAKANA).value = "｢";
     meta_cands->at(transliteration::HALF_KATAKANA).content_value = "｢";
-    EXPECT_EQ(transliteration::NUM_T13N_TYPES, seg[0]->meta_candidates_size());
+    EXPECT_EQ(seg[0]->meta_candidates_size(), transliteration::NUM_T13N_TYPES);
   }
   EXPECT_EQ(
       "｢",
@@ -307,7 +307,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   seg[2]->set_key("」");
   // set meta candidates
   {
-    EXPECT_EQ(0, seg[2]->meta_candidates_size());
+    EXPECT_EQ(seg[2]->meta_candidates_size(), 0);
     std::vector<Segment::Candidate> *meta_cands =
         seg[2]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
@@ -318,7 +318,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
     }
     meta_cands->at(transliteration::HALF_KATAKANA).value = "｣";
     meta_cands->at(transliteration::HALF_KATAKANA).content_value = "｣";
-    EXPECT_EQ(transliteration::NUM_T13N_TYPES, seg[2]->meta_candidates_size());
+    EXPECT_EQ(seg[2]->meta_candidates_size(), transliteration::NUM_T13N_TYPES);
   }
   EXPECT_EQ(
       "｣",
@@ -330,8 +330,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
 
   const int half_index = -transliteration::HALF_KATAKANA - 1;
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, half_index));
-  EXPECT_EQ("｢", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("｣", seg[2]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "｢");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "｣");
 
   const int valid_index = -(transliteration::NUM_T13N_TYPES - 1) - 1;
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, valid_index));
@@ -387,25 +387,25 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   seg[6]->mutable_candidate(2)->style = NumberUtil::NumberString::NUMBER_KANJI;
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 0));
-  EXPECT_EQ("2", seg[0]->candidate(0).content_value);
-  EXPECT_EQ("3", seg[2]->candidate(0).content_value);
-  EXPECT_EQ("4", seg[3]->candidate(0).content_value);
+  EXPECT_EQ(seg[0]->candidate(0).content_value, "2");
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "3");
+  EXPECT_EQ(seg[3]->candidate(0).content_value, "4");
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-  EXPECT_EQ("３", seg[2]->candidate(0).content_value);
-  EXPECT_EQ("４", seg[3]->candidate(0).content_value);
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "３");
+  EXPECT_EQ(seg[3]->candidate(0).content_value, "４");
 
-  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
+  EXPECT_EQ(seg[6]->candidate(0).content_value, "4");  // far from
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 2));
-  EXPECT_EQ("三", seg[2]->candidate(0).content_value);
-  EXPECT_EQ("四", seg[3]->candidate(0).content_value);
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "三");
+  EXPECT_EQ(seg[3]->candidate(0).content_value, "四");
 
-  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
+  EXPECT_EQ(seg[6]->candidate(0).content_value, "4");  // far from
 
   EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 3));
-  EXPECT_EQ("参", seg[2]->candidate(0).content_value);
-  EXPECT_EQ("4", seg[6]->candidate(0).content_value);  // far from
+  EXPECT_EQ(seg[2]->candidate(0).content_value, "参");
+  EXPECT_EQ(seg[6]->candidate(0).content_value, "4");  // far from
 }
 
 // Bug #4596846: Non-number characters are changed to numbers
@@ -426,7 +426,7 @@ TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
   // Should not change a segment that doesn't have a number as its first
   // candidate.
   EXPECT_FALSE(GetRewriter()->Focus(&segments, 0, 1));
-  EXPECT_NE("５", seg[1]->candidate(0).content_value);
+  EXPECT_NE(seg[1]->candidate(0).content_value, "５");
 }
 
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
@@ -459,8 +459,8 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
     AddCandidate(seg[5], "階");
 
     EXPECT_TRUE(GetRewriter()->Focus(&segments, 1, 1));
-    EXPECT_EQ("階", seg[3]->candidate(0).content_value);
-    EXPECT_EQ("階", seg[5]->candidate(0).content_value);
+    EXPECT_EQ(seg[3]->candidate(0).content_value, "階");
+    EXPECT_EQ(seg[5]->candidate(0).content_value, "階");
   }
 
   // No Number
@@ -553,7 +553,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     AddCandidate(seg[1], "二回");
 
     EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-    EXPECT_EQ("二回", seg[1]->candidate(0).value);
+    EXPECT_EQ(seg[1]->candidate(0).value, "二回");
   }
   // Test for reranking of number compound + parallel marker pattern:
   // http://mozcsuorg.appspot.com/#issue/49
@@ -598,7 +598,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     seg[1]->mutable_candidate(2)->rid = kNounId;
 
     EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-    EXPECT_EQ("二回", seg[1]->candidate(0).value);
+    EXPECT_EQ(seg[1]->candidate(0).value, "二回");
   }
   // Test for reranking of number compound + parallel marker pattern for 3
   // segments.
@@ -655,8 +655,8 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     seg[2]->mutable_candidate(2)->rid = kNounId;
 
     EXPECT_TRUE(GetRewriter()->Focus(&segments, 0, 1));
-    EXPECT_EQ("二回や", seg[1]->candidate(0).value);
-    EXPECT_EQ("三回", seg[2]->candidate(0).value);
+    EXPECT_EQ(seg[1]->candidate(0).value, "二回や");
+    EXPECT_EQ(seg[2]->candidate(0).value, "三回");
   }
   // Test case where two number segments are too far to be rewritten.
   {

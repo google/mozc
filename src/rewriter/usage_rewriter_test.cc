@@ -110,8 +110,8 @@ class UsageRewriterTest : public ::testing::Test {
 
 TEST_F(UsageRewriterTest, CapabilityTest) {
   std::unique_ptr<UsageRewriter> rewriter(CreateUsageRewriter());
-  EXPECT_EQ(RewriterInterface::CONVERSION | RewriterInterface::PREDICTION,
-            rewriter->capability(convreq_));
+  EXPECT_EQ(rewriter->capability(convreq_),
+            RewriterInterface::CONVERSION | RewriterInterface::PREDICTION);
 }
 
 TEST_F(UsageRewriterTest, ConjugationTest) {
@@ -125,10 +125,10 @@ TEST_F(UsageRewriterTest, ConjugationTest) {
   AddCandidate("うたえば", "歌えば", "うたえ", "歌え", seg);
   AddCandidate("うたえば", "唱えば", "うたえ", "唄え", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("歌う", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("唄う", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "歌う");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "唄う");
+  EXPECT_NE(segments.conversion_segment(0).candidate(1).usage_description, "");
 }
 
 TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
@@ -141,16 +141,16 @@ TEST_F(UsageRewriterTest, SingleSegmentSingleCandidateTest) {
   seg->set_key("あおい");
   AddCandidate("あおい", "青い", "あおい", "青い", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("青い", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "青い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
 
   segments.Clear();
   seg = segments.push_back_segment();
   seg->set_key("あおい");
   AddCandidate("あおい", "あああ", "あおい", "あああ", seg);
   EXPECT_FALSE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_description, "");
 }
 
 TEST_F(UsageRewriterTest, ConfigTest) {
@@ -201,10 +201,10 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   AddCandidate("あおい", "青い", "あおい", "青い", seg);
   AddCandidate("あおい", "蒼い", "あおい", "蒼い", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("青い", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("蒼い", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "青い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "蒼い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(1).usage_description, "");
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -212,10 +212,10 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   AddCandidate("あおい", "青い", "あおい", "青い", seg);
   AddCandidate("あおい", "あああ", "あおい", "あああ", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("青い", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "青い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_description, "");
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -223,10 +223,10 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   AddCandidate("あおい", "あああ", "あおい", "あああ", seg);
   AddCandidate("あおい", "青い", "あおい", "青い", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("青い", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "青い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(1).usage_description, "");
 
   segments.Clear();
   seg = segments.push_back_segment();
@@ -234,10 +234,10 @@ TEST_F(UsageRewriterTest, SingleSegmentMultiCandidatesTest) {
   AddCandidate("あおい", "あああ", "あおい", "あああ", seg);
   AddCandidate("あおい", "いいい", "あおい", "いいい", seg);
   EXPECT_FALSE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_description, "");
 }
 
 TEST_F(UsageRewriterTest, MultiSegmentsTest) {
@@ -256,16 +256,16 @@ TEST_F(UsageRewriterTest, MultiSegmentsTest) {
   AddCandidate("うたえば", "歌えば", "うたえ", "歌え", seg);
   AddCandidate("うたえば", "唱えば", "うたえ", "唄え", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("青い", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("蒼い", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(2).usage_title);
-  EXPECT_EQ("", segments.conversion_segment(0).candidate(2).usage_description);
-  EXPECT_EQ("歌う", segments.conversion_segment(1).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(1).candidate(0).usage_description);
-  EXPECT_EQ("唄う", segments.conversion_segment(1).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(1).candidate(1).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "青い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "蒼い");
+  EXPECT_NE(segments.conversion_segment(0).candidate(1).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).usage_title, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(1).candidate(0).usage_title, "歌う");
+  EXPECT_NE(segments.conversion_segment(1).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(1).candidate(1).usage_title, "唄う");
+  EXPECT_NE(segments.conversion_segment(1).candidate(1).usage_description, "");
 }
 
 TEST_F(UsageRewriterTest, SameUsageTest) {
@@ -279,12 +279,12 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
   AddCandidate("うたえば", "唱えば", "うたえ", "唄え", seg);
   AddCandidate("うたえば", "唱エバ", "うたえ", "唄え", seg);
   EXPECT_TRUE(rewriter->Rewrite(convreq_, &segments));
-  EXPECT_EQ("歌う", segments.conversion_segment(0).candidate(0).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(0).usage_description);
-  EXPECT_EQ("唄う", segments.conversion_segment(0).candidate(1).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(1).usage_description);
-  EXPECT_EQ("唄う", segments.conversion_segment(0).candidate(2).usage_title);
-  EXPECT_NE("", segments.conversion_segment(0).candidate(2).usage_description);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).usage_title, "歌う");
+  EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_title, "唄う");
+  EXPECT_NE(segments.conversion_segment(0).candidate(1).usage_description, "");
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).usage_title, "唄う");
+  EXPECT_NE(segments.conversion_segment(0).candidate(2).usage_description, "");
   EXPECT_NE(segments.conversion_segment(0).candidate(0).usage_id,
             segments.conversion_segment(0).candidate(1).usage_id);
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).usage_id,
@@ -292,16 +292,16 @@ TEST_F(UsageRewriterTest, SameUsageTest) {
 }
 
 TEST_F(UsageRewriterTest, GetKanjiPrefixAndOneHiragana) {
-  EXPECT_EQ("合わ", UsageRewriter::GetKanjiPrefixAndOneHiragana("合わせる"));
-  EXPECT_EQ("合う", UsageRewriter::GetKanjiPrefixAndOneHiragana("合う"));
-  EXPECT_EQ("合合わ",
-            UsageRewriter::GetKanjiPrefixAndOneHiragana("合合わせる"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("合"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("京都"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("合合合わせる"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("カタカナ"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("abc"));
-  EXPECT_EQ("", UsageRewriter::GetKanjiPrefixAndOneHiragana("あ合わせる"));
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合わせる"), "合わ");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合う"), "合う");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合合わせる"),
+            "合合わ");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合"), "");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("京都"), "");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("合合合わせる"), "");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("カタカナ"), "");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("abc"), "");
+  EXPECT_EQ(UsageRewriter::GetKanjiPrefixAndOneHiragana("あ合わせる"), "");
 }
 
 TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
@@ -338,8 +338,8 @@ TEST_F(UsageRewriterTest, CommentFromUserDictionary) {
 
   // Result of ("うま", "アルパカ"). Comment from user dictionary is expected.
   const Segment::Candidate &cand1 = segments.conversion_segment(0).candidate(1);
-  EXPECT_EQ("アルパカ", cand1.usage_title);
-  EXPECT_EQ("アルパカコメント", cand1.usage_description);
+  EXPECT_EQ(cand1.usage_title, "アルパカ");
+  EXPECT_EQ(cand1.usage_description, "アルパカコメント");
 }
 
 }  // namespace mozc

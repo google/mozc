@@ -174,7 +174,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     const std::string ucs4 = absl::StrFormat("U+00%02X", ascii);
     InitSegments(ucs4, ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(ascii, segments.segment(0).candidate(0).value.at(0));
+    EXPECT_EQ(segments.segment(0).candidate(0).value.at(0), ascii);
     EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
                 Segment::Candidate::NO_MODIFICATION);
   }
@@ -221,8 +221,8 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   AddSegment("02", "02", &segments);
   AddSegment("0", "0", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ(' ', segments.conversion_segment(0).candidate(0).value.at(0));
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
 
   // If the segments is already resized, returns false.
   InitSegments("U+0020", "U+0020", &segments);
@@ -238,7 +238,7 @@ TEST_F(UnicodeRewriterTest, MultipleSegment) {
   segments.set_resized(true);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ(' ', segments.conversion_segment(0).candidate(0).value.at(0));
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value.at(0), ' ');
 }
 
 TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {

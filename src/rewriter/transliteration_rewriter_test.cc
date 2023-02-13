@@ -69,7 +69,7 @@ void SetAkann(composer::Composer *composer) {
   InsertASCIISequence("akann", composer);
   std::string query;
   composer->GetQueryForConversion(&query);
-  EXPECT_EQ("あかん", query);
+  EXPECT_EQ(query, "あかん");
 }
 
 }  // namespace
@@ -113,37 +113,37 @@ TEST_F(TransliterationRewriterTest, T13nFromKeyTest) {
   Segment *segment = segments.add_segment();
   CHECK(segment);
   segment->set_key("あかん");
-  EXPECT_EQ(0, segment->meta_candidates_size());
+  EXPECT_EQ(segment->meta_candidates_size(), 0);
   const ConversionRequest default_request;
   EXPECT_TRUE(t13n_rewriter->Rewrite(default_request, &segments));
   {
-    EXPECT_EQ("あかん",
-              segment->meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アカン",
-              segment->meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("akan",
-              segment->meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("AKAN",
-              segment->meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("akan",
-              segment->meta_candidate(transliteration::HALF_ASCII_LOWER).value);
+    EXPECT_EQ(segment->meta_candidate(transliteration::HIRAGANA).value,
+              "あかん");
+    EXPECT_EQ(segment->meta_candidate(transliteration::FULL_KATAKANA).value,
+              "アカン");
+    EXPECT_EQ(segment->meta_candidate(transliteration::HALF_ASCII).value,
+              "akan");
+    EXPECT_EQ(segment->meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "AKAN");
+    EXPECT_EQ(segment->meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "akan");
     EXPECT_EQ(
-        "Akan",
-        segment->meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ａｋａｎ",
-              segment->meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＡＫＡＮ",
-              segment->meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ａｋａｎ",
-              segment->meta_candidate(transliteration::FULL_ASCII_LOWER).value);
+        segment->meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+        "Akan");
+    EXPECT_EQ(segment->meta_candidate(transliteration::FULL_ASCII).value,
+              "ａｋａｎ");
+    EXPECT_EQ(segment->meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＡＫＡＮ");
+    EXPECT_EQ(segment->meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ａｋａｎ");
     EXPECT_EQ(
-        "Ａｋａｎ",
-        segment->meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｶﾝ",
-              segment->meta_candidate(transliteration::HALF_KATAKANA).value);
+        segment->meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+        "Ａｋａｎ");
+    EXPECT_EQ(segment->meta_candidate(transliteration::HALF_KATAKANA).value,
+              "ｱｶﾝ");
     for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
-      EXPECT_NE(0, segment->meta_candidate(i).lid);
-      EXPECT_NE(0, segment->meta_candidate(i).rid);
+      EXPECT_NE(segment->meta_candidate(i).lid, 0);
+      EXPECT_NE(segment->meta_candidate(i).rid, 0);
       EXPECT_FALSE(segment->meta_candidate(i).key.empty());
     }
   }
@@ -167,33 +167,31 @@ TEST_F(TransliterationRewriterTest, T13nFromComposerTest) {
   segment->set_key("あかん");
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   {
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あかん", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アカン",
-              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("akann", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("AKANN",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("akann",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Akann",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ａｋａｎｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＡＫＡＮＮ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ａｋａｎｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ａｋａｎｎ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｶﾝ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかん");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
+              "アカン");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "AKANN");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value,
+              "ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＡＫＡＮＮ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｶﾝ");
     for (size_t i = 0; i < segment->meta_candidates_size(); ++i) {
-      EXPECT_NE(0, segment->meta_candidate(i).lid);
-      EXPECT_NE(0, segment->meta_candidate(i).rid);
+      EXPECT_NE(segment->meta_candidate(i).lid, 0);
+      EXPECT_NE(segment->meta_candidate(i).rid, 0);
       EXPECT_FALSE(segment->meta_candidate(i).key.empty());
     }
   }
@@ -225,13 +223,13 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
     segment->set_key("っ");
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("っｓｈ", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("っsh", seg.meta_candidate(transliteration::HIRAGANA).key);
-    EXPECT_EQ("ssh", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("っsh", seg.meta_candidate(transliteration::HALF_ASCII).key);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "っｓｈ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).key, "っsh");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "ssh");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).key, "っsh");
   }
 }
 
@@ -249,7 +247,7 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
     InsertASCIISequence("kamabokonoinbou", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("かまぼこのいんぼう", query);
+    EXPECT_EQ(query, "かまぼこのいんぼう");
   }
 
   Segments segments;
@@ -264,18 +262,18 @@ TEST_F(TransliterationRewriterTest, T13nWithMultiSegmentsTest) {
   }
 
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
-  EXPECT_EQ(2, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
   {
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("かまぼこの",
-              seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("kamabokono",
-              seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value,
+              "かまぼこの");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value,
+              "kamabokono");
   }
   {
     const Segment &seg = segments.conversion_segment(1);
-    EXPECT_EQ("いんぼう", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("inbou", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "いんぼう");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "inbou");
   }
 }
 
@@ -293,7 +291,7 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
     InsertASCIISequence("kan", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("かん", query);
+    EXPECT_EQ(query, "かん");
   }
 
   Segments segments;
@@ -305,27 +303,25 @@ TEST_F(TransliterationRewriterTest, ComposerValidationTest) {
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   // Should not use composer
   {
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("かん", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("カン", seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("kan", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("KAN",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("kan",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Kan",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｋａｎ", seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＫＡＮ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ｋａｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ｋａｎ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｶﾝ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "かん");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "カン");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "kan");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "KAN");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "kan");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Kan");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value, "ｋａｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＫＡＮ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ｋａｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ｋａｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｶﾝ");
   }
 }
 
@@ -346,30 +342,28 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
   segment->set_key("あかん");
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
   {
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あかん", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アカン",
-              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("akann", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("AKANN",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("akann",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Akann",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ａｋａｎｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＡＫＡＮＮ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ａｋａｎｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ａｋａｎｎ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｶﾝ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかん");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
+              "アカン");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "AKANN");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Akann");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value,
+              "ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＡＫＡＮＮ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ａｋａｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｶﾝ");
   }
 
   // Resegmentation
@@ -383,52 +377,48 @@ TEST_F(TransliterationRewriterTest, RewriteWithSameComposerTest) {
 
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
-  EXPECT_EQ(2, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
   {
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あか", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アカ", seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("aka", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("AKA",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("aka",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Aka",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ａｋａ", seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＡＫＡ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ａｋａ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ａｋａ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｶ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "アカ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "aka");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "AKA");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "aka");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Aka");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value, "ａｋａ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＡＫＡ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ａｋａ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ａｋａ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｶ");
   }
   {
     const Segment &seg = segments.conversion_segment(1);
 
-    EXPECT_EQ("ん", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("ン", seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("nn", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("NN",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("nn",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Nn",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｎｎ", seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＮＮ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ｎｎ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ｎｎ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ﾝ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "ん");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "ン");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "nn");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "NN");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "nn");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Nn");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value, "ｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＮＮ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ｎｎ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ﾝ");
   }
 }
 
@@ -446,9 +436,9 @@ TEST_F(TransliterationRewriterTest, NoKeyTest) {
 
   ConversionRequest request;
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
-  EXPECT_EQ(2, segments.conversion_segments_size());
-  EXPECT_NE(0, segments.conversion_segment(0).meta_candidates_size());
-  EXPECT_EQ(0, segments.conversion_segment(1).meta_candidates_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
+  EXPECT_NE(segments.conversion_segment(0).meta_candidates_size(), 0);
+  EXPECT_EQ(segments.conversion_segment(1).meta_candidates_size(), 0);
 }
 
 TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
@@ -473,9 +463,9 @@ TEST_F(TransliterationRewriterTest, NoKeyWithComposerTest) {
   segment->set_key("");  // void key
 
   EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
-  EXPECT_EQ(2, segments.conversion_segments_size());
-  EXPECT_NE(0, segments.conversion_segment(0).meta_candidates_size());
-  EXPECT_EQ(0, segments.conversion_segment(1).meta_candidates_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 2);
+  EXPECT_NE(segments.conversion_segment(0).meta_candidates_size(), 0);
+  EXPECT_EQ(segments.conversion_segment(1).meta_candidates_size(), 0);
 }
 
 TEST_F(TransliterationRewriterTest, NoRewriteTest) {
@@ -492,7 +482,7 @@ TEST_F(TransliterationRewriterTest, NoRewriteTest) {
   segment->set_key("亜");
   ConversionRequest request;
   EXPECT_FALSE(t13n_rewriter->Rewrite(request, &segments));
-  EXPECT_EQ(0, segments.conversion_segment(0).meta_candidates_size());
+  EXPECT_EQ(segments.conversion_segment(0).meta_candidates_size(), 0);
 }
 
 TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
@@ -503,12 +493,12 @@ TEST_F(TransliterationRewriterTest, MobileEnvironmentTest) {
       CreateTransliterationRewriter());
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 
@@ -530,7 +520,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
     InsertASCIISequence("11#", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("い、", query);
+    EXPECT_EQ(query, "い、");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -542,25 +532,23 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysHiragana) {
   {
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("い、", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("イ、", seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("い、", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("い、",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("い、",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "い、",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("い、", seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("い、",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("い、",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "い、",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｲ､", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "イ、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value, "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "い、");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｲ､");
   }
 }
 
@@ -582,7 +570,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
     InsertASCIISequence("1212", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("あかあか", query);
+    EXPECT_EQ(query, "あかあか");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -595,28 +583,26 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysToNumber) {
   {
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あかあか", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アカアカ",
-              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "あかあか",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("あかあか",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "あかあか",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｶｱｶ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
+              "アカアカ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "あかあか");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｶｱｶ");
   }
 }
 
@@ -639,7 +625,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
     InsertASCIISequence("1a", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("あき", query);
+    EXPECT_EQ(query, "あき");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -651,25 +637,23 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWith12KeysFlick) {
   {
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あき", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アキ", seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("あき", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("あき",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("あき",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "あき",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("あき", seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("あき",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("あき",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "あき",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱｷ", seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value, "アキ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value, "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "あき");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value, "ｱｷ");
   }
 }
 
@@ -694,7 +678,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     InsertASCIISequence("shi", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ(kShi, query);
+    EXPECT_EQ(query, kShi);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -703,7 +687,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("shi", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "shi");
   }
 
   {
@@ -712,7 +696,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     InsertASCIISequence("si", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ(kShi, query);
+    EXPECT_EQ(query, kShi);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -721,7 +705,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithQwertyHiragana) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("si", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "si");
   }
 }
 
@@ -742,7 +726,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
     InsertASCIISequence("<'de", &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    EXPECT_EQ("あん゜で", query);
+    EXPECT_EQ(query, "あん゜で");
   }
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -754,28 +738,26 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   {
     const Segment &seg = segments.conversion_segment(0);
 
-    EXPECT_EQ("あん゜で", seg.meta_candidate(transliteration::HIRAGANA).value);
-    EXPECT_EQ("アン゜デ",
-              seg.meta_candidate(transliteration::FULL_KATAKANA).value);
-    EXPECT_EQ("annde", seg.meta_candidate(transliteration::HALF_ASCII).value);
-    EXPECT_EQ("ANNDE",
-              seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value);
-    EXPECT_EQ("annde",
-              seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Annde",
-        seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ａｎｎｄｅ",
-              seg.meta_candidate(transliteration::FULL_ASCII).value);
-    EXPECT_EQ("ＡＮＮＤＥ",
-              seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value);
-    EXPECT_EQ("ａｎｎｄｅ",
-              seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value);
-    EXPECT_EQ(
-        "Ａｎｎｄｅ",
-        seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value);
-    EXPECT_EQ("ｱﾝﾟﾃﾞ",
-              seg.meta_candidate(transliteration::HALF_KATAKANA).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HIRAGANA).value, "あん゜で");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_KATAKANA).value,
+              "アン゜デ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "annde");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_UPPER).value,
+              "ANNDE");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_LOWER).value,
+              "annde");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII_CAPITALIZED).value,
+              "Annde");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII).value,
+              "ａｎｎｄｅ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_UPPER).value,
+              "ＡＮＮＤＥ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_LOWER).value,
+              "ａｎｎｄｅ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::FULL_ASCII_CAPITALIZED).value,
+              "Ａｎｎｄｅ");
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_KATAKANA).value,
+              "ｱﾝﾟﾃﾞ");
   }
 }
 
@@ -846,7 +828,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
       const std::string &half_ascii =
           seg.meta_candidate(transliteration::HALF_ASCII).value;
       if (keycode_to_t13n_map[i] && keycode_to_t13n_map[i] != std::string("")) {
-        EXPECT_EQ(keycode_to_t13n_map[i], half_ascii);
+        EXPECT_EQ(half_ascii, keycode_to_t13n_map[i]);
       } else {
         EXPECT_TRUE(half_ascii == ascii_input || half_ascii == query);
       }
@@ -872,7 +854,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     InsertASCIISequence("ssh", &composer);
     std::string query;
     composer.GetQueryForPrediction(&query);
-    EXPECT_EQ(kXtsu, query);
+    EXPECT_EQ(query, kXtsu);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -882,7 +864,7 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("ssh", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "ssh");
   }
 }
 
@@ -904,7 +886,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     InsertASCIISequence("ssh", &composer);  // "っsh|"
     std::string query;
     composer.GetQueryForPrediction(&query);
-    EXPECT_EQ(kXtsu, query);
+    EXPECT_EQ(query, kXtsu);
 
     composer.MoveCursorTo(1);  // "っ|sh"
 
@@ -916,7 +898,7 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
-    EXPECT_EQ("s", seg.meta_candidate(transliteration::HALF_ASCII).value);
+    EXPECT_EQ(seg.meta_candidate(transliteration::HALF_ASCII).value, "s");
   }
 }
 

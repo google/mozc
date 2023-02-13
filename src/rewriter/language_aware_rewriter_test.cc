@@ -155,8 +155,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
                                               &segments));
 
-    EXPECT_EQ("ｐｙてょｎ", composition);
-    ASSERT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(composition, "ｐｙてょｎ");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_THAT(segments.conversion_segment(0),
                 HasSingleCandidate(IsLangAwareCandidate("python")));
     Mock::VerifyAndClearExpectations(&dictionary);
@@ -169,9 +169,9 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "mozuk", &composition,
                                                &segments));
 
-    EXPECT_EQ("もずｋ", composition);
-    ASSERT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(composition, "もずｋ");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
     Mock::VerifyAndClearExpectations(&dictionary);
   }
   {
@@ -184,7 +184,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     PushFrontCandidate("cand2", segment);
     PushFrontCandidate("cand1", segment);
     PushFrontCandidate("cand0", segment);
-    ASSERT_EQ(3, segment->candidates_size());
+    ASSERT_EQ(segment->candidates_size(), 3);
 
     // Set up the mock dictionary: "ほうせ" -> "house" doesn't exist but there's
     // an entry whose value is "house".
@@ -195,7 +195,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     // => ["cand0", "cand1", "house", "cand2"]
     EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "house", &composition,
                                               &segments));
-    EXPECT_EQ("ほうせ", composition);
+    EXPECT_EQ(composition, "ほうせ");
     EXPECT_THAT(*segment, CandidatesAreArray({
                               ValueIs("cand0"),
                               ValueIs("cand1"),
@@ -215,8 +215,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "query", &composition,
                                               &segments));
 
-    EXPECT_EQ("くえｒｙ", composition);
-    ASSERT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(composition, "くえｒｙ");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_THAT(segments.conversion_segment(0),
                 HasSingleCandidate(IsLangAwareCandidate("query")));
     Mock::VerifyAndClearExpectations(&dictionary);
@@ -229,7 +229,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "google",
                                                &composition, &segments));
-    EXPECT_EQ("google", composition);
+    EXPECT_EQ(composition, "google");
     Mock::VerifyAndClearExpectations(&dictionary);
   }
   {
@@ -247,9 +247,9 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "naru", &composition,
                                                &segments));
 
-    EXPECT_EQ("なる", composition);
-    ASSERT_EQ(1, segments.conversion_segments_size());
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(composition, "なる");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
     Mock::VerifyAndClearExpectations(&dictionary);
   }
 }
@@ -271,7 +271,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     Segments segments;
     EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
                                               &segments));
-    EXPECT_EQ(kPyTeyoN, composition);
+    EXPECT_EQ(composition, kPyTeyoN);
     ASSERT_EQ(1, segments.conversion_segments_size());
     EXPECT_THAT(segments.conversion_segment(0),
                 HasSingleCandidate(IsLangAwareCandidate("python")));
@@ -297,7 +297,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
     composer.GetStringForPreedit(&composition);
-    EXPECT_EQ(kPyTeyoN, composition);
+    EXPECT_EQ(composition, kPyTeyoN);
 
     // Perform the rewrite command.
     Segments segments;
@@ -329,7 +329,7 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "1d*=", &composition,
                                                &segments));
-    EXPECT_EQ("１ｄ＊＝", composition);
+    EXPECT_EQ(composition, "１ｄ＊＝");
   }
   {
     // "xyzw" is composed to "ｘｙｚｗ". Do not rewrite.
@@ -337,7 +337,7 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "xyzw", &composition,
                                                &segments));
-    EXPECT_EQ("ｘｙｚｗ", composition);
+    EXPECT_EQ(composition, "ｘｙｚｗ");
   }
 }
 
@@ -382,7 +382,7 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     InsertASCIISequence("query", &composer);
 
     ConversionRequest conv_request(&composer, &request, &config);
-    EXPECT_EQ(param.type, rewriter.capability(conv_request));
+    EXPECT_EQ(rewriter.capability(conv_request), param.type);
   }
 }
 

@@ -100,7 +100,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ(2, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 2);
     seg->clear_candidates();
   }
 
@@ -109,7 +109,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ(1, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 1);
     seg->clear_candidates();
   }
 
@@ -118,7 +118,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
     seg->set_key("ひみつ");
     candidate->value = "秘密";
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ(1, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 1);
     seg->clear_candidates();
   }
 
@@ -127,7 +127,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
     seg->set_key("きょうと");
     candidate->value = "京都";
     EXPECT_FALSE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
     seg->clear_candidates();
   }
 
@@ -141,7 +141,7 @@ TEST_F(CommandRewriterTest, Rewrite) {
     seg2->set_key("です");
     candidate2->value = "です";
     EXPECT_FALSE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ(0, CommandCandidatesSize(*seg));
+    EXPECT_EQ(CommandCandidatesSize(*seg), 0);
   }
 }
 
@@ -156,7 +156,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
     candidate->value = "サジェスト";
     config_.set_presentation_mode(false);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ("サジェスト機能の一時停止", GetCommandCandidateValue(*seg));
+    EXPECT_EQ(GetCommandCandidateValue(*seg), "サジェスト機能の一時停止");
     seg->clear_candidates();
   }
 
@@ -166,7 +166,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
     candidate->value = "サジェスト";
     config_.set_presentation_mode(true);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ("サジェスト機能を元に戻す", GetCommandCandidateValue(*seg));
+    EXPECT_EQ(GetCommandCandidateValue(*seg), "サジェスト機能を元に戻す");
     seg->clear_candidates();
   }
 
@@ -176,7 +176,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
     candidate->value = "秘密";
     config_.set_incognito_mode(false);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ("シークレットモードをオン", GetCommandCandidateValue(*seg));
+    EXPECT_EQ(GetCommandCandidateValue(*seg), "シークレットモードをオン");
     seg->clear_candidates();
   }
 
@@ -186,7 +186,7 @@ TEST_F(CommandRewriterTest, ValueCheck) {
     candidate->value = "秘密";
     config_.set_incognito_mode(true);
     EXPECT_TRUE(rewriter.Rewrite(convreq_, &segments));
-    EXPECT_EQ("シークレットモードをオフ", GetCommandCandidateValue(*seg));
+    EXPECT_EQ(GetCommandCandidateValue(*seg), "シークレットモードをオフ");
     seg->clear_candidates();
   }
 }

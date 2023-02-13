@@ -127,10 +127,10 @@ TEST_F(DiceRewriterTest, InsertTest) {
     MakeSegments(&segments, kKey, 1, candidates_size);
 
     EXPECT_TRUE(dice_rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(segments.segments_size(), 1);
 
     const Segment &segment = segments.conversion_segment(0);
-    EXPECT_EQ(1, CountDiceNumber(segment));
+    EXPECT_EQ(CountDiceNumber(segment), 1);
 
     size_t dice_number_index = GetDiceNumberIndex(segment);
     EXPECT_LE(1, dice_number_index);

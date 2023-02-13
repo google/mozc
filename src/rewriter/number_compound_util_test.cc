@@ -110,9 +110,9 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
     EXPECT_TRUE(SplitStringIntoNumberAndCounterSuffix(
         suffix_array, kSplittableCases[i].input, &actual_number, &actual_suffix,
         &actual_script_type));
-    EXPECT_EQ(kSplittableCases[i].expected_number, actual_number);
-    EXPECT_EQ(kSplittableCases[i].expected_suffix, actual_suffix);
-    EXPECT_EQ(kSplittableCases[i].expected_script_type, actual_script_type);
+    EXPECT_EQ(actual_number, kSplittableCases[i].expected_number);
+    EXPECT_EQ(actual_suffix, kSplittableCases[i].expected_suffix);
+    EXPECT_EQ(actual_script_type, kSplittableCases[i].expected_script_type);
   }
 
   // Test cases for unsplittable compounds.

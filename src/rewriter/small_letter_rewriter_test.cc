@@ -195,8 +195,8 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
   AddSegment("45", "45", &segments);
   AddSegment("6", "6", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ("¹²³⁴⁵⁶", segments.conversion_segment(0).candidate(2).value);
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(2).value, "¹²³⁴⁵⁶");
 
   // If the segments is already resized, returns false.
   InitSegments("^123", "^123", &segments);
@@ -212,7 +212,7 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
   segments.set_resized(true);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ("¹²³", segments.conversion_segment(0).candidate(1).value);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).value, "¹²³");
 }
 
 }  // namespace mozc

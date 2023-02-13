@@ -66,29 +66,29 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   std::vector<std::string> variants;
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("foo", &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("Foo", variants[0]);
-  EXPECT_EQ("FOO", variants[1]);
+  EXPECT_EQ(variants.size(), 2);
+  EXPECT_EQ(variants[0], "Foo");
+  EXPECT_EQ(variants[1], "FOO");
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("Bar", &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("bar", variants[0]);
-  EXPECT_EQ("BAR", variants[1]);
+  EXPECT_EQ(variants.size(), 2);
+  EXPECT_EQ(variants[0], "bar");
+  EXPECT_EQ(variants[1], "BAR");
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("HOGE", &variants));
-  EXPECT_EQ(2, variants.size());
-  EXPECT_EQ("hoge", variants[0]);
-  EXPECT_EQ("Hoge", variants[1]);
+  EXPECT_EQ(variants.size(), 2);
+  EXPECT_EQ(variants[0], "hoge");
+  EXPECT_EQ(variants[1], "Hoge");
 
   EXPECT_FALSE(rewriter.ExpandEnglishVariants("Foo Bar", &variants));
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("iPhone", &variants));
-  EXPECT_EQ(1, variants.size());
-  EXPECT_EQ("iphone", variants[0]);
+  EXPECT_EQ(variants.size(), 1);
+  EXPECT_EQ(variants[0], "iphone");
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("MeCab", &variants));
-  EXPECT_EQ(1, variants.size());
-  EXPECT_EQ("mecab", variants[0]);
+  EXPECT_EQ(variants.size(), 1);
+  EXPECT_EQ(variants[0], "mecab");
 
   EXPECT_FALSE(rewriter.ExpandEnglishVariants("グーグル", &variants));
 }
@@ -109,17 +109,17 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     candidate->content_value = "Google";
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
 
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(3, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
-    EXPECT_EQ("google", seg->candidate(1).value);
-    EXPECT_EQ("google", seg->candidate(1).content_value);
-    EXPECT_EQ("GOOGLE", seg->candidate(2).value);
-    EXPECT_EQ("GOOGLE", seg->candidate(2).content_value);
+    EXPECT_EQ(seg->candidates_size(), 3);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
+    EXPECT_EQ(seg->candidate(1).value, "google");
+    EXPECT_EQ(seg->candidate(1).content_value, "google");
+    EXPECT_EQ(seg->candidate(2).value, "GOOGLE");
+    EXPECT_EQ(seg->candidate(2).content_value, "GOOGLE");
   }
 
   {
@@ -140,17 +140,17 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     }
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(40, seg->candidates_size());
+    EXPECT_EQ(seg->candidates_size(), 40);
 
     for (int i = 0; i < 10; ++i) {
-      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).value);
-      EXPECT_EQ(std::to_string(i), seg->candidate(4 * i).content_value);
-      EXPECT_EQ("Google", seg->candidate(4 * i + 1).value);
-      EXPECT_EQ("Google", seg->candidate(4 * i + 1).content_value);
-      EXPECT_EQ("google", seg->candidate(4 * i + 2).value);
-      EXPECT_EQ("google", seg->candidate(4 * i + 2).content_value);
-      EXPECT_EQ("GOOGLE", seg->candidate(4 * i + 3).value);
-      EXPECT_EQ("GOOGLE", seg->candidate(4 * i + 3).content_value);
+      EXPECT_EQ(seg->candidate(4 * i).value, std::to_string(i));
+      EXPECT_EQ(seg->candidate(4 * i).content_value, std::to_string(i));
+      EXPECT_EQ(seg->candidate(4 * i + 1).value, "Google");
+      EXPECT_EQ(seg->candidate(4 * i + 1).content_value, "Google");
+      EXPECT_EQ(seg->candidate(4 * i + 2).value, "google");
+      EXPECT_EQ(seg->candidate(4 * i + 2).content_value, "google");
+      EXPECT_EQ(seg->candidate(4 * i + 3).value, "GOOGLE");
+      EXPECT_EQ(seg->candidate(4 * i + 3).content_value, "GOOGLE");
     }
   }
 }
@@ -172,15 +172,16 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
     candidate->content_value = "Michael Jackson";
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
 
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Michael Jackson", seg->candidate(0).value);
-    EXPECT_EQ("Michael Jackson", seg->candidate(0).content_value);
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
+    EXPECT_EQ(seg->candidate(0).content_value, "Michael Jackson");
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Michael Jackson", seg->candidate(0).value);
-    EXPECT_EQ("Michael Jackson", seg->candidate(0).content_value);
-    EXPECT_NE(0, (seg->candidate(0).attributes &
-                  Segment::Candidate::NO_VARIANTS_EXPANSION));
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
+    EXPECT_EQ(seg->candidate(0).content_value, "Michael Jackson");
+    EXPECT_NE((seg->candidate(0).attributes &
+               Segment::Candidate::NO_VARIANTS_EXPANSION),
+              0);
   }
 }
 
@@ -198,11 +199,11 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     candidate->value = "Google";
     candidate->content_value = "Google";
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(1, seg->candidates_size());
+    EXPECT_EQ(seg->candidates_size(), 1);
   }
 
   {
@@ -216,17 +217,17 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
 
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(3, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
-    EXPECT_EQ("google", seg->candidate(1).value);
-    EXPECT_EQ("google", seg->candidate(1).content_value);
-    EXPECT_EQ("GOOGLE", seg->candidate(2).value);
-    EXPECT_EQ("GOOGLE", seg->candidate(2).content_value);
+    EXPECT_EQ(seg->candidates_size(), 3);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
+    EXPECT_EQ(seg->candidate(1).value, "google");
+    EXPECT_EQ(seg->candidate(1).content_value, "google");
+    EXPECT_EQ(seg->candidate(2).value, "GOOGLE");
+    EXPECT_EQ(seg->candidate(2).content_value, "GOOGLE");
   }
 }
 
@@ -258,9 +259,9 @@ TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
     candidate->value = "google";
     candidate->content_value = "google";
 
-    EXPECT_EQ(3, seg->candidates_size());
+    EXPECT_EQ(seg->candidates_size(), 3);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(4, seg->candidates_size());  // Kana, lower, upper, capitalized
+    EXPECT_EQ(seg->candidates_size(), 4);  // Kana, lower, upper, capitalized
   }
 }
 
@@ -292,7 +293,7 @@ TEST_F(EnglishVariantsRewriterTest, KeepRank) {
     candidate->value = "google";
     candidate->content_value = "google";
 
-    EXPECT_EQ(3, seg->candidates_size());
+    EXPECT_EQ(seg->candidates_size(), 3);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
 
     int upper_rank, lower_rank, capitalized_rank, kana_rank;
@@ -322,15 +323,16 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
     candidate->content_value = "Google";
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
 
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ(1, seg->candidates_size());
-    EXPECT_EQ("Google", seg->candidate(0).value);
-    EXPECT_EQ("Google", seg->candidate(0).content_value);
-    EXPECT_NE(0, (seg->candidate(0).attributes &
-                  Segment::Candidate::NO_VARIANTS_EXPANSION));
+    EXPECT_EQ(seg->candidates_size(), 1);
+    EXPECT_EQ(seg->candidate(0).value, "Google");
+    EXPECT_EQ(seg->candidate(0).content_value, "Google");
+    EXPECT_NE((seg->candidate(0).attributes &
+               Segment::Candidate::NO_VARIANTS_EXPANSION),
+              0);
   }
 }
 
@@ -342,12 +344,12 @@ TEST_F(EnglishVariantsRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 

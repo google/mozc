@@ -989,12 +989,12 @@ TEST_F(DateRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 
@@ -1051,9 +1051,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
     const auto &segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
     ASSERT_LT(3, cand_size);
-    EXPECT_EQ("1234", segment.candidate(0).value);
-    EXPECT_EQ("cand1", segment.candidate(cand_size - 2).value);
-    EXPECT_EQ("cand2", segment.candidate(cand_size - 1).value);
+    EXPECT_EQ(segment.candidate(0).value, "1234");
+    EXPECT_EQ(segment.candidate(cand_size - 2).value, "cand1");
+    EXPECT_EQ(segment.candidate(cand_size - 1).value, "cand2");
   }
 
   // Test case where results are inserted after the last candidate.
@@ -1069,9 +1069,9 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
     const auto &segment = segments.segment(0);
     const auto cand_size = segment.candidates_size();
     ASSERT_LT(3, cand_size);
-    EXPECT_EQ("1234", segment.candidate(0).value);
-    EXPECT_EQ("cand1", segment.candidate(1).value);
-    EXPECT_EQ("cand2", segment.candidate(2).value);
+    EXPECT_EQ(segment.candidate(0).value, "1234");
+    EXPECT_EQ(segment.candidate(1).value, "cand1");
+    EXPECT_EQ(segment.candidate(2).value, "cand2");
   }
 }
 

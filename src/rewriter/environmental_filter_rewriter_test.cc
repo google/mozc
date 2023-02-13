@@ -265,7 +265,7 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
                &segments);
 
     EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
   }
 
   // Emoji in Unicode 13.0 should be allowed in this case.
@@ -281,7 +281,7 @@ TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
     AddSegment("a", {"🛻", "🤵‍♀", "🥸"}, &segments);
 
     EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
 
@@ -293,7 +293,7 @@ TEST_F(EnvironmentalFilterRewriterTest, RemoveTest) {
   AddSegment("a", {"a\t1", "a\n2", "a\n\r3"}, &segments);
 
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
-  EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
 }
 
 TEST_F(EnvironmentalFilterRewriterTest, NoRemoveTest) {
@@ -302,7 +302,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NoRemoveTest) {
 
   const ConversionRequest request;
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
-  EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
 }
 
 TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
@@ -319,7 +319,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
 
     EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
   }
 
   {
@@ -337,7 +337,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
 
     EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
   }
 
   {
@@ -355,7 +355,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
 
     EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 1);
   }
 
   {
@@ -375,7 +375,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
 
     EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(2, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 2);
   }
 
   {
@@ -397,7 +397,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
                &segments);
 
     EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
-    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
 
@@ -408,12 +408,12 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   segments.Clear();
   AddSegment("test", "test", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
-  EXPECT_EQ("test", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "test");
 
   segments.Clear();
   AddSegment("きょうと", "京都", &segments);
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
-  EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "京都");
 
   // Wave dash (U+301C) per platform
   segments.Clear();
@@ -423,13 +423,13 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
 #ifdef OS_WIN
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   // U+FF5E
-  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "～");
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
 #else  // OS_WIN
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
-  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
-  EXPECT_EQ(description, segments.segment(0).candidate(0).description);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
+  EXPECT_EQ(segments.segment(0).candidate(0).description, description);
 #endif  // OS_WIN
 
   // Wave dash (U+301C) w/ normalization
@@ -440,7 +440,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   rewriter_->SetNormalizationFlag(TextNormalizer::kAll);
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   // U+FF5E
-  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "～");
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
 
   // Wave dash (U+301C) w/o normalization
@@ -451,8 +451,8 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   rewriter_->SetNormalizationFlag(TextNormalizer::kNone);
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
-  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
-  EXPECT_EQ(description, segments.segment(0).candidate(0).description);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
+  EXPECT_EQ(segments.segment(0).candidate(0).description, description);
 
   // not normalized.
   segments.Clear();
@@ -462,7 +462,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
       Segment::Candidate::USER_DICTIONARY;
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
-  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
 
   // not normalized.
   segments.Clear();
@@ -472,7 +472,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
       Segment::Candidate::NO_MODIFICATION;
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
-  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
 }
 
 }  // namespace

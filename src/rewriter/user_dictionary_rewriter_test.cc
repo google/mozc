@@ -101,7 +101,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 2 3 4 5");
   }
 
   {
@@ -112,7 +112,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 2 3 4 5");
   }
 
   {
@@ -123,7 +123,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 2 3 4 5");
   }
 
   {
@@ -134,7 +134,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", false, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 3 2 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 3 2 4 5");
   }
   {
     Segments segments;
@@ -144,7 +144,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 3 4 2 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 3 4 2 5");
   }
   {
     Segments segments;
@@ -154,7 +154,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 2 3 4 5");
   }
   {
     Segments segments;
@@ -164,7 +164,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", true, &segments);
     AddCandidate("5", true, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 2 3 4 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 2 3 4 5");
   }
   {
     Segments segments;
@@ -174,7 +174,7 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     AddCandidate("4", true, &segments);
     AddCandidate("5", false, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_EQ("1 4 2 3 5", GetCandidates(segments));
+    EXPECT_EQ(GetCandidates(segments), "1 4 2 3 5");
   }
 }
 }  // namespace mozc
