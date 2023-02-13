@@ -46,6 +46,7 @@ def ParseArguments() -> argparse.Namespace:
   parser = argparse.ArgumentParser()
   parser.add_argument('--input')
   parser.add_argument('--output')
+  parser.add_argument('--productbuild', action='store_true')
   parser.add_argument('--work_dir')
   return parser.parse_args()
 
@@ -120,6 +121,48 @@ def TweakQtApps(top_dir: str) -> None:
     SymlinkQtFrameworks(app_dir)
 
 
+def TweakForProductbuild(top_dir: str) -> None:
+  """Tweak file paths for the productbuild command."""
+  orig_dir = os.getcwd()
+  os.chdir(top_dir)
+
+  name = 'Mozc'
+  folder = 'Mozc'
+  domain = 'org.mozc'
+
+  renames = [
+      (f'Uninstall{name}.app', f'root/Applications/{folder}/'),
+      (f'{name}.app', 'root/Library/Input Methods/'),
+      (
+          f'{domain}.inputmethod.Japanese.Converter.plist',
+          'root/Library/LaunchAgents/',
+      ),
+      (
+          f'{domain}.inputmethod.Japanese.Renderer.plist',
+          'root/Library/LaunchAgents/',
+      ),
+      ('ActivatePane.bundle', 'Plugins/'),
+      ('DevConfirmPane.bundle', 'Plugins/'),
+      ('InstallerSections.plist', 'Plugins/'),
+      ('postflight.sh', 'scripts/postinstall'),
+      ('preflight.sh', 'scripts/preinstall'),
+  ]
+  # Qt apps
+  renames += [
+      ('ConfigDialog.app', f'root/Applications/{folder}/'),
+      ('DictionaryTool.app', f'root/Applications/{folder}/'),
+  ]
+
+  for src, dst in renames:
+    if dst.endswith('/'):
+      dst = os.path.join(dst, src)
+    os.renames(src, dst)
+  os.chmod('scripts/postinstall', 0o755)
+  os.chmod('scripts/preinstall', 0o755)
+
+  os.chdir(orig_dir)
+
+
 def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   """Tweak the zip file of installer files to optimize the structure."""
   # Remove top_dir if it already exists.
@@ -131,8 +174,11 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   util.RunOrDie(['unzip', '-q', args.input, '-d', work_dir])
   TweakQtApps(top_dir)
 
+  if args.productbuild:
+    TweakForProductbuild(top_dir)
+
   # Create a zip file with the zip command.
-  # It's possible but not easy to contain symlinks with shutil.make_archive.
+  # It's not easy to contain symlinks with shutil.make_archive.
   if os.path.exists(args.output):
     os.remove(args.output)
   orig_dir = os.getcwd()

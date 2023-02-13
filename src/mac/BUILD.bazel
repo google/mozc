@@ -396,6 +396,8 @@ genrule(
         oss_macos = [
             "//gui/config_dialog:config_dialog_macos",
             "//gui/dictionary_tool:dictionary_tool_macos",
+            "installer/distribution.xml",
+            "installer/InstallerSections.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
@@ -419,6 +421,15 @@ genrule(
     srcs = [":zipped_installer_files"],
     outs = ["tweaked_installer.zip"],
     cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
+    tags = ["manual"],
+    tools = [":tweak_installer_files"],
+)
+
+genrule(
+    name = "productbuild_files",
+    srcs = [":zipped_installer_files"],
+    outs = ["productbuild_files.zip"],
+    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@",
     tags = ["manual"],
     tools = [":tweak_installer_files"],
 )
