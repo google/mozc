@@ -74,9 +74,7 @@ mozc_cc_library(
         "mozc_emacs_helper_lib.h",
     ],
     deps = [
-        "//base",
         "//base:logging",
-        "//base:number_util",
         "//base:port",
         "//base:util",
         "//base/protobuf",
@@ -87,7 +85,7 @@ mozc_cc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//storage:lru_cache",
-        "//storage:lru_storage",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

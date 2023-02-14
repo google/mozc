@@ -38,6 +38,7 @@
 #include "rewriter/date_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <iterator>
@@ -52,17 +53,20 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/civil_time.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -1018,7 +1022,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   japanese_util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
   uint32_t year = 0;
-  if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
+  if (!absl::SimpleAtoi(year_str, &year)) {
     return false;
   }
 

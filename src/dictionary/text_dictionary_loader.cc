@@ -42,16 +42,15 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_stream.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/multifile.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -111,14 +110,6 @@ ValueAndKey ParseReadingCorrectionTSV(const std::string &line) {
   CHECK(!iter.Done());
   value_key.second = iter.Get();
   return value_key;
-}
-
-// Helper function to parse an integer from a string.
-bool SafeStrToInt(absl::string_view s, int *n) {
-  uint32_t u32 = 0;
-  const bool ret = NumberUtil::SafeStrToUInt32(s, &u32);
-  *n = u32;
-  return ret;
 }
 
 }  // namespace
@@ -316,9 +307,12 @@ std::unique_ptr<Token> TextDictionaryLoader::ParseTSV(
 
   // Parse key, lid, rid, cost, value.
   japanese_util::NormalizeVoicedSoundMark(columns[0], &token->key);
-  CHECK(SafeStrToInt(columns[1], &token->lid)) << "Wrong lid: " << columns[1];
-  CHECK(SafeStrToInt(columns[2], &token->rid)) << "Wrong rid: " << columns[2];
-  CHECK(SafeStrToInt(columns[3], &token->cost)) << "Wrong cost: " << columns[3];
+  CHECK(absl::SimpleAtoi(columns[1], &token->lid))
+      << "Wrong lid: " << columns[1];
+  CHECK(absl::SimpleAtoi(columns[2], &token->rid))
+      << "Wrong rid: " << columns[2];
+  CHECK(absl::SimpleAtoi(columns[3], &token->cost))
+      << "Wrong cost: " << columns[3];
   japanese_util::NormalizeVoicedSoundMark(columns[4], &token->value);
 
   // Optionally, label (SPELLING_CORRECTION, ZIP_CODE, etc.) may be provided in

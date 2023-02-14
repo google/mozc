@@ -29,15 +29,16 @@
 
 #include "net/json_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/protobuf/descriptor.h"
 #include "net/jsoncpp.h"
+#include "absl/strings/numbers.h"
 
 using mozc::protobuf::Descriptor;
 using mozc::protobuf::EnumValueDescriptor;
@@ -196,7 +197,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       int64_t int_value;
-      if (!NumberUtil::SafeStrToInt64(value.asString(), &int_value)) {
+      if (!absl::SimpleAtoi(value.asString(), &int_value)) {
         DLOG(ERROR) << "value is not convertible to int64_t: "
                     << Json::FastWriter().write(value);
         return false;
@@ -220,7 +221,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       uint64_t uint_value;
-      if (!NumberUtil::SafeStrToUInt64(value.asString(), &uint_value)) {
+      if (!absl::SimpleAtoi(value.asString(), &uint_value)) {
         DLOG(ERROR) << "value is not convertible to uint64_t: "
                     << Json::FastWriter().write(value);
         return false;
@@ -324,8 +325,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           DLOG(ERROR) << "value is not convertible to stringValue: "
                       << Json::FastWriter().write(value[i]);
           result = false;
-        } else if (!NumberUtil::SafeStrToInt64(value[i].asString(),
-                                               &int_value)) {
+        } else if (!absl::SimpleAtoi(value[i].asString(), &int_value)) {
           DLOG(ERROR) << "value is not convertible to int64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;
@@ -354,8 +354,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           DLOG(ERROR) << "value is not convertible to stringValue: "
                       << Json::FastWriter().write(value[i]);
           result = false;
-        } else if (!NumberUtil::SafeStrToUInt64(value[i].asString(),
-                                                &uint_value)) {
+        } else if (!absl::SimpleAtoi(value[i].asString(), &uint_value)) {
           DLOG(ERROR) << "value is not convertible to uint64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;

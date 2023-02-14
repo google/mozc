@@ -31,13 +31,9 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cerrno>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iterator>
 #include <limits>
 #include <string>
 #include <type_traits>
@@ -46,10 +42,10 @@
 #include "base/japanese_util.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -469,7 +465,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
 
   // Following conversions require uint64_t number.
   uint64_t n;
-  if (!SafeStrToUInt64(input_num, &n)) {
+  if (!absl::SimpleAtoi(input_num, &n)) {
     return converted;
   }
 
@@ -495,7 +491,7 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
   }
 
   uint64_t n;
-  if (!SafeStrToUInt64(input_num, &n)) {
+  if (!absl::SimpleAtoi(input_num, &n)) {
     return false;
   }
 
@@ -589,14 +585,6 @@ bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t *value) {
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToInt32(absl::string_view str, int32_t *value) {
-  return absl::SimpleAtoi(str, value);
-}
-
-bool NumberUtil::SafeStrToInt64(absl::string_view str, int64_t *value) {
-  return absl::SimpleAtoi(str, value);
-}
-
 bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
   uint32_t tmp;
   // SimpleAtoi doesn't support 16-bit integers.
@@ -604,18 +592,6 @@ bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
     return false;
   }
   return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeStrToUInt32(absl::string_view str, uint32_t *value) {
-  return absl::SimpleAtoi(str, value);
-}
-
-bool NumberUtil::SafeHexStrToUInt32(absl::string_view str, uint32_t *value) {
-  return absl::SimpleHexAtoi(str, value);
-}
-
-bool NumberUtil::SafeStrToUInt64(absl::string_view str, uint64_t *value) {
-  return absl::SimpleAtoi(str, value);
 }
 
 bool NumberUtil::SafeStrToDouble(absl::string_view str, double *value) {
@@ -878,7 +854,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     NumberUtil::KanjiNumberToArabicNumber(kanji_char, &tmp);
 
     uint64_t n = 0;
-    if (!NumberUtil::SafeStrToUInt64(tmp, &n)) {
+    if (!absl::SimpleAtoi(tmp, &n)) {
       break;
     }
 

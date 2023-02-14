@@ -223,6 +223,8 @@ mozc_cc_library(
         "//dictionary/system:__subpackages__",
         # For //prediction:dictionary_predictor.
         "//prediction:__pkg__",
+        # For //rewriter:date_rewriter
+        "//rewriter:__pkg__",
     ],
     deps = ["//base:port"],
 )
@@ -493,12 +495,9 @@ mozc_cc_library(
     deps = [
         ":dictionary_token",
         ":pos_matcher_lib",
-        "//base",
-        "//base:file_stream",
         "//base:japanese_util",
         "//base:logging",
         "//base:multifile",
-        "//base:number_util",
         "//base:port",
         "//base:util",
         "//testing:gunit_prod",

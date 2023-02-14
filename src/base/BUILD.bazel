@@ -517,7 +517,6 @@ mozc_cc_library(
         ":japanese_util",
         ":japanese_util_rule",
         ":logging",
-        ":port",
         ":util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -531,8 +530,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":number_util",
-        ":port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

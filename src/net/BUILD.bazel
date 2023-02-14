@@ -87,13 +87,11 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":jsoncpp",
-        "//base",
         "//base:logging",
-        "//base:number_util",
         "//base:port",
-        "//base/protobuf",
         "//base/protobuf:descriptor",
         "//base/protobuf:message",
+        "@com_google_absl//absl/strings",
     ],
 )
 
