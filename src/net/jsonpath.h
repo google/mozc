@@ -30,11 +30,11 @@
 #ifndef MOZC_NET_JSONPATH_H_
 #define MOZC_NET_JSONPATH_H_
 
-#include <string>
 #include <vector>
 
 #include "base/port.h"
 #include "net/jsoncpp.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace net {
@@ -70,7 +70,7 @@ class JsonPath {
   //     std::cout << value->asString();
   //   }
   // }
-  static bool Parse(const Json::Value &root, const std::string &jsonpath,
+  static bool Parse(const Json::Value &root, absl::string_view jsonpath,
                     std::vector<const Json::Value *> *output);
 };
 
