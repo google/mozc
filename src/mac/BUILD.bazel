@@ -86,12 +86,17 @@ mozc_macos_application(
 mozc_objc_library(
     name = "common",
     hdrs = ["common.h"],
+    sdk_frameworks = ["Foundation"],
 )
 
 mozc_objc_library(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
-    sdk_frameworks = ["InputMethodKit"],
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+        "InputMethodKit",
+    ],
     tags = ["manual"],
     deps = [
         ":imk_controller",
@@ -119,6 +124,11 @@ mozc_objc_library(
         "English.lproj/Config.xib",
         "Japanese.lproj/Config.xib",
     ],
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+        "InputMethodKit",
+    ],
     tags = ["manual"],
     textual_hdrs = [
         "GoogleJapaneseInputControllerInterface.h",
@@ -139,14 +149,12 @@ mozc_objc_library(
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
-        "@com_google_absl//absl/base",
     ],
 )
 
 mozc_objc_test(
     name = "imk_controller_test",
     srcs = ["GoogleJapaneseInputController_test.mm"],
-    sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_controller",
         ":keycode_map",
@@ -164,6 +172,10 @@ mozc_objc_library(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
+    sdk_frameworks = [
+        "Foundation",
+        "InputMethodKit",
+    ],
     tags = ["manual"],
     deps = [
         ":common",
@@ -189,6 +201,10 @@ mozc_objc_library(
     name = "keycode_map",
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+    ],
     tags = ["manual"],
     textual_hdrs = [
         ":init_kanamap",
@@ -205,9 +221,7 @@ mozc_objc_library(
 mozc_objc_test(
     name = "keycode_map_test",
     srcs = ["KeyCodeMap_test.mm"],
-    sdk_frameworks = [
-        "AppKit",
-    ],
+    sdk_frameworks = ["AppKit"],
     deps = [
         ":keycode_map",
         "//protocol:commands_cc_proto",
@@ -256,6 +270,8 @@ mozc_objc_library(
     data = ["ActivatePane/ActivatePane.xib"],
     sdk_frameworks = [
         "Carbon",
+        "Cocoa",
+        "Foundation",
         "InstallerPlugins",
     ],
     tags = ["manual"],
@@ -279,6 +295,8 @@ mozc_objc_library(
     data = ["DevConfirmPane/DevConfirmPane.xib"],
     sdk_frameworks = [
         "Carbon",
+        "Cocoa",
+        "Foundation",
         "InstallerPlugins",
     ],
     tags = ["manual"],
