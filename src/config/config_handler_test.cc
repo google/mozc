@@ -29,12 +29,8 @@
 
 #include "config/config_handler.h"
 
-#ifdef OS_WIN
-#include <windows.h>
-#endif  // OS_WIN
-
 #include <atomic>
-#include <cstdint>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -42,7 +38,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -53,9 +48,15 @@
 #include "testing/mozctest.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+
+#ifdef OS_WIN
+#include <windows.h>
+#endif  // OS_WIN
 
 namespace mozc {
 namespace config {
@@ -87,7 +88,7 @@ class ScopedSetConfigFileName {
   ScopedSetConfigFileName() = delete;
   ScopedSetConfigFileName(const ScopedSetConfigFileName &) = delete;
   ScopedSetConfigFileName &operator=(const ScopedSetConfigFileName &) = delete;
-  explicit ScopedSetConfigFileName(const std::string &new_name)
+  explicit ScopedSetConfigFileName(const absl::string_view new_name)
       : default_config_filename_(ConfigHandler::GetConfigFileName()) {
     ConfigHandler::SetConfigFileName(new_name);
   }
@@ -282,9 +283,9 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (size_t i = 0; i < std::size(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
-    const std::string &src_path = mozc::testing::GetSourceFileOrDie(
+    const std::string src_path = mozc::testing::GetSourceFileOrDie(
         {"data", "test", "config", file_name});
-    const std::string &dest_path =
+    const std::string dest_path =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), file_name);
     ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))
         << "Copy failed: " << src_path << " to " << dest_path;

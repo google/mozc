@@ -28,10 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Handler of mozc configuration.
-
 #include "config/config_handler.h"
 
-#include <algorithm>
 #include <istream>
 #include <memory>
 #include <string>
@@ -39,11 +37,11 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -85,7 +83,7 @@ class ConfigHandlerImpl {
     Reload();
     ConfigHandler::GetDefaultConfig(&default_config_);
   }
-  virtual ~ConfigHandlerImpl() {}
+  virtual ~ConfigHandlerImpl() = default;
   bool GetConfig(Config *config) const;
   std::unique_ptr<config::Config> GetConfig() const;
   const Config &DefaultConfig() const;
@@ -94,7 +92,7 @@ class ConfigHandlerImpl {
   bool SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
   bool Reload();
-  void SetConfigFileName(const std::string &filename);
+  void SetConfigFileName(absl::string_view filename);
   std::string GetConfigFileName();
 
  private:
@@ -249,10 +247,10 @@ bool ConfigHandlerImpl::ReloadUnlocked() {
   return ret_code;
 }
 
-void ConfigHandlerImpl::SetConfigFileName(const std::string &filename) {
+void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   absl::MutexLock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
-  filename_ = filename;
+  filename_ = std::string(filename);
   ReloadUnlocked();
 }
 
@@ -330,7 +328,7 @@ const Config &ConfigHandler::DefaultConfig() {
 // Reload from file
 bool ConfigHandler::Reload() { return GetConfigHandlerImpl()->Reload(); }
 
-void ConfigHandler::SetConfigFileName(const std::string &filename) {
+void ConfigHandler::SetConfigFileName(const absl::string_view filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);
 }
 
