@@ -197,7 +197,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
 
     const commands::Preedit &conversion = output.preedit();
     ASSERT_LE(2, conversion.segment_size());
-    EXPECT_EQ("ぃ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment(0).value(), "ぃ");
   }
 
   // TranslateHalfASCII
@@ -210,8 +210,8 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    ASSERT_EQ(2, conversion.segment_size());
-    EXPECT_EQ("li", conversion.segment(0).value());
+    ASSERT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).value(), "li");
   }
 }
 
@@ -222,8 +222,8 @@ TEST_F(SessionRegressionTest,
     InitSessionToPrecomposition(session_.get());
     commands::Command command;
     InsertCharacterChars("NFL", &command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
 
     EXPECT_TRUE(SendKey("F10", &command));
     ASSERT_FALSE(command.output().has_candidates());
@@ -237,8 +237,8 @@ TEST_F(SessionRegressionTest,
 #else   // __APPLE__
     EXPECT_TRUE(command.output().has_result());
 #endif  // __APPLE__
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
   }
 }
 
@@ -258,12 +258,12 @@ TEST_F(SessionRegressionTest, HistoryLearning) {
     command.Clear();
     session_->ConvertNext(&command);
     candidate2 = GetComposition(command);
-    EXPECT_NE(candidate1, candidate2);
+    EXPECT_NE(candidate2, candidate1);
 
     command.Clear();
     session_->Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
-    EXPECT_EQ(candidate2, command.output().result().value());
+    EXPECT_EQ(command.output().result().value(), candidate2);
   }
 
   {  // Second session.  The previous second candidate should be promoted.
@@ -272,8 +272,8 @@ TEST_F(SessionRegressionTest, HistoryLearning) {
 
     command.Clear();
     session_->Convert(&command);
-    EXPECT_NE(candidate1, GetComposition(command));
-    EXPECT_EQ(candidate2, GetComposition(command));
+    EXPECT_NE(GetComposition(command), candidate1);
+    EXPECT_EQ(GetComposition(command), candidate2);
   }
 }
 
@@ -294,17 +294,17 @@ TEST_F(SessionRegressionTest, Undo) {
   command.Clear();
   session_->ConvertNext(&command);
   const std::string candidate2 = GetComposition(command);
-  EXPECT_NE(candidate1, candidate2);
+  EXPECT_NE(candidate2, candidate1);
 
   command.Clear();
   session_->Commit(&command);
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(candidate2, command.output().result().value());
+  EXPECT_EQ(command.output().result().value(), candidate2);
 
   command.Clear();
   session_->Undo(&command);
-  EXPECT_NE(candidate1, GetComposition(command));
-  EXPECT_EQ(candidate2, GetComposition(command));
+  EXPECT_NE(GetComposition(command), candidate1);
+  EXPECT_EQ(GetComposition(command), candidate2);
 }
 
 // TODO(hsumita): This test may be moved to session_test.cc.
@@ -323,7 +323,7 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 
   command.Clear();
   session_->PredictAndConvert(&command);
-  EXPECT_EQ(1, command.output().preedit().segment_size());
+  EXPECT_EQ(command.output().preedit().segment_size(), 1);
 
   // Candidate contain "よろしく" or NOT
   int yoroshiku_id = -1;
@@ -336,17 +336,17 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
     command.Clear();
     session_->ConvertNext(&command);
   }
-  EXPECT_EQ(kYoroshikuString, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kYoroshikuString);
   EXPECT_GE(yoroshiku_id, 0);
 
   command.Clear();
   session_->Commit(&command);
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(kYoroshikuString, command.output().result().value());
+  EXPECT_EQ(command.output().result().value(), kYoroshikuString);
 
   command.Clear();
   session_->Undo(&command);
-  EXPECT_EQ(kYoroshikuString, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kYoroshikuString);
 }
 
 // This test is to check the consistency between the result of prediction and
@@ -374,7 +374,7 @@ TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
 
   command.Clear();
   InsertCharacterChars(kKey, &command);
-  EXPECT_EQ(1, command.output().preedit().segment_size());
+  EXPECT_EQ(command.output().preedit().segment_size(), 1);
   const std::string suggestion_first_candidate =
       command.output().all_candidate_words().candidates(0).value();
 
@@ -396,9 +396,9 @@ TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
   const std::string prediction_commit_result =
       command.output().result().value();
 
-  EXPECT_EQ(suggestion_first_candidate, suggestion_commit_result);
-  EXPECT_EQ(suggestion_first_candidate, prediction_first_candidate);
-  EXPECT_EQ(suggestion_first_candidate, prediction_commit_result);
+  EXPECT_EQ(suggestion_commit_result, suggestion_first_candidate);
+  EXPECT_EQ(prediction_first_candidate, suggestion_first_candidate);
+  EXPECT_EQ(prediction_commit_result, suggestion_first_candidate);
 }
 
 TEST_F(SessionRegressionTest, AutoConversionTest) {
@@ -418,7 +418,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
       session_->InsertCharacter(&command);
     }
 
-    EXPECT_EQ(session::ImeContext::COMPOSITION, session_->context().state());
+    EXPECT_EQ(session_->context().state(), session::ImeContext::COMPOSITION);
   }
 
   // Auto conversion with KUTEN
@@ -441,7 +441,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
       session_->InsertCharacter(&command);
     }
 
-    EXPECT_EQ(session::ImeContext::CONVERSION, session_->context().state());
+    EXPECT_EQ(session_->context().state(), session::ImeContext::CONVERSION);
   }
 
   // Auto conversion with KUTEN, but do not convert in numerical input
@@ -464,7 +464,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
       session_->InsertCharacter(&command);
     }
 
-    EXPECT_EQ(session::ImeContext::COMPOSITION, session_->context().state());
+    EXPECT_EQ(session_->context().state(), session::ImeContext::COMPOSITION);
   }
 }
 
@@ -476,7 +476,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue2330463) {
     InsertCharacterChars("[],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    EXPECT_EQ("｢｣､｡", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "｢｣､｡");
   }
 
   {
@@ -486,7 +486,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue2330463) {
     InsertCharacterChars("[g],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    EXPECT_EQ("｢g｣､｡", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "｢g｣､｡");
   }
 
   {
@@ -496,7 +496,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue2330463) {
     InsertCharacterChars("[a],.", &command);
     command.Clear();
     SendKey("F8", &command);
-    EXPECT_EQ("｢ｱ｣､｡", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "｢ｱ｣､｡");
   }
 }
 
@@ -508,7 +508,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue6209563) {
     InsertCharacterChars("tt", &command);
     command.Clear();
     SendKey("F10", &command);
-    EXPECT_EQ("tt", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "tt");
   }
 
   {  // Kana mode
@@ -531,7 +531,7 @@ TEST_F(SessionRegressionTest, TransliterationIssue6209563) {
 
     command.Clear();
     SendKey("F10", &command);
-    EXPECT_EQ("aaaaa", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "aaaaa");
   }
 }
 
@@ -546,7 +546,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
 
   commands::Command command;
   InsertCharacterChars("ssh", &command);
-  EXPECT_EQ("っｓｈ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "っｓｈ");
 
   constexpr int kHiraganaId = -1;
   SendCommandWithId(commands::SessionCommand::SUBMIT_CANDIDATE, kHiraganaId,
@@ -555,7 +555,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   EXPECT_TRUE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
 
-  EXPECT_EQ("っｓｈ", command.output().result().value());
+  EXPECT_EQ(command.output().result().value(), "っｓｈ");
 }
 
 TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
@@ -581,13 +581,13 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   InsertCharacterChars("aiu", &command);
   {
     auto candidate = command.output().candidates().candidate(0);
-    EXPECT_EQ(target_id, candidate.id());
-    EXPECT_EQ(target_word, candidate.value());
+    EXPECT_EQ(candidate.id(), target_id);
+    EXPECT_EQ(candidate.value(), target_word);
   }
   {
     auto candidate = command.output().candidates().candidate(1);
-    EXPECT_NE(target_id, candidate.id());
-    EXPECT_NE(target_word, candidate.value());
+    EXPECT_NE(candidate.id(), target_id);
+    EXPECT_NE(candidate.value(), target_word);
   }
 
   // 3. Delete the above candidate from the history.
@@ -600,13 +600,13 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   EXPECT_GT(command.output().candidates().candidate_size(), 0);
   {
     auto candidate = command.output().candidates().candidate(0);
-    EXPECT_NE(target_id, candidate.id());
-    EXPECT_NE(target_word, candidate.value());
+    EXPECT_NE(candidate.id(), target_id);
+    EXPECT_NE(candidate.value(), target_word);
   }
   {
     auto candidate = command.output().candidates().candidate(1);
-    EXPECT_EQ(target_id, candidate.id());
-    EXPECT_EQ(target_word, candidate.value());
+    EXPECT_EQ(candidate.id(), target_id);
+    EXPECT_EQ(candidate.value(), target_word);
   }
 }
 

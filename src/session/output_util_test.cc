@@ -341,7 +341,7 @@ TEST(OutputUtilTest, GetCandidateIndexById) {
   // Existing ID
   int32_t candidate_index = 0;
   EXPECT_TRUE(OutputUtil::GetCandidateIndexById(output, -2, &candidate_index));
-  EXPECT_EQ(9, candidate_index);
+  EXPECT_EQ(candidate_index, 9);
 
   // Not existing ID.
   candidate_index = 0;
@@ -356,7 +356,7 @@ TEST(OutputUtilTest, GetCandidateIdByIndex) {
   // Existing index
   int32_t candidate_id = 0;
   EXPECT_TRUE(OutputUtil::GetCandidateIdByIndex(output, 9, &candidate_id));
-  EXPECT_EQ(-2, candidate_id);
+  EXPECT_EQ(candidate_id, -2);
 
   // Not existing index.
   candidate_id = 0;
@@ -369,7 +369,7 @@ TEST(OutputUtilTest, GetFocusedCandidateId) {
 
   int32_t candidate_id = 0;
   EXPECT_TRUE(OutputUtil::GetFocusedCandidateId(output, &candidate_id));
-  EXPECT_EQ(-3, candidate_id);
+  EXPECT_EQ(candidate_id, -3);
 }
 
 }  // namespace

@@ -88,7 +88,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
   static const int32_t kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
-  EXPECT_EQ(kInterval, watchdog.interval());
+  EXPECT_EQ(watchdog.interval(), kInterval);
 
   mozc::client::ClientMock client;
   InitializeClient(&client);
@@ -104,21 +104,21 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
   watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
 
-  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
 
   watchdog.Start("SessionWatchDogTest");  // start
 
   absl::SleepFor(absl::Milliseconds(100));
   EXPECT_TRUE(watchdog.IsRunning());
-  EXPECT_EQ(kInterval, watchdog.interval());
+  EXPECT_EQ(watchdog.interval(), kInterval);
 
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
-  EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 5);
 
   absl::SleepFor(absl::Milliseconds(5000));  // 10.5 sec
 
-  EXPECT_EQ(10, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 10);
 
   watchdog.Terminate();
 }
@@ -127,7 +127,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   static const int32_t kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
-  EXPECT_EQ(kInterval, watchdog.interval());
+  EXPECT_EQ(watchdog.interval(), kInterval);
 
   mozc::client::ClientMock client;
   InitializeClient(&client);
@@ -143,17 +143,17 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
 
-  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
 
   watchdog.Start("SessionWatchDogCPUStatsTest");  // start
 
   absl::SleepFor(absl::Milliseconds(100));
   EXPECT_TRUE(watchdog.IsRunning());
-  EXPECT_EQ(kInterval, watchdog.interval());
+  EXPECT_EQ(watchdog.interval(), kInterval);
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
   // not called
-  EXPECT_EQ(0, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
 
   // cup loads become low
   cpu_loads.clear();
@@ -164,7 +164,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
 
   absl::SleepFor(absl::Milliseconds(5000));  // 5 sec
   // called
-  EXPECT_EQ(5, client.GetFunctionCallCount("Cleanup"));
+  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 5);
 
   watchdog.Terminate();
 }

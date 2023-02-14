@@ -117,7 +117,7 @@ TEST_F(KeyMapTest, GetCommand) {
     PrecompositionState::Commands command;
     key_event.set_key_code(97);
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
 
     key_event.Clear();
     key_event.set_key_code(98);
@@ -134,7 +134,7 @@ TEST_F(KeyMapTest, GetCommand) {
     PrecompositionState::Commands command;
     key_event.set_key_string("hoge");
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
   }
   {
     KeyMap<CompositionState> keymap;
@@ -147,7 +147,7 @@ TEST_F(KeyMapTest, GetCommand) {
     CompositionState::Commands command;
     key_event.set_key_code(97);
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(CompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, CompositionState::INSERT_CHARACTER);
 
     key_event.Clear();
     key_event.set_key_code(98);
@@ -172,7 +172,7 @@ TEST_F(KeyMapTest, GetCommand) {
     key_event.Clear();
     key_event.set_special_key(commands::KeyEvent::ENTER);
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(CompositionState::COMMIT, command);
+    EXPECT_EQ(command, CompositionState::COMMIT);
 
     // CTRL-ALT-DELETE
     key_event.Clear();
@@ -180,7 +180,7 @@ TEST_F(KeyMapTest, GetCommand) {
     key_event.add_modifier_keys(commands::KeyEvent::CTRL);
     key_event.add_modifier_keys(commands::KeyEvent::ALT);
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(CompositionState::IME_OFF, command);
+    EXPECT_EQ(command, CompositionState::IME_OFF);
   }
 }
 
@@ -230,7 +230,7 @@ TEST_F(KeyMapTest, GetCommandForKeyString) {
     PrecompositionState::Commands command;
     key_event.set_key_code(97);
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
   }
 
   // key_code = 97, key_string = "a"
@@ -240,7 +240,7 @@ TEST_F(KeyMapTest, GetCommandForKeyString) {
     key_event.set_key_code(97);
     key_event.set_key_string("a");
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
   }
 
   // key_code = empty, key_string = "a"
@@ -249,7 +249,7 @@ TEST_F(KeyMapTest, GetCommandForKeyString) {
     PrecompositionState::Commands command;
     key_event.set_key_string("a");
     EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+    EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
   }
 }
 
@@ -264,7 +264,7 @@ TEST_F(KeyMapTest, GetCommandKeyStub) {
   commands::KeyEvent key_event;
   key_event.set_key_code(97);
   EXPECT_TRUE(keymap.GetCommand(key_event, &command));
-  EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, command);
+  EXPECT_EQ(command, PrecompositionState::INSERT_CHARACTER);
 }
 
 TEST_F(KeyMapTest, GetCommand_overlay) {
@@ -279,7 +279,7 @@ TEST_F(KeyMapTest, GetCommand_overlay) {
     DirectInputState::Commands command;
     EXPECT_TRUE(manager.GetCommandDirect(key_event, &command));
     // MSIME defines HENKAN as Reconvert, but the overlay defines it as IME_ON.
-    EXPECT_EQ(DirectInputState::Commands::IME_ON, command);
+    EXPECT_EQ(command, DirectInputState::Commands::IME_ON);
   }
 }
 
@@ -310,15 +310,15 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 
     PrecompositionState::Commands fund_command;
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &fund_command));
-    EXPECT_EQ(PrecompositionState::INSERT_CHARACTER, fund_command);
+    EXPECT_EQ(fund_command, PrecompositionState::INSERT_CHARACTER);
 
     CompositionState::Commands composition_command;
     EXPECT_TRUE(manager.GetCommandComposition(key_event, &composition_command));
-    EXPECT_EQ(CompositionState::INSERT_CHARACTER, composition_command);
+    EXPECT_EQ(composition_command, CompositionState::INSERT_CHARACTER);
 
     ConversionState::Commands conv_command;
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::INSERT_CHARACTER);
   }
 
   {  // Check key bindings of Shift.
@@ -330,7 +330,7 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 
     CompositionState::Commands composition_command;
     EXPECT_TRUE(manager.GetCommandComposition(key_event, &composition_command));
-    EXPECT_EQ(CompositionState::INSERT_CHARACTER, composition_command);
+    EXPECT_EQ(composition_command, CompositionState::INSERT_CHARACTER);
 
     ConversionState::Commands conv_command;
     EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
@@ -368,52 +368,52 @@ TEST_F(KeyMapTest, GetName) {
     std::string name;
     EXPECT_TRUE(
         manager.GetNameFromCommandDirect(DirectInputState::IME_ON, &name));
-    EXPECT_EQ("IMEOn", name);
+    EXPECT_EQ(name, "IMEOn");
     EXPECT_TRUE(
         manager.GetNameFromCommandDirect(DirectInputState::RECONVERT, &name));
-    EXPECT_EQ("Reconvert", name);
+    EXPECT_EQ(name, "Reconvert");
   }
   {
     // Precomposition
     std::string name;
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::IME_OFF, &name));
-    EXPECT_EQ("IMEOff", name);
+    EXPECT_EQ(name, "IMEOff");
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::IME_ON, &name));
-    EXPECT_EQ("IMEOn", name);
+    EXPECT_EQ(name, "IMEOn");
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::INSERT_CHARACTER, &name));
-    EXPECT_EQ("InsertCharacter", name);
+    EXPECT_EQ(name, "InsertCharacter");
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::RECONVERT, &name));
-    EXPECT_EQ("Reconvert", name);
+    EXPECT_EQ(name, "Reconvert");
   }
   {
     // Composition
     std::string name;
     EXPECT_TRUE(manager.GetNameFromCommandComposition(CompositionState::IME_OFF,
                                                       &name));
-    EXPECT_EQ("IMEOff", name);
+    EXPECT_EQ(name, "IMEOff");
     EXPECT_TRUE(
         manager.GetNameFromCommandComposition(CompositionState::IME_ON, &name));
-    EXPECT_EQ("IMEOn", name);
+    EXPECT_EQ(name, "IMEOn");
     EXPECT_TRUE(manager.GetNameFromCommandComposition(
         CompositionState::INSERT_CHARACTER, &name));
-    EXPECT_EQ("InsertCharacter", name);
+    EXPECT_EQ(name, "InsertCharacter");
   }
   {
     // Conversion
     std::string name;
     EXPECT_TRUE(
         manager.GetNameFromCommandConversion(ConversionState::IME_OFF, &name));
-    EXPECT_EQ("IMEOff", name);
+    EXPECT_EQ(name, "IMEOff");
     EXPECT_TRUE(
         manager.GetNameFromCommandConversion(ConversionState::IME_ON, &name));
-    EXPECT_EQ("IMEOn", name);
+    EXPECT_EQ(name, "IMEOn");
     EXPECT_TRUE(manager.GetNameFromCommandConversion(
         ConversionState::INSERT_CHARACTER, &name));
-    EXPECT_EQ("InsertCharacter", name);
+    EXPECT_EQ(name, "InsertCharacter");
   }
 }
 
@@ -443,21 +443,21 @@ TEST_F(KeyMapTest, ShiftTabToConvertPrev) {
 
     KeyParser::ParseKey("Shift Tab", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::CONVERT_PREV);
   }
 
   {  // Kotoeri
     KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
     KeyParser::ParseKey("Shift Tab", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::CONVERT_PREV);
   }
 
   {  // ATOK
     KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
     KeyParser::ParseKey("Shift Tab", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::CONVERT_PREV, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::CONVERT_PREV);
   }
 }
 
@@ -471,11 +471,11 @@ TEST_F(KeyMapTest, LaunchToolTest) {
 
     KeyParser::ParseKey("Ctrl F7", &key_event);
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
-    EXPECT_EQ(PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG, conv_command);
+    EXPECT_EQ(conv_command, PrecompositionState::LAUNCH_WORD_REGISTER_DIALOG);
 
     KeyParser::ParseKey("Ctrl F12", &key_event);
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &conv_command));
-    EXPECT_EQ(PrecompositionState::LAUNCH_CONFIG_DIALOG, conv_command);
+    EXPECT_EQ(conv_command, PrecompositionState::LAUNCH_CONFIG_DIALOG);
   }
 
   // http://b/3432829
@@ -497,21 +497,21 @@ TEST_F(KeyMapTest, Undo) {
 
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
-    EXPECT_EQ(PrecompositionState::UNDO, command);
+    EXPECT_EQ(command, PrecompositionState::UNDO);
   }
   {  // MSIME
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
-    EXPECT_EQ(PrecompositionState::UNDO, command);
+    EXPECT_EQ(command, PrecompositionState::UNDO);
   }
   {  // KOTOERI
     KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
 
     KeyParser::ParseKey("Ctrl Backspace", &key_event);
     EXPECT_TRUE(manager.GetCommandPrecomposition(key_event, &command));
-    EXPECT_EQ(PrecompositionState::UNDO, command);
+    EXPECT_EQ(command, PrecompositionState::UNDO);
   }
 }
 
@@ -525,30 +525,30 @@ TEST_F(KeyMapTest, Reconvert) {
 
     KeyParser::ParseKey("Shift Henkan", &key_event);
     EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
-    EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+    EXPECT_EQ(direct_command, DirectInputState::RECONVERT);
     EXPECT_TRUE(
         manager.GetCommandPrecomposition(key_event, &precomposition_command));
-    EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+    EXPECT_EQ(precomposition_command, PrecompositionState::RECONVERT);
   }
   {  // MSIME
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
 
     KeyParser::ParseKey("Henkan", &key_event);
     EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
-    EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+    EXPECT_EQ(direct_command, DirectInputState::RECONVERT);
     EXPECT_TRUE(
         manager.GetCommandPrecomposition(key_event, &precomposition_command));
-    EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+    EXPECT_EQ(precomposition_command, PrecompositionState::RECONVERT);
   }
   {  // KOTOERI
     KeyMapManager manager(GetDefaultConfig(config::Config::KOTOERI));
 
     KeyParser::ParseKey("Ctrl Shift r", &key_event);
     EXPECT_TRUE(manager.GetCommandDirect(key_event, &direct_command));
-    EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
+    EXPECT_EQ(direct_command, DirectInputState::RECONVERT);
     EXPECT_TRUE(
         manager.GetCommandPrecomposition(key_event, &precomposition_command));
-    EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
+    EXPECT_EQ(precomposition_command, PrecompositionState::RECONVERT);
   }
 }
 
@@ -561,14 +561,14 @@ TEST_F(KeyMapTest, Initialize) {
     KeyMapManager manager(GetDefaultConfig(config::Config::ATOK));
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::SEGMENT_WIDTH_EXPAND, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::SEGMENT_WIDTH_EXPAND);
   }
   {  // MSIME
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
     keymap_setting = config::Config::MSIME;
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::SEGMENT_FOCUS_RIGHT);
   }
 }
 
@@ -586,7 +586,7 @@ TEST_F(KeyMapTest, AddCommand) {
     EXPECT_TRUE(manager.AddCommand("Composition", kKeyEvent, "Cancel"));
 
     EXPECT_TRUE(manager.GetCommandComposition(key_event, &command));
-    EXPECT_EQ(CompositionState::CANCEL, command);
+    EXPECT_EQ(command, CompositionState::CANCEL);
   }
 
   {  // Error detections
@@ -611,19 +611,19 @@ TEST_F(KeyMapTest, ZeroQuerySuggestion) {
 
   KeyParser::ParseKey("ESC", &key_event);
   EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
-  EXPECT_EQ(PrecompositionState::CANCEL, command);
+  EXPECT_EQ(command, PrecompositionState::CANCEL);
 
   KeyParser::ParseKey("Tab", &key_event);
   EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
-  EXPECT_EQ(PrecompositionState::PREDICT_AND_CONVERT, command);
+  EXPECT_EQ(command, PrecompositionState::PREDICT_AND_CONVERT);
 
   KeyParser::ParseKey("Shift Enter", &key_event);
   EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
-  EXPECT_EQ(PrecompositionState::COMMIT_FIRST_SUGGESTION, command);
+  EXPECT_EQ(command, PrecompositionState::COMMIT_FIRST_SUGGESTION);
 
   KeyParser::ParseKey("Ctrl Backspace", &key_event);
   EXPECT_TRUE(manager.GetCommandZeroQuerySuggestion(key_event, &command));
-  EXPECT_EQ(PrecompositionState::REVERT, command);
+  EXPECT_EQ(command, PrecompositionState::REVERT);
 }
 
 TEST_F(KeyMapTest, CapsLock) {
@@ -634,7 +634,7 @@ TEST_F(KeyMapTest, CapsLock) {
 
   ConversionState::Commands conv_command;
   EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-  EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
+  EXPECT_EQ(conv_command, ConversionState::INSERT_CHARACTER);
 }
 
 TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
@@ -648,7 +648,7 @@ TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
   // See the description in command.proto.
   KeyParser::ParseKey("Ctrl CAPS H", &key_event);
   EXPECT_TRUE(manager.GetCommandComposition(key_event, &composition_command));
-  EXPECT_EQ(CompositionState::BACKSPACE, composition_command);
+  EXPECT_EQ(composition_command, CompositionState::BACKSPACE);
 
   // "Ctrl CAPS h" means that Ctrl, Shift and H key are pressed.
   KeyParser::ParseKey("Ctrl CAPS h", &key_event);
@@ -668,7 +668,7 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
-    EXPECT_EQ(ConversionState::INPUT_MODE_HIRAGANA, conv_command);
+    EXPECT_EQ(conv_command, ConversionState::INPUT_MODE_HIRAGANA);
   }
   {  // CHROMEOS
     KeyMapManager manager(GetDefaultConfig(config::Config::CHROMEOS));

@@ -58,10 +58,10 @@ using ::testing::SetArgPointee;
 
 TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
-  EXPECT_EQ(0, context.create_time());
-  EXPECT_EQ(0, context.last_command_time());
+  EXPECT_EQ(context.create_time(), 0);
+  EXPECT_EQ(context.last_command_time(), 0);
   EXPECT_TRUE(nullptr == context.mutable_converter());
-  EXPECT_EQ(ImeContext::NONE, context.state());
+  EXPECT_EQ(context.state(), ImeContext::NONE);
   EXPECT_PROTO_EQ(commands::Request::default_instance(), context.GetRequest());
 }
 
@@ -70,10 +70,10 @@ TEST(ImeContextTest, BasicTest) {
   config::Config config;
 
   context.set_create_time(100);
-  EXPECT_EQ(100, context.create_time());
+  EXPECT_EQ(context.create_time(), 100);
 
   context.set_last_command_time(12345);
-  EXPECT_EQ(12345, context.last_command_time());
+  EXPECT_EQ(context.last_command_time(), 12345);
 
   const commands::Request request;
 
@@ -84,7 +84,7 @@ TEST(ImeContextTest, BasicTest) {
       std::make_unique<SessionConverter>(&converter, &request, &config));
 
   context.set_state(ImeContext::COMPOSITION);
-  EXPECT_EQ(ImeContext::COMPOSITION, context.state());
+  EXPECT_EQ(context.state(), ImeContext::COMPOSITION);
 
   context.SetRequest(&request);
   EXPECT_PROTO_EQ(request, context.GetRequest());
@@ -95,10 +95,10 @@ TEST(ImeContextTest, BasicTest) {
             context.client_capability().text_deletion());
 
   context.mutable_application_info()->set_process_id(123);
-  EXPECT_EQ(123, context.application_info().process_id());
+  EXPECT_EQ(context.application_info().process_id(), 123);
 
   context.mutable_output()->set_id(1414);
-  EXPECT_EQ(1414, context.output().id());
+  EXPECT_EQ(context.output().id(), 1414);
 }
 
 TEST(ImeContextTest, CopyContext) {
@@ -140,13 +140,13 @@ TEST(ImeContextTest, CopyContext) {
 
     std::string composition;
     source.composer().GetStringForSubmission(&composition);
-    EXPECT_EQ("あｎ", composition);
+    EXPECT_EQ(composition, "あｎ");
 
     ImeContext::CopyContext(source, &destination);
-    EXPECT_EQ(ImeContext::COMPOSITION, destination.state());
+    EXPECT_EQ(destination.state(), ImeContext::COMPOSITION);
     composition.clear();
     source.composer().GetStringForSubmission(&composition);
-    EXPECT_EQ("あｎ", composition);
+    EXPECT_EQ(composition, "あｎ");
   }
 
   {
@@ -174,27 +174,27 @@ TEST(ImeContextTest, CopyContext) {
 
     std::string composition;
     source.composer().GetQueryForConversion(&composition);
-    EXPECT_EQ("あん", composition);
+    EXPECT_EQ(composition, "あん");
 
     commands::Output output;
     source.converter().FillOutput(source.composer(), &output);
-    EXPECT_EQ(1, output.preedit().segment_size());
-    EXPECT_EQ("庵", output.preedit().segment(0).value());
+    EXPECT_EQ(output.preedit().segment_size(), 1);
+    EXPECT_EQ(output.preedit().segment(0).value(), "庵");
 
     ImeContext::CopyContext(source, &destination);
-    EXPECT_EQ(kCreateTime, destination.create_time());
-    EXPECT_EQ(kLastCommandTime, destination.last_command_time());
-    EXPECT_EQ(ImeContext::CONVERSION, destination.state());
+    EXPECT_EQ(destination.create_time(), kCreateTime);
+    EXPECT_EQ(destination.last_command_time(), kLastCommandTime);
+    EXPECT_EQ(destination.state(), ImeContext::CONVERSION);
     composition.clear();
     destination.composer().GetQueryForConversion(&composition);
-    EXPECT_EQ("あん", composition);
+    EXPECT_EQ(composition, "あん");
 
     output.Clear();
     destination.converter().FillOutput(source.composer(), &output);
-    EXPECT_EQ(1, output.preedit().segment_size());
-    EXPECT_EQ("庵", output.preedit().segment(0).value());
+    EXPECT_EQ(output.preedit().segment_size(), 1);
+    EXPECT_EQ(output.preedit().segment(0).value(), "庵");
 
-    EXPECT_EQ(kQuick, destination.composer().source_text());
+    EXPECT_EQ(destination.composer().source_text(), kQuick);
   }
 }
 

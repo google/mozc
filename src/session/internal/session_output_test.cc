@@ -94,28 +94,28 @@ TEST(SessionOutputTest, FillCandidate) {
 
   candidate.set_id(13);
   SessionOutput::FillCandidate(segment, candidate, &candidate_proto);
-  EXPECT_EQ(13, candidate_proto.id());
-  EXPECT_EQ(kValue13, candidate_proto.value());
+  EXPECT_EQ(candidate_proto.id(), 13);
+  EXPECT_EQ(candidate_proto.value(), kValue13);
   EXPECT_FALSE(candidate_proto.has_annotation());
 
   candidate.Clear();
   candidate_proto.Clear();
   candidate.set_id(42);
   SessionOutput::FillCandidate(segment, candidate, &candidate_proto);
-  EXPECT_EQ(42, candidate_proto.id());
-  EXPECT_EQ(kValue42, candidate_proto.value());
+  EXPECT_EQ(candidate_proto.id(), 42);
+  EXPECT_EQ(candidate_proto.value(), kValue42);
   EXPECT_TRUE(candidate_proto.has_annotation());
-  EXPECT_EQ(kPrefix42, candidate_proto.annotation().prefix());
-  EXPECT_EQ(kSuffix42, candidate_proto.annotation().suffix());
-  EXPECT_EQ(kDescription42, candidate_proto.annotation().description());
+  EXPECT_EQ(candidate_proto.annotation().prefix(), kPrefix42);
+  EXPECT_EQ(candidate_proto.annotation().suffix(), kSuffix42);
+  EXPECT_EQ(candidate_proto.annotation().description(), kDescription42);
 
   candidate.Clear();
   candidate_proto.Clear();
   candidate.set_subcandidate_list(&candidate_list);
   SessionOutput::FillCandidate(segment, candidate, &candidate_proto);
   EXPECT_TRUE(candidate_proto.has_id());
-  EXPECT_EQ(kFirstIdInSubList, candidate_proto.id());
-  EXPECT_EQ(kSubcandidateList, candidate_proto.value());
+  EXPECT_EQ(candidate_proto.id(), kFirstIdInSubList);
+  EXPECT_EQ(candidate_proto.value(), kSubcandidateList);
   EXPECT_FALSE(candidate_proto.has_annotation());
 }
 
@@ -146,14 +146,14 @@ TEST(SessionOutputTest, FillCandidates) {
 
   // Focused index = 0. page_size = 9.
   SessionOutput::FillCandidates(segment, candidate_list, 0, &candidates_proto);
-  EXPECT_EQ(9, candidates_proto.page_size());
-  EXPECT_EQ(3, candidates_proto.candidate_size());
-  EXPECT_EQ(0, candidates_proto.position());
+  EXPECT_EQ(candidates_proto.page_size(), 9);
+  EXPECT_EQ(candidates_proto.candidate_size(), 3);
+  EXPECT_EQ(candidates_proto.position(), 0);
   EXPECT_TRUE(candidates_proto.has_focused_index());
-  EXPECT_EQ(0, candidates_proto.focused_index());
-  EXPECT_EQ(kValues[0], candidates_proto.candidate(0).value());
-  EXPECT_EQ(kValues[1], candidates_proto.candidate(1).value());
-  EXPECT_EQ(kSubcandidateList, candidates_proto.candidate(2).value());
+  EXPECT_EQ(candidates_proto.focused_index(), 0);
+  EXPECT_EQ(candidates_proto.candidate(0).value(), kValues[0]);
+  EXPECT_EQ(candidates_proto.candidate(1).value(), kValues[1]);
+  EXPECT_EQ(candidates_proto.candidate(2).value(), kSubcandidateList);
   EXPECT_FALSE(candidates_proto.has_subcandidates());
 
   // Focused index = 2 with a subcandidate list. page_size = 5.
@@ -161,27 +161,27 @@ TEST(SessionOutputTest, FillCandidates) {
   candidate_list.MoveToId(3);
   candidate_list.set_page_size(5);
   SessionOutput::FillCandidates(segment, candidate_list, 1, &candidates_proto);
-  EXPECT_EQ(5, candidates_proto.page_size());
-  EXPECT_EQ(3, candidates_proto.candidate_size());
-  EXPECT_EQ(1, candidates_proto.position());
+  EXPECT_EQ(candidates_proto.page_size(), 5);
+  EXPECT_EQ(candidates_proto.candidate_size(), 3);
+  EXPECT_EQ(candidates_proto.position(), 1);
   EXPECT_TRUE(candidates_proto.has_focused_index());
-  EXPECT_EQ(2, candidates_proto.focused_index());
-  EXPECT_EQ(kValues[0], candidates_proto.candidate(0).value());
-  EXPECT_EQ(kValues[1], candidates_proto.candidate(1).value());
-  EXPECT_EQ(kSubcandidateList, candidates_proto.candidate(2).value());
-  EXPECT_EQ(0, candidates_proto.candidate(0).index());
-  EXPECT_EQ(1, candidates_proto.candidate(1).index());
-  EXPECT_EQ(2, candidates_proto.candidate(2).index());
+  EXPECT_EQ(candidates_proto.focused_index(), 2);
+  EXPECT_EQ(candidates_proto.candidate(0).value(), kValues[0]);
+  EXPECT_EQ(candidates_proto.candidate(1).value(), kValues[1]);
+  EXPECT_EQ(candidates_proto.candidate(2).value(), kSubcandidateList);
+  EXPECT_EQ(candidates_proto.candidate(0).index(), 0);
+  EXPECT_EQ(candidates_proto.candidate(1).index(), 1);
+  EXPECT_EQ(candidates_proto.candidate(2).index(), 2);
 
   // Check the values of the subcandidate list.
   EXPECT_TRUE(candidates_proto.has_subcandidates());
-  EXPECT_EQ(3, candidates_proto.subcandidates().candidate_size());
-  EXPECT_EQ(2, candidates_proto.subcandidates().position());
+  EXPECT_EQ(candidates_proto.subcandidates().candidate_size(), 3);
+  EXPECT_EQ(candidates_proto.subcandidates().position(), 2);
   EXPECT_TRUE(candidates_proto.subcandidates().has_focused_index());
-  EXPECT_EQ(1, candidates_proto.subcandidates().focused_index());
-  EXPECT_EQ(kValues[2], candidates_proto.subcandidates().candidate(0).value());
-  EXPECT_EQ(kValues[3], candidates_proto.subcandidates().candidate(1).value());
-  EXPECT_EQ(kValues[4], candidates_proto.subcandidates().candidate(2).value());
+  EXPECT_EQ(candidates_proto.subcandidates().focused_index(), 1);
+  EXPECT_EQ(candidates_proto.subcandidates().candidate(0).value(), kValues[2]);
+  EXPECT_EQ(candidates_proto.subcandidates().candidate(1).value(), kValues[3]);
+  EXPECT_EQ(candidates_proto.subcandidates().candidate(2).value(), kValues[4]);
 
   // Check focused_index.
   candidates_proto.Clear();
@@ -268,10 +268,10 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   sub1.set_focused(true);
   subsub1.set_focused(true);
   main_list.MoveToId(5);
-  EXPECT_EQ(5, main_list.focused_id());
-  EXPECT_EQ(0, main_list.focused_index());
-  EXPECT_EQ(1, sub1.focused_index());
-  EXPECT_EQ(0, subsub1.focused_index());
+  EXPECT_EQ(main_list.focused_id(), 5);
+  EXPECT_EQ(main_list.focused_index(), 0);
+  EXPECT_EQ(sub1.focused_index(), 1);
+  EXPECT_EQ(subsub1.focused_index(), 0);
   // End of Initialization
 
   // Exexcute FillAllCandidateWords
@@ -280,25 +280,25 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
                                        &candidates_proto);
 
   // Varidation
-  EXPECT_EQ(1, candidates_proto.focused_index());
-  EXPECT_EQ(kCategory, candidates_proto.category());
-  EXPECT_EQ(kValueSize, candidates_proto.candidates_size());
+  EXPECT_EQ(candidates_proto.focused_index(), 1);
+  EXPECT_EQ(candidates_proto.category(), kCategory);
+  EXPECT_EQ(candidates_proto.candidates_size(), kValueSize);
 
-  EXPECT_EQ(1, candidates_proto.candidates(0).id());
-  EXPECT_EQ(5, candidates_proto.candidates(1).id());
-  EXPECT_EQ(6, candidates_proto.candidates(2).id());
-  EXPECT_EQ(2, candidates_proto.candidates(3).id());
-  EXPECT_EQ(0, candidates_proto.candidates(4).id());
-  EXPECT_EQ(3, candidates_proto.candidates(5).id());
-  EXPECT_EQ(4, candidates_proto.candidates(6).id());
+  EXPECT_EQ(candidates_proto.candidates(0).id(), 1);
+  EXPECT_EQ(candidates_proto.candidates(1).id(), 5);
+  EXPECT_EQ(candidates_proto.candidates(2).id(), 6);
+  EXPECT_EQ(candidates_proto.candidates(3).id(), 2);
+  EXPECT_EQ(candidates_proto.candidates(4).id(), 0);
+  EXPECT_EQ(candidates_proto.candidates(5).id(), 3);
+  EXPECT_EQ(candidates_proto.candidates(6).id(), 4);
 
-  EXPECT_EQ(0, candidates_proto.candidates(0).index());
-  EXPECT_EQ(1, candidates_proto.candidates(1).index());
-  EXPECT_EQ(2, candidates_proto.candidates(2).index());
-  EXPECT_EQ(3, candidates_proto.candidates(3).index());
-  EXPECT_EQ(4, candidates_proto.candidates(4).index());
-  EXPECT_EQ(5, candidates_proto.candidates(5).index());
-  EXPECT_EQ(6, candidates_proto.candidates(6).index());
+  EXPECT_EQ(candidates_proto.candidates(0).index(), 0);
+  EXPECT_EQ(candidates_proto.candidates(1).index(), 1);
+  EXPECT_EQ(candidates_proto.candidates(2).index(), 2);
+  EXPECT_EQ(candidates_proto.candidates(3).index(), 3);
+  EXPECT_EQ(candidates_proto.candidates(4).index(), 4);
+  EXPECT_EQ(candidates_proto.candidates(5).index(), 5);
+  EXPECT_EQ(candidates_proto.candidates(6).index(), 6);
 
   EXPECT_FALSE(candidates_proto.candidates(0).has_key());
   EXPECT_FALSE(candidates_proto.candidates(1).has_key());
@@ -307,15 +307,15 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_FALSE(candidates_proto.candidates(4).has_key());
   EXPECT_FALSE(candidates_proto.candidates(5).has_key());
   EXPECT_TRUE(candidates_proto.candidates(6).has_key());
-  EXPECT_EQ(kSpecialKey, candidates_proto.candidates(6).key());
+  EXPECT_EQ(candidates_proto.candidates(6).key(), kSpecialKey);
 
-  EXPECT_EQ(kValues[1], candidates_proto.candidates(0).value());
-  EXPECT_EQ(kValues[5], candidates_proto.candidates(1).value());
-  EXPECT_EQ(kValues[6], candidates_proto.candidates(2).value());
-  EXPECT_EQ(kValues[2], candidates_proto.candidates(3).value());
-  EXPECT_EQ(kValues[0], candidates_proto.candidates(4).value());
-  EXPECT_EQ(kValues[3], candidates_proto.candidates(5).value());
-  EXPECT_EQ(kValues[4], candidates_proto.candidates(6).value());
+  EXPECT_EQ(candidates_proto.candidates(0).value(), kValues[1]);
+  EXPECT_EQ(candidates_proto.candidates(1).value(), kValues[5]);
+  EXPECT_EQ(candidates_proto.candidates(2).value(), kValues[6]);
+  EXPECT_EQ(candidates_proto.candidates(3).value(), kValues[2]);
+  EXPECT_EQ(candidates_proto.candidates(4).value(), kValues[0]);
+  EXPECT_EQ(candidates_proto.candidates(5).value(), kValues[3]);
+  EXPECT_EQ(candidates_proto.candidates(6).value(), kValues[4]);
 
   EXPECT_TRUE(candidates_proto.candidates(0).has_annotation());
   EXPECT_TRUE(candidates_proto.candidates(1).has_annotation());
@@ -325,13 +325,13 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
   EXPECT_TRUE(candidates_proto.candidates(5).has_annotation());
   EXPECT_TRUE(candidates_proto.candidates(6).has_annotation());
 
-  EXPECT_EQ(1, candidates_proto.candidates(0).num_segments_in_candidate());
-  EXPECT_EQ(5, candidates_proto.candidates(1).num_segments_in_candidate());
-  EXPECT_EQ(6, candidates_proto.candidates(2).num_segments_in_candidate());
-  EXPECT_EQ(2, candidates_proto.candidates(3).num_segments_in_candidate());
-  EXPECT_EQ(1, candidates_proto.candidates(4).num_segments_in_candidate());
-  EXPECT_EQ(3, candidates_proto.candidates(5).num_segments_in_candidate());
-  EXPECT_EQ(4, candidates_proto.candidates(6).num_segments_in_candidate());
+  EXPECT_EQ(candidates_proto.candidates(0).num_segments_in_candidate(), 1);
+  EXPECT_EQ(candidates_proto.candidates(1).num_segments_in_candidate(), 5);
+  EXPECT_EQ(candidates_proto.candidates(2).num_segments_in_candidate(), 6);
+  EXPECT_EQ(candidates_proto.candidates(3).num_segments_in_candidate(), 2);
+  EXPECT_EQ(candidates_proto.candidates(4).num_segments_in_candidate(), 1);
+  EXPECT_EQ(candidates_proto.candidates(5).num_segments_in_candidate(), 3);
+  EXPECT_EQ(candidates_proto.candidates(6).num_segments_in_candidate(), 4);
 }
 
 TEST(SessionOutputTest, FillAllCandidateWords_Attributes) {
@@ -368,8 +368,8 @@ TEST(SessionOutputTest, FillAllCandidateWords_Attributes) {
 
   candidate_list.set_focused(true);
   candidate_list.MoveToId(0);
-  EXPECT_EQ(0, candidate_list.focused_id());
-  EXPECT_EQ(0, candidate_list.focused_index());
+  EXPECT_EQ(candidate_list.focused_id(), 0);
+  EXPECT_EQ(candidate_list.focused_index(), 0);
   // End of Initialization
 
   // Exexcute FillAllCandidateWords
@@ -378,27 +378,27 @@ TEST(SessionOutputTest, FillAllCandidateWords_Attributes) {
                                        &candidates_proto);
 
   // Varidation
-  EXPECT_EQ(0, candidates_proto.focused_index());
-  EXPECT_EQ(kCategory, candidates_proto.category());
-  EXPECT_EQ(kValueSize, candidates_proto.candidates_size());
+  EXPECT_EQ(candidates_proto.focused_index(), 0);
+  EXPECT_EQ(candidates_proto.category(), kCategory);
+  EXPECT_EQ(candidates_proto.candidates_size(), kValueSize);
 
-  EXPECT_EQ(0, candidates_proto.candidates(0).attributes_size());
+  EXPECT_EQ(candidates_proto.candidates(0).attributes_size(), 0);
 
-  EXPECT_EQ(1, candidates_proto.candidates(1).attributes_size());
-  EXPECT_EQ(commands::CandidateAttribute::USER_DICTIONARY,
-            candidates_proto.candidates(1).attributes(0));
+  EXPECT_EQ(candidates_proto.candidates(1).attributes_size(), 1);
+  EXPECT_EQ(candidates_proto.candidates(1).attributes(0),
+            commands::CandidateAttribute::USER_DICTIONARY);
 
-  EXPECT_EQ(1, candidates_proto.candidates(2).attributes_size());
-  EXPECT_EQ(commands::CandidateAttribute::USER_HISTORY,
-            candidates_proto.candidates(2).attributes(0));
+  EXPECT_EQ(candidates_proto.candidates(2).attributes_size(), 1);
+  EXPECT_EQ(candidates_proto.candidates(2).attributes(0),
+            commands::CandidateAttribute::USER_HISTORY);
 
-  EXPECT_EQ(1, candidates_proto.candidates(3).attributes_size());
-  EXPECT_EQ(commands::CandidateAttribute::SPELLING_CORRECTION,
-            candidates_proto.candidates(3).attributes(0));
+  EXPECT_EQ(candidates_proto.candidates(3).attributes_size(), 1);
+  EXPECT_EQ(candidates_proto.candidates(3).attributes(0),
+            commands::CandidateAttribute::SPELLING_CORRECTION);
 
   EXPECT_EQ(1, candidates_proto.candidates(4).attributes_size());
-  EXPECT_EQ(commands::CandidateAttribute::TYPING_CORRECTION,
-            candidates_proto.candidates(4).attributes(0));
+  EXPECT_EQ(candidates_proto.candidates(4).attributes(0),
+            commands::CandidateAttribute::TYPING_CORRECTION);
 }
 
 TEST(SessionOutputTest, ShouldShowUsages) {
@@ -524,17 +524,17 @@ TEST(SessionOutputTest, FillUsages) {
   ASSERT_TRUE(candidates_proto.has_usages());
   // There is no focused usage.
   EXPECT_FALSE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(2, candidates_proto.usages().information_size());
-  EXPECT_EQ(10, candidates_proto.usages().information(0).id());
-  EXPECT_EQ(dummy_segments[0].usage_title,
-            candidates_proto.usages().information(0).title());
-  EXPECT_EQ(dummy_segments[0].usage_description,
-            candidates_proto.usages().information(0).description());
-  EXPECT_EQ(20, candidates_proto.usages().information(1).id());
-  EXPECT_EQ(dummy_segments[4].usage_title,
-            candidates_proto.usages().information(1).title());
-  EXPECT_EQ(dummy_segments[4].usage_description,
-            candidates_proto.usages().information(1).description());
+  EXPECT_EQ(candidates_proto.usages().information_size(), 2);
+  EXPECT_EQ(candidates_proto.usages().information(0).id(), 10);
+  EXPECT_EQ(candidates_proto.usages().information(0).title(),
+            dummy_segments[0].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(0).description(),
+            dummy_segments[0].usage_description);
+  EXPECT_EQ(candidates_proto.usages().information(1).id(), 20);
+  EXPECT_EQ(candidates_proto.usages().information(1).title(),
+            dummy_segments[4].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(1).description(),
+            dummy_segments[4].usage_description);
 
   candidate_list.MoveToId(12);
   candidates_proto.Clear();
@@ -542,54 +542,54 @@ TEST(SessionOutputTest, FillUsages) {
   ASSERT_TRUE(candidates_proto.has_usages());
   // Focused usage index is 20
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(2, candidates_proto.usages().focused_index());
-  EXPECT_EQ(4, candidates_proto.usages().information_size());
-  EXPECT_EQ(30, candidates_proto.usages().information(0).id());
-  EXPECT_EQ(dummy_segments[10].usage_title,
-            candidates_proto.usages().information(0).title());
-  EXPECT_EQ(dummy_segments[10].usage_description,
-            candidates_proto.usages().information(0).description());
-  EXPECT_EQ(40, candidates_proto.usages().information(1).id());
-  EXPECT_EQ(dummy_segments[11].usage_title,
-            candidates_proto.usages().information(1).title());
-  EXPECT_EQ(dummy_segments[11].usage_description,
-            candidates_proto.usages().information(1).description());
-  EXPECT_EQ(50, candidates_proto.usages().information(2).id());
-  EXPECT_EQ(dummy_segments[12].usage_title,
-            candidates_proto.usages().information(2).title());
-  EXPECT_EQ(dummy_segments[12].usage_description,
-            candidates_proto.usages().information(2).description());
-  EXPECT_EQ(60, candidates_proto.usages().information(3).id());
-  EXPECT_EQ(dummy_segments[13].usage_title,
-            candidates_proto.usages().information(3).title());
-  EXPECT_EQ(dummy_segments[13].usage_description,
-            candidates_proto.usages().information(3).description());
+  EXPECT_EQ(candidates_proto.usages().focused_index(), 2);
+  EXPECT_EQ(candidates_proto.usages().information_size(), 4);
+  EXPECT_EQ(candidates_proto.usages().information(0).id(), 30);
+  EXPECT_EQ(candidates_proto.usages().information(0).title(),
+            dummy_segments[10].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(0).description(),
+            dummy_segments[10].usage_description);
+  EXPECT_EQ(candidates_proto.usages().information(1).id(), 40);
+  EXPECT_EQ(candidates_proto.usages().information(1).title(),
+            dummy_segments[11].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(1).description(),
+            dummy_segments[11].usage_description);
+  EXPECT_EQ(candidates_proto.usages().information(2).id(), 50);
+  EXPECT_EQ(candidates_proto.usages().information(2).title(),
+            dummy_segments[12].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(2).description(),
+            dummy_segments[12].usage_description);
+  EXPECT_EQ(candidates_proto.usages().information(3).id(), 60);
+  EXPECT_EQ(candidates_proto.usages().information(3).title(),
+            dummy_segments[13].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(3).description(),
+            dummy_segments[13].usage_description);
 
   candidate_list.MoveToId(19);
   candidates_proto.Clear();
   SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
   ASSERT_TRUE(candidates_proto.has_usages());
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(0, candidates_proto.usages().focused_index());
+  EXPECT_EQ(candidates_proto.usages().focused_index(), 0);
   // usages(id:100) of "val19" and "val21" are merged
-  EXPECT_EQ(2, candidates_proto.usages().information_size());
-  EXPECT_EQ(100, candidates_proto.usages().information(0).id());
-  EXPECT_EQ(dummy_segments[19].usage_title,
-            candidates_proto.usages().information(0).title());
-  EXPECT_EQ(dummy_segments[19].usage_description,
-            candidates_proto.usages().information(0).description());
-  EXPECT_EQ(110, candidates_proto.usages().information(1).id());
-  EXPECT_EQ(dummy_segments[20].usage_title,
-            candidates_proto.usages().information(1).title());
-  EXPECT_EQ(dummy_segments[20].usage_description,
-            candidates_proto.usages().information(1).description());
+  EXPECT_EQ(candidates_proto.usages().information_size(), 2);
+  EXPECT_EQ(candidates_proto.usages().information(0).id(), 100);
+  EXPECT_EQ(candidates_proto.usages().information(0).title(),
+            dummy_segments[19].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(0).description(),
+            dummy_segments[19].usage_description);
+  EXPECT_EQ(candidates_proto.usages().information(1).id(), 110);
+  EXPECT_EQ(candidates_proto.usages().information(1).title(),
+            dummy_segments[20].usage_title);
+  EXPECT_EQ(candidates_proto.usages().information(1).description(),
+            dummy_segments[20].usage_description);
 
   candidate_list.MoveToId(20);
   candidates_proto.Clear();
   SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
   ASSERT_TRUE(candidates_proto.has_usages());
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(1, candidates_proto.usages().focused_index());
+  EXPECT_EQ(candidates_proto.usages().focused_index(), 1);
 
   // usages(id:100) of "val19" and "val21" are merged
   candidate_list.MoveToId(21);
@@ -597,7 +597,7 @@ TEST(SessionOutputTest, FillUsages) {
   SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
   ASSERT_TRUE(candidates_proto.has_usages());
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(0, candidates_proto.usages().focused_index());
+  EXPECT_EQ(candidates_proto.usages().focused_index(), 0);
 
   // usages(id:110) of "val20" and "val22" are merged
   candidate_list.MoveToId(22);
@@ -605,7 +605,7 @@ TEST(SessionOutputTest, FillUsages) {
   SessionOutput::FillUsages(segment, candidate_list, &candidates_proto);
   ASSERT_TRUE(candidates_proto.has_usages());
   EXPECT_TRUE(candidates_proto.usages().has_focused_index());
-  EXPECT_EQ(1, candidates_proto.usages().focused_index());
+  EXPECT_EQ(candidates_proto.usages().focused_index(), 1);
 
   candidate_list.MoveToId(28);
   candidates_proto.Clear();
@@ -620,26 +620,26 @@ TEST(SessionOutputTest, FillShortcuts) {
   for (size_t i = 0; i < 10; ++i) {
     candidates_proto1.add_candidate();
   }
-  ASSERT_EQ(10, candidates_proto1.candidate_size());
+  ASSERT_EQ(candidates_proto1.candidate_size(), 10);
 
   SessionOutput::FillShortcuts(kDigits, &candidates_proto1);
-  EXPECT_EQ(kDigits.substr(0, 1),
-            candidates_proto1.candidate(0).annotation().shortcut());
-  EXPECT_EQ(kDigits.substr(8, 1),
-            candidates_proto1.candidate(8).annotation().shortcut());
+  EXPECT_EQ(candidates_proto1.candidate(0).annotation().shortcut(),
+            kDigits.substr(0, 1));
+  EXPECT_EQ(candidates_proto1.candidate(8).annotation().shortcut(),
+            kDigits.substr(8, 1));
   EXPECT_FALSE(candidates_proto1.candidate(9).annotation().has_shortcut());
 
   commands::Candidates candidates_proto2;
   for (size_t i = 0; i < 3; ++i) {
     candidates_proto2.add_candidate();
   }
-  ASSERT_EQ(3, candidates_proto2.candidate_size());
+  ASSERT_EQ(candidates_proto2.candidate_size(), 3);
 
   SessionOutput::FillShortcuts(kDigits, &candidates_proto2);
-  EXPECT_EQ(kDigits.substr(0, 1),
-            candidates_proto2.candidate(0).annotation().shortcut());
-  EXPECT_EQ(kDigits.substr(2, 1),
-            candidates_proto2.candidate(2).annotation().shortcut());
+  EXPECT_EQ(candidates_proto2.candidate(0).annotation().shortcut(),
+            kDigits.substr(0, 1));
+  EXPECT_EQ(candidates_proto2.candidate(2).annotation().shortcut(),
+            kDigits.substr(2, 1));
 }
 
 TEST(SessionOutputTest, FillFooter) {
@@ -650,12 +650,12 @@ TEST(SessionOutputTest, FillFooter) {
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
   EXPECT_FALSE(candidates.footer().has_label());
   EXPECT_TRUE(candidates.footer().has_sub_label());
-  EXPECT_EQ(0, candidates.footer().sub_label().find("build "));
+  EXPECT_EQ(candidates.footer().sub_label().find("build "), 0);
 #else   // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_TRUE(candidates.footer().has_label());
   EXPECT_FALSE(candidates.footer().has_sub_label());
   constexpr char kLabel[] = "Tabキーで選択";
-  EXPECT_EQ(kLabel, candidates.footer().label());
+  EXPECT_EQ(candidates.footer().label(), kLabel);
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
   EXPECT_FALSE(candidates.footer().index_visible());
@@ -707,12 +707,12 @@ TEST(SessionOutputTest, FillFooter) {
 #else   // !__APPLE__ && !OS_CHROMEOS
       constexpr char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
 #endif  // __APPLE__ || OS_CHROMEOS
-      EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
+      EXPECT_EQ(candidates.footer().label(), kDeleteInstruction);
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
     } else {
       EXPECT_FALSE(candidates.footer().has_label());
       EXPECT_TRUE(candidates.footer().has_sub_label());
-      EXPECT_EQ(0, candidates.footer().sub_label().find("build "));
+      EXPECT_EQ(candidates.footer().sub_label().find("build "), 0);
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
     }
   }
@@ -726,7 +726,7 @@ TEST(SessionOutputTest, FillSubLabel) {
   EXPECT_FALSE(footer.has_label());
   EXPECT_GT(footer.sub_label().size(), 6);  // 6 == strlen("build ")
   // sub_label should start with "build ".
-  EXPECT_EQ(0, footer.sub_label().find("build "));
+  EXPECT_EQ(footer.sub_label().find("build "), 0);
 }
 
 TEST(SessionOutputTest, AddSegment) {
@@ -738,15 +738,15 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string kValue = "ゔ〜 PREEDIT FOCUSED";
     const int types = SessionOutput::PREEDIT | SessionOutput::FOCUSED;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
-    EXPECT_EQ(index + 1, preedit.segment_size());
+    EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
-    EXPECT_EQ(normalized_key, segment.key());
+    EXPECT_EQ(segment.key(), normalized_key);
     const std::string normalized_value = TextNormalizer::NormalizeText(kValue);
-    EXPECT_EQ(normalized_value, segment.value());
-    EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
-    EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
+    EXPECT_EQ(segment.value(), normalized_value);
+    EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
+    EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::UNDERLINE);
     ++index;
   }
 
@@ -755,15 +755,15 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string kValue = "ゔ〜 PREEDIT";
     const int types = SessionOutput::PREEDIT;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
-    EXPECT_EQ(index + 1, preedit.segment_size());
+    EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
-    EXPECT_EQ(normalized_key, segment.key());
+    EXPECT_EQ(segment.key(), normalized_key);
     const std::string normalized_value = TextNormalizer::NormalizeText(kValue);
-    EXPECT_EQ(normalized_value, segment.value());
-    EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
-    EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
+    EXPECT_EQ(segment.value(), normalized_value);
+    EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
+    EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::UNDERLINE);
     ++index;
   }
 
@@ -772,16 +772,16 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string kValue = "ゔ〜 CONVERSION FOCUSED";
     const int types = SessionOutput::CONVERSION | SessionOutput::FOCUSED;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
-    EXPECT_EQ(index + 1, preedit.segment_size());
+    EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
-    EXPECT_EQ(normalized_key, segment.key());
+    EXPECT_EQ(segment.key(), normalized_key);
     // Normalization is performed in Rewriter.
     std::string normalized_value = kValue;
-    EXPECT_EQ(normalized_value, segment.value());
-    EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
-    EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT, segment.annotation());
+    EXPECT_EQ(segment.value(), normalized_value);
+    EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
+    EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::HIGHLIGHT);
     ++index;
   }
 
@@ -790,16 +790,16 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string kValue = "ゔ〜 CONVERSION";
     const int types = SessionOutput::CONVERSION;
     EXPECT_TRUE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
-    EXPECT_EQ(index + 1, preedit.segment_size());
+    EXPECT_EQ(preedit.segment_size(), index + 1);
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
     const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
-    EXPECT_EQ(normalized_key, segment.key());
+    EXPECT_EQ(segment.key(), normalized_key);
     // Normalization is performed in Rewriter.
     std::string normalized_value = kValue;
-    EXPECT_EQ(normalized_value, segment.value());
-    EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
-    EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
+    EXPECT_EQ(segment.value(), normalized_value);
+    EXPECT_EQ(segment.value_length(), Util::CharsLen(normalized_value));
+    EXPECT_EQ(segment.annotation(), commands::Preedit::Segment::UNDERLINE);
     ++index;
   }
 
@@ -808,7 +808,7 @@ TEST(SessionOutputTest, AddSegment) {
     const std::string kValue = "";  // empty value
     const int types = SessionOutput::CONVERSION;
     EXPECT_FALSE(SessionOutput::AddSegment(kKey, kValue, types, &preedit));
-    EXPECT_EQ(index, preedit.segment_size());
+    EXPECT_EQ(preedit.segment_size(), index);
   }
 }
 
@@ -818,31 +818,31 @@ TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
   commands::Result result;
   SessionOutput::FillConversionResultWithoutNormalization(kInput, kInput,
                                                           &result);
-  EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ(kInput, result.key());    // should not be normalized
-  EXPECT_EQ(kInput, result.value());  // should not be normalized
+  EXPECT_EQ(result.type(), commands::Result::STRING);
+  EXPECT_EQ(result.key(), kInput);    // should not be normalized
+  EXPECT_EQ(result.value(), kInput);  // should not be normalized
 }
 
 TEST(SessionOutputTest, FillConversionResult) {
   commands::Result result;
   SessionOutput::FillConversionResult("abc", "ABC", &result);
-  EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ("abc", result.key());
-  EXPECT_EQ("ABC", result.value());
+  EXPECT_EQ(result.type(), commands::Result::STRING);
+  EXPECT_EQ(result.key(), "abc");
+  EXPECT_EQ(result.value(), "ABC");
 }
 
 TEST(SessionOutputTest, FillCursorOffsetResult) {
   commands::Result result;
   SessionOutput::FillCursorOffsetResult(-1, &result);
-  EXPECT_EQ(-1, result.cursor_offset());
+  EXPECT_EQ(result.cursor_offset(), -1);
 }
 
 TEST(SessionOutputTest, FillPreeditResult) {
   commands::Result result;
   SessionOutput::FillPreeditResult("ABC", &result);
-  EXPECT_EQ(commands::Result::STRING, result.type());
-  EXPECT_EQ("ABC", result.key());
-  EXPECT_EQ("ABC", result.value());
+  EXPECT_EQ(result.type(), commands::Result::STRING);
+  EXPECT_EQ(result.key(), "ABC");
+  EXPECT_EQ(result.value(), "ABC");
 }
 
 TEST(SessionOutputTest, FillAllCandidateWords_NonFocused) {

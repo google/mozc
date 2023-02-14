@@ -139,7 +139,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
       sconverter.FillOutput(composer, &output);
 
       const commands::Preedit& conversion = output.preedit();
-      EXPECT_EQ(input, conversion.segment(0).value())
+      EXPECT_EQ(conversion.segment(0).value(), input)
           << input << "\t" << conversion.segment(0).value();
     }
   }

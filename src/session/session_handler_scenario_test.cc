@@ -287,9 +287,9 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
   const Output &output = handler.LastOutput();
 
   if (command == "EXPECT_CONSUMED") {
-    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(args.size(), 2);
     ASSERT_TRUE(output.has_consumed());
-    EXPECT_EQ(args[1] == "true", output.consumed());
+    EXPECT_EQ(output.consumed(), args[1] == "true");
   } else if (command == "EXPECT_PREEDIT") {
     // Concat preedit segments and assert.
     const std::string &expected_preedit = args.size() == 1 ? "" : args[1];
@@ -298,58 +298,58 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     for (int i = 0; i < preedit.segment_size(); ++i) {
       preedit_string += preedit.segment(i).value();
     }
-    EXPECT_EQ(expected_preedit, preedit_string)
+    EXPECT_EQ(preedit_string, expected_preedit)
         << "Expected preedit: " << expected_preedit << "\n"
         << "Actual preedit: " << preedit.Utf8DebugString();
   } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
     ASSERT_LE(1, args.size());
     const mozc::commands::Preedit &preedit = output.preedit();
-    ASSERT_EQ(args.size() - 1, preedit.segment_size());
+    ASSERT_EQ(preedit.segment_size(), args.size() - 1);
     for (int i = 0; i < preedit.segment_size(); ++i) {
-      EXPECT_EQ(args[i + 1], preedit.segment(i).value())
+      EXPECT_EQ(preedit.segment(i).value(), args[i + 1])
           << "Segment index = " << i;
     }
   } else if (command == "EXPECT_PREEDIT_CURSOR_POS") {
     // Concat preedit segments and assert.
-    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(args.size(), 2);
     const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
     const mozc::commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(expected_pos, preedit.cursor()) << preedit.Utf8DebugString();
+    EXPECT_EQ(preedit.cursor(), expected_pos) << preedit.Utf8DebugString();
   } else if (command == "EXPECT_CANDIDATE") {
-    ASSERT_EQ(3, args.size());
+    ASSERT_EQ(args.size(), 3);
     uint32_t candidate_id = 0;
     const bool has_result =
         GetCandidateIdByValue(args[2], output, &candidate_id);
     EXPECT_TRUE(has_result) << args[2] + " is not found\n"
                             << output.candidates().Utf8DebugString();
     if (has_result) {
-      EXPECT_EQ(NumberUtil::SimpleAtoi(args[1]), candidate_id);
+      EXPECT_EQ(candidate_id, NumberUtil::SimpleAtoi(args[1]));
     }
   } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
-    ASSERT_EQ(3, args.size());
+    ASSERT_EQ(args.size(), 3);
     const CandidateWord &cand = handler.GetCandidateByValue(args[1]);
     const bool has_cand = !cand.value().empty();
     EXPECT_TRUE(has_cand) << args[1] + " is not found\n"
                           << output.candidates().Utf8DebugString();
     if (has_cand) {
-      EXPECT_EQ(args[2], cand.annotation().description())
+      EXPECT_EQ(cand.annotation().description(), args[2])
           << cand.Utf8DebugString();
     }
   } else if (command == "EXPECT_RESULT") {
     if (args.size() == 2 && !args[1].empty()) {
       ASSERT_TRUE(output.has_result());
       const mozc::commands::Result &result = output.result();
-      EXPECT_EQ(args[1], result.value()) << result.Utf8DebugString();
+      EXPECT_EQ(result.value(), args[1]) << result.Utf8DebugString();
     } else {
       EXPECT_FALSE(output.has_result()) << output.result().Utf8DebugString();
     }
   } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(args.size(), 2);
     EXPECT_IN_ALL_CANDIDATE_WORDS(args[1], output)
         << args[1] << " is not found.\n"
         << output.Utf8DebugString();
   } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(args.size(), 2);
     EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(args[1], output);
   } else if (command == "EXPECT_HAS_CANDIDATES") {
     if (args.size() == 2 && !args[1].empty()) {
@@ -362,10 +362,10 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
   } else if (command == "EXPECT_NO_CANDIDATES") {
     ASSERT_FALSE(output.has_candidates());
   } else if (command == "EXPECT_SEGMENTS_SIZE") {
-    ASSERT_EQ(2, args.size());
-    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]), output.preedit().segment_size());
+    ASSERT_EQ(args.size(), 2);
+    ASSERT_EQ(output.preedit().segment_size(), NumberUtil::SimpleAtoi(args[1]));
   } else if (command == "EXPECT_HIGHLIGHTED_SEGMENT_INDEX") {
-    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(args.size(), 2);
     ASSERT_TRUE(output.has_preedit());
     const mozc::commands::Preedit &preedit = output.preedit();
     int index = -1;
@@ -376,9 +376,9 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
         break;
       }
     }
-    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]), index);
+    ASSERT_EQ(index, NumberUtil::SimpleAtoi(args[1]));
   } else if (command == "EXPECT_USAGE_STATS_COUNT") {
-    ASSERT_EQ(3, args.size());
+    ASSERT_EQ(args.size(), 3);
     const uint32_t expected_value = NumberUtil::SimpleAtoi(args[2]);
     if (expected_value == 0) {
       EXPECT_STATS_NOT_EXIST(args[1]);
@@ -386,13 +386,13 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
       EXPECT_COUNT_STATS(args[1], expected_value);
     }
   } else if (command == "EXPECT_USAGE_STATS_INTEGER") {
-    ASSERT_EQ(3, args.size());
+    ASSERT_EQ(args.size(), 3);
     EXPECT_INTEGER_STATS(args[1], NumberUtil::SimpleAtoi(args[2]));
   } else if (command == "EXPECT_USAGE_STATS_BOOLEAN") {
-    ASSERT_EQ(3, args.size());
+    ASSERT_EQ(args.size(), 3);
     EXPECT_BOOLEAN_STATS(args[1], args[2] == "true");
   } else if (command == "EXPECT_USAGE_STATS_TIMING") {
-    ASSERT_EQ(6, args.size());
+    ASSERT_EQ(args.size(), 6);
     const uint64_t expected_total = NumberUtil::SimpleAtoi(args[2]);
     const uint32_t expected_num = NumberUtil::SimpleAtoi(args[3]);
     const uint32_t expected_min = NumberUtil::SimpleAtoi(args[4]);

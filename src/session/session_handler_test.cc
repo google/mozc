@@ -301,8 +301,8 @@ TEST_F(SessionHandlerTest, CreateSession_Config) {
     input->mutable_key()->set_special_key(commands::KeyEvent::F7);
     input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
-              command.output().launch_tool_mode());
+    EXPECT_EQ(command.output().launch_tool_mode(),
+              commands::Output::WORD_REGISTER_DIALOG);
   }
 }
 
@@ -381,7 +381,7 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
     input->set_type(commands::Input::SHUTDOWN);
     // EvalCommand returns false since the session no longer exists.
     EXPECT_FALSE(handler.EvalCommand(&command));
-    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_EQ(command.output().id(), session_id);
   }
 
   {  // Any command should be rejected after shutdown.
@@ -409,7 +409,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_id(session_id);
     input->set_type(commands::Input::CLEAR_USER_HISTORY);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_EQ(command.output().id(), session_id);
     EXPECT_COUNT_STATS("ClearUserHistory", 1);
   }
 
@@ -419,7 +419,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_id(session_id);
     input->set_type(commands::Input::CLEAR_USER_PREDICTION);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_EQ(command.output().id(), session_id);
     EXPECT_COUNT_STATS("ClearUserPrediction", 1);
   }
 
@@ -429,7 +429,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
     input->set_id(session_id);
     input->set_type(commands::Input::CLEAR_UNUSED_USER_PREDICTION);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(session_id, command.output().id());
+    EXPECT_EQ(command.output().id(), session_id);
     EXPECT_COUNT_STATS("ClearUnusedUserPrediction", 1);
   }
 
@@ -463,8 +463,8 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
     config::ConfigHandler::GetStoredConfig(&config);
-    EXPECT_EQ(config::Config::KOTOERI,
-              command.output().config().session_keymap());
+    EXPECT_EQ(command.output().config().session_keymap(),
+              config::Config::KOTOERI);
   }
 
   uint64_t session_id = 0;
@@ -502,9 +502,9 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     config.set_session_keymap(config::Config::ATOK);
     *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(command.input().id(), command.output().id());
+    EXPECT_EQ(command.output().id(), command.input().id());
     config::ConfigHandler::GetStoredConfig(&config);
-    EXPECT_EQ(config::Config::ATOK, command.output().config().session_keymap());
+    EXPECT_EQ(command.output().config().session_keymap(), config::Config::ATOK);
   }
   {
     // ATOK assigns a function to ctrl+f7 (precomposition) (KOTOERI doesn't) so
@@ -516,8 +516,8 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     input->mutable_key()->set_special_key(commands::KeyEvent::F7);
     input->mutable_key()->add_modifier_keys(commands::KeyEvent::CTRL);
     EXPECT_TRUE(handler.EvalCommand(&command));
-    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
-              command.output().launch_tool_mode());
+    EXPECT_EQ(command.output().launch_tool_mode(),
+              commands::Output::WORD_REGISTER_DIALOG);
   }
 
   EXPECT_COUNT_STATS("SetConfig", 1);
@@ -554,7 +554,7 @@ TEST_F(SessionHandlerTest, KeyMapTest) {
     EXPECT_TRUE(handler.EvalCommand(&command));
     // As different keymap is set, the handler's kaymap manager should be
     // updated.
-    EXPECT_NE(msime_keymap, handler.key_map_manager_.get());
+    EXPECT_NE(handler.key_map_manager_.get(), msime_keymap);
   }
 }
 
@@ -591,8 +591,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenario) {
   // Session handler receives reload request when engine builder is not running.
   // EngineBuilderInterface::PrepareAsync() should be called once.
   engine_builder->set_state(MockEngineBuilder::State::STOP);
-  ASSERT_EQ(EngineReloadResponse::ACCEPTED, SendDummyEngineCommand(&handler));
-  EXPECT_EQ(1, engine_builder->num_prepare_async_called());
+  ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
+  EXPECT_EQ(engine_builder->num_prepare_async_called(), 1);
 
   // Emulate the state after successful data load.
   engine_builder->set_state(MockEngineBuilder::State::RELOAD_READY);
@@ -601,8 +601,8 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenario) {
   // handler currently holds no session.
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(1, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 1);
+  EXPECT_EQ(engine_builder->num_clear_called(), 1);
 }
 
 // Tests the interaction with EngineBuilderInterface in the situation where
@@ -616,16 +616,16 @@ TEST_F(SessionHandlerTest, EngineReloadAlreadyRunning) {
   engine_builder->set_state(MockEngineBuilder::State::RUNNING);
 
   // Session handler receives reload request when engine builder is running.
-  ASSERT_EQ(EngineReloadResponse::ALREADY_RUNNING,
-            SendDummyEngineCommand(&handler));
-  EXPECT_EQ(1, engine_builder->num_prepare_async_called());
+  ASSERT_EQ(SendDummyEngineCommand(&handler),
+            EngineReloadResponse::ALREADY_RUNNING);
+  EXPECT_EQ(engine_builder->num_prepare_async_called(), 1);
 
   // BuildFromPreparedData() shouldn't be called on create session event when
   // async data load is running.
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(0, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 0);
+  EXPECT_EQ(engine_builder->num_clear_called(), 0);
 }
 
 // Tests the interaction with EngineBuilderInterface in the situation where
@@ -642,8 +642,8 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidData) {
   // request.
   uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
-  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(1, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 0);
+  EXPECT_EQ(engine_builder->num_clear_called(), 1);
 }
 
 // Tests the interaction with EngineBuilderInterface in the situation where
@@ -657,8 +657,8 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExists) {
   engine_builder->set_state(MockEngineBuilder::State::STOP);
   uint64_t id1 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id1));
-  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(0, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 0);
+  EXPECT_EQ(engine_builder->num_clear_called(), 0);
 
   // Emulate the state where async data load is complete.
   engine_builder->set_state(MockEngineBuilder::State::RELOAD_READY);
@@ -667,8 +667,8 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExists) {
   // (id1), engine reload should not happen.
   uint64_t id2 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id2));
-  EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(0, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 0);
+  EXPECT_EQ(engine_builder->num_clear_called(), 0);
 
   // All the sessions were deleted.
   ASSERT_TRUE(DeleteSession(&handler, id1));
@@ -678,8 +678,8 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExists) {
   // reloaded at this timing.
   uint64_t id3 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id3));
-  EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
-  EXPECT_EQ(1, engine_builder->num_clear_called());
+  EXPECT_EQ(engine_builder->num_build_from_prepared_data_called(), 1);
+  EXPECT_EQ(engine_builder->num_clear_called(), 1);
 }
 
 }  // namespace mozc
