@@ -39,8 +39,10 @@
       'hard_dependency': 1,
       'sources': [
         'dictionary_predictor.cc',
+        'dictionary_prediction_aggregator.cc',
         'number_decoder.cc',
         'predictor.cc',
+        'result.cc',
         'user_history_predictor.cc',
       ],
       'dependencies': [

@@ -38,6 +38,7 @@
       'type': 'executable',
       'sources': [
         'dictionary_predictor_test.cc',
+        'dictionary_prediction_aggregator_test.cc',
         'number_decoder_test.cc',
         'user_history_predictor_test.cc',
         'predictor_test.cc',
