@@ -27,6 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(
     "//:build_defs.bzl",
     "cc_library_mozc",
@@ -124,5 +125,15 @@ cc_qt_library_mozc(
         "//renderer:renderer_style_handler",
         "//renderer:window_util",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+build_test(
+    name = "qt_build_test",
+    targets = [
+        ":qt_ipc_server",
+        ":qt_ipc_thread",
+        ":qt_server",
+        ":qt_window_manager",
     ],
 )
