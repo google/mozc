@@ -31,6 +31,7 @@
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <queue>
@@ -41,25 +42,19 @@
 
 #include "base/freelist.h"
 #include "base/trie.h"
+#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
+#include "request/conversion_request.h"
+#include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
+#include "testing/gunit_prod.h"  // for FRIEND_TEST
 #include "absl/strings/string_view.h"
-// for FRIEND_TEST
-#include "testing/gunit_prod.h"
 
 namespace mozc {
-
-namespace storage {
-class StringStorageInterface;
-}  // namespace storage
-
-class ConversionRequest;
-class Segment;
-class Segments;
 class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
@@ -135,8 +130,8 @@ class UserHistoryPredictor : public PredictorInterface {
   bool ClearUnusedHistory() override;
 
   // Clears a specific history entry.
-  bool ClearHistoryEntry(const std::string &key,
-                         const std::string &value) override;
+  bool ClearHistoryEntry(absl::string_view key,
+                         absl::string_view value) override;
 
   // Implements PredictorInterface.
   bool Wait() override;
@@ -154,8 +149,8 @@ class UserHistoryPredictor : public PredictorInterface {
   typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
 
   // Returns fingerprints from various object.
-  static uint32_t Fingerprint(const std::string &key, const std::string &value);
-  static uint32_t Fingerprint(const std::string &key, const std::string &value,
+  static uint32_t Fingerprint(absl::string_view key, absl::string_view value);
+  static uint32_t Fingerprint(absl::string_view key, absl::string_view value,
                               EntryType type);
   static uint32_t EntryFingerprint(const Entry &entry);
   static uint32_t SegmentFingerprint(const Segment &segment);
@@ -486,7 +481,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // Recursively removes a chain of Entries in |dic_|. See the comment in
   // implemenetation for details.
   RemoveNgramChainResult RemoveNgramChain(
-      const std::string &target_key, const std::string &target_value,
+      absl::string_view target_key, absl::string_view target_value,
       Entry *entry, std::vector<absl::string_view> *key_ngrams,
       size_t key_ngrams_len, std::vector<absl::string_view> *value_ngrams,
       size_t value_ngrams_len);

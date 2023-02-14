@@ -36,8 +36,11 @@
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
+
+class Segments;
 
 class BasePredictor : public PredictorInterface {
  public:
@@ -59,8 +62,8 @@ class BasePredictor : public PredictorInterface {
   bool ClearUnusedHistory() override;
 
   // Clears a specific user history data of UserHistoryPredictor.
-  bool ClearHistoryEntry(const std::string &key,
-                         const std::string &value) override;
+  bool ClearHistoryEntry(absl::string_view key,
+                         absl::string_view value) override;
 
   // Syncs user history.
   bool Sync() override;

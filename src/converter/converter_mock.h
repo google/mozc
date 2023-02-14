@@ -44,29 +44,29 @@ class MockConverter final : public ConverterInterface {
               (const ConversionRequest &request, Segments *segments),
               (const, override));
   MOCK_METHOD(bool, StartConversion,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartReverseConversion,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPredictionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
   MOCK_METHOD(bool, StartPrediction,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartSuggestionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
   MOCK_METHOD(bool, StartSuggestion,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialPredictionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
   MOCK_METHOD(bool, StartPartialPrediction,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(bool, StartPartialSuggestionForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
   MOCK_METHOD(bool, StartPartialSuggestion,
-              (Segments * segments, const std::string &key), (const, override));
+              (Segments * segments, absl::string_view key), (const, override));
   MOCK_METHOD(void, FinishConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
@@ -74,7 +74,7 @@ class MockConverter final : public ConverterInterface {
   MOCK_METHOD(void, ResetConversion, (Segments * segments), (const, override));
   MOCK_METHOD(void, RevertConversion, (Segments * segments), (const, override));
   MOCK_METHOD(bool, ReconstructHistory,
-              (Segments * segments, const std::string &preceding_text),
+              (Segments * segments, absl::string_view preceding_text),
               (const, override));
   MOCK_METHOD(bool, CommitSegmentValue,
               (Segments * segments, size_t segment_index, int candidate_index),

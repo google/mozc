@@ -164,7 +164,6 @@ mozc_cc_library(
     deps = [
         ":session_converter",
         ":session_usage_stats_util",
-        "//base",
         "//base:clock",
         "//base:logging",
         "//base:port",
@@ -202,8 +201,6 @@ mozc_cc_test(
     deps = [
         ":request_test_util",
         ":session",
-        ":session_converter_interface",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -228,8 +225,11 @@ mozc_cc_test(
         "//session/internal:keymap",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

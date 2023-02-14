@@ -31,7 +31,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -53,7 +53,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -63,14 +62,14 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-using commands::Request;
 using dictionary::DictionaryInterface;
 using dictionary::PosMatcher;
 using dictionary::SuppressionDictionary;
@@ -235,7 +234,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
 UserHistoryStorage::UserHistoryStorage(const std::string &filename)
     : storage_(new storage::EncryptedStringStorage(filename)) {}
 
-UserHistoryStorage::~UserHistoryStorage() {}
+UserHistoryStorage::~UserHistoryStorage() = default;
 
 bool UserHistoryStorage::Load() {
   std::string input;
@@ -318,7 +317,7 @@ int UserHistoryStorage::DeleteEntriesUntouchedFor62Days() {
 UserHistoryPredictor::EntryPriorityQueue::EntryPriorityQueue()
     : pool_(kEntryPoolSize) {}
 
-UserHistoryPredictor::EntryPriorityQueue::~EntryPriorityQueue() {}
+UserHistoryPredictor::EntryPriorityQueue::~EntryPriorityQueue() = default;
 
 bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
   DCHECK(entry);
@@ -617,7 +616,7 @@ void UserHistoryPredictor::EraseNextEntries(uint32_t fp, Entry *entry) {
 // node ("ccc", "CCC").
 UserHistoryPredictor::RemoveNgramChainResult
 UserHistoryPredictor::RemoveNgramChain(
-    const std::string &target_key, const std::string &target_value,
+    const absl::string_view target_key, const absl::string_view target_value,
     Entry *entry, std::vector<absl::string_view> *key_ngrams,
     size_t key_ngrams_len, std::vector<absl::string_view> *value_ngrams,
     size_t value_ngrams_len) {
@@ -684,8 +683,8 @@ UserHistoryPredictor::RemoveNgramChain(
   return NOT_FOUND;
 }
 
-bool UserHistoryPredictor::ClearHistoryEntry(const std::string &key,
-                                             const std::string &value) {
+bool UserHistoryPredictor::ClearHistoryEntry(const absl::string_view key,
+                                             const absl::string_view value) {
   bool deleted = false;
   {
     // Finds the history entry that has the exactly same key and value and has
@@ -2036,22 +2035,22 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
 }
 
 // static
-uint32_t UserHistoryPredictor::Fingerprint(const std::string &key,
-                                           const std::string &value,
+uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
+                                           const absl::string_view value,
                                            EntryType type) {
   if (type == Entry::DEFAULT_ENTRY) {
     // Since we have already used the fingerprint function for next entries and
     // next entries are saved in user's local machine, we are not able
     // to change the Fingerprint function for the old key/value type.
-    return Hash::Fingerprint32(key + kDelimiter + value);
+    return Hash::Fingerprint32(absl::StrCat(key, kDelimiter, value));
   } else {
     return Hash::Fingerprint32(static_cast<uint8_t>(type));
   }
 }
 
 // static
-uint32_t UserHistoryPredictor::Fingerprint(const std::string &key,
-                                           const std::string &value) {
+uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
+                                           const absl::string_view value) {
   return Fingerprint(key, value, Entry::DEFAULT_ENTRY);
 }
 

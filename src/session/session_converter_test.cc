@@ -47,7 +47,6 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -56,7 +55,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
@@ -3077,7 +3075,8 @@ TEST_F(SessionConverterTest, GetReadingText) {
   // For reverse conversion, key is the original kanji string.
   candidate->key = kKanjiAiueo;
   candidate->value = kChars_Aiueo;
-  EXPECT_CALL(mock_converter, StartReverseConversion(_, kKanjiAiueo))
+  EXPECT_CALL(mock_converter,
+              StartReverseConversion(_, absl::string_view(kKanjiAiueo)))
       .WillOnce(DoAll(SetArgPointee<0>(reverse_segments), Return(true)));
   std::string reading;
   EXPECT_TRUE(converter.GetReadingText(kKanjiAiueo, &reading));
@@ -3628,7 +3627,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
 
-    EXPECT_CALL(mock_converter, ReconstructHistory(_, kKey))
+    EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
 
     Context context;
@@ -3650,7 +3649,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
 
-    EXPECT_CALL(mock_converter, ReconstructHistory(_, kKey))
+    EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
 
     Context context;

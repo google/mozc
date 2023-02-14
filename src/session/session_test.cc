@@ -29,6 +29,7 @@
 
 #include "session/session.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -44,6 +45,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
 #include "engine/engine.h"
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
@@ -56,21 +58,16 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
-#include "session/session_converter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class ConverterInterface;
-class PredictorInterface;
-
-namespace dictionary {
-class SuppressionDictionary;
-}
 
 namespace session {
 namespace {
@@ -9692,7 +9689,9 @@ TEST_P(SessionTest, DeleteHistory) {
   MockUserDataManager user_data_manager;
   EXPECT_CALL(engine, GetUserDataManager())
       .WillOnce(Return(&user_data_manager));
-  EXPECT_CALL(user_data_manager, ClearUserPredictionEntry("", "DeleteHistory"))
+  EXPECT_CALL(user_data_manager,
+              ClearUserPredictionEntry(absl::string_view(),
+                                       absl::string_view("DeleteHistory")))
       .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
@@ -9965,7 +9964,8 @@ TEST_P(SessionTest, DeleteCandidateFromHistory) {
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry("あいうえお", "あいうえお"))
+                ClearUserPredictionEntry(absl::string_view("あいうえお"),
+                                         absl::string_view("あいうえお")))
         .WillOnce(Return(true));
 
     commands::Command command;
@@ -9979,7 +9979,8 @@ TEST_P(SessionTest, DeleteCandidateFromHistory) {
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry("あいうえお", "アイウエオ"))
+                ClearUserPredictionEntry(absl::string_view("あいうえお"),
+                                         absl::string_view("アイウエオ")))
         .WillOnce(Return(true));
 
     commands::Command command;

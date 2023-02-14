@@ -55,7 +55,10 @@ cc_proto_library(
 mozc_cc_library(
     name = "predictor_interface",
     hdrs = ["predictor_interface.h"],
-    deps = ["@com_google_absl//absl/base:core_headers"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 mozc_cc_library(
@@ -88,7 +91,6 @@ mozc_cc_library(
         "//testing:gunit_prod",
         "//usage_stats",
         "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -226,15 +228,13 @@ mozc_cc_library(
     hdrs = ["predictor.h"],
     deps = [
         ":predictor_interface",
-        "//base",
         "//base:logging",
-        "//config:config_handler",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
