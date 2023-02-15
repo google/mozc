@@ -193,9 +193,9 @@ mozc_cc_binary(
         ":ipc",
         "//base:init_mozc_buildtool",
         "//base:logging",
-        "//base:port",
-        "//base:thread",
+        "//base:thread2",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
