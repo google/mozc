@@ -31,14 +31,17 @@
 #define MOZC_BASE_UTIL_H_
 
 #include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
+#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/port.h"
 #include "absl/base/attributes.h"
+#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -249,9 +252,8 @@ class Util {
   // given line.
   static bool ChopReturns(std::string *line);
 
-  // Generate a random sequence. It uses secure method if possible, or Random()
-  // as a fallback method.
-  ABSL_DEPRECATED("Use the overload with absl::Span")
+  // Generate a random sequence. It uses absl::BitGen as a random source.
+  ABSL_DEPRECATED("Use absl::Uniform or mozc::Random.")
   static void GetRandomSequence(char *buf, size_t buf_size);
   static void GetRandomSequence(absl::Span<char> buf);
 

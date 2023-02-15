@@ -33,10 +33,9 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
+#include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -110,8 +109,9 @@ bool DiceRewriter::Rewrite(const ConversionRequest &request,
 
   // Get a random number whose range is [1, kDiceFaces]
   // Insert the number at |insert_pos|
-  return InsertCandidate(Util::Random(kDiceFaces) + 1, insert_pos,
-                         segments->mutable_conversion_segment(0));
+  return InsertCandidate(
+      absl::Uniform(absl::IntervalClosed, bitgen_, 1, kDiceFaces), insert_pos,
+      segments->mutable_conversion_segment(0));
 }
 
 }  // namespace mozc

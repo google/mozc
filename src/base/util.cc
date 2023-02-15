@@ -52,6 +52,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdarg>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>

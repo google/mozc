@@ -102,6 +102,7 @@
         'init_mozc.cc',
         'logging.cc',
         'mmap.cc',
+        'random.cc',
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',

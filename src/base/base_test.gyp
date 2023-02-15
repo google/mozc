@@ -105,6 +105,7 @@
         'bitarray_test.cc',
         'logging_test.cc',
         'mmap_test.cc',
+        'random_test.h',
         'singleton_test.cc',
         'text_normalizer_test.cc',
         'thread_test.cc',
@@ -120,6 +121,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_random',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_time',
         'base.gyp:base_core',

@@ -39,31 +39,21 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/random.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
 
 using user_dictionary::UserDictionary;
-
-std::string GenRandomString(int size) {
-  std::string result;
-  const size_t len = Util::Random(size) + 1;
-  for (int i = 0; i < len; ++i) {
-    const char32_t l =
-        static_cast<char32_t>(Util::Random(static_cast<int>('~' - ' ')) + ' ');
-    Util::Ucs4ToUtf8Append(l, &result);
-  }
-  return result;
-}
 
 }  // namespace
 
@@ -175,6 +165,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
 TEST_F(UserDictionaryStorageTest, DeleteTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load().ok());
+  absl::BitGen gen;
 
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
@@ -187,7 +178,7 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
 
     std::vector<uint64_t> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
-      if (Util::Random(3) == 0) {  // 33%
+      if (absl::Bernoulli(gen, 1.0 / 3)) {  // 33%
         EXPECT_TRUE(storage.DeleteDictionary(ids[i]));
         continue;
       }
@@ -254,29 +245,33 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 TEST_F(UserDictionaryStorageTest, SerializeTest) {
   // Repeat 20 times
   const std::string filepath = GetUserDictionaryFile();
+  Random random;
   for (int n = 0; n < 20; ++n) {
     ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
     UserDictionaryStorage storage1(filepath);
 
     {
       EXPECT_FALSE(storage1.Load().ok()) << "n = " << n;
-      const size_t dic_size = Util::Random(50) + 1;
+      const size_t dic_size =
+          absl::Uniform(absl::IntervalClosed, random, 1, 50);
 
       for (size_t i = 0; i < dic_size; ++i) {
         uint64_t id = 0;
         const std::string dic_name =
             "test" + std::to_string(static_cast<uint32_t>(i));
         EXPECT_TRUE(storage1.CreateDictionary(dic_name, &id)) << "n = " << n;
-        const size_t entry_size = Util::Random(100) + 1;
+        const size_t entry_size =
+            absl::Uniform(absl::IntervalClosed, random, 1, 100);
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
               storage1.GetProto().mutable_dictionaries(i);
           UserDictionaryStorage::UserDictionaryEntry *entry =
               dic->add_entries();
-          entry->set_key(GenRandomString(10));
-          entry->set_value(GenRandomString(10));
+          constexpr char32_t lo = ' ', hi = '~';
+          entry->set_key(random.Utf8StringRandomLen(10, lo, hi));
+          entry->set_value(random.Utf8StringRandomLen(10, lo, hi));
           entry->set_pos(UserDictionary::NOUN);
-          entry->set_comment(GenRandomString(10));
+          entry->set_comment(random.Utf8StringRandomLen(10, lo, hi));
         }
       }
 

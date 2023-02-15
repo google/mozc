@@ -738,12 +738,10 @@ mozc_cc_library(
     hdrs = ["dice_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base",
         "//base:logging",
-        "//base:util",
         "//converter:segments",
-        "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,

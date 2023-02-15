@@ -48,6 +48,7 @@
 #include "testing/mozctest.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -383,8 +384,9 @@ class SetConfigThread final : public Thread {
 
  protected:
   void Run() override {
+    absl::BitGen gen;
     while (!quitting_) {
-      const size_t next_index = Util::Random(configs_.size());
+      const size_t next_index = absl::Uniform(gen, 0u, configs_.size());
       ConfigHandler::SetConfig(configs_.at(next_index));
     }
   }

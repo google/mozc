@@ -35,12 +35,14 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/random.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/random/distributions.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -154,16 +156,16 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     CHECK(token_info);
     token_info->pos_type = TokenInfo::DEFAULT_POS;
     // set id randomly
-    const int id = Util::Random(50);
+    const int id = absl::Uniform(random_, 0, 50);
     token_info->token->lid = id;
-    token_info->token->rid = (Util::Random(2) == 0) ? id : id + 1;
+    token_info->token->rid = absl::Bernoulli(random_, 0.5) ? id : id + 1;
   }
 
   void SetFrequentPos(TokenInfo *token_info) const {
     CHECK(token_info);
     token_info->pos_type = TokenInfo::FREQUENT_POS;
     // set id randomly
-    const int id = Util::Random(256);
+    const int id = absl::Uniform(random_, 0, 256);
     token_info->id_in_frequent_pos_map = id;
   }
 
@@ -175,7 +177,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   void SetRandPos() {
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
       CHECK(source_tokens_[i].token);
-      int n = Util::Random(TokenInfo::POS_TYPE_SIZE);
+      int n = absl::Uniform(random_, 0, TokenInfo::POS_TYPE_SIZE);
       CHECK_GE(n, 0);
       CHECK_LT(n, TokenInfo::POS_TYPE_SIZE);
       if (i == 0 && n == 2) {
@@ -199,7 +201,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     CHECK(token_info);
     token_info->cost_type = TokenInfo::DEFAULT_COST;
     // set cost randomly
-    const int cost = Util::Random(8000);
+    const int cost = absl::Uniform(random_, 0, 8000);
     token_info->token->cost = cost;
   }
 
@@ -207,14 +209,14 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     CHECK(token_info);
     token_info->cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
     // set cost randomly
-    const int cost = Util::Random(8000);
+    const int cost = absl::Uniform(random_, 0, 8000);
     token_info->token->cost = cost;
   }
 
   void SetRandCost() {
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
       CHECK(source_tokens_[i].token);
-      int n = Util::Random(TokenInfo::COST_TYPE_SIZE);
+      int n = absl::Uniform(random_, 0, TokenInfo::COST_TYPE_SIZE);
       CHECK_GE(n, 0);
       CHECK_LT(n, TokenInfo::POS_TYPE_SIZE);
       if (n == 0) {
@@ -229,7 +231,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
     CHECK(token_info);
     token_info->value_type = TokenInfo::DEFAULT_VALUE;
     // set id randomly
-    const int id = Util::Random(50000);
+    const int id = absl::Uniform(random_, 0, 50000);
     token_info->id_in_value_trie = id;
   }
 
@@ -241,7 +243,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   void SetRandValue() {
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
       CHECK(source_tokens_[i].token);
-      int n = Util::Random(TokenInfo::VALUE_TYPE_SIZE);
+      int n = absl::Uniform(random_, 0, TokenInfo::VALUE_TYPE_SIZE);
       CHECK_GE(n, 0);
       CHECK_LT(n, TokenInfo::VALUE_TYPE_SIZE);
       if (i == 0 && n == 1) {
@@ -263,7 +265,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
   void SetRandLabel() {
     for (size_t i = 0; i < source_tokens_.size(); ++i) {
       CHECK(source_tokens_[i].token);
-      int n = Util::Random(Token::LABEL_SIZE);
+      int n = absl::Uniform(random_, 0, Token::LABEL_SIZE);
       CHECK_GE(n, 0);
       CHECK_LT(n, Token::LABEL_SIZE);
       if (n == 0) {
@@ -310,6 +312,7 @@ class SystemDictionaryCodecTest : public ::testing::Test {
 
   std::vector<TokenInfo> source_tokens_;
   std::vector<TokenInfo> decoded_tokens_;
+  mutable mozc::Random random_;
 };
 
 class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
@@ -487,7 +490,6 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomPosTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandPos();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
@@ -527,7 +529,6 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomCostTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandCost();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
@@ -671,7 +672,6 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomValueTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandValue();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
@@ -685,7 +685,6 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomLabelTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandLabel();
   std::string encoded;
   codec->EncodeTokens(source_tokens_, &encoded);
@@ -699,7 +698,6 @@ TEST_F(SystemDictionaryCodecTest, TokenRandomTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandPos();
   SetRandCost();
   SetRandValue();
@@ -716,7 +714,6 @@ TEST_F(SystemDictionaryCodecTest, ReadTokenRandomTest) {
   SystemDictionaryCodecInterface *codec =
       SystemDictionaryCodecFactory::GetCodec();
   InitTokens(50);
-  Util::SetRandomSeed(0);
   SetRandPos();
   SetRandCost();
   SetRandValue();
@@ -753,7 +750,6 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       SystemDictionaryCodecFactory::GetCodec();
   {  // Token
     InitTokens(50);
-    Util::SetRandomSeed(0);
     SetRandPos();
     SetRandCost();
     SetRandValue();
@@ -787,33 +783,23 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
     }
     EXPECT_EQ(read_num, source_tokens_.size());
   }
-  {  // Value
-    std::string original;
-    {
-      char32_t a_ucs4 = '!';
-      Util::SetRandomSeed(0);
-      for (size_t i = 0; i < 10000; ++i) {
-        // U+4E00-9FFF CJK Unified Ideographs
-        const char32_t c = a_ucs4 + static_cast<uint16_t>(Util::Random(0x9f00));
-        Util::Ucs4ToUtf8Append(c, &original);
-      }
-    }
+  {
+    // Value
+    // U+4E00-9FFF CJK Unified Ideographs
+    constexpr char32_t a_ucs4 = '!';
+    const std::string original =
+        random_.Utf8String(10000, a_ucs4, a_ucs4 + 0x9f00);
     std::string encoded;
     codec->EncodeValue(original, &encoded);
     std::string decoded;
     codec->DecodeValue(encoded, &decoded);
     EXPECT_EQ(decoded, original);
   }
-  {  // Key
-    std::string original;
-    {
-      char32_t a_ucs4 = 0x3041;  // "ぁ"
-      Util::SetRandomSeed(0);
-      for (size_t i = 0; i < 1000; ++i) {
-        const char32_t c = a_ucs4 + static_cast<uint16_t>(Util::Random(1000));
-        Util::Ucs4ToUtf8Append(c, &original);
-      }
-    }
+  {
+    // Key
+    constexpr char32_t a_ucs4 = 0x3041;  // "ぁ"
+    const std::string original =
+        random_.Utf8String(1000, a_ucs4, a_ucs4 + 1000);
     std::string encoded;
     codec->EncodeKey(original, &encoded);
     EXPECT_EQ(codec->GetEncodedKeyLength(original), encoded.size());

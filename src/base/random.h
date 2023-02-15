@@ -27,73 +27,54 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/bitarray.h"
+#ifndef MOZC_BASE_RANDOM_H_
+#define MOZC_BASE_RANDOM_H_
 
-#include <iterator>
-#include <vector>
+#include <cstddef>
+#include <random>
+#include <string>
 
-#include "testing/googletest.h"
-#include "testing/gunit.h"
 #include "absl/random/random.h"
 
 namespace mozc {
-namespace {
 
-TEST(BitArray, BitArraySizeTest) {
-  {
-    BitArray array(0);
-    EXPECT_EQ(array.size(), 0);
-    EXPECT_EQ(array.array_size(), 4);
-  }
+// Random is a utility class to generate random sequences.
+// This class can work as an absl UBRG and be passed to absl distribution
+// functions (absl::Uniform, absl::Bernoulli, etc) so you don't need a separate
+// absl::BitGen.
+class Random {
+ public:
+  using result_type = absl::BitGen::result_type;
 
-  {
-    BitArray array(5);
-    EXPECT_EQ(array.size(), 5);
-    EXPECT_EQ(array.array_size(), 4);
-  }
+  Random() = default;
+  explicit Random(std::seed_seq &&seed);
+  explicit Random(absl::BitGen &&gen);
 
-  {
-    BitArray array(32);
-    EXPECT_EQ(array.size(), 32);
-    EXPECT_EQ(array.array_size(), 8);
-  }
+  // Disallow copy, allow move.
+  Random(const Random &) = delete;
+  Random &operator=(const Random &) = delete;
+  Random(Random &&) = default;
+  Random &operator=(Random &&) = default;
 
-  {
-    BitArray array(100);
-    EXPECT_EQ(array.size(), 100);
-    EXPECT_EQ(array.array_size(), 16);
-  }
-}
+  // Pass through the underlying absl::BitGen UBRG attributes.
+  static constexpr result_type min() { return absl::BitGen::min(); }
+  static constexpr result_type max() { return absl::BitGen::max(); }
+  result_type operator()() { return bitgen_(); }
 
-TEST(BitArray, BitArrayTest) {
-  constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
-  absl::BitGen gen;
+  // Generates a random valid utf-8 sequence with len codepoints [lo, hi].
+  std::string Utf8String(size_t len, char32_t lo, char32_t hi);
+  // Generates a random valid utf-8 sequence with [1, len_max] codepoints [lo,
+  // hi].
+  std::string Utf8StringRandomLen(size_t len_max, char32_t lo, char32_t hi);
+  // Generates a random binary ([0, 0xff]) string of size bytes.
+  // Note that NUL can be in the middle of the sequence.
+  // Use Utf8String for valid random string generations.
+  std::string ByteString(size_t size);
 
-  for (const size_t size : kBitArraySize) {
-    // set array
-    BitArray array(size);
-    EXPECT_EQ(array.size(), size);
-    std::vector<int> target(size);
-    for (size_t j = 0; j < size; ++j) {
-      const bool v = absl::Bernoulli(gen, 0.5);
-      if (v) {
-        target[j] = 1;
-        array.set(j);
-      } else {
-        target[j] = 0;
-        array.clear(j);
-      }
-    }
+ private:
+  absl::BitGen bitgen_;
+};
 
-    const char *data = array.array();
-
-    // verify
-    for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
-      EXPECT_EQ(array.get(j), (target[j] != 0));
-    }
-  }
-}
-
-}  // namespace
 }  // namespace mozc
+
+#endif  // MOZC_BASE_RANDOM_H_

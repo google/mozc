@@ -30,36 +30,30 @@
 #include "data_manager/dataset_reader.h"
 
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <sstream>
 #include <string>
 
 #include "base/port.h"
+#include "base/random.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "testing/gunit.h"
+#include "absl/random/distributions.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-std::string GenerateRandomBytes(size_t len) {
-  std::string s;
-  s.resize(len);
-  for (size_t i = 0; i < len; ++i) {
-    s[i] = static_cast<char>(Util::Random(256));
-  }
-  return s;
-}
-
-std::string GetTestMagicNumber() { return std::string("ma\0gic", 6); }
+constexpr absl::string_view kTestMagicNumber = "ma\0gic";
 
 TEST(DataSetReaderTest, ValidData) {
-  const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
+  constexpr absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   std::string image;
   {
-    DataSetWriter w(GetTestMagicNumber());
+    DataSetWriter w(kTestMagicNumber);
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
     std::stringstream out;
@@ -69,7 +63,7 @@ TEST(DataSetReaderTest, ValidData) {
 
   DataSetReader r;
   ASSERT_TRUE(DataSetReader::VerifyChecksum(image));
-  ASSERT_TRUE(r.Init(image, GetTestMagicNumber()));
+  ASSERT_TRUE(r.Init(image, kTestMagicNumber));
 
   absl::string_view data;
   EXPECT_TRUE(r.Get("google", &data));
@@ -82,56 +76,53 @@ TEST(DataSetReaderTest, ValidData) {
 }
 
 TEST(DataSetReaderTest, InvalidMagicString) {
-  const std::string &magic = GetTestMagicNumber();
   DataSetReader r;
-  EXPECT_FALSE(r.Init("", magic));
-  EXPECT_FALSE(r.Init("abc", magic));
-  EXPECT_FALSE(r.Init("this is a text file", magic));
+  EXPECT_FALSE(r.Init("", kTestMagicNumber));
+  EXPECT_FALSE(r.Init("abc", kTestMagicNumber));
+  EXPECT_FALSE(r.Init("this is a text file", kTestMagicNumber));
 }
 
 TEST(DataSetReaderTest, BrokenMetadata) {
-  const std::string &magic = GetTestMagicNumber();
   DataSetReader r;
 
   // Only magic number, no metadata.
-  EXPECT_FALSE(DataSetReader::VerifyChecksum(magic));
-  EXPECT_FALSE(r.Init(magic, magic));
+  EXPECT_FALSE(DataSetReader::VerifyChecksum(kTestMagicNumber));
+  EXPECT_FALSE(r.Init(kTestMagicNumber, kTestMagicNumber));
 
   // Metadata size is too small.
-  std::string data = magic;
+  std::string data(kTestMagicNumber);
   data.append("content and metadata");
   data.append(Util::SerializeUint64(0));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
-  EXPECT_FALSE(r.Init(data, magic));
+  EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too small.
-  data = magic;
+  data = kTestMagicNumber;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(4));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
-  EXPECT_FALSE(r.Init(data, magic));
+  EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too large.
-  data = magic;
+  data = kTestMagicNumber;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(std::numeric_limits<uint64_t>::max()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
-  EXPECT_FALSE(r.Init(data, magic));
+  EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata chunk is not a serialied protobuf.
-  data = magic;
+  data = kTestMagicNumber;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(strlen("content and metadata")));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
-  EXPECT_FALSE(r.Init(data, magic));
+  EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 }
 
 TEST(DataSetReaderTest, BrokenMetadataFields) {
-  const std::string &magic = GetTestMagicNumber();
-  const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
+  constexpr absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
   std::string content;
   {
-    DataSetWriter w(magic);
+    DataSetWriter w(kTestMagicNumber);
     w.Add("google", 16, kGoogle);
     w.Add("mozc", 64, kMozc);
     std::stringstream out;
@@ -157,7 +148,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
 
     DataSetReader r;
     EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
-    EXPECT_FALSE(r.Init(image, magic));
+    EXPECT_FALSE(r.Init(image, kTestMagicNumber));
   }
   {
     // Create an image with broken size.
@@ -173,21 +164,23 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
 
     DataSetReader r;
     EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
-    EXPECT_FALSE(r.Init(image, magic));
+    EXPECT_FALSE(r.Init(image, kTestMagicNumber));
   }
 }
 
 TEST(DataSetReaderTest, OneBitError) {
-  const char *kTestMagicNumber = "Dummy magic number\r\n";
+  constexpr absl::string_view kTestMagicNumber = "Dummy magic number\r\n";
 
   // Create data at random.
   std::string image;
   {
     constexpr int kAlignments[] = {8, 16, 32, 64};
     DataSetWriter w(kTestMagicNumber);
+    Random random;
     for (int i = 0; i < 10; ++i) {
-      w.Add(absl::StrFormat("key%d", i), kAlignments[Util::Random(4)],
-            GenerateRandomBytes(1 + Util::Random(1024)));
+      w.Add(absl::StrFormat("key%d", i),
+            kAlignments[absl::Uniform(random, 0u, std::size(kAlignments))],
+            random.ByteString(absl::Uniform(random, 1, 1024)));
     }
     std::stringstream out;
     w.Finish(&out);

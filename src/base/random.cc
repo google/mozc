@@ -27,73 +27,46 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/bitarray.h"
+#include "base/random.h"
 
-#include <iterator>
-#include <vector>
+#include <cstddef>
+#include <random>
+#include <string>
+#include <utility>
 
-#include "testing/googletest.h"
-#include "testing/gunit.h"
+#include "base/util.h"
+#include "absl/algorithm/container.h"
 #include "absl/random/random.h"
 
 namespace mozc {
-namespace {
 
-TEST(BitArray, BitArraySizeTest) {
-  {
-    BitArray array(0);
-    EXPECT_EQ(array.size(), 0);
-    EXPECT_EQ(array.array_size(), 4);
-  }
+Random::Random(std::seed_seq &&seed)
+    : bitgen_(std::forward<std::seed_seq>(seed)) {}
 
-  {
-    BitArray array(5);
-    EXPECT_EQ(array.size(), 5);
-    EXPECT_EQ(array.array_size(), 4);
-  }
+Random::Random(absl::BitGen &&gen) : bitgen_(std::move(gen)) {}
 
-  {
-    BitArray array(32);
-    EXPECT_EQ(array.size(), 32);
-    EXPECT_EQ(array.array_size(), 8);
+std::string Random::Utf8String(size_t len, char32_t lo, char32_t hi) {
+  std::string result;
+  result.reserve(len);
+  for (size_t i = 0; i < len; ++i) {
+    Util::Ucs4ToUtf8Append(absl::Uniform(absl::IntervalClosed, bitgen_, lo, hi),
+                           &result);
   }
-
-  {
-    BitArray array(100);
-    EXPECT_EQ(array.size(), 100);
-    EXPECT_EQ(array.array_size(), 16);
-  }
+  return result;
 }
 
-TEST(BitArray, BitArrayTest) {
-  constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
-  absl::BitGen gen;
-
-  for (const size_t size : kBitArraySize) {
-    // set array
-    BitArray array(size);
-    EXPECT_EQ(array.size(), size);
-    std::vector<int> target(size);
-    for (size_t j = 0; j < size; ++j) {
-      const bool v = absl::Bernoulli(gen, 0.5);
-      if (v) {
-        target[j] = 1;
-        array.set(j);
-      } else {
-        target[j] = 0;
-        array.clear(j);
-      }
-    }
-
-    const char *data = array.array();
-
-    // verify
-    for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
-      EXPECT_EQ(array.get(j), (target[j] != 0));
-    }
-  }
+std::string Random::Utf8StringRandomLen(size_t len_max, char32_t lo,
+                                        char32_t hi) {
+  return Utf8String(absl::Uniform(absl::IntervalClosed, bitgen_, 1u, len_max),
+                    lo, hi);
 }
 
-}  // namespace
+std::string Random::ByteString(size_t size) {
+  std::string result;
+  result.resize(size);
+  absl::c_generate(
+      result, [&]() -> char { return absl::Uniform<unsigned char>(bitgen_); });
+  return result;
+}
+
 }  // namespace mozc

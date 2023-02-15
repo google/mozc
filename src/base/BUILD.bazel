@@ -626,8 +626,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":bitarray",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -1476,5 +1476,29 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_library(
+    name = "random",
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    deps = [
+        ":util",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/random",
+    ],
+)
+
+mozc_cc_test(
+    name = "random_test",
+    size = "small",
+    srcs = ["random_test.cc"],
+    deps = [
+        ":random",
+        ":util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/random",
     ],
 )

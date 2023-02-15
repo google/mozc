@@ -49,6 +49,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc {
