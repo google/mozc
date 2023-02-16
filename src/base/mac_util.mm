@@ -40,11 +40,15 @@
 #include <launch.h>
 #endif  // OS_IOS
 
+#include <string>
+
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/scoped_cftyperef.h"
 #include "base/singleton.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -128,8 +132,8 @@ std::string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory
 
 }  // namespace
 
-std::string MacUtil::GetLabelForSuffix(const std::string &suffix) {
-  return std::string(kProjectPrefix) + suffix;
+std::string MacUtil::GetLabelForSuffix(const absl::string_view suffix) {
+  return absl::StrCat(kProjectPrefix, suffix);
 }
 
 std::string MacUtil::GetApplicationSupportDirectory() {
