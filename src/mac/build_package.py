@@ -68,18 +68,18 @@ def main():
         'pkgbuild',
         '--root', 'root',
         '--identifier', identifier,
-        'mozc_pkg.pkg',  # This file name is configured in distribution.xml.
+        '--scripts', 'scripts/',
+        'Mozc.pkg',  # the name "Mozc.pkg" is configured in distribution.xml.
     ]
     util.RunOrDie(pkgbuild_commands)
     productbuild_commands = [
         'productbuild',
         '--distribution', 'distribution.xml',
         '--plugins', 'Plugins/',
-        '--scripts', 'scripts/',
-        'Mozc.pkg',
+        'package.pkg',  # this name is only used within this script.
     ]
     util.RunOrDie(productbuild_commands)
-    shutil.copyfile('Mozc.pkg', output_path)
+    shutil.copyfile('package.pkg', output_path)
 
 
 if __name__ == '__main__':

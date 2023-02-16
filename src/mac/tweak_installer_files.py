@@ -149,16 +149,12 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
           'root/Library/LaunchAgents/',
       ),
       ('ActivatePane.bundle', 'Plugins/'),
-      ('DevConfirmPane.bundle', 'Plugins/'),
       ('InstallerSections.plist', 'Plugins/'),
       ('postflight.sh', 'scripts/postinstall'),
       ('preflight.sh', 'scripts/preinstall'),
   ]
-  if tweak_qt:
-    renames += [
-        ('ConfigDialog.app', f'root/Applications/{folder}/'),
-        ('DictionaryTool.app', f'root/Applications/{folder}/'),
-    ]
+  if not oss:
+    renames += [('DevConfirmPane.bundle', 'Plugins/')]
 
   for src, dst in renames:
     if dst.endswith('/'):
@@ -166,6 +162,19 @@ def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
     os.renames(src, dst)
   os.chmod('scripts/postinstall', 0o755)
   os.chmod('scripts/preinstall', 0o755)
+
+  if tweak_qt:
+    resources_dir = f'/Library/Input Methods/{name}.app/Contents/Resources/'
+    # /Applications/Mozc/ConfigDialog.app is a symlink to
+    # /Library/Input Method/Mozc.app/Contents/Resources/ConfigDialog.app
+    os.symlink(
+        resources_dir + 'ConfigDialog.app/',
+        f'root/Applications/{folder}/ConfigDialog.app',
+    )
+    os.symlink(
+        resources_dir + 'DictionaryTool.app/',
+        f'root/Applications/{folder}/DictionaryTool.app',
+    )
 
   os.chdir(orig_dir)
 
