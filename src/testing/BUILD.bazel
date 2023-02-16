@@ -30,6 +30,7 @@
 load(
     "//:build_defs.bzl",
     "mozc_cc_library",
+    "mozc_objc_library",
     "mozc_select",
 )
 
@@ -83,6 +84,22 @@ mozc_cc_library(
         linux = [],
         oss = ["//base:init_mozc"],
     ),
+)
+
+mozc_objc_library(
+    name = "gunit_main_objc",
+    testonly = True,
+    hdrs = [
+        "gmock.h",
+        "googletest.h",
+        "gunit.h",
+    ],
+    deps = [
+        "//third_party/apple_frameworks:XCTest",  # fixdeps: keep
+        "//third_party/objective_c/google_toolbox_for_mac:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
+        "@com_google_absl//absl/flags:flag",
+        "@gtest",
+    ],
 )
 
 mozc_cc_library(

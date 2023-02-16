@@ -154,6 +154,7 @@ mozc_objc_library(
 
 mozc_objc_test(
     name = "imk_controller_test",
+    size = "small",
     srcs = ["GoogleJapaneseInputController_test.mm"],
     deps = [
         ":imk_controller",
@@ -163,7 +164,7 @@ mozc_objc_test(
         "//client:client_mock",
         "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
         "@com_google_absl//absl/time",
     ],
 )
@@ -188,12 +189,13 @@ mozc_objc_library(
 
 mozc_objc_test(
     name = "imk_server_test",
+    size = "small",
     srcs = ["GoogleJapaneseInputServer_test.mm"],
     sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_server",
         "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
     ],
 )
 
@@ -220,12 +222,13 @@ mozc_objc_library(
 
 mozc_objc_test(
     name = "keycode_map_test",
+    size = "small",
     srcs = ["KeyCodeMap_test.mm"],
     sdk_frameworks = ["AppKit"],
     deps = [
         ":keycode_map",
         "//protocol:commands_cc_proto",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
     ],
 )
 

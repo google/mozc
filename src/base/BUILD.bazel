@@ -1335,10 +1335,11 @@ mozc_objc_library(
 
 mozc_objc_test(
     name = "mac_util_test",
+    size = "small",
     srcs = ["mac_util_test.mm"],
     deps = [
         ":mac_util",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
     ],
 )
 

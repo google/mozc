@@ -116,7 +116,6 @@ bzl_library(
         "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
         "//tools/build_rules/android_cc_test:def",
-        "@build_bazel_rules_apple//apple:apple_binary",
         "@build_bazel_rules_apple//apple:macos",
     ],
 )

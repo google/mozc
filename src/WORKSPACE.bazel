@@ -130,6 +130,19 @@ load(
 
 apple_rules_dependencies()
 
+# Google Toolbox for Mac
+# https://github.com/google/google-toolbox-for-mac
+# We just need UnitTesting, so strip to the directory and skip dependencies.
+GTM_GIT_SHA="8fbaae947b87c1e66c0934493168fc6d583ed889"
+http_archive(
+    name = "google_toolbox_for_mac",
+    urls = [
+        "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
+    ],
+    strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
+    build_file = "@//:BUILD.google_toolbox_for_mac.bazel",
+)
+
 # Material icons
 http_file(
     name = "material_icon_dictionary_png",
