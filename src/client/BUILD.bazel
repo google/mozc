@@ -241,6 +241,7 @@ mozc_cc_binary(
         "client_quality_test_main.cc",
         ":client_quality_test_data",
     ],
+    tags = ["manual"],
     deps = [
         ":client",
         "//base",

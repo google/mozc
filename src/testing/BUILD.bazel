@@ -94,10 +94,12 @@ mozc_objc_library(
         "googletest.h",
         "gunit.h",
     ],
+    sdk_frameworks = [
+        "XCTest",  # fixdeps: keep
+    ],
     deps = [
-        "//third_party/apple_frameworks:XCTest",  # fixdeps: keep
-        "//third_party/objective_c/google_toolbox_for_mac:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
         "@com_google_absl//absl/flags:flag",
+        "@google_toolbox_for_mac//:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
         "@gtest",
     ],
 )
