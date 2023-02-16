@@ -32,17 +32,12 @@
 
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
-#include "base/port.h"
+#include "base/singleton.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-
-// TODO(team): Get rid of Singleton.
-template <class T>
-class Singleton;
 
 namespace config {
 
@@ -59,14 +54,13 @@ class CharacterFormManager {
   // This method cannot return the preference,
   // if str has two set of string groups having different preferences.
   // e.g., GetPreeditCharacterForm("グーグル012") returns NO_CONVERSION
-  Config::CharacterForm GetPreeditCharacterForm(const std::string &input) const;
+  Config::CharacterForm GetPreeditCharacterForm(absl::string_view input) const;
   Config::CharacterForm GetConversionCharacterForm(
-      const std::string &input) const;
+      absl::string_view input) const;
 
   // Converts string according to the config rules.
-  void ConvertPreeditString(const std::string &input,
-                            std::string *output) const;
-  void ConvertConversionString(const std::string &input,
+  void ConvertPreeditString(absl::string_view input, std::string *output) const;
+  void ConvertConversionString(absl::string_view input,
                                std::string *output) const;
 
   // Converts string according to the config rules.
@@ -76,10 +70,10 @@ class CharacterFormManager {
   // e.g., output = "@" alternative_output = "＠"
   // return true if both output and alternative_output are defined.
   bool ConvertPreeditStringWithAlternative(
-      const std::string &input, std::string *output,
+      absl::string_view input, std::string *output,
       std::string *alternative_output) const;
   bool ConvertConversionStringWithAlternative(
-      const std::string &input, std::string *output,
+      absl::string_view input, std::string *output,
       std::string *alternative_output) const;
 
   // Calls this method after user fixed the final result.
@@ -87,7 +81,7 @@ class CharacterFormManager {
   // SetCharacterForm() stores the last character form into local file.
   // Next time user calls GetPreeditCharacterForm() or
   // GetConversionCharacterForm(), the preference is restored.
-  void SetCharacterForm(const std::string &input, Config::CharacterForm form);
+  void SetCharacterForm(absl::string_view input, Config::CharacterForm form);
 
   // Guesses the character form of str and call
   // SetCharacterForm with this result.
@@ -95,7 +89,7 @@ class CharacterFormManager {
   // It is more useful to call GuessAndSetCharacterForm(), as
   // you don't need to pass the form.
   // You can just pass the final final conversion string to this method.
-  void GuessAndSetCharacterForm(const std::string &input);
+  void GuessAndSetCharacterForm(absl::string_view input);
 
   // Clears history data. This method does not clear config data.
   void ClearHistory();
@@ -108,9 +102,9 @@ class CharacterFormManager {
   // AddPreeditRule("[]{}()", config::Config::LAST_FORM);
   // AddPreeditRule("+=", config::Config::HALF_WIDTH);
   // The all characters in str are treated as the same group.
-  void AddPreeditRule(const std::string &input, Config::CharacterForm form);
+  void AddPreeditRule(absl::string_view input, Config::CharacterForm form);
 
-  void AddConversionRule(const std::string &input, Config::CharacterForm form);
+  void AddConversionRule(absl::string_view input, Config::CharacterForm form);
 
   // Loads Default rules.
   void SetDefaultRule();
@@ -119,7 +113,7 @@ class CharacterFormManager {
   void ReloadConfig(const Config &config);
 
   // Utility function: pass character form.
-  static void ConvertWidth(const std::string &input, std::string *output,
+  static void ConvertWidth(absl::string_view input, std::string *output,
                            Config::CharacterForm form);
 
   // Returns form types for given two pair of strings.
@@ -138,9 +132,9 @@ class CharacterFormManager {
   // Ambiguous case:
   //  input1="ABC１２３" input2="ＡＢＣ123"
   //  return false.
-  static bool GetFormTypesFromStringPair(const std::string &input1,
+  static bool GetFormTypesFromStringPair(absl::string_view input1,
                                          FormType *form1,
-                                         const std::string &input2,
+                                         absl::string_view input2,
                                          FormType *form2);
 
   // Returns the singleton instance.
@@ -148,6 +142,8 @@ class CharacterFormManager {
 
  private:
   class Data;
+
+  // TODO(team): Get rid of Singleton.
   friend class Singleton<CharacterFormManager>;
 
   CharacterFormManager();

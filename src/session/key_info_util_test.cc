@@ -81,9 +81,9 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
   PushKey("Ctrl l", &expected);
   std::sort(expected.begin(), expected.end());
 
-  ASSERT_EQ(expected.size(), actual.size());
+  ASSERT_EQ(actual.size(), expected.size());
   for (size_t i = 0; i < expected.size(); ++i) {
-    EXPECT_EQ(expected[i], actual[i]);
+    EXPECT_EQ(actual[i], expected[i]);
   }
 }
 

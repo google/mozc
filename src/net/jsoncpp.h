@@ -35,7 +35,9 @@
 // Mozc basically disables C++ exception.
 #define JSON_USE_EXCEPTION 0
 #endif  // !JSON_USE_EXCEPTION
-#include "third_party/jsoncpp/include/json/json.h"
+
+#include "third_party/jsoncpp/include/json/json.h"  // IWYU pragma: export
+
 #define MOZC_JSONCPP_JSON_H_INCLUDED
 #endif  // !MOZC_JSONCPP_JSON_H_INCLUDED
 

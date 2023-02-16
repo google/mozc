@@ -30,6 +30,14 @@
 #include "ipc/ipc.h"
 
 #include <cstdint>
+#include <memory>
+#include <string>
+
+#include "base/logging.h"
+#include "base/singleton.h"
+#include "base/thread.h"
+#include "ipc/ipc_path_manager.h"
+#include "absl/strings/string_view.h"
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -38,16 +46,6 @@
 #include <signal.h>
 #include <sys/types.h>
 #endif  // OS_WIN
-
-#include <cstdlib>
-#include <memory>
-#include <string>
-
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/singleton.h"
-#include "base/thread.h"
-#include "ipc/ipc_path_manager.h"
 
 namespace mozc {
 
@@ -58,7 +56,7 @@ class IPCServerThread : public Thread {
   IPCServerThread(const IPCServerThread &) = delete;
   IPCServerThread &operator=(const IPCServerThread &) = delete;
   explicit IPCServerThread(IPCServer *server) : server_(server) {}
-  ~IPCServerThread() override {}
+  ~IPCServerThread() override = default;
   void Run() override {
     if (server_ != nullptr) {
       server_->Loop();
@@ -88,11 +86,11 @@ void IPCServer::Wait() {
   }
 }
 
-IPCClientInterface::~IPCClientInterface() {}
+IPCClientInterface::~IPCClientInterface() = default;
 
-IPCClientFactoryInterface::~IPCClientFactoryInterface() {}
+IPCClientFactoryInterface::~IPCClientFactoryInterface() = default;
 
-IPCClientFactory::~IPCClientFactory() {}
+IPCClientFactory::~IPCClientFactory() = default;
 
 IPCClientInterface *IPCClientFactory::NewClient(const std::string &name,
                                                 const std::string &path_name) {
@@ -124,7 +122,7 @@ uint32_t IPCClient::GetServerProcessId() const {
 }
 
 // static
-bool IPCClient::TerminateServer(const std::string &name) {
+bool IPCClient::TerminateServer(const absl::string_view name) {
   IPCClient client(name);
 
   if (!client.Connected()) {

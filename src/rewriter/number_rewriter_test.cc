@@ -173,13 +173,13 @@ TEST_F(NumberRewriterTest, BasicTest) {
   };
 
   constexpr size_t kExpectResultSize = std::size(kExpectResults);
-  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
-    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
+    EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
+    EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
+    EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
   }
   seg->clear_candidates();
 }
@@ -215,7 +215,7 @@ TEST_F(NumberRewriterTest, RequestType) {
     ConversionRequest request;
     request.set_request_type(test_data.request_type_);
     EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
-    EXPECT_EQ(test_data.expected_candidate_number_, seg->candidates_size());
+    EXPECT_EQ(seg->candidates_size(), test_data.expected_candidate_number_);
   }
 }
 
@@ -250,13 +250,13 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   };
 
   constexpr size_t kExpectResultSize = std::size(kExpectResults);
-  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
-    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
+    EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
+    EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
+    EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
   }
 
   seg->clear_candidates();
@@ -276,15 +276,15 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(2, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 2);
 
-  EXPECT_EQ("十五個", seg->candidate(0).value);
-  EXPECT_EQ("十五個", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, "十五個");
+  EXPECT_EQ(seg->candidate(0).content_value, "十五個");
+  EXPECT_EQ(seg->candidate(0).description, "");
 
-  EXPECT_EQ("15個", seg->candidate(1).value);
-  EXPECT_EQ("15個", seg->candidate(1).content_value);
-  EXPECT_EQ("", seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, "15個");
+  EXPECT_EQ(seg->candidate(1).content_value, "15個");
+  EXPECT_EQ(seg->candidate(1).description, "");
   seg->clear_candidates();
 }
 
@@ -308,23 +308,23 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(4, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 4);
 
-  EXPECT_EQ("十五回", seg->candidate(0).value);
-  EXPECT_EQ("十五回", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, "十五回");
+  EXPECT_EQ(seg->candidate(0).content_value, "十五回");
+  EXPECT_EQ(seg->candidate(0).description, "");
 
-  EXPECT_EQ("15回", seg->candidate(1).value);
-  EXPECT_EQ("15回", seg->candidate(1).content_value);
-  EXPECT_EQ("", seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, "15回");
+  EXPECT_EQ(seg->candidate(1).content_value, "15回");
+  EXPECT_EQ(seg->candidate(1).description, "");
 
-  EXPECT_EQ("十五階", seg->candidate(2).value);
-  EXPECT_EQ("十五階", seg->candidate(2).content_value);
-  EXPECT_EQ("", seg->candidate(2).description);
+  EXPECT_EQ(seg->candidate(2).value, "十五階");
+  EXPECT_EQ(seg->candidate(2).content_value, "十五階");
+  EXPECT_EQ(seg->candidate(2).description, "");
 
-  EXPECT_EQ("15階", seg->candidate(3).value);
-  EXPECT_EQ("15階", seg->candidate(3).content_value);
-  EXPECT_EQ("", seg->candidate(3).description);
+  EXPECT_EQ(seg->candidate(3).value, "15階");
+  EXPECT_EQ(seg->candidate(3).content_value, "15階");
+  EXPECT_EQ(seg->candidate(3).description, "");
 
   seg->clear_candidates();
 }
@@ -400,25 +400,25 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ("", seg->candidate(0).value);
-  EXPECT_EQ("", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, "");
+  EXPECT_EQ(seg->candidate(0).content_value, "");
+  EXPECT_EQ(seg->candidate(0).description, "");
 
-  EXPECT_EQ("0", seg->candidate(1).value);
-  EXPECT_EQ("0", seg->candidate(1).content_value);
-  EXPECT_EQ("", seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, "0");
+  EXPECT_EQ(seg->candidate(1).content_value, "0");
+  EXPECT_EQ(seg->candidate(1).description, "");
 
-  EXPECT_EQ("〇", seg->candidate(2).value);
-  EXPECT_EQ("〇", seg->candidate(2).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(2).description);
+  EXPECT_EQ(seg->candidate(2).value, "〇");
+  EXPECT_EQ(seg->candidate(2).content_value, "〇");
+  EXPECT_EQ(seg->candidate(2).description, kKanjiDescription);
 
-  EXPECT_EQ("０", seg->candidate(3).value);
-  EXPECT_EQ("０", seg->candidate(3).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(seg->candidate(3).value, "０");
+  EXPECT_EQ(seg->candidate(3).content_value, "０");
+  EXPECT_EQ(seg->candidate(3).description, kArabicDescription);
 
-  EXPECT_EQ("零", seg->candidate(4).value);
-  EXPECT_EQ("零", seg->candidate(4).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(4).description);
+  EXPECT_EQ(seg->candidate(4).value, "零");
+  EXPECT_EQ(seg->candidate(4).content_value, "零");
+  EXPECT_EQ(seg->candidate(4).description, kOldKanjiDescription);
 
   seg->clear_candidates();
 }
@@ -438,7 +438,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 
   // Number of cahdidates should be maintained
-  EXPECT_EQ(1, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 1);
 
   seg->clear_candidates();
 }
@@ -459,23 +459,23 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(4, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 4);
 
-  EXPECT_EQ("0", seg->candidate(0).value);
-  EXPECT_EQ("0", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, "0");
+  EXPECT_EQ(seg->candidate(0).content_value, "0");
+  EXPECT_EQ(seg->candidate(0).description, "");
 
-  EXPECT_EQ("〇", seg->candidate(1).value);
-  EXPECT_EQ("〇", seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, "〇");
+  EXPECT_EQ(seg->candidate(1).content_value, "〇");
+  EXPECT_EQ(seg->candidate(1).description, kKanjiDescription);
 
-  EXPECT_EQ("０", seg->candidate(2).value);
-  EXPECT_EQ("０", seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(seg->candidate(2).value, "０");
+  EXPECT_EQ(seg->candidate(2).content_value, "０");
+  EXPECT_EQ(seg->candidate(2).description, kArabicDescription);
 
-  EXPECT_EQ("零", seg->candidate(3).value);
-  EXPECT_EQ("零", seg->candidate(3).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(3).description);
+  EXPECT_EQ(seg->candidate(3).value, "零");
+  EXPECT_EQ(seg->candidate(3).content_value, "零");
+  EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
 
   seg->clear_candidates();
 }
@@ -496,23 +496,23 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(4, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 4);
 
-  EXPECT_EQ("00", seg->candidate(0).value);
-  EXPECT_EQ("00", seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, "00");
+  EXPECT_EQ(seg->candidate(0).content_value, "00");
+  EXPECT_EQ(seg->candidate(0).description, "");
 
-  EXPECT_EQ("〇〇", seg->candidate(1).value);
-  EXPECT_EQ("〇〇", seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, "〇〇");
+  EXPECT_EQ(seg->candidate(1).content_value, "〇〇");
+  EXPECT_EQ(seg->candidate(1).description, kKanjiDescription);
 
-  EXPECT_EQ("００", seg->candidate(2).value);
-  EXPECT_EQ("００", seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(seg->candidate(2).value, "００");
+  EXPECT_EQ(seg->candidate(2).content_value, "００");
+  EXPECT_EQ(seg->candidate(2).description, kArabicDescription);
 
-  EXPECT_EQ("零", seg->candidate(3).value);
-  EXPECT_EQ("零", seg->candidate(3).content_value);
-  EXPECT_EQ(kOldKanjiDescription, seg->candidate(3).description);
+  EXPECT_EQ(seg->candidate(3).value, "零");
+  EXPECT_EQ(seg->candidate(3).content_value, "零");
+  EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
 
   seg->clear_candidates();
 }
@@ -556,13 +556,13 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   };
 
   constexpr size_t kExpectResultSize = std::size(kExpectResults);
-  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
-    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
+    EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
+    EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
+    EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
   }
 
   seg->clear_candidates();
@@ -608,13 +608,13 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   };
 
   constexpr size_t kExpectResultSize = std::size(kExpectResults);
-  EXPECT_EQ(kExpectResultSize, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
     SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
-    EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
-    EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
-    EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
+    EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
+    EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
+    EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
   }
 
   seg->clear_candidates();
@@ -641,51 +641,51 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(6, seg->candidates_size());
+  EXPECT_EQ(seg->candidates_size(), 6);
 
-  EXPECT_EQ(input, seg->candidate(0).value);
-  EXPECT_EQ(input, seg->candidate(0).content_value);
-  EXPECT_EQ("", seg->candidate(0).description);
+  EXPECT_EQ(seg->candidate(0).value, input);
+  EXPECT_EQ(seg->candidate(0).content_value, input);
+  EXPECT_EQ(seg->candidate(0).description, "");
 
   // 10^100 as "一〇〇〇〇〇 ... 〇"
   std::string expected2 = "一";
   for (size_t i = 0; i < 100; ++i) {
     expected2 += "〇";
   }
-  EXPECT_EQ(expected2, seg->candidate(1).value);
-  EXPECT_EQ(expected2, seg->candidate(1).content_value);
-  EXPECT_EQ(kKanjiDescription, seg->candidate(1).description);
+  EXPECT_EQ(seg->candidate(1).value, expected2);
+  EXPECT_EQ(seg->candidate(1).content_value, expected2);
+  EXPECT_EQ(seg->candidate(1).description, kKanjiDescription);
 
   // 10^100 as "１０００００ ... ０"
   std::string expected3 = "１";
   for (size_t i = 0; i < 100; ++i) {
     expected3 += "０";
   }
-  EXPECT_EQ(expected3, seg->candidate(2).value);
-  EXPECT_EQ(expected3, seg->candidate(2).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(2).description);
+  EXPECT_EQ(seg->candidate(2).value, expected3);
+  EXPECT_EQ(seg->candidate(2).content_value, expected3);
+  EXPECT_EQ(seg->candidate(2).description, kArabicDescription);
 
   // 10,000, ... ,000
   std::string expected1 = "10";
   for (size_t i = 0; i < 100 / 3; ++i) {
     expected1 += ",000";
   }
-  EXPECT_EQ(expected1, seg->candidate(3).value);
-  EXPECT_EQ(expected1, seg->candidate(3).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(3).description);
+  EXPECT_EQ(seg->candidate(3).value, expected1);
+  EXPECT_EQ(seg->candidate(3).content_value, expected1);
+  EXPECT_EQ(seg->candidate(3).description, kArabicDescription);
 
   // "１０，０００， ... ，０００"
   std::string expected4 = "１０";  // "１０"
   for (size_t i = 0; i < 100 / 3; ++i) {
     expected4 += "，０００";
   }
-  EXPECT_EQ(expected4, seg->candidate(4).value);
-  EXPECT_EQ(expected4, seg->candidate(4).content_value);
-  EXPECT_EQ(kArabicDescription, seg->candidate(4).description);
+  EXPECT_EQ(seg->candidate(4).value, expected4);
+  EXPECT_EQ(seg->candidate(4).content_value, expected4);
+  EXPECT_EQ(seg->candidate(4).description, kArabicDescription);
 
-  EXPECT_EQ("Googol", seg->candidate(5).value);
-  EXPECT_EQ("Googol", seg->candidate(5).content_value);
-  EXPECT_EQ("", seg->candidate(5).description);
+  EXPECT_EQ(seg->candidate(5).value, "Googol");
+  EXPECT_EQ(seg->candidate(5).content_value, "Googol");
+  EXPECT_EQ(seg->candidate(5).description, "");
 
   seg->clear_candidates();
 }
@@ -711,7 +711,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
   }
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
-  EXPECT_NE(0, segments.segments_size());
+  EXPECT_NE(segments.segments_size(), 0);
   int kanji_pos = 0, arabic_pos = 0;
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "三百", &kanji_pos));
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "300", &arabic_pos));
@@ -747,7 +747,7 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   int kanji_pos = 0, old_kanji_pos = 0;
-  EXPECT_NE(0, segments.segments_size());
+  EXPECT_NE(segments.segments_size(), 0);
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "三百", &kanji_pos));
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "参百", &old_kanji_pos));
   EXPECT_LT(kanji_pos, old_kanji_pos);
@@ -785,7 +785,7 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
   // "一" becomes the base candidate, instead of "壱"
   int base_pos = 0;
   EXPECT_TRUE(FindCandidateId(segments.segment(0), "一", &base_pos));
-  EXPECT_EQ(0, base_pos);
+  EXPECT_EQ(base_pos, 0);
 
   // Daiji will be inserted with new correct POS ids.
   int daiji_pos = 0;
@@ -900,12 +900,12 @@ TEST_F(NumberRewriterTest, DuplicateCandidateTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 
@@ -955,8 +955,8 @@ TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
   }
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_GT(segment->candidates_size(), 1);
-  EXPECT_EQ("一", segment->candidate(0).value);
-  EXPECT_EQ("位置", segment->candidate(1).value);
+  EXPECT_EQ(segment->candidate(0).value, "一");
+  EXPECT_EQ(segment->candidate(1).value, "位置");
 }
 
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
@@ -987,7 +987,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   }
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  ASSERT_EQ(2, segments.conversion_segments_size());
+  ASSERT_EQ(segments.conversion_segments_size(), 2);
   const Segment &seg = segments.conversion_segment(0);
   ASSERT_LE(2, seg.candidates_size());
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
@@ -1017,7 +1017,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
   }
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  ASSERT_EQ(1, segments.conversion_segments_size());
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment &seg = segments.conversion_segment(0);
   ASSERT_LE(2, seg.candidates_size());
   bool found_halfwidth = false;
@@ -1027,7 +1027,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
       continue;
     }
     found_halfwidth = true;
-    EXPECT_EQ(3, candidate.consumed_key_size);
+    EXPECT_EQ(candidate.consumed_key_size, 3);
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }

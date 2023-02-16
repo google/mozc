@@ -38,8 +38,10 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/version.h"
+#include "client/client_interface.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -47,6 +49,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace client {
@@ -95,7 +98,7 @@ class TestServerLauncher : public ServerLauncherInterface {
     return start_server_result_;
   }
 
-  bool ForceTerminateServer(const std::string &name) override {
+  bool ForceTerminateServer(const absl::string_view name) override {
     force_terminate_server_called_ = true;
     return force_terminate_server_result_;
   }
@@ -125,7 +128,7 @@ class TestServerLauncher : public ServerLauncherInterface {
     force_terminate_server_called_ = force_terminate_server_called;
   }
 
-  void set_server_program(const std::string &server_path) override {}
+  void set_server_program(const absl::string_view server_path) override {}
 
   const std::string &server_program() const override {
     return placeholder_server_program_path_;
@@ -151,8 +154,8 @@ class TestServerLauncher : public ServerLauncherInterface {
     mock_output.SerializeToString(&response_);
   }
 
-  void set_product_version_after_start_server(const std::string &version) {
-    product_version_after_start_server_ = version;
+  void set_product_version_after_start_server(const absl::string_view version) {
+    product_version_after_start_server_ = std::string(version);
   }
 
  private:
@@ -910,7 +913,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
     return start_server_result_;
   }
 
-  bool ForceTerminateServer(const std::string &name) override {
+  bool ForceTerminateServer(const absl::string_view name) override {
     force_terminate_server_called_ = true;
     return force_terminate_server_result_;
   }
@@ -919,7 +922,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override {}
 
-  void set_server_program(const std::string &server_path) override {}
+  void set_server_program(const absl::string_view server_path) override {}
 
   void set_restricted(bool restricted) override {}
 

@@ -176,7 +176,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
     AddSegment("ー", "test", &segments);
     AddSegment(">", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
-    EXPECT_EQ(2, segments.segments_size());
+    EXPECT_EQ(segments.segments_size(), 2);
     EXPECT_TRUE(HasCandidate(segments, 0, "―"));
     EXPECT_FALSE(HasCandidate(segments, 0, "→"));
     EXPECT_TRUE(HasCandidate(segments, 1, "〉"));
@@ -215,7 +215,7 @@ TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
     Segments segments;
     AddSegment("したつき", "test", &segments);
     EXPECT_TRUE(symbol_rewriter.RewriteEachCandidate(request, &segments));
-    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(segments.segments_size(), 1);
     EXPECT_TRUE(
         HasCandidateAndDescription(segments, 0, "₍", "下付き文字(始め丸括弧)"));
   }
@@ -275,7 +275,7 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 5);
     // Full width should be inserted with high ranking.
-    EXPECT_EQ("％", segments.segment(0).candidate(1).value);
+    EXPECT_EQ(segments.segment(0).candidate(1).value, "％");
   }
 }
 
@@ -299,9 +299,9 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
     EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
     EXPECT_GT(segments.segment(0).candidates_size(), 5);  // Symbols were added
     // Should keep top candidates.
-    EXPECT_EQ("app", segments.segment(0).candidate(0).value);
-    EXPECT_EQ("apple", segments.segment(0).candidate(1).value);
-    EXPECT_EQ("align", segments.segment(0).candidate(2).value);
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "app");
+    EXPECT_EQ(segments.segment(0).candidate(1).value, "apple");
+    EXPECT_EQ(segments.segment(0).candidate(2).value, "align");
   }
 }
 
@@ -319,11 +319,11 @@ TEST_F(SymbolRewriterTest, SetKey) {
   candidate->value = "strange value";
   candidate->content_key = "strange key";
   candidate->content_value = "strange value";
-  EXPECT_EQ(1, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 1);
   EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
   EXPECT_GT(segment->candidates_size(), 1);
   for (size_t i = 1; i < segment->candidates_size(); ++i) {
-    EXPECT_EQ(kKey, segment->candidate(i).key);
+    EXPECT_EQ(segment->candidate(i).key, kKey);
   }
 }
 
@@ -335,12 +335,12 @@ TEST_F(SymbolRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter.capability(convreq));
+    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 
@@ -363,20 +363,20 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   EXPECT_LE(2, segment->candidates_size());
 
   const Segment::Candidate &cand0 = segment->candidate(0);
-  EXPECT_EQ(" ", cand0.key);
-  EXPECT_EQ(" ", cand0.value);
-  EXPECT_EQ(" ", cand0.content_key);
-  EXPECT_EQ(" ", cand0.content_value);
-  ASSERT_EQ(1, cand0.inner_segment_boundary.size());
-  EXPECT_EQ(Segment::Candidate::EncodeLengths(1, 1, 1, 1),
-            cand0.inner_segment_boundary[0]);
+  EXPECT_EQ(cand0.key, " ");
+  EXPECT_EQ(cand0.value, " ");
+  EXPECT_EQ(cand0.content_key, " ");
+  EXPECT_EQ(cand0.content_value, " ");
+  ASSERT_EQ(cand0.inner_segment_boundary.size(), 1);
+  EXPECT_EQ(cand0.inner_segment_boundary[0],
+            Segment::Candidate::EncodeLengths(1, 1, 1, 1));
 
   const char *kFullWidthSpace = "　";
   const Segment::Candidate &cand1 = segment->candidate(1);
-  EXPECT_EQ(" ", cand1.key);
-  EXPECT_EQ(kFullWidthSpace, cand1.value);
-  EXPECT_EQ(" ", cand1.content_key);
-  EXPECT_EQ(kFullWidthSpace, cand1.content_value);
+  EXPECT_EQ(cand1.key, " ");
+  EXPECT_EQ(cand1.value, kFullWidthSpace);
+  EXPECT_EQ(cand1.content_key, " ");
+  EXPECT_EQ(cand1.content_value, kFullWidthSpace);
   EXPECT_TRUE(cand1.inner_segment_boundary.empty());
 }
 

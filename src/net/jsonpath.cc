@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <sstream>
@@ -39,9 +40,9 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/port.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace net {
@@ -58,7 +59,7 @@ struct JsonPathNode {
 
   static constexpr int kSliceUndef = std::numeric_limits<int32_t>::max();
 
-  static bool IsUndef(int n) { return n == kSliceUndef; }
+  static bool IsUndef(const int n) { return n == kSliceUndef; }
 
   std::string DebugString() const {
     std::ostringstream os;
@@ -73,10 +74,10 @@ struct JsonPathNode {
         slice_start(0),
         slice_end(0),
         slice_step(0) {}
-  ~JsonPathNode() {}
+  ~JsonPathNode() = default;
 };
 
-bool GetDigit(const std::string &str, int *output) {
+bool GetDigit(const absl::string_view str, int *const output) {
   DCHECK(output);
   if (str.empty()) {
     return false;
@@ -103,7 +104,7 @@ bool GetDigit(const std::string &str, int *output) {
   return true;
 }
 
-bool GetSliceDigit(const std::string &str, int *output) {
+bool GetSliceDigit(const absl::string_view str, int *const output) {
   if (str.empty()) {
     *output = JsonPathNode::kSliceUndef;
     return true;
@@ -111,10 +112,10 @@ bool GetSliceDigit(const std::string &str, int *output) {
   return GetDigit(str, output);
 }
 
-bool GetQuotedString(const std::string &str, const char c,
-                     std::string *output) {
+bool GetQuotedString(const absl::string_view str, const char c,
+                     std::string *const output) {
   if (str.size() >= 2 && str[0] == c && str[str.size() - 1] == c) {
-    *output = str.substr(1, str.size() - 2);
+    *output = std::string(str.substr(1, str.size() - 2));
     return true;
   }
   return false;
@@ -124,7 +125,7 @@ typedef std::vector<JsonPathNode> JsonPathNodes;
 
 class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
  public:
-  bool Parse(const std::string &jsonpath) {
+  bool Parse(const absl::string_view jsonpath) {
     clear();
     if (jsonpath.size() <= 1 || jsonpath[0] != '$') {
       LOG(ERROR) << "Not starts with $";
@@ -207,7 +208,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
  private:
   enum NodesType { IN_BRACKET, OUT_BRACKET };
 
-  bool AddNodes(const std::string &nodes_exp, NodesType nodes_type) {
+  bool AddNodes(const absl::string_view nodes_exp, const NodesType nodes_type) {
     if (nodes_exp.empty()) {
       return false;
     }
@@ -219,8 +220,8 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
     if (nodes_type == OUT_BRACKET) {
       JsonPathNode node;
       node.type = JsonPathNode::OBJECT_INDEX;
-      node.object_index = nodes_exp;
-      nodes->push_back(node);
+      node.object_index = std::string(nodes_exp);
+      nodes->emplace_back(node);
     } else if (nodes_type == IN_BRACKET) {
       std::vector<std::string> nodes_exps =
           absl::StrSplit(nodes_exp, ',', absl::SkipEmpty());
@@ -277,7 +278,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
 //  which matches to |nodes|.
 void CollectValuesRecursively(const Json::Value &value,
                               const JsonPathNodes &nodes,
-                              std::vector<const Json::Value *> *output) {
+                              std::vector<const Json::Value *> *const output) {
   DCHECK(output);
   for (size_t node_index = 0; node_index < nodes.size(); ++node_index) {
     if (nodes[node_index].type != JsonPathNode::OBJECT_INDEX) {
@@ -285,9 +286,10 @@ void CollectValuesRecursively(const Json::Value &value,
     }
     if (value.isObject()) {
       const Json::Value::Members members = value.getMemberNames();
-      const std::string &object_index = nodes[node_index].object_index;
-      if (object_index != "*" && value.isMember(object_index)) {
-        output->push_back(&value[object_index]);
+      const absl::string_view object_index = nodes[node_index].object_index;
+      if (object_index != "*" &&
+          value.isMember(object_index.begin(), object_index.end())) {
+        output->push_back(value.find(object_index.begin(), object_index.end()));
       }
       for (size_t i = 0; i < members.size(); ++i) {
         const Json::Value &v = value[members[i]];
@@ -305,8 +307,8 @@ void CollectValuesRecursively(const Json::Value &value,
 }
 
 void CollectNodesFromJson(const Json::Value &value,
-                          const JsonPathExp &jsonpathexp, size_t depth,
-                          std::vector<const Json::Value *> *output) {
+                          const JsonPathExp &jsonpathexp, const size_t depth,
+                          std::vector<const Json::Value *> *const output) {
   if (depth >= jsonpathexp.size()) {
     output->push_back(&value);
     return;
@@ -381,8 +383,8 @@ void CollectNodesFromJson(const Json::Value &value,
 }  // namespace
 
 // static
-bool JsonPath::Parse(const Json::Value &root, const std::string &jsonpath,
-                     std::vector<const Json::Value *> *output) {
+bool JsonPath::Parse(const Json::Value &root, const absl::string_view jsonpath,
+                     std::vector<const Json::Value *> *const output) {
   JsonPathExp jsonpathexp;
   if (!jsonpathexp.Parse(jsonpath)) {
     LOG(WARNING) << "Parsing JsonPath error: " << jsonpath;

@@ -34,6 +34,8 @@
 #include <vector>
 
 #include "testing/gunit.h"
+#include "absl/algorithm/container.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -280,13 +282,9 @@ TEST(TrieTest, UTF8LongestMatch) {
   EXPECT_FALSE(trie.LongestMatch("お", &value, &key_length));
 }
 
-bool HasData(const std::vector<std::string> &values, const std::string &value) {
-  for (size_t i = 0; i < values.size(); ++i) {
-    if (values[i] == value) {
-      return true;
-    }
-  }
-  return false;
+bool HasData(const std::vector<std::string> &values,
+             const absl::string_view value) {
+  return absl::c_find(values, value) != values.end();
 }
 
 TEST(TrieTest, LookUpPredictiveAll) {

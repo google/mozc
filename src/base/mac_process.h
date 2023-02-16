@@ -32,15 +32,17 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 #ifdef __APPLE__
 namespace mozc {
 class MacProcess {
  public:
   // Open a browser in mac way using NSFoundation framework.
-  static bool OpenBrowserForMac(const std::string &url);
+  static bool OpenBrowserForMac(absl::string_view url);
 
   // Open an application in mac way using NSWorkspace.
-  static bool OpenApplication(const std::string &path);
+  static bool OpenApplication(absl::string_view path);
 
   // Open GoogleJapaneseInputTool.app as the specified tool name.
   static bool LaunchMozcTool(const std::string &tool_name);

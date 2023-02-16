@@ -103,6 +103,7 @@ mozc_cc_library(
         "//base:version",
         "//base:win_util",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
@@ -193,9 +194,9 @@ mozc_cc_binary(
         ":ipc",
         "//base:init_mozc_buildtool",
         "//base:logging",
-        "//base:port",
-        "//base:thread",
+        "//base:thread2",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -268,7 +269,6 @@ mozc_cc_library(
     textual_hdrs = ["ipc.h"],
     visibility = ["//visibility:private"],
     deps = [
-        "//base:port",
         "//base:scoped_handle",
         "@com_google_absl//absl/strings",
     ],

@@ -49,11 +49,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-exports_files([
-    "client.h",
-    "util.h",
-])
-
 # Test suite needs to have exact test names,
 # because android tests are tagged "manual".
 test_suite(
@@ -519,11 +514,9 @@ mozc_cc_library(
     hdrs = ["number_util.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":double_array_def",
         ":japanese_util",
         ":japanese_util_rule",
         ":logging",
-        ":port",
         ":util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -537,8 +530,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":number_util",
-        ":port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -562,6 +555,7 @@ mozc_cc_test(
     deps = [
         ":trie",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -632,8 +626,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":bitarray",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -688,7 +682,6 @@ mozc_cc_library(
         ":file_stream",
         ":logging",
         ":mmap",
-        ":port",
         ":scoped_handle",
         ":singleton",
         ":util",
@@ -809,14 +802,15 @@ mozc_cc_library(
 
 mozc_objc_library(
     name = "mac_process",
-    srcs = mozc_select(macos = ["mac_process.mm"]),
-    hdrs = mozc_select(macos = ["mac_process.h"]),
+    srcs = ["mac_process.mm"],
+    hdrs = ["mac_process.h"],
     sdk_frameworks = ["Cocoa"],
     deps = [
         ":const",
         ":logging",
         ":mac_util",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1219,7 +1213,7 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
-        ":version",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1232,6 +1226,7 @@ mozc_cc_test(
         ":url",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1286,6 +1281,30 @@ mozc_cc_library(
     ],
 )
 
+# These sdk_framework targets are for cross-platform builds.
+# Carbon and UIKit are only available in one of the platforms.
+# TODO(yuryu): split ios code from mac_util so we don't need these.
+
+mozc_objc_library(
+    name = "Carbon",
+    sdk_frameworks = ["Carbon"],
+    tags = [
+        "manual",
+        "notap",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+mozc_objc_library(
+    name = "UIKit",
+    sdk_frameworks = ["UIKit"],
+    tags = [
+        "manual",
+        "notap",
+    ],
+    visibility = ["//visibility:private"],
+)
+
 mozc_objc_library(
     name = "mac_util",
     srcs = [
@@ -1294,9 +1313,11 @@ mozc_objc_library(
     ],
     hdrs = ["mac_util.h"],
     sdk_frameworks = [
+        "CoreFoundation",
         "CoreGraphics",
-        "CoreServices",
+        "Foundation",
         "IOKit",
+        "launch",
     ],
     visibility = ["//:__subpackages__"],
     deps = [
@@ -1305,15 +1326,20 @@ mozc_objc_library(
         ":port",
         ":singleton",
         "@com_google_absl//absl/strings",
-    ],
+    ] + mozc_select(
+        # Split iOS code into a separate library.
+        ios = [":UIKit"],
+        macos = [":Carbon"],
+    ),
 )
 
 mozc_objc_test(
     name = "mac_util_test",
+    size = "small",
     srcs = ["mac_util_test.mm"],
     deps = [
         ":mac_util",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
     ],
 )
 
@@ -1324,12 +1350,15 @@ mozc_cc_binary(
         "mac_util.h",
         "mac_util_main.cc",
     ],
+    tags = [
+        "manual",
+        "notap",
+    ],
     deps = [
         ":init_mozc",
         ":port",
         ":util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
     ] + mozc_select(ios = [":mac_util"]),
 )
 
@@ -1445,5 +1474,29 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_library(
+    name = "random",
+    srcs = ["random.cc"],
+    hdrs = ["random.h"],
+    deps = [
+        ":util",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/random",
+    ],
+)
+
+mozc_cc_test(
+    name = "random_test",
+    size = "small",
+    srcs = ["random_test.cc"],
+    deps = [
+        ":random",
+        ":util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/random",
     ],
 )

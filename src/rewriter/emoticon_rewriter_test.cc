@@ -150,12 +150,12 @@ TEST_F(EmoticonRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 

@@ -36,7 +36,8 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "base/version.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -54,14 +55,14 @@ class UrlImpl {
  public:
   UrlImpl() { InitUninstallationSurveyUrl(); }
 
-  bool GetUninstallationSurveyUrl(const std::string &version,
+  bool GetUninstallationSurveyUrl(const absl::string_view version,
                                   std::string *url) const {
     DCHECK(url);
     *url = uninstallation_survey_url_;
     if (!version.empty()) {
-      *url += "&";
-      std::vector<std::pair<std::string, std::string> > params;
-      params.push_back(std::make_pair(kSurveyVersionEntry, version));
+      absl::StrAppend(url, "&");
+      std::vector<std::pair<std::string, std::string>> params;
+      params.emplace_back(kSurveyVersionEntry, version);
       Util::AppendCgiParams(params, url);
     }
     return true;
@@ -85,7 +86,7 @@ class UrlImpl {
 };
 }  // namespace
 
-bool Url::GetUninstallationSurveyUrl(const std::string &version,
+bool Url::GetUninstallationSurveyUrl(const absl::string_view version,
                                      std::string *url) {
   return Singleton<UrlImpl>::get()->GetUninstallationSurveyUrl(version, url);
 }

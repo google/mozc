@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -50,6 +49,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc {
@@ -296,64 +296,6 @@ TEST(UtilTest, SplitIterator_MultiDelimiter_AllowEmpty) {
     EXPECT_EQ(iter.Get(), "");
     iter.Next();
     EXPECT_TRUE(iter.Done());
-  }
-}
-
-TEST(UtilTest, StripWhiteSpaces) {
-  // basic scenario.
-  {
-    const std::string input = "  foo   ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // no space means just copy.
-  {
-    const std::string input = "foo";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // tabs and linebreaks are also spaces.
-  {
-    const std::string input = " \tfoo\n";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo");
-  }
-
-  // spaces in the middle remains.
-  {
-    const std::string input = " foo bar baz ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "foo bar baz");
-  }
-
-  // all spaces means clear out output.
-  {
-    const std::string input = " \v \r ";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_TRUE(output.empty());
-  }
-
-  // empty input.
-  {
-    const std::string input = "";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_TRUE(output.empty());
-  }
-
-  // one character.
-  {
-    const std::string input = "a";
-    std::string output;
-    Util::StripWhiteSpaces(input, &output);
-    EXPECT_EQ(output, "a");
   }
 }
 
@@ -659,7 +601,7 @@ TEST(UtilTest, CodepointsToUtf8) {
   }
 }
 
-void VerifyUtf8ToUcs4(const std::string &text, char32_t expected_ucs4,
+void VerifyUtf8ToUcs4(absl::string_view text, char32_t expected_ucs4,
                       size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
@@ -1751,19 +1693,6 @@ TEST(UtilTest, GetRandomSequence) {
   const auto first = buf[0];
   EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
                            [first](char c) { return c != first; }));
-}
-
-TEST(UtilTest, GetRandomAsciiSequence) {
-  Util::GetRandomAsciiSequence({});
-
-  // Sufficiently large so it's highly unlikely to have only one value.
-  std::array<char, 1024> buf = {};
-  Util::GetRandomAsciiSequence(absl::MakeSpan(buf));
-  const auto first = buf[0];
-  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
-                           [first](char c) { return c != first; }));
-  EXPECT_TRUE(std::all_of(buf.begin(), buf.end(),
-                          [](char c) -> bool { return isprint(c); }));
 }
 
 }  // namespace mozc

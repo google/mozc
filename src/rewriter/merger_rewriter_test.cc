@@ -119,20 +119,18 @@ TEST_F(MergerRewriterTest, Rewrite) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "a.Rewrite();"
-      "b.Rewrite();"
-      "c.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Rewrite();"
+            "b.Rewrite();"
+            "c.Rewrite();");
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "a.Rewrite();"
-      "b.Rewrite();"
-      "c.Rewrite();"
-      "d.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Rewrite();"
+            "b.Rewrite();"
+            "c.Rewrite();"
+            "d.Rewrite();");
 }
 
 TEST_F(MergerRewriterTest, RewriteSuggestion) {
@@ -145,22 +143,22 @@ TEST_F(MergerRewriterTest, RewriteSuggestion) {
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", true, RewriterInterface::SUGGESTION));
 
-  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
   Segment *segment = segments.push_back_segment();
-  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
 
-  EXPECT_EQ(0, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 0);
   segment->push_back_candidate();
   segment->push_back_candidate();
   segment->push_back_candidate();
   segment->push_back_candidate();
-  EXPECT_EQ(4, segment->candidates_size());
-  EXPECT_EQ(3, request.config().suggestions_size());
+  EXPECT_EQ(segment->candidates_size(), 4);
+  EXPECT_EQ(request.config().suggestions_size(), 3);
 
   EXPECT_TRUE(merger.Rewrite(request, &segments));
-  EXPECT_EQ("a.Rewrite();", call_result);
+  EXPECT_EQ(call_result, "a.Rewrite();");
 
-  EXPECT_EQ(3, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 3);
 }
 
 TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
@@ -180,23 +178,23 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", true, RewriterInterface::SUGGESTION));
 
-  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
   Segment *segment = segments.push_back_segment();
-  EXPECT_EQ(1, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
 
-  EXPECT_EQ(0, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 0);
   segment->push_back_candidate();
   segment->push_back_candidate();
   segment->push_back_candidate();
   segment->push_back_candidate();
-  EXPECT_EQ(4, segment->candidates_size());
-  EXPECT_EQ(3, request.config().suggestions_size());
+  EXPECT_EQ(segment->candidates_size(), 4);
+  EXPECT_EQ(request.config().suggestions_size(), 3);
 
   EXPECT_TRUE(merger.Rewrite(request, &segments));
-  EXPECT_EQ("a.Rewrite();", call_result);
+  EXPECT_EQ(call_result, "a.Rewrite();");
 
   // If mixed_conversion is true, the suggestions are not deleted.
-  EXPECT_EQ(4, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 4);
 }
 
 TEST_F(MergerRewriterTest, RewriteCheckTest) {
@@ -227,36 +225,32 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
 
   request.set_request_type(ConversionRequest::PREDICTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "c.Rewrite();"
-      "d.Rewrite();"
-      "e.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "c.Rewrite();"
+            "d.Rewrite();"
+            "e.Rewrite();");
   call_result.clear();
 
   request.set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "b.Rewrite();"
-      "e.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "b.Rewrite();"
+            "e.Rewrite();");
   call_result.clear();
 
   request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "b.Rewrite();"
-      "e.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "b.Rewrite();"
+            "e.Rewrite();");
   call_result.clear();
 
   request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
-  EXPECT_EQ(
-      "c.Rewrite();"
-      "d.Rewrite();"
-      "e.Rewrite();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "c.Rewrite();"
+            "d.Rewrite();"
+            "e.Rewrite();");
   call_result.clear();
 }
 
@@ -267,20 +261,18 @@ TEST_F(MergerRewriterTest, Focus) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Focus(nullptr, 0, 0));
-  EXPECT_EQ(
-      "a.Focus();"
-      "b.Focus();"
-      "c.Focus();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Focus();"
+            "b.Focus();"
+            "c.Focus();");
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Focus(nullptr, 0, 0));
-  EXPECT_EQ(
-      "a.Focus();"
-      "b.Focus();"
-      "c.Focus();"
-      "d.Focus();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Focus();"
+            "b.Focus();"
+            "c.Focus();"
+            "d.Focus();");
 }
 
 TEST_F(MergerRewriterTest, Finish) {
@@ -291,11 +283,10 @@ TEST_F(MergerRewriterTest, Finish) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   merger.Finish(request, nullptr);
-  EXPECT_EQ(
-      "a.Finish();"
-      "b.Finish();"
-      "c.Finish();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Finish();"
+            "b.Finish();"
+            "c.Finish();");
 }
 
 TEST_F(MergerRewriterTest, Sync) {
@@ -305,20 +296,18 @@ TEST_F(MergerRewriterTest, Sync) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Sync());
-  EXPECT_EQ(
-      "a.Sync();"
-      "b.Sync();"
-      "c.Sync();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Sync();"
+            "b.Sync();"
+            "c.Sync();");
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Sync());
-  EXPECT_EQ(
-      "a.Sync();"
-      "b.Sync();"
-      "c.Sync();"
-      "d.Sync();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Sync();"
+            "b.Sync();"
+            "c.Sync();"
+            "d.Sync();");
 }
 
 TEST_F(MergerRewriterTest, Reload) {
@@ -328,20 +317,18 @@ TEST_F(MergerRewriterTest, Reload) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Reload());
-  EXPECT_EQ(
-      "a.Reload();"
-      "b.Reload();"
-      "c.Reload();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Reload();"
+            "b.Reload();"
+            "c.Reload();");
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Reload());
-  EXPECT_EQ(
-      "a.Reload();"
-      "b.Reload();"
-      "c.Reload();"
-      "d.Reload();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Reload();"
+            "b.Reload();"
+            "c.Reload();"
+            "d.Reload();");
 }
 
 TEST_F(MergerRewriterTest, Clear) {
@@ -351,20 +338,18 @@ TEST_F(MergerRewriterTest, Clear) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
   merger.Clear();
-  EXPECT_EQ(
-      "a.Clear();"
-      "b.Clear();"
-      "c.Clear();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Clear();"
+            "b.Clear();"
+            "c.Clear();");
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   merger.Clear();
-  EXPECT_EQ(
-      "a.Clear();"
-      "b.Clear();"
-      "c.Clear();"
-      "d.Clear();",
-      call_result);
+  EXPECT_EQ(call_result,
+            "a.Clear();"
+            "b.Clear();"
+            "c.Clear();"
+            "d.Clear();");
 }
 
 }  // namespace

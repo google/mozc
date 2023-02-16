@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_H_
 #define MOZC_SESSION_SESSION_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
@@ -39,32 +40,19 @@
 
 #include "base/port.h"
 #include "composer/composer.h"
+#include "composer/table.h"
+#include "engine/engine_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "session/internal/ime_context.h"
+#include "session/internal/keymap.h"
 #include "session/session_interface.h"
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
-namespace commands {
-class ApplicationInfo;
-class Capability;
-class Command;
-class Input;
-class KeyEvent;
-}  // namespace commands
-
-namespace composer {
-class Table;
-}  // namespace composer
-
-namespace keymap {
-class KeyMapManager;
-}  // namespace keymap
-
-class EngineInterface;
-
 namespace session {
-class ImeContext;
 
 class Session : public SessionInterface {
  public:
@@ -243,7 +231,7 @@ class Session : public SessionInterface {
 
   // Send a command to the composer to append a special string.
   bool SendComposerCommand(
-      const mozc::composer::Composer::InternalCommand composer_command,
+      mozc::composer::Composer::InternalCommand composer_command,
       mozc::commands::Command *command);
 
   bool ReportBug(mozc::commands::Command *command);

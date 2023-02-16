@@ -30,21 +30,24 @@
 #include "config/character_form_manager.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace config {
@@ -65,14 +68,14 @@ class CharacterFormManagerImpl {
       delete;
   virtual ~CharacterFormManagerImpl();
 
-  Config::CharacterForm GetCharacterForm(const std::string &str) const;
+  Config::CharacterForm GetCharacterForm(absl::string_view str) const;
 
-  void SetCharacterForm(const std::string &str, Config::CharacterForm form);
-  void GuessAndSetCharacterForm(const std::string &str);
+  void SetCharacterForm(absl::string_view str, Config::CharacterForm form);
+  void GuessAndSetCharacterForm(absl::string_view str);
 
-  void ConvertString(const std::string &str, std::string *output) const;
+  void ConvertString(absl::string_view str, std::string *output) const;
 
-  bool ConvertStringWithAlternative(const std::string &str, std::string *output,
+  bool ConvertStringWithAlternative(absl::string_view str, std::string *output,
                                     std::string *alternative_output) const;
 
   // clear setting
@@ -86,7 +89,7 @@ class CharacterFormManagerImpl {
 
   // Note that rule is MERGED.
   // Call Clear() first if you want to set rule from scratch
-  void AddRule(const std::string &key, Config::CharacterForm form);
+  void AddRule(absl::string_view key, Config::CharacterForm form);
 
   void set_storage(LruStorage *storage) { storage_ = storage; }
 
@@ -107,10 +110,10 @@ class CharacterFormManagerImpl {
   //             for period = HALF_WIDTH
   //  this will be "３.１４" and it is not consistent
   //  so this function will return false
-  bool TryConvertStringWithPreference(const std::string &str,
+  bool TryConvertStringWithPreference(absl::string_view str,
                                       std::string *output) const;
 
-  void ConvertStringAlternative(const std::string &str,
+  void ConvertStringAlternative(absl::string_view str,
                                 std::string *output) const;
 
   LruStorage *storage_;
@@ -191,7 +194,7 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
 // "&" -> "&"                (Symbol is used as it is)
 // "ほげほげ" -> 0x0000      (Unknown)
 // "𠮟"       -> 0x0000      (Non BMP character is also Unknown)
-uint16_t GetNormalizedCharacter(const std::string &str) {
+uint16_t GetNormalizedCharacter(const absl::string_view str) {
   const Util::ScriptType type = Util::GetScriptType(str);
   uint16_t ucs2 = 0x0000;
   switch (type) {
@@ -226,29 +229,34 @@ uint16_t GetNormalizedCharacter(const std::string &str) {
   return ucs2;
 }
 
-void ConvertToAlternative(const std::string &input, std::string *output,
-                          Util::FormType form, Util::ScriptType type) {
+std::string ConvertToAlternative(const absl::string_view input,
+                                 Util::FormType form, Util::ScriptType type) {
+  std::string output;
   switch (form) {
     case Util::FULL_WIDTH:
       if (type == Util::KATAKANA ||
           Util::IsFullWidthSymbolInHalfWidthKatakana(input)) {
-        return japanese_util::HalfWidthToFullWidth(input, output);
+        japanese_util::HalfWidthToFullWidth(input, &output);
+      } else {
+        japanese_util::FullWidthToHalfWidth(input, &output);
       }
-      return japanese_util::FullWidthToHalfWidth(input, output);
+      break;
     case Util::HALF_WIDTH:
-      return japanese_util::HalfWidthToFullWidth(input, output);
+      japanese_util::HalfWidthToFullWidth(input, &output);
+      break;
     default:
-      *output = input;
+      output = std::string(input);
   }
+  return output;
 }
 
 CharacterFormManagerImpl::CharacterFormManagerImpl()
     : storage_(nullptr), require_consistent_conversion_(false) {}
 
-CharacterFormManagerImpl::~CharacterFormManagerImpl() {}
+CharacterFormManagerImpl::~CharacterFormManagerImpl() = default;
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
-    const std::string &str) const {
+    const absl::string_view str) const {
   const uint16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
     return Config::NO_CONVERSION;
@@ -275,7 +283,7 @@ void CharacterFormManagerImpl::ClearHistory() {
 
 // TODO(taku): need to chunk str
 void CharacterFormManagerImpl::GuessAndSetCharacterForm(
-    const std::string &str) {
+    const absl::string_view str) {
   const Util::FormType form = Util::GetFormType(str);
   if (form == Util::FULL_WIDTH) {
     SetCharacterForm(str, Config::FULL_WIDTH);
@@ -288,7 +296,7 @@ void CharacterFormManagerImpl::GuessAndSetCharacterForm(
   }
 }
 
-void CharacterFormManagerImpl::SetCharacterForm(const std::string &str,
+void CharacterFormManagerImpl::SetCharacterForm(const absl::string_view str,
                                                 Config::CharacterForm form) {
   const uint16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
@@ -357,13 +365,13 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
   VLOG(2) << ucs2 << " is stored to " << kFileName << " as " << form;
 }
 
-void CharacterFormManagerImpl::ConvertString(const std::string &str,
+void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
                                              std::string *output) const {
   ConvertStringWithAlternative(str, output, nullptr);
 }
 
 bool CharacterFormManagerImpl::TryConvertStringWithPreference(
-    const std::string &str, std::string *output) const {
+    const absl::string_view str, std::string *output) const {
   DCHECK(output);
   const char *begin = str.data();
   const char *end = begin + str.size();
@@ -422,10 +430,9 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
 }
 
 void CharacterFormManagerImpl::ConvertStringAlternative(
-    const std::string &str, std::string *output) const {
+    const absl::string_view str, std::string *output) const {
   DCHECK(output);
-  const char *begin = str.c_str();
-  const char *end = str.c_str() + str.size();
+  auto begin = str.begin(), end = str.end();
   Util::FormType prev_form = Util::UNKNOWN_FORM;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
 
@@ -448,10 +455,8 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
     }
 
     // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (begin != str.c_str() && prev_form != form) {
-      std::string tmp;
-      ConvertToAlternative(buf, &tmp, prev_form, prev_type);
-      *output += tmp;
+    if (begin != str.begin() && prev_form != form) {
+      absl::StrAppend(output, ConvertToAlternative(buf, prev_form, prev_type));
       buf.clear();
     }
 
@@ -462,14 +467,12 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
   }
 
   if (!buf.empty()) {
-    std::string tmp;
-    ConvertToAlternative(buf, &tmp, prev_form, prev_type);
-    *output += tmp;
+    absl::StrAppend(output, ConvertToAlternative(buf, prev_form, prev_type));
   }
 }
 
 bool CharacterFormManagerImpl::ConvertStringWithAlternative(
-    const std::string &str, std::string *output,
+    const absl::string_view str, std::string *output,
     std::string *alternative_output) const {
   // If require_consistent_conversion_ is true,
   // do not convert to inconsistent form string.
@@ -477,7 +480,7 @@ bool CharacterFormManagerImpl::ConvertStringWithAlternative(
   output->clear();
   if (!TryConvertStringWithPreference(str, output) &&
       require_consistent_conversion_) {
-    *output = str;
+    *output = std::string(str);
   }
 
   if (alternative_output != nullptr) {
@@ -494,10 +497,9 @@ void CharacterFormManagerImpl::Clear() {
   group_table_.clear();
 }
 
-void CharacterFormManagerImpl::AddRule(const std::string &key,
+void CharacterFormManagerImpl::AddRule(const absl::string_view key,
                                        Config::CharacterForm form) {
-  const char *begin = key.c_str();
-  const char *end = key.c_str() + key.size();
+  auto begin = key.begin(), end = key.end();
 
   std::vector<uint16_t> group;
   while (begin < end) {
@@ -554,7 +556,7 @@ void CharacterFormManagerImpl::AddRule(const std::string &key,
 class CharacterFormManager::Data {
  public:
   Data();
-  ~Data() {}
+  ~Data() = default;
 
   CharacterFormManagerImpl *GetPreeditManager() { return preedit_.get(); }
   CharacterFormManagerImpl *GetConversionManager() { return conversion_.get(); }
@@ -587,13 +589,13 @@ CharacterFormManager::CharacterFormManager() : data_(new Data) {
   ReloadConfig(config);
 }
 
-CharacterFormManager::~CharacterFormManager() {}
+CharacterFormManager::~CharacterFormManager() = default;
 
 void CharacterFormManager::ReloadConfig(const Config &config) {
   Clear();
   if (config.character_form_rules_size() > 0) {
     for (size_t i = 0; i < config.character_form_rules_size(); ++i) {
-      const std::string &group = config.character_form_rules(i).group();
+      const absl::string_view group = config.character_form_rules(i).group();
       const Config::CharacterForm preedit_form =
           config.character_form_rules(i).preedit_character_form();
       const Config::CharacterForm conversion_form =
@@ -606,51 +608,52 @@ void CharacterFormManager::ReloadConfig(const Config &config) {
   }
 }
 
-void CharacterFormManager::ConvertWidth(const std::string &input,
+void CharacterFormManager::ConvertWidth(const absl::string_view input,
                                         std::string *output,
                                         Config::CharacterForm form) {
-  if (form == Config::FULL_WIDTH) {
-    japanese_util::HalfWidthToFullWidth(input, output);
-    return;
-  } else if (form == Config::HALF_WIDTH) {
-    japanese_util::FullWidthToHalfWidth(input, output);
-    return;
+  switch (form) {
+    case Config::FULL_WIDTH:
+      japanese_util::HalfWidthToFullWidth(input, output);
+      break;
+    case Config::HALF_WIDTH:
+      japanese_util::FullWidthToHalfWidth(input, output);
+      break;
+    default:
+      *output = std::string(input);
   }
-
-  *output = input;
 }
 
-void CharacterFormManager::ConvertPreeditString(const std::string &input,
+void CharacterFormManager::ConvertPreeditString(const absl::string_view input,
                                                 std::string *output) const {
   data_->GetPreeditManager()->ConvertString(input, output);
 }
 
-void CharacterFormManager::ConvertConversionString(const std::string &input,
-                                                   std::string *output) const {
+void CharacterFormManager::ConvertConversionString(
+    const absl::string_view input, std::string *output) const {
   data_->GetConversionManager()->ConvertString(input, output);
 }
 
 bool CharacterFormManager::ConvertPreeditStringWithAlternative(
-    const std::string &input, std::string *output,
+    const absl::string_view input, std::string *output,
     std::string *alternative_output) const {
   return data_->GetPreeditManager()->ConvertStringWithAlternative(
       input, output, alternative_output);
 }
 
 bool CharacterFormManager::ConvertConversionStringWithAlternative(
-    const std::string &input, std::string *output,
+    const absl::string_view input, std::string *output,
     std::string *alternative_output) const {
   return data_->GetConversionManager()->ConvertStringWithAlternative(
       input, output, alternative_output);
 }
 
 Config::CharacterForm CharacterFormManager::GetPreeditCharacterForm(
-    const std::string &input) const {
+    const absl::string_view input) const {
   return data_->GetPreeditManager()->GetCharacterForm(input);
 }
 
 Config::CharacterForm CharacterFormManager::GetConversionCharacterForm(
-    const std::string &input) const {
+    const absl::string_view input) const {
   return data_->GetConversionManager()->GetCharacterForm(input);
 }
 
@@ -667,25 +670,26 @@ void CharacterFormManager::Clear() {
   data_->GetPreeditManager()->Clear();
 }
 
-void CharacterFormManager::SetCharacterForm(const std::string &input,
+void CharacterFormManager::SetCharacterForm(const absl::string_view input,
                                             Config::CharacterForm form) {
   // no need to call Preedit, as storage is shared
   // GetPreeditManager()->SetCharacterForm(input, form);
   data_->GetConversionManager()->SetCharacterForm(input, form);
 }
 
-void CharacterFormManager::GuessAndSetCharacterForm(const std::string &input) {
+void CharacterFormManager::GuessAndSetCharacterForm(
+    const absl::string_view input) {
   // no need to call Preedit, as storage is shared
   // GetPreeditManager()->SetCharacterForm(input, form);
   data_->GetConversionManager()->GuessAndSetCharacterForm(input);
 }
 
-void CharacterFormManager::AddPreeditRule(const std::string &input,
+void CharacterFormManager::AddPreeditRule(const absl::string_view input,
                                           Config::CharacterForm form) {
   data_->GetPreeditManager()->AddRule(input, form);
 }
 
-void CharacterFormManager::AddConversionRule(const std::string &input,
+void CharacterFormManager::AddConversionRule(const absl::string_view input,
                                              Config::CharacterForm form) {
   data_->GetConversionManager()->AddRule(input, form);
 }
@@ -719,10 +723,9 @@ char32_t SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
 }
 }  // namespace
 
-bool CharacterFormManager::GetFormTypesFromStringPair(const std::string &input1,
-                                                      FormType *output_form1,
-                                                      const std::string &input2,
-                                                      FormType *output_form2) {
+bool CharacterFormManager::GetFormTypesFromStringPair(
+    const absl::string_view input1, FormType *output_form1,
+    const absl::string_view input2, FormType *output_form2) {
   CHECK(output_form1);
   CHECK(output_form2);
 

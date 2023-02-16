@@ -34,17 +34,18 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <iterator>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/port.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -85,7 +86,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
   }
 
   // Read an event ID (a sequence number).
-  if (!NumberUtil::SafeStrToUInt32(tokens[1], event_id)) {
+  if (!absl::SimpleAtoi(tokens[1], event_id)) {
     ErrorExit(kErrWrongTypeArgument, "Event ID is not an integer");
   }
 
@@ -117,7 +118,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
       // Parse session ID.
-      if (!NumberUtil::SafeStrToUInt32(tokens[3], session_id)) {
+      if (!absl::SimpleAtoi(tokens[3], session_id)) {
         ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
       }
       break;
@@ -128,7 +129,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
       // Parse session ID.
-      if (!NumberUtil::SafeStrToUInt32(tokens[3], session_id)) {
+      if (!absl::SimpleAtoi(tokens[3], session_id)) {
         ErrorExit(kErrWrongTypeArgument, "Session ID is not an integer");
       }
       // Parse keys.
@@ -137,8 +138,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
       for (int i = 4; i < tokens.size() - 1; ++i) {
         if (isdigit(tokens[i][0])) {  // Numeric key code
           uint32_t key_code;
-          if (!NumberUtil::SafeStrToUInt32(tokens[i], &key_code) ||
-              key_code > 255) {
+          if (!absl::SimpleAtoi(tokens[i], &key_code) || key_code > 255) {
             ErrorExit(kErrWrongTypeArgument, "Wrong character code");
           }
           keys.push_back(std::string(1, static_cast<char>(key_code)));
@@ -313,9 +313,9 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
         }
         break;
       case '(':
-      case ')':  // list parantheses
+      case ')':  // list parentheses
       case '[':
-      case ']':   // vector parantheses
+      case ']':   // vector parentheses
       case '\'':  // quote
       case '`':   // quasiquote
         results.push_back(std::string(1, *i));
@@ -350,9 +350,9 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
           switch (*i) {
             case ';':  // comment
             case '(':
-            case ')':  // list parantheses
+            case ')':  // list parentheses
             case '[':
-            case ']':   // vector parantheses
+            case ']':   // vector parentheses
             case '\'':  // quote
             case '`':   // quasiquote
             case '\"':  // string

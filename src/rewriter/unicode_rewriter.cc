@@ -30,18 +30,18 @@
 #include "rewriter/unicode_rewriter.h"
 
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <string>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -51,7 +51,7 @@ UnicodeRewriter::UnicodeRewriter(const ConverterInterface *parent_converter)
   DCHECK(parent_converter_);
 }
 
-UnicodeRewriter::~UnicodeRewriter() {}
+UnicodeRewriter::~UnicodeRewriter() = default;
 
 namespace {
 
@@ -79,7 +79,7 @@ bool IsValidUcs4Expression(const std::string &input) {
 bool UCS4ExpressionToInteger(const std::string &input, uint32_t *ucs4) {
   DCHECK(ucs4);
   const std::string hexcode(input, 2, input.npos);
-  return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
+  return absl::SimpleHexAtoi(hexcode, ucs4);
 }
 
 void AddCandidate(const std::string &key, const std::string &value, int index,

@@ -38,28 +38,19 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/port.h"
 #include "base/trie.h"
+#include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "absl/container/flat_hash_set.h"
 
 namespace mozc {
-
-// For friendship.
-class DictionaryPredictorTest;
-
-namespace commands {
-class Request;
-}  // namespace commands
-
-namespace config {
-class Config;
-}  // namespace config
 namespace composer {
-
-class TypingModel;
 
 // This is a bitmap representing Entry's additional attributes.
 enum TableAttribute {
@@ -160,8 +151,12 @@ class Table {
   // Return the default table.
   static const Table &GetDefaultTable();
 
+  void SetTypingModelForTesting(
+      std::unique_ptr<const TypingModel> typing_model) {
+    typing_model_ = std::move(typing_model);
+  }
+
  private:
-  friend class mozc::DictionaryPredictorTest;
   friend class TypingCorrectorTest;
   friend class TypingCorrectionTest;
 

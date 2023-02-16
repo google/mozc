@@ -488,7 +488,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
                                       &description);
 
     EXPECT_TRUE(shortcut.empty());
-    EXPECT_EQ(kSampleValue, value);
+    EXPECT_EQ(value, kSampleValue);
     EXPECT_TRUE(description.empty());
   }
   {
@@ -503,8 +503,8 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
-    EXPECT_EQ(kSampleShortcut, shortcut);
-    EXPECT_EQ(kSampleValue, value);
+    EXPECT_EQ(shortcut, kSampleShortcut);
+    EXPECT_EQ(value, kSampleValue);
     EXPECT_TRUE(description.empty());
   }
   {
@@ -519,7 +519,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
                                       &description);
 
     EXPECT_TRUE(shortcut.empty());
-    EXPECT_EQ(expected_prefixed_value, value);
+    EXPECT_EQ(value, expected_prefixed_value);
     EXPECT_TRUE(description.empty());
   }
   {
@@ -534,7 +534,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
                                       &description);
 
     EXPECT_TRUE(shortcut.empty());
-    EXPECT_EQ(expected_suffixed_value, value);
+    EXPECT_EQ(value, expected_suffixed_value);
     EXPECT_TRUE(description.empty());
   }
   {
@@ -550,7 +550,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
                                       &description);
 
     EXPECT_TRUE(shortcut.empty());
-    EXPECT_EQ(expected_presuffixed_value, value);
+    EXPECT_EQ(value, expected_presuffixed_value);
     EXPECT_TRUE(description.empty());
   }
 }
@@ -940,10 +940,10 @@ TEST_F(CandidateWindowTest, DrawFooterSeparatorTest) {
       footer_rect.Width(), footer_rect.Height() - kFooterSeparatorHeight);
   Rect result = footer_rect;
   testkit.window->DrawFooterSeparator(&result);
-  EXPECT_EQ(expect_rest_area.origin.x, result.origin.x);
-  EXPECT_EQ(expect_rest_area.origin.y, result.origin.y);
-  EXPECT_EQ(expect_rest_area.size.width, result.size.width);
-  EXPECT_EQ(expect_rest_area.size.height, result.size.height);
+  EXPECT_EQ(result.origin.x, expect_rest_area.origin.x);
+  EXPECT_EQ(result.origin.y, expect_rest_area.origin.y);
+  EXPECT_EQ(result.size.width, expect_rest_area.size.width);
+  EXPECT_EQ(result.size.height, expect_rest_area.size.height);
   FinalizeTestKit(&testkit);
 }
 
@@ -955,14 +955,14 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     const Rect original_footer_content_area(10, 20, 30, 40);
     Rect footer_content_area = original_footer_content_area;
     testkit.window->DrawFooterIndex(&footer_content_area);
-    EXPECT_EQ(original_footer_content_area.origin.x,
-              footer_content_area.origin.x);
-    EXPECT_EQ(original_footer_content_area.origin.y,
-              footer_content_area.origin.y);
-    EXPECT_EQ(original_footer_content_area.size.width,
-              footer_content_area.size.width);
-    EXPECT_EQ(original_footer_content_area.size.height,
-              footer_content_area.size.height);
+    EXPECT_EQ(footer_content_area.origin.x,
+              original_footer_content_area.origin.x);
+    EXPECT_EQ(footer_content_area.origin.y,
+              original_footer_content_area.origin.y);
+    EXPECT_EQ(footer_content_area.size.width,
+              original_footer_content_area.size.width);
+    EXPECT_EQ(footer_content_area.size.height,
+              original_footer_content_area.size.height);
     FinalizeTestKit(&testkit);
   }
   {
@@ -976,14 +976,14 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     const Rect original_footer_content_area(10, 20, 30, 40);
     Rect footer_content_area = original_footer_content_area;
     testkit.window->DrawFooterIndex(&footer_content_area);
-    EXPECT_EQ(original_footer_content_area.origin.x,
-              footer_content_area.origin.x);
-    EXPECT_EQ(original_footer_content_area.origin.y,
-              footer_content_area.origin.y);
-    EXPECT_EQ(original_footer_content_area.size.width,
-              footer_content_area.size.width);
-    EXPECT_EQ(original_footer_content_area.size.height,
-              footer_content_area.size.height);
+    EXPECT_EQ(footer_content_area.origin.x,
+              original_footer_content_area.origin.x);
+    EXPECT_EQ(footer_content_area.origin.y,
+              original_footer_content_area.origin.y);
+    EXPECT_EQ(footer_content_area.size.width,
+              original_footer_content_area.size.width);
+    EXPECT_EQ(footer_content_area.size.height,
+              original_footer_content_area.size.height);
 
     FinalizeTestKit(&testkit);
   }
@@ -996,14 +996,14 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     const Rect original_footer_content_area(10, 20, 30, 40);
     Rect footer_content_area = original_footer_content_area;
     testkit.window->DrawFooterIndex(&footer_content_area);
-    EXPECT_EQ(original_footer_content_area.origin.x,
-              footer_content_area.origin.x);
-    EXPECT_EQ(original_footer_content_area.origin.y,
-              footer_content_area.origin.y);
-    EXPECT_EQ(original_footer_content_area.size.width,
-              footer_content_area.size.width);
-    EXPECT_EQ(original_footer_content_area.size.height,
-              footer_content_area.size.height);
+    EXPECT_EQ(footer_content_area.origin.x,
+              original_footer_content_area.origin.x);
+    EXPECT_EQ(footer_content_area.origin.y,
+              original_footer_content_area.origin.y);
+    EXPECT_EQ(footer_content_area.size.width,
+              original_footer_content_area.size.width);
+    EXPECT_EQ(footer_content_area.size.height,
+              original_footer_content_area.size.height);
     FinalizeTestKit(&testkit);
   }
   {
@@ -1042,11 +1042,11 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     Rect footer_content_area = original_footer_content_area;
     testkit.window->DrawFooterIndex(&footer_content_area);
 
-    EXPECT_EQ(expect_remaining_rect.origin.x, footer_content_area.origin.x);
-    EXPECT_EQ(expect_remaining_rect.origin.y, footer_content_area.origin.y);
-    EXPECT_EQ(expect_remaining_rect.size.width, footer_content_area.size.width);
-    EXPECT_EQ(expect_remaining_rect.size.height,
-              footer_content_area.size.height);
+    EXPECT_EQ(footer_content_area.origin.x, expect_remaining_rect.origin.x);
+    EXPECT_EQ(footer_content_area.origin.y, expect_remaining_rect.origin.y);
+    EXPECT_EQ(footer_content_area.size.width, expect_remaining_rect.size.width);
+    EXPECT_EQ(footer_content_area.size.height,
+              expect_remaining_rect.size.height);
     FinalizeTestKit(&testkit);
   }
 }
@@ -1428,7 +1428,7 @@ TEST_F(CandidateWindowTest, GetSelectedRowIndexTest) {
           .WillOnce(Return(kInRect));
       EXPECT_CALL(*testkit.table_layout_mock, GetRowRect(Ne(i)))
           .WillRepeatedly(Return(kOutRect));
-      EXPECT_EQ(i, testkit.window->GetSelectedRowIndex(kPos));
+      EXPECT_EQ(testkit.window->GetSelectedRowIndex(kPos), i);
       FinalizeTestKit(&testkit);
     }
   }
@@ -1440,7 +1440,7 @@ TEST_F(CandidateWindowTest, GetSelectedRowIndexTest) {
     EXPECT_CALL(*testkit.table_layout_mock, GetRowRect(_))
         .Times(10)
         .WillRepeatedly(Return(kOutRect));
-    EXPECT_EQ(-1, testkit.window->GetSelectedRowIndex(kPos));
+    EXPECT_EQ(testkit.window->GetSelectedRowIndex(kPos), -1);
     FinalizeTestKit(&testkit);
   }
 }

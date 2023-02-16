@@ -50,6 +50,7 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -176,7 +177,7 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // and client-renderer) so we need to have different global mutexes to
 // serialize each client. Currently |ipc_name| starts with "session" and
 // "renderer" are expected.
-HANDLE GetClientMutex(const std::string &ipc_name) {
+HANDLE GetClientMutex(const absl::string_view ipc_name) {
   if (absl::StartsWith(ipc_name, "session")) {
     return Singleton<ConverterClientMutex>::get()->get();
   }
@@ -612,7 +613,7 @@ void IPCServer::Loop() {
 }
 
 // old interface
-IPCClient::IPCClient(const std::string &name)
+IPCClient::IPCClient(const absl::string_view name)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -620,7 +621,8 @@ IPCClient::IPCClient(const std::string &name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const std::string &name, const std::string &server_path)
+IPCClient::IPCClient(const absl::string_view name,
+                     const absl::string_view server_path)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -628,7 +630,8 @@ IPCClient::IPCClient(const std::string &name, const std::string &server_path)
   Init(name, server_path);
 }
 
-void IPCClient::Init(const std::string &name, const std::string &server_path) {
+void IPCClient::Init(const absl::string_view name,
+                     const absl::string_view server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // We should change the mutex based on which IPC server we will talk with.

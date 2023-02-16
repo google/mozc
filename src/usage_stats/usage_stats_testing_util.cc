@@ -30,16 +30,12 @@
 #include "usage_stats/usage_stats_testing_util.h"
 
 #include <cstdint>
-#include <cstring>
-#include <string>
-#include <vector>
+#include <memory>
 
-#include "base/port.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
-#include "usage_stats/usage_stats.h"
-#include "usage_stats/usage_stats.pb.h"
+#include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 using ::testing::AssertionSuccess;
 
@@ -49,7 +45,7 @@ namespace internal {
 
 ::testing::AssertionResult ExpectStatsExist(const char *name_string,
                                             const char *param_string,
-                                            const std::string &name,
+                                            const absl::string_view name,
                                             bool expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
@@ -58,7 +54,7 @@ namespace internal {
 
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
-                                            const std::string &name,
+                                            const absl::string_view name,
                                             uint32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
@@ -67,7 +63,7 @@ namespace internal {
 
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
-                                              const std::string &name,
+                                              const absl::string_view name,
                                               int32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
@@ -76,7 +72,7 @@ namespace internal {
 
 ::testing::AssertionResult ExpectBooleanStats(const char *name_string,
                                               const char *expected_string,
-                                              const std::string &name,
+                                              const absl::string_view name,
                                               bool expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
@@ -86,7 +82,7 @@ namespace internal {
 ::testing::AssertionResult ExpectTimingStats(
     const char *name_string, const char *expected_total_string,
     const char *expected_num_string, const char *expected_min_string,
-    const char *expected_max_string, const std::string &name,
+    const char *expected_max_string, const absl::string_view name,
     uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
     uint32_t expected_max) {
   // Always returns success for now.

@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <climits>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>  // NOLINT
 #include <iterator>
@@ -46,6 +48,7 @@
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
@@ -286,7 +289,7 @@ class PredictionCommon : public TestScenarioInterface {
     std::vector<std::string> request_keys;
     CreatePredictionKeys(type, &request_keys);
     for (size_t i = 0; i < request_keys.size(); ++i) {
-      const std::string &keys = request_keys[i];
+      const absl::string_view keys = request_keys[i];
       for (size_t j = 0; j < keys.size(); ++j) {
         commands::KeyEvent key;
         key.set_key_code(static_cast<int>(keys[j]));

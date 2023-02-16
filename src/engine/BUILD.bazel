@@ -64,7 +64,6 @@ mozc_cc_library(
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -78,12 +77,14 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":engine_builder",
+        ":engine_interface",
         "//base:file_util",
         "//prediction:predictor_interface",
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -91,10 +92,11 @@ mozc_cc_library(
     name = "engine_interface",
     hdrs = ["engine_interface.h"],
     deps = [
-        "//base",
-        "//base:port",
+        ":user_data_manager_interface",
+        "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
+        "//prediction:predictor_interface",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -116,12 +118,10 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
-        "//base",
         "//base:logging",
         "//base:port",
         "//converter",
         "//converter:connector",
-        "//converter:converter_interface",
         "//converter:immutable_converter_interface",
         "//converter:immutable_converter_no_factory",
         "//converter:segmenter",
@@ -146,6 +146,7 @@ mozc_cc_library(
         "//rewriter:rewriter_interface",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -288,6 +289,7 @@ mozc_cc_library(
     deps = [
         ":user_data_manager_interface",
         "//testing:gunit",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -297,6 +299,9 @@ mozc_cc_library(
     visibility = [
         # For //session:session_handler_scenario_test.
         "//session:__pkg__",
+    ],
+    deps = [
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -318,5 +323,6 @@ mozc_cc_library(
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
         "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
 )

@@ -31,22 +31,26 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <string>
+
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/util.h"
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 const char kFileSchema[] = "file://";
 }  // namespace
 
-bool MacProcess::OpenBrowserForMac(const std::string &url) {
+bool MacProcess::OpenBrowserForMac(const absl::string_view url) {
   bool success = false;
   NSURL *nsURL = nil;
-  if (url.find(kFileSchema) == 0) {
+  if (absl::StartsWith(url, kFileSchema)) {
     // for making URL from "file://...", use fileURLWithPath
-    const std::string filepath = url.substr(strlen(kFileSchema));
+    const std::string filepath(url.substr(strlen(kFileSchema)));
     NSString *nsStr = [[NSString alloc] initWithBytes:filepath.data()
                                                length:filepath.size()
                                              encoding:NSUTF8StringEncoding];
@@ -65,7 +69,7 @@ bool MacProcess::OpenBrowserForMac(const std::string &url) {
   return success;
 }
 
-bool MacProcess::OpenApplication(const std::string &path) {
+bool MacProcess::OpenApplication(const absl::string_view path) {
   NSString *nsStr = [[NSString alloc] initWithBytes:path.data()
                                              length:path.size()
                                            encoding:NSUTF8StringEncoding];

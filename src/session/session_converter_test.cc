@@ -47,7 +47,6 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -56,7 +55,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/candidate_list.h"
-#include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
@@ -442,11 +440,11 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_FALSE(output.has_candidates());
 
   const commands::Preedit &conversion = output.preedit();
-  EXPECT_EQ(1, conversion.segment_size());
-  EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT,
-            conversion.segment(0).annotation());
-  EXPECT_EQ(kChars_Aiueo, conversion.segment(0).value());
-  EXPECT_EQ(kChars_Aiueo, conversion.segment(0).key());
+  EXPECT_EQ(conversion.segment_size(), 1);
+  EXPECT_EQ(conversion.segment(0).annotation(),
+            commands::Preedit::Segment::HIGHLIGHT);
+  EXPECT_EQ(conversion.segment(0).value(), kChars_Aiueo);
+  EXPECT_EQ(conversion.segment(0).key(), kChars_Aiueo);
 
   // Converter should be active before submittion
   EXPECT_TRUE(converter.IsActive());
@@ -463,8 +461,8 @@ TEST_F(SessionConverterTest, Convert) {
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   const commands::Result &result = output.result();
-  EXPECT_EQ(kChars_Aiueo, result.value());
-  EXPECT_EQ(kChars_Aiueo, result.key());
+  EXPECT_EQ(result.value(), kChars_Aiueo);
+  EXPECT_EQ(result.key(), kChars_Aiueo);
 
   // Converter should be inactive after submittion
   EXPECT_FALSE(converter.IsActive());
@@ -517,8 +515,8 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("aiueo", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "aiueo");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -533,8 +531,8 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("AIUEO", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "AIUEO");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -549,8 +547,8 @@ TEST_F(SessionConverterTest, ConvertToTransliteration) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ＡＩＵＥＯ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ＡＩＵＥＯ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -584,9 +582,9 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
-    EXPECT_EQ("ぃ", conversion.segment(0).value());
-    EXPECT_EQ("家", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).value(), "ぃ");
+    EXPECT_EQ(conversion.segment(1).value(), "家");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -602,8 +600,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
-    EXPECT_EQ("li", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).value(), "li");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -646,8 +644,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ｄｖｄ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ｄｖｄ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -662,8 +660,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ＤＶＤ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ＤＶＤ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -678,8 +676,8 @@ TEST_F(SessionConverterTest, ConvertToTransliterationWithoutCascadigWindow) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("Ｄｖｄ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "Ｄｖｄ");
     EXPECT_FALSE(IsCandidateListVisible(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -702,7 +700,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   EXPECT_TRUE(converter.Convert(*composer_));
   std::vector<int> expected_indices = {0, 0};
   {
-    EXPECT_EQ(0, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 0);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
     commands::Output output;
@@ -712,16 +710,16 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    ASSERT_EQ(2, conversion.segment_size());
-    EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT,
-              conversion.segment(0).annotation());
-    EXPECT_EQ(kKamabokono, conversion.segment(0).key());
-    EXPECT_EQ(kKamabokono, conversion.segment(0).value());
+    ASSERT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).annotation(),
+              commands::Preedit::Segment::HIGHLIGHT);
+    EXPECT_EQ(conversion.segment(0).key(), kKamabokono);
+    EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
 
-    EXPECT_EQ(commands::Preedit::Segment::UNDERLINE,
-              conversion.segment(1).annotation());
-    EXPECT_EQ(kInbou, conversion.segment(1).key());
-    EXPECT_EQ("陰謀", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment(1).annotation(),
+              commands::Preedit::Segment::UNDERLINE);
+    EXPECT_EQ(conversion.segment(1).key(), kInbou);
+    EXPECT_EQ(conversion.segment(1).value(), "陰謀");
   }
 
   // Test for candidates [CandidateNext]
@@ -738,7 +736,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   expected_indices[0] -= 1;
   {
     EXPECT_TRUE(IsCandidateListVisible(converter));
-    EXPECT_EQ(0, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 0);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
@@ -749,17 +747,17 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(0, candidates.position());
-    EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
-    EXPECT_EQ("カマボコの", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 0);
+    EXPECT_EQ(candidates.candidate(0).value(), kKamabokono);
+    EXPECT_EQ(candidates.candidate(1).value(), "カマボコの");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
   }
 
   // Test for segment motion. [SegmentFocusRight]
   converter.SegmentFocusRight();
   {
-    EXPECT_EQ(1, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 1);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     converter.SetCandidateListVisible(true);
 
@@ -771,18 +769,18 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(5, candidates.position());
-    EXPECT_EQ("陰謀", candidates.candidate(0).value());
-    EXPECT_EQ("印房", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.focused_index(), 0);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 5);
+    EXPECT_EQ(candidates.candidate(0).value(), "陰謀");
+    EXPECT_EQ(candidates.candidate(1).value(), "印房");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
   }
 
   // Test for segment motion. [SegmentFocusLeft]
   converter.SegmentFocusLeft();
   {
-    EXPECT_EQ(0, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 0);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     converter.SetCandidateListVisible(true);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -794,12 +792,12 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(0, candidates.position());
-    EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
-    EXPECT_EQ("カマボコの", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.focused_index(), 0);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 0);
+    EXPECT_EQ(candidates.candidate(0).value(), kKamabokono);
+    EXPECT_EQ(candidates.candidate(1).value(), "カマボコの");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
   }
 
   // Test for segment motion. [SegmentFocusLeft] at the head of segments.
@@ -808,7 +806,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   // and at the head of segments to left, should work.
   converter.SegmentFocusLeft();
   {
-    EXPECT_EQ(1, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 1);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     converter.SetCandidateListVisible(true);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -820,12 +818,12 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(5, candidates.position());
-    EXPECT_EQ("陰謀", candidates.candidate(0).value());
-    EXPECT_EQ("印房", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.focused_index(), 0);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 5);
+    EXPECT_EQ(candidates.candidate(0).value(), "陰謀");
+    EXPECT_EQ(candidates.candidate(1).value(), "印房");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
   }
 
   // Test for segment motion. [SegmentFocusRight] at the tail of segments.
@@ -839,24 +837,24 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
     commands::Output output;
-    EXPECT_EQ(0, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 0);
     converter.FillOutput(*composer_, &output);
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(0, candidates.position());
-    EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
-    EXPECT_EQ("カマボコの", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.focused_index(), 0);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 0);
+    EXPECT_EQ(candidates.candidate(0).value(), kKamabokono);
+    EXPECT_EQ(candidates.candidate(1).value(), "カマボコの");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
   }
 
   // Test for candidate motion. [CandidateNext]
   converter.SegmentFocusRight();  // Focus to the last segment.
-  EXPECT_EQ(1, GetSegmentIndex(converter));
+  EXPECT_EQ(GetSegmentIndex(converter), 1);
   converter.CandidateNext(*composer_);
   expected_indices[1] += 1;
   {
@@ -869,16 +867,16 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(1, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(5, candidates.position());
-    EXPECT_EQ("陰謀", candidates.candidate(0).value());
-    EXPECT_EQ("印房", candidates.candidate(1).value());
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.focused_index(), 1);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 5);
+    EXPECT_EQ(candidates.candidate(0).value(), "陰謀");
+    EXPECT_EQ(candidates.candidate(1).value(), "印房");
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(kKamabokono, conversion.segment(0).value());
-    EXPECT_EQ("印房", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
+    EXPECT_EQ(conversion.segment(1).value(), "印房");
   }
 
   // Test for segment motion again [SegmentFocusLeftEdge] [SegmentFocusLast]
@@ -888,22 +886,22 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     SetKamaboko(&fixed_segments);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
-    ASSERT_EQ("陰謀", fixed_segments.segment(1).candidate(0).value);
-    ASSERT_EQ("印房", fixed_segments.segment(1).candidate(1).value);
+    ASSERT_EQ(fixed_segments.segment(1).candidate(0).value, "陰謀");
+    ASSERT_EQ(fixed_segments.segment(1).candidate(1).value, "印房");
     // swap the values.
     fixed_segments.mutable_segment(1)->mutable_candidate(0)->value.swap(
         fixed_segments.mutable_segment(1)->mutable_candidate(1)->value);
-    ASSERT_EQ("印房", fixed_segments.segment(1).candidate(0).value);
-    ASSERT_EQ("陰謀", fixed_segments.segment(1).candidate(1).value);
+    ASSERT_EQ(fixed_segments.segment(1).candidate(0).value, "印房");
+    ASSERT_EQ(fixed_segments.segment(1).candidate(1).value, "陰謀");
     EXPECT_CALL(mock_converter, CommitSegmentValue(_, _, _))
         .WillRepeatedly(DoAll(SetArgPointee<0>(fixed_segments), Return(true)));
   }
   converter.SegmentFocusLeftEdge();
   {
-    EXPECT_EQ(0, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 0);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     converter.SegmentFocusLast();
-    EXPECT_EQ(1, GetSegmentIndex(converter));
+    EXPECT_EQ(GetSegmentIndex(converter), 1);
     EXPECT_FALSE(IsCandidateListVisible(converter));
     converter.SetCandidateListVisible(true);
 
@@ -914,18 +912,18 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(0, candidates.focused_index());
-    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
-    EXPECT_EQ(5, candidates.position());
-    EXPECT_EQ("印房", candidates.candidate(0).value());
+    EXPECT_EQ(candidates.focused_index(), 0);
+    ASSERT_EQ(candidates.size(), 3);  // two candidates + one t13n sub list.
+    EXPECT_EQ(candidates.position(), 5);
+    EXPECT_EQ(candidates.candidate(0).value(), "印房");
 
-    EXPECT_EQ("陰謀", candidates.candidate(1).value());
+    EXPECT_EQ(candidates.candidate(1).value(), "陰謀");
 
-    EXPECT_EQ("そのほかの文字種", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.candidate(2).value(), "そのほかの文字種");
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(kKamabokono, conversion.segment(0).value());
-    EXPECT_EQ("印房", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
+    EXPECT_EQ(conversion.segment(1).value(), "印房");
   }
 
   converter.Commit(*composer_, Context::default_instance());
@@ -942,8 +940,8 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ("かまぼこの印房", result.value());
-    EXPECT_EQ("かまぼこのいんぼう", result.key());
+    EXPECT_EQ(result.value(), "かまぼこの印房");
+    EXPECT_EQ(result.key(), "かまぼこのいんぼう");
     EXPECT_FALSE(converter.IsActive());
   }
 }
@@ -983,19 +981,19 @@ TEST_F(SessionConverterTest, Transliterations) {
   EXPECT_TRUE(output.has_candidates());
 
   const commands::Candidates &candidates = output.candidates();
-  EXPECT_EQ(2, candidates.size());  // one candidate + one t13n sub list.
-  EXPECT_EQ(1, candidates.focused_index());
-  EXPECT_EQ("そのほかの文字種", candidates.candidate(1).value());
+  EXPECT_EQ(candidates.size(), 2);  // one candidate + one t13n sub list.
+  EXPECT_EQ(candidates.focused_index(), 1);
+  EXPECT_EQ(candidates.candidate(1).value(), "そのほかの文字種");
 
   std::vector<std::string> t13ns;
   composer_->GetTransliterations(&t13ns);
 
   EXPECT_TRUE(candidates.has_subcandidates());
-  EXPECT_EQ(t13ns.size(), candidates.subcandidates().size());
-  EXPECT_EQ(9, candidates.subcandidates().candidate_size());
+  EXPECT_EQ(candidates.subcandidates().size(), t13ns.size());
+  EXPECT_EQ(candidates.subcandidates().candidate_size(), 9);
 
   for (size_t i = 0; i < candidates.subcandidates().candidate_size(); ++i) {
-    EXPECT_EQ(t13ns[i], candidates.subcandidates().candidate(i).value());
+    EXPECT_EQ(candidates.subcandidates().candidate(i).value(), t13ns[i]);
   }
 }
 
@@ -1076,8 +1074,8 @@ TEST_F(SessionConverterTest, T13NWithResegmentation) {
     EXPECT_FALSE(output.has_result());
     EXPECT_TRUE(output.has_preedit());
     const commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(3, preedit.segment_size());
-    EXPECT_EQ("ｲﾝﾎﾞ", preedit.segment(1).value());
+    EXPECT_EQ(preedit.segment_size(), 3);
+    EXPECT_EQ(preedit.segment(1).value(), "ｲﾝﾎﾞ");
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 }
@@ -1112,8 +1110,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ｱbc", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ｱbc");
   }
 
   // Composition will be transliterated to "ａｂｃ".
@@ -1128,8 +1126,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ａｂｃ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ａｂｃ");
   }
 
   EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
@@ -1143,8 +1141,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("abc", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "abc");
   }
 
   EXPECT_TRUE(converter.ConvertToHalfWidth(*composer_));
@@ -1158,8 +1156,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ABC", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ABC");
   }
 }
 
@@ -1196,8 +1194,8 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("q､｡", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "q､｡");
   }
 }
 
@@ -1230,8 +1228,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("アｂｃ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "アｂｃ");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1245,8 +1243,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ｱbc", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ｱbc");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1260,8 +1258,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("あｂｃ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "あｂｃ");
   }
 }
 
@@ -1295,8 +1293,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("漢字", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "漢字");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1310,8 +1308,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("かんじ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "かんじ");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1325,8 +1323,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("カンジ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "カンジ");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1340,8 +1338,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("ｶﾝｼﾞ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "ｶﾝｼﾞ");
   }
 
   EXPECT_TRUE(converter.SwitchKanaType(*composer_));
@@ -1355,8 +1353,8 @@ TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("かんじ", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "かんじ");
   }
 }
 
@@ -1411,8 +1409,8 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(kKamabokono, conversion.segment(0).value());
-    EXPECT_EQ("陰謀", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment(0).value(), kKamabokono);
+    EXPECT_EQ(conversion.segment(1).value(), "陰謀");
   }
 
   EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 1))
@@ -1431,8 +1429,8 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ("カマボコの", conversion.segment(0).value());
-    EXPECT_EQ("陰謀", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment(0).value(), "カマボコの");
+    EXPECT_EQ(conversion.segment(1).value(), "陰謀");
   }
 
   {  // Initialization of CommitSegments.
@@ -1449,7 +1447,7 @@ TEST_F(SessionConverterTest, CommitFirstSegment) {
   expected_indices.erase(expected_indices.begin(),
                          expected_indices.begin() + 1);
   EXPECT_FALSE(IsCandidateListVisible(converter));
-  EXPECT_EQ(Util::CharsLen(kKamabokono), size);
+  EXPECT_EQ(size, Util::CharsLen(kKamabokono));
   EXPECT_TRUE(converter.IsActive());
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
@@ -1516,7 +1514,7 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
                                         &size);
   // Here 頂いた
   EXPECT_FALSE(IsCandidateListVisible(converter));
-  EXPECT_EQ(Util::CharsLen(kIberiko + kNekowo), size);
+  EXPECT_EQ(size, Util::CharsLen(kIberiko + kNekowo));
   EXPECT_TRUE(converter.IsActive());
 }
 
@@ -1544,7 +1542,7 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   converter.CommitHeadToFocusedSegments(*composer_, Context::default_instance(),
                                         &size);
   EXPECT_FALSE(IsCandidateListVisible(converter));
-  EXPECT_EQ(0, size);
+  EXPECT_EQ(size, 0);
   EXPECT_FALSE(converter.IsActive());
 }
 
@@ -1587,12 +1585,12 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(1, preedit.segment_size());
-    EXPECT_EQ(kKakko, preedit.segment(0).value());
+    EXPECT_EQ(preedit.segment_size(), 1);
+    EXPECT_EQ(preedit.segment(0).value(), kKakko);
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(2, candidates.size());
-    EXPECT_EQ("（）", candidates.candidate(0).value());
+    EXPECT_EQ(candidates.size(), 2);
+    EXPECT_EQ(candidates.candidate(0).value(), "（）");
     EXPECT_FALSE(candidates.has_focused_index());
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -1610,7 +1608,7 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(SessionConverter::kConsumedAllCharacters, committed_key_size);
+  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
 
   {  // Check the result
     commands::Output output;
@@ -1620,10 +1618,10 @@ TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ("「」", result.value());
-    EXPECT_EQ(kKakko, result.key());
-    EXPECT_EQ(-1, result.cursor_offset());
-    EXPECT_EQ(SessionConverterInterface::COMPOSITION, GetState(converter));
+    EXPECT_EQ(result.value(), "「」");
+    EXPECT_EQ(result.key(), kKakko);
+    EXPECT_EQ(result.cursor_offset(), -1);
+    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
@@ -1651,8 +1649,8 @@ TEST_F(SessionConverterTest, CommitPreedit) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ(kChars_Aiueo, result.value());
-    EXPECT_EQ(kChars_Aiueo, result.key());
+    EXPECT_EQ(result.value(), kChars_Aiueo);
+    EXPECT_EQ(result.key(), kChars_Aiueo);
   }
   EXPECT_FALSE(converter.IsActive());
 
@@ -1681,9 +1679,9 @@ TEST_F(SessionConverterTest, CommitPreeditBracketPairText) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ("（）", result.value());
-    EXPECT_EQ("（）", result.key());
-    EXPECT_EQ(-1, result.cursor_offset());
+    EXPECT_EQ(result.value(), "（）");
+    EXPECT_EQ(result.key(), "（）");
+    EXPECT_EQ(result.cursor_offset(), -1);
   }
 
   EXPECT_FALSE(converter.IsActive());
@@ -1764,12 +1762,12 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(1, preedit.segment_size());
-    EXPECT_EQ(kChars_Mo, preedit.segment(0).value());
+    EXPECT_EQ(preedit.segment_size(), 1);
+    EXPECT_EQ(preedit.segment(0).value(), kChars_Mo);
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(2, candidates.size());
-    EXPECT_EQ(kChars_Mozukusu, candidates.candidate(0).value());
+    EXPECT_EQ(candidates.size(), 2);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozukusu);
     EXPECT_FALSE(candidates.has_focused_index());
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
@@ -1787,7 +1785,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(SessionConverter::kConsumedAllCharacters, committed_key_size);
+  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
 
   {  // Check the result
     commands::Output output;
@@ -1797,9 +1795,9 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ(kChars_Momonga, result.value());
-    EXPECT_EQ(kChars_Momonga, result.key());
-    EXPECT_EQ(SessionConverterInterface::COMPOSITION, GetState(converter));
+    EXPECT_EQ(result.value(), kChars_Momonga);
+    EXPECT_EQ(result.key(), kChars_Momonga);
+    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
@@ -1854,7 +1852,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-  EXPECT_EQ(SessionConverter::kConsumedAllCharacters, committed_key_size);
+  EXPECT_EQ(committed_key_size, SessionConverter::kConsumedAllCharacters);
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   {  // Check the result
@@ -1865,9 +1863,9 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ(kChars_Momonga, result.value());
-    EXPECT_EQ(kChars_Momonga, result.key());
-    EXPECT_EQ(SessionConverterInterface::COMPOSITION, GetState(converter));
+    EXPECT_EQ(result.value(), kChars_Momonga);
+    EXPECT_EQ(result.key(), kChars_Momonga);
+    EXPECT_EQ(GetState(converter), SessionConverterInterface::COMPOSITION);
   }
 
   EXPECT_COUNT_STATS("Commit", 1);
@@ -1966,7 +1964,7 @@ TEST_F(SessionConverterTest, PartialPrediction) {
   converter.CommitSuggestionById(0, *composer_, Context::default_instance(),
                                  &committed_key_size);
   Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_EQ(Util::CharsLen(kChars_Kokode), committed_key_size);
+  EXPECT_EQ(committed_key_size, Util::CharsLen(kChars_Kokode));
   // Indices should be {0} since there is another segment.
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
@@ -1976,9 +1974,9 @@ TEST_F(SessionConverterTest, PartialPrediction) {
     EXPECT_TRUE(output.has_result());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ("此処では", result.value());
-    EXPECT_EQ(kChars_Kokode, result.key());
-    EXPECT_EQ(SessionConverterInterface::SUGGESTION, GetState(converter));
+    EXPECT_EQ(result.value(), "此処では");
+    EXPECT_EQ(result.key(), kChars_Kokode);
+    EXPECT_EQ(GetState(converter), SessionConverterInterface::SUGGESTION);
   }
 
   EXPECT_COUNT_STATS("Commit", 1);
@@ -2032,8 +2030,8 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
     EXPECT_FALSE(output.candidates().footer().logo_visible());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(2, candidates.size());
-    EXPECT_EQ(kChars_Mozukusu, candidates.candidate(0).value());
+    EXPECT_EQ(candidates.size(), 2);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozukusu);
     EXPECT_FALSE(candidates.has_focused_index());
   }
 
@@ -2057,17 +2055,17 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 
     // Check the conversion
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ(kChars_Mozukusu, conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), kChars_Mozukusu);
 
     // Check the candidate list
     const commands::Candidates &candidates = output.candidates();
     // Candidates should be the same as suggestion
-    EXPECT_EQ(2, candidates.size());
-    EXPECT_EQ(kChars_Mozukusu, candidates.candidate(0).value());
-    EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
+    EXPECT_EQ(candidates.size(), 2);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozukusu);
+    EXPECT_EQ(candidates.candidate(1).value(), kChars_Momonga);
     EXPECT_TRUE(candidates.has_focused_index());
-    EXPECT_EQ(0, candidates.focused_index());
+    EXPECT_EQ(candidates.focused_index(), 0);
   }
 
   EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 1))
@@ -2109,11 +2107,11 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 
     const commands::Candidates &candidates = output.candidates();
     // Candidates should be merged with the previous suggestions.
-    EXPECT_EQ(4, candidates.size());
-    EXPECT_EQ(kChars_Mozukusu, candidates.candidate(0).value());
-    EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
-    EXPECT_EQ(kChars_Mozuku, candidates.candidate(2).value());
-    EXPECT_EQ("モンドリアン", candidates.candidate(3).value());
+    EXPECT_EQ(candidates.size(), 4);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozukusu);
+    EXPECT_EQ(candidates.candidate(1).value(), kChars_Momonga);
+    EXPECT_EQ(candidates.candidate(2).value(), kChars_Mozuku);
+    EXPECT_EQ(candidates.candidate(3).value(), "モンドリアン");
     EXPECT_TRUE(candidates.has_focused_index());
   }
 
@@ -2142,8 +2140,8 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Result &result = output.result();
-    EXPECT_EQ("モンドリアン", result.value());
-    EXPECT_EQ("もんどりあん", result.key());
+    EXPECT_EQ(result.value(), "モンドリアン");
+    EXPECT_EQ(result.key(), "もんどりあん");
   }
 
   // After commit, the state should be reset. Thus, calling prediction before
@@ -2164,16 +2162,16 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 
     // Check the conversion
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ(kChars_Mozuku, conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
 
     // Check the candidate list
     const commands::Candidates &candidates = output.candidates();
     // Candidates should NOT be merged with the previous suggestions.
-    EXPECT_EQ(3, candidates.size());
-    EXPECT_EQ(kChars_Mozuku, candidates.candidate(0).value());
-    EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
-    EXPECT_EQ("モンドリアン", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.size(), 3);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozuku);
+    EXPECT_EQ(candidates.candidate(1).value(), kChars_Momonga);
+    EXPECT_EQ(candidates.candidate(2).value(), "モンドリアン");
     EXPECT_TRUE(candidates.has_focused_index());
   }
 }
@@ -2271,10 +2269,10 @@ TEST_F(SessionConverterTest, OnePhaseSuggestion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(3, candidates.size());
-    EXPECT_EQ(kChars_Mozuku, candidates.candidate(0).value());
-    EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
-    EXPECT_EQ("モンドリアン", candidates.candidate(2).value());
+    EXPECT_EQ(candidates.size(), 3);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozuku);
+    EXPECT_EQ(candidates.candidate(1).value(), kChars_Momonga);
+    EXPECT_EQ(candidates.candidate(2).value(), "モンドリアン");
     EXPECT_FALSE(candidates.has_focused_index());
   }
 }
@@ -2328,7 +2326,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     AppendCandidateList(ConversionRequest::CONVERSION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     // 3 == hiragana cand, katakana cand and sub candidate list.
-    EXPECT_EQ(3, candidate_list.size());
+    EXPECT_EQ(candidate_list.size(), 3);
     EXPECT_TRUE(candidate_list.focused());
     size_t sub_cand_list_count = 0;
     for (size_t i = 0; i < candidate_list.size(); ++i) {
@@ -2337,7 +2335,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
       }
     }
     // Sub candidate list for T13N.
-    EXPECT_EQ(1, sub_cand_list_count);
+    EXPECT_EQ(sub_cand_list_count, 1);
   }
   {
     Segment *segment = segments.mutable_conversion_segment(0);
@@ -2359,7 +2357,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     const CandidateList &candidate_list = GetCandidateList(converter);
     // 4 == hiragana cand, katakana cand, hiragana cand2
     // and sub candidate list.
-    EXPECT_EQ(4, candidate_list.size());
+    EXPECT_EQ(candidate_list.size(), 4);
     EXPECT_TRUE(candidate_list.focused());
     size_t sub_cand_list_count = 0;
     std::set<int> id_set;
@@ -2376,7 +2374,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
       }
     }
     // Sub candidate list shouldn't be duplicated.
-    EXPECT_EQ(1, sub_cand_list_count);
+    EXPECT_EQ(sub_cand_list_count, 1);
   }
 }
 
@@ -2442,8 +2440,8 @@ TEST_F(SessionConverterTest, ReloadConfig) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ("1", candidates.candidate(0).annotation().shortcut());
-    EXPECT_EQ("2", candidates.candidate(1).annotation().shortcut());
+    EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), "1");
+    EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), "2");
   }
 
   {  // Set OperationPreferences #2
@@ -2490,11 +2488,11 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     EXPECT_FALSE(output.has_candidates());
     EXPECT_TRUE(output.has_all_candidate_words());
 
-    EXPECT_EQ(0, output.all_candidate_words().focused_index());
-    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
+    EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
     // [ "かまぼこの", "カマボコの", "カマボコノ" (t13n), "かまぼこの" (t13n),
     //   "ｶﾏﾎﾞｺﾉ" (t13n) ]
-    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 5);
   }
 
   EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 1))
@@ -2512,11 +2510,11 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     EXPECT_TRUE(output.has_candidates());
     EXPECT_TRUE(output.has_all_candidate_words());
 
-    EXPECT_EQ(1, output.all_candidate_words().focused_index());
-    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    EXPECT_EQ(output.all_candidate_words().focused_index(), 1);
+    EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
     // [ "かまぼこの", "カマボコの", "カマボコノ" (t13n), "かまぼこの" (t13n),
     //   "ｶﾏﾎﾞｺﾉ" (t13n) ]
-    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 5);
   }
 
   EXPECT_CALL(mock_converter, CommitSegmentValue(_, 0, 1))
@@ -2534,10 +2532,10 @@ TEST_F(SessionConverterTest, OutputAllCandidateWords) {
     EXPECT_FALSE(output.has_candidates());
     EXPECT_TRUE(output.has_all_candidate_words());
 
-    EXPECT_EQ(0, output.all_candidate_words().focused_index());
-    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
+    EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
     // [ "陰謀", "印房", "インボウ" (t13n), "いんぼう" (t13n), "ｲﾝﾎﾞｳ" (t13n) ]
-    EXPECT_EQ(5, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 5);
   }
 }
 
@@ -2578,10 +2576,10 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
     converter.CandidateNext(*composer_);
     std::string preedit;
     GetPreedit(converter, 0, 1, &preedit);
-    EXPECT_EQ("[content_key:conversion1-2]", preedit);
+    EXPECT_EQ(preedit, "[content_key:conversion1-2]");
     std::string conversion;
     GetConversion(converter, 0, 1, &conversion);
-    EXPECT_EQ("[value:conversion1-2]", conversion);
+    EXPECT_EQ(conversion, "[value:conversion1-2]");
   }
   {
     // SUGGESTION
@@ -2592,10 +2590,10 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
     converter.Suggest(*composer_);
     std::string preedit;
     GetPreedit(converter, 0, 1, &preedit);
-    EXPECT_EQ("[content_key:conversion1-1]", preedit);
+    EXPECT_EQ(preedit, "[content_key:conversion1-1]");
     std::string conversion;
     GetConversion(converter, 0, 1, &conversion);
-    EXPECT_EQ("[value:conversion1-1]", conversion);
+    EXPECT_EQ(conversion, "[value:conversion1-1]");
   }
   segment = segments.add_segment();
   segment->set_segment_type(Segment::FREE);
@@ -2620,10 +2618,10 @@ TEST_F(SessionConverterTest, GetPreeditAndGetConversion) {
     converter.CandidateNext(*composer_);
     std::string preedit;
     GetPreedit(converter, 0, 2, &preedit);
-    EXPECT_EQ("[key:conversion1][key:conversion2]", preedit);
+    EXPECT_EQ(preedit, "[key:conversion1][key:conversion2]");
     std::string conversion;
     GetConversion(converter, 0, 2, &conversion);
-    EXPECT_EQ("[value:conversion1-2][value:conversion2-1]", conversion);
+    EXPECT_EQ(conversion, "[value:conversion1-2][value:conversion2-1]");
   }
 }
 
@@ -2646,9 +2644,9 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
 
   Segments src;
   GetSegments(converter, &src);
-  ASSERT_EQ(2, src.history_segments_size());
-  EXPECT_EQ("車で", src.history_segment(0).candidate(0).value);
-  EXPECT_EQ("行く", src.history_segment(1).candidate(0).value);
+  ASSERT_EQ(src.history_segments_size(), 2);
+  EXPECT_EQ(src.history_segment(0).candidate(0).value, "車で");
+  EXPECT_EQ(src.history_segment(1).candidate(0).value, "行く");
 
   src.mutable_history_segment(0)->mutable_candidate(0)->value = "歩いて";
   Segment *segment = src.add_segment();
@@ -2661,14 +2659,14 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
   Segments dest;
   GetSegments(converter, &dest);
 
-  ASSERT_EQ(2, dest.history_segments_size());
-  ASSERT_EQ(1, dest.conversion_segments_size());
-  EXPECT_EQ(src.history_segment(0).candidate(0).value,
-            dest.history_segment(0).candidate(0).value);
-  EXPECT_EQ(src.history_segment(1).candidate(0).value,
-            dest.history_segment(1).candidate(0).value);
-  EXPECT_EQ(src.history_segment(2).candidate(0).value,
-            dest.history_segment(2).candidate(0).value);
+  ASSERT_EQ(dest.history_segments_size(), 2);
+  ASSERT_EQ(dest.conversion_segments_size(), 1);
+  EXPECT_EQ(dest.history_segment(0).candidate(0).value,
+            src.history_segment(0).candidate(0).value);
+  EXPECT_EQ(dest.history_segment(1).candidate(0).value,
+            src.history_segment(1).candidate(0).value);
+  EXPECT_EQ(dest.history_segment(2).candidate(0).value,
+            src.history_segment(2).candidate(0).value);
 }
 
 TEST_F(SessionConverterTest, Clone) {
@@ -2763,8 +2761,8 @@ TEST_F(SessionConverterTest, Issue1948334) {
 
     const commands::Candidates &candidates = output.candidates();
     // Candidates should be merged with the previous suggestions.
-    EXPECT_EQ(1, candidates.size());
-    EXPECT_EQ(kChars_Mozukusu, candidates.candidate(0).value());
+    EXPECT_EQ(candidates.size(), 1);
+    EXPECT_EQ(candidates.candidate(0).value(), kChars_Mozukusu);
     EXPECT_FALSE(candidates.has_focused_index());
   }
 }
@@ -2831,7 +2829,7 @@ TEST_F(SessionConverterTest, Issue1960362) {
   EXPECT_FALSE(output.has_candidates());
 
   const commands::Preedit &conversion = output.preedit();
-  EXPECT_EQ("jyut", conversion.segment(0).value());
+  EXPECT_EQ(conversion.segment(0).value(), "jyut");
 }
 
 TEST_F(SessionConverterTest, Issue1978201) {
@@ -2867,8 +2865,8 @@ TEST_F(SessionConverterTest, Issue1978201) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ(kChars_Mozuku, conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
   }
 
   // Meaningless segment manipulations.
@@ -2884,8 +2882,8 @@ TEST_F(SessionConverterTest, Issue1978201) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ(kChars_Mozuku, conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), kChars_Mozuku);
   }
 }
 
@@ -2903,14 +2901,14 @@ TEST_F(SessionConverterTest, Issue1981020) {
 #ifdef OS_WIN
   // "～～～～" U+FF5E * 4
   const std::string fullwidth_tilde_ff5e = "～～～～";
-  EXPECT_EQ(fullwidth_tilde_ff5e,
-            segments.conversion_segment(0).candidate(0).value);
-  EXPECT_EQ(fullwidth_tilde_ff5e,
-            segments.conversion_segment(0).candidate(0).content_value);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+            fullwidth_tilde_ff5e);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
+            fullwidth_tilde_ff5e);
 #else   // OS_WIN
-  EXPECT_EQ(wave_dash_301c, segments.conversion_segment(0).candidate(0).value);
-  EXPECT_EQ(wave_dash_301c,
-            segments.conversion_segment(0).candidate(0).content_value);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, wave_dash_301c);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
+            wave_dash_301c);
 #endif  // OS_WIN
 }
 
@@ -3028,8 +3026,8 @@ TEST_F(SessionConverterTest, Issue2040116) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("GoogleSuggest", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "GoogleSuggest");
   }
 
   {
@@ -3054,11 +3052,11 @@ TEST_F(SessionConverterTest, Issue2040116) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(1, conversion.segment_size());
-    EXPECT_EQ("GoogleSuggest", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 1);
+    EXPECT_EQ(conversion.segment(0).value(), "GoogleSuggest");
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(1, candidates.candidate_size());
+    EXPECT_EQ(candidates.candidate_size(), 1);
   }
 }
 
@@ -3077,11 +3075,12 @@ TEST_F(SessionConverterTest, GetReadingText) {
   // For reverse conversion, key is the original kanji string.
   candidate->key = kKanjiAiueo;
   candidate->value = kChars_Aiueo;
-  EXPECT_CALL(mock_converter, StartReverseConversion(_, kKanjiAiueo))
+  EXPECT_CALL(mock_converter,
+              StartReverseConversion(_, absl::string_view(kKanjiAiueo)))
       .WillOnce(DoAll(SetArgPointee<0>(reverse_segments), Return(true)));
   std::string reading;
   EXPECT_TRUE(converter.GetReadingText(kKanjiAiueo, &reading));
-  EXPECT_EQ(kChars_Aiueo, reading);
+  EXPECT_EQ(reading, kChars_Aiueo);
 }
 
 TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
@@ -3111,9 +3110,9 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(2, candidates.size());
-    EXPECT_EQ("search", candidates.candidate(0).value());
-    EXPECT_EQ("input", candidates.candidate(1).value());
+    EXPECT_EQ(candidates.size(), 2);
+    EXPECT_EQ(candidates.candidate(0).value(), "search");
+    EXPECT_EQ(candidates.candidate(1).value(), "input");
   }
 }
 
@@ -3142,7 +3141,7 @@ TEST_F(SessionConverterTest, CommitHead) {
 
   size_t committed_size;
   converter.CommitHead(1, *composer_, &committed_size);
-  EXPECT_EQ(1, committed_size);
+  EXPECT_EQ(committed_size, 1);
   composer_->DeleteAt(0);
 
   commands::Output output;
@@ -3151,14 +3150,14 @@ TEST_F(SessionConverterTest, CommitHead) {
   EXPECT_FALSE(output.has_candidates());
 
   const commands::Result &result = output.result();
-  EXPECT_EQ("あ", result.value());
-  EXPECT_EQ("あ", result.key());
+  EXPECT_EQ(result.value(), "あ");
+  EXPECT_EQ(result.key(), "あ");
   std::string preedit;
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("いうえお", preedit);
+  EXPECT_EQ(preedit, "いうえお");
 
   converter.CommitHead(3, *composer_, &committed_size);
-  EXPECT_EQ(3, committed_size);
+  EXPECT_EQ(committed_size, 3);
   composer_->DeleteAt(0);
   composer_->DeleteAt(0);
   composer_->DeleteAt(0);
@@ -3167,10 +3166,10 @@ TEST_F(SessionConverterTest, CommitHead) {
   EXPECT_FALSE(output.has_candidates());
 
   const commands::Result &result2 = output.result();
-  EXPECT_EQ("いうえ", result2.value());
-  EXPECT_EQ("いうえ", result2.key());
+  EXPECT_EQ(result2.value(), "いうえ");
+  EXPECT_EQ(result2.key(), "いうえ");
   composer_->GetStringForPreedit(&preedit);
-  EXPECT_EQ("お", preedit);
+  EXPECT_EQ(preedit, "お");
 
   EXPECT_STATS_NOT_EXIST("Commit");
   EXPECT_STATS_NOT_EXIST("CommitFromComposition");
@@ -3216,7 +3215,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     size_t committed_size = 0;
     converter.CommitFirstSegment(*composer_, Context::default_instance(),
                                  &committed_size);
-    EXPECT_EQ(0, committed_size);
+    EXPECT_EQ(committed_size, 0);
 
     commands::Output output;
     converter.FillOutput(*composer_, &output);
@@ -3239,7 +3238,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     size_t committed_size = 0;
     converter.CommitFirstSegment(*composer_, Context::default_instance(),
                                  &committed_size);
-    EXPECT_EQ(Util::CharsLen(kKamabokono), committed_size);
+    EXPECT_EQ(committed_size, Util::CharsLen(kKamabokono));
 
     commands::Output output;
     converter.FillOutput(*composer_, &output);
@@ -3261,7 +3260,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     size_t committed_size = 0;
     EXPECT_FALSE(converter.CommitSuggestionById(
         0, *composer_, Context::default_instance(), &committed_size));
-    EXPECT_EQ(0, committed_size);
+    EXPECT_EQ(committed_size, 0);
   }
 
   {
@@ -3278,7 +3277,7 @@ TEST_F(SessionConverterTest, CommandCandidateWithCommitCommands) {
     size_t committed_size = 0;
     EXPECT_FALSE(converter.CommitSuggestionByIndex(
         1, *composer_, Context::default_instance(), &committed_size));
-    EXPECT_EQ(0, committed_size);
+    EXPECT_EQ(committed_size, 0);
   }
 }
 
@@ -3628,7 +3627,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
 
-    EXPECT_CALL(mock_converter, ReconstructHistory(_, kKey))
+    EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
 
     Context context;
@@ -3650,7 +3649,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     MockConverter mock_converter;
     SessionConverter converter(&mock_converter, request_.get(), config_.get());
 
-    EXPECT_CALL(mock_converter, ReconstructHistory(_, kKey))
+    EXPECT_CALL(mock_converter, ReconstructHistory(_, absl::string_view(kKey)))
         .WillOnce(DoAll(SetArgPointee<0>(mock_result), Return(true)));
 
     Context context;
@@ -3675,7 +3674,7 @@ TEST_F(SessionConverterTest, CandidatePageSize) {
   request_->set_candidate_page_size(kPageSize);
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
-  EXPECT_EQ(kPageSize, GetCandidateList(converter).page_size());
+  EXPECT_EQ(GetCandidateList(converter).page_size(), kPageSize);
 }
 
 }  // namespace session

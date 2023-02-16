@@ -224,7 +224,7 @@ TEST(RendererClient, ActivateTest) {
     launcher.set_can_connect(false);
     TestIPCClient::Reset();
     EXPECT_TRUE(client.Activate());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 
   {
@@ -234,7 +234,7 @@ TEST(RendererClient, ActivateTest) {
     TestIPCClient::set_connected(false);
     TestIPCClient::Reset();
     EXPECT_TRUE(client.Activate());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 
   {
@@ -244,7 +244,7 @@ TEST(RendererClient, ActivateTest) {
     TestIPCClient::set_connected(true);
     TestIPCClient::Reset();
     EXPECT_TRUE(client.Activate());
-    EXPECT_EQ(1, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 1);
   }
 
   {
@@ -255,7 +255,7 @@ TEST(RendererClient, ActivateTest) {
     EXPECT_TRUE(client.Activate());
     EXPECT_TRUE(client.Activate());
     EXPECT_TRUE(client.Activate());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 }
 
@@ -340,7 +340,7 @@ TEST(RendererClient, ConnectionTest) {
     EXPECT_TRUE(client.ExecCommand(command));
 
     // IPC should be called three times
-    EXPECT_EQ(3, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 3);
   }
 
   {
@@ -352,7 +352,7 @@ TEST(RendererClient, ConnectionTest) {
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_TRUE(client.ExecCommand(command));
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 
   {
@@ -364,7 +364,7 @@ TEST(RendererClient, ConnectionTest) {
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_TRUE(client.ExecCommand(command));
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 }
 
@@ -386,7 +386,7 @@ TEST(RendererClient, ShutdownTest) {
     // Shutdown with commands::RendererCommand::SHUTDOWN command
     EXPECT_TRUE(client.Shutdown(false));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(1, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 1);
   }
 
   {
@@ -398,7 +398,7 @@ TEST(RendererClient, ShutdownTest) {
     // Shutdown with ForceTerminateRenderer
     EXPECT_TRUE(client.Shutdown(true));
     EXPECT_TRUE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 
   {
@@ -409,7 +409,7 @@ TEST(RendererClient, ShutdownTest) {
 
     EXPECT_TRUE(client.Shutdown(false));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 
   {
@@ -420,7 +420,7 @@ TEST(RendererClient, ShutdownTest) {
 
     EXPECT_TRUE(client.Shutdown(true));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 }
 
@@ -444,7 +444,7 @@ TEST(RendererClient, ProtocolVersionMismatchNewer) {
     TestIPCClient::set_server_protocol_version(IPC_PROTOCOL_VERSION - 1);
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_TRUE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 }
 
@@ -468,7 +468,7 @@ TEST(RendererClient, ProtocolVersionMismatchOlder) {
     TestIPCClient::set_server_protocol_version(IPC_PROTOCOL_VERSION + 1);
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(0, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 0);
   }
 }
 
@@ -493,7 +493,7 @@ TEST(RendererClient, MozcVersionMismatchNewer) {
     TestIPCClient::set_server_protocol_version(IPC_PROTOCOL_VERSION);
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(1, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 1);
   }
 }
 
@@ -518,7 +518,7 @@ TEST(RendererClient, MozcVersionMismatchOlder) {
     TestIPCClient::set_server_protocol_version(IPC_PROTOCOL_VERSION);
     EXPECT_TRUE(client.ExecCommand(command));
     EXPECT_FALSE(launcher.is_force_terminate_renderer_called());
-    EXPECT_EQ(1, TestIPCClient::counter());
+    EXPECT_EQ(TestIPCClient::counter(), 1);
   }
 }
 

@@ -320,8 +320,8 @@ class ConverterTest : public ::testing::Test {
         CreateSuffixDictionaryFromDataManager(data_manager));
     converter_and_data->connector =
         Connector::CreateFromDataManager(data_manager).value();
-    converter_and_data->segmenter.reset(
-        Segmenter::CreateFromDataManager(data_manager));
+    converter_and_data->segmenter =
+        Segmenter::CreateFromDataManager(data_manager);
     converter_and_data->immutable_converter =
         std::make_unique<ImmutableConverterImpl>(
             converter_and_data->dictionary.get(),

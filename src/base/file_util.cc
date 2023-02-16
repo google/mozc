@@ -34,11 +34,12 @@
 #include <Windows.h>
 #else  // OS_WIN
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 #endif  // OS_WIN
 
-#include <cstdint>
+#include <cerrno>
+#include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <ios>
@@ -56,7 +57,9 @@
 #include "base/win_util.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace {
 
@@ -603,22 +606,16 @@ absl::Status FileUtilImpl::CreateHardLink(const std::string &from,
 std::string FileUtil::JoinPath(
     const std::vector<absl::string_view> &components) {
   std::string output;
-  JoinPath(components, &output);
-  return output;
-}
-
-void FileUtil::JoinPath(const std::vector<absl::string_view> &components,
-                        std::string *output) {
-  output->clear();
-  for (size_t i = 0; i < components.size(); ++i) {
-    if (components[i].empty()) {
+  for (const absl::string_view component : components) {
+    if (component.empty()) {
       continue;
     }
-    if (!output->empty() && output->back() != kFileDelimiter) {
-      output->append(1, kFileDelimiter);
+    if (!output.empty() && output.back() != kFileDelimiter) {
+      output.append(1, kFileDelimiter);
     }
-    output->append(components[i].data(), components[i].size());
+    absl::StrAppend(&output, component);
   }
+  return output;
 }
 
 // TODO(taku): what happens if filename == '/foo/bar/../bar/..

@@ -38,9 +38,8 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <cstdint>
-#include <map>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -50,7 +49,6 @@
 #include "base/init_mozc.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/status.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
@@ -59,7 +57,9 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
 ABSL_FLAG(std::string, ordering_rule, "", "sorting order file");
@@ -100,7 +100,7 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
         absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
     CHECK_GE(fields.size(), 2);
     uint32_t ucs4 = 0;
-    NumberUtil::SafeHexStrToUInt32(fields[0], &ucs4);
+    CHECK(absl::SimpleHexAtoi(fields[0], &ucs4));
     std::string utf8;
     Util::Ucs4ToUtf8(ucs4, &utf8);
     if (sorting_map->find(utf8) != sorting_map->end()) {

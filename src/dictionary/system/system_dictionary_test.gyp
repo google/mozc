@@ -36,6 +36,7 @@
         'codec_test.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_random',
         '../../base/absl.gyp:absl_strings',
         '../../testing/testing.gyp:gtest_main',
         'system_dictionary.gyp:system_dictionary_codec',
@@ -65,6 +66,7 @@
         'system_dictionary_test.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_random',
         '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base_core',
         '../../config/config.gyp:config_handler',

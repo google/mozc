@@ -46,8 +46,7 @@ load("//bazel:stubs.bzl", "register_extension_info")
 load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//bazel:stubs.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
-load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
 
 def mozc_cc_library(deps = [], copts = [], **kwargs):
     """
@@ -249,38 +248,18 @@ def mozc_objc_library(
         name,
         srcs = [],
         hdrs = [],
-        textual_hdrs = [],
         deps = [],
-        proto_deps = [],
         copts = [],
-        sdk_frameworks = [],
         tags = [],
         **kwargs):
-    # Because proto_library cannot be in deps of objc_library,
-    # cc_library as a wrapper is necessary as a workaround.
-    proto_deps_name = name + "_proto_deps"
-    native.cc_library(
-        name = proto_deps_name,
-        deps = proto_deps,
-        copts = copts + ["-funsigned-char"],
-        visibility = ["//visibility:private"],
-        tags = ["manual"],
-    )
-    sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
-        textual_hdrs = textual_hdrs + proto_deps,
         deps = deps + [
             "//:macro",
-            proto_deps_name,
-        ] + mozc_select(
-            macos = sdk_frameworks_deps,
-            oss_macos = [],
-        ),
+        ],
         copts = copts + ["-funsigned-char", "-std=c++17"],
-        sdk_frameworks = mozc_select(oss_macos = sdk_frameworks),
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
@@ -299,80 +278,56 @@ def objc_library_mozc(**kwargs):
     """
     mozc_objc_library(**kwargs)
 
-def _run_test_impl(ctx):
-    """Rule to run executables (e.g. apple_binary) as test."""
+def _snake_case_camel_case(id):
+    # Don't capitalize if it's just one word.
+    if id.find("_") < 0:
+        return id
+    components = id.split("_")
+    return "".join([s.capitalize() for s in components])
 
-    # Relative path from the executable to the build root.
-    base_dir = "/".join([".."] * ctx.outputs.executable.path.count("/"))
+def mozc_objc_test(
+        name,
+        bundle_id = None,
+        size = None,
+        visibility = None,
+        tags = [],
+        **kwargs):
+    """A wrapper for objc_library and macos_unit_test.
 
-    # ":" is noop for avoiding empty commands.
-    sandboxed_commands = [":"]
-    commands = [":"]
-    for test in ctx.files.tests:
-        sandboxed_commands.append("{short_path} || err=1".format(short_path = test.short_path))
-        commands.append("{base_dir}/{path} || err=1".format(base_dir = base_dir, path = test.path))
+    This macro internally creates two targets: mozc_objc_library and macos_unit_test because the
+    macos_unit_test rule doesn't take source files directly.
 
-    # The directory path to the executable is different between 'blaze test' and 'blaze build'.
-    # If this is called by 'blaze test', TEST_WORKSPACE is filled.
-    script = """
-err=0
-if [ \"${{TEST_WORKSPACE}}\" != \"\" ]; then
-  {sandboxed_commands}
-else
-  cd `dirname ${{0}}`
-  {commands}
-fi
-exit $err
-""".format(sandboxed_commands = "\n".join(sandboxed_commands), commands = "\n".join(commands))
-
-    # Write the file to be executed by run_mozc_test.
-    ctx.actions.write(
-        output = ctx.outputs.executable,
-        content = script,
-    )
-
-    return [DefaultInfo(runfiles = ctx.runfiles(files = ctx.files.tests))]
-
-_run_test = rule(
-    implementation = _run_test_impl,
-    attrs = {
-        "tests": attr.label_list(
-            mandatory = True,
-            allow_files = True,
-        ),
-    },
-    test = True,
-)
-
-def mozc_objc_test(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
+    Args:
+      name: name for the macos_unit_test target
+      bundle_id: optional. Test bundle id for macos_unit_test. The default value is
+          MACOS_BUNDLE_ID_PREFIX.package.name.CamelCasedName.
+      size: optional. passed to macos_unit_test.
+      visibility: optional. Visibility for the unit test target.
+      tags: optional. Tags for both the library and unit test targets.
+      **kwargs: other arguments passed to mozc_objc_library.
+    """
+    lib_name = name + "_lib"
+    default_bundle_id = ".".join([
+        MACOS_BUNDLE_ID_PREFIX,
+        _snake_case_camel_case(native.package_name().replace("/", ".")),
+        _snake_case_camel_case(name),
+    ])
     mozc_objc_library(
-        name = name + "_lib",
-        testonly = 1,
-        srcs = srcs,
-        deps = deps,
-        alwayslink = 1,
+        name = lib_name,
+        testonly = True,
+        alwayslink = True,
         visibility = ["//visibility:private"],
+        tags = ["manual"] + tags,
         **kwargs
     )
-
-    sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
-    apple_binary(
-        name = name + "_bin",
-        testonly = 1,
-        minimum_os_version = "10.13",
-        platform_type = "macos",
-        sdk_frameworks = mozc_select(oss_macos = sdk_frameworks),
-        deps = [name + "_lib"] + mozc_select(
-            macos = sdk_frameworks_deps,
-            oss_macos = [],
-        ),
-        visibility = ["//visibility:private"],
-        tags = ["manual"],
-    )
-
-    _run_test(
+    macos_unit_test(
         name = name,
-        tests = mozc_select(macos = [name + "_bin"]),
+        minimum_os_version = "10.13",
+        bundle_id = bundle_id or default_bundle_id,
+        deps = [lib_name],
+        size = size,
+        visibility = visibility,
+        tags = tags,
     )
 
 register_extension_info(

@@ -69,12 +69,12 @@ TEST(SessionObserverHandlerTest, ObserverTest) {
   command.mutable_output()->set_consumed(true);
   handler.EvalCommandHandler(command);
 
-  EXPECT_EQ(1, observer1.eval_count());
-  EXPECT_EQ('a', observer1.command().input().key().key_code());
+  EXPECT_EQ(observer1.eval_count(), 1);
+  EXPECT_EQ(observer1.command().input().key().key_code(), 'a');
   EXPECT_TRUE(observer1.command().output().consumed());
 
-  EXPECT_EQ(1, observer2.eval_count());
-  EXPECT_EQ('a', observer2.command().input().key().key_code());
+  EXPECT_EQ(observer2.eval_count(), 1);
+  EXPECT_EQ(observer2.command().input().key().key_code(), 'a');
   EXPECT_TRUE(observer2.command().output().consumed());
 
   // Round2: EvalCommandHandler
@@ -83,12 +83,12 @@ TEST(SessionObserverHandlerTest, ObserverTest) {
   command.mutable_output()->set_consumed(false);
   handler.EvalCommandHandler(command);
 
-  EXPECT_EQ(2, observer1.eval_count());
-  EXPECT_EQ('z', observer1.command().input().key().key_code());
+  EXPECT_EQ(observer1.eval_count(), 2);
+  EXPECT_EQ(observer1.command().input().key().key_code(), 'z');
   EXPECT_FALSE(observer1.command().output().consumed());
 
-  EXPECT_EQ(2, observer2.eval_count());
-  EXPECT_EQ('z', observer2.command().input().key().key_code());
+  EXPECT_EQ(observer2.eval_count(), 2);
+  EXPECT_EQ(observer2.command().input().key().key_code(), 'z');
   EXPECT_FALSE(observer2.command().output().consumed());
 }
 

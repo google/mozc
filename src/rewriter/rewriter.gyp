@@ -80,6 +80,7 @@
         'zipcode_rewriter.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',

@@ -30,8 +30,9 @@
 #include "converter/converter.h"
 
 #include <algorithm>
-#include <climits>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <string>
@@ -40,21 +41,20 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
@@ -74,7 +74,7 @@ size_t GetSegmentIndex(const Segments *segments, size_t segment_index) {
   return result;
 }
 
-void SetKey(Segments *segments, const std::string &key) {
+void SetKey(Segments *segments, const absl::string_view key) {
   segments->set_max_history_segments_size(4);
   segments->clear_conversion_segments();
 
@@ -89,7 +89,7 @@ void SetKey(Segments *segments, const std::string &key) {
 }
 
 bool ShouldSetKeyForPrediction(const ConversionRequest &request,
-                               const std::string &key,
+                               const absl::string_view key,
                                const Segments &segments) {
   // (1) If should_call_set_key_in_prediction is true, invoke SetKey.
   // (2) If the segment size is 0, invoke SetKey because the segments is not
@@ -151,7 +151,7 @@ bool IsValidSegments(const ConversionRequest &request,
 //   - "C60" -> "60" / NUMBER
 //   - "200x" -> "x" / ALPHABET
 //   (currently only NUMBER and ALPHABET are supported)
-bool ExtractLastTokenWithScriptType(const std::string &text,
+bool ExtractLastTokenWithScriptType(const absl::string_view text,
                                     std::string *last_token,
                                     Util::ScriptType *last_script_type) {
   last_token->clear();
@@ -197,7 +197,8 @@ bool ExtractLastTokenWithScriptType(const std::string &text,
 // and math symbols are converted to their half-width equivalents except for
 // some special symbols, e.g., "×", "÷", and "・". Returns false if the input
 // string contains non-math characters.
-bool TryNormalizingKeyAsMathExpression(absl::string_view s, std::string *key) {
+bool TryNormalizingKeyAsMathExpression(const absl::string_view s,
+                                       std::string *key) {
   key->reserve(s.size());
   for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
     // Half-width arabic numbers.
@@ -309,7 +310,7 @@ bool ConverterImpl::StartConversionForRequest(
 }
 
 bool ConverterImpl::StartConversion(Segments *segments,
-                                    const std::string &key) const {
+                                    const absl::string_view key) const {
   if (key.empty()) {
     return false;
   }
@@ -318,7 +319,8 @@ bool ConverterImpl::StartConversion(Segments *segments,
 }
 
 bool ConverterImpl::Convert(const ConversionRequest &request,
-                            const std::string &key, Segments *segments) const {
+                            const absl::string_view key,
+                            Segments *segments) const {
   SetKey(segments, key);
   if (!immutable_converter_->ConvertForRequest(request, segments)) {
     // Conversion can fail for keys like "12". Even in such cases, rewriters
@@ -333,7 +335,7 @@ bool ConverterImpl::Convert(const ConversionRequest &request,
 }
 
 bool ConverterImpl::StartReverseConversion(Segments *segments,
-                                           const std::string &key) const {
+                                           const absl::string_view key) const {
   segments->Clear();
   if (key.empty()) {
     return false;
@@ -349,7 +351,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
       Segment::Candidate *cand =
           segments->mutable_segment(0)->push_back_candidate();
       cand->Init();
-      cand->key = key;
+      cand->key = std::string(key);
       cand->value.swap(value);
       return true;
     }
@@ -402,7 +404,8 @@ void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
 
 // TODO(noriyukit): |key| can be a member of ConversionRequest.
 bool ConverterImpl::Predict(const ConversionRequest &request,
-                            const std::string &key, Segments *segments) const {
+                            const absl::string_view key,
+                            Segments *segments) const {
   if (ShouldSetKeyForPrediction(request, key, *segments)) {
     SetKey(segments, key);
   }
@@ -450,14 +453,14 @@ bool ConverterImpl::StartPredictionForRequest(
 }
 
 bool ConverterImpl::StartPrediction(Segments *segments,
-                                    const std::string &key) const {
+                                    const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PREDICTION);
   return Predict(default_request, key, segments);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
-                                    const std::string &key) const {
+                                    const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::SUGGESTION);
   return Predict(default_request, key, segments);
@@ -474,7 +477,7 @@ bool ConverterImpl::StartSuggestionForRequest(
 }
 
 bool ConverterImpl::StartPartialSuggestion(Segments *segments,
-                                           const std::string &key) const {
+                                           const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   return Predict(default_request, key, segments);
@@ -497,7 +500,7 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
 }
 
 bool ConverterImpl::StartPartialPrediction(Segments *segments,
-                                           const std::string &key) const {
+                                           const absl::string_view key) const {
   ConversionRequest default_request;
   default_request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   return Predict(default_request, key, segments);
@@ -578,7 +581,7 @@ void ConverterImpl::RevertConversion(Segments *segments) const {
 }
 
 bool ConverterImpl::ReconstructHistory(
-    Segments *segments, const std::string &preceding_text) const {
+    Segments *segments, const absl::string_view preceding_text) const {
   segments->Clear();
 
   std::string key;
@@ -635,8 +638,8 @@ bool ConverterImpl::CommitSegmentValue(Segments *segments, size_t segment_index,
 
 bool ConverterImpl::CommitPartialSuggestionSegmentValue(
     Segments *segments, size_t segment_index, int candidate_index,
-    absl::string_view current_segment_key,
-    absl::string_view new_segment_key) const {
+    const absl::string_view current_segment_key,
+    const absl::string_view new_segment_key) const {
   DCHECK_GT(segments->conversion_segments_size(), 0);
 
   const size_t raw_segment_index = GetSegmentIndex(segments, segment_index);
@@ -1010,9 +1013,9 @@ void ConverterImpl::CommitUsageStats(const Segments *segments,
   UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
-bool ConverterImpl::GetLastConnectivePart(const std::string &preceding_text,
-                                          std::string *key, std::string *value,
-                                          uint16_t *id) const {
+bool ConverterImpl::GetLastConnectivePart(
+    const absl::string_view preceding_text, std::string *key,
+    std::string *value, uint16_t *id) const {
   key->clear();
   value->clear();
   *id = general_noun_id_;

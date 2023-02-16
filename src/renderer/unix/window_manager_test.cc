@@ -139,7 +139,7 @@ TEST(WindowManagerTest, SetSendCommandInterfaceTest) {
   WindowManager manager(candidate_window_mock, infolist_window_mock, gtk_mock);
   manager.SetSendCommandInterface(send_command_interface);
 
-  EXPECT_EQ(send_command_interface, manager.send_command_interface_);
+  EXPECT_EQ(manager.send_command_interface_, send_command_interface);
 }
 
 TEST(WindowManagerTest, SetWindowPosTest) {
@@ -585,10 +585,10 @@ TEST(WindowManagerTest, GetMonitorRectTest) {
   WindowManager manager(candidate_window_mock, infolist_window_mock, gtk_mock);
 
   const Rect &actual_monitor_rect = manager.GetMonitorRect(cursor.x, cursor.y);
-  EXPECT_EQ(monitor_rect.x, actual_monitor_rect.origin.x);
-  EXPECT_EQ(monitor_rect.y, actual_monitor_rect.origin.y);
-  EXPECT_EQ(monitor_rect.width, actual_monitor_rect.size.width);
-  EXPECT_EQ(monitor_rect.height, actual_monitor_rect.size.height);
+  EXPECT_EQ(actual_monitor_rect.origin.x, monitor_rect.x);
+  EXPECT_EQ(actual_monitor_rect.origin.y, monitor_rect.y);
+  EXPECT_EQ(actual_monitor_rect.size.width, monitor_rect.width);
+  EXPECT_EQ(actual_monitor_rect.size.height, monitor_rect.height);
 }
 
 class FontUpdateTestableWindowManager : public WindowManager {

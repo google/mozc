@@ -82,9 +82,9 @@ void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
   ASSERT_TRUE(key_event.has_key_code());
   ASSERT_TRUE(key_event.has_key_string());
   ASSERT_FALSE(key_event.has_special_key());
-  EXPECT_EQ(expected_key_code, key_event.key_code());
-  EXPECT_EQ(expected_key_string, key_event.key_string());
-  EXPECT_EQ(expected_style, key_event.input_style());
+  EXPECT_EQ(key_event.key_code(), expected_key_code);
+  EXPECT_EQ(key_event.key_string(), expected_key_string);
+  EXPECT_EQ(key_event.input_style(), expected_style);
 }
 
 void TestKanaTransformation(const std::string &key_string,
@@ -105,8 +105,8 @@ void TestKanaTransformation(const std::string &key_string,
 
   ASSERT_TRUE(key_event.has_key_string()) << key_string;
   ASSERT_FALSE(key_event.has_special_key()) << key_string;
-  EXPECT_EQ(expected_key_string, key_event.key_string()) << key_string;
-  EXPECT_EQ(expected_key_code, key_event.key_code()) << key_string;
+  EXPECT_EQ(key_event.key_string(), expected_key_string) << key_string;
+  EXPECT_EQ(key_event.key_code(), expected_key_code) << key_string;
 }
 
 }  // namespace
@@ -121,7 +121,7 @@ TEST(KeyEventTransformerTest, Numpad) {
 
     ASSERT_TRUE(key_event.has_special_key());
     ASSERT_FALSE(key_event.has_key_code());
-    EXPECT_EQ(commands::KeyEvent::ENTER, key_event.special_key());
+    EXPECT_EQ(key_event.special_key(), commands::KeyEvent::ENTER);
   }
 
   {  // NUMPAD_INPUT_MODE

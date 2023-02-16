@@ -45,7 +45,6 @@ package_group(
 mozc_cc_library(
     name = "jsoncpp",
     hdrs = ["jsoncpp.h"],
-    tags = ["manual"],
     visibility = ["//:__subpackages__"],
     deps = [
         "//third_party/jsoncpp:json",
@@ -56,11 +55,9 @@ mozc_cc_library(
     name = "jsonpath",
     srcs = ["jsonpath.cc"],
     hdrs = ["jsonpath.h"],
-    tags = ["manual"],
     visibility = [":self_and_friends"],
     deps = [
         ":jsoncpp",
-        "//base",
         "//base:logging",
         "//base:number_util",
         "//base:port",
@@ -72,10 +69,10 @@ mozc_cc_test(
     name = "jsonpath_test",
     srcs = ["jsonpath_test.cc"],
     requires_full_emulation = False,
-    tags = ["manual"],
     deps = [
         ":jsonpath",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -83,17 +80,14 @@ mozc_cc_library(
     name = "json_util",
     srcs = ["json_util.cc"],
     hdrs = ["json_util.h"],
-    tags = ["manual"],
     visibility = ["//:__subpackages__"],
     deps = [
         ":jsoncpp",
-        "//base",
         "//base:logging",
-        "//base:number_util",
         "//base:port",
-        "//base/protobuf",
         "//base/protobuf:descriptor",
         "//base/protobuf:message",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -115,15 +109,13 @@ mozc_cc_test(
     name = "json_util_test",
     srcs = ["json_util_test.cc"],
     requires_full_emulation = False,
-    tags = ["manual"],
     deps = [
         ":json_util",
         ":json_util_test_cc_proto",
-        ":jsoncpp",
         "//base:logging",
-        "//base:port",
-        "//base:util",
+        "//base/protobuf",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/strings",
     ],
 )

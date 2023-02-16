@@ -49,6 +49,7 @@
         'user_pos_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',

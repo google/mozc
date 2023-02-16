@@ -29,18 +29,18 @@
 
 #include "usage_stats/usage_stats.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <map>
-#include <numeric>
 #include <string>
 
 #include "base/logging.h"
-#include "config/stats_config_util.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_uploader.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -50,10 +50,10 @@ constexpr char kRegistryPrefix[] = "usage_stats.";
 
 #include "usage_stats/usage_stats_list.h"
 
-bool LoadStats(const std::string &name, Stats *stats) {
+bool LoadStats(const absl::string_view name, Stats *stats) {
   DCHECK(UsageStats::IsListed(name)) << name << " is not in the list";
   std::string stats_str;
-  const std::string key = kRegistryPrefix + name;
+  const std::string key = absl::StrCat(kRegistryPrefix, name);
   if (!mozc::storage::Registry::Lookup(key, &stats_str)) {
     VLOG(1) << "Usage stats " << name << " is not registered yet.";
     return false;
@@ -65,7 +65,8 @@ bool LoadStats(const std::string &name, Stats *stats) {
   return true;
 }
 
-bool GetterInternal(const std::string &name, Stats::Type type, Stats *stats) {
+bool GetterInternal(const absl::string_view name, Stats::Type type,
+                    Stats *stats) {
   if (!LoadStats(name, stats)) {
     return false;
   }
@@ -79,7 +80,7 @@ bool GetterInternal(const std::string &name, Stats::Type type, Stats *stats) {
 
 }  // namespace
 
-bool UsageStats::IsListed(const std::string &name) {
+bool UsageStats::IsListed(const absl::string_view name) {
   for (size_t i = 0; i < std::size(kStatsList); ++i) {
     if (name == kStatsList[i]) {
       return true;
@@ -116,27 +117,28 @@ void UsageStats::ClearAllStats() {
   }
 }
 
-void UsageStats::IncrementCountBy(const std::string &name, uint32_t val) {
+void UsageStats::IncrementCountBy(const absl::string_view name, uint32_t val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
 
-void UsageStats::UpdateTiming(const std::string &name, uint32_t val) {
+void UsageStats::UpdateTiming(const absl::string_view name, uint32_t val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
 
-void UsageStats::SetInteger(const std::string &name, int val) {
+void UsageStats::SetInteger(const absl::string_view name, int val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
 
-void UsageStats::SetBoolean(const std::string &name, bool val) {
+void UsageStats::SetBoolean(const absl::string_view name, bool val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
 
-bool UsageStats::GetCountForTest(const std::string &name, uint32_t *value) {
+bool UsageStats::GetCountForTest(const absl::string_view name,
+                                 uint32_t *value) {
   CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::COUNT, &stats)) {
@@ -151,7 +153,8 @@ bool UsageStats::GetCountForTest(const std::string &name, uint32_t *value) {
   return true;
 }
 
-bool UsageStats::GetIntegerForTest(const std::string &name, int32_t *value) {
+bool UsageStats::GetIntegerForTest(const absl::string_view name,
+                                   int32_t *value) {
   CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::INTEGER, &stats)) {
@@ -166,7 +169,7 @@ bool UsageStats::GetIntegerForTest(const std::string &name, int32_t *value) {
   return true;
 }
 
-bool UsageStats::GetBooleanForTest(const std::string &name, bool *value) {
+bool UsageStats::GetBooleanForTest(const absl::string_view name, bool *value) {
   CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::BOOLEAN, &stats)) {
@@ -181,9 +184,10 @@ bool UsageStats::GetBooleanForTest(const std::string &name, bool *value) {
   return true;
 }
 
-bool UsageStats::GetTimingForTest(const std::string &name, uint64_t *total_time,
-                                  uint32_t *num_timings, uint32_t *avg_time,
-                                  uint32_t *min_time, uint32_t *max_time) {
+bool UsageStats::GetTimingForTest(const absl::string_view name,
+                                  uint64_t *total_time, uint32_t *num_timings,
+                                  uint32_t *avg_time, uint32_t *min_time,
+                                  uint32_t *max_time) {
   Stats stats;
   if (!GetterInternal(name, Stats::TIMING, &stats)) {
     return false;
@@ -217,7 +221,7 @@ bool UsageStats::GetTimingForTest(const std::string &name, uint64_t *total_time,
   return true;
 }
 
-bool UsageStats::GetVirtualKeyboardForTest(const std::string &name,
+bool UsageStats::GetVirtualKeyboardForTest(const absl::string_view name,
                                            Stats *stats) {
   if (!GetterInternal(name, Stats::VIRTUAL_KEYBOARD, stats)) {
     return false;
@@ -232,12 +236,12 @@ bool UsageStats::GetVirtualKeyboardForTest(const std::string &name,
   return true;
 }
 
-bool UsageStats::GetStatsForTest(const std::string &name, Stats *stats) {
+bool UsageStats::GetStatsForTest(const absl::string_view name, Stats *stats) {
   return LoadStats(name, stats);
 }
 
 void UsageStats::StoreTouchEventStats(
-    const std::string &name,
+    const absl::string_view name,
     const std::map<std::string, TouchEventStatsMap> &touch_stats) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing

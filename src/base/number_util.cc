@@ -31,24 +31,21 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cerrno>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iterator>
 #include <limits>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "base/japanese_util.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -468,7 +465,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
 
   // Following conversions require uint64_t number.
   uint64_t n;
-  if (!SafeStrToUInt64(input_num, &n)) {
+  if (!absl::SimpleAtoi(input_num, &n)) {
     return converted;
   }
 
@@ -494,7 +491,7 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
   }
 
   uint64_t n;
-  if (!SafeStrToUInt64(input_num, &n)) {
+  if (!absl::SimpleAtoi(input_num, &n)) {
     return false;
   }
 
@@ -527,21 +524,14 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
 
 namespace {
 
-const absl::string_view SkipWhiteSpace(absl::string_view str) {
-  absl::string_view::size_type i;
-  for (i = 0; i < str.size() && isspace(str[i]); ++i) {
-  }
-  DCHECK(i == str.size() || !isspace(str[i]));
-  return str.substr(i);
-}
-
 // There is an informative discussion about the overflow detection in
 // "Hacker's Delight" (http://www.hackersdelight.org/basics.pdf)
 //   2-12 'Overflow Detection'
 
 // *output = arg1 + arg2
 // return false when an integer overflow happens.
-bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
+constexpr bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2,
+                                   uint64_t *output) {
   *output = arg1 + arg2;
   if (arg2 > (std::numeric_limits<uint64_t>::max() - arg1)) {
     // overflow happens
@@ -552,7 +542,8 @@ bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
 
 // *output = arg1 * arg2
 // return false when an integer overflow happens.
-bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
+constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
+                                        uint64_t *output) {
   *output = arg1 * arg2;
   if (arg1 != 0 && arg2 > (std::numeric_limits<uint64_t>::max() / arg1)) {
     // overflow happens
@@ -561,236 +552,59 @@ bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
   return true;
 }
 
-// A simple wrapper of strtoull function. |c_str| must be terminated by '\0'.
-inline uint64_t StrToUint64(const char *c_str, char **end_ptr, int base) {
-#ifdef OS_WIN
-  return _strtoui64(c_str, end_ptr, base);
-#else   // OS_WIN
-  return strtoull(c_str, end_ptr, base);
-#endif  // OS_WIN
-}
+// Avoid implicit casts.
+template <typename SrcType, typename DestType,
+          std::enable_if_t<!std::is_integral_v<SrcType>, bool> = true>
+bool SafeCast(SrcType src, DestType *dest) = delete;
 
-// Converts a string which describes a number into an uint64_t value in |base|
-// radix.  Does not convert octal or hexadecimal strings with "0" or "0x"
-// suffixes.
-bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64_t *value) {
-  DCHECK(value);
-
-  // Maximum possible length of number string, including terminating '\0'. Note
-  // that the maximum possible length is achieved when str="111...11" (64
-  // unities) and base=2.
-  constexpr size_t kMaxPossibleLength = 65;
-
-  // Leading white spaces are allowed.
-  const absl::string_view stripped_str = SkipWhiteSpace(str);
-  if (stripped_str.empty() || stripped_str.size() >= kMaxPossibleLength) {
+template <typename SrcType, typename DestType,
+          std::enable_if_t<std::is_integral_v<SrcType> &&
+                               std::is_integral_v<DestType>,
+                           bool> = true>
+constexpr bool SafeCast(SrcType src, DestType *dest) {
+  if (std::numeric_limits<SrcType>::is_signed &&
+      !std::numeric_limits<DestType>::is_signed && src < 0) {
     return false;
   }
-  // StrToUint64() does not check if the input is negative.  However, a leading
-  // '+' is OK.
-  if (stripped_str[0] == '-') {
+  if (src < std::numeric_limits<DestType>::min() ||
+      std::numeric_limits<DestType>::max() < src) {
     return false;
   }
-
-  // Since absl::string_view doesn't end with '\0', we make a c-string on stack
-  // here.
-  char buf[kMaxPossibleLength];
-  memcpy(buf, str.data(), str.size());
-  buf[str.size()] = '\0';
-
-  char *end_ptr = nullptr;
-  errno = 0;
-  *value = StrToUint64(buf, &end_ptr, base);
-  if (errno != 0 || end_ptr == buf) {  // Failed to parse uint64_t.
-    return false;
-  }
-  // Trailing white spaces are allowed.
-  const absl::string_view trailing_str(end_ptr, buf + str.size() - end_ptr);
-  return SkipWhiteSpace(trailing_str).empty();
-}
-
-template <typename T1, typename T2>
-struct GenericFalseTypeArity2 {
-  // TODO(yukawa): Use std::false_type once C++11 is enabled everywhere.
-  static constexpr bool value = false;
-};
-
-template <typename SrcType, typename DestType>
-bool SafeCast(SrcType src, DestType *dest) {
-  static_assert(GenericFalseTypeArity2<SrcType, DestType>::value,
-                "Shouldn't be used with implicit type conversion.");
-  return false;
-}
-
-template <>
-bool SafeCast(int64_t src, int16_t *dest) {
-  if (src < static_cast<int64_t>(std::numeric_limits<int16_t>::min()) ||
-      static_cast<int64_t>(std::numeric_limits<int16_t>::max()) < src) {
-    return false;
-  }
-  *dest = static_cast<int16_t>(src);
-  return true;
-}
-
-template <>
-bool SafeCast(int64_t src, int32_t *dest) {
-  if (src < static_cast<int64_t>(std::numeric_limits<int32_t>::min()) ||
-      static_cast<int64_t>(std::numeric_limits<int32_t>::max()) < src) {
-    return false;
-  }
-  *dest = static_cast<int32_t>(src);
-  return true;
-}
-
-template <>
-bool SafeCast(uint64_t src, int64_t *dest) {
-  if (src > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
-    return false;
-  }
-  *dest = static_cast<int64_t>(src);
-  return true;
-}
-
-template <>
-bool SafeCast(uint64_t src, uint16_t *dest) {
-  if (src > static_cast<uint64_t>(std::numeric_limits<uint16_t>::max())) {
-    return false;
-  }
-  *dest = static_cast<uint16_t>(src);
-  return true;
-}
-
-template <>
-bool SafeCast(uint64_t src, uint32_t *dest) {
-  if (src > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())) {
-    return false;
-  }
-  *dest = static_cast<uint32_t>(src);
-  return true;
-}
-
-template <typename SrcType, typename DestType>
-bool SafeUnaryNegation(SrcType src, DestType *dest) {
-  static_assert(GenericFalseTypeArity2<SrcType, DestType>::value,
-                "Shouldn't be used with implicit type conversion.");
-  return false;
-}
-
-template <>
-bool SafeUnaryNegation(uint64_t src, int64_t *dest) {
-  int64_t tmp = 0;
-  if (!SafeCast(src, &tmp)) {
-    if (src == 0x8000000000000000ul) {
-      // This is an exceptional case. |src| isn't in the range of int64_t,
-      // but |-src| is in the range.
-      *dest = std::numeric_limits<int64_t>::min();
-      return true;
-    }
-    return false;
-  }
-  *dest = -tmp;
+  *dest = static_cast<DestType>(src);
   return true;
 }
 
 }  // namespace
 
 bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t *value) {
-  int64_t tmp;
-  if (!SafeStrToInt64(str, &tmp)) {
-    return false;
-  }
-  return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeStrToInt32(absl::string_view str, int32_t *value) {
-  int64_t tmp;
-  if (!SafeStrToInt64(str, &tmp)) {
-    return false;
-  }
-  return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeStrToInt64(absl::string_view str, int64_t *value) {
-  const absl::string_view stripped_str = SkipWhiteSpace(str);
-  if (stripped_str.empty()) {
-    return false;
-  }
-  uint64_t tmp;
-  if (stripped_str[0] == '-') {
-    absl::string_view opposite_str =
-        stripped_str.substr(1, stripped_str.size() - 1);
-    if (!SafeStrToUInt64WithBase(opposite_str, 10, &tmp)) {
-      return false;
-    }
-    return SafeUnaryNegation(tmp, value);
-  }
-  if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
+  int32_t tmp;
+  // SimpleAtoi doesn't support 16-bit integers.
+  if (!absl::SimpleAtoi(str, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
 bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
-  uint64_t tmp;
-  if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
+  uint32_t tmp;
+  // SimpleAtoi doesn't support 16-bit integers.
+  if (!absl::SimpleAtoi(str, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeStrToUInt32(absl::string_view str, uint32_t *value) {
-  uint64_t tmp;
-  if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
-    return false;
-  }
-  return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeHexStrToUInt32(absl::string_view str, uint32_t *value) {
-  uint64_t tmp;
-  if (!SafeStrToUInt64WithBase(str, 16, &tmp)) {
-    return false;
-  }
-  return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeOctStrToUInt32(absl::string_view str, uint32_t *value) {
-  uint64_t tmp;
-  if (!SafeStrToUInt64WithBase(str, 8, &tmp)) {
-    return false;
-  }
-  return SafeCast(tmp, value);
-}
-
-bool NumberUtil::SafeStrToUInt64(absl::string_view str, uint64_t *value) {
-  return SafeStrToUInt64WithBase(str, 10, value);
 }
 
 bool NumberUtil::SafeStrToDouble(absl::string_view str, double *value) {
   DCHECK(value);
-  // Note that absl::string_view isn't terminated by '\0'.  However, since
-  // strtod requires null-terminated string, we make a string here. If we have a
-  // good estimate of the maximum possible length of the input string, we may be
-  // able to use char buffer instead.  Note: const reference ensures the life of
-  // this temporary string until the end!
-  const std::string &s = std::string(str);
-  const char *ptr = s.c_str();
-
-  char *end_ptr;
-  errno = 0;  // errno only gets set on errors
-  // strtod of GCC accepts hexadecimal number like "0x1234", but that of
-  // VisualC++ does not.
-  // Note that strtod accepts white spaces at the beginning of the parameter.
-  *value = std::strtod(ptr, &end_ptr);
-
-  if (errno != 0 || ptr == end_ptr || std::isnan(*value) ||
-      *value == std::numeric_limits<double>::infinity() ||
+  if (!absl::SimpleAtod(str, value)) {
+    return false;
+  }
+  // SafeStrToDouble returns false for NaN and overflows.
+  if (std::isnan(*value) || *value == std::numeric_limits<double>::infinity() ||
       *value == -std::numeric_limits<double>::infinity()) {
     return false;
   }
-  // Trailing white spaces are allowed.
-  const absl::string_view trailing_str(end_ptr, ptr + s.size() - end_ptr);
-  return SkipWhiteSpace(trailing_str).empty();
+  return true;
 }
 
 namespace {
@@ -842,7 +656,7 @@ bool ReduceOnesDigit(std::vector<uint64_t>::const_iterator *begin,
 }
 
 // Given expected_base, 10, 100, or 1000, reads leading one or two numbers and
-// calculates the number in the follwoing way:
+// calculates the number in the following way:
 //   Case: expected_base == 10
 //     [10, ...] => 10
 //     [2, 10, ...] => 20
@@ -1040,7 +854,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     NumberUtil::KanjiNumberToArabicNumber(kanji_char, &tmp);
 
     uint64_t n = 0;
-    if (!NumberUtil::SafeStrToUInt64(tmp, &n)) {
+    if (!absl::SimpleAtoi(tmp, &n)) {
       break;
     }
 

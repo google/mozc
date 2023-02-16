@@ -31,14 +31,17 @@
 #define MOZC_BASE_UTIL_H_
 
 #include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <ctime>
+#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/port.h"
 #include "absl/base/attributes.h"
+#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -122,7 +125,7 @@ class Util {
   static void SplitStringToUtf8Graphemes(absl::string_view str,
                                          std::vector<std::string> *graphemes);
 
-  static void SplitCSV(const std::string &input,
+  static void SplitCSV(absl::string_view input,
                        std::vector<std::string> *output);
 
   static void AppendStringWithDelimiter(absl::string_view delimiter,
@@ -159,11 +162,6 @@ class Util {
   // Returns true if the text in the range [first, last) is 1) all in upper case
   // ASCII, or 2) capitalized.
   static bool IsUpperOrCapitalizedAscii(absl::string_view s);
-
-  // Strips the leading/trailing white spaces from the input and stores it to
-  // the output.  If the input does not have such white spaces, this method just
-  // copies the input into the output.  It clears the output always.
-  static void StripWhiteSpaces(const std::string &input, std::string *output);
 
   static size_t OneCharLen(const char *src);
 
@@ -248,20 +246,16 @@ class Util {
   static void StripUtf8Bom(std::string *line);
 
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
-  static bool IsUtf16Bom(const std::string &line);
+  static bool IsUtf16Bom(absl::string_view line);
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
   static bool ChopReturns(std::string *line);
 
-  // Generate a random sequence. It uses secure method if possible, or Random()
-  // as a fallback method.
-  ABSL_DEPRECATED("Use the overload with absl::Span")
+  // Generate a random sequence. It uses absl::BitGen as a random source.
+  ABSL_DEPRECATED("Use absl::Uniform or mozc::Random.")
   static void GetRandomSequence(char *buf, size_t buf_size);
   static void GetRandomSequence(absl::Span<char> buf);
-  ABSL_DEPRECATED("Use the overload with absl::Span")
-  static void GetRandomAsciiSequence(char *buf, size_t buf_size);
-  static void GetRandomAsciiSequence(absl::Span<char> buf);
 
   // Return random variable whose range is [0..size-1].
   // This function uses rand() internally, so don't use it for
@@ -281,16 +275,16 @@ class Util {
 
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area
-  static bool IsFullWidthSymbolInHalfWidthKatakana(const std::string &input);
+  static bool IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input);
 
   // Returns true if all chars are defined in half-width-katakana area.
-  static bool IsHalfWidthKatakanaSymbol(const std::string &input);
+  static bool IsHalfWidthKatakanaSymbol(absl::string_view input);
 
   // Returns true if one or more Kana-symbol characters are in the input.
-  static bool IsKanaSymbolContained(const std::string &input);
+  static bool IsKanaSymbolContained(absl::string_view input);
 
   // Returns true if |input| looks like a pure English word.
-  static bool IsEnglishTransliteration(const std::string &value);
+  static bool IsEnglishTransliteration(absl::string_view value);
 
   // Returns true if key is an open bracket.  If key is an open bracket,
   // corresponding close bracket is assigned.
@@ -303,8 +297,8 @@ class Util {
   // Returns true if input is a bracket pair text (e.g. "「」").
   static bool IsBracketPairText(absl::string_view input);
 
-  static void EncodeUri(const std::string &input, std::string *output);
-  static void DecodeUri(const std::string &input, std::string *output);
+  static void EncodeUri(absl::string_view input, std::string *output);
+  static void DecodeUri(absl::string_view input, std::string *output);
 
   // Make a string for CGI parameters from params and append it to
   // base.  The result looks like:
@@ -351,7 +345,7 @@ class Util {
 
   // The same as GetScryptType(), but it ignores symbols
   // in the |str|.
-  static ScriptType GetScriptTypeWithoutSymbols(const std::string &str);
+  static ScriptType GetScriptTypeWithoutSymbols(absl::string_view str);
 
   // return true if all script_type in str is "type"
   static bool IsScriptType(absl::string_view str, ScriptType type);
@@ -375,7 +369,7 @@ class Util {
 
   // return FormType of string.
   // return UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
-  static FormType GetFormType(const std::string &str);
+  static FormType GetFormType(absl::string_view str);
 
   // Returns true if all characters of `str` are ASCII (U+00 - U+7F).
   static bool IsAscii(absl::string_view str);

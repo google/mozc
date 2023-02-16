@@ -29,28 +29,23 @@
 
 #include "usage_stats/usage_stats_uploader.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <map>
 #include <string>
-#include <utility>
-#include <vector>
 
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "storage/registry.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace usage_stats {
 namespace {
 
 void SetUpMetaDataWithMozcVersion(uint32_t last_upload_time,
-                                  const std::string &mozc_version) {
+                                  const absl::string_view mozc_version) {
   EXPECT_TRUE(
       storage::Registry::Insert("usage_stats.last_upload", last_upload_time));
   EXPECT_TRUE(

@@ -30,9 +30,10 @@
 #ifndef MOZC_BASE_PROCESS_H_
 #define MOZC_BASE_PROCESS_H_
 
+#include <cstddef>
 #include <string>
 
-#include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -54,7 +55,7 @@ class Process {
   // On Windows, the pid parameter is ignored and the initial directory of the
   // new process is set to the system directory.
   // On Mac OSX, if the path does not specify the binary itself but
-  // specifies an directory ending with ".app", an application is
+  // specifies a directory ending with ".app", an application is
   // spawned in the OSX way.
   static bool SpawnProcess(const std::string &path, const std::string &arg,
                            size_t *pid = nullptr);

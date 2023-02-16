@@ -108,7 +108,7 @@ TEST_F(SingleKanjiRewriterTest, CapabilityTest) {
   convreq.set_request(&request);
 
   request.set_mixed_conversion(false);
-  EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
+  EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
 }
 
 TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
@@ -126,11 +126,11 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
   candidate->value = "starnge value";
   candidate->content_value = "strange value";
 
-  EXPECT_EQ(1, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 1);
   rewriter->Rewrite(default_request_, &segments);
   EXPECT_GT(segment->candidates_size(), 1);
   for (size_t i = 1; i < segment->candidates_size(); ++i) {
-    EXPECT_EQ(kKey, segment->candidate(i).key);
+    EXPECT_EQ(segment->candidate(i).key, kKey);
   }
 }
 
@@ -142,12 +142,12 @@ TEST_F(SingleKanjiRewriterTest, MobileEnvironmentTest) {
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(RewriterInterface::ALL, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(RewriterInterface::CONVERSION, rewriter->capability(convreq));
+    EXPECT_EQ(rewriter->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 
@@ -165,10 +165,10 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate1->value = "見";
   candidate1->content_value = "見";
 
-  EXPECT_EQ(1, segment1->candidates_size());
+  EXPECT_EQ(segment1->candidates_size(), 1);
   rewriter.Rewrite(default_request_, &segments);
 
-  EXPECT_EQ("未", segment1->candidate(0).value);
+  EXPECT_EQ(segment1->candidate(0).value, "未");
 
   Segment *segment2 = segments.add_segment();
 
@@ -191,17 +191,17 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate1->content_value = "見";
 
   rewriter.Rewrite(default_request_, &segments);
-  EXPECT_EQ("見", segment1->candidate(0).value);
+  EXPECT_EQ(segment1->candidate(0).value, "見");
 
   // Only applied when right word's POS is noun.
   candidate2->lid = pos_matcher().GetContentNounId();
   candidate2->rid = pos_matcher().GetContentNounId();
 
   rewriter.Rewrite(default_request_, &segments);
-  EXPECT_EQ("未", segment1->candidate(0).value);
+  EXPECT_EQ(segment1->candidate(0).value, "未");
 
-  EXPECT_EQ(pos_matcher().GetNounPrefixId(), segment1->candidate(0).lid);
-  EXPECT_EQ(pos_matcher().GetNounPrefixId(), segment1->candidate(0).rid);
+  EXPECT_EQ(segment1->candidate(0).lid, pos_matcher().GetNounPrefixId());
+  EXPECT_EQ(segment1->candidate(0).rid, pos_matcher().GetNounPrefixId());
 }
 
 TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
@@ -219,14 +219,14 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
     candidate->content_value = candidate->value;
   }
 
-  EXPECT_EQ(10, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 10);
   EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(10, segment->candidates_size());  // Some candidates were inserted.
 
   for (int i = 0; i < 10; ++i) {
     // First 10 candidates have not changed.
     const Segment::Candidate &candidate = segment->candidate(i);
-    EXPECT_EQ(absl::StrFormat("cand%d", i), candidate.value);
+    EXPECT_EQ(candidate.value, absl::StrFormat("cand%d", i));
   }
 }
 
@@ -245,11 +245,11 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
     candidate->content_value = candidate->value;
   }
 
-  EXPECT_EQ(1, segment->candidates_size());
+  EXPECT_EQ(segment->candidates_size(), 1);
   EXPECT_TRUE(segment->candidate(0).description.empty());
   EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
-  EXPECT_EQ("亜の旧字体", segment->candidate(0).description);
+  EXPECT_EQ(segment->candidate(0).description, "亜の旧字体");
 }
 
 TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
@@ -264,7 +264,7 @@ TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
       commands::DecoderExperimentParams::NO_VARIATION);
   svs_convreq.set_request(&request);
 
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
   EXPECT_FALSE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
   EXPECT_TRUE(Contains(segments, "\uFA19"));  // 神 CJK compat ideograph.
@@ -282,7 +282,7 @@ TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
       commands::DecoderExperimentParams::SVS_JAPANESE);
   svs_convreq.set_request(&request);
 
-  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  EXPECT_EQ(segments.segment(0).candidates_size(), 1);
   EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
   EXPECT_TRUE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
   EXPECT_FALSE(Contains(segments, "\uFA19"));       // 神 CJK compat ideograph.
@@ -293,7 +293,7 @@ TEST_F(SingleKanjiRewriterTest, EmptySegments) {
 
   Segments segments;
 
-  EXPECT_EQ(0, segments.conversion_segments_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 0);
   EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 }
 
@@ -304,8 +304,8 @@ TEST_F(SingleKanjiRewriterTest, EmptyCandidates) {
   Segment *segment = segments.add_segment();
   segment->set_key("み");
 
-  EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 0);
   EXPECT_FALSE(rewriter.Rewrite(default_request_, &segments));
 }
 }  // namespace mozc

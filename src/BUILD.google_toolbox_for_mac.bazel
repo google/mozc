@@ -1,0 +1,11 @@
+# Test runner for MacOS.
+# https://github.com/google/google-toolbox-for-mac
+
+package(default_visibility = ["//visibility:public"])
+
+objc_library(
+    name = "GTM_GoogleTestRunner_GTM_USING_XCTEST",
+    testonly = True,
+    srcs = ["GTMGoogleTestRunner.mm"],
+    deps = ["@//testing:gunit"],
+)

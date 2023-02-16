@@ -101,7 +101,7 @@ class CorrectionRewriterTest : public testing::Test {
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {
-  EXPECT_EQ(RewriterInterface::ALL, rewriter_->capability(convreq_));
+  EXPECT_EQ(rewriter_->capability(convreq_), RewriterInterface::ALL);
 }
 
 TEST_F(CorrectionRewriterTest, RewriteTest) {
@@ -123,14 +123,14 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
 
   // candidate 0
   EXPECT_EQ(
-      (Segment::Candidate::RERANKED | Segment::Candidate::SPELLING_CORRECTION),
-      segments.conversion_segment(0).candidate(0).attributes);
-  EXPECT_EQ("<もしかして: tsukigime>",
-            segments.conversion_segment(0).candidate(0).description);
+      segments.conversion_segment(0).candidate(0).attributes,
+      (Segment::Candidate::RERANKED | Segment::Candidate::SPELLING_CORRECTION));
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).description,
+            "<もしかして: tsukigime>");
 
   // candidate 1
-  EXPECT_EQ(Segment::Candidate::DEFAULT_ATTRIBUTE,
-            segments.conversion_segment(0).candidate(1).attributes);
+  EXPECT_EQ(segments.conversion_segment(0).candidate(1).attributes,
+            Segment::Candidate::DEFAULT_ATTRIBUTE);
   EXPECT_TRUE(segments.conversion_segment(0).candidate(1).description.empty());
 }
 

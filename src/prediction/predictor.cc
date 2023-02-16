@@ -30,16 +30,18 @@
 #include "prediction/predictor.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "base/logging.h"
 #include "converter/segments.h"
+#include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "absl/flags/flag.h"
+#include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -89,7 +91,7 @@ BasePredictor::BasePredictor(
   DCHECK(user_history_predictor_);
 }
 
-BasePredictor::~BasePredictor() {}
+BasePredictor::~BasePredictor() = default;
 
 void BasePredictor::Finish(const ConversionRequest &request,
                            Segments *segments) {
@@ -125,8 +127,8 @@ bool BasePredictor::ClearUnusedHistory() {
   return user_history_predictor_->ClearUnusedHistory();
 }
 
-bool BasePredictor::ClearHistoryEntry(const std::string &key,
-                                      const std::string &value) {
+bool BasePredictor::ClearHistoryEntry(const absl::string_view key,
+                                      const absl::string_view value) {
   return user_history_predictor_->ClearHistoryEntry(key, value);
 }
 
@@ -207,7 +209,7 @@ MobilePredictor::MobilePredictor(
                     std::move(user_history_predictor)),
       predictor_name_("MobilePredictor") {}
 
-MobilePredictor::~MobilePredictor() {}
+MobilePredictor::~MobilePredictor() = default;
 
 ConversionRequest MobilePredictor::GetRequestForPredict(
     const ConversionRequest &request, const Segments &segments) {

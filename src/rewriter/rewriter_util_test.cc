@@ -58,10 +58,10 @@ TEST(RewriterUtilTest, CalculateInsertPositionTest_UserHistory) {
         Segment::Candidate::USER_HISTORY_PREDICTION;
   }
 
-  EXPECT_EQ(3, RewriterUtil::CalculateInsertPosition(segment, 0));
-  EXPECT_EQ(4, RewriterUtil::CalculateInsertPosition(segment, 1));
-  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 2));
-  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 3));
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 0), 3);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 1), 4);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 2), 5);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 3), 5);
 }
 
 TEST(RewriterUtilTest, CalculateInsertPositionTest_NoUserHistory) {
@@ -71,10 +71,10 @@ TEST(RewriterUtilTest, CalculateInsertPositionTest_NoUserHistory) {
                  &segment);
   }
 
-  EXPECT_EQ(0, RewriterUtil::CalculateInsertPosition(segment, 0));
-  EXPECT_EQ(1, RewriterUtil::CalculateInsertPosition(segment, 1));
-  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 5));
-  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 6));
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 0), 0);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 1), 1);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 5), 5);
+  EXPECT_EQ(RewriterUtil::CalculateInsertPosition(segment, 6), 5);
 }
 
 }  // namespace

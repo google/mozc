@@ -417,7 +417,7 @@ TEST_F(InfolistWindowTest, DrawCaptionTest) {
         RenderText(infostyle.caption_string(), RectEq(caption_expected_rect),
                    FontSpecInterface::FONTSET_INFOLIST_CAPTION));
 
-    EXPECT_EQ(infostyle.caption_height(), testkit.window->DrawCaption());
+    EXPECT_EQ(testkit.window->DrawCaption(), infostyle.caption_height());
 
     FinalizeTestKit(&testkit);
   }

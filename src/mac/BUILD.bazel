@@ -86,12 +86,17 @@ mozc_macos_application(
 mozc_objc_library(
     name = "common",
     hdrs = ["common.h"],
+    sdk_frameworks = ["Foundation"],
 )
 
 mozc_objc_library(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
-    sdk_frameworks = ["InputMethodKit"],
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+        "InputMethodKit",
+    ],
     tags = ["manual"],
     deps = [
         ":imk_controller",
@@ -119,10 +124,10 @@ mozc_objc_library(
         "English.lproj/Config.xib",
         "Japanese.lproj/Config.xib",
     ],
-    proto_deps = [
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//protocol:renderer_cc_proto",
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+        "InputMethodKit",
     ],
     tags = ["manual"],
     textual_hdrs = [
@@ -140,24 +145,26 @@ mozc_objc_library(
         "//base:util",
         "//client",
         "//ipc",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
-        "@com_google_absl//absl/base",
     ],
 )
 
 mozc_objc_test(
     name = "imk_controller_test",
+    size = "small",
     srcs = ["GoogleJapaneseInputController_test.mm"],
-    proto_deps = ["//protocol:candidates_cc_proto"],
-    sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_controller",
         ":keycode_map",
         "//base:logging",
         "//base:mac_util",
         "//client:client_mock",
+        "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
-        "//testing:gunit_main",
+        "//testing:gunit_main_objc",
         "@com_google_absl//absl/time",
     ],
 )
@@ -166,24 +173,29 @@ mozc_objc_library(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
-    proto_deps = ["//protocol:commands_cc_proto"],
+    sdk_frameworks = [
+        "Foundation",
+        "InputMethodKit",
+    ],
     tags = ["manual"],
     deps = [
         ":common",
         "//base:const",
         "//base:logging",
+        "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
     ],
 )
 
 mozc_objc_test(
     name = "imk_server_test",
+    size = "small",
     srcs = ["GoogleJapaneseInputServer_test.mm"],
-    proto_deps = ["//protocol:commands_cc_proto"],
     sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_server",
-        "//testing:gunit_main",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main_objc",
     ],
 )
 
@@ -191,7 +203,10 @@ mozc_objc_library(
     name = "keycode_map",
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
-    proto_deps = ["//protocol:commands_cc_proto"],
+    sdk_frameworks = [
+        "Carbon",
+        "Cocoa",
+    ],
     tags = ["manual"],
     textual_hdrs = [
         ":init_kanamap",
@@ -200,19 +215,20 @@ mozc_objc_library(
     ],
     deps = [
         "//base:logging",
+        "//protocol:commands_cc_proto",
         "@com_google_absl//absl/base",
     ],
 )
 
 mozc_objc_test(
     name = "keycode_map_test",
+    size = "small",
     srcs = ["KeyCodeMap_test.mm"],
-    sdk_frameworks = [
-        "AppKit",
-    ],
+    sdk_frameworks = ["AppKit"],
     deps = [
         ":keycode_map",
-        "//testing:gunit_main",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main_objc",
     ],
 )
 
@@ -257,6 +273,8 @@ mozc_objc_library(
     data = ["ActivatePane/ActivatePane.xib"],
     sdk_frameworks = [
         "Carbon",
+        "Cocoa",
+        "Foundation",
         "InstallerPlugins",
     ],
     tags = ["manual"],
@@ -280,6 +298,8 @@ mozc_objc_library(
     data = ["DevConfirmPane/DevConfirmPane.xib"],
     sdk_frameworks = [
         "Carbon",
+        "Cocoa",
+        "Foundation",
         "InstallerPlugins",
     ],
     tags = ["manual"],
@@ -340,9 +360,10 @@ mozc_macos_application(
 
 genrule(
     name = "tweak_preflight",
-    srcs = [
-        "installer/preflight_template.sh",
-    ],
+    srcs = mozc_select(
+        default = ["installer/preflight_template.sh"],
+        oss = ["installer/preflight_template.sh"],
+    ),
     outs = ["preflight.sh"],
     cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
            " --output $@" +
@@ -357,9 +378,10 @@ genrule(
 
 genrule(
     name = "tweak_postflight",
-    srcs = [
-        "installer/postflight_template.sh",
-    ],
+    srcs = mozc_select(
+        default = ["installer/postflight_template.sh"],
+        oss = ["installer/postflight_template.sh"],
+    ),
     outs = ["postflight.sh"],
     cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
            " --output $@" +
@@ -393,10 +415,18 @@ genrule(
             ":uninstaller_macos",
         ],
     ) + mozc_select(
-        # For oss_macos only
+        # For macos or oss_macos only
+        macos = [
+            "installer/distribution.xml",
+            "installer/InstallerSections.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+        ],
         oss_macos = [
             "//gui/config_dialog:config_dialog_macos",
             "//gui/dictionary_tool:dictionary_tool_macos",
+            "installer/distribution.xml",
+            "installer/InstallerSections.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
@@ -424,6 +454,19 @@ genrule(
     tools = [":tweak_installer_files"],
 )
 
+genrule(
+    name = "productbuild_files",
+    srcs = [":zipped_installer_files"],
+    outs = ["productbuild_files.zip"],
+    cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@" + mozc_select(
+        default = " --noqt",
+        oss_macos = " --oss",
+    ),
+    tags = ["manual"],
+    tools = [":tweak_installer_files"],
+)
+
+# Binary for Packages (i.e. packagesbuild command)
 mozc_py_binary(
     name = "build_installer",
     srcs = ["build_installer.py"],
@@ -437,11 +480,7 @@ AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
 genrule(
     name = "installer_oss_macos",
     srcs = [":tweaked_installer_files"] + mozc_select(
-        oss_macos = [
-            "installer/Mozc_template.pkgproj",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
-        ],
+        oss_macos = ["installer/Mozc_template.pkgproj"],
     ),
     outs = ["Mozc.pkg"],
     cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +
@@ -457,4 +496,27 @@ genrule(
         "//base:mozc_version_txt",
         "//build_tools:tweak_pkgproj",
     ],
+)
+
+# Binary for default tools (i.e. pkgbuild and productbuild commands)
+mozc_py_binary(
+    name = "build_package",
+    srcs = ["build_package.py"],
+    test_lib = False,
+    deps = ["//build_tools:util"],
+)
+
+genrule(
+    name = "package_macos",
+    srcs = [":productbuild_files"],
+    outs = ["Mozc2.pkg"],
+    cmd = "$(location :build_package) --input $(location :productbuild_files) --output $@" +
+          mozc_select(
+              default = "",
+              oss = " --oss",
+          ),
+    exec_compatible_with = ["@platforms//os:macos"],
+    # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.
+    tags = ["manual"],
+    tools = [":build_package"],
 )

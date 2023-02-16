@@ -48,7 +48,7 @@ TEST(TokenTest, GetID) {
   token_rich.set_sorting_key(100);
   token_rich.set_description("Google IME");
 
-  EXPECT_NE(token_empty.GetID(), token_simple.GetID());
+  EXPECT_NE(token_simple.GetID(), token_empty.GetID());
   EXPECT_EQ(token_rich.GetID(), token_simple.GetID());
 }
 
@@ -66,14 +66,14 @@ TEST(TokenTest, MergeFrom) {
   token_from.set_description("Google IME");
 
   token_to.MergeFrom(token_from);
-  EXPECT_EQ("mozc", token_to.key());
-  EXPECT_EQ("moooozc", token_to.value());
-  EXPECT_EQ("noun", token_to.pos());
-  EXPECT_EQ(100, token_to.sorting_key());
-  EXPECT_EQ("Google IME", token_to.description());
+  EXPECT_EQ(token_to.key(), "mozc");
+  EXPECT_EQ(token_to.value(), "moooozc");
+  EXPECT_EQ(token_to.pos(), "noun");
+  EXPECT_EQ(token_to.sorting_key(), 100);
+  EXPECT_EQ(token_to.description(), "Google IME");
 
   // It is possible that the IDs are different.
-  EXPECT_NE(token_from.GetID(), token_to.GetID());
+  EXPECT_NE(token_to.GetID(), token_from.GetID());
 }
 
 }  // namespace rewriter

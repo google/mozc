@@ -28,17 +28,17 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
-#include <cstring>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "ipc/ipc.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, server_address, "ipc_test", "");
 ABSL_FLAG(bool, test, false, "automatic test mode");
@@ -50,22 +50,6 @@ ABSL_FLAG(int32_t, num_requests, 100, "number of requests");
 
 namespace mozc {
 
-class MultiConnections : public Thread {
- public:
-  void Run() override {
-    for (int i = 0; i < absl::GetFlag(FLAGS_num_requests); ++i) {
-      mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
-                          absl::GetFlag(FLAGS_server_path));
-      CHECK(con.Connected());
-      std::string input = "testtesttesttest";
-      std::string output;
-      CHECK(con.Call(input, &output, 1000));
-      CHECK_EQ(input.size(), output.size());
-      CHECK_EQ(input, output);
-    }
-  }
-};
-
 class EchoServer : public IPCServer {
  public:
   EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
@@ -76,15 +60,6 @@ class EchoServer : public IPCServer {
   }
 };
 
-class EchoServerThread : public Thread {
- public:
-  explicit EchoServerThread(EchoServer *con) : con_(con) {}
-  void Run() override { con_->Loop(); }
-
- private:
-  EchoServer *con_;
-};
-
 }  // namespace mozc
 
 int main(int argc, char **argv) {
@@ -92,17 +67,26 @@ int main(int argc, char **argv) {
 
   if (absl::GetFlag(FLAGS_test)) {
     mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10, 1000);
-    mozc::EchoServerThread server_thread_main(&con);
-    server_thread_main.SetJoinable(true);
-    server_thread_main.Start("IpcMain");
+    mozc::Thread2 server_thread_main([&con] { con.Loop(); });
 
-    std::vector<mozc::MultiConnections> cons(absl::GetFlag(FLAGS_num_threads));
-    for (size_t i = 0; i < cons.size(); ++i) {
-      cons[i].SetJoinable(true);
-      cons[i].Start("MultiConnections");
+    std::vector<mozc::Thread2> cons;
+    cons.reserve(absl::GetFlag(FLAGS_num_threads));
+    for (int i = 0; i < absl::GetFlag(FLAGS_num_threads); ++i) {
+      cons.push_back(mozc::Thread2([] {
+        for (int i = 0; i < absl::GetFlag(FLAGS_num_requests); ++i) {
+          mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
+                              absl::GetFlag(FLAGS_server_path));
+          CHECK(con.Connected());
+          std::string input = "testtesttesttest";
+          std::string output;
+          CHECK(con.Call(input, &output, 1000));
+          CHECK_EQ(input.size(), output.size());
+          CHECK_EQ(input, output);
+        }
+      }));
     }
-    for (size_t i = 0; i < cons.size(); ++i) {
-      cons[i].Join();
+    for (auto &con : cons) {
+      con.Join();
     }
 
     mozc::IPCClient kill(absl::GetFlag(FLAGS_server_address),

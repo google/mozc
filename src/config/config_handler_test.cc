@@ -29,12 +29,8 @@
 
 #include "config/config_handler.h"
 
-#ifdef OS_WIN
-#include <windows.h>
-#endif  // OS_WIN
-
 #include <atomic>
-#include <cstdint>
+#include <cstddef>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -42,7 +38,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -53,9 +48,16 @@
 #include "testing/mozctest.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+
+#ifdef OS_WIN
+#include <windows.h>
+#endif  // OS_WIN
 
 namespace mozc {
 namespace config {
@@ -87,7 +89,7 @@ class ScopedSetConfigFileName {
   ScopedSetConfigFileName() = delete;
   ScopedSetConfigFileName(const ScopedSetConfigFileName &) = delete;
   ScopedSetConfigFileName &operator=(const ScopedSetConfigFileName &) = delete;
-  explicit ScopedSetConfigFileName(const std::string &new_name)
+  explicit ScopedSetConfigFileName(const absl::string_view new_name)
       : default_config_filename_(ConfigHandler::GetConfigFileName()) {
     ConfigHandler::SetConfigFileName(new_name);
   }
@@ -109,8 +111,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
-  ASSERT_TRUE(ConfigHandler::Reload())
-      << "failed to reload: " << ConfigHandler::GetConfigFileName();
+  ConfigHandler::Reload();
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
@@ -118,9 +119,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.set_verbose_level(2);
 #endif  // MOZC_NO_LOGGING
   ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
+  ConfigHandler::SetConfig(input);
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
@@ -134,9 +135,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.set_verbose_level(0);
 #endif  // MOZC_NO_LOGGING
   ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
+  ConfigHandler::SetConfig(input);
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   output2 = ConfigHandler::GetConfig();
 
   input.mutable_general_config()->set_last_modified_time(0);
@@ -150,7 +151,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 
@@ -160,7 +161,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_FALSE(input.general_config().upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
@@ -174,8 +175,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
-  ASSERT_TRUE(ConfigHandler::Reload())
-      << "failed to reload: " << ConfigHandler::GetConfigFileName();
+  ConfigHandler::Reload();
 
   struct Testcase {
     bool stored_config_value;
@@ -199,7 +199,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::GetDefaultConfig(&input);
     input.set_incognito_mode(stored_config_value);
     ConfigHandler::SetMetaData(&input);
-    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    ConfigHandler::SetConfig(input);
     // Set imposed config.
     input.Clear();
     if (kTestcases[i].imposed_config_value != Testcase::DO_NOT_IMPOSE) {
@@ -209,7 +209,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
@@ -217,10 +217,9 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
 
     // Reload and check.
-    ASSERT_TRUE(ConfigHandler::Reload())
-        << "failed to reload: " << ConfigHandler::GetConfigFileName();
+    ConfigHandler::Reload();
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
@@ -232,7 +231,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
@@ -282,21 +281,19 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
   for (size_t i = 0; i < std::size(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
-    const std::string &src_path = mozc::testing::GetSourceFileOrDie(
+    const std::string src_path = mozc::testing::GetSourceFileOrDie(
         {"data", "test", "config", file_name});
-    const std::string &dest_path =
+    const std::string dest_path =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), file_name);
     ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))
         << "Copy failed: " << src_path << " to " << dest_path;
 
     ScopedSetConfigFileName scoped_config_file_name("user://" +
                                                     std::string(file_name));
-    ASSERT_TRUE(ConfigHandler::Reload())
-        << "failed to reload: " << ConfigHandler::GetConfigFileName();
+    ConfigHandler::Reload();
 
     Config default_config;
-    EXPECT_TRUE(ConfigHandler::GetConfig(&default_config))
-        << "failed to GetConfig from: " << file_name;
+    ConfigHandler::GetConfig(&default_config);
 
 #ifdef OS_WIN
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
@@ -382,8 +379,9 @@ class SetConfigThread final : public Thread {
 
  protected:
   void Run() override {
+    absl::BitGen gen;
     while (!quitting_) {
-      const size_t next_index = Util::Random(configs_.size());
+      const size_t next_index = absl::Uniform(gen, 0u, configs_.size());
       ConfigHandler::SetConfig(configs_.at(next_index));
     }
   }

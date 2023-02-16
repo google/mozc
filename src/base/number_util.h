@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -148,13 +147,7 @@ class NumberUtil {
   // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
   // success or false if the string is in the wrong format.
   static bool SafeStrToInt16(absl::string_view str, int16_t *value);
-  static bool SafeStrToInt32(absl::string_view str, int32_t *value);
-  static bool SafeStrToInt64(absl::string_view str, int64_t *value);
   static bool SafeStrToUInt16(absl::string_view str, uint16_t *value);
-  static bool SafeStrToUInt32(absl::string_view str, uint32_t *value);
-  static bool SafeStrToUInt64(absl::string_view str, uint64_t *value);
-  static bool SafeHexStrToUInt32(absl::string_view str, uint32_t *value);
-  static bool SafeOctStrToUInt32(absl::string_view str, uint32_t *value);
 
   // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.

@@ -29,15 +29,19 @@
 
 #include "engine/engine_builder.h"
 
+#include <memory>
 #include <string>
 
 #include "base/file_util.h"
+#include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
+#include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -152,7 +156,7 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
       {EngineReloadRequest::DESKTOP, "DefaultPredictor"},
       {EngineReloadRequest::MOBILE, "MobilePredictor"},
   };
-  const std::string &tmp_src =
+  const std::string tmp_src =
       FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
   const std::string install_path =
       FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});

@@ -223,12 +223,13 @@ struct mach_ipc_receive_message {
 }  // namespace
 
 // Client implementation
-IPCClient::IPCClient(const std::string &name)
+IPCClient::IPCClient(const absl::string_view name)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, "");
 }
 
-IPCClient::IPCClient(const std::string &name, const std::string &server_path)
+IPCClient::IPCClient(const absl::string_view name,
+                     const absl::string_view server_path)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, server_path);
 }
@@ -237,8 +238,8 @@ IPCClient::~IPCClient() {
   // Do nothing
 }
 
-void IPCClient::Init(const std::string &name,
-                     const std::string & /*server_path*/) {
+void IPCClient::Init(const absl::string_view name,
+                     const absl::string_view /*server_path*/) {
   ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
   if (!ipc_path_manager_->LoadPathName()) {
     LOG(ERROR) << "Cannot load IPC path name";

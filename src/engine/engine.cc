@@ -29,16 +29,15 @@
 
 #include "engine/engine.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
-#include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
@@ -53,7 +52,6 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
-#include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
@@ -63,6 +61,9 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -91,8 +92,8 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
   bool ClearUnusedUserPrediction() override;
-  bool ClearUserPredictionEntry(const std::string &key,
-                                const std::string &value) override;
+  bool ClearUserPredictionEntry(absl::string_view key,
+                                absl::string_view value) override;
   bool Wait() override;
 
  private:
@@ -129,8 +130,8 @@ bool UserDataManagerImpl::ClearUnusedUserPrediction() {
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPredictionEntry(const std::string &key,
-                                                   const std::string &value) {
+bool UserDataManagerImpl::ClearUserPredictionEntry(
+    const absl::string_view key, const absl::string_view value) {
   return predictor_->ClearHistoryEntry(key, value);
 }
 
@@ -228,7 +229,7 @@ absl::Status Engine::Init(
   }
   connector_ = *std::move(status_or_connector);
 
-  segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager));
+  segmenter_ = Segmenter::CreateFromDataManager(*data_manager);
   RETURN_IF_NULL(segmenter_);
 
   pos_group_ = std::make_unique<PosGroup>(data_manager->GetPosGroupData());

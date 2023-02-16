@@ -29,19 +29,18 @@
 
 #include "net/json_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <limits>
 #include <string>
-#include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/util.h"
+#include "base/protobuf/protobuf.h"
 #include "net/json_util_test.pb.h"
-#include "net/jsoncpp.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace net {
@@ -682,10 +681,12 @@ TEST(JsonUtilTest, CombinedTest) {
 
 namespace {
 
-bool ParseToMessage(const std::string &json_string, TestMsg *message) {
+bool ParseToMessage(const absl::string_view json_string,
+                    TestMsg *const message) {
   message->Clear();
   Json::Value value;
-  EXPECT_TRUE(Json::Reader().parse(json_string, value));
+  EXPECT_TRUE(
+      Json::Reader().parse(json_string.begin(), json_string.end(), value));
   return JsonUtil::JsonValueToProtobufMessage(value, message);
 }
 

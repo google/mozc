@@ -29,15 +29,17 @@
 
 #include "net/json_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
-#include "base/port.h"
 #include "base/protobuf/descriptor.h"
+#include "base/protobuf/message.h"
 #include "net/jsoncpp.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 using mozc::protobuf::Descriptor;
 using mozc::protobuf::EnumValueDescriptor;
@@ -58,7 +60,8 @@ namespace {
 bool ProtobufRepeatedFieldValueToJsonValue(const Message &message,
                                            const Reflection &reflection,
                                            const FieldDescriptor &field,
-                                           int index, Json::Value *value) {
+                                           const int index,
+                                           Json::Value *const value) {
   switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
       *value = Json::Value(reflection.GetRepeatedInt32(message, &field, index));
@@ -119,7 +122,7 @@ bool ProtobufRepeatedFieldValueToJsonValue(const Message &message,
 bool ProtobufFieldValueToJsonValue(const Message &message,
                                    const Reflection &reflection,
                                    const FieldDescriptor &field,
-                                   Json::Value *value) {
+                                   Json::Value *const value) {
   switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
       *value = Json::Value(reflection.GetInt32(message, &field));
@@ -157,9 +160,9 @@ bool ProtobufFieldValueToJsonValue(const Message &message,
     }
     case FieldDescriptor::CPPTYPE_STRING: {
       std::string scratch;
-      const std::string &str =
+      const absl::string_view str =
           reflection.GetStringReference(message, &field, &scratch);
-      *value = Json::Value(str);
+      *value = Json::Value(str.begin(), str.end());
       return true;
     }
     case FieldDescriptor::CPPTYPE_MESSAGE: {
@@ -175,18 +178,18 @@ bool ProtobufFieldValueToJsonValue(const Message &message,
 }
 
 bool JsonValueToProtobufFieldValue(const Json::Value &value,
-                                   const FieldDescriptor *field,
-                                   const Reflection *reflection,
-                                   Message *message) {
-  DCHECK(!field->is_repeated());
-  switch (field->cpp_type()) {
+                                   const FieldDescriptor &field,
+                                   const Reflection &reflection,
+                                   Message *const message) {
+  DCHECK(!field.is_repeated());
+  switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
       if (!value.isConvertibleTo(Json::intValue)) {
         DLOG(ERROR) << "value is not convertible to intValue: "
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetInt32(message, field, value.asInt());
+      reflection.SetInt32(message, &field, value.asInt());
       break;
     }
     case FieldDescriptor::CPPTYPE_INT64: {
@@ -196,12 +199,12 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       int64_t int_value;
-      if (!NumberUtil::SafeStrToInt64(value.asString(), &int_value)) {
+      if (!absl::SimpleAtoi(value.asString(), &int_value)) {
         DLOG(ERROR) << "value is not convertible to int64_t: "
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetInt64(message, field, int_value);
+      reflection.SetInt64(message, &field, int_value);
       break;
     }
     case FieldDescriptor::CPPTYPE_UINT32: {
@@ -210,7 +213,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetUInt32(message, field, value.asUInt());
+      reflection.SetUInt32(message, &field, value.asUInt());
       break;
     }
     case FieldDescriptor::CPPTYPE_UINT64: {
@@ -220,12 +223,12 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       uint64_t uint_value;
-      if (!NumberUtil::SafeStrToUInt64(value.asString(), &uint_value)) {
+      if (!absl::SimpleAtoi(value.asString(), &uint_value)) {
         DLOG(ERROR) << "value is not convertible to uint64_t: "
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetUInt64(message, field, uint_value);
+      reflection.SetUInt64(message, &field, uint_value);
       break;
     }
     case FieldDescriptor::CPPTYPE_DOUBLE: {
@@ -234,7 +237,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetDouble(message, field, value.asDouble());
+      reflection.SetDouble(message, &field, value.asDouble());
       break;
     }
     case FieldDescriptor::CPPTYPE_FLOAT: {
@@ -243,7 +246,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetFloat(message, field, value.asFloat());
+      reflection.SetFloat(message, &field, value.asFloat());
       break;
     }
     case FieldDescriptor::CPPTYPE_BOOL: {
@@ -252,7 +255,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetBool(message, field, value.asBool());
+      reflection.SetBool(message, &field, value.asBool());
       break;
     }
     case FieldDescriptor::CPPTYPE_ENUM: {
@@ -262,12 +265,12 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       const EnumValueDescriptor *enum_value =
-          field->enum_type()->FindValueByName(value.asString());
+          field.enum_type()->FindValueByName(value.asString());
       if (!enum_value) {
         DLOG(ERROR) << "value is not enum: " << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetEnum(message, field, enum_value);
+      reflection.SetEnum(message, &field, enum_value);
       break;
     }
     case FieldDescriptor::CPPTYPE_STRING: {
@@ -276,7 +279,7 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
                     << Json::FastWriter().write(value);
         return false;
       }
-      reflection->SetString(message, field, value.asString());
+      reflection.SetString(message, &field, value.asString());
       break;
     }
     case FieldDescriptor::CPPTYPE_MESSAGE: {
@@ -286,11 +289,11 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
         return false;
       }
       return JsonUtil::JsonValueToProtobufMessage(
-          value, reflection->MutableMessage(message, field, nullptr));
+          value, reflection.MutableMessage(message, &field, nullptr));
       break;
     }
     default: {
-      DLOG(ERROR) << "Unknown or unsupported type: " << field->cpp_type();
+      DLOG(ERROR) << "Unknown or unsupported type: " << field.cpp_type();
       return false;
     }
   }
@@ -298,13 +301,13 @@ bool JsonValueToProtobufFieldValue(const Json::Value &value,
 }
 
 bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
-                                           const FieldDescriptor *field,
-                                           const Reflection *reflection,
-                                           Message *message) {
-  DCHECK(field->is_repeated());
+                                           const FieldDescriptor &field,
+                                           const Reflection &reflection,
+                                           Message *const message) {
+  DCHECK(field.is_repeated());
   DCHECK(value.isArray());
   bool result = true;
-  switch (field->cpp_type()) {
+  switch (field.cpp_type()) {
     case FieldDescriptor::CPPTYPE_INT32: {
       for (Json::ArrayIndex i = 0; i < value.size(); ++i) {
         if (!value[i].isConvertibleTo(Json::intValue)) {
@@ -312,7 +315,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddInt32(message, field, value[i].asInt());
+          reflection.AddInt32(message, &field, value[i].asInt());
         }
       }
       break;
@@ -324,13 +327,12 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           DLOG(ERROR) << "value is not convertible to stringValue: "
                       << Json::FastWriter().write(value[i]);
           result = false;
-        } else if (!NumberUtil::SafeStrToInt64(value[i].asString(),
-                                               &int_value)) {
+        } else if (!absl::SimpleAtoi(value[i].asString(), &int_value)) {
           DLOG(ERROR) << "value is not convertible to int64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddInt64(message, field, int_value);
+          reflection.AddInt64(message, &field, int_value);
         }
       }
       break;
@@ -342,7 +344,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddUInt32(message, field, value[i].asUInt());
+          reflection.AddUInt32(message, &field, value[i].asUInt());
         }
       }
       break;
@@ -354,13 +356,12 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           DLOG(ERROR) << "value is not convertible to stringValue: "
                       << Json::FastWriter().write(value[i]);
           result = false;
-        } else if (!NumberUtil::SafeStrToUInt64(value[i].asString(),
-                                                &uint_value)) {
+        } else if (!absl::SimpleAtoi(value[i].asString(), &uint_value)) {
           DLOG(ERROR) << "value is not convertible to uint64_t: "
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddUInt64(message, field, uint_value);
+          reflection.AddUInt64(message, &field, uint_value);
         }
       }
       break;
@@ -372,7 +373,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddDouble(message, field, value[i].asDouble());
+          reflection.AddDouble(message, &field, value[i].asDouble());
         }
       }
       break;
@@ -384,7 +385,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddFloat(message, field, value[i].asFloat());
+          reflection.AddFloat(message, &field, value[i].asFloat());
         }
       }
       break;
@@ -396,7 +397,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddBool(message, field, value[i].asBool());
+          reflection.AddBool(message, &field, value[i].asBool());
         }
       }
       break;
@@ -409,12 +410,12 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           result = false;
         } else {
           const EnumValueDescriptor *enum_value =
-              field->enum_type()->FindValueByName(value[i].asString());
+              field.enum_type()->FindValueByName(value[i].asString());
           if (!enum_value) {
             DLOG(ERROR) << "value is not enum: " << value[i].asString();
             result = false;
           } else {
-            reflection->AddEnum(message, field, enum_value);
+            reflection.AddEnum(message, &field, enum_value);
           }
         }
       }
@@ -427,7 +428,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
                       << Json::FastWriter().write(value[i]);
           result = false;
         } else {
-          reflection->AddString(message, field, value[i].asString());
+          reflection.AddString(message, &field, value[i].asString());
         }
       }
       break;
@@ -440,7 +441,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
           result = false;
         } else {
           if (!JsonUtil::JsonValueToProtobufMessage(
-                  value[i], reflection->AddMessage(message, field, nullptr))) {
+                  value[i], reflection.AddMessage(message, &field, nullptr))) {
             result = false;
           }
         }
@@ -448,7 +449,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
       break;
     }
     default: {
-      DLOG(ERROR) << "Unknown or unsupported type: " << field->cpp_type();
+      DLOG(ERROR) << "Unknown or unsupported type: " << field.cpp_type();
       return false;
     }
   }
@@ -458,7 +459,7 @@ bool JsonValueToProtobufRepeatedFieldValue(const Json::Value &value,
 }  // namespace
 
 bool JsonUtil::ProtobufMessageToJsonValue(const Message &message,
-                                          Json::Value *value) {
+                                          Json::Value *const value) {
   *value = Json::Value(Json::objectValue);
   const Descriptor *descriptor = message.GetDescriptor();
   const Reflection *reflection = message.GetReflection();
@@ -493,7 +494,7 @@ bool JsonUtil::ProtobufMessageToJsonValue(const Message &message,
 }
 
 bool JsonUtil::JsonValueToProtobufMessage(const Json::Value &value,
-                                          Message *message) {
+                                          Message *const message) {
   const Descriptor *descriptor = message->GetDescriptor();
   const Reflection *reflection = message->GetReflection();
   const Json::Value::Members &members = value.getMemberNames();
@@ -513,14 +514,14 @@ bool JsonUtil::JsonValueToProtobufMessage(const Json::Value &value,
         result = false;
         continue;
       }
-      if (!JsonValueToProtobufRepeatedFieldValue(value[members[i]], field,
-                                                 reflection, message)) {
+      if (!JsonValueToProtobufRepeatedFieldValue(value[members[i]], *field,
+                                                 *reflection, message)) {
         DLOG(ERROR) << "JsonValueToProtobufRepeatedFieldValue error: \""
                     << members[i] << "\"";
         result = false;
       }
     } else {
-      if (!JsonValueToProtobufFieldValue(value[members[i]], field, reflection,
+      if (!JsonValueToProtobufFieldValue(value[members[i]], *field, *reflection,
                                          message)) {
         DLOG(ERROR) << "JsonValueToProtobufFieldValue error: \"" << members[i]
                     << "\"";

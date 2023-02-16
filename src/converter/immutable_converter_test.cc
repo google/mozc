@@ -38,9 +38,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/system_util.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
 #include "converter/segmenter.h"
@@ -141,7 +139,7 @@ class MockDataAndImmutableConverter {
 
     connector_ = Connector::CreateFromDataManager(*data_manager_).value();
 
-    segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
+    segmenter_ = Segmenter::CreateFromDataManager(*data_manager_);
     CHECK(segmenter_.get());
 
     pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());

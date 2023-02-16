@@ -36,6 +36,7 @@
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -75,11 +76,11 @@ class ClientMock : public client::ClientInterface {
   void EnableCascadingWindow(bool enable) override;
   void set_timeout(int timeout) override;
   void set_restricted(bool restricted) override;
-  void set_server_program(const std::string &program_path) override;
+  void set_server_program(absl::string_view program_path) override;
   void set_suppress_error_dialog(bool suppress) override;
   void set_client_capability(const commands::Capability &capability) override;
   bool LaunchTool(const std::string &mode,
-                  const std::string &extra_arg) override;
+                  absl::string_view extra_arg) override;
   bool LaunchToolWithProtoBuf(const commands::Output &output) override;
   bool OpenBrowser(const std::string &url) override;
 

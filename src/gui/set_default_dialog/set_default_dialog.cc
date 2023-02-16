@@ -97,10 +97,7 @@ bool SetDefaultDialog::SetCheckDefault(bool check_default) {
     return false;
   }
   mozc::config::Config config;
-  if (!mozc::config::ConfigHandler::GetConfig(&config)) {
-    LOG(ERROR) << "Cannot get config";
-    return false;
-  }
+  mozc::config::ConfigHandler::GetConfig(&config);
   config.set_check_default(check_default);
   if (!client->SetConfig(config)) {
     LOG(ERROR) << "Cannot set config";

@@ -46,6 +46,9 @@ def ParseArguments() -> argparse.Namespace:
   parser = argparse.ArgumentParser()
   parser.add_argument('--input')
   parser.add_argument('--output')
+  parser.add_argument('--productbuild', action='store_true')
+  parser.add_argument('--noqt', action='store_true')
+  parser.add_argument('--oss', action='store_true')
   parser.add_argument('--work_dir')
   return parser.parse_args()
 
@@ -120,6 +123,62 @@ def TweakQtApps(top_dir: str) -> None:
     SymlinkQtFrameworks(app_dir)
 
 
+def TweakForProductbuild(top_dir: str, tweak_qt: bool, oss: bool) -> None:
+  """Tweak file paths for the productbuild command."""
+  orig_dir = os.getcwd()
+  os.chdir(top_dir)
+
+  if oss:
+    name = 'Mozc'
+    folder = 'Mozc'
+    domain = 'org.mozc'
+  else:
+    name = 'GoogleJapaneseInput'
+    folder = 'GoogleJapaneseInput.localized'
+    domain = 'com.google'
+
+  renames = [
+      (f'Uninstall{name}.app', f'root/Applications/{folder}/'),
+      (f'{name}.app', 'root/Library/Input Methods/'),
+      (
+          f'{domain}.inputmethod.Japanese.Converter.plist',
+          'root/Library/LaunchAgents/',
+      ),
+      (
+          f'{domain}.inputmethod.Japanese.Renderer.plist',
+          'root/Library/LaunchAgents/',
+      ),
+      ('ActivatePane.bundle', 'Plugins/'),
+      ('InstallerSections.plist', 'Plugins/'),
+      ('postflight.sh', 'scripts/postinstall'),
+      ('preflight.sh', 'scripts/preinstall'),
+  ]
+  if not oss:
+    renames += [('DevConfirmPane.bundle', 'Plugins/')]
+
+  for src, dst in renames:
+    if dst.endswith('/'):
+      dst = os.path.join(dst, src)
+    os.renames(src, dst)
+  os.chmod('scripts/postinstall', 0o755)
+  os.chmod('scripts/preinstall', 0o755)
+
+  if tweak_qt:
+    resources_dir = f'/Library/Input Methods/{name}.app/Contents/Resources/'
+    # /Applications/Mozc/ConfigDialog.app is a symlink to
+    # /Library/Input Method/Mozc.app/Contents/Resources/ConfigDialog.app
+    os.symlink(
+        resources_dir + 'ConfigDialog.app/',
+        f'root/Applications/{folder}/ConfigDialog.app',
+    )
+    os.symlink(
+        resources_dir + 'DictionaryTool.app/',
+        f'root/Applications/{folder}/DictionaryTool.app',
+    )
+
+  os.chdir(orig_dir)
+
+
 def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   """Tweak the zip file of installer files to optimize the structure."""
   # Remove top_dir if it already exists.
@@ -129,10 +188,17 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
 
   # The zip file should contain the 'installer' directory.
   util.RunOrDie(['unzip', '-q', args.input, '-d', work_dir])
-  TweakQtApps(top_dir)
+
+  tweak_qt = not args.noqt
+
+  if tweak_qt:
+    TweakQtApps(top_dir)
+
+  if args.productbuild:
+    TweakForProductbuild(top_dir, tweak_qt, args.oss)
 
   # Create a zip file with the zip command.
-  # It's possible but not easy to contain symlinks with shutil.make_archive.
+  # It's not easy to contain symlinks with shutil.make_archive.
   if os.path.exists(args.output):
     os.remove(args.output)
   orig_dir = os.getcwd()

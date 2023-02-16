@@ -34,7 +34,7 @@
 #ifndef MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
 #define MOZC_ENGINE_USER_DATA_MANAGER_INTERFACE_H_
 
-#include <string>
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -58,8 +58,8 @@ class UserDataManagerInterface {
   virtual bool ClearUnusedUserPrediction() = 0;
 
   // Clears a specific user prediction history.
-  virtual bool ClearUserPredictionEntry(const std::string &key,
-                                        const std::string &value) = 0;
+  virtual bool ClearUserPredictionEntry(absl::string_view key,
+                                        absl::string_view value) = 0;
 
   // Waits for syncer thread to complete.
   virtual bool Wait() = 0;

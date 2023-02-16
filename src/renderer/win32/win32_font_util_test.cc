@@ -113,19 +113,19 @@ TEST(FontUtilTest, RoundtripToWinLogFont) {
   LOGFONT result = {};
   EXPECT_TRUE(FontUtil::ToLOGFONT(win_log_font, &result));
 
-  EXPECT_EQ(original.lfHeight, result.lfHeight);
-  EXPECT_EQ(original.lfWidth, result.lfWidth);
-  EXPECT_EQ(original.lfEscapement, result.lfEscapement);
-  EXPECT_EQ(original.lfOrientation, result.lfOrientation);
-  EXPECT_EQ(original.lfWeight, result.lfWeight);
-  EXPECT_EQ(original.lfItalic, result.lfItalic);
-  EXPECT_EQ(original.lfUnderline, result.lfUnderline);
-  EXPECT_EQ(original.lfStrikeOut, result.lfStrikeOut);
-  EXPECT_EQ(original.lfCharSet, result.lfCharSet);
-  EXPECT_EQ(original.lfOutPrecision, result.lfOutPrecision);
-  EXPECT_EQ(original.lfClipPrecision, result.lfClipPrecision);
-  EXPECT_EQ(original.lfQuality, result.lfQuality);
-  EXPECT_EQ(original.lfPitchAndFamily, result.lfPitchAndFamily);
+  EXPECT_EQ(result.lfHeight, original.lfHeight);
+  EXPECT_EQ(result.lfWidth, original.lfWidth);
+  EXPECT_EQ(result.lfEscapement, original.lfEscapement);
+  EXPECT_EQ(result.lfOrientation, original.lfOrientation);
+  EXPECT_EQ(result.lfWeight, original.lfWeight);
+  EXPECT_EQ(result.lfItalic, original.lfItalic);
+  EXPECT_EQ(result.lfUnderline, original.lfUnderline);
+  EXPECT_EQ(result.lfStrikeOut, original.lfStrikeOut);
+  EXPECT_EQ(result.lfCharSet, original.lfCharSet);
+  EXPECT_EQ(result.lfOutPrecision, original.lfOutPrecision);
+  EXPECT_EQ(result.lfClipPrecision, original.lfClipPrecision);
+  EXPECT_EQ(result.lfQuality, original.lfQuality);
+  EXPECT_EQ(result.lfPitchAndFamily, original.lfPitchAndFamily);
   EXPECT_STREQ(original.lfFaceName, result.lfFaceName);
 }
 
@@ -154,20 +154,20 @@ TEST(FontUtilTest, RoundtripToLOGFONT) {
   mozc::commands::RendererCommand::WinLogFont result;
   EXPECT_TRUE(FontUtil::ToWinLogFont(log_font, &result));
 
-  EXPECT_EQ(original.height(), result.height());
-  EXPECT_EQ(original.width(), result.width());
-  EXPECT_EQ(original.escapement(), result.escapement());
-  EXPECT_EQ(original.orientation(), result.orientation());
-  EXPECT_EQ(original.weight(), result.weight());
-  EXPECT_EQ(original.italic(), result.italic());
-  EXPECT_EQ(original.underline(), result.underline());
-  EXPECT_EQ(original.strike_out(), result.strike_out());
-  EXPECT_EQ(original.char_set(), result.char_set());
-  EXPECT_EQ(original.out_precision(), result.out_precision());
-  EXPECT_EQ(original.clip_precision(), result.clip_precision());
-  EXPECT_EQ(original.quality(), result.quality());
-  EXPECT_EQ(original.pitch_and_family(), result.pitch_and_family());
-  EXPECT_EQ(original.face_name(), result.face_name());
+  EXPECT_EQ(result.height(), original.height());
+  EXPECT_EQ(result.width(), original.width());
+  EXPECT_EQ(result.escapement(), original.escapement());
+  EXPECT_EQ(result.orientation(), original.orientation());
+  EXPECT_EQ(result.weight(), original.weight());
+  EXPECT_EQ(result.italic(), original.italic());
+  EXPECT_EQ(result.underline(), original.underline());
+  EXPECT_EQ(result.strike_out(), original.strike_out());
+  EXPECT_EQ(result.char_set(), original.char_set());
+  EXPECT_EQ(result.out_precision(), original.out_precision());
+  EXPECT_EQ(result.clip_precision(), original.clip_precision());
+  EXPECT_EQ(result.quality(), original.quality());
+  EXPECT_EQ(result.pitch_and_family(), original.pitch_and_family());
+  EXPECT_EQ(result.face_name(), original.face_name());
 }
 }  // namespace win32
 }  // namespace mozc

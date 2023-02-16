@@ -43,8 +43,8 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/random.h"
 #include "base/singleton.h"
-#include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
@@ -63,6 +63,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/random/distributions.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -133,8 +134,8 @@ class UserPosMock : public UserPosInterface {
   // This method returns true if the given pos is "noun" or "verb".
   bool IsValidPos(absl::string_view pos) const override { return true; }
 
-  static const char *kNoun;
-  static const char *kVerb;
+  static constexpr absl::string_view kNoun = "名詞";
+  static constexpr absl::string_view kVerb = "動詞ワ行五段";
 
   // Given a verb, this method expands it to three different forms,
   // i.e. base form (the word itself), "-ed" form and "-ing" form. For
@@ -177,19 +178,6 @@ class UserPosMock : public UserPosInterface {
     return false;
   }
 };
-
-const char *UserPosMock::kNoun = "名詞";
-const char *UserPosMock::kVerb = "動詞ワ行五段";
-
-std::string GenRandomAlphabet(int size) {
-  std::string result;
-  const size_t len = Util::Random(size) + 1;
-  for (int i = 0; i < len; ++i) {
-    const char32_t l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
-    Util::Ucs4ToUtf8Append(l, &result);
-  }
-  return result;
-}
 
 class UserDictionaryTest : public ::testing::Test {
  protected:
@@ -646,6 +634,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   const std::string filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+  Random random;
 
   // Create dictionary
   std::vector<std::string> keys;
@@ -661,10 +650,10 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-      entry->set_key(GenRandomAlphabet(10));
-      entry->set_value(GenRandomAlphabet(10));
+      entry->set_key(random.Utf8StringRandomLen(10, 'a', 'z'));
+      entry->set_value(random.Utf8StringRandomLen(10, 'a', 'z'));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
-      entry->set_comment(GenRandomAlphabet(10));
+      entry->set_comment(random.Utf8StringRandomLen(10, 'a', 'z'));
       keys.push_back(entry->key());
     }
     EXPECT_OK(storage.Save());
@@ -678,9 +667,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     dic->SetUserDictionaryName(filename);
 
     for (int i = 0; i < 32; ++i) {
-      std::random_device rd;
-      std::mt19937 urbg(rd());
-      std::shuffle(keys.begin(), keys.end(), urbg);
+      std::shuffle(keys.begin(), keys.end(), random);
       dic->Reload();
       for (int i = 0; i < 1000; ++i) {
         CollectTokenCallback callback;

@@ -29,6 +29,7 @@
 
 #include "session/session.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -44,6 +45,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
 #include "engine/engine.h"
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
@@ -56,21 +58,16 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
-#include "session/session_converter_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class ConverterInterface;
-class PredictorInterface;
-
-namespace dictionary {
-class SuppressionDictionary;
-}
 
 namespace session {
 namespace {
@@ -371,7 +368,7 @@ void SwitchInputFieldType(commands::Context::InputFieldType type,
                         &command);
   command.mutable_input()->mutable_context()->set_input_field_type(type);
   EXPECT_TRUE(session->SendCommand(&command));
-  EXPECT_EQ(type, session->context().composer().GetInputFieldType());
+  EXPECT_EQ(session->context().composer().GetInputFieldType(), type);
 }
 
 void SwitchInputMode(commands::CompositionMode mode, Session *session) {
@@ -492,7 +489,7 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
-    EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
+    EXPECT_EQ(session->context().state(), ImeContext::CONVERSION);
     Mock::VerifyAndClearExpectations(converter);
   }
 
@@ -876,7 +873,7 @@ TEST_P(SessionTest, SwitchInputMode) {
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
     // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-    EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
   }
 
   {
@@ -890,7 +887,7 @@ TEST_P(SessionTest, SwitchInputMode) {
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
     // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-    EXPECT_EQ(commands::DIRECT, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::DIRECT);
 
     // SWITCH_INPUT_MODE
     SwitchInputMode(commands::HIRAGANA, &session);
@@ -898,7 +895,7 @@ TEST_P(SessionTest, SwitchInputMode) {
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
     // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("あ", command);
@@ -906,7 +903,7 @@ TEST_P(SessionTest, SwitchInputMode) {
     // GET_STATUS
     SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
     // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 }
 
@@ -953,10 +950,10 @@ TEST_P(SessionTest, InputMode) {
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 
   SendKey("a", &session, &command);
-  EXPECT_EQ("a", command.output().preedit().segment(0).key());
+  EXPECT_EQ(command.output().preedit().segment(0).key(), "a");
 
   command.Clear();
   session.Commit(&command);
@@ -964,7 +961,7 @@ TEST_P(SessionTest, InputMode) {
   // Input mode remains even after submission.
   command.Clear();
   session.GetStatus(&command);
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 }
 
 TEST_P(SessionTest, SelectCandidate) {
@@ -1069,7 +1066,7 @@ TEST_P(SessionTest, Conversion) {
     EXPECT_TRUE(command.output().preedit().segment(i).has_key());
     key += command.output().preedit().segment(i).key();
   }
-  EXPECT_EQ("あいうえお", key);
+  EXPECT_EQ(key, "あいうえお");
 }
 
 TEST_P(SessionTest, SegmentWidthShrink) {
@@ -1191,14 +1188,14 @@ TEST_P(SessionTest, ResetFocusedSegmentAfterCommit) {
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(1, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 1);
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_result());
   // "私の名前は[中のです]"
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(2, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 2);
   EXPECT_TRUE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_result());
   // "私の名前は[なかのです]"
@@ -1366,7 +1363,7 @@ TEST_P(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   command.Clear();
   session.Convert(&command);
   // ex. "[バリに]旅行に行った"
-  EXPECT_EQ("バリに旅行に行った", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "バリに旅行に行った");
   command.Clear();
   session.ConvertNext(&command);
   // ex. "[針に]旅行に行った"
@@ -1384,7 +1381,7 @@ TEST_P(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   // ex. "針に[旅行に]行った"
   // Make sure the first segment (i.e. "針に" in the above case) remains
   // after moving the focused segment right.
-  EXPECT_EQ(first_segment, command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), first_segment);
 
   segment = segments.mutable_segment(1);
   segment->set_key("りょこうにい");
@@ -1405,7 +1402,7 @@ TEST_P(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
 
   // Make sure the first segment (i.e. "針に" in the above case) remains
   // after expanding the focused segment.
-  EXPECT_EQ(first_segment, command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), first_segment);
 }
 
 TEST_P(SessionTest, CommitSegment) {
@@ -1444,18 +1441,18 @@ TEST_P(SessionTest, CommitSegment) {
 
   command.Clear();
   session.Convert(&command);
-  EXPECT_EQ(0, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 0);
   // "[私の]名前"
 
   command.Clear();
   session.ConvertNext(&command);
-  EXPECT_EQ(1, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 1);
   // "[わたしの]名前"
 
   command.Clear();
   session.ConvertNext(&command);
   // "[渡しの]名前" showing a candidate window
-  EXPECT_EQ(2, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 2);
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
@@ -1467,7 +1464,7 @@ TEST_P(SessionTest, CommitSegment) {
   command.Clear();
   session.CommitSegment(&command);
   // "渡しの" + "[名前]"
-  EXPECT_EQ(0, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 0);
 }
 
 TEST_P(SessionTest, CommitSegmentAt2ndSegment) {
@@ -1528,7 +1525,7 @@ TEST_P(SessionTest, CommitSegmentAt2ndSegment) {
   command.Clear();
   session.SegmentWidthShrink(&command);
   // "私の" + "[葉]は"
-  EXPECT_EQ(2, command.output().preedit().segment_size());
+  EXPECT_EQ(command.output().preedit().segment_size(), 2);
 }
 
 TEST_P(SessionTest, Transliterations) {
@@ -1648,9 +1645,9 @@ TEST_P(SessionTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
-    EXPECT_EQ("ぃ", conversion.segment(0).value());
-    EXPECT_EQ("家", conversion.segment(1).value());
+    EXPECT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).value(), "ぃ");
+    EXPECT_EQ(conversion.segment(1).value(), "家");
   }
 
   // TranslateHalfASCII
@@ -1663,8 +1660,8 @@ TEST_P(SessionTest, ConvertToTransliterationWithMultipleSegments) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
-    EXPECT_EQ("li", conversion.segment(0).value());
+    EXPECT_EQ(conversion.segment_size(), 2);
+    EXPECT_EQ(conversion.segment(0).value(), "li");
   }
 }
 
@@ -1889,9 +1886,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
 
   // HIRAGANA
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
   // HIRAGANA to FULL_KATAKANA
   command.Clear();
@@ -1899,9 +1896,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("ア", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ア");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
 
   // FULL_KATRAKANA to HALF_KATAKANA
   command.Clear();
@@ -1909,9 +1906,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("ｱ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ｱ");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
 
   // HALF_KATAKANA to HIRAGANA
   command.Clear();
@@ -1919,9 +1916,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
   // To Half ASCII mode.
   command.Clear();
@@ -1929,9 +1926,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeHalfASCII(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("a", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "a");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   // HALF_ASCII to HALF_ASCII
   command.Clear();
@@ -1939,9 +1936,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("a", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "a");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   // To Full ASCII mode.
   command.Clear();
@@ -1949,9 +1946,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeFullASCII(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("ａ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ａ");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
 
   // FULL_ASCII to FULL_ASCII
   command.Clear();
@@ -1959,9 +1956,9 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   command.Clear();
   session.InputModeSwitchKanaType(&command);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("ａ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ａ");
   EXPECT_TRUE(command.output().has_mode());
-  EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
 }
 
 TEST_P(SessionTest, TranslateHalfWidth) {
@@ -2027,7 +2024,7 @@ TEST_P(SessionTest, UpdatePreferences) {
       command.output().candidates().candidate_size();
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
-  EXPECT_EQ(no_cascading_cand_size, cascading_cand_size);
+  EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
 #else   // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
 #endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
@@ -2040,16 +2037,16 @@ TEST_P(SessionTest, UpdatePreferences) {
   command.mutable_input()->mutable_config()->set_session_keymap(
       config::Config::MSIME);
   session.SendKey(&command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
-  EXPECT_EQ(commands::HALF_ASCII, command.output().status().comeback_mode());
+  EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HALF_ASCII);
 
   // On KOTOERI keymap, EISU key does "ToggleAlphanumericMode".
   SetSendKeyCommand("EISU", &command);
   command.mutable_input()->mutable_config()->set_session_keymap(
       config::Config::KOTOERI);
   session.SendKey(&command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-  EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+  EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+  EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 }
 
 TEST_P(SessionTest, RomajiInput) {
@@ -2070,7 +2067,7 @@ TEST_P(SessionTest, RomajiInput) {
   commands::Command command;
   InsertCharacterChars("pan", &session, &command);
 
-  EXPECT_EQ("ぱｎ", command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "ぱｎ");
 
   command.Clear();
 
@@ -2127,7 +2124,7 @@ TEST_P(SessionTest, KanaInput) {
   command.mutable_input()->mutable_key()->set_key_string("!");
   session.SendKey(&command);
 
-  EXPECT_EQ("もずく！", command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "もずく！");
 
   Segments segments;
   Segment *segment = segments.add_segment();
@@ -2156,7 +2153,7 @@ TEST_P(SessionTest, ExceededComposition) {
   commands::Command command;
 
   const std::string exceeded_preedit(500, 'a');
-  ASSERT_EQ(500, exceeded_preedit.size());
+  ASSERT_EQ(exceeded_preedit.size(), 500);
   InsertCharacterChars(exceeded_preedit, &session, &command);
 
   std::string long_a;
@@ -2213,8 +2210,8 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     const commands::Output &output = command.output();
     EXPECT_TRUE(output.has_all_candidate_words());
 
-    EXPECT_EQ(0, output.all_candidate_words().focused_index());
-    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
+    EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
@@ -2224,13 +2221,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(9, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
 #else   // OS_LINUX || OS_ANDROID || OS_WASM
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(11, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
   }
 
@@ -2241,8 +2238,8 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_TRUE(output.has_all_candidate_words());
 
-    EXPECT_EQ(1, output.all_candidate_words().focused_index());
-    EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
+    EXPECT_EQ(output.all_candidate_words().focused_index(), 1);
+    EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
@@ -2252,13 +2249,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(9, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
 #else   // OS_LINUX || OS_ANDROID || OS_WASM
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
-    EXPECT_EQ(11, output.all_candidate_words().candidates_size());
+    EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
   }
 }
@@ -2291,7 +2288,7 @@ TEST_P(SessionTest, UndoForComposition) {
     InsertCharacterChars("ai", &session, &command);
     ConversionRequest request;
     SetComposer(&session, &request);
-    EXPECT_EQ("あい", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あい");
 
     command.Clear();
     // EXPECT_CALL(converter, FinishConversion(_, _))
@@ -2299,17 +2296,17 @@ TEST_P(SessionTest, UndoForComposition) {
     session.CommitFirstSuggestion(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("あいうえお", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
 
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_SINGLE_SEGMENT("あい", command);
-    EXPECT_EQ(2, command.output().candidates().size());
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(command.output().candidates().size(), 2);
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 }
 
@@ -2395,8 +2392,8 @@ TEST_P(SessionTest, UndoForSingleSegment) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_PREEDIT("あいうえお", command);
 
     // Undo twice - do nothing and keep the previous status.
@@ -2424,8 +2421,8 @@ TEST_P(SessionTest, UndoForSingleSegment) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_PREEDIT("アイウエオ", command);
 
     // Undo twice - do nothing and keep the previous status.
@@ -2453,8 +2450,8 @@ TEST_P(SessionTest, UndoForSingleSegment) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_PREEDIT("aiueo", command);
   }
 
@@ -2572,7 +2569,7 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     // CommitSegments() sets the first segment SUBMITTED.
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
@@ -2585,16 +2582,16 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.CommitCandidate(&command);
     EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-2", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-7, command.output().deletion_range().offset());
-    EXPECT_EQ(7, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -7);
+    EXPECT_EQ(command.output().deletion_range().length(), 7);
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     // Move to second segment and do the same thing.
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
@@ -2610,17 +2607,17 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     // "cand2-2" is focused
     EXPECT_PREEDIT("cand3-1", command);
     EXPECT_RESULT("cand1-1cand2-2", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-14, command.output().deletion_range().offset());
-    EXPECT_EQ(14, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -14);
+    EXPECT_EQ(command.output().deletion_range().length(), 14);
     // "cand2-1" is focused
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   }
   {  // Undo for CommitSegment
     segments.mutable_segment(0)->set_segment_type(Segment::FREE);
@@ -2632,11 +2629,11 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     session.ConvertNext(&command);
-    EXPECT_EQ("cand1-2cand2-1cand3-1", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "cand1-2cand2-1cand3-1");
     command.Clear();
     segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
     segments.mutable_segment(1)->set_segment_type(Segment::FREE);
@@ -2646,16 +2643,16 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.CommitSegment(&command);
     EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-2", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-7, command.output().deletion_range().offset());
-    EXPECT_EQ(7, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -7);
+    EXPECT_EQ(command.output().deletion_range().length(), 7);
     EXPECT_PREEDIT("cand1-2cand2-1cand3-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     // Move to third segment and do the same thing.
     command.Clear();
@@ -2677,17 +2674,17 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.CommitSegment(&command);
     EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-1", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-7, command.output().deletion_range().offset());
-    EXPECT_EQ(7, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -7);
+    EXPECT_EQ(command.output().deletion_range().length(), 7);
     // "cand3-2" is focused
     EXPECT_PREEDIT("cand1-1cand2-1cand3-2", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   }
 }
 
@@ -2743,7 +2740,7 @@ TEST_P(SessionTest, MultipleUndo) {
   session.Convert(&command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   // Commit 1st and 2nd segment
   segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
@@ -2766,17 +2763,17 @@ TEST_P(SessionTest, MultipleUndo) {
   session.CommitCandidate(&command);
   EXPECT_PREEDIT("cand3-1", command);
   EXPECT_RESULT("cand2-2", command);
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   // Undo to revive 2nd commit.
   command.Clear();
   session.Undo(&command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_TRUE(command.output().has_deletion_range());
-  EXPECT_EQ(-7, command.output().deletion_range().offset());
-  EXPECT_EQ(7, command.output().deletion_range().length());
+  EXPECT_EQ(command.output().deletion_range().offset(), -7);
+  EXPECT_EQ(command.output().deletion_range().length(), 7);
   EXPECT_PREEDIT("cand2-1cand3-1", command);
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   // Try undoing against the 1st commit.
   command.Clear();
@@ -2784,8 +2781,8 @@ TEST_P(SessionTest, MultipleUndo) {
   if (GetParam().decoder_experiment_params().undo_partial_commit()) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-7, command.output().deletion_range().offset());
-    EXPECT_EQ(7, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -7);
+    EXPECT_EQ(command.output().deletion_range().length(), 7);
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
   } else {
     // Multiple undo is unsupported.
@@ -2793,7 +2790,7 @@ TEST_P(SessionTest, MultipleUndo) {
     EXPECT_FALSE(command.output().has_deletion_range());
     EXPECT_PREEDIT("cand2-1cand3-1", command);
   }
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   // No further undo available.
   command.Clear();
@@ -2962,7 +2959,7 @@ TEST_P(SessionTest, CommitRawText) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
     Segments segments;
     {  // Initialize segments.
@@ -2975,7 +2972,7 @@ TEST_P(SessionTest, CommitRawText) {
     SetSendCommandCommand(commands::SessionCommand::COMMIT_RAW_TEXT, &command);
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
   {  // From conversion mode.
@@ -2983,7 +2980,7 @@ TEST_P(SessionTest, CommitRawText) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
     Segments segments;
     {  // Initialize segments.
@@ -3000,13 +2997,13 @@ TEST_P(SessionTest, CommitRawText) {
     command.Clear();
     session.Convert(&command);
     EXPECT_PREEDIT("あべし", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
     command.Clear();
     SetSendCommandCommand(commands::SessionCommand::COMMIT_RAW_TEXT, &command);
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
 }
@@ -3044,13 +3041,13 @@ TEST_P(SessionTest, CommitRawTextKanaInput) {
   command.mutable_input()->mutable_key()->set_key_string("!");
   session.SendKey(&command);
 
-  EXPECT_EQ("もずく！", command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "もずく！");
 
   command.Clear();
   SetSendCommandCommand(commands::SessionCommand::COMMIT_RAW_TEXT, &command);
   session.SendCommand(&command);
   EXPECT_RESULT_AND_KEY("mr@h!", "mr@h!", command);
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
 }
 
 TEST_P(SessionTest, ConvertNextPagePrevPage) {
@@ -3206,8 +3203,8 @@ TEST_P(SessionTest, NeedlessClearUndoContext) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_PREEDIT("あいうえお", command);
   }
 
@@ -3244,8 +3241,8 @@ TEST_P(SessionTest, NeedlessClearUndoContext) {
     } else {
       EXPECT_FALSE(command.output().has_result());
       EXPECT_TRUE(command.output().has_deletion_range());
-      EXPECT_EQ(-5, command.output().deletion_range().offset());
-      EXPECT_EQ(5, command.output().deletion_range().length());
+      EXPECT_EQ(command.output().deletion_range().offset(), -5);
+      EXPECT_EQ(command.output().deletion_range().length(), 5);
       EXPECT_PREEDIT("あいうえお", command);
     }
   }
@@ -3316,40 +3313,40 @@ TEST_P(SessionTest, TemporaryInputModeAfterUndo) {
 
   // Shift + Ascii triggers temporary input mode switch.
   SendKey("A", &session, &command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   SendKey("Enter", &session, &command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
   // Undo and keep temporary input mode correct
   command.Clear();
   session.Undo(&command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("A", command);
   SendKey("Enter", &session, &command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
   // Undo and input additional "A" with temporary input mode.
   command.Clear();
   session.Undo(&command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   SendKey("A", &session, &command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("AA", command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   // Input additional "a" with original input mode.
   SendKey("a", &session, &command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("AAあ", command);
 
   // Submit and Undo
   SendKey("Enter", &session, &command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   command.Clear();
   session.Undo(&command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("AAあ", command);
 
@@ -3358,14 +3355,14 @@ TEST_P(SessionTest, TemporaryInputModeAfterUndo) {
   SendKey("a", &session, &command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("AAあAa", command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   // Submit and Undo
   SendKey("Enter", &session, &command);
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   command.Clear();
   session.Undo(&command);
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_PREEDIT("AAあAa", command);
 }
@@ -3434,7 +3431,7 @@ TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
-    EXPECT_EQ("あいうえお", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あいうえお");
 
     EXPECT_CALL(converter, StartConversionForRequest(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3442,7 +3439,7 @@ TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     session.ConvertToHalfASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
-    EXPECT_EQ("aiueo", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "aiueo");
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -3455,7 +3452,7 @@ TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
-    EXPECT_EQ("あいうえお", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あいうえお");
 
     EXPECT_CALL(converter, StartConversionForRequest(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -3463,7 +3460,7 @@ TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     session.ConvertToFullASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
-    EXPECT_EQ("ａｉｕｅｏ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "ａｉｕｅｏ");
     Mock::VerifyAndClearExpectations(&converter);
   }
 }
@@ -3489,7 +3486,7 @@ TEST_P(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   commands::Command command;
 
   InsertCharacterCodeAndString('a', "ち", &session, &command);
-  EXPECT_EQ("ち", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ち");
 
   SendKey("Enter", &session, &command);
   command.Clear();
@@ -3497,12 +3494,12 @@ TEST_P(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
 
   EXPECT_FALSE(command.output().has_result());
   ASSERT_TRUE(command.output().has_preedit());
-  EXPECT_EQ("ち", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ち");
 
   InsertCharacterCodeAndString('@', "゛", &session, &command);
   EXPECT_FALSE(command.output().has_result());
   ASSERT_TRUE(command.output().has_preedit());
-  EXPECT_EQ("ぢ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ぢ");
 }
 
 TEST_P(SessionTest, SpaceOnAlphanumeric) {
@@ -3521,7 +3518,7 @@ TEST_P(SessionTest, SpaceOnAlphanumeric) {
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
-    EXPECT_EQ("A", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A");
 
     SendKey("Space", &session, &command);
     EXPECT_RESULT("A ", command);
@@ -3536,15 +3533,15 @@ TEST_P(SessionTest, SpaceOnAlphanumeric) {
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
-    EXPECT_EQ("A", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A");
 
     SendKey("Space", &session, &command);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("A ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A ");
 
     SendKey("a", &session, &command);
     EXPECT_RESULT("A ", command);
-    EXPECT_EQ("あ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ");
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -3556,15 +3553,15 @@ TEST_P(SessionTest, SpaceOnAlphanumeric) {
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
-    EXPECT_EQ("A", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A");
 
     SendKey("Space", &session, &command);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("A ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A ");
 
     SendKey("a", &session, &command);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("A a", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "A a");
     Mock::VerifyAndClearExpectations(&converter);
   }
 }
@@ -3759,7 +3756,7 @@ TEST_P(SessionTest, T13NWithResegmentation) {
   // Convert to T13N (Half katakana)
   SendKey("F8", &session, &command);
 
-  EXPECT_EQ("ｲﾝﾎﾞ", command.output().preedit().segment(1).value());
+  EXPECT_EQ(command.output().preedit().segment(1).value(), "ｲﾝﾎﾞ");
 }
 
 TEST_P(SessionTest, Shortcut) {
@@ -3808,8 +3805,8 @@ TEST_P(SessionTest, Shortcut) {
     SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     const commands::Candidates &candidates = command.output().candidates();
-    EXPECT_EQ(expected[0], candidates.candidate(0).annotation().shortcut());
-    EXPECT_EQ(expected[1], candidates.candidate(1).annotation().shortcut());
+    EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), expected[0]);
+    EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), expected[1]);
   }
 }
 
@@ -3845,15 +3842,15 @@ TEST_P(SessionTest, ShortcutWithCapsLockIssue5655743) {
   ASSERT_TRUE(command.output().has_candidates());
 
   const commands::Candidates &candidates = command.output().candidates();
-  EXPECT_EQ("a", candidates.candidate(0).annotation().shortcut());
-  EXPECT_EQ("s", candidates.candidate(1).annotation().shortcut());
+  EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), "a");
+  EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), "s");
 
   // Select the second candidate by 's' key when the CapsLock is enabled.
   // Note that "CAPS S" means that 's' key is pressed w/o shift key.
   // See the description in command.proto.
   EXPECT_TRUE(SendKey("CAPS S", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ("アイウエオ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "アイウエオ");
 }
 
 TEST_P(SessionTest, NumpadKey) {
@@ -3900,19 +3897,19 @@ TEST_P(SessionTest, NumpadKey) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_TRUE(SendKey("Numpad1", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ("1", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "1");
 
   EXPECT_TRUE(TestSendKey("Add", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_TRUE(SendKey("Add", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ("1+", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "1+");
 
   EXPECT_TRUE(TestSendKey("Equals", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_TRUE(SendKey("Equals", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ("1+=", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "1+=");
 
   EXPECT_TRUE(TestSendKey("Separator", &session, &command));
   EXPECT_TRUE(command.output().consumed());
@@ -3981,9 +3978,9 @@ TEST_P(SessionTest, KanaSymbols) {
     SetSendKeyCommand("<", &command);
     command.mutable_input()->mutable_key()->set_key_string("、");
     EXPECT_TRUE(session.SendKey(&command));
-    EXPECT_EQ(static_cast<uint32_t>(','), command.input().key().key_code());
-    EXPECT_EQ("，", command.input().key().key_string());
-    EXPECT_EQ("，", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.input().key().key_code(), static_cast<uint32_t>(','));
+    EXPECT_EQ(command.input().key().key_string(), "，");
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "，");
   }
   {
     commands::Command command;
@@ -3994,9 +3991,9 @@ TEST_P(SessionTest, KanaSymbols) {
     SetSendKeyCommand("?", &command);
     command.mutable_input()->mutable_key()->set_key_string("・");
     EXPECT_TRUE(session.SendKey(&command));
-    EXPECT_EQ(static_cast<uint32_t>('/'), command.input().key().key_code());
-    EXPECT_EQ("／", command.input().key().key_string());
-    EXPECT_EQ("／", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.input().key().key_code(), static_cast<uint32_t>('/'));
+    EXPECT_EQ(command.input().key().key_string(), "／");
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "／");
   }
 }
 
@@ -4018,7 +4015,7 @@ TEST_P(SessionTest, InsertCharacterWithShiftKey) {
     // Shift does nothing because the input mode has already been reverted.
     EXPECT_TRUE(SendKey("Shift", &session, &command));
     EXPECT_TRUE(SendKey("a", &session, &command));  // "あAaああ"
-    EXPECT_EQ("あAaああ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あAaああ");
   }
 
   {  // Revert back to the previous input mode.
@@ -4026,7 +4023,7 @@ TEST_P(SessionTest, InsertCharacterWithShiftKey) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_TRUE(SendKey("A", &session, &command));  // "アA"
     EXPECT_TRUE(SendKey("a", &session, &command));  // "アAa"
@@ -4036,7 +4033,7 @@ TEST_P(SessionTest, InsertCharacterWithShiftKey) {
     // Shift does nothing because the input mode has already been reverted.
     EXPECT_TRUE(SendKey("Shift", &session, &command));
     EXPECT_TRUE(SendKey("a", &session, &command));  // "アAaアア"
-    EXPECT_EQ("アAaアア", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "アAaアア");
   }
 }
 
@@ -4051,10 +4048,10 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -4069,18 +4066,18 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     EXPECT_TRUE(session.Convert(&command));
     EXPECT_FALSE(command.output().has_candidates());
     EXPECT_FALSE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_EQ(command.output().candidates().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_FALSE(command.output().has_candidates());
     EXPECT_RESULT("NFL", command);
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
   }
 
   {
@@ -4088,10 +4085,10 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -4103,19 +4100,19 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     EXPECT_TRUE(session.PredictAndConvert(&command));
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_TRUE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_EQ(command.output().candidates().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_FALSE(command.output().has_candidates());
     EXPECT_RESULT("NFL", command);
 
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
   }
 
   {
@@ -4123,10 +4120,10 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     Segments segments;
     Segment *segment = segments.add_segment();
@@ -4141,18 +4138,18 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     EXPECT_TRUE(session.ConvertToHalfASCII(&command));
     EXPECT_FALSE(command.output().has_candidates());
     EXPECT_FALSE(command.output().candidates().has_focused_index());
-    EXPECT_EQ(0, command.output().candidates().focused_index());
+    EXPECT_EQ(command.output().candidates().focused_index(), 0);
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_FALSE(command.output().has_candidates());
     EXPECT_RESULT("NFL", command);
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
   }
 }
 
@@ -4169,42 +4166,42 @@ TEST_P(SessionTest, StatusOutput) {
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
     // command.output().mode() is going to be obsolete.
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("A", &session, &command));  // "あA"
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));  // "あAa"
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     // Shift reverts the input mode to Hiragana.
     EXPECT_TRUE(SendKey("Shift", &session, &command));
     EXPECT_TRUE(SendKey("a", &session, &command));  // "あAaあ"
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("A", &session, &command));  // "あAaあA"
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as HIRAGANA
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", &session, &command));  // "あAaあA"
@@ -4213,9 +4210,9 @@ TEST_P(SessionTest, StatusOutput) {
     // command.output().mode() always returns DIRECT when IME is
     // deactivated.  This is the reason why command.output().mode() is
     // going to be obsolete.
-    EXPECT_EQ(commands::DIRECT, command.output().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::DIRECT);
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
+    EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
   }
 
   {  // Katakana mode + Shift key
@@ -4223,27 +4220,27 @@ TEST_P(SessionTest, StatusOutput) {
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
+    EXPECT_EQ(command.output().status().comeback_mode(),
+              commands::FULL_KATAKANA);
 
     EXPECT_TRUE(SendKey("a", &session, &command));
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
+    EXPECT_EQ(command.output().status().comeback_mode(),
+              commands::FULL_KATAKANA);
 
     EXPECT_TRUE(SendKey("A", &session, &command));  // "アA"
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());  // obsolete
-    EXPECT_EQ(commands::HALF_ASCII, command.output().status().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);  // obsolete
+    EXPECT_EQ(command.output().status().mode(), commands::HALF_ASCII);
     // Global mode should be kept as FULL_KATAKANA
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().status().comeback_mode(),
+              commands::FULL_KATAKANA);
 
     // When the IME is deactivated, the temporary composition mode is reset.
     EXPECT_TRUE(SendKey("OFF", &session, &command));  // "アA"
@@ -4252,10 +4249,10 @@ TEST_P(SessionTest, StatusOutput) {
     // command.output().mode() always returns DIRECT when IME is
     // deactivated.  This is the reason why command.output().mode() is
     // going to be obsolete.
-    EXPECT_EQ(commands::DIRECT, command.output().mode());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              command.output().status().comeback_mode());
+    EXPECT_EQ(command.output().mode(), commands::DIRECT);
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
+    EXPECT_EQ(command.output().status().comeback_mode(),
+              commands::FULL_KATAKANA);
   }
 }
 
@@ -4299,24 +4296,24 @@ TEST_P(SessionTest, Suggest) {
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // moz|
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_moz), Return(true)));
   SendKey("Z", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(1, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOZUKU", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 1);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOZUKU");
 
   // mo|
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("Backspace", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // m|o
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
@@ -4324,8 +4321,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // mo|
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
@@ -4333,8 +4330,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToEnd(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // |mo
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
@@ -4342,8 +4339,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToBeginning(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // m|o
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
@@ -4351,8 +4348,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.MoveCursorRight(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   // m|
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
@@ -4360,8 +4357,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.Delete(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   Segments segments_m_conv;
   {
@@ -4384,8 +4381,8 @@ TEST_P(SessionTest, Suggest) {
   command.Clear();
   EXPECT_TRUE(session.ConvertCancel(&command));
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 }
 
 TEST_P(SessionTest, CommitCandidateTypingCorrection) {
@@ -4417,10 +4414,10 @@ TEST_P(SessionTest, CommitCandidateTypingCorrection) {
   InsertCharacterChars("jueri", &session, &command);
 
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(1, command.output().preedit().segment_size());
-  EXPECT_EQ(kJueri, command.output().preedit().segment(0).key());
-  EXPECT_EQ(1, command.output().candidates().candidate_size());
-  EXPECT_EQ("クエリ", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().preedit().segment_size(), 1);
+  EXPECT_EQ(command.output().preedit().segment(0).key(), kJueri);
+  EXPECT_EQ(command.output().candidates().candidate_size(), 1);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "クエリ");
 
   // commit partial prediction
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
@@ -4501,8 +4498,8 @@ TEST_P(SessionTest, MobilePartialPrediction) {
           DoAll(SetArgPointee<1>(segments_watashino), Return(true)));
   InsertCharacterChars("watashino", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("私の", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "私の");
 
   // partial suggestion for "わた|しの"
   EXPECT_CALL(converter, StartPartialPredictionForRequest(_, _))
@@ -4513,8 +4510,8 @@ TEST_P(SessionTest, MobilePartialPrediction) {
   EXPECT_TRUE(session.MoveCursorLeft(&command));
   // partial suggestion candidates
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("綿", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "綿");
 
   // commit partial prediction
   EXPECT_CALL(converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
@@ -4528,12 +4525,12 @@ TEST_P(SessionTest, MobilePartialPrediction) {
   EXPECT_RESULT_AND_KEY("綿", "わた", command);
 
   // remaining text in preedit
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
   EXPECT_SINGLE_SEGMENT("しの", command);
 
   // Suggestion for new text fills the candidates.
   EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ("四ノ宮", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "四ノ宮");
 }
 
 TEST_P(SessionTest, ToggleAlphanumericMode) {
@@ -4547,24 +4544,24 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
 
   {
     InsertCharacterChars("a", &session, &command);
-    EXPECT_EQ("あ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ");
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     command.Clear();
     session.ToggleAlphanumericMode(&command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
     InsertCharacterChars("a", &session, &command);
-    EXPECT_EQ("あa", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あa");
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     command.Clear();
     session.ToggleAlphanumericMode(&command);
     InsertCharacterChars("a", &session, &command);
-    EXPECT_EQ("あaあ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あaあ");
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 
   {
@@ -4573,14 +4570,14 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
     session.EditCancel(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     session.ToggleAlphanumericMode(&command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
     InsertCharacterChars("a", &session, &command);
-    EXPECT_EQ("a", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "a");
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   }
 
   {
@@ -4590,18 +4587,18 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
     session.EditCancel(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     session.ToggleAlphanumericMode(&command);
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
     InsertCharacterChars("n", &session, &command);  // on Hiragana mode
-    EXPECT_EQ("ｎ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "ｎ");
 
     command.Clear();
     session.ToggleAlphanumericMode(&command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
     InsertCharacterChars("a", &session, &command);  // on Half ascii mode.
-    EXPECT_EQ("ｎa", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "ｎa");
   }
 
   {
@@ -4611,11 +4608,11 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
     session.EditCancel(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     session.InputModeHiragana(&command);
     InsertCharacterChars("a", &session, &command);  // on Hiragana mode
-    EXPECT_EQ("あ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ");
 
     Segments segments;
     SetAiueo(&segments);
@@ -4628,17 +4625,17 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
     command.Clear();
     session.Convert(&command);
 
-    EXPECT_EQ("あいうえお", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あいうえお");
 
     command.Clear();
     session.ToggleAlphanumericMode(&command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     command.Clear();
     session.Commit(&command);
 
     InsertCharacterChars("a", &session, &command);  // on Half ascii mode.
-    EXPECT_EQ("a", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "a");
   }
 }
 
@@ -4742,11 +4739,11 @@ TEST_P(SessionTest, InsertSpaceHalfWidth) {
   EXPECT_FALSE(command.output().has_result());
 
   EXPECT_TRUE(SendKey("a", &session, &command));
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   command.Clear();
   EXPECT_TRUE(session.InsertSpaceHalfWidth(&command));
-  EXPECT_EQ("あ ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ ");
 
   {  // Convert "あ " with dummy conversions.
     Segments segments;
@@ -4763,8 +4760,8 @@ TEST_P(SessionTest, InsertSpaceHalfWidth) {
 
   command.Clear();
   EXPECT_TRUE(session.InsertSpaceHalfWidth(&command));
-  EXPECT_EQ("亜  ", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().value(), "亜  ");
+  EXPECT_EQ(GetComposition(command), "");
 }
 
 TEST_P(SessionTest, InsertSpaceFullWidth) {
@@ -4786,13 +4783,12 @@ TEST_P(SessionTest, InsertSpaceFullWidth) {
   EXPECT_RESULT("　", command);  // Full-width space
 
   EXPECT_TRUE(SendKey("a", &session, &command));
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpaceFullWidth(&command));
-  EXPECT_EQ("あ　",  // full-width space
-            GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ　");  // full-width space
 
   {  // Convert "あ　" (full-width space) with dummy conversions.
     Segments segments;
@@ -4810,8 +4806,8 @@ TEST_P(SessionTest, InsertSpaceFullWidth) {
   command.Clear();
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpaceFullWidth(&command));
-  EXPECT_EQ("亜　　", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().value(), "亜　　");
+  EXPECT_EQ(GetComposition(command), "");
 }
 
 TEST_P(SessionTest, InsertSpaceWithInputMode) {
@@ -4844,7 +4840,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_KATAKANA, &session, &command));
     // In this case, space key event should not be consumed.
     EXPECT_FALSE(command.output().consumed());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
   {
     Session session(&engine);
@@ -4859,7 +4855,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ", command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
     EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA, &session,
                                     &command));
@@ -4868,7 +4864,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_KATAKANA, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ ", command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 
   {
@@ -4894,8 +4890,8 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_KATAKANA, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_RESULT("　", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
-    EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
+    EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
   }
   {
     Session session(&engine);
@@ -4910,7 +4906,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ", command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
     EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA, &session,
                                     &command));
@@ -4919,7 +4915,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_KATAKANA, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ　", command);  // Full-width space
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 
   // Second, the 1st case filed in http://b/2936141
@@ -4949,8 +4945,8 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_ASCII, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_RESULT("　", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   }
   {
     Session session(&engine);
@@ -4966,7 +4962,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_TRUE(SendKeyWithMode("a", commands::HALF_ASCII, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("a", command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(
         TestSendKeyWithMode("Space", commands::HALF_ASCII, &session, &command));
@@ -4975,7 +4971,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::HALF_ASCII, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("a　", command);  // Full-width space
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
   }
 
   // Finally, the 2nd case filed in http://b/2936141
@@ -5018,7 +5014,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_TRUE(SendKeyWithMode("a", commands::FULL_ASCII, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("ａ", command);
-    EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
 
     EXPECT_TRUE(
         TestSendKeyWithMode("Space", commands::FULL_ASCII, &session, &command));
@@ -5027,7 +5023,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
         SendKeyWithMode("Space", commands::FULL_ASCII, &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("ａ ", command);
-    EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
   }
 }
 
@@ -5314,32 +5310,32 @@ TEST_P(SessionTest, InsertSpaceInCompositionMode) {
   commands::Command command;
 
   SendKey("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(GetComposition(command), "あ");
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
   EXPECT_TRUE(TestSendKey("Ctrl a", &session, &command));
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("Ctrl a", &session, &command);
-  EXPECT_EQ("あ　", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ　");
 
   EXPECT_TRUE(TestSendKey("Ctrl b", &session, &command));
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("Ctrl b", &session, &command);
-  EXPECT_EQ("あ　 ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ　 ");
 
   EXPECT_TRUE(TestSendKey("Ctrl c", &session, &command));
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("Ctrl c", &session, &command);
-  EXPECT_EQ("あ　  ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ　  ");
 
   EXPECT_TRUE(TestSendKey("Ctrl d", &session, &command));
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("Ctrl d", &session, &command);
-  EXPECT_EQ("あ　  　", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ　  　");
 }
 
 TEST_P(SessionTest, InsertSpaceInConversionMode) {
@@ -5374,7 +5370,7 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
     EXPECT_TRUE(SendKey("Ctrl a", &session, &command));
     EXPECT_TRUE(GetComposition(command).empty());
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あいうえお　", command.output().result().value());
+    EXPECT_EQ(command.output().result().value(), "あいうえお　");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -5389,7 +5385,7 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
     EXPECT_TRUE(SendKey("Ctrl b", &session, &command));
     EXPECT_TRUE(GetComposition(command).empty());
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あいうえお ", command.output().result().value());
+    EXPECT_EQ(command.output().result().value(), "あいうえお ");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -5404,7 +5400,7 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
     EXPECT_TRUE(SendKey("Ctrl c", &session, &command));
     EXPECT_TRUE(GetComposition(command).empty());
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あいうえお ", command.output().result().value());
+    EXPECT_EQ(command.output().result().value(), "あいうえお ");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -5419,7 +5415,7 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
     EXPECT_TRUE(SendKey("Ctrl d", &session, &command));
     EXPECT_TRUE(GetComposition(command).empty());
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あいうえお　", command.output().result().value());
+    EXPECT_EQ(command.output().result().value(), "あいうえお　");
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
     Mock::VerifyAndClearExpectations(&converter);
   }
@@ -5435,16 +5431,16 @@ TEST_P(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   commands::Command command;
 
   EXPECT_TRUE(session.InputModeHalfKatakana(&command));
-  EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
   InsertCharacterChars("a", &session, &command);
-  EXPECT_EQ("ｱ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ｱ");
 
   command.Clear();
   commands::KeyEvent space_key;
   space_key.set_special_key(commands::KeyEvent::SPACE);
   *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session.InsertSpaceFullWidth(&command));
-  EXPECT_EQ("ｱ　", GetComposition(command));  // "ｱ　" (full-width space)
+  EXPECT_EQ(GetComposition(command), "ｱ　");  // "ｱ　" (full-width space)
 }
 
 TEST_P(SessionTest, IsFullWidthInsertSpace) {
@@ -5638,7 +5634,7 @@ TEST_P(SessionTest, Issue1951385) {
   commands::Command command;
 
   const std::string exceeded_preedit(500, 'a');
-  ASSERT_EQ(500, exceeded_preedit.size());
+  ASSERT_EQ(exceeded_preedit.size(), 500);
   InsertCharacterChars(exceeded_preedit, &session, &command);
 
   Segments segments;
@@ -5726,7 +5722,7 @@ TEST_P(SessionTest, Issue1975771) {
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   EXPECT_TRUE(command.output().has_candidates());
   // The second candidate should be selected.
-  EXPECT_EQ(1, command.output().candidates().focused_index());
+  EXPECT_EQ(command.output().candidates().focused_index(), 1);
 }
 
 TEST_P(SessionTest, Issue2029466) {
@@ -5803,7 +5799,7 @@ TEST_P(SessionTest, Issue2034943) {
 
   // The composition should have been reset.
   InsertCharacterChars("ku", &session, &command);
-  EXPECT_EQ("く", command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "く");
 }
 
 TEST_P(SessionTest, Issue2026354) {
@@ -5888,7 +5884,7 @@ TEST_P(SessionTest, Issue2187132) {
 
   // After submission, input mode should be reverted.
   SendKey("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   command.Clear();
   session.EditCancel(&command);
@@ -5899,7 +5895,7 @@ TEST_P(SessionTest, Issue2187132) {
   SendKey("A", &session, &command);
   SendKey("Enter", &session, &command);
   SendKey("a", &session, &command);
-  EXPECT_EQ("a", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "a");
 }
 
 TEST_P(SessionTest, Issue2190364) {
@@ -5919,14 +5915,14 @@ TEST_P(SessionTest, Issue2190364) {
   session.ToggleAlphanumericMode(&command);
 
   InsertCharacterCodeAndString('a', "ち", &session, &command);
-  EXPECT_EQ("a", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "a");
 
   command.Clear();
   session.ToggleAlphanumericMode(&command);
-  EXPECT_EQ("a", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "a");
 
   InsertCharacterCodeAndString('i', "に", &session, &command);
-  EXPECT_EQ("aに", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "aに");
 }
 
 TEST_P(SessionTest, Issue1556649) {
@@ -5939,18 +5935,18 @@ TEST_P(SessionTest, Issue1556649) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("kudoudesu", &session, &command);
-  EXPECT_EQ("くどうです", GetComposition(command));
-  EXPECT_EQ(5, command.output().preedit().cursor());
+  EXPECT_EQ(GetComposition(command), "くどうです");
+  EXPECT_EQ(command.output().preedit().cursor(), 5);
 
   command.Clear();
   EXPECT_TRUE(session.DisplayAsHalfKatakana(&command));
-  EXPECT_EQ("ｸﾄﾞｳﾃﾞｽ", GetComposition(command));
-  EXPECT_EQ(7, command.output().preedit().cursor());
+  EXPECT_EQ(GetComposition(command), "ｸﾄﾞｳﾃﾞｽ");
+  EXPECT_EQ(command.output().preedit().cursor(), 7);
 
   for (size_t i = 0; i < 7; ++i) {
     const size_t expected_pos = 6 - i;
     EXPECT_TRUE(SendKey("Left", &session, &command));
-    EXPECT_EQ(expected_pos, command.output().preedit().cursor());
+    EXPECT_EQ(command.output().preedit().cursor(), expected_pos);
   }
 }
 
@@ -5969,10 +5965,10 @@ TEST_P(SessionTest, Issue1518994) {
     command.Clear();
     EXPECT_TRUE(session.ToggleAlphanumericMode(&command));
     EXPECT_TRUE(SendKey("i", &session, &command));
-    EXPECT_EQ("あi", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あi");
 
     EXPECT_TRUE(SendKey("Space", &session, &command));
-    EXPECT_EQ("あi ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あi ");
   }
 
   {
@@ -5981,10 +5977,10 @@ TEST_P(SessionTest, Issue1518994) {
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
     EXPECT_TRUE(SendKey("I", &session, &command));
-    EXPECT_EQ("あI", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あI");
 
     EXPECT_TRUE(SendKey("Space", &session, &command));
-    EXPECT_EQ("あI ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あI ");
   }
 }
 
@@ -5999,13 +5995,13 @@ TEST_P(SessionTest, Issue1571043) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("aiu", &session, &command);
-  EXPECT_EQ("あいう", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あいう");
 
   for (size_t i = 0; i < 3; ++i) {
     const size_t expected_pos = 2 - i;
     EXPECT_TRUE(SendKey("Left", &session, &command));
-    EXPECT_EQ(expected_pos, command.output().preedit().cursor());
-    EXPECT_EQ(1, command.output().preedit().segment_size());
+    EXPECT_EQ(command.output().preedit().cursor(), expected_pos);
+    EXPECT_EQ(command.output().preedit().segment_size(), 1);
   }
 }
 
@@ -6021,12 +6017,12 @@ TEST_P(SessionTest, Issue2217250) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("www.", &session, &command);
-  EXPECT_EQ("www.", GetComposition(command));
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(GetComposition(command), "www.");
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   SendKey("Enter", &session, &command);
-  EXPECT_EQ("www.", command.output().result().value());
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().result().value(), "www.");
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
 TEST_P(SessionTest, Issue2223823) {
@@ -6041,12 +6037,12 @@ TEST_P(SessionTest, Issue2223823) {
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("G", &session, &command);
-  EXPECT_EQ("G", GetComposition(command));
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(GetComposition(command), "G");
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   SendKey("Shift", &session, &command);
-  EXPECT_EQ("G", GetComposition(command));
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(GetComposition(command), "G");
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
 TEST_P(SessionTest, Issue2223762) {
@@ -6061,7 +6057,7 @@ TEST_P(SessionTest, Issue2223762) {
   commands::Command command;
 
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());
@@ -6087,12 +6083,12 @@ TEST_P(SessionTest, Issue2223755) {
     EXPECT_TRUE(SendKey("Eisu", &session, &command));
     EXPECT_TRUE(SendKey("i", &session, &command));
 
-    EXPECT_EQ("あ い", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ い");
 
     command.Clear();
     EXPECT_TRUE(session.DisplayAsFullKatakana(&command));
 
-    EXPECT_EQ("ア　イ", GetComposition(command));  // fullwidth space
+    EXPECT_EQ(GetComposition(command), "ア　イ");  // fullwidth space
   }
 
   {  // ConvertToFullKatakana
@@ -6106,7 +6102,7 @@ TEST_P(SessionTest, Issue2223755) {
     EXPECT_TRUE(SendKey("Eisu", &session, &command));
     EXPECT_TRUE(SendKey("i", &session, &command));
 
-    EXPECT_EQ("あ い", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ い");
 
     {  // Initialize the mock converter to generate t13n candidates.
       Segments segments;
@@ -6126,7 +6122,7 @@ TEST_P(SessionTest, Issue2223755) {
     command.Clear();
     EXPECT_TRUE(session.ConvertToFullKatakana(&command));
 
-    EXPECT_EQ("ア　イ", GetComposition(command));  // fullwidth space
+    EXPECT_EQ(GetComposition(command), "ア　イ");  // fullwidth space
   }
 }
 
@@ -6143,14 +6139,14 @@ TEST_P(SessionTest, Issue2269058) {
   commands::Command command;
 
   EXPECT_TRUE(SendKey("G", &session, &command));
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
-  EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
   EXPECT_TRUE(SendKey("Shift", &session, &command));
-  EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
 TEST_P(SessionTest, Issue2272745) {
@@ -6165,10 +6161,10 @@ TEST_P(SessionTest, Issue2272745) {
     commands::Command command;
 
     EXPECT_TRUE(SendKey("G", &session, &command));
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(SendKey("Backspace", &session, &command));
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 
   {
@@ -6177,10 +6173,10 @@ TEST_P(SessionTest, Issue2272745) {
     commands::Command command;
 
     EXPECT_TRUE(SendKey("G", &session, &command));
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(SendKey("Escape", &session, &command));
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 }
 
@@ -6203,7 +6199,7 @@ TEST_P(SessionTest, Issue2282319) {
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 
   EXPECT_TRUE(TestSendKey("a", &session, &command));
   EXPECT_TRUE(command.output().consumed());
@@ -6275,10 +6271,10 @@ TEST_P(SessionTest, Issue2379374) {
   }
 
   EXPECT_TRUE(SendKey("a", &session, &command));
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   EXPECT_TRUE(SendKey("Space", &session, &command));
-  EXPECT_EQ("亜", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "亜");
 
   EXPECT_TRUE(SendKey("Numpad0", &session, &command));
   EXPECT_TRUE(GetComposition(command).empty());
@@ -6286,7 +6282,7 @@ TEST_P(SessionTest, Issue2379374) {
 
   // The previous Numpad0 must not affect the current composition.
   EXPECT_TRUE(SendKey("a", &session, &command));
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 }
 
 TEST_P(SessionTest, Issue2569789) {
@@ -6303,13 +6299,13 @@ TEST_P(SessionTest, Issue2569789) {
     commands::Command command;
 
     InsertCharacterChars("google", &session, &command);
-    EXPECT_EQ("google", GetComposition(command));
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(GetComposition(command), "google");
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     EXPECT_TRUE(SendKey("enter", &session, &command));
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("google", command.output().result().value());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().result().value(), "google");
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 
   {
@@ -6318,12 +6314,12 @@ TEST_P(SessionTest, Issue2569789) {
     commands::Command command;
 
     InsertCharacterChars("Google", &session, &command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(SendKey("enter", &session, &command));
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("Google", command.output().result().value());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().result().value(), "Google");
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 
   {
@@ -6332,14 +6328,14 @@ TEST_P(SessionTest, Issue2569789) {
     commands::Command command;
 
     InsertCharacterChars("Google", &session, &command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(SendKey("shift", &session, &command));
-    EXPECT_EQ("Google", GetComposition(command));
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(GetComposition(command), "Google");
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     InsertCharacterChars("aaa", &session, &command);
-    EXPECT_EQ("Googleあああ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "Googleあああ");
   }
 
   {
@@ -6348,12 +6344,12 @@ TEST_P(SessionTest, Issue2569789) {
     commands::Command command;
 
     InsertCharacterChars("http", &session, &command);
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
 
     EXPECT_TRUE(SendKey("enter", &session, &command));
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("http", command.output().result().value());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().result().value(), "http");
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
   }
 }
 
@@ -6373,11 +6369,11 @@ TEST_P(SessionTest, Issue2555503) {
   session.InputModeFullKatakana(&command);
 
   SendKey("i", &session, &command);
-  EXPECT_EQ("あイ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あイ");
 
   SendKey("backspace", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
-  EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(GetComposition(command), "あ");
+  EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
 }
 
 TEST_P(SessionTest, Issue2791640) {
@@ -6397,8 +6393,8 @@ TEST_P(SessionTest, Issue2791640) {
   ASSERT_TRUE(command.output().consumed());
 
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ("あ", command.output().result().value());
-  EXPECT_EQ(commands::DIRECT, command.output().mode());
+  EXPECT_EQ(command.output().result().value(), "あ");
+  EXPECT_EQ(command.output().mode(), commands::DIRECT);
 
   ASSERT_FALSE(command.output().has_preedit());
 }
@@ -6421,8 +6417,8 @@ TEST_P(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
     ASSERT_TRUE(command.output().consumed());
 
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あ", command.output().result().value());
-    EXPECT_EQ(commands::DIRECT, command.output().mode());
+    EXPECT_EQ(command.output().result().value(), "あ");
+    EXPECT_EQ(command.output().mode(), commands::DIRECT);
 
     ASSERT_FALSE(command.output().has_preedit());
   }
@@ -6439,8 +6435,8 @@ TEST_P(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
     ASSERT_TRUE(command.output().consumed());
 
     ASSERT_TRUE(command.output().has_result());
-    EXPECT_EQ("あ", command.output().result().value());
-    EXPECT_EQ(commands::DIRECT, command.output().mode());
+    EXPECT_EQ(command.output().result().value(), "あ");
+    EXPECT_EQ(command.output().mode(), commands::DIRECT);
 
     ASSERT_FALSE(command.output().has_preedit());
   }
@@ -6519,7 +6515,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
     EXPECT_TRUE(command.output().has_consumed());
     EXPECT_TRUE(command.output().consumed());
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("あ", command);
   }
@@ -6531,7 +6527,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
     command.mutable_input()->mutable_key()->set_mode(commands::FULL_KATAKANA);
     EXPECT_TRUE(session.IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("ア", command);
   }
@@ -6543,7 +6539,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
     command.mutable_input()->mutable_key()->set_mode(commands::HALF_KATAKANA);
     EXPECT_TRUE(session.IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_KATAKANA);
     SendKey("a", &session, &command);
     // "ｱ" (half-width Katakana)
     EXPECT_SINGLE_SEGMENT("ｱ", command);
@@ -6556,7 +6552,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
     command.mutable_input()->mutable_key()->set_mode(commands::FULL_ASCII);
     EXPECT_TRUE(session.IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("ａ", command);
   }
@@ -6568,7 +6564,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
     command.mutable_input()->mutable_key()->set_mode(commands::HALF_ASCII);
     EXPECT_TRUE(session.IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HALF_ASCII);
     SendKey("a", &session, &command);
     EXPECT_SINGLE_SEGMENT("a", command);
   }
@@ -6584,23 +6580,23 @@ TEST_P(SessionTest, InputModeConsumed) {
   commands::Command command;
   EXPECT_TRUE(session.InputModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   command.Clear();
   EXPECT_TRUE(session.InputModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   command.Clear();
   EXPECT_TRUE(session.InputModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 }
 
 TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
@@ -6642,31 +6638,31 @@ TEST_P(SessionTest, InputModeOutputHasComposition) {
   command.Clear();
   EXPECT_TRUE(session.InputModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
   EXPECT_SINGLE_SEGMENT("あ", command);
 }
 
@@ -6698,35 +6694,35 @@ TEST_P(SessionTest, InputModeOutputHasCandidates) {
   command.Clear();
   EXPECT_TRUE(session.InputModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfKatakana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_KATAKANA);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeFullASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::FULL_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_ASCII);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_TRUE(command.output().has_preedit());
 
   command.Clear();
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HALF_ASCII, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_TRUE(command.output().has_preedit());
 }
@@ -7165,17 +7161,17 @@ TEST_P(SessionTest, AutoConversion) {
               InsertCharacterChars(key, &session, &command);
             }
             EXPECT_TRUE(command.output().has_preedit());
-            EXPECT_EQ(1, command.output().preedit().segment_size());
+            EXPECT_EQ(command.output().preedit().segment_size(), 1);
             EXPECT_TRUE(command.output().preedit().segment(0).has_value());
             EXPECT_TRUE(command.output().preedit().segment(0).has_key());
 
             if (onoff > 0 && flag[i] > 0) {
-              EXPECT_EQ("あいうえお",
-                        command.output().preedit().segment(0).key());
+              EXPECT_EQ(command.output().preedit().segment(0).key(),
+                        "あいうえお");
             } else {
               // Not "あいうえお"
-              EXPECT_NE("あいうえお",
-                        command.output().preedit().segment(0).key());
+              EXPECT_NE(command.output().preedit().segment(0).key(),
+                        "あいうえお");
             }
           }
         }
@@ -7197,14 +7193,14 @@ TEST_P(SessionTest, InputSpaceWithKatakanaMode) {
   commands::Command command;
   EXPECT_TRUE(session.InputModeHiragana(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(mozc::commands::HIRAGANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::HIRAGANA);
 
   SetSendKeyCommand("Space", &command);
   command.mutable_input()->mutable_key()->set_mode(commands::FULL_KATAKANA);
   EXPECT_TRUE(session.SendKey(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT("　", command);
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, command.output().mode());
+  EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
 }
 
 TEST_P(SessionTest, AlphanumericOfSSH) {
@@ -7219,7 +7215,7 @@ TEST_P(SessionTest, AlphanumericOfSSH) {
 
   commands::Command command;
   InsertCharacterChars("ssh", &session, &command);
-  EXPECT_EQ("っｓｈ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "っｓｈ");
 
   Segments segments;
   // Set a dummy segments for ConvertToHalfASCII.
@@ -7258,13 +7254,13 @@ TEST_P(SessionTest, KeitaiInputToggle) {
 
   SendKey("1", &session, &command);
   // "あ|"
-  EXPECT_EQ("あ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あ");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendKey("1", &session, &command);
   // "い|"
-  EXPECT_EQ("い", command.output().preedit().segment(0).value());
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "い");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendKey("1", &session, &command);
   SendKey("1", &session, &command);
@@ -7275,52 +7271,52 @@ TEST_P(SessionTest, KeitaiInputToggle) {
   SendKey("1", &session, &command);
   SendKey("1", &session, &command);
   SendKey("1", &session, &command);
-  EXPECT_EQ("あ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(1, command.output().preedit().cursor());
-
-  SendKey("2", &session, &command);
-  EXPECT_EQ("あか", command.output().preedit().segment(0).value());
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あ");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendKey("2", &session, &command);
-  EXPECT_EQ("あき", command.output().preedit().segment(0).value());
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あか");
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
+
+  SendKey("2", &session, &command);
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あき");
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
 
   SendKey("*", &session, &command);
-  EXPECT_EQ("あぎ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あぎ");
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
 
   SendKey("*", &session, &command);
-  EXPECT_EQ("あき", command.output().preedit().segment(0).value());
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あき");
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
 
   SendKey("3", &session, &command);
-  EXPECT_EQ("あきさ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきさ");
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
 
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
-  EXPECT_EQ("あきさ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきさ");
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
 
   SendKey("3", &session, &command);
-  EXPECT_EQ("あきささ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきささ");
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
 
   SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ("あきささ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきささ");
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
 
   SendKey("4", &session, &command);
-  EXPECT_EQ("あきさたさ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきさたさ");
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
 
   SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ("あきさたさ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきさたさ");
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
 
   SendKey("*", &session, &command);
-  EXPECT_EQ("あきざたさ", command.output().preedit().segment(0).value());
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきざたさ");
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
 
   // Test for End key
   SendSpecialKey(commands::KeyEvent::END, &session, &command);
@@ -7329,8 +7325,8 @@ TEST_P(SessionTest, KeitaiInputToggle) {
   SendSpecialKey(commands::KeyEvent::END, &session, &command);
   SendKey("6", &session, &command);
   SendKey("*", &session, &command);
-  EXPECT_EQ("あきざたさひば", command.output().preedit().segment(0).value());
-  EXPECT_EQ(7, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あきざたさひば");
+  EXPECT_EQ(command.output().preedit().cursor(), 7);
 
   // Test for Right key
   SendSpecialKey(commands::KeyEvent::END, &session, &command);
@@ -7339,43 +7335,43 @@ TEST_P(SessionTest, KeitaiInputToggle) {
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
   SendKey("6", &session, &command);
   SendKey("*", &session, &command);
-  EXPECT_EQ("あきざたさひばひば",
-            command.output().preedit().segment(0).value());
-  EXPECT_EQ(9, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "あきざたさひばひば");
+  EXPECT_EQ(command.output().preedit().cursor(), 9);
 
   // Test for Left key
   SendSpecialKey(commands::KeyEvent::END, &session, &command);
   SendKey("6", &session, &command);
   SendKey("6", &session, &command);
-  EXPECT_EQ("あきざたさひばひばひ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "あきざたさひばひばひ");
   SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
   SendKey("6", &session, &command);
-  EXPECT_EQ("あきざたさひばひばはひ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "あきざたさひばひばはひ");
   SendKey("*", &session, &command);
-  EXPECT_EQ("あきざたさひばひばばひ",
-            command.output().preedit().segment(0).value());
-  EXPECT_EQ(10, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "あきざたさひばひばばひ");
+  EXPECT_EQ(command.output().preedit().cursor(), 10);
 
   // Test for Home key
   SendSpecialKey(commands::KeyEvent::HOME, &session, &command);
-  EXPECT_EQ("あきざたさひばひばばひ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "あきざたさひばひばばひ");
   SendKey("6", &session, &command);
   SendKey("*", &session, &command);
-  EXPECT_EQ("ばあきざたさひばひばばひ",
-            command.output().preedit().segment(0).value());
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "ばあきざたさひばひばばひ");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendSpecialKey(commands::KeyEvent::END, &session, &command);
   SendKey("5", &session, &command);
-  EXPECT_EQ("ばあきざたさひばひばばひな",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "ばあきざたさひばひばばひな");
   SendKey("*", &session, &command);  // no effect
-  EXPECT_EQ("ばあきざたさひばひばばひな",
-            command.output().preedit().segment(0).value());
-  EXPECT_EQ(13, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().segment(0).value(),
+            "ばあきざたさひばひばばひな");
+  EXPECT_EQ(command.output().preedit().cursor(), 13);
 }
 
 TEST_P(SessionTest, KeitaiInputFlick) {
@@ -7397,7 +7393,7 @@ TEST_P(SessionTest, KeitaiInputFlick) {
     SendKey("*", &session, &command);
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
-    EXPECT_EQ("はじょう", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -7414,7 +7410,7 @@ TEST_P(SessionTest, KeitaiInputFlick) {
     SendKey("*", &session, &command);
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
-    EXPECT_EQ("はじょう", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "はじょう");
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -7429,11 +7425,11 @@ TEST_P(SessionTest, KeitaiInputFlick) {
     SendKey("2", &session, &command);
     SendKey("3", &session, &command);
     SendKey("3", &session, &command);
-    EXPECT_EQ("あかし", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "あかし");
     InsertCharacterCodeAndString('5', "の", &session, &command);
     InsertCharacterCodeAndString('2', "く", &session, &command);
     InsertCharacterCodeAndString('3', "し", &session, &command);
-    EXPECT_EQ("あかしのくし", command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "あかしのくし");
     SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
     SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
     SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
@@ -7461,8 +7457,8 @@ TEST_P(SessionTest, KeitaiInputFlick) {
     SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
     SendKey("*", &session, &command);
     SendKey("*", &session, &command);
-    EXPECT_EQ("あるかしんのくしゅう",
-              command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるかしんのくしゅう");
     SendSpecialKey(commands::KeyEvent::HOME, &session, &command);
     SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
     SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
@@ -7479,8 +7475,8 @@ TEST_P(SessionTest, KeitaiInputFlick) {
     SendKey("6", &session, &command);
     SendKey("6", &session, &command);
     SendKey("6", &session, &command);
-    EXPECT_EQ("あるぱかしんのふくしゅう",
-              command.output().preedit().segment(0).value());
+    EXPECT_EQ(command.output().preedit().segment(0).value(),
+              "あるぱかしんのふくしゅう");
     Mock::VerifyAndClearExpectations(&converter);
   }
 }
@@ -7631,8 +7627,8 @@ TEST_P(SessionTest, CommitCandidateSuggestion) {
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+  EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_mo), Return(true)));
@@ -7646,7 +7642,7 @@ TEST_P(SessionTest, CommitCandidateSuggestion) {
   EXPECT_FALSE(command.output().has_preedit());
   // Zero query suggestion fills the candidates.
   EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
 bool FindCandidateID(const commands::Candidates &candidates,
@@ -7690,9 +7686,9 @@ TEST_P(SessionTest, CommitCandidateT13N) {
   AddMetaCandidate("tok", "tok", segment);
   AddMetaCandidate("tok", "TOK", segment);
   AddMetaCandidate("tok", "Tok", segment);
-  EXPECT_EQ("tok", segment->candidate(-1).value);
-  EXPECT_EQ("TOK", segment->candidate(-2).value);
-  EXPECT_EQ("Tok", segment->candidate(-3).value);
+  EXPECT_EQ(segment->candidate(-1).value, "tok");
+  EXPECT_EQ(segment->candidate(-2).value, "TOK");
+  EXPECT_EQ(segment->candidate(-3).value, "Tok");
 
   EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
@@ -7716,7 +7712,7 @@ TEST_P(SessionTest, CommitCandidateT13N) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT("TOK", command);
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
 #endif  // OS_WIN, __APPLE__
 }
 
@@ -7734,8 +7730,8 @@ TEST_P(SessionTest, RequestConvertReverse) {
   EXPECT_FALSE(command.output().has_deletion_range());
   EXPECT_TRUE(command.output().has_callback());
   EXPECT_TRUE(command.output().callback().has_session_command());
-  EXPECT_EQ(commands::SessionCommand::CONVERT_REVERSE,
-            command.output().callback().session_command().type());
+  EXPECT_EQ(command.output().callback().session_command().type(),
+            commands::SessionCommand::CONVERT_REVERSE);
 }
 
 TEST_P(SessionTest, ConvertReverseFails) {
@@ -7769,9 +7765,9 @@ TEST_P(SessionTest, ConvertReverse) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kKanjiAiueo, command.output().preedit().segment(0).value());
-  EXPECT_EQ(kKanjiAiueo,
-            command.output().all_candidate_words().candidates(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), kKanjiAiueo);
+  EXPECT_EQ(command.output().all_candidate_words().candidates(0).value(),
+            kKanjiAiueo);
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_GT(command.output().candidates().candidate_size(), 0);
 }
@@ -7791,7 +7787,7 @@ TEST_P(SessionTest, EscapeFromConvertReverse) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kKanjiAiueo, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kKanjiAiueo);
 
   SendKey("ESC", &session, &command);
 
@@ -7819,7 +7815,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverse) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kKanjiAiueo, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kKanjiAiueo);
 
   SendKey("ESC", &session, &command);
   SendKey("ESC", &session, &command);
@@ -7830,7 +7826,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverse) {
   EXPECT_RESULT_AND_KEY(kKanjiAiueo, kKanjiAiueo, command);
 
   SendKey("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   SendKey("ESC", &session, &command);
   EXPECT_FALSE(command.output().has_preedit());
@@ -7854,7 +7850,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kInput, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kInput);
 
   SendKey("ESC", &session, &command);
   SendKey("ESC", &session, &command);
@@ -7883,7 +7879,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kInput, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kInput);
 
   SendKey("ESC", &session, &command);
   SendKey("ESC", &session, &command);
@@ -7911,7 +7907,7 @@ TEST_P(SessionTest, EscapeFromCompositionAfterConvertReverse) {
   // Conversion Reverse
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kKanjiAiueo, GetComposition(command));
+  EXPECT_EQ(GetComposition(command), kKanjiAiueo);
 
   session.Commit(&command);
 
@@ -7919,7 +7915,7 @@ TEST_P(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 
   // Escape in composition state
   SendKey("a", &session, &command);
-  EXPECT_EQ("あ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "あ");
 
   SendKey("ESC", &session, &command);
   EXPECT_FALSE(command.output().has_preedit());
@@ -7959,15 +7955,15 @@ TEST_P(SessionTest, DCHECKFailureAfterConvertReverse) {
   SetupMockForReverseConversion("あいうえお", "あいうえお", &converter);
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ("あいうえお", command.output().preedit().segment(0).value());
-  EXPECT_EQ("あいうえお",
-            command.output().all_candidate_words().candidates(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あいうえお");
+  EXPECT_EQ(command.output().all_candidate_words().candidates(0).value(),
+            "あいうえお");
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_GT(command.output().candidates().candidate_size(), 0);
 
   SendKey("ESC", &session, &command);
   SendKey("a", &session, &command);
-  EXPECT_EQ("あいうえおあ", command.output().preedit().segment(0).value());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "あいうえおあ");
   EXPECT_FALSE(command.output().has_result());
 }
 
@@ -7981,24 +7977,24 @@ TEST_P(SessionTest, LaunchTool) {
   {
     commands::Command command;
     EXPECT_TRUE(session.LaunchConfigDialog(&command));
-    EXPECT_EQ(commands::Output::CONFIG_DIALOG,
-              command.output().launch_tool_mode());
+    EXPECT_EQ(command.output().launch_tool_mode(),
+              commands::Output::CONFIG_DIALOG);
     EXPECT_TRUE(command.output().consumed());
   }
 
   {
     commands::Command command;
     EXPECT_TRUE(session.LaunchDictionaryTool(&command));
-    EXPECT_EQ(commands::Output::DICTIONARY_TOOL,
-              command.output().launch_tool_mode());
+    EXPECT_EQ(command.output().launch_tool_mode(),
+              commands::Output::DICTIONARY_TOOL);
     EXPECT_TRUE(command.output().consumed());
   }
 
   {
     commands::Command command;
     EXPECT_TRUE(session.LaunchWordRegisterDialog(&command));
-    EXPECT_EQ(commands::Output::WORD_REGISTER_DIALOG,
-              command.output().launch_tool_mode());
+    EXPECT_EQ(command.output().launch_tool_mode(),
+              commands::Output::WORD_REGISTER_DIALOG);
     EXPECT_TRUE(command.output().consumed());
   }
 }
@@ -8019,7 +8015,7 @@ TEST_P(SessionTest, NotZeroQuerySuggest) {
   // Type "google".
   commands::Command command;
   InsertCharacterChars("google", &session, &command);
-  EXPECT_EQ("google", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "google");
 
   // Set up a mock suggestion result.
   Segments segments;
@@ -8033,12 +8029,12 @@ TEST_P(SessionTest, NotZeroQuerySuggest) {
   EXPECT_CALL(converter, StartSuggestionForRequest(_, _)).Times(0);
   command.Clear();
   session.Commit(&command);
-  EXPECT_EQ("google", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().value(), "google");
+  EXPECT_EQ(GetComposition(command), "");
   EXPECT_FALSE(command.output().has_candidates());
 
   const ImeContext &context = session.context();
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, context.state());
+  EXPECT_EQ(context.state(), ImeContext::PRECOMPOSITION);
 }
 
 TEST_P(SessionTest, ZeroQuerySuggest) {
@@ -8052,13 +8048,13 @@ TEST_P(SessionTest, ZeroQuerySuggest) {
 
     commands::Command command;
     session.Commit(&command);
-    EXPECT_EQ("GOOGLE", command.output().result().value());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(command.output().result().value(), "GOOGLE");
+    EXPECT_EQ(GetComposition(command), "");
     EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("search", command.output().candidates().candidate(0).value());
-    EXPECT_EQ("input", command.output().candidates().candidate(1).value());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
+    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -8069,13 +8065,13 @@ TEST_P(SessionTest, ZeroQuerySuggest) {
 
     commands::Command command;
     session.CommitSegment(&command);
-    EXPECT_EQ("GOOGLE", command.output().result().value());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(command.output().result().value(), "GOOGLE");
+    EXPECT_EQ(GetComposition(command), "");
     EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("search", command.output().candidates().candidate(0).value());
-    EXPECT_EQ("input", command.output().candidates().candidate(1).value());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
+    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -8089,13 +8085,13 @@ TEST_P(SessionTest, ZeroQuerySuggest) {
     command.mutable_input()->mutable_command()->set_id(0);
     session.SendCommand(&command);
 
-    EXPECT_EQ("GOOGLE", command.output().result().value());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(command.output().result().value(), "GOOGLE");
+    EXPECT_EQ(GetComposition(command), "");
     EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("search", command.output().candidates().candidate(0).value());
-    EXPECT_EQ("input", command.output().candidates().candidate(1).value());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
+    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
     Mock::VerifyAndClearExpectations(&converter);
   }
 
@@ -8140,13 +8136,13 @@ TEST_P(SessionTest, ZeroQuerySuggest) {
 
     command.Clear();
     session.CommitFirstSuggestion(&command);
-    EXPECT_EQ("google", command.output().result().value());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(command.output().result().value(), "google");
+    EXPECT_EQ(GetComposition(command), "");
     EXPECT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("search", command.output().candidates().candidate(0).value());
-    EXPECT_EQ("input", command.output().candidates().candidate(1).value());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "search");
+    EXPECT_EQ(command.output().candidates().candidate(1).value(), "input");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 }
 
@@ -8166,8 +8162,8 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 
   {  // PredictAndConvert should select the first candidate.
@@ -8182,7 +8178,7 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     EXPECT_FALSE(command.output().has_result());
     // "search" is the first suggest candidate.
     EXPECT_PREEDIT("search", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   }
 
   {  // CommitFirstSuggestion should insert the first candidate.
@@ -8198,10 +8194,10 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "");
     // "search" is the first suggest candidate.
     EXPECT_RESULT("search", command);
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 
   {  // Space should be inserted directly.
@@ -8213,9 +8209,9 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     SendKey("Space", &session, &command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
-    EXPECT_EQ("", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "");
     EXPECT_RESULT("　", command);  // Full-width space
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 
   {  // 'a' should be inserted in the composition.
@@ -8223,14 +8219,14 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     commands::Request request;
     commands::Command command;
     SetupZeroQuerySuggestion(&session, &request, &command, &converter);
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 
     SendKey("a", &session, &command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
+    EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
     EXPECT_PREEDIT("あ", command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 
   {  // Enter should be inserted directly.
@@ -8243,8 +8239,8 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     EXPECT_FALSE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 
   {  // Right should be inserted directly.
@@ -8257,8 +8253,8 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     EXPECT_FALSE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   }
 
   {  // SelectCnadidate command should work with zero query suggestion.
@@ -8277,7 +8273,7 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
     EXPECT_FALSE(command.output().has_result());
     // "search" is the first suggest candidate.
     EXPECT_PREEDIT("search", command);
-    EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   }
 }
 
@@ -8311,7 +8307,7 @@ TEST_P(SessionTest, Issue4437420) {
   SetSendKeyCommand("*", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
   session.SendKey(&command);
-  EXPECT_EQ("A", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "A");
 
   // Change to 12keys-halfascii mode.
   SwitchInputMode(commands::HALF_ASCII, &session);
@@ -8328,7 +8324,7 @@ TEST_P(SessionTest, Issue4437420) {
   SetSendKeyCommand("2", &command);
   *command.mutable_input()->mutable_config() = overriding_config;
   session.SendKey(&command);
-  EXPECT_EQ("Aa", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "Aa");
   command.Clear();
 }
 
@@ -8393,26 +8389,26 @@ TEST_P(SessionTest, UndoKeyAction) {
     SetSendKeyCommand("2", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("a", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "a");
 
     // Type "2" again to produce "b".
     SetSendKeyCommand("2", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("b", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "b");
 
     // Push UNDO key to reproduce "a".
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("a", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "a");
     EXPECT_TRUE(command.output().consumed());
 
     // Push UNDO key again to produce "2".
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("2", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "2");
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
   }
@@ -8437,24 +8433,24 @@ TEST_P(SessionTest, UndoKeyAction) {
     SetSendKeyCommand("3", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("さ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "さ");
 
     SetSendKeyCommand("3", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("し", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "し");
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("さ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "さ");
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("そ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "そ");
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
   }
@@ -8480,29 +8476,29 @@ TEST_P(SessionTest, UndoKeyAction) {
     SetSendKeyCommand("3", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("さ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "さ");
 
     SetSendKeyCommand("*", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("ざ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "ざ");
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("ざ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "ざ");
     EXPECT_TRUE(command.output().consumed());
 
     SetSendKeyCommand("*", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("さ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "さ");
     command.Clear();
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
-    EXPECT_EQ("さ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "さ");
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
   }
@@ -8573,8 +8569,8 @@ TEST_P(SessionTest, UndoKeyAction) {
     session.SendCommand(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
+    EXPECT_EQ(command.output().deletion_range().offset(), -5);
+    EXPECT_EQ(command.output().deletion_range().length(), 5);
     EXPECT_PREEDIT("あいうえお", command);
     EXPECT_TRUE(command.output().consumed());
 
@@ -8609,7 +8605,7 @@ TEST_P(SessionTest, UndoKeyAction) {
     SetSendKeyCommand("1", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("あ", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "あ");
     command.Clear();
 
     session.Commit(&command);
@@ -8620,7 +8616,7 @@ TEST_P(SessionTest, UndoKeyAction) {
     SetSendKeyCommand("2", &command);
     *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
-    EXPECT_EQ("か", GetComposition(command));
+    EXPECT_EQ(GetComposition(command), "か");
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
 
@@ -8660,8 +8656,8 @@ TEST_P(SessionTest, DedupAfterUndo) {
     // Type "!" to produce "！".
     SetSendKeyCommand("!", &command);
     session.SendKey(&command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
-    EXPECT_EQ("！", GetComposition(command));
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
+    EXPECT_EQ(GetComposition(command), "！");
 
     ASSERT_TRUE(command.output().has_candidates());
 
@@ -8678,11 +8674,11 @@ TEST_P(SessionTest, DedupAfterUndo) {
     command.Clear();
     session.CommitFirstSuggestion(&command);
     EXPECT_FALSE(command.output().has_preedit());
-    EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
 
     command.Clear();
     session.Undo(&command);
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
     EXPECT_TRUE(command.output().has_deletion_range());
     ASSERT_TRUE(command.output().has_candidates());
 
@@ -8692,8 +8688,8 @@ TEST_P(SessionTest, DedupAfterUndo) {
     FindCandidateIDs(command.output().candidates(), "!", &ids);
     EXPECT_GE(1, ids.size());
 
-    EXPECT_EQ(command.output().candidates().candidate_size(),
-              candidate_size_before_undo);
+    EXPECT_EQ(candidate_size_before_undo,
+              command.output().candidates().candidate_size());
   }
 }
 
@@ -8707,14 +8703,14 @@ TEST_P(SessionTest, MoveCursor) {
   commands::Command command;
 
   InsertCharacterChars("MOZUKU", &session, &command);
-  EXPECT_EQ(6, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 6);
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(5, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 5);
   command.mutable_input()->mutable_command()->set_cursor_position(3);
   session.MoveCursorTo(&command);
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
   session.MoveCursorRight(&command);
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
 }
 
 TEST_P(SessionTest, MoveCursorPrecomposition) {
@@ -8748,20 +8744,20 @@ TEST_P(SessionTest, MoveCursorRightWithCommit) {
   commands::Command command;
 
   InsertCharacterChars("MOZC", &session, &command);
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
   command.Clear();
   session.MoveCursorRight(&command);
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
   command.Clear();
   session.MoveCursorRight(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("MOZC", command.output().result().value());
-  EXPECT_EQ(0, command.output().result().cursor_offset());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "MOZC");
+  EXPECT_EQ(command.output().result().cursor_offset(), 0);
 }
 
 TEST_P(SessionTest, MoveCursorLeftWithCommit) {
@@ -8780,27 +8776,27 @@ TEST_P(SessionTest, MoveCursorLeftWithCommit) {
   commands::Command command;
 
   InsertCharacterChars("MOZC", &session, &command);
-  EXPECT_EQ(4, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 4);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(3, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 3);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(2, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 2);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
   command.Clear();
 
   session.MoveCursorLeft(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("MOZC", command.output().result().value());
-  EXPECT_EQ(-4, command.output().result().cursor_offset());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "MOZC");
+  EXPECT_EQ(command.output().result().cursor_offset(), -4);
 }
 
 TEST_P(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
@@ -8818,17 +8814,17 @@ TEST_P(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
-  EXPECT_EQ(6, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 6);
   command.Clear();
 
   session.MoveCursorRight(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("GOOGLE", command.output().result().value());
-  EXPECT_EQ(0, command.output().result().cursor_offset());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "GOOGLE");
+  EXPECT_EQ(command.output().result().cursor_offset(), 0);
   EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
+  EXPECT_EQ(command.output().candidates().candidate_size(), 2);
 }
 
 TEST_P(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
@@ -8846,20 +8842,20 @@ TEST_P(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
-  EXPECT_EQ(6, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 6);
   command.Clear();
   for (int i = 5; i >= 0; --i) {
     session.MoveCursorLeft(&command);
-    EXPECT_EQ(i, command.output().preedit().cursor());
+    EXPECT_EQ(command.output().preedit().cursor(), i);
     command.Clear();
   }
 
   session.MoveCursorLeft(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("GOOGLE", command.output().result().value());
-  EXPECT_EQ(-6, command.output().result().cursor_offset());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "GOOGLE");
+  EXPECT_EQ(command.output().result().cursor_offset(), -6);
   EXPECT_FALSE(command.output().has_candidates());
 }
 
@@ -8879,14 +8875,14 @@ TEST_P(SessionTest, CommitHead) {
   commands::Command command;
 
   InsertCharacterChars("moz", &session, &command);
-  EXPECT_EQ("もｚ", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "もｚ");
   command.Clear();
   session.CommitHead(1, &command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("も", command.output().result().value());
-  EXPECT_EQ("ｚ", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "も");
+  EXPECT_EQ(GetComposition(command), "ｚ");
   InsertCharacterChars("u", &session, &command);
-  EXPECT_EQ("ず", GetComposition(command));
+  EXPECT_EQ(GetComposition(command), "ず");
 }
 
 TEST_P(SessionTest, PasswordWithToggleAlphabetInput) {
@@ -8909,40 +8905,40 @@ TEST_P(SessionTest, PasswordWithToggleAlphabetInput) {
 
   commands::Command command;
   SendKey("2", &session, &command);
-  EXPECT_EQ("a", GetComposition(command));
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(GetComposition(command), "a");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendKey("2", &session, &command);
-  EXPECT_EQ("b", GetComposition(command));
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(GetComposition(command), "b");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   // cursor key commits the preedit.
   SendKey("right", &session, &command);
   // "b"
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("b", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "b");
+  EXPECT_EQ(GetComposition(command), "");
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
 
   SendKey("2", &session, &command);
   // "b[a]"
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
-  EXPECT_EQ("a", GetComposition(command));
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
+  EXPECT_EQ(GetComposition(command), "a");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   SendKey("4", &session, &command);
   // ba[g]
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("a", command.output().result().value());
-  EXPECT_EQ("g", GetComposition(command));
-  EXPECT_EQ(1, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "a");
+  EXPECT_EQ(GetComposition(command), "g");
+  EXPECT_EQ(command.output().preedit().cursor(), 1);
 
   // cursor key commits the preedit.
   SendKey("left", &session, &command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("g", command.output().result().value());
-  EXPECT_EQ(0, command.output().preedit().segment_size());
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "g");
+  EXPECT_EQ(command.output().preedit().segment_size(), 0);
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
 TEST_P(SessionTest, SwitchInputFieldType) {
@@ -8954,8 +8950,8 @@ TEST_P(SessionTest, SwitchInputFieldType) {
   InitSessionToPrecomposition(&session);
 
   // initial state is NORMAL
-  EXPECT_EQ(commands::Context::NORMAL,
-            session.context().composer().GetInputFieldType());
+  EXPECT_EQ(session.context().composer().GetInputFieldType(),
+            commands::Context::NORMAL);
 
   {
     SCOPED_TRACE("Switch input field type to PASSWORD");
@@ -8987,34 +8983,34 @@ TEST_P(SessionTest, CursorKeysInPasswordMode) {
   commands::Command command;
   // cursor key commits the preedit without moving system cursor.
   SendKey("m", &session, &command);
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
   command.Clear();
   session.MoveCursorLeft(&command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("m", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "m");
+  EXPECT_EQ(GetComposition(command), "");
   VLOG(0) << command.DebugString();
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("o", &session, &command);
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
   command.Clear();
   session.MoveCursorRight(&command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("o", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "o");
+  EXPECT_EQ(GetComposition(command), "");
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 
   SendKey("z", &session, &command);
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
   SetSendCommandCommand(commands::SessionCommand::MOVE_CURSOR, &command);
   command.mutable_input()->mutable_command()->set_cursor_position(3);
   session.MoveCursorTo(&command);
-  EXPECT_EQ("z", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
-  EXPECT_EQ(0, command.output().preedit().cursor());
+  EXPECT_EQ(command.output().result().value(), "z");
+  EXPECT_EQ(GetComposition(command), "");
+  EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 }
 
@@ -9041,34 +9037,34 @@ TEST_P(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   SwitchInputMode(commands::HALF_ASCII, &session);
 
   SendKey("m", &session, &command);
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
-  EXPECT_EQ("m", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
+  EXPECT_EQ(GetComposition(command), "m");
   SendKey("esc", &session, &command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("m", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "m");
+  EXPECT_EQ(GetComposition(command), "");
   EXPECT_FALSE(command.output().consumed());
 
   SendKey("o", &session, &command);
   SendKey("z", &session, &command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("o", command.output().result().value());
-  EXPECT_EQ("z", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "o");
+  EXPECT_EQ(GetComposition(command), "z");
   SendKey("esc", &session, &command);
-  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
-  EXPECT_EQ("z", command.output().result().value());
-  EXPECT_EQ("", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
+  EXPECT_EQ(command.output().result().value(), "z");
+  EXPECT_EQ(GetComposition(command), "");
   EXPECT_FALSE(command.output().consumed());
 
   // in normal mode, preedit is cleared without commit.
   SwitchInputFieldType(commands::Context::NORMAL, &session);
 
   SendKey("m", &session, &command);
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
-  EXPECT_EQ("m", GetComposition(command));
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
+  EXPECT_EQ(GetComposition(command), "m");
   SendKey("esc", &session, &command);
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(commands::Result::NONE, command.output().result().type());
+  EXPECT_EQ(command.output().result().type(), commands::Result::NONE);
   EXPECT_FALSE(command.output().has_preedit());
 }
 
@@ -9097,13 +9093,13 @@ TEST_P(SessionTest, EditCancel) {
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
     command.Clear();
     session.EditCancel(&command);
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
   }
 
@@ -9121,13 +9117,13 @@ TEST_P(SessionTest, EditCancel) {
         .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
     command.Clear();
     session.EditCancel(&command);
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     // test case against b/5566728
     EXPECT_RESULT("[MO]", command);
   }
@@ -9184,8 +9180,8 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9206,8 +9202,8 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9227,16 +9223,16 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
 
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9255,8 +9251,8 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9282,16 +9278,16 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
         .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
-    EXPECT_EQ(2, command.output().candidates().candidate_size());
-    EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+    EXPECT_EQ(command.output().candidates().candidate_size(), 2);
+    EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
 
     EXPECT_TRUE(SendKey("hankaku/zenkaku", &session, &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_RESULT("[MO]", command);
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
@@ -9382,7 +9378,7 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_result());
 
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   }
 
   {  // Cancel of Reverse conversion in password field
@@ -9408,7 +9404,7 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
     EXPECT_TRUE(SendKey("ESC", &session, &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_result());
-    EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+    EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
     // The second escape key will be mapped into EditCancel.
     EXPECT_TRUE(TestSendKey("ESC", &session, &command));
@@ -9464,8 +9460,8 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     // |consumed()|.
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Current behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9493,8 +9489,8 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     // |consumed()|.
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Following behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9521,8 +9517,8 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     // |consumed()|.
     EXPECT_FALSE(command.output().consumed())
         << "Congrats! b/5955618 seems to be fixed";
-    EXPECT_EQ("", GetComposition(command));
-    EXPECT_EQ(0, command.output().candidates().candidate_size());
+    EXPECT_EQ(GetComposition(command), "");
+    EXPECT_EQ(command.output().candidates().candidate_size(), 0);
     EXPECT_FALSE(command.output().has_result());
     // Following behavior seems to be a bug.
     // This command should deactivate the IME.
@@ -9615,19 +9611,19 @@ TEST_P(SessionTest, ModeChangeOfConvertAtPunctuations) {
 
   commands::Command command;
   SendKey("a", &session, &command);  // "あ|" (composition)
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
   SendKey(".", &session, &command);  // "あ。|" (conversion)
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   SendKey("ESC", &session, &command);  // "あ。|" (composition)
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
   SendKey("Left", &session, &command);  // "あ|。" (composition)
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 
   SendKey("i", &session, &command);  // "あい|。" (should be composition)
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 }
 
 TEST_P(SessionTest, SuppressSuggestion) {
@@ -9684,7 +9680,7 @@ TEST_P(SessionTest, DeleteHistory) {
   command.Clear();
   EXPECT_TRUE(session.PredictAndConvert(&command));
   EXPECT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
   EXPECT_PREEDIT("DeleteHistory", command);
 
   // Do DeleteHistory command. After that, the session should be back in
@@ -9692,10 +9688,12 @@ TEST_P(SessionTest, DeleteHistory) {
   MockUserDataManager user_data_manager;
   EXPECT_CALL(engine, GetUserDataManager())
       .WillOnce(Return(&user_data_manager));
-  EXPECT_CALL(user_data_manager, ClearUserPredictionEntry("", "DeleteHistory"))
+  EXPECT_CALL(user_data_manager,
+              ClearUserPredictionEntry(absl::string_view(),
+                                       absl::string_view("DeleteHistory")))
       .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   EXPECT_PREEDIT("でｌ", command);
 }
 
@@ -9728,7 +9726,7 @@ TEST_P(SessionTest, SendKeyWithKeyString) {
   commands::Command command;
 
   // Test for precomposition state.
-  EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
   constexpr char kZa[] = "ざ";
   SetSendKeyCommandWithKeyString(kZa, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
@@ -9741,7 +9739,7 @@ TEST_P(SessionTest, SendKeyWithKeyString) {
   command.Clear();
 
   // Test for composition state.
-  EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
+  EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
   constexpr char kOnsenManju[] = "♨饅頭";
   SetSendKeyCommandWithKeyString(kOnsenManju, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
@@ -9832,7 +9830,7 @@ TEST_P(SessionTest, MakeSureIMEOn) {
     EXPECT_TRUE(command.output().consumed());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
   }
 
   {
@@ -9846,7 +9844,7 @@ TEST_P(SessionTest, MakeSureIMEOn) {
     EXPECT_TRUE(command.output().consumed());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
   }
 
   {
@@ -9888,7 +9886,7 @@ TEST_P(SessionTest, MakeSureIMEOff) {
     EXPECT_TRUE(command.output().consumed());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
   }
 
   {
@@ -9902,7 +9900,7 @@ TEST_P(SessionTest, MakeSureIMEOff) {
     EXPECT_TRUE(command.output().consumed());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
-    EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
+    EXPECT_EQ(command.output().status().mode(), commands::HIRAGANA);
   }
 
   {
@@ -9945,7 +9943,7 @@ TEST_P(SessionTest, MakeSureIMEOffWithCommitComposition) {
     EXPECT_TRUE(command.output().consumed());
     ASSERT_TRUE(command.output().has_status());
     EXPECT_FALSE(command.output().status().activated());
-    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
+    EXPECT_EQ(command.output().status().mode(), commands::FULL_KATAKANA);
   }
 }
 
@@ -9965,7 +9963,8 @@ TEST_P(SessionTest, DeleteCandidateFromHistory) {
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry("あいうえお", "あいうえお"))
+                ClearUserPredictionEntry(absl::string_view("あいうえお"),
+                                         absl::string_view("あいうえお")))
         .WillOnce(Return(true));
 
     commands::Command command;
@@ -9979,7 +9978,8 @@ TEST_P(SessionTest, DeleteCandidateFromHistory) {
     InitSessionToConversionWithAiueo(&session, &converter);
 
     EXPECT_CALL(user_data_manager,
-                ClearUserPredictionEntry("あいうえお", "アイウエオ"))
+                ClearUserPredictionEntry(absl::string_view("あいうえお"),
+                                         absl::string_view("アイウエオ")))
         .WillOnce(Return(true));
 
     commands::Command command;
@@ -10003,7 +10003,7 @@ TEST_P(SessionTest, SetConfig) {
   session.PushUndoContext();
   session.SetConfig(&config);
 
-  EXPECT_EQ(&session.context_->GetConfig(), &config);
+  EXPECT_EQ(&config, &session.context_->GetConfig());
   // SetConfig() resets undo context.
   EXPECT_TRUE(session.undo_contexts_.empty());
 }

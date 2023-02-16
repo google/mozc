@@ -27,15 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WIN
-#include <sddl.h>
-#include <shlobj.h>
-#include <string.h>
-#include <windows.h>
-#else  // OS_WIN
-#include <unistd.h>
-#endif  // OS_WIN
-
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -44,22 +36,30 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#if defined(__APPLE__) || defined(OS_IOS)
-#include "base/mac_util.h"
-#endif  // __APPLE__ || OS_IOS
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
-#ifdef OS_WIN
-#include "base/win_sandbox.h"
-#endif  // OS_WIN
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+
+#if defined(__APPLE__) || defined(OS_IOS)
+#include "base/mac_util.h"
+#endif  // __APPLE__ || OS_IOS
+
+#ifdef OS_WIN
+#include <sddl.h>
+#include <shlobj.h>
+#include <windows.h>
+
+#include "base/win_sandbox.h"
+#else  // OS_WIN
+#include <unistd.h>
+#endif  // OS_WIN
 
 namespace mozc {
 namespace client {
@@ -99,7 +99,7 @@ ServerLauncher::ServerLauncher()
       restricted_(false),
       suppress_error_dialog_(false) {}
 
-ServerLauncher::~ServerLauncher() {}
+ServerLauncher::~ServerLauncher() = default;
 
 bool ServerLauncher::StartServer(ClientInterface *client) {
   if (server_program().empty()) {
@@ -231,7 +231,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   return false;
 }
 
-bool ServerLauncher::ForceTerminateServer(const std::string &name) {
+bool ServerLauncher::ForceTerminateServer(const absl::string_view name) {
   return IPCClient::TerminateServer(name);
 }
 

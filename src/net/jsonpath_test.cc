@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace net {
@@ -41,10 +42,11 @@ class JsonPathTest : public testing::Test {
  public:
   void SetUp() override {}
 
-  std::string Parse(const std::string &json, const std::string &jsonpath) {
+  std::string Parse(const absl::string_view json,
+                    const absl::string_view jsonpath) {
     Json::Reader reader;
     Json::Value root;
-    EXPECT_TRUE(reader.parse(json, root))
+    EXPECT_TRUE(reader.parse(json.begin(), json.end(), root))
         << reader.getFormattedErrorMessages() << " " << json;
     std::vector<const Json::Value *> output;
     if (!JsonPath::Parse(root, jsonpath, &output)) {

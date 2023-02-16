@@ -484,12 +484,6 @@ mozc_objc_library(
         "mac/RendererBaseWindow.h",
         "mac/mac_view_util.h",
     ]),
-    proto_deps = [
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//protocol:renderer_cc_proto",
-    ],
     sdk_frameworks = [
         "Carbon",
         "Foundation",
@@ -508,6 +502,10 @@ mozc_objc_library(
         "//config:stats_config_util",
         "//ipc:ipc",
         "//mac:common",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",

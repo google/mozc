@@ -69,6 +69,7 @@ mozc_cc_library(
         "//base:port",
         "//config:stats_config_util",
         "//storage:registry",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -115,16 +116,13 @@ mozc_cc_test(
         "no_android",
     ],
     deps = [
-        ":usage_stats",
-        ":usage_stats_testing_util",
         ":usage_stats_uploader",
-        "//base",
-        "//base:port",
         "//base:system_util",
         "//base:version",
         "//storage:registry",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 

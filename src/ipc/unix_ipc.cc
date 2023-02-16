@@ -28,24 +28,22 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OS_LINUX only. Note that OS_ANDROID/OS_WASM don't reach here.
-#include <cstdint>
 #if defined(OS_LINUX)
 
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <libgen.h>
-#include <netinet/in.h>
+#include <stddef.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/un.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include <cerrno>
-#include <cstdlib>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <memory>
 #include <string>
 
 #include "base/file_util.h"
@@ -54,6 +52,7 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
@@ -224,7 +223,7 @@ bool IsAbstractSocket(const std::string &address) {
 }  // namespace
 
 // Client
-IPCClient::IPCClient(const std::string &name)
+IPCClient::IPCClient(const absl::string_view name)
     : socket_(kInvalidSocket),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -232,7 +231,8 @@ IPCClient::IPCClient(const std::string &name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const std::string &name, const std::string &server_path)
+IPCClient::IPCClient(const absl::string_view name,
+                     const absl::string_view server_path)
     : socket_(kInvalidSocket),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -240,7 +240,8 @@ IPCClient::IPCClient(const std::string &name, const std::string &server_path)
   Init(name, server_path);
 }
 
-void IPCClient::Init(const std::string &name, const std::string &server_path) {
+void IPCClient::Init(const absl::string_view name,
+                     const absl::string_view server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // Try twice, because key may be changed.

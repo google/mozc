@@ -51,6 +51,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/random/random.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -171,11 +172,12 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
   auto connector = std::move(status_or_connector).value();
 
   EXPECT_EQ(connector->GetResolution(), expected_resolution_);
+  absl::BitGen gen;
   for (ConnectionFileReader reader(connection_txt_file_); !reader.done();
        reader.Next()) {
     // Randomly sample test entries because connection data have several
     // millions of entries.
-    if (Util::Random(100000) != 0) {
+    if (!absl::Bernoulli(gen, 1.0 / 100000)) {
       continue;
     }
     const int cost = reader.cost();

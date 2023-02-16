@@ -32,9 +32,9 @@
 #include <iterator>
 #include <vector>
 
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace {
@@ -67,16 +67,15 @@ TEST(BitArray, BitArraySizeTest) {
 
 TEST(BitArray, BitArrayTest) {
   constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
+  absl::BitGen gen;
 
-  for (size_t i = 0; i < std::size(kBitArraySize); ++i) {
-    const size_t size = kBitArraySize[i];
-
+  for (const size_t size : kBitArraySize) {
     // set array
     BitArray array(size);
     EXPECT_EQ(array.size(), size);
     std::vector<int> target(size);
     for (size_t j = 0; j < size; ++j) {
-      const bool v = (Util::Random(2) == 0);
+      const bool v = absl::Bernoulli(gen, 0.5);
       if (v) {
         target[j] = 1;
         array.set(j);

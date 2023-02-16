@@ -67,7 +67,7 @@ void VerifyCalculationInString(const CalculatorInterface *calculator,
   std::string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
-  EXPECT_EQ(expected, result) << "expr = " << expression << std::endl;
+  EXPECT_EQ(result, expected) << "expr = " << expression << std::endl;
 }
 
 // Tries to calculate |wrong_key| and returns true if it fails.
