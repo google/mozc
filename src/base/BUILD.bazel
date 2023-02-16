@@ -1292,7 +1292,6 @@ mozc_objc_library(
         "manual",
         "notap",
     ],
-    target_compatible_with = ["@platforms//os:macos"],
     visibility = ["//visibility:private"],
 )
 
@@ -1303,7 +1302,6 @@ mozc_objc_library(
         "manual",
         "notap",
     ],
-    target_compatible_with = ["@platforms//os:ios"],
     visibility = ["//visibility:private"],
 )
 
