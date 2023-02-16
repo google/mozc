@@ -71,6 +71,7 @@
         'zipcode_rewriter_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:number_util',

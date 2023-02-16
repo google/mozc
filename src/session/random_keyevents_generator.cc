@@ -29,6 +29,7 @@
 
 #include "session/random_keyevents_generator.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <iterator>
 #include <random>
@@ -42,6 +43,7 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "session/session_stress_test_data.h"
+#include "absl/random/distributions.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -84,7 +86,7 @@ const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
 }  // namespace
 
 RandomKeyEventsGenerator::RandomKeyEventsGenerator(std::seed_seq &&seed)
-    : gen_(std::forward<std::seed_seq>(seed)) {}
+    : bitgen_(std::forward<std::seed_seq>(seed)) {}
 
 void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
   // Read all kTestSentences and load these to memory.
@@ -114,7 +116,7 @@ void RandomKeyEventsGenerator::TypeRawKeys(
       for (size_t i = 0; i < kProbableKeyEventSize; ++i) {
         commands::KeyEvent::ProbableKeyEvent *probable_key_event =
             key.add_probable_key_event();
-        probable_key_event->set_key_code(absl::Uniform(gen_, 0x20, 0x7F));
+        probable_key_event->set_key_code(absl::Uniform(bitgen_, 0x20, 0x7F));
         probable_key_event->set_probability(
             (1.0 - kMostPossibleKeyProbability) / kProbableKeyEventSize);
       }
@@ -145,7 +147,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequenceInternal(
 
   commands::KeyEvent key;
   key.set_special_key(commands::KeyEvent::ENTER);
-  keys->push_back(key);
+  keys->push_back(std::move(key));
 }
 
 void RandomKeyEventsGenerator::GenerateMobileSequence(
@@ -153,14 +155,15 @@ void RandomKeyEventsGenerator::GenerateMobileSequence(
   CHECK(keys);
   keys->clear();
 
-  const absl::string_view sentence =
-      kTestSentences[absl::Uniform<size_t>(gen_, 0, std::size(kTestSentences))];
+  const absl::string_view sentence = kTestSentences[absl::Uniform<size_t>(
+      bitgen_, 0, std::size(kTestSentences))];
   CHECK(!sentence.empty());
   for (size_t i = 0; i < sentence.size();) {
     // To simulate mobile key events, split given sentence into smaller parts.
-    // Average 5, Min 1, Max 15
-    const size_t len = absl::Uniform(gen_, 0, 5) + absl::Uniform(gen_, 0, 5) +
-                       absl::Uniform(gen_, 0, 5);
+    // Average 5, Min 1, Max 15.
+    // absl::Poisson returns [0, max]. Add one and cap at 15.
+    const size_t len =
+        std::max<size_t>(absl::Poisson<size_t>(bitgen_, 4) + 1, 15);
     GenerateMobileSequenceInternal(absl::ClippedSubstr(sentence, i, len),
                                    create_probable_key_events, keys);
     i += len;
@@ -172,8 +175,8 @@ void RandomKeyEventsGenerator::GenerateSequence(
   CHECK(keys);
   keys->clear();
 
-  const absl::string_view sentence =
-      kTestSentences[absl::Uniform<size_t>(gen_, 0, std::size(kTestSentences))];
+  const absl::string_view sentence = kTestSentences[absl::Uniform<size_t>(
+      bitgen_, 0, std::size(kTestSentences))];
   CHECK(!sentence.empty());
 
   const std::string input = ToRomaji(sentence);
@@ -199,9 +202,9 @@ void RandomKeyEventsGenerator::GenerateSequence(
     }
 
     for (int i = 0; i < 5; ++i) {
-      const size_t num = Util::Random(30) + 8;
+      const size_t num = absl::Uniform(bitgen_, 8, 38);
       for (size_t j = 0; j < num; ++j) {
-        if (absl::Bernoulli(gen_, 0.25)) {
+        if (absl::Bernoulli(bitgen_, 0.25)) {
           commands::KeyEvent key;
           key.set_special_key(commands::KeyEvent::SPACE);
           key.add_modifier_keys(commands::KeyEvent::SHIFT);
@@ -224,24 +227,24 @@ void RandomKeyEventsGenerator::GenerateSequence(
       keys->push_back(basic_keys[i]);
     }
 
-    const size_t num = absl::Uniform<size_t>(gen_, 10, 40);
+    const size_t num = absl::Uniform<size_t>(bitgen_, 10, 40);
     for (size_t i = 0; i < num; ++i) {
       commands::KeyEvent key;
-      switch (absl::Uniform(gen_, 0, 4)) {
+      switch (absl::Uniform(bitgen_, 0, 4)) {
         case 0:
           key.set_special_key(commands::KeyEvent::LEFT);
-          if (absl::Bernoulli(gen_, 0.5)) {
+          if (absl::Bernoulli(bitgen_, 0.5)) {
             key.add_modifier_keys(commands::KeyEvent::SHIFT);
           }
           break;
         case 1:
           key.set_special_key(commands::KeyEvent::RIGHT);
-          if (absl::Bernoulli(gen_, 0.5)) {
+          if (absl::Bernoulli(bitgen_, 0.5)) {
             key.add_modifier_keys(commands::KeyEvent::SHIFT);
           }
           break;
         default: {
-          const size_t space_num = absl::Uniform(gen_, 3, 23);
+          const size_t space_num = absl::Uniform(bitgen_, 3, 23);
           for (size_t i = 0; i < space_num; ++i) {
             key.set_special_key(commands::KeyEvent::SPACE);
             keys->push_back(key);
@@ -249,11 +252,11 @@ void RandomKeyEventsGenerator::GenerateSequence(
         } break;
       }
 
-      if (absl::Bernoulli(gen_, 0.25)) {
+      if (absl::Bernoulli(bitgen_, 0.25)) {
         key.add_modifier_keys(commands::KeyEvent::CTRL);
       }
 
-      if (absl::Bernoulli(gen_, 0.1)) {
+      if (absl::Bernoulli(bitgen_, 0.1)) {
         key.add_modifier_keys(commands::KeyEvent::ALT);
       }
 
@@ -271,10 +274,10 @@ void RandomKeyEventsGenerator::GenerateSequence(
       keys->push_back(basic_keys[i]);
     }
 
-    const size_t num = Util::Random(20) + 10;
+    const size_t num = absl::Uniform(bitgen_, 10, 30);
     for (size_t i = 0; i < num; ++i) {
       commands::KeyEvent key;
-      switch (absl::Uniform(gen_, 0, 5)) {
+      switch (absl::Uniform(bitgen_, 0, 5)) {
         case 0:
           key.set_special_key(commands::KeyEvent::LEFT);
           break;
@@ -289,7 +292,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
           break;
         default: {
           // add any ascii
-          const size_t insert_num = absl::Uniform<size_t>(gen_, 1, 6);
+          const size_t insert_num = absl::Uniform<size_t>(bitgen_, 1, 6);
           for (size_t i = 0; i < insert_num; ++i) {
             key.set_key_code(GetRandomAsciiKey());
           }
@@ -307,10 +310,10 @@ void RandomKeyEventsGenerator::GenerateSequence(
   {
     for (size_t i = 0; i < basic_keys.size(); ++i) {
       commands::KeyEvent key;
-      switch (absl::Uniform(gen_, 0, 8)) {
+      switch (absl::Uniform(bitgen_, 0, 8)) {
         case 0:
           key.set_key_code(kSpecialKeys[absl::Uniform<uint32_t>(
-              gen_, 0, std::size(kSpecialKeys))]);
+              bitgen_, 0, std::size(kSpecialKeys))]);
           break;
         case 1:
           key.set_key_code(GetRandomAsciiKey());
@@ -320,19 +323,19 @@ void RandomKeyEventsGenerator::GenerateSequence(
           break;
       }
 
-      if (absl::Bernoulli(gen_, 0.1)) {  // 10%
+      if (absl::Bernoulli(bitgen_, 0.1)) {  // 10%
         key.add_modifier_keys(commands::KeyEvent::CTRL);
       }
 
-      if (absl::Bernoulli(gen_, 0.1)) {  // 10%
+      if (absl::Bernoulli(bitgen_, 0.1)) {  // 10%
         key.add_modifier_keys(commands::KeyEvent::SHIFT);
       }
 
-      if (absl::Bernoulli(gen_, 0.02)) {  // 2%
+      if (absl::Bernoulli(bitgen_, 0.02)) {  // 2%
         key.add_modifier_keys(commands::KeyEvent::KEY_DOWN);
       }
 
-      if (absl::Bernoulli(gen_, 0.02)) {  // 2%
+      if (absl::Bernoulli(bitgen_, 0.02)) {  // 2%
         key.add_modifier_keys(commands::KeyEvent::KEY_UP);
       }
 
@@ -350,7 +353,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
 }
 
 uint32_t RandomKeyEventsGenerator::GetRandomAsciiKey() {
-  return absl::Uniform<uint32_t>(gen_, ' ', '~');
+  return absl::Uniform<uint32_t>(bitgen_, ' ', '~');
 }
 
 // static

@@ -136,11 +136,9 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":session_converter",
-        "//base",
-        "//base:clock",
         "//base:port",
+        "//base:random",
         "//base:system_util",
-        "//base:util",
         "//composer",
         "//composer:table",
         "//config:config_handler",
@@ -750,6 +748,7 @@ mozc_cc_test(
         ":random_keyevents_generator",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
     ],
 )
 

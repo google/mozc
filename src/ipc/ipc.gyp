@@ -135,6 +135,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_time',
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:version',
         '../testing/testing.gyp:gtest_main',
         'ipc',

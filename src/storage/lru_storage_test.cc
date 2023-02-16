@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 #include <set>
 #include <string>
 #include <utility>
@@ -41,12 +42,13 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
+#include "base/random.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace storage {
@@ -54,23 +56,15 @@ namespace {
 
 constexpr uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
-std::string GenRandomString(int size) {
-  std::string result;
-  const size_t len = Util::Random(size) + 1;
-  for (int i = 0; i < len; ++i) {
-    const char32_t l = Util::Random(0x1FFFF) + 1;
-    Util::Ucs4ToUtf8Append(l, &result);
-  }
-  return result;
-}
-
 void RunTest(LruStorage *storage, uint32_t size) {
   mozc::storage::LruCache<std::string, uint32_t> cache(size);
   std::set<std::string> used;
   std::vector<std::pair<std::string, uint32_t> > values;
+  mozc::Random random;
   for (int i = 0; i < size * 2; ++i) {
-    const std::string key = GenRandomString(20);
-    const uint32_t value = static_cast<uint32_t>(Util::Random(10000000));
+    const std::string key = random.Utf8String(
+        absl::Uniform(absl::IntervalClosed, random, 1, 20), 1, 0x20000);
+    const uint32_t value = absl::Uniform(random, 0u, 10000000u);
     if (used.find(key) != used.end()) {
       continue;
     }
@@ -171,6 +165,8 @@ struct Entry {
 TEST_F(LruStorageTest, ReadWriteTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
   const std::string file = GetTemporaryFilePath();
+  absl::BitGen gen;
+
   for (int i = 0; i < std::size(kSize); ++i) {
     LruStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
     LruStorage storage;
@@ -185,10 +181,10 @@ TEST_F(LruStorageTest, ReadWriteTest) {
     const size_t size = kSize[i];
     for (int j = 0; j < size; ++j) {
       Entry entry;
-      entry.key = Util::Random(RAND_MAX);
-      const int n = Util::Random(RAND_MAX);
+      entry.key = absl::Uniform<uint64_t>(gen);
+      const int n = absl::Uniform(gen, 0, std::numeric_limits<int>::max());
       entry.value.assign(reinterpret_cast<const char *>(&n), 4);
-      entry.last_access_time = Util::Random(100000);
+      entry.last_access_time = absl::Uniform(gen, 0, 100000);
       entries.push_back(entry);
       storage.Write(j, entry.key, entry.value, entry.last_access_time);
     }

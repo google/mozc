@@ -156,7 +156,6 @@ mozc_cc_test(
         ":number_rewriter",
         ":user_segment_history_rewriter",
         ":variants_rewriter",
-        "//base",
         "//base:clock",
         "//base:clock_mock",
         "//base:file_util",
@@ -166,7 +165,6 @@ mozc_cc_test(
         "//base:util",
         "//config:character_form_manager",
         "//config:config_handler",
-        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_group",
@@ -175,6 +173,7 @@ mozc_cc_test(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
     ],
 )

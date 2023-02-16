@@ -74,7 +74,7 @@ class RandomKeyEventsGenerator {
                                       bool create_probable_key_events,
                                       std::vector<commands::KeyEvent> *keys);
 
-  absl::BitGen gen_;
+  absl::BitGen bitgen_;
 };
 }  // namespace session
 }  // namespace mozc

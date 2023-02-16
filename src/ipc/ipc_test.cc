@@ -35,15 +35,19 @@
 #include <vector>
 
 #include "base/port.h"
+#include "base/random.h"
 #include "base/system_util.h"
 #include "base/thread.h"
-#include "base/util.h"
-#include "ipc/ipc_test_util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+
+#ifdef __APPLE__
+#include "ipc/ipc_test_util.h"
+#endif  // __APPLE__
 
 namespace {
 
@@ -59,14 +63,6 @@ static constexpr int kNumThreads = 5;
 #endif  // OS_WIN
 static constexpr int kNumRequests = 2000;
 
-std::string GenRandomString(size_t size) {
-  std::string result;
-  while (result.length() < size) {
-    result += static_cast<char>(mozc::Util::Random(256));
-  }
-  return result;
-}
-
 class MultiConnections : public mozc::Thread {
  public:
 #ifdef __APPLE__
@@ -79,15 +75,15 @@ class MultiConnections : public mozc::Thread {
 
   void Run() override {
     absl::SleepFor(absl::Seconds(2));
+    mozc::Random random;
     for (int i = 0; i < kNumRequests; ++i) {
       mozc::IPCClient con(kServerAddress, "");
 #ifdef __APPLE__
       con.SetMachPortManager(mach_port_manager_);
 #endif  // __APPLE__
       ASSERT_TRUE(con.Connected());
-      const int size = std::max(mozc::Util::Random(8000), 1);
-      std::string input = "test";
-      input += GenRandomString(size);
+      const int size = absl::Uniform(random, 1, 8000);
+      const std::string input = absl::StrCat("test", random.ByteString(size));
       std::string output;
       ASSERT_TRUE(con.Call(input, &output, 1000));
       EXPECT_EQ(output.size(), input.size());

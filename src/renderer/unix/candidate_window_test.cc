@@ -34,7 +34,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "client/client_interface.h"
 #include "renderer/table_layout_mock.h"
 #include "renderer/unix/cairo_factory_mock.h"
@@ -45,6 +44,7 @@
 #include "renderer/unix/text_renderer_mock.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "absl/random/random.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -867,12 +867,13 @@ TEST_F(CandidateWindowTest, DrawInformationIconTest) {
   CandidateWindowTestKit testkit = SetUpCandidateWindow();
 
   commands::Candidates candidates;
+  absl::BitGen gen;
 
   for (int i = 0; i < 10; ++i) {
     commands::Candidates_Candidate *candidate = candidates.add_candidate();
     candidate->set_index(i);
     candidate->set_id(i * 0x10);
-    if (Util::Random(2) == 0) {
+    if (absl::Bernoulli(gen, 0.5)) {
       candidate->set_information_id(i * 0x20);
       const Rect row_rect(i * 10, i * 20, i * 30, i * 40);
       const Rect expected_icon_rect(row_rect.origin.x + row_rect.size.width - 6,

@@ -40,6 +40,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/random.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -60,6 +61,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -1607,11 +1609,12 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
   WaitForSyncer(predictor);
 
+  absl::BitGen gen;
   std::vector<Command> commands(10000);
   for (size_t i = 0; i < commands.size(); ++i) {
     commands[i].key = std::to_string(static_cast<uint32_t>(i)) + "key";
     commands[i].value = std::to_string(static_cast<uint32_t>(i)) + "value";
-    const int n = Util::Random(100);
+    const int n = absl::Uniform(gen, 0, 100);
     if (n == 0) {
       commands[i].type = Command::WAIT;
     } else if (n < 10) {
@@ -2696,27 +2699,15 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
   EXPECT_EQ(value, "ぐ");
 }
 
-namespace {
-uint32_t GetRandomAscii() {
-  return static_cast<uint32_t>(' ') +
-         Util::Random(static_cast<uint32_t>('~' - ' '));
-}
-}  // namespace
-
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_->SetTable(table_.get());
   Segments segments;
+  Random random;
 
   for (size_t i = 0; i < 1000; ++i) {
     composer_->Reset();
-    const int len = 1 + Util::Random(4);
-    DCHECK_GE(len, 1);
-    DCHECK_LE(len, 5);
-    std::string input;
-    for (size_t j = 0; j < len; ++j) {
-      input += GetRandomAscii();
-    }
+    const std::string input = random.Utf8StringRandomLen(4, ' ', '~');
     InitSegmentsFromInputSequence(input, composer_.get(), convreq_.get(),
                                   &segments);
     std::string input_key;

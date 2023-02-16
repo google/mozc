@@ -96,14 +96,14 @@ mozc_cc_test(
     deps = [
         ":lru_cache",
         ":lru_storage",
-        "//base",
         "//base:clock_mock",
         "//base:file_util",
         "//base:logging",
         "//base:port",
-        "//base:util",
+        "//base:random",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 
