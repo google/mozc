@@ -56,7 +56,7 @@ class ConfigHandler {
   // This method returns a *copied* Config instance
   // so use this with caution, especially when custom_keymap_table exists
   // the copy operation against typically 5KB string always happens.
-  static bool GetConfig(Config *config);
+  static void GetConfig(Config *config);
 
   // Returns current Config as a unique_ptr.
   // The same performance note as GetConfig(Config*) applies.
@@ -64,13 +64,13 @@ class ConfigHandler {
 
   // Returns stored config.
   // If imposed config is not set, the result is the same as GetConfig().
-  static bool GetStoredConfig(Config *config);
+  static void GetStoredConfig(Config *config);
 
   // Returns stored Config as a unique_ptr.
   static std::unique_ptr<config::Config> GetStoredConfig();
 
   // Sets config.
-  static bool SetConfig(const Config &config);
+  static void SetConfig(const Config &config);
 
   // Sets imposed config.
   //
@@ -98,7 +98,7 @@ class ConfigHandler {
   // Reloads config from storage.
   //
   // This method does nothing on imposed config.
-  static bool Reload();
+  static void Reload();
 
   // Sets config file. (for unittesting)
   static void SetConfigFileName(absl::string_view filename);

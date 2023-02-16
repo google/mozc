@@ -84,23 +84,23 @@ class ConfigHandlerImpl {
     ConfigHandler::GetDefaultConfig(&default_config_);
   }
   virtual ~ConfigHandlerImpl() = default;
-  bool GetConfig(Config *config) const;
+  void GetConfig(Config *config) const;
   std::unique_ptr<config::Config> GetConfig() const;
   const Config &DefaultConfig() const;
-  bool GetStoredConfig(Config *config) const;
+  void GetStoredConfig(Config *config) const;
   std::unique_ptr<config::Config> GetStoredConfig() const;
-  bool SetConfig(const Config &config);
+  void SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
-  bool Reload();
+  void Reload();
   void SetConfigFileName(absl::string_view filename);
   std::string GetConfigFileName();
 
  private:
   // copy config to config_ and do some
   // platform dependent hooks/rewrites
-  bool SetConfigInternal(const Config &config);
+  void SetConfigInternal(const Config &config);
   void UpdateMergedConfig();
-  bool ReloadUnlocked();
+  void ReloadUnlocked();
 
   std::string filename_;
   Config stored_config_;
@@ -116,10 +116,9 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 }
 
 // return current Config
-bool ConfigHandlerImpl::GetConfig(Config *config) const {
+void ConfigHandlerImpl::GetConfig(Config *config) const {
   absl::MutexLock lock(&mutex_);
   *config = merged_config_;
-  return true;
 }
 
 // return current Config as a unique_ptr.
@@ -133,10 +132,9 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
 }
 
 // return stored Config
-bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
+void ConfigHandlerImpl::GetStoredConfig(Config *config) const {
   absl::MutexLock lock(&mutex_);
   *config = stored_config_;
-  return true;
 }
 
 // return stored Config as a unique_ptr.
@@ -146,7 +144,7 @@ std::unique_ptr<config::Config> ConfigHandlerImpl::GetStoredConfig() const {
 }
 
 // set config and rewrite internal data
-bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
+void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_ = config;
 
 #ifdef MOZC_NO_LOGGING
@@ -175,8 +173,6 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   }
 
   UpdateMergedConfig();
-
-  return true;
 }
 
 void ConfigHandlerImpl::UpdateMergedConfig() {
@@ -184,7 +180,7 @@ void ConfigHandlerImpl::UpdateMergedConfig() {
   merged_config_.MergeFrom(imposed_config_);
 }
 
-bool ConfigHandlerImpl::SetConfig(const Config &config) {
+void ConfigHandlerImpl::SetConfig(const Config &config) {
   absl::MutexLock lock(&mutex_);
   Config output_config;
   output_config = config;
@@ -202,7 +198,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
   ConfigFileStream::AtomicUpdate(filename_ + ".txt", debug_content);
 #endif  // DEBUG
 
-  return SetConfigInternal(output_config);
+  SetConfigInternal(output_config);
 }
 
 void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
@@ -221,30 +217,25 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 }
 
 // Reload from file
-bool ConfigHandlerImpl::Reload() {
+void ConfigHandlerImpl::Reload() {
   absl::MutexLock lock(&mutex_);
-  return ReloadUnlocked();
+  ReloadUnlocked();
 }
 
-bool ConfigHandlerImpl::ReloadUnlocked() {
+void ConfigHandlerImpl::ReloadUnlocked() {
   VLOG(1) << "Reloading config file: " << filename_;
   std::unique_ptr<std::istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
-  bool ret_code = true;
 
   if (is == nullptr) {
     LOG(ERROR) << filename_ << " is not found";
-    ret_code = false;
   } else if (!input_proto.ParseFromIstream(is.get())) {
     LOG(ERROR) << filename_ << " is broken";
     input_proto.Clear();  // revert to default setting
-    ret_code = false;
   }
 
   // we set default config when file is broken
-  ret_code |= SetConfigInternal(input_proto);
-
-  return ret_code;
+  SetConfigInternal(input_proto);
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
@@ -261,8 +252,8 @@ std::string ConfigHandlerImpl::GetConfigFileName() {
 }  // namespace
 
 // Returns current Config
-bool ConfigHandler::GetConfig(Config *config) {
-  return GetConfigHandlerImpl()->GetConfig(config);
+void ConfigHandler::GetConfig(Config *config) {
+  GetConfigHandlerImpl()->GetConfig(config);
 }
 
 std::unique_ptr<config::Config> ConfigHandler::GetConfig() {
@@ -270,16 +261,16 @@ std::unique_ptr<config::Config> ConfigHandler::GetConfig() {
 }
 
 // Returns Stored Config
-bool ConfigHandler::GetStoredConfig(Config *config) {
-  return GetConfigHandlerImpl()->GetStoredConfig(config);
+void ConfigHandler::GetStoredConfig(Config *config) {
+  GetConfigHandlerImpl()->GetStoredConfig(config);
 }
 
 std::unique_ptr<config::Config> ConfigHandler::GetStoredConfig() {
   return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
-bool ConfigHandler::SetConfig(const Config &config) {
-  return GetConfigHandlerImpl()->SetConfig(config);
+void ConfigHandler::SetConfig(const Config &config) {
+  GetConfigHandlerImpl()->SetConfig(config);
 }
 
 // Sets overriding config
@@ -326,7 +317,7 @@ const Config &ConfigHandler::DefaultConfig() {
 }
 
 // Reload from file
-bool ConfigHandler::Reload() { return GetConfigHandlerImpl()->Reload(); }
+void ConfigHandler::Reload() { GetConfigHandlerImpl()->Reload(); }
 
 void ConfigHandler::SetConfigFileName(const absl::string_view filename) {
   GetConfigHandlerImpl()->SetConfigFileName(filename);

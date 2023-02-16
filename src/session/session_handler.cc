@@ -301,16 +301,12 @@ bool SessionHandler::GetStoredConfig(commands::Command *command) {
   // Use GetStoredConfig instead of GetConfig because GET_CONFIG
   // command should return raw stored config, which is not
   // affected by imposed config.
-  if (!config::ConfigHandler::GetStoredConfig(
-          command->mutable_output()->mutable_config())) {
-    LOG(WARNING) << "cannot get config";
-    return false;
-  }
+  config::ConfigHandler::GetStoredConfig(
+      command->mutable_output()->mutable_config());
 
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
   SetConfig(*config::ConfigHandler::GetConfig());
-
   return true;
 }
 

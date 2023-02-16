@@ -111,8 +111,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
-  ASSERT_TRUE(ConfigHandler::Reload())
-      << "failed to reload: " << ConfigHandler::GetConfigFileName();
+  ConfigHandler::Reload();
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(true);
@@ -120,9 +119,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.set_verbose_level(2);
 #endif  // MOZC_NO_LOGGING
   ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
+  ConfigHandler::SetConfig(input);
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
@@ -136,9 +135,9 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.set_verbose_level(0);
 #endif  // MOZC_NO_LOGGING
   ConfigHandler::SetMetaData(&input);
-  EXPECT_TRUE(ConfigHandler::SetConfig(input));
+  ConfigHandler::SetConfig(input);
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   output2 = ConfigHandler::GetConfig();
 
   input.mutable_general_config()->set_last_modified_time(0);
@@ -152,7 +151,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 
@@ -162,7 +161,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_FALSE(input.general_config().upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
-  EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  ConfigHandler::GetConfig(&output);
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
@@ -176,8 +175,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
-  ASSERT_TRUE(ConfigHandler::Reload())
-      << "failed to reload: " << ConfigHandler::GetConfigFileName();
+  ConfigHandler::Reload();
 
   struct Testcase {
     bool stored_config_value;
@@ -201,7 +199,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::GetDefaultConfig(&input);
     input.set_incognito_mode(stored_config_value);
     ConfigHandler::SetMetaData(&input);
-    EXPECT_TRUE(ConfigHandler::SetConfig(input));
+    ConfigHandler::SetConfig(input);
     // Set imposed config.
     input.Clear();
     if (kTestcases[i].imposed_config_value != Testcase::DO_NOT_IMPOSE) {
@@ -211,7 +209,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
@@ -219,10 +217,9 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
 
     // Reload and check.
-    ASSERT_TRUE(ConfigHandler::Reload())
-        << "failed to reload: " << ConfigHandler::GetConfigFileName();
+    ConfigHandler::Reload();
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), expected);
@@ -234,7 +231,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
     ConfigHandler::SetImposedConfig(input);
     // Check post-condition.
     output.Clear();
-    EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+    ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
     ConfigHandler::GetConfig(&output);
     EXPECT_EQ(output.incognito_mode(), stored_config_value);
@@ -293,12 +290,10 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
     ScopedSetConfigFileName scoped_config_file_name("user://" +
                                                     std::string(file_name));
-    ASSERT_TRUE(ConfigHandler::Reload())
-        << "failed to reload: " << ConfigHandler::GetConfigFileName();
+    ConfigHandler::Reload();
 
     Config default_config;
-    EXPECT_TRUE(ConfigHandler::GetConfig(&default_config))
-        << "failed to GetConfig from: " << file_name;
+    ConfigHandler::GetConfig(&default_config);
 
 #ifdef OS_WIN
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
