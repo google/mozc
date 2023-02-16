@@ -327,7 +327,7 @@ def mozc_objc_test(
         deps = [lib_name],
         size = size,
         visibility = visibility,
-        tags = tags,
+        tags = ["manual"] + tags,
     )
 
 register_extension_info(
