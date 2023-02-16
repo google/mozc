@@ -31,13 +31,6 @@
 
 #include "client/client.h"
 
-
-#ifdef OS_WIN
-#include <Windows.h>
-#else  // OS_WIN
-#include <unistd.h>
-#endif  // OS_WIN
-
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -54,23 +47,29 @@
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/version.h"
+#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/key_info_util.h"
+#include "absl/base/attributes.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #ifdef OS_WIN
+#include <Windows.h>
+
+#include "base/util.h"
 #include "base/win_util.h"
+#else  // OS_WIN
+#include <unistd.h>
 #endif  // OS_WIN
 
 #ifdef __APPLE__
 #include "base/mac_process.h"
 #endif  // __APPLE__
-
-#include "absl/base/attributes.h"
 
 namespace mozc {
 namespace client {
@@ -78,13 +77,13 @@ namespace client {
 namespace {
 constexpr char kServerAddress[] = "session";  // name for the IPC connection.
 constexpr int kResultBufferSize = 8192 * 32;  // size of IPC buffer
-constexpr size_t kMaxPlayBackSize = 512;  // size of maximum history
+constexpr size_t kMaxPlayBackSize = 512;      // size of maximum history
 
 #ifdef DEBUG
 constexpr int kDefaultTimeout = 100000;  // 100 sec for dbg
 #else                                    // DEBUG
 constexpr int kDefaultTimeout = 30000;  // 30 sec for opt
-#endif  // DEBUG
+#endif                                   // DEBUG
 
 // Delete Session is called inside the Destructor of Client class.
 // To prevent from an application being stalled at the close time,
@@ -131,8 +130,8 @@ void Client::InitRequestForSvsJapanese(bool use_svs) {
   } else {
     variation_types &= ~commands::DecoderExperimentParams::SVS_JAPANESE;
   }
-  request_->mutable_decoder_experiment_params()
-      ->set_variation_character_types(variation_types);
+  request_->mutable_decoder_experiment_params()->set_variation_character_types(
+      variation_types);
 }
 
 void Client::SetIPCClientFactory(IPCClientFactoryInterface *client_factory) {
@@ -237,8 +236,8 @@ void Client::DumpQueryOfDeath() {
   ResetHistory();
 }
 
-void Client::DumpHistorySnapshot(const std::string &filename,
-                                 const std::string &label) const {
+void Client::DumpHistorySnapshot(const absl::string_view filename,
+                                 const absl::string_view label) const {
   const std::string snapshot_file =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), filename);
   // open with append mode
@@ -450,7 +449,7 @@ void Client::set_restricted(bool restricted) {
   server_launcher_->set_restricted(restricted);
 }
 
-void Client::set_server_program(const std::string &program_path) {
+void Client::set_server_program(const absl::string_view program_path) {
   server_launcher_->set_server_program(program_path);
 }
 
@@ -873,7 +872,8 @@ bool Client::LaunchToolWithProtoBuf(const commands::Output &output) {
   return LaunchTool(mode, "");
 }
 
-bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
+bool Client::LaunchTool(const std::string &mode,
+                        const absl::string_view extra_arg) {
   // Don't execute any child process if the parent process is not
   // in proper runlevel.
   if (!IsValidRunLevel()) {
@@ -890,7 +890,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
 
   if (mode == "administration_dialog") {
 #ifdef OS_WIN
-    const std::string &path = mozc::SystemUtil::GetToolPath();
+    const absl::string_view path = mozc::SystemUtil::GetToolPath();
     std::wstring wpath;
     Util::Utf8ToWide(path, &wpath);
     wpath = L"\"" + wpath + L"\"";
@@ -911,10 +911,9 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
   }
 
 #if defined(OS_WIN) || defined(OS_LINUX) || defined(OS_ANDROID)
-  std::string arg = "--mode=" + mode;
+  std::string arg = absl::StrCat("--mode=", mode);
   if (!extra_arg.empty()) {
-    arg += " ";
-    arg += extra_arg;
+    absl::StrAppend(&arg, " ", extra_arg);
   }
   if (!mozc::Process::SpawnMozcProcess(kMozcTool, arg)) {
     LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;

@@ -47,6 +47,7 @@ mozc_cc_library(
     deps = [
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -86,6 +87,7 @@ mozc_cc_library(
         "//session:key_info_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         ios = [
@@ -102,11 +104,13 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":client",
+        ":client_interface",
         "//base:logging",
         "//base:number_util",
         "//base:version",
         "//composer:key_parser",
         "//config:config_handler",
+        "//ipc",
         "//ipc:ipc_mock",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -124,10 +128,9 @@ mozc_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":client_interface",
-        "//base",
-        "//base:logging",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -196,6 +199,7 @@ mozc_cc_binary(
         "//base:util",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
         "//session:random_keyevents_generator",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -237,7 +241,6 @@ mozc_cc_binary(
         "client_quality_test_main.cc",
         ":client_quality_test_data",
     ],
-    tags = ["manual"],
     deps = [
         ":client",
         "//base",

@@ -682,7 +682,6 @@ mozc_cc_library(
         ":file_stream",
         ":logging",
         ":mmap",
-        ":port",
         ":scoped_handle",
         ":singleton",
         ":util",
@@ -811,6 +810,7 @@ mozc_objc_library(
         ":logging",
         ":mac_util",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 

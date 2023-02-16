@@ -29,8 +29,6 @@
 
 #include "base/process.h"
 
-#include "absl/time/time.h"
-
 #ifdef OS_WIN
 #include <Windows.h>
 #else  // OS_WIN
@@ -55,6 +53,7 @@
 #include <sys/types.h>
 #endif  // OS_LINUX || OS_ANDROID
 
+#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -64,12 +63,15 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 #ifdef OS_WIN
 #include "base/scoped_handle.h"
+#include "base/util.h"
 #include "base/win_util.h"
 #endif  // OS_WIN
 
@@ -79,6 +81,7 @@
 // See the "PROGRAMMING" section of http://goo.gl/4Hq0D for the
 // detailed information.
 #include <crt_externs.h>
+
 static char **environ = *_NSGetEnviron();
 #elif !defined(OS_WIN)
 // Defined somewhere in libc. We can't pass nullptr as the 6th argument of

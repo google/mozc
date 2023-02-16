@@ -31,29 +31,22 @@
 #define MOZC_IPC_IPC_PATH_MANAGER_H_
 
 #include <cstdint>
-#ifdef OS_WIN
-#include <time.h>
-#else  // OS_WIN
-#include <sys/time.h>
-#endif  // OS_WIN
-#ifdef OS_WIN
-#include <map>
-#endif  // OS_WIN
+#include <ctime>
 #include <memory>
 #include <string>
 
-#include "base/port.h"
-// For FRIEND_TEST
-#include "testing/gunit_prod.h"
+#include "base/process_mutex.h"
+#include "ipc/ipc.pb.h"
+#include "testing/gunit_prod.h"  // For FRIEND_TEST
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
+#ifdef OS_WIN
+#include <functional>
+#include <map>
+#endif  // OS_WIN
+
 namespace mozc {
-
-namespace ipc {
-class IPCPathInfo;
-}
-
-class ProcessMutex;
 
 class IPCPathManager {
  public:
@@ -103,16 +96,16 @@ class IPCPathManager {
   // returns false.
   // To keep backward compatibility and other operating system
   // having no support of getting peer's pid, you can set 0 pid.
-  bool IsValidServer(uint32_t pid, const std::string &server_path);
+  bool IsValidServer(uint32_t pid, absl::string_view server_path);
 
   // clear ipc_key;
   void Clear();
 
   // return singleton instance corresponding to "name"
-  static IPCPathManager *GetIPCPathManager(const std::string &name);
+  static IPCPathManager *GetIPCPathManager(absl::string_view name);
 
   // do not call constructor directly.
-  explicit IPCPathManager(const std::string &name);
+  explicit IPCPathManager(absl::string_view name);
   virtual ~IPCPathManager();
 
  private:
@@ -137,7 +130,10 @@ class IPCPathManager {
   uint32_t server_pid_;      // cache for pid of server_path
   time_t last_modified_;
 #ifdef OS_WIN
-  std::map<std::string, std::wstring> expected_server_ntpath_cache_;
+  // std::less<> is a transparent comparator that's necessary to pass
+  // absl::string_view to map::find(), etc.
+  std::map<std::string, std::wstring, std::less<>>
+      expected_server_ntpath_cache_;
 #endif  // OS_WIN
 };
 

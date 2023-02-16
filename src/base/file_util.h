@@ -30,21 +30,18 @@
 #ifndef MOZC_BASE_FILE_UTIL_H_
 #define MOZC_BASE_FILE_UTIL_H_
 
-#if defined(OS_WIN)
-#include <windows.h>
-#else  // OS_WIN
-#include <sys/types.h>
-#endif  // OS_WIN
-
-#include <cstdint>
+#include <ctime>
 #include <ios>
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+
+#ifdef OS_WIN
+#include <windows.h>
+#endif  // OS_WIN
 
 // Ad-hoc workaround against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -159,17 +156,11 @@ class FileUtil {
 
   // Joins the give path components using the OS-specific path delimiter.
   static std::string JoinPath(const std::vector<absl::string_view> &components);
-  static void JoinPath(const std::vector<absl::string_view> &components,
-                       std::string *output);
 
   // Joins the given two path components using the OS-specific path delimiter.
-  static std::string JoinPath(const std::string &path1,
-                              const std::string &path2) {
+  static std::string JoinPath(const absl::string_view path1,
+                              const absl::string_view path2) {
     return JoinPath({path1, path2});
-  }
-  static void JoinPath(const std::string &path1, const std::string &path2,
-                       std::string *output) {
-    JoinPath({path1, path2}, output);
   }
 
   static std::string Basename(const std::string &filename);

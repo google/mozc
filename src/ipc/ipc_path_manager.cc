@@ -29,29 +29,13 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
-#error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
-
 #include <errno.h>
 
-#ifdef OS_WIN
-// clang-format off
-#include <windows.h>
-#include <psapi.h>  // GetModuleFileNameExW
-// clang-format on
-#else  // OS_WIN
-// For stat system call
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#ifdef __APPLE__
-#include <sys/sysctl.h>
-#endif  // __APPLE__
-#endif  // OS_WIN
-
+#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <functional>
 #include <ios>
 #include <map>
 #include <memory>
@@ -61,27 +45,43 @@
 #include "base/const.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#ifdef OS_WIN
-#include "base/unverified_sha1.h"
-#endif  // OS_WIN
 #include "base/logging.h"
-#if defined(__APPLE__) || defined(OS_IOS)
-#include "base/mac_util.h"
-#endif  // __APPLE__ || OS_IOS
-#include "base/port.h"
 #include "base/process_mutex.h"
-#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/version.h"
-#ifdef OS_WIN
-#include "base/win_util.h"
-#endif  // OS_WIN
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+
+#if defined(OS_ANDROID) || defined(OS_WASM)
+#error "This platform is not supported."
+#endif  // OS_ANDROID || OS_WASM
+
+#if defined(__APPLE__) || defined(OS_IOS)
+#include <sys/sysctl.h>
+
+#include "base/mac_util.h"
+#endif  // __APPLE__ || OS_IOS
+
+#ifdef OS_WIN
+// clang-format off
+#include <windows.h>
+#include <psapi.h>  // GetModuleFileNameExW
+// clang-format on
+#include "base/scoped_handle.h"
+#include "base/unverified_sha1.h"
+#include "base/win_util.h"
+#else  // OS_WIN
+// For stat system call
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif  // OS_WIN
 
 namespace mozc {
 namespace {
@@ -149,46 +149,43 @@ std::string CreateIPCKey() {
 
 class IPCPathManagerMap {
  public:
-  IPCPathManager *GetIPCPathManager(const std::string &name) {
+  IPCPathManager *GetIPCPathManager(const absl::string_view name) {
     absl::MutexLock l(&mutex_);
-    std::map<std::string, IPCPathManager *>::const_iterator it =
-        manager_map_.find(name);
+    const auto it = manager_map_.find(name);
     if (it != manager_map_.end()) {
-      return it->second;
+      return it->second.get();
     }
-    IPCPathManager *manager = new IPCPathManager(name);
-    manager_map_.insert(std::make_pair(name, manager));
-    return manager;
+    auto manager = std::make_unique<IPCPathManager>(name);
+    IPCPathManager *ptr = manager.get();
+    manager_map_.emplace(name, std::move(manager));
+    return ptr;
   }
 
-  IPCPathManagerMap() {}
+  IPCPathManagerMap() = default;
 
   ~IPCPathManagerMap() {
     absl::MutexLock l(&mutex_);
-    for (std::map<std::string, IPCPathManager *>::iterator it =
-             manager_map_.begin();
-         it != manager_map_.end(); ++it) {
-      delete it->second;
-    }
     manager_map_.clear();
   }
 
  private:
-  std::map<std::string, IPCPathManager *> manager_map_;
+  std::map<std::string, std::unique_ptr<IPCPathManager>, std::less<>>
+      manager_map_;
   absl::Mutex mutex_;
 };
 
 }  // namespace
 
-IPCPathManager::IPCPathManager(const std::string &name)
+IPCPathManager::IPCPathManager(const absl::string_view name)
     : ipc_path_info_(new ipc::IPCPathInfo),
       name_(name),
       server_pid_(0),
       last_modified_(-1) {}
 
-IPCPathManager::~IPCPathManager() {}
+IPCPathManager::~IPCPathManager() = default;
 
-IPCPathManager *IPCPathManager::GetIPCPathManager(const std::string &name) {
+IPCPathManager *IPCPathManager::GetIPCPathManager(
+    const absl::string_view name) {
   IPCPathManagerMap *manager_map = Singleton<IPCPathManagerMap>::get();
   DCHECK(manager_map != nullptr);
   return manager_map->GetIPCPathManager(name);
@@ -328,7 +325,7 @@ void IPCPathManager::Clear() {
 }
 
 bool IPCPathManager::IsValidServer(uint32_t pid,
-                                   const std::string &server_path) {
+                                   const absl::string_view server_path) {
   absl::MutexLock l(&mutex_);
   if (pid == 0) {
     // For backward compatibility.
@@ -366,7 +363,8 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
         // Caches the relationship from |server_path| to
         // |expected_server_ntpath| in case |server_path| is renamed later.
         // (This can happen during the updating).
-        expected_server_ntpath_cache_[server_path] = expected_server_ntpath;
+        expected_server_ntpath_cache_.emplace(server_path,
+                                              expected_server_ntpath);
       }
     }
 
@@ -385,7 +383,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 
     // Here we can safely assume that |server_path| (expected one) should be
     // the same to |server_path_| (actual one).
-    server_path_ = server_path;
+    server_path_ = std::string(server_path);
     server_pid_ = pid;
   }
 #endif  // OS_WIN
@@ -429,12 +427,12 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
   }
 
 #ifdef OS_LINUX
-  if ((server_path + " (deleted)") == server_path_) {
+  if (absl::StrCat(server_path, " (deleted)") == server_path_) {
     LOG(WARNING) << server_path << " on disk is modified";
     // If a user updates the server binary on disk during the server is running,
     // "readlink /proc/<pid>/exe" returns a path with the " (deleted)" suffix.
     // We allow the special case.
-    server_path_ = server_path;
+    server_path_ = std::string(server_path);
     return true;
   }
 #endif  // OS_LINUX

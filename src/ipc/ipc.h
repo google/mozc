@@ -38,7 +38,6 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "base/scoped_handle.h"
 #include "absl/strings/string_view.h"
 
@@ -115,11 +114,11 @@ class IPCClient : public IPCClientInterface {
   // the client is connecting a valid server.
   // If server_path is empty, no validation is executed.
   // Note: "server_path" will be ignored on Mac (MachIPC).
-  IPCClient(const std::string &name, const std::string &server_path);
+  IPCClient(absl::string_view name, absl::string_view server_path);
 
   // old interface
   // same as IPCClient(name, "");
-  explicit IPCClient(const std::string &name);
+  explicit IPCClient(absl::string_view name);
 
   ~IPCClient() override;
 
@@ -148,7 +147,7 @@ class IPCClient : public IPCClientInterface {
 
   // terminate the server process named |name|
   // Do not use it unless version mismatch happens
-  static bool TerminateServer(const std::string &name);
+  static bool TerminateServer(absl::string_view name);
 
 #ifdef __APPLE__
   void SetMachPortManager(MachPortManagerInterface *manager) {
@@ -157,7 +156,7 @@ class IPCClient : public IPCClientInterface {
 #endif  // __APPLE__
 
  private:
-  void Init(const std::string &name, const std::string &server_path);
+  void Init(absl::string_view name, absl::string_view server_path);
 
 #ifdef OS_WIN
   // Windows

@@ -37,6 +37,7 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -59,7 +60,7 @@ class ServerLauncherInterface {
 
   // terminate the server.
   // You should not call this method unless protocol version mismatch happens.
-  virtual bool ForceTerminateServer(const std::string &name) = 0;
+  virtual bool ForceTerminateServer(absl::string_view name) = 0;
 
   // Wait server until it terminates
   virtual bool WaitServer(uint32_t pid) = 0;
@@ -68,7 +69,7 @@ class ServerLauncherInterface {
   virtual void OnFatal(ServerErrorType type) = 0;
 
   // set the full path of server program.
-  virtual void set_server_program(const std::string &server_program) = 0;
+  virtual void set_server_program(absl::string_view server_program) = 0;
 
   // return the full path of server program
   // This is used for making IPC connection.
@@ -80,13 +81,13 @@ class ServerLauncherInterface {
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
 
-  ServerLauncherInterface() {}
-  virtual ~ServerLauncherInterface() {}
+  ServerLauncherInterface() = default;
+  virtual ~ServerLauncherInterface() = default;
 };
 
 class ClientInterface {
  public:
-  virtual ~ClientInterface() {}
+  virtual ~ClientInterface() = default;
 
   // NOTE: Client class does NOT take the ownership of client_factory
   virtual void SetIPCClientFactory(
@@ -199,7 +200,7 @@ class ClientInterface {
 
   // Sets server program path.
   // mainly for unittesting.
-  virtual void set_server_program(const std::string &program_path) = 0;
+  virtual void set_server_program(absl::string_view program_path) = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
@@ -211,7 +212,7 @@ class ClientInterface {
   // Launches mozc tool. |mode| is the mode of MozcTool,
   // e,g,. "config_dialog", "dictionary_tool".
   virtual bool LaunchTool(const std::string &mode,
-                          const std::string &extra_arg) = 0;
+                          absl::string_view extra_arg) = 0;
   // Launches mozc_tool with output message.
   // If launch_tool_mode has no value or is set as NO_TOOL, this function will
   // do nothing and return false.
@@ -221,31 +222,30 @@ class ClientInterface {
   virtual bool OpenBrowser(const std::string &url) = 0;
 
  protected:
-  ClientInterface() {}
+  ClientInterface() = default;
 };
 
 class ClientFactoryInterface {
  public:
-  virtual ~ClientFactoryInterface() {}
+  virtual ~ClientFactoryInterface() = default;
   virtual ClientInterface *NewClient() = 0;
 };
 
 class ClientFactory {
  public:
+  ClientFactory() = delete;
+  ~ClientFactory() = delete;
+
   // Return a new client.
   static ClientInterface *NewClient();
 
   // Set a ClientFactoryInterface for unittesting.
   static void SetClientFactory(ClientFactoryInterface *client_factory);
-
- private:
-  ClientFactory() {}
-  ~ClientFactory() {}
 };
 
 class SendCommandInterface {
  public:
-  virtual ~SendCommandInterface() {}
+  virtual ~SendCommandInterface() = default;
   virtual bool SendCommand(const commands::SessionCommand &command,
                            commands::Output *output) = 0;
 };

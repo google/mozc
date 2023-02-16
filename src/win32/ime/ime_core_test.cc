@@ -74,7 +74,9 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     return start_server_result_;
   }
 
-  virtual bool ForceTerminateServer(const std::string &name) { return true; }
+  virtual bool ForceTerminateServer(const absl::string_view name) {
+    return true;
+  }
 
   virtual bool WaitServer(uint32_t pid) { return true; }
 
@@ -97,7 +99,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 
   virtual void set_suppress_error_dialog(bool suppress) {}
 
-  virtual void set_server_program(const std::string &server_path) {}
+  virtual void set_server_program(const absl::string_view server_path) {}
 
   virtual const std::string &server_program() const {
     static const std::string path;

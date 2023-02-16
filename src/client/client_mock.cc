@@ -31,9 +31,12 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
-#include "base/logging.h"
+#include "client/client_interface.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -92,7 +95,8 @@ MockBoolImplementation(NoOperation, void);
 MockVoidImplementation(EnableCascadingWindow, bool enable);
 MockVoidImplementation(set_timeout, int timeout);
 MockVoidImplementation(set_restricted, bool restricted);
-MockVoidImplementation(set_server_program, const std::string &program_path);
+MockVoidImplementation(set_server_program,
+                       const absl::string_view program_path);
 MockVoidImplementation(set_suppress_error_dialog, bool suppress_error_dialog);
 MockVoidImplementation(set_client_capability,
                        const commands::Capability &capability);
@@ -163,7 +167,7 @@ bool ClientMock::SetConfig(const config::Config &config) {
 
 // LaunchTool arguments are quite different from other methods.
 bool ClientMock::LaunchTool(const std::string &mode,
-                            const std::string &extra_arg) {
+                            const absl::string_view extra_arg) {
   absl::MutexLock l(&mutex_);
   function_counter_["LaunchTool"]++;
   return return_bool_values_["LaunchTool"];
