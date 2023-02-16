@@ -432,7 +432,8 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
 void CharacterFormManagerImpl::ConvertStringAlternative(
     const absl::string_view str, std::string *output) const {
   DCHECK(output);
-  auto begin = str.begin(), end = str.end();
+  const char *begin = str.data();
+  const char *end = str.data() + str.size();
   Util::FormType prev_form = Util::UNKNOWN_FORM;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
 
