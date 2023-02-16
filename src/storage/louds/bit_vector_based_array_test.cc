@@ -76,9 +76,9 @@ TEST_F(BitVectorBasedArrayTest, Get) {
   for (size_t i = 0; i < std::size(kTestData); ++i) {
     size_t length;
     const char* result = array.Get(i, &length);
-    EXPECT_EQ(std::string(kTestData[i].expected_element,
-                          kTestData[i].expected_length),
-              std::string(result, length));
+    EXPECT_EQ(std::string(result, length),
+              std::string(kTestData[i].expected_element,
+                          kTestData[i].expected_length));
   }
 
   array.Close();

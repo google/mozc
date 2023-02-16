@@ -52,7 +52,7 @@ std::vector<Key> GetOrderedKeys(const LruCache<Key, Value> &cache) {
 
 TEST(LruCacheTest, Insert) {
   LruCache<int, int> cache(3);
-  EXPECT_EQ(0, cache.Size());
+  EXPECT_EQ(cache.Size(), 0);
 
   cache.Insert(0, 0);
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(0));
@@ -117,7 +117,7 @@ TEST(LruCacheTest, Erase) {
   EXPECT_TRUE(cache.Erase(0));
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(2));
   EXPECT_TRUE(cache.Erase(2));
-  EXPECT_EQ(0, cache.Size());
+  EXPECT_EQ(cache.Size(), 0);
 }
 
 TEST(LruCacheTest, Clear) {
@@ -127,7 +127,7 @@ TEST(LruCacheTest, Clear) {
   }
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(2, 1, 0));
   cache.Clear();
-  EXPECT_EQ(0, cache.Size());
+  EXPECT_EQ(cache.Size(), 0);
 }
 
 TEST(LruCacheTest, LargeCapacity) {
@@ -136,7 +136,7 @@ TEST(LruCacheTest, LargeCapacity) {
   for (int i = 0; i < 3 * kCapacity; ++i) {
     cache.Insert(i, i);
     EXPECT_TRUE(cache.HasKey(i));
-    EXPECT_EQ(i, cache.Head()->key);
+    EXPECT_EQ(cache.Head()->key, i);
     EXPECT_GE(kCapacity, cache.Size());
   }
 }

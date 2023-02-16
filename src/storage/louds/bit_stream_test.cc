@@ -42,11 +42,11 @@ TEST_F(BitStreamTest, Pattern1) {
   for (int i = 0; i < 128; ++i) {
     bit_stream.PushBit(0);
     bit_stream.PushBit(1);
-    EXPECT_EQ(2 * (i + 1), bit_stream.num_bits());
-    EXPECT_EQ(i / 4 + 1, bit_stream.ByteSize());
+    EXPECT_EQ(bit_stream.num_bits(), 2 * (i + 1));
+    EXPECT_EQ(bit_stream.ByteSize(), i / 4 + 1);
   }
 
-  EXPECT_EQ(std::string(32, '\xAA'), bit_stream.image());
+  EXPECT_EQ(bit_stream.image(), std::string(32, '\xAA'));
 }
 
 TEST_F(BitStreamTest, Pattern2) {
@@ -56,11 +56,11 @@ TEST_F(BitStreamTest, Pattern2) {
     bit_stream.PushBit(0);
     bit_stream.PushBit(1);
     bit_stream.PushBit(1);
-    EXPECT_EQ(4 * (i + 1), bit_stream.num_bits());
-    EXPECT_EQ(i / 2 + 1, bit_stream.ByteSize());
+    EXPECT_EQ(bit_stream.num_bits(), 4 * (i + 1));
+    EXPECT_EQ(bit_stream.ByteSize(), i / 2 + 1);
   }
 
-  EXPECT_EQ(std::string(64, '\xCC'), bit_stream.image());
+  EXPECT_EQ(bit_stream.image(), std::string(64, '\xCC'));
 }
 
 TEST_F(BitStreamTest, FillPadding32) {
@@ -71,7 +71,7 @@ TEST_F(BitStreamTest, FillPadding32) {
 
   bit_stream.PushBit(1);
   bit_stream.FillPadding32();
-  EXPECT_EQ(std::string("\x01\x00\x00\x00", 4), bit_stream.image());
+  EXPECT_EQ(bit_stream.image(), std::string("\x01\x00\x00\x00", 4));
 }
 
 }  // namespace

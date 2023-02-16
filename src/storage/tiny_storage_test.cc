@@ -113,7 +113,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
          it != target.end(); ++it) {
       std::string value;
       EXPECT_TRUE(storage->Lookup(it->first, &value));
-      EXPECT_EQ(value, it->second);
+      EXPECT_EQ(it->second, value);
     }
 
     for (std::map<std::string, std::string>::const_iterator it = target.begin();
@@ -127,14 +127,14 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
 
     std::unique_ptr<StorageInterface> storage2(CreateStorage());
     EXPECT_TRUE(storage2->Open(filename));
-    EXPECT_EQ(storage->Size(), storage2->Size());
+    EXPECT_EQ(storage2->Size(), storage->Size());
 
     // Lookup
     for (std::map<std::string, std::string>::const_iterator it = target.begin();
          it != target.end(); ++it) {
       std::string value;
       EXPECT_TRUE(storage2->Lookup(it->first, &value));
-      EXPECT_EQ(value, it->second);
+      EXPECT_EQ(it->second, value);
     }
 
     for (std::map<std::string, std::string>::const_iterator it = target.begin();

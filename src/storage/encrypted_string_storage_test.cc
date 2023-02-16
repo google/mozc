@@ -101,7 +101,7 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
   std::string output;
   ASSERT_TRUE(storage_->Load(&output));
 
-  EXPECT_EQ(kData, output);
+  EXPECT_EQ(output, kData);
 }
 
 #ifndef OS_ANDROID

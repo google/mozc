@@ -117,24 +117,24 @@ TEST_P(LoudsTest, Basic) {
     Louds::Node node;
     EXPECT_TRUE(louds.IsRoot(node));
     EXPECT_NO_SIBLING(louds, node);
-    EXPECT_EQ(1, node.node_id());
+    EXPECT_EQ(node.node_id(), 1);
 
     louds.MoveToFirstChild(&node);
     EXPECT_LEAF(louds, node);
-    EXPECT_EQ(2, node.node_id());
+    EXPECT_EQ(node.node_id(), 2);
 
     louds.MoveToNextSibling(&node);
     EXPECT_NO_SIBLING(louds, node);
-    EXPECT_EQ(3, node.node_id());
+    EXPECT_EQ(node.node_id(), 3);
 
     louds.MoveToFirstChild(&node);
     EXPECT_LEAF(louds, node);
-    EXPECT_EQ(4, node.node_id());
+    EXPECT_EQ(node.node_id(), 4);
 
     louds.MoveToNextSibling(&node);
     EXPECT_LEAF(louds, node);
     EXPECT_NO_SIBLING(louds, node);
-    EXPECT_EQ(5, node.node_id());
+    EXPECT_EQ(node.node_id(), 5);
   }
 
   // 4 -> 3 -> 1
@@ -142,13 +142,13 @@ TEST_P(LoudsTest, Basic) {
     Louds::Node node;
     louds.InitNodeFromNodeId(4, &node);
     EXPECT_LEAF(louds, node);
-    EXPECT_EQ(4, node.node_id());
+    EXPECT_EQ(node.node_id(), 4);
 
     louds.MoveToParent(&node);
-    EXPECT_EQ(3, node.node_id());
+    EXPECT_EQ(node.node_id(), 3);
 
     louds.MoveToParent(&node);
-    EXPECT_EQ(1, node.node_id());
+    EXPECT_EQ(node.node_id(), 1);
     EXPECT_TRUE(louds.IsRoot(node));
   }
 }
