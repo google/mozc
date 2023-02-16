@@ -1356,11 +1356,10 @@ mozc_cc_binary(
     ],
     deps = [
         ":init_mozc",
-        ":mac_util",
         ":port",
         ":util",
         "@com_google_absl//absl/flags:flag",
-    ],
+    ] + mozc_select(ios = [":mac_util"]),
 )
 
 mozc_cc_library(
