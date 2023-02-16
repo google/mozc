@@ -38,10 +38,9 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace {
@@ -96,9 +95,7 @@ class FortuneData {
       // Friday the 13th
       levels = kFriday13Levels;
     }
-    uint32_t random = 0;
-    Util::GetRandomSequence(reinterpret_cast<char *>(&random), sizeof(random));
-    const int level = random % kMaxLevel;
+    const int level = absl::Uniform(gen_, 0, kMaxLevel);
     for (int i = 0; i < std::size(kNormalLevels); ++i) {
       if (level <= levels[i]) {
         fortune_type_ = static_cast<FortuneType>(i);
@@ -113,6 +110,7 @@ class FortuneData {
  private:
   FortuneType fortune_type_;
   absl::CivilDay last_updated_day_;
+  absl::BitGen gen_;
 };
 
 // Insert Fortune message into the |segment|
@@ -176,9 +174,9 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
 
 }  // namespace
 
-FortuneRewriter::FortuneRewriter() {}
+FortuneRewriter::FortuneRewriter() = default;
 
-FortuneRewriter::~FortuneRewriter() {}
+FortuneRewriter::~FortuneRewriter() = default;
 
 bool FortuneRewriter::Rewrite(const ConversionRequest &request,
                               Segments *segments) const {

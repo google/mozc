@@ -32,15 +32,13 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/util.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -48,7 +46,7 @@ namespace user_dictionary {
 UserDictionarySessionHandler::UserDictionarySessionHandler()
     : session_id_(kInvalidSessionId),
       dictionary_path_(UserDictionaryUtil::GetUserDictionaryFileName()) {}
-UserDictionarySessionHandler::~UserDictionarySessionHandler() {}
+UserDictionarySessionHandler::~UserDictionarySessionHandler() = default;
 
 bool UserDictionarySessionHandler::Evaluate(
     const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
@@ -547,7 +545,7 @@ UserDictionarySession *UserDictionarySessionHandler::GetSession(
 uint64_t UserDictionarySessionHandler::CreateNewSessionId() const {
   uint64_t id = kInvalidSessionId;
   while (true) {
-    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
+    id = absl::Uniform<uint64_t>(bitgen_);
 
     if (id != kInvalidSessionId &&
         (session_ == nullptr || session_id_ != id)) {

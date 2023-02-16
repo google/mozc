@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "base/random.h"
 
 namespace mozc {
 namespace storage {
@@ -61,6 +62,7 @@ class EncryptedStringStorage : public StringStorageInterface {
 
  private:
   std::string filename_;
+  mutable mozc::Random random_;
 };
 
 }  // namespace storage

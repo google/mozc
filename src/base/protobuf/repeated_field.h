@@ -30,8 +30,10 @@
 #ifndef MOZC_BASE_PROTOBUF_REPEATED_FIELD_H_
 #define MOZC_BASE_PROTOBUF_REPEATED_FIELD_H_
 
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/protobuf.h"  // IWYU pragma: keep
 
-#include "google/protobuf/repeated_field.h"
+
+#include "google/protobuf/repeated_field.h"  // IWYU pragma: export
+
 
 #endif  // MOZC_BASE_PROTOBUF_REPEATED_FIELD_H_

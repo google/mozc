@@ -29,22 +29,22 @@
 
 #include "base/password_manager.h"
 
-#include <stddef.h>
 #ifdef OS_WIN
 #include <windows.h>
 #else  // OS_WIN
 #include <sys/stat.h>
 #endif  // OS_WIN
 
+#include <cstddef>
 #include <cstdlib>
 #include <string>
 
 #include "base/const.h"
 #include "base/encryptor.h"
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/random.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -63,9 +63,8 @@ constexpr char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
 constexpr size_t kPasswordSize = 32;
 
 std::string CreateRandomPassword() {
-  char buf[kPasswordSize];
-  Util::GetRandomSequence(buf, sizeof(buf));
-  return std::string(buf, sizeof(buf));
+  mozc::Random random;
+  return random.ByteString(kPasswordSize);
 }
 
 // RAII class to make a given file writable/read-only

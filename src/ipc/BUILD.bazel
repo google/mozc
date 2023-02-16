@@ -96,6 +96,7 @@ mozc_cc_library(
         "//base:obfuscator_support",
         "//base:port",
         "//base:process_mutex",
+        "//base:random",
         "//base:scoped_handle",
         "//base:singleton",
         "//base:system_util",

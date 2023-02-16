@@ -33,13 +33,15 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/file_util.h"
-#include "base/util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/algorithm/container.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace {
@@ -47,22 +49,22 @@ namespace {
 TEST(MmapTest, MmapTest) {
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
+  absl::BitGen gen;
 
   constexpr size_t kFileNameSize[] = {1, 100, 1024, 8192};
   for (int i = 0; i < std::size(kFileNameSize); ++i) {
     ASSERT_OK(FileUtil::UnlinkIfExists(filename));
-    auto buf = std::make_unique<char[]>(kFileNameSize[i]);
-    memset(buf.get(), 0, kFileNameSize[i]);
+    std::vector<char> buf(kFileNameSize[i]);
     ASSERT_OK(FileUtil::SetContents(
-        filename, absl::string_view(buf.get(), kFileNameSize[i])));
-
-    Util::GetRandomSequence(buf.get(), kFileNameSize[i]);
+        filename, absl::string_view(buf.data(), kFileNameSize[i])));
+    absl::c_generate(
+        buf, [&gen]() -> char { return absl::Uniform<unsigned char>(gen); });
 
     // Write Test
     {
       Mmap mmap;
       EXPECT_TRUE(mmap.Open(filename.c_str(), "r+"));
-      memcpy(mmap.begin(), buf.get(), kFileNameSize[i]);
+      memcpy(mmap.begin(), buf.data(), kFileNameSize[i]);
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
         EXPECT_EQ(mmap[j], buf[j]);

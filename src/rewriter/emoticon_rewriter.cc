@@ -38,9 +38,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
@@ -48,6 +45,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
+#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -189,10 +187,8 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       // TODO(taku): want to make it "generate" more funny emoticon.
       begin = dic_.begin();
       CHECK(begin != dic_.end());
-      uint32_t n = 0;
       // use secure random not to predict the next emoticon.
-      Util::GetRandomSequence(reinterpret_cast<char *>(&n), sizeof(n));
-      begin += n % dic_.size();
+      begin += absl::Uniform(bitgen_, 0u, dic_.size());
       end = begin + 1;
       initial_insert_pos = RewriterUtil::CalculateInsertPosition(segment, 4);
       initial_insert_size = 1;

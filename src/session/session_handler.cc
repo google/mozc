@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,12 +42,12 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "session/common.h"
 #include "session/internal/keymap.h"
 #include "absl/flags/flag.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-#include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
 #include "composer/table.h"
@@ -63,9 +64,8 @@
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-#include <memory>
-
 #include "usage_stats/usage_stats.h"
+#include "absl/random/random.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -721,7 +721,7 @@ bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
 SessionID SessionHandler::CreateNewSessionID() {
   SessionID id = 0;
   while (true) {
-    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
+    id = absl::Uniform<SessionID>(bitgen_);
     // don't allow id == 0, as it is reserved for
     // "invalid id"
     if (id != 0 && !session_map_->HasKey(id)) {

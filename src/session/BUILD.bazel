@@ -352,6 +352,7 @@ mozc_cc_library(
         "//testing:gunit_prod",
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -374,7 +375,6 @@ mozc_cc_library(
             "//spelling:spellchecker_service_registration",
         ],
     ) + [
-        ":session",
         ":session_handler",
         ":session_handler_interface",
         ":session_usage_observer",
@@ -399,6 +399,7 @@ mozc_cc_library(
         "//testing:gunit_prod",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 

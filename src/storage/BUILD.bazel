@@ -217,13 +217,13 @@ mozc_cc_library(
     srcs = ["encrypted_string_storage.cc"],
     hdrs = ["encrypted_string_storage.h"],
     deps = [
-        "//base",
         "//base:encryptor",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:mmap",
         "//base:port",
+        "//base:random",
         "//base:util",
     ],
 )
