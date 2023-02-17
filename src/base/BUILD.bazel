@@ -1323,7 +1323,6 @@ mozc_objc_library(
         ":port",
         ":singleton",
         "@com_google_absl//absl/strings",
-        "//third_party/apple_frameworks:launch",
     ] + mozc_select(
         # Split iOS code into a separate library.
         ios = [":UIKit"],
