@@ -47,6 +47,8 @@
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
 
+#include "absl/random/random.h"
+
 namespace mozc {
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -176,6 +178,7 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
 
+  absl::BitGen bitgen_;
 };
 
 }  // namespace mozc

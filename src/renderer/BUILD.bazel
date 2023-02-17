@@ -418,6 +418,7 @@ mozc_cc_test(
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ] + mozc_select(
         oss_linux = ["@gtk2//:gtk2"],
     ),

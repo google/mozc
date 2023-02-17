@@ -37,12 +37,12 @@
 #include <string>
 
 #include "base/config_file_stream.h"
-#include "base/file_stream.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/protobuf/protobuf.h"
+#include "base/protobuf/repeated_field.h"
 #include "base/util.h"
 #include "dictionary/user_pos_interface.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 
@@ -345,10 +345,11 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
 uint64_t UserDictionaryUtil::CreateNewDictionaryId(
     const user_dictionary::UserDictionaryStorage &storage) {
   static constexpr uint64_t kInvalidDictionaryId = 0;
+  absl::BitGen gen;
 
   uint64_t id = kInvalidDictionaryId;
   while (id == kInvalidDictionaryId) {
-    Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
+    id = absl::Uniform<uint64_t>(gen);
 
     // Duplication check.
     for (int i = 0; i < storage.dictionaries_size(); ++i) {

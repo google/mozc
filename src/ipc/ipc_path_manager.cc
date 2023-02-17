@@ -29,8 +29,7 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#include <errno.h>
-
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -47,6 +46,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
+#include "base/random.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -121,30 +121,27 @@ bool IsValidKey(const std::string &name) {
 }
 
 std::string CreateIPCKey() {
-  char buf[16] = {};  // key is 128 bit
-  char value[kKeySize + 1] = {};
-
+  // key is 128 bit
 #ifdef OS_WIN
   const std::string sid = SystemUtil::GetUserSidAsString();
-  const std::string sha1 = internal::UnverifiedSHA1::MakeDigest(sid);
-  for (int i = 0; i < sizeof(buf) && i < sha1.size(); ++i) {
-    buf[i] = sha1.at(i);
-  }
+  const std::string buf = internal::UnverifiedSHA1::MakeDigest(sid);
 #else   // OS_WIN
   // get 128 bit key: Note that collision will happen.
-  Util::GetRandomSequence(buf, sizeof(buf));
+  Random random;
+  const std::string buf = random.ByteString(16);
 #endif  // OS_WIN
 
   // escape
-  for (size_t i = 0; i < sizeof(buf); ++i) {
-    const int hi = ((static_cast<int>(buf[i]) & 0xF0) >> 4);
-    const int lo = (static_cast<int>(buf[i]) & 0x0F);
-    value[2 * i] = static_cast<char>(hi >= 10 ? hi - 10 + 'a' : hi + '0');
-    value[2 * i + 1] = static_cast<char>(lo >= 10 ? lo - 10 + 'a' : lo + '0');
+  std::string value;
+  value.reserve(kKeySize);
+  for (char c : buf) {
+    const int hi = (static_cast<int>(c) & 0xF0) >> 4;
+    const int lo = (static_cast<int>(c) & 0x0F);
+    value.push_back(static_cast<char>(hi >= 10 ? hi - 10 + 'a' : hi + '0'));
+    value.push_back(static_cast<char>(lo >= 10 ? lo - 10 + 'a' : lo + '0'));
   }
 
-  value[kKeySize] = '\0';
-  return std::string(value);
+  return value;
 }
 
 class IPCPathManagerMap {

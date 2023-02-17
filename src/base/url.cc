@@ -30,16 +30,50 @@
 #include "base/url.h"
 
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/singleton.h"
-#include "base/util.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace url {
+
+std::string DecodeUrl(const absl::string_view input) {
+  std::string result;
+  result.reserve(input.size());
+  for (auto p = input.begin(); p < input.end(); ++p) {
+    if (*p == '%' && p + 2 < input.end()) {
+      const char h = absl::ascii_toupper(p[1]);
+      const char l = absl::ascii_toupper(p[2]);
+      const int vh = absl::ascii_isalpha(h) ? (10 + (h - 'A')) : (h - '0');
+      const int vl = absl::ascii_isalpha(l) ? (10 + (l - 'A')) : (l - '0');
+      result.push_back((vh << 4) + vl);
+      p += 2;
+    } else if (*p == '+') {
+      result.push_back(' ');
+    } else {
+      result.push_back(*p);
+    }
+  }
+  return result;
+}
+
+std::string EncodeUrl(const absl::string_view input) {
+  std::string result;
+  result.reserve(input.size());
+  for (const char c : input) {
+    if (absl::ascii_isascii(c) && absl::ascii_isalnum(c)) {
+      result.append(1, c);
+    } else {
+      absl::StrAppendFormat(&result, "%%%02X", c);
+    }
+  }
+  return result;
+}
+
 namespace {
 constexpr char kSurveyBaseUrl[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
@@ -51,44 +85,25 @@ constexpr char kSurveyHtmlLanguage[] = "jp";
 constexpr char kSurveyFormatEntry[] = "format";
 constexpr char kSurveyFormat[] = "inproduct";
 
-class UrlImpl {
- public:
-  UrlImpl() { InitUninstallationSurveyUrl(); }
-
-  bool GetUninstallationSurveyUrl(const absl::string_view version,
-                                  std::string *url) const {
-    DCHECK(url);
-    *url = uninstallation_survey_url_;
-    if (!version.empty()) {
-      absl::StrAppend(url, "&");
-      std::vector<std::pair<std::string, std::string>> params;
-      params.emplace_back(kSurveyVersionEntry, version);
-      Util::AppendCgiParams(params, url);
-    }
-    return true;
-  }
-
- private:
-  void InitUninstallationSurveyUrl() {
-    uninstallation_survey_url_.clear();
-    uninstallation_survey_url_ = kSurveyBaseUrl;
-    uninstallation_survey_url_ += "?";
-    std::vector<std::pair<std::string, std::string> > params;
-    params.push_back(
-        std::make_pair(kSurveyContactTypeEntry, kSurveyContactType));
-    params.push_back(
-        std::make_pair(kSurveyHtmlLanguageEntry, kSurveyHtmlLanguage));
-    params.push_back(std::make_pair(kSurveyFormatEntry, kSurveyFormat));
-    Util::AppendCgiParams(params, &uninstallation_survey_url_);
-  }
-
-  std::string uninstallation_survey_url_;
-};
-}  // namespace
-
-bool Url::GetUninstallationSurveyUrl(const absl::string_view version,
-                                     std::string *url) {
-  return Singleton<UrlImpl>::get()->GetUninstallationSurveyUrl(version, url);
+std::string ParamPairToString(const absl::string_view key,
+                              const absl::string_view value) {
+  return absl::StrCat(key, "=", EncodeUrl(value));
 }
 
+}  // namespace
+
+std::string GetUninstallationSurveyUrl(const absl::string_view version) {
+  std::vector<std::string> params = {
+      ParamPairToString(kSurveyContactTypeEntry, kSurveyContactType),
+      ParamPairToString(kSurveyHtmlLanguageEntry, kSurveyHtmlLanguage),
+      ParamPairToString(kSurveyFormatEntry, kSurveyFormat),
+  };
+  if (!version.empty()) {
+    params.push_back(ParamPairToString(kSurveyVersionEntry, version));
+  }
+
+  return absl::StrCat(kSurveyBaseUrl, "?", absl::StrJoin(params, "&"));
+}
+
+}  // namespace url
 }  // namespace mozc

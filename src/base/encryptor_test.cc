@@ -34,9 +34,8 @@
 #include <memory>
 #include <string>
 
-#include "base/password_manager.h"
+#include "base/random.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
@@ -178,9 +177,9 @@ TEST(EncryptorTest, EncryptBatch) {
   constexpr size_t kSizeTable[] = {1,    10,   16,    32,    100,
                                    1000, 1600, 10000, 16000, 100000};
 
+  Random random;
   for (size_t i = 0; i < std::size(kSizeTable); ++i) {
-    std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
-    Util::GetRandomSequence(buf.get(), kSizeTable[i]);
+    const std::string original = random.ByteString(kSizeTable[i]);
 
     Encryptor::Key key1, key2, key3, key4;
 
@@ -195,10 +194,7 @@ TEST(EncryptorTest, EncryptBatch) {
     EXPECT_TRUE(key3.IsAvailable());
     EXPECT_TRUE(key4.IsAvailable());
 
-    std::string original(buf.get(), kSizeTable[i]);
-
-    // enfoce to copy. disable reference counting
-    std::string encrypted(original.data(), original.size());
+    std::string encrypted(original);
 
     EXPECT_TRUE(Encryptor::EncryptString(key1, &encrypted));
     EXPECT_EQ(encrypted.size() % key1.block_size(), 0);
@@ -232,10 +228,9 @@ TEST(EncryptorTest, ProtectData) {
   SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   constexpr size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
 
+  Random random;
   for (size_t i = 0; i < std::size(kSizeTable); ++i) {
-    std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
-    Util::GetRandomSequence(buf.get(), kSizeTable[i]);
-    std::string input(buf.get(), kSizeTable[i]);
+    const std::string input = random.ByteString(kSizeTable[i]);
     std::string output;
     EXPECT_TRUE(Encryptor::ProtectData(input, &output));
     EXPECT_NE(input, output);

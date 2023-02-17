@@ -329,14 +329,11 @@ mozc_cc_library(
     deps = [
         ":user_dictionary_session",
         ":user_dictionary_util",
-        "//base",
-        "//base:file_util",
         "//base:logging",
         "//base:port",
-        "//base:util",
-        "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -412,18 +409,15 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
-        ":user_pos",
         ":user_pos_interface",
-        "//base",
         "//base:config_file_stream",
-        "//base:file_stream",
         "//base:japanese_util",
         "//base:logging",
         "//base:port",
         "//base:util",
-        "//base/protobuf",
-        "//base/protobuf:message",
+        "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/random",
     ],
 )
 

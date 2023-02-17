@@ -34,9 +34,11 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
 
 mozc_cc_library(
     name = "engine_builder_interface",
@@ -58,12 +60,15 @@ mozc_cc_library(
         ":engine_builder_interface",
         ":engine_interface",
         "//base:file_util",
+        "//base:hash",
         "//base:logging",
         "//base:port",
         "//base:thread",
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -93,6 +98,8 @@ mozc_cc_library(
     hdrs = ["engine_interface.h"],
     deps = [
         ":user_data_manager_interface",
+        "//base",
+        "//base:port",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
@@ -118,10 +125,12 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
+        "//base",
         "//base:logging",
         "//base:port",
         "//converter",
         "//converter:connector",
+        "//converter:converter_interface",
         "//converter:immutable_converter_interface",
         "//converter:immutable_converter_no_factory",
         "//converter:segmenter",

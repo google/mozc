@@ -96,14 +96,14 @@ mozc_cc_test(
     deps = [
         ":lru_cache",
         ":lru_storage",
-        "//base",
         "//base:clock_mock",
         "//base:file_util",
         "//base:logging",
         "//base:port",
-        "//base:util",
+        "//base:random",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 
@@ -217,13 +217,13 @@ mozc_cc_library(
     srcs = ["encrypted_string_storage.cc"],
     hdrs = ["encrypted_string_storage.h"],
     deps = [
-        "//base",
         "//base:encryptor",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:mmap",
         "//base:port",
+        "//base:random",
         "//base:util",
     ],
 )

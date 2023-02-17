@@ -48,7 +48,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("uint64_t", value));
     uint64_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint64_t", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 
   {
@@ -56,7 +56,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("uint32_t", value));
     uint32_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint32_t", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 
   {
@@ -64,7 +64,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("uint16_t", value));
     uint16_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint16_t", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 
   {
@@ -72,7 +72,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("uint8_t", value));
     uint8_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint8_t", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 
   {
@@ -80,7 +80,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("bool", value));
     bool expected = false;
     EXPECT_TRUE(Registry::Lookup("bool", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 
   {
@@ -88,7 +88,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_TRUE(Registry::Insert("string", value));
     std::string expected;
     EXPECT_TRUE(Registry::Lookup("string", &expected));
-    EXPECT_EQ(expected, value);
+    EXPECT_EQ(value, expected);
   }
 }
 }  // namespace storage

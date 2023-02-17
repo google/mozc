@@ -31,10 +31,9 @@
 #include <memory>
 #include <string>
 
-#include "base/clock.h"
 #include "base/port.h"
+#include "base/random.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -65,12 +64,9 @@ namespace session {
 class SessionConverterStressTest : public ::testing::Test {
  public:
   SessionConverterStressTest() {
-    if (!absl::GetFlag(FLAGS_test_deterministic)) {
-      absl::SetFlag(&FLAGS_test_srand_seed,
-                    static_cast<int32_t>(Clock::GetTime()));
+    if (absl::GetFlag(FLAGS_test_deterministic)) {
+      random_ = Random(std::seed_seq{absl::GetFlag(FLAGS_test_srand_seed)});
     }
-    Util::SetRandomSeed(
-        static_cast<uint32_t>(absl::GetFlag(FLAGS_test_srand_seed)));
   }
 
   void SetUp() override {
@@ -79,21 +75,10 @@ class SessionConverterStressTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
   }
-};
 
-namespace {
-void GenerateRandomInput(size_t length, char min_code, char max_code,
-                         std::string* output) {
-  output->reserve(length);
-  char tmp[2];
-  tmp[1] = '\0';
-  for (int i = 0; i < length; ++i) {
-    tmp[0] = static_cast<unsigned char>(min_code +
-                                        Util::Random(max_code - min_code + 1));
-    output->append(tmp);
-  }
-}
-}  // namespace
+ protected:
+  Random random_;
+};
 
 TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   // ConvertToHalfWidth has to return the same string as the input.
@@ -118,7 +103,6 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   table.LoadFromFile(kRomajiHiraganaTable.c_str());
   composer::Composer composer(&table, &request, &config);
   commands::Output output;
-  std::string input;
 
   for (int test = 0; test < kTestCaseSize; ++test) {
     constexpr int kLoopLimit = 100;
@@ -126,12 +110,11 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
       composer.Reset();
       sconverter.Reset();
       output.Clear();
-      input.clear();
 
       // Limited by kMaxCharLength in immutable_converter.cc
       constexpr int kInputStringLength = 32;
-      GenerateRandomInput(kInputStringLength, kTestCases[test].min,
-                          kTestCases[test].max, &input);
+      const std::string input = random_.Utf8String(
+          kInputStringLength, kTestCases[test].min, kTestCases[test].max);
 
       composer.InsertCharacterPreedit(input);
       sconverter.ConvertToTransliteration(composer,

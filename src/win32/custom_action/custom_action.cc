@@ -71,7 +71,7 @@
   if (::IsDebuggerPresent()) {                                          \
     __debugbreak();                                                     \
   }
-#else   // _DEBUG
+#else  // _DEBUG
 #define DEBUG_BREAK_FOR_DEBUGGER()
 #endif  // _DEBUG
 
@@ -273,9 +273,8 @@ UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
 // [Return='ignore']
 UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  std::string url;
-  mozc::Url::GetUninstallationSurveyUrl(mozc::Version::GetMozcVersion(), &url);
-  mozc::Process::OpenBrowser(url);
+  mozc::Process::OpenBrowser(
+      mozc::url::GetUninstallationSurveyUrl(mozc::Version::GetMozcVersion()));
   return ERROR_SUCCESS;
 }
 

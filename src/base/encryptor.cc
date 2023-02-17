@@ -29,8 +29,6 @@
 
 #include "base/encryptor.h"
 
-#include <cstdint>
-
 #if defined(OS_WIN)
 // clang-format off
 #include <windows.h>
@@ -43,12 +41,14 @@
 #include <string.h>
 #endif  // platforms (OS_WIN, __APPLE__, ...)
 
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <string>
 
 #include "base/logging.h"
 #include "base/password_manager.h"
+#include "base/random.h"
 #include "base/unverified_aes256.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
@@ -418,10 +418,8 @@ bool Encryptor::ProtectData(const std::string &plain_text,
     return false;
   }
 
-  char salt_buf[kSaltSize];
-  Util::GetRandomSequence(salt_buf, sizeof(salt_buf));
-
-  std::string salt(salt_buf, kSaltSize);
+  Random random;
+  const std::string salt = random.ByteString(kSaltSize);
 
   Encryptor::Key key;
   if (!key.DeriveFromPassword(password, salt)) {

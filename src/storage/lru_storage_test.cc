@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 #include <set>
 #include <string>
 #include <utility>
@@ -41,12 +42,13 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
+#include "base/random.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace storage {
@@ -54,23 +56,15 @@ namespace {
 
 constexpr uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
-std::string GenRandomString(int size) {
-  std::string result;
-  const size_t len = Util::Random(size) + 1;
-  for (int i = 0; i < len; ++i) {
-    const char32_t l = Util::Random(0x1FFFF) + 1;
-    Util::Ucs4ToUtf8Append(l, &result);
-  }
-  return result;
-}
-
 void RunTest(LruStorage *storage, uint32_t size) {
   mozc::storage::LruCache<std::string, uint32_t> cache(size);
   std::set<std::string> used;
   std::vector<std::pair<std::string, uint32_t> > values;
+  mozc::Random random;
   for (int i = 0; i < size * 2; ++i) {
-    const std::string key = GenRandomString(20);
-    const uint32_t value = static_cast<uint32_t>(Util::Random(10000000));
+    const std::string key = random.Utf8String(
+        absl::Uniform(absl::IntervalClosed, random, 1, 20), 1, 0x20000);
+    const uint32_t value = absl::Uniform(random, 0u, 10000000u);
     if (used.find(key) != used.end()) {
       continue;
     }
@@ -154,10 +148,10 @@ TEST_F(LruStorageTest, LruStorageTest) {
     LruStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
     LruStorage storage;
     EXPECT_TRUE(storage.Open(file.c_str()));
-    EXPECT_EQ(file, storage.filename());
-    EXPECT_EQ(kSize[i], storage.size());
-    EXPECT_EQ(4, storage.value_size());
-    EXPECT_EQ(kSeed, storage.seed());
+    EXPECT_EQ(storage.filename(), file);
+    EXPECT_EQ(storage.size(), kSize[i]);
+    EXPECT_EQ(storage.value_size(), 4);
+    EXPECT_EQ(storage.seed(), kSeed);
     RunTest(&storage, kSize[i]);
   }
 }
@@ -171,24 +165,26 @@ struct Entry {
 TEST_F(LruStorageTest, ReadWriteTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
   const std::string file = GetTemporaryFilePath();
+  absl::BitGen gen;
+
   for (int i = 0; i < std::size(kSize); ++i) {
     LruStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
     LruStorage storage;
     EXPECT_TRUE(storage.Open(file.c_str()));
-    EXPECT_EQ(file, storage.filename());
-    EXPECT_EQ(kSize[i], storage.size());
-    EXPECT_EQ(4, storage.value_size());
-    EXPECT_EQ(kSeed, storage.seed());
+    EXPECT_EQ(storage.filename(), file);
+    EXPECT_EQ(storage.size(), kSize[i]);
+    EXPECT_EQ(storage.value_size(), 4);
+    EXPECT_EQ(storage.seed(), kSeed);
 
     std::vector<Entry> entries;
 
     const size_t size = kSize[i];
     for (int j = 0; j < size; ++j) {
       Entry entry;
-      entry.key = Util::Random(RAND_MAX);
-      const int n = Util::Random(RAND_MAX);
+      entry.key = absl::Uniform<uint64_t>(gen);
+      const int n = absl::Uniform(gen, 0, std::numeric_limits<int>::max());
       entry.value.assign(reinterpret_cast<const char *>(&n), 4);
-      entry.last_access_time = Util::Random(100000);
+      entry.last_access_time = absl::Uniform(gen, 0, 100000);
       entries.push_back(entry);
       storage.Write(j, entry.key, entry.value, entry.last_access_time);
     }
@@ -198,9 +194,9 @@ TEST_F(LruStorageTest, ReadWriteTest) {
       std::string value;
       uint32_t last_access_time;
       storage.Read(j, &key, &value, &last_access_time);
-      EXPECT_EQ(entries[j].key, key);
-      EXPECT_EQ(entries[j].value, value);
-      EXPECT_EQ(entries[j].last_access_time, last_access_time);
+      EXPECT_EQ(key, entries[j].key);
+      EXPECT_EQ(value, entries[j].value);
+      EXPECT_EQ(last_access_time, entries[j].last_access_time);
     }
   }
 }
@@ -271,20 +267,20 @@ TEST_F(LruStorageTest, Merge) {
     uint32_t last_access_time;
 
     storage1.Read(0, &fp, &value, &last_access_time);
-    EXPECT_EQ(5, fp);
-    EXPECT_EQ(50, last_access_time);
+    EXPECT_EQ(fp, 5);
+    EXPECT_EQ(last_access_time, 50);
 
     storage1.Read(1, &fp, &value, &last_access_time);
-    EXPECT_EQ(3, fp);
-    EXPECT_EQ(30, last_access_time);
+    EXPECT_EQ(fp, 3);
+    EXPECT_EQ(last_access_time, 30);
 
     storage1.Read(2, &fp, &value, &last_access_time);
-    EXPECT_EQ(2, fp);
-    EXPECT_EQ(20, last_access_time);
+    EXPECT_EQ(fp, 2);
+    EXPECT_EQ(last_access_time, 20);
 
     storage1.Read(3, &fp, &value, &last_access_time);
-    EXPECT_EQ(1, fp);
-    EXPECT_EQ(10, last_access_time);
+    EXPECT_EQ(fp, 1);
+    EXPECT_EQ(last_access_time, 10);
   }
 
   // same FP
@@ -314,22 +310,22 @@ TEST_F(LruStorageTest, Merge) {
     uint32_t last_access_time;
 
     storage1.Read(0, &fp, &value, &last_access_time);
-    EXPECT_EQ(3, fp);
-    EXPECT_EQ(50, last_access_time);
-    EXPECT_EQ("new2", value);
+    EXPECT_EQ(fp, 3);
+    EXPECT_EQ(last_access_time, 50);
+    EXPECT_EQ(value, "new2");
 
     storage1.Read(1, &fp, &value, &last_access_time);
-    EXPECT_EQ(2, fp);
-    EXPECT_EQ(20, last_access_time);
-    EXPECT_EQ("test", value);
+    EXPECT_EQ(fp, 2);
+    EXPECT_EQ(last_access_time, 20);
+    EXPECT_EQ(value, "test");
 
     storage1.Read(2, &fp, &value, &last_access_time);
-    EXPECT_EQ(1, fp);
-    EXPECT_EQ(10, last_access_time);
+    EXPECT_EQ(fp, 1);
+    EXPECT_EQ(last_access_time, 10);
 
     storage1.Read(3, &fp, &value, &last_access_time);
-    EXPECT_EQ(0, fp);
-    EXPECT_EQ(0, last_access_time);
+    EXPECT_EQ(fp, 0);
+    EXPECT_EQ(last_access_time, 0);
   }
 
   EXPECT_OK(FileUtil::Unlink(file1));
@@ -400,58 +396,58 @@ TEST_F(LruStorageTest, Delete) {
   // mmapped region.
   EXPECT_TRUE(storage.Delete("3333"));
   std::vector<std::string> expected = {"aaaa", "bbbb", "cccc"};
-  EXPECT_EQ(expected, GetValuesInStorageOrder(storage));
-  EXPECT_EQ(3, storage.used_size());
-  EXPECT_EQ("aaaa", storage.LookupAsString("0000"));
-  EXPECT_EQ("bbbb", storage.LookupAsString("1111"));
-  EXPECT_EQ("cccc", storage.LookupAsString("2222"));
+  EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
+  EXPECT_EQ(storage.used_size(), 3);
+  EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
+  EXPECT_EQ(storage.LookupAsString("1111"), "bbbb");
+  EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
   EXPECT_TRUE(storage.Lookup("3333") == nullptr);
 
   // Remove the element ("1111", "bbbb") in the middle.  The current
   // last element, ("2222", "cccc") should be moved to keep contiguity.
   EXPECT_TRUE(storage.Delete("1111"));
-  EXPECT_EQ(2, storage.used_size());
-  EXPECT_EQ("aaaa", storage.LookupAsString("0000"));
-  EXPECT_EQ("cccc", storage.LookupAsString("2222"));
+  EXPECT_EQ(storage.used_size(), 2);
+  EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
+  EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
   EXPECT_TRUE(storage.Lookup("1111") == nullptr);
   EXPECT_TRUE(storage.Lookup("3333") == nullptr);
   expected = {"aaaa", "cccc"};
-  EXPECT_EQ(expected, GetValuesInStorageOrder(storage));
+  EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   // Insert a new element ("4444", "eeee").
   EXPECT_TRUE(storage.Insert("4444", "eeee"));
-  EXPECT_EQ(3, storage.used_size());
-  EXPECT_EQ("aaaa", storage.LookupAsString("0000"));
-  EXPECT_EQ("cccc", storage.LookupAsString("2222"));
-  EXPECT_EQ("eeee", storage.LookupAsString("4444"));
+  EXPECT_EQ(storage.used_size(), 3);
+  EXPECT_EQ(storage.LookupAsString("0000"), "aaaa");
+  EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
+  EXPECT_EQ(storage.LookupAsString("4444"), "eeee");
   EXPECT_TRUE(storage.Lookup("1111") == nullptr);
   EXPECT_TRUE(storage.Lookup("3333") == nullptr);
   expected = {"aaaa", "cccc", "eeee"};
-  EXPECT_EQ(expected, GetValuesInStorageOrder(storage));
+  EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   // Remove the beginning ("0000", "aaaa").
   EXPECT_TRUE(storage.Delete("0000"));
-  EXPECT_EQ(2, storage.used_size());
-  EXPECT_EQ("cccc", storage.LookupAsString("2222"));
-  EXPECT_EQ("eeee", storage.LookupAsString("4444"));
+  EXPECT_EQ(storage.used_size(), 2);
+  EXPECT_EQ(storage.LookupAsString("2222"), "cccc");
+  EXPECT_EQ(storage.LookupAsString("4444"), "eeee");
   EXPECT_TRUE(storage.Lookup("0000") == nullptr);
   EXPECT_TRUE(storage.Lookup("1111") == nullptr);
   EXPECT_TRUE(storage.Lookup("3333") == nullptr);
   expected = {"eeee", "cccc"};  // "eeee" was moved to the position of "aaaa".
-  EXPECT_EQ(expected, GetValuesInStorageOrder(storage));
+  EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   // Remove ("4444", "eeee")
   EXPECT_TRUE(storage.Delete("4444"));
-  EXPECT_EQ(1, storage.used_size());
+  EXPECT_EQ(storage.used_size(), 1);
   EXPECT_TRUE(storage.Lookup("0000") == nullptr);
   EXPECT_TRUE(storage.Lookup("1111") == nullptr);
   EXPECT_TRUE(storage.Lookup("3333") == nullptr);
   EXPECT_TRUE(storage.Lookup("4444") == nullptr);
   expected = {"cccc"};
-  EXPECT_EQ(expected, GetValuesInStorageOrder(storage));
+  EXPECT_EQ(GetValuesInStorageOrder(storage), expected);
 
   EXPECT_TRUE(storage.Delete("2222"));
-  EXPECT_EQ(0, storage.used_size());
+  EXPECT_EQ(storage.used_size(), 0);
   EXPECT_TRUE(storage.Lookup("0000") == nullptr);
   EXPECT_TRUE(storage.Lookup("1111") == nullptr);
   EXPECT_TRUE(storage.Lookup("2222") == nullptr);
@@ -495,10 +491,10 @@ TEST_F(LruStorageTest, DeleteElementsBefore) {
       "bbbb",
       "aaaa",
   };
-  EXPECT_EQ(kExpectedAfterInsert, values);
+  EXPECT_EQ(values, kExpectedAfterInsert);
 
   // Should remove "1111" and "2222".
-  EXPECT_EQ(2, storage.DeleteElementsBefore(3));
+  EXPECT_EQ(storage.DeleteElementsBefore(3), 2);
 
   values.clear();
   storage.GetAllValues(&values);
@@ -506,7 +502,7 @@ TEST_F(LruStorageTest, DeleteElementsBefore) {
       "dddd",
       "cccc",
   };
-  EXPECT_EQ(kExpectedAfterDelete, values);
+  EXPECT_EQ(values, kExpectedAfterDelete);
 }
 
 TEST_F(LruStorageTest, DeleteElementsUntouchedFor62Days) {
@@ -532,7 +528,7 @@ TEST_F(LruStorageTest, DeleteElementsUntouchedFor62Days) {
   storage.Insert("3333", "cccc");
   storage.Insert("4444", "dddd");
 
-  EXPECT_EQ(2, storage.DeleteElementsUntouchedFor62Days());
+  EXPECT_EQ(storage.DeleteElementsUntouchedFor62Days(), 2);
 
   std::vector<std::string> values;
   storage.GetAllValues(&values);
@@ -540,7 +536,7 @@ TEST_F(LruStorageTest, DeleteElementsUntouchedFor62Days) {
       "dddd",
       "cccc",
   };
-  EXPECT_EQ(kExpectedAfterDelete, values);
+  EXPECT_EQ(values, kExpectedAfterDelete);
 }
 
 TEST_F(LruStorageTest, OldDataAreNotLookedUp) {
@@ -556,8 +552,8 @@ TEST_F(LruStorageTest, OldDataAreNotLookedUp) {
   EXPECT_TRUE(storage.Insert("2222", "bbbb"));
 
   // The two elements can be looked up as they are still not 62-day old.
-  EXPECT_EQ("aaaa", storage.LookupAsString("1111"));
-  EXPECT_EQ("bbbb", storage.LookupAsString("2222"));
+  EXPECT_EQ(storage.LookupAsString("1111"), "aaaa");
+  EXPECT_EQ(storage.LookupAsString("2222"), "bbbb");
   EXPECT_TRUE(storage.Touch("1111"));
   EXPECT_TRUE(storage.Touch("2222"));
 
@@ -575,8 +571,8 @@ TEST_F(LruStorageTest, OldDataAreNotLookedUp) {
   EXPECT_FALSE(storage.Touch("2222"));
 
   // But the new ones are accessible.
-  EXPECT_EQ("cccc", storage.LookupAsString("3333"));
-  EXPECT_EQ("dddd", storage.LookupAsString("4444"));
+  EXPECT_EQ(storage.LookupAsString("3333"), "cccc");
+  EXPECT_EQ(storage.LookupAsString("4444"), "dddd");
   EXPECT_TRUE(storage.Touch("3333"));
   EXPECT_TRUE(storage.Touch("4444"));
 }

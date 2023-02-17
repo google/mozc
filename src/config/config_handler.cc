@@ -30,12 +30,14 @@
 // Handler of mozc configuration.
 #include "config/config_handler.h"
 
+#include <cstdint>
 #include <istream>
 #include <memory>
 #include <string>
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -109,6 +111,7 @@ class ConfigHandlerImpl {
   Config merged_config_;
   Config default_config_;
   mutable absl::Mutex mutex_;
+  uint64_t stored_config_hash_ = 0;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -181,7 +184,18 @@ void ConfigHandlerImpl::UpdateMergedConfig() {
 }
 
 void ConfigHandlerImpl::SetConfig(const Config &config) {
+  uint64_t hash = Hash::Fingerprint(config.SerializeAsString());
+
   absl::MutexLock lock(&mutex_);
+
+  // If the wire format of config
+  // (except for metadata, added by ConfigHandler::SetMetaData() soon later)
+  // is identical to the one of the previously stored config, skip updating.
+  if (stored_config_hash_ == hash) {
+    return;
+  }
+  stored_config_hash_ = hash;
+
   Config output_config;
   output_config = config;
 

@@ -30,12 +30,11 @@
 #ifndef MOZC_ENGINE_ENGINE_BUILDER_H_
 #define MOZC_ENGINE_ENGINE_BUILDER_H_
 
+#include <atomic>
 #include <memory>
 
 #include "base/port.h"
 #include "engine/engine_builder_interface.h"
-#include "engine/engine_interface.h"
-#include "protocol/engine_builder.pb.h"
 
 namespace mozc {
 
@@ -60,8 +59,9 @@ class EngineBuilder : public EngineBuilderInterface {
 
  private:
   class Preparator;
-
   std::unique_ptr<Preparator> preparator_;
+
+  std::atomic<std::uint64_t> model_path_fp_ = 0;
 };
 
 }  // namespace mozc

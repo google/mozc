@@ -34,7 +34,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/util.h"
 #include "testing/gunit.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/str_cat.h"
@@ -42,6 +41,7 @@
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace url {
 namespace {
 
 constexpr char kSurveyBaseUrl[] =
@@ -50,9 +50,7 @@ constexpr char kSurveyBaseUrl[] =
 bool FindEncodedParam(const std::vector<std::string> &params,
                       const absl::string_view key,
                       const absl::string_view value) {
-  std::string encoded;
-  Util::EncodeUri(value, &encoded);
-  const std::string param = absl::StrCat(key, "=", encoded);
+  const std::string param = absl::StrCat(key, "=", mozc::url::EncodeUrl(value));
   return absl::c_find(params, param) != params.end();
 }
 
@@ -71,8 +69,7 @@ std::optional<ParsedUrl> ParseUrl(const absl::string_view url) {
 }
 
 TEST(UrlTest, UninstallationSurveyUrl) {
-  std::string url;
-  Url::GetUninstallationSurveyUrl("0.1.2.3", &url);
+  const std::string url = GetUninstallationSurveyUrl("0.1.2.3");
   const std::optional<ParsedUrl> parsed = ParseUrl(url);
   ASSERT_TRUE(parsed.has_value()) << "Unexpected URL format: " << url;
   EXPECT_EQ(parsed->base_url, kSurveyBaseUrl);
@@ -84,8 +81,7 @@ TEST(UrlTest, UninstallationSurveyUrl) {
 }
 
 TEST(UrlTest, UninstallationSurveyUrlWithNoVersion) {
-  std::string url;
-  Url::GetUninstallationSurveyUrl("", &url);
+  const std::string url = GetUninstallationSurveyUrl("");
   const std::optional<ParsedUrl> parsed = ParseUrl(url);
   ASSERT_TRUE(parsed.has_value()) << "Unexpected URL format: " << url;
   EXPECT_EQ(parsed->base_url, kSurveyBaseUrl);
@@ -95,5 +91,20 @@ TEST(UrlTest, UninstallationSurveyUrlWithNoVersion) {
   EXPECT_TRUE(FindEncodedParam(parsed->params, "format", "inproduct"));
 }
 
+TEST(UrlTest, EncodeUri) {
+  EXPECT_EQ(EncodeUrl("もずく"), "%E3%82%82%E3%81%9A%E3%81%8F");
+  EXPECT_EQ(EncodeUrl("mozc"), "mozc");
+  EXPECT_EQ(EncodeUrl("http://mozc/?q=Hello World"),
+            "http%3A%2F%2Fmozc%2F%3Fq%3DHello%20World");
+}
+
+TEST(UrlTest, DecodeUri) {
+  EXPECT_EQ(DecodeUrl("%E3%82%82%E3%81%9A%E3%81%8F"), "もずく");
+  EXPECT_EQ(DecodeUrl("mozc"), "mozc");
+  EXPECT_EQ(DecodeUrl("http%3A%2F%2Fmozc%2F%3Fq%3DHello+World"),
+            "http://mozc/?q=Hello World");
+}
+
 }  // namespace
+}  // namespace url
 }  // namespace mozc

@@ -78,7 +78,7 @@ TEST(MemoryStorageTest, SimpleTest) {
          it != target.end(); ++it) {
       std::string value;
       EXPECT_TRUE(storage->Lookup(it->first, &value));
-      EXPECT_EQ(value, it->second);
+      EXPECT_EQ(it->second, value);
     }
 
     for (std::map<std::string, std::string>::const_iterator it = target.begin();

@@ -146,8 +146,7 @@ bool RunReboot(const AuthorizationRef &auth) {
 }
 
 + (void)initializeUninstaller {
-  std::string url;
-  mozc::Url::GetUninstallationSurveyUrl(mozc::Version::GetMozcVersion(), &url);
+  const std::string url = mozc::url::GetUninstallationSurveyUrl(mozc::Version::GetMozcVersion());
   NSString *uninstallUrl = [[NSString alloc] initWithBytes:url.data()
                                                     length:url.size()
                                                   encoding:NSUTF8StringEncoding];

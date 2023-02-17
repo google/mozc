@@ -196,6 +196,10 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
     // Cannot build twice.
     engine = builder_.BuildFromPreparedData();
     EXPECT_FALSE(engine);
+
+    // Skips the duplicated response.
+    builder_.PrepareAsync(request_, &response_);
+    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOADED);
   }
 }
 

@@ -125,12 +125,10 @@ bool EncryptedStringStorage::Decrypt(const std::string &salt,
 }
 
 bool EncryptedStringStorage::Save(const std::string &input) const {
-  std::string output, salt;
   // Generate salt.
-  salt.resize(kSaltSize);
-  Util::GetRandomSequence(&salt[0], kSaltSize);
+  const std::string salt = random_.ByteString(kSaltSize);
 
-  output.assign(input);
+  std::string output(input);
   if (!Encrypt(salt, &output)) {
     return false;
   }

@@ -35,6 +35,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -126,6 +127,7 @@ class UserDictionarySessionHandler {
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,
                                     UserDictionaryCommandStatus *status);
   uint64_t CreateNewSessionId() const;
+  mutable absl::BitGen bitgen_;
 };
 
 }  // namespace user_dictionary

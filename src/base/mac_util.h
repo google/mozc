@@ -33,13 +33,16 @@
 #ifdef __APPLE__
 #include <string>
 
-#include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 class MacUtil {
  public:
+  MacUtil() = delete;
+  ~MacUtil() = delete;
+
   // Returns the label commonly used in the project for specified suffix.
-  static std::string GetLabelForSuffix(const std::string &suffix);
+  static std::string GetLabelForSuffix(absl::string_view suffix);
 
   // Returns (basically) "~/Library/Application Support".
   static std::string GetApplicationSupportDirectory();
@@ -90,10 +93,6 @@ class MacUtil {
   static bool IsSuppressSuggestionWindow(const std::string &name,
                                          const std::string &owner);
 #endif  // !OS_IOS
-
- private:
-  MacUtil() {}
-  ~MacUtil() {}
 };
 }  // namespace mozc
 

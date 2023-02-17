@@ -297,17 +297,6 @@ class Util {
   // Returns true if input is a bracket pair text (e.g. "「」").
   static bool IsBracketPairText(absl::string_view input);
 
-  static void EncodeUri(absl::string_view input, std::string *output);
-  static void DecodeUri(absl::string_view input, std::string *output);
-
-  // Make a string for CGI parameters from params and append it to
-  // base.  The result looks like:
-  //   <base><key1>=<encoded val1>&<key2>=<encoded val2>
-  // The base is supposed to end "?" or "&".
-  static void AppendCgiParams(
-      const std::vector<std::pair<std::string, std::string> > &params,
-      std::string *base);
-
   // Escape any characters into \x prefixed hex digits.
   // ex.  "ABC" => "\x41\x42\x43".
   static void Escape(absl::string_view input, std::string *output);

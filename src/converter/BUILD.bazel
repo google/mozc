@@ -765,9 +765,7 @@ mozc_cc_binary(
     srcs = ["quality_regression_main.cc"],
     deps = [
         ":quality_regression_util",
-        "//base",
         "//base:init_mozc",
-        "//base:util",
         "//engine:eval_engine_factory",
         "@com_google_absl//absl/flags:flag",
     ],

@@ -38,11 +38,11 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
+#include <map>
+#include <new>
 #include <set>
-
-#import "mac/GoogleJapaneseInputControllerInterface.h"
-#import "mac/GoogleJapaneseInputServer.h"
-#import "mac/KeyCodeMap.h"
+#include <string>
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -52,32 +52,34 @@
 #include "base/util.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
+#import "mac/GoogleJapaneseInputControllerInterface.h"
+#import "mac/GoogleJapaneseInputServer.h"
+#import "mac/KeyCodeMap.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/strings/string_view.h"
 
-using mozc::commands::Candidates;
+using mozc::kProductNameInEnglish;
+using mozc::MacProcess;
 using mozc::commands::Capability;
 using mozc::commands::CompositionMode;
-using mozc::commands::Input;
 using mozc::commands::KeyEvent;
 using mozc::commands::Output;
 using mozc::commands::Preedit;
 using mozc::commands::RendererCommand;
 using mozc::commands::SessionCommand;
 using mozc::config::Config;
-using mozc::kProductNameInEnglish;
-using mozc::MacProcess;
 
 namespace {
 // set of bundle IDs of applications on which Mozc should not open urls.
-const std::set<std::string> *gNoOpenLinkApps = nullptr;
+const std::set<std::string, std::less<>> *gNoOpenLinkApps = nullptr;
 // The mapping from the CompositionMode enum to the actual id string
 // of composition modes.
 const std::map<CompositionMode, NSString *> *gModeIdMap = nullptr;
-const std::set<std::string> *gNoSelectedRangeApps = nullptr;
-const std::set<std::string> *gNoDisplayModeSwitchApps = nullptr;
-const std::set<std::string> *gNoSurroundingTextApps = nullptr;
+const std::set<std::string, std::less<>> *gNoSelectedRangeApps = nullptr;
+const std::set<std::string, std::less<>> *gNoDisplayModeSwitchApps = nullptr;
+const std::set<std::string, std::less<>> *gNoSurroundingTextApps = nullptr;
 
 // TODO(horo): This value should be get from system configuration.
 //  DoubleClickInterval can be get from NSEvent (MacOSX ver >= 10.6)
@@ -88,7 +90,7 @@ const int kMaxSurroundingLength = 20;
 // surrounding text takes too much time. So we set this limitation.
 const int kGetSurroundingTextClientLengthLimit = 1000;
 
-NSString *GetLabelForSuffix(const std::string &suffix) {
+NSString *GetLabelForSuffix(const absl::string_view suffix) {
   std::string label = mozc::MacUtil::GetLabelForSuffix(suffix);
   return [NSString stringWithUTF8String:label.c_str()];
 }
@@ -140,7 +142,8 @@ CompositionMode GetCompositionMode(NSString *modeID) {
   return mozc::commands::DIRECT;
 }
 
-bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::string &bundleId) {
+bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
+                         const absl::string_view bundleId) {
   return bundleIdSet == nullptr || bundleId.empty() ||
          bundleIdSet->find(bundleId) != bundleIdSet->end();
 }
@@ -191,7 +194,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
   candidateController_ = new (std::nothrow) mozc::renderer::RendererClient;
   rendererCommand_ = new (std::nothrow) RendererCommand;
   mozcClient_ = mozc::client::ClientFactory::NewClient();
-  imkServer_ = reinterpret_cast<id<ServerCallback> >(server);
+  imkServer_ = reinterpret_cast<id<ServerCallback>>(server);
   imkClientForTest_ = nil;
   lastKeyDownTime_ = 0;
   lastKeyCode_ = 0;
@@ -247,7 +250,8 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 }
 
 + (void)initializeConstants {
-  std::set<std::string> *noOpenlinkApps = new (std::nothrow) std::set<std::string>;
+  std::set<std::string, std::less<>> *noOpenlinkApps =
+      new (std::nothrow) std::set<std::string, std::less<>>;
   if (noOpenlinkApps) {
     // should not open links during screensaver.
     noOpenlinkApps->insert("com.apple.securityagent");
@@ -266,7 +270,8 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
     gModeIdMap = newMap;
   }
 
-  std::set<std::string> *noSelectedRangeApps = new (std::nothrow) std::set<std::string>;
+  std::set<std::string, std::less<>> *noSelectedRangeApps =
+      new (std::nothrow) std::set<std::string, std::less<>>;
   if (noSelectedRangeApps) {
     // Do not call selectedRange: method for the following
     // applications because it could lead to application crash.
@@ -283,13 +288,15 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
   // mode.  When the first composition character is alphanumeric (such
   // like pressing Shift-A at first), that character is directly
   // inserted into application instead of composition starting "A".
-  std::set<std::string> *noDisplayModeSwitchApps = new (std::nothrow) std::set<std::string>;
+  std::set<std::string, std::less<>> *noDisplayModeSwitchApps =
+      new (std::nothrow) std::set<std::string, std::less<>>;
   if (noDisplayModeSwitchApps) {
     noDisplayModeSwitchApps->insert("com.microsoft.Word");
     gNoDisplayModeSwitchApps = noDisplayModeSwitchApps;
   }
 
-  std::set<std::string> *noSurroundingTextApps = new (std::nothrow) std::set<std::string>;
+  std::set<std::string, std::less<>> *noSurroundingTextApps =
+      new (std::nothrow) std::set<std::string, std::less<>>;
   if (noSurroundingTextApps) {
     // Disables the surrounding text feature for the following application
     // because calling attributedSubstringFromRange to it is very heavy.

@@ -418,8 +418,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
       IBUS_Shift_L, IBUS_Shift_R, IBUS_Caps_Lock, IBUS_a,
   };
   constexpr size_t kKeySetSize = std::size(kKeySet);
-  Util::SetRandomSeed(static_cast<uint32_t>(Clock::GetTime()));
-
+  absl::BitGen gen;
   constexpr int kTrialNum = 1000;
   for (int trial = 0; trial < kTrialNum; ++trial) {
     handler_->Clear();
@@ -429,7 +428,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
 
     constexpr int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {
-      const int key_index = Util::Random(kKeySetSize);
+      const int key_index = absl::Uniform<int>(gen, 0, kKeySetSize);
       const uint key_value = kKeySet[key_index];
 
       bool is_key_up;
@@ -467,7 +466,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
     ProcessKey(false, non_modifier_key, &key);
 
     {
-      const bool is_key_up = static_cast<bool>(Util::Random(2));
+      const bool is_key_up = absl::Bernoulli(gen, 0.5);
       SCOPED_TRACE(absl::StrFormat(
           "Should be reset by non_modifier_key %s. key_sequence:\n%s",
           (is_key_up ? "up" : "down"), key_sequence.c_str()));

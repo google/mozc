@@ -149,6 +149,8 @@ mozc_objc_library(
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -285,7 +287,9 @@ mozc_macos_bundle(
     bundle_name = "ActivatePane",
     infoplists = ["ActivatePane/Info.plist"],
     strings = [
+        "ActivatePane/English.lproj/InfoPlist.strings",
         "ActivatePane/English.lproj/Localizable.strings",
+        "ActivatePane/Japanese.lproj/InfoPlist.strings",
         "ActivatePane/Japanese.lproj/Localizable.strings",
     ],
     deps = ["activate_pane_lib"],
@@ -310,7 +314,9 @@ mozc_macos_bundle(
     bundle_name = "DevConfirmPane",
     infoplists = ["DevConfirmPane/Info.plist"],
     strings = [
+        "DevConfirmPane/English.lproj/InfoPlist.strings",
         "DevConfirmPane/English.lproj/Localizable.strings",
+        "DevConfirmPane/Japanese.lproj/InfoPlist.strings",
         "DevConfirmPane/Japanese.lproj/Localizable.strings",
     ],
     deps = ["dev_confirm_pane_lib"],

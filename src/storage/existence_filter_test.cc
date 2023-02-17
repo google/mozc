@@ -95,10 +95,10 @@ TEST(ExistenceFilterTest, RunTest) {
 }
 
 TEST(ExistenceFilterTest, MinFilterSizeEstimateTest) {
-  EXPECT_EQ(61, ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.1, 100));
-  EXPECT_EQ(120, ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01, 100));
-  EXPECT_EQ(79, ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 100));
-  EXPECT_EQ(781, ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 1000));
+  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.1, 100), 61);
+  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01, 100), 120);
+  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 100), 79);
+  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 1000), 781);
 }
 
 TEST(ExistenceFilterTest, ReadWriteTest) {

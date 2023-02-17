@@ -18,5 +18,7 @@
 	<string>DevConfirmPane</string>
 	<key>NSPrincipalClass</key>
 	<string>InstallerSection</string>
+	<key>InstallerSectionTitle</key>
+	<string>Confirmation</string>
 </dict>
 </plist>

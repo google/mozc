@@ -54,6 +54,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -1462,9 +1463,10 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   Clock::SetClockForUnitTest(&clock);
 
   rewriter->Clear();
+  absl::BitGen gen;
   for (int i = 0; i < 5; ++i) {
     InitSegments(&segments, 1);
-    const int n = Util::Random(10);
+    const int n = absl::Uniform(gen, 0, 10);
     const std::string expected = segments.segment(0).candidate(n).value;
     segments.mutable_segment(0)->move_candidate(n, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
