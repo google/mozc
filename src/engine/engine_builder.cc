@@ -34,15 +34,24 @@
 #include <utility>
 
 #include "base/file_util.h"
+#include "base/hash.h"
 #include "base/logging.h"
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace {
+
+uint64_t GetRequestHash(const EngineReloadRequest &request) {
+  if (request.file_path().empty() || request.install_location().empty()) {
+    return 0;
+  }
+  return Hash::Fingerprint(request.SerializeAsString());
+}
 
 EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   switch (status) {
@@ -119,6 +128,16 @@ EngineBuilder::~EngineBuilder() = default;
 void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
                                  EngineReloadResponse *response) {
   *response->mutable_request() = request;
+
+  // Skips the sync when loading the model with the same path.
+  const auto model_path_fp = model_path_fp_.load();
+  if (model_path_fp != 0 && model_path_fp == GetRequestHash(request)) {
+    LOG(INFO)
+        << "PrepareAsync is skipped because the same model is already loaded.";
+    response->set_status(EngineReloadResponse::RELOADED);
+    return;
+  }
+
   if (preparator_) {
     if (preparator_->IsRunning()) {
       response->set_status(EngineReloadResponse::ALREADY_RUNNING);
@@ -175,6 +194,9 @@ std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
     LOG(ERROR) << engine.status();
     return nullptr;
   }
+
+  model_path_fp_.store(GetRequestHash(preparator_->response_.request()));
+
   return *std::move(engine);
 }
 
