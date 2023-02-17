@@ -45,7 +45,6 @@ mozc_cc_library(
     hdrs = ["engine_builder_interface.h"],
     deps = [
         ":engine_interface",
-        "//base:port",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/strings",
     ],
@@ -98,8 +97,6 @@ mozc_cc_library(
     hdrs = ["engine_interface.h"],
     deps = [
         ":user_data_manager_interface",
-        "//base",
-        "//base:port",
         "//converter:converter_interface",
         "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
@@ -125,7 +122,6 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
-        "//base",
         "//base:logging",
         "//base:port",
         "//converter",
@@ -194,7 +190,6 @@ mozc_cc_test(
     deps = [
         ":engine_factory",
         ":engine_interface",
-        "//base",
         "//base:logging",
         "//prediction:predictor_interface",
         "//testing:gunit_main",
@@ -237,7 +232,6 @@ mozc_cc_library(
     ],
     deps = [
         ":engine",
-        "//base",
         "//data_manager/google:google_data_manager",
         "//prediction:predictor",
         "@com_google_absl//absl/status:statusor",

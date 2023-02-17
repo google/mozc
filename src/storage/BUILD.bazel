@@ -43,7 +43,6 @@ mozc_cc_library(
     srcs = ["lru_storage.cc"],
     hdrs = ["lru_storage.h"],
     deps = [
-        "//base",
         "//base:clock",
         "//base:file_stream",
         "//base:file_util",
@@ -83,7 +82,6 @@ mozc_cc_library(
     srcs = ["existence_filter.cc"],
     hdrs = ["existence_filter.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
     ],
@@ -113,7 +111,6 @@ mozc_cc_test(
     srcs = ["existence_filter_test.cc"],
     deps = [
         ":existence_filter",
-        "//base",
         "//base:hash",
         "//base:logging",
         "//base:port",
@@ -133,7 +130,6 @@ mozc_cc_library(
     hdrs = ["tiny_storage.h"],
     deps = [
         ":storage_interaface",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
@@ -149,7 +145,6 @@ mozc_cc_test(
     deps = [
         ":storage_interaface",
         ":tiny_storage",
-        "//base",
         "//base:file_util",
         "//base:port",
         "//testing:gunit_main",
@@ -164,7 +159,6 @@ mozc_cc_library(
     hdrs = ["memory_storage.h"],
     deps = [
         ":storage_interaface",
-        "//base",
         "//base:logging",
     ],
 )
@@ -175,7 +169,6 @@ mozc_cc_test(
     srcs = ["memory_storage_test.cc"],
     deps = [
         ":memory_storage",
-        "//base",
         "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
@@ -189,7 +182,6 @@ mozc_cc_library(
     deps = [
         ":storage_interaface",
         ":tiny_storage",
-        "//base",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -205,7 +197,6 @@ mozc_cc_test(
     srcs = ["registry_test.cc"],
     deps = [
         ":registry",
-        "//base",
         "//base:system_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",

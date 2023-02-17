@@ -46,7 +46,6 @@ mozc_cc_library(
         ":key_event_util",
         ":table",
         ":type_corrected_query",
-        "//base",
         "//base:clock",
         "//base:japanese_util",
         "//base:logging",
@@ -80,7 +79,6 @@ mozc_cc_test(
         ":composer",
         ":key_parser",
         ":table",
-        "//base",
         "//base:clock_mock",
         "//base:logging",
         "//base:system_util",
@@ -102,7 +100,6 @@ mozc_cc_library(
     srcs = ["table.cc"],
     hdrs = ["table.h"],
     deps = [
-        "//base",
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:hash",
@@ -136,7 +133,6 @@ mozc_cc_binary(
     deps = [
         ":composer",
         ":table",
-        "//base",
         "//base:init_mozc",
         "//base/protobuf",
         "//protocol:commands_cc_proto",
@@ -167,7 +163,6 @@ mozc_cc_library(
     srcs = ["key_event_util.cc"],
     hdrs = ["key_event_util.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//protocol:commands_cc_proto",
@@ -182,7 +177,6 @@ mozc_cc_test(
     deps = [
         ":key_event_util",
         ":key_parser",
-        "//base",
         "//base:util",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
@@ -195,9 +189,7 @@ mozc_cc_library(
     srcs = ["key_parser.cc"],
     hdrs = ["key_parser.h"],
     deps = [
-        "//base",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings",

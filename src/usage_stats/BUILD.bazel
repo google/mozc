@@ -64,7 +64,6 @@ mozc_cc_library(
     deps = [
         ":usage_stats_cc_proto",
         ":usage_stats_uploader",
-        "//base",
         "//base:logging",
         "//base:port",
         "//config:stats_config_util",
@@ -102,7 +101,6 @@ mozc_cc_library(
     ],
     hdrs = ["usage_stats_uploader.h"],
     deps = [
-        "//base",
         "//base:port",
         "//storage:registry",
     ],
@@ -134,9 +132,7 @@ mozc_cc_library(
     deps = [
         ":usage_stats",
         ":usage_stats_cc_proto",
-        "//base",
         "//base:port",
-        "//base:util",
         "//config:stats_config_util",
         "//config:stats_config_util_mock",
         "//testing",

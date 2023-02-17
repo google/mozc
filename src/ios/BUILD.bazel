@@ -41,7 +41,6 @@ mozc_cc_library(
     visibility = [
     ],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//config:config_handler",

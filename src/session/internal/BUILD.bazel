@@ -45,7 +45,6 @@ mozc_cc_library(
     deps = [
         ":key_event_transformer",
         ":keymap",
-        "//base",
         "//base:logging",
         "//base:port",
         "//composer",
@@ -89,7 +88,6 @@ mozc_cc_library(
     srcs = ["key_event_transformer.cc"],
     hdrs = ["key_event_transformer.h"],
     deps = [
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:port",
@@ -120,7 +118,6 @@ mozc_cc_library(
     hdrs = ["session_output.h"],
     deps = [
         ":candidate_list",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:text_normalizer",
@@ -189,7 +186,6 @@ mozc_cc_test(
     srcs = ["key_event_transformer_test.cc"],
     deps = [
         ":key_event_transformer",
-        "//base",
         "//base:port",
         "//base:singleton",
         "//protocol:commands_cc_proto",

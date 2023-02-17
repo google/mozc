@@ -77,7 +77,6 @@ mozc_cc_library(
     deps = [
         ":googletest",
         ":gunit",
-        "//base",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         client = ["//base:init_mozc"],
@@ -140,7 +139,6 @@ mozc_cc_library(
     hdrs = ["testing_util.h"],
     deps = [
         ":gunit",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base/protobuf",
@@ -177,7 +175,6 @@ mozc_cc_library(
     deps = mozc_select(
         client = [
             ":mozc_data_dir_header",
-            "//base",
             "//base:status",
             "//base:logging",
             "//base:file_util",
@@ -188,7 +185,6 @@ mozc_cc_library(
         linux = ["@gtest//:gtest"],
         oss = [
             ":mozc_data_dir_header",
-            "//base",
             "//base:status",
             "//base:logging",
             "//base:file_util",
@@ -208,7 +204,6 @@ mozc_cc_library(
     ],
     deps = [
         ":googletest",
-        "//base",
         "//base:file_util",
         "//base:logging",
         "//base:port",

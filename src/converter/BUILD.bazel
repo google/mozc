@@ -69,7 +69,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":segments",
-        "//base",
         "//base:number_util",
         "//base:system_util",
         "//base:util",
@@ -109,7 +108,6 @@ mozc_cc_library(
         "//dictionary:__subpackages__",
     ],
     deps = [
-        "//base",
         "//base:port",
         "//dictionary:dictionary_token",
     ],
@@ -124,7 +122,6 @@ mozc_cc_library(
     ],
     deps = [
         ":node",
-        "//base",
         "//base:freelist",
         "//base:logging",
         "//base:port",
@@ -154,7 +151,6 @@ mozc_cc_library(
     srcs = ["connector.cc"],
     hdrs = ["connector.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -177,7 +173,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":connector",
-        "//base",
         "//base:logging",
         "//base:mmap",
         "//data_manager:connection_file_reader",
@@ -199,7 +194,6 @@ mozc_cc_library(
         ":node",
         ":segmenter",
         ":segments",
-        "//base",
         "//base:freelist",
         "//base:logging",
         "//base:port",
@@ -253,7 +247,6 @@ mozc_cc_library(
         ":node",
         ":node_allocator",
         ":segments",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -275,7 +268,6 @@ mozc_cc_test(
         ":candidate_filter",
         ":node",
         ":segments",
-        "//base",
         "//base:freelist",
         "//base:port",
         "//base:util",
@@ -314,7 +306,6 @@ mozc_cc_library(
     deps = [
         ":node",
         ":node_allocator",
-        "//base",
         "//base:freelist",
         "//base:logging",
         "//base:port",
@@ -332,7 +323,6 @@ mozc_cc_test(
     deps = [
         ":lattice",
         ":node",
-        "//base",
         "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/container:btree",
@@ -374,7 +364,6 @@ mozc_cc_library(
         ":node_list_builder",
         ":segmenter",
         ":segments",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:port",
@@ -555,7 +544,6 @@ mozc_cc_test(
         ":converter",
         ":converter_interface",
         ":segments",
-        "//base",
         "//base:file_util",
         "//base:system_util",
         "//composer",
@@ -578,7 +566,6 @@ mozc_cc_library(
     srcs = ["pos_id_printer.cc"],
     hdrs = ["pos_id_printer.h"],
     deps = [
-        "//base",
         "//base:file_stream",
         "//base:logging",
         "//base:number_util",
@@ -595,7 +582,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":pos_id_printer",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//testing:gunit_main",
@@ -619,7 +605,6 @@ mozc_cc_binary(
         ":lattice",
         ":pos_id_printer",
         ":segments",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc",
@@ -650,7 +635,6 @@ mozc_cc_library(
     hdrs = ["gen_segmenter_bitarray.h"],
     visibility = ["//data_manager:__subpackages__"],
     deps = [
-        "//base",
         "//base:bitarray",
         "//base:file_stream",
         "//base:logging",
@@ -693,7 +677,6 @@ mozc_cc_library(
     srcs = ["key_corrector.cc"],
     hdrs = ["key_corrector.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -709,7 +692,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":key_corrector",
-        "//base",
         "//base:port",
         "//testing:gunit_main",
     ],
@@ -743,7 +725,6 @@ mozc_cc_library(
     deps = [
         ":converter_interface",
         ":segments",
-        "//base",
         "//base:file_stream",
         "//base:logging",
         "//base:port",

@@ -84,31 +84,11 @@ test_suite(
 )
 
 mozc_cc_library(
-    name = "base",
-    hdrs = [
-        "compiler_specific.h",
-        "const.h",
-    ],
-    deps = [
-        ":compiler_specific",
-        ":const",
-        ":file_stream",
-        ":file_util",
-        ":mmap",
-        ":number_util",
-        ":port",
-        ":process_mutex",
-        ":singleton",
-        ":system_util",
-        ":thread",
-        ":util",
-    ],
-)
-
-mozc_cc_library(
     name = "compiler_specific",
     hdrs = ["compiler_specific.h"],
-    visibility = ["//visibility:private"],
+    visibility = [
+        "//:__subpackages__",
+    ],
 )
 
 mozc_cc_library(
@@ -118,6 +98,7 @@ mozc_cc_library(
     copts = ["-DMOZC_BUILDTOOL_BUILD"],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":system_util",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         client = [
@@ -178,8 +159,7 @@ mozc_cc_library(
     name = "const",
     hdrs = ["const.h"],
     visibility = [
-        "//mac:__pkg__",
-        "//renderer:__pkg__",
+        "//:__subpackages__",
     ],
 )
 
@@ -407,7 +387,6 @@ mozc_cc_test(
     deps = [
         ":clock",
         ":clock_mock",
-        ":port",
         "//testing:gunit_main",
     ],
 )
@@ -595,7 +574,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":port",
-        ":util",
         "@com_google_absl//absl/time",
     ],
 )
@@ -723,7 +701,6 @@ mozc_cc_test(
     deps = [
         ":file_util",
         ":logging",
-        ":number_util",
         ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
@@ -1270,7 +1247,7 @@ mozc_cc_library(
     srcs = ["crash_report_handler.cc"],
     hdrs = ["crash_report_handler.h"],
     deps = [
-        ":base",
+        ":const",
         ":file_util",
         ":logging",
         ":system_util",
@@ -1367,7 +1344,7 @@ mozc_cc_library(
         "//server:__pkg__",
     ],
     deps = [
-        ":base",
+        ":const",
         ":port",
         ":util",
     ],

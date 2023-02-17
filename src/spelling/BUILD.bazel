@@ -113,7 +113,6 @@ mozc_cc_test(
     srcs = ["spellchecker_service_test.cc"],
     deps = [
         ":spellchecker_service",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:util",
@@ -131,10 +130,8 @@ mozc_cc_library(
     hdrs = ["rulebased_filter.h"],
     deps = [
         "//base:file_stream",
-        "//base:file_util",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
@@ -152,7 +149,6 @@ mozc_cc_test(
     srcs = ["rulebased_filter_test.cc"],
     deps = [
         ":rulebased_filter",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:util",

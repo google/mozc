@@ -121,7 +121,6 @@ mozc_cc_library(
     srcs = ["connection_file_reader.cc"],
     hdrs = ["connection_file_reader.h"],
     deps = [
-        "//base",
         "//base:file_stream",
         "//base:logging",
         "//base:number_util",
@@ -165,7 +164,6 @@ mozc_cc_test(
     deps = [
         ":dataset_cc_proto",
         ":dataset_writer",
-        "//base:file_stream",
         "//base:file_util",
         "//base:obfuscator_support",
         "//base:util",
@@ -181,7 +179,6 @@ mozc_cc_binary(
     srcs = ["dataset_writer_main.cc"],
     deps = [
         ":dataset_writer",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc_buildtool",

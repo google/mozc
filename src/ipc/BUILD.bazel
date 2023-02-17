@@ -53,7 +53,7 @@ mozc_cc_library(
     hdrs = ["ipc.h"],
     deps = [
         ":ipc_path_manager",
-        "//base",
+        "//base:const",
         "//base:cpu_stats",
         "//base:file_util",
         "//base:logging",
@@ -89,7 +89,7 @@ mozc_cc_library(
     deps = [
         ":ipc_hdr",
         ":ipc_cc_proto",
-        "//base",
+        "//base:const",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
@@ -207,7 +207,7 @@ mozc_cc_library(
     srcs = ["named_event.cc"],
     hdrs = ["named_event.h"],
     deps = [
-        "//base",
+        "//base:const",
         "//base:hash",
         "//base:logging",
         "//base:port",

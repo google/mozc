@@ -98,7 +98,6 @@ mozc_cc_qt_library(
     ],
     deps = [
         ":encoding_util",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:singleton",

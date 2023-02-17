@@ -414,7 +414,6 @@ def mozc_dataset(
         copts = ["-Wno-parentheses"],
         visibility = ["//tools:__subpackages__"],
         deps = [
-            "//base",
             "//base:init_mozc_buildtool",
             "//converter:gen_segmenter_bitarray",
             "//:macro",

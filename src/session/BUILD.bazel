@@ -71,7 +71,6 @@ mozc_cc_library(
     deps = [
         ":session_converter_interface",
         ":session_usage_stats_util",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:text_normalizer",
@@ -103,7 +102,6 @@ mozc_cc_test(
     deps = [
         ":request_test_util",
         ":session_converter",
-        "//base",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -246,7 +244,6 @@ mozc_cc_test(
         ":session",
         ":session_converter_interface",
         ":session_handler",
-        "//base",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -275,7 +272,6 @@ mozc_cc_library(
     hdrs = ["session_observer_handler.h"],
     deps = [
         ":session_observer_interface",
-        "//base",
         "//base:port",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -325,7 +321,6 @@ mozc_cc_library(
         ":session",
         ":session_handler_interface",
         ":session_observer_handler",
-        "//base",
         "//base:clock",
         "//base:logging",
         "//base:port",
@@ -376,7 +371,6 @@ mozc_cc_library(
         ":session_handler",
         ":session_handler_interface",
         ":session_usage_observer",
-        "//base",
         "//base:config_file_stream",
         "//base:file_util",
         "//base:logging",
@@ -412,7 +406,6 @@ mozc_cc_test(
     deps = [
         ":session_handler",
         ":session_handler_test_util",
-        "//base",
         "//base:clock_mock",
         "//base:port",
         "//base:stopwatch",
@@ -459,7 +452,6 @@ mozc_cc_library(
     srcs = ["request_test_util.cc"],
     hdrs = ["request_test_util.h"],
     deps = [
-        "//base",
         "//base:port",
         "//composer:table",
         "//protocol:commands_cc_proto",
@@ -605,7 +597,6 @@ mozc_cc_library(
     srcs = ["key_info_util.cc"],
     hdrs = ["key_info_util.h"],
     deps = [
-        "//base",
         "//base:config_file_stream",
         "//base:logging",
         "//base:port",
@@ -627,7 +618,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":key_info_util",
-        "//base",
         "//composer:key_parser",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
@@ -641,7 +631,6 @@ mozc_cc_library(
     srcs = ["output_util.cc"],
     hdrs = ["output_util.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//protocol:candidates_cc_proto",
@@ -656,7 +645,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":output_util",
-        "//base",
         "//base:port",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
@@ -669,7 +657,6 @@ mozc_cc_library(
     srcs = ["session_usage_stats_util.cc"],
     hdrs = ["session_usage_stats_util.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -689,7 +676,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":session_usage_stats_util",
-        "//base",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
@@ -723,7 +709,6 @@ mozc_cc_library(
     ],
     hdrs = ["random_keyevents_generator.h"],
     deps = [
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:port",
@@ -876,10 +861,7 @@ mozc_cc_library(
     visibility = [
         "//:__subpackages__",
     ],
-    deps = [
-        "//base:port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_library(

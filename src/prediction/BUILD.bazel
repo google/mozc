@@ -343,7 +343,6 @@ mozc_cc_test(
         ":predictor",
         ":predictor_interface",
         ":user_history_predictor",
-        "//base",
         "//base:logging",
         "//base:singleton",
         "//base:system_util",
@@ -367,7 +366,6 @@ mozc_cc_library(
     srcs = ["suggestion_filter.cc"],
     hdrs = ["suggestion_filter.h"],
     deps = [
-        "//base",
         "//base:hash",
         "//base:logging",
         "//base:port",
@@ -405,7 +403,6 @@ mozc_cc_binary(
     name = "gen_suggestion_filter_main",
     srcs = ["gen_suggestion_filter_main.cc"],
     deps = [
-        "//base",
         "//base:codegen_bytearray_stream",
         "//base:file_stream",
         "//base:hash",
