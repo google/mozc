@@ -126,15 +126,9 @@ bool ClearCheckDefault() {
     return false;
   }
   config::Config config;
-  if (!config::ConfigHandler::GetConfig(&config)) {
-    LOG(ERROR) << "Cannot get config";
-    return false;
-  }
+  config::ConfigHandler::GetConfig(&config);
   config.set_check_default(false);
-  if (!client.SetConfig(config)) {
-    LOG(ERROR) << "Cannot set config";
-    return false;
-  }
+  client.SetConfig(config);
   return true;
 }
 

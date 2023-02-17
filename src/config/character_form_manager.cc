@@ -456,7 +456,7 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
     }
 
     // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (begin != str.begin() && prev_form != form) {
+    if (begin != str.data() && prev_form != form) {
       absl::StrAppend(output, ConvertToAlternative(buf, prev_form, prev_type));
       buf.clear();
     }
@@ -500,7 +500,8 @@ void CharacterFormManagerImpl::Clear() {
 
 void CharacterFormManagerImpl::AddRule(const absl::string_view key,
                                        Config::CharacterForm form) {
-  auto begin = key.begin(), end = key.end();
+  const char *begin = key.data();
+  const char *end = key.data() + key.size();
 
   std::vector<uint16_t> group;
   while (begin < end) {
