@@ -428,7 +428,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
 
     constexpr int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {
-      const int key_index = absl::Uniform(gen, 0, kKeySetSize);
+      const int key_index = absl::Uniform<int>(gen, 0, kKeySetSize);
       const uint key_value = kKeySet[key_index];
 
       bool is_key_up;
