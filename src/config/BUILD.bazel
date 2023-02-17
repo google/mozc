@@ -45,6 +45,7 @@ mozc_cc_library(
     deps = [
         "//base:clock",
         "//base:config_file_stream",
+        "//base:hash",
         "//base:logging",
         "//base:singleton",
         "//base:system_util",
@@ -63,6 +64,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":config_handler",
+        "//base:clock_mock",
         "//base:file_util",
         "//base:logging",
         "//base:system_util",

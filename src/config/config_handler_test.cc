@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/clock_mock.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
@@ -165,6 +166,63 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
 #endif  // OS_ANDROID && CHANNEL_DEV
+}
+
+TEST_F(ConfigHandlerTest, SetMetadata) {
+  ClockMock clock1(1000, 0);
+  Clock::SetClockForUnitTest(&clock1);
+  Config input1;
+  ConfigHandler::SetMetaData(&input1);
+
+  ClockMock clock2(1000, 0);
+  Clock::SetClockForUnitTest(&clock2);
+  Config input2;
+  ConfigHandler::SetMetaData(&input2);
+
+  ClockMock clock3(1001, 0);
+  Clock::SetClockForUnitTest(&clock3);
+  Config input3;
+  ConfigHandler::SetMetaData(&input3);
+
+  // input1 and input2 are created at the same time,
+  // but input3 is not.
+  EXPECT_EQ(input1.DebugString(), input2.DebugString());
+  EXPECT_NE(input2.DebugString(), input3.DebugString());
+  EXPECT_NE(input3.DebugString(), input1.DebugString());
+  Clock::SetClockForUnitTest(nullptr);
+}
+
+TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
+  Config input;
+
+  const std::string config_file = FileUtil::JoinPath(
+      absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
+  ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
+  ScopedSetConfigFileName scoped_config_file_name(config_file);
+  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
+  ConfigHandler::Reload();
+
+  ConfigHandler::GetDefaultConfig(&input);
+  input.set_incognito_mode(true);
+#ifndef MOZC_NO_LOGGING
+  input.set_verbose_level(2);
+#endif  // MOZC_NO_LOGGING
+
+  ClockMock clock1(1000, 0);
+  Clock::SetClockForUnitTest(&clock1);
+  ConfigHandler::SetConfig(input);
+  std::unique_ptr<config::Config> output1 = ConfigHandler::GetConfig();
+
+  ClockMock clock2(1001, 0);
+  Clock::SetClockForUnitTest(&clock2);
+  ConfigHandler::SetConfig(input);
+  std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
+
+  // As SetConfig() is called twice with the same config,
+  // GetConfig() must return the identical (including metadata!) config.
+  // This also means no actual storage write access happened.
+  EXPECT_EQ(output1->DebugString(), output2->DebugString());
+  Clock::SetClockForUnitTest(nullptr);
 }
 
 TEST_F(ConfigHandlerTest, SetImposedConfig) {

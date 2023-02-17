@@ -39,6 +39,7 @@
         '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         "../base/absl.gyp:absl_time",
+        '../base/base_test.gyp:clock_mock',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
         'config.gyp:config_handler',

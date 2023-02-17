@@ -43,6 +43,7 @@
         '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../base/base.gyp:hash',
         '../base/base.gyp:version',
         '../protocol/protocol.gyp:config_proto',
       ],
