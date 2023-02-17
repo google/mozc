@@ -924,51 +924,6 @@ TEST(UtilTest, ChopReturns) {
   EXPECT_EQ(line, "line");
 }
 
-TEST(UtilTest, EncodeUri) {
-  std::string encoded;
-  Util::EncodeUri("もずく", &encoded);
-  EXPECT_EQ(encoded, "%E3%82%82%E3%81%9A%E3%81%8F");
-
-  encoded.clear();
-  Util::EncodeUri("mozc", &encoded);
-  EXPECT_EQ(encoded, "mozc");
-
-  encoded.clear();
-  Util::EncodeUri("http://mozc/?q=Hello World", &encoded);
-  EXPECT_EQ(encoded, "http%3A%2F%2Fmozc%2F%3Fq%3DHello%20World");
-}
-
-TEST(UtilTest, DecodeUri) {
-  std::string decoded;
-  Util::DecodeUri("%E3%82%82%E3%81%9A%E3%81%8F", &decoded);
-  EXPECT_EQ(decoded, "もずく");
-
-  decoded.clear();
-  Util::DecodeUri("mozc", &decoded);
-  EXPECT_EQ(decoded, "mozc");
-
-  decoded.clear();
-  Util::DecodeUri("http%3A%2F%2Fmozc%2F%3Fq%3DHello+World", &decoded);
-  EXPECT_EQ(decoded, "http://mozc/?q=Hello World");
-}
-
-TEST(UtilTest, AppendCgiParams) {
-  std::vector<std::pair<std::string, std::string> > params;
-  std::string url;
-  Util::AppendCgiParams(params, &url);
-  EXPECT_TRUE(url.empty());
-
-  params.push_back(std::make_pair("foo", "b a+r"));
-  url = "http://mozc.com?";
-  Util::AppendCgiParams(params, &url);
-  EXPECT_EQ(url, "http://mozc.com?foo=b%20a%2Br");
-
-  params.push_back(std::make_pair("buzz", "mozc"));
-  url.clear();
-  Util::AppendCgiParams(params, &url);
-  EXPECT_EQ(url, "foo=b%20a%2Br&buzz=mozc");
-}
-
 TEST(UtilTest, Escape) {
   std::string escaped;
   Util::Escape("らむだ", &escaped);

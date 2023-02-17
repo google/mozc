@@ -32,24 +32,23 @@
 
 #include <string>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace url {
 
-class Url {
- public:
-  Url() = delete;
-  Url(const Url &) = delete;
-  Url &operator=(const Url &) = delete;
+// Decode an encoded url.
+std::string DecodeUrl(absl::string_view input);
 
-  // Composes a URL for an uninstallation survey.  Note that we should set
-  // version because, in Mac OS, we can not get mozc version from uninstaller
-  // binary.
-  static bool GetUninstallationSurveyUrl(absl::string_view version,
-                                         std::string *url);
-};
+// Encode non-alnum characters in the input url.
+std::string EncodeUrl(absl::string_view input);
 
+// Composes a URL for an uninstallation survey.  Note that we should set
+// version because, in Mac OS, we can not get mozc version from uninstaller
+// binary.
+std::string GetUninstallationSurveyUrl(absl::string_view version);
+
+}  // namespace url
 }  // namespace mozc
 
 #endif  // MOZC_BASE_URL_H_

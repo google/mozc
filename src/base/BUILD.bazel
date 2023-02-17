@@ -1211,11 +1211,8 @@ mozc_cc_library(
     hdrs = ["url.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":logging",
-        ":port",
-        ":singleton",
-        ":util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -1226,7 +1223,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":url",
-        ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
