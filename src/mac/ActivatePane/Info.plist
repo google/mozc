@@ -12,13 +12,15 @@
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
-  <key>CFBundleVersion</key>
-  <string>${CURRENT_PROJECT_VERSION}</string>
-  <key>CFBundleShortVersionString</key>
-  <string>${MARKETING_VERSION}</string>
+	<key>CFBundleVersion</key>
+	<string>${CURRENT_PROJECT_VERSION}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${MARKETING_VERSION}</string>
 	<key>NSMainNibFile</key>
 	<string>ActivatePane</string>
 	<key>NSPrincipalClass</key>
 	<string>InstallerSection</string>
+	<key>InstallerSectionTitle</key>
+	<string>Setup</string>
 </dict>
 </plist>
