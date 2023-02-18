@@ -39,7 +39,6 @@ mozc_cc_library(
         ":mozc_connection",
         ":fcitx_key_util",
         ":surrounding_text_util",
-        "//base:base",
         "//base:init_mozc",
         "//base:port",
         "//base:process",
