@@ -42,10 +42,7 @@ mozc_cc_library(
     name = "transliteration",
     srcs = ["transliteration.cc"],
     hdrs = ["transliteration.h"],
-    deps = [
-        "//base",
-        "//base:port",
-    ],
+    deps = ["//base:port"],
 )
 
 mozc_cc_test(
@@ -54,7 +51,6 @@ mozc_cc_test(
     srcs = ["transliteration_test.cc"],
     deps = [
         ":transliteration",
-        "//base",
         "//testing:gunit_main",
     ],
 )

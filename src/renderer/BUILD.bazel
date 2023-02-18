@@ -53,7 +53,6 @@ mozc_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":renderer_interface",
-        "//base",
         "//base:clock",
         "//base:logging",
         "//base:port",
@@ -82,7 +81,6 @@ mozc_cc_test(
     deps = [
         ":renderer_client",
         ":renderer_interface",
-        "//base",
         "//base:logging",
         "//base:number_util",
         "//base:port",
@@ -102,7 +100,8 @@ mozc_cc_library(
     hdrs = ["renderer_server.h"],
     deps = [
         ":renderer_interface",
-        "//base",
+        "//base:compiler_specific",
+        "//base:const",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -149,7 +148,6 @@ mozc_cc_library(
     ],
     hdrs = ["table_layout.h"],
     deps = [
-        "//base",
         "//base:coordinates",
         "//base:logging",
         "//base:port",
@@ -167,7 +165,6 @@ mozc_cc_test(
     tags = ["no_android"],
     deps = [
         ":table_layout",
-        "//base",
         "//testing:gunit_main",
     ],
 )
@@ -176,10 +173,7 @@ mozc_cc_library(
     name = "window_util",
     srcs = ["window_util.cc"],
     hdrs = ["window_util.h"],
-    deps = [
-        "//base",
-        "//base:coordinates",
-    ],
+    deps = ["//base:coordinates"],
 )
 
 mozc_cc_library(
@@ -213,7 +207,6 @@ mozc_cc_test(
     tags = ["no_android"],
     deps = [
         ":window_util",
-        "//base",
         "//base:coordinates",
         "//testing:gunit_main",
     ],
@@ -289,7 +282,8 @@ mozc_cc_library(
         ],
     ),
     deps = [
-        "//base",
+        "//base:port",
+        "//base:util",
         "//client",
         "//config:stats_config_util",
         "//ipc",
@@ -490,7 +484,6 @@ mozc_objc_library(
         "Foundation",
     ],
     deps = mozc_select(macos = [
-        "//base:base",
         "//base:const",
         "//base:coordinates",
         "//base:crash_report_handler",

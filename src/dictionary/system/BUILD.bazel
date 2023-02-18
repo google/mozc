@@ -56,7 +56,6 @@ mozc_cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":words_info",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:singleton",
@@ -112,7 +111,6 @@ mozc_cc_library(
         ":key_expansion_table",
         ":token_decode_iterator",
         ":words_info",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:mmap",
@@ -142,7 +140,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":codec",
-        "//base",
         "//base:logging",
         "//base:mmap",
         "//base:port",
@@ -250,10 +247,7 @@ mozc_cc_test(
 mozc_cc_library(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],
-    deps = [
-        "//base",
-        "//base:port",
-    ],
+    deps = ["//base:port"],
 )
 
 mozc_cc_test(

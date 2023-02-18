@@ -79,7 +79,7 @@ mozc_cc_qt_library(
         ":uic_word_register_dialog",
     ],
     deps = [
-        "//base",
+        "//base:const",
         "//base:logging",
         "//base:port",
         "//base:system_util",

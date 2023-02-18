@@ -108,7 +108,7 @@ mozc_cc_library(
         ":ibus_header",
         ":ibus_utils",
         ":ibus_wrapper",
-        "//base",
+        "//base:const",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -136,7 +136,6 @@ mozc_cc_library(
         "MOZC_IBUS_INSTALL_DIR=\\\"" + IBUS_MOZC_INSTALL_DIR + "\\\"",
     ],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -153,7 +152,6 @@ mozc_cc_test(
     ],
     deps = [
         ":ibus_utils",
-        "//base",
         "//testing:gunit_main",
     ],
 )
@@ -196,8 +194,8 @@ mozc_cc_library(
         ":ibus_utils",
         ":ibus_wrapper",
         ":x11_selection_monitor",
-        "//base",
         "//base:clock",
+        "//base:const",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -279,7 +277,6 @@ mozc_cc_binary(
         ":ibus_header",
         ":ibus_mozc_lib",
         ":ibus_utils",
-        "//base",
         "//base:init_mozc",
         "//base:logging",
         "//base:version",
@@ -301,7 +298,6 @@ mozc_cc_test(
     ),
     deps = [
         ":ibus_mozc_lib",
-        "//base",
         "//base:clock",
         "//base:port",
         "//base:util",
@@ -376,7 +372,6 @@ mozc_cc_library(
         ],
     ),
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:thread",

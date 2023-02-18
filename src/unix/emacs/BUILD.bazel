@@ -48,7 +48,6 @@ mozc_cc_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         ":mozc_emacs_helper_lib",
-        "//base",
         "//base:init_mozc",
         "//base:logging",
         "//base:util",

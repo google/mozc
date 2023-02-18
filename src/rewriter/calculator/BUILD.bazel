@@ -44,7 +44,6 @@ mozc_cc_library(
     hdrs = ["calculator_interface.h"],
     textual_hdrs = ["parser.c.inc"],
     deps = [
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:number_util",
@@ -62,7 +61,6 @@ mozc_cc_library(
     hdrs = ["calculator_mock.h"],
     deps = [
         ":calculator",
-        "//base",
         "//base:logging",
     ],
 )
@@ -75,7 +73,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":calculator",
-        "//base",
         "//base:file_util",
         "//base:logging",
         "//testing:gunit_main",

@@ -61,7 +61,6 @@ mozc_cc_library(
     ],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # mozc_server.cc
     deps = [
-        "//base",
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:logging",

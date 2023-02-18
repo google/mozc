@@ -67,7 +67,7 @@ mozc_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":client_interface",
-        "//base",
+        "//base:const",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
@@ -140,7 +140,6 @@ mozc_cc_binary(
     srcs = ["server_launcher_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:init_mozc",
         "//base:logging",
         "//base:process",
@@ -213,7 +212,6 @@ mozc_cc_binary(
     srcs = ["ping_server_main.cc"],
     deps = [
         ":client",
-        "//base",
         "//base:init_mozc",
         "//base:logging",
         "@com_google_absl//absl/flags:flag",
@@ -244,7 +242,6 @@ mozc_cc_binary(
     tags = ["manual"],
     deps = [
         ":client",
-        "//base",
         "//base:file_stream",
         "//base:init_mozc",
         "//base:japanese_util",

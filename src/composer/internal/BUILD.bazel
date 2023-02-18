@@ -55,7 +55,6 @@ mozc_cc_library(
         ":composition_input",
         ":transliterator_interface",
         ":transliterators",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -72,7 +71,6 @@ mozc_cc_library(
     hdrs = ["transliterators.h"],
     deps = [
         ":transliterator_interface",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:singleton",
@@ -117,9 +115,7 @@ mozc_cc_library(
     srcs = ["composition_input.cc"],
     hdrs = ["composition_input.h"],
     deps = [
-        "//base",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//base/protobuf:repeated_field",
         "//composer:key_parser",
@@ -154,7 +150,6 @@ mozc_cc_library(
         ":composition_input",
         ":transliterator_interface",
         ":transliterators",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -199,7 +194,6 @@ mozc_cc_library(
     srcs = ["converter.cc"],
     hdrs = ["converter.h"],
     deps = [
-        "//base",
         "//base:port",
         "//composer:table",
     ],
@@ -212,7 +206,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":converter",
-        "//base",
         "//composer:table",
         "//testing:gunit_main",
     ],
@@ -223,7 +216,6 @@ mozc_cc_library(
     srcs = ["mode_switching_handler.cc"],
     hdrs = ["mode_switching_handler.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:singleton",
     ],
@@ -236,7 +228,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":mode_switching_handler",
-        "//base",
         "//testing:gunit_main",
     ],
 )
@@ -268,7 +259,6 @@ mozc_cc_library(
     srcs = ["typing_model.cc"],
     hdrs = ["typing_model.h"],
     deps = [
-        "//base",
         "//base:port",
         "//data_manager:data_manager_interface",
         "//protocol:commands_cc_proto",
@@ -284,7 +274,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":typing_model",
-        "//base",
         "//composer:type_corrected_query",
         "//session:request_test_util",
         "//testing:gunit_main",
@@ -301,7 +290,6 @@ mozc_cc_library(
         ":composition",
         ":composition_input",
         ":typing_model",
-        "//base",
         "//base:port",
         "//base/protobuf",
         "//base/protobuf:repeated_field",
@@ -324,7 +312,6 @@ mozc_cc_test(
     deps = [
         "typing_corrector",
         ":typing_model",
-        "//base",
         "//base:singleton",
         "//composer:table",
         "//composer:type_corrected_query",

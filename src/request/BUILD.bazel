@@ -41,7 +41,6 @@ mozc_cc_library(
     srcs = ["conversion_request.cc"],
     hdrs = ["conversion_request.h"],
     deps = [
-        "//base",
         "//base:logging",
         "//base:port",
         "//config:config_handler",
