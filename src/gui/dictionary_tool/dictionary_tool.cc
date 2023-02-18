@@ -51,6 +51,7 @@
 #include <algorithm>
 #include <functional>
 #include <ios>
+#include <iosfwd>
 #include <memory>
 #include <string>
 #include <utility>
