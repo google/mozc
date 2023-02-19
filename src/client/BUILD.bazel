@@ -77,7 +77,7 @@ mozc_cc_library(
         "//base:system_util",
         "//base:util",
         "//base:version",
-        "//base:win_util",
+        "//base/win32:win_util",
         "//composer:key_event_util",
         "//config:config_handler",
         "//ipc",

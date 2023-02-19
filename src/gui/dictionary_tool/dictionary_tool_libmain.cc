@@ -39,7 +39,7 @@
 #include "gui/dictionary_tool/dictionary_tool.h"
 
 #ifdef OS_WIN
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #endif  // OS_WIN
 
 int RunDictionaryTool(int argc, char *argv[]) {

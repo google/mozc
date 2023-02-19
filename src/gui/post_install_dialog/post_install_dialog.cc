@@ -45,7 +45,7 @@
 #include "usage_stats/usage_stats.h"
 
 #ifdef OS_WIN
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "win32/base/imm_util.h"
 #endif  // OS_WIN
 

@@ -42,7 +42,7 @@
 
 #include <strsafe.h>
 
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"

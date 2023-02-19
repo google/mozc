@@ -30,7 +30,7 @@
 #include "gui/tool/mozc_tool_libmain.h"
 
 #ifdef OS_WIN
-#include "base/winmain.h"
+#include "base/win32/winmain.h"
 #endif  // OS_WIN
 
 int main(int argc, char *argv[]) { return RunMozcTool(argc, argv); }

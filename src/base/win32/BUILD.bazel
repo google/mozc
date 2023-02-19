@@ -1,0 +1,156 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Base library platform dependent code for Win32.
+
+load(
+    "//:build_defs.bzl",
+    "mozc_cc_library",
+)
+
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
+mozc_cc_library(
+    name = "scoped_handle",
+    srcs = ["scoped_handle.cc"],
+    hdrs = ["scoped_handle.h"],
+)
+
+mozc_cc_library(
+    name = "win_api_test_helper",
+    # TODO(b/180075250): Add when we support win32 builds.
+    # srcs = ["win_api_test_helper.cc"],
+    hdrs = ["win_api_test_helper.h"],
+    visibility = [
+        # For //config:stats_config_util_test.
+        "//config:__pkg__",
+    ],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+# TODO (b/180075250): Add when we support win32 builds.
+# mozc_cc_test(
+#     name = "win_api_test_helper_test",
+#     srcs = ["win_api_test_helper_test.cc"],
+#     deps = [
+#         ":win_api_test_helper",
+#         "//testing:gunit_main_objc",
+#     ],
+# )
+
+mozc_cc_library(
+    name = "win_font_test_helper",
+    testonly = True,
+    srcs = ["win_font_test_helper.cc"],
+    hdrs = ["win_font_test_helper.h"],
+    deps = [
+        "//base:logging",
+        "//base:mmap",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "win_sandbox",
+    srcs = ["win_sandbox.cc"],
+    hdrs = ["win_sandbox.h"],
+    deps = [
+        ":scoped_handle",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+    ],
+)
+
+# TODO (b/180075250): Add when we support win32 builds.
+# mozc_cc_test(
+#     name = "win_sandbox_test",
+#     srcs = ["win_sandbox_test.cc"],
+#     deps = [
+#         ":scoped_handle",
+#         ":win_sandbox",
+#         "//testing:gunit_main_objc",
+#     ],
+# )
+
+mozc_cc_library(
+    name = "win_util",
+    # TODO(b/269889028): temporary fix to address cyclic dependency
+    # srcs = ["win_util.cc"],
+    hdrs = ["win_util.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//base:port",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+# TODO (b/180075250): Add when we support win32 builds.
+# mozc_cc_test(
+#     name = "win_util_test",
+#     srcs = ["win_util_test.cc"],
+#     deps = [
+#         ":win_util",
+#         "//base:system_util",
+#         "//base:util",
+#         "//testing:gunit_main_objc",
+#     ],
+# )
+
+# TODO (b/180075250): Add when we support win32 builds.
+# mozc_cc_library(
+#     name = "win_util_test_dll",
+#     testonly = True,
+#     srcs = ["win_util_test_dll.cc"],
+#     deps = [":win_util"],
+# )
+
+mozc_cc_library(
+    name = "winmain",
+    hdrs = ["winmain.h"],
+    visibility = [
+        # For //server:mozc_server.
+        "//server:__pkg__",
+    ],
+    deps = [
+        "//base:const",
+        "//base:port",
+        "//base:util",
+    ],
+)

@@ -50,7 +50,7 @@
 #include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/indicator_visibility_tracker.h"

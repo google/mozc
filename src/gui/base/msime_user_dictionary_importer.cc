@@ -80,7 +80,7 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/encoding_util.h"
 

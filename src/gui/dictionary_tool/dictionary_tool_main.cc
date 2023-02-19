@@ -31,7 +31,7 @@
 #include "absl/flags/flag.h"
 
 #ifdef OS_WIN
-#include "base/winmain.h"
+#include "base/win32/winmain.h"
 #endif  // OS_WIN
 
 int RunDictionaryTool(int argc, char *argv[]);

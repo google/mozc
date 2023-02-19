@@ -32,7 +32,7 @@
 #include "base/logging.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
 #include "win32/base/imm_util.h"

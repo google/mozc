@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_WINMAIN_H_
-#define MOZC_BASE_WINMAIN_H_
+#ifndef MOZC_BASE_WIN32_WINMAIN_H_
+#define MOZC_BASE_WIN32_WINMAIN_H_
 
 // When we want to make a non-console Windows application,
 // we need to prepare WinMain function as an entry point.
@@ -139,4 +139,4 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   return WinMainToMain(argc, argv);
 }
 #endif  // OS_WIN
-#endif  // MOZC_BASE_WINMAIN_H_
+#endif  // MOZC_BASE_WIN32_WINMAIN_H_

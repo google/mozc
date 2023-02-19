@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 
 // skip all unless OS_WIN
 #ifdef OS_WIN
@@ -47,9 +47,9 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/base/call_once.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"

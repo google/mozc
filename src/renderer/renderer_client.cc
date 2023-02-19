@@ -53,7 +53,7 @@
 #endif  // __APPLE__
 
 #ifdef OS_WIN
-#include "base/win_sandbox.h"
+#include "base/win32/win_sandbox.h"
 #endif  // OS_WIN
 
 namespace mozc {

@@ -62,7 +62,7 @@
 #include <windows.h>
 
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #else  // OS_WIN
 #include <unistd.h>
 #endif  // OS_WIN

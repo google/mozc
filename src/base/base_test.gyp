@@ -40,8 +40,8 @@
           'target_name': 'win_util_test_dll',
           'type': 'shared_library',
           'sources': [
-            'win_util_test_dll.cc',
-            'win_util_test_dll.def',
+            'win32/win_util_test_dll.cc',
+            'win32/win_util_test_dll.def',
           ],
           'dependencies': [
             'base.gyp:base',
@@ -68,8 +68,8 @@
         }],
         ['OS=="win"', {
           'sources': [
-            'win_api_test_helper_test.cc',
-            'win_sandbox_test.cc',
+            'win32/win_api_test_helper_test.cc',
+            'win32/win_sandbox_test.cc',
           ],
         }],
       ],
@@ -115,7 +115,7 @@
       'conditions': [
         ['OS=="win"', {
           'sources': [
-            'win_util_test.cc',
+            'win32/win_util_test.cc',
           ],
         }],
       ],

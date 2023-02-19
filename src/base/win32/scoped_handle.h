@@ -27,34 +27,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_api_test_helper.h"
+#ifndef MOZC_BASE_WIN32_SCOPED_HANDLE_H_
+#define MOZC_BASE_WIN32_SCOPED_HANDLE_H_
 
-#include "testing/googletest.h"
-#include "testing/gunit.h"
-
+#ifdef OS_WIN
+// Example:
+//   ScopedHandle hfile(CreateFile(...));
+//   if (!hfile.get())
+//     ...process error
+//   ReadFile(hfile.get(), ...);
 namespace mozc {
-namespace {
 
-constexpr DWORD kFakeWindowsVersion = 0x12345678;
-DWORD WINAPI GetVersionHook() { return kFakeWindowsVersion; }
+class ScopedHandle {
+ public:
+  // In order not to depend on <Windows.h> from this header, here we
+  // assume HANDLE type is a synonym of void *.
+  typedef void *Win32Handle;
 
-// Suppress optimizations to avoid a test failure with some environments.
-// See b/236203361 for details.
-#pragma optimize("", off)
-TEST(WinAPITestHelperTest, BasicTest) {
-  std::vector<WinAPITestHelper::HookRequest> requests;
-  requests.push_back(DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
+  // Initializes with nullptr.
+  ScopedHandle();
 
-  auto restore_info =
-      WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
-  EXPECT_EQ(GetVersion(), kFakeWindowsVersion);
+  // Initializes with taking ownership of |handle|.
+  // Covert: If |handle| is INVALID_HANDLE_VALUE, this wrapper treat
+  //     it as nullptr.
+  explicit ScopedHandle(Win32Handle handle);
 
-  WinAPITestHelper::RestoreHook(restore_info);
-  restore_info = nullptr;
+  // Call ::CloseHandle API against the current object (if any).
+  ~ScopedHandle();
 
-  EXPECT_NE(GetVersion(), kFakeWindowsVersion);
-}
-#pragma optimize("", on)
+  // Call ::CloseHandle API against the current object (if any), then
+  // takes ownership of |handle|
+  void reset(Win32Handle handle);
 
-}  // namespace
+  // Returns the object pointer without transferring the ownership.
+  Win32Handle get() const;
+
+  // Transfers ownership away from this object.
+  Win32Handle take();
+
+ private:
+  void Close();
+
+  Win32Handle handle_;
+};
+
 }  // namespace mozc
+
+#endif  // OS_WIN
+#endif  // MOZC_BASE_WIN32_SCOPED_HANDLE_H_

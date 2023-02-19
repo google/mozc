@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_WIN_SANDBOX_H_
-#define MOZC_BASE_WIN_SANDBOX_H_
+#ifndef MOZC_BASE_WIN32_WIN_SANDBOX_H_
+#define MOZC_BASE_WIN32_WIN_SANDBOX_H_
 
 // skip all unless OS_WIN
 #ifdef OS_WIN
@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 
 namespace mozc {
 class Sid {
@@ -208,4 +208,4 @@ class WinSandbox {
 
 }  // namespace mozc
 #endif  // OS_WIN
-#endif  // MOZC_BASE_WIN_SANDBOX_H_
+#endif  // MOZC_BASE_WIN32_WIN_SANDBOX_H_

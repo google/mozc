@@ -32,9 +32,9 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "absl/synchronization/mutex.h"

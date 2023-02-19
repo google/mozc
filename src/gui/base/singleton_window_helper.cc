@@ -44,8 +44,8 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
-#include "base/scoped_handle.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "gui/base/win_util.h"
 #include "ipc/window_info.pb.h"
 

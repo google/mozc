@@ -56,7 +56,7 @@
 #include <shlobj.h>
 #include <windows.h>
 
-#include "base/win_sandbox.h"
+#include "base/win32/win_sandbox.h"
 #else  // OS_WIN
 #include <unistd.h>
 #endif  // OS_WIN

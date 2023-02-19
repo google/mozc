@@ -81,7 +81,7 @@
 #include "base/util.h"
 
 #ifdef OS_WIN
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #endif  // OS_WIN
 #include "absl/synchronization/mutex.h"
 

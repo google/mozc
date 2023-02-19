@@ -45,11 +45,11 @@
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_sandbox.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_sandbox.h"
+#include "base/win32/win_util.h"
 
 namespace mozc {
 namespace {

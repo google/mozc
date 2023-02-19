@@ -27,59 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/scoped_handle.h"
+#ifndef MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
+#define MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
 
-#ifdef OS_WIN
-#include <windows.h>
+#if defined(OS_WIN)
+
+#include <string>
+
+#include "base/port.h"
 
 namespace mozc {
 
-ScopedHandle::ScopedHandle() : handle_(nullptr) {}
+class WinFontTestHelper {
+ public:
+  WinFontTestHelper() = delete;
+  WinFontTestHelper(const WinFontTestHelper&) = delete;
+  WinFontTestHelper& operator=(const WinFontTestHelper&) = delete;
 
-ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(nullptr) {
-  reset(handle);
-}
+  // Returns true when private fonts are successfully initialized for unit test.
+  static bool Initialize();
+  // Uninitializes the private fonts.
+  static void Uninitialize();
 
-ScopedHandle::~ScopedHandle() { Close(); }
-
-void ScopedHandle::reset(Win32Handle handle) {
-  Close();
-  // Comment by yukawa:
-  // FYI, ATL has similar class called CHandle and its document
-  // says that we cannot
-  // assume INVALID_HANDLE_VALUE is the only invalid handle.
-  // See the note section of this document.
-  // http://msdn.microsoft.com/en-us/library/5fc6ft2t.aspx
-  // .NET approach is also informative.
-  // .NET has similar handle wrapper called SafeHandle,
-  // which allows us to override
-  // the condition of invalid handle.
-  // http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.isinvalid.aspx
-  // They has pre-defined special classes SafeHandleMinusOneIsInvalid and
-  // SafeHandleZeroOrMinusOneIsInvalid.
-  // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandleminusoneisinvalid.aspx
-  // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandlezeroorminusoneisinvalid.aspx
-  if (handle != INVALID_HANDLE_VALUE) {
-    handle_ = handle;
-  }
-}
-
-ScopedHandle::Win32Handle ScopedHandle::get() const { return handle_; }
-
-// transfers ownership away from this object
-ScopedHandle::Win32Handle ScopedHandle::take() {
-  HANDLE handle = handle_;
-  handle_ = nullptr;
-  return handle;
-}
-
-void ScopedHandle::Close() {
-  if (handle_ != nullptr) {
-    ::CloseHandle(handle_);
-    handle_ = nullptr;
-  }
-}
+  // Returns the font face name of IPAex-Gothic.
+  static std::string GetIPAexGothicFontName();
+  // Returns the font face name of IPAex-Mincho.
+  static std::string GetIPAexMinchoFontName();
+};
 
 }  // namespace mozc
 
 #endif  // OS_WIN
+#endif  // MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_

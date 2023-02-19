@@ -53,7 +53,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #ifdef OS_WIN
-#include "base/win_sandbox.h"
+#include "base/win32/win_sandbox.h"
 #endif  // OS_WIN
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"

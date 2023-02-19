@@ -42,7 +42,7 @@
 #include "gui/post_install_dialog/post_install_dialog.h"
 
 #ifdef OS_WIN
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #endif  // OS_WIN
 
 int RunPostInstallDialog(int argc, char *argv[]) {

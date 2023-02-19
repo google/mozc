@@ -43,8 +43,8 @@
 #include "absl/flags/flag.h"
 
 #ifdef OS_WIN
-#include "base/win_util.h"
-#include "base/winmain.h"
+#include "base/win32/win_util.h"
+#include "base/win32/winmain.h"
 #include "renderer/win32/win32_server.h"
 #elif defined(__APPLE__)
 #include "renderer/mac/CandidateController.h"

@@ -27,36 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// A dll to test the loader lock detection. (Only used for internal unit test)
+#include "base/win32/win_api_test_helper.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#include "base/win_util.h"
+#include "testing/googletest.h"
+#include "testing/gunit.h"
 
-bool g_is_lock_check_succeeded = false;
-bool g_is_lock_held = false;
+namespace mozc {
+namespace {
 
-extern "C" int __stdcall IsLockCheckSucceeded() {
-  return g_is_lock_check_succeeded ? 1 : 0;
+constexpr DWORD kFakeWindowsVersion = 0x12345678;
+DWORD WINAPI GetVersionHook() { return kFakeWindowsVersion; }
+
+// Suppress optimizations to avoid a test failure with some environments.
+// See b/236203361 for details.
+#pragma optimize("", off)
+TEST(WinAPITestHelperTest, BasicTest) {
+  std::vector<WinAPITestHelper::HookRequest> requests;
+  requests.push_back(DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
+
+  auto restore_info =
+      WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
+  EXPECT_EQ(GetVersion(), kFakeWindowsVersion);
+
+  WinAPITestHelper::RestoreHook(restore_info);
+  restore_info = nullptr;
+
+  EXPECT_NE(GetVersion(), kFakeWindowsVersion);
 }
+#pragma optimize("", on)
 
-extern "C" int __stdcall IsLockHeld() { return g_is_lock_held ? 1 : 0; }
-
-extern "C" int __stdcall ClearFlagsAndCheckAgain() {
-  g_is_lock_check_succeeded = false;
-  g_is_lock_held = false;
-
-  g_is_lock_check_succeeded =
-      mozc::WinUtil::IsDLLSynchronizationHeld(&g_is_lock_held);
-  return 0;
-}
-
-// Represents the entry point of this module.
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
-  if (reason == DLL_PROCESS_ATTACH) {
-    g_is_lock_check_succeeded =
-        mozc::WinUtil::IsDLLSynchronizationHeld(&g_is_lock_held);
-  }
-  return TRUE;
-}
-#endif  // OS_WIN
+}  // namespace
+}  // namespace mozc

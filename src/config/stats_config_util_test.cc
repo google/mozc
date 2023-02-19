@@ -35,7 +35,7 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/win_api_test_helper.h"
+#include "base/win32/win_api_test_helper.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"

@@ -38,8 +38,8 @@
 #include <memory>
 
 #include "base/port.h"
-#include "base/scoped_handle.h"
 #include "base/thread.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/synchronization/mutex.h"
 
 // Usage:

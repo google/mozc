@@ -32,7 +32,7 @@
 #include <string>
 
 #ifdef OS_WIN
-#include "base/win_api_test_helper.h"
+#include "base/win32/win_api_test_helper.h"
 #endif  // OS_WIN
 #include "testing/gunit.h"
 

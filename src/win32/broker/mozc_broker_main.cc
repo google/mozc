@@ -35,7 +35,7 @@
 #include "base/init_mozc.h"
 #include "base/system_util.h"
 #ifdef OS_WIN
-#include "base/winmain.h"
+#include "base/win32/winmain.h"
 #endif  // OS_WIN
 #include "config/stats_config_util.h"
 #include "absl/flags/flag.h"

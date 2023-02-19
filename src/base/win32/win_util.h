@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_WIN_UTIL_H_
-#define MOZC_BASE_WIN_UTIL_H_
+#ifndef MOZC_BASE_WIN32_WIN_UTIL_H_
+#define MOZC_BASE_WIN32_WIN_UTIL_H_
 
 #if defined(OS_WIN)
 #include <windows.h>
@@ -195,4 +195,4 @@ class ScopedCOMInitializer {
 }  // namespace mozc
 
 #endif  // OS_WIN
-#endif  // MOZC_BASE_WIN_UTIL_H_
+#endif  // MOZC_BASE_WIN32_WIN_UTIL_H_

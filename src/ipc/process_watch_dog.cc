@@ -38,7 +38,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"

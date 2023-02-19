@@ -35,7 +35,6 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlstr.h>
-
 #include <strsafe.h>
 
 #include <memory>
@@ -43,8 +42,8 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/process.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
+#include "base/win32/scoped_handle.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"

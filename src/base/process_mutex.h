@@ -33,7 +33,7 @@
 #include <string>
 
 #ifdef OS_WIN
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 #endif  // OS_WIN
 
 #include "base/port.h"

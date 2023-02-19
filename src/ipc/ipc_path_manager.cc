@@ -73,9 +73,9 @@
 #include <windows.h>
 #include <psapi.h>  // GetModuleFileNameExW
 // clang-format on
-#include "base/scoped_handle.h"
 #include "base/unverified_sha1.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
 #else  // OS_WIN
 // For stat system call
 #include <sys/stat.h>

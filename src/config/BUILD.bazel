@@ -112,7 +112,7 @@ mozc_cc_test(
         "//base:file_util",
         "//base:singleton",
         "//base:system_util",
-        "//base:win_api_test_helper",
+        "//base/win32:win_api_test_helper",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",

@@ -70,9 +70,9 @@
 #include "absl/time/time.h"
 
 #ifdef OS_WIN
-#include "base/scoped_handle.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
 #endif  // OS_WIN
 
 #ifdef __APPLE__

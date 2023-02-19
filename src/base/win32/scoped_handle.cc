@@ -27,51 +27,59 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_SCOPED_HANDLE_H_
-#define MOZC_BASE_SCOPED_HANDLE_H_
+#include "base/win32/scoped_handle.h"
 
 #ifdef OS_WIN
-// Example:
-//   ScopedHandle hfile(CreateFile(...));
-//   if (!hfile.get())
-//     ...process error
-//   ReadFile(hfile.get(), ...);
+#include <windows.h>
+
 namespace mozc {
 
-class ScopedHandle {
- public:
-  // In order not to depend on <Windows.h> from this header, here we
-  // assume HANDLE type is a synonym of void *.
-  typedef void *Win32Handle;
+ScopedHandle::ScopedHandle() : handle_(nullptr) {}
 
-  // Initializes with nullptr.
-  ScopedHandle();
+ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(nullptr) {
+  reset(handle);
+}
 
-  // Initializes with taking ownership of |handle|.
-  // Covert: If |handle| is INVALID_HANDLE_VALUE, this wrapper treat
-  //     it as nullptr.
-  explicit ScopedHandle(Win32Handle handle);
+ScopedHandle::~ScopedHandle() { Close(); }
 
-  // Call ::CloseHandle API against the current object (if any).
-  ~ScopedHandle();
+void ScopedHandle::reset(Win32Handle handle) {
+  Close();
+  // Comment by yukawa:
+  // FYI, ATL has similar class called CHandle and its document
+  // says that we cannot
+  // assume INVALID_HANDLE_VALUE is the only invalid handle.
+  // See the note section of this document.
+  // http://msdn.microsoft.com/en-us/library/5fc6ft2t.aspx
+  // .NET approach is also informative.
+  // .NET has similar handle wrapper called SafeHandle,
+  // which allows us to override
+  // the condition of invalid handle.
+  // http://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle.isinvalid.aspx
+  // They has pre-defined special classes SafeHandleMinusOneIsInvalid and
+  // SafeHandleZeroOrMinusOneIsInvalid.
+  // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandleminusoneisinvalid.aspx
+  // http://msdn.microsoft.com/en-us/library/microsoft.win32.safehandles.safehandlezeroorminusoneisinvalid.aspx
+  if (handle != INVALID_HANDLE_VALUE) {
+    handle_ = handle;
+  }
+}
 
-  // Call ::CloseHandle API against the current object (if any), then
-  // takes ownership of |handle|
-  void reset(Win32Handle handle);
+ScopedHandle::Win32Handle ScopedHandle::get() const { return handle_; }
 
-  // Returns the object pointer without transferring the ownership.
-  Win32Handle get() const;
+// transfers ownership away from this object
+ScopedHandle::Win32Handle ScopedHandle::take() {
+  HANDLE handle = handle_;
+  handle_ = nullptr;
+  return handle;
+}
 
-  // Transfers ownership away from this object.
-  Win32Handle take();
-
- private:
-  void Close();
-
-  Win32Handle handle_;
-};
+void ScopedHandle::Close() {
+  if (handle_ != nullptr) {
+    ::CloseHandle(handle_);
+    handle_ = nullptr;
+  }
+}
 
 }  // namespace mozc
 
 #endif  // OS_WIN
-#endif  // MOZC_BASE_SCOPED_HANDLE_H_

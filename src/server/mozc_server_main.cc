@@ -29,7 +29,7 @@
 
 #include "base/port.h"
 #ifdef OS_WIN
-#include "base/winmain.h"
+#include "base/win32/winmain.h"
 #endif  // OS_WIN
 #include "server/mozc_server.h"
 

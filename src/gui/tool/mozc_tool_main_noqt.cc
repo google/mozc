@@ -29,6 +29,6 @@
 
 // Dummy mozc tool just for supporting NOQT flag.
 
-#include "base/winmain.h"
+#include "base/win32/winmain.h"
 
 int main(int argc, char *argv[]) { return 0; }

@@ -38,7 +38,7 @@
 #include <memory>
 #include <string>
 
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
