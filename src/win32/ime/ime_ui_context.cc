@@ -37,7 +37,7 @@
 #include <atlapp.h>
 #include <atlstr.h>
 #include <atlmisc.h>
-#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
+#include <commctrl.h>  // for CCSIZEOF_STRUCT
 // clang-format on
 
 #include <strsafe.h>

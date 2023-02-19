@@ -30,8 +30,8 @@
 #include "ipc/named_event.h"
 
 #ifdef OS_WIN
-#include <Sddl.h>
-#include <Windows.h>
+#include <sddl.h>
+#include <windows.h>
 #else  // OS_WIN
 #include <errno.h>
 #include <fcntl.h>

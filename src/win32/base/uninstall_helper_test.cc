@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <CGuid.h>
-#include <Windows.h>
+#include <cguid.h>
+#include <windows.h>
 
 #include "base/const.h"
 #include "base/util.h"

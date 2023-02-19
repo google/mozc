@@ -59,7 +59,7 @@
 #include "absl/strings/string_view.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 
 #include "base/util.h"
 #include "base/win_util.h"

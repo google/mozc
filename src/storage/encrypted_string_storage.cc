@@ -30,7 +30,7 @@
 #include "storage/encrypted_string_storage.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #endif  // OS_WIN
 
 #include <cstring>

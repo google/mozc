@@ -30,7 +30,7 @@
 #ifndef MOZC_RENDERER_WIN32_WIN32_RENDERER_UTIL_H_
 #define MOZC_RENDERER_WIN32_WIN32_RENDERER_UTIL_H_
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <memory>
 #include <string>

@@ -30,7 +30,7 @@
 #include "config/stats_config_util.h"
 
 #ifdef OS_WIN
-#include <Lmcons.h>
+#include <lmcons.h>
 #include <atlbase.h>
 #include <sddl.h>
 #include <shlobj.h>

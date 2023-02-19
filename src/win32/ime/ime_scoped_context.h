@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_IME_IME_SCOPED_CONTEXT_H_
 #define MOZC_WIN32_IME_IME_SCOPED_CONTEXT_H_
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "base/port.h"
 #include "win32/base/immdev.h"

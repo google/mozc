@@ -30,8 +30,8 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include <Sddl.h>
-#include <Windows.h>
+#include <sddl.h>
+#include <windows.h>
 
 #include <algorithm>
 #include <cstdint>

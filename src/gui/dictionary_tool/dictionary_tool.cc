@@ -45,7 +45,7 @@
 #include <QtGui>
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #endif  // OS_WIN
 
 #include <algorithm>

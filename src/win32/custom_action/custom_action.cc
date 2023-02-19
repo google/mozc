@@ -31,7 +31,7 @@
 
 // clang-format off
 #include <windows.h>
-#include <IEPMapi.h>
+#include <iepmapi.h>
 #include <atlbase.h>
 #if !defined(MOZC_NO_LOGGING)
 #include <atlstr.h>

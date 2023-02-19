@@ -29,7 +29,7 @@
 
 #include "win32/base/imm_registrar.h"
 
-#include <WinNls32.h>
+#include <winnls32.h>
 #include <atlbase.h>
 #include <strsafe.h>
 #include <windows.h>
