@@ -33,7 +33,7 @@
 
 // skip all unless OS_WIN
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #include <shlwapi.h>
 
 #include "base/logging.h"

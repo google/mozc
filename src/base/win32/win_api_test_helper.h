@@ -32,7 +32,7 @@
 
 #ifdef OS_WIN
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <string>
 #include <vector>

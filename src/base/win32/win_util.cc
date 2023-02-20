@@ -32,10 +32,10 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include <Aux_ulib.h>
-#include <Psapi.h>
-#include <Stringapiset.h>
-#include <Winternl.h>
+#include <aux_ulib.h>
+#include <psapi.h>
+#include <stringapiset.h>
+#include <winternl.h>
 #include <shellapi.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE

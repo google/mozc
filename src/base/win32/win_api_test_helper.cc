@@ -29,7 +29,7 @@
 
 #include "base/win32/win_api_test_helper.h"
 
-#include <Windows.h>
+#include <windows.h>
 #include <winnt.h>
 
 #include <cstdint>

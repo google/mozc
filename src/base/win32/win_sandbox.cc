@@ -31,8 +31,8 @@
 
 // skipp all unless OS_WIN
 #ifdef OS_WIN
-#include <AclAPI.h>
-#include <Windows.h>
+#include <aclapi.h>
+#include <windows.h>
 #include <atlsecurity.h>
 #include <sddl.h>
 #include <strsafe.h>

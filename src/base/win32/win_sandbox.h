@@ -33,8 +33,8 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include <AccCtrl.h>
-#include <Windows.h>
+#include <accctrl.h>
+#include <windows.h>
 
 #include <cstdint>
 #include <string>

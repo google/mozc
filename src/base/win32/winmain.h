@@ -46,8 +46,8 @@
 //  int main(int argc,  char *argv[]) { .. }
 #ifdef OS_WIN
 // clang-format off
-#include <Windows.h>
-#include <ShellAPI.h>  // for CommandLineToArgvW
+#include <windows.h>
+#include <shellapi.h>  // for CommandLineToArgvW
 // clang-format on
 
 #include "base/const.h"
