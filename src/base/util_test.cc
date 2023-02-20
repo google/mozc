@@ -531,26 +531,6 @@ TEST(UtilTest, IsCapitalizedAscii) {
   EXPECT_FALSE(Util::IsCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-TEST(UtilTest, IsLowerOrUpperAscii) {
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii(""));
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii("hello"));
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii("HELLO"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("Hello"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("HeLlO"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("symbol!"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("Ｈｅｌｌｏ"));
-}
-
-TEST(UtilTest, IsUpperOrCapitalizedAscii) {
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii(""));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("hello"));
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii("HELLO"));
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii("Hello"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("HeLlO"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("symbol!"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
-}
-
 TEST(UtilTest, Utf8ToCodepoints) {
   {
     const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints("");

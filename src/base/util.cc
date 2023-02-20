@@ -452,29 +452,6 @@ bool Util::IsCapitalizedAscii(absl::string_view s) {
   return false;
 }
 
-bool Util::IsLowerOrUpperAscii(absl::string_view s) {
-  if (s.empty()) {
-    return true;
-  }
-  if (absl::ascii_islower(s.front())) {
-    return IsLowerAscii(absl::ClippedSubstr(s, 1));
-  }
-  if (absl::ascii_isupper(s.front())) {
-    return IsUpperAscii(absl::ClippedSubstr(s, 1));
-  }
-  return false;
-}
-
-bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
-  if (s.empty()) {
-    return true;
-  }
-  if (absl::ascii_isupper(s.front())) {
-    return IsLowerOrUpperAscii(absl::ClippedSubstr(s, 1));
-  }
-  return false;
-}
-
 namespace {
 
 // Table of UTF-8 character lengths, based on first byte

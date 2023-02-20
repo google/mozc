@@ -154,15 +154,6 @@ class Util {
   // Returns true if the text in the rage [first, last) is capitalized ASCII.
   static bool IsCapitalizedAscii(absl::string_view s);
 
-  // Returns true if the characters in [first, last) are all in lower case ASCII
-  // or all in upper case ASCII. Namely, equivalent to
-  //     IsLowerAscii(first, last) || IsUpperAscii(first last)
-  static bool IsLowerOrUpperAscii(absl::string_view s);
-
-  // Returns true if the text in the range [first, last) is 1) all in upper case
-  // ASCII, or 2) capitalized.
-  static bool IsUpperOrCapitalizedAscii(absl::string_view s);
-
   static size_t OneCharLen(const char *src);
 
   // Returns the lengths of [src, src+size] encoded in UTF8.
