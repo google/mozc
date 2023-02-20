@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_HANDLER_CONVENTIONAL_H_
 #define MOZC_WIN32_TIP_TIP_UI_HANDLER_CONVENTIONAL_H_
 
-#include <Windows.h>
+#include <windows.h>
 #include <msctf.h>
 
 #include "base/port.h"

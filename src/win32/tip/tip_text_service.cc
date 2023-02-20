@@ -29,10 +29,10 @@
 
 #include "win32/tip/tip_text_service.h"
 
-#include <Ime.h>
+#include <ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>

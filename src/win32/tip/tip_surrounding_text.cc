@@ -29,7 +29,7 @@
 
 #include "win32/tip/tip_surrounding_text.h"
 
-#include <Windows.h>
+#include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>

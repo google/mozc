@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_THREAD_CONTEXT_H_
 #define MOZC_WIN32_TIP_TIP_THREAD_CONTEXT_H_
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <cstdint>
 #include <memory>

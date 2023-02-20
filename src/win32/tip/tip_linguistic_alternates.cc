@@ -29,10 +29,10 @@
 
 #include "win32/tip/tip_linguistic_alternates.h"
 
-#include <Windows.h>
+#include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <Ctffunc.h>
+#include <ctffunc.h>
 #include <atlbase.h>
 #include <atlcom.h>
 

@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_KEYEVENT_HANDLER_H_
 #define MOZC_WIN32_TIP_TIP_KEYEVENT_HANDLER_H_
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "base/port.h"
 

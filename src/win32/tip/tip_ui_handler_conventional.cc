@@ -31,7 +31,7 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
+#include <commctrl.h>  // for CCSIZEOF_STRUCT
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
