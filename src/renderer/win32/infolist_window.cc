@@ -41,8 +41,8 @@
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
+#include "renderer/win32/resource.h"
 #include "renderer/win32/text_renderer.h"
-#include "renderer/win_resource.h"
 
 namespace mozc {
 namespace renderer {

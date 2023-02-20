@@ -217,7 +217,7 @@
           'toolsets': ['host'],
           'variables': {
             'gen_resource_proj_name': 'mozc_renderer',
-            'gen_main_resource_path': 'renderer/mozc_renderer.rc',
+            'gen_main_resource_path': 'renderer/win32/mozc_renderer.rc',
             'gen_output_resource_path':
                 '<(gen_out_dir)/mozc_renderer_autogen.rc',
           },
@@ -429,7 +429,7 @@
           ],
           'msvs_settings': {
             'VCManifestTool': {
-              'AdditionalManifestFiles': 'mozc_renderer.exe.manifest',
+              'AdditionalManifestFiles': 'win32/mozc_renderer.exe.manifest',
               'EmbedManifest': 'true',
             },
           },
