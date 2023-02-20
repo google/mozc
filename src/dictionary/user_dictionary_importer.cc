@@ -31,9 +31,9 @@
 
 #include "base/japanese_util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <algorithm>
 #include <cstdint>

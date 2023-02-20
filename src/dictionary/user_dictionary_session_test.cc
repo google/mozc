@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
-#ifndef OS_WIN
+#ifndef _WIN32
 #include <sys/stat.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include "base/file_util.h"
 #include "base/system_util.h"
@@ -76,9 +76,9 @@ class UserDictionarySessionTest : public ::testing::Test {
   }
 
   static std::string GetUserDictionaryFile() {
-#ifndef OS_WIN
+#ifndef _WIN32
     chmod(absl::GetFlag(FLAGS_test_tmpdir).c_str(), 0777);
-#endif  // OS_WIN
+#endif  // _WIN32
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 

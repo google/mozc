@@ -111,22 +111,22 @@ int Loop(std::istream *input) {
   mozc::commands::RendererCommand renderer_command;
 
   if (absl::GetFlag(FLAGS_test_renderer)) {
-#ifdef OS_WIN
+#ifdef _WIN32
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id(
         ::GetCurrentThreadId());
-#endif  // OS_WIN
-#if defined(OS_WIN) || defined(__APPLE__)
+#endif  // _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
     renderer_client = std::make_unique<renderer::RendererClient>();
     CHECK(renderer_client->Activate());
-#else   // defined(OS_WIN) || defined(__APPLE__)
+#else   // defined(_WIN32) || defined(__APPLE__)
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif  // defined(OS_WIN) || defined(__APPLE__)
+#endif  // defined(_WIN32) || defined(__APPLE__)
   }
 
   commands::Command command;

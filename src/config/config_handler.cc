@@ -65,13 +65,13 @@ void AddCharacterFormRule(const char *group,
 bool GetPlatformSpecificDefaultEmojiSetting() {
   // Disable Unicode emoji conversion by default on specific platforms.
   bool use_emoji_conversion_default = true;
-#if defined(OS_WIN)
+#if defined(_WIN32)
   if (!SystemUtil::IsWindows8OrLater()) {
     use_emoji_conversion_default = false;
   }
-#elif defined(OS_ANDROID)
+#elif defined(__ANDROID__)
   use_emoji_conversion_default = false;
-#endif  // defined(OS_WIN), defined(OS_ANDROID)
+#endif  // defined(_WIN32), defined(__ANDROID__)
   return use_emoji_conversion_default;
 }
 
@@ -166,9 +166,9 @@ void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
     stored_config_.set_session_keymap(ConfigHandler::GetDefaultKeyMap());
   }
 
-#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+#if defined(__ANDROID__) && defined(CHANNEL_DEV)
   stored_config_.mutable_general_config()->set_upload_usage_stats(true);
-#endif  // CHANNEL_DEV && OS_ANDROID
+#endif  // CHANNEL_DEV && __ANDROID__
 
   if (GetPlatformSpecificDefaultEmojiSetting() &&
       !stored_config_.has_use_emoji_conversion()) {
@@ -316,9 +316,9 @@ void ConfigHandler::GetDefaultConfig(Config *config) {
   AddCharacterFormRule("<>=+-/*", kFullWidth, kLastForm, config);
   AddCharacterFormRule("?!", kFullWidth, kLastForm, config);
 
-#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+#if defined(__ANDROID__) && defined(CHANNEL_DEV)
   config->mutable_general_config()->set_upload_usage_stats(true);
-#endif  // OS_ANDROID && CHANNEL_DEV
+#endif  // __ANDROID__ && CHANNEL_DEV
 
   if (GetPlatformSpecificDefaultEmojiSetting()) {
     config->set_use_emoji_conversion(true);
