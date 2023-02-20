@@ -30,7 +30,7 @@
 #include "base/process.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #else  // OS_WIN
 #include <string.h>
 #include <sys/stat.h>

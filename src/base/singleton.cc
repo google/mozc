@@ -30,7 +30,7 @@
 #include "base/singleton.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #else  // OS_WIN
 #include <cstdlib>
 #endif  // OS_WIN

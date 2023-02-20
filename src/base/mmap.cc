@@ -30,7 +30,7 @@
 #include "base/mmap.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 
 #include <string>
 #else  // OS_WIN

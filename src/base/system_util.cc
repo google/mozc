@@ -35,11 +35,11 @@
 
 #ifdef OS_WIN
 // clang-format off
-#include <Windows.h>
-#include <LMCons.h>
-#include <Sddl.h>
-#include <ShlObj.h>
-#include <VersionHelpers.h>
+#include <windows.h>
+#include <lmcons.h>
+#include <sddl.h>
+#include <shlobj.h>
+#include <versionhelpers.h>
 // clang-format on
 #else  // OS_WIN
 #include <pwd.h>

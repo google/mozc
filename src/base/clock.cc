@@ -30,7 +30,7 @@
 #include "base/clock.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #include <time.h>
 #else  // OS_WIN
 #ifdef __APPLE__

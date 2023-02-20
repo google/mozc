@@ -30,7 +30,7 @@
 #include "base/file_util.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
+#include <windows.h>
 #endif  // OS_WIN
 
 #include <fstream>
@@ -46,7 +46,7 @@
 #include "absl/strings/str_format.h"
 
 // Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.

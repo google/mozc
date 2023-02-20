@@ -30,8 +30,8 @@
 #include "base/file_util.h"
 
 #ifdef OS_WIN
-#include <KtmW32.h>
-#include <Windows.h>
+#include <ktmw32.h>
+#include <windows.h>
 #else  // OS_WIN
 #include <sys/stat.h>
 #include <unistd.h>
@@ -72,7 +72,7 @@ constexpr char kFileDelimiter = '/';
 }  // namespace
 
 // Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.

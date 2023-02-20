@@ -44,7 +44,7 @@
 #endif  // OS_WIN
 
 // Ad-hoc workaround against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.

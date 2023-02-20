@@ -31,8 +31,8 @@
 
 #if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
-#include <ShellAPI.h>  // for CommandLineToArgvW
-#include <Windows.h>
+#include <shellapi.h>  // for CommandLineToArgvW
+#include <windows.h>
 
 #include <cstdlib>
 #include <string>

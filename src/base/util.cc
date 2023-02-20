@@ -31,8 +31,8 @@
 
 #ifdef OS_WIN
 // clang-format off
-#include <Windows.h>
-#include <WinCrypt.h>  // WinCrypt.h must be included after Windows.h
+#include <windows.h>
+#include <wincrypt.h>  // WinCrypt.h must be included after Windows.h
 // clang-format on
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 #include <time.h>
