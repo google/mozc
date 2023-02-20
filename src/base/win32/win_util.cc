@@ -29,8 +29,8 @@
 
 #include "base/win32/win_util.h"
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 
 #include <aux_ulib.h>
 #include <psapi.h>
@@ -574,4 +574,4 @@ ScopedCOMInitializer::~ScopedCOMInitializer() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

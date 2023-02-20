@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_WIN32_WIN_UTIL_H_
 #define MOZC_BASE_WIN32_WIN_UTIL_H_
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 #include <windows.h>
 
 #include <cstdint>
@@ -194,5 +194,5 @@ class ScopedCOMInitializer {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_WIN_UTIL_H_

@@ -29,7 +29,7 @@
 
 #include "base/win32/scoped_handle.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
 
 namespace mozc {
@@ -82,4 +82,4 @@ void ScopedHandle::Close() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

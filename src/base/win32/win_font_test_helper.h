@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
 #define MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 
 #include <string>
 
@@ -57,5 +57,5 @@ class WinFontTestHelper {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_

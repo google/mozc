@@ -30,8 +30,8 @@
 #ifndef MOZC_BASE_WIN32_WIN_SANDBOX_H_
 #define MOZC_BASE_WIN32_WIN_SANDBOX_H_
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 
 #include <accctrl.h>
 #include <windows.h>
@@ -207,5 +207,5 @@ class WinSandbox {
 };
 
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_WIN_SANDBOX_H_

@@ -44,7 +44,7 @@
 //  #include "winmain.h"   // Use WinMain
 //  // here main() is automatically converted to WinMain
 //  int main(int argc,  char *argv[]) { .. }
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <shellapi.h>  // for CommandLineToArgvW
@@ -138,5 +138,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   // call main()
   return WinMainToMain(argc, argv);
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_WINMAIN_H_

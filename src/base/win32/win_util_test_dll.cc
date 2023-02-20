@@ -29,7 +29,7 @@
 
 // A dll to test the loader lock detection. (Only used for internal unit test)
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 #include <windows.h>
 
 #include "base/win32/win_util.h"
@@ -60,4 +60,4 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
   }
   return TRUE;
 }
-#endif  // OS_WIN
+#endif  // _WIN32

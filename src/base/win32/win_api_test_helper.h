@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_
 #define MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 #include <windows.h>
 
@@ -117,5 +117,5 @@ class WinAPITestHelper {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_

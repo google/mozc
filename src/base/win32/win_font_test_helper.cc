@@ -31,8 +31,8 @@
 
 #include <string>
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <shlwapi.h>
 
@@ -132,4 +132,4 @@ std::string WinFontTestHelper::GetIPAexMinchoFontName() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

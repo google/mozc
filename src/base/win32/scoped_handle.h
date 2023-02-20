@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_WIN32_SCOPED_HANDLE_H_
 #define MOZC_BASE_WIN32_SCOPED_HANDLE_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // Example:
 //   ScopedHandle hfile(CreateFile(...));
 //   if (!hfile.get())
@@ -73,5 +73,5 @@ class ScopedHandle {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_BASE_WIN32_SCOPED_HANDLE_H_

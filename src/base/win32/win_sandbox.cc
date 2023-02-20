@@ -29,8 +29,8 @@
 
 #include "base/win32/win_sandbox.h"
 
-// skipp all unless OS_WIN
-#ifdef OS_WIN
+// skipp all unless _WIN32
+#ifdef _WIN32
 #include <aclapi.h>
 #include <windows.h>
 #include <atlsecurity.h>
@@ -1411,4 +1411,4 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
 }
 
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32
