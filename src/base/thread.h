@@ -58,9 +58,9 @@ class Thread {
  private:
   void Detach();
 
-#ifndef OS_WIN
+#ifndef _WIN32
   static void *WrapperForPOSIX(void *ptr);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   std::unique_ptr<ThreadInternalState> state_;
 };

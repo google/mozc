@@ -29,7 +29,7 @@
 
 #include "base/encryptor.h"
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 // clang-format off
 #include <windows.h>
 #include <wincrypt.h>
@@ -39,7 +39,7 @@
 #include <unistd.h>
 #else  // Other platforms
 #include <string.h>
-#endif  // platforms (OS_WIN, __APPLE__, ...)
+#endif  // platforms (_WIN32, __APPLE__, ...)
 
 #include <cstdint>
 #include <iterator>
@@ -299,7 +299,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 }
 
 // Protect|Unprotect Data
-#ifdef OS_WIN
+#ifdef _WIN32
 // See. http://msdn.microsoft.com/en-us/library/aa380261.aspx
 bool Encryptor::ProtectData(const std::string &plain_text,
                             std::string *cipher_text) {
@@ -401,7 +401,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
   return true;
 }
 
-#else   // OS_WIN | __APPLE__
+#else   // _WIN32 | __APPLE__
 
 namespace {
 
@@ -475,6 +475,6 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
 
   return true;
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace mozc

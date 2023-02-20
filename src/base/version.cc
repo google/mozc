@@ -54,13 +54,13 @@ bool StringAsIntegerComparator(absl::string_view lhs, absl::string_view rhs) {
 
 std::string Version::GetMozcVersion() { return version::kMozcVersion; }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 std::wstring Version::GetMozcVersionW() {
   std::wstring version;
   Util::Utf8ToWide(version::kMozcVersion, &version);
   return version;
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 int Version::GetMozcVersionMajor() { return version::kMozcVersionMajor; }
 

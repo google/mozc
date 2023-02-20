@@ -29,9 +29,9 @@
 
 #include "base/update_util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 
@@ -40,7 +40,7 @@ bool UpdateUtil::WriteActiveUsageInfo() {
   return false;
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
-#ifdef OS_WIN
+#ifdef _WIN32
   const wchar_t kOmahaUsageKey[] =
       L"Software\\Google\\Update\\ClientState\\"
       L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -57,10 +57,10 @@ bool UpdateUtil::WriteActiveUsageInfo() {
                           sizeof(kDidRunValue));
   RegCloseKey(key);
   return ERROR_SUCCESS == result;
-#else   // OS_WIN
+#else   // _WIN32
   // TODO(mazda): Implement Mac version
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace mozc

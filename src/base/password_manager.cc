@@ -29,11 +29,11 @@
 
 #include "base/password_manager.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <sys/stat.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstddef>
 #include <cstdlib>
@@ -54,11 +54,11 @@
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 constexpr char kPasswordFile[] = "encrypt_key.db";
-#else   // OS_WIN
+#else   // _WIN32
 constexpr char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
-#endif  // OS_WIN
+#endif  // _WIN32
 
 constexpr size_t kPasswordSize = 32;
 
@@ -76,15 +76,15 @@ class ScopedReadWriteFile {
       LOG(WARNING) << "file not found: " << filename << ": " << s;
       return;
     }
-#ifdef OS_WIN
+#ifdef _WIN32
     std::wstring wfilename;
     Util::Utf8ToWide(filename_, &wfilename);
     if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
-#else   // OS_WIN
+#else   // _WIN32
     chmod(filename_.c_str(), 0600);                  // write temporary
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   ~ScopedReadWriteFile() {
@@ -92,14 +92,14 @@ class ScopedReadWriteFile {
       LOG(WARNING) << "file not found: " << filename_;
       return;
     }
-#ifdef OS_WIN
+#ifdef _WIN32
     if (!FileUtil::HideFileWithExtraAttributes(filename_,
                                                FILE_ATTRIBUTE_READONLY)) {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
-#else   // OS_WIN
+#else   // _WIN32
     chmod(filename_.c_str(), 0400);                  // read only
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
  private:
@@ -206,7 +206,7 @@ bool PlainPasswordManager::RemovePassword() const {
 //////////////////////////////////////////////////////////////////
 // WinPasswordManager
 // We use this manager with both Windows and Mac
-#if (defined(OS_WIN) || defined(__APPLE__))
+#if (defined(_WIN32) || defined(__APPLE__))
 class WinMacPasswordManager : public PasswordManagerInterface {
  public:
   virtual bool SetPassword(const std::string &password) const;
@@ -258,19 +258,19 @@ bool WinMacPasswordManager::GetPassword(std::string *password) const {
 bool WinMacPasswordManager::RemovePassword() const {
   return RemovePasswordFile();
 }
-#endif  // OS_WIN | __APPLE__
+#endif  // _WIN32 | __APPLE__
 
 // We use plain text file for password storage on Linux. If you port this module
 // to other Linux distro, you might want to implement a new password manager
 // which adopts some secure mechanism such like gnome-keyring.
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
 typedef PlainPasswordManager DefaultPasswordManager;
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
 // Windows or Mac
-#if (defined(OS_WIN) || defined(__APPLE__))
+#if (defined(_WIN32) || defined(__APPLE__))
 typedef WinMacPasswordManager DefaultPasswordManager;
-#endif  // (defined(OS_WIN) || defined(__APPLE__))
+#endif  // (defined(_WIN32) || defined(__APPLE__))
 
 namespace {
 class PasswordManagerImpl {

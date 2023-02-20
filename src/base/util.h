@@ -216,7 +216,7 @@ class Util {
   // Returns true if |s| is a valid UTF8.
   static bool IsValidUtf8(absl::string_view s);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Returns how many wide characters are necessary in UTF-16 to represent
   // given UTF-8 string. Note that the result of this method becomes greater
   // than that of Util::CharsLen if |src| contains any character which is
@@ -227,7 +227,7 @@ class Util {
   static int Utf8ToWide(absl::string_view input, std::wstring *output);
   static int WideToUtf8(const wchar_t *input, std::string *output);
   static int WideToUtf8(const std::wstring &input, std::string *output);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // Extracts a substring range, where both start and length are in terms of
   // UTF8 size. Note that the returned string view refers to the same memory

@@ -52,14 +52,14 @@
 
 #include "base/port.h"
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 // This is used only for code generation, so shouldn't be used from android
 // platform.
 #error \
     "base/codegen_bytearray_stream.h shouldn't be used from android platform."
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // Visual C++ does not support string literals longer than 65535 characters
 // so integer arrays (e.g. arrays of uint64_t) are used to represent byte arrays
 // on Windows.
@@ -80,7 +80,7 @@
 //       "\\x12\\x34\\x56\\x78...";
 //   const size_t kVAR_size = 123;
 #define MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace codegenstream {

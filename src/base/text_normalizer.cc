@@ -184,11 +184,11 @@ std::string NormalizeTextForWindows(absl::string_view input) {
 std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
                                                   TextNormalizer::Flag flag) {
   if (flag == TextNormalizer::kDefault) {
-#ifdef OS_WIN
+#ifdef _WIN32
     flag = TextNormalizer::kAll;
-#else  // OS_WIN
+#else  // _WIN32
     flag = TextNormalizer::kNone;
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   if (flag != TextNormalizer::kAll) {

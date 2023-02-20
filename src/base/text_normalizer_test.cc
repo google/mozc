@@ -47,11 +47,11 @@ TEST(TextNormalizerTest, NormalizeText) {
 
   // "〜" is U+301C
   output = TextNormalizer::NormalizeText("ぐ〜ぐる");
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(output, "ぐ～ぐる");  // "～" is U+FF5E
-#else                             // OS_WIN
+#else                             // _WIN32
   EXPECT_EQ(output, "ぐ〜ぐる");  // "〜" is U+301C
-#endif                            // OS_WIN
+#endif                            // _WIN32
 
   // "〜" is U+301C
   output =
@@ -64,11 +64,11 @@ TEST(TextNormalizerTest, NormalizeText) {
 
   // "−" is U+2212
   output = TextNormalizer::NormalizeText("１−２−３");
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(output, "１－２－３");  // "－" is U+FF0D
-#else                               // OS_WIN
+#else                               // _WIN32
   EXPECT_EQ(output, "１−２−３");  // "−" is U+2212
-#endif                              // OS_WIN
+#endif                              // _WIN32
 
   // "−" is U+2212
   output =

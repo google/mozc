@@ -41,7 +41,7 @@ constexpr char kProductNameInEnglish[] = "Mozc";
 
 constexpr char kVersionRewriterVersionPrefix[] = kProductPrefix "-";
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 // Safe length of IME name in terms of IME_ESC_IME_NAME request.
 // See http://msdn.microsoft.com/en-us/library/dd318166.aspx for details.
 const int kSafeIMENameLengthForNTInTchars = 64;
@@ -132,7 +132,7 @@ constexpr char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
 constexpr char kEventPathPrefix[] = "Mozc.event.";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#else   // OS_LINUX including OS_ANDROID
+#else   // __linux__ including __ANDROID__
 constexpr char kMozcServerName[] = "mozc_server";
 constexpr char kMozcRenderer[] = "mozc_renderer";
 constexpr char kEventPathPrefix[] = "mozc.event.";

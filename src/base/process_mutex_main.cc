@@ -29,9 +29,9 @@
 
 #include "base/process_mutex.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 #include <string>
@@ -54,11 +54,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   ::Sleep(absl::GetFlag(FLAGS_sleep_time) * 1000);
-#else   // OS_WIN
+#else   // _WIN32
   ::sleep(absl::GetFlag(FLAGS_sleep_time));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   mutex.UnLock();
 

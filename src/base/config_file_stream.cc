@@ -29,9 +29,9 @@
 
 #include "base/config_file_stream.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstring>
 #include <ios>
@@ -188,7 +188,7 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
   if (!absl::EndsWith(real_filename, ".db")) {
@@ -200,7 +200,7 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
                  << ::GetLastError();
     }
   }
-#endif  // OS_WIN
+#endif  // _WIN32
   return true;
 }
 
