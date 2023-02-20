@@ -86,14 +86,14 @@ mozc_py_binary(
 genrule(
     name = "package",
     srcs = [
+        ":icons",
         "//gui/tool:mozc_tool",
-        "//renderer:mozc_renderer",
         "//server:mozc_server",
         "//unix/emacs:mozc_emacs_helper",
         "//unix/ibus:gen_mozc_xml",
         "//unix/ibus:ibus_mozc",
-        "//unix:icons",
         "//unix/emacs:mozc.el",
+        "//renderer/qt:mozc_renderer",
     ],
     outs = ["mozc.zip"],
     cmd = " ".join([
@@ -112,5 +112,4 @@ genrule(
 mozc_py_binary(
     name = "build_package",
     srcs = ["build_package.py"],
-    deps = ["//build_tools:util"],
 )

@@ -94,6 +94,18 @@
       ],
     },
     {
+      'target_name': 'init_mozc_renderer',
+      'type': 'static_library',
+      'sources': [
+        'init_mozc_renderer.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:crash_report_handler',
+        '../config/config.gyp:stats_config_util',
+      ],
+    },
+    {
       'target_name': 'renderer_client_test',
       'type': 'executable',
       'sources': [
@@ -399,7 +411,7 @@
           'product_name': '<(renderer_product_name_win)',
           'type': 'executable',
           'sources': [
-            'mozc_renderer_main.cc',
+            'win32/win32_renderer_main.cc',
             'win32/win32_server.cc',
             'win32/window_manager.cc',
             'win32/candidate_window.cc',
@@ -426,6 +438,7 @@
             'win32_renderer_core',
             'win32_text_renderer',
             'window_util',
+            'init_mozc_renderer',
           ],
           'msvs_settings': {
             'VCManifestTool': {
@@ -457,7 +470,7 @@
           'mac_bundle': 1,
           'product_name': '<(branding)Renderer',
           'sources': [
-            'mozc_renderer_main.cc',
+            'mac/mac_renderer_main.cc',
             'mac/mac_server.mm',
             'mac/mac_server_send_command.mm',
             'mac/CandidateController.mm',
@@ -489,6 +502,7 @@
             'renderer_style_handler',
             'table_layout',
             'window_util',
+            'init_mozc_renderer',
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
@@ -596,13 +610,14 @@
             'renderer_style_handler',
             'table_layout',
             'window_util',
+            'init_mozc_renderer',
           ],
         },
         {
           'target_name': 'mozc_renderer',
           'type': 'executable',
           'sources': [
-            'mozc_renderer_main.cc',
+            'unix/gtk_renderer_main.cc',
           ],
           'dependencies': [
             '../base/base.gyp:crash_report_handler',

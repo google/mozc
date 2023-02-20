@@ -119,7 +119,9 @@ mozc_cc_library(
     name = "init_mozc",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
@@ -811,7 +813,9 @@ mozc_cc_library(
         "run_level.cc",
     ],
     hdrs = ["run_level.h"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":const",
         ":logging",
