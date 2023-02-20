@@ -29,12 +29,12 @@
 
 #include "ipc/process_watch_dog.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <errno.h>
 #include <signal.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -45,7 +45,7 @@
 
 namespace mozc {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 ProcessWatchDog::ProcessWatchDog()
     : event_(::CreateEventW(nullptr, TRUE, FALSE, nullptr)),
       process_id_(UnknownProcessID),
@@ -226,7 +226,7 @@ void ProcessWatchDog::Run() {
   }
 }
 
-#else   // OS_WIN
+#else   // _WIN32
 
 ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
@@ -319,6 +319,6 @@ void ProcessWatchDog::Run() {
     }
   }
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace mozc

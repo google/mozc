@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 
 #include <sddl.h>
 #include <windows.h>
@@ -781,4 +781,4 @@ bool IPCClient::Call(const std::string &request, std::string *response,
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

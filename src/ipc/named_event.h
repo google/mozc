@@ -30,11 +30,11 @@
 #ifndef MOZC_IPC_NAMED_EVENT_H_
 #define MOZC_IPC_NAMED_EVENT_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <semaphore.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <string>
 
@@ -133,12 +133,12 @@ class NamedEventListener {
  private:
   bool is_owner_;
 
-#ifdef OS_WIN
+#ifdef _WIN32
   HANDLE handle_;
-#else   // OS_WIN
+#else   // _WIN32
   sem_t *sem_;
   std::string key_filename_;
-#endif  // OS_WIN
+#endif  // _WIN32
 };
 
 class NamedEventNotifier {
@@ -156,11 +156,11 @@ class NamedEventNotifier {
   bool Notify();
 
  private:
-#ifdef OS_WIN
+#ifdef _WIN32
   HANDLE handle_;
-#else   // OS_WIN
+#else   // _WIN32
   sem_t *sem_;
-#endif  // OS_WIN
+#endif  // _WIN32
 };
 }  // namespace mozc
 

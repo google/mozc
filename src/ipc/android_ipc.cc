@@ -30,7 +30,7 @@
 // IPC server inplementation for Android. Currently it does nothing.
 
 // skip all if not Android
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 
 #include <cstdint>
 
@@ -68,4 +68,4 @@ void IPCServer::Terminate() {
 
 };  // namespace mozc
 
-#endif  // OS_ANDROID
+#endif  // __ANDROID__

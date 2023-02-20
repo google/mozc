@@ -41,10 +41,10 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <functional>
 #include <map>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 
@@ -129,12 +129,12 @@ class IPCPathManager {
   std::string server_path_;  // cache for server_path
   uint32_t server_pid_;      // cache for pid of server_path
   time_t last_modified_;
-#ifdef OS_WIN
+#ifdef _WIN32
   // std::less<> is a transparent comparator that's necessary to pass
   // absl::string_view to map::find(), etc.
   std::map<std::string, std::wstring, std::less<>>
       expected_server_ntpath_cache_;
-#endif  // OS_WIN
+#endif  // _WIN32
 };
 
 }  // namespace mozc
