@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_MAC_UTIL_H_
-#define MOZC_BASE_MAC_UTIL_H_
+#ifndef MOZC_BASE_MAC_MAC_UTIL_H_
+#define MOZC_BASE_MAC_MAC_UTIL_H_
 
 #ifdef __APPLE__
 #include <string>
@@ -71,8 +71,7 @@ class MacUtil {
   // If "pid" is non-null, it will store the pid of the launched
   // process in it.  Returns true if it successfully launches the
   // process.
-  static bool StartLaunchdService(const std::string &service_name,
-                                  pid_t *pid);
+  static bool StartLaunchdService(const std::string &service_name, pid_t *pid);
 
   // Checks if the prelauncher is set in "Login Item".
   static bool CheckPrelauncherLoginItemStatus();
@@ -97,4 +96,4 @@ class MacUtil {
 }  // namespace mozc
 
 #endif  // __APPLE__
-#endif  // MOZC_BASE_MAC_UTIL_H_
+#endif  // MOZC_BASE_MAC_MAC_UTIL_H_

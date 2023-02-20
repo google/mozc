@@ -55,7 +55,7 @@
 #include "absl/strings/str_format.h"
 
 #ifdef __APPLE__
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 using ::mozc::internal::UnverifiedSHA1;

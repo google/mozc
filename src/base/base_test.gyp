@@ -63,7 +63,7 @@
       'conditions': [
         ['OS=="mac"', {
           'sources': [
-            'mac_util_test.mm',
+            'mac/mac_util_test.mm',
           ],
         }],
         ['OS=="win"', {

@@ -1,0 +1,132 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Base library platform dependent code for MacOS.
+
+load(
+    "//:build_defs.bzl",
+    "mozc_cc_binary",
+    "mozc_objc_library",
+    "mozc_objc_test",
+    "mozc_select",
+)
+
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
+mozc_objc_library(
+    name = "mac_process",
+    srcs = ["mac_process.mm"],
+    hdrs = ["mac_process.h"],
+    deps = [
+        ":mac_util",
+        "//base:const",
+        "//base:logging",
+        "//base:util",
+        "//third_party/apple_frameworks:Cocoa",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+# These sdk_framework targets are for cross-platform builds.
+# Carbon and UIKit are only available in one of the platforms.
+# TODO(yuryu): split ios code from mac_util so we don't need these.
+
+mozc_objc_library(
+    name = "Carbon",
+    tags = [
+        "manual",
+    ],
+    visibility = ["//visibility:private"],
+    deps = ["//third_party/apple_frameworks:Carbon"],
+)
+
+mozc_objc_library(
+    name = "UIKit",
+    tags = [
+        "manual",
+    ],
+    visibility = ["//visibility:private"],
+    deps = ["//third_party/apple_frameworks:UIKit"],
+)
+
+mozc_objc_library(
+    name = "mac_util",
+    srcs = [
+        "mac_util.mm",
+        "scoped_cftyperef.h",
+    ],
+    hdrs = ["mac_util.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//base:const",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "@com_google_absl//absl/strings",
+        "//third_party/apple_frameworks:CoreFoundation",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:IOKit",
+    ] + mozc_select(
+        # Split iOS code into a separate library.
+        ios = [":UIKit"],
+        macos = [":Carbon"],
+    ),
+)
+
+mozc_objc_test(
+    name = "mac_util_test",
+    size = "small",
+    srcs = ["mac_util_test.mm"],
+    deps = [
+        ":mac_util",
+        "//testing:gunit_main_objc",
+    ],
+)
+
+# Only for macOS.
+mozc_cc_binary(
+    name = "mac_util_main",
+    srcs = [
+        "mac_util.h",
+        "mac_util_main.cc",
+    ],
+    target_compatible_with = ["@platforms//os:macos"],
+    deps = [
+        ":mac_util",
+        "//base:init_mozc",
+        "//base:util",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)

@@ -66,7 +66,7 @@
 #include "session/internal/keymap.h"
 
 #ifdef __APPLE__
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 #ifdef _WIN32

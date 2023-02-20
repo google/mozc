@@ -74,7 +74,7 @@
 #include "base/logging.h"
 
 #ifdef __APPLE__
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 #include "base/singleton.h"

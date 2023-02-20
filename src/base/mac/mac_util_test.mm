@@ -27,29 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_MAC_PROCESS_H_
-#define MOZC_BASE_MAC_PROCESS_H_
-
 #include <string>
 
-#include "absl/strings/string_view.h"
+#import "base/mac/mac_util.h"
 
-#ifdef __APPLE__
+#include "testing/gunit.h"
+
 namespace mozc {
-class MacProcess {
- public:
-  // Open a browser in mac way using NSFoundation framework.
-  static bool OpenBrowserForMac(absl::string_view url);
 
-  // Open an application in mac way using NSWorkspace.
-  static bool OpenApplication(absl::string_view path);
+TEST(MacUtil, GetSerialNumber) {
+  const std::string serial1 = MacUtil::GetSerialNumber();
+  const std::string serial2 = MacUtil::GetSerialNumber();
+  // In this scenario, serial numbers should not be empty.
+  EXPECT_FALSE(serial1.empty());
+  EXPECT_EQ(serial1, serial2);
+}
 
-  // Open GoogleJapaneseInputTool.app as the specified tool name.
-  static bool LaunchMozcTool(const std::string &tool_name);
+#ifndef OS_IOS
+TEST(MacUtil, IsSuppressSuggestionWindow) {
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", "Test"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", "Test"));
 
-  // Open GoogleJapaneseInputTool.app as the error message dialog.
-  static bool LaunchErrorMessageDialog(const std::string &error_type);
-};
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Google", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Firefox"));
+}
+#endif  // OS_IOS
+
 }  // namespace mozc
-#endif  // __APPLE__
-#endif  // MOZC_BASE_MAC_PROCESS_H_

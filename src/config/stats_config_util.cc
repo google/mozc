@@ -49,7 +49,7 @@
 #include <fstream>
 #include <string>
 
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 #if defined(__ANDROID__)
@@ -250,10 +250,10 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  NullStatsConfigUtilImpl() {}
+  NullStatsConfigUtilImpl() = default;
   NullStatsConfigUtilImpl(const NullStatsConfigUtilImpl &) = delete;
   NullStatsConfigUtilImpl &operator=(const NullStatsConfigUtilImpl &) = delete;
-  ~NullStatsConfigUtilImpl() override {}
+  ~NullStatsConfigUtilImpl() override = default;
   bool IsEnabled() override { return false; }
   bool SetEnabled(bool val) override { return true; }
 };
