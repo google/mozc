@@ -46,7 +46,7 @@ namespace mozc {
 namespace storage {
 
 namespace {
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 // Mock the encryption/decryption for android.
 // For android, we use Java's library for encryption. However, we cannot use
 // them, because we cannot launch JVM from native tests on Android.
@@ -75,9 +75,9 @@ class TestEncryptedStringStorage : public EncryptedStringStorage {
   mutable std::string salt_;
   mutable std::string original_data_;
 };
-#else  // OS_ANDROID
+#else  // __ANDROID__
 typedef EncryptedStringStorage TestEncryptedStringStorage;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 }  // namespace
 
 class EncryptedStringStorageTest : public testing::Test {
@@ -104,7 +104,7 @@ TEST_F(EncryptedStringStorageTest, SaveAndLoad) {
   EXPECT_EQ(output, kData);
 }
 
-#ifndef OS_ANDROID
+#ifndef __ANDROID__
 // Note: On Android, we cannot check the behavior of Encryption because
 // it depends on the JVM's behavior, which cannot be launched from native test.
 TEST_F(EncryptedStringStorageTest, Encrypt) {
@@ -128,7 +128,7 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   EXPECT_LT(original_data.size(), result.size());
   EXPECT_TRUE(result.find(original_data) == std::string::npos);
 }
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 }  // namespace storage
 }  // namespace mozc

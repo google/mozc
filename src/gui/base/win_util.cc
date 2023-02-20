@@ -31,7 +31,7 @@
 
 #include <cstdint>
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <atlbase.h>
@@ -46,11 +46,11 @@
 #include <shlobj.h>
 #include <shobjidl.h>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "base/const.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -58,7 +58,7 @@
 namespace mozc {
 namespace gui {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
@@ -213,9 +213,9 @@ void InitializeJumpList() {
   }
 }
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 struct FindVisibleWindowInfo {
@@ -240,10 +240,10 @@ BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
 }
 
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 void WinUtil::ActivateWindow(uint32_t process_id) {
-#ifdef OS_WIN
+#ifdef _WIN32
   FindVisibleWindowInfo info = {};
   info.target_process_id = process_id;
 
@@ -281,20 +281,20 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
   if (::SetForegroundWindow(window.m_hWnd) == FALSE) {
     LOG(ERROR) << "::SetForegroundWindow() failed.";
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 const wchar_t kIMEHotKeyEntryKey[] = L"Keyboard Layout\\Toggle";
 const wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
 const wchar_t kIMEHotKeyEntryData[] = L"3";
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // static
 bool WinUtil::GetIMEHotKeyDisabled() {
-#ifdef OS_WIN
+#ifdef _WIN32
   CRegKey key;
   LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_READ);
 
@@ -316,14 +316,14 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   }
 
   return false;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 // static
 bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (WinUtil::GetIMEHotKeyDisabled() == disabled) {
     // Do not need to update this entry.
     return true;
@@ -356,13 +356,13 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
 
     return (ERROR_SUCCESS == result || ERROR_FILE_NOT_FOUND == result);
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   return false;
 }
 
 void WinUtil::KeepJumpListUpToDate() {
-#ifdef OS_WIN
+#ifdef _WIN32
   HRESULT hr = S_OK;
 
   hr = ::CoInitializeEx(nullptr,
@@ -373,7 +373,7 @@ void WinUtil::KeepJumpListUpToDate() {
   }
   InitializeJumpList();
   ::CoUninitialize();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace gui
 }  // namespace mozc

@@ -31,9 +31,9 @@
 
 #include "base/init_mozc.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "base/win32/winmain.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 int RunConfigDialog(int argc, char *argv[]);
 

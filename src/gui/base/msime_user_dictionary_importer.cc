@@ -29,7 +29,7 @@
 
 #include "gui/base/msime_user_dictionary_importer.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
 
 // In general, mixing different NTDDI_VERSION/_WIN32_WINNT values in a single
@@ -288,7 +288,7 @@ MSIMEUserDictionarImporter::Create() {
 }  // namespace gui
 }  // namespace mozc
 
-#else  // OS_WIN
+#else  // _WIN32
 
 namespace mozc {
 namespace gui {
@@ -301,4 +301,4 @@ MSIMEUserDictionarImporter::Create() {
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
