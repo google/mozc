@@ -30,13 +30,31 @@
 
 """A tool to embedded tsv file into test binary for quality regression test."""
 
+import argparse
 import codecs
+from collections.abc import Iterable
+import logging
 import sys
+from typing import TextIO
 import xml.dom.minidom
 
 
 _DISABLED = 'false'
 _ENABLED = 'true'
+
+
+def ParseArgs() -> argparse.Namespace:
+  parser = argparse.ArgumentParser(
+      'Embed TSV files into test binary for the quality regressin test.'
+  )
+  parser.add_argument(
+      '--output',
+      help='Output file',
+      type=argparse.FileType('w', encoding='utf-8'),
+      default=sys.stdout,
+  )
+  parser.add_argument('files', nargs='+')
+  return parser.parse_args()
 
 
 def ParseTSV(file):
@@ -61,13 +79,14 @@ def ParseXML(file):
   dom = xml.dom.minidom.parseString(contents)
   for issue in dom.getElementsByTagName('issue'):
     status = GetText(issue.getElementsByTagName('status'))
-    enabled = (_DISABLED if status != 'Fixed' and status != 'Verified'
-               else _ENABLED)
-    id = issue.attributes['id'].value
+    enabled = (
+        _DISABLED if status != 'Fixed' and status != 'Verified' else _ENABLED
+    )
+    id_ = issue.attributes['id'].value
     target = GetText(issue.getElementsByTagName('target'))
-    for detail in issue.getElementsByTagName(u'detail'):
+    for detail in issue.getElementsByTagName('detail'):
       fields = []
-      fields.append('mozcsu_%s' % id)
+      fields.append('mozcsu_%s' % id_)
       for key in ('reading', 'output', 'actionStatus', 'rank', 'accuracy'):
         fields.append(GetText(detail.getElementsByTagName(key)))
       if target:
@@ -83,30 +102,38 @@ def ParseFile(file):
     return ParseTSV(file)
 
 
-def GenerateHeader(files):
-  print('namespace mozc{')
-  print('struct TestCase {')
-  print('  const bool enabled;')
-  print('  const char *tsv;')
-  print('} kTestData[] = {')
+def GenerateHeader(out: TextIO, files: Iterable[str]) -> None:
+  """Generates a C++ file from files.
+
+  Args:
+    out: output file object
+    files: list of input file paths.
+  """
+  out.write('namespace mozc{\n')
+  out.write('struct TestCase {\n')
+  out.write('  const bool enabled;\n')
+  out.write('  const char *tsv;\n')
+  out.write('} kTestData[] = {\n')
 
   for file in files:
     try:
       for enabled, line in ParseFile(file):
         # Escape characters: \ and " to \\ and \"
         line = line.replace('\\', '\\\\').replace('"', '\\"')
-        print(' {%s, "%s"},' % (enabled, line))
+        out.write(' {%s, "%s"},\n' % (enabled, line))
     except Exception as e:  # pylint: disable=broad-except
-      print('cannot open %s: %s' % (file, e))
+      logging.exception('cannot open %r: %r', file, e)
       sys.exit(1)
 
-  print('  {false, nullptr},')
-  print('};')
-  print('}  // namespace mozc')
+  out.write('  {false, nullptr},\n')
+  out.write('};\n')
+  out.write('}  // namespace mozc\n')
 
 
-def main():
-  GenerateHeader(sys.argv[1:])
+def main() -> None:
+  args = ParseArgs()
+  GenerateHeader(args.output, args.files)
+
 
 if __name__ == '__main__':
   main()
