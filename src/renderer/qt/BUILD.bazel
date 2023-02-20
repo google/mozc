@@ -30,25 +30,25 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(
     "//:build_defs.bzl",
-    "cc_library_mozc",
+    "mozc_cc_library",
 )
 load(
     "//bazel:qt.bzl",
-    "cc_qt_library_mozc",
-    "qt_moc_mozc",
+    "mozc_cc_qt_library",
+    "mozc_qt_moc",
 )
 
 package(default_visibility = ["//:__subpackages__"])
 
 licenses(["notice"])
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_qt_ipc_thread",
     srcs = ["qt_ipc_thread.h"],
     outs = ["out_qt_ipc_thread.cc"],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "qt_ipc_thread",
     srcs = [
         "qt_ipc_thread.cc",
@@ -61,13 +61,13 @@ cc_qt_library_mozc(
     ],
 )
 
-qt_moc_mozc(
+mozc_qt_moc(
     name = "moc_qt_server",
     srcs = ["qt_server.h"],
     outs = ["out_qt_server.cc"],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "qt_server",
     srcs = [
         "qt_server.cc",
@@ -89,7 +89,7 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_library_mozc(
+mozc_cc_library(
     name = "qt_ipc_server",
     srcs = [
         "qt_ipc_server.cc",
@@ -107,7 +107,7 @@ cc_library_mozc(
     ],
 )
 
-cc_qt_library_mozc(
+mozc_cc_qt_library(
     name = "qt_window_manager",
     srcs = [
         "qt_window_manager.cc",

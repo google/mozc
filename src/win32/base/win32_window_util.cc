@@ -42,7 +42,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 
 namespace mozc {
 namespace win32 {

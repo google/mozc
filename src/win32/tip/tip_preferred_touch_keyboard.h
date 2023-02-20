@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_PREFERRED_TOUCH_KEYBOARD_H_
 #define MOZC_WIN32_TIP_TIP_PREFERRED_TOUCH_KEYBOARD_H_
 
-#include <Unknwn.h>
+#include <unknwn.h>
 
 #include "base/port.h"
 

@@ -164,13 +164,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "scoped_handle",
-    srcs = ["scoped_handle.cc"],
-    hdrs = ["scoped_handle.h"],
-    visibility = ["//:__subpackages__"],
-)
-
-mozc_cc_library(
     name = "freelist",
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
@@ -276,16 +269,6 @@ mozc_cc_test(
         ":thread",
         "//testing:gunit_main",
         "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_library(
-    name = "win_util",
-    hdrs = ["win_util.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":port",
-        "//testing:gunit_prod",
     ],
 )
 
@@ -616,8 +599,8 @@ mozc_cc_library(
     deps = [
         ":logging",
         ":port",
-        ":scoped_handle",
         ":util",
+        "//base/win32:scoped_handle",
     ],
 )
 
@@ -661,10 +644,10 @@ mozc_cc_library(
         ":file_stream",
         ":logging",
         ":mmap",
-        ":scoped_handle",
         ":singleton",
         ":util",
-        ":win_util",
+        "//base/win32:scoped_handle",
+        "//base/win32:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -727,7 +710,7 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
-        ":win_util",
+        "//base/win32:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
@@ -769,10 +752,10 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":port",
-        ":scoped_handle",
+        "//base/win32:scoped_handle",
         ":system_util",
         ":util",
-        ":win_util",
+        "//base/win32:win_util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(macos = ["mac_process"]),
@@ -812,10 +795,10 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":port",
-        ":scoped_handle",
         ":singleton",
         ":system_util",
         ":util",
+        "//base/win32:scoped_handle",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -841,7 +824,6 @@ mozc_cc_library(
     name = "run_level",
     srcs = [
         "run_level.cc",
-        "win_sandbox.h",
     ],
     hdrs = ["run_level.h"],
     visibility = ["//:__subpackages__"],
@@ -849,10 +831,11 @@ mozc_cc_library(
         ":const",
         ":logging",
         ":port",
-        ":scoped_handle",
         ":system_util",
         ":util",
-        ":win_util",
+        "//base/win32:scoped_handle",
+        "//base/win32:win_sandbox",
+        "//base/win32:win_util",
     ],
 )
 
@@ -1334,30 +1317,6 @@ mozc_cc_binary(
         ":util",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(ios = [":mac_util"]),
-)
-
-mozc_cc_library(
-    name = "winmain",
-    hdrs = ["winmain.h"],
-    visibility = [
-        # For //server:mozc_server.
-        "//server:__pkg__",
-    ],
-    deps = [
-        ":const",
-        ":port",
-        ":util",
-    ],
-)
-
-mozc_cc_library(
-    name = "win_api_test_helper",
-    hdrs = ["win_api_test_helper.h"],
-    visibility = [
-        # For //config:stats_config_util_test.
-        "//config:__pkg__",
-    ],
-    deps = [":port"],
 )
 
 mozc_cc_library(

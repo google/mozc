@@ -61,7 +61,7 @@
 
     'conditions': [
       ['target_platform=="Windows"', {
-        'wtl_dir': '<(ext_third_party_dir)/wtl',
+        'wtl_dir': '<(third_party_dir)/wtl',
       }],
     ],
 

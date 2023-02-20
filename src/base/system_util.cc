@@ -33,19 +33,19 @@
 
 #include "absl/status/status.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
-#include <Windows.h>
-#include <LMCons.h>
-#include <Sddl.h>
-#include <ShlObj.h>
-#include <VersionHelpers.h>
+#include <windows.h>
+#include <lmcons.h>
+#include <sddl.h>
+#include <shlobj.h>
+#include <versionhelpers.h>
 // clang-format on
-#else  // OS_WIN
+#else  // _WIN32
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include <sys/stat.h>
@@ -57,16 +57,16 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <memory>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <sstream>
 #include <string>
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 #include "base/android_util.h"
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 #include "base/const.h"
 #include "base/environ.h"
@@ -80,9 +80,9 @@
 #include "base/singleton.h"
 #include "base/util.h"
 
-#ifdef OS_WIN
-#include "base/win_util.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_util.h"
+#endif  // _WIN32
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -126,7 +126,7 @@ void UserProfileDirectoryImpl::SetDir(const std::string &dir) {
   dir_ = dir;
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class LocalAppDataDirectoryCache {
  public:
@@ -235,7 +235,7 @@ class LocalAppDataDirectoryCache {
   HRESULT result_;
   std::string path_;
 };
-#endif  // OS_WIN
+#endif  // _WIN32
 
 std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 #if defined(OS_CHROMEOS)
@@ -245,11 +245,11 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   // NaCL platform is correct.
   return "/mutable";
 
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   // Do nothing for WebAssembly.
   return "";
 
-#elif defined(OS_ANDROID)
+#elif defined(__ANDROID__)
   // For android, we do nothing here because user profile directory,
   // of which the path depends on active user,
   // is injected from Java layer.
@@ -264,7 +264,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   // up by iTunes and iCloud.
   return FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
 
-#elif defined(OS_WIN)
+#elif defined(_WIN32)
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
 
@@ -288,7 +288,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   return FileUtil::JoinPath(dir, "Mozc");
 #endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
-#elif defined(OS_LINUX)
+#elif defined(__linux__)
   // 1. If "$HOME/.mozc" already exists,
   //    use "$HOME/.mozc" for backward compatibility.
   // 2. If $XDG_CONFIG_HOME is defined
@@ -347,7 +347,7 @@ void SystemUtil::SetUserProfileDirectory(const std::string &path) {
   Singleton<UserProfileDirectoryImpl>::get()->SetDir(path);
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
 class ProgramFilesX86Cache {
@@ -418,10 +418,10 @@ class ProgramFilesX86Cache {
   std::string path_;
 };
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 std::string SystemUtil::GetServerDirectory() {
-#ifdef OS_WIN
+#ifdef _WIN32
   DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return FileUtil::JoinPath(
@@ -432,18 +432,18 @@ std::string SystemUtil::GetServerDirectory() {
   return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                             kProductNameInEnglish);
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #if defined(__APPLE__)
   return MacUtil::GetServerDirectory();
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
 #ifndef MOZC_SERVER_DIR
 #define MOZC_SERVER_DIR "/usr/lib/mozc"
 #endif  // MOZC_SERVER_DIR
   return MOZC_SERVER_DIR;
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
@@ -477,7 +477,7 @@ std::string SystemUtil::GetToolPath() {
 }
 
 std::string SystemUtil::GetDocumentDirectory() {
-#if defined(OS_LINUX)
+#if defined(__linux__)
 
 #ifndef MOZC_DOCUMENT_DIR
 #define MOZC_DOCUMENT_DIR "/usr/lib/mozc/documents"
@@ -486,9 +486,9 @@ std::string SystemUtil::GetDocumentDirectory() {
 
 #elif defined(__APPLE__)
   return GetServerDirectory();
-#else   // OS_LINUX, __APPLE__
+#else   // __linux__, __APPLE__
   return FileUtil::JoinPath(GetServerDirectory(), "documents");
-#endif  // OS_LINUX, __APPLE__
+#endif  // __linux__, __APPLE__
 }
 
 std::string SystemUtil::GetCrashReportDirectory() {
@@ -498,7 +498,7 @@ std::string SystemUtil::GetCrashReportDirectory() {
 }
 
 std::string SystemUtil::GetUserNameAsString() {
-#if defined(OS_WIN)
+#if defined(_WIN32)
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
   // Call the same name Windows API.  (include Advapi32.lib).
@@ -510,27 +510,25 @@ std::string SystemUtil::GetUserNameAsString() {
   std::string username;
   Util::WideToUtf8(&wusername[0], &username);
   return username;
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#if defined(OS_ANDROID)
+#if defined(__ANDROID__)
   // Android doesn't seem to support getpwuid_r.
   struct passwd *ppw = getpwuid(geteuid());
   CHECK(ppw != nullptr);
   return ppw->pw_name;
-#endif  // OS_ANDROID
-
-#if defined(__APPLE__) || defined(OS_LINUX) || defined(OS_WASM)
+#elif defined(__APPLE__) || defined(__linux__) || defined(__wasm__)
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   return pw.pw_name;
-#endif  // __APPLE__ || OS_LINUX || OS_WASM
+#endif  // __APPLE__ || __linux__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 class UserSidImpl {
@@ -578,17 +576,17 @@ UserSidImpl::UserSidImpl() {
 }
 
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 std::string SystemUtil::GetUserSidAsString() {
-#ifdef OS_WIN
+#ifdef _WIN32
   return Singleton<UserSidImpl>::get()->get();
-#else   // OS_WIN
+#else   // _WIN32
   return GetUserNameAsString();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 std::string GetObjectNameAsString(HANDLE handle) {
@@ -679,22 +677,22 @@ std::string GetSessionIdString() {
 }
 
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 std::string SystemUtil::GetDesktopNameAsString() {
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
   const char *display = Environ::GetEnv("DISPLAY");
   if (display == nullptr) {
     return "";
   }
   return display;
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
 #if defined(__APPLE__)
   return "";
 #endif  // __APPLE__
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
   const std::string &session_id = GetSessionIdString();
   if (session_id.empty()) {
     DLOG(ERROR) << "Failed to retrieve session id";
@@ -714,10 +712,10 @@ std::string SystemUtil::GetDesktopNameAsString() {
   }
 
   return (session_id + "." + window_station_name + "." + desktop_name);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
@@ -756,33 +754,33 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
   }
   return true;
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 bool SystemUtil::IsWindows7OrLater() {
-#ifdef OS_WIN
+#ifdef _WIN32
   static const bool result = ::IsWindows7OrGreater();
   return result;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool SystemUtil::IsWindows8OrLater() {
-#ifdef OS_WIN
+#ifdef _WIN32
   static const bool result = ::IsWindows8OrGreater();
   return result;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool SystemUtil::IsWindows8_1OrLater() {
-#ifdef OS_WIN
+#ifdef _WIN32
   static const bool result = ::IsWindows8Point1OrGreater();
   return result;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 namespace {
@@ -807,14 +805,14 @@ bool SystemUtil::IsWindowsX64() {
       break;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   SYSTEM_INFO system_info = {};
   // This function never fails.
   ::GetNativeSystemInfo(&system_info);
   return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 void SystemUtil::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
@@ -832,7 +830,7 @@ void SystemUtil::SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode) {
   }
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 const wchar_t *SystemUtil::GetSystemDir() {
   DCHECK(Singleton<SystemDirectoryCache>::get()->succeeded());
   return Singleton<SystemDirectoryCache>::get()->system_dir();
@@ -855,12 +853,12 @@ std::string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
   // Compose "Local\MSCTF.AsmCacheReady.<desktop name><session #>".
   return ("Local\\MSCTF.AsmCacheReady." + desktop_name + session_id);
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // TODO(toshiyuki): move this to the initialization module and calculate
 // version only when initializing.
 std::string SystemUtil::GetOSVersionString() {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::string ret = "Windows";
   OSVERSIONINFOEX osvi = {0};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
@@ -879,32 +877,32 @@ std::string SystemUtil::GetOSVersionString() {
   const std::string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
-#elif defined(OS_LINUX)
+#elif defined(__linux__)
   const std::string ret = "Linux";
   return ret;
-#else   // !OS_WIN && !__APPLE__ && !OS_LINUX
+#else   // !_WIN32 && !__APPLE__ && !__linux__
   const std::string ret = "Unknown";
   return ret;
-#endif  // OS_WIN, __APPLE__, OS_LINUX
+#endif  // _WIN32, __APPLE__, __linux__
 }
 
 void SystemUtil::DisableIME() {
-#ifdef OS_WIN
+#ifdef _WIN32
   // Note that ImmDisableTextFrameService API is no longer supported on
   // Windows Vista and later.
   // https://msdn.microsoft.com/en-us/library/windows/desktop/dd318537.aspx
   ::ImmDisableIME(-1);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 uint64_t SystemUtil::GetTotalPhysicalMemory() {
-#if defined(OS_WIN)
+#if defined(_WIN32)
   MEMORYSTATUSEX memory_status = {sizeof(MEMORYSTATUSEX)};
   if (!::GlobalMemoryStatusEx(&memory_status)) {
     return 0;
   }
   return memory_status.ullTotalPhys;
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #if defined(__APPLE__)
   int mib[] = {CTL_HW, HW_MEMSIZE};
@@ -921,7 +919,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
   return total_memory;
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const int32_t page_size = sysconf(_SC_PAGESIZE);
   const int32_t number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
@@ -934,7 +932,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 #endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.

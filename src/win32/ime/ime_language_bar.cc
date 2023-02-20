@@ -36,7 +36,7 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar_menu.h"
 #include "win32/ime/ime_resource.h"

@@ -104,7 +104,7 @@ class SystemUtil {
   // Mac has no DesktopName() so, just return empty string
   static std::string GetDesktopNameAsString();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // From an early stage of the development of Mozc, we have somehow abused
   // CHECK macro assuming that any failure of fundamental APIs like
   // ::SHGetFolderPathW or ::SHGetKnownFolderPathis is worth being notified
@@ -122,7 +122,7 @@ class SystemUtil {
   //   sandboxed environment, where such kind of fundamental APIs are far more
   //   likely to fail.  See b/3216603.
   static bool EnsureVitalImmutableDataIsAvailable();
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // returns true if the version of Windows is 6.1 or later.
   static bool IsWindows7OrLater();
@@ -145,7 +145,7 @@ class SystemUtil {
   // For unit tests, this function overrides the behavior of |IsWindowsX64|.
   static void SetIsWindowsX64ModeForTest(IsWindowsX64Mode mode);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // return system directory. If failed, return nullptr.
   // You need not to delete the returned pointer.
   // This function is thread safe.
@@ -158,7 +158,7 @@ class SystemUtil {
   // utility functions defined in util.cc.
   // TODO(yukawa): Move this method to win32/base/*
   static std::string GetMSCTFAsmCacheReadyEventName();
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // return string representing os version
   // TODO(toshiyuki): Add unittests.

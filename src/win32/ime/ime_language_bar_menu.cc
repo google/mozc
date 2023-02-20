@@ -47,7 +47,7 @@
 #include <limits>
 
 #include "base/logging.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/ime/ime_impl_imm.h"
 #include "win32/ime/ime_language_bar.h"

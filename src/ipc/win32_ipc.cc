@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 
-#include <Sddl.h>
-#include <Windows.h>
+#include <sddl.h>
+#include <windows.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -40,13 +40,13 @@
 #include "base/const.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "base/win_sandbox.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_sandbox.h"
+#include "base/win32/win_util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/match.h"
@@ -781,4 +781,4 @@ bool IPCClient::Call(const std::string &request, std::string *response,
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

@@ -58,14 +58,14 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 
 #include "base/util.h"
-#include "base/win_util.h"
-#else  // OS_WIN
+#include "base/win32/win_util.h"
+#else  // _WIN32
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include "base/mac_process.h"
@@ -471,13 +471,13 @@ bool Client::CreateSession() {
   commands::ApplicationInfo *info = input.mutable_application_info();
   DCHECK(info);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   info->set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
   info->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
-#else   // OS_WIN
+#else   // _WIN32
   info->set_process_id(static_cast<uint32_t>(getpid()));
   info->set_thread_id(0);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   commands::Output output;
   if (!CheckVersionOrRestartServerInternal(input, &output)) {
@@ -889,7 +889,7 @@ bool Client::LaunchTool(const std::string &mode,
   }
 
   if (mode == "administration_dialog") {
-#ifdef OS_WIN
+#ifdef _WIN32
     const absl::string_view path = mozc::SystemUtil::GetToolPath();
     std::wstring wpath;
     Util::Utf8ToWide(path, &wpath);
@@ -905,12 +905,12 @@ bool Client::LaunchTool(const std::string &mode,
     // http://b/2415191
     return WinUtil::ShellExecuteInSystemDir(L"runas", wpath.c_str(),
                                             L"--mode=administration_dialog");
-#endif  // OS_WIN
+#endif  // _WIN32
 
     return false;
   }
 
-#if defined(OS_WIN) || defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(_WIN32) || defined(__linux__) || defined(__ANDROID__)
   std::string arg = absl::StrCat("--mode=", mode);
   if (!extra_arg.empty()) {
     absl::StrAppend(&arg, " ", extra_arg);
@@ -919,7 +919,7 @@ bool Client::LaunchTool(const std::string &mode,
     LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
     return false;
   }
-#endif  // OS_WIN || OS_LINUX || OS_ANDROID
+#endif  // _WIN32 || __linux__ || __ANDROID__
 
   // TODO(taku): move MacProcess inside SpawnMozcProcess.
   // TODO(taku): support extra_arg.

@@ -31,9 +31,9 @@
 
 #include <cstdint>
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -44,13 +44,14 @@
 #include <QTimer>
 #include <QtGui>
 
-#ifdef OS_WIN
-#include <Windows.h>
-#endif  // OS_WIN
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 #include <algorithm>
 #include <functional>
 #include <ios>
+#include <iosfwd>
 #include <memory>
 #include <string>
 #include <utility>
@@ -74,9 +75,9 @@
 #include "gui/dictionary_tool/import_dialog.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "gui/base/win_util.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace gui {
@@ -275,11 +276,11 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
   if (encoding_type == UserDictionaryImporter::NUM_ENCODINGS) {
     LOG(ERROR) << "GuessFileEncodingType() returns UNKNOWN encoding.";
     // set default encoding
-#ifdef OS_WIN
+#ifdef _WIN32
     encoding_type = UserDictionaryImporter::SHIFT_JIS;
-#else   // OS_WIN
+#else   // _WIN32
     encoding_type = UserDictionaryImporter::UTF16;
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   VLOG(1) << "Setting Encoding to: " << static_cast<int>(encoding_type);
@@ -361,11 +362,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 #endif  // !ENABLE_CLOUD_SYNC
 
   // main window
-#ifndef OS_LINUX
+#ifndef __linux__
   // For some reason setCentralWidget crashes the dictionary_tool on Linux
   // TODO(taku): investigate the cause of the crashes
   setCentralWidget(splitter_);
-#endif  // OS_LINUX
+#endif  // __linux__
 
   setContextMenuPolicy(Qt::NoContextMenu);
 
@@ -469,11 +470,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   export_action_ = dic_menu_->addAction(tr("Export current dictionary..."));
 
   // add Import from MS-IME's dictionary
-#ifdef OS_WIN
+#ifdef _WIN32
   dic_menu_->addSeparator();
   import_default_ime_action_ = dic_menu_->addAction(
       tr("Import from %1's user dictionary...").arg("Microsoft IME"));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   dic_menu_button_->setMenu(dic_menu_);
   connect(new_action_, SIGNAL(triggered()), this, SLOT(CreateDictionary()));
@@ -486,10 +487,10 @@ DictionaryTool::DictionaryTool(QWidget *parent)
           SLOT(ImportAndAppendDictionary()));
   connect(export_action_, SIGNAL(triggered()), this, SLOT(ExportDictionary()));
 
-#ifdef OS_WIN
+#ifdef _WIN32
   connect(import_default_ime_action_, SIGNAL(triggered()), this,
           SLOT(ImportFromDefaultIME()));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // Signals and slots to connect buttons to actions.
   connect(new_word_button_, SIGNAL(clicked()), this, SLOT(AddWord()));
@@ -907,7 +908,7 @@ void DictionaryTool::ImportHelper(
 }
 
 void DictionaryTool::ImportFromDefaultIME() {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (RunLevel::IsElevatedByUAC()) {
     // MS-IME's dictionary importer doesn't work if the current
     // process is already elevated by UAC. If user disables UAC<
@@ -964,7 +965,7 @@ void DictionaryTool::ImportFromDefaultIME() {
   UpdateUIStatus();
 
   ReportImportError(error, dic_name, added_entries_size);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 void DictionaryTool::ExportDictionary() {
@@ -1563,11 +1564,11 @@ bool DictionaryTool::IsWritableToExport(const std::string &file_name) {
     QFileInfo dir_info(file_info.dir().absolutePath());
     // This preprocessor conditional is a workaround for a problem
     // that export fails on Windows.
-#ifdef OS_WIN
+#ifdef _WIN32
     return dir_info.isExecutable();
-#else   // OS_WIN
+#else   // _WIN32
     return dir_info.isExecutable() && dir_info.isWritable();
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 }
 
@@ -1579,9 +1580,9 @@ void DictionaryTool::UpdateUIStatus() {
 
   delete_action_->setEnabled(dic_list_->count() > 0);
   import_append_action_->setEnabled(dic_list_->count() > 0);
-#ifdef OS_WIN
+#ifdef _WIN32
   import_default_ime_action_->setEnabled(dic_list_->count() > 0);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   const bool is_enable_new_word =
       dic_list_->count() > 0 && dic_content_->rowCount() < max_entry_size_;

@@ -29,7 +29,7 @@
 
 #include "win32/base/imm_registrar.h"
 
-#include <WinNls32.h>
+#include <winnls32.h>
 #include <atlbase.h>
 #include <strsafe.h>
 #include <windows.h>
@@ -45,7 +45,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "win32/base/display_name_resource.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"

@@ -29,12 +29,12 @@
 
 #include "base/process_mutex.h"
 
-#ifndef OS_WIN
+#ifndef _WIN32
 #include <unistd.h>
 
 #include <cstdlib>
 #include <string>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -73,7 +73,7 @@ class ProcessMutexTest : public testing::Test {
   std::string original_user_profile_dir_;
 };
 
-#if !defined(OS_WIN)
+#if !defined(_WIN32)
 TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   const pid_t pid = ::fork();
   if (pid == 0) {  // child process
@@ -98,7 +98,7 @@ TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
     LOG(FATAL) << "fork() failed";
   }
 }
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
 TEST_F(ProcessMutexTest, BasicTest) {
   ProcessMutex m1(kName);

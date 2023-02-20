@@ -31,9 +31,9 @@
 
 #include "base/japanese_util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <algorithm>
 #include <cstdint>
@@ -52,7 +52,7 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "dictionary/user_dictionary_util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"

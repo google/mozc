@@ -32,40 +32,40 @@
 
 // Check duplicate OS_XXX definition.
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #define MOZC_OS_DEFINED
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #define MOZC_OS_DEFINED
 #endif  // __APPLE__
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 #define MOZC_OS_DEFINED
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 #ifdef OS_NACL
 #error "We no longer support NaCl. Still need? Report to b/158959918 ASAP."
 #endif  // OS_NACL
 
-#ifdef OS_LINUX
+#ifdef __linux__
 // TODO(matsuzakit): Remove following guard.
-// Currently OS_LINUX and OS_ANDROID are defined at the same time.
-#if !defined(OS_ANDROID)
+// Currently __linux__ and __ANDROID__ are defined at the same time.
+#if !defined(__ANDROID__)
 #define MOZC_OS_DEFINED
-#endif  // !OS_ANDROID
-#endif  // OS_LINUX
+#endif  // !__ANDROID__
+#endif  // __linux__
 
 #ifdef OS_IOS
 #define MOZC_OS_DEFINED
 #endif  // OS_IOS
 
-#ifdef OS_WASM
+#ifdef __wasm__
 #define MOZC_OS_DEFINED
-#endif  // OS_WASM
+#endif  // __wasm__
 
 #ifndef MOZC_OS_DEFINED
-#error "OS_XXX (e.g., OS_WIN) must be defined."
+#error "Unsupported OS."
 #endif  // !MOZC_OS_DEFINED
 
 #undef MOZC_OS_DEFINED

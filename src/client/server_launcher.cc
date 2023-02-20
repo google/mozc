@@ -51,15 +51,15 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__ || OS_IOS
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <sddl.h>
 #include <shlobj.h>
 #include <windows.h>
 
-#include "base/win_sandbox.h"
-#else  // OS_WIN
+#include "base/win32/win_sandbox.h"
+#else  // _WIN32
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace client {
@@ -114,7 +114,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 
   std::string arg;
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // When mozc is not used as a default IME and some applications (like notepad)
   // are registered in "Start up", mozc_server may not be launched successfully.
   // This is because the Explorer launches start-up processes inside a group job
@@ -130,7 +130,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(WARNING) << "Parent process is in job. start with restricted mode";
     arg += "--restricted";
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef DEBUG
   // In order to test the Session treatment (timeout/size constratins),
@@ -145,7 +145,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   const bool listener_is_available = listener.IsAvailable();
 
   size_t pid = 0;
-#ifdef OS_WIN
+#ifdef _WIN32
   mozc::WinSandbox::SecurityInfo info;
   // You cannot use WinSandbox::USER_INTERACTIVE here because restricted token
   // seems to prevent WinHTTP from using SSL. b/5502343
@@ -168,7 +168,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(ERROR) << "Can't start process: " << ::GetLastError();
     return false;
   }
-#elif defined(__APPLE__)  // OS_WIN
+#elif defined(__APPLE__)  // _WIN32
   // Use launchd API instead of spawning process.  It doesn't use
   // server_program() at all.
   const bool result = MacUtil::StartLaunchdService(

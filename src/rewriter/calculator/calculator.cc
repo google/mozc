@@ -35,9 +35,9 @@
 // causes build error.
 #include <assert.h>
 #include <stdio.h>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <float.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 #include <string.h>
 
 #include <cmath>

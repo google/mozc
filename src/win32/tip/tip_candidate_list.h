@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_CANDIDATE_LIST_H_
 #define MOZC_WIN32_TIP_TIP_CANDIDATE_LIST_H_
 
-#include <Unknwn.h>
+#include <unknwn.h>
 
 #include <string>
 #include <vector>

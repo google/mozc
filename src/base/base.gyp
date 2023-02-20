@@ -71,8 +71,8 @@
         }],
         ['OS=="win"', {
           'sources': [
-            'win_api_test_helper.cc',
-            'win_sandbox.cc',
+            'win32/win_api_test_helper.cc',
+            'win32/win_sandbox.cc',
           ],
         }],
       ],
@@ -108,7 +108,7 @@
         'thread.cc',
         'thread2.cc',
         'util.cc',
-        'win_util.cc',
+        'win32/win_util.cc',
       ],
       'dependencies': [
         'clock',
@@ -197,7 +197,7 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'scoped_handle.cc',
+        'win32/scoped_handle.cc',
       ],
     },
     {
@@ -508,7 +508,7 @@
           'target_name': 'win_font_test_helper',
           'type': 'static_library',
           'sources': [
-            'win_font_test_helper.cc',
+            'win32/win_font_test_helper.cc',
           ],
           'dependencies': [
             'base',

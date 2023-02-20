@@ -50,7 +50,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "absl/base/macros.h"

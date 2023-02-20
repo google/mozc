@@ -38,15 +38,15 @@
 #include "gui/base/util.h"
 #include "gui/dictionary_tool/dictionary_tool.h"
 
-#ifdef OS_WIN
-#include "base/win_util.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_util.h"
+#endif  // _WIN32
 
 int RunDictionaryTool(int argc, char *argv[]) {
-#ifdef OS_WIN
+#ifdef _WIN32
   // For MSIMEImportIterator.
   mozc::ScopedCOMInitializer com_initializer;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   Q_INIT_RESOURCE(qrc_dictionary_tool);
   auto app = mozc::gui::GuiUtil::InitQt(argc, argv);

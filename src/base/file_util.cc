@@ -29,13 +29,13 @@
 
 #include "base/file_util.h"
 
-#ifdef OS_WIN
-#include <KtmW32.h>
-#include <Windows.h>
-#else  // OS_WIN
+#ifdef _WIN32
+#include <ktmw32.h>
+#include <windows.h>
+#else  // _WIN32
 #include <sys/stat.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cerrno>
 #include <cstddef>
@@ -51,10 +51,10 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -63,16 +63,16 @@
 
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 constexpr char kFileDelimiter = '\\';
-#else   // OS_WIN
+#else   // _WIN32
 constexpr char kFileDelimiter = '/';
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace
 
 // Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
@@ -117,7 +117,7 @@ using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
 
 }  // namespace
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
@@ -171,14 +171,14 @@ absl::Status StripWritePreventingAttributesIfExists(
 }
 
 }  // namespace
-#endif  // OS_WIN
+#endif  // _WIN32
 
 absl::Status FileUtil::CreateDirectory(const std::string &path) {
   return FileUtilSingleton::Get()->CreateDirectory(path);
 }
 
 absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
-#if defined(OS_WIN)
+#if defined(_WIN32)
   std::wstring wide;
   if (Util::Utf8ToWide(path, &wide) <= 0) {
     return absl::InvalidArgumentError("Failed to convert to wstring");
@@ -188,13 +188,13 @@ absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
                                            "CreateDirectoryW failed");
   }
   return absl::OkStatus();
-#else   // !OS_WIN
+#else   // !_WIN32
   if (::mkdir(path.c_str(), 0700) != 0) {
     const int err = errno;
     return absl::ErrnoToStatus(err, "mkdir failed");
   }
   return absl::OkStatus();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::RemoveDirectory(const std::string &dirname) {
@@ -202,7 +202,7 @@ absl::Status FileUtil::RemoveDirectory(const std::string &dirname) {
 }
 
 absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wide;
   if (Util::Utf8ToWide(dirname, &wide) <= 0) {
     return absl::InvalidArgumentError("Failed to convert to wstring");
@@ -212,13 +212,13 @@ absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
                                            "RemoveDirectoryW failed");
   }
   return absl::OkStatus();
-#else   // !OS_WIN
+#else   // !_WIN32
   if (::rmdir(dirname.c_str()) != 0) {
     const int err = errno;
     return absl::ErrnoToStatus(err, "rmdir failed");
   }
   return absl::OkStatus();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::RemoveDirectoryIfExists(const std::string &dirname) {
@@ -237,7 +237,7 @@ absl::Status FileUtil::Unlink(const std::string &filename) {
 }
 
 absl::Status FileUtilImpl::Unlink(const std::string &filename) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (absl::Status s = StripWritePreventingAttributesIfExists(filename);
       !s.ok()) {
     return absl::UnknownError(absl::StrFormat(
@@ -252,14 +252,14 @@ absl::Status FileUtilImpl::Unlink(const std::string &filename) const {
     return absl::UnknownError(absl::StrFormat("DeleteFileW failed: %d", err));
   }
   return absl::OkStatus();
-#else   // !OS_WIN
+#else   // !_WIN32
   if (::unlink(filename.c_str()) != 0) {
     const int err = errno;
     return absl::UnknownError(
         absl::StrFormat("unlink failed: errno = %d", err));
   }
   return absl::OkStatus();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::UnlinkIfExists(const std::string &filename) {
@@ -284,20 +284,20 @@ absl::Status FileUtil::FileExists(const std::string &filename) {
 }
 
 absl::Status FileUtilImpl::FileExists(const std::string &filename) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wide;
   if (Util::Utf8ToWide(filename, &wide) <= 0) {
     return absl::InvalidArgumentError("Utf8ToWide failed");
   }
   return GetFileAttributes(wide).status();
-#else   // !OS_WIN
+#else   // !_WIN32
   struct stat s;
   if (::stat(filename.c_str(), &s) == 0) {
     return absl::OkStatus();
   }
   const int err = errno;
   return absl::ErrnoToStatus(err, absl::StrCat("Cannot stat ", filename));
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::DirectoryExists(const std::string &dirname) {
@@ -305,7 +305,7 @@ absl::Status FileUtil::DirectoryExists(const std::string &dirname) {
 }
 
 absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wide;
   if (Util::Utf8ToWide(dirname, &wide) <= 0) {
     return absl::InvalidArgumentError("Utf8ToWide failed");
@@ -317,7 +317,7 @@ absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
   }
   return (*attrs & FILE_ATTRIBUTE_DIRECTORY) ? absl::OkStatus()
                                              : absl::NotFoundError(dirname);
-#else   // !OS_WIN
+#else   // !_WIN32
   struct stat s;
   if (::stat(dirname.c_str(), &s) == 0) {
     return S_ISDIR(s.st_mode)
@@ -326,10 +326,10 @@ absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
   }
   const int err = errno;
   return absl::ErrnoToStatus(err, absl::StrCat("Cannot stat ", dirname));
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace {
 
 absl::Status TransactionalMoveFile(const std::wstring &from,
@@ -407,7 +407,7 @@ bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
   }
   return s.ok();
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 absl::Status FileUtil::CopyFile(const std::string &from,
                                 const std::string &to) {
@@ -416,7 +416,7 @@ absl::Status FileUtil::CopyFile(const std::string &from,
 
 absl::Status FileUtilImpl::CopyFile(const std::string &from,
                                     const std::string &to) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wfrom, wto;
   if (Util::Utf8ToWide(from, &wfrom) <= 0) {
     return absl::InvalidArgumentError(
@@ -429,7 +429,7 @@ absl::Status FileUtilImpl::CopyFile(const std::string &from,
   if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
     return s;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   InputFileStream ifs(from, std::ios::binary);
   if (!ifs) {
@@ -448,7 +448,7 @@ absl::Status FileUtilImpl::CopyFile(const std::string &from,
   ifs.close();
   ofs.close();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   absl::StatusOr<DWORD> attrs = GetFileAttributes(wfrom);
   if (attrs.ok()) {
     if (absl::Status s = SetFileAttributes(wto, *attrs); !s.ok()) {
@@ -457,7 +457,7 @@ absl::Status FileUtilImpl::CopyFile(const std::string &from,
   } else {
     LOG(ERROR) << attrs.status();
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   return absl::OkStatus();
 }
@@ -520,7 +520,7 @@ absl::Status FileUtil::AtomicRename(const std::string &from,
 
 absl::Status FileUtilImpl::AtomicRename(const std::string &from,
                                         const std::string &to) const {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring fromw, tow;
   Util::Utf8ToWide(from, &fromw);
   Util::Utf8ToWide(to, &tow);
@@ -564,7 +564,7 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
                         *original_attributes, move_status.ToString()));
   }
   return absl::OkStatus();
-#else   // !OS_WIN
+#else   // !_WIN32
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
   // is not properly implemented, atomic rename is POSIX spec though.
   // http://www.weirdnet.nl/apple/rename.html
@@ -574,7 +574,7 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
         absl::StrFormat("errno(%d): %s", err, std::strerror(err)));
   }
   return absl::OkStatus();
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::CreateHardLink(const std::string &from,
@@ -636,7 +636,7 @@ std::string FileUtil::Basename(const std::string &filename) {
 }
 
 std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
-#ifdef OS_WIN
+#ifdef _WIN32
   constexpr char kFileDelimiterForUnix = '/';
   constexpr char kFileDelimiterForWindows = '\\';
   std::string normalized;
@@ -644,9 +644,9 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
                       std::string(1, kFileDelimiterForWindows), true,
                       &normalized);
   return normalized;
-#else   // OS_WIN
+#else   // _WIN32
   return path;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
@@ -656,7 +656,7 @@ absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
 
 absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
     const std::string &filename) const {
-#if defined(OS_WIN)
+#if defined(_WIN32)
   std::wstring wide;
   if (!Util::Utf8ToWide(filename, &wide)) {
     return absl::InvalidArgumentError(
@@ -670,14 +670,14 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
   }
   return (static_cast<uint64_t>(info.ftLastWriteTime.dwHighDateTime) << 32) +
          info.ftLastWriteTime.dwLowDateTime;
-#else   // !OS_WIN
+#else   // !_WIN32
   struct stat stat_info;
   if (::stat(filename.c_str(), &stat_info)) {
     const int err = errno;
     return absl::ErrnoToStatus(err, absl::StrCat("stat failed: ", filename));
   }
   return stat_info.st_mtime;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 absl::Status FileUtil::GetContents(const std::string &filename,

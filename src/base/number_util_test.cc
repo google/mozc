@@ -190,10 +190,10 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_DOUBLE_EQ(-1.7976931348623158e308, value);
 
   // It seems that the Android libc doesn't accept hex format, so disable it.
-#ifndef OS_ANDROID
+#ifndef __ANDROID__
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
   EXPECT_EQ(value, static_cast<double>(0x1234));
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("1.0e309", &value));   // overflow
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.0e309", &value));  // underflow

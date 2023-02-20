@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QGuiApplication>
 #include <QtGui>
@@ -41,9 +41,9 @@
 #include "gui/base/util.h"
 #include "gui/set_default_dialog/set_default_dialog.h"
 
-#ifdef OS_WIN
-#include "base/win_util.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_util.h"
+#endif  // _WIN32
 
 int RunSetDefaultDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_set_default_dialog);
@@ -59,10 +59,10 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
     return -1;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // For ImeUtil::SetDefault.
   mozc::ScopedCOMInitializer com_initializer;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 

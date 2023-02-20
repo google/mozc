@@ -31,9 +31,9 @@
 
 #include <cstdint>
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
 #include <QFile>
 #include <QFileDialog>
@@ -457,13 +457,13 @@ bool KeyMapEditorDialog::Update() {
   *keymap_table += invisible_keymap_table_;
 
   if (new_direct_mode_commands != direct_mode_commands_) {
-#if defined(OS_WIN) || defined(OS_LINUX)
+#if defined(_WIN32) || defined(__linux__)
     QMessageBox::information(
         this, windowTitle(),
         tr("Changes of keymaps for direct input mode will apply only to "
            "applications that are launched after making your "
            "modifications."));
-#endif  // OS_WIN || OS_LINUX
+#endif  // _WIN32 || __linux__
     direct_mode_commands_ = new_direct_mode_commands;
   }
 

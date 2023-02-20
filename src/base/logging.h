@@ -43,7 +43,7 @@ ABSL_DECLARE_FLAG(bool, logtostderr);
 namespace mozc {
 
 enum LogSeverity {
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
   // Defined in <android/log.h>
   LOG_UNKNOWN = 0,  // ANDROID_LOG_UNKNOWN
   LOG_DEFAULT = 1,  // ANDROID_LOG_DEFAULT
@@ -55,17 +55,17 @@ enum LogSeverity {
   LOG_FATAL = 7,    // ANDROID_LOG_FATAL
   LOG_SILENT = 8,   // ANDROID_LOG_SILENT
   LOG_SEVERITY_SIZE = 9,
-#else   // OS_ANDROID
+#else   // __ANDROID__
   LOG_INFO = 0,
   LOG_WARNING = 1,
   LOG_ERROR = 2,
 // Special hack for Windows build, where ERROR is defined as 0 in wingdi.h.
-#ifdef OS_WIN
+#ifdef _WIN32
   LOG_0 = LOG_ERROR,
-#endif  // OS_WIN
+#endif  // _WIN32
   LOG_FATAL = 3,
   LOG_SEVERITY_SIZE = 4,
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 };
 
 // DFATAL is FATAL in debug mode, ERROR in normal mode

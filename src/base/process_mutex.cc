@@ -29,15 +29,15 @@
 
 #include "base/process_mutex.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <map>
 #include <string>
@@ -48,9 +48,9 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#ifdef OS_WIN
-#include "base/win_sandbox.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_sandbox.h"
+#endif  // _WIN32
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -59,11 +59,11 @@ namespace {
 std::string CreateProcessMutexFileName(const char *name) {
   name = (name == nullptr) ? "nullptr" : name;
 
-#ifdef OS_WIN
+#ifdef _WIN32
   std::string basename;
-#else   // OS_WIN
+#else   // _WIN32
   std::string basename = ".";
-#endif  // OS_WIN
+#endif  // _WIN32
 
   basename += name;
   basename += ".lock";
@@ -74,7 +74,7 @@ std::string CreateProcessMutexFileName(const char *name) {
 
 bool ProcessMutex::Lock() { return LockAndWrite(""); }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 ProcessMutex::ProcessMutex(const char *name)
     : handle_(INVALID_HANDLE_VALUE), locked_(false) {
@@ -134,7 +134,7 @@ bool ProcessMutex::UnLock() {
   return true;
 }
 
-#else   // !OS_WIN
+#else   // !_WIN32
 
 namespace {
 // Special workaround for the bad treatment of fcntl.
@@ -276,5 +276,5 @@ bool ProcessMutex::UnLock() {
   locked_ = false;
   return true;
 }
-#endif  // !OS_WIN
+#endif  // !_WIN32
 }  // namespace mozc

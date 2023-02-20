@@ -50,18 +50,18 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
 #if defined(OS_CHROMEOS)
   EXPECT_EQ("/mutable", SystemUtil::GetUserProfileDirectory());
 
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   EXPECT_TRUE(SystemUtil::GetUserProfileDirectory().empty());
 
-#elif defined(OS_ANDROID)
+#elif defined(__ANDROID__)
   EXPECT_TRUE(SystemUtil::GetUserProfileDirectory().empty());
 
 #elif defined(OS_IOS)
-#elif defined(OS_WIN)
+#elif defined(_WIN32)
 #elif defined(__APPLE__)
   // TODO(komatsu): write a test.
 
-#elif defined(OS_LINUX)
+#elif defined(__linux__)
   EnvironMock environ_mock;
   FileUtilMock file_util_mock;
   SystemUtil::SetUserProfileDirectory("");
@@ -128,12 +128,12 @@ TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);
 }
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
   std::string result = SystemUtil::GetOSVersionString();
   // |result| must start with "Android ".
   EXPECT_TRUE(absl::StartsWith(result, "Android "));
 }
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 }  // namespace mozc

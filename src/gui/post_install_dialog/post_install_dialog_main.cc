@@ -29,9 +29,9 @@
 
 #include "base/init_mozc.h"
 
-#ifdef OS_WIN
-#include "base/winmain.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/winmain.h"
+#endif  // _WIN32
 
 int RunPostInstallDialog(int argc, char *argv[]);
 

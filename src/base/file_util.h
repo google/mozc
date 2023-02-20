@@ -39,12 +39,12 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // Ad-hoc workaround against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
@@ -60,11 +60,11 @@
 
 namespace mozc {
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 using FileTimeStamp = uint64_t;
-#else   // OS_WIN
+#else   // _WIN32
 using FileTimeStamp = time_t;
-#endif  // OS_WIN
+#endif  // _WIN32
 
 class FileUtilInterface {
  public:
@@ -117,13 +117,13 @@ class FileUtil {
   // Returns true if the directory exists.
   static absl::Status DirectoryExists(const std::string &dirname);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Adds file attributes to the file to hide it.
   // FILE_ATTRIBUTE_NORMAL will be removed.
   static bool HideFile(const std::string &filename);
   static bool HideFileWithExtraAttributes(const std::string &filename,
                                           DWORD extra_attributes);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // Copies a file to another file, using mmap internally.
   // The destination file will be overwritten if exists.

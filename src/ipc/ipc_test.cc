@@ -55,12 +55,12 @@ namespace {
 // testing tool rut.py misunderstood that the file named
 // kServerAddress is a binary to be tested.
 static constexpr char kServerAddress[] = "test_echo_server";
-#ifdef OS_WIN
+#ifdef _WIN32
 // On windows, multiple-connections failed.
 static constexpr int kNumThreads = 1;
-#else  // OS_WIN
+#else  // _WIN32
 static constexpr int kNumThreads = 5;
-#endif  // OS_WIN
+#endif  // _WIN32
 static constexpr int kNumRequests = 2000;
 
 class MultiConnections : public mozc::Thread {

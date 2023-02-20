@@ -55,7 +55,7 @@ class TestProcessWatchDog : public ProcessWatchDog {
 TEST(ProcessWatchDog, ProcessWatchDogTest) {
   g_current_time = Clock::GetTime();
 
-#ifndef OS_WIN
+#ifndef _WIN32
   // revoke myself with different parameter
   pid_t pid = fork();
   if (pid == 0) {
@@ -72,6 +72,6 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
   } else {
     LOG(ERROR) << "cannot execute fork";
   }
-#endif  // !OS_WIN
+#endif  // !_WIN32
 }
 }  // namespace mozc

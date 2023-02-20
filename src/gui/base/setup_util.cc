@@ -29,21 +29,21 @@
 
 #include "gui/base/setup_util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <algorithm>
-#endif  // OS_WIN
+#endif  // _WIN32
 #include <cstdint>
 
 #include "base/logging.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "dictionary/user_dictionary_importer.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #include "usage_stats/usage_stats.h"
 #include "win32/base/imm_util.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace gui {
@@ -65,7 +65,7 @@ bool SetupUtil::IsUserDictionaryLocked() const {
 }
 
 void SetupUtil::SetDefaultProperty(uint32_t flags) {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (flags & IME_DEFAULT) {
     mozc::usage_stats::UsageStats::IncrementCount("PostInstallSetDefault");
     win32::ImeUtil::SetDefault();
@@ -84,14 +84,14 @@ void SetupUtil::SetDefaultProperty(uint32_t flags) {
       LOG(ERROR) << "Failed to migrate dictionary";
     }
   }
-#else   // OS_WIN
+#else   // _WIN32
   // not supported on Mac and Linux
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 // - Imports MS-IME's user dictionary to Mozc' dictionary
 bool SetupUtil::MigrateDictionaryFromMSIME() {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (!is_userdictionary_locked_ && !storage_->Lock()) {
     return false;
   }
@@ -152,9 +152,9 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     return false;
   }
   return true;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace gui
 }  // namespace mozc

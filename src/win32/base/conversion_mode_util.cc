@@ -29,11 +29,11 @@
 
 #include "win32/base/conversion_mode_util.h"
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 #include <imm.h>
 #include <msctf.h>
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 
@@ -54,7 +54,7 @@ constexpr uint32_t kEUDC = 0x200;
 constexpr uint32_t kSymbol = 0x400;
 constexpr uint32_t kFixed = 0x800;
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 // Check the equality of constans if header files are available.
 
 // kAlphaNumeric
@@ -105,7 +105,7 @@ static_assert(kSymbol == TF_CONVERSIONMODE_SYMBOL, "Renaming Check");
 // kFixed
 static_assert(kFixed == IME_CMODE_FIXED, "Renaming Check");
 static_assert(kFixed == TF_CONVERSIONMODE_FIXED, "Renaming Check");
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // Returns true if the specified bits are set in the |flag| with
 // unsetting the bits in the |flag|.

@@ -31,9 +31,9 @@
 
 #include <cstdint>
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <algorithm>
 #include <memory>
@@ -71,11 +71,11 @@ class SessionCommand;
 namespace renderer {
 
 namespace {
-#ifdef OS_WIN
+#ifdef _WIN32
 constexpr int kNumConnections = 1;
-#else   // OS_WIN
+#else   // _WIN32
 constexpr int kNumConnections = 10;
-#endif  // OS_WIN
+#endif  // _WIN32
 constexpr int kIPCServerTimeOut = 1000;
 constexpr char kServiceName[] = "renderer";
 
@@ -133,7 +133,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
                    mozc::commands::Output *output) override {
-#ifdef OS_WIN
+#ifdef _WIN32
     if ((command.type() != commands::SessionCommand::SELECT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::USAGE_STATS_EVENT)) {
@@ -160,7 +160,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
       LPARAM id = static_cast<LPARAM>(command.id());
       ::PostMessage(target, mozc_msg, type, id);
     }
-#endif  // OS_WIN
+#endif  // _WIN32
 
     // TODO(all): implementation for Mac/Linux
     return true;

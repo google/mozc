@@ -29,9 +29,9 @@
 
 #include "gui/set_default_dialog/set_default_dialog.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QtGui>
 #include <memory>
@@ -43,9 +43,9 @@
 #include "gui/base/util.h"
 #include "protocol/config.pb.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "win32/base/migration_util.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace gui {
@@ -64,19 +64,19 @@ void SetDefaultDialog::accept() {
   // TODO(mazda): Implement SetDefault on Mac and Linux.
   const bool dont_ask_again =
       (dontAskAgainCheckBox->checkState() == Qt::Checked);
-#ifdef OS_WIN
+#ifdef _WIN32
   // LaunchBrokerForSetDefault is responsible to do the same task of
   // |SetCheckDefault(false)| if |dont_ask_again| is true.
   if (!win32::MigrationUtil::LaunchBrokerForSetDefault(dont_ask_again)) {
     LOG(ERROR) << "Failed to set Mozc as the default IME";
   }
-#else  // OS_WIN
+#else  // _WIN32
   if (dont_ask_again) {
     if (!SetCheckDefault(false)) {
       LOG(ERROR) << "Failed to set check_default";
     }
   }
-#endif  // OS_WIN
+#endif  // _WIN32
   done(QDialog::Accepted);
 }
 

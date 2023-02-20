@@ -52,9 +52,9 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__
 
-#ifdef OS_WIN
-#include "base/win_sandbox.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_sandbox.h"
+#endif  // _WIN32
 
 namespace mozc {
 namespace renderer {
@@ -132,7 +132,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     NamedEventListener listener(name_.c_str());
     const bool listener_is_available = listener.IsAvailable();
 
-#ifdef OS_WIN
+#ifdef _WIN32
     DWORD pid = 0;
     const bool process_in_job = RunLevel::IsProcessInJob();
     const std::string arg = process_in_job ? "--restricted" : "";
@@ -151,15 +151,15 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     // start renreder process
     const bool result =
         WinSandbox::SpawnSandboxedProcess(path_, arg, info, &pid);
-#elif defined(__APPLE__)  // OS_WIN
+#elif defined(__APPLE__)  // _WIN32
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;
     const bool result = MacUtil::StartLaunchdService("Renderer", &pid);
-#else                     // OS_WIN, __APPLE__
+#else                     // _WIN32, __APPLE__
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);
     uint32_t pid = static_cast<uint32_t>(tmp);
-#endif                    // OS_WIN, __APPLE__
+#endif                    // _WIN32, __APPLE__
 
     if (!result) {
       LOG(ERROR) << "Can't start process";

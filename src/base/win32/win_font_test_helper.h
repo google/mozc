@@ -27,36 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// A dll to test the loader lock detection. (Only used for internal unit test)
+#ifndef MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
+#define MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_
 
-#if defined(OS_WIN)
-#include <windows.h>
-#include "base/win_util.h"
+#if defined(_WIN32)
 
-bool g_is_lock_check_succeeded = false;
-bool g_is_lock_held = false;
+#include <string>
 
-extern "C" int __stdcall IsLockCheckSucceeded() {
-  return g_is_lock_check_succeeded ? 1 : 0;
-}
+#include "base/port.h"
 
-extern "C" int __stdcall IsLockHeld() { return g_is_lock_held ? 1 : 0; }
+namespace mozc {
 
-extern "C" int __stdcall ClearFlagsAndCheckAgain() {
-  g_is_lock_check_succeeded = false;
-  g_is_lock_held = false;
+class WinFontTestHelper {
+ public:
+  WinFontTestHelper() = delete;
+  WinFontTestHelper(const WinFontTestHelper&) = delete;
+  WinFontTestHelper& operator=(const WinFontTestHelper&) = delete;
 
-  g_is_lock_check_succeeded =
-      mozc::WinUtil::IsDLLSynchronizationHeld(&g_is_lock_held);
-  return 0;
-}
+  // Returns true when private fonts are successfully initialized for unit test.
+  static bool Initialize();
+  // Uninitializes the private fonts.
+  static void Uninitialize();
 
-// Represents the entry point of this module.
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
-  if (reason == DLL_PROCESS_ATTACH) {
-    g_is_lock_check_succeeded =
-        mozc::WinUtil::IsDLLSynchronizationHeld(&g_is_lock_held);
-  }
-  return TRUE;
-}
-#endif  // OS_WIN
+  // Returns the font face name of IPAex-Gothic.
+  static std::string GetIPAexGothicFontName();
+  // Returns the font face name of IPAex-Mincho.
+  static std::string GetIPAexMinchoFontName();
+};
+
+}  // namespace mozc
+
+#endif  // _WIN32
+#endif  // MOZC_BASE_WIN32_WIN_FONT_TEST_HELPER_H_

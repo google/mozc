@@ -32,7 +32,7 @@
 #ifndef MOZC_WIN32_BASE_CONVERSION_MODE_UTIL_H_
 #define MOZC_WIN32_BASE_CONVERSION_MODE_UTIL_H_
 
-#include <Windows.h>  // for DWORD
+#include <windows.h>  // for DWORD
 
 #include <cstdint>
 

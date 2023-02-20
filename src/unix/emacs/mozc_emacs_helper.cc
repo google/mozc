@@ -130,11 +130,11 @@ void ProcessLoop() {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_suppress_stderr)) {
-#ifdef OS_WIN
+#ifdef _WIN32
     const char path[] = "NUL";
-#else   // OS_WIN
+#else   // _WIN32
     const char path[] = "/dev/null";
-#endif  // OS_WIN
+#endif  // _WIN32
     if (!freopen(path, "a", stderr)) {
       mozc::emacs::ErrorExit(mozc::emacs::kErrFileError,
                              "freopen for stderr failed");

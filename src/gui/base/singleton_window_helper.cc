@@ -30,11 +30,11 @@
 #include "gui/base/singleton_window_helper.h"
 
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 #include <ios>
@@ -44,8 +44,8 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
-#include "base/scoped_handle.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "gui/base/win_util.h"
 #include "ipc/window_info.pb.h"
 
@@ -54,7 +54,7 @@ namespace gui {
 namespace {
 bool ReadWindowInfo(const std::string &lock_name,
                     ipc::WindowInfo *window_info) {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wfilename;
   mozc::Util::Utf8ToWide(lock_name, &wfilename);
   {
@@ -97,7 +97,7 @@ bool ReadWindowInfo(const std::string &lock_name,
       return false;
     }
   }
-#else   // OS_WIN
+#else   // _WIN32
   InputFileStream is(lock_name, std::ios::binary | std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << lock_name;
@@ -108,7 +108,7 @@ bool ReadWindowInfo(const std::string &lock_name,
     LOG(ERROR) << "ParseFromStream failed";
     return false;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
   return true;
 }
 }  // namespace
@@ -121,11 +121,11 @@ SingletonWindowHelper::~SingletonWindowHelper() {}
 
 bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;
-#ifdef OS_WIN
+#ifdef _WIN32
   window_info.set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
-#else   // OS_WIN
+#else   // _WIN32
   window_info.set_process_id(static_cast<uint32_t>(getpid()));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   std::string window_info_str;
   if (!window_info.SerializeToString(&window_info_str)) {
@@ -150,13 +150,13 @@ bool SingletonWindowHelper::ActivatePreviousWindow() {
     LOG(ERROR) << "ReadWindowInfo failed";
     return false;
   }
-#ifdef OS_WIN
+#ifdef _WIN32
   WinUtil::ActivateWindow(window_info.process_id());
   return true;
-#else   // OS_WIN
+#else   // _WIN32
   // not implemented
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace gui

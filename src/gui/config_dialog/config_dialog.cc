@@ -32,16 +32,16 @@
 
 #include <cstdint>
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <QGuiApplication>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QMessageBox>
 #include <algorithm>
@@ -69,9 +69,9 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "gui/base/win_util.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace {
 template <typename T>
@@ -98,9 +98,9 @@ ConfigDialog::ConfigDialog()
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint);
   setWindowModality(Qt::NonModal);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   miscStartupWidget->setVisible(false);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   miscDefaultIMEWidget->setVisible(false);
@@ -108,21 +108,21 @@ ConfigDialog::ConfigDialog()
   setWindowTitle(tr("%1 Preferences").arg(GuiUtil::ProductName()));
 #endif  // __APPLE__
 
-#if defined(OS_LINUX)
+#if defined(__linux__)
   miscDefaultIMEWidget->setVisible(false);
   miscAdministrationWidget->setVisible(false);
   miscStartupWidget->setVisible(false);
-#endif  // OS_LINUX
+#endif  // __linux__
 
 #ifdef MOZC_NO_LOGGING
   // disable logging options
   miscLoggingWidget->setVisible(false);
 
-#if defined(OS_LINUX)
+#if defined(__linux__)
   // The last "misc" tab has no valid configs on Linux
   constexpr int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
-#endif  // OS_LINUX
+#endif  // __linux__
 #endif  // MOZC_NO_LOGGING
 
   suggestionsSizeSpinBox->setRange(1, 9);
@@ -148,12 +148,12 @@ ConfigDialog::ConfigDialog()
 
   inputModeComboBox->addItem(tr("Romaji"));
   inputModeComboBox->addItem(tr("Kana"));
-#ifdef OS_WIN
+#ifdef _WIN32
   // These options changing the preedit method by a hot key are only
   // supported by Windows.
   inputModeComboBox->addItem(tr("Romaji (switchable)"));
   inputModeComboBox->addItem(tr("Kana (switchable)"));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   spaceCharacterFormComboBox->addItem(tr("Follow input mode"));
   spaceCharacterFormComboBox->addItem(tr("Fullwidth"));
@@ -191,10 +191,10 @@ ConfigDialog::ConfigDialog()
   useJapaneseLayout->hide();
 #endif  // !__APPLE__
 
-#ifndef OS_WIN
+#ifndef _WIN32
   // Mode indicator is available only on Windows.
   useModeIndicator->hide();
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
   // Reset texts explicitly for translations.
   configDialogButtonBox->button(QDialogButtonBox::Ok)->setText(tr("  Ok  "));
@@ -253,13 +253,13 @@ ConfigDialog::ConfigDialog()
   usageStatsMessage->installEventFilter(this);
   incognitoModeMessage->installEventFilter(this);
 
-#ifndef OS_WIN
+#ifndef _WIN32
   checkDefaultCheckBox->setVisible(false);
   checkDefaultLine->setVisible(false);
   checkDefaultLabel->setVisible(false);
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
-#ifdef OS_WIN
+#ifdef _WIN32
   launchAdministrationDialogButton->setEnabled(true);
   // if the current application is not elevated by UAC,
   // add a shield icon
@@ -274,7 +274,7 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setVisible(false);
   usageStatsMessage->setDisabled(true);
   usageStatsMessage->setVisible(false);
-#else   // OS_WIN
+#else   // _WIN32
   launchAdministrationDialogButton->setEnabled(false);
   launchAdministrationDialogButton->setVisible(false);
   launchAdministrationDialogButtonForUsageStats->setEnabled(false);
@@ -282,9 +282,9 @@ ConfigDialog::ConfigDialog()
   administrationLine->setVisible(false);
   administrationLabel->setVisible(false);
   dictionaryPreloadingAndUACLabel->setVisible(false);
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_LINUX
+#ifdef __linux__
   // On Linux, disable all fields for UsageStats
   usageStatsLabel->setEnabled(false);
   usageStatsLabel->setVisible(false);
@@ -294,17 +294,17 @@ ConfigDialog::ConfigDialog()
   usageStatsMessage->setVisible(false);
   usageStatsCheckBox->setEnabled(false);
   usageStatsCheckBox->setVisible(false);
-#endif  // OS_LINUX
+#endif  // __linux__
 
   GuiUtil::ReplaceWidgetLabels(this);
 
   Reload();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
-#else   // OS_WIN
+#else   // _WIN32
   IMEHotKeyDisabledCheckBox->setVisible(false);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
@@ -370,7 +370,7 @@ bool ConfigDialog::Update() {
     return false;
   }
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
   if ((initial_preedit_method_ != static_cast<int>(config.preedit_method())) ||
       (initial_use_keyboard_to_change_preedit_method_ !=
        config.use_keyboard_to_change_preedit_method())) {
@@ -381,29 +381,29 @@ bool ConfigDialog::Update() {
     initial_use_keyboard_to_change_preedit_method_ =
         config.use_keyboard_to_change_preedit_method();
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_WIN
+#ifdef _WIN32
   if (initial_use_mode_indicator_ != config.use_mode_indicator()) {
     QMessageBox::information(this, windowTitle(),
                              tr("Input mode indicator setting is enabled from"
                                 " new applications."));
     initial_use_mode_indicator_ = config.use_mode_indicator();
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   if (!SetConfig(config)) {
     QMessageBox::critical(this, windowTitle(), tr("Failed to update config"));
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   if (!WinUtil::SetIMEHotKeyDisabled(IMEHotKeyDisabledCheckBox->isChecked())) {
     // Do not show any dialog here, since this operation will not fail
     // in almost all cases.
     // TODO(taku): better to show dialog?
     LOG(ERROR) << "Failed to update IME HotKey status";
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   if (startupCheckBox->isChecked()) {
@@ -423,19 +423,19 @@ bool ConfigDialog::Update() {
 void ConfigDialog::SetSendStatsCheckBox() {
   // On windows, usage_stats flag is managed by
   // administration_dialog. http://b/2889759
-#ifndef OS_WIN
+#ifndef _WIN32
   const bool val = StatsConfigUtil::IsEnabled();
   usageStatsCheckBox->setChecked(val);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 void ConfigDialog::GetSendStatsCheckBox() const {
   // On windows, usage_stats flag is managed by
   // administration_dialog. http://b/2889759
-#ifndef OS_WIN
+#ifndef _WIN32
   const bool val = usageStatsCheckBox->isChecked();
   StatsConfigUtil::SetEnabled(val);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 #define SET_COMBOBOX(combobox, enumname, field)                    \
@@ -465,11 +465,11 @@ static constexpr int kPreeditMethodSize = 2;
 void SetComboboxForPreeditMethod(const config::Config &config,
                                  QComboBox *combobox) {
   int index = static_cast<int>(config.preedit_method());
-#ifdef OS_WIN
+#ifdef _WIN32
   if (config.use_keyboard_to_change_preedit_method()) {
     index += kPreeditMethodSize;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
   combobox->setCurrentIndex(index);
 }
 
@@ -826,9 +826,9 @@ void ConfigDialog::ResetToDefaults() {
 }
 
 void ConfigDialog::LaunchAdministrationDialog() {
-#ifdef OS_WIN
+#ifdef _WIN32
   client_->LaunchTool("administration_dialog", "");
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 void ConfigDialog::EnableApplyButton() {

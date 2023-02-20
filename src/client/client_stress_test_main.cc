@@ -32,12 +32,12 @@
 
 #include "client/client.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <memory>
 #include <ostream>
@@ -81,22 +81,22 @@ int main(int argc, char **argv) {
   mozc::commands::RendererCommand renderer_command;
 
   if (absl::GetFlag(FLAGS_test_renderer)) {
-#ifdef OS_WIN
+#ifdef _WIN32
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id(
         ::GetCurrentThreadId());
-#endif  // OS_WIN
-#if defined(OS_WIN) || defined(__APPLE__)
+#endif  // _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
     renderer_client = std::make_unique<mozc::renderer::RendererClient>();
     CHECK(renderer_client->Activate());
-#else   // OS_WIN || __APPLE__
+#else   // _WIN32 || __APPLE__
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif  // OS_WIN || __APPLE__
+#endif  // _WIN32 || __APPLE__
   }
 
   std::vector<mozc::commands::KeyEvent> keys;

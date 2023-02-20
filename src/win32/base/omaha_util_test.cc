@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/base/omaha_util.h"
+
 // clang-format off
 #include <windows.h>
 #include <strsafe.h>
@@ -37,10 +39,9 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/win_api_test_helper.h"
-#include "base/win_util.h"
+#include "base/win32/win_api_test_helper.h"
+#include "base/win32/win_util.h"
 #include "testing/gunit.h"
-#include "win32/base/omaha_util.h"
 
 namespace mozc {
 namespace win32 {

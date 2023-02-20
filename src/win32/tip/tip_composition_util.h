@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
 #define MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
 
-#include <Windows.h>
+#include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>

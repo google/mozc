@@ -29,9 +29,9 @@
 
 #include "storage/encrypted_string_storage.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
-#endif  // OS_WIN
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 #include <cstring>
 #include <ios>
@@ -155,12 +155,12 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   if (!FileUtil::HideFile(filename_)) {
     LOG(ERROR) << "Cannot make hidden: " << filename_ << " "
                << ::GetLastError();
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   return true;
 }

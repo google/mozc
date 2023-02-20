@@ -57,21 +57,21 @@ ImportDialog::ImportDialog(QWidget *parent)
   ime_combobox_->addItem(tr("Google"),
                          static_cast<int>(UserDictionaryImporter::MOZC));
 
-#ifdef OS_WIN
+#ifdef _WIN32
   ime_combobox_->addItem(tr("Microsoft IME"),
                          static_cast<int>(UserDictionaryImporter::MSIME));
   ime_combobox_->addItem(tr("ATOK"),
                          static_cast<int>(UserDictionaryImporter::ATOK));
   ime_combobox_->addItem(tr("Kotoeri"),
                          static_cast<int>(UserDictionaryImporter::KOTOERI));
-#else  // OS_WIN
+#else  // _WIN32
   ime_combobox_->addItem(tr("Kotoeri"),
                          static_cast<int>(UserDictionaryImporter::KOTOERI));
   ime_combobox_->addItem(tr("ATOK"),
                          static_cast<int>(UserDictionaryImporter::ATOK));
   ime_combobox_->addItem(tr("Microsoft IME"),
                          static_cast<int>(UserDictionaryImporter::MSIME));
-#endif  // OS_WIN
+#endif  // _WIN32
 
   encoding_combobox_->addItem(
       tr("Auto detection"),

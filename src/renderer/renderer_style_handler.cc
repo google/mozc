@@ -30,14 +30,14 @@
 #include "renderer/renderer_style_handler.h"
 
 // clang-format off
-#if defined(OS_WIN)
+#if defined(_WIN32)
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlgdi.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 // clang-format on
 
 #include "base/singleton.h"
@@ -46,9 +46,9 @@
 namespace mozc {
 namespace renderer {
 namespace {
-#if defined(OS_WIN)
+#if defined(_WIN32)
 constexpr int kDefaultDPI = 96;
-#endif  // OS_WIN
+#endif  // _WIN32
 
 class RendererStyleHandlerImpl {
  public:
@@ -206,7 +206,7 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
 }
 
 void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
-#if defined OS_WIN
+#if defined _WIN32
   WTL::CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);

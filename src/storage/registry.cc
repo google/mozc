@@ -46,11 +46,11 @@ namespace {
 
 ABSL_CONST_INIT absl::Mutex g_mutex(absl::kConstInit);
 
-#ifdef OS_WIN
+#ifdef _WIN32
 constexpr char kRegistryFileName[] = "registry.db";
-#else   // OS_WIN
+#else   // _WIN32
 constexpr char kRegistryFileName[] = ".registry.db";  // hidden file
-#endif  // OS_WIN
+#endif  // _WIN32
 
 class StorageInitializer {
  public:

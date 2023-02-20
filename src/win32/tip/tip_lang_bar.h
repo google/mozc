@@ -30,7 +30,7 @@
 #ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 #define MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 
-#include <Unknwn.h>
+#include <unknwn.h>
 #include <windows.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE

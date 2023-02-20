@@ -30,8 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_INPUT_MODE_MANAGER_H_
 #define MOZC_WIN32_TIP_TIP_INPUT_MODE_MANAGER_H_
 
-#include <InputScope.h>
-#include <Windows.h>
+#include <inputscope.h>
+#include <windows.h>
 
 #include <cstdint>
 #include <memory>

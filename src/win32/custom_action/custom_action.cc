@@ -31,7 +31,7 @@
 
 // clang-format off
 #include <windows.h>
-#include <IEPMapi.h>
+#include <iepmapi.h>
 #include <atlbase.h>
 #if !defined(MOZC_NO_LOGGING)
 #include <atlstr.h>
@@ -49,8 +49,8 @@
 #include "base/url.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "base/win_sandbox.h"
-#include "base/win_util.h"
+#include "base/win32/win_sandbox.h"
+#include "base/win32/win_util.h"
 #include "client/client_interface.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"

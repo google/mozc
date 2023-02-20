@@ -39,13 +39,13 @@
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/string_view.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <errno.h>
 #include <signal.h>
 #include <sys/types.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 
@@ -136,7 +136,7 @@ bool IPCClient::TerminateServer(const absl::string_view name) {
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   HANDLE handle =
       ::OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(pid));
   if (nullptr == handle) {
@@ -155,13 +155,13 @@ bool IPCClient::TerminateServer(const absl::string_view name) {
   ::CloseHandle(handle);
 
   return true;
-#else   // OS_WIN
+#else   // _WIN32
   if (-1 == ::kill(static_cast<pid_t>(pid), 9)) {
     LOG(ERROR) << "kill failed: " << errno;
     return false;
   }
 
   return true;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace mozc

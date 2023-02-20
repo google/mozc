@@ -27,12 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_WIN_API_TEST_HELPER_H_
-#define MOZC_BASE_WIN_API_TEST_HELPER_H_
+#ifndef MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_
+#define MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
-#include <Windows.h>
+#include <windows.h>
 
 #include <string>
 #include <vector>
@@ -117,5 +117,5 @@ class WinAPITestHelper {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
-#endif  // MOZC_BASE_WIN_API_TEST_HELPER_H_
+#endif  // _WIN32
+#endif  // MOZC_BASE_WIN32_WIN_API_TEST_HELPER_H_

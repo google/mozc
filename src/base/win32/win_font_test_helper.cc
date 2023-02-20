@@ -27,13 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_font_test_helper.h"
+#include "base/win32/win_font_test_helper.h"
 
 #include <string>
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
-#include <Windows.h>
+// skip all unless _WIN32
+#ifdef _WIN32
+#include <windows.h>
 #include <shlwapi.h>
 
 #include "base/logging.h"
@@ -132,4 +132,4 @@ std::string WinFontTestHelper::GetIPAexMinchoFontName() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

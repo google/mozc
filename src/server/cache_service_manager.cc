@@ -44,9 +44,9 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "server/win32_service_state.pb.h"
 
 namespace mozc {

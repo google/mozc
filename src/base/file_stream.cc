@@ -29,10 +29,10 @@
 
 #include "base/file_stream.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <codecvt>
 #include <locale>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <fstream>
 #include <ios>
@@ -41,7 +41,7 @@
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 std::wstring ToPlatformString(absl::string_view filename) {
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
@@ -51,11 +51,11 @@ std::wstring ToPlatformString(absl::string_view filename) {
   return utf8_to_wide.from_bytes(filename.data(),
                                  filename.data() + filename.size());
 }
-#else   // OS_WIN
+#else   // _WIN32
 std::string ToPlatformString(absl::string_view filename) {
   return std::string(filename.data(), filename.size());
 }
-#endif  // OS_WIN or not
+#endif  // _WIN32 or not
 
 }  // namespace
 

@@ -31,15 +31,15 @@
 
 #include <string>
 
-#ifdef OS_WIN
-#include "base/win_api_test_helper.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_api_test_helper.h"
+#endif  // _WIN32
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 class UpdateUtilTestWin : public testing::Test {
  protected:
@@ -145,14 +145,14 @@ TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
 
-#else  // OS_WIN
+#else  // _WIN32
 
 // UpdateUtil::WriteActiveUsageInfo is not implemented except for Windows.
 TEST(UpdateUtilTest, WriteActiveUsageInfo) {
   EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
 }
 
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace
 }  // namespace mozc

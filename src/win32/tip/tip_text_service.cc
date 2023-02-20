@@ -29,10 +29,10 @@
 
 #include "win32/tip/tip_text_service.h"
 
-#include <Ime.h>
+#include <ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>
@@ -50,7 +50,7 @@
 #include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/indicator_visibility_tracker.h"

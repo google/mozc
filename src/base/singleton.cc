@@ -29,11 +29,11 @@
 
 #include "base/singleton.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
-#else  // OS_WIN
+#ifdef _WIN32
+#include <windows.h>
+#else  // _WIN32
 #include <cstdlib>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace {
@@ -53,11 +53,11 @@ SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
 // is not good but better than an inifinite loop.
 void ExitWithError() {
   // This logic is copied from logging.h
-#ifdef OS_WIN
+#ifdef _WIN32
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else   // OS_WIN
+#else   // _WIN32
   exit(-1);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace

@@ -58,9 +58,9 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
 #if defined(__APPLE__) || defined(OS_IOS)
 #include <sys/sysctl.h>
@@ -68,20 +68,20 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__ || OS_IOS
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <psapi.h>  // GetModuleFileNameExW
 // clang-format on
-#include "base/scoped_handle.h"
 #include "base/unverified_sha1.h"
-#include "base/win_util.h"
-#else  // OS_WIN
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
+#else  // _WIN32
 // For stat system call
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace {
@@ -92,11 +92,11 @@ constexpr size_t kKeySize = 32;
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files
 std::string GetIPCKeyFileName(const std::string &name) {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::string basename;
-#else   // OS_WIN
+#else   // _WIN32
   std::string basename = ".";  // hidden file
-#endif  // OS_WIN
+#endif  // _WIN32
   basename += name + ".ipc";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
@@ -122,14 +122,14 @@ bool IsValidKey(const std::string &name) {
 
 std::string CreateIPCKey() {
   // key is 128 bit
-#ifdef OS_WIN
+#ifdef _WIN32
   const std::string sid = SystemUtil::GetUserSidAsString();
   const std::string buf = internal::UnverifiedSHA1::MakeDigest(sid);
-#else   // OS_WIN
+#else   // _WIN32
   // get 128 bit key: Note that collision will happen.
   Random random;
   const std::string buf = random.ByteString(16);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // escape
   std::string value;
@@ -215,14 +215,14 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
   ipc_path_info_->set_product_version(Version::GetMozcVersion());
 
-#ifdef OS_WIN
+#ifdef _WIN32
   ipc_path_info_->set_process_id(
       static_cast<uint32_t>(::GetCurrentProcessId()));
   ipc_path_info_->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
-#else   // OS_WIN
+#else   // _WIN32
   ipc_path_info_->set_process_id(static_cast<uint32_t>(getpid()));
   ipc_path_info_->set_thread_id(0);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   std::string buf;
   if (!ipc_path_info_->SerializeToString(&buf)) {
@@ -254,7 +254,7 @@ bool IPCPathManager::LoadPathName() {
     return true;
   }
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
   // Fill the default values as fallback.
   // Applications conerted by Desktop App Converter (DAC) does not read
   // a file of ipc session name in the LocalLow directory.
@@ -265,10 +265,10 @@ bool IPCPathManager::LoadPathName() {
   ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
   ipc_path_info_->set_product_version(Version::GetMozcVersion());
   return true;
-#else   // defined(OS_WIN)
+#else   // defined(_WIN32)
   LOG(ERROR) << "LoadPathName failed";
   return false;
-#endif  // defined(OS_WIN)
+#endif  // defined(_WIN32)
 }
 
 bool IPCPathManager::GetPathName(std::string *ipc_name) const {
@@ -282,20 +282,20 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   *ipc_name = mozc::kIPCPrefix;
 #elif defined(__APPLE__)
   ipc_name->assign(MacUtil::GetLabelForSuffix(""));
-#else   // not OS_WIN nor __APPLE__
+#else   // not _WIN32 nor __APPLE__
   // GetUserIPCName("<name>") => "/tmp/.mozc.<key>.<name>"
   constexpr char kIPCPrefix[] = "/tmp/.mozc.";
   *ipc_name = kIPCPrefix;
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_LINUX
+#ifdef __linux__
   // On Linux, use abstract namespace which is independent of the file system.
   (*ipc_name)[0] = '\0';
-#endif  // OS_LINUX
+#endif  // __linux__
 
   ipc_name->append(ipc_path_info_->key());
   ipc_name->append(".");
@@ -346,7 +346,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
   server_pid_ = 0;
   server_path_.clear();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   {
     std::wstring expected_server_ntpath;
     const std::map<std::string, std::wstring>::const_iterator it =
@@ -383,7 +383,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
     server_path_ = std::string(server_path);
     server_pid_ = pid;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   int name[] = {CTL_KERN, KERN_PROCARGS, static_cast<int>(pid)};
@@ -402,7 +402,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
   server_pid_ = pid;
 #endif  // __APPLE__
 
-#ifdef OS_LINUX
+#ifdef __linux__
   // load from /proc/<pid>/exe
   char proc[128];
   char filename[512];
@@ -416,14 +416,14 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 
   server_path_ = filename;
   server_pid_ = pid;
-#endif  // OS_LINUX
+#endif  // __linux__
 
   VLOG(1) << "server path: " << server_path << " " << server_path_;
   if (server_path == server_path_) {
     return true;
   }
 
-#ifdef OS_LINUX
+#ifdef __linux__
   if (absl::StrCat(server_path, " (deleted)") == server_path_) {
     LOG(WARNING) << server_path << " on disk is modified";
     // If a user updates the server binary on disk during the server is running,
@@ -432,17 +432,17 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
     server_path_ = std::string(server_path);
     return true;
   }
-#endif  // OS_LINUX
+#endif  // __linux__
 
   return false;
 }
 
 bool IPCPathManager::ShouldReload() const {
-#ifdef OS_WIN
+#ifdef _WIN32
   // In windows, no reloading mechanism is necessary because IPC files
   // are automatically removed.
   return false;
-#else   // OS_WIN
+#else   // _WIN32
   absl::MutexLock l(&mutex_);
 
   time_t last_modified = GetIPCFileTimeStamp();
@@ -451,15 +451,15 @@ bool IPCPathManager::ShouldReload() const {
   }
 
   return true;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 time_t IPCPathManager::GetIPCFileTimeStamp() const {
-#ifdef OS_WIN
+#ifdef _WIN32
   // In windows, we don't need to get the exact file timestamp, so
   // just returns -1 at this time.
   return static_cast<time_t>(-1);
-#else   // OS_WIN
+#else   // _WIN32
   const std::string filename = GetIPCKeyFileName(name_);
   struct stat filestat;
   if (::stat(filename.c_str(), &filestat) == -1) {
@@ -467,7 +467,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
     return static_cast<time_t>(-1);
   }
   return filestat.st_mtime;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool IPCPathManager::LoadPathNameInternal() {
@@ -478,7 +478,7 @@ bool IPCPathManager::LoadPathNameInternal() {
 
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wfilename;
   Util::Utf8ToWide(filename, &wfilename);
 
@@ -526,7 +526,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     }
   }
 
-#else   // OS_WIN
+#else   // _WIN32
 
   InputFileStream is(filename, std::ios::binary | std::ios::in);
   if (!is) {
@@ -538,7 +538,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     LOG(ERROR) << "ParseFromStream failed";
     return false;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   if (!IsValidKey(ipc_path_info_->key())) {
     LOG(ERROR) << "IPCServer::key is invalid";

@@ -29,17 +29,17 @@
 
 #include "gui/config_dialog/keybinding_editor.h"
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <imm.h>
 #include <ime.h>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QMenu>
 #include <QMessageBox>
@@ -111,7 +111,7 @@ static const auto *kQtKeyModifierNonRequiredTable =
         {Qt::Key_Hiragana_Katakana, "Hiragana"},
         {Qt::Key_Eisu_toggle, "Eisu"},
         {Qt::Key_Zenkaku_Hankaku, "Hankaku/Zenkaku"},
-#ifdef OS_LINUX
+#ifdef __linux__
         // On Linux (X / Wayland), Hangul and Hanja are identical with
         // ImeOn and ImeOff.
         // https://github.com/google/mozc/issues/552
@@ -120,11 +120,11 @@ static const auto *kQtKeyModifierNonRequiredTable =
         {Qt::Key_Hangul, "ON"},
         // Hanja == Lang2 (USB HID) / ImeOff (Windows) / Eisu (macOS)
         {Qt::Key_Hangul_Hanja, "OFF"},
-#endif  // OS_LINUX
+#endif  // __linux__
     });
 // LINT.ThenChange(//composer/key_parser_test.cc)
 
-#ifdef OS_WIN
+#ifdef _WIN32
 struct WinVirtualKeyEntry {
   DWORD virtual_key;
   const char *mozc_key_name;
@@ -153,18 +153,18 @@ const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
     {0x16, "ON"},   // 0x16 = VK_IME_ON
     {0x1A, "OFF"},  // 0x1A = VK_IME_OFF
 };
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // On Windows Hiragana/Eisu keys only emits KEY_DOWN event.
 // for these keys we don't handle auto-key repeat.
 bool IsDownOnlyKey(const QKeyEvent &key_event) {
-#ifdef OS_WIN
+#ifdef _WIN32
   const DWORD virtual_key = key_event.nativeVirtualKey();
   return (virtual_key == VK_DBE_ALPHANUMERIC ||
           virtual_key == VK_DBE_HIRAGANA || virtual_key == VK_DBE_KATAKANA);
-#else  // OS_WIN
+#else  // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool IsAlphabet(const char key) { return (key >= 'a' && key <= 'z'); }
@@ -382,7 +382,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     return Encode(result);
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   const DWORD virtual_key = key_event.nativeVirtualKey();
   for (size_t i = 0; i < std::size(kWinVirtualKeyModifierNonRequiredTable);
@@ -393,7 +393,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
       return Encode(result);
     }
   }
-#elif OS_LINUX
+#elif __linux__
   // The XKB defines three types of logical key code: "xkb::Hiragana",
   // "xkb::Katakana" and "xkb::Hiragana_Katakana".
   // On most of Linux distributions, any key event against physical
@@ -417,7 +417,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     modifier_non_required_key_ = QLatin1String("Katakana");
     return Encode(result);
   }
-#endif  // OS_WIN, OS_LINUX
+#endif  // _WIN32, __linux__
 
   if (qt_key == Qt::Key_yen) {
     // Japanese Yen mark, treat it as backslash for compatibility
@@ -490,16 +490,16 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
 KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
     : QDialog(parent), trigger_parent_(trigger_parent) {
   setupUi(this);
-#if defined(OS_LINUX)
+#if defined(__linux__)
   // Workaround for the issue https://github.com/google/mozc/issues/9
   // Seems that even after clicking the button for the keybinding dialog,
   // the edit is not raised. This might be a bug of setFocusProxy.
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool | Qt::WindowStaysOnTopHint);
-#else  // OS_LINUX
+#else  // __linux__
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool);
-#endif  // OS_LINUX
+#endif  // __linux__
 
   QPushButton *ok_button =
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
@@ -513,9 +513,9 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   KeyBindingLineEdit->setMaxLength(32);
   KeyBindingLineEdit->setAttribute(Qt::WA_InputMethodEnabled, false);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   ::ImmAssociateContext(reinterpret_cast<HWND>(KeyBindingLineEdit->winId()), 0);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   QObject::connect(KeyBindingEditorbuttonBox,
                    SIGNAL(clicked(QAbstractButton *)), this,

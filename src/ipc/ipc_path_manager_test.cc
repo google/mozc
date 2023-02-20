@@ -29,9 +29,9 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
 #include <string>
 #include <vector>
@@ -106,11 +106,11 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
   EXPECT_EQ(path, t.path());
-#ifdef OS_LINUX
+#ifdef __linux__
   // On Linux, |path| should be abstract (see man unix(7) for details.)
   ASSERT_FALSE(path.empty());
   EXPECT_EQ(path[0], '\0');
-#endif  // OS_LINUX
+#endif  // __linux__
 }
 
 // Test the thread-safeness of GetPathName() and
@@ -132,7 +132,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
 
 TEST_F(IPCPathManagerTest, ReloadTest) {
   // We have only mock implementations for Windows, so no test should be run.
-#ifndef OS_WIN
+#ifndef _WIN32
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("reload_test");
 
   EXPECT_TRUE(manager->CreateNewPathName());
@@ -148,7 +148,7 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
   ASSERT_OK(FileUtil::SetContents(filename, "foobar"));
   EXPECT_TRUE(manager->ShouldReload());
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST_F(IPCPathManagerTest, PathNameTest) {

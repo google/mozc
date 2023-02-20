@@ -56,9 +56,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace config {
@@ -147,7 +147,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_EQ(output.DebugString(), input.DebugString());
   EXPECT_EQ(output2->DebugString(), input.DebugString());
 
-#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+#if defined(__ANDROID__) && defined(CHANNEL_DEV)
   input.Clear();
   EXPECT_FALSE(input.general_config().has_upload_usage_stats());
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
@@ -165,7 +165,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   ConfigHandler::GetConfig(&output);
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // OS_ANDROID && CHANNEL_DEV
+#endif  // __ANDROID__ && CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, SetMetadata) {
@@ -324,7 +324,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   EXPECT_EQ(updated_config.incognito_mode(), default_incognito_mode);
 }
 
-#if !defined(OS_ANDROID)
+#if !defined(__ANDROID__)
 // Temporarily disable this test because FileUtil::CopyFile fails on
 // Android for some reason.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
@@ -353,19 +353,19 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     Config default_config;
     ConfigHandler::GetConfig(&default_config);
 
-#ifdef OS_WIN
+#ifdef _WIN32
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
     std::wstring wdest_path;
     Util::Utf8ToWide(dest_path, &wdest_path);
     ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
-#endif  // OS_WIN
+#endif  // _WIN32
 
     // Remove test file just in case.
     ASSERT_OK(FileUtil::Unlink(dest_path));
     EXPECT_FALSE(FileUtil::FileExists(dest_path).ok());
   }
 }
-#endif  // !OS_ANDROID
+#endif  // !__ANDROID__
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   Config output;
@@ -413,10 +413,10 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
               testcases[i].conversion_character_form);
   }
 
-#if defined(OS_ANDROID) && defined(CHANNEL_DEV)
+#if defined(__ANDROID__) && defined(CHANNEL_DEV)
   EXPECT_TRUE(output.general_config().has_upload_usage_stats());
   EXPECT_TRUE(output.general_config().upload_usage_stats());
-#endif  // OS_ANDROID && CHANNEL_DEV
+#endif  // __ANDROID__ && CHANNEL_DEV
 }
 
 TEST_F(ConfigHandlerTest, DefaultConfig) {

@@ -29,9 +29,9 @@
 
 #include "gui/tool/mozc_tool_libmain.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QtGui>
 
@@ -57,9 +57,9 @@
 #include "base/const.h"
 #endif  // __APPLE__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "gui/base/win_util.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 ABSL_FLAG(std::string, mode, "about_dialog", "mozc_tool mode");
 ABSL_DECLARE_FLAG(std::string, error_type);
@@ -71,12 +71,12 @@ int RunDictionaryTool(int argc, char *argv[]);
 int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
 int RunSetDefaultDialog(int argc, char *argv[]);
 int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 int RunPrelaunchProcesses(int argc, char *argv[]);
@@ -141,10 +141,10 @@ int RunMozcTool(int argc, char *argv[]) {
   // install Qt debug handler
   qInstallMessageHandler(mozc::gui::DebugUtil::MessageHandler);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Update JumpList if available.
   mozc::gui::WinUtil::KeepJumpListUpToDate();
-#endif  // OS_WIN
+#endif  // _WIN32
 
   if (absl::GetFlag(FLAGS_mode) == "config_dialog") {
     return RunConfigDialog(argc, argv);
@@ -156,7 +156,7 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunErrorMessageDialog(argc, argv);
   } else if (absl::GetFlag(FLAGS_mode) == "about_dialog") {
     return RunAboutDialog(argc, argv);
-#ifdef OS_WIN
+#ifdef _WIN32
   } else if (absl::GetFlag(FLAGS_mode) == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
     return RunSetDefaultDialog(argc, argv);
@@ -166,7 +166,7 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (absl::GetFlag(FLAGS_mode) == "administration_dialog") {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
-#endif  // OS_WIN
+#endif  // _WIN32
 #ifdef __APPLE__
   } else if (absl::GetFlag(FLAGS_mode) == "prelauncher") {
     // Prelauncher is used on Mac only.

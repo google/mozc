@@ -29,12 +29,12 @@
 
 #include "base/thread.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <process.h>  // for _beginthreadex
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <pthread.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <atomic>
 #include <memory>
@@ -44,7 +44,7 @@
 
 namespace mozc {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // Win32-based Thread implementation.
 
 namespace {
@@ -111,7 +111,7 @@ void Thread::Terminate() {
   }
 }
 
-#else  // OS_WIN
+#else  // _WIN32
 // Thread implementation for pthread-based platforms. Currently all the
 // platforms except for Windows use pthread.
 
@@ -142,13 +142,13 @@ void Thread::Start(const std::string &thread_name) {
     state_->is_running = false;
     state_->handle.reset();
   } else {
-#if defined(OS_WASM)
+#if defined(__wasm__)
     // WASM doesn't support setname?
-#elif defined(__APPLE__)  // !OS_WASM
+#elif defined(__APPLE__)  // !__wasm__
     pthread_setname_np(thread_name.c_str());
-#else                     // !(OS_WASM | __APPLE__)
+#else                     // !(__wasm__ | __APPLE__)
     pthread_setname_np(*state_->handle, thread_name.c_str());
-#endif                    // !(OS_WASM | __APPLE__)
+#endif                    // !(__wasm__ | __APPLE__)
   }
 }
 
@@ -174,7 +174,7 @@ void Thread::Join() {
 
 namespace {
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 
 void ExitThread(int sig) { pthread_exit(0); }
 
@@ -200,7 +200,7 @@ void PThreadCancel(pthread_t thread_id) {
   }
 }
 
-#else  // OS_ANDROID
+#else  // __ANDROID__
 
 void InitPThreadCancel() {
   // Nothing is required.
@@ -208,7 +208,7 @@ void InitPThreadCancel() {
 
 void PThreadCancel(pthread_t thread_id) { pthread_cancel(thread_id); }
 
-#endif  // OS_ANDROID or others
+#endif  // __ANDROID__ or others
 
 void PThreadCleanupRoutine(void *ptr) {
   auto *is_running = static_cast<std::atomic<bool> *>(ptr);
@@ -241,7 +241,7 @@ void Thread::Terminate() {
   }
 }
 
-#endif  // OS_WIN
+#endif  // _WIN32
 
 Thread::Thread() : state_(new ThreadInternalState) {}
 

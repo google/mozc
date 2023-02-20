@@ -38,12 +38,12 @@
 
 #include "base/port.h"
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 // This is used only for code generation, so shouldn't be used from android
 // platform.
 #error \
     "base/codegen_bytearray_stream.cc shouldn't be used from android platform."
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 #include <iomanip>

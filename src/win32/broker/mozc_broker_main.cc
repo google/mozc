@@ -27,22 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
 #include "base/system_util.h"
-#ifdef OS_WIN
-#include "base/winmain.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/winmain.h"
+#endif  // _WIN32
 #include "config/stats_config_util.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, mode, "", "mozc_broker mode");
 
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace mozc {
 namespace win32 {
 int RunPrelaunchProcesses(int argc, char *argv[]);
@@ -51,7 +51,7 @@ int RunUnregisterIME(int argc, char *argv[]);
 int RunSetDefault(int argc, char *argv[]);
 }  // namespace win32
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32
 
 int main(int argc, char *argv[]) {
   // Currently, mozc_broker does not care about runlevel because this process
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   int result = 0;
-#ifdef OS_WIN
+#ifdef _WIN32
   if (absl::GetFlag(FLAGS_mode) == "register_ime") {
     result = mozc::win32::RunRegisterIME(argc, argv);
   } else if (absl::GetFlag(FLAGS_mode) == "set_default") {
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   } else if (absl::GetFlag(FLAGS_mode) == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   return result;
 }

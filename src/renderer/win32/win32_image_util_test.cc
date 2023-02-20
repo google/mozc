@@ -50,7 +50,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
-#include "base/win_font_test_helper.h"
+#include "base/win32/win_font_test_helper.h"
 #include "net/jsoncpp.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"

@@ -29,35 +29,35 @@
 
 #include "base/logging.h"
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 #include <android/log.h>
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #define NO_MINMAX
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <sys/stat.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <algorithm>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <codecvt>
-#endif  // OS_WIN
+#endif  // _WIN32
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <locale>
-#endif  // OS_WIN
+#endif  // _WIN32
 #include <memory>
 #include <sstream>
 #include <string>
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 #include "base/const.h"
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 #include "base/clock.h"
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
@@ -75,7 +75,7 @@ ABSL_FLAG(int32_t, v, 0, "verbose level");
 
 namespace mozc {
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 namespace {
 // In order to make logging.h independent from <android/log.h>, we use the
 // raw number to define the following constants. Check the equality here
@@ -95,25 +95,25 @@ COMPARE_LOG_LEVEL(LOG_FATAL, ANDROID_LOG_FATAL);
 COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 #undef COMPARE_LOG_LEVEL
 }  // namespace
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 // Use the same implementation both for Opt and Debug.
 std::string Logging::GetLogMessageHeader() {
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
   // On Android, other records are not needed because they are added by
   // Android's logging framework.
   return absl::StrCat(pthread_self(), " ");  // returns unsigned long.
 
-#else  // OS_ANDROID
+#else  // __ANDROID__
 
   const absl::Time at = Clock::GetAbslTime();
   const absl::TimeZone tz = Clock::GetTimeZone();
   const std::string timestamp = absl::FormatTime("%Y-%m-%d %H:%M:%S ", at, tz);
 
-#if defined(OS_WASM)
+#if defined(__wasm__)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       static_cast<unsigned int>(pthread_self());
-#elif defined(OS_LINUX)
+#elif defined(__linux__)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       // It returns unsigned long.
                       pthread_self());
@@ -125,11 +125,11 @@ std::string Logging::GetLogMessageHeader() {
   return absl::StrCat(timestamp, ::getpid(), " ", ::getpid(),
                       reinterpret_cast<uint32_t>(pthread_self()));
 #endif  // __LP64__
-#elif defined(OS_WIN)
+#elif defined(_WIN32)
   return absl::StrCat(timestamp, ::GetCurrentProcessId(), " ",
                       ::GetCurrentThreadId());
-#endif  // OS_WIN
-#endif  // OS_ANDROID
+#endif  // _WIN32
+#endif  // __ANDROID__
 }
 
 #ifdef MOZC_NO_LOGGING
@@ -199,13 +199,13 @@ class LogStreamImpl {
 
   void Write(LogSeverity, const std::string &log);
   void set_log_to_stderr(bool log_to_stderr) {
-#if defined(OS_ANDROID)
+#if defined(__ANDROID__)
     // Android uses Android's log library.
     use_cerr_ = false;
-#else   // OS_ANDROID
+#else   // __ANDROID__
     absl::MutexLock l(&mutex_);
     use_cerr_ = log_to_stderr;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
   }
 
  private:
@@ -226,10 +226,10 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
   if (use_cerr_) {
     std::cerr << log;
   } else {
-#if defined(OS_ANDROID)
+#if defined(__ANDROID__)
     __android_log_write(severity, kProductPrefix,
                         const_cast<char *>(log.c_str()));
-#else   // OS_ANDROID
+#else   // __ANDROID__
     // Since our logging mechanism is essentially singleton, it is indeed
     // possible that this method is called before |Logging::InitLogStream()|.
     // b/32360767 is an example, where |SystemUtil::GetLoggingDirectory()|
@@ -239,7 +239,7 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
       *real_log_stream_ << log;
       real_log_stream_->flush();
     }
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
   }
 }
 
@@ -258,7 +258,7 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   if (use_cerr_) {
     return;
   }
-#if defined(OS_WIN)
+#if defined(_WIN32)
   // On Windows, just create a stream.
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |log_file_path| from UTF-8 to UTF-16.
@@ -268,14 +268,14 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
   real_log_stream_ = std::make_unique<std::ofstream>(
       utf8_to_wide.from_bytes(log_file_path).c_str(), std::ios::app);
-#elif !defined(OS_ANDROID)
+#elif !defined(__ANDROID__)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
   real_log_stream_ =
       std::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
   DCHECK(!use_cerr_ || !real_log_stream_);
 }
 
@@ -287,16 +287,16 @@ void LogStreamImpl::Reset() {
 void LogStreamImpl::ResetUnlocked() {
   real_log_stream_.reset();
   config_verbose_level_ = 0;
-#if defined(OS_ANDROID) || defined(OS_WIN)
+#if defined(__ANDROID__) || defined(_WIN32)
   // On Android, the standard log library is used.
   // On Windows, coloring is disabled
   // because cmd.exe doesn't support ANSI color escape sequences.
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
   support_color_ = false;
-#else   // OS_ANDROID, OS_WIN
+#else   // __ANDROID__, _WIN32
   support_color_ = (use_cerr_ && absl::GetFlag(FLAGS_colored_log) &&
                     ::isatty(::fileno(stderr)));
-#endif  // OS_ANDROID, OS_WIN
+#endif  // __ANDROID__, _WIN32
   // use_cerr_ is updated by ABSL_FLAG.OnUpdate().
 }
 
@@ -348,18 +348,18 @@ const struct SeverityProperty {
   const char *label;
   const char *color_escape_sequence;
 } kSeverityProperties[] = {
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
     {"UNKNOWN", kCyanEscapeSequence}, {"DEFAULT", kCyanEscapeSequence},
     {"VERBOSE", kCyanEscapeSequence}, {"DEBUG", kCyanEscapeSequence},
     {"INFO", kCyanEscapeSequence},    {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},    {"FATAL", kRedEscapeSequence},
     {"SILENT", kCyanEscapeSequence},
-#else   // OS_ANDROID
+#else   // __ANDROID__
     {"INFO", kCyanEscapeSequence},
     {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},
     {"FATAL", kRedEscapeSequence},
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 };
 }  // namespace
 
@@ -405,12 +405,12 @@ LogFinalizer::~LogFinalizer() {
   if (severity_ >= LOG_FATAL) {
     // On windows, call exception handler to
     // make stack trace and minidump
-#ifdef OS_WIN
+#ifdef _WIN32
     ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else   // OS_WIN
+#else   // _WIN32
     mozc::Logging::CloseLogStream();
     exit(-1);
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 }
 
@@ -419,11 +419,11 @@ void LogFinalizer::operator&(std::ostream &working_stream) {
 }
 
 void NullLogFinalizer::OnFatal() {
-#ifdef OS_WIN
+#ifdef _WIN32
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else   // OS_WIN
+#else   // _WIN32
   exit(-1);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace mozc

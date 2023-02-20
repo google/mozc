@@ -457,13 +457,13 @@ TEST_F(UserDictionaryStorageTest, Export) {
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(std::string(mapped_data.begin(), mapped_data.size()),
             "key\tvalue\t名詞\tcomment\r\n");
-#else   // OS_WIN
+#else   // _WIN32
   EXPECT_EQ(std::string(mapped_data.begin(), mapped_data.size()),
             "key\tvalue\t名詞\tcomment\n");
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace mozc

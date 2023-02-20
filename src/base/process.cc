@@ -29,14 +29,14 @@
 
 #include "base/process.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
-#else  // OS_WIN
+#ifdef _WIN32
+#include <windows.h>
+#else  // _WIN32
 #include <string.h>
 #include <sys/stat.h>
 
 #include <cerrno>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include <fcntl.h>
@@ -46,12 +46,12 @@
 #include "base/mac_process.h"
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(__linux__) || defined(__ANDROID__)
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#endif  // OS_LINUX || OS_ANDROID
+#endif  // __linux__ || __ANDROID__
 
 #include <cstddef>
 #include <cstdlib>
@@ -69,11 +69,11 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
-#ifdef OS_WIN
-#include "base/scoped_handle.h"
+#ifdef _WIN32
 #include "base/util.h"
-#include "base/win_util.h"
-#endif  // OS_WIN
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
+#endif  // _WIN32
 
 #ifdef __APPLE__
 // We do not use the global environ variable because it is unavailable
@@ -83,7 +83,7 @@
 #include <crt_externs.h>
 
 static char **environ = *_NSGetEnviron();
-#elif !defined(OS_WIN)
+#elif !defined(_WIN32)
 // Defined somewhere in libc. We can't pass nullptr as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
@@ -99,13 +99,13 @@ bool Process::OpenBrowser(const std::string &url) {
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wurl;
   Util::Utf8ToWide(url, &wurl);
   return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(__linux__) || defined(__ANDROID__)
 
 #ifndef MOZC_BROWSER_COMMAND
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
@@ -114,7 +114,7 @@ bool Process::OpenBrowser(const std::string &url) {
 #endif  // MOZC_BROWSER_COMMAND
 
   return SpawnProcess(MOZC_BROWSER_COMMAND, url);
-#endif  // OS_LINUX || OS_ANDROID
+#endif  // __linux__ || __ANDROID__
 
 #ifdef __APPLE__
   return MacProcess::OpenBrowserForMac(url);
@@ -124,7 +124,7 @@ bool Process::OpenBrowser(const std::string &url) {
 
 bool Process::SpawnProcess(const std::string &path, const std::string &arg,
                            size_t *pid) {
-#ifdef OS_WIN
+#ifdef _WIN32
   std::wstring wpath;
   Util::Utf8ToWide(path, &wpath);
   wpath = L"\"" + wpath + L"\"";
@@ -167,10 +167,10 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   }
 
   return create_process_succeeded;
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   // Spawning processes is not supported in WASM.
   return false;
-#else  // OS_WASM
+#else  // __wasm__
 
   const std::vector<std::string> arg_tmp =
       absl::StrSplit(arg, ' ', absl::SkipEmpty());
@@ -196,7 +196,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   }
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(__linux__) || defined(__ANDROID__)
   // Do not call posix_spawn() for obviously bad path.
   if (!S_ISREG(statbuf.st_mode)) {
     LOG(ERROR) << "Not a regular file: " << path;
@@ -219,7 +219,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   // (www.gnu.org/software/libc/manual/html_node/Heap-Consistency-Checking.html)
   constexpr int kOverwrite = 0;  // Do not overwrite.
   ::setenv("MALLOC_CHECK_", "2", kOverwrite);
-#endif  // OS_LINUX || OS_ANDROID
+#endif  // __linux__ || __ANDROID__
   pid_t tmp_pid = 0;
 
   // Spawn new process.
@@ -240,7 +240,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
     *pid = tmp_pid;
   }
   return result == 0;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool Process::SpawnMozcProcess(const std::string &filename,
@@ -260,7 +260,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
     return false;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   DWORD processe_id = static_cast<DWORD>(pid);
   ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
   if (handle.get() == nullptr) {
@@ -279,10 +279,10 @@ bool Process::WaitProcess(size_t pid, int timeout) {
   }
 
   return true;
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   // Process handling is not supported in WASM.
   return false;
-#else   // OS_WASM
+#else   // __wasm__
   pid_t processe_id = static_cast<pid_t>(pid);
   constexpr int kPollingDuration = 250;
   int left_time = timeout < 0 ? 1 : timeout;
@@ -301,7 +301,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 
   LOG(ERROR) << pid << " didn't terminate within " << timeout << " msec";
   return false;
-#endif  // OS_WASM
+#endif  // __wasm__
 }
 
 bool Process::IsProcessAlive(size_t pid, bool default_result) {
@@ -309,7 +309,7 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
     return default_result;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   {
     ScopedHandle handle(
         ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid)));
@@ -328,10 +328,10 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   }  // release handle
 
   return default_result;  // unknown
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   // Process handling is not supported in WASM.
   return false;
-#else   // OS_WIN
+#else   // _WIN32
   constexpr int kSig = 0;
   if (::kill(static_cast<pid_t>(pid), kSig) == -1) {
     if (errno == EPERM || errno == EINVAL) {
@@ -342,11 +342,11 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   }
 
   return true;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (thread_id == 0) {
     return default_result;
   }
@@ -370,11 +370,11 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
 
   return default_result;  // unknown
 
-#else   // OS_WIN
+#else   // _WIN32
   // On Linux/Mac, there is no way to check the status of thread id from
   // other process.
   return default_result;
-#endif  // OS_WNIDOWS
+#endif  // _WIN32
 }
 
 bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
@@ -385,7 +385,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
   }
 #endif  // __APPLE__
 
-#ifdef OS_WIN
+#ifdef _WIN32
   const std::string arg =
       "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
@@ -393,9 +393,9 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(__linux__) || defined(__ANDROID__)
   constexpr char kMozcTool[] = "mozc_tool";
   const std::string arg =
       "--mode=error_message_dialog --error_type=" + error_type;
@@ -404,7 +404,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // OS_LINUX || OS_ANDROID
+#endif  // __linux__ || __ANDROID__
 
   return true;
 }

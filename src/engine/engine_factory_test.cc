@@ -40,11 +40,11 @@ namespace mozc {
 TEST(EngineFactoryTest, MobilePredictorOnAndroid) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
   PredictorInterface *predictor = engine->GetPredictor();
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
   EXPECT_EQ(predictor->GetPredictorName(), "MobilePredictor");
-#else   // OS_ANDROID
+#else   // __ANDROID__
   EXPECT_EQ(predictor->GetPredictorName(), "DefaultPredictor");
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 }
 
 }  // namespace mozc

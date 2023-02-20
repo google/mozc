@@ -545,11 +545,11 @@ bool UserDictionary::Load(
 
   // If UserDictionary is pretty big, we first remove the
   // current dictionary to save memory usage.
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
   constexpr size_t kVeryBigUserDictionarySize = 5000;
-#else   // OS_ANDROID
+#else   // __ANDROID__
   constexpr size_t kVeryBigUserDictionarySize = 100000;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
   if (size >= kVeryBigUserDictionarySize) {
     TokensIndex *dummy_empty_tokens =

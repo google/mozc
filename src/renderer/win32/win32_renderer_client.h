@@ -30,7 +30,7 @@
 #ifndef MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_HANDLER_
 #define MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_HANDLER_
 
-#include <Windows.h>
+#include <windows.h>
 
 #include "base/port.h"
 

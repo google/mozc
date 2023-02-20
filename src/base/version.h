@@ -44,10 +44,10 @@ class Version {
   // Get current mozc version (former called MOZC_VERSION)
   static std::string GetMozcVersion();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Get current mozc version (former called MOZC_VERSION) by std::wstring
   static std::wstring GetMozcVersionW();
-#endif  // OS_WIN
+#endif  // _WIN32
 
   static int GetMozcVersionMajor();
   static int GetMozcVersionMinor();

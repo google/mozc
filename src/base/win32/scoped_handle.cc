@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
 
 namespace mozc {
@@ -82,4 +82,4 @@ void ScopedHandle::Close() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32

@@ -57,11 +57,11 @@ int GetTableHeight(QTableWidget *widget) {
   // Here we use "龍" to calc font size, as it looks almost square
   const QRect rect =
       QFontMetrics(widget->font()).boundingRect(QString::fromUtf8("龍"));
-#ifdef OS_WIN
+#ifdef _WIN32
   return static_cast<int>(rect.height() * 1.3);
-#else  // OS_WIN
+#else  // _WIN32
   return static_cast<int>(rect.height() * 1.4);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace
 

@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
 #elif defined(ENABLE_GTK_RENDERER)
 #include <gtk/gtk.h>
-#endif  // OS_WIN, ENABLE_GTK_RENDERER
+#endif  // _WIN32, ENABLE_GTK_RENDERER
 
 #include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
@@ -42,9 +42,9 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
-#ifdef OS_WIN
-#include "base/win_util.h"
-#include "base/winmain.h"
+#ifdef _WIN32
+#include "base/win32/win_util.h"
+#include "base/win32/winmain.h"
 #include "renderer/win32/win32_server.h"
 #elif defined(__APPLE__)
 #include "renderer/mac/CandidateController.h"
@@ -65,7 +65,7 @@
 #include "renderer/unix/unix_renderer.h"
 #include "renderer/unix/unix_server.h"
 #include "renderer/unix/window_manager.h"
-#endif  // OS_WIN, __APPLE__, ENABLE_QT_RENDERER, ENABLE_GTK_RENDERER
+#endif  // _WIN32, __APPLE__, ENABLE_QT_RENDERER, ENABLE_GTK_RENDERER
 
 ABSL_DECLARE_FLAG(bool, restricted);
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-#ifdef OS_WIN
+#ifdef _WIN32
   mozc::ScopedCOMInitializer com_initializer;
 #elif defined(ENABLE_GTK_RENDERER)
   gtk_set_locale();
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 #endif  // GLIB>=2.31.0
   gdk_threads_init();
   gtk_init(&argc, &argv);
-#endif  // OS_WIN, ENABLE_GTK_RENDERER
+#endif  // _WIN32, ENABLE_GTK_RENDERER
 
   mozc::SystemUtil::DisableIME();
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   int result_code = 0;
 
   {
-#ifdef OS_WIN
+#ifdef _WIN32
     mozc::renderer::win32::Win32Server server;
     server.SetRendererInterface(&server);
     result_code = server.StartServer();
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     renderer.Initialize();
     server.SetRendererInterface(&renderer);
     result_code = server.StartServer();
-#endif  // OS_WIN, __APPLE__, ENABLE_QT_RENDERER, ENABLE_GTK_RENDERER
+#endif  // _WIN32, __APPLE__, ENABLE_QT_RENDERER, ENABLE_GTK_RENDERER
   }
 
   return result_code;

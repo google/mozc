@@ -29,15 +29,15 @@
 
 #include "base/clock.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 #include <time.h>
-#else  // OS_WIN
+#else  // _WIN32
 #ifdef __APPLE__
 #include <mach/mach_time.h>
 #endif  // __APPLE__
 #include <sys/time.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 
@@ -50,7 +50,7 @@ namespace {
 class ClockImpl : public ClockInterface {
  public:
   ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {
-#if defined(OS_CHROMEOS) || defined(OS_WIN)
+#if defined(OS_CHROMEOS) || defined(_WIN32)
     // Because absl::LocalTimeZone() always returns UTC timezone on Chrome OS
     // and Windows, a work-around for Chrome OS and Windows is required.
     int offset_sec = 9 * 60 * 60;  // JST as fallback
@@ -63,12 +63,12 @@ class ClockImpl : public ClockInterface {
           + offset->tm_min * 60;  // minute offset.
     }
     timezone_ = absl::FixedTimeZone(offset_sec);
-#endif  // defined(OS_CHROMEOS) || defined(OS_WIN)
+#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
   }
   ~ClockImpl() override {}
 
   void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override {
-#ifdef OS_WIN
+#ifdef _WIN32
     FILETIME file_time;
     GetSystemTimeAsFileTime(&file_time);
     ULARGE_INTEGER time_value;
@@ -86,20 +86,20 @@ class ClockImpl : public ClockInterface {
     time_value.QuadPart -= kDeltaEpochInMicroSecs;
     *sec = static_cast<uint64_t>(time_value.QuadPart / 1000000UL);
     *usec = static_cast<uint32_t>(time_value.QuadPart % 1000000UL);
-#else   // OS_WIN
+#else   // _WIN32
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     *sec = tv.tv_sec;
     *usec = tv.tv_usec;
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   uint64_t GetTime() override {
-#ifdef OS_WIN
+#ifdef _WIN32
     return static_cast<uint64_t>(_time64(nullptr));
-#else   // OS_WIN
+#else   // _WIN32
     return static_cast<uint64_t>(time(nullptr));
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   absl::Time GetAbslTime() override {
@@ -107,7 +107,7 @@ class ClockImpl : public ClockInterface {
   }
 
   uint64_t GetFrequency() override {
-#if defined(OS_WIN)
+#if defined(_WIN32)
     LARGE_INTEGER timestamp;
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
     // available.
@@ -118,16 +118,16 @@ class ClockImpl : public ClockInterface {
     mach_timebase_info(&timebase_info);
     return static_cast<uint64_t>(1.0e9 * timebase_info.denom /
                                  timebase_info.numer);
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#elif defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
     return 1000000uLL;
-#else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
+#else  // platforms (_WIN32, __APPLE__, __linux__, ...)
 #error "Not supported platform"
-#endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
+#endif  // platforms (_WIN32, __APPLE__, __linux__, ...)
   }
 
   uint64_t GetTicks() override {
     // TODO(team): Use functions in <chrono> once the use of it is approved.
-#if defined(OS_WIN)
+#if defined(_WIN32)
     LARGE_INTEGER timestamp;
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
     // available.
@@ -135,14 +135,14 @@ class ClockImpl : public ClockInterface {
     return static_cast<uint64_t>(timestamp.QuadPart);
 #elif defined(__APPLE__)
     return static_cast<uint64_t>(mach_absolute_time());
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#elif defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
     uint64_t sec;
     uint32_t usec;
     GetTimeOfDay(&sec, &usec);
     return sec * 1000000 + usec;
-#else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
+#else  // platforms (_WIN32, __APPLE__, __linux__, ...)
 #error "Not supported platform"
-#endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
+#endif  // platforms (_WIN32, __APPLE__, __linux__, ...)
   }
 
   const absl::TimeZone& GetTimeZone() override {

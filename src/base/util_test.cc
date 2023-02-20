@@ -1202,7 +1202,7 @@ TEST(UtilTest, IsJisX0208) {
   EXPECT_FALSE(Util::IsJisX0208("𠮷"));  // U+20BB7
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 TEST(UtilTest, WideCharsLen) {
   // "að ®b"
   const std::string input_utf8 = "a\360\240\256\237b";
@@ -1237,7 +1237,7 @@ TEST(UtilTest, WideToUtf8_SurrogatePairSupport) {
   EXPECT_EQ(output_utf8, "\360\240\256\237");
   EXPECT_EQ(output_wide, input_wide);
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 TEST(UtilTest, IsKanaSymbolContained) {
   const std::string kFullstop("。");

@@ -46,7 +46,7 @@
 #include <limits>
 #include <string>
 
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_dll_module.h"

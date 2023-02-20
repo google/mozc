@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_lang_bar_menu.h"

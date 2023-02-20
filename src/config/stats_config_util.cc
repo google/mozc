@@ -29,20 +29,20 @@
 
 #include "config/stats_config_util.h"
 
-#ifdef OS_WIN
-#include <Lmcons.h>
+#ifdef _WIN32
+#include <lmcons.h>
 #include <atlbase.h>
 #include <sddl.h>
 #include <shlobj.h>
 #include <time.h>
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 #ifdef __APPLE__
@@ -52,10 +52,10 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__
 
-#if defined(OS_ANDROID)
+#if defined(__ANDROID__)
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 #include "base/file_util.h"
 #include "base/singleton.h"
@@ -67,7 +67,7 @@ namespace config {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#ifdef OS_WIN
+#ifdef _WIN32
 
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kOmahaUsageKey[] =
@@ -151,7 +151,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
   return true;
 }
 
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
@@ -226,7 +226,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 }
 #endif  // MACOSX
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   AndroidStatsConfigUtilImpl() {}
@@ -244,7 +244,7 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
     return false;
   }
 };
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -265,11 +265,11 @@ StatsConfigUtilInterface *g_stats_config_util_handler = nullptr;
 #if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
 // For non-official build, use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(OS_WIN)
+#elif defined(_WIN32)
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(__APPLE__)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(OS_ANDROID)
+#elif defined(__ANDROID__)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else   // Platforms
 // Fall back mode.  Use null implementation.

@@ -30,16 +30,16 @@
 #ifndef MOZC_IPC_PROCESS_WATCH_DOG_H_
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
-#ifndef OS_WIN
+#ifndef _WIN32
 #include <sys/types.h>
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
 #include <cstdint>
 #include <memory>
 
 #include "base/port.h"
-#include "base/scoped_handle.h"
 #include "base/thread.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/synchronization/mutex.h"
 
 // Usage:
@@ -70,16 +70,16 @@ class ProcessWatchDog : public Thread {
     TIMEOUT_SIGNALED = 10,              // timeout is signaled
   };
 
-#ifdef OS_WIN
+#ifdef _WIN32
   typedef uint32_t ProcessID;
   typedef uint32_t ThreadID;
-#else   // OS_WIN
+#else   // _WIN32
   typedef pid_t ProcessID;
   // Linux/Mac has no way to export ThreadID to other process.
   // For instance, Mac's thread id is just a pointer to the some
   // internal data structure (_opaque_pthread_t*).
   typedef uint32_t ThreadID;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   static constexpr ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
   static constexpr ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
@@ -107,9 +107,9 @@ class ProcessWatchDog : public Thread {
   void StopWatchDog();
 
  private:
-#ifdef OS_WIN
+#ifdef _WIN32
   ScopedHandle event_;
-#endif  // OS_WIN
+#endif  // _WIN32
   ProcessID process_id_;
   ThreadID thread_id_;
   int timeout_;

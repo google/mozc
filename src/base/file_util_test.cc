@@ -29,9 +29,9 @@
 
 #include "base/file_util.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
-#endif  // OS_WIN
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 #include <fstream>
 #include <string>
@@ -46,7 +46,7 @@
 #include "absl/strings/str_format.h"
 
 // Ad-hoc workadound against macro problem on Windows.
-// On Windows, following macros, defined when you include <Windows.h>,
+// On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
@@ -115,7 +115,7 @@ TEST(FileUtilTest, Unlink) {
   EXPECT_OK(FileUtil::Unlink(filepath));
   EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
 
-#ifdef OS_WIN
+#ifdef _WIN32
   constexpr DWORD kTestAttributeList[] = {
       FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_HIDDEN,
       FILE_ATTRIBUTE_NORMAL,  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
@@ -134,12 +134,12 @@ TEST(FileUtilTest, Unlink) {
     EXPECT_OK(FileUtil::Unlink(filepath));
     EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   EXPECT_OK(FileUtil::UnlinkIfExists(filepath));
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 TEST(FileUtilTest, HideFile) {
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
@@ -186,7 +186,7 @@ TEST(FileUtilTest, HideFile) {
 
   ASSERT_OK(FileUtil::Unlink(filename));
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 TEST(FileUtilTest, IsEqualFile) {
   const std::string filename1 =
@@ -268,7 +268,7 @@ TEST(FileUtilTest, CopyFile) {
   EXPECT_OK(s);
   EXPECT_TRUE(*s);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   struct TestData {
     TestData(DWORD from, DWORD to) : from_attributes(from), to_attributes(to) {}
     const DWORD from_attributes;
@@ -316,7 +316,7 @@ TEST(FileUtilTest, CopyFile) {
               ::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL));
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   ASSERT_OK(FileUtil::Unlink(from));
   ASSERT_OK(FileUtil::Unlink(to));
@@ -356,7 +356,7 @@ TEST(FileUtilTest, AtomicRename) {
   CreateTestFile(to, "test");
   EXPECT_OK(FileUtil::AtomicRename(from, to));
 
-#ifdef OS_WIN
+#ifdef _WIN32
   struct TestData {
     TestData(DWORD from, DWORD to) : from_attributes(from), to_attributes(to) {}
     const DWORD from_attributes;
@@ -401,7 +401,7 @@ TEST(FileUtilTest, AtomicRename) {
     ::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL);
     ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL);
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   ASSERT_OK(FileUtil::UnlinkIfExists(from));
   ASSERT_OK(FileUtil::UnlinkIfExists(to));
@@ -428,11 +428,11 @@ TEST(FileUtilTest, CreateHardLink) {
   EXPECT_FALSE(FileUtil::CreateHardLink(filename1, filename2).ok());
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #define SP "\\"
-#else  // OS_WIN
+#else  // _WIN32
 #define SP "/"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 TEST(FileUtilTest, JoinPath) {
   EXPECT_TRUE(FileUtil::JoinPath({}).empty());
@@ -476,7 +476,7 @@ TEST(FileUtilTest, Basename) {
 #undef SP
 
 TEST(FileUtilTest, NormalizeDirectorySeparator) {
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "\\foo\\bar");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo\\bar");
@@ -487,7 +487,7 @@ TEST(FileUtilTest, NormalizeDirectorySeparator) {
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "\\");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
-#else   // OS_WIN
+#else   // _WIN32
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo\\bar"), "\\foo\\bar");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/foo\\bar"), "/foo\\bar");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\foo/bar"), "\\foo/bar");
@@ -498,7 +498,7 @@ TEST(FileUtilTest, NormalizeDirectorySeparator) {
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator(""), "");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("/"), "/");
   EXPECT_EQ(FileUtil::NormalizeDirectorySeparator("\\"), "\\");
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST(FileUtilTest, GetModificationTime) {
@@ -543,20 +543,20 @@ TEST(FileUtilTest, GetAndSetContents) {
   // Text mode write.
   ASSERT_OK(FileUtil::SetContents(filename, "test\ntest\n", std::ios::out));
   EXPECT_OK(FileUtil::GetContents(filename, &content));
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(content, "test\r\ntest\r\n");
-#else   // OS_WIN
+#else   // _WIN32
   EXPECT_EQ(content, "test\ntest\n");
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // Text mode read.
   ASSERT_OK(FileUtil::SetContents(filename, "test\r\ntest\r\n"));
   EXPECT_OK(FileUtil::GetContents(filename, &content, std::ios::in));
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_EQ(content, "test\ntest\n");
-#else   // OS_WIN
+#else   // _WIN32
   EXPECT_EQ(content, "test\r\ntest\r\n");
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST(FileUtilTest, FileUnlinker) {

@@ -180,11 +180,11 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   ASSERT_OK(FileUtil::FileExists(test_file_path));
   FileUnlinker unlinker(test_file_path);
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #define TRAILING_CARRIAGE_RETURN ""
-#else  // OS_WIN
+#else  // _WIN32
 #define TRAILING_CARRIAGE_RETURN "\r"
-#endif  // OS_WIN
+#endif  // _WIN32
   const char *kExpectedLines[] = {
       "ab\rc",
       "d" TRAILING_CARRIAGE_RETURN,

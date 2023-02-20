@@ -44,9 +44,9 @@
 #include <sstream>
 
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_util.h"
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"

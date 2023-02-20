@@ -29,32 +29,32 @@
 
 #include "base/run_level.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <aclapi.h>
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include <unistd.h>
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID)
+#if defined(__linux__) || defined(__ANDROID__)
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_LINUX || OS_ANDROID
+#endif  // __linux__ || __ANDROID__
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win_sandbox.h"
-#include "base/win_util.h"
+#include "base/win32/scoped_handle.h"
+#include "base/win32/win_sandbox.h"
+#include "base/win32/win_util.h"
 
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 const wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
 
 // Returns true if both array have the same content.
@@ -142,11 +142,11 @@ bool IsElevatedByUAC(const HANDLE hToken) {
 
   return (SECURITY_MANDATORY_MEDIUM_RID < *pdwIntegrityLevelRID);
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 }  // namespace
 
 RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
-#ifdef OS_WIN
+#ifdef _WIN32
   bool is_service_process = false;
   if (!WinUtil::IsServiceProcess(&is_service_process)) {
     // Returns DENY conservatively.
@@ -262,10 +262,10 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
   return RunLevel::NORMAL;
 
-#elif defined(OS_WASM)
+#elif defined(__wasm__)
   // WASM doesn't have runlevels. Always return normal.
   return RunLevel::NORMAL;
-#else  // OS_WIN
+#else  // _WIN32
   if (type == SERVER || type == RENDERER) {
     if (::geteuid() == 0) {
       // This process is started by root, or the executable is setuid to root.
@@ -295,11 +295,11 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
   return RunLevel::NORMAL;
 
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool RunLevel::IsProcessInJob() {
-#ifdef OS_WIN
+#ifdef _WIN32
   // Check to see if we're in a job where
   // we can't create a child in our sandbox
 
@@ -319,13 +319,13 @@ bool RunLevel::IsProcessInJob() {
   }
 
   return true;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool RunLevel::IsElevatedByUAC() {
-#ifdef OS_WIN
+#ifdef _WIN32
   // Get process token
   HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
@@ -335,13 +335,13 @@ bool RunLevel::IsElevatedByUAC() {
 
   ScopedHandle process_token(hProcessToken);
   return mozc::IsElevatedByUAC(process_token.get());
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool RunLevel::SetElevatedProcessDisabled(bool disable) {
-#ifdef OS_WIN
+#ifdef _WIN32
   HKEY key = 0;
   LONG result =
       ::RegCreateKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey, 0,
@@ -358,13 +358,13 @@ bool RunLevel::SetElevatedProcessDisabled(bool disable) {
   ::RegCloseKey(key);
 
   return ERROR_SUCCESS == result;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool RunLevel::GetElevatedProcessDisabled() {
-#ifdef OS_WIN
+#ifdef _WIN32
   HKEY key = 0;
   LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey,
                                 0, KEY_READ, &key);
@@ -386,8 +386,8 @@ bool RunLevel::GetElevatedProcessDisabled() {
   }
 
   return value > 0;
-#else   // OS_WIN
+#else   // _WIN32
   return false;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace mozc

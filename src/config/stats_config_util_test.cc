@@ -35,21 +35,21 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/win_api_test_helper.h"
+#include "base/win32/win_api_test_helper.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 namespace mozc {
 namespace config {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-#ifdef OS_WIN
+#ifdef _WIN32
 
 namespace {
 const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
@@ -667,9 +667,9 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());
 }
 #endif  // !CHANNEL_DEV
-#endif  // OS_WIN
+#endif  // _WIN32
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
   const std::string config_file = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
@@ -683,13 +683,11 @@ TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 #endif  // CHANNEL_DEV
 }
-#endif  // OS_ANDROID
-
-#if defined(OS_LINUX)
+#elif defined(__linux__)  // __ANDROID__
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif  // OS_LINUX
+#endif  // __linux__
 
 #else  // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {

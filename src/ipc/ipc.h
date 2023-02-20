@@ -38,7 +38,7 @@
 #include <memory>
 #include <string>
 
-#include "base/scoped_handle.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -158,16 +158,16 @@ class IPCClient : public IPCClientInterface {
  private:
   void Init(absl::string_view name, absl::string_view server_path);
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Windows
   ScopedHandle pipe_handle_;
   ScopedHandle pipe_event_;
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;
-#else   // OS_WIN
+#else   // _WIN32
   int socket_;
-#endif  // OS_WIN
+#endif  // _WIN32
   bool connected_;
   IPCPathManager *ipc_path_manager_;
   IPCErrorType last_ipc_error_;
@@ -261,17 +261,17 @@ class IPCServer {
   bool connected_;
   std::unique_ptr<Thread> server_thread_;
 
-#ifdef OS_WIN
+#ifdef _WIN32
   ScopedHandle pipe_handle_;
   ScopedHandle pipe_event_;
   ScopedHandle quit_event_;
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;
-#else   // OS_WIN
+#else   // _WIN32
   int socket_;
   std::string server_address_;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   int timeout_;
 };

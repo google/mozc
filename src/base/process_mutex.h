@@ -32,9 +32,9 @@
 
 #include <string>
 
-#ifdef OS_WIN
-#include "base/scoped_handle.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/scoped_handle.h"
+#endif  // _WIN32
 
 #include "base/port.h"
 
@@ -80,9 +80,9 @@ class ProcessMutex {
   bool locked() const { return locked_; }
 
  private:
-#ifdef OS_WIN
+#ifdef _WIN32
   ScopedHandle handle_;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // TODO(yukawa): Remove this flag as it can always be determined by other
   //     internal state.

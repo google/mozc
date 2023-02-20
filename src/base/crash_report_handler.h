@@ -30,9 +30,9 @@
 #ifndef MOZC_BASE_CRASH_REPORT_HANDLER_H_
 #define MOZC_BASE_CRASH_REPORT_HANDLER_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <string>
 
@@ -65,11 +65,11 @@ class CrashReportHandler {
   // SetCriticalSection on Windows and NOT thread-safe on Mac.
   static bool Uninitialize();
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // Set the CRITICAL_SECTION struct used when initializing or uninitializing
   // ExceptionHandler.
   static void SetCriticalSection(CRITICAL_SECTION *critical_section);
-#endif  // OS_WIN
+#endif  // _WIN32
 
  private:
   // Disallow all constructors, destructors, and operator=.

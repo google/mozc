@@ -29,17 +29,17 @@
 
 #include "ipc/named_event.h"
 
-#ifdef OS_WIN
-#include <Sddl.h>
-#include <Windows.h>
-#else  // OS_WIN
+#ifdef _WIN32
+#include <sddl.h>
+#include <windows.h>
+#else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/types.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <algorithm>
 #include <cstdint>
@@ -52,9 +52,9 @@
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#ifdef OS_WIN
-#include "base/win_sandbox.h"
-#endif  // OS_WIN
+#ifdef _WIN32
+#include "base/win32/win_sandbox.h"
+#endif  // _WIN32
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -62,7 +62,7 @@
 namespace mozc {
 namespace {
 
-#ifndef OS_WIN
+#ifndef _WIN32
 const pid_t kInvalidPid = 1;  // We can safely use 1 as 1 is reserved for init.
 
 // Returns true if the process is alive.
@@ -75,7 +75,7 @@ bool IsProcessAlive(pid_t pid) {
   // still performed.
   return ::kill(pid, kSig) == 0;
 }
-#endif  // !OS_WIN
+#endif  // !_WIN32
 }  // namespace
 
 const std::string NamedEventUtil::GetEventPath(const char *name) {
@@ -84,9 +84,9 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   event_name += SystemUtil::GetUserSidAsString();
   event_name += ".";
   event_name += name;
-#ifdef OS_WIN
+#ifdef _WIN32
   return event_name;
-#else   // OS_WIN
+#else   // _WIN32
   // To maximze mozc portability, (especailly on BSD including OSX),
   // makes the length of path name shorter than 14byte.
   // Please see the following man page for detail:
@@ -100,10 +100,10 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   absl::SNPrintF(buf, kEventPathLength, "/%x",
                  static_cast<uint64_t>(Hash::Fingerprint(event_name)));
   return buf;
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(nullptr) {
   std::wstring event_path;
@@ -248,7 +248,7 @@ bool NamedEventNotifier::Notify() {
   return true;
 }
 
-#else   // OS_WIN
+#else   // _WIN32
 
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), sem_(SEM_FAILED) {
@@ -356,5 +356,5 @@ bool NamedEventNotifier::Notify() {
 
   return true;
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 }  // namespace mozc

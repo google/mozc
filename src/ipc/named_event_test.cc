@@ -175,11 +175,11 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
 }
 
 TEST_F(NamedEventTest, NamedEventPathLengthTest) {
-#ifndef OS_WIN
+#ifndef _WIN32
   const std::string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not includeing terminating null.
   EXPECT_EQ(name_path.length(), 13);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace

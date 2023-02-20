@@ -29,25 +29,25 @@
 
 #include "base/util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
-#include <Windows.h>
-#include <WinCrypt.h>  // WinCrypt.h must be included after Windows.h
+#include <windows.h>
+#include <wincrypt.h>  // WinCrypt.h must be included after Windows.h
 // clang-format on
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 #include <time.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #endif  // __APPLE__
 
-#ifndef OS_WIN
+#ifndef _WIN32
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
 #include <algorithm>
 #include <cerrno>
@@ -743,7 +743,7 @@ size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
   return 6;
 }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 size_t Util::WideCharsLen(absl::string_view src) {
   const int num_chars =
       ::MultiByteToWideChar(CP_UTF8, 0, src.data(), src.size(), nullptr, 0);
@@ -789,7 +789,7 @@ int Util::WideToUtf8(const wchar_t *input, std::string *output) {
 int Util::WideToUtf8(const std::wstring &input, std::string *output) {
   return WideToUtf8(input.c_str(), output);
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
   const char *begin = src.data();
@@ -867,11 +867,11 @@ int Util::Random(int size) {
 void Util::SetRandomSeed(uint32_t seed) { ::srand(seed); }
 
 void Util::Sleep(uint32_t msec) {
-#ifdef OS_WIN
+#ifdef _WIN32
   ::Sleep(msec);
-#else   // OS_WIN
+#else   // _WIN32
   usleep(msec * 1000);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 namespace {
@@ -1339,9 +1339,9 @@ bool Util::DeserializeUint64(absl::string_view s, uint64_t *x) {
 }
 
 bool Util::IsLittleEndian() {
-#ifdef OS_WIN
+#ifdef _WIN32
   return true;
-#endif  // OS_WIN
+#endif  // _WIN32
 
   union {
     unsigned char c[4];

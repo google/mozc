@@ -29,28 +29,28 @@
 
 #include "gui/base/encoding_util.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <codecvt>
 #include <cstring>
 #include <memory>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <string>
 
 #include "base/logging.h"
 #include "base/port.h"
 #include "testing/gunit.h"
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "absl/strings/string_view.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 bool Convert(absl::string_view input, std::string* output) {
   const int CP_932 = 932;
@@ -100,7 +100,7 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
   }
 }
 
-#endif  // OS_WIN
+#endif  // _WIN32
 
 TEST(EncodingUtilTest, Issue2190350) {
   std::string result = "";

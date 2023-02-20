@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_api_test_helper.h"
+#include "base/win32/win_api_test_helper.h"
 
 #include "testing/googletest.h"
 #include "testing/gunit.h"

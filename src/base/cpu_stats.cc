@@ -29,9 +29,9 @@
 
 #include "base/cpu_stats.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 #include <mach/host_info.h>
@@ -49,12 +49,12 @@
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 uint64_t FileTimeToInt64(const FILETIME &file_time) {
   return (static_cast<uint64_t>(file_time.dwHighDateTime) << 32) |
          (static_cast<uint64_t>(file_time.dwLowDateTime));
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
 uint64_t TimeValueTToInt64(const time_value_t &time_value) {
@@ -91,7 +91,7 @@ CPUStats::CPUStats()
 CPUStats::~CPUStats() {}
 
 float CPUStats::GetSystemCPULoad() {
-#ifdef OS_WIN
+#ifdef _WIN32
   FILETIME idle_time, kernel_time, user_time;
   // Note that GetSystemTimes is available in Windows XP SP1 or later.
   // http://msdn.microsoft.com/en-us/library/ms724400.aspx
@@ -105,7 +105,7 @@ float CPUStats::GetSystemCPULoad() {
   const uint64_t total_times =
       FileTimeToInt64(kernel_time) + FileTimeToInt64(user_time);
   const uint64_t cpu_times = total_times - FileTimeToInt64(idle_time);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   host_cpu_load_info_data_t cpu_info;
@@ -124,20 +124,20 @@ float CPUStats::GetSystemCPULoad() {
 
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
   // NOT IMPLEMENTED
   // TODO(taku): implement Linux version
   // can take the info from /proc/stats
   const uint64_t total_times = 0;
   const uint64_t cpu_times = 0;
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
   return UpdateCPULoad(total_times, cpu_times, &prev_system_total_times_,
                        &prev_system_cpu_times_);
 }
 
 float CPUStats::GetCurrentProcessCPULoad() {
-#ifdef OS_WIN
+#ifdef _WIN32
   FILETIME current_file_time;
   ::GetSystemTimeAsFileTime(&current_file_time);
 
@@ -152,7 +152,7 @@ float CPUStats::GetCurrentProcessCPULoad() {
       FileTimeToInt64(current_file_time) - FileTimeToInt64(create_time);
   const uint64_t cpu_times =
       FileTimeToInt64(kernel_time) + FileTimeToInt64(user_time);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   task_thread_times_info task_times_info;
@@ -177,11 +177,11 @@ float CPUStats::GetCurrentProcessCPULoad() {
                              TimeValueTToInt64(task_times_info.system_time);
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
   // not implemented
   const uint64_t total_times = 0;
   const uint64_t cpu_times = 0;
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
 
   return UpdateCPULoad(total_times, cpu_times,
                        &prev_current_process_total_times_,
@@ -189,11 +189,11 @@ float CPUStats::GetCurrentProcessCPULoad() {
 }
 
 size_t CPUStats::GetNumberOfProcessors() const {
-#ifdef OS_WIN
+#ifdef _WIN32
   SYSTEM_INFO info;
   ::GetSystemInfo(&info);
   return static_cast<size_t>(info.dwNumberOfProcessors);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   host_basic_info basic_info;
@@ -208,9 +208,9 @@ size_t CPUStats::GetNumberOfProcessors() const {
   return static_cast<size_t>(basic_info.avail_cpus);
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
   // Not implemented
   return 1;
-#endif  // OS_LINUX
+#endif  // __linux__
 }
 }  // namespace mozc

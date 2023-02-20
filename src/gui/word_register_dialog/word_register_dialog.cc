@@ -31,23 +31,23 @@
 
 #include <cstdint>
 
-#if defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_WASM
+#endif  // __ANDROID__ || __wasm__
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <imm.h>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <QMessageBox>
 #include <QtGui>
 #include <cstdlib>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <memory>  // for std::unique_ptr
-#endif             // OS_WIN
+#endif             // _WIN32
 #include <string>
 #include <vector>
 
@@ -76,7 +76,7 @@ constexpr int kMaxEditLength = 100;
 constexpr int kMaxReverseConversionLength = 30;
 
 QString GetEnv(const char *envname) {
-#if defined(OS_WIN)
+#if defined(_WIN32)
   std::wstring wenvname;
   mozc::Util::Utf8ToWide(envname, &wenvname);
   const DWORD buffer_size =
@@ -98,10 +98,10 @@ QString GetEnv(const char *envname) {
     }
   }
   return QLatin1String("");
-#endif  // OS_WIN
-#if defined(__APPLE__) || defined(OS_LINUX)
+#endif  // _WIN32
+#if defined(__APPLE__) || defined(__linux__)
   return QString::fromUtf8(::getenv(envname));
-#endif  // __APPLE__ or OS_LINUX
+#endif  // __APPLE__ or __linux__
   // TODO(team): Support other platforms.
   return QLatin1String("");
 }
@@ -123,10 +123,10 @@ WordRegisterDialog::WordRegisterDialog()
   WordlineEdit->setMaxLength(kMaxEditLength);
 
   if (!SetDefaultEntryFromEnvironmentVariable()) {
-#ifdef OS_WIN
+#ifdef _WIN32
     // On Windows, try to use clipboard as a fallback.
     SetDefaultEntryFromClipboard();
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 
   client_->set_timeout(kSessionTimeout);
@@ -424,7 +424,7 @@ void WordRegisterDialog::SetDefaultEntryFromClipboard() {
 }
 
 void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
-#ifdef OS_WIN
+#ifdef _WIN32
   const HWND foreground_window = ::GetForegroundWindow();
   if (foreground_window == nullptr) {
     LOG(ERROR) << "GetForegroundWindow() failed: " << ::GetLastError();
@@ -456,7 +456,7 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
   if (send_result == 0) {
     LOG(ERROR) << "SendMessageTimeout() failed: " << ::GetLastError();
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
@@ -483,13 +483,13 @@ const QString WordRegisterDialog::TrimValue(const QString &str) const {
 }
 
 void WordRegisterDialog::EnableIME() {
-#ifdef OS_WIN
+#ifdef _WIN32
   // TODO(taku): implement it for other platform.
   HIMC himc = ::ImmGetContext(reinterpret_cast<HWND>(winId()));
   if (himc != nullptr) {
     ::ImmSetOpenStatus(himc, TRUE);
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 }  // namespace gui
 }  // namespace mozc

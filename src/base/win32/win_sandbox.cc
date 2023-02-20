@@ -27,24 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_sandbox.h"
+#include "base/win32/win_sandbox.h"
 
-// skipp all unless OS_WIN
-#ifdef OS_WIN
-#include <AclAPI.h>
-#include <Windows.h>
+// skipp all unless _WIN32
+#ifdef _WIN32
+#include <aclapi.h>
+#include <windows.h>
+#include <atlsecurity.h>
 #include <sddl.h>
 #include <strsafe.h>
-
-#include <atlsecurity.h>
 
 #include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 
 namespace mozc {
 namespace {
@@ -1412,4 +1411,4 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
 }
 
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32

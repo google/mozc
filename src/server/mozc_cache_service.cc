@@ -38,10 +38,10 @@
 #include <algorithm>
 
 #include "base/file_util.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/winmain.h"  // use WinMain
+#include "base/win32/scoped_handle.h"
+#include "base/win32/winmain.h"  // use WinMain
 #include "server/cache_service_manager.h"
 
 namespace {
@@ -49,7 +49,7 @@ HANDLE g_stop_event = NULL;
 
 #if defined(MOZC_NO_LOGGING)
 #define LOG_WIN32_ERROR(message)
-#else
+#else  // MOZC_NO_LOGGING
 template <size_t num_elements>
 void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
                     const wchar_t *message, int error_no) {
@@ -59,7 +59,7 @@ void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
 }
 #define LOG_WIN32_ERROR(message) \
   LogMessageImpl(_T(__FILE__), __LINE__, message, ::GetLastError())
-#endif
+#endif  // MOZC_NO_LOGGING
 
 std::wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];
@@ -236,7 +236,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   if (!VerifyPrivilegeRestrictionIfNeeded(dwArgc, lpszArgv)) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
-#endif
+#endif  // _DEBUG
 
   if (!mozc::CacheServiceManager::HasEnoughMemory()) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
@@ -428,4 +428,4 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
-#endif
+#endif  // OS_WIN

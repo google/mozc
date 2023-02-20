@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_WINMAIN_H_
-#define MOZC_BASE_WINMAIN_H_
+#ifndef MOZC_BASE_WIN32_WINMAIN_H_
+#define MOZC_BASE_WIN32_WINMAIN_H_
 
 // When we want to make a non-console Windows application,
 // we need to prepare WinMain function as an entry point.
@@ -44,10 +44,10 @@
 //  #include "winmain.h"   // Use WinMain
 //  // here main() is automatically converted to WinMain
 //  int main(int argc,  char *argv[]) { .. }
-#ifdef OS_WIN
+#ifdef _WIN32
 // clang-format off
-#include <Windows.h>
-#include <ShellAPI.h>  // for CommandLineToArgvW
+#include <windows.h>
+#include <shellapi.h>  // for CommandLineToArgvW
 // clang-format on
 
 #include "base/const.h"
@@ -138,5 +138,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   // call main()
   return WinMainToMain(argc, argv);
 }
-#endif  // OS_WIN
-#endif  // MOZC_BASE_WINMAIN_H_
+#endif  // _WIN32
+#endif  // MOZC_BASE_WIN32_WINMAIN_H_

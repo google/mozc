@@ -44,7 +44,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/util.h"
-#include "base/win_font_test_helper.h"
+#include "base/win32/win_font_test_helper.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "testing/gunit.h"

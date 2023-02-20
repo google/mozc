@@ -29,10 +29,10 @@
 
 #include "base/crash_report_handler.h"
 
-#if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if defined(_WIN32) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
-#include <ShellAPI.h>  // for CommandLineToArgvW
-#include <Windows.h>
+#include <shellapi.h>  // for CommandLineToArgvW
+#include <windows.h>
 
 #include <cstdlib>
 #include <string>
@@ -309,7 +309,7 @@ void CrashReportHandler::SetCriticalSection(
 
 }  // namespace mozc
 
-#else  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
+#else  // _WIN32 && GOOGLE_JAPANESE_INPUT_BUILD
 
 namespace mozc {
 
@@ -321,11 +321,11 @@ bool CrashReportHandler::IsInitialized() { return false; }
 
 bool CrashReportHandler::Uninitialize() { return false; }
 
-#ifdef OS_WIN
+#ifdef _WIN32
 void CrashReportHandler::SetCriticalSection(
     CRITICAL_SECTION *critical_section) {}
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace mozc
 
-#endif  // OS_WIN && GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // _WIN32 && GOOGLE_JAPANESE_INPUT_BUILD

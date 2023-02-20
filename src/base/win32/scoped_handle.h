@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_SCOPED_HANDLE_H_
-#define MOZC_BASE_SCOPED_HANDLE_H_
+#ifndef MOZC_BASE_WIN32_SCOPED_HANDLE_H_
+#define MOZC_BASE_WIN32_SCOPED_HANDLE_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 // Example:
 //   ScopedHandle hfile(CreateFile(...));
 //   if (!hfile.get())
@@ -73,5 +73,5 @@ class ScopedHandle {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
-#endif  // MOZC_BASE_SCOPED_HANDLE_H_
+#endif  // _WIN32
+#endif  // MOZC_BASE_WIN32_SCOPED_HANDLE_H_

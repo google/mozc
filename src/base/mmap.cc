@@ -29,17 +29,17 @@
 
 #include "base/mmap.h"
 
-#ifdef OS_WIN
-#include <Windows.h>
+#ifdef _WIN32
+#include <windows.h>
 
 #include <string>
-#else  // OS_WIN
+#else  // _WIN32
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 #include <cstring>
@@ -48,13 +48,13 @@
 #include "base/port.h"
 #include "base/util.h"
 
-#if defined(OS_WIN)
-#include "base/scoped_handle.h"
-#endif  // OS_WIN
+#if defined(_WIN32)
+#include "base/win32/scoped_handle.h"
+#endif  // _WIN32
 
 namespace mozc {
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 
 Mmap::Mmap() : text_(nullptr), size_(0) {}
 
@@ -115,7 +115,7 @@ void Mmap::Close() {
   size_ = 0;
 }
 
-#else  // !OS_WIN
+#else  // !_WIN32
 
 Mmap::Mmap() : text_(nullptr), size_(0) {}
 
@@ -188,16 +188,16 @@ void Mmap::Close() {
   text_ = nullptr;
   size_ = 0;
 }
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
 // Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
 
 // Caveat: Currently |OS_IOS| and |__APPLE__| are not exclusive.
-#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_WIN)
+#if defined(__ANDROID__) || defined(OS_IOS) || defined(_WIN32)
 #define MOZC_HAVE_MLOCK 0
-#else  // OS_ANDROID || OS_IOS || OS_WIN
+#else  // __ANDROID__ || OS_IOS || _WIN32
 #define MOZC_HAVE_MLOCK 1
-#endif  // OS_ANDROID || OS_IOS || OS_WIN
+#endif  // __ANDROID__ || OS_IOS || _WIN32
 
 
 #ifndef MOZC_HAVE_MLOCK

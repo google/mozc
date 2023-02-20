@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/win_util.h"
+#include "base/win32/win_util.h"
 
-// skip all unless OS_WIN
-#ifdef OS_WIN
+// skip all unless _WIN32
+#ifdef _WIN32
 
-#include <Aux_ulib.h>
-#include <Psapi.h>
-#include <Stringapiset.h>
-#include <Winternl.h>
+#include <aux_ulib.h>
+#include <psapi.h>
+#include <stringapiset.h>
+#include <winternl.h>
 #include <shellapi.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -47,9 +47,9 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "base/win32/scoped_handle.h"
 #include "absl/base/call_once.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -574,4 +574,4 @@ ScopedCOMInitializer::~ScopedCOMInitializer() {
 
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
