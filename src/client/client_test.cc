@@ -530,11 +530,13 @@ TEST_F(ClientTest, IsDirectModeCommandFailureTest) {
   // As SetupConnection is not called, SetConfig fails to update the config.
 
   config::Config config = config::ConfigHandler::DefaultConfig();
+  const bool is_kotoeri = (config.session_keymap() == config::Config::KOTOERI);
   config.set_session_keymap(config::Config::ATOK);
-  client_->SetConfig(config);
+  // SetConfig should be failed.
+  EXPECT_FALSE(client_->SetConfig(config));
   {
     commands::KeyEvent key;
-    KeyParser::ParseKey("HENKAN", &key);
+    KeyParser::ParseKey(is_kotoeri ? "Ctrl Shift r" : "HENKAN", &key);
     EXPECT_TRUE(client_->IsDirectModeCommand(key));
   }
   {
