@@ -190,11 +190,11 @@ class Connector::Row final {
 
 absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
   constexpr int kCacheSize = 256;
-#else   // OS_ANDROID
+#else   // __ANDROID__
   constexpr int kCacheSize = 1024;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
   const char *connection_data = nullptr;
   size_t connection_data_size = 0;
   data_manager.GetConnectorData(&connection_data, &connection_data_size);

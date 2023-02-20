@@ -34,16 +34,16 @@
 #include "base/run_level.h"
 #include "config/stats_config_util.h"
 #include "gui/base/util.h"
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "server/cache_service_manager.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 
 namespace mozc {
 namespace gui {
 
-#ifdef OS_WIN
+#ifdef _WIN32
 using mozc::config::StatsConfigUtil;
-#endif  // OS_WIN
+#endif  // _WIN32
 
 AdministrationDialog::AdministrationDialog()
     : dialog_title_(
@@ -63,7 +63,7 @@ AdministrationDialog::AdministrationDialog()
   // clicked slot by default.
   usageStatsMessage->installEventFilter(this);
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
@@ -76,14 +76,14 @@ AdministrationDialog::AdministrationDialog()
 
   CacheServiceEnabledcheckBox->setChecked(CacheServiceManager::IsEnabled() ||
                                           CacheServiceManager::IsRunning());
-#endif  // OS_WIN
+#endif  // _WIN32
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
 AdministrationDialog::~AdministrationDialog() {}
 
 bool AdministrationDialog::CanStartService() {
-#ifdef OS_WIN
+#ifdef _WIN32
   if (!CacheServiceEnabledcheckBox->isChecked()) {
     return true;
   }
@@ -95,13 +95,13 @@ bool AdministrationDialog::CanStartService() {
            "dictionary into physical memory."));
     return false;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 
   return true;
 }
 
 void AdministrationDialog::clicked(QAbstractButton *button) {
-#ifdef OS_WIN
+#ifdef _WIN32
   switch (AdministrationDialogbuttonBox->buttonRole(button)) {
     case QDialogButtonBox::ApplyRole:
     case QDialogButtonBox::AcceptRole:
@@ -149,7 +149,7 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
     default:
       break;
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 // Catch MouseButtonRelease event to toggle the CheckBoxes

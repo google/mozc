@@ -85,11 +85,11 @@ constexpr size_t kMaxPrevValueTrial = 500;
 
 // Cache size
 // Typically memory/storage footprint becomes kLruCacheSize * 70 bytes.
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 constexpr size_t kLruCacheSize = 4000;
-#else   // OS_ANDROID
+#else   // __ANDROID__
 constexpr size_t kLruCacheSize = 10000;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 // Don't save key/value that are
 // longer than kMaxCandidateSize to avoid memory explosion
@@ -105,11 +105,11 @@ const uint16_t kRevertId = 1;
 constexpr size_t kEntryPoolSize = 16;
 
 // File name for the history
-#ifdef OS_WIN
+#ifdef _WIN32
 constexpr char kFileName[] = "user://history.db";
-#else   // OS_WIN
+#else   // _WIN32
 constexpr char kFileName[] = "user://.history.db";
-#endif  // OS_WIN
+#endif  // _WIN32
 
 // Uses '\t' as a key/value delimiter
 constexpr char kDelimiter[] = "\t";

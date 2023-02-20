@@ -151,12 +151,12 @@ TEST(CalculatorTest, StressTest) {
     const std::string query(line, 0, query_length);
 
     // Smoke test.
-    // If (OS_ANDROID && x86) the result differs from expectation
+    // If (__ANDROID__ && x86) the result differs from expectation
     // because of floating point specification so on such environment
     // Following verification is skipped.
     std::string unused_result;
     calculator->CalculateString(query, &unused_result);
-#if !defined(OS_ANDROID) || !defined(__i386__)
+#if !defined(__ANDROID__) || !defined(__i386__)
     if (line.size() == query_length) {
       // False test
       VerifyRejection(calculator, line);
@@ -164,7 +164,7 @@ TEST(CalculatorTest, StressTest) {
     }
     const std::string answer(line, query_length);
     VerifyCalculation(calculator, query, answer);
-#endif  // !defined(OS_ANDROID) || !defined(__i386__)
+#endif  // !defined(__ANDROID__) || !defined(__i386__)
   }
   LOG(INFO) << "done " << lineno << " tests from " << filename << std::endl;
 }

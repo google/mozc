@@ -106,9 +106,9 @@ AboutDialog::AboutDialog(QWidget *parent)
 
   // change font size for product name
   QFont font = label->font();
-#ifdef OS_WIN
+#ifdef _WIN32
   font.setPointSize(22);
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #ifdef __APPLE__
   font.setPointSize(26);

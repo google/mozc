@@ -29,7 +29,7 @@
 
 // JNI wrapper for SessionHandler.
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 
 #include <jni.h>
 
@@ -210,4 +210,4 @@ Java_com_google_android_apps_inputmethod_libs_mozc_session_MozcJNI_initialize(
 
 }  // extern "C"
 
-#endif  // OS_ANDROID
+#endif  // __ANDROID__

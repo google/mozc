@@ -41,7 +41,7 @@
 // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
-#ifdef OS_WIN
+#ifdef _WIN32
 namespace mozc {
 
 namespace commands {
@@ -435,5 +435,5 @@ class LayoutManager {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_RENDERER_WIN32_WIN32_RENDERER_UTIL_H_

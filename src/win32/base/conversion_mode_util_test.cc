@@ -29,12 +29,12 @@
 
 #include "win32/base/conversion_mode_util.h"
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
 // clang-format off
 #include <windows.h>
 #include <imm.h>
 // clang-format on
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstdint>
 
@@ -44,7 +44,7 @@
 
 namespace mozc {
 namespace win32 {
-#if !defined(OS_WIN)
+#if !defined(_WIN32)
 // Use the same naming convention to emulate imm32.h.
 const uint32_t IME_CMODE_ALPHANUMERIC = 0x0;
 const uint32_t IME_CMODE_NATIVE = 0x1;
@@ -59,7 +59,7 @@ const uint32_t IME_CMODE_NOCONVERSION = 0x100;
 const uint32_t IME_CMODE_EUDC = 0x200;
 const uint32_t IME_CMODE_SYMBOL = 0x400;
 const uint32_t IME_CMODE_SYMBOL = 0x800;
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
 TEST(ConversionModeUtilTest, ToNativeMode) {
   uint32_t native_code = 0;

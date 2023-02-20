@@ -30,11 +30,11 @@
 
 #include "testing/googletest.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#else  // OS_WIN
+#else  // _WIN32
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <climits>
 #include <string>
@@ -59,7 +59,7 @@ namespace {
 
 #include "testing/mozc_data_dir.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 std::string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
   const DWORD char_size =
@@ -92,7 +92,7 @@ std::string GetTestTmpdir() {
   return tmpdir;
 }
 
-#else  // OS_WIN
+#else  // _WIN32
 
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g. like "/spam/eggs/foo_unittest".
@@ -118,7 +118,7 @@ std::string GetTestSrcdir() {
 
   const std::string srcdir(kMozcDataDir);
 
-#if !defined(OS_ANDROID)
+#if !defined(__ANDROID__)
   // TestSrcdir is not supported in Android.
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
@@ -126,7 +126,7 @@ std::string GetTestSrcdir() {
     LOG(ERROR)  << "Failed to access the default srcdir: " << srcdir << "\n"
                 << "Set TEST_SRCDIR env var to specify the directory.";
   }
-#endif  // !defined(OS_ANDROID)
+#endif  // !defined(__ANDROID__)
   return srcdir;
 }
 
@@ -146,7 +146,7 @@ std::string GetTestTmpdir() {
   }
   return tmpdir;
 }
-#endif  // OS_WIN
+#endif  // _WIN32
 
 }  // namespace
 
