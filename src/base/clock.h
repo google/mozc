@@ -33,7 +33,7 @@
 #include <cstdint>
 #include <ctime>
 
-#include "base/port.h"
+#include "absl/base/attributes.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -66,22 +66,26 @@ class Clock {
   // Gets the current time using gettimeofday-like functions.
   // sec: number of seconds from epoch
   // usec: micro-second passed: [0,1000000)
+  ABSL_DEPRECATED("Use GetAbslTime()")
   static void GetTimeOfDay(uint64_t *sec, uint32_t *usec);
 
   // Gets the current time using time-like function
   // For Windows, _time64() is used.
   // For Linux/Mac, time() is used.
+  ABSL_DEPRECATED("Use GetAbslTime()")
   static uint64_t GetTime();
 
   // Returns the current time in absl::Time.
   static absl::Time GetAbslTime();
 
   // Gets the system frequency to calculate the time from ticks.
+  ABSL_DEPRECATED("Use GetAbslTime()")
   static uint64_t GetFrequency();
 
   // Gets the current ticks. It may return incorrect value on Virtual Machines.
   // If you'd like to get a value in secs, it is necessary to divide a result by
   // GetFrequency().
+  ABSL_DEPRECATED("Use GetAbslTime()")
   static uint64_t GetTicks();
 
   // Returns the timezone. LocalTimeZone is usually returned.

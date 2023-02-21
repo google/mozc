@@ -356,8 +356,8 @@ mozc_cc_library(
     srcs = ["clock.cc"],
     hdrs = ["clock.h"],
     deps = [
-        ":port",
         ":singleton",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
@@ -553,6 +553,7 @@ mozc_cc_library(
     deps = [
         ":clock",
         ":port",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
