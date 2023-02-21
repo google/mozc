@@ -809,25 +809,35 @@ TEST(UtilTest, IsUtf16Bom) {
 }
 
 TEST(UtilTest, BracketTest) {
-  static const struct BracketType {
-    const char *open_bracket;
-    const char *close_bracket;
-  } kBracketType[] = {
-      {"（", "）"}, {"〔", "〕"}, {"［", "］"}, {"｛", "｝"},
-      {"〈", "〉"}, {"《", "》"}, {"「", "」"}, {"『", "』"},
-      {"【", "】"}, {"〘", "〙"}, {"〚", "〛"}, {nullptr, nullptr},  // sentinel
-  };
+  using BracketPair = std::pair<absl::string_view, absl::string_view>;
+  constexpr std::array<BracketPair, 16> kBracketType = {{
+      // {{, }} is necessary to initialize std::array.
+      {"（", "）"},
+      {"〔", "〕"},
+      {"［", "］"},
+      {"｛", "｝"},
+      {"〈", "〉"},
+      {"《", "》"},
+      {"「", "」"},
+      {"『", "』"},
+      {"【", "】"},
+      {"〘", "〙"},
+      {"〚", "〛"},
+      {"«", "»"},
+      {"‘", "’"},
+      {"“", "”"},
+      {"‹", "›"},
+      {"〝", "〟"},
+  }};
 
   std::string pair;
-  for (size_t i = 0; (kBracketType[i].open_bracket != nullptr ||
-                      kBracketType[i].close_bracket != nullptr);
-       ++i) {
-    EXPECT_TRUE(Util::IsOpenBracket(kBracketType[i].open_bracket, &pair));
-    EXPECT_EQ(pair, kBracketType[i].close_bracket);
-    EXPECT_TRUE(Util::IsCloseBracket(kBracketType[i].close_bracket, &pair));
-    EXPECT_EQ(pair, kBracketType[i].open_bracket);
-    EXPECT_FALSE(Util::IsOpenBracket(kBracketType[i].close_bracket, &pair));
-    EXPECT_FALSE(Util::IsCloseBracket(kBracketType[i].open_bracket, &pair));
+  for (const BracketPair &bracket : kBracketType) {
+    EXPECT_TRUE(Util::IsOpenBracket(bracket.first, &pair));
+    EXPECT_EQ(pair, bracket.second);
+    EXPECT_TRUE(Util::IsCloseBracket(bracket.second, &pair));
+    EXPECT_EQ(pair, bracket.first);
+    EXPECT_FALSE(Util::IsOpenBracket(bracket.second, &pair));
+    EXPECT_FALSE(Util::IsCloseBracket(bracket.first, &pair));
   }
 }
 
