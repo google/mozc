@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/port.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"

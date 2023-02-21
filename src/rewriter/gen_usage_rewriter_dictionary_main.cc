@@ -102,10 +102,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "absl/base/config.h"
 #include "absl/container/btree_map.h"

@@ -38,8 +38,8 @@
 #include <string>
 #include <vector>
 
+#include "base/container/freelist.h"
 #include "base/file_stream.h"
-#include "base/freelist.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "dictionary/pos_matcher.h"

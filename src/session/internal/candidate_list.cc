@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"

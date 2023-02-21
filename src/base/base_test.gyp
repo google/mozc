@@ -386,7 +386,7 @@
       'target_name': 'serialized_string_array_test',
       'type': 'executable',
       'sources': [
-        'serialized_string_array_test.cc',
+        'container/serialized_string_array_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',

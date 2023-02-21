@@ -47,12 +47,12 @@ mozc_objc_library(
     name = "mac_process",
     srcs = ["mac_process.mm"],
     hdrs = ["mac_process.h"],
+    sdk_frameworks = ["Cocoa"],
     deps = [
         ":mac_util",
         "//base:const",
         "//base:logging",
         "//base:util",
-        "//third_party/apple_frameworks:Cocoa",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -63,20 +63,20 @@ mozc_objc_library(
 
 mozc_objc_library(
     name = "Carbon",
+    sdk_frameworks = ["Carbon"],
     tags = [
         "manual",
     ],
     visibility = ["//visibility:private"],
-    deps = ["//third_party/apple_frameworks:Carbon"],
 )
 
 mozc_objc_library(
     name = "UIKit",
+    sdk_frameworks = ["UIKit"],
     tags = [
         "manual",
     ],
     visibility = ["//visibility:private"],
-    deps = ["//third_party/apple_frameworks:UIKit"],
 )
 
 mozc_objc_library(
@@ -86,6 +86,12 @@ mozc_objc_library(
         "scoped_cftyperef.h",
     ],
     hdrs = ["mac_util.h"],
+    sdk_frameworks = [
+        "CoreFoundation",
+        "CoreGraphics",
+        "Foundation",
+        "IOKit",
+    ],
     visibility = ["//:__subpackages__"],
     deps = [
         "//base:const",
@@ -93,10 +99,6 @@ mozc_objc_library(
         "//base:port",
         "//base:singleton",
         "@com_google_absl//absl/strings",
-        "//third_party/apple_frameworks:CoreFoundation",
-        "//third_party/apple_frameworks:CoreGraphics",
-        "//third_party/apple_frameworks:Foundation",
-        "//third_party/apple_frameworks:IOKit",
     ] + mozc_select(
         # Split iOS code into a separate library.
         ios = [":UIKit"],

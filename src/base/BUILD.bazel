@@ -63,7 +63,6 @@ test_suite(
         ":number_util_test_android",
         ":obfuscator_support_test_android",
         ":process_mutex_test_android",
-        ":serialized_string_array_test_android",
         ":singleton_test_android",
         ":stopwatch_test_android",
         ":system_util_test_android",
@@ -160,13 +159,6 @@ mozc_cc_library(
     visibility = [
         "//:__subpackages__",
     ],
-)
-
-mozc_cc_library(
-    name = "freelist",
-    hdrs = ["freelist.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [":port"],
 )
 
 mozc_cc_library(
@@ -1240,32 +1232,6 @@ mozc_cc_test(
         ":port",
         "//testing:gunit_main",
         "//testing:mozctest",
-    ],
-)
-
-mozc_cc_library(
-    name = "serialized_string_array",
-    srcs = ["serialized_string_array.cc"],
-    hdrs = ["serialized_string_array.h"],
-    deps = [
-        ":file_util",
-        ":logging",
-        ":port",
-        ":status",
-        "@com_google_absl//absl/base:config",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "serialized_string_array_test",
-    srcs = ["serialized_string_array_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":port",
-        ":serialized_string_array",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
     ],
 )
 

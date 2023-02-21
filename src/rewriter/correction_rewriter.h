@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/serialized_string_array.h"
+#include "base/container/serialized_string_array.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
 

@@ -420,6 +420,10 @@ mozc_objc_library(
         "mac/mac_server_send_command.h",
         "mac/mac_view_util.h",
     ],
+    sdk_frameworks = [
+        "Carbon",
+        "Foundation",
+    ],
     deps = [
         ":renderer_interface",
         ":renderer_server",
@@ -437,8 +441,6 @@ mozc_objc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//third_party/apple_frameworks:Carbon",
-        "//third_party/apple_frameworks:Foundation",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",

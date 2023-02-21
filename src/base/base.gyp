@@ -453,7 +453,7 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'serialized_string_array.cc',
+        'container/serialized_string_array.cc',
       ],
       'dependencies': [
         'base_core',

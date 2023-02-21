@@ -35,8 +35,8 @@
 #include <iterator>
 #include <utility>
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

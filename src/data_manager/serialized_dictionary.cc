@@ -39,12 +39,12 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "base/status.h"
 #include "absl/base/config.h"
 #include "absl/strings/str_split.h"
@@ -95,7 +95,7 @@ SerializedDictionary::SerializedDictionary(absl::string_view token_array,
   string_array_.Set(string_array_data);
 }
 
-SerializedDictionary::~SerializedDictionary() {}
+SerializedDictionary::~SerializedDictionary() = default;
 
 SerializedDictionary::IterRange SerializedDictionary::equal_range(
     absl::string_view key) const {

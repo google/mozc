@@ -44,7 +44,8 @@ package(default_visibility = [
 test_suite(
     name = "android_test",
     tests = [
-        "bitarray_test_android",
+        ":bitarray_test_android",
+        ":serialized_string_array_test_android",
     ],
 )
 
@@ -62,5 +63,38 @@ mozc_cc_test(
         ":bitarray",
         "//testing:gunit_main",
         "@com_google_absl//absl/random",
+    ],
+)
+
+mozc_cc_library(
+    name = "freelist",
+    hdrs = ["freelist.h"],
+    visibility = ["//:__subpackages__"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "serialized_string_array",
+    srcs = ["serialized_string_array.cc"],
+    hdrs = ["serialized_string_array.h"],
+    deps = [
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:status",
+        "@com_google_absl//absl/base:config",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "serialized_string_array_test",
+    srcs = ["serialized_string_array_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        "//base:port",
+        "//base/container:serialized_string_array",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )

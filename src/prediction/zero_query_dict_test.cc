@@ -34,8 +34,8 @@
 #include <memory>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 

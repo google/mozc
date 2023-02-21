@@ -39,9 +39,9 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"

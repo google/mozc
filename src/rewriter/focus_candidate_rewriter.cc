@@ -33,9 +33,9 @@
 #include <cstdint>
 #include <string>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -138,7 +138,7 @@ FocusCandidateRewriter::FocusCandidateRewriter(
   suffix_array_.Set(data);
 }
 
-FocusCandidateRewriter::~FocusCandidateRewriter() {}
+FocusCandidateRewriter::~FocusCandidateRewriter() = default;
 
 bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
                                    int candidate_index) const {

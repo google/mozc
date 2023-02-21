@@ -38,7 +38,7 @@
 #include <string>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/port.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_pos.h"

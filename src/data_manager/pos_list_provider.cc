@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/embedded_file.h"
 #include "base/logging.h"
-#include "base/serialized_string_array.h"
 
 namespace mozc {
 namespace {
