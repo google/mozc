@@ -145,14 +145,7 @@ filegroup(
     srcs = mozc_select(
         default = [],
         linux = ["//unix:package"],
-        macos = [
-            "//mac:activate_pane",
-            "//mac:dev_confirm_pane",
-            "//mac:mozc_macos",
-            "//mac:uninstaller_macos",
-        ],
+        macos = ["//mac:package"],
         oss_android = ["//android/jni:mozc_lib"],
-        oss_linux = ["//unix:package"],
-        oss_macos = ["//mac:installer_oss_macos"],
     ),
 )

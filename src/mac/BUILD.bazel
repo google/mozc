@@ -488,7 +488,7 @@ genrule(
     srcs = [":tweaked_installer_files"] + mozc_select(
         oss_macos = ["installer/Mozc_template.pkgproj"],
     ),
-    outs = ["Mozc.pkg"],
+    outs = ["Mozc_Packages.pkg"],
     cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +
            " --pkgproj_command $(location //build_tools:tweak_pkgproj)" +
            " --pkgproj_input $(location installer/Mozc_template.pkgproj)" +
@@ -513,9 +513,9 @@ mozc_py_binary(
 )
 
 genrule(
-    name = "package_macos",
+    name = "package",
     srcs = [":productbuild_files"],
-    outs = ["Mozc2.pkg"],
+    outs = ["Mozc.pkg"],
     cmd = "$(location :build_package) --input $(location :productbuild_files) --output $@" +
           mozc_select(
               default = "",

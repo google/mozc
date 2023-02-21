@@ -3,6 +3,21 @@ How to build Mozc on macOS
 
 [![macOS](https://github.com/google/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/macos.yaml)
 
+## Summary
+
+If you are not sure what the following commands do, please check the descriptions below
+and make sure the operations before running them.
+
+```
+mkdir -p ~/work
+cd ~/work
+git clone https://github.com/google/mozc.git -b master --single-branch --recursive
+
+cd ~/work/mozc/src
+MOZC_QT_PATH={Your_Qt_path} bazel build package --config oss_macos -c opt
+open bazel-bin/mac/Mozc.pkg
+```
+
 ## Get the Code
 
 You can download Mozc source code as follows:
@@ -21,23 +36,30 @@ git clone https://github.com/google/mozc.git -b master --single-branch --recursi
 
 Building on Mac requires the following software.
 
-  * Xcode
-  * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
-  * [Qt 5](https://download.qt.io/official_releases/qt/) for GUI (e.g. qtbase [5.15.8](https://download.qt.io/official_releases/qt/5.15/5.15.8/submodules/))
-  * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
+* Xcode
+* [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
+* [Qt 5](https://download.qt.io/official_releases/qt/) for GUI (e.g. qtbase [5.15.8](https://download.qt.io/official_releases/qt/5.15/5.15.8/submodules/))
 
-To build the installer (target: `package`), you need both Qt and Packages.
-To build other targets, you may not need to install them.
+To build the installer (target: `package`) or GUI tools, you need Qt.
 
 ### Build Qt
 
 Qt is required for GUI tools. The following is an example of build configuration.
 
 ```
-# extract Qt.tar.gz to ~/myqt.
+# extract qtbase-everywhere-opensource-src-5.NN.NN.tar.xz to ~/myqt.
 cd ~/myqt
 ./configure -opensource -developer-build -platform macx-clang -release
 make
+```
+
+The following configure options build a smaller Qt for Mozc.
+```
+./configure -opensource -developer-build -platform macx-clang -release \
+-nomake examples -nomake tests -nomake tools \
+-no-cups -no-dbus -no-icu -no-opengl \
+-no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci -no-sql-odbc -no-sql-psql \
+-no-sql-sqlite -no-sql-sqlite2 -no-sql-tds
 ```
 
 -----
@@ -96,9 +118,10 @@ Targets only for Bazel:
 
 ### Software Requirements
 
-For GYP build, Ninja is also required.
+For GYP build, Ninja and Packages are also required.
 
-  * [Ninja](https://github.com/ninja-build/ninja) for GYP build
+* [Ninja](https://github.com/ninja-build/ninja) for GYP build
+* [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
 
 ### Path to Python3
 
