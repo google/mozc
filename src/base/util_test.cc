@@ -50,7 +50,6 @@
 #include "testing/gunit.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -1239,17 +1238,6 @@ TEST(UtilTest, IsKanaSymbolContained) {
   EXPECT_FALSE(Util::IsKanaSymbolContained(""));
 }
 
-TEST(UtilTest, RandomSeedTest) {
-  Util::SetRandomSeed(0);
-  const int first_try = Util::Random(INT_MAX);
-  const int second_try = Util::Random(INT_MAX);
-  EXPECT_NE(first_try, second_try);
-
-  // Reset the seed.
-  Util::SetRandomSeed(0);
-  EXPECT_EQ(first_try, Util::Random(INT_MAX));
-}
-
 TEST(UtilTest, SplitFirstChar32) {
   absl::string_view rest;
   char32_t c = 0;
@@ -1627,17 +1615,6 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
     uint64_t v;
     EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }
-}
-
-TEST(UtilTest, GetRandomSequence) {
-  Util::GetRandomSequence({});
-
-  // Sufficiently large so it's highly unlikely to have only one value.
-  std::array<char, 256> buf = {};
-  Util::GetRandomSequence(absl::MakeSpan(buf));
-  const auto first = buf[0];
-  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
-                           [first](char c) { return c != first; }));
 }
 
 }  // namespace mozc

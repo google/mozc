@@ -77,7 +77,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -821,27 +820,6 @@ bool Util::ChopReturns(std::string *line) {
   }
   return false;
 }
-
-void Util::GetRandomSequence(char *buf, size_t buf_size) {
-  GetRandomSequence(absl::MakeSpan(buf, buf_size));
-}
-
-void Util::GetRandomSequence(absl::Span<char> buf) {
-  absl::BitGen gen;
-  std::generate(buf.begin(), buf.end(), [&]() -> char {
-    return static_cast<char>(absl::Uniform<unsigned char>(gen));
-  });
-}
-
-int Util::Random(int size) {
-  DLOG_IF(FATAL, size < 0) << "|size| should be positive or 0. size: " << size;
-  // Caveat: RAND_MAX is likely to be too small to achieve fine-grained
-  // uniform distribution.
-  // TODO(yukawa): Improve the resolution.
-  return static_cast<int>(1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
-void Util::SetRandomSeed(uint32_t seed) { ::srand(seed); }
 
 void Util::Sleep(uint32_t msec) {
 #ifdef _WIN32
