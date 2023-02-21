@@ -122,8 +122,8 @@ mozc_cc_binary(
         "//base:init_mozc_buildtool",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 

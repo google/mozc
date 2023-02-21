@@ -32,9 +32,9 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
 
 ABSL_FLAG(bool, client, false, "client mode");
 ABSL_FLAG(bool, server, false, "server mode");
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     CHECK(manager->SavePathName());
     CHECK(manager->GetPathName(&path));
     LOG(INFO) << "PathName: " << path;
-    mozc::Util::Sleep(30000);  // sleep 30sec
+    absl::SleepFor(absl::Seconds(30));
     return 0;
   }
 
