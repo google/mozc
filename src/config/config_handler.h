@@ -62,31 +62,13 @@ class ConfigHandler {
   // The same performance note as GetConfig(Config*) applies.
   static std::unique_ptr<config::Config> GetConfig();
 
-  // Returns stored config.
-  // If imposed config is not set, the result is the same as GetConfig().
+  // Aliases of GetConfig.
+  // TODO(b/267705984): Clean up these methods.
   static void GetStoredConfig(Config *config);
-
-  // Returns stored Config as a unique_ptr.
   static std::unique_ptr<config::Config> GetStoredConfig();
 
   // Sets config.
   static void SetConfig(const Config &config);
-
-  // Sets imposed config.
-  //
-  // If imposed config is set, the result of GetConfig() method
-  // turns to be a mixture of current confing and imposed config.
-  // When merging, imposed config's fields are prioritized.
-  // If you want to use raw Store config (which is not affected by
-  // the imposed config), call this method with the "empty"
-  // (no field values are set) config.
-  //
-  // Imposed config is never saved to storage.
-  //
-  // Reload() method does not affect the imposed config, and the same imposed
-  // config is used after reloading.
-  // In other words, the imposed config is neither reloaded nor reset.
-  static void SetImposedConfig(const Config &config);
 
   // Gets default config value.
   //

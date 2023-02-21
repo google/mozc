@@ -121,12 +121,12 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 
   AddRewriter(std::make_unique<DateRewriter>(dictionary));
   AddRewriter(std::make_unique<FortuneRewriter>());
-#if !(defined(OS_ANDROID) || defined(OS_IOS))
+#if !(defined(__ANDROID__) || defined(OS_IOS))
   // CommandRewriter is not tested well on Android or iOS.
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(std::make_unique<CommandRewriter>());
-#endif  // !(OS_ANDROID || OS_IOS)
+#endif  // !(__ANDROID__ || OS_IOS)
 #ifndef NO_USAGE_REWRITER
   AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER

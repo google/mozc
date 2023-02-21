@@ -1,7 +1,7 @@
 ---
 name: Build error
 about: Issues for building Mozc
-title: ''
+title: 'Build error: '
 labels: ''
 assignees: ''
 

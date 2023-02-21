@@ -27,44 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#ifndef MOZC_RENDERER_INIT_MOZC_RENDERER_H_
+#define MOZC_RENDERER_INIT_MOZC_RENDERER_H_
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "ipc/ipc_path_manager.h"
-#include "absl/flags/flag.h"
-#include "absl/time/clock.h"
+namespace mozc::renderer {
 
-ABSL_FLAG(bool, client, false, "client mode");
-ABSL_FLAG(bool, server, false, "server mode");
-ABSL_FLAG(std::string, name, "test", "ipc name");
+// InitMozcRenderer performs additional initializations for a renderer process
+// and calls InitMozc. Use this function instead of InitMozc in a renderer
+// process.
+void InitMozcRenderer(const char* argv0, int* argc, char*** argv);
 
-// command line tool to check the behavior of IPCPathManager
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
+}  // namespace mozc::renderer
 
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
-  CHECK(manager);
-
-  std::string path;
-
-  if (absl::GetFlag(FLAGS_client)) {
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    return 0;
-  }
-
-  if (absl::GetFlag(FLAGS_server)) {
-    CHECK(manager->CreateNewPathName());
-    CHECK(manager->SavePathName());
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    absl::SleepFor(absl::Seconds(30));
-    return 0;
-  }
-
-  LOG(INFO) << "use --client or --server";
-  return 0;
-}
+#endif  // MOZC_RENDERER_INIT_MOZC_RENDERER_H_

@@ -29,9 +29,9 @@
 
 #include "server/mozc_server.h"
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstddef>
 #include <memory>
@@ -44,9 +44,9 @@
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
+#include "absl/base/config.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -66,12 +66,12 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
   // Big endian is not supported. The storage for user history is endian
   // dependent. If we want to sync the data via network sync feature, we
   // will see some problems.
-  CHECK(mozc::Util::IsLittleEndian()) << "Big endian is not supported.";
-#ifdef OS_WIN
+  static_assert(ABSL_IS_LITTLE_ENDIAN, "Big endian is not supported.");
+#ifdef _WIN32
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
   // Make sure that mozc_server exits all after other processes.
   ::SetProcessShutdownParameters(0x100, SHUTDOWN_NORETRY);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // call GetRunLevel before mozc::InitMozc().
   // mozc::InitMozc() will do all static initialization and may access
@@ -113,11 +113,11 @@ int MozcServer::Run() {
       return -1;
     }
 
-#if defined(OS_WIN)
+#if defined(_WIN32)
     // On Windows, ShutdownSessionCallback is not called intentionally in order
     // to avoid crashes oritinates from it. See b/2696087.
     g_session_server->Loop();
-#else   // defined(OS_WIN)
+#else   // defined(_WIN32)
     // Create a new thread.
     // We can't call Loop() as Loop() doesn't make a thread.
     // We have to make a thread here so that ShutdownSessionCallback()
@@ -126,7 +126,7 @@ int MozcServer::Run() {
 
     // Wait until the session server thread finishes.
     g_session_server->Wait();
-#endif  // defined(OS_WIN)
+#endif  // defined(_WIN32)
   }
 
   return 0;

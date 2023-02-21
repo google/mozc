@@ -93,11 +93,11 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     seg->set_key("こまんど");
     candidate->value = "コマンド";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
     EXPECT_EQ(CommandCandidatesSize(*seg), 0);
-#else  // OS_ANDROID
+#else  // __ANDROID__
     EXPECT_EQ(CommandCandidatesSize(*seg), 2);
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
     seg->clear_candidates();
   }
 
@@ -106,11 +106,11 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
     seg->set_key("さじぇすと");
     candidate->value = "サジェスト";
     EXPECT_TRUE(GetRewriter()->Rewrite(request, &segments));
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
     EXPECT_EQ(CommandCandidatesSize(*seg), 0);
-#else  // OS_ANDROID
+#else  // __ANDROID__
     EXPECT_EQ(CommandCandidatesSize(*seg), 1);
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
     seg->clear_candidates();
   }
 }

@@ -44,17 +44,18 @@
 #include <set>
 #include <string>
 
+#import "mac/GoogleJapaneseInputControllerInterface.h"
+#import "mac/GoogleJapaneseInputServer.h"
+#import "mac/KeyCodeMap.h"
+
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/mac_process.h"
-#include "base/mac_util.h"
+#include "base/mac/mac_process.h"
+#include "base/mac/mac_util.h"
 #include "base/process.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "ipc/ipc.h"
-#import "mac/GoogleJapaneseInputControllerInterface.h"
-#import "mac/GoogleJapaneseInputServer.h"
-#import "mac/KeyCodeMap.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"

@@ -36,8 +36,10 @@
 
 #include <objc/objc-class.h>
 
+#include <string>
+
 #include "base/logging.h"
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #include "client/client_mock.h"
 #include "protocol/candidates.pb.h"
 #include "renderer/renderer_interface.h"

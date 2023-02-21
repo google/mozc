@@ -67,7 +67,8 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
-        ios = ["//base:mac_util"],
+        ios = ["//base/mac:mac_util"],
+        macos = ["//base/mac:mac_util"],
     ),
 )
 
@@ -108,7 +109,8 @@ mozc_cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
-        ios = ["//base:mac_util"],
+        ios = ["//base/mac:mac_util"],
+        macos = ["//base/mac:mac_util"],
     ),
 )
 
@@ -120,8 +122,8 @@ mozc_cc_binary(
         "//base:init_mozc_buildtool",
         "//base:logging",
         "//base:port",
-        "//base:util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 

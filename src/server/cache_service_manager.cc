@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef OS_WIN
+#ifdef _WIN32
 
 #include "server/cache_service_manager.h"
 
@@ -597,4 +597,4 @@ bool CacheServiceManager::EnsureServiceStopped() {
 }
 
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32

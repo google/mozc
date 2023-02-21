@@ -45,7 +45,7 @@ mozc_cc_library(
         "//renderer:renderer_client",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
-        macos = ["//base:mac_util"],
+        macos = ["//base/mac:mac_util"],
     ),
 )
 

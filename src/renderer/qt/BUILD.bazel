@@ -30,6 +30,7 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(
     "//:build_defs.bzl",
+    "mozc_cc_binary",
     "mozc_cc_library",
 )
 load(
@@ -41,6 +42,16 @@ load(
 package(default_visibility = ["//:__subpackages__"])
 
 licenses(["notice"])
+
+mozc_cc_binary(
+    name = "mozc_renderer",
+    srcs = ["qt_renderer_main.cc"],
+    defines = ["ENABLE_QT_RENDERER"],
+    deps = [
+        ":qt_server",
+        "//renderer:init_mozc_renderer",
+    ],
+)
 
 mozc_qt_moc(
     name = "moc_qt_ipc_thread",

@@ -63,7 +63,7 @@
       'conditions': [
         ['OS=="mac"', {
           'sources': [
-            'mac_util_test.mm',
+            'mac/mac_util_test.mm',
           ],
         }],
         ['OS=="win"', {
@@ -102,7 +102,7 @@
       'target_name': 'base_core_test',
       'type': 'executable',
       'sources': [
-        'bitarray_test.cc',
+        'container/bitarray_test.cc',
         'logging_test.cc',
         'mmap_test.cc',
         'random_test.h',

@@ -139,17 +139,16 @@ mozc_objc_library(
         ":keycode_map",
         "//base:const",
         "//base:logging",
-        "//base:mac_process",
-        "//base:mac_util",
         "//base:process",
         "//base:util",
+        "//base/mac:mac_process",
+        "//base/mac:mac_util",
         "//client",
         "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
-        "@com_google_absl//absl/base",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -162,7 +161,7 @@ mozc_objc_test(
         ":imk_controller",
         ":keycode_map",
         "//base:logging",
-        "//base:mac_util",
+        "//base/mac:mac_util",
         "//client:client_mock",
         "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
@@ -339,14 +338,15 @@ mozc_objc_library(
     ],
     sdk_frameworks = [
         "Carbon",
+        "Cocoa",
         "Security",
     ],
     tags = ["manual"],
     deps = [
         "//base:init_mozc",
-        "//base:mac_util",
         "//base:url",
         "//base:version",
+        "//base/mac:mac_util",
     ],
 )
 
@@ -488,7 +488,7 @@ genrule(
     srcs = [":tweaked_installer_files"] + mozc_select(
         oss_macos = ["installer/Mozc_template.pkgproj"],
     ),
-    outs = ["Mozc.pkg"],
+    outs = ["Mozc_Packages.pkg"],
     cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +
            " --pkgproj_command $(location //build_tools:tweak_pkgproj)" +
            " --pkgproj_input $(location installer/Mozc_template.pkgproj)" +
@@ -513,9 +513,9 @@ mozc_py_binary(
 )
 
 genrule(
-    name = "package_macos",
+    name = "package",
     srcs = [":productbuild_files"],
-    outs = ["Mozc2.pkg"],
+    outs = ["Mozc.pkg"],
     cmd = "$(location :build_package) --input $(location :productbuild_files) --output $@" +
           mozc_select(
               default = "",

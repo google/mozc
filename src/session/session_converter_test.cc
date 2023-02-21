@@ -2898,18 +2898,18 @@ TEST_F(SessionConverterTest, Issue1981020) {
       .WillOnce(SaveArgPointee<1>(&segments));
   converter.CommitPreedit(*composer_, Context::default_instance());
 
-#ifdef OS_WIN
+#ifdef _WIN32
   // "～～～～" U+FF5E * 4
   const std::string fullwidth_tilde_ff5e = "～～～～";
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
             fullwidth_tilde_ff5e);
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
             fullwidth_tilde_ff5e);
-#else   // OS_WIN
+#else   // _WIN32
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, wave_dash_301c);
   EXPECT_EQ(segments.conversion_segment(0).candidate(0).content_value,
             wave_dash_301c);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST_F(SessionConverterTest, Issue2029557) {

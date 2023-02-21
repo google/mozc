@@ -50,6 +50,7 @@
 #endif  // !_WIN32
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <cstdarg>
 #include <cstddef>
@@ -69,7 +70,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/algorithm/container.h"
-#include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/random/random.h"
 #include "absl/strings/ascii.h"
@@ -77,7 +77,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -452,29 +451,6 @@ bool Util::IsCapitalizedAscii(absl::string_view s) {
   return false;
 }
 
-bool Util::IsLowerOrUpperAscii(absl::string_view s) {
-  if (s.empty()) {
-    return true;
-  }
-  if (absl::ascii_islower(s.front())) {
-    return IsLowerAscii(absl::ClippedSubstr(s, 1));
-  }
-  if (absl::ascii_isupper(s.front())) {
-    return IsUpperAscii(absl::ClippedSubstr(s, 1));
-  }
-  return false;
-}
-
-bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
-  if (s.empty()) {
-    return true;
-  }
-  if (absl::ascii_isupper(s.front())) {
-    return IsLowerOrUpperAscii(absl::ClippedSubstr(s, 1));
-  }
-  return false;
-}
-
 namespace {
 
 // Table of UTF-8 character lengths, based on first byte
@@ -845,27 +821,6 @@ bool Util::ChopReturns(std::string *line) {
   return false;
 }
 
-void Util::GetRandomSequence(char *buf, size_t buf_size) {
-  GetRandomSequence(absl::MakeSpan(buf, buf_size));
-}
-
-void Util::GetRandomSequence(absl::Span<char> buf) {
-  absl::BitGen gen;
-  std::generate(buf.begin(), buf.end(), [&]() -> char {
-    return static_cast<char>(absl::Uniform<unsigned char>(gen));
-  });
-}
-
-int Util::Random(int size) {
-  DLOG_IF(FATAL, size < 0) << "|size| should be positive or 0. size: " << size;
-  // Caveat: RAND_MAX is likely to be too small to achieve fine-grained
-  // uniform distribution.
-  // TODO(yukawa): Improve the resolution.
-  return static_cast<int>(1.0 * size * rand() / (RAND_MAX + 1.0));
-}
-
-void Util::SetRandomSeed(uint32_t seed) { ::srand(seed); }
-
 void Util::Sleep(uint32_t msec) {
 #ifdef _WIN32
   ::Sleep(msec);
@@ -884,77 +839,78 @@ void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
 
-struct BracketPair {
-  absl::string_view GetOpenBracket() const {
-    return absl::string_view(open, open_len);
-  }
-  absl::string_view GetCloseBracket() const {
-    return absl::string_view(close, close_len);
-  }
-
-  const char *open;
-  size_t open_len;
-
-  const char *close;
-  size_t close_len;
+// A sorted array of opening and closing brackets.
+// * Both `open` and `close` bracket must be sorted.
+// * Both `open` and `close` bracket must be the same size.
+// If you add a new bracket pair, you must keep this property.
+constexpr std::array<absl::string_view, 20> kSortedBrackets{
+    "()",    // U+0028 U+0029
+    "[]",    // U+005B U+005D
+    "{}",    // U+007B U+007D
+    "«»",    // U+00AB U+00BB
+    "‘’",    // U+2018 U+2019
+    "“”",    // U+201C U+201D
+    "‹›",    // U+2039 U+203A
+    "〈〉",  // U+3008 U+3009
+    "《》",  // U+300A U+300B
+    "「」",  // U+300C U+300D
+    "『』",  // U+300E U+300F
+    "【】",  // U+3010 U+3011
+    "〔〕",  // U+3014 U+3015
+    "〘〙",  // U+3018 U+3019
+    "〚〛",  // U+301A U+301B
+    "〝〟",  // U+301D U+301F
+    "（）",  // U+FF08 U+FF09
+    "［］",  // U+FF3B U+FF3D
+    "｛｝",  // U+FF5B U+FF5D
+    "｢｣",    // U+FF62 U+FF63
 };
 
-// A bidirectional map between opening and closing brackets as a sorted array.
-// NOTE: This array is sorted in order of both |open| and |close|.  If you add a
-// new bracket pair, you must keep this property.
-const BracketPair kSortedBracketPairs[] = {
-    {"(", 1, ")", 1},   {"[", 1, "]", 1},   {"{", 1, "}", 1},
-    {"〈", 3, "〉", 3}, {"《", 3, "》", 3}, {"「", 3, "」", 3},
-    {"『", 3, "』", 3}, {"【", 3, "】", 3}, {"〔", 3, "〕", 3},
-    {"〘", 3, "〙", 3}, {"〚", 3, "〛", 3}, {"（", 3, "）", 3},
-    {"［", 3, "］", 3}, {"｛", 3, "｝", 3}, {"｢", 3, "｣", 3},
-};
+absl::string_view OpenBracket(absl::string_view pair) {
+  return pair.substr(0, pair.size() / 2);
+}
+
+absl::string_view CloseBracket(absl::string_view pair) {
+  return pair.substr(pair.size() / 2);
+}
 
 }  // namespace
 
 bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
-  struct OrderByOpenBracket {
-    bool operator()(const BracketPair &x, absl::string_view key) const {
-      return x.GetOpenBracket() < key;
-    }
-  };
-  const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                                     OrderByOpenBracket());
-  if (iter == end || iter->GetOpenBracket() != key) {
+  const auto end = kSortedBrackets.end();
+  const auto iter =
+      std::lower_bound(kSortedBrackets.begin(), end, key,
+                       [](absl::string_view pair, absl::string_view key) {
+                         return OpenBracket(pair) < key;
+                       });
+  if (iter == end || OpenBracket(*iter) != key) {
     return false;
   }
-  *close_bracket = std::string(iter->GetCloseBracket());
+  *close_bracket = std::string(CloseBracket(*iter));
   return true;
 }
 
 bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
-  struct OrderByCloseBracket {
-    bool operator()(const BracketPair &x, absl::string_view key) const {
-      return x.GetCloseBracket() < key;
-    }
-  };
-  const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                                     OrderByCloseBracket());
-  if (iter == end || iter->GetCloseBracket() != key) {
+  const auto end = kSortedBrackets.end();
+  const auto iter =
+      std::lower_bound(kSortedBrackets.begin(), end, key,
+                       [](absl::string_view pair, absl::string_view key) {
+                         return CloseBracket(pair) < key;
+                       });
+  if (iter == end || CloseBracket(*iter) != key) {
     return false;
   }
-  *open_bracket = std::string(iter->GetOpenBracket());
+  *open_bracket = std::string(OpenBracket(*iter));
   return true;
 }
 
 bool Util::IsBracketPairText(absl::string_view input) {
-  // The definition of "bracket" here is a bit wider than kSortedBracketPairs
-  // because it also contains some additional pairs listed in
-  // data/symbol/symbol.tsv.
-  static const auto &kBracketPairText =
-      *new absl::flat_hash_set<absl::string_view>{
-          "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
-          "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
-          "〚〛", "（）", "［］", "｛｝", "｢｣", "〝〟",
-      };
-  return kBracketPairText.contains(input);
+  const auto end = kSortedBrackets.end();
+  const auto iter = std::lower_bound(kSortedBrackets.begin(), end, input);
+  if (iter == end || *iter != input) {
+    return false;
+  }
+  return true;
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {
@@ -1336,22 +1292,6 @@ bool Util::DeserializeUint64(absl::string_view s, uint64_t *x) {
        static_cast<uint64_t>(s[4]) << 24 | static_cast<uint64_t>(s[5]) << 16 |
        static_cast<uint64_t>(s[6]) << 8 | static_cast<uint64_t>(s[7]);
   return true;
-}
-
-bool Util::IsLittleEndian() {
-#ifdef _WIN32
-  return true;
-#endif  // _WIN32
-
-  union {
-    unsigned char c[4];
-    unsigned int i;
-  } u;
-  static_assert(sizeof(u.c) == sizeof(u.i),
-                "Expecting (unsigned) int is 32-bit integer.");
-  static_assert(sizeof(u) == sizeof(u.i), "Checking alignment.");
-  u.i = 0x12345678U;
-  return u.c[0] == 0x78U;
 }
 
 bool Util::IsAcceptableCharacterAsCandidate(char32_t letter) {

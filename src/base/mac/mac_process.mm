@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#import "base/mac_process.h"
+#import "base/mac/mac_process.h"
 
 #import <Cocoa/Cocoa.h>
 
@@ -35,7 +35,7 @@
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #include "base/util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"

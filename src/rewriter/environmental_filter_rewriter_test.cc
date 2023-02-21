@@ -420,17 +420,17 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   AddSegment("なみ", "〜", &segments);
   constexpr char description[] = "[全]波ダッシュ";
   segments.mutable_segment(0)->mutable_candidate(0)->description = description;
-#ifdef OS_WIN
+#ifdef _WIN32
   EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   // U+FF5E
   EXPECT_EQ(segments.segment(0).candidate(0).value, "～");
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
-#else  // OS_WIN
+#else  // _WIN32
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");
   EXPECT_EQ(segments.segment(0).candidate(0).description, description);
-#endif  // OS_WIN
+#endif  // _WIN32
 
   // Wave dash (U+301C) w/ normalization
   segments.Clear();

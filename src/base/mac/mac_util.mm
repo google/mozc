@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#import "base/mac_util.h"
+#import "base/mac/mac_util.h"
 
 #import <Foundation/Foundation.h>
 
@@ -44,7 +44,7 @@
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/scoped_cftyperef.h"
+#include "base/mac/scoped_cftyperef.h"
 #include "base/singleton.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"

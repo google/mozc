@@ -60,11 +60,11 @@
 
 using mozc::usage_stats::UsageStats;
 
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
 constexpr bool kDefaultUseActualConverterForRealtimeConversion = false;
-#else   // OS_ANDROID
+#else   // __ANDROID__
 constexpr bool kDefaultUseActualConverterForRealtimeConversion = true;
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
 
 ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion,
           kDefaultUseActualConverterForRealtimeConversion,

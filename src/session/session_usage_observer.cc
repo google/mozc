@@ -91,7 +91,6 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
     case commands::Input::NO_OPERATION:
     case commands::Input::SET_CONFIG:
     case commands::Input::GET_CONFIG:
-    case commands::Input::SET_IMPOSED_CONFIG:
     case commands::Input::CLEAR_USER_HISTORY:
     case commands::Input::CLEAR_USER_PREDICTION:
     case commands::Input::CLEAR_UNUSED_USER_PREDICTION:

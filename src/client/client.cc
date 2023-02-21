@@ -68,7 +68,7 @@
 #endif  // _WIN32
 
 #ifdef __APPLE__
-#include "base/mac_process.h"
+#include "base/mac/mac_process.h"
 #endif  // __APPLE__
 
 namespace mozc {

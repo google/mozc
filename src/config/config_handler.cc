@@ -92,7 +92,6 @@ class ConfigHandlerImpl {
   void GetStoredConfig(Config *config) const;
   std::unique_ptr<config::Config> GetStoredConfig() const;
   void SetConfig(const Config &config);
-  void SetImposedConfig(const Config &config);
   void Reload();
   void SetConfigFileName(absl::string_view filename);
   std::string GetConfigFileName();
@@ -101,14 +100,11 @@ class ConfigHandlerImpl {
   // copy config to config_ and do some
   // platform dependent hooks/rewrites
   void SetConfigInternal(const Config &config);
-  void UpdateMergedConfig();
   void ReloadUnlocked();
 
   std::string filename_;
+  // TODO(b/267705984): Rename to `config_` later.
   Config stored_config_;
-  Config imposed_config_;
-  // equals to config_.MergeFrom(imposed_config_)
-  Config merged_config_;
   Config default_config_;
   mutable absl::Mutex mutex_;
   uint64_t stored_config_hash_ = 0;
@@ -121,29 +117,29 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 // return current Config
 void ConfigHandlerImpl::GetConfig(Config *config) const {
   absl::MutexLock lock(&mutex_);
-  *config = merged_config_;
+  *config = stored_config_;
 }
 
 // return current Config as a unique_ptr.
 std::unique_ptr<config::Config> ConfigHandlerImpl::GetConfig() const {
   absl::MutexLock lock(&mutex_);
-  return std::make_unique<config::Config>(merged_config_);
+  return std::make_unique<config::Config>(stored_config_);
 }
 
 const Config &ConfigHandlerImpl::DefaultConfig() const {
   return default_config_;
 }
 
-// return stored Config
+// Aliase of GetConfig.
+// TODO(b/267705984): Clean up these methods.
 void ConfigHandlerImpl::GetStoredConfig(Config *config) const {
-  absl::MutexLock lock(&mutex_);
-  *config = stored_config_;
+  return GetConfig(config);
 }
 
-// return stored Config as a unique_ptr.
+// Aliase of GetConfig.
+// TODO(b/267705984): Clean up these methods.
 std::unique_ptr<config::Config> ConfigHandlerImpl::GetStoredConfig() const {
-  absl::MutexLock lock(&mutex_);
-  return std::make_unique<config::Config>(stored_config_);
+  return GetConfig();
 }
 
 // set config and rewrite internal data
@@ -174,13 +170,6 @@ void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
       !stored_config_.has_use_emoji_conversion()) {
     stored_config_.set_use_emoji_conversion(true);
   }
-
-  UpdateMergedConfig();
-}
-
-void ConfigHandlerImpl::UpdateMergedConfig() {
-  merged_config_ = stored_config_;
-  merged_config_.MergeFrom(imposed_config_);
 }
 
 void ConfigHandlerImpl::SetConfig(const Config &config) {
@@ -201,7 +190,7 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
 
   ConfigHandler::SetMetaData(&output_config);
 
-  LOG(INFO) << "Setting new config: " << filename_;
+  VLOG(1) << "Setting new config: " << filename_;
   ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
 
 #ifdef DEBUG
@@ -213,21 +202,6 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
 #endif  // DEBUG
 
   SetConfigInternal(output_config);
-}
-
-void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
-  absl::MutexLock lock(&mutex_);
-  VLOG(1) << "Setting new overriding config";
-  imposed_config_ = config;
-
-#ifdef DEBUG
-  std::string debug_content(
-      "# This is a text-based config file for debugging.\n"
-      "# Nothing happens when you edit this file manually.\n");
-  debug_content += config.DebugString();
-  ConfigFileStream::AtomicUpdate(filename_ + ".overriding.txt", debug_content);
-#endif  // DEBUG
-  UpdateMergedConfig();
 }
 
 // Reload from file
@@ -285,11 +259,6 @@ std::unique_ptr<config::Config> ConfigHandler::GetStoredConfig() {
 
 void ConfigHandler::SetConfig(const Config &config) {
   GetConfigHandlerImpl()->SetConfig(config);
-}
-
-// Sets overriding config
-void ConfigHandler::SetImposedConfig(const Config &config) {
-  GetConfigHandlerImpl()->SetImposedConfig(config);
 }
 
 // static

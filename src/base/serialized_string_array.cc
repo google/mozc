@@ -38,7 +38,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/status.h"
-#include "base/util.h"
+#include "absl/base/config.h"
 
 namespace mozc {
 namespace {
@@ -48,7 +48,7 @@ constexpr uint32_t kEmptyArrayData = 0x00000000;
 }  // namespace
 
 SerializedStringArray::SerializedStringArray() {
-  DCHECK(Util::IsLittleEndian()) << "Little endian is assumed";
+  static_assert(ABSL_IS_LITTLE_ENDIAN, "Little endian is assumed");
   clear();
 }
 

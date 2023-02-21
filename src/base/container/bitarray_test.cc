@@ -27,44 +27,73 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+#include "base/container/bitarray.h"
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "ipc/ipc_path_manager.h"
-#include "absl/flags/flag.h"
-#include "absl/time/clock.h"
+#include <iterator>
+#include <vector>
 
-ABSL_FLAG(bool, client, false, "client mode");
-ABSL_FLAG(bool, server, false, "server mode");
-ABSL_FLAG(std::string, name, "test", "ipc name");
+#include "testing/googletest.h"
+#include "testing/gunit.h"
+#include "absl/random/random.h"
 
-// command line tool to check the behavior of IPCPathManager
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
+namespace mozc {
+namespace {
 
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
-  CHECK(manager);
-
-  std::string path;
-
-  if (absl::GetFlag(FLAGS_client)) {
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    return 0;
+TEST(BitArray, BitArraySizeTest) {
+  {
+    BitArray array(0);
+    EXPECT_EQ(array.size(), 0);
+    EXPECT_EQ(array.array_size(), 4);
   }
 
-  if (absl::GetFlag(FLAGS_server)) {
-    CHECK(manager->CreateNewPathName());
-    CHECK(manager->SavePathName());
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    absl::SleepFor(absl::Seconds(30));
-    return 0;
+  {
+    BitArray array(5);
+    EXPECT_EQ(array.size(), 5);
+    EXPECT_EQ(array.array_size(), 4);
   }
 
-  LOG(INFO) << "use --client or --server";
-  return 0;
+  {
+    BitArray array(32);
+    EXPECT_EQ(array.size(), 32);
+    EXPECT_EQ(array.array_size(), 8);
+  }
+
+  {
+    BitArray array(100);
+    EXPECT_EQ(array.size(), 100);
+    EXPECT_EQ(array.array_size(), 16);
+  }
 }
+
+TEST(BitArray, BitArrayTest) {
+  constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
+  absl::BitGen gen;
+
+  for (const size_t size : kBitArraySize) {
+    // set array
+    BitArray array(size);
+    EXPECT_EQ(array.size(), size);
+    std::vector<int> target(size);
+    for (size_t j = 0; j < size; ++j) {
+      const bool v = absl::Bernoulli(gen, 0.5);
+      if (v) {
+        target[j] = 1;
+        array.set(j);
+      } else {
+        target[j] = 0;
+        array.clear(j);
+      }
+    }
+
+    const char *data = array.array();
+
+    // verify
+    for (size_t j = 0; j < size; ++j) {
+      EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
+      EXPECT_EQ(array.get(j), (target[j] != 0));
+    }
+  }
+}
+
+}  // namespace
+}  // namespace mozc

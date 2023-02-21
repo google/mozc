@@ -43,7 +43,6 @@
 #include "absl/base/attributes.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -154,15 +153,6 @@ class Util {
   // Returns true if the text in the rage [first, last) is capitalized ASCII.
   static bool IsCapitalizedAscii(absl::string_view s);
 
-  // Returns true if the characters in [first, last) are all in lower case ASCII
-  // or all in upper case ASCII. Namely, equivalent to
-  //     IsLowerAscii(first, last) || IsUpperAscii(first last)
-  static bool IsLowerOrUpperAscii(absl::string_view s);
-
-  // Returns true if the text in the range [first, last) is 1) all in upper case
-  // ASCII, or 2) capitalized.
-  static bool IsUpperOrCapitalizedAscii(absl::string_view s);
-
   static size_t OneCharLen(const char *src);
 
   // Returns the lengths of [src, src+size] encoded in UTF8.
@@ -251,23 +241,6 @@ class Util {
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
   static bool ChopReturns(std::string *line);
-
-  // Generate a random sequence. It uses absl::BitGen as a random source.
-  ABSL_DEPRECATED("Use absl::Uniform or mozc::Random.")
-  static void GetRandomSequence(char *buf, size_t buf_size);
-  static void GetRandomSequence(absl::Span<char> buf);
-
-  // Return random variable whose range is [0..size-1].
-  // This function uses rand() internally, so don't use it for
-  // security-sensitive purpose.
-  // Caveats: The returned value does not have good granularity especially
-  // when |size| is larger than |RAND_MAX|.
-  // TODO(yukawa): Improve the granularity.
-  // TODO(yukawa): Clarify the semantics when |size| is 0 or smaller.
-  ABSL_DEPRECATED("Use absl::Uniform()") static int Random(int size);
-
-  // Set the seed of Util::Random().
-  ABSL_DEPRECATED("Use absl::BitGen") static void SetRandomSeed(uint32_t seed);
 
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
@@ -372,9 +345,6 @@ class Util {
   // Deserializes a string serialized by SerializeUint64.  Returns false if the
   // length of s is not eight or s is in an invalid format.
   static bool DeserializeUint64(absl::string_view s, uint64_t *x);
-
-  // Checks endian-ness at runtime.
-  static bool IsLittleEndian();
 
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than

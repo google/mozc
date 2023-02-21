@@ -110,21 +110,21 @@ TEST(T13nTest, IsInFullKatakanaTypes) {
 }
 
 TEST(T13nTest, ToggleFullAsciiTypes) {
-  EXPECT_EQ(FULL_ASCII, T13n::ToggleFullAsciiTypes(HIRAGANA));
-  EXPECT_EQ(FULL_ASCII_UPPER, T13n::ToggleFullAsciiTypes(FULL_ASCII));
-  EXPECT_EQ(FULL_ASCII_LOWER, T13n::ToggleFullAsciiTypes(FULL_ASCII_UPPER));
-  EXPECT_EQ(FULL_ASCII_CAPITALIZED,
-            T13n::ToggleFullAsciiTypes(FULL_ASCII_LOWER));
-  EXPECT_EQ(FULL_ASCII, T13n::ToggleFullAsciiTypes(FULL_ASCII_CAPITALIZED));
+  EXPECT_EQ(T13n::ToggleFullAsciiTypes(HIRAGANA), FULL_ASCII);
+  EXPECT_EQ(T13n::ToggleFullAsciiTypes(FULL_ASCII), FULL_ASCII_UPPER);
+  EXPECT_EQ(T13n::ToggleFullAsciiTypes(FULL_ASCII_UPPER), FULL_ASCII_LOWER);
+  EXPECT_EQ(T13n::ToggleFullAsciiTypes(FULL_ASCII_LOWER),
+            FULL_ASCII_CAPITALIZED);
+  EXPECT_EQ(T13n::ToggleFullAsciiTypes(FULL_ASCII_CAPITALIZED), FULL_ASCII);
 }
 
 TEST(T13nTest, ToggleHalfAsciiTypes) {
-  EXPECT_EQ(HALF_ASCII, T13n::ToggleHalfAsciiTypes(HIRAGANA));
-  EXPECT_EQ(HALF_ASCII_UPPER, T13n::ToggleHalfAsciiTypes(HALF_ASCII));
-  EXPECT_EQ(HALF_ASCII_LOWER, T13n::ToggleHalfAsciiTypes(HALF_ASCII_UPPER));
-  EXPECT_EQ(HALF_ASCII_CAPITALIZED,
-            T13n::ToggleHalfAsciiTypes(HALF_ASCII_LOWER));
-  EXPECT_EQ(HALF_ASCII, T13n::ToggleHalfAsciiTypes(HALF_ASCII_CAPITALIZED));
+  EXPECT_EQ(T13n::ToggleHalfAsciiTypes(HIRAGANA), HALF_ASCII);
+  EXPECT_EQ(T13n::ToggleHalfAsciiTypes(HALF_ASCII), HALF_ASCII_UPPER);
+  EXPECT_EQ(T13n::ToggleHalfAsciiTypes(HALF_ASCII_UPPER), HALF_ASCII_LOWER);
+  EXPECT_EQ(T13n::ToggleHalfAsciiTypes(HALF_ASCII_LOWER),
+            HALF_ASCII_CAPITALIZED);
+  EXPECT_EQ(T13n::ToggleHalfAsciiTypes(HALF_ASCII_CAPITALIZED), HALF_ASCII);
 }
 
 }  // namespace transliteration

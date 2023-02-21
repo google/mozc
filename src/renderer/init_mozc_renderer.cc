@@ -27,73 +27,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/bitarray.h"
+#include "renderer/init_mozc_renderer.h"
 
-#include <iterator>
-#include <vector>
+#include <cstdlib>
 
-#include "testing/googletest.h"
-#include "testing/gunit.h"
-#include "absl/random/random.h"
+#include "base/crash_report_handler.h"
+#include "base/init_mozc.h"
+#include "base/run_level.h"
+#include "base/system_util.h"
+#include "config/stats_config_util.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
-namespace mozc {
-namespace {
+ABSL_DECLARE_FLAG(bool, restricted);
 
-TEST(BitArray, BitArraySizeTest) {
-  {
-    BitArray array(0);
-    EXPECT_EQ(array.size(), 0);
-    EXPECT_EQ(array.array_size(), 4);
+namespace mozc::renderer {
+
+void InitMozcRenderer(const char* argv0, int* argc, char*** argv) {
+  const mozc::RunLevel::RunLevelType run_level =
+      mozc::RunLevel::GetRunLevel(mozc::RunLevel::RENDERER);
+  if (run_level >= mozc::RunLevel::DENY) {
+    std::exit(-1);
   }
 
-  {
-    BitArray array(5);
-    EXPECT_EQ(array.size(), 5);
-    EXPECT_EQ(array.array_size(), 4);
-  }
+  mozc::SystemUtil::DisableIME();
 
-  {
-    BitArray array(32);
-    EXPECT_EQ(array.size(), 32);
-    EXPECT_EQ(array.array_size(), 8);
+  // restricted mode
+  if (run_level == mozc::RunLevel::RESTRICTED) {
+    absl::SetFlag(&FLAGS_restricted, true);
   }
-
-  {
-    BitArray array(100);
-    EXPECT_EQ(array.size(), 100);
-    EXPECT_EQ(array.array_size(), 16);
+  if (mozc::config::StatsConfigUtil::IsEnabled()) {
+    mozc::CrashReportHandler::Initialize(false);
   }
+  mozc::InitMozc(argv0, argc, argv);
 }
 
-TEST(BitArray, BitArrayTest) {
-  constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
-  absl::BitGen gen;
-
-  for (const size_t size : kBitArraySize) {
-    // set array
-    BitArray array(size);
-    EXPECT_EQ(array.size(), size);
-    std::vector<int> target(size);
-    for (size_t j = 0; j < size; ++j) {
-      const bool v = absl::Bernoulli(gen, 0.5);
-      if (v) {
-        target[j] = 1;
-        array.set(j);
-      } else {
-        target[j] = 0;
-        array.clear(j);
-      }
-    }
-
-    const char *data = array.array();
-
-    // verify
-    for (size_t j = 0; j < size; ++j) {
-      EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
-      EXPECT_EQ(array.get(j), (target[j] != 0));
-    }
-  }
-}
-
-}  // namespace
-}  // namespace mozc
+}  // namespace mozc::renderer

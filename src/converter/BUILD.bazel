@@ -289,9 +289,9 @@ mozc_cc_library(
     hdrs = ["segmenter.h"],
     deps = [
         ":node",
-        "//base:bitarray",
         "//base:logging",
         "//base:port",
+        "//base/container:bitarray",
         "//data_manager:data_manager_interface",
     ],
 )
@@ -635,12 +635,12 @@ mozc_cc_library(
     hdrs = ["gen_segmenter_bitarray.h"],
     visibility = ["//data_manager:__subpackages__"],
     deps = [
-        "//base:bitarray",
         "//base:file_stream",
         "//base:logging",
         "//base:port",
-        "//base:util",
+        "//base/container:bitarray",
         "//protocol:segmenter_data_cc_proto",
+        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
     ],

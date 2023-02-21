@@ -54,13 +54,13 @@
       'conditions': [
         ['OS=="mac"', {
           'sources': [
-            'mac_process.mm',
-            'mac_util.mm',
+            '../base/mac/mac_process.mm',
+            '../base/mac/mac_util.mm',
           ],
         }],
         ['target_platform=="iOS" and _toolset=="target"', {
           'sources!': [
-            'mac_process.mm',
+            '../base/mac/mac_process.mm',
             'process.cc',
           ],
           'link_settings': {
@@ -557,16 +557,6 @@
               '<(mac_breakpad_dir)',
             ],
           },
-        },
-        {
-          'target_name': 'mac_util_main',
-          'type': 'executable',
-          'sources': [
-            'mac_util_main.cc',
-          ],
-          'dependencies': [
-            'base',
-          ],
         },
       ]},
     ],

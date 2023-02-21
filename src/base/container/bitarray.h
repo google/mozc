@@ -27,14 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_BITARRAY_H_
-#define MOZC_BASE_BITARRAY_H_
+#ifndef MOZC_BASE_CONTAINER_BITARRAY_H_
+#define MOZC_BASE_CONTAINER_BITARRAY_H_
 
 #include <cstdint>
 #include <cstring>  // memset
 #include <memory>
-
-#include "base/port.h"
 
 namespace mozc {
 
@@ -43,13 +41,13 @@ class BitArray {
   // Specify the size of bit vector
   explicit BitArray(uint32_t size)
       : array_(new uint32_t[1 + (size >> 5)]), size_(size) {
-    memset(reinterpret_cast<char *>(array_.get()), 0, 4 * (1 + (size >> 5)));
+    memset(array_.get(), 0, sizeof(uint32_t) * (1 + (size >> 5)));
   }
 
   BitArray(const BitArray &) = delete;
   BitArray &operator=(const BitArray &) = delete;
 
-  ~BitArray() {}
+  ~BitArray() = default;
 
   // Gets true/false of |index|
   bool get(uint32_t index) const {
@@ -73,15 +71,16 @@ class BitArray {
   }
 
   // Returns the required buffer size for saving the bit vector.
-  size_t array_size() const { return 4 * (1 + (size_ >> 5)); }
+  constexpr size_t array_size() const {
+    return sizeof(uint32_t) * (1 + (size_ >> 5));
+  }
 
   // Returns the number of bit(s).
-  size_t size() const { return size_; }
+  constexpr size_t size() const { return size_; }
 
   // Immutable accessor.
-  static bool GetValue(const char *array, uint32_t index) {
-    const uint32_t *uarray = reinterpret_cast<const uint32_t *>(array);
-    return static_cast<bool>((uarray[(index >> 5)] >> (index & 0x0000001F)) &
+  constexpr static bool GetValue(const char *array, uint32_t index) {
+    return static_cast<bool>((array[(index >> 3)] >> (index & 0x00000007)) &
                              0x00000001);
   }
 
@@ -92,4 +91,4 @@ class BitArray {
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_BITARRAY_H_
+#endif  // MOZC_BASE_CONTAINER_BITARRAY_H_

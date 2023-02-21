@@ -50,7 +50,6 @@
 #include "testing/gunit.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -531,26 +530,6 @@ TEST(UtilTest, IsCapitalizedAscii) {
   EXPECT_FALSE(Util::IsCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-TEST(UtilTest, IsLowerOrUpperAscii) {
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii(""));
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii("hello"));
-  EXPECT_TRUE(Util::IsLowerOrUpperAscii("HELLO"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("Hello"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("HeLlO"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("symbol!"));
-  EXPECT_FALSE(Util::IsLowerOrUpperAscii("Ｈｅｌｌｏ"));
-}
-
-TEST(UtilTest, IsUpperOrCapitalizedAscii) {
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii(""));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("hello"));
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii("HELLO"));
-  EXPECT_TRUE(Util::IsUpperOrCapitalizedAscii("Hello"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("HeLlO"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("symbol!"));
-  EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
-}
-
 TEST(UtilTest, Utf8ToCodepoints) {
   {
     const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints("");
@@ -829,25 +808,35 @@ TEST(UtilTest, IsUtf16Bom) {
 }
 
 TEST(UtilTest, BracketTest) {
-  static const struct BracketType {
-    const char *open_bracket;
-    const char *close_bracket;
-  } kBracketType[] = {
-      {"（", "）"}, {"〔", "〕"}, {"［", "］"}, {"｛", "｝"},
-      {"〈", "〉"}, {"《", "》"}, {"「", "」"}, {"『", "』"},
-      {"【", "】"}, {"〘", "〙"}, {"〚", "〛"}, {nullptr, nullptr},  // sentinel
-  };
+  using BracketPair = std::pair<absl::string_view, absl::string_view>;
+  constexpr std::array<BracketPair, 16> kBracketType = {{
+      // {{, }} is necessary to initialize std::array.
+      {"（", "）"},
+      {"〔", "〕"},
+      {"［", "］"},
+      {"｛", "｝"},
+      {"〈", "〉"},
+      {"《", "》"},
+      {"「", "」"},
+      {"『", "』"},
+      {"【", "】"},
+      {"〘", "〙"},
+      {"〚", "〛"},
+      {"«", "»"},
+      {"‘", "’"},
+      {"“", "”"},
+      {"‹", "›"},
+      {"〝", "〟"},
+  }};
 
   std::string pair;
-  for (size_t i = 0; (kBracketType[i].open_bracket != nullptr ||
-                      kBracketType[i].close_bracket != nullptr);
-       ++i) {
-    EXPECT_TRUE(Util::IsOpenBracket(kBracketType[i].open_bracket, &pair));
-    EXPECT_EQ(pair, kBracketType[i].close_bracket);
-    EXPECT_TRUE(Util::IsCloseBracket(kBracketType[i].close_bracket, &pair));
-    EXPECT_EQ(pair, kBracketType[i].open_bracket);
-    EXPECT_FALSE(Util::IsOpenBracket(kBracketType[i].close_bracket, &pair));
-    EXPECT_FALSE(Util::IsCloseBracket(kBracketType[i].open_bracket, &pair));
+  for (const BracketPair &bracket : kBracketType) {
+    EXPECT_TRUE(Util::IsOpenBracket(bracket.first, &pair));
+    EXPECT_EQ(pair, bracket.second);
+    EXPECT_TRUE(Util::IsCloseBracket(bracket.second, &pair));
+    EXPECT_EQ(pair, bracket.first);
+    EXPECT_FALSE(Util::IsOpenBracket(bracket.second, &pair));
+    EXPECT_FALSE(Util::IsCloseBracket(bracket.first, &pair));
   }
 }
 
@@ -1249,17 +1238,6 @@ TEST(UtilTest, IsKanaSymbolContained) {
   EXPECT_FALSE(Util::IsKanaSymbolContained(""));
 }
 
-TEST(UtilTest, RandomSeedTest) {
-  Util::SetRandomSeed(0);
-  const int first_try = Util::Random(INT_MAX);
-  const int second_try = Util::Random(INT_MAX);
-  EXPECT_NE(first_try, second_try);
-
-  // Reset the seed.
-  Util::SetRandomSeed(0);
-  EXPECT_EQ(first_try, Util::Random(INT_MAX));
-}
-
 TEST(UtilTest, SplitFirstChar32) {
   absl::string_view rest;
   char32_t c = 0;
@@ -1637,17 +1615,6 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
     uint64_t v;
     EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }
-}
-
-TEST(UtilTest, GetRandomSequence) {
-  Util::GetRandomSequence({});
-
-  // Sufficiently large so it's highly unlikely to have only one value.
-  std::array<char, 256> buf = {};
-  Util::GetRandomSequence(absl::MakeSpan(buf));
-  const auto first = buf[0];
-  EXPECT_FALSE(std::all_of(buf.begin(), buf.end(),
-                           [first](char c) { return c != first; }));
 }
 
 }  // namespace mozc

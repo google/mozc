@@ -29,42 +29,37 @@
 
 #include <string>
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "ipc/ipc_path_manager.h"
-#include "absl/flags/flag.h"
-#include "absl/time/clock.h"
+#import "base/mac/mac_util.h"
 
-ABSL_FLAG(bool, client, false, "client mode");
-ABSL_FLAG(bool, server, false, "server mode");
-ABSL_FLAG(std::string, name, "test", "ipc name");
+#include "testing/gunit.h"
 
-// command line tool to check the behavior of IPCPathManager
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
+namespace mozc {
 
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
-  CHECK(manager);
-
-  std::string path;
-
-  if (absl::GetFlag(FLAGS_client)) {
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    return 0;
-  }
-
-  if (absl::GetFlag(FLAGS_server)) {
-    CHECK(manager->CreateNewPathName());
-    CHECK(manager->SavePathName());
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    absl::SleepFor(absl::Seconds(30));
-    return 0;
-  }
-
-  LOG(INFO) << "use --client or --server";
-  return 0;
+TEST(MacUtil, GetSerialNumber) {
+  const std::string serial1 = MacUtil::GetSerialNumber();
+  const std::string serial2 = MacUtil::GetSerialNumber();
+  // In this scenario, serial numbers should not be empty.
+  EXPECT_FALSE(serial1.empty());
+  EXPECT_EQ(serial1, serial2);
 }
+
+#ifndef OS_IOS
+TEST(MacUtil, IsSuppressSuggestionWindow) {
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", "Test"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", "Test"));
+
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Google", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Firefox"));
+}
+#endif  // OS_IOS
+
+}  // namespace mozc

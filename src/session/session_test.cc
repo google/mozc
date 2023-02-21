@@ -497,23 +497,23 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
   // Though the method name asserts "ToPrecomposition",
   // this method doesn't change session's state.
   void InitSessionToPrecomposition(Session *session) {
-#ifdef OS_WIN
+#ifdef _WIN32
     // Session is created with direct mode on Windows
     // Direct status
     commands::Command command;
     session->IMEOn(&command);
-#endif  // OS_WIN
+#endif  // _WIN32
     InitSessionWithRequest(session, GetParam());
   }
 
   void InitSessionToPrecomposition(Session *session,
                                    const commands::Request &request) {
-#ifdef OS_WIN
+#ifdef _WIN32
     // Session is created with direct mode on Windows
     // Direct status
     commands::Command command;
     session->IMEOn(&command);
-#endif  // OS_WIN
+#endif  // _WIN32
     InitSessionWithRequest(session, request);
   }
 
@@ -2023,11 +2023,11 @@ TEST_P(SessionTest, UpdatePreferences) {
   const size_t cascading_cand_size =
       command.output().candidates().candidate_size();
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
+#if defined(__linux__) || defined(__ANDROID__) || __wasm__
   EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
-#else   // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
+#else   // defined(__linux__) || defined(__ANDROID__) || __wasm__
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
-#endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
+#endif  // defined(__linux__) || defined(__ANDROID__) || __wasm__
 
   command.Clear();
   session.ConvertCancel(&command);
@@ -2212,7 +2212,7 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2222,13 +2222,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // OS_LINUX || OS_ANDROID || OS_WASM
+#else   // __linux__ || __ANDROID__ || __wasm__
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
   }
 
   command.Clear();
@@ -2240,7 +2240,7 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 1);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
+#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2250,13 +2250,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // OS_LINUX || OS_ANDROID || OS_WASM
+#else   // __linux__ || __ANDROID__ || __wasm__
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // __linux__ || __ANDROID__ || __wasm__
   }
 }
 
@@ -6445,7 +6445,7 @@ TEST_P(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 TEST_P(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
-#ifdef OS_WIN
+#ifdef _WIN32
   config::Config config;
   const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
@@ -6467,7 +6467,7 @@ TEST_P(SessionTest, SendKeyDirectInputStateTest) {
   EXPECT_TRUE(SendKey("Hiragana", &session, &command));
   EXPECT_TRUE(SendKey("a", &session, &command));
   EXPECT_SINGLE_SEGMENT("あ", command);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST_P(SessionTest, HandlingDirectInputTableAttribute) {
@@ -6602,7 +6602,7 @@ TEST_P(SessionTest, InputModeConsumed) {
 TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
   // This test is only for Windows, because InputModeHiragana bound
   // with Hiragana key is only supported on Windows yet.
-#ifdef OS_WIN
+#ifdef _WIN32
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
@@ -6621,7 +6621,7 @@ TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
   commands::Command command;
   EXPECT_TRUE(TestSendKey("Hiragana", &session, &command));
   EXPECT_TRUE(command.output().consumed());
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 TEST_P(SessionTest, InputModeOutputHasComposition) {
@@ -7697,10 +7697,10 @@ TEST_P(SessionTest, CommitCandidateT13N) {
   SendKey("k", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   int id = 0;
-#if defined(OS_WIN) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__APPLE__)
   // meta candidates are in cascading window
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
-#else   // OS_WIN, __APPLE__
+#else   // _WIN32, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
@@ -7713,7 +7713,7 @@ TEST_P(SessionTest, CommitCandidateT13N) {
   EXPECT_RESULT("TOK", command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_EQ(command.output().preedit().cursor(), 0);
-#endif  // OS_WIN, __APPLE__
+#endif  // _WIN32, __APPLE__
 }
 
 TEST_P(SessionTest, RequestConvertReverse) {

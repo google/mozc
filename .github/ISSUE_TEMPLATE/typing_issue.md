@@ -1,14 +1,14 @@
 ---
 name: Typing issue
 about: Out-of-vocabulary, ranking issues, etc.
-title: ''
+title: 'Typing issue: '
 labels: ''
 assignees: ''
 
 ---
 
 **Category of the typing issue**
-Choose one of them
+Choose one of them (delete rest of them)
 1. Out-of-vocabulary (e.g. "夕日" is not in the candidate list at all).
 2. Word ranking issue (e.g. "夕日" is in the list, but ranking is lower than expected).
 3. Conversion issue (e.g. "夕日がきれい" is not converted as expected).

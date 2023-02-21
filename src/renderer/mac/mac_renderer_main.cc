@@ -27,29 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_MAC_PROCESS_H_
-#define MOZC_BASE_MAC_PROCESS_H_
+// Mozc renderer process for MacOS.
 
-#include <string>
-
-#include "absl/strings/string_view.h"
-
+// TODO(b/110808149): Remove the ifdefs when we support cross-platform builds.
 #ifdef __APPLE__
-namespace mozc {
-class MacProcess {
- public:
-  // Open a browser in mac way using NSFoundation framework.
-  static bool OpenBrowserForMac(absl::string_view url);
+#include "renderer/init_mozc_renderer.h"
+#include "renderer/mac/CandidateController.h"
+#include "renderer/mac/mac_server.h"
+#include "renderer/mac/mac_server_send_command.h"
 
-  // Open an application in mac way using NSWorkspace.
-  static bool OpenApplication(absl::string_view path);
+int main(int argc, char* argv[]) {
+  mozc::renderer::InitMozcRenderer(argv[0], &argc, &argv);
 
-  // Open GoogleJapaneseInputTool.app as the specified tool name.
-  static bool LaunchMozcTool(const std::string &tool_name);
+  mozc::renderer::mac::MacServer::Init();
+  mozc::renderer::mac::MacServer server(argc, (const char**)argv);
+  mozc::renderer::mac::CandidateController renderer;
+  mozc::renderer::mac::MacServerSendCommand send_command;
+  server.SetRendererInterface(&renderer);
+  renderer.SetSendCommandInterface(&send_command);
+  return server.StartServer();
+}
+#else  // __APPLE__
 
-  // Open GoogleJapaneseInputTool.app as the error message dialog.
-  static bool LaunchErrorMessageDialog(const std::string &error_type);
-};
-}  // namespace mozc
+int main() { return 1; }
+
 #endif  // __APPLE__
-#endif  // MOZC_BASE_MAC_PROCESS_H_

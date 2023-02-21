@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "base/init_mozc.h"
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #include "base/util.h"
 #include "absl/flags/flag.h"
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
       std::cout << "pid: " << pid << std::endl;
     }
   }
-#else
+#else   // __APPLE__
   std::cout << "This command works on macOS or iOS only." << std::endl;
 #endif  // __APPLE__
 

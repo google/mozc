@@ -27,44 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
+// Mozc renderer process with Qt.
 
-#include "base/init_mozc.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "ipc/ipc_path_manager.h"
-#include "absl/flags/flag.h"
-#include "absl/time/clock.h"
+#include "renderer/init_mozc_renderer.h"
+#include "renderer/qt/qt_server.h"
 
-ABSL_FLAG(bool, client, false, "client mode");
-ABSL_FLAG(bool, server, false, "server mode");
-ABSL_FLAG(std::string, name, "test", "ipc name");
+int main(int argc, char* argv[]) {
+  mozc::renderer::InitMozcRenderer(argv[0], &argc, &argv);
 
-// command line tool to check the behavior of IPCPathManager
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-
-  mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
-  CHECK(manager);
-
-  std::string path;
-
-  if (absl::GetFlag(FLAGS_client)) {
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    return 0;
-  }
-
-  if (absl::GetFlag(FLAGS_server)) {
-    CHECK(manager->CreateNewPathName());
-    CHECK(manager->SavePathName());
-    CHECK(manager->GetPathName(&path));
-    LOG(INFO) << "PathName: " << path;
-    absl::SleepFor(absl::Seconds(30));
-    return 0;
-  }
-
-  LOG(INFO) << "use --client or --server";
-  return 0;
+  mozc::renderer::QtServer server;
+  return server.StartServer(argc, argv);
 }

@@ -33,7 +33,7 @@
 
 #include "absl/flags/flag.h"
 #ifdef __APPLE__
-#include "base/mac_util.h"
+#include "base/mac/mac_util.h"
 #endif  // __APPLE__
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
