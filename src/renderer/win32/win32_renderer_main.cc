@@ -29,8 +29,8 @@
 
 // Mozc renderer process for win32.
 
-#include "base/win_util.h"
-#include "base/winmain.h"
+#include "base/win32/win_util.h"
+#include "base/win32/winmain.h"
 #include "renderer/init_mozc_renderer.h"
 #include "renderer/win32/win32_server.h"
 
