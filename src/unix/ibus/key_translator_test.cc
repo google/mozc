@@ -150,15 +150,15 @@ TEST_F(KeyTranslatorTest, TranslateAscii) {
       translator_->Translate(0x20, 0, 0, config::Config::ROMAN, true, &out));
   EXPECT_FALSE(out.has_key_code());
   EXPECT_TRUE(out.has_special_key());
-  EXPECT_EQ(0, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 0);
 
   for (char c = 0x21; c < 0x7f; ++c) {
     EXPECT_TRUE(
         translator_->Translate(c, 0, 0, config::Config::ROMAN, true, &out));
     EXPECT_TRUE(out.has_key_code());
     EXPECT_FALSE(out.has_special_key());
-    EXPECT_EQ(c, out.key_code());
-    EXPECT_EQ(0, out.modifier_keys_size());
+    EXPECT_EQ(out.key_code(), c);
+    EXPECT_EQ(out.modifier_keys_size(), 0);
   }
 }
 
@@ -169,8 +169,8 @@ TEST_F(KeyTranslatorTest, TranslateSpecial) {
                                        config::Config::ROMAN, true, &out));
     EXPECT_FALSE(out.has_key_code());
     EXPECT_TRUE(out.has_special_key());
-    EXPECT_EQ(kSpecialKeys[i].mozc_key, out.special_key());
-    EXPECT_EQ(0, out.modifier_keys_size());
+    EXPECT_EQ(out.special_key(), kSpecialKeys[i].mozc_key);
+    EXPECT_EQ(out.modifier_keys_size(), 0);
   }
 
   // Check Hiragana_Katakana local hack. The detail is described in
@@ -179,8 +179,8 @@ TEST_F(KeyTranslatorTest, TranslateSpecial) {
                                      config::Config::ROMAN, true, &out));
   EXPECT_FALSE(out.has_key_code());
   ASSERT_TRUE(out.has_special_key());
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  EXPECT_EQ(0, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  EXPECT_EQ(out.modifier_keys_size(), 0);
 }
 
 TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
@@ -190,25 +190,25 @@ TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
   // C-F1
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_CONTROL_MASK,
                                      config::Config::ROMAN, true, &out));
-  ASSERT_EQ(1, out.modifier_keys_size());
+  ASSERT_EQ(out.modifier_keys_size(), 1);
 
   // C-a
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_CONTROL_MASK,
                                      config::Config::ROMAN, true, &out));
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // SHIFT modifier
   // S-F1
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_SHIFT_MASK,
                                      config::Config::ROMAN, true, &out));
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // S-a
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_SHIFT_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(0, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 0);
 
   // S-0
   // TODO(nona): Resolve Shift-0 problem (b/4338394)
@@ -222,14 +222,14 @@ TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
   // M-F1
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, IBUS_MOD1_MASK,
                                      config::Config::ROMAN, true, &out));
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 
   // M-a
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', IBUS_MOD1_MASK,
                                      config::Config::ROMAN, true, &out));
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 }
 
 TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
@@ -241,7 +241,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_CONTROL_MASK | IBUS_SHIFT_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -249,7 +249,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_CONTROL_MASK | IBUS_SHIFT_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -258,7 +258,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_CONTROL_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -266,7 +266,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_CONTROL_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -275,7 +275,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -283,7 +283,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
 
@@ -292,7 +292,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_F1, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(3, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 3);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
@@ -301,7 +301,7 @@ TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_A, 'a', modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(3, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 3);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
@@ -317,67 +317,67 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithSingleModifierTest) {
                                      config::Config::ROMAN, true, &out));
   EXPECT_FALSE(out.has_key_code());
   ASSERT_TRUE(out.has_special_key());
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  EXPECT_EQ(0, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  EXPECT_EQ(out.modifier_keys_size(), 0);
 
   // C-Hiragana_Katakana
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0,
                                      IBUS_CONTROL_MASK, config::Config::ROMAN,
                                      true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // M-Hiragana_Katakana
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, IBUS_MOD1_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 
   // Hiragana_Katakana handling should have no effect into Hiragana key or
   // Katakana key.
   // S-Hiragana
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_SHIFT_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // C-Hiragana
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_CONTROL_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // M-Hiragana
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, IBUS_MOD1_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 
   // S-Katakana
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_SHIFT_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // C-Katakana
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_CONTROL_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // M-Katakana
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, IBUS_MOD1_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 }
 
 TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
@@ -390,24 +390,24 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // M-S-Hiragana_Katakana
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 
   // C-M-Hiragana_Katakana
   modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 
@@ -415,8 +415,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  EXPECT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  EXPECT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 
@@ -426,8 +426,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 
@@ -435,8 +435,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 
@@ -444,8 +444,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 
@@ -453,8 +453,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Hiragana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KANA, out.special_key());
-  EXPECT_EQ(3, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KANA);
+  EXPECT_EQ(out.modifier_keys_size(), 3);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
@@ -463,8 +463,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 
@@ -472,8 +472,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 
@@ -481,8 +481,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  ASSERT_EQ(2, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  ASSERT_EQ(out.modifier_keys_size(), 2);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
 
@@ -490,8 +490,8 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   modifier = IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_CONTROL_MASK;
   EXPECT_TRUE(translator_->Translate(IBUS_Katakana, 0, modifier,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(commands::KeyEvent::KATAKANA, out.special_key());
-  EXPECT_EQ(3, out.modifier_keys_size());
+  EXPECT_EQ(out.special_key(), commands::KeyEvent::KATAKANA);
+  EXPECT_EQ(out.modifier_keys_size(), 3);
   IsContained(commands::KeyEvent::CTRL, out.modifier_keys());
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
   IsContained(commands::KeyEvent::ALT, out.modifier_keys());
@@ -503,7 +503,7 @@ TEST_F(KeyTranslatorTest, MultipleShiftKeysTest) {
   // Hit Shift_L with shift modifier (typically Shift_R).
   EXPECT_TRUE(translator_->Translate(IBUS_Shift_L, 0, IBUS_SHIFT_MASK,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
+  EXPECT_EQ(out.modifier_keys_size(), 1);
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 }
 
@@ -543,43 +543,43 @@ TEST_F(KeyTranslatorTest, TranslateModiferOnly) {
   // Just tap left_shift key
   EXPECT_TRUE(translator_->Translate(IBUS_Shift_L, 0, 0, config::Config::ROMAN,
                                      true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // Just tap right_shift key
   out.Clear();
   EXPECT_TRUE(translator_->Translate(IBUS_Shift_R, 0, 0, config::Config::ROMAN,
                                      true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::SHIFT);
 
   // Just tap left_ctrl key
   out.Clear();
   EXPECT_TRUE(translator_->Translate(IBUS_Control_L, 0, 0,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // Just tap right_ctrl key
   out.Clear();
   EXPECT_TRUE(translator_->Translate(IBUS_Control_R, 0, 0,
                                      config::Config::ROMAN, true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::CTRL);
 
   // Just tap left_alt key
   out.Clear();
   EXPECT_TRUE(translator_->Translate(IBUS_Alt_L, 0, 0, config::Config::ROMAN,
                                      true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 
   // Just tap right_alt key
   out.Clear();
   EXPECT_TRUE(translator_->Translate(IBUS_Alt_R, 0, 0, config::Config::ROMAN,
                                      true, &out));
-  EXPECT_EQ(1, out.modifier_keys_size());
-  EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
+  EXPECT_EQ(out.modifier_keys_size(), 1);
+  EXPECT_EQ(out.modifier_keys(0), commands::KeyEvent::ALT);
 }
 
 }  // namespace ibus
