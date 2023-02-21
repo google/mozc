@@ -145,19 +145,19 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
 
   if (segments->resized()) {
     ResizeOrInsert(segments, request, INSERT);
-#ifdef OS_ANDROID
+#ifdef __ANDROID__
     // TODO(hidehiko): UsageStats requires some functionalities, e.g. network,
     // which are not needed for mozc's main features.
     // So, to focus on the main features' developping, we just skip it for now.
     // Note: we can #ifdef inside SetInteger, but to build it we need to build
     // other methods in usage_stats as well. So we'll exclude the method here
     // for now.
-#else   // OS_ANDROID
+#else   // __ANDROID__
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
         "UserBoundaryHistoryEntrySize",
         static_cast<int>(storage_->used_size()));
-#endif  // OS_ANDROID
+#endif  // __ANDROID__
   }
 }
 

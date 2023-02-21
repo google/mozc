@@ -28,18 +28,18 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <windows.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 using ssize_t = SSIZE_T;
-#else  // OS_WIN
+#else  // _WIN32
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // _WIN32
 
 #include <cstddef>
 #include <cstring>
@@ -92,9 +92,9 @@ bool Recv(int socket, char *buf, size_t buf_size, int timeout) {
 bool Send(int socket, const char *buf, size_t buf_size, int timeout) {
   ssize_t buf_left = buf_size;
   while (buf_left > 0) {
-#if defined(OS_WIN)
+#if defined(_WIN32)
     constexpr int kFlag = 0;
-#elif defined(__APPLE__)  // defined(OS_WIN)
+#elif defined(__APPLE__)  // defined(_WIN32)
     constexpr int kFlag = SO_NOSIGPIPE;
 #else                     // defined(__APPLE__)
     constexpr int kFlag = MSG_NOSIGNAL;
@@ -111,13 +111,13 @@ bool Send(int socket, const char *buf, size_t buf_size, int timeout) {
 }
 
 void CloseSocket(int client_socket) {
-#ifdef OS_WIN
+#ifdef _WIN32
   ::closesocket(client_socket);
   ::shutdown(client_socket, SD_BOTH);
-#else   // OS_WIN
+#else   // _WIN32
   ::close(client_socket);
   ::shutdown(client_socket, SHUT_RDWR);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 // Standalone RPCServer.
@@ -134,13 +134,13 @@ class RPCServer {
 
     CHECK_NE(server_socket_, kInvalidSocket) << "socket failed";
 
-#ifndef OS_WIN
+#ifndef _WIN32
     int flags = ::fcntl(server_socket_, F_GETFD, 0);
     CHECK_GE(flags, 0) << "fcntl(F_GETFD) failed";
     flags |= FD_CLOEXEC;
     CHECK_EQ(::fcntl(server_socket_, F_SETFD, flags), 0)
         << "fctl(F_SETFD) failed";
-#endif  // !OS_WIN
+#endif  // !_WIN32
 
     ::memset(&sin, 0, sizeof(sin));
     sin.sin_port = htons(absl::GetFlag(FLAGS_port));
@@ -334,15 +334,15 @@ class RPCClient {
 class ScopedWSAData {
  public:
   ScopedWSAData() {
-#ifdef OS_WIN
+#ifdef _WIN32
     WSADATA wsaData;
     CHECK_EQ(::WSAStartup(MAKEWORD(2, 1), &wsaData), 0) << "WSAStartup failed";
-#endif  // OS_WIN
+#endif  // _WIN32
   }
   ~ScopedWSAData() {
-#ifdef OS_WIN
+#ifdef _WIN32
     ::WSACleanup();
-#endif  // OS_WIN
+#endif  // _WIN32
   }
 };
 }  // namespace

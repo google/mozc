@@ -223,22 +223,22 @@ void Session::InitContext(ImeContext *context) const {
       &context->GetConfig()));
   context->set_converter(std::make_unique<SessionConverter>(
       engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
-#ifdef OS_WIN
+#ifdef _WIN32
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
   context->set_state(ImeContext::DIRECT);
-#else   // OS_WIN
+#else   // _WIN32
   context->set_state(ImeContext::PRECOMPOSITION);
-#endif  // OS_WIN
+#endif  // _WIN32
   context->mutable_client_context()->Clear();
 
   context->SetConfig(&context->GetConfig());
   context->SetKeyMapManager(&context->GetKeyMapManager());
 
-#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_LINUX) || \
-    defined(OS_WASM)
+#if defined(__ANDROID__) || defined(OS_IOS) || defined(__linux__) || \
+    defined(__wasm__)
   context->mutable_converter()->set_use_cascading_window(false);
-#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_WASM
+#endif  // __ANDROID__ || OS_IOS || __linux__ || __wasm__
 }
 
 void Session::PushUndoContext() {
@@ -971,15 +971,15 @@ void Session::UpdatePreferences(commands::Command *command) {
         config.selection_shortcut());
   }
 
-#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_LINUX) || \
-    defined(OS_WASM)
+#if defined(__ANDROID__) || defined(OS_IOS) || defined(__linux__) || \
+    defined(__wasm__)
   context_->mutable_converter()->set_use_cascading_window(false);
-#else   // OS_LINUX || OS_ANDROID || OS_WASM
+#else   // __linux__ || __ANDROID__ || __wasm__
   if (config.has_use_cascading_window()) {
     context_->mutable_converter()->set_use_cascading_window(
         config.use_cascading_window());
   }
-#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_WASM
+#endif  // __ANDROID__ || OS_IOS || __linux__ || __wasm__
 }
 
 bool Session::IMEOn(commands::Command *command) {

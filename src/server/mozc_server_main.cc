@@ -28,9 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/port.h"
-#ifdef OS_WIN
+#ifdef _WIN32
 #include "base/win32/winmain.h"
-#endif  // OS_WIN
+#endif  // _WIN32
 #include "server/mozc_server.h"
 
 int main(int argc, char* argv[]) {

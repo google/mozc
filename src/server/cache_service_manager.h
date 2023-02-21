@@ -30,7 +30,7 @@
 #ifndef MOZC_SERVER_CACHE_SERVICE_MANAGER_H_
 #define MOZC_SERVER_CACHE_SERVICE_MANAGER_H_
 
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <stdio.h>
 #include <string>
 
@@ -103,5 +103,5 @@ class CacheServiceManager {
   ~CacheServiceManager() {}
 };
 }  // namespace mozc
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_SERVER_CAC_SERVICE_MANAGER_H_

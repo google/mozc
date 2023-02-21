@@ -107,16 +107,16 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   // Here, we want to kill the session only when the target thread/process
   // are terminated with 100% probability. Otherwise, it's better to do
   // nothing to prevent any side effects.
-#ifdef OS_WIN
+#ifdef _WIN32
   if (info.has_thread_id()) {
     return Process::IsThreadAlive(static_cast<size_t>(info.thread_id()), true);
   }
-#else   // OS_WIN
+#else   // _WIN32
   if (info.has_process_id()) {
     return Process::IsProcessAlive(static_cast<size_t>(info.process_id()),
                                    true);
   }
-#endif  // OS_WIN
+#endif  // _WIN32
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
 }

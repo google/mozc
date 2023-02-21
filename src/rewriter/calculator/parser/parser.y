@@ -6,7 +6,7 @@
 
 %include {
 #include <assert.h>
-#ifdef OS_WIN
+#ifdef _WIN32
 #include <float.h>
 #endif
 #include <string.h>

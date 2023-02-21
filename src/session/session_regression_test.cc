@@ -79,12 +79,12 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 void InitSessionToPrecomposition(session::Session *session) {
-#ifdef OS_WIN
+#ifdef _WIN32
   // Session is created with direct mode on Windows
   // Direct status
   commands::Command command;
   session->IMEOn(&command);
-#endif  // OS_WIN
+#endif  // _WIN32
 }
 
 }  // namespace

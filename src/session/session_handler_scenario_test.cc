@@ -189,11 +189,11 @@ const char *kUsageStatsScenarioFileList[] = {
     DATA_DIR "select_minor_prediction.txt",
     DATA_DIR "select_prediction.txt",
     DATA_DIR "select_t13n_by_key.txt",
-#if !defined(OS_LINUX) && !defined(OS_ANDROID)
+#if !defined(__linux__) && !defined(__ANDROID__)
     // This test requires cascading window.
     // TODO(hsumita): Removes this ifndef block.
     DATA_DIR "select_t13n_on_cascading_window.txt",
-#endif  // !OS_LINUX && !OS_ANDROID
+#endif  // !__linux__ && !__ANDROID__
     DATA_DIR "suggestion.txt",
     DATA_DIR "switch_kana_type.txt",
     DATA_DIR "zero_query_suggestion.txt",
