@@ -52,6 +52,7 @@
       'dependencies': [
         '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
+        'bit_stream',
         'louds',
         'simple_succinct_bit_vector_index',
       ],
@@ -78,6 +79,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        'bit_stream',
         'simple_succinct_bit_vector_index',
       ],
     },

@@ -30,17 +30,19 @@
 #include "storage/louds/louds_trie_builder.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "storage/louds/bit_stream.h"
 
 namespace mozc {
 namespace storage {
 namespace louds {
+
+using internal::PushInt32;
 
 LoudsTrieBuilder::LoudsTrieBuilder() : built_(false) {}
 
@@ -78,16 +80,6 @@ class EntryLengthLessThan {
   size_t length_;
 };
 
-void PushInt(size_t value, std::string *image) {
-  // Make sure the value is fit in the 32-bit value.
-  CHECK_EQ(value & ~0xFFFFFFFF, 0);
-
-  // Output LSB to MSB.
-  image->push_back(static_cast<char>(value & 0xFF));
-  image->push_back(static_cast<char>((value >> 8) & 0xFF));
-  image->push_back(static_cast<char>((value >> 16) & 0xFF));
-  image->push_back(static_cast<char>((value >> 24) & 0xFF));
-}
 }  // namespace
 
 void LoudsTrieBuilder::Build() {
@@ -199,11 +191,11 @@ void LoudsTrieBuilder::Build() {
   terminal_stream.FillPadding32();
 
   // Output
-  PushInt(trie_stream.ByteSize(), &image_);
-  PushInt(terminal_stream.ByteSize(), &image_);
-  // The num bits of each character annoated to each edge.
-  PushInt(8, &image_);
-  PushInt(edge_character.size(), &image_);
+  PushInt32(trie_stream.ByteSize(), image_);
+  PushInt32(terminal_stream.ByteSize(), image_);
+  // The num bits of each character annotated to each edge.
+  PushInt32(8, image_);
+  PushInt32(edge_character.size(), image_);
 
   image_.append(trie_stream.image());
   image_.append(terminal_stream.image());

@@ -29,11 +29,15 @@
 
 #include "storage/louds/bit_stream.h"
 
+#include <cstdint>
+#include <iterator>
+#include <string>
+
 #include "testing/gunit.h"
+#include "absl/strings/str_cat.h"
 
+namespace mozc::storage::louds::internal {
 namespace {
-
-using ::mozc::storage::louds::BitStream;
 
 class BitStreamTest : public ::testing::Test {};
 
@@ -74,4 +78,33 @@ TEST_F(BitStreamTest, FillPadding32) {
   EXPECT_EQ(bit_stream.image(), std::string("\x01\x00\x00\x00", 4));
 }
 
+TEST_F(BitStreamTest, PushInt32) {
+  std::string image;
+  std::string expected = std::string(4, '\x00');
+  PushInt32(0, image);
+  EXPECT_EQ(image, expected);
+
+  absl::StrAppend(&expected, std::string(4, '\xff'));
+
+  PushInt32(0xffffffff, image);
+  EXPECT_EQ(image, expected);
+
+  absl::StrAppend(&expected, "\x78\x56\x34\x12");
+  PushInt32(0x12345678, image);
+  EXPECT_EQ(image, expected);
+}
+
+TEST_F(BitStreamTest, ReadInt32) {
+  constexpr uint8_t kTestData[][sizeof(uint32_t)] = {
+      {0, 0, 0, 0},
+      {0xff, 0xff, 0xff, 0xff},
+      {0x78, 0x56, 0x34, 0x12},
+  };
+  constexpr uint32_t kExpected[] = {0, 0xffffffff, 0x12345678};
+  for (int i = 0; i < std::size(kTestData); ++i) {
+    EXPECT_EQ(ReadInt32(kTestData[i]), kExpected[i]);
+  }
+}
+
 }  // namespace
+}  // namespace mozc::storage::louds::internal

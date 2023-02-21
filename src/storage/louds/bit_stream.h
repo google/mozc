@@ -30,9 +30,10 @@
 #ifndef MOZC_STORAGE_LOUDS_BIT_STREAM_H_
 #define MOZC_STORAGE_LOUDS_BIT_STREAM_H_
 
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <string>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace storage {
@@ -42,8 +43,8 @@ namespace louds {
 class BitStream {
  public:
   BitStream();
-  BitStream(const BitStream&) = delete;
-  BitStream& operator=(const BitStream&) = delete;
+  BitStream(const BitStream &) = delete;
+  BitStream &operator=(const BitStream &) = delete;
 
   const std::string &image() const { return image_; }
   size_t num_bits() const { return num_bits_; }
@@ -58,6 +59,18 @@ class BitStream {
   std::string image_;
   size_t num_bits_;
 };
+
+namespace internal {
+
+void PushInt32(size_t value, std::string &image);
+
+inline int32_t ReadInt32(const uint8_t *data) {
+  int32_t tmp;
+  memcpy(&tmp, data, sizeof(tmp));
+  return tmp;
+}
+
+}  // namespace internal
 
 }  // namespace louds
 }  // namespace storage

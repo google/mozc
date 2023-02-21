@@ -29,10 +29,11 @@
 
 #include "storage/louds/louds_trie.h"
 
+#include <cstddef>
 #include <cstdint>
 
 #include "base/logging.h"
-#include "base/port.h"
+#include "storage/louds/bit_stream.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/strings/string_view.h"
@@ -41,12 +42,7 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-namespace {
-inline int32_t ReadInt32(const uint8_t *data) {
-  // TODO(noriyukit): static assertion for the endian.
-  return *reinterpret_cast<const int32_t *>(data);
-}
-}  // namespace
+using internal::ReadInt32;
 
 bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
                      size_t louds_lb1_cache_size,
