@@ -145,6 +145,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/numeric:bits",
     ],
 )
 

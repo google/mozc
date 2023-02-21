@@ -37,6 +37,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/base/internal/endian.h"
+#include "absl/numeric/bits.h"
 
 namespace mozc {
 namespace storage {
@@ -81,37 +82,16 @@ class ZeroBitIndexIterator {
   const int *ptr_;
 };
 
-#ifdef __GNUC__
-// TODO(hidehiko): Support XMM and 64-bits popcount for 64bits architectures.
-inline int BitCount1(uint32_t x) { return __builtin_popcount(x); }
-#else   // __GNUC__
-int BitCount1(uint32_t x) {
-  x = ((x & 0xaaaaaaaa) >> 1) + (x & 0x55555555);
-  x = ((x & 0xcccccccc) >> 2) + (x & 0x33333333);
-  x = ((x >> 4) + x) & 0x0f0f0f0f;
-  x = (x >> 8) + x;
-  x = ((x >> 16) + x) & 0x3f;
-  return x;
-}
-#endif  // __GNUC__
-
 inline int BitCount0(uint32_t x) {
   // Flip all bits, and count 1-bits.
-  return BitCount1(~x);
+  return absl::popcount(~x);
 }
 
-inline bool IsPowerOfTwo(int value) {
-  // value & -value is the well-known idiom to take the lowest 1-bit in
-  // value, so value & ~(value & -value) clears the lowest 1-bit in value.
-  // If the result is 0, value has only one 1-bit i.e. it is power of two.
-  return value != 0 && (value & ~(value & -value)) == 0;
-}
-
-// Returns 1-bits in the data[0] ... data[length - 1].
+// Returns 1-bits in the data to length words.
 int Count1Bits(const uint8_t *data, int length) {
   int num_bits = 0;
   for (; length > 0; data += 4, --length) {
-    num_bits += BitCount1(absl::little_endian::Load32(data));
+    num_bits += absl::popcount(absl::little_endian::Load32(data));
   }
   return num_bits;
 }
@@ -120,7 +100,7 @@ int Count1Bits(const uint8_t *data, int length) {
 void InitIndex(const uint8_t *data, int length, int chunk_size,
                std::vector<int> *index) {
   DCHECK_GE(chunk_size, 4);
-  DCHECK(IsPowerOfTwo(chunk_size)) << chunk_size;
+  DCHECK(absl::has_single_bit<uint32_t>(chunk_size)) << chunk_size;
   DCHECK_EQ(length % 4, 0);
 
   index->clear();
@@ -229,7 +209,8 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   if (n % 32 > 0) {
     const int offset = 4 * (n / 32);
     const int shift = 32 - n % 32;
-    result += BitCount1(absl::little_endian::Load32(data_ + offset) << shift);
+    result +=
+        absl::popcount((absl::little_endian::Load32(data_ + offset) << shift));
   }
 
   return result;
@@ -301,7 +282,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   const int offset = (chunk_index * chunk_size_) & ~int{3};
   const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = BitCount1(absl::little_endian::Load32(ptr));
+    const int bit_count = absl::popcount(absl::little_endian::Load32(ptr));
     if (bit_count >= n) {
       break;
     }
