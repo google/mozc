@@ -47,7 +47,7 @@
 #include "renderer/unix/window_manager.h"
 
 int main(int argc, char* argv[]) {
-  mozc::renderer::internal::InitMozcRenderer(argv[0], &argc, &argv);
+  mozc::renderer::InitMozcRenderer(argv[0], &argc, &argv);
 
   gtk_set_locale();
 #if !GLIB_CHECK_VERSION(2, 31, 0)
