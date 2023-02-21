@@ -50,6 +50,7 @@
 #endif  // !_WIN32
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <cstdarg>
 #include <cstddef>
@@ -69,7 +70,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/algorithm/container.h"
-#include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/random/random.h"
 #include "absl/strings/ascii.h"
@@ -861,74 +861,78 @@ void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
 
-// A bidirectional map between opening and closing brackets as a sorted array.
-// NOTE: This array is sorted in order of both |open| and |close|.  If you add a
-// new bracket pair, you must keep this property.
-using BracketPair = std::pair<absl::string_view, absl::string_view>;
-constexpr BracketPair kSortedBracketPairs[] = {
-    {"(", ")"},    // U+0028 U+0029
-    {"[", "]"},    // U+005B U+005D
-    {"{", "}"},    // U+007B U+007D
-    {"«", "»"},    // U+00AB U+00BB
-    {"‘", "’"},    // U+2018 U+2019
-    {"“", "”"},    // U+201C U+201D
-    {"‹", "›"},    // U+2039 U+203A
-    {"〈", "〉"},  // U+3008 U+3009
-    {"《", "》"},  // U+300A U+300B
-    {"「", "」"},  // U+300C U+300D
-    {"『", "』"},  // U+300E U+300F
-    {"【", "】"},  // U+3010 U+3011
-    {"〔", "〕"},  // U+3014 U+3015
-    {"〘", "〙"},  // U+3018 U+3019
-    {"〚", "〛"},  // U+301A U+301B
-    {"〝", "〟"},  // U+301D U+301F
-    {"（", "）"},  // U+FF08 U+FF09
-    {"［", "］"},  // U+FF3B U+FF3D
-    {"｛", "｝"},  // U+FF5B U+FF5D
-    {"｢", "｣"},    // U+FF62 U+FF63
+// A sorted array of opening and closing brackets.
+// * Both `open` and `close` bracket must be sorted.
+// * Both `open` and `close` bracket must be the same size.
+// If you add a new bracket pair, you must keep this property.
+constexpr std::array<absl::string_view, 20> kSortedBrackets{
+    "()",    // U+0028 U+0029
+    "[]",    // U+005B U+005D
+    "{}",    // U+007B U+007D
+    "«»",    // U+00AB U+00BB
+    "‘’",    // U+2018 U+2019
+    "“”",    // U+201C U+201D
+    "‹›",    // U+2039 U+203A
+    "〈〉",  // U+3008 U+3009
+    "《》",  // U+300A U+300B
+    "「」",  // U+300C U+300D
+    "『』",  // U+300E U+300F
+    "【】",  // U+3010 U+3011
+    "〔〕",  // U+3014 U+3015
+    "〘〙",  // U+3018 U+3019
+    "〚〛",  // U+301A U+301B
+    "〝〟",  // U+301D U+301F
+    "（）",  // U+FF08 U+FF09
+    "［］",  // U+FF3B U+FF3D
+    "｛｝",  // U+FF5B U+FF5D
+    "｢｣",    // U+FF62 U+FF63
 };
+
+absl::string_view OpenBracket(absl::string_view pair) {
+  return pair.substr(0, pair.size() / 2);
+}
+
+absl::string_view CloseBracket(absl::string_view pair) {
+  return pair.substr(pair.size() / 2);
+}
 
 }  // namespace
 
 bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
-  const auto end = std::end(kSortedBracketPairs);
+  const auto end = kSortedBrackets.end();
   const auto iter =
-      std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                       [](const BracketPair &pair, absl::string_view key) {
-                         return pair.first < key;
+      std::lower_bound(kSortedBrackets.begin(), end, key,
+                       [](absl::string_view pair, absl::string_view key) {
+                         return OpenBracket(pair) < key;
                        });
-  if (iter == end || iter->first != key) {
+  if (iter == end || OpenBracket(*iter) != key) {
     return false;
   }
-  *close_bracket = std::string(iter->second);
+  *close_bracket = std::string(CloseBracket(*iter));
   return true;
 }
 
 bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
-  const auto end = std::end(kSortedBracketPairs);
+  const auto end = kSortedBrackets.end();
   const auto iter =
-      std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                       [](const BracketPair &pair, absl::string_view key) {
-                         return pair.second < key;
+      std::lower_bound(kSortedBrackets.begin(), end, key,
+                       [](absl::string_view pair, absl::string_view key) {
+                         return CloseBracket(pair) < key;
                        });
-  if (iter == end || iter->second != key) {
+  if (iter == end || CloseBracket(*iter) != key) {
     return false;
   }
-  *open_bracket = std::string(iter->first);
+  *open_bracket = std::string(OpenBracket(*iter));
   return true;
 }
 
 bool Util::IsBracketPairText(absl::string_view input) {
-  // The definition of "bracket" here is a bit wider than kSortedBracketPairs
-  // because it also contains some additional pairs listed in
-  // data/symbol/symbol.tsv.
-  static const auto &kBracketPairText =
-      *new absl::flat_hash_set<absl::string_view>{
-          "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
-          "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
-          "〚〛", "（）", "［］", "｛｝", "｢｣", "〝〟",
-      };
-  return kBracketPairText.contains(input);
+  const auto end = kSortedBrackets.end();
+  const auto iter = std::lower_bound(kSortedBrackets.begin(), end, input);
+  if (iter == end || *iter != input) {
+    return false;
+  }
+  return true;
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {
