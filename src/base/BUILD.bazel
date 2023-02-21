@@ -548,12 +548,10 @@ mozc_cc_library(
     name = "clock_mock",
     testonly = True,
     srcs = ["clock_mock.cc"],
-    hdrs = [
-        "clock.h",  # For ClockInterface
-        "clock_mock.h",
-    ],
+    hdrs = ["clock_mock.h"],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":clock",
         ":port",
         "@com_google_absl//absl/time",
     ],
