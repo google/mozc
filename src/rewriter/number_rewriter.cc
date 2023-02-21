@@ -36,10 +36,10 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -440,7 +440,7 @@ NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
   suffix_array_.Set(data);
 }
 
-NumberRewriter::~NumberRewriter() {}
+NumberRewriter::~NumberRewriter() = default;
 
 int NumberRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {

@@ -37,8 +37,8 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/serialized_string_array.h"
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"

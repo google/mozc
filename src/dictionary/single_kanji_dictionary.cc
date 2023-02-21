@@ -36,8 +36,8 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"

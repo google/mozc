@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"

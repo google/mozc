@@ -32,8 +32,8 @@
 
 #include <cstdint>
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
@@ -53,7 +53,7 @@ class FocusCandidateRewriter : public RewriterInterface {
 
   // Changed the focus of "segment_index"-th segment to be "candidate_index".
   // The segments will be written according to pre-defined "actions".
-  // Currently, FocusSegmentValue() finds bracket/parentheses matching, e.g,
+  // Currently, FocusSegmentValue() finds bracket/parentheses matching, e.g.,
   // When user chooses "(" in some candidate, corresponding close bracket ")"
   // is automatically placed at the top.
   bool Focus(Segments *segments, size_t segment_index,

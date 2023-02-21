@@ -34,8 +34,8 @@
 #include <string>
 #include <utility>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "absl/strings/string_view.h"
@@ -69,7 +69,7 @@ SuffixDictionary::SuffixDictionary(absl::string_view key_array_data,
   value_array_.Set(value_array_data);
 }
 
-SuffixDictionary::~SuffixDictionary() {}
+SuffixDictionary::~SuffixDictionary() = default;
 
 bool SuffixDictionary::HasKey(absl::string_view key) const {
   // SuffixDictionary::HasKey() is never called and unnecessary to

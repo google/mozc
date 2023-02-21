@@ -42,9 +42,9 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
-#include "base/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"

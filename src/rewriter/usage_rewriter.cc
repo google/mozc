@@ -34,8 +34,8 @@
 
 #include <string>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -99,7 +99,7 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   }
 }
 
-UsageRewriter::~UsageRewriter() {}
+UsageRewriter::~UsageRewriter() = default;
 
 // static
 // "合いました" => "合い"
@@ -198,7 +198,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
   // UsageIDs for embedded usage dictionary are generated in advance by
   // gen_usage_rewriter_dictionary_main.cc (which are just sequential numbers).
   // However, since user dictionary comments don't have such IDs, dynamically
-  // genereate them so that they don't conflict with those of the embedded usage
+  // generate them so that they don't conflict with those of the embedded usage
   // dictionary.  Since just the uniqueness in one Segments is sufficient, for
   // usage from the user dictionary, we simply assign sequential numbers larger
   // than the maximum ID of the embedded usage dictionary.

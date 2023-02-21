@@ -30,8 +30,8 @@
 #ifndef MOZC_REWRITER_NUMBER_REWRITER_H_
 #define MOZC_REWRITER_NUMBER_REWRITER_H_
 
+#include "base/container/serialized_string_array.h"
 #include "base/port.h"
-#include "base/serialized_string_array.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
