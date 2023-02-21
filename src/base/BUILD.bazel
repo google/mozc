@@ -52,7 +52,6 @@ package(default_visibility = [
 test_suite(
     name = "android_test",
     tests = [
-        ":bitarray_test_android",
         ":clock_mock_test_android",
         ":clock_test_android",
         ":config_file_stream_test_android",
@@ -570,25 +569,6 @@ mozc_cc_test(
         ":clock_mock",
         ":util",
         "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "bitarray",
-    hdrs = ["bitarray.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [":port"],
-)
-
-mozc_cc_test(
-    name = "bitarray_test",
-    size = "small",
-    srcs = ["bitarray_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":bitarray",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/random",
     ],
 )
 

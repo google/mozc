@@ -27,14 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_BITARRAY_H_
-#define MOZC_BASE_BITARRAY_H_
+#ifndef MOZC_BASE_CONTAINER_BITARRAY_H_
+#define MOZC_BASE_CONTAINER_BITARRAY_H_
 
 #include <cstdint>
 #include <cstring>  // memset
 #include <memory>
-
-#include "base/port.h"
 
 namespace mozc {
 
@@ -49,7 +47,7 @@ class BitArray {
   BitArray(const BitArray &) = delete;
   BitArray &operator=(const BitArray &) = delete;
 
-  ~BitArray() {}
+  ~BitArray() = default;
 
   // Gets true/false of |index|
   bool get(uint32_t index) const {
@@ -92,4 +90,4 @@ class BitArray {
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_BITARRAY_H_
+#endif  // MOZC_BASE_CONTAINER_BITARRAY_H_

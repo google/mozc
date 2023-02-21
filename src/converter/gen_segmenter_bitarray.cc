@@ -42,7 +42,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/bitarray.h"
+#include "base/container/bitarray.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
