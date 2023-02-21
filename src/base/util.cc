@@ -861,63 +861,55 @@ void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
 
-struct BracketPair {
-  absl::string_view GetOpenBracket() const {
-    return absl::string_view(open, open_len);
-  }
-  absl::string_view GetCloseBracket() const {
-    return absl::string_view(close, close_len);
-  }
-
-  const char *open;
-  size_t open_len;
-
-  const char *close;
-  size_t close_len;
-};
-
 // A bidirectional map between opening and closing brackets as a sorted array.
 // NOTE: This array is sorted in order of both |open| and |close|.  If you add a
 // new bracket pair, you must keep this property.
-const BracketPair kSortedBracketPairs[] = {
-    {"(", 1, ")", 1},   {"[", 1, "]", 1},   {"{", 1, "}", 1},
-    {"〈", 3, "〉", 3}, {"《", 3, "》", 3}, {"「", 3, "」", 3},
-    {"『", 3, "』", 3}, {"【", 3, "】", 3}, {"〔", 3, "〕", 3},
-    {"〘", 3, "〙", 3}, {"〚", 3, "〛", 3}, {"（", 3, "）", 3},
-    {"［", 3, "］", 3}, {"｛", 3, "｝", 3}, {"｢", 3, "｣", 3},
+using BracketPair = std::pair<absl::string_view, absl::string_view>;
+constexpr BracketPair kSortedBracketPairs[] = {
+    {"(", ")"},    // U+0028 U+0029
+    {"[", "]"},    // U+005B U+005D
+    {"{", "}"},    // U+007B U+007D
+    {"〈", "〉"},  // U+3008 U+3009
+    {"《", "》"},  // U+300A U+300B
+    {"「", "」"},  // U+300C U+300D
+    {"『", "』"},  // U+300E U+300F
+    {"【", "】"},  // U+3010 U+3011
+    {"〔", "〕"},  // U+3014 U+3015
+    {"〘", "〙"},  // U+3018 U+3019
+    {"〚", "〛"},  // U+301A U+301B
+    {"（", "）"},  // U+FF08 U+FF09
+    {"［", "］"},  // U+FF3B U+FF3D
+    {"｛", "｝"},  // U+FF5B U+FF5D
+    {"｢", "｣"},    // U+FF62 U+FF63
 };
 
 }  // namespace
 
 bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
-  struct OrderByOpenBracket {
-    bool operator()(const BracketPair &x, absl::string_view key) const {
-      return x.GetOpenBracket() < key;
-    }
-  };
   const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                                     OrderByOpenBracket());
-  if (iter == end || iter->GetOpenBracket() != key) {
+  const auto iter =
+      std::lower_bound(std::begin(kSortedBracketPairs), end, key,
+                       [](const BracketPair &pair, absl::string_view key) {
+                         return pair.first < key;
+                       });
+  if (iter == end || iter->first != key) {
     return false;
   }
-  *close_bracket = std::string(iter->GetCloseBracket());
+  *close_bracket = std::string(iter->second);
   return true;
 }
 
 bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
-  struct OrderByCloseBracket {
-    bool operator()(const BracketPair &x, absl::string_view key) const {
-      return x.GetCloseBracket() < key;
-    }
-  };
   const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
-                                     OrderByCloseBracket());
-  if (iter == end || iter->GetCloseBracket() != key) {
+  const auto iter =
+      std::lower_bound(std::begin(kSortedBracketPairs), end, key,
+                       [](const BracketPair &pair, absl::string_view key) {
+                         return pair.second < key;
+                       });
+  if (iter == end || iter->second != key) {
     return false;
   }
-  *open_bracket = std::string(iter->GetOpenBracket());
+  *open_bracket = std::string(iter->first);
   return true;
 }
 
