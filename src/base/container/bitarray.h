@@ -71,13 +71,15 @@ class BitArray {
   }
 
   // Returns the required buffer size for saving the bit vector.
-  size_t array_size() const { return sizeof(uint32_t) * (1 + (size_ >> 5)); }
+  constexpr size_t array_size() const {
+    return sizeof(uint32_t) * (1 + (size_ >> 5));
+  }
 
   // Returns the number of bit(s).
-  size_t size() const { return size_; }
+  constexpr size_t size() const { return size_; }
 
   // Immutable accessor.
-  static bool GetValue(const char *array, uint32_t index) {
+  constexpr static bool GetValue(const char *array, uint32_t index) {
     return static_cast<bool>((array[(index >> 3)] >> (index & 0x00000007)) &
                              0x00000001);
   }
