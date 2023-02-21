@@ -46,8 +46,8 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 
@@ -203,7 +203,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   CHECK(barray.array());
   CHECK_GT(barray.size(), 0);
 
-  CHECK(Util::IsLittleEndian()) << "Architecture must be little endian";
+  static_assert(ABSL_IS_LITTLE_ENDIAN, "Architecture must be little endian");
   {
     mozc::converter::SegmenterDataSizeInfo pb;
     pb.set_compressed_lsize(kCompressedLSize);

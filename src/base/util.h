@@ -346,9 +346,6 @@ class Util {
   // length of s is not eight or s is in an invalid format.
   static bool DeserializeUint64(absl::string_view s, uint64_t *x);
 
-  // Checks endian-ness at runtime.
-  static bool IsLittleEndian();
-
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than
   // orthodox classification logics.

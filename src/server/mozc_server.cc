@@ -44,9 +44,9 @@
 #include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
+#include "absl/base/config.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -66,7 +66,7 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
   // Big endian is not supported. The storage for user history is endian
   // dependent. If we want to sync the data via network sync feature, we
   // will see some problems.
-  CHECK(mozc::Util::IsLittleEndian()) << "Big endian is not supported.";
+  static_assert(ABSL_IS_LITTLE_ENDIAN, "Big endian is not supported.");
 #ifdef _WIN32
   // http://msdn.microsoft.com/en-us/library/ms686227.aspx
   // Make sure that mozc_server exits all after other processes.

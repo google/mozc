@@ -1252,7 +1252,7 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":status",
-        ":util",
+        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/strings",
     ],
 )

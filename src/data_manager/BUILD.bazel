@@ -250,7 +250,7 @@ mozc_cc_library(
         "//base:port",
         "//base:serialized_string_array",
         "//base:status",
-        "//base:util",
+        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/strings",
     ],
 )

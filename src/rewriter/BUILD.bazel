@@ -1331,6 +1331,7 @@ mozc_cc_binary(
         "//base:logging",
         "//base:serialized_string_array",
         "//base:util",
+        "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

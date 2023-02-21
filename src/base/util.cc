@@ -1294,22 +1294,6 @@ bool Util::DeserializeUint64(absl::string_view s, uint64_t *x) {
   return true;
 }
 
-bool Util::IsLittleEndian() {
-#ifdef _WIN32
-  return true;
-#endif  // _WIN32
-
-  union {
-    unsigned char c[4];
-    unsigned int i;
-  } u;
-  static_assert(sizeof(u.c) == sizeof(u.i),
-                "Expecting (unsigned) int is 32-bit integer.");
-  static_assert(sizeof(u) == sizeof(u.i), "Checking alignment.");
-  u.i = 0x12345678U;
-  return u.c[0] == 0x78U;
-}
-
 bool Util::IsAcceptableCharacterAsCandidate(char32_t letter) {
   // Unicode does not have code point larger than 0x10FFFF.
   if (letter > 0x10FFFF) {

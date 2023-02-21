@@ -107,6 +107,7 @@
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
+#include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_split.h"
@@ -257,7 +258,7 @@ uint32_t Lookup(const absl::btree_map<std::string, uint32_t> &m,
 }
 
 void Convert() {
-  CHECK(Util::IsLittleEndian());
+  static_assert(ABSL_IS_LITTLE_ENDIAN);
 
   // Load cforms_file
   absl::btree_map<std::string, std::vector<ConjugationType>> inflection_map;
