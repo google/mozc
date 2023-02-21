@@ -41,8 +41,8 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/trie.h"
 #include "base/port.h"
-#include "base/trie.h"
 #include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"

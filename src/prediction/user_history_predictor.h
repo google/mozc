@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "base/container/freelist.h"
-#include "base/trie.h"
+#include "base/container/trie.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"

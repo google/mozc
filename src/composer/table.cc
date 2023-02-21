@@ -43,11 +43,11 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
+#include "base/container/trie.h"
 #include "base/file_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/trie.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
 #include "config/config_handler.h"

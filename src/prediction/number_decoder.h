@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/trie.h"
+#include "base/container/trie.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

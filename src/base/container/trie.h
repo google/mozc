@@ -29,8 +29,8 @@
 
 // Trie tree library
 
-#ifndef MOZC_BASE_TRIE_H_
-#define MOZC_BASE_TRIE_H_
+#ifndef MOZC_BASE_CONTAINER_TRIE_H_
+#define MOZC_BASE_CONTAINER_TRIE_H_
 
 #include <map>
 #include <memory>
@@ -228,4 +228,4 @@ class Trie final {
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_TRIE_H_
+#endif  // MOZC_BASE_CONTAINER_TRIE_H_
