@@ -29,7 +29,9 @@
 
 #include "base/crash_report_handler.h"
 
-#if defined(_WIN32) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
+// TODO(b/180075250): Temporarily removed while supporting Lexan.
+#if defined(_WIN32) && defined(GOOGLE_JAPANESE_INPUT_BUILD) && \
+    !defined(__clang__)
 
 #include <shellapi.h>  // for CommandLineToArgvW
 #include <windows.h>
@@ -309,7 +311,7 @@ void CrashReportHandler::SetCriticalSection(
 
 }  // namespace mozc
 
-#else  // _WIN32 && GOOGLE_JAPANESE_INPUT_BUILD
+#else  // _WIN32 && GOOGLE_JAPANESE_INPUT_BUILD && !__clang__
 
 namespace mozc {
 
