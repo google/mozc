@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -37,14 +38,41 @@
 #include "converter/quality_regression_util.h"
 #include "engine/eval_engine_factory.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 ABSL_FLAG(std::vector<std::string>, test_files, {}, "regression test files");
 ABSL_FLAG(std::string, data_file, "", "engine data file");
 ABSL_FLAG(std::string, data_type, "", "engine data type");
 ABSL_FLAG(std::string, engine_type, "desktop", "engine type");
+ABSL_FLAG(std::string, output, "", "output file");
 
 using mozc::Engine;
 using mozc::quality_regression::QualityRegressionUtil;
+
+namespace {
+
+absl::Status Run(std::ostream &out, const Engine &engine,
+                 const std::vector<QualityRegressionUtil::TestItem> &items) {
+  QualityRegressionUtil util(engine.GetConverter());
+  for (const QualityRegressionUtil::TestItem &item : items) {
+    std::string actual_value;
+    const absl::StatusOr<bool> result =
+        util.ConvertAndTest(item, &actual_value);
+    if (!result.ok()) {
+      return result.status();
+    }
+    out << (result.value() ? "OK:\t" : "FAILED:\t") << item.key << "\t"
+        << actual_value << "\t" << item.command;
+    if (item.expected_rank != 0) {
+      out << " " << item.expected_rank;
+    }
+    out << "\t" << item.expected_value << "\t" << std::endl;
+  }
+  return absl::OkStatus();
+}
+
+}  // namespace
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
@@ -57,7 +85,6 @@ int main(int argc, char **argv) {
     LOG(ERROR) << create_result.status();
     return static_cast<int>(create_result.status().code());
   }
-  QualityRegressionUtil util((*create_result)->GetConverter());
 
   std::vector<QualityRegressionUtil::TestItem> items;
   const absl::Status parse_result = QualityRegressionUtil::ParseFiles(
@@ -67,19 +94,16 @@ int main(int argc, char **argv) {
     return static_cast<int>(parse_result.code());
   }
 
-  for (size_t i = 0; i < items.size(); ++i) {
-    std::string actual_value;
-    const auto &result = util.ConvertAndTest(items[i], &actual_value);
-    if (!result.ok()) {
-      LOG(ERROR) << result.status();
-      return static_cast<int>(result.status().code());
-    }
-    std::cout << (*result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
-              << actual_value << "\t" << items[i].command;
-    if (items[i].expected_rank != 0) {
-      std::cout << " " << items[i].expected_rank;
-    }
-    std::cout << "\t" << items[i].expected_value << "\t" << std::endl;
+  absl::Status status;
+  if (!absl::GetFlag(FLAGS_output).empty()) {
+    std::ofstream out(absl::GetFlag(FLAGS_output));
+    status = Run(out, *create_result.value(), items);
+  } else {
+    status = Run(std::cout, *create_result.value(), items);
+  }
+  if (!status.ok()) {
+    LOG(ERROR) << status;
+    return static_cast<int>(status.code());
   }
 
   return 0;
