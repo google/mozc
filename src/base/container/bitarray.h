@@ -41,7 +41,7 @@ class BitArray {
   // Specify the size of bit vector
   explicit BitArray(uint32_t size)
       : array_(new uint32_t[1 + (size >> 5)]), size_(size) {
-    memset(reinterpret_cast<char *>(array_.get()), 0, 4 * (1 + (size >> 5)));
+    memset(array_.get(), 0, sizeof(uint32_t) * (1 + (size >> 5)));
   }
 
   BitArray(const BitArray &) = delete;
@@ -71,15 +71,14 @@ class BitArray {
   }
 
   // Returns the required buffer size for saving the bit vector.
-  size_t array_size() const { return 4 * (1 + (size_ >> 5)); }
+  size_t array_size() const { return sizeof(uint32_t) * (1 + (size_ >> 5)); }
 
   // Returns the number of bit(s).
   size_t size() const { return size_; }
 
   // Immutable accessor.
   static bool GetValue(const char *array, uint32_t index) {
-    const uint32_t *uarray = reinterpret_cast<const uint32_t *>(array);
-    return static_cast<bool>((uarray[(index >> 5)] >> (index & 0x0000001F)) &
+    return static_cast<bool>((array[(index >> 3)] >> (index & 0x00000007)) &
                              0x00000001);
   }
 
