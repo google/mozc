@@ -553,7 +553,6 @@ TEST_F(KeyMapTest, Reconvert) {
 }
 
 TEST_F(KeyMapTest, Initialize) {
-  config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
   ConversionState::Commands conv_command;
 
@@ -565,7 +564,6 @@ TEST_F(KeyMapTest, Initialize) {
   }
   {  // MSIME
     KeyMapManager manager(GetDefaultConfig(config::Config::MSIME));
-    keymap_setting = config::Config::MSIME;
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(conv_command, ConversionState::SEGMENT_FOCUS_RIGHT);
