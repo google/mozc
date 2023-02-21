@@ -105,10 +105,10 @@ mozc_cc_library(
     srcs = ["candidate_list.cc"],
     hdrs = ["candidate_list.h"],
     deps = [
-        "//base:freelist",
         "//base:hash",
         "//base:logging",
         "//base:port",
+        "//base/container:freelist",
     ],
 )
 

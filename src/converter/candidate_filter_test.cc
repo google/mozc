@@ -27,16 +27,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "converter/candidate_filter.h"
+
 #include <climits>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/port.h"
 #include "base/util.h"
-#include "converter/candidate_filter.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"

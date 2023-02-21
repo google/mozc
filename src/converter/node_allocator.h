@@ -30,7 +30,7 @@
 #ifndef MOZC_CONVERTER_NODE_ALLOCATOR_H_
 #define MOZC_CONVERTER_NODE_ALLOCATOR_H_
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/node.h"

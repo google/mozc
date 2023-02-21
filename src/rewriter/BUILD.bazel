@@ -871,10 +871,10 @@ mozc_cc_library(
     hdrs = ["dictionary_generator.h"],
     deps = [
         "//base:file_stream",
-        "//base:freelist",
         "//base:hash",
         "//base:logging",
         "//base:port",
+        "//base/container:freelist",
         "//data_manager:data_manager_interface",
         "//dictionary:pos_matcher_lib",
         "//dictionary:user_pos",

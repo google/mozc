@@ -163,13 +163,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "freelist",
-    hdrs = ["freelist.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [":port"],
-)
-
-mozc_cc_library(
     name = "logging",
     srcs = ["logging.cc"],
     hdrs = ["logging.h"],

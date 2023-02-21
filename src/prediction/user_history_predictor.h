@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/trie.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"

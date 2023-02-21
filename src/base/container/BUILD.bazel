@@ -64,3 +64,10 @@ mozc_cc_test(
         "@com_google_absl//absl/random",
     ],
 )
+
+mozc_cc_library(
+    name = "freelist",
+    hdrs = ["freelist.h"],
+    visibility = ["//:__subpackages__"],
+    deps = ["//base:port"],
+)

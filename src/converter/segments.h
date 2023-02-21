@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-#include "base/freelist.h"
+#include "base/container/freelist.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "converter/lattice.h"
