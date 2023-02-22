@@ -29,22 +29,24 @@
 
 #include "storage/louds/bit_vector_based_array.h"
 
+#include <cstddef>
 #include <cstdint>
 
 #include "base/logging.h"
+#include "storage/louds/bit_stream.h"
+#include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
 namespace storage {
 namespace louds {
+
+using internal::ReadInt32;
+
 namespace {
 
 // Select1 is not used, so cache is unnecessary.
 constexpr size_t kLb0CacheSize = 1024;
 constexpr size_t kLb1CacheSize = 0;
-
-inline int ReadInt32(const uint8_t *data) {
-  return *reinterpret_cast<const int32_t *>(data);
-}
 
 }  // namespace
 

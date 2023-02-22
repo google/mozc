@@ -38,7 +38,7 @@ TEST(NullMessageTranslatorTest, BasicTest) {
   NullMessageTranslator translator;
 
   // NullMessageTranslator always returns the given message.
-  EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+  EXPECT_EQ(translator.MaybeTranslate("foobar"), "foobar");
 }
 
 TEST(LocaleBasedMessageTranslatorTest, UnknownLocaleName) {
@@ -46,38 +46,38 @@ TEST(LocaleBasedMessageTranslatorTest, UnknownLocaleName) {
   LocaleBasedMessageTranslator translator("ja_JP");
 
   // For unknown key.
-  EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+  EXPECT_EQ(translator.MaybeTranslate("foobar"), "foobar");
 
   // For known key.
-  EXPECT_EQ("Properties", translator.MaybeTranslate("Properties"));
+  EXPECT_EQ(translator.MaybeTranslate("Properties"), "Properties");
 }
 
 TEST(LocaleBasedMessageTranslatorTest, KnownJapaneseLocaleName) {
   {
     LocaleBasedMessageTranslator translator("ja_JP.UTF-8");
     // For unknown key.
-    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+    EXPECT_EQ(translator.MaybeTranslate("foobar"), "foobar");
 
     // For known key.
-    EXPECT_EQ("プロパティ", translator.MaybeTranslate("Properties"));
+    EXPECT_EQ(translator.MaybeTranslate("Properties"), "プロパティ");
   }
 
   {
     LocaleBasedMessageTranslator translator("ja_JP.utf8");
     // For unknown key.
-    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+    EXPECT_EQ(translator.MaybeTranslate("foobar"), "foobar");
 
     // For known key.
-    EXPECT_EQ("プロパティ", translator.MaybeTranslate("Properties"));
+    EXPECT_EQ(translator.MaybeTranslate("Properties"), "プロパティ");
   }
 
   {
     LocaleBasedMessageTranslator translator("ja_JP.uTf-8");
     // For unknown key.
-    EXPECT_EQ("foobar", translator.MaybeTranslate("foobar"));
+    EXPECT_EQ(translator.MaybeTranslate("foobar"), "foobar");
 
     // For known key.
-    EXPECT_EQ("プロパティ", translator.MaybeTranslate("Properties"));
+    EXPECT_EQ(translator.MaybeTranslate("Properties"), "プロパティ");
   }
 }
 

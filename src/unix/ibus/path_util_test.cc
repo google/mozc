@@ -42,7 +42,7 @@ TEST(PathUtilTest, ValidateReturns) {
   EXPECT_FALSE(icon_path.empty());
   // Confirm that the end of the returned path equals to the icon file.
   const std::string kExpected = "/test.png";
-  EXPECT_EQ(kExpected, icon_path.substr(icon_path.size() - kExpected.size()));
+  EXPECT_EQ(icon_path.substr(icon_path.size() - kExpected.size()), kExpected);
 }
 
 }  // namespace ibus

@@ -29,7 +29,9 @@
 
 #include "storage/louds/bit_vector_based_array_builder.h"
 
+#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "storage/louds/bit_stream.h"
@@ -41,8 +43,6 @@ namespace louds {
 // Initial values of base_length_ and step_length_ is (4, 1) bytes.
 BitVectorBasedArrayBuilder::BitVectorBasedArrayBuilder()
     : built_(false), base_length_(4), step_length_(1) {}
-
-BitVectorBasedArrayBuilder::~BitVectorBasedArrayBuilder() {}
 
 void BitVectorBasedArrayBuilder::Add(const std::string &element) {
   CHECK(!built_);
@@ -56,17 +56,7 @@ void BitVectorBasedArrayBuilder::SetSize(size_t base_length,
   step_length_ = step_length;
 }
 
-namespace {
-void PushInt32(int value, std::string *image) {
-  CHECK_EQ(value & ~0xFFFFFFFF, 0);
-
-  // Output from LSB to MSB.
-  image->push_back(static_cast<char>(value & 0xFF));
-  image->push_back(static_cast<char>((value >> 8) & 0xFF));
-  image->push_back(static_cast<char>((value >> 16) & 0xFF));
-  image->push_back(static_cast<char>((value >> 24) & 0xFF));
-}
-}  // namespace
+using internal::PushInt32;
 
 void BitVectorBasedArrayBuilder::Build() {
   CHECK(!built_);
@@ -104,10 +94,10 @@ void BitVectorBasedArrayBuilder::Build() {
   bit_stream.FillPadding32();
 
   // Output the image.
-  PushInt32(bit_stream.ByteSize(), &image_);
-  PushInt32(base_length_, &image_);
-  PushInt32(step_length_, &image_);
-  PushInt32(0, &image_);
+  PushInt32(bit_stream.ByteSize(), image_);
+  PushInt32(base_length_, image_);
+  PushInt32(step_length_, image_);
+  PushInt32(0, image_);
 
   image_.append(bit_stream.image());
   image_.append(data);

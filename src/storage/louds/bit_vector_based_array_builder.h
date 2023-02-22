@@ -30,10 +30,9 @@
 #ifndef MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_BUILDER_H_
 #define MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_BUILDER_H_
 
+#include <cstddef>
 #include <string>
 #include <vector>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace storage {
@@ -45,7 +44,7 @@ class BitVectorBasedArrayBuilder {
   BitVectorBasedArrayBuilder(const BitVectorBasedArrayBuilder&) = delete;
   BitVectorBasedArrayBuilder& operator=(const BitVectorBasedArrayBuilder&) =
       delete;
-  ~BitVectorBasedArrayBuilder();
+  ~BitVectorBasedArrayBuilder() = default;
 
   // Adds the element to the builder.
   // The length of the element would be ceiling by padding '\x00' bytes to the

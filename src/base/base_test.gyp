@@ -311,7 +311,7 @@
       'target_name': 'trie_test',
       'type': 'executable',
       'sources': [
-        'trie_test.cc',
+        'container/trie_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',

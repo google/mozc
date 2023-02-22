@@ -68,7 +68,6 @@ test_suite(
         ":system_util_test_android",
         ":text_normalizer_test_android",
         ":thread_test_android",
-        ":trie_test_android",
         ":url_test_android",
         ":version_test_android",
         # Disabled tests due to errors.
@@ -482,31 +481,6 @@ mozc_cc_test(
     deps = [
         ":number_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
-    name = "trie",
-    hdrs = ["trie.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":util",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "trie_test",
-    size = "small",
-    srcs = ["trie_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":trie",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1098,7 +1072,8 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        ":port",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -1112,6 +1087,7 @@ mozc_cc_test(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 

@@ -136,8 +136,8 @@ mozc_cc_library(
         ":node_allocator",
         "//base:logging",
         "//base:port",
-        "//base:trie",
         "//base:util",
+        "//base/container:trie",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//protocol:commands_cc_proto",
@@ -749,6 +749,8 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//engine:eval_engine_factory",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

@@ -46,6 +46,7 @@ test_suite(
     tests = [
         ":bitarray_test_android",
         ":serialized_string_array_test_android",
+        ":trie_test_android",
     ],
 )
 
@@ -95,6 +96,31 @@ mozc_cc_test(
         "//base:port",
         "//base/container:serialized_string_array",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "trie",
+    hdrs = ["trie.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//base:logging",
+        "//base:util",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "trie_test",
+    size = "small",
+    srcs = ["trie_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":trie",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
     ],
 )

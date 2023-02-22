@@ -58,7 +58,7 @@ class NamedEventListenerThread : public Thread {
         initial_wait_msec_(initial_wait_msec),
         wait_msec_(wait_msec),
         max_num_wait_(max_num_wait),
-        first_triggered_ticks_(0) {
+        first_triggered_time_(0) {
     EXPECT_TRUE(listener_.IsAvailable());
   }
 
@@ -66,24 +66,28 @@ class NamedEventListenerThread : public Thread {
     absl::SleepFor(absl::Milliseconds(initial_wait_msec_));
     for (size_t i = 0; i < max_num_wait_; ++i) {
       const bool result = listener_.Wait(wait_msec_);
-      const uint64_t ticks = Clock::GetTicks();
       if (result) {
-        first_triggered_ticks_ = ticks;
+        first_triggered_time_ = absl::ToUnixNanos(Clock::GetAbslTime());
         return;
       }
     }
   }
 
-  uint64_t first_triggered_ticks() const { return first_triggered_ticks_; }
+  absl::Time first_triggered_time() const {
+    return absl::FromUnixNanos(first_triggered_time_);
+  }
 
-  bool IsTriggered() const { return first_triggered_ticks() > 0; }
+  bool IsTriggered() const { return first_triggered_time_ != 0; }
 
  private:
   NamedEventListener listener_;
   const uint32_t initial_wait_msec_;
   const uint32_t wait_msec_;
   const size_t max_num_wait_;
-  std::atomic<uint64_t> first_triggered_ticks_;
+  // std::atomic requires the type to be is_trivially_copyable, and some
+  // (older?) versions of msvc and clang think absl::Time is not.
+  // Store UnixNanos instead of absl::Time.
+  std::atomic<uint64_t> first_triggered_time_;
 };
 
 class NamedEventTest : public testing::Test {
@@ -106,13 +110,13 @@ TEST_F(NamedEventTest, NamedEventBasicTest) {
   absl::SleepFor(absl::Milliseconds(200));
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
-  const uint64_t notify_ticks = Clock::GetTicks();
+  const absl::Time notified_time = Clock::GetAbslTime();
   notifier.Notify();
   listener.Join();
 
   // There is a chance that |listener| is not triggered.
   if (listener.IsTriggered()) {
-    EXPECT_LT(notify_ticks, listener.first_triggered_ticks());
+    EXPECT_LT(notified_time, listener.first_triggered_time());
   }
 }
 
@@ -159,7 +163,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   // at once with single notifier event
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
-  const uint64_t notify_ticks = Clock::GetTicks();
+  const absl::Time notify_time = Clock::GetAbslTime();
   ASSERT_TRUE(notifier.Notify());
 
   for (size_t i = 0; i < kNumRequests; ++i) {
@@ -169,7 +173,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   for (size_t i = 0; i < kNumRequests; ++i) {
     // There is a chance that |listeners[i]| is not triggered.
     if (listeners[i]->IsTriggered()) {
-      EXPECT_LT(notify_ticks, listeners[i]->first_triggered_ticks());
+      EXPECT_LT(notify_time, listeners[i]->first_triggered_time());
     }
   }
 }

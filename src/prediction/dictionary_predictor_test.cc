@@ -147,10 +147,9 @@ class DictionaryPredictorTestPeer {
   }
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
-                                 bool include_exact_key, Segments *segments,
+                                 Segments *segments,
                                  std::vector<Result> *results) const {
-    return predictor_.AddPredictionToCandidates(request, include_exact_key,
-                                                segments, results);
+    return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
  private:
@@ -184,6 +183,18 @@ Result CreateResult5(absl::string_view key, absl::string_view value, int wcost,
   result.key = std::string(key);
   result.value = std::string(value);
   result.wcost = wcost;
+  result.SetTypesAndTokenAttributes(types, token_attrs);
+  return result;
+}
+
+Result CreateResult6(absl::string_view key, absl::string_view value, int wcost,
+                     int cost, PredictionTypes types,
+                     Token::AttributesBitfield token_attrs) {
+  Result result;
+  result.key = std::string(key);
+  result.value = std::string(value);
+  result.wcost = wcost;
+  result.cost = cost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
 }
@@ -971,10 +982,8 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
 
   // Enables debug mode.
   config_->set_verbose_level(1);
-  predictor.AddPredictionToCandidates(
-      *convreq_for_suggestion_,
-      false,  // Do not include expect same key result
-      &segments, &results);
+  predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
+                                      &results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1008,10 +1017,8 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(
       kTestSize);
 
-  predictor.AddPredictionToCandidates(
-      *convreq_for_suggestion_,
-      false,  // Do not include expect same key result
-      &segments, &results);
+  predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
+                                      &results);
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   ASSERT_EQ(kTestSize, segments.conversion_segment(0).candidates_size());
@@ -1050,10 +1057,8 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
   convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(
       kLowCostCandidateSize + 1);
 
-  predictor.AddPredictionToCandidates(
-      *convreq_for_suggestion_,
-      false,  // Do not include expect same key result
-      &segments, &results);
+  predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
+                                      &results);
 
   ASSERT_EQ(1, segments.conversion_segments_size());
   ASSERT_EQ(kLowCostCandidateSize,
@@ -1261,6 +1266,39 @@ TEST_F(DictionaryPredictorTest,
   InitSegmentsWithKey("かつた", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
+}
+
+TEST_F(DictionaryPredictorTest, Dedup) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  constexpr int kSize = 5;
+  std::vector<Result> results;
+  for (int i = 0; i < kSize; ++i) {
+    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0, i,
+                                    prediction::REALTIME, Token::NONE));
+    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
+                                    kSize + i, prediction::PREFIX,
+                                    Token::NONE));
+    results.push_back(
+        CreateResult6("test", absl::StrCat("value", i), 0, 2 * kSize + i,
+                      prediction::TYPING_CORRECTION, Token::NONE));
+    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
+                                    3 * kSize + i, prediction::UNIGRAM,
+                                    Token::NONE));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("test", &segments);
+  predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                      &results);
+
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
 }
 
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {

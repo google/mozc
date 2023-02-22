@@ -42,11 +42,11 @@
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
+#include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/thread.h"
-#include "base/trie.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"

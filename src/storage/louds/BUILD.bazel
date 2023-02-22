@@ -63,6 +63,7 @@ mozc_cc_library(
     hdrs = ["louds_trie.h"],
     visibility = ["//:__subpackages__"],
     deps = [
+        ":bit_stream",
         ":louds",
         ":simple_succinct_bit_vector_index",
         "//base:logging",
@@ -104,6 +105,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
+        ":bit_stream",
         ":simple_succinct_bit_vector_index",
         "//base:logging",
         "//base:port",
@@ -120,7 +122,6 @@ mozc_cc_library(
     deps = [
         ":bit_stream",
         "//base:logging",
-        "//base:port",
     ],
 )
 
@@ -145,6 +146,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/numeric:bits",
     ],
 )
 
@@ -164,7 +166,7 @@ mozc_cc_library(
     hdrs = ["bit_stream.h"],
     deps = [
         "//base:logging",
-        "//base:port",
+        "@com_google_absl//absl/base",
     ],
 )
 
@@ -175,5 +177,6 @@ mozc_cc_test(
     deps = [
         ":bit_stream",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )

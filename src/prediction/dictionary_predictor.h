@@ -54,8 +54,7 @@
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 
@@ -89,6 +88,35 @@ class DictionaryPredictor : public PredictorInterface {
   }
 
  private:
+  class ResultFilter {
+   public:
+    ResultFilter(const ConversionRequest &request, const Segments &segments,
+                 const SuggestionFilter *suggestion_filter);
+    bool ShouldRemove(const Result &result, int added_num,
+                      std::string *log_message);
+
+   private:
+    bool CheckDupAndReturn(const std::string &value, std::string *log_message);
+
+    const std::string input_key_;
+    const size_t input_key_len_;
+    const SuggestionFilter *suggestion_filter_;
+    const bool is_mixed_conversion_;
+    const bool include_exact_key_;
+
+    std::string history_key_;
+    std::string history_value_;
+    std::string exact_bigram_key_;
+
+    int suffix_count_;
+    int predictive_count_;
+    int realtime_count_;
+    int prefix_tc_count_;
+    int tc_count_;
+
+    absl::flat_hash_set<std::string> seen_;
+  };
+
   // pair: <rid, key_length>
   using PrefixPenaltyKey = std::pair<uint16_t, int16_t>;
 
@@ -105,8 +133,14 @@ class DictionaryPredictor : public PredictorInterface {
                                           std::vector<Result> *results);
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
-                                 bool include_exact_key, Segments *segments,
+                                 Segments *segments,
                                  std::vector<Result> *results) const;
+
+  void FillCandidate(
+      const ConversionRequest &request, const Result &result,
+      const std::string &key, const std::string &value,
+      const absl::flat_hash_map<std::string, int32_t> &merged_types,
+      Segment::Candidate *candidate) const;
 
   // Returns the position of misspelled character position.
   //
@@ -209,8 +243,8 @@ class DictionaryPredictor : public PredictorInterface {
   // Gets history key/value.
   // Returns false if history segments are
   // not found.
-  bool GetHistoryKeyAndValue(const Segments &segments, std::string *key,
-                             std::string *value) const;
+  static bool GetHistoryKeyAndValue(const Segments &segments, std::string *key,
+                                    std::string *value);
 
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;

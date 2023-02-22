@@ -52,9 +52,9 @@ class MozcEmacsHelperLibTest : public testing::Test {
     mozc::commands::Input input;
     mozc::emacs::ParseInputLine(input_line, &actual_event_id,
                                 &actual_session_id, &input);
-    EXPECT_EQ(event_id, actual_event_id);
-    EXPECT_EQ(session_id, actual_session_id);
-    EXPECT_EQ(protobuf, input.ShortDebugString());
+    EXPECT_EQ(actual_event_id, event_id);
+    EXPECT_EQ(actual_session_id, session_id);
+    EXPECT_EQ(input.ShortDebugString(), protobuf);
   }
 
   void PrintAndTestSexpr(const mozc::protobuf::Message &message,
@@ -62,14 +62,14 @@ class MozcEmacsHelperLibTest : public testing::Test {
     std::vector<std::string> buffer;
     mozc::emacs::PrintMessage(message, &buffer);
     const std::string output = absl::StrJoin(buffer, "");
-    EXPECT_EQ(sexpr, output);
+    EXPECT_EQ(output, sexpr);
   }
 
   void TestUnquoteString(const std::string &expected,
                          const std::string &input) {
     std::string output;
     EXPECT_TRUE(mozc::emacs::UnquoteString("\"" + input + "\"", &output));
-    EXPECT_EQ(expected, output);
+    EXPECT_EQ(output, expected);
   }
 
   void ExpectUnquoteStringFails(const std::string &input) {
@@ -221,20 +221,20 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
 
 TEST_F(MozcEmacsHelperLibTest, NormalizeSymbol) {
   using mozc::emacs::NormalizeSymbol;
-  EXPECT_EQ("page-up", NormalizeSymbol("PAGE_UP"));
-  EXPECT_EQ("page-down", NormalizeSymbol("PAGE_DOWN"));
-  EXPECT_EQ("key-code", NormalizeSymbol("key_code"));
-  EXPECT_EQ("modifiers", NormalizeSymbol("modifiers"));
-  EXPECT_EQ("123", NormalizeSymbol("123"));
+  EXPECT_EQ(NormalizeSymbol("PAGE_UP"), "page-up");
+  EXPECT_EQ(NormalizeSymbol("PAGE_DOWN"), "page-down");
+  EXPECT_EQ(NormalizeSymbol("key_code"), "key-code");
+  EXPECT_EQ(NormalizeSymbol("modifiers"), "modifiers");
+  EXPECT_EQ(NormalizeSymbol("123"), "123");
 }
 
 TEST_F(MozcEmacsHelperLibTest, QuoteString) {
   using mozc::emacs::QuoteString;
-  EXPECT_EQ("\"\"", QuoteString(""));
-  EXPECT_EQ("\"abc\"", QuoteString("abc"));
-  EXPECT_EQ("\"\\\"abc\\\"\"", QuoteString("\"abc\""));
-  EXPECT_EQ("\"\\\\\\\"\"", QuoteString("\\\""));
-  EXPECT_EQ("\"\t\n\v\f\r \"", QuoteString("\t\n\v\f\r "));
+  EXPECT_EQ(QuoteString(""), "\"\"");
+  EXPECT_EQ(QuoteString("abc"), "\"abc\"");
+  EXPECT_EQ(QuoteString("\"abc\""), "\"\\\"abc\\\"\"");
+  EXPECT_EQ(QuoteString("\\\""), "\"\\\\\\\"\"");
+  EXPECT_EQ(QuoteString("\t\n\v\f\r "), "\"\t\n\v\f\r \"");
 }
 
 TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
@@ -263,10 +263,10 @@ TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
                           "-x0", "\"い\"", "p",   ")"};
 
   EXPECT_TRUE(result);
-  EXPECT_EQ(std::size(golden), output.size());
+  EXPECT_EQ(output.size(), std::size(golden));
   int len = std::min(std::size(golden), output.size());
   for (int i = 0; i < len; ++i) {
-    EXPECT_EQ(golden[i], output[i]);
+    EXPECT_EQ(output[i], golden[i]);
   }
 
   // control character
