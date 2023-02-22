@@ -118,7 +118,7 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
         **kwargs
     )
 
-    if "no_android" not in tags:
+    if "noandroid" not in tags:
         android_cc_test(
             name = name + "_android",
             cc_test_name = name,

@@ -228,7 +228,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["codegen_bytearray_stream_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     visibility = ["//visibility:private"],
     deps = [
         ":codegen_bytearray_stream",

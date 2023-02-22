@@ -78,7 +78,7 @@ mozc_cc_test(
     size = "medium",
     srcs = ["renderer_client_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
@@ -123,7 +123,7 @@ mozc_cc_test(
     size = "medium",
     srcs = ["renderer_server_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
@@ -162,7 +162,7 @@ mozc_cc_test(
         "table_layout_test.cc",
     ],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":table_layout",
         "//testing:gunit_main",
@@ -204,7 +204,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["window_util_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":window_util",
         "//base:coordinates",

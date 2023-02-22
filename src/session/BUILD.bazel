@@ -537,7 +537,7 @@ mozc_cc_test(
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":session_watch_dog",
         "//base:cpu_stats",
