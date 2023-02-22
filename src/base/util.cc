@@ -876,7 +876,8 @@ absl::string_view CloseBracket(absl::string_view pair) {
 
 }  // namespace
 
-bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
+bool Util::IsOpenBracket(absl::string_view key,
+                         absl::string_view *close_bracket) {
   const auto end = kSortedBrackets.end();
   const auto iter =
       std::lower_bound(kSortedBrackets.begin(), end, key,
@@ -886,11 +887,12 @@ bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
   if (iter == end || OpenBracket(*iter) != key) {
     return false;
   }
-  *close_bracket = std::string(CloseBracket(*iter));
+  *close_bracket = CloseBracket(*iter);
   return true;
 }
 
-bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
+bool Util::IsCloseBracket(absl::string_view key,
+                          absl::string_view *open_bracket) {
   const auto end = kSortedBrackets.end();
   const auto iter =
       std::lower_bound(kSortedBrackets.begin(), end, key,
@@ -900,7 +902,7 @@ bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
   if (iter == end || CloseBracket(*iter) != key) {
     return false;
   }
-  *open_bracket = std::string(OpenBracket(*iter));
+  *open_bracket = OpenBracket(*iter);
   return true;
 }
 

@@ -735,8 +735,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 
   // learn CloseBracket when OpenBracket is fixed.
-  std::string close_bracket_key;
-  std::string close_bracket_value;
+  absl::string_view close_bracket_key;
+  absl::string_view close_bracket_value;
   if (Util::IsOpenBracket(content_key, &close_bracket_key) &&
       Util::IsOpenBracket(content_value, &close_bracket_value)) {
     INSERT_FEATURE(GetFeatureS, close_bracket_key, close_bracket_value,
@@ -891,9 +891,10 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
                      reinterpret_cast<const char *>(&v));
   }
 
-  std::string close_bracket_key;
+  absl::string_view close_bracket_key;
   if (Util::IsOpenBracket(segment.key(), &close_bracket_key)) {
-    storage_->Insert(close_bracket_key, reinterpret_cast<const char *>(&v));
+    const std::string key{close_bracket_key.data(), close_bracket_key.size()};
+    storage_->Insert(key, reinterpret_cast<const char *>(&v));
   }
 }
 

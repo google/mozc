@@ -829,7 +829,7 @@ TEST(UtilTest, BracketTest) {
       {"〝", "〟"},
   }};
 
-  std::string pair;
+  absl::string_view pair;
   for (const BracketPair &bracket : kBracketType) {
     EXPECT_TRUE(Util::IsOpenBracket(bracket.first, &pair));
     EXPECT_EQ(pair, bracket.second);
