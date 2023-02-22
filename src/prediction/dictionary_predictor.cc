@@ -34,10 +34,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iterator>
-#include <list>
-#include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,6 +60,7 @@
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -97,6 +95,14 @@ using ::mozc::usage_stats::UsageStats;
 // candidates would appear in the top results.
 constexpr int kInfinity = (2 << 20);
 
+bool IsDebug(const ConversionRequest &request) {
+#ifndef NDEBUG
+  return true;
+#else   // NDEBUG
+  return request.config().verbose_level() >= 1;
+#endif  // NDEBUG
+}
+
 bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
@@ -111,6 +117,20 @@ bool IsLatinInputMode(const ConversionRequest &request) {
 
 bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
+}
+
+void GetCandidateKeyAndValue(const Result &result,
+                             absl::string_view history_key,
+                             absl::string_view history_value, std::string *key,
+                             std::string *value) {
+  if (result.types & PredictionType::BIGRAM) {
+    // remove the prefix of history key and history value.
+    *key = result.key.substr(history_key.size());
+    *value = result.value.substr(history_value.size());
+    return;
+  }
+  *key = result.key;
+  *value = result.value;
 }
 
 }  // namespace
@@ -237,10 +257,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
     // not called.
-    return AddPredictionToCandidates(
-        request,
-        true,  // Include exact key result even if it's a bad suggestion.
-        segments, &results);
+    return AddPredictionToCandidates(request, segments, &results);
   }
 
   // Normal prediction.
@@ -251,24 +268,17 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   const std::string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
   RemoveMissSpelledCandidates(input_key_len, &results);
-  return AddPredictionToCandidates(request, false,  // Remove exact key result.
-                                   segments, &results);
+  return AddPredictionToCandidates(request, segments, &results);
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
-    const ConversionRequest &request, bool include_exact_key,
-    Segments *segments, std::vector<Result> *results) const {
+    const ConversionRequest &request, Segments *segments,
+    std::vector<Result> *results) const {
   DCHECK(segments);
   DCHECK(results);
-  const std::string &input_key = segments->conversion_segment(0).key();
-  const size_t input_key_len = Util::CharsLen(input_key);
 
   std::string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
-
-  // exact_bigram_key does not contain ambiguity expansion, because
-  // this is used for exact matching for the key.
-  const std::string exact_bigram_key = history_key + input_key;
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
@@ -278,31 +288,15 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // we can pop as many results as we need efficiently.
   std::make_heap(results->begin(), results->end(), ResultCostLess());
 
-  const size_t size = std::min(
+  const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results->size());
 
+  ResultFilter filter(request, *segments, suggestion_filter_);
   int added = 0;
-  std::set<std::string> seen;
 
-  int suffix_count = 0;
-  int predictive_count = 0;
-  int realtime_count = 0;
-  int prefix_tc_count = 0;
-  int tc_count = 0;
-  bool cursor_at_tail =
-      request.has_composer() &&
-      request.composer().GetCursor() == request.composer().GetLength();
-
-  absl::flat_hash_map<std::string, int32_t> merged_types;
-
-#ifndef NDEBUG
-  const bool is_debug = true;
-#else   // NDEBUG
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
-  const bool is_debug = request.config().verbose_level() >= 1;
-#endif  // NDEBUG
-
-  if (is_debug) {
+  absl::flat_hash_map<std::string, int32_t> merged_types;
+  if (IsDebug(request)) {
     for (const auto &result : *results) {
       if (!result.removed) {
         merged_types[result.value] |= result.types;
@@ -310,75 +304,13 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     }
   }
 
-  auto add_candidate = [&](const Result &result, const std::string &key,
-                           const std::string &value,
-                           Segment::Candidate *candidate) {
-    DCHECK(candidate);
-
-    candidate->Init();
-    candidate->content_key = key;
-    candidate->content_value = value;
-    candidate->key = key;
-    candidate->value = value;
-    candidate->lid = result.lid;
-    candidate->rid = result.rid;
-    candidate->wcost = result.wcost;
-    candidate->cost = result.cost;
-    candidate->attributes = result.candidate_attributes;
-    if ((!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
-         IsLatinInputMode(request)) ||
-        (result.types & PredictionType::SUFFIX)) {
-      candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
-      candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
-    }
-    if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-      candidate->consumed_key_size = result.consumed_key_size;
-      // There are two scenarios to reach here.
-      // 1. Auto partial suggestion.
-      //    e.g. composition わたしのなまえ| -> candidate 私の
-      // 2. Partial suggestion.
-      //    e.g. composition わたしの|なまえ -> candidate 私の
-      // To distinguish auto partial suggestion from (non-auto) partial
-      // suggestion, see the cursor position. If the cursor is at the tail
-      // of the composition, this is auto partial suggestion.
-      if (cursor_at_tail) {
-        candidate->attributes |= Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
-      }
-    }
-    candidate->source_info = result.source_info;
-    if (result.types & PredictionType::REALTIME) {
-      candidate->inner_segment_boundary = result.inner_segment_boundary;
-    }
-    if (result.types & PredictionType::TYPING_CORRECTION) {
-      candidate->attributes |= Segment::Candidate::TYPING_CORRECTION;
-    }
-
-    SetDescription(result.types, &candidate->description);
-    if (is_debug) {
-      SetDebugDescription(merged_types[result.value], &candidate->description);
-    }
-#ifdef MOZC_DEBUG
-    candidate->log += "\n" + result.log;
-#endif  // MOZC_DEBUG
-  };
-
 #ifdef MOZC_DEBUG
   auto add_debug_candidate = [&](Result result, const std::string &log) {
     std::string key, value;
-    if (result.types & PredictionType::BIGRAM) {
-      // remove the prefix of history key and history value.
-      key = result.key.substr(history_key.size(),
-                              result.key.size() - history_key.size());
-      value = result.value.substr(history_value.size(),
-                                  result.value.size() - history_value.size());
-    } else {
-      key = result.key;
-      value = result.value;
-    }
-
+    GetCandidateKeyAndValue(result, history_key, history_value, &key, &value);
     result.log.append(log);
     Segment::Candidate candidate;
-    add_candidate(result, key, value, &candidate);
+    FillCandidate(request, result, key, value, merged_types, &candidate);
     segment->removed_candidates_for_debug_.push_back(std::move(candidate));
   };
 #define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
@@ -395,112 +327,197 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
     const Result &result = results->at(results->size() - i - 1);
 
-    if (added >= size || result.cost >= kInfinity) {
+    if (added >= max_candidates_size || result.cost >= kInfinity) {
       break;
     }
 
-    if (result.removed) {
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Removed flag is on");
+    std::string log_message;
+    if (filter.ShouldRemove(result, added, &log_message)) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
       continue;
-    }
-
-    // When |include_exact_key| is true, we don't filter the results
-    // which have the exactly same key as the input even if it's a bad
-    // suggestion.
-    if (!(include_exact_key && (result.key == input_key)) &&
-        suggestion_filter_->IsBadSuggestion(result.value)) {
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Bad suggestion");
-      continue;
-    }
-
-    // Don't suggest exactly the same candidate as key.
-    // if |include_exact_key| is true, that's not the case.
-    if (!include_exact_key && !(result.types & PredictionType::REALTIME) &&
-        (((result.types & PredictionType::BIGRAM) &&
-          exact_bigram_key == result.value) ||
-         (!(result.types & PredictionType::BIGRAM) &&
-          input_key == result.value))) {
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Key == candidate");
-      continue;
-    }
-
-    std::string key, value;
-    if (result.types & PredictionType::BIGRAM) {
-      // remove the prefix of history key and history value.
-      key = result.key.substr(history_key.size(),
-                              result.key.size() - history_key.size());
-      value = result.value.substr(history_value.size(),
-                                  result.value.size() - history_value.size());
-    } else {
-      key = result.key;
-      value = result.value;
-    }
-
-    if (!seen.insert(value).second) {
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Duplicated");
-      continue;
-    }
-
-    // User input: "おーすとり" (len = 5)
-    // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
-    if ((result.candidate_attributes &
-         Segment::Candidate::SPELLING_CORRECTION) &&
-        key != input_key &&
-        input_key_len <= GetMissSpelledPosition(key, value) + 1) {
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Spelling correction");
-      continue;
-    }
-
-    if ((result.types & PredictionType::SUFFIX) && suffix_count++ >= 20) {
-      // TODO(toshiyuki): Need refactoring for controlling suffix
-      // prediction number after we will fix the appropriate number.
-      MOZC_ADD_DEBUG_CANDIDATE(result, "Added suffix >= 20");
-      continue;
-    }
-
-    if (IsMixedConversionEnabled(request.request())) {
-      // Suppress long candidates to show more candidates in the candidate view.
-      if (input_key_len > 0 &&  // Do not filter for zero query
-          (input_key_len < Util::CharsLen(result.key)) &&
-          (predictive_count++ >= 3 || added >= 10)) {
-        MOZC_ADD_DEBUG_CANDIDATE(
-            result, absl::StrCat("Added predictive (",
-                                 GetPredictionTypeDebugString(result.types),
-                                 ") >= 3 || added >= 10"));
-        continue;
-      }
-      if ((result.types & PredictionType::REALTIME) &&
-          // Do not remove one-segment realtime candidates
-          // example:
-          // "勝った" for the reading, "かった".
-          result.inner_segment_boundary.size() != 1 &&
-          (realtime_count++ >= 3 || added >= 5)) {
-        MOZC_ADD_DEBUG_CANDIDATE(result, "Added realtime >= 3 || added >= 5");
-        continue;
-      }
-      if ((result.types & PredictionType::TYPING_CORRECTION) &&
-          (tc_count++ >= 3 || added >= 10)) {
-        MOZC_ADD_DEBUG_CANDIDATE(result,
-                                 "Added typing correction >= 3 || added >= 10");
-        continue;
-      }
-      if ((result.types & PredictionType::PREFIX) &&
-          (result.candidate_attributes &
-           Segment::Candidate::TYPING_CORRECTION) &&
-          (prefix_tc_count++ >= 3 || added >= 10)) {
-        MOZC_ADD_DEBUG_CANDIDATE(
-            result, "Added prefix typing correction >= 3 || added >= 10");
-        continue;
-      }
     }
 
     Segment::Candidate *candidate = segment->push_back_candidate();
-    add_candidate(result, key, value, candidate);
+
+    std::string key, value;
+    GetCandidateKeyAndValue(result, history_key, history_value, &key, &value);
+    FillCandidate(request, result, key, value, merged_types, candidate);
     ++added;
   }
 
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
+}
+
+DictionaryPredictor::ResultFilter::ResultFilter(
+    const ConversionRequest &request, const Segments &segments,
+    const SuggestionFilter *suggestion_filter)
+    : input_key_(segments.conversion_segment(0).key()),
+      input_key_len_(Util::CharsLen(input_key_)),
+      suggestion_filter_(suggestion_filter),
+      is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
+      include_exact_key_(IsMixedConversionEnabled(request.request())) {
+  GetHistoryKeyAndValue(segments, &history_key_, &history_value_);
+  exact_bigram_key_ = history_key_ + input_key_;
+
+  suffix_count_ = 0;
+  predictive_count_ = 0;
+  realtime_count_ = 0;
+  prefix_tc_count_ = 0;
+  tc_count_ = 0;
+}
+
+bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
+                                                     int added_num,
+                                                     std::string *log_message) {
+  if (result.removed) {
+    *log_message = "Removed flag is on";
+    return true;
+  }
+
+  // When |include_exact_key| is true, we don't filter the results
+  // which have the exactly same key as the input even if it's a bad
+  // suggestion.
+  if (!(include_exact_key_ && (result.key == input_key_)) &&
+      suggestion_filter_->IsBadSuggestion(result.value)) {
+    *log_message = "Bad suggestion";
+    return true;
+  }
+
+  // Don't suggest exactly the same candidate as key.
+  // if |include_exact_key| is true, that's not the case.
+  if (!include_exact_key_ && !(result.types & PredictionType::REALTIME) &&
+      (((result.types & PredictionType::BIGRAM) &&
+        exact_bigram_key_ == result.value) ||
+       (!(result.types & PredictionType::BIGRAM) &&
+        input_key_ == result.value))) {
+    *log_message = "Key == candidate";
+    return true;
+  }
+
+  std::string key, value;
+  GetCandidateKeyAndValue(result, history_key_, history_value_, &key, &value);
+
+  // User input: "おーすとり" (len = 5)
+  // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
+  if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
+      key != input_key_ &&
+      input_key_len_ <= GetMissSpelledPosition(key, value) + 1) {
+    *log_message = "Spelling correction";
+    return true;
+  }
+
+  if ((result.types & PredictionType::SUFFIX) && suffix_count_++ >= 20) {
+    // TODO(toshiyuki): Need refactoring for controlling suffix
+    // prediction number after we will fix the appropriate number.
+    *log_message = "Added suffix >= 20";
+    return true;
+  }
+
+  if (!is_mixed_conversion_) {
+    return CheckDupAndReturn(value, log_message);
+  }
+
+  // Suppress long candidates to show more candidates in the candidate view.
+  if (input_key_len_ > 0 &&  // Do not filter for zero query
+      (input_key_len_ < Util::CharsLen(result.key)) &&
+      (predictive_count_++ >= 3 || added_num >= 10)) {
+    *log_message = absl::StrCat("Added predictive (",
+                                GetPredictionTypeDebugString(result.types),
+                                ") >= 3 || added >= 10");
+    return true;
+  }
+  if ((result.types & PredictionType::REALTIME) &&
+      // Do not remove one-segment realtime candidates
+      // example:
+      // "勝った" for the reading, "かった".
+      result.inner_segment_boundary.size() != 1 &&
+      (realtime_count_++ >= 3 || added_num >= 5)) {
+    *log_message = "Added realtime >= 3 || added >= 5";
+    return true;
+  }
+  if ((result.types & PredictionType::TYPING_CORRECTION) &&
+      (tc_count_++ >= 3 || added_num >= 10)) {
+    *log_message = "Added typing correction >= 3 || added >= 10";
+    return true;
+  }
+  if ((result.types & PredictionType::PREFIX) &&
+      (result.candidate_attributes & Segment::Candidate::TYPING_CORRECTION) &&
+      (prefix_tc_count_++ >= 3 || added_num >= 10)) {
+    *log_message = "Added prefix typing correction >= 3 || added >= 10";
+    return true;
+  }
+
+  return CheckDupAndReturn(value, log_message);
+}
+
+bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
+    const std::string &value, std::string *log_message) {
+  if (!seen_.insert(value).second) {
+    *log_message = "Duplicated";
+    return true;
+  }
+  return false;
+}
+
+void DictionaryPredictor::FillCandidate(
+    const ConversionRequest &request, const Result &result,
+    const std::string &key, const std::string &value,
+    const absl::flat_hash_map<std::string, int32_t> &merged_types,
+    Segment::Candidate *candidate) const {
+  DCHECK(candidate);
+
+  const bool cursor_at_tail =
+      request.has_composer() &&
+      request.composer().GetCursor() == request.composer().GetLength();
+
+  candidate->Init();
+  candidate->content_key = key;
+  candidate->content_value = value;
+  candidate->key = key;
+  candidate->value = value;
+  candidate->lid = result.lid;
+  candidate->rid = result.rid;
+  candidate->wcost = result.wcost;
+  candidate->cost = result.cost;
+  candidate->attributes = result.candidate_attributes;
+  if ((!(candidate->attributes & Segment::Candidate::SPELLING_CORRECTION) &&
+       IsLatinInputMode(request)) ||
+      (result.types & PredictionType::SUFFIX)) {
+    candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
+  }
+  if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+    candidate->consumed_key_size = result.consumed_key_size;
+    // There are two scenarios to reach here.
+    // 1. Auto partial suggestion.
+    //    e.g. composition わたしのなまえ| -> candidate 私の
+    // 2. Partial suggestion.
+    //    e.g. composition わたしの|なまえ -> candidate 私の
+    // To distinguish auto partial suggestion from (non-auto) partial
+    // suggestion, see the cursor position. If the cursor is at the tail
+    // of the composition, this is auto partial suggestion.
+    if (cursor_at_tail) {
+      candidate->attributes |= Segment::Candidate::AUTO_PARTIAL_SUGGESTION;
+    }
+  }
+  candidate->source_info = result.source_info;
+  if (result.types & PredictionType::REALTIME) {
+    candidate->inner_segment_boundary = result.inner_segment_boundary;
+  }
+  if (result.types & PredictionType::TYPING_CORRECTION) {
+    candidate->attributes |= Segment::Candidate::TYPING_CORRECTION;
+  }
+
+  SetDescription(result.types, &candidate->description);
+  if (IsDebug(request)) {
+    auto it = merged_types.find(result.value);
+    SetDebugDescription(it == merged_types.end() ? 0 : it->second,
+                        &candidate->description);
+  }
+#ifdef MOZC_DEBUG
+  candidate->log += "\n" + result.log;
+#endif  // MOZC_DEBUG
 }
 
 void DictionaryPredictor::SetDescription(PredictionTypes types,
@@ -979,9 +996,10 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   return penalty;
 }
 
+// static
 bool DictionaryPredictor::GetHistoryKeyAndValue(const Segments &segments,
                                                 std::string *key,
-                                                std::string *value) const {
+                                                std::string *value) {
   DCHECK(key);
   DCHECK(value);
   if (segments.history_segments_size() == 0) {
