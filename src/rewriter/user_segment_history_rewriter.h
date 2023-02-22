@@ -81,10 +81,10 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool IsPunctuation(const Segment &seg,
                      const Segment::Candidate &candidate) const;
   bool GetFeatureLN(const Segments &segments, size_t i,
-                    const std::string &base_key, const std::string &base_value,
+                    absl::string_view base_key, absl::string_view base_value,
                     std::string *value) const;
   bool GetFeatureRN(const Segments &segments, size_t i,
-                    const std::string &base_key, const std::string &base_value,
+                    absl::string_view base_key, absl::string_view base_value,
                     std::string *value) const;
   bool SortCandidates(const std::vector<ScoreType> &sorted_scores,
                       Segment *segment) const;
