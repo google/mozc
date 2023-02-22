@@ -85,7 +85,7 @@ TEST_F(UsageStatsUploaderTest, SendTestDeleteExistingClientId) {
   storage::Registry::Insert("usage_stats.client_id", store_value);
   std::string client_id;
   EXPECT_TRUE(storage::Registry::Lookup("usage_stats.client_id", &client_id));
-  EXPECT_EQ("some_value", client_id);
+  EXPECT_EQ(client_id, "some_value");
 
   EXPECT_TRUE(UsageStatsUploader::Send(nullptr));
 
