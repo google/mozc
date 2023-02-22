@@ -89,8 +89,6 @@ class ConfigHandlerImpl {
   void GetConfig(Config *config) const;
   std::unique_ptr<config::Config> GetConfig() const;
   const Config &DefaultConfig() const;
-  void GetStoredConfig(Config *config) const;
-  std::unique_ptr<config::Config> GetStoredConfig() const;
   void SetConfig(const Config &config);
   void Reload();
   void SetConfigFileName(absl::string_view filename);
@@ -103,8 +101,7 @@ class ConfigHandlerImpl {
   void ReloadUnlocked();
 
   std::string filename_;
-  // TODO(b/267705984): Rename to `config_` later.
-  Config stored_config_;
+  Config config_;
   Config default_config_;
   mutable absl::Mutex mutex_;
   uint64_t stored_config_hash_ = 0;
@@ -117,49 +114,37 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 // return current Config
 void ConfigHandlerImpl::GetConfig(Config *config) const {
   absl::MutexLock lock(&mutex_);
-  *config = stored_config_;
+  *config = config_;
 }
 
 // return current Config as a unique_ptr.
 std::unique_ptr<config::Config> ConfigHandlerImpl::GetConfig() const {
   absl::MutexLock lock(&mutex_);
-  return std::make_unique<config::Config>(stored_config_);
+  return std::make_unique<config::Config>(config_);
 }
 
 const Config &ConfigHandlerImpl::DefaultConfig() const {
   return default_config_;
 }
 
-// Aliase of GetConfig.
-// TODO(b/267705984): Clean up these methods.
-void ConfigHandlerImpl::GetStoredConfig(Config *config) const {
-  return GetConfig(config);
-}
-
-// Aliase of GetConfig.
-// TODO(b/267705984): Clean up these methods.
-std::unique_ptr<config::Config> ConfigHandlerImpl::GetStoredConfig() const {
-  return GetConfig();
-}
-
 // set config and rewrite internal data
 void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
-  stored_config_ = config;
+  config_ = config;
 
 #ifdef MOZC_NO_LOGGING
   // Delete the optional field from the config.
-  stored_config_.clear_verbose_level();
+  config_.clear_verbose_level();
   // Fall back if the default value is not the expected value.
-  if (stored_config_.verbose_level() != 0) {
-    stored_config_.set_verbose_level(0);
+  if (config_.verbose_level() != 0) {
+    config_.set_verbose_level(0);
   }
 #endif  // MOZC_NO_LOGGING
 
-  Logging::SetConfigVerboseLevel(stored_config_.verbose_level());
+  Logging::SetConfigVerboseLevel(config_.verbose_level());
 
   // Initialize platform specific configuration.
-  if (stored_config_.session_keymap() == Config::NONE) {
-    stored_config_.set_session_keymap(ConfigHandler::GetDefaultKeyMap());
+  if (config_.session_keymap() == Config::NONE) {
+    config_.set_session_keymap(ConfigHandler::GetDefaultKeyMap());
   }
 
 #if defined(__ANDROID__) && defined(CHANNEL_DEV)
@@ -167,8 +152,8 @@ void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 #endif  // CHANNEL_DEV && __ANDROID__
 
   if (GetPlatformSpecificDefaultEmojiSetting() &&
-      !stored_config_.has_use_emoji_conversion()) {
-    stored_config_.set_use_emoji_conversion(true);
+      !config_.has_use_emoji_conversion()) {
+    config_.set_use_emoji_conversion(true);
   }
 }
 
@@ -246,15 +231,6 @@ void ConfigHandler::GetConfig(Config *config) {
 
 std::unique_ptr<config::Config> ConfigHandler::GetConfig() {
   return GetConfigHandlerImpl()->GetConfig();
-}
-
-// Returns Stored Config
-void ConfigHandler::GetStoredConfig(Config *config) {
-  GetConfigHandlerImpl()->GetStoredConfig(config);
-}
-
-std::unique_ptr<config::Config> ConfigHandler::GetStoredConfig() {
-  return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
 void ConfigHandler::SetConfig(const Config &config) {

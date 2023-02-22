@@ -292,17 +292,16 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::GetStoredConfig(commands::Command *command) {
-  VLOG(1) << "Getting stored config";
-  config::ConfigHandler::GetStoredConfig(
-      command->mutable_output()->mutable_config());
+bool SessionHandler::GetConfig(commands::Command *command) {
+  VLOG(1) << "Getting config";
+  config::ConfigHandler::GetConfig(command->mutable_output()->mutable_config());
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
   UpdateSessions(command->output().config(), *request_);
   return true;
 }
 
-bool SessionHandler::SetStoredConfig(commands::Command *command) {
+bool SessionHandler::SetConfig(commands::Command *command) {
   VLOG(1) << "Setting user config";
   if (!command->input().has_config()) {
     LOG(WARNING) << "config is empty";
@@ -310,7 +309,7 @@ bool SessionHandler::SetStoredConfig(commands::Command *command) {
   }
 
   *command->mutable_output()->mutable_config() = command->input().config();
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
 
   UsageStats::IncrementCount("SetConfig");
   return true;
@@ -365,10 +364,10 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = ClearUnusedUserPrediction(command);
       break;
     case commands::Input::GET_CONFIG:
-      eval_succeeded = GetStoredConfig(command);
+      eval_succeeded = GetConfig(command);
       break;
     case commands::Input::SET_CONFIG:
-      eval_succeeded = SetStoredConfig(command);
+      eval_succeeded = SetConfig(command);
       break;
     case commands::Input::SET_REQUEST:
       eval_succeeded = SetRequest(command);
@@ -435,7 +434,7 @@ void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
   observer_handler_->AddObserver(observer);
 }
 
-void SessionHandler::MaybeUpdateStoredConfig(commands::Command *command) {
+void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
   if (!command->output().has_config()) {
     return;
   }
@@ -452,7 +451,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
     return false;
   }
   (*session)->SendKey(command);
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
   return true;
 }
 
@@ -476,7 +475,7 @@ bool SessionHandler::SendCommand(commands::Command *command) {
     return false;
   }
   (*session)->SendCommand(command);
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
   return true;
 }
 

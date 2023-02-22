@@ -62,11 +62,6 @@ class ConfigHandler {
   // The same performance note as GetConfig(Config*) applies.
   static std::unique_ptr<config::Config> GetConfig();
 
-  // Aliases of GetConfig.
-  // TODO(b/267705984): Clean up these methods.
-  static void GetStoredConfig(Config *config);
-  static std::unique_ptr<config::Config> GetStoredConfig();
-
   // Sets config.
   static void SetConfig(const Config &config);
 
