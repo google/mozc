@@ -1072,7 +1072,8 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        ":port",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -1086,6 +1087,7 @@ mozc_cc_test(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 

@@ -32,6 +32,7 @@
 #include <cstdint>
 
 #include "base/clock.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -41,59 +42,48 @@ Stopwatch Stopwatch::StartNew() {
   return stopwatch;
 }
 
-Stopwatch::Stopwatch()
-    : state_(STOPWATCH_STOPPED),
-      frequency_(1000),
-      start_timestamp_(0),
-      elapsed_timestamp_(0) {
-  frequency_ = Clock::GetFrequency();
-
-  Reset();
-}
+Stopwatch::Stopwatch() : state_(STOPWATCH_STOPPED) {}
 
 void Stopwatch::Reset() {
-  start_timestamp_ = elapsed_timestamp_ = 0;
   state_ = STOPWATCH_STOPPED;
+  elapsed_ = absl::ZeroDuration();
 }
 
 void Stopwatch::Start() {
   if (state_ == STOPWATCH_STOPPED) {
-    start_timestamp_ = Clock::GetTicks();
+    start_ = Clock::GetAbslTime();
     state_ = STOPWATCH_RUNNING;
   }
 }
 
 void Stopwatch::Stop() {
   if (state_ == STOPWATCH_RUNNING) {
-    const int64_t stop_timestamp = Clock::GetTicks();
-    elapsed_timestamp_ += (stop_timestamp - start_timestamp_);
-    start_timestamp_ = 0;
+    elapsed_ += GetElapsed();
     state_ = STOPWATCH_STOPPED;
   }
 }
 
 int64_t Stopwatch::GetElapsedMilliseconds() {
-  return GetElapsedTicks() * 1000 / frequency_;
+  return absl::ToInt64Milliseconds(GetElapsed());
 }
 
 double Stopwatch::GetElapsedMicroseconds() {
-  return GetElapsedTicks() * 1.0e6 / frequency_;
+  return absl::ToDoubleMicroseconds(GetElapsed());
 }
 
 double Stopwatch::GetElapsedNanoseconds() {
-  return GetElapsedTicks() * 1.0e9 / frequency_;
+  return absl::ToDoubleNanoseconds(GetElapsed());
 }
 
 int64_t Stopwatch::GetElapsedTicks() {
+  return Clock::GetFrequency() * absl::ToDoubleSeconds(GetElapsed());
+}
+
+absl::Duration Stopwatch::GetElapsed() const {
   if (state_ == STOPWATCH_STOPPED) {
-    return elapsed_timestamp_;
+    return elapsed_;
   }
-
-  const int64_t current_timestamp = Clock::GetTicks();
-  elapsed_timestamp_ += (current_timestamp - start_timestamp_);
-  start_timestamp_ = current_timestamp;
-
-  return elapsed_timestamp_;
+  return Clock::GetAbslTime() - start_;
 }
 
 bool Stopwatch::IsRunning() const { return state_ == STOPWATCH_RUNNING; }

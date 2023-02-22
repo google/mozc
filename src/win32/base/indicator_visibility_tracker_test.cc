@@ -36,6 +36,7 @@
 #include "base/clock_mock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace win32 {
@@ -56,7 +57,9 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
   virtual void TearDown() { Clock::SetClockForUnitTest(nullptr); }
 
   void PutForwardMilliseconds(uint64_t milli_sec) {
-    clock_mock_->PutClockForwardByTicks(milli_sec);
+    clock_mock_->PutClockForward(
+        milli_sec / absl::ToInt64Milliseconds(absl::Seconds(1)),
+        milli_sec % absl::ToInt64Milliseconds(absl::Seconds(1)));
   }
 
  private:
