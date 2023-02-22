@@ -47,7 +47,7 @@
 namespace mozc {
 namespace {
 
-constexpr absl::string_view kTestMagicNumber = "ma\0gic";
+constexpr const char kTestMagicNumber[] = "ma\0gic";
 
 TEST(DataSetReaderTest, ValidData) {
   constexpr absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
