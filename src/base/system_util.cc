@@ -438,12 +438,12 @@ std::string SystemUtil::GetServerDirectory() {
   return MacUtil::GetServerDirectory();
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
 #ifndef MOZC_SERVER_DIR
 #define MOZC_SERVER_DIR "/usr/lib/mozc"
 #endif  // MOZC_SERVER_DIR
   return MOZC_SERVER_DIR;
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
@@ -680,13 +680,13 @@ std::string GetSessionIdString() {
 #endif  // _WIN32
 
 std::string SystemUtil::GetDesktopNameAsString() {
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
   const char *display = Environ::GetEnv("DISPLAY");
   if (display == nullptr) {
     return "";
   }
   return display;
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
 #if defined(__APPLE__)
   return "";
@@ -919,7 +919,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
   return total_memory;
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const int32_t page_size = sysconf(_SC_PAGESIZE);
   const int32_t number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
@@ -932,7 +932,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 #endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.

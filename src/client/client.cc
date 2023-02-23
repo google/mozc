@@ -910,7 +910,7 @@ bool Client::LaunchTool(const std::string &mode,
     return false;
   }
 
-#if defined(_WIN32) || defined(__linux__) || defined(__ANDROID__)
+#if defined(_WIN32) || defined(__linux__)
   std::string arg = absl::StrCat("--mode=", mode);
   if (!extra_arg.empty()) {
     absl::StrAppend(&arg, " ", extra_arg);
@@ -919,7 +919,7 @@ bool Client::LaunchTool(const std::string &mode,
     LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
     return false;
   }
-#endif  // _WIN32 || __linux__ || __ANDROID__
+#endif  // _WIN32 || __linux__
 
   // TODO(taku): move MacProcess inside SpawnMozcProcess.
   // TODO(taku): support extra_arg.

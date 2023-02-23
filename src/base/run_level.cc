@@ -38,10 +38,10 @@
 #include <unistd.h>
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__)
+#ifdef __linux__
 #include <sys/types.h>
 #include <unistd.h>
-#endif  // __linux__ || __ANDROID__
+#endif  // __linux__
 
 #include "base/const.h"
 #include "base/logging.h"

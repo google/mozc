@@ -235,10 +235,9 @@ void Session::InitContext(ImeContext *context) const {
   context->SetConfig(&context->GetConfig());
   context->SetKeyMapManager(&context->GetKeyMapManager());
 
-#if defined(__ANDROID__) || defined(OS_IOS) || defined(__linux__) || \
-    defined(__wasm__)
+#if defined(OS_IOS) || defined(__linux__) || defined(__wasm__)
   context->mutable_converter()->set_use_cascading_window(false);
-#endif  // __ANDROID__ || OS_IOS || __linux__ || __wasm__
+#endif  // OS_IOS || __linux__ || __wasm__
 }
 
 void Session::PushUndoContext() {
@@ -971,15 +970,14 @@ void Session::UpdatePreferences(commands::Command *command) {
         config.selection_shortcut());
   }
 
-#if defined(__ANDROID__) || defined(OS_IOS) || defined(__linux__) || \
-    defined(__wasm__)
+#if defined(OS_IOS) || defined(__linux__) || defined(__wasm__)
   context_->mutable_converter()->set_use_cascading_window(false);
-#else   // __linux__ || __ANDROID__ || __wasm__
+#else   // OS_IOS || __linux__ || __wasm__
   if (config.has_use_cascading_window()) {
     context_->mutable_converter()->set_use_cascading_window(
         config.use_cascading_window());
   }
-#endif  // __ANDROID__ || OS_IOS || __linux__ || __wasm__
+#endif  // OS_IOS || __linux__ || __wasm__
 }
 
 bool Session::IMEOn(commands::Command *command) {
