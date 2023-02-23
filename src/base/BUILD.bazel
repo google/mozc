@@ -1134,8 +1134,6 @@ mozc_cc_library(
     deps = [
         ":file_stream",
         ":logging",
-        ":port",
-        ":util",
         "@com_google_absl//absl/strings",
     ],
 )
