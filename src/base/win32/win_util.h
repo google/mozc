@@ -166,13 +166,6 @@ class WinUtil {
   // directory and delete the application directory.
   static bool ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
                                       const wchar_t *parameters);
-
-  // Converts the error code to canonical status code.
-  static absl::StatusCode ErrorToCanonicalCode(DWORD error_code);
-
-  // Converts the error code to canonical status.
-  static absl::Status ErrorToCanonicalStatus(DWORD error_code,
-                                             absl::string_view message);
 };
 
 // Initializes COM in the constructor (STA), and uninitializes COM in the
@@ -182,7 +175,7 @@ class ScopedCOMInitializer {
   ScopedCOMInitializer();
   ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
   ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
-  ScopedCOMInitializer::~ScopedCOMInitializer();
+  ~ScopedCOMInitializer();
 
   // Returns the error code from CoInitialize(nullptr)
   // (called in constructor)
