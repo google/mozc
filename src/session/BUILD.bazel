@@ -346,6 +346,7 @@ mozc_cc_library(
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/time",
     ],
 )
 

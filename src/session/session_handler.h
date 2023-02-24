@@ -33,7 +33,6 @@
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
 
@@ -44,10 +43,9 @@
 #include "session/common.h"
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
-
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/random/random.h"
+
 
 namespace mozc {
 
@@ -164,7 +162,6 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<EngineBuilderInterface> engine_builder_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
-  std::unique_ptr<Stopwatch> stopwatch_;
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;
