@@ -30,15 +30,7 @@
 #import "base/mac/mac_util.h"
 
 #import <Foundation/Foundation.h>
-
-#ifdef OS_IOS
-#import <UIKit/UIKit.h>
-#else  // OS_IOS
-#include <CoreFoundation/CoreFoundation.h>
-#include <CoreGraphics/CoreGraphics.h>
-#include <IOKit/IOKitLib.h>
-#include <launch.h>
-#endif  // OS_IOS
+#include <TargetConditionals.h>
 
 #include <string>
 
@@ -50,14 +42,23 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
+#if TARGET_OS_IPHONE
+#import <UIKit/UIKit.h>
+#else  // TARGET_OS_IPHONE
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreGraphics/CoreGraphics.h>
+#include <IOKit/IOKitLib.h>
+#include <launch.h>
+#endif  // TARGET_OS_IPHONE
+
 namespace mozc {
 namespace {
 const char kServerDirectory[] = "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources";
-#ifndef OS_IOS
+#if TARGET_OS_OSX
 const unsigned char kPrelauncherPath[] =
     "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources/" kProductPrefix
     "Prelauncher.app";
-#endif  // OS_IOS
+#endif  // TARGET_OS_OSX
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProjectPrefix[] = "com.google.inputmethod.Japanese.";
@@ -67,7 +68,7 @@ const char kProjectPrefix[] = "org.mozc.inputmethod.Japanese.";
 #error Unknown branding
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD, MOZC_BUILD
 
-#ifndef OS_IOS
+#if TARGET_OS_OSX
 // Returns the reference of prelauncher login item.
 // If the prelauncher login item does not exist this function returns nullptr.
 // Otherwise you must release the reference.
@@ -117,7 +118,7 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
-#endif  // OS_IOS
+#endif  // TARGET_OS_OSX
 
 std::string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
   std::string dir;
@@ -181,7 +182,7 @@ std::string MacUtil::GetResourcesDirectory() {
   return result;
 }
 
-#ifdef OS_IOS
+#if TARGET_OS_IPHONE
 std::string MacUtil::GetSerialNumber() {
   std::string result;
   NSString *const kSerialNumberNSString = [[UIDevice currentDevice].identifierForVendor UUIDString];
@@ -190,7 +191,7 @@ std::string MacUtil::GetSerialNumber() {
   }
   return result;
 }
-#else   // OS_IOS
+#else   // TARGET_OS_IPHONE
 std::string MacUtil::GetSerialNumber() {
   // Please refer to TN1103 for the details
   // http://developer.apple.com/library/mac/#technotes/tn/tn1103.html
@@ -349,6 +350,6 @@ bool MacUtil::IsSuppressSuggestionWindow(const std::string &name, const std::str
          (("Google" == name) || absl::EndsWith(name, " - Google 検索") ||
           absl::EndsWith(name, " - Google Search"));
 }
-#endif  // OS_IOS
+#endif  // TARGET_OS_IPHONE
 
 }  // namespace mozc

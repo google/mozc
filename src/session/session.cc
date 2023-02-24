@@ -63,6 +63,10 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>  // for TARGET_OS_IPHONE
+#endif                           // __APPLE__
+
 namespace mozc {
 namespace session {
 namespace {
@@ -235,9 +239,10 @@ void Session::InitContext(ImeContext *context) const {
   context->SetConfig(&context->GetConfig());
   context->SetKeyMapManager(&context->GetKeyMapManager());
 
-#if defined(OS_IOS) || defined(__linux__) || defined(__wasm__)
+#if (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(__linux__) || \
+    defined(__wasm__)
   context->mutable_converter()->set_use_cascading_window(false);
-#endif  // OS_IOS || __linux__ || __wasm__
+#endif  // TARGET_OS_IPHONE || __linux__ || __wasm__
 }
 
 void Session::PushUndoContext() {
@@ -970,14 +975,15 @@ void Session::UpdatePreferences(commands::Command *command) {
         config.selection_shortcut());
   }
 
-#if defined(OS_IOS) || defined(__linux__) || defined(__wasm__)
+#if (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(__linux__) || \
+    defined(__wasm__)
   context_->mutable_converter()->set_use_cascading_window(false);
-#else   // OS_IOS || __linux__ || __wasm__
+#else   // TARGET_OS_IPHONE || __linux__ || __wasm__
   if (config.has_use_cascading_window()) {
     context_->mutable_converter()->set_use_cascading_window(
         config.use_cascading_window());
   }
-#endif  // OS_IOS || __linux__ || __wasm__
+#endif  // TARGET_OS_IPHONE || __linux__ || __wasm__
 }
 
 bool Session::IMEOn(commands::Command *command) {

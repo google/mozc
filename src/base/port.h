@@ -48,10 +48,6 @@
 #define MOZC_OS_DEFINED
 #endif  // __linux__
 
-#ifdef OS_IOS
-#define MOZC_OS_DEFINED
-#endif  // OS_IOS
-
 #ifdef __wasm__
 #define MOZC_OS_DEFINED
 #endif  // __wasm__
