@@ -47,6 +47,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
 namespace mozc {
@@ -75,7 +76,7 @@ class Entry {
  public:
   Entry(const std::string &input, const std::string &result,
         const std::string &pending, TableAttributes attributes);
-  virtual ~Entry() {}
+  virtual ~Entry() = default;
   const std::string &input() const { return input_; }
   const std::string &result() const { return result_; }
   const std::string &pending() const { return pending_; }
@@ -183,7 +184,7 @@ class Table {
 class TableManager {
  public:
   TableManager();
-  ~TableManager();
+  ~TableManager() = default;
   // Return Table for the request and the config
   // TableManager has ownership of the return value;
   const Table *GetTable(const commands::Request &request,
@@ -199,7 +200,7 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  std::map<uint32_t, std::unique_ptr<const Table>> table_map_;
+  absl::flat_hash_map<uint32_t, std::unique_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
   uint32_t custom_roman_table_fingerprint_;
 };

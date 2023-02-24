@@ -44,13 +44,11 @@
 
 #include "base/config_file_stream.h"
 #include "base/container/trie.h"
-#include "base/file_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
@@ -730,8 +728,6 @@ const Table &Table::GetDefaultTable() {
 // ========================================
 TableManager::TableManager()
     : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {}
-
-TableManager::~TableManager() = default;
 
 const Table *TableManager::GetTable(
     const mozc::commands::Request &request, const mozc::config::Config &config,
