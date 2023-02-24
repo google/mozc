@@ -32,15 +32,15 @@
 
 #include <string>
 
-#include "base/port.h"
 #include "base/random.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
 
 class StringStorageInterface {
  public:
-  virtual ~StringStorageInterface() {}
+  virtual ~StringStorageInterface() = default;
 
   virtual bool Load(std::string *output) const = 0;
   virtual bool Save(const std::string &input) const = 0;
@@ -48,7 +48,7 @@ class StringStorageInterface {
 
 class EncryptedStringStorage : public StringStorageInterface {
  public:
-  explicit EncryptedStringStorage(const std::string &filename);
+  explicit EncryptedStringStorage(absl::string_view filename);
   EncryptedStringStorage(const EncryptedStringStorage &) = delete;
   EncryptedStringStorage &operator=(const EncryptedStringStorage &) = delete;
   ~EncryptedStringStorage() override;
