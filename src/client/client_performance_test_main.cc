@@ -32,8 +32,12 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>  // NOLINT
+#include <functional>
+#include <iostream>
 #include <iterator>
+#include <limits>
+#include <memory>
+#include <numeric>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -50,9 +54,11 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/random_keyevents_generator.h"
+#include "absl/algorithm/container.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "absl/types/span.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
@@ -63,12 +69,12 @@ namespace {
 
 struct Result {
   std::string test_name;
-  std::vector<uint32_t> operations_times;
+  std::vector<absl::Duration> operations_times;
 };
 
 class TestSentenceGenerator {
  public:
-  const std::vector<std::vector<commands::KeyEvent> > &GetTestKeys() const {
+  const std::vector<std::vector<commands::KeyEvent>> &GetTestKeys() const {
     return keys_;
   }
 
@@ -97,7 +103,7 @@ class TestSentenceGenerator {
   }
 
  private:
-  std::vector<std::vector<commands::KeyEvent> > keys_;
+  std::vector<std::vector<commands::KeyEvent>> keys_;
 };
 
 class TestScenarioInterface {
@@ -154,48 +160,39 @@ class TestScenarioInterface {
   commands::Output output_;
 };
 
-std::string GetBasicStats(const std::vector<uint32_t> times) {
-  uint32_t total_time = 0;
-  uint32_t avg_time = 0;
-  uint32_t max_time = 0;
-  uint32_t min_time = 0;
-  uint32_t sd_time = 0;  // Standard Deviation
-  uint32_t med_time = 0;
-
-  min_time = INT_MAX;
-  max_time = 0;
-  for (size_t i = 0; i < times.size(); ++i) {
-    total_time += times[i];
-    min_time = std::min(times[i], min_time);
-    max_time = std::max(times[i], max_time);
+std::string GetBasicStats(const std::vector<absl::Duration> &times) {
+  std::vector<uint64_t> temp;
+  temp.resize(times.size());
+  absl::c_transform(times, temp.begin(), absl::ToInt64Microseconds);
+  absl::c_sort(temp);
+  const uint64_t total = absl::c_accumulate(temp, 0);
+  uint64_t mean = 0;
+  uint64_t max = 0;
+  uint64_t min = std::numeric_limits<uint64_t>::max();
+  uint64_t median = 0;
+  if (!temp.empty()) {
+    min = temp.front();
+    max = temp.back();
+    mean = total / times.size();
+    median = temp[temp.size() / 2];
   }
 
-  avg_time = static_cast<uint32_t>(1.0 * total_time / times.size());
-
+  uint64_t stddev = 0;
   if (times.size() >= 2) {
-    double dsd_time = 0;
-    for (size_t i = 0; i < times.size(); ++i) {
-      dsd_time += (avg_time - times[i]) * (avg_time - times[i]);
-    }
-    dsd_time = sqrt(dsd_time / (times.size() - 1));
-    sd_time = static_cast<uint32_t>(dsd_time);
-  }
-
-  if (!times.empty()) {
-    std::vector<uint32_t> tmp(times);
-    std::sort(tmp.begin(), tmp.end());
-    med_time = tmp[tmp.size() / 2];
+    double dsd = std::transform_reduce(
+        temp.begin(), temp.end(), 0.0, std::plus<>(),
+        [mean](uint64_t t) -> double { return (mean - t) * (mean - t); });
+    stddev = static_cast<uint64_t>(sqrt(dsd / (temp.size() - 1)));
   }
 
   return absl::StrFormat("size=%d total=%d avg=%d max=%d min=%d st=%d med=%d",
-                         static_cast<int>(times.size()), total_time, avg_time,
-                         max_time, min_time, sd_time, med_time);
+                         times.size(), total, mean, max, min, stddev, median);
 }
 
 class PreeditCommon : public TestScenarioInterface {
  protected:
   virtual void RunTest(Result *result) {
-    const std::vector<std::vector<commands::KeyEvent> > &keys =
+    const std::vector<std::vector<commands::KeyEvent>> &keys =
         Singleton<TestSentenceGenerator>::get()->GetTestKeys();
     for (size_t i = 0; i < keys.size(); ++i) {
       for (int j = 0; j < keys[i].size(); ++j) {
@@ -203,7 +200,7 @@ class PreeditCommon : public TestScenarioInterface {
         stopwatch.Start();
         client_.SendKey(keys[i][j], &output_);
         stopwatch.Stop();
-        result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
+        result->operations_times.push_back(stopwatch.GetElapsed());
       }
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
@@ -301,7 +298,7 @@ class PredictionCommon : public TestScenarioInterface {
       stopwatch.Start();
       client_.SendKey(key, &output_);
       stopwatch.Stop();
-      result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
+      result->operations_times.push_back(stopwatch.GetElapsed());
 
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
@@ -335,7 +332,7 @@ class Conversion : public TestScenarioInterface {
     DisableSuggestion();
     IMEOn();
 
-    const std::vector<std::vector<commands::KeyEvent> > &keys =
+    const std::vector<std::vector<commands::KeyEvent>> &keys =
         Singleton<TestSentenceGenerator>::get()->GetTestKeys();
     for (size_t i = 0; i < keys.size(); ++i) {
       for (int j = 0; j < keys[i].size(); ++j) {
@@ -347,7 +344,7 @@ class Conversion : public TestScenarioInterface {
       stopwatch.Start();
       client_.SendKey(key, &output_);
       stopwatch.Stop();
-      result->operations_times.push_back(stopwatch.GetElapsedMicroseconds());
+      result->operations_times.push_back(stopwatch.GetElapsed());
 
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
