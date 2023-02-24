@@ -98,11 +98,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithKanaLock) {
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
       'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
-  EXPECT_EQ(expected_length, actual_length);
-  EXPECT_EQ(1, actual_length);
+  EXPECT_EQ(actual_length, expected_length);
+  EXPECT_EQ(actual_length, 1);
 
-  EXPECT_EQ(expected_buffer[0], actual_buffer[0]);
-  EXPECT_EQ(0xff80, actual_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], expected_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], 0xff80);
 }
 
 TEST_F(ImeKeyboardTest, CheckQKeyWithoutCapsLock) {
@@ -123,11 +123,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithoutCapsLock) {
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
       'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
-  EXPECT_EQ(expected_length, actual_length);
-  EXPECT_EQ(1, actual_length);
+  EXPECT_EQ(actual_length, expected_length);
+  EXPECT_EQ(actual_length, 1);
 
-  EXPECT_EQ(expected_buffer[0], actual_buffer[0]);
-  EXPECT_EQ('q', actual_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], expected_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], 'q');
 }
 
 TEST_F(ImeKeyboardTest, CheckQKeyWithCapsLock) {
@@ -149,11 +149,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithCapsLock) {
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
       'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
-  EXPECT_EQ(expected_length, actual_length);
-  EXPECT_EQ(1, actual_length);
+  EXPECT_EQ(actual_length, expected_length);
+  EXPECT_EQ(actual_length, 1);
 
-  EXPECT_EQ(expected_buffer[0], actual_buffer[0]);
-  EXPECT_EQ('Q', actual_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], expected_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], 'Q');
 }
 
 TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCapsLock) {
@@ -176,11 +176,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCapsLock) {
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
       'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
-  EXPECT_EQ(expected_length, actual_length);
-  EXPECT_EQ(1, actual_length);
+  EXPECT_EQ(actual_length, expected_length);
+  EXPECT_EQ(actual_length, 1);
 
-  EXPECT_EQ(expected_buffer[0], actual_buffer[0]);
-  EXPECT_EQ('q', actual_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], expected_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], 'q');
 }
 
 TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCtrlCapsLock) {
@@ -204,10 +204,10 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCtrlCapsLock) {
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
       'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
-  EXPECT_EQ(expected_length, actual_length);
-  EXPECT_EQ(1, actual_length);
+  EXPECT_EQ(actual_length, expected_length);
+  EXPECT_EQ(actual_length, 1);
 
-  EXPECT_EQ(expected_buffer[0], actual_buffer[0]);
+  EXPECT_EQ(actual_buffer[0], expected_buffer[0]);
 }
 
 }  // namespace win32

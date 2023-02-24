@@ -168,11 +168,11 @@ TEST(ReconvertStringTest, dwCompAndTargetStrOffset_IsOnEnd) {
         &(actual_reconvert_string), &actual_precedeing_text,                   \
         &actual_preceding_composition, &actual_target,                         \
         &actual_following_composition, &actual_following_text));               \
-    EXPECT_EQ((expected_precedeing_text), actual_precedeing_text);             \
-    EXPECT_EQ((expected_preceding_composition), actual_preceding_composition); \
-    EXPECT_EQ((expected_target), actual_target);                               \
-    EXPECT_EQ((expected_following_composition), actual_following_composition); \
-    EXPECT_EQ((expected_following_text), actual_following_text);               \
+    EXPECT_EQ(actual_precedeing_text, (expected_precedeing_text));             \
+    EXPECT_EQ(actual_preceding_composition, (expected_preceding_composition)); \
+    EXPECT_EQ(actual_target, (expected_target));                               \
+    EXPECT_EQ(actual_following_composition, (expected_following_composition)); \
+    EXPECT_EQ(actual_following_text, (expected_following_text));               \
   } while (false)
 
 #define EXPECT_DECOMPOSE_FAIL(actual_reconvert_string)           \
@@ -255,7 +255,7 @@ TEST(ReconvertStringTest, Compose) {
 
     EXPECT_TRUE(ReconvertString::Compose(L"H", L"e", L"l", L"l", L"o",
                                          &reconvert_string));
-    EXPECT_EQ(5, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 5);
     EXPECT_DECOMPOSE_SUCCESS(L"H", L"e", L"l", L"l", L"o", reconvert_string);
   }
 
@@ -264,7 +264,7 @@ TEST(ReconvertStringTest, Compose) {
     reconvert_string.Initialize(L"", 10);
     EXPECT_TRUE(
         ReconvertString::Compose(L"H", L"", L"", L"", L"", &reconvert_string));
-    EXPECT_EQ(1, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 1);
     EXPECT_DECOMPOSE_SUCCESS(L"H", L"", L"", L"", L"", reconvert_string);
   }
 
@@ -273,7 +273,7 @@ TEST(ReconvertStringTest, Compose) {
     reconvert_string.Initialize(L"", 10);
     EXPECT_TRUE(
         ReconvertString::Compose(L"", L"e", L"", L"", L"", &reconvert_string));
-    EXPECT_EQ(1, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 1);
     EXPECT_DECOMPOSE_SUCCESS(L"", L"e", L"", L"", L"", reconvert_string);
   }
 
@@ -282,7 +282,7 @@ TEST(ReconvertStringTest, Compose) {
     reconvert_string.Initialize(L"", 10);
     EXPECT_TRUE(
         ReconvertString::Compose(L"", L"", L"l", L"", L"", &reconvert_string));
-    EXPECT_EQ(1, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 1);
     EXPECT_DECOMPOSE_SUCCESS(L"", L"", L"l", L"", L"", reconvert_string);
   }
 
@@ -291,7 +291,7 @@ TEST(ReconvertStringTest, Compose) {
     reconvert_string.Initialize(L"", 10);
     EXPECT_TRUE(
         ReconvertString::Compose(L"", L"", L"", L"l", L"", &reconvert_string));
-    EXPECT_EQ(1, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 1);
     EXPECT_DECOMPOSE_SUCCESS(L"", L"", L"", L"l", L"", reconvert_string);
   }
 
@@ -300,7 +300,7 @@ TEST(ReconvertStringTest, Compose) {
     reconvert_string.Initialize(L"", 10);
     EXPECT_TRUE(
         ReconvertString::Compose(L"", L"", L"", L"", L"o", &reconvert_string));
-    EXPECT_EQ(1, reconvert_string.dwStrLen);
+    EXPECT_EQ(reconvert_string.dwStrLen, 1);
     EXPECT_DECOMPOSE_SUCCESS(L"", L"", L"", L"", L"o", reconvert_string);
   }
 

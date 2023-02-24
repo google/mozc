@@ -96,37 +96,37 @@ TEST(TipDisplayAttributesTest, BasicTest) {
                                         kTestDescription);
 
   CComBSTR desc;
-  EXPECT_EQ(S_OK, attribute.GetDescription(&desc));
+  EXPECT_EQ(attribute.GetDescription(&desc), S_OK);
   EXPECT_STREQ(kTestDescription, desc);
 
   GUID guid;
-  EXPECT_EQ(S_OK, attribute.GetGUID(&guid));
-  EXPECT_NE(FALSE, ::IsEqualGUID(kTestGuid, guid));
+  EXPECT_EQ(attribute.GetGUID(&guid), S_OK);
+  EXPECT_NE(::IsEqualGUID(kTestGuid, guid), FALSE);
 
   TF_DISPLAYATTRIBUTE info;
-  EXPECT_EQ(S_OK, attribute.GetAttributeInfo(&info));
-  EXPECT_EQ(kTestAttribute.bAttr, info.bAttr);
+  EXPECT_EQ(attribute.GetAttributeInfo(&info), S_OK);
+  EXPECT_EQ(info.bAttr, kTestAttribute.bAttr);
   EXPECT_TRUE(IsSameColor(kTestAttribute.crBk, info.crBk));
   EXPECT_TRUE(IsSameColor(kTestAttribute.crLine, info.crLine));
   EXPECT_TRUE(IsSameColor(kTestAttribute.crText, info.crText));
-  EXPECT_EQ(kTestAttribute.fBoldLine, info.fBoldLine);
-  EXPECT_EQ(kTestAttribute.lsStyle, info.lsStyle);
+  EXPECT_EQ(info.fBoldLine, kTestAttribute.fBoldLine);
+  EXPECT_EQ(info.lsStyle, kTestAttribute.lsStyle);
 }
 
 TEST(TipDisplayAttributesTest, SetAttributeInfo) {
   TestableTipDisplayAttribute attribute(kTestGuid, kTestAttribute,
                                         kTestDescription);
 
-  EXPECT_EQ(S_OK, attribute.SetAttributeInfo(&kTestUserAttribute));
+  EXPECT_EQ(attribute.SetAttributeInfo(&kTestUserAttribute), S_OK);
 
   TF_DISPLAYATTRIBUTE info;
-  EXPECT_EQ(S_OK, attribute.GetAttributeInfo(&info));
-  EXPECT_EQ(kTestUserAttribute.bAttr, info.bAttr);
+  EXPECT_EQ(attribute.GetAttributeInfo(&info), S_OK);
+  EXPECT_EQ(info.bAttr, kTestUserAttribute.bAttr);
   EXPECT_TRUE(IsSameColor(kTestUserAttribute.crBk, info.crBk));
   EXPECT_TRUE(IsSameColor(kTestUserAttribute.crLine, info.crLine));
   EXPECT_TRUE(IsSameColor(kTestUserAttribute.crText, info.crText));
-  EXPECT_EQ(kTestUserAttribute.fBoldLine, info.fBoldLine);
-  EXPECT_EQ(kTestUserAttribute.lsStyle, info.lsStyle);
+  EXPECT_EQ(info.fBoldLine, kTestUserAttribute.fBoldLine);
+  EXPECT_EQ(info.lsStyle, kTestUserAttribute.lsStyle);
 }
 
 }  // namespace tsf

@@ -71,7 +71,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(false, TipInputModeManagerImpl::kHiragana),
               input_scope_off);
       EXPECT_FALSE(state.open_close);
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
     {
       const StatePair state =
@@ -79,7 +79,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(true, TipInputModeManagerImpl::kHiragana),
               input_scope_off);
       EXPECT_FALSE(state.open_close) << "Should be temporarily off.";
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
   }
 
@@ -93,7 +93,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(false, TipInputModeManagerImpl::kHiragana),
               input_scope_full_hiragana);
       EXPECT_TRUE(state.open_close) << "Should be temporarily on.";
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
     {
       const StatePair state =
@@ -101,7 +101,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(true, TipInputModeManagerImpl::kHiragana),
               input_scope_full_hiragana);
       EXPECT_TRUE(state.open_close) << "Should be temporarily on.";
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
     {
       const StatePair state =
@@ -109,7 +109,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(true, TipInputModeManagerImpl::kFullAscii),
               input_scope_full_hiragana);
       EXPECT_TRUE(state.open_close) << "Should be temporarily on.";
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode)
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana)
           << "Should be temporarily Hiragana";
     }
   }
@@ -126,7 +126,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(false, TipInputModeManagerImpl::kHiragana),
               input_scope_invalid);
       EXPECT_FALSE(state.open_close);
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
     {
       const StatePair state =
@@ -134,7 +134,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(true, TipInputModeManagerImpl::kHiragana),
               input_scope_invalid);
       EXPECT_TRUE(state.open_close);
-      EXPECT_EQ(TipInputModeManagerImpl::kHiragana, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kHiragana);
     }
     {
       const StatePair state =
@@ -142,7 +142,7 @@ TEST(TipInputModeManagerImplTest, GetOverriddenState) {
               StatePair(true, TipInputModeManagerImpl::kFullAscii),
               input_scope_invalid);
       EXPECT_TRUE(state.open_close);
-      EXPECT_EQ(TipInputModeManagerImpl::kFullAscii, state.conversion_mode);
+      EXPECT_EQ(state.conversion_mode, TipInputModeManagerImpl::kFullAscii);
     }
   }
 }
@@ -159,11 +159,11 @@ TEST(TipInputModeManagerTest, IgnoreConversionModeByGlobalConfig_Issue8583505) {
   std::vector<InputScope> input_scope_empty;
   auto action =
       input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
-  EXPECT_EQ(TipInputModeManager::kDoNothing, action);
+  EXPECT_EQ(action, TipInputModeManager::kDoNothing);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
 
   // On
   input_mode_manager.OnReceiveCommand(true, TipInputModeManager::kHiragana,
@@ -178,10 +178,10 @@ TEST(TipInputModeManagerTest, IgnoreConversionModeByGlobalConfig_Issue8583505) {
 
   // Hiragana -> HalfAlpha (ignored)
   action = input_mode_manager.OnChangeConversionMode(kNativeHalfAlpha);
-  EXPECT_EQ(TipInputModeManager::kDoNothing, action);
+  EXPECT_EQ(action, TipInputModeManager::kDoNothing);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
 }
 
 TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
@@ -196,11 +196,11 @@ TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
   std::vector<InputScope> input_scope_empty;
   auto action =
       input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
-  EXPECT_EQ(TipInputModeManager::kDoNothing, action);
+  EXPECT_EQ(action, TipInputModeManager::kDoNothing);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
 
   // On
   input_mode_manager.OnReceiveCommand(true, TipInputModeManager::kHiragana,
@@ -215,10 +215,10 @@ TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
 
   // Hiragana -> HalfAlpha (honored)
   action = input_mode_manager.OnChangeConversionMode(kNativeHalfAlpha);
-  EXPECT_EQ(TipInputModeManager::kUpdateUI, action);
+  EXPECT_EQ(action, TipInputModeManager::kUpdateUI);
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
-  EXPECT_EQ(TipInputModeManager::kHalfAscii,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHalfAscii);
 }
 
 TEST(TipInputModeManagerTest, ChangeInputScope) {
@@ -231,11 +231,11 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   std::vector<InputScope> input_scope_empty;
   auto action =
       input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
-  EXPECT_EQ(TipInputModeManager::kDoNothing, action);
+  EXPECT_EQ(action, TipInputModeManager::kDoNothing);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
 
   std::vector<InputScope> input_scope_full_katakana;
   input_scope_full_katakana.push_back(IS_KATAKANA_FULLWIDTH);
@@ -243,10 +243,10 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   // InputScope: IS_KATAKANA_FULLWIDTH
   // This should change the mode and make indicator visible.
   action = input_mode_manager.OnChangeInputScope(input_scope_full_katakana);
-  EXPECT_EQ(TipInputModeManager::kUpdateUI, action);
+  EXPECT_EQ(action, TipInputModeManager::kUpdateUI);
   EXPECT_TRUE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kFullKatakana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kFullKatakana);
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
 
   action = input_mode_manager.OnKey(VirtualKey(), true, true);
@@ -257,10 +257,10 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   std::vector<InputScope> input_scope_email;
   input_scope_email.push_back(IS_EMAIL_SMTPEMAILADDRESS);
   action = input_mode_manager.OnChangeInputScope(input_scope_email);
-  EXPECT_EQ(TipInputModeManager::kUpdateUI, action);
+  EXPECT_EQ(action, TipInputModeManager::kUpdateUI);
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
 
   // OnKey
@@ -273,10 +273,10 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
   std::vector<InputScope> input_scope_number;
   input_scope_number.push_back(IS_NUMBER);
   action = input_mode_manager.OnChangeInputScope(input_scope_number);
-  EXPECT_EQ(TipInputModeManager::kDoNothing, action);
+  EXPECT_EQ(action, TipInputModeManager::kDoNothing);
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
-  EXPECT_EQ(TipInputModeManager::kHiragana,
-            input_mode_manager.GetEffectiveConversionMode());
+  EXPECT_EQ(input_mode_manager.GetEffectiveConversionMode(),
+            TipInputModeManager::kHiragana);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
 }
 
@@ -288,7 +288,7 @@ TEST(TipInputModeManagerTest, HonorOpenCloseModeFromApps_Issue8661096) {
 
   // An application calls ImmSetOpenStatus(himc, TRUE)
   auto action = input_mode_manager.OnChangeOpenClose(true);
-  EXPECT_EQ(TipInputModeManager::kUpdateUI, action);
+  EXPECT_EQ(action, TipInputModeManager::kUpdateUI);
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
   EXPECT_TRUE(input_mode_manager.GetEffectiveOpenClose());
   EXPECT_TRUE(input_mode_manager.GetTsfOpenClose());

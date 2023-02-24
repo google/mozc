@@ -45,15 +45,15 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 0, &characters_in_utf16));
-    EXPECT_EQ(0, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 0);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 1, &characters_in_utf16));
-    EXPECT_EQ(1, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 1);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 5, &characters_in_utf16));
-    EXPECT_EQ(5, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 5);
 
     EXPECT_FALSE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 6, &characters_in_utf16));
@@ -65,11 +65,11 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 1, &characters_in_utf16));
-    EXPECT_EQ(1, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 1);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 2, &characters_in_utf16));
-    EXPECT_EQ(3, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 3);
 
     EXPECT_FALSE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 3, &characters_in_utf16));
@@ -85,15 +85,15 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 0, &characters_in_utf16));
-    EXPECT_EQ(0, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 0);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 1, &characters_in_utf16));
-    EXPECT_EQ(1, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 1);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 2, &characters_in_utf16));
-    EXPECT_EQ(2, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 2);
 
     EXPECT_FALSE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 3, &characters_in_utf16));
@@ -105,15 +105,15 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 0, &characters_in_utf16));
-    EXPECT_EQ(0, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 0);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 1, &characters_in_utf16));
-    EXPECT_EQ(1, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 1);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 2, &characters_in_utf16));
-    EXPECT_EQ(2, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 2);
 
     EXPECT_FALSE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 3, &characters_in_utf16));
@@ -126,15 +126,15 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 0, &characters_in_utf16));
-    EXPECT_EQ(0, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 0);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 1, &characters_in_utf16));
-    EXPECT_EQ(2, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 2);
 
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 2, &characters_in_utf16));
-    EXPECT_EQ(3, characters_in_utf16);
+    EXPECT_EQ(characters_in_utf16, 3);
 
     EXPECT_FALSE(TipSurroundingTextUtil::MeasureCharactersBackward(
         kSource, 3, &characters_in_utf16));

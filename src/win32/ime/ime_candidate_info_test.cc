@@ -43,55 +43,55 @@ namespace {
 #define EXPECT_CANDIDATEINFO(size, count, first_list_offset, private_size, \
                              private_offset, info)                         \
   do {                                                                     \
-    EXPECT_EQ((size), (info)->dwSize);                                     \
-    EXPECT_EQ((count), (info)->dwCount);                                   \
-    EXPECT_EQ((first_list_offset), (info)->dwOffset[0]);                   \
-    EXPECT_EQ(0, (info)->dwOffset[1]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[2]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[3]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[4]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[5]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[6]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[7]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[8]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[9]);                                     \
-    EXPECT_EQ(0, (info)->dwOffset[10]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[11]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[12]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[13]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[14]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[15]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[16]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[17]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[18]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[19]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[20]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[21]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[22]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[23]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[24]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[25]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[26]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[27]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[28]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[29]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[30]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[31]);                                    \
-    EXPECT_EQ(0, (info)->dwOffset[32]);                                    \
-    EXPECT_EQ((private_size), (info)->dwPrivateSize);                      \
-    EXPECT_EQ((private_offset), (info)->dwPrivateOffset);                  \
+    EXPECT_EQ((info)->dwSize, (size));                                     \
+    EXPECT_EQ((info)->dwCount, (count));                                   \
+    EXPECT_EQ((info)->dwOffset[0], (first_list_offset));                   \
+    EXPECT_EQ((info)->dwOffset[1], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[2], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[3], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[4], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[5], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[6], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[7], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[8], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[9], 0);                                     \
+    EXPECT_EQ((info)->dwOffset[10], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[11], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[12], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[13], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[14], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[15], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[16], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[17], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[18], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[19], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[20], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[21], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[22], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[23], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[24], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[25], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[26], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[27], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[28], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[29], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[30], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[31], 0);                                    \
+    EXPECT_EQ((info)->dwOffset[32], 0);                                    \
+    EXPECT_EQ((info)->dwPrivateSize, (private_size));                      \
+    EXPECT_EQ((info)->dwPrivateOffset, (private_offset));                  \
   } while (false)
 
 #define EXPECT_CANDIDATELIST(size, style, count, selection, page_start, \
                              page_size, info)                           \
   do {                                                                  \
-    EXPECT_EQ((size), (info)->dwSize);                                  \
-    EXPECT_EQ((style), (info)->dwStyle);                                \
-    EXPECT_EQ((count), (info)->dwCount);                                \
-    EXPECT_EQ((selection), (info)->dwSelection);                        \
-    EXPECT_EQ((page_start), (info)->dwPageStart);                       \
-    EXPECT_EQ((page_size), (info)->dwPageSize);                         \
-    EXPECT_EQ((page_start), (info)->dwPageStart);                       \
+    EXPECT_EQ((info)->dwSize, (size));                                  \
+    EXPECT_EQ((info)->dwStyle, (style));                                \
+    EXPECT_EQ((info)->dwCount, (count));                                \
+    EXPECT_EQ((info)->dwSelection, (selection));                        \
+    EXPECT_EQ((info)->dwPageStart, (page_start));                       \
+    EXPECT_EQ((info)->dwPageSize, (page_size));                         \
+    EXPECT_EQ((info)->dwPageStart, (page_start));                       \
   } while (false)
 
 constexpr size_t kNumCandidates = 13;
@@ -470,10 +470,10 @@ TEST(CandidateInfoUtilTest, ConversionTest) {
   FillOutputForConversion(&output, 0, false);
   info.Clear();
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
-  EXPECT_EQ(0, info.candidate_info_size);
-  EXPECT_EQ(0, info.candidate_list_size);
-  EXPECT_EQ(0, info.count);
-  EXPECT_EQ(0, info.selection);
+  EXPECT_EQ(info.candidate_info_size, 0);
+  EXPECT_EQ(info.candidate_list_size, 0);
+  EXPECT_EQ(info.count, 0);
+  EXPECT_EQ(info.selection, 0);
   EXPECT_FALSE(info.show_candidate);
   EXPECT_TRUE(info.offsets.empty());
   EXPECT_TRUE(info.text_buffer.empty());
@@ -483,13 +483,13 @@ TEST(CandidateInfoUtilTest, ConversionTest) {
   info.Clear();
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
 
-  EXPECT_EQ(330, info.candidate_info_size);
-  EXPECT_EQ(186, info.candidate_list_size);
-  EXPECT_EQ(kNumCandidates, info.count);
-  EXPECT_EQ(1, info.selection);
+  EXPECT_EQ(info.candidate_info_size, 330);
+  EXPECT_EQ(info.candidate_list_size, 186);
+  EXPECT_EQ(info.count, kNumCandidates);
+  EXPECT_EQ(info.selection, 1);
   EXPECT_TRUE(info.show_candidate);
-  EXPECT_EQ(kNumCandidates, info.offsets.size());
-  EXPECT_EQ(55, info.text_buffer.size());
+  EXPECT_EQ(info.offsets.size(), kNumCandidates);
+  EXPECT_EQ(info.text_buffer.size(), 55);
 
   // End conversion.
   output.clear_all_candidate_words();
@@ -498,10 +498,10 @@ TEST(CandidateInfoUtilTest, ConversionTest) {
   info.Clear();
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
 
-  EXPECT_EQ(0, info.candidate_info_size);
-  EXPECT_EQ(0, info.candidate_list_size);
-  EXPECT_EQ(0, info.count);
-  EXPECT_EQ(0, info.selection);
+  EXPECT_EQ(info.candidate_info_size, 0);
+  EXPECT_EQ(info.candidate_list_size, 0);
+  EXPECT_EQ(info.count, 0);
+  EXPECT_EQ(info.selection, 0);
   EXPECT_FALSE(info.show_candidate);
   EXPECT_TRUE(info.offsets.empty());
   EXPECT_TRUE(info.text_buffer.empty());
@@ -516,10 +516,10 @@ TEST(CandidateInfoUtilTest, SuggestionTest) {
   info.Clear();
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
 
-  EXPECT_EQ(0, info.candidate_info_size);
-  EXPECT_EQ(0, info.candidate_list_size);
-  EXPECT_EQ(0, info.count);
-  EXPECT_EQ(0, info.selection);
+  EXPECT_EQ(info.candidate_info_size, 0);
+  EXPECT_EQ(info.candidate_list_size, 0);
+  EXPECT_EQ(info.count, 0);
+  EXPECT_EQ(info.selection, 0);
   EXPECT_FALSE(info.show_candidate);
   EXPECT_TRUE(info.offsets.empty());
   EXPECT_TRUE(info.text_buffer.empty());
@@ -539,19 +539,19 @@ TEST(CandidateInfoUtilTest, WriteResultTest) {
   EXPECT_CANDIDATELIST(186, IME_CAND_READ, kNumCandidates, 1, 0, 9,
                        buffer.GetList(0));
 
-  EXPECT_EQ(kValueList[0], ToUTF8(buffer.GetCandidateString(0, 0)));
-  EXPECT_EQ(kValueList[1], ToUTF8(buffer.GetCandidateString(0, 1)));
-  EXPECT_EQ(kValueList[2], ToUTF8(buffer.GetCandidateString(0, 2)));
-  EXPECT_EQ(kValueList[3], ToUTF8(buffer.GetCandidateString(0, 3)));
-  EXPECT_EQ(kValueList[4], ToUTF8(buffer.GetCandidateString(0, 4)));
-  EXPECT_EQ(kValueList[5], ToUTF8(buffer.GetCandidateString(0, 5)));
-  EXPECT_EQ(kValueList[6], ToUTF8(buffer.GetCandidateString(0, 6)));
-  EXPECT_EQ(kValueList[7], ToUTF8(buffer.GetCandidateString(0, 7)));
-  EXPECT_EQ(kValueList[8], ToUTF8(buffer.GetCandidateString(0, 8)));
-  EXPECT_EQ(kValueList[9], ToUTF8(buffer.GetCandidateString(0, 9)));
-  EXPECT_EQ(kValueList[10], ToUTF8(buffer.GetCandidateString(0, 10)));
-  EXPECT_EQ(kValueList[11], ToUTF8(buffer.GetCandidateString(0, 11)));
-  EXPECT_EQ(kValueList[12], ToUTF8(buffer.GetCandidateString(0, 12)));
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 0)), kValueList[0]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 1)), kValueList[1]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 2)), kValueList[2]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 3)), kValueList[3]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 4)), kValueList[4]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 5)), kValueList[5]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 6)), kValueList[6]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 7)), kValueList[7]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 8)), kValueList[8]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 9)), kValueList[9]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 10)), kValueList[10]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 11)), kValueList[11]);
+  EXPECT_EQ(ToUTF8(buffer.GetCandidateString(0, 12)), kValueList[12]);
 }
 
 TEST(CandidateInfoUtilTest, PagingEmulation_Issue4077022) {
