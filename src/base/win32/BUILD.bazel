@@ -107,20 +107,6 @@ mozc_cc_library(
 #     ],
 # )
 
-mozc_cc_library(
-    name = "win_util",
-    # TODO(b/269889028): temporary fix to address cyclic dependency
-    # srcs = ["win_util.cc"],
-    hdrs = ["win_util.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        "//base:port",
-        "//testing:gunit_prod",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
 # TODO (b/180075250): Add when we support win32 builds.
 # mozc_cc_test(
 #     name = "win_util_test",
@@ -153,4 +139,16 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
     ],
+)
+
+# TODO(b/269889028): Change these filegroup rules to mozc_cc_library after
+# fixing cyclic dependency with base:system_util.
+filegroup(
+    name = "win_util_h",
+    srcs = ["win_util.h"],
+)
+
+filegroup(
+    name = "win_util_cc",
+    srcs = ["win_util.cc"],
 )

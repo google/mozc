@@ -29,14 +29,6 @@
 
 #include "base/file_util.h"
 
-#ifdef _WIN32
-#include <ktmw32.h>
-#include <windows.h>
-#else  // _WIN32
-#include <sys/stat.h>
-#include <unistd.h>
-#endif  // _WIN32
-
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
@@ -52,13 +44,24 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/singleton.h"
-#include "base/util.h"
-#include "base/win32/scoped_handle.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+
+#ifdef _WIN32
+// clang-format off
+#include <windows.h>  // Include windows.h before ktmw32.h
+#include <ktmw32.h>
+// clang-format on
+
+#include "base/util.h"
+#include "base/win32/scoped_handle.h"
+#else  // _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace {
 

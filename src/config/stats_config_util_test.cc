@@ -35,7 +35,6 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/win32/win_api_test_helper.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
@@ -44,6 +43,10 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #endif  // __ANDROID__
+
+#ifdef _WIN32
+#include "base/win32/win_api_test_helper.h"
+#endif  // _WIN32
 
 namespace mozc {
 namespace config {
@@ -687,9 +690,9 @@ TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif  // __linux__
+#endif                    // __linux__
 
-#else  // !GOOGLE_JAPANESE_INPUT_BUILD
+#else   // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }

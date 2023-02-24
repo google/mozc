@@ -29,12 +29,6 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
-#include "base/japanese_util.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
@@ -46,17 +40,23 @@
 
 #include "base/compiler_specific.h"
 #include "base/hash.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/win32/win_util.h"
 #include "dictionary/user_dictionary_util.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+
+#ifdef _WIN32
+#include <windows.h>
+
+#include "base/win32/win_util.h"
+#endif  // _WIN32
 
 namespace mozc {
 

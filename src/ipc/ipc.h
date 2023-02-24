@@ -31,15 +31,18 @@
 #define MOZC_IPC_IPC_H_
 
 #include <cstdint>
+#include <memory>
+#include <string>
+
+#include "absl/strings/string_view.h"
+
 #ifdef __APPLE__
 #include <mach/mach.h>  // for mach_port_t
 #endif                  // __APPLE__
 
-#include <memory>
-#include <string>
-
+#ifdef _WIN32
 #include "base/win32/scoped_handle.h"
-#include "absl/strings/string_view.h"
+#endif  // _WIN32
 
 namespace mozc {
 
