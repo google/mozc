@@ -32,6 +32,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -108,7 +109,7 @@ class TestSentenceGenerator {
 
 class TestScenarioInterface {
  public:
-  virtual void Run(Result *result) = 0;
+  virtual Result Run() = 0;
 
   TestScenarioInterface() {
     if (!absl::GetFlag(FLAGS_server_path).empty()) {
@@ -211,27 +212,31 @@ class PreeditCommon : public TestScenarioInterface {
 
 class PreeditWithoutSuggestion : public PreeditCommon {
  public:
-  void Run(Result *result) override {
-    result->test_name = "preedit_without_suggestion";
+  Result Run() override {
+    Result result;
+    result.test_name = "preedit_without_suggestion";
     ResetConfig();
     IMEOn();
     DisableSuggestion();
-    RunTest(result);
+    RunTest(&result);
     IMEOff();
     ResetConfig();
+    return result;
   }
 };
 
 class PreeditWithSuggestion : public PreeditCommon {
  public:
-  void Run(Result *result) override {
-    result->test_name = "preedit_with_suggestion";
+  Result Run() override {
+    Result result;
+    result.test_name = "preedit_with_suggestion";
     ResetConfig();
     IMEOn();
     EnableSuggestion();
-    RunTest(result);
+    RunTest(&result);
     IMEOff();
     ResetConfig();
+    return result;
   }
 };
 
@@ -310,24 +315,29 @@ class PredictionCommon : public TestScenarioInterface {
 
 class PredictionWithOneChar : public PredictionCommon {
  public:
-  void Run(Result *result) override {
-    result->test_name = "prediction_one_char";
-    RunTest(ONE_CHAR, result);
+  Result Run() override {
+    Result result;
+    result.test_name = "prediction_one_char";
+    RunTest(ONE_CHAR, &result);
+    return result;
   }
 };
 
 class PredictionWithTwoChars : public PredictionCommon {
  public:
-  void Run(Result *result) override {
-    result->test_name = "prediction_two_chars";
-    RunTest(TWO_CHARS, result);
+  Result Run() override {
+    Result result;
+    result.test_name = "prediction_two_chars";
+    RunTest(TWO_CHARS, &result);
+    return result;
   }
 };
 
 class Conversion : public TestScenarioInterface {
  public:
-  void Run(Result *result) override {
-    result->test_name = "conversion";
+  Result Run() override {
+    Result result;
+    result.test_name = "conversion";
     ResetConfig();
     DisableSuggestion();
     IMEOn();
@@ -344,7 +354,7 @@ class Conversion : public TestScenarioInterface {
       stopwatch.Start();
       client_.SendKey(key, &output_);
       stopwatch.Stop();
-      result->operations_times.push_back(stopwatch.GetElapsed());
+      result.operations_times.push_back(stopwatch.GetElapsed());
 
       commands::SessionCommand command;
       command.set_type(commands::SessionCommand::REVERT);
@@ -353,45 +363,44 @@ class Conversion : public TestScenarioInterface {
 
     IMEOff();
     ResetConfig();
+    return result;
   }
 };
+
+void Run(std::ostream &os) {
+  std::vector<std::unique_ptr<TestScenarioInterface>> tests;
+  tests.push_back(std::make_unique<PreeditWithoutSuggestion>());
+  tests.push_back(std::make_unique<PreeditWithSuggestion>());
+  tests.push_back(std::make_unique<Conversion>());
+  tests.push_back(std::make_unique<PredictionWithOneChar>());
+  tests.push_back(std::make_unique<PredictionWithTwoChars>());
+
+  std::vector<Result> results;
+  results.reserve(tests.size());
+  for (const auto &test : tests) {
+    results.push_back(test->Run());
+  }
+
+  CHECK_EQ(results.size(), tests.size());
+
+  // TODO(taku): generate histogram with ChartAPI
+  for (const Result &result : results) {
+    os << result.test_name << ": "
+       << mozc::GetBasicStats(result.operations_times) << std::endl;
+  }
+}
+
 }  // namespace
 }  // namespace mozc
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  std::vector<mozc::TestScenarioInterface *> tests;
-  std::vector<mozc::Result *> results;
-
-  tests.push_back(new mozc::PreeditWithoutSuggestion);
-  tests.push_back(new mozc::PreeditWithSuggestion);
-  tests.push_back(new mozc::Conversion);
-  tests.push_back(new mozc::PredictionWithOneChar);
-  tests.push_back(new mozc::PredictionWithTwoChars);
-
-  for (size_t i = 0; i < tests.size(); ++i) {
-    mozc::Result *result = new mozc::Result;
-    tests[i]->Run(result);
-    results.push_back(result);
-  }
-
-  CHECK_EQ(results.size(), tests.size());
-
-  std::ostream *ofs = &std::cout;
   if (!absl::GetFlag(FLAGS_log_path).empty()) {
-    ofs = new mozc::OutputFileStream(absl::GetFlag(FLAGS_log_path));
-  }
-
-  // TODO(taku): generate histogram with ChartAPI
-  for (size_t i = 0; i < tests.size(); ++i) {
-    (*ofs) << results[i]->test_name << ": "
-           << mozc::GetBasicStats(results[i]->operations_times) << std::endl;
-    delete tests[i];
-    delete results[i];
-  }
-  if (ofs != &std::cout) {
-    delete ofs;
+    std::ofstream ofs = mozc::OutputFileStream(absl::GetFlag(FLAGS_log_path));
+    mozc::Run(ofs);
+  } else {
+    mozc::Run(std::cout);
   }
 
   return 0;
