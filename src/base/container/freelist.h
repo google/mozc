@@ -68,7 +68,7 @@ class FreeList {
   }
 
   T* Alloc() {
-    if ((current_index_ + 1) >= size_) {
+    if (current_index_ >= size_) {
       chunk_index_++;
       current_index_ = 0;
     }
@@ -98,7 +98,7 @@ class ObjectPool {
   ObjectPool& operator=(const ObjectPool&) = delete;
   explicit ObjectPool(int size) : freelist_(size) {}
 
-  ~ObjectPool() {}
+  ~ObjectPool() = default;
 
   void Free() {
     released_.clear();
