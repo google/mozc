@@ -29,9 +29,23 @@
 
 #include "ipc/named_event.h"
 
+#include <cstddef>
+#include <string>
+
+#include "base/const.h"
+#include "base/hash.h"
+#include "base/logging.h"
+#include "base/system_util.h"
+#include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+
 #ifdef _WIN32
 #include <sddl.h>
 #include <windows.h>
+
+#include "base/util.h"
+#include "base/win32/win_sandbox.h"
 #else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
@@ -40,20 +54,6 @@
 #include <string.h>
 #include <sys/types.h>
 #endif  // _WIN32
-
-#include <cstddef>
-#include <string>
-
-#include "base/const.h"
-#include "base/hash.h"
-#include "base/logging.h"
-#include "base/system_util.h"
-#ifdef _WIN32
-#include "base/win32/win_sandbox.h"
-#endif  // _WIN32
-#include "absl/strings/str_format.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace {

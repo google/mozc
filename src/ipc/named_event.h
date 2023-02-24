@@ -30,14 +30,14 @@
 #ifndef MOZC_IPC_NAMED_EVENT_H_
 #define MOZC_IPC_NAMED_EVENT_H_
 
+#include <cstddef>
+#include <string>
+
 #ifdef _WIN32
 #include <windows.h>
 #else  // _WIN32
 #include <semaphore.h>
 #endif  // _WIN32
-
-#include <cstddef>
-#include <string>
 
 // Named Event class for Inter Process Communication:
 // This is a shallow wrapper for Windows CreateEvent() API.
