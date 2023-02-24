@@ -32,12 +32,12 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
-#include <cctype>
 #include <string>
 #include <utility>
 
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "absl/strings/ascii.h"
 
 namespace mozc {
 namespace composer {
@@ -85,7 +85,8 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
 }
 
 bool ModeSwitchingHandler::IsDriveLetter(const std::string &key) {
-  return key.size() == 3 && isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
+  return key.size() == 3 && absl::ascii_isalpha(key[0]) && key[1] == ':' &&
+         key[2] == '\\';
 }
 
 void ModeSwitchingHandler::AddRule(const std::string &key,
