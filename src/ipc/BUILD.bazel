@@ -210,12 +210,12 @@ mozc_cc_library(
         "//base:const",
         "//base:hash",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
-        "//base:util",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:win_sandbox"],
+    ),
 )
 
 mozc_cc_binary(
