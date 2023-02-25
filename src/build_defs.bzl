@@ -495,3 +495,11 @@ def select_mozc(**kwargs):
     """Deprecated, use mozc_select.
     """
     return mozc_select(**kwargs)
+
+# Tags aliases for build filtering.
+MOZC_TAGS = struct(
+    ANDROID_ONLY = ["nolinux", "nomac", "nowin"],
+    LINUX_ONLY = ["noandroid", "nomac", "nowin"],
+    MAC_ONLY = ["noandroid", "nolinux", "nowin"],
+    WIN_ONLY = ["noandroid", "nolinux", "nomac"],
+)
