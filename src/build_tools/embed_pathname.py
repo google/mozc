@@ -69,7 +69,8 @@ def main():
     escaped_path = path.encode('string-escape')
   with open(opt.output, 'w') as output_file:
     output_file.write(
-        'const char %s[] = "%s";\n' % (opt.constant_name, escaped_path))
+        'constexpr char %s[] = "%s";\n' % (opt.constant_name, escaped_path)
+    )
 
 
 if __name__ == '__main__':
