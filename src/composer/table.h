@@ -49,6 +49,7 @@
 #include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -74,8 +75,8 @@ typedef uint32_t TableAttributes;
 
 class Entry {
  public:
-  Entry(const std::string &input, const std::string &result,
-        const std::string &pending, TableAttributes attributes);
+  Entry(absl::string_view input, absl::string_view result,
+        absl::string_view pending, TableAttributes attributes);
   virtual ~Entry() = default;
   const std::string &input() const { return input_; }
   const std::string &result() const { return result_; }
@@ -102,30 +103,31 @@ class Table {
 
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
-  bool IsLoopingEntry(const std::string &input,
-                      const std::string &pending) const;
-  const Entry *AddRule(const std::string &input, const std::string &output,
-                       const std::string &pending);
+  bool IsLoopingEntry(absl::string_view input,
+                      absl::string_view pending) const;
+  const Entry *AddRule(absl::string_view input,
+                       absl::string_view output,
+                       absl::string_view pending);
 
-  const Entry *AddRuleWithAttributes(const std::string &input,
-                                     const std::string &output,
-                                     const std::string &pending,
+  const Entry *AddRuleWithAttributes(absl::string_view input,
+                                     absl::string_view output,
+                                     absl::string_view pending,
                                      TableAttributes attributes);
 
-  void DeleteRule(const std::string &input);
+  void DeleteRule(absl::string_view input);
 
   bool LoadFromString(const std::string &str);
   bool LoadFromFile(const char *filepath);
 
-  const Entry *LookUp(const std::string &input) const;
-  const Entry *LookUpPrefix(const std::string &input, size_t *key_length,
+  const Entry *LookUp(absl::string_view input) const;
+  const Entry *LookUpPrefix(absl::string_view input, size_t *key_length,
                             bool *fixed) const;
-  void LookUpPredictiveAll(const std::string &input,
+  void LookUpPredictiveAll(absl::string_view input,
                            std::vector<const Entry *> *results) const;
   // TODO(komatsu): Delete this function.
-  bool HasSubRules(const std::string &input) const;
+  bool HasSubRules(absl::string_view input) const;
 
-  bool HasNewChunkEntry(const std::string &input) const;
+  bool HasNewChunkEntry(absl::string_view input) const;
 
   bool case_sensitive() const;
   void set_case_sensitive(bool case_sensitive);
@@ -135,15 +137,15 @@ class Table {
   // Parse special key strings escaped with the pair of "{" and "}"
   // and register them to be used by ParseSpecialKey().
   // Also returns the parsed string.
-  std::string RegisterSpecialKey(const std::string &input);
+  std::string RegisterSpecialKey(absl::string_view input);
 
   // Parse special key strings escaped with the pair of "{" and "}"
   // and return the parsed string.
-  std::string ParseSpecialKey(const std::string &input) const;
+  std::string ParseSpecialKey(absl::string_view input) const;
 
   // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
   // return the trimmed visible string.
-  static std::string DeleteSpecialKey(const std::string &input);
+  static std::string DeleteSpecialKey(absl::string_view input);
 
   // If the string starts with a special key wrapped with ("\x0F", "\x0E"),
   // erases it and returns true. Otherwise returns false.
