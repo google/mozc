@@ -32,12 +32,14 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace composer {
 
 class TransliteratorInterface {
  public:
-  virtual ~TransliteratorInterface() {}
+  virtual ~TransliteratorInterface() = default;
 
   // Return the transliterated string of either raw or converted.
   // Determination of which argument is used depends on the
@@ -46,8 +48,8 @@ class TransliteratorInterface {
   // Expected usage examples:
   // - HalfKatakanaTransliterator("a", "あ") => "ｱ"
   // - FullAsciiTransliterator("a", "あ") => "ａ"
-  virtual std::string Transliterate(const std::string &raw,
-                                    const std::string &converted) const = 0;
+  virtual std::string Transliterate(
+      absl::string_view raw, absl::string_view converted) const = 0;
 
   // Split raw and converted strings based on the transliteration
   // rule.  If raw or converted could not be deterministically split,
@@ -61,8 +63,8 @@ class TransliteratorInterface {
   // - HalfKatakanaTransliterator(1, "zu", "ず") => false
   //   (raw_lhs, raw_rhs) => ("す", "゛")  fall back strings.
   //   (conv_lhs, conv_rhs) => ("す", "゛")
-  virtual bool Split(size_t position, const std::string &raw,
-                     const std::string &converted, std::string *raw_lhs,
+  virtual bool Split(size_t position, absl::string_view raw,
+                     absl::string_view converted, std::string *raw_lhs,
                      std::string *raw_rhs, std::string *converted_lhs,
                      std::string *converted_rhs) const = 0;
 };
