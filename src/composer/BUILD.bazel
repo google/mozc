@@ -49,10 +49,7 @@ mozc_cc_library(
         "//base:clock",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:util",
-        "//base/protobuf",
-        "//base/protobuf:repeated_field",
         "//composer/internal:composition",
         "//composer/internal:composition_input",
         "//composer/internal:mode_switching_handler",
@@ -122,6 +119,7 @@ mozc_cc_library(
     visibility = [
         # For //composer/internal:typing_corrector_test.
         "//composer/internal:__pkg__",
+        "//prediction:__pkg__",
     ],
 )
 

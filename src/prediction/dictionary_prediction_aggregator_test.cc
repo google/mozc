@@ -30,6 +30,8 @@
 #include "prediction/dictionary_prediction_aggregator.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -37,6 +39,8 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
+#include "base/logging.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/internal/typing_model.h"
@@ -59,7 +63,8 @@
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/functional/bind_front.h"
+#include "transliteration/transliteration.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -265,7 +270,7 @@ void PrependHistorySegments(absl::string_view key, absl::string_view value,
 void SetUpInputForSuggestion(absl::string_view key,
                              composer::Composer *composer, Segments *segments) {
   composer->Reset();
-  composer->SetPreeditTextForTestOnly(std::string(key));
+  composer->SetPreeditTextForTestOnly(key);
   InitSegmentsWithKey(key, segments);
 }
 
