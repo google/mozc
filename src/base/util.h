@@ -215,8 +215,10 @@ class Util {
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
   static int Utf8ToWide(absl::string_view input, std::wstring *output);
+  static std::wstring Utf8ToWide(absl::string_view input);
   static int WideToUtf8(const wchar_t *input, std::string *output);
   static int WideToUtf8(const std::wstring &input, std::string *output);
+  static std::string WideToUtf8(const std::wstring &input);
 #endif  // _WIN32
 
   // Extracts a substring range, where both start and length are in terms of

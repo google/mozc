@@ -745,6 +745,12 @@ int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
   return copied_num_chars;
 }
 
+std::wstring Util::Utf8ToWide(absl::string_view input) {
+  std::wstring output;
+  Utf8ToWide(input, &output);
+  return output;
+}
+
 int Util::WideToUtf8(const wchar_t *input, std::string *output) {
   const int output_length =
       WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
@@ -764,6 +770,12 @@ int Util::WideToUtf8(const wchar_t *input, std::string *output) {
 
 int Util::WideToUtf8(const std::wstring &input, std::string *output) {
   return WideToUtf8(input.c_str(), output);
+}
+
+std::string Util::WideToUtf8(const std::wstring &input) {
+  std::string output;
+  WideToUtf8(input, &output);
+  return output;
 }
 #endif  // _WIN32
 
