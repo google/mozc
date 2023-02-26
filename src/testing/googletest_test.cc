@@ -27,47 +27,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// This test is only relevant when mozc is using its own test main.
 
 #include "testing/googletest.h"
 
 #include <string>
 
-#include "base/environ.h"
-#include "base/file/temp_dir.h"
+#include "base/file_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 #include "absl/flags/flag.h"
-
-ABSL_FLAG(std::string, test_srcdir, "",
-          "A directory that contains the input data files for a test.");
-
-ABSL_FLAG(std::string, test_tmpdir, "",
-          "Directory for all temporary testing files.");
-
 
 namespace mozc {
 namespace {
 
-#include "testing/mozc_data_dir.h"
+using ::testing::IsEmpty;
+using ::testing::Not;
 
-std::string GetTestSrcdir() {
-  const char* srcdir_env = Environ::GetEnv("TEST_SRCDIR");
-  if (srcdir_env && srcdir_env[0]) {
-    return srcdir_env;
-  }
+TEST(GoogleTest, TestFlags) {
+#ifndef __ANDROID__
+  // InitTestFlags() is automatically called by main() in gtest_main.cc.
+  std::string srcdir = absl::GetFlag(FLAGS_test_srcdir);
+  EXPECT_THAT(srcdir, Not(IsEmpty()));
+  EXPECT_OK(FileUtil::DirectoryExists(srcdir));
+#endif  // !__ANDROID__
 
-  return kMozcDataDir;
+  std::string tmpdir = absl::GetFlag(FLAGS_test_tmpdir);
+  EXPECT_THAT(tmpdir, Not(IsEmpty()));
+  EXPECT_OK(FileUtil::DirectoryExists(tmpdir));
 }
 
 }  // namespace
-
-void InitTestFlags() {
-  if (absl::GetFlag(FLAGS_test_srcdir).empty()) {
-    absl::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
-  }
-  if (absl::GetFlag(FLAGS_test_tmpdir).empty()) {
-    TempDirectory tempdir = TempDirectory::Default();
-    absl::SetFlag(&FLAGS_test_tmpdir, tempdir.path());
-  }
-}
-
 }  // namespace mozc
 

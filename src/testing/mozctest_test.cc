@@ -27,47 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "testing/mozctest.h"
 
-#include "testing/googletest.h"
-
+#include <fstream>
 #include <string>
 
-#include "base/environ.h"
-#include "base/file/temp_dir.h"
-#include "absl/flags/flag.h"
+#include "testing/gunit.h"
 
-ABSL_FLAG(std::string, test_srcdir, "",
-          "A directory that contains the input data files for a test.");
-
-ABSL_FLAG(std::string, test_tmpdir, "",
-          "Directory for all temporary testing files.");
-
-
-namespace mozc {
+namespace mozc::testing {
 namespace {
 
-#include "testing/mozc_data_dir.h"
-
-std::string GetTestSrcdir() {
-  const char* srcdir_env = Environ::GetEnv("TEST_SRCDIR");
-  if (srcdir_env && srcdir_env[0]) {
-    return srcdir_env;
-  }
-
-  return kMozcDataDir;
+TEST(MozcTestTest, GetSourcePath) {
+  std::string path = GetSourcePath({"testing", "BUILD"});
+  std::ifstream ifs(path);
+  EXPECT_TRUE(ifs.good());
 }
 
 }  // namespace
-
-void InitTestFlags() {
-  if (absl::GetFlag(FLAGS_test_srcdir).empty()) {
-    absl::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
-  }
-  if (absl::GetFlag(FLAGS_test_tmpdir).empty()) {
-    TempDirectory tempdir = TempDirectory::Default();
-    absl::SetFlag(&FLAGS_test_tmpdir, tempdir.path());
-  }
-}
-
-}  // namespace mozc
-
+}  // namespace mozc::testing
