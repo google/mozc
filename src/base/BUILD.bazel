@@ -635,6 +635,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -667,7 +668,9 @@ mozc_cc_library(
         ":util",
         "//bazel/win32:aux_ulib",  # win_util
         "//bazel/win32:imm32",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         android = [
@@ -677,6 +680,7 @@ mozc_cc_library(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
         windows = [
+            "//base/win32:scoped_handle",
             # win_util.h includes gunit_prod.h for FRIEND_TEST.
             "//testing:gunit_prod",
         ],

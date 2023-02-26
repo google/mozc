@@ -244,6 +244,7 @@
       'target_name': 'file_util_test',
       'type': 'executable',
       'sources': [
+        'file/temp_dir_test.cc',
         'file_util_test.cc',
       ],
       'dependencies': [
