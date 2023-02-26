@@ -232,6 +232,8 @@ mozc_cc_test(
     deps = [
         ":mode_switching_handler",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

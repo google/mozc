@@ -956,19 +956,12 @@ void Composer::AutoSwitchMode() {
   composition_.GetStringWithTransliterator(
       GetTransliterator(transliteration::HALF_ASCII), &key);
 
-  ModeSwitchingHandler::ModeSwitching display_mode =
-      ModeSwitchingHandler::NO_CHANGE;
-  ModeSwitchingHandler::ModeSwitching input_mode =
-      ModeSwitchingHandler::NO_CHANGE;
-  if (!ModeSwitchingHandler::GetModeSwitchingHandler()->GetModeSwitchingRule(
-          key, &display_mode, &input_mode)) {
-    // If the key is not a pattern of mode switch rule, the procedure
-    // stops here.
-    return;
-  }
+  const ModeSwitchingHandler::Rule mode_switching =
+      ModeSwitchingHandler::GetModeSwitchingHandler()->GetModeSwitchingRule(
+          key);
 
   // |display_mode| affects the existing composition the user typed.
-  switch (display_mode) {
+  switch (mode_switching.display_mode) {
     case ModeSwitchingHandler::NO_CHANGE:
       // Do nothing.
       break;
@@ -991,13 +984,13 @@ void Composer::AutoSwitchMode() {
       SetOutputMode(transliteration::FULL_ASCII);
       break;
     default:
-      LOG(ERROR) << "Unknown value: " << display_mode;
+      LOG(ERROR) << "Unknown value: " << mode_switching.display_mode;
       break;
   }
 
   // |input_mode| affects the current input mode used for the user's
   // new typing.
-  switch (input_mode) {
+  switch (mode_switching.input_mode) {
     case ModeSwitchingHandler::NO_CHANGE:
       // Do nothing.
       break;
@@ -1021,7 +1014,7 @@ void Composer::AutoSwitchMode() {
       }
       break;
     default:
-      LOG(ERROR) << "Unknown value: " << display_mode;
+      LOG(ERROR) << "Unknown value: " << mode_switching.input_mode;
       break;
   }
 }
