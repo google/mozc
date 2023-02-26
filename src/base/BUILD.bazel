@@ -589,6 +589,7 @@ mozc_cc_library(
         ":logging",
         ":mmap",
         ":singleton",
+        "//bazel/win32:ktmw32",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -664,6 +665,8 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
+        "//bazel/win32:aux_ulib",  # win_util
+        "//bazel/win32:imm32",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
@@ -673,6 +676,10 @@ mozc_cc_library(
         ],
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
+        windows = [
+            # win_util.h includes gunit_prod.h for FRIEND_TEST.
+            "//testing:gunit_prod",
+        ],
     ),
 )
 
@@ -991,6 +998,7 @@ mozc_cc_library(
         ":singleton",
         ":system_util",
         ":util",
+        "//bazel/win32:crypt32",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/strings:str_format",
