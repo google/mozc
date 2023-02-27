@@ -30,6 +30,7 @@
 #include "base/run_level.h"
 
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -55,17 +56,6 @@ namespace {
 #ifdef _WIN32
 const wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
 
-// Returns true if both array have the same content.
-template <typename T, size_t ArraySize>
-bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {
-  for (size_t i = 0; i < ArraySize; ++i) {
-    if (lhs[i] != rhs[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // returns true if the token was created by Secondary Logon
 // (typically via RunAs command) or UAC (w/ alternative credential provided)
 //  or if failed to determine.
@@ -85,15 +75,12 @@ bool IsDifferentUser(const HANDLE hToken) {
   //  Vista SP1 (Normal)                     "User32 \0"
   //  ->  Vista SP1 (RunAs):                 "seclogo\0"
   //  ->  Vista SP1 (Over-the-shoulder UAC): "CredPro\0"
+  constexpr absl::string_view kSeclogo("seclogo", TOKEN_SOURCE_LENGTH);
+  constexpr absl::string_view kCredPro("CredPro", TOKEN_SOURCE_LENGTH);
 
-  // Sacrifice the last character. That is practically ok for our purpose.
-  src.SourceName[TOKEN_SOURCE_LENGTH - 1] = '\0';
+  absl::string_view source_name(src.SourceName, TOKEN_SOURCE_LENGTH);
 
-  constexpr char kSeclogo[] = "seclogo";
-  constexpr char kCredPro[] = "CredPro";
-
-  return (AreEqualArray(kSeclogo, src.SourceName) ||
-          AreEqualArray(kCredPro, src.SourceName));
+  return source_name == kSeclogo|| source_name == kCredPro;
 }
 
 // Returns true if UAC gave the high integrity level to the token

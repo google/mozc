@@ -795,6 +795,7 @@ mozc_cc_library(
         ":port",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",
