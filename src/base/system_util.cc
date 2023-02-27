@@ -30,8 +30,32 @@
 #include "base/system_util.h"
 
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <sstream>
+#include <string>
 
+#include "base/const.h"
+#include "base/environ.h"
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "base/singleton.h"
 #include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
+
+#ifdef __ANDROID__
+#include "base/android_util.h"
+#endif  // __ANDROID__
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>  // for TARGET_OS_*
+#include <sys/stat.h>
+#include <sys/sysctl.h>
+
+#include <cerrno>
+
+#include "base/mac/mac_util.h"
+#endif  // __APPLE__
 
 #ifdef _WIN32
 // clang-format off
@@ -41,49 +65,16 @@
 #include <shlobj.h>
 #include <versionhelpers.h>
 // clang-format on
+
+#include <memory>  // for unique_ptr
+
+#include "base/util.h"  // for Util::WideToUtf8
+#include "base/win32/win_util.h"
 #else  // _WIN32
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #endif  // _WIN32
-
-#ifdef __APPLE__
-#include <sys/stat.h>
-#include <sys/sysctl.h>
-
-#include <cerrno>
-#endif  // __APPLE__
-
-#include <cstdlib>
-#include <cstring>
-
-#ifdef _WIN32
-#include <memory>
-#endif  // _WIN32
-
-#include <sstream>
-#include <string>
-
-#ifdef __ANDROID__
-#include "base/android_util.h"
-#endif  // __ANDROID__
-
-#include "base/const.h"
-#include "base/environ.h"
-#include "base/file_util.h"
-#include "base/logging.h"
-
-#ifdef __APPLE__
-#include "base/mac/mac_util.h"
-#endif  // __APPLE__
-
-#include "base/singleton.h"
-#include "base/util.h"
-
-#ifdef _WIN32
-#include "base/win32/win_util.h"
-#endif  // _WIN32
-#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -255,10 +246,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   // is injected from Java layer.
   return "";
 
-#elif defined(OS_IOS)
-  // OS_IOS block must be placed before __APPLE__ because both macros are
-  // currently defined on iOS.
-  //
+#elif defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   // On iOS, use Caches directory instead of Application Spport directory
   // because the support directory doesn't exist by default.  Also, it is backed
   // up by iTunes and iCloud.
@@ -276,7 +264,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(dir, kProductNameInEnglish);
 
-#elif defined(__APPLE__)
+#elif defined(TARGET_OS_OSX) && TARGET_OS_OSX
   std::string dir = MacUtil::GetApplicationSupportDirectory();
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Google");
@@ -438,12 +426,12 @@ std::string SystemUtil::GetServerDirectory() {
   return MacUtil::GetServerDirectory();
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
 #ifndef MOZC_SERVER_DIR
 #define MOZC_SERVER_DIR "/usr/lib/mozc"
 #endif  // MOZC_SERVER_DIR
   return MOZC_SERVER_DIR;
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
@@ -680,13 +668,13 @@ std::string GetSessionIdString() {
 #endif  // _WIN32
 
 std::string SystemUtil::GetDesktopNameAsString() {
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
   const char *display = Environ::GetEnv("DISPLAY");
   if (display == nullptr) {
     return "";
   }
   return display;
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
 #if defined(__APPLE__)
   return "";
@@ -919,7 +907,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
   return total_memory;
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const int32_t page_size = sysconf(_SC_PAGESIZE);
   const int32_t number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
@@ -932,7 +920,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 #endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.

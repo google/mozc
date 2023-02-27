@@ -47,7 +47,7 @@
 namespace mozc {
 namespace {
 
-constexpr const char kTestMagicNumber[] = "ma\0gic";
+constexpr absl::string_view kTestMagicNumber = {"ma\0gic", 6};
 
 TEST(DataSetReaderTest, ValidData) {
   constexpr absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
@@ -97,21 +97,21 @@ TEST(DataSetReaderTest, BrokenMetadata) {
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too small.
-  data = kTestMagicNumber;
+  data = std::string(kTestMagicNumber);
   data.append("content and metadata");
   data.append(Util::SerializeUint64(4));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too large.
-  data = kTestMagicNumber;
+  data = std::string(kTestMagicNumber);
   data.append("content and metadata");
   data.append(Util::SerializeUint64(std::numeric_limits<uint64_t>::max()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata chunk is not a serialied protobuf.
-  data = kTestMagicNumber;
+  data = std::string(kTestMagicNumber);
   data.append("content and metadata");
   data.append(Util::SerializeUint64(strlen("content and metadata")));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));

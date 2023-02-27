@@ -228,7 +228,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["codegen_bytearray_stream_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     visibility = ["//visibility:private"],
     deps = [
         ":codegen_bytearray_stream",
@@ -543,8 +543,9 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":util",
-        "//base/win32:scoped_handle",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:scoped_handle"],
+    ),
 )
 
 mozc_cc_test(
@@ -588,14 +589,16 @@ mozc_cc_library(
         ":logging",
         ":mmap",
         ":singleton",
-        ":util",
-        "//base/win32:scoped_handle",
-        "//base/win32:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select(
+        windows = [
+            ":util",
+            "//base/win32:scoped_handle",
+        ],
+    ),
 )
 
 mozc_cc_library(
@@ -637,8 +640,16 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "system_util",
-    srcs = ["system_util.cc"] + mozc_select(android = ["android_util.cc"]),
-    hdrs = ["system_util.h"] + mozc_select(android = ["android_util.h"]),
+    # TODO(b/269889028): android_util and win_util have cyclic dependency
+    # between this library. Solve it and make them independent libraries.
+    srcs = ["system_util.cc"] + mozc_select(
+        android = ["android_util.cc"],
+        windows = ["//base/win32:win_util_cc"],
+    ),
+    hdrs = ["system_util.h"] + mozc_select(
+        android = ["android_util.h"],
+        windows = ["//base/win32:win_util_h"],
+    ),
     local_defines = mozc_select(
         linux = [
             "MOZC_DOCUMENT_DIR=\\\"" + LINUX_MOZC_DOCUMENT_DIR + "\\\"",
@@ -653,7 +664,6 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
-        "//base/win32:win_util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
@@ -696,13 +706,14 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":port",
-        "//base/win32:scoped_handle",
         ":system_util",
         ":util",
-        "//base/win32:win_util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
-    ] + mozc_select(macos = ["//base/mac:mac_process"]),
+    ] + mozc_select(
+        macos = ["//base/mac:mac_process"],
+        windows = ["//base/win32:scoped_handle"],
+    ),
 )
 
 mozc_cc_binary(
@@ -728,9 +739,13 @@ mozc_cc_library(
         ":singleton",
         ":system_util",
         ":util",
-        "//base/win32:scoped_handle",
         "@com_google_absl//absl/synchronization",
-    ],
+    ] + mozc_select(
+        windows = [
+            "//base/win32:scoped_handle",
+            "//base/win32:win_sandbox",
+        ],
+    ),
 )
 
 mozc_cc_test(
@@ -765,10 +780,12 @@ mozc_cc_library(
         ":port",
         ":system_util",
         ":util",
-        "//base/win32:scoped_handle",
-        "//base/win32:win_sandbox",
-        "//base/win32:win_util",
-    ],
+    ] + mozc_select(
+        windows = [
+            "//base/win32:scoped_handle",
+            "//base/win32:win_sandbox",
+        ],
+    ),
 )
 
 mozc_cc_binary(
@@ -1134,8 +1151,6 @@ mozc_cc_library(
     deps = [
         ":file_stream",
         ":logging",
-        ":port",
-        ":util",
         "@com_google_absl//absl/strings",
     ],
 )

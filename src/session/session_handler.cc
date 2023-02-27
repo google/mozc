@@ -34,22 +34,15 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "session/common.h"
-#include "session/internal/keymap.h"
-#include "absl/flags/flag.h"
-#ifndef MOZC_DISABLE_SESSION_WATCHDOG
-#include "base/process.h"
-#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/stopwatch.h"
-#include "base/util.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
@@ -59,13 +52,19 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "session/common.h"
+#include "session/internal/keymap.h"
 #include "session/session.h"
 #include "session/session_observer_handler.h"
+#include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
+#include "absl/random/random.h"
+#include "absl/time/time.h"
+
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
+#include "base/process.h"
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-#include "usage_stats/usage_stats.h"
-#include "absl/random/random.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -143,7 +142,6 @@ void SessionHandler::Init(
   engine_ = std::move(engine);
   engine_builder_ = std::move(engine_builder);
   observer_handler_ = std::make_unique<session::SessionObserverHandler>();
-  stopwatch_ = std::make_unique<Stopwatch>();
   user_dictionary_session_handler_ =
       std::make_unique<user_dictionary::UserDictionarySessionHandler>();
   table_manager_ = std::make_unique<composer::TableManager>();
@@ -292,17 +290,16 @@ bool SessionHandler::ClearUnusedUserPrediction(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::GetStoredConfig(commands::Command *command) {
-  VLOG(1) << "Getting stored config";
-  config::ConfigHandler::GetStoredConfig(
-      command->mutable_output()->mutable_config());
+bool SessionHandler::GetConfig(commands::Command *command) {
+  VLOG(1) << "Getting config";
+  config::ConfigHandler::GetConfig(command->mutable_output()->mutable_config());
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
   UpdateSessions(command->output().config(), *request_);
   return true;
 }
 
-bool SessionHandler::SetStoredConfig(commands::Command *command) {
+bool SessionHandler::SetConfig(commands::Command *command) {
   VLOG(1) << "Setting user config";
   if (!command->input().has_config()) {
     LOG(WARNING) << "config is empty";
@@ -310,7 +307,7 @@ bool SessionHandler::SetStoredConfig(commands::Command *command) {
   }
 
   *command->mutable_output()->mutable_config() = command->input().config();
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
 
   UsageStats::IncrementCount("SetConfig");
   return true;
@@ -333,8 +330,8 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
   }
 
   bool eval_succeeded = false;
-  stopwatch_->Reset();
-  stopwatch_->Start();
+  Stopwatch stopwatch;
+  stopwatch.Start();
 
   switch (command->input().type()) {
     case commands::Input::CREATE_SESSION:
@@ -365,10 +362,10 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       eval_succeeded = ClearUnusedUserPrediction(command);
       break;
     case commands::Input::GET_CONFIG:
-      eval_succeeded = GetStoredConfig(command);
+      eval_succeeded = GetConfig(command);
       break;
     case commands::Input::SET_CONFIG:
-      eval_succeeded = SetStoredConfig(command);
+      eval_succeeded = SetConfig(command);
       break;
     case commands::Input::SET_REQUEST:
       eval_succeeded = SetRequest(command);
@@ -419,9 +416,10 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     observer_handler_->EvalCommandHandler(*command);
   }
 
-  stopwatch_->Stop();
-  UsageStats::UpdateTiming("ElapsedTimeUSec",
-                           stopwatch_->GetElapsedMicroseconds());
+  stopwatch.Stop();
+  UsageStats::UpdateTiming(
+      "ElapsedTimeUSec",
+      static_cast<uint32_t>(absl::ToInt64Microseconds(stopwatch.GetElapsed())));
 
   return is_available_;
 }
@@ -435,7 +433,7 @@ void SessionHandler::AddObserver(session::SessionObserverInterface *observer) {
   observer_handler_->AddObserver(observer);
 }
 
-void SessionHandler::MaybeUpdateStoredConfig(commands::Command *command) {
+void SessionHandler::MaybeUpdateConfig(commands::Command *command) {
   if (!command->output().has_config()) {
     return;
   }
@@ -452,7 +450,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
     return false;
   }
   (*session)->SendKey(command);
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
   return true;
 }
 
@@ -476,7 +474,7 @@ bool SessionHandler::SendCommand(commands::Command *command) {
     return false;
   }
   (*session)->SendCommand(command);
-  MaybeUpdateStoredConfig(command);
+  MaybeUpdateConfig(command);
   return true;
 }
 
@@ -689,19 +687,17 @@ bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
 
 // Create Random Session ID in order to make the session id unpredicable
 SessionID SessionHandler::CreateNewSessionID() {
-  SessionID id = 0;
   while (true) {
-    id = absl::Uniform<SessionID>(bitgen_);
-    // don't allow id == 0, as it is reserved for
-    // "invalid id"
-    if (id != 0 && !session_map_->HasKey(id)) {
-      break;
+    // don't allow id == 0, as it is reserved for "invalid id"
+    const SessionID id =
+        absl::Uniform<SessionID>(absl::IntervalClosed, bitgen_, 1,
+                                 std::numeric_limits<SessionID>::max());
+    if (!session_map_->HasKey(id)) {
+      return id;
     }
 
     LOG(WARNING) << "Session ID " << id << " is already used. retry";
   }
-
-  return id;
 }
 
 bool SessionHandler::DeleteSessionID(SessionID id) {

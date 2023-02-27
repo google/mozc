@@ -42,6 +42,8 @@
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -73,19 +75,17 @@ Composition &Composition::operator=(const Composition &x) {
   return *this;
 }
 
-Composition::~Composition() = default;
-
 void Composition::Erase() { chunks_.clear(); }
 
-size_t Composition::InsertAt(size_t pos, const std::string &input) {
+size_t Composition::InsertAt(size_t pos, const absl::string_view input) {
   CompositionInput composition_input;
   composition_input.set_raw(input);
   return InsertInput(pos, composition_input);
 }
 
 size_t Composition::InsertKeyAndPreeditAt(const size_t pos,
-                                          const std::string &key,
-                                          const std::string &preedit) {
+                                          const absl::string_view key,
+                                          const absl::string_view preedit) {
   CompositionInput composition_input;
   composition_input.set_raw(key);
   composition_input.set_conversion(preedit);
@@ -412,14 +412,14 @@ CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
 void Composition::CombinePendingChunks(CharChunkList::iterator it,
                                        const CompositionInput &input) {
   // Combine |**it| and |**(--it)| into |**it| as long as possible.
-  const std::string &next_input =
+  const absl::string_view next_input =
       input.conversion().empty() ? input.raw() : input.conversion();
 
   while (it != chunks_.begin()) {
     CharChunkList::iterator left_it = it;
     --left_it;
-    if (!(*left_it)->IsConvertible(input_t12r_, table_,
-                                   (*it)->pending() + next_input)) {
+    if (!(*left_it)->IsConvertible(
+            input_t12r_, table_, absl::StrCat((*it)->pending(), next_input))) {
       return;
     }
 

@@ -447,7 +447,6 @@ mozc_cc_library(
         "//base:port",
         "//base:system_util",
         "//base:util",
-        "//base/win32:win_util",
         "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/strings",
     ],

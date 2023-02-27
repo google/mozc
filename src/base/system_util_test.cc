@@ -56,7 +56,6 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
 #elif defined(__ANDROID__)
   EXPECT_TRUE(SystemUtil::GetUserProfileDirectory().empty());
 
-#elif defined(OS_IOS)
 #elif defined(_WIN32)
 #elif defined(__APPLE__)
   // TODO(komatsu): write a test.

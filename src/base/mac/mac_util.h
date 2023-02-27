@@ -31,6 +31,8 @@
 #define MOZC_BASE_MAC_MAC_UTIL_H_
 
 #ifdef __APPLE__
+#include <TargetConditionals.h>
+
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -65,7 +67,7 @@ class MacUtil {
   // Returns the machine serial number.
   static std::string GetSerialNumber();
 
-#ifndef OS_IOS
+#if !TARGET_OS_IPHONE
   // Starts the specified service by using launchd.  "service_name" is
   // a suffix for the service label (like "Converter" or "Renderer").
   // If "pid" is non-null, it will store the pid of the launched
@@ -91,7 +93,7 @@ class MacUtil {
   // the window specified by |name| and |owner|.
   static bool IsSuppressSuggestionWindow(const std::string &name,
                                          const std::string &owner);
-#endif  // !OS_IOS
+#endif  // !TARGET_OS_IPHONE
 };
 }  // namespace mozc
 

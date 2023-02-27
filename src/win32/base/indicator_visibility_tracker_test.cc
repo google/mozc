@@ -71,50 +71,50 @@ TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
 
   EXPECT_FALSE(tracker.IsVisible()) << "Should be hidden by default.";
 
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
-            tracker.OnDissociateContext());
+  EXPECT_EQ(tracker.OnDissociateContext(),
+            IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());  // KillFocus -> Invisible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
 
   // 0 msec later -> WindowMove -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnMoveFocusedWindow());
+  EXPECT_EQ(tracker.OnMoveFocusedWindow(),
+            IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
   // |kWaitDuration/2| msec later -> WindowMove -> Visible
   PutForwardMilliseconds(kWaitDuration / 2);
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnMoveFocusedWindow());
+  EXPECT_EQ(tracker.OnMoveFocusedWindow(),
+            IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
   // |kWaitDuration*2| msec later -> WindowMove -> Invisible
   PutForwardMilliseconds(kWaitDuration * 2);
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
-            tracker.OnMoveFocusedWindow());
+  EXPECT_EQ(tracker.OnMoveFocusedWindow(),
+            IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());
 
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
-            tracker.OnTestKey(AKey, true, false));
+  EXPECT_EQ(tracker.OnTestKey(AKey, true, false),
+            IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());  // TestKeyDown -> Invisible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI,
-            tracker.OnKey(AKey, true, false));
+  EXPECT_EQ(tracker.OnKey(AKey, true, false),
+            IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());  // KeyDown -> Invisible
-  EXPECT_EQ(IndicatorVisibilityTracker::kUpdateUI, tracker.OnChangeInputMode());
+  EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnTestKey(AKey, false, false));
+  EXPECT_EQ(tracker.OnTestKey(AKey, false, false),
+            IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());  // TestKeyUp -> Visible
-  EXPECT_EQ(IndicatorVisibilityTracker::kNothing,
-            tracker.OnKey(AKey, false, false));
+  EXPECT_EQ(tracker.OnKey(AKey, false, false),
+            IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());  // KeyUp -> Visible
 }
 

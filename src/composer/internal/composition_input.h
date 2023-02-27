@@ -35,6 +35,7 @@
 #include "base/protobuf/repeated_field.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -56,8 +57,9 @@ class CompositionInput final {
   // it is used as an input of a command key. (e.g. "{henkan}").
   bool Init(const Table &table, const commands::KeyEvent &key_event,
             bool is_new_input);
-  void InitFromRaw(const std::string &raw, bool is_new_input);
-  void InitFromRawAndConv(const std::string &raw, const std::string &conversion,
+  void InitFromRaw(absl::string_view raw, bool is_new_input);
+  void InitFromRawAndConv(absl::string_view raw,
+                          absl::string_view conversion,
                           bool is_new_input);
 
   void Clear();
@@ -66,11 +68,11 @@ class CompositionInput final {
   const std::string &raw() const { return raw_; }
   void clear_raw() { raw_.clear(); }
   std::string *mutable_raw() { return &raw_; }
-  void set_raw(const std::string &raw) { raw_ = raw; }
+  void set_raw(const absl::string_view raw) { raw_ = std::string(raw); }
 
   const std::string &conversion() const;
   void clear_conversion();
-  void set_conversion(const std::string &conversion);
+  void set_conversion(absl::string_view conversion);
 
   const ProbableKeyEvents &probable_key_events() const {
     return probable_key_events_;

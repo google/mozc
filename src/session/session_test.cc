@@ -2023,11 +2023,11 @@ TEST_P(SessionTest, UpdatePreferences) {
   const size_t cascading_cand_size =
       command.output().candidates().candidate_size();
 
-#if defined(__linux__) || defined(__ANDROID__) || __wasm__
+#if defined(__linux__) || defined(__wasm__)
   EXPECT_EQ(cascading_cand_size, no_cascading_cand_size);
-#else   // defined(__linux__) || defined(__ANDROID__) || __wasm__
+#else   // __linux__ || __wasm__
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
-#endif  // defined(__linux__) || defined(__ANDROID__) || __wasm__
+#endif  // __linux__ || __wasm__
 
   command.Clear();
   session.ConvertCancel(&command);
@@ -2212,7 +2212,7 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 0);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2222,13 +2222,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // __linux__ || __ANDROID__ || __wasm__
+#else   // __linux__ || __wasm__
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
   }
 
   command.Clear();
@@ -2240,7 +2240,7 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(output.all_candidate_words().focused_index(), 1);
     EXPECT_EQ(output.all_candidate_words().category(), commands::CONVERSION);
-#if defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#if defined(__linux__) || defined(__wasm__)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2250,13 +2250,13 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 9);
-#else   // __linux__ || __ANDROID__ || __wasm__
+#else   // __linux__ || __wasm__
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(output.all_candidate_words().candidates_size(), 11);
-#endif  // __linux__ || __ANDROID__ || __wasm__
+#endif  // __linux__ || __wasm__
   }
 }
 

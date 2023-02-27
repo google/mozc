@@ -230,7 +230,7 @@ class RegistryEmulator {
     const size_t total_size_in_tchar = (num_data / sizeof(wchar_t));
     if (total_size_in_tchar > 0) {
       const size_t null_char_index = total_size_in_tchar - 1;
-      EXPECT_EQ(L'\0', src[null_char_index]);
+      EXPECT_EQ(src[null_char_index], L'\0');
       const size_t total_length_without_null = total_size_in_tchar - 1;
       const std::wstring value(src, src + total_length_without_null);
       target->assign(value);
@@ -485,24 +485,24 @@ TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   // The ClientState key should be created.
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 
   // ClientStateKey exists. "ap" value does not exist.
   test.property()->Clear();
   test.property()->set_omaha_key_exists(true);
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 
   // ClientStateKey exists. "ap" value exists.
   test.property()->Clear();
@@ -510,12 +510,12 @@ TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
   test.property()->mutable_ap_value()->assign(L"internal-dev");
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 }
 
 TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
@@ -527,24 +527,24 @@ TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   // The ClientState key should be created.
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 
   // ClientStateKey exists. "ap" value does not exist.
   test.property()->Clear();
   test.property()->set_omaha_key_exists(true);
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 
   // ClientStateKey exists. "ap" value exists.
   test.property()->Clear();
@@ -552,12 +552,12 @@ TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
   test.property()->mutable_ap_value()->assign(L"internal-dev");
   EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(L"internal-stable", test.property()->ap_value());
-  EXPECT_EQ(L"internal-stable", OmahaUtil::ReadChannel());
+  EXPECT_EQ(test.property()->ap_value(), L"internal-stable");
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"internal-stable");
   EXPECT_TRUE(OmahaUtil::ClearChannel());
   EXPECT_TRUE(test.property()->omaha_key_exists());
   EXPECT_FALSE(test.property()->has_ap_value());
-  EXPECT_EQ(L"", OmahaUtil::ReadChannel());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
 }
 
 TEST_F(OmahaUtilTestOn32bitMachine, WriteClearOmahaError) {
@@ -569,18 +569,18 @@ TEST_F(OmahaUtilTestOn32bitMachine, WriteClearOmahaError) {
   EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
   // The ClientState key should be created.
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(1, test.property()->installer_result());
-  EXPECT_EQ(L"yy\r\nxx", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result(), 1);
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"yy\r\nxx");
 
   // If the header does not exist, CRLF disappears.
   EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L""));
-  EXPECT_EQ(L"xx", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"xx");
 
   // Check if we can clear the error code.
   EXPECT_TRUE(OmahaUtil::ClearOmahaError());
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(0, test.property()->installer_result());
-  EXPECT_EQ(L"", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result(), 0);
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"");
 }
 
 TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
@@ -592,18 +592,18 @@ TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
   // The ClientState key should be created.
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(1, test.property()->installer_result());
-  EXPECT_EQ(L"yy\r\nxx", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result(), 1);
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"yy\r\nxx");
 
   // If the header does not exist, CRLF disappears.
   EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L""));
-  EXPECT_EQ(L"xx", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"xx");
 
   // Check if we can clear the error code.
   EXPECT_TRUE(OmahaUtil::ClearOmahaError());
   EXPECT_TRUE(test.property()->omaha_key_exists());
-  EXPECT_EQ(0, test.property()->installer_result());
-  EXPECT_EQ(L"", test.property()->installer_result_ui_string());
+  EXPECT_EQ(test.property()->installer_result(), 0);
+  EXPECT_EQ(test.property()->installer_result_ui_string(), L"");
 }
 
 }  // namespace win32

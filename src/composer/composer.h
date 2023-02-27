@@ -32,14 +32,12 @@
 #ifndef MOZC_COMPOSER_COMPOSER_H_
 #define MOZC_COMPOSER_COMPOSER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "base/port.h"
-#include "base/protobuf/repeated_field.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
@@ -47,9 +45,10 @@
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
+#include "protocol/config.pb.h"
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "transliteration/transliteration.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -166,7 +165,7 @@ class Composer final {
   //
   // If the input is ascii characters, input mode will be set as HALF_ASCII.
   // This is useful to test the behavior of alphabet keyboard.
-  void SetPreeditTextForTestOnly(const std::string &input);
+  void SetPreeditTextForTestOnly(absl::string_view input);
 
   bool InsertCharacterKeyAndPreedit(const std::string &key,
                                     const std::string &preedit);
@@ -241,7 +240,7 @@ class Composer final {
   size_t shifted_sequence_count() const;
   const std::string &source_text() const;
   std::string *mutable_source_text();
-  void set_source_text(const std::string &source_text);
+  void set_source_text(absl::string_view source_text);
   size_t max_length() const;
   void set_max_length(size_t length);
 
@@ -258,7 +257,7 @@ class Composer final {
   // This function have a bug when key has characters input with Preedit.
   // Expected behavior: InsertPreedit("A") + InsertKey("a") -> "Aあ"
   // Actual behavior:   InsertPreedit("A") + InsertKey("a") -> "Aa"
-  void ApplyTemporaryInputMode(const std::string &input, bool caps_locked);
+  void ApplyTemporaryInputMode(absl::string_view input, bool caps_locked);
 
   // Generate transliterated substrings.
   void GetTransliteratedText(Transliterators::Transliterator t12r,

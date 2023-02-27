@@ -30,6 +30,7 @@
 load(
     "//:build_defs.bzl",
     "mozc_cc_library",
+    "mozc_select",
 )
 load(
     "//bazel:qt.bzl",
@@ -159,8 +160,12 @@ mozc_cc_qt_library(
         "//base:process_mutex",
         "//base:util",
         "//base:version",
-        "//base/win32:scoped_handle",
         "//ipc",
         "//ipc:window_info_cc_proto",
-    ],
+    ] + mozc_select(
+        windows = [
+            "//base:system_util",
+            "//base/win32:scoped_handle",
+        ],
+    ),
 )

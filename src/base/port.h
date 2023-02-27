@@ -40,25 +40,13 @@
 #define MOZC_OS_DEFINED
 #endif  // __APPLE__
 
-#ifdef __ANDROID__
-#define MOZC_OS_DEFINED
-#endif  // __ANDROID__
-
 #ifdef OS_NACL
 #error "We no longer support NaCl. Still need? Report to b/158959918 ASAP."
 #endif  // OS_NACL
 
 #ifdef __linux__
-// TODO(matsuzakit): Remove following guard.
-// Currently __linux__ and __ANDROID__ are defined at the same time.
-#if !defined(__ANDROID__)
 #define MOZC_OS_DEFINED
-#endif  // !__ANDROID__
 #endif  // __linux__
-
-#ifdef OS_IOS
-#define MOZC_OS_DEFINED
-#endif  // OS_IOS
 
 #ifdef __wasm__
 #define MOZC_OS_DEFINED

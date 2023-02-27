@@ -58,12 +58,12 @@ TEST(TipEnumDisplayAttributesTest, BasicTest) {
     const HRESULT result = enum_display_attribute.Next(1, &info, &fetched);
     EXPECT_TRUE(SUCCEEDED(result));
     if (result == S_OK) {
-      EXPECT_EQ(1, fetched);
-      EXPECT_NE(nullptr, info);
+      EXPECT_EQ(fetched, 1);
+      EXPECT_NE(info, nullptr);
     } else {
-      EXPECT_EQ(S_FALSE, result);
-      EXPECT_EQ(0, fetched);
-      EXPECT_EQ(nullptr, info);
+      EXPECT_EQ(result, S_FALSE);
+      EXPECT_EQ(fetched, 0);
+      EXPECT_EQ(info, nullptr);
       break;
     }
   }
@@ -77,13 +77,13 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
   ULONG fetched = 0;
   const HRESULT result =
       enum_display_attribute.Next(std::size(infolist), infolist, &fetched);
-  EXPECT_EQ(S_FALSE, result);
-  EXPECT_EQ(2, fetched);
+  EXPECT_EQ(result, S_FALSE);
+  EXPECT_EQ(fetched, 2);
 
-  EXPECT_NE(nullptr, infolist[0]);
-  EXPECT_NE(nullptr, infolist[1]);
-  EXPECT_EQ(nullptr, infolist[2]);
-  EXPECT_EQ(nullptr, infolist[3]);
+  EXPECT_NE(infolist[0], nullptr);
+  EXPECT_NE(infolist[1], nullptr);
+  EXPECT_EQ(infolist[2], nullptr);
+  EXPECT_EQ(infolist[3], nullptr);
 
   // Clean up.
   for (size_t i = 0; i < std::size(infolist); ++i) {

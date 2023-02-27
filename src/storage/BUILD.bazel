@@ -213,9 +213,10 @@ mozc_cc_library(
         "//base:file_util",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
         "//base:random",
         "//base:util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 

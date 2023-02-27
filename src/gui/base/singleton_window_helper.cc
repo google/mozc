@@ -29,13 +29,6 @@
 
 #include "gui/base/singleton_window_helper.h"
 
-
-#ifdef _WIN32
-#include <windows.h>
-#else  // _WIN32
-#include <unistd.h>
-#endif  // _WIN32
-
 #include <cstdint>
 #include <ios>
 #include <memory>
@@ -44,10 +37,18 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
+
+#include "ipc/window_info.pb.h"
+
+#ifdef _WIN32
+#include <windows.h>
+
 #include "base/util.h"
 #include "base/win32/scoped_handle.h"
 #include "gui/base/win_util.h"
-#include "ipc/window_info.pb.h"
+#else  // _WIN32
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace mozc {
 namespace gui {

@@ -39,6 +39,10 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>  // for TARGET_OS_IPHONE
+#endif                           // __APPLE__
+
 namespace mozc {
 namespace dictionary {
 namespace {
@@ -116,14 +120,14 @@ class DictionaryLoaderThread : public Thread {
       const std::string key = "key" + std::to_string(i);
       const std::string value = "value" + std::to_string(i);
       EXPECT_TRUE(dic_->AddEntry(key, value));
-#ifdef OS_IOS
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
       // Sleep only for 1 msec. On iOS, sleep takes a very longer time
       // like 30 times compaired with MacOS. This should be a temporary
       // solution.
       absl::SleepFor(absl::Milliseconds(1));
-#else   // OS_IOS
+#else   // TARGET_OS_IPHONE
       absl::SleepFor(absl::Milliseconds(5));
-#endif  // OS_IOS
+#endif  // TARGET_OS_IPHONE
     }
   }
 

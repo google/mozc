@@ -46,16 +46,16 @@ TEST(KeyboardLayoutIDTest, Validation) {
   {
     KeyboardLayoutID klid(0);
     EXPECT_TRUE(klid.has_id());
-    EXPECT_EQ(0x00000000, klid.id());
-    EXPECT_EQ(std::wstring(L"00000000"), klid.ToString());
+    EXPECT_EQ(klid.id(), 0x00000000);
+    EXPECT_EQ(klid.ToString(), std::wstring(L"00000000"));
   }
 
   // constructor for the text form.
   {
     KeyboardLayoutID klid(L"00000000");
     EXPECT_TRUE(klid.has_id());
-    EXPECT_EQ(0x00000000, klid.id());
-    EXPECT_EQ(std::wstring(L"00000000"), klid.ToString());
+    EXPECT_EQ(klid.id(), 0x00000000);
+    EXPECT_EQ(klid.ToString(), std::wstring(L"00000000"));
   }
 
   {
@@ -69,15 +69,15 @@ TEST(KeyboardLayoutIDTest, Validation) {
     // Can reassign the id.
     klid.set_id(1);
     EXPECT_TRUE(klid.has_id());
-    EXPECT_EQ(0x00000001, klid.id());
-    EXPECT_EQ(std::wstring(L"00000001"), klid.ToString());
+    EXPECT_EQ(klid.id(), 0x00000001);
+    EXPECT_EQ(klid.ToString(), std::wstring(L"00000001"));
 
     // Can copy the instance.
     KeyboardLayoutID another_klid(L"00000002");
     klid = another_klid;
     EXPECT_TRUE(klid.has_id());
-    EXPECT_EQ(0x00000002, klid.id());
-    EXPECT_EQ(std::wstring(L"00000002"), klid.ToString());
+    EXPECT_EQ(klid.id(), 0x00000002);
+    EXPECT_EQ(klid.ToString(), std::wstring(L"00000002"));
   }
 }
 
@@ -86,22 +86,22 @@ TEST(KeyboardLayoutIDTest, ConvertFromString) {
 
   EXPECT_TRUE(klid.Parse(L"E0220411"));
   EXPECT_TRUE(klid.has_id());
-  EXPECT_EQ(0xE0220411, klid.id());
-  EXPECT_EQ(std::wstring(L"E0220411"), klid.ToString());
+  EXPECT_EQ(klid.id(), 0xE0220411);
+  EXPECT_EQ(klid.ToString(), std::wstring(L"E0220411"));
 
   EXPECT_TRUE(klid.Parse(L"e0220411"));
-  EXPECT_EQ(0xE0220411, klid.id());
+  EXPECT_EQ(klid.id(), 0xE0220411);
   EXPECT_TRUE(klid.has_id());
   // This should be capitalised
-  EXPECT_EQ(std::wstring(L"E0220411"), klid.ToString());
+  EXPECT_EQ(klid.ToString(), std::wstring(L"E0220411"));
 
   // Do not reject any KLID unless it has an invalid text form.
   // The caller is responsible for checking the existence of this KLID in the
   // current system even if |has_id()| returns true.
   EXPECT_TRUE(klid.Parse(L"00000000"));
   EXPECT_TRUE(klid.has_id());
-  EXPECT_EQ(0x00000000, klid.id());
-  EXPECT_EQ(std::wstring(L"00000000"), klid.ToString());
+  EXPECT_EQ(klid.id(), 0x00000000);
+  EXPECT_EQ(klid.ToString(), std::wstring(L"00000000"));
 
   // Invalid text form.  Should be rejected.
   EXPECT_FALSE(klid.Parse(L"123"));
@@ -125,13 +125,13 @@ TEST(KeyboardLayoutIDTest, ConvertFromInteger) {
 
   klid.set_id(0xE0220411);
   EXPECT_TRUE(klid.has_id());
-  EXPECT_EQ(0xE0220411, klid.id());
-  EXPECT_EQ(std::wstring(L"E0220411"), klid.ToString());
+  EXPECT_EQ(klid.id(), 0xE0220411);
+  EXPECT_EQ(klid.ToString(), std::wstring(L"E0220411"));
 
   klid.set_id(0x00000123);
   EXPECT_TRUE(klid.has_id());
-  EXPECT_EQ(0x00000123, klid.id());
-  EXPECT_EQ(std::wstring(L"00000123"), klid.ToString());
+  EXPECT_EQ(klid.id(), 0x00000123);
+  EXPECT_EQ(klid.ToString(), std::wstring(L"00000123"));
 
   // Do not reject any KLID because the integer form never be invalid as
   // opposed to text form.
@@ -139,8 +139,8 @@ TEST(KeyboardLayoutIDTest, ConvertFromInteger) {
   // current system even if |has_id()| returns true.
   klid.set_id(0xFFFFFFFF);
   EXPECT_TRUE(klid.has_id());
-  EXPECT_EQ(0xFFFFFFFF, klid.id());
-  EXPECT_EQ(std::wstring(L"FFFFFFFF"), klid.ToString());
+  EXPECT_EQ(klid.id(), 0xFFFFFFFF);
+  EXPECT_EQ(klid.ToString(), std::wstring(L"FFFFFFFF"));
 }
 }  // namespace win32
 }  // namespace mozc

@@ -33,7 +33,7 @@
 #include <windows.h>
 #endif  // _WIN32
 
-#include <cstring>
+#include <cstddef>
 #include <ios>
 #include <string>
 
@@ -44,6 +44,8 @@
 #include "base/mmap.h"
 #include "base/password_manager.h"
 #include "base/util.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -56,10 +58,10 @@ constexpr size_t kSaltSize = 32;
 constexpr size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
 
-EncryptedStringStorage::EncryptedStringStorage(const std::string &filename)
+EncryptedStringStorage::EncryptedStringStorage(const absl::string_view filename)
     : filename_(filename) {}
 
-EncryptedStringStorage::~EncryptedStringStorage() {}
+EncryptedStringStorage::~EncryptedStringStorage() = default;
 
 bool EncryptedStringStorage::Load(std::string *output) const {
   DCHECK(output);

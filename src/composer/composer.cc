@@ -31,10 +31,12 @@
 
 #include "composer/composer.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "base/clock.h"
@@ -53,7 +55,9 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
 // Use flags instead of constant for performance evaluation.
@@ -364,7 +368,7 @@ void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   position_ = composition_.GetLength();
 }
 
-void Composer::ApplyTemporaryInputMode(const std::string &input,
+void Composer::ApplyTemporaryInputMode(const absl::string_view input,
                                        bool caps_locked) {
   DCHECK(!input.empty());
 
@@ -373,7 +377,7 @@ void Composer::ApplyTemporaryInputMode(const std::string &input,
 
   // When input is not an ASCII code, reset the input mode to the one before
   // temporary input mode.
-  if (Util::OneCharLen(input.c_str()) != 1) {
+  if (Util::OneCharLen(input.data()) != 1) {
     // Call SetInputMode() only when the current input mode is temporary, which
     // is detected by the if-condition below.  Without this check,
     // SetInputMode() is called always for multi-byte charactesrs.  This causes
@@ -477,23 +481,22 @@ void Composer::InsertCharacterPreedit(const std::string &input) {
 }
 
 // Note: This method is only for test.
-void Composer::SetPreeditTextForTestOnly(const std::string &input) {
+void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
   composition_.SetInputMode(Transliterators::RAW_STRING);
   size_t begin = 0;
   const size_t end = input.size();
   while (begin < end) {
-    const size_t mblen = Util::OneCharLen(input.c_str() + begin);
-    const std::string character(input, begin, mblen);
-    CompositionInput input;
-    input.set_raw(character);
-    input.set_is_new_input(is_new_input_);
-    position_ = composition_.InsertInput(position_, input);
+    const size_t mblen = Util::OneCharLen(input.data() + begin);
+    CompositionInput composition_input;
+    composition_input.set_raw(input.substr(begin, mblen));
+    composition_input.set_is_new_input(is_new_input_);
+    position_ = composition_.InsertInput(position_, composition_input);
     is_new_input_ = false;
     begin += mblen;
   }
   DCHECK_EQ(begin, end);
 
-  std::string lower_input = input;
+  std::string lower_input(input);
   Util::LowerString(&lower_input);
   if (Util::IsLowerAscii(lower_input)) {
     // Fake input mode.
@@ -1240,8 +1243,8 @@ size_t Composer::shifted_sequence_count() const {
 
 const std::string &Composer::source_text() const { return source_text_; }
 std::string *Composer::mutable_source_text() { return &source_text_; }
-void Composer::set_source_text(const std::string &source_text) {
-  source_text_.assign(source_text);
+void Composer::set_source_text(const absl::string_view source_text) {
+  source_text_ = std::string(source_text);
 }
 
 size_t Composer::max_length() const { return max_length_; }

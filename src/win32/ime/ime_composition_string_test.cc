@@ -478,39 +478,39 @@ TEST(ImeCompositionStringTest, StartCompositionTest) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(messages.size(), 2);
 
-  EXPECT_EQ(WM_IME_STARTCOMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
-  EXPECT_EQ(0, messages[0].lparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_STARTCOMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
+  EXPECT_EQ(messages[0].lparam(), 0);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
   // When the preedit is updated, the following flags should be sent
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
   EXPECT_EQ(
+      messages[1].lparam(),
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
-      messages[1].lparam());
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART));
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(2, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(2, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(1, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(1, compstr.info.dwCompStrLen);
-  EXPECT_EQ(1, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultStrLen);
-  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 2);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 2);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 1);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 1);
+  EXPECT_EQ(compstr.info.dwCursorPos, 1);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 0);
+  EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｶﾞ");
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_INPUT);
 
   // TODO(yukawa): Check other fields in |compstr.info|
 }
@@ -532,29 +532,29 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionBecomesEmpty) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(messages.size(), 2);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
-  EXPECT_EQ(0, messages[0].lparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
+  EXPECT_EQ(messages[0].lparam(), 0);
 
-  EXPECT_EQ(WM_IME_ENDCOMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
-  EXPECT_EQ(0, messages[1].lparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_ENDCOMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
+  EXPECT_EQ(messages[1].lparam(), 0);
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(0, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompStrLen);
-  EXPECT_EQ(-1, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultStrLen);
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCursorPos, -1);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 }
 
 TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommitted) {
@@ -579,36 +579,35 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommitted) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(messages.size(), 2);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
   // When the result string is updated, the following flags should be sent
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
-  EXPECT_EQ((GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
-             GCS_RESULTCLAUSE),
-            messages[0].lparam());
+  EXPECT_EQ(messages[0].lparam(), (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
+                                   GCS_RESULTSTR | GCS_RESULTCLAUSE));
 
-  EXPECT_EQ(WM_IME_ENDCOMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
-  EXPECT_EQ(0, messages[1].lparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_ENDCOMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
+  EXPECT_EQ(messages[1].lparam(), 0);
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(0, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompStrLen);
-  EXPECT_EQ(-1, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(8, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(2, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(8, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(1, compstr.info.dwResultStrLen);
-  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, ResultReadStr));
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCursorPos, -1);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 2);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 1);
+  EXPECT_EQ(GET_STRING(compstr, ResultReadStr), "ｶﾞ");
 }
 
 TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
@@ -634,37 +633,36 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(3, messages.size());
+  EXPECT_EQ(messages.size(), 3);
 
-  EXPECT_EQ(WM_IME_STARTCOMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
-  EXPECT_EQ(0, messages[0].lparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_STARTCOMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
+  EXPECT_EQ(messages[0].lparam(), 0);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
-  EXPECT_EQ((GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
-             GCS_RESULTCLAUSE),
-            messages[1].lparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
+  EXPECT_EQ(messages[1].lparam(), (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
+                                   GCS_RESULTSTR | GCS_RESULTCLAUSE));
 
-  EXPECT_EQ(WM_IME_ENDCOMPOSITION, messages[2].message());
-  EXPECT_EQ(0, messages[2].wparam());
-  EXPECT_EQ(0, messages[2].lparam());
+  EXPECT_EQ(messages[2].message(), WM_IME_ENDCOMPOSITION);
+  EXPECT_EQ(messages[2].wparam(), 0);
+  EXPECT_EQ(messages[2].lparam(), 0);
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(0, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(0, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(0, compstr.info.dwCompStrLen);
-  EXPECT_EQ(-1, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(8, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(1, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(8, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(1, compstr.info.dwResultStrLen);
-  EXPECT_EQ("　", GET_STRING(compstr, ResultStr));
-  EXPECT_EQ(" ", GET_STRING(compstr, ResultReadStr));
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 0);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 0);
+  EXPECT_EQ(compstr.info.dwCursorPos, -1);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 1);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 1);
+  EXPECT_EQ(GET_STRING(compstr, ResultStr), "　");
+  EXPECT_EQ(GET_STRING(compstr, ResultReadStr), " ");
 }
 
 TEST(ImeCompositionStringTest,
@@ -699,39 +697,39 @@ TEST(ImeCompositionStringTest,
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(1, messages.size());
+  EXPECT_EQ(messages.size(), 1);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
   // When both the preedit and result string is updated, the following flags
   // should be sent regardless of which field is actually updated. Otherwise,
   // some applications such as wordpad OOo Writer 3.0 will not update
   // composition window and caret state properly.
   EXPECT_EQ(
+      messages[0].lparam(),
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
        GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART) |
           (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
-           GCS_RESULTCLAUSE),
-      messages[0].lparam());
+           GCS_RESULTCLAUSE));
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(2, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(2, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(1, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(1, compstr.info.dwCompStrLen);
-  EXPECT_EQ(1, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(8, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(2, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(8, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(1, compstr.info.dwResultStrLen);
-  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ("ｶﾞ", GET_STRING(compstr, ResultReadStr));
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 2);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 2);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 1);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 1);
+  EXPECT_EQ(compstr.info.dwCursorPos, 1);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 2);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 1);
+  EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｶﾞ");
+  EXPECT_EQ(GET_STRING(compstr, ResultReadStr), "ｶﾞ");
 
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_INPUT);
 }
 
 TEST(ImeCompositionStringTest, Suggest) {
@@ -743,49 +741,49 @@ TEST(ImeCompositionStringTest, Suggest) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(messages.size(), 2);
 
-  EXPECT_EQ(WM_IME_STARTCOMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
-  EXPECT_EQ(0, messages[0].lparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_STARTCOMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
+  EXPECT_EQ(messages[0].lparam(), 0);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
   // When the preedit is updated, the following flags should be sent
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
   EXPECT_EQ(
+      messages[1].lparam(),
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
-      messages[1].lparam());
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART));
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(4, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(4, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(4, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(4, compstr.info.dwCompStrLen);
-  EXPECT_EQ(4, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultStrLen);
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 4);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 4);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 4);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 4);
+  EXPECT_EQ(compstr.info.dwCursorPos, 4);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 
-  EXPECT_EQ("ｱﾙﾌｧ", GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ("あるふぁ", GET_STRING(compstr, CompStr));
+  EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｱﾙﾌｧ");
+  EXPECT_EQ(GET_STRING(compstr, CompStr), "あるふぁ");
 
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 2));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompReadAttr, 3));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 2), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 3), ATTR_INPUT);
 
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompAttr, 0));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompAttr, 1));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompAttr, 2));
-  EXPECT_EQ(ATTR_INPUT, GET_ATTRIBUTE(compstr, CompAttr, 3));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 0), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 1), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 2), ATTR_INPUT);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 3), ATTR_INPUT);
 }
 
 TEST(ImeCompositionStringTest, Predict) {
@@ -797,54 +795,54 @@ TEST(ImeCompositionStringTest, Predict) {
 
   std::vector<UIMessage> messages;
   EXPECT_TRUE(compstr.Update(output, &messages));
-  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(messages.size(), 2);
 
-  EXPECT_EQ(WM_IME_STARTCOMPOSITION, messages[0].message());
-  EXPECT_EQ(0, messages[0].wparam());
-  EXPECT_EQ(0, messages[0].lparam());
+  EXPECT_EQ(messages[0].message(), WM_IME_STARTCOMPOSITION);
+  EXPECT_EQ(messages[0].wparam(), 0);
+  EXPECT_EQ(messages[0].lparam(), 0);
 
-  EXPECT_EQ(WM_IME_COMPOSITION, messages[1].message());
-  EXPECT_EQ(0, messages[1].wparam());
+  EXPECT_EQ(messages[1].message(), WM_IME_COMPOSITION);
+  EXPECT_EQ(messages[1].wparam(), 0);
   // When the preedit is updated, the following flags should be sent
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
   EXPECT_EQ(
+      messages[1].lparam(),
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
-      messages[1].lparam());
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART));
 
-  EXPECT_EQ(0, compstr.focused_character_index_);
-  EXPECT_EQ(4, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(4, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(9, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(8, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(9, compstr.info.dwCompStrLen);
-  EXPECT_EQ(9, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultStrLen);
+  EXPECT_EQ(compstr.focused_character_index_, 0);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 4);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 4);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 9);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 8);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 9);
+  EXPECT_EQ(compstr.info.dwCursorPos, 9);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 
-  EXPECT_EQ("ｱﾙﾌｧ", GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ("AlphaBeta", GET_STRING(compstr, CompStr));
+  EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｱﾙﾌｧ");
+  EXPECT_EQ(GET_STRING(compstr, CompStr), "AlphaBeta");
 
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 2));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 3));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 2), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 3), ATTR_TARGET_CONVERTED);
 
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 0));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 1));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 2));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 3));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 4));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 5));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 6));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 7));
-  EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 8));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 0), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 1), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 2), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 3), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 4), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 5), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 6), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 7), ATTR_TARGET_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 8), ATTR_TARGET_CONVERTED);
 }
 
 TEST(ImeCompositionStringTest, Convert) {
@@ -863,58 +861,58 @@ TEST(ImeCompositionStringTest, Convert) {
   {
     std::vector<UIMessage> messages;
     EXPECT_TRUE(compstr.Update(output, &messages));
-    EXPECT_EQ(2, messages.size());
+    EXPECT_EQ(messages.size(), 2);
 
-    EXPECT_EQ(WM_IME_STARTCOMPOSITION, messages[0].message());
-    EXPECT_EQ(0, messages[0].wparam());
-    EXPECT_EQ(0, messages[0].lparam());
+    EXPECT_EQ(messages[0].message(), WM_IME_STARTCOMPOSITION);
+    EXPECT_EQ(messages[0].wparam(), 0);
+    EXPECT_EQ(messages[0].lparam(), 0);
 
-    EXPECT_EQ(WM_IME_COMPOSITION, messages[1].message());
-    EXPECT_EQ(0, messages[1].wparam());
+    EXPECT_EQ(messages[1].message(), WM_IME_COMPOSITION);
+    EXPECT_EQ(messages[1].wparam(), 0);
     // When the preedit is updated, the following flags should be sent
     // regardless of which field is actually updated. Otherwise, some
     // applications such as wordpad OOo Writer 3.0 will not update composition
     // window and caret state properly.
     EXPECT_EQ(
+        messages[1].lparam(),
         (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
-        messages[1].lparam());
+         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART));
 
-    EXPECT_EQ(5, compstr.focused_character_index_);
-    EXPECT_EQ(8, compstr.info.dwCompReadAttrLen);
-    EXPECT_EQ(12, compstr.info.dwCompReadClauseLen);
-    EXPECT_EQ(8, compstr.info.dwCompReadStrLen);
-    EXPECT_EQ(9, compstr.info.dwCompAttrLen);
-    EXPECT_EQ(12, compstr.info.dwCompClauseLen);
-    EXPECT_EQ(9, compstr.info.dwCompStrLen);
-    EXPECT_EQ(5, compstr.info.dwCursorPos);
-    EXPECT_EQ(0, compstr.info.dwDeltaStart);
-    EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-    EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-    EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-    EXPECT_EQ(0, compstr.info.dwResultStrLen);
+    EXPECT_EQ(compstr.focused_character_index_, 5);
+    EXPECT_EQ(compstr.info.dwCompReadAttrLen, 8);
+    EXPECT_EQ(compstr.info.dwCompReadClauseLen, 12);
+    EXPECT_EQ(compstr.info.dwCompReadStrLen, 8);
+    EXPECT_EQ(compstr.info.dwCompAttrLen, 9);
+    EXPECT_EQ(compstr.info.dwCompClauseLen, 12);
+    EXPECT_EQ(compstr.info.dwCompStrLen, 9);
+    EXPECT_EQ(compstr.info.dwCursorPos, 5);
+    EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+    EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+    EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+    EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+    EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 
-    EXPECT_EQ("ｱﾙﾌｧﾍﾞｰﾀ", GET_STRING(compstr, CompReadStr));
-    EXPECT_EQ("AlphaBeta", GET_STRING(compstr, CompStr));
+    EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｱﾙﾌｧﾍﾞｰﾀ");
+    EXPECT_EQ(GET_STRING(compstr, CompStr), "AlphaBeta");
 
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 2));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 3));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 4));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 5));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 6));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 7));
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 2), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 3), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 4), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 5), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 6), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 7), ATTR_TARGET_CONVERTED);
 
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 0));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 1));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 2));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 3));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 4));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 5));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 6));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 7));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 8));
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 0), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 1), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 2), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 3), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 4), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 5), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 6), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 7), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 8), ATTR_TARGET_CONVERTED);
   }
 
   // Second conversion
@@ -922,53 +920,53 @@ TEST(ImeCompositionStringTest, Convert) {
   {
     std::vector<UIMessage> messages;
     EXPECT_TRUE(compstr.Update(output, &messages));
-    EXPECT_EQ(1, messages.size());
+    EXPECT_EQ(messages.size(), 1);
 
-    EXPECT_EQ(WM_IME_COMPOSITION, messages[0].message());
-    EXPECT_EQ(0, messages[0].wparam());
+    EXPECT_EQ(messages[0].message(), WM_IME_COMPOSITION);
+    EXPECT_EQ(messages[0].wparam(), 0);
     // When the preedit is updated, the following flags should be sent
     // regardless of which field is actually updated. Otherwise, some
     // applications such as wordpad OOo Writer 3.0 will not update composition
     // window and caret state properly.
     EXPECT_EQ(
+        messages[0].lparam(),
         (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
-        messages[0].lparam());
+         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART));
 
-    EXPECT_EQ(5, compstr.focused_character_index_);
-    EXPECT_EQ(8, compstr.info.dwCompReadAttrLen);
-    EXPECT_EQ(12, compstr.info.dwCompReadClauseLen);
-    EXPECT_EQ(8, compstr.info.dwCompReadStrLen);
-    EXPECT_EQ(8, compstr.info.dwCompAttrLen);
-    EXPECT_EQ(12, compstr.info.dwCompClauseLen);
-    EXPECT_EQ(8, compstr.info.dwCompStrLen);
-    EXPECT_EQ(5, compstr.info.dwCursorPos);
-    EXPECT_EQ(0, compstr.info.dwDeltaStart);
-    EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-    EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-    EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-    EXPECT_EQ(0, compstr.info.dwResultStrLen);
+    EXPECT_EQ(compstr.focused_character_index_, 5);
+    EXPECT_EQ(compstr.info.dwCompReadAttrLen, 8);
+    EXPECT_EQ(compstr.info.dwCompReadClauseLen, 12);
+    EXPECT_EQ(compstr.info.dwCompReadStrLen, 8);
+    EXPECT_EQ(compstr.info.dwCompAttrLen, 8);
+    EXPECT_EQ(compstr.info.dwCompClauseLen, 12);
+    EXPECT_EQ(compstr.info.dwCompStrLen, 8);
+    EXPECT_EQ(compstr.info.dwCursorPos, 5);
+    EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+    EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+    EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+    EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+    EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 
-    EXPECT_EQ("ｱﾙﾌｧﾍﾞｰﾀ", GET_STRING(compstr, CompReadStr));
-    EXPECT_EQ("Alphaベータ", GET_STRING(compstr, CompStr));
+    EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｱﾙﾌｧﾍﾞｰﾀ");
+    EXPECT_EQ(GET_STRING(compstr, CompStr), "Alphaベータ");
 
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 2));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 3));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 4));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 5));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 6));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 7));
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 2), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 3), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 4), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 5), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 6), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 7), ATTR_TARGET_CONVERTED);
 
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 0));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 1));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 2));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 3));
-    EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 4));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 5));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 6));
-    EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompAttr, 7));
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 0), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 1), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 2), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 3), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 4), ATTR_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 5), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 6), ATTR_TARGET_CONVERTED);
+    EXPECT_EQ(GET_ATTRIBUTE(compstr, CompAttr, 7), ATTR_TARGET_CONVERTED);
   }
 }
 
@@ -1018,25 +1016,25 @@ TEST(ImeCompositionStringTest, SurrogatePairSupport) {
 
   // Here, |focused_character_index_| != Preedit::highlighted_position()
   // because of surrogate parir.
-  EXPECT_EQ(4, compstr.focused_character_index_);
-  EXPECT_EQ(7, compstr.info.dwCompReadAttrLen);
-  EXPECT_EQ(16, compstr.info.dwCompReadClauseLen);
-  EXPECT_EQ(7, compstr.info.dwCompReadStrLen);
-  EXPECT_EQ(6, compstr.info.dwCompAttrLen);
-  EXPECT_EQ(16, compstr.info.dwCompClauseLen);
-  EXPECT_EQ(6, compstr.info.dwCompStrLen);
-  EXPECT_EQ(4, compstr.info.dwCursorPos);
-  EXPECT_EQ(0, compstr.info.dwDeltaStart);
-  EXPECT_EQ(0, compstr.info.dwResultReadClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultReadStrLen);
-  EXPECT_EQ(0, compstr.info.dwResultClauseLen);
-  EXPECT_EQ(0, compstr.info.dwResultStrLen);
+  EXPECT_EQ(compstr.focused_character_index_, 4);
+  EXPECT_EQ(compstr.info.dwCompReadAttrLen, 7);
+  EXPECT_EQ(compstr.info.dwCompReadClauseLen, 16);
+  EXPECT_EQ(compstr.info.dwCompReadStrLen, 7);
+  EXPECT_EQ(compstr.info.dwCompAttrLen, 6);
+  EXPECT_EQ(compstr.info.dwCompClauseLen, 16);
+  EXPECT_EQ(compstr.info.dwCompStrLen, 6);
+  EXPECT_EQ(compstr.info.dwCursorPos, 4);
+  EXPECT_EQ(compstr.info.dwDeltaStart, 0);
+  EXPECT_EQ(compstr.info.dwResultReadClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultReadStrLen, 0);
+  EXPECT_EQ(compstr.info.dwResultClauseLen, 0);
+  EXPECT_EQ(compstr.info.dwResultStrLen, 0);
 
-  EXPECT_EQ("ｼｶﾙﾄｼｶﾙ", GET_STRING(compstr, CompReadStr));
+  EXPECT_EQ(GET_STRING(compstr, CompReadStr), "ｼｶﾙﾄｼｶﾙ");
 
-  EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
-  EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
-  EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 2));
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 0), ATTR_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 1), ATTR_CONVERTED);
+  EXPECT_EQ(GET_ATTRIBUTE(compstr, CompReadAttr, 2), ATTR_CONVERTED);
 
   // TODO(yukawa): Check other fields in |compstr.info|
 }

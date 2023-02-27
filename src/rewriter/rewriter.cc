@@ -68,6 +68,11 @@
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
 #include "absl/flags/flag.h"
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>  // for TARGET_OS_IPHONE
+#endif                           // __APPLE__
+
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
 #endif  // NO_USAGE_REWRITER
@@ -121,12 +126,12 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
 
   AddRewriter(std::make_unique<DateRewriter>(dictionary));
   AddRewriter(std::make_unique<FortuneRewriter>());
-#if !(defined(__ANDROID__) || defined(OS_IOS))
+#if !(defined(__ANDROID__) || (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE))
   // CommandRewriter is not tested well on Android or iOS.
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
   AddRewriter(std::make_unique<CommandRewriter>());
-#endif  // !(__ANDROID__ || OS_IOS)
+#endif  // !(__ANDROID__ || TARGET_OS_IPHONE)
 #ifndef NO_USAGE_REWRITER
   AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER

@@ -35,6 +35,7 @@
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -64,13 +65,14 @@ bool CompositionInput::Init(const Table &table,
   return true;
 }
 
-void CompositionInput::InitFromRaw(const std::string &raw, bool is_new_input) {
+void CompositionInput::InitFromRaw(const absl::string_view raw,
+                                   bool is_new_input) {
   set_raw(raw);
   set_is_new_input(is_new_input);
 }
 
-void CompositionInput::InitFromRawAndConv(const std::string &raw,
-                                          const std::string &conversion,
+void CompositionInput::InitFromRawAndConv(const absl::string_view raw,
+                                          const absl::string_view conversion,
                                           bool is_new_input) {
   set_raw(raw);
   set_conversion(conversion);
@@ -88,16 +90,12 @@ bool CompositionInput::Empty() const {
   return raw().empty() && conversion().empty();
 }
 
-const std::string &CompositionInput::conversion() const {
-  return conversion_;
-}
+const std::string &CompositionInput::conversion() const { return conversion_; }
 
-void CompositionInput::clear_conversion() {
-  conversion_.clear();
-}
+void CompositionInput::clear_conversion() { conversion_.clear(); }
 
-void CompositionInput::set_conversion(const std::string &conversion) {
-  conversion_ = conversion;
+void CompositionInput::set_conversion(const absl::string_view conversion) {
+  conversion_ = std::string(conversion);
 }
 
 }  // namespace composer

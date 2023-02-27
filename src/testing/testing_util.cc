@@ -35,6 +35,8 @@
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
 
+#undef GetMessage  // Undef Win32 macro.
+
 namespace mozc {
 namespace testing {
 

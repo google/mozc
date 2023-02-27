@@ -29,27 +29,25 @@
 
 #include "base/run_level.h"
 
+#include "base/logging.h"
+
+#ifdef __linux__
+#include <sys/types.h>
+#endif  // __linux__
+
 #ifdef _WIN32
 #include <aclapi.h>
 #include <windows.h>
-#endif  // _WIN32
-
-#ifdef __APPLE__
-#include <unistd.h>
-#endif  // __APPLE__
-
-#if defined(__linux__) || defined(__ANDROID__)
-#include <sys/types.h>
-#include <unistd.h>
-#endif  // __linux__ || __ANDROID__
 
 #include "base/const.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win32/scoped_handle.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
+#else  // _WIN32
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace mozc {
 namespace {

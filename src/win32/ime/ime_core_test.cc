@@ -176,14 +176,14 @@ TEST(ImeCoreTest, OpenIME) {
   {
     commands::Input actual_input;
     ASSERT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_COMMAND, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_COMMAND);
     ASSERT_TRUE(actual_input.has_command());
     ASSERT_TRUE(actual_input.command().has_type());
-    EXPECT_EQ(commands::SessionCommand::TURN_ON_IME,
-              actual_input.command().type());
+    EXPECT_EQ(actual_input.command().type(),
+              commands::SessionCommand::TURN_ON_IME);
     ASSERT_TRUE(actual_input.command().has_composition_mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              actual_input.command().composition_mode());
+    EXPECT_EQ(actual_input.command().composition_mode(),
+              commands::FULL_KATAKANA);
   }
 }
 
@@ -204,25 +204,25 @@ TEST(ImeCoreTest, CloseIME) {
   {
     commands::Input actual_input;
     ASSERT_TRUE(mock_client.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_COMMAND, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_COMMAND);
     ASSERT_TRUE(actual_input.has_command());
     ASSERT_TRUE(actual_input.command().has_type());
-    EXPECT_EQ(commands::SessionCommand::TURN_OFF_IME,
-              actual_input.command().type());
+    EXPECT_EQ(actual_input.command().type(),
+              commands::SessionCommand::TURN_OFF_IME);
     ASSERT_TRUE(actual_input.command().has_composition_mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              actual_input.command().composition_mode());
+    EXPECT_EQ(actual_input.command().composition_mode(),
+              commands::FULL_KATAKANA);
   }
 }
 
 TEST(ImeCoreTest, GetSupportableConversionMode) {
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE,
-            ImeCore::GetSupportableConversionMode(IME_CMODE_NATIVE |
-                                                  IME_CMODE_FULLSHAPE));
+  EXPECT_EQ(ImeCore::GetSupportableConversionMode(IME_CMODE_NATIVE |
+                                                  IME_CMODE_FULLSHAPE),
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
 
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            ImeCore::GetSupportableConversionMode(
-                IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN));
+  EXPECT_EQ(ImeCore::GetSupportableConversionMode(
+                IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN),
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 }
 
 TEST(ImeCoreTest, GetSupportableConversionMode_Issue2914115) {
@@ -230,35 +230,35 @@ TEST(ImeCoreTest, GetSupportableConversionMode_Issue2914115) {
   // In some environment, its initial conversion mode is IME_CMODE_NATIVE
   // (only), which is not the one of the expected conversion modes for Mozc.
   // Assume Full-width Hiragana in this case.
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            ImeCore::GetSupportableConversionMode(IME_CMODE_NATIVE));
+  EXPECT_EQ(ImeCore::GetSupportableConversionMode(IME_CMODE_NATIVE),
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 }
 
 TEST(ImeCoreTest, GetSupportableSentenceMode) {
   // Always returns IME_SMODE_PHRASEPREDICT.
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_NONE));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_NONE),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_PLAURALCLAUSE));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_PLAURALCLAUSE),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_SINGLECONVERT));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_SINGLECONVERT),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_AUTOMATIC));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_AUTOMATIC),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_PHRASEPREDICT));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_PHRASEPREDICT),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_CONVERSATION));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_CONVERSATION),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_RESERVED));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(IME_SMODE_RESERVED),
+            IME_SMODE_PHRASEPREDICT);
 
-  EXPECT_EQ(IME_SMODE_PHRASEPREDICT,
-            ImeCore::GetSupportableSentenceMode(MAXDWORD));
+  EXPECT_EQ(ImeCore::GetSupportableSentenceMode(MAXDWORD),
+            IME_SMODE_PHRASEPREDICT);
 }
 
 TEST(ImeCoreTest, GetSupportableSentenceMode_Issue2955175) {
@@ -266,28 +266,28 @@ TEST(ImeCoreTest, GetSupportableSentenceMode_Issue2955175) {
   // If Mozc leaves the sentence mode IME_SMODE_NONE and switch to MS-IME in
   // Sylpheed, MS-IME cannot convert composition string because it's in
   // Muhenkan-mode.
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_NONE));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_NONE),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_PLAURALCLAUSE));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_PLAURALCLAUSE),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_SINGLECONVERT));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_SINGLECONVERT),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_AUTOMATIC));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_AUTOMATIC),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_PHRASEPREDICT));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_PHRASEPREDICT),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_CONVERSATION));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_CONVERSATION),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE,
-            ImeCore::GetSupportableSentenceMode(IME_SMODE_RESERVED));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(IME_SMODE_RESERVED),
+            IME_SMODE_NONE);
 
-  EXPECT_NE(IME_SMODE_NONE, ImeCore::GetSupportableSentenceMode(MAXDWORD));
+  EXPECT_NE(ImeCore::GetSupportableSentenceMode(MAXDWORD), IME_SMODE_NONE);
 }
 
 namespace {
@@ -339,9 +339,9 @@ const UIMessage kMsgCloseCandidate(WM_IME_NOTIFY, IMN_CLOSECANDIDATE,
 #define EXPECT_UI_MSG(expected_message, expected_wparam, expected_lparam, \
                       actual_ui_msg)                                      \
   do {                                                                    \
-    EXPECT_EQ((expected_message), (actual_ui_msg).message());             \
-    EXPECT_EQ((expected_wparam), (actual_ui_msg).wparam());               \
-    EXPECT_EQ((expected_lparam), (actual_ui_msg).lparam());               \
+    EXPECT_EQ((actual_ui_msg).message(), (expected_message));             \
+    EXPECT_EQ((actual_ui_msg).wparam(), (expected_wparam));               \
+    EXPECT_EQ((actual_ui_msg).lparam(), (expected_lparam));               \
   } while (false)
 
 #define EXPECT_UI_UPDATE_MSG(actual_msg) \
@@ -380,7 +380,7 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, false,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
     EXPECT_SET_OPEN_STATUS_MSG(sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
   }
@@ -397,7 +397,7 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHalfAlpha, &sorted_messages);
 
-    EXPECT_EQ(4, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 4);
 
     EXPECT_SET_CONVERSION_MODE_MSG(sorted_messages[0]);
     EXPECT_STARTCOMPOSITION_MSG(sorted_messages[1]);
@@ -416,7 +416,7 @@ TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHalfAlpha, false, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(5, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 5);
     EXPECT_SET_CONVERSION_MODE_MSG(sorted_messages[0]);
     EXPECT_COMPOSITION_MSG(kCompositionResultFlag, sorted_messages[1]);
     EXPECT_ENDCOMPOSITION_MSG(sorted_messages[2]);
@@ -437,7 +437,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, false,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
     EXPECT_SET_OPEN_STATUS_MSG(sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
   }
@@ -454,7 +454,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHalfAlpha, &sorted_messages);
 
-    EXPECT_EQ(4, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 4);
 
     EXPECT_SET_CONVERSION_MODE_MSG(sorted_messages[0]);
     EXPECT_STARTCOMPOSITION_MSG(sorted_messages[1]);
@@ -473,7 +473,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHalfAlpha, true, kHalfAlpha, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
 
     EXPECT_COMPOSITION_MSG(kCompositionUpdateFlag, sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
@@ -491,7 +491,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHalfAlpha, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(4, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 4);
 
     EXPECT_SET_CONVERSION_MODE_MSG(sorted_messages[0]);
     EXPECT_COMPOSITION_MSG(kCompositionResultFlag, sorted_messages[1]);
@@ -508,7 +508,7 @@ TEST(ImeCoreTest, CompositionMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, false, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
     EXPECT_SET_OPEN_STATUS_MSG(sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
   }
@@ -526,7 +526,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, false,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
     EXPECT_SET_OPEN_STATUS_MSG(sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
   }
@@ -543,7 +543,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(3, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 3);
 
     EXPECT_STARTCOMPOSITION_MSG(sorted_messages[0]);
     EXPECT_COMPOSITION_MSG(kCompositionUpdateFlag, sorted_messages[1]);
@@ -561,7 +561,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(2, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 2);
 
     EXPECT_COMPOSITION_MSG(kCompositionUpdateFlag, sorted_messages[0]);
     EXPECT_UI_UPDATE_MSG(sorted_messages[1]);
@@ -579,7 +579,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(3, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 3);
 
     EXPECT_COMPOSITION_MSG(kCompositionUpdateFlag, sorted_messages[0]);
     EXPECT_OPENCANDIDATE_MSG(sorted_messages[1]);
@@ -598,7 +598,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(3, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 3);
 
     EXPECT_COMPOSITION_MSG(kCompositionUpdateFlag, sorted_messages[0]);
     EXPECT_CHANGECANDIDATE_MSG(sorted_messages[1]);
@@ -617,7 +617,7 @@ TEST(ImeCoreTest, CandidateMessageOrderTest) {
     ImeCore::SortIMEMessages(composition_messages, candidate_messages, true,
                              kHiragana, true, kHiragana, &sorted_messages);
 
-    EXPECT_EQ(3, sorted_messages.size());
+    EXPECT_EQ(sorted_messages.size(), 3);
     // IMN_CLOSECANDIDATE must prior to any composition message!
     EXPECT_CLOSECANDIDATE_MSG(sorted_messages[0]);
     EXPECT_COMPOSITION_MSG(kCompositionResultAndUpdateFlag, sorted_messages[1]);

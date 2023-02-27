@@ -74,6 +74,16 @@ mozc_cc_library(
     deps = ["//base:port"],
 )
 
+mozc_cc_test(
+    name = "freelist_test",
+    srcs = ["freelist_test.cc"],
+    deps = [
+        ":freelist",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
 mozc_cc_library(
     name = "serialized_string_array",
     srcs = ["serialized_string_array.cc"],

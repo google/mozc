@@ -33,7 +33,6 @@
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
 
@@ -44,10 +43,9 @@
 #include "session/common.h"
 #include "session/session_handler_interface.h"
 #include "storage/lru_cache.h"
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
-
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/random/random.h"
+
 
 namespace mozc {
 
@@ -114,9 +112,8 @@ class SessionHandler : public SessionHandlerInterface {
   void Init(std::unique_ptr<EngineInterface> engine,
             std::unique_ptr<EngineBuilderInterface> engine_builder);
 
-  // Updates the stored config, if the |command| contains the config.
-  // TODO(b/267705984): Rename to "MaybeUpdateConfig" later.
-  void MaybeUpdateStoredConfig(commands::Command *command);
+  // Updates the config, if the |command| contains the config.
+  void MaybeUpdateConfig(commands::Command *command);
 
   bool CreateSession(commands::Command *command);
   bool DeleteSession(commands::Command *command);
@@ -131,9 +128,8 @@ class SessionHandler : public SessionHandlerInterface {
   // Reloads all the sessions.
   // Before that, UpdateSessions() is called to update them.
   bool Reload(commands::Command *command);
-  // TODO(b/267705984): Rename to "Get/SetConfig" later.
-  bool GetStoredConfig(commands::Command *command);
-  bool SetStoredConfig(commands::Command *command);
+  bool GetConfig(commands::Command *command);
+  bool SetConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
   // Sets the given config, request, and delivertive information
@@ -166,7 +162,6 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<EngineBuilderInterface> engine_builder_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
-  std::unique_ptr<Stopwatch> stopwatch_;
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;

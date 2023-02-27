@@ -152,25 +152,25 @@ TEST(TipCandidateListTest, EmptyCandidate) {
   std::vector<std::wstring> empty;
   CComPtr<ITfCandidateList> candidate_list(
       TipCandidateList::New(empty, new MockCallback(&result)));
-  ASSERT_NE(nullptr, candidate_list);
+  ASSERT_NE(candidate_list, nullptr);
 
   ULONG num = 0;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
-  EXPECT_EQ(0, num);
+  EXPECT_EQ(num, 0);
 
   CComPtr<ITfCandidateString> str;
   EXPECT_HRESULT_FAILED(candidate_list->GetCandidate(0, &str));
-  EXPECT_EQ(nullptr, str);
+  EXPECT_EQ(str, nullptr);
 
   CComPtr<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
-  ASSERT_NE(nullptr, enum_candidates);
+  ASSERT_NE(enum_candidates, nullptr);
 
   ITfCandidateString *buffer[3] = {};
   ULONG num_fetched = 0;
-  EXPECT_EQ(S_FALSE,
-            enum_candidates->Next(std::size(buffer), buffer, &num_fetched));
-  EXPECT_EQ(0, num_fetched);
+  EXPECT_EQ(enum_candidates->Next(std::size(buffer), buffer, &num_fetched),
+            S_FALSE);
+  EXPECT_EQ(num_fetched, 0);
 
   EXPECT_FALSE(result.on_finalize_called());
 
@@ -188,11 +188,11 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
   }
   CComPtr<ITfCandidateList> candidate_list(
       TipCandidateList::New(source, new MockCallback(&result)));
-  ASSERT_NE(nullptr, candidate_list);
+  ASSERT_NE(candidate_list, nullptr);
 
   ULONG num = 0;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
-  ASSERT_EQ(source.size(), num);
+  ASSERT_EQ(num, source.size());
 
   for (size_t i = 0; i < source.size(); ++i) {
     CComPtr<ITfCandidateString> candidate_str;
@@ -202,7 +202,7 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
 
   CComPtr<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
-  EXPECT_NE(nullptr, enum_candidates);
+  EXPECT_NE(enum_candidates, nullptr);
 
   size_t offset = 0;
   while (offset < source.size()) {
@@ -216,11 +216,11 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
     }
     const size_t rest = source.size() - offset;
     if (rest > kBufferSize) {
-      EXPECT_EQ(S_OK, hr);
-      ASSERT_EQ(kBufferSize, num_fetched);
+      EXPECT_EQ(hr, S_OK);
+      ASSERT_EQ(num_fetched, kBufferSize);
     } else {
-      EXPECT_EQ(S_FALSE, hr);
-      ASSERT_EQ(rest, num_fetched);
+      EXPECT_EQ(hr, S_FALSE);
+      ASSERT_EQ(num_fetched, rest);
     }
     for (size_t buffer_index = 0; buffer_index < num_fetched; ++buffer_index) {
       const size_t index = offset + buffer_index;
@@ -237,8 +237,8 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
 
   EXPECT_HRESULT_SUCCEEDED(candidate_list->SetResult(1, CAND_FINALIZED));
   EXPECT_TRUE(result.on_finalize_called());
-  EXPECT_EQ(1, result.index());
-  EXPECT_EQ(source[1], result.candidate());
+  EXPECT_EQ(result.index(), 1);
+  EXPECT_EQ(result.candidate(), source[1]);
 
   result.Reset();
 

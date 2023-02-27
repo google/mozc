@@ -44,11 +44,11 @@ class TipRefCountTest : public testing::Test {
 TEST_F(TipRefCountTest, AddRefRelease) {
   TipRefCount ref_count;
 
-  EXPECT_EQ(1, ref_count.AddRefImpl()) << "Initial count is zero.";
-  EXPECT_EQ(2, ref_count.AddRefImpl());
-  EXPECT_EQ(1, ref_count.ReleaseImpl());
-  EXPECT_EQ(0, ref_count.ReleaseImpl());
-  EXPECT_EQ(0, ref_count.ReleaseImpl());
+  EXPECT_EQ(ref_count.AddRefImpl(), 1) << "Initial count is zero.";
+  EXPECT_EQ(ref_count.AddRefImpl(), 2);
+  EXPECT_EQ(ref_count.ReleaseImpl(), 1);
+  EXPECT_EQ(ref_count.ReleaseImpl(), 0);
+  EXPECT_EQ(ref_count.ReleaseImpl(), 0);
 }
 
 TEST_F(TipRefCountTest, DllLock) {

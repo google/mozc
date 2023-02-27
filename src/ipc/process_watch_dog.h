@@ -30,17 +30,18 @@
 #ifndef MOZC_IPC_PROCESS_WATCH_DOG_H_
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
-#ifndef _WIN32
-#include <sys/types.h>
-#endif  // !_WIN32
-
 #include <cstdint>
 #include <memory>
 
 #include "base/port.h"
 #include "base/thread.h"
-#include "base/win32/scoped_handle.h"
 #include "absl/synchronization/mutex.h"
+
+#ifdef _WIN32
+#include "base/win32/scoped_handle.h"
+#else  // _WIN32
+#include <sys/types.h>
+#endif  // _WIN32
 
 // Usage:
 //

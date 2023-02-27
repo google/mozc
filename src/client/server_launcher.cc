@@ -47,9 +47,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
-#if defined(__APPLE__) || defined(OS_IOS)
+#ifdef __APPLE__
 #include "base/mac/mac_util.h"
-#endif  // __APPLE__ || OS_IOS
+#endif  // __APPLE__
 
 #ifdef _WIN32
 #include <sddl.h>

@@ -43,6 +43,7 @@ package(default_visibility = [
 mozc_cc_library(
     name = "transliterator_interface",
     hdrs = ["transliterator_interface.h"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_library(
@@ -76,6 +77,7 @@ mozc_cc_library(
         "//base:singleton",
         "//base:util",
         "//config:character_form_manager",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -121,6 +123,7 @@ mozc_cc_library(
         "//composer:key_parser",
         "//composer:table",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -148,13 +151,11 @@ mozc_cc_library(
     deps = [
         ":char_chunk",
         ":composition_input",
-        ":transliterator_interface",
         ":transliterators",
         "//base:logging",
         "//base:port",
         "//base:util",
         "//composer:table",
-        "//testing:gunit_prod",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -218,6 +219,8 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:singleton",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
     ],
 )
 

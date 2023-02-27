@@ -29,9 +29,23 @@
 
 #include "ipc/named_event.h"
 
+#include <cstddef>
+#include <string>
+
+#include "base/const.h"
+#include "base/hash.h"
+#include "base/logging.h"
+#include "base/system_util.h"
+#include "absl/strings/str_format.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+
 #ifdef _WIN32
 #include <sddl.h>
 #include <windows.h>
+
+#include "base/util.h"
+#include "base/win32/win_sandbox.h"
 #else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
@@ -40,24 +54,6 @@
 #include <string.h>
 #include <sys/types.h>
 #endif  // _WIN32
-
-#include <algorithm>
-#include <cstdint>
-#include <cstdio>
-#include <string>
-
-#include "base/const.h"
-#include "base/hash.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/system_util.h"
-#include "base/util.h"
-#ifdef _WIN32
-#include "base/win32/win_sandbox.h"
-#endif  // _WIN32
-#include "absl/strings/str_format.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -78,7 +74,7 @@ bool IsProcessAlive(pid_t pid) {
 #endif  // !_WIN32
 }  // namespace
 
-const std::string NamedEventUtil::GetEventPath(const char *name) {
+std::string NamedEventUtil::GetEventPath(const char *name) {
   name = (name == nullptr) ? "nullptr" : name;
   std::string event_name = kEventPathPrefix;
   event_name += SystemUtil::GetUserSidAsString();
@@ -87,7 +83,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
 #ifdef _WIN32
   return event_name;
 #else   // _WIN32
-  // To maximze mozc portability, (especailly on BSD including OSX),
+  // To maximze mozc portability, (especially on BSD including OSX),
   // makes the length of path name shorter than 14byte.
   // Please see the following man page for detail:
   // http://www.freebsd.org/cgi/man.cgi?query=sem_open&manpath=FreeBSD+7.0-RELEASE
@@ -295,10 +291,10 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
     return NamedEventListener::TIMEOUT;
   }
 
-  const bool inifinite = msec < 0 ? true : false;
+  const bool infinite = msec < 0 ? true : false;
   constexpr int kWaitMsec = 200;
 
-  while (inifinite || msec > 0) {
+  while (infinite || msec > 0) {
     absl::SleepFor(absl::Milliseconds(kWaitMsec));
 
     if (!IsProcessAlive(pid)) {

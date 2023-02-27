@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <TargetConditionals.h>
+
 #include <string>
 
 #import "base/mac/mac_util.h"
@@ -43,7 +45,7 @@ TEST(MacUtil, GetSerialNumber) {
   EXPECT_EQ(serial1, serial2);
 }
 
-#ifndef OS_IOS
+#if TARGET_OS_OSX
 TEST(MacUtil, IsSuppressSuggestionWindow) {
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", ""));
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", "Test"));
@@ -60,6 +62,6 @@ TEST(MacUtil, IsSuppressSuggestionWindow) {
   EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Safari"));
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Firefox"));
 }
-#endif  // OS_IOS
+#endif  // TARGET_OS_OSX
 
 }  // namespace mozc

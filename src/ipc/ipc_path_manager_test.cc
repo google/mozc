@@ -33,15 +33,14 @@
 #error "This platform is not supported."
 #endif  // __ANDROID__ || __wasm__
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "base/thread.h"
-#include "base/util.h"
+#include "base/thread2.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
@@ -53,38 +52,6 @@
 #include "absl/time/time.h"
 
 namespace mozc {
-namespace {
-
-class CreateThread : public Thread {
- public:
-  void Run() override {
-    IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
-    EXPECT_TRUE(manager->CreateNewPathName());
-    EXPECT_TRUE(manager->SavePathName());
-    EXPECT_TRUE(manager->GetPathName(&path_));
-    EXPECT_GT(manager->GetServerProtocolVersion(), 0);
-    EXPECT_FALSE(manager->GetServerProductVersion().empty());
-    EXPECT_GT(manager->GetServerProcessId(), 0);
-  }
-
-  const std::string &path() const { return path_; }
-
- private:
-  std::string path_;
-};
-
-class BatchGetPathNameThread : public Thread {
- public:
-  void Run() override {
-    for (int i = 0; i < 100; ++i) {
-      IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test2");
-      std::string path;
-      EXPECT_TRUE(manager->CreateNewPathName());
-      EXPECT_TRUE(manager->GetPathName(&path));
-    }
-  }
-};
-}  // namespace
 
 class IPCPathManagerTest : public ::testing::Test {
  protected:
@@ -94,9 +61,17 @@ class IPCPathManagerTest : public ::testing::Test {
 };
 
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
-  CreateThread t;
-  t.Start("IPCPathManagerTest");
-  t.Join();
+  std::string path_created;
+  mozc::Thread2([&path_created] {
+    IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
+    EXPECT_TRUE(manager->CreateNewPathName());
+    EXPECT_TRUE(manager->SavePathName());
+    EXPECT_TRUE(manager->GetPathName(&path_created));
+    EXPECT_GT(manager->GetServerProtocolVersion(), 0);
+    EXPECT_FALSE(manager->GetServerProductVersion().empty());
+    EXPECT_GT(manager->GetServerProcessId(), 0);
+  }).Join();
+
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
@@ -105,7 +80,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_GT(manager->GetServerProtocolVersion(), 0);
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
-  EXPECT_EQ(path, t.path());
+  EXPECT_EQ(path, path_created);
 #ifdef __linux__
   // On Linux, |path| should be abstract (see man unix(7) for details.)
   ASSERT_FALSE(path.empty());
@@ -116,17 +91,19 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
 // Test the thread-safeness of GetPathName() and
 // GetIPCPathManager
 TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
-  // mozc::Thread is not designed as value-semantics.
-  // So here we use pointers to maintain these instances.
-  std::vector<BatchGetPathNameThread *> threads(64);
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i] = new BatchGetPathNameThread;
-    threads[i]->Start("IPCPathManagerBatchTest");
+  std::vector<mozc::Thread2> threads;
+  for (int i = 0; i < 64; ++i) {
+    threads.push_back(mozc::Thread2([] {
+      for (int i = 0; i < 100; ++i) {
+        IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test2");
+        std::string path;
+        EXPECT_TRUE(manager->CreateNewPathName());
+        EXPECT_TRUE(manager->GetPathName(&path));
+      }
+    }));
   }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i]->Join();
-    delete threads[i];
-    threads[i] = nullptr;
+  for (auto &thread : threads) {
+    thread.Join();
   }
 }
 

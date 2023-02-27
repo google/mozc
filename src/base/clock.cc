@@ -118,11 +118,11 @@ class ClockImpl : public ClockInterface {
     mach_timebase_info(&timebase_info);
     return static_cast<uint64_t>(1.0e9 * timebase_info.denom /
                                  timebase_info.numer);
-#elif defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#elif defined(__linux__) || defined(__wasm__)
     return 1000000uLL;
-#else  // platforms (_WIN32, __APPLE__, __linux__, ...)
+#else  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
 #error "Not supported platform"
-#endif  // platforms (_WIN32, __APPLE__, __linux__, ...)
+#endif  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
   }
 
   uint64_t GetTicks() override {
@@ -135,14 +135,14 @@ class ClockImpl : public ClockInterface {
     return static_cast<uint64_t>(timestamp.QuadPart);
 #elif defined(__APPLE__)
     return static_cast<uint64_t>(mach_absolute_time());
-#elif defined(__linux__) || defined(__ANDROID__) || defined(__wasm__)
+#elif defined(__linux__) || defined(__wasm__)
     uint64_t sec;
     uint32_t usec;
     GetTimeOfDay(&sec, &usec);
     return sec * 1000000 + usec;
-#else  // platforms (_WIN32, __APPLE__, __linux__, ...)
+#else  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
 #error "Not supported platform"
-#endif  // platforms (_WIN32, __APPLE__, __linux__, ...)
+#endif  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
   }
 
   const absl::TimeZone& GetTimeZone() override {

@@ -47,18 +47,18 @@ TEST(ImeSurrogatePairObserverTest, UCS2Test) {
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_a, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kHiraganaA, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kHiraganaA);
   }
 
   // key down
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_a, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kHiraganaA, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kHiraganaA);
   }
 }
 
@@ -79,36 +79,36 @@ TEST(ImeSurrogatePairObserverTest, BasicSurrogatePairTest) {
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key down (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // test key down (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_low, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 
   // key down (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_low, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 }
 
@@ -129,72 +129,72 @@ TEST(ImeSurrogatePairObserverTest, BasicSurrogatePairTestWithKeyUp) {
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key down (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // test key up (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_high, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key up (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_high, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // test key down (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_low, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 
   // key down (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_low, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 
   // test key up (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_low, false);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 
   // key up (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_low, false);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kUcs4, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kUcs4);
   }
 }
 
@@ -219,72 +219,72 @@ TEST(ImeSurrogatePairObserverTest, IrregularOrderSurrogatePairTest) {
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key down (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_high, true);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // test key up (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_high, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key up (high surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_high, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // test key down "あ"
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_a, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kHiraganaA, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kHiraganaA);
   }
 
   // key down "あ"
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_a, true);
-    EXPECT_EQ(SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4,
-              action.type);
-    EXPECT_EQ(kHiraganaA, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4);
+    EXPECT_EQ(action.ucs4, kHiraganaA);
   }
 
   // test key up (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnTestKeyEvent(vk_low, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 
   // key up (low surrogate)
   {
     SurrogatePairObserver::ClientAction action =
         observer.OnKeyEvent(vk_low, false);
-    EXPECT_EQ(SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-              action.type);
-    EXPECT_EQ(0, action.ucs4);
+    EXPECT_EQ(action.type,
+              SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+    EXPECT_EQ(action.ucs4, 0);
   }
 }
 

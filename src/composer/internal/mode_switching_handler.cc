@@ -32,12 +32,13 @@
 
 #include "composer/internal/mode_switching_handler.h"
 
-#include <cctype>
 #include <string>
 #include <utility>
 
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -56,10 +57,8 @@ ModeSwitchingHandler::ModeSwitchingHandler() {
   AddRule("\\\\", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
 }
 
-ModeSwitchingHandler::~ModeSwitchingHandler() {}
-
 bool ModeSwitchingHandler::GetModeSwitchingRule(
-    const std::string &key, ModeSwitching *display_mode,
+    const absl::string_view key, ModeSwitching *display_mode,
     ModeSwitching *input_mode) const {
   if (display_mode == nullptr || input_mode == nullptr) {
     LOG(ERROR) << "display_mode/input_mode is nullptr.";
@@ -84,11 +83,12 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
   return false;
 }
 
-bool ModeSwitchingHandler::IsDriveLetter(const std::string &key) {
-  return key.size() == 3 && isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
+bool ModeSwitchingHandler::IsDriveLetter(const absl::string_view key) {
+  return key.size() == 3 && absl::ascii_isalpha(key[0]) && key[1] == ':' &&
+         key[2] == '\\';
 }
 
-void ModeSwitchingHandler::AddRule(const std::string &key,
+void ModeSwitchingHandler::AddRule(const absl::string_view key,
                                    const ModeSwitching display_mode,
                                    const ModeSwitching input_mode) {
   patterns_.emplace(key, std::make_pair(display_mode, input_mode));

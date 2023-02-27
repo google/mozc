@@ -36,9 +36,8 @@
 #include <vector>
 
 #include "base/clock.h"
-#include "base/port.h"
 #include "base/system_util.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
@@ -50,27 +49,23 @@ namespace {
 
 constexpr char kName[] = "named_event_test";
 
-class NamedEventListenerThread : public Thread {
+class NamedEventListenerThread {
  public:
-  NamedEventListenerThread(const std::string &name, uint32_t initial_wait_msec,
-                           uint32_t wait_msec, size_t max_num_wait)
-      : listener_(name.c_str()),
-        initial_wait_msec_(initial_wait_msec),
-        wait_msec_(wait_msec),
-        max_num_wait_(max_num_wait),
-        first_triggered_time_(0) {
+  NamedEventListenerThread(const char *name, absl::Duration initial_wait,
+                           absl::Duration wait, int max_num_wait)
+      : listener_(name), first_triggered_time_(0) {
     EXPECT_TRUE(listener_.IsAvailable());
-  }
-
-  void Run() override {
-    absl::SleepFor(absl::Milliseconds(initial_wait_msec_));
-    for (size_t i = 0; i < max_num_wait_; ++i) {
-      const bool result = listener_.Wait(wait_msec_);
-      if (result) {
-        first_triggered_time_ = absl::ToUnixNanos(Clock::GetAbslTime());
-        return;
-      }
-    }
+    thread_ =
+        mozc::Thread2([initial_wait, wait, max_num_wait, &listener = listener_,
+                       &first_triggered_time = first_triggered_time_]() {
+          absl::SleepFor(initial_wait);
+          for (int i = 0; i < max_num_wait; ++i) {
+            if (listener.Wait(absl::ToInt64Milliseconds(wait))) {
+              first_triggered_time = absl::ToUnixNanos(Clock::GetAbslTime());
+              return;
+            }
+          }
+        });
   }
 
   absl::Time first_triggered_time() const {
@@ -79,11 +74,12 @@ class NamedEventListenerThread : public Thread {
 
   bool IsTriggered() const { return first_triggered_time_ != 0; }
 
+  void Join() { thread_.Join(); }
+
  private:
   NamedEventListener listener_;
-  const uint32_t initial_wait_msec_;
-  const uint32_t wait_msec_;
-  const size_t max_num_wait_;
+  mozc::Thread2 thread_;
+
   // std::atomic requires the type to be is_trivially_copyable, and some
   // (older?) versions of msvc and clang think absl::Time is not.
   // Store UnixNanos instead of absl::Time.
@@ -105,8 +101,8 @@ class NamedEventTest : public testing::Test {
 };
 
 TEST_F(NamedEventTest, NamedEventBasicTest) {
-  NamedEventListenerThread listener(kName, 0, 50, 100);
-  listener.Start("NamedEventBasicTest");
+  NamedEventListenerThread listener(kName, absl::ZeroDuration(),
+                                    absl::Milliseconds(50), 100);
   absl::SleepFor(absl::Milliseconds(200));
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
@@ -145,16 +141,10 @@ TEST_F(NamedEventTest, IsOwnerTest) {
 }
 
 TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
-  constexpr size_t kNumRequests = 4;
-
-  // mozc::Thread is not designed as value-semantics.
-  // So here we use pointers to maintain these instances.
-  std::vector<std::unique_ptr<NamedEventListenerThread>> listeners(
-      kNumRequests);
-  for (size_t i = 0; i < kNumRequests; ++i) {
-    listeners[i] =
-        std::make_unique<NamedEventListenerThread>(kName, 33 * i, 50, 100);
-    listeners[i]->Start("NamedEventMultipleListenerTest");
+  std::vector<std::unique_ptr<NamedEventListenerThread>> listeners;
+  for (int i = 0; i < 4; ++i) {
+    listeners.push_back(std::make_unique<NamedEventListenerThread>(
+        kName, absl::Milliseconds(33 * i), absl::Milliseconds(50), 100));
   }
 
   absl::SleepFor(absl::Milliseconds(200));
@@ -166,14 +156,14 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   const absl::Time notify_time = Clock::GetAbslTime();
   ASSERT_TRUE(notifier.Notify());
 
-  for (size_t i = 0; i < kNumRequests; ++i) {
-    listeners[i]->Join();
+  for (auto &listener : listeners) {
+    listener->Join();
   }
 
-  for (size_t i = 0; i < kNumRequests; ++i) {
-    // There is a chance that |listeners[i]| is not triggered.
-    if (listeners[i]->IsTriggered()) {
-      EXPECT_LT(notify_time, listeners[i]->first_triggered_time());
+  for (const auto &listener : listeners) {
+    // There is a chance that |listener| is not triggered.
+    if (listener->IsTriggered()) {
+      EXPECT_LT(notify_time, listener->first_triggered_time());
     }
   }
 }

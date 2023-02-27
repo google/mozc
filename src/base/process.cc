@@ -46,12 +46,12 @@
 #include "base/mac/mac_process.h"
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__)
+#ifdef __linux
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include <sys/types.h>
-#endif  // __linux__ || __ANDROID__
+#endif  // __linux__
 
 #include <cstddef>
 #include <cstdlib>
@@ -105,7 +105,7 @@ bool Process::OpenBrowser(const std::string &url) {
   return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
 #endif  // _WIN32
 
-#if defined(__linux__) || defined(__ANDROID__)
+#ifdef __linux__
 
 #ifndef MOZC_BROWSER_COMMAND
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
@@ -114,7 +114,7 @@ bool Process::OpenBrowser(const std::string &url) {
 #endif  // MOZC_BROWSER_COMMAND
 
   return SpawnProcess(MOZC_BROWSER_COMMAND, url);
-#endif  // __linux__ || __ANDROID__
+#endif  // __linux__
 
 #ifdef __APPLE__
   return MacProcess::OpenBrowserForMac(url);
@@ -196,7 +196,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   }
 #endif  // __APPLE__
 
-#if defined(__linux__) || defined(__ANDROID__)
+#ifdef __linux__
   // Do not call posix_spawn() for obviously bad path.
   if (!S_ISREG(statbuf.st_mode)) {
     LOG(ERROR) << "Not a regular file: " << path;
@@ -219,7 +219,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   // (www.gnu.org/software/libc/manual/html_node/Heap-Consistency-Checking.html)
   constexpr int kOverwrite = 0;  // Do not overwrite.
   ::setenv("MALLOC_CHECK_", "2", kOverwrite);
-#endif  // __linux__ || __ANDROID__
+#endif  // __linux__
   pid_t tmp_pid = 0;
 
   // Spawn new process.
@@ -395,7 +395,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
   }
 #endif  // _WIN32
 
-#if defined(__linux__) || defined(__ANDROID__)
+#ifdef __linux__
   constexpr char kMozcTool[] = "mozc_tool";
   const std::string arg =
       "--mode=error_message_dialog --error_type=" + error_type;
@@ -404,7 +404,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // __linux__ || __ANDROID__
+#endif  // __linux__
 
   return true;
 }

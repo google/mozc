@@ -118,7 +118,7 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
         **kwargs
     )
 
-    if "no_android" not in tags:
+    if "noandroid" not in tags:
         android_cc_test(
             name = name + "_android",
             cc_test_name = name,
@@ -495,3 +495,11 @@ def select_mozc(**kwargs):
     """Deprecated, use mozc_select.
     """
     return mozc_select(**kwargs)
+
+# Tags aliases for build filtering.
+MOZC_TAGS = struct(
+    ANDROID_ONLY = ["nolinux", "nomac", "nowin"],
+    LINUX_ONLY = ["noandroid", "nomac", "nowin"],
+    MAC_ONLY = ["noandroid", "nolinux", "nowin"],
+    WIN_ONLY = ["noandroid", "nolinux", "nomac"],
+)

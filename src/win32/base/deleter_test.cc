@@ -121,7 +121,7 @@ TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
   InputState ime_state;
 
   EXPECT_FALSE(deleter.IsDeletionOngoing());
-  EXPECT_EQ(0, keyboard_mock->last_send_input_data().size());
+  EXPECT_EQ(keyboard_mock->last_send_input_data().size(), 0);
 
   // OnKeyEvent never crashes even when there is no ongoing session.
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
@@ -139,7 +139,7 @@ TEST(VKBackBasedDeleterTest, BeginDeletionTest_DeletionCountZero) {
   // If the deletion count is zero, no deletion operation is started.
   deleter.BeginDeletion(0, output, ime_state);
   EXPECT_FALSE(deleter.IsDeletionOngoing());
-  EXPECT_EQ(0, keyboard_mock->last_send_input_data().size());
+  EXPECT_EQ(keyboard_mock->last_send_input_data().size(), 0);
 }
 
 TEST(VKBackBasedDeleterTest, NormalSequence) {
@@ -178,23 +178,23 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
   // and one pair of VK_BACK [down/up] as a sentinel key event where pending
   // output and ime state wiil be applied.
   const std::vector<INPUT> inputs = keyboard_mock->last_send_input_data();
-  EXPECT_EQ(8, inputs.size());
-  EXPECT_EQ(VK_BACK, inputs[0].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[1].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[2].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[3].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[4].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[5].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[6].ki.wVk);
-  EXPECT_EQ(VK_BACK, inputs[7].ki.wVk);
-  EXPECT_EQ(0, inputs[0].ki.dwFlags);
-  EXPECT_EQ(KEYEVENTF_KEYUP, inputs[1].ki.dwFlags);
-  EXPECT_EQ(0, inputs[2].ki.dwFlags);
-  EXPECT_EQ(KEYEVENTF_KEYUP, inputs[3].ki.dwFlags);
-  EXPECT_EQ(0, inputs[4].ki.dwFlags);
-  EXPECT_EQ(KEYEVENTF_KEYUP, inputs[5].ki.dwFlags);
-  EXPECT_EQ(0, inputs[6].ki.dwFlags);
-  EXPECT_EQ(KEYEVENTF_KEYUP, inputs[7].ki.dwFlags);
+  EXPECT_EQ(inputs.size(), 8);
+  EXPECT_EQ(inputs[0].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[1].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[2].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[3].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[4].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[5].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[6].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[7].ki.wVk, VK_BACK);
+  EXPECT_EQ(inputs[0].ki.dwFlags, 0);
+  EXPECT_EQ(inputs[1].ki.dwFlags, KEYEVENTF_KEYUP);
+  EXPECT_EQ(inputs[2].ki.dwFlags, 0);
+  EXPECT_EQ(inputs[3].ki.dwFlags, KEYEVENTF_KEYUP);
+  EXPECT_EQ(inputs[4].ki.dwFlags, 0);
+  EXPECT_EQ(inputs[5].ki.dwFlags, KEYEVENTF_KEYUP);
+  EXPECT_EQ(inputs[6].ki.dwFlags, 0);
+  EXPECT_EQ(inputs[7].ki.dwFlags, KEYEVENTF_KEYUP);
 
   // Initially, the deleter is waiting for the first VK_BACK test-key-down.
   EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
@@ -231,8 +231,8 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
             deleter.OnKeyEvent(VK_BACK, true, false));
 
   // Check the pending output and state.
-  EXPECT_EQ(kOutputId, deleter.pending_output().id());
-  EXPECT_EQ(kLastKey, deleter.pending_ime_state().last_down_key.virtual_key());
+  EXPECT_EQ(deleter.pending_output().id(), kOutputId);
+  EXPECT_EQ(deleter.pending_ime_state().last_down_key.virtual_key(), kLastKey);
 
   // The last key-up will not be sent to the application.
   EXPECT_EQ(VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,

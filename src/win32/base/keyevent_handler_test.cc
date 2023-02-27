@@ -84,7 +84,7 @@ LPARAM CreateLParam(uint16_t repeat_count, uint8_t scan_code,
   const LPARAM param = static_cast<LPARAM>(value);
 #if defined(_M_X64)
   // In x64 environment, upper DWORD will be filled with 0.
-  EXPECT_EQ(0, param & 0xffffffff00000000);
+  EXPECT_EQ(param & 0xffffffff00000000, 0);
 #endif  // _M_X64
   return param;
 }
@@ -346,24 +346,24 @@ TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_FALSE(actual_input.key().has_key_code());
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_FALSE(actual_input.key().activated());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::HANKAKU, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::HANKAKU);
   }
 }
 
@@ -409,7 +409,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x00010001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x00010001);
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -472,7 +472,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -548,25 +548,25 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('j', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), 'j');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_FALSE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -625,25 +625,25 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem102) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('\\', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), '\\');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_FALSE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -702,25 +702,25 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem5) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('\\', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), '\\');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_FALSE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -781,25 +781,25 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'h');  // must be non-capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -862,26 +862,26 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'h');  // must be non-capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(2, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(1));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 2);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
+    EXPECT_EQ(actual_input.key().modifier_keys(1), commands::KeyEvent::SHIFT);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -936,25 +936,25 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('H', actual_input.key().key_code());  // must be capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'H');  // must be capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CAPS);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1011,25 +1011,25 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'h');  // must be non-capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CAPS);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1086,26 +1086,26 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('H', actual_input.key().key_code());  // must be capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'H');  // must be capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(2, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
-    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(1));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 2);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
+    EXPECT_EQ(actual_input.key().modifier_keys(1), commands::KeyEvent::CAPS);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1163,27 +1163,27 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('h', actual_input.key().key_code());  // must be non-capitalized.
+    EXPECT_EQ(actual_input.key().key_code(), 'h');  // must be non-capitalized.
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(3, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(1));
-    EXPECT_EQ(commands::KeyEvent::CAPS, actual_input.key().modifier_keys(2));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 3);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
+    EXPECT_EQ(actual_input.key().modifier_keys(1), commands::KeyEvent::SHIFT);
+    EXPECT_EQ(actual_input.key().modifier_keys(2), commands::KeyEvent::CAPS);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1251,25 +1251,25 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('^', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), '^');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1335,8 +1335,8 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
     EXPECT_FALSE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_FALSE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
 }
 
@@ -1396,13 +1396,13 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_FALSE(actual_input.key().has_key_code());
@@ -1410,13 +1410,13 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(2, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(1));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 2);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
+    EXPECT_EQ(actual_input.key().modifier_keys(1), commands::KeyEvent::SHIFT);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::SPACE, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::SPACE);
   }
 }
 
@@ -1476,13 +1476,13 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
     EXPECT_TRUE(result.should_be_sent_to_server);
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_FALSE(actual_input.key().has_key_code());
@@ -1490,13 +1490,13 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(2, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(1));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 2);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
+    EXPECT_EQ(actual_input.key().modifier_keys(1), commands::KeyEvent::SHIFT);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::BACKSPACE, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::BACKSPACE);
   }
 }
 
@@ -1536,7 +1536,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247KeyUpShouldNotBeEaten) {
                                             false,   // has_context_code,
                                             true,    // is_previous_state_down,
                                             true));  // is_in_transition_state
-    EXPECT_EQ(0xc0400001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0xc0400001);
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -1597,7 +1597,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x002a0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x002a0001);
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -1632,7 +1632,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
                                             false,   // has_context_code,
                                             false,   // is_previous_state_down,
                                             true));  // is_in_transition_state
-    EXPECT_EQ(0x802a0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x802a0001);
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -1656,19 +1656,19 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_code());
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
     // Interestingly we have to set SHIFT modifier in spite of the Shift key
     // has been just released.
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::SHIFT);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1718,7 +1718,7 @@ TEST_F(KeyEventHandlerTest,
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
@@ -1734,18 +1734,18 @@ TEST_F(KeyEventHandlerTest,
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('A', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), 'A');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
     // Interestingly, Mozc client is required not to set Shift here.
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1797,7 +1797,7 @@ TEST_F(KeyEventHandlerTest,
                                             false,    // has_context_code,
                                             true,     // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x40700001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x40700001);
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
@@ -1812,15 +1812,15 @@ TEST_F(KeyEventHandlerTest,
     EXPECT_TRUE(mock.start_server_called());
 
     // Should be Full-Katakana
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN |
-                  IME_CMODE_KATAKANA,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN |
+                  IME_CMODE_KATAKANA);
   }
 
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_input_style());
     EXPECT_FALSE(actual_input.key().has_key_code());
@@ -1828,12 +1828,12 @@ TEST_F(KeyEventHandlerTest,
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
     // Interestingly, Mozc client is required not to set Shift here.
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::KATAKANA, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::KATAKANA);
   }
 }
 
@@ -1881,7 +1881,7 @@ TEST_F(KeyEventHandlerTest,
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
@@ -1897,18 +1897,18 @@ TEST_F(KeyEventHandlerTest,
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('a', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), 'a');
     EXPECT_TRUE(actual_input.key().has_key_string());
-    EXPECT_EQ("ち", actual_input.key().key_string());
+    EXPECT_EQ(actual_input.key().key_string(), "ち");
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -1958,7 +1958,7 @@ TEST_F(KeyEventHandlerTest, CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrl) {
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
@@ -1974,18 +1974,18 @@ TEST_F(KeyEventHandlerTest, CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrl) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('a', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), 'a');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -2035,7 +2035,7 @@ TEST_F(KeyEventHandlerTest,
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
@@ -2051,18 +2051,18 @@ TEST_F(KeyEventHandlerTest,
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::TEST_SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::TEST_SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('a', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), 'a');
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::CTRL, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::CTRL);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -2120,8 +2120,8 @@ TEST_F(KeyEventHandlerTest, Issue2801503ModeChangeWhenIMEIsGoingToBeTurnedOff) {
     // Next conversion status is determined by mock_output.status() instead of
     // mock_output.mode(), which is unfortunately |commands::DIRECT| in this
     // case.  (This was the main reason why http://b/2801503 happened)
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
   }
 }
 
@@ -2181,18 +2181,18 @@ TEST_F(KeyEventHandlerTest, Issue3029665KanaLockedWo) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_TRUE(actual_input.key().has_key_code());
-    EXPECT_EQ('0', actual_input.key().key_code());
+    EXPECT_EQ(actual_input.key().key_code(), '0');
     EXPECT_TRUE(actual_input.key().has_key_string());
-    EXPECT_EQ("を", actual_input.key().key_string());
+    EXPECT_EQ(actual_input.key().key_string(), "を");
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -2245,18 +2245,18 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftHenkanShouldBeValid) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::SHIFT);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::HENKAN, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::HENKAN);
   }
 }
 
@@ -2308,18 +2308,18 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftMuhenkanShouldBeValid) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(1, actual_input.key().modifier_keys_size());
-    EXPECT_EQ(commands::KeyEvent::SHIFT, actual_input.key().modifier_keys(0));
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 1);
+    EXPECT_EQ(actual_input.key().modifier_keys(0), commands::KeyEvent::SHIFT);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::MUHENKAN, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::MUHENKAN);
   }
 }
 
@@ -2371,7 +2371,7 @@ TEST_F(KeyEventHandlerTest, Issue7098463HideSuggestWindow) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_context());
     EXPECT_TRUE(actual_input.context().suppress_suggestion());
   }
@@ -2713,17 +2713,17 @@ TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_code());
     EXPECT_TRUE(actual_input.key().has_key_string());
-    EXPECT_EQ("あ", actual_input.key().key_string());
+    EXPECT_EQ(actual_input.key().key_string(), "あ");
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_FALSE(actual_input.key().has_special_key());
   }
 }
@@ -2778,18 +2778,18 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
   {
     commands::Input actual_input;
     EXPECT_TRUE(mock.GetGeneratedRequest(&actual_input));
-    EXPECT_EQ(commands::Input::SEND_KEY, actual_input.type());
+    EXPECT_EQ(actual_input.type(), commands::Input::SEND_KEY);
     EXPECT_TRUE(actual_input.has_key());
     EXPECT_FALSE(actual_input.key().has_key_code());
     EXPECT_FALSE(actual_input.key().has_key_string());
     EXPECT_TRUE(actual_input.key().has_activated());
     EXPECT_TRUE(actual_input.key().activated());
     EXPECT_TRUE(actual_input.key().has_mode());
-    EXPECT_EQ(commands::HIRAGANA, actual_input.key().mode());
+    EXPECT_EQ(actual_input.key().mode(), commands::HIRAGANA);
     EXPECT_FALSE(actual_input.key().has_modifiers());
-    EXPECT_EQ(0, actual_input.key().modifier_keys_size());
+    EXPECT_EQ(actual_input.key().modifier_keys_size(), 0);
     EXPECT_TRUE(actual_input.key().has_special_key());
-    EXPECT_EQ(commands::KeyEvent::CAPS_LOCK, actual_input.key().special_key());
+    EXPECT_EQ(actual_input.key().special_key(), commands::KeyEvent::CAPS_LOCK);
   }
 }
 
@@ -2889,7 +2889,7 @@ TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
                                             false,    // has_context_code,
                                             false,    // is_previous_state_down,
                                             false));  // is_in_transition_state
-    EXPECT_EQ(0x1e0001, lparam.lparam());
+    EXPECT_EQ(lparam.lparam(), 0x1e0001);
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
@@ -2903,11 +2903,11 @@ TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
 
     EXPECT_TRUE(next_state.open);
     EXPECT_TRUE(mock.start_server_called());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-              next_state.logical_conversion_mode);
+    EXPECT_EQ(next_state.logical_conversion_mode,
+              IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
     // Visible mode should be half alphanumeric.
-    EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN,
-              next_state.visible_conversion_mode);
+    EXPECT_EQ(next_state.visible_conversion_mode,
+              IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN);
   }
 }
 

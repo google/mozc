@@ -29,19 +29,20 @@
 
 #include "ipc/process_watch_dog.h"
 
+#include "base/logging.h"
+#include "base/port.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+
 #ifdef _WIN32
 #include <windows.h>
+
+#include "base/win32/scoped_handle.h"
 #else  // _WIN32
 #include <errno.h>
 #include <signal.h>
 #endif  // _WIN32
-
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/win32/scoped_handle.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 

@@ -49,10 +49,7 @@ mozc_cc_library(
         "//base:clock",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:util",
-        "//base/protobuf",
-        "//base/protobuf:repeated_field",
         "//composer/internal:composition",
         "//composer/internal:composition_input",
         "//composer/internal:mode_switching_handler",
@@ -101,18 +98,16 @@ mozc_cc_library(
     hdrs = ["table.h"],
     deps = [
         "//base:config_file_stream",
-        "//base:file_stream",
         "//base:hash",
         "//base:logging",
         "//base:port",
         "//base:util",
         "//base/container:trie",
         "//composer/internal:typing_model",
-        "//config:config_handler",
         "//data_manager:data_manager_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//testing:gunit_prod",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
@@ -124,6 +119,7 @@ mozc_cc_library(
     visibility = [
         # For //composer/internal:typing_corrector_test.
         "//composer/internal:__pkg__",
+        "//prediction:__pkg__",
     ],
 )
 

@@ -53,7 +53,7 @@ bool IsConnectorSegment(const Segment &segment) {
 }
 
 // Finds value from the candidates list and move the candidate to the top.
-bool RewriteCandidate(Segment *segment, const std::string &value) {
+bool RewriteCandidate(Segment *segment, absl::string_view value) {
   for (int i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).content_value == value) {
       segment->move_candidate(i, 0);  // move to top
@@ -173,7 +173,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
   {
     const std::string &left_value =
         seg.candidate(candidate_index).content_value;
-    std::string right_value;
+    absl::string_view right_value;
 
     if (Util::IsOpenBracket(left_value, &right_value)) {
       int num_nest = 1;
@@ -189,7 +189,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
         }
         const std::string &target_right_value =
             target_right_seg->candidate(0).content_value;
-        std::string tmp;
+        absl::string_view tmp;
         if (Util::IsOpenBracket(target_right_value, &tmp)) {
           ++num_nest;
         } else if (Util::IsCloseBracket(target_right_value, &tmp)) {
@@ -209,7 +209,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
   {
     const std::string &right_value =
         seg.candidate(candidate_index).content_value;
-    std::string left_value;
+    absl::string_view left_value;
 
     if (Util::IsCloseBracket(right_value, &left_value)) {
       int num_nest = 1;
@@ -225,7 +225,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
         }
         const std::string &target_left_value =
             target_left_seg->candidate(0).content_value;
-        std::string tmp;
+        absl::string_view tmp;
         if (Util::IsCloseBracket(target_left_value, &tmp)) {
           ++num_nest;
         } else if (Util::IsOpenBracket(target_left_value, &tmp)) {

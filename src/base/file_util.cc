@@ -29,14 +29,6 @@
 
 #include "base/file_util.h"
 
-#ifdef _WIN32
-#include <ktmw32.h>
-#include <windows.h>
-#else  // _WIN32
-#include <sys/stat.h>
-#include <unistd.h>
-#endif  // _WIN32
-
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
@@ -52,14 +44,24 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/singleton.h"
-#include "base/util.h"
-#include "base/win32/scoped_handle.h"
-#include "base/win32/win_util.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+
+#ifdef _WIN32
+// clang-format off
+#include <windows.h>  // Include windows.h before ktmw32.h
+#include <ktmw32.h>
+// clang-format on
+
+#include "base/util.h"
+#include "base/win32/scoped_handle.h"
+#else  // _WIN32
+#include <sys/stat.h>
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace {
 
@@ -120,13 +122,36 @@ using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
 #ifdef _WIN32
 namespace {
 
+// Converts the Win32 error code to absl::StatusCode.
+absl::StatusCode Win32ErrorToStatusCode(DWORD error_code) {
+  switch (error_code) {
+    case ERROR_SUCCESS:
+      return absl::StatusCode::kOk;
+    case ERROR_FILE_NOT_FOUND:
+    case ERROR_PATH_NOT_FOUND:
+      return absl::StatusCode::kNotFound;
+    case ERROR_ACCESS_DENIED:
+      return absl::StatusCode::kPermissionDenied;
+    case ERROR_ALREADY_EXISTS:
+      return absl::StatusCode::kAlreadyExists;
+    default:
+      return absl::StatusCode::kUnknown;
+  }
+}
+
+// Converts the Win32 error code to absl::Status.
+absl::Status Win32ErrorToStatus(DWORD error_code, absl::string_view message) {
+  return absl::Status(Win32ErrorToStatusCode(error_code),
+                      absl::StrCat(message, ": error_code=", error_code));
+}
+
 absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
   if (const DWORD attrs = ::GetFileAttributesW(filename.c_str());
       attrs != INVALID_FILE_ATTRIBUTES) {
     return attrs;
   }
   const DWORD error = ::GetLastError();
-  return WinUtil::ErrorToCanonicalStatus(error, "GetFileAttributesW failed");
+  return Win32ErrorToStatus(error, "GetFileAttributesW failed");
 }
 
 absl::Status SetFileAttributes(const std::wstring &filename, DWORD attrs) {
@@ -134,7 +159,7 @@ absl::Status SetFileAttributes(const std::wstring &filename, DWORD attrs) {
     return absl::OkStatus();
   }
   const DWORD error = ::GetLastError();
-  return WinUtil::ErrorToCanonicalStatus(
+  return Win32ErrorToStatus(
       error, absl::StrCat("SetFileAttributesW failed: attrs = ", attrs));
 }
 
@@ -184,8 +209,7 @@ absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
     return absl::InvalidArgumentError("Failed to convert to wstring");
   }
   if (!::CreateDirectoryW(wide.c_str(), nullptr)) {
-    return WinUtil::ErrorToCanonicalStatus(::GetLastError(),
-                                           "CreateDirectoryW failed");
+    return Win32ErrorToStatus(::GetLastError(), "CreateDirectoryW failed");
   }
   return absl::OkStatus();
 #else   // !_WIN32
@@ -208,8 +232,7 @@ absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
     return absl::InvalidArgumentError("Failed to convert to wstring");
   }
   if (!::RemoveDirectoryW(wide.c_str())) {
-    return WinUtil::ErrorToCanonicalStatus(::GetLastError(),
-                                           "RemoveDirectoryW failed");
+    return Win32ErrorToStatus(::GetLastError(), "RemoveDirectoryW failed");
   }
   return absl::OkStatus();
 #else   // !_WIN32
@@ -550,7 +573,7 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
   if (!::MoveFileExW(fromw.c_str(), tow.c_str(),
                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
     const DWORD move_file_ex_error = ::GetLastError();
-    return WinUtil::ErrorToCanonicalStatus(
+    return Win32ErrorToStatus(
         move_file_ex_error,
         absl::StrFormat(
             "MoveFileExW failed; Status of TransactionalMoveFile: %s",
@@ -665,7 +688,7 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
   WIN32_FILE_ATTRIBUTE_DATA info = {};
   if (!::GetFileAttributesEx(wide.c_str(), GetFileExInfoStandard, &info)) {
     const auto last_error = ::GetLastError();
-    return WinUtil::ErrorToCanonicalStatus(
+    return Win32ErrorToStatus(
         last_error, absl::StrCat("GetFileAttributesEx(", filename, ") failed"));
   }
   return (static_cast<uint64_t>(info.ftLastWriteTime.dwHighDateTime) << 32) +

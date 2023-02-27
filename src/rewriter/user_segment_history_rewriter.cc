@@ -99,7 +99,7 @@ class FeatureValue {
 };
 MOZC_CLANG_POP_WARNING();
 
-bool IsPunctuationInternal(const std::string &str) {
+bool IsPunctuationInternal(absl::string_view str) {
   return (str == "。" || str == "｡" || str == "、" || str == "､" ||
           str == "，" || str == "," || str == "．" || str == ".");
 }
@@ -227,15 +227,15 @@ inline void JoinStringsWithTab5(const absl::string_view s1,
 
 // Feature "Left Right"
 inline bool GetFeatureLR(const Segments &segments, size_t i,
-                         const std::string &base_key,
-                         const std::string &base_value, std::string *value) {
+                         absl::string_view base_key,
+                         absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (i + 1 >= segments.segments_size() || i <= 0) {
     return false;
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 1));
-  JoinStringsWithTab5(absl::string_view("LR", 2), base_key,
+  JoinStringsWithTab5("LR", base_key,
                       segments.segment(i - 1).candidate(j1).value, base_value,
                       segments.segment(i + 1).candidate(j2).value, value);
   return true;
@@ -243,32 +243,32 @@ inline bool GetFeatureLR(const Segments &segments, size_t i,
 
 // Feature "Left Left"
 inline bool GetFeatureLL(const Segments &segments, size_t i,
-                         const std::string &base_key,
-                         const std::string &base_value, std::string *value) {
+                         absl::string_view base_key,
+                         absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (i < 2) {
     return false;
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 2));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  JoinStringsWithTab5(absl::string_view("LL", 2), base_key,
+  JoinStringsWithTab5("LL", base_key,
                       segments.segment(i - 2).candidate(j1).value,
-                      segments.segment(i - 1).candidate(j2).value, base_value,
-                      value);
+                      segments.segment(i - 1).candidate(j2).value,
+                      base_value, value);
   return true;
 }
 
 // Feature "Right Right"
 inline bool GetFeatureRR(const Segments &segments, size_t i,
-                         const std::string &base_key,
-                         const std::string &base_value, std::string *value) {
+                         absl::string_view base_key,
+                         absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (i + 2 >= segments.segments_size()) {
     return false;
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i + 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 2));
-  JoinStringsWithTab5(absl::string_view("RR", 2), base_key, base_value,
+  JoinStringsWithTab5("RR", base_key, base_value,
                       segments.segment(i + 1).candidate(j1).value,
                       segments.segment(i + 2).candidate(j2).value, value);
   return true;
@@ -276,51 +276,50 @@ inline bool GetFeatureRR(const Segments &segments, size_t i,
 
 // Feature "Left"
 inline bool GetFeatureL(const Segments &segments, size_t i,
-                        const std::string &base_key,
-                        const std::string &base_value, std::string *value) {
+                        absl::string_view base_key,
+                        absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (i < 1) {
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  JoinStringsWithTab4(absl::string_view("L", 1), base_key,
-                      segments.segment(i - 1).candidate(j).value, base_value,
-                      value);
+  JoinStringsWithTab4("L", base_key, segments.segment(i - 1).candidate(j).value,
+                      base_value, value);
   return true;
 }
 
 // Feature "Right"
 inline bool GetFeatureR(const Segments &segments, size_t i,
-                        const std::string &base_key,
-                        const std::string &base_value, std::string *value) {
+                        absl::string_view base_key,
+                        absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (i + 1 >= segments.segments_size()) {
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  JoinStringsWithTab4(absl::string_view("R", 1), base_key, base_value,
+  JoinStringsWithTab4("R", base_key, base_value,
                       segments.segment(i + 1).candidate(j).value, value);
   return true;
 }
 
 // Feature "Current"
 inline bool GetFeatureC(const Segments &segments, size_t i,
-                        const std::string &base_key,
-                        const std::string &base_value, std::string *value) {
+                        absl::string_view base_key,
+                        absl::string_view base_value, std::string *value) {
   DCHECK(value);
-  JoinStringsWithTab3(absl::string_view("C", 1), base_key, base_value, value);
+  JoinStringsWithTab3("C", base_key, base_value, value);
   return true;
 }
 
 // Feature "Single"
 inline bool GetFeatureS(const Segments &segments, size_t i,
-                        const std::string &base_key,
-                        const std::string &base_value, std::string *value) {
+                        absl::string_view base_key,
+                        absl::string_view base_value, std::string *value) {
   DCHECK(value);
   if (segments.segments_size() - segments.history_segments_size() != 1) {
     return false;
   }
-  JoinStringsWithTab3(absl::string_view("S", 1), base_key, base_value, value);
+  JoinStringsWithTab3("S", base_key, base_value, value);
   return true;
 }
 
@@ -736,8 +735,8 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   }
 
   // learn CloseBracket when OpenBracket is fixed.
-  std::string close_bracket_key;
-  std::string close_bracket_value;
+  absl::string_view close_bracket_key;
+  absl::string_view close_bracket_value;
   if (Util::IsOpenBracket(content_key, &close_bracket_key) &&
       Util::IsOpenBracket(content_value, &close_bracket_value)) {
     INSERT_FEATURE(GetFeatureS, close_bracket_key, close_bracket_value,
@@ -892,9 +891,10 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
                      reinterpret_cast<const char *>(&v));
   }
 
-  std::string close_bracket_key;
+  absl::string_view close_bracket_key;
   if (Util::IsOpenBracket(segment.key(), &close_bracket_key)) {
-    storage_->Insert(close_bracket_key, reinterpret_cast<const char *>(&v));
+    const std::string key{close_bracket_key.data(), close_bracket_key.size()};
+    storage_->Insert(key, reinterpret_cast<const char *>(&v));
   }
 }
 
@@ -1037,8 +1037,8 @@ bool UserSegmentHistoryRewriter::IsPunctuation(
 // Feature "Left Number"
 bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
                                               size_t i,
-                                              const std::string &base_key,
-                                              const std::string &base_value,
+                                              absl::string_view base_key,
+                                              absl::string_view base_value,
                                               std::string *value) const {
   DCHECK(value);
   if (i < 1) {
@@ -1059,8 +1059,8 @@ bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
 // Feature "Right Number"
 bool UserSegmentHistoryRewriter::GetFeatureRN(const Segments &segments,
                                               size_t i,
-                                              const std::string &base_key,
-                                              const std::string &base_value,
+                                              absl::string_view base_key,
+                                              absl::string_view base_value,
                                               std::string *value) const {
   DCHECK(value);
   if (i + 1 >= segments.segments_size()) {

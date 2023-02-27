@@ -44,16 +44,15 @@
 
 #include "base/config_file_stream.h"
 #include "base/container/trie.h"
-#include "base/file_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "composer/internal/typing_model.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -100,8 +99,7 @@ constexpr char kNotouchHiraganaTableFile[] = "system://notouch-hiragana.tsv";
 // Reuse qwerty_mobile-halfwidthascii table
 constexpr char kNotouchHalfwidthasciiTableFile[] =
     "system://qwerty_mobile-halfwidthascii.tsv";
-constexpr char k50KeysHiraganaTableFile[] =
-    "system://50keys-hiragana.tsv";
+constexpr char k50KeysHiraganaTableFile[] = "system://50keys-hiragana.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
 
@@ -123,8 +121,8 @@ constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
 // ========================================
 // Entry
 // ========================================
-Entry::Entry(const std::string &input, const std::string &result,
-             const std::string &pending, const TableAttributes attributes)
+Entry::Entry(const absl::string_view input, const absl::string_view result,
+             const absl::string_view pending, const TableAttributes attributes)
     : input_(input),
       result_(result),
       pending_(pending),
@@ -327,13 +325,13 @@ bool Table::InitializeWithRequestAndConfig(
   return result;
 }
 
-bool Table::IsLoopingEntry(const std::string &input,
-                           const std::string &pending) const {
+bool Table::IsLoopingEntry(const absl::string_view input,
+                           const absl::string_view pending) const {
   if (input.empty() || pending.empty()) {
     return false;
   }
 
-  std::string key = pending;
+  std::string key(pending);
   do {
     // If input is a prefix of key, it should be looping.
     // (ex. input="a", pending="abc").
@@ -348,25 +346,26 @@ bool Table::IsLoopingEntry(const std::string &input,
       return false;
     }
     DCHECK_LE(key_length, key.size());
-    key = entry->pending() + key.substr(key_length);
+    key = absl::StrCat(entry->pending(), key.substr(key_length));
   } while (!key.empty());
 
   return false;
 }
 
-const Entry *Table::AddRule(const std::string &input, const std::string &output,
-                            const std::string &pending) {
+const Entry *Table::AddRule(const absl::string_view input,
+                            const absl::string_view output,
+                            const absl::string_view pending) {
   return AddRuleWithAttributes(input, output, pending, NO_TABLE_ATTRIBUTE);
 }
 
-const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
-                                          const std::string &output,
-                                          const std::string &escaped_pending,
-                                          const TableAttributes attributes) {
+const Entry *Table::AddRuleWithAttributes(
+    const absl::string_view escaped_input, const absl::string_view output,
+    const absl::string_view escaped_pending, const TableAttributes attributes) {
   if (attributes & NEW_CHUNK) {
     // TODO(komatsu): Make a new trie tree for checking the new chunk
     // attribute rather than reusing the conversion trie.
-    const std::string additional_input = kNewChunkPrefix + escaped_input;
+    const std::string additional_input =
+        absl::StrCat(kNewChunkPrefix, escaped_input);
     AddRuleWithAttributes(additional_input, output, escaped_pending,
                           NO_TABLE_ATTRIBUTE);
   }
@@ -410,7 +409,7 @@ const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
   return entry;
 }
 
-void Table::DeleteRule(const std::string &input) {
+void Table::DeleteRule(const absl::string_view input) {
   // NOTE : If this method is called and an entry is deleted,
   //     case_sensitive_ turns to be invalid
   //     because it is not updated.
@@ -444,7 +443,7 @@ const TypingModel *Table::typing_model() const { return typing_model_.get(); }
 namespace {
 constexpr char kAttributeDelimiter = ' ';
 
-TableAttributes ParseAttributes(const std::string &input) {
+TableAttributes ParseAttributes(const absl::string_view input) {
   TableAttributes attributes = NO_TABLE_ATTRIBUTE;
 
   std::vector<std::string> attribute_strings =
@@ -496,48 +495,48 @@ bool Table::LoadFromStream(std::istream *is) {
   return true;
 }
 
-const Entry *Table::LookUp(const std::string &input) const {
+const Entry *Table::LookUp(const absl::string_view input) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUp(input, &entry);
   } else {
-    std::string normalized_input = input;
+    std::string normalized_input(input);
     Util::LowerString(&normalized_input);
     entries_->LookUp(normalized_input, &entry);
   }
   return entry;
 }
 
-const Entry *Table::LookUpPrefix(const std::string &input, size_t *key_length,
-                                 bool *fixed) const {
+const Entry *Table::LookUpPrefix(const absl::string_view input,
+                                 size_t *key_length, bool *fixed) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUpPrefix(input, &entry, key_length, fixed);
   } else {
-    std::string normalized_input = input;
+    std::string normalized_input(input);
     Util::LowerString(&normalized_input);
     entries_->LookUpPrefix(normalized_input, &entry, key_length, fixed);
   }
   return entry;
 }
 
-void Table::LookUpPredictiveAll(const std::string &input,
+void Table::LookUpPredictiveAll(const absl::string_view input,
                                 std::vector<const Entry *> *results) const {
   if (case_sensitive_) {
     entries_->LookUpPredictiveAll(input, results);
   } else {
-    std::string normalized_input = input;
+    std::string normalized_input(input);
     Util::LowerString(&normalized_input);
     entries_->LookUpPredictiveAll(normalized_input, results);
   }
 }
 
-bool Table::HasNewChunkEntry(const std::string &input) const {
+bool Table::HasNewChunkEntry(const absl::string_view input) const {
   if (input.empty()) {
     return false;
   }
 
-  const std::string key = kNewChunkPrefix + input;
+  const std::string key = absl::StrCat(kNewChunkPrefix, input);
   size_t key_length = 0;
   bool fixed = false;
   LookUpPrefix(key, &key_length, &fixed);
@@ -548,11 +547,11 @@ bool Table::HasNewChunkEntry(const std::string &input) const {
   return false;
 }
 
-bool Table::HasSubRules(const std::string &input) const {
+bool Table::HasSubRules(const absl::string_view input) const {
   if (case_sensitive_) {
     return entries_->HasSubTrie(input);
   } else {
-    std::string normalized_input = input;
+    std::string normalized_input(input);
     Util::LowerString(&normalized_input);
     return entries_->HasSubTrie(normalized_input);
   }
@@ -578,9 +577,9 @@ void Table::set_case_sensitive(const bool case_sensitive) {
 }
 
 namespace {
-bool FindBlock(const std::string &input, const std::string &open,
-               const std::string &close, const size_t offset, size_t *open_pos,
-               size_t *close_pos) {
+bool FindBlock(const absl::string_view input, const absl::string_view open,
+               const absl::string_view close, const size_t offset,
+               size_t *open_pos, size_t *close_pos) {
   DCHECK(open_pos);
   DCHECK(close_pos);
 
@@ -597,27 +596,29 @@ bool FindBlock(const std::string &input, const std::string &open,
   return true;
 }
 
-using OnKeyFound = std::function<std::string(const std::string &)>;
+using OnKeyFound = std::function<std::string(const absl::string_view)>;
 
-std::string ParseBlock(const std::string &input, const OnKeyFound &callback) {
+std::string ParseBlock(const absl::string_view input,
+                       const OnKeyFound &callback) {
   std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;
   for (size_t cursor = 0; cursor < input.size();) {
     if (!FindBlock(input, "{", "}", cursor, &open_pos, &close_pos)) {
-      output.append(input, cursor, input.size() - cursor);
+      absl::StrAppend(&output, input.substr(cursor));
       break;
     }
 
-    output.append(input, cursor, open_pos - cursor);
+    absl::StrAppend(&output, input.substr(cursor, open_pos - cursor));
 
     // The both sizes of "{" and "}" is 1.
-    const std::string key(input, open_pos + 1, close_pos - open_pos - 1);
+    const absl::string_view key =
+        input.substr(open_pos + 1, close_pos - open_pos - 1);
     if (key == "{") {
       // "{{}" is treated as "{".
-      output.append("{");
+      absl::StrAppend(&output, "{");
     } else {
-      output.append(callback(key));
+      absl::StrAppend(&output, callback(key));
     }
 
     cursor = close_pos + 1;
@@ -627,8 +628,8 @@ std::string ParseBlock(const std::string &input, const OnKeyFound &callback) {
 
 }  // namespace
 
-std::string Table::RegisterSpecialKey(const std::string &input) {
-  OnKeyFound callback = [&](const std::string &key) {
+std::string Table::RegisterSpecialKey(const absl::string_view input) {
+  OnKeyFound callback = [this](const absl::string_view key) {
     if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
       return it->second;  // existing entry
     }
@@ -641,20 +642,20 @@ std::string Table::RegisterSpecialKey(const std::string &input) {
     // New special key is replaced with a Unicode PUA and registered.
     std::string special_key;
     Util::Ucs4ToUtf8(keycode, &special_key);
-    special_key_map_[key] = special_key;
+    special_key_map_.emplace(key, special_key);
     return special_key;
   };
   return ParseBlock(input, callback);
 }
 
-std::string Table::ParseSpecialKey(const std::string &input) const {
-  OnKeyFound callback = [&](const std::string &key) {
+std::string Table::ParseSpecialKey(const absl::string_view input) const {
+  OnKeyFound callback = [this](const absl::string_view key) {
     if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
       return it->second;  // existing entry
     }
     // Unregistered key is replaced with the fallback format.
     LOG(WARNING) << "Unregistered special key: " << key;
-    return kSpecialKeyOpen + key + kSpecialKeyClose;
+    return absl::StrCat(kSpecialKeyOpen, key, kSpecialKeyClose);
   };
   return ParseBlock(input, callback);
 }
@@ -666,18 +667,18 @@ bool IsSpecialKey(char32_t c) {
 }  // namespace
 
 // static
-std::string Table::DeleteSpecialKey(const std::string &input) {
+std::string Table::DeleteSpecialKey(const absl::string_view input) {
   std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;
   for (size_t cursor = 0; cursor < input.size();) {
     if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose, cursor, &open_pos,
                    &close_pos)) {
-      output.append(input, cursor, input.size() - cursor);
+      absl::StrAppend(&output, input.substr(cursor));
       break;
     }
 
-    output.append(input, cursor, open_pos - cursor);
+    absl::StrAppend(&output, input.substr(cursor, open_pos - cursor));
     // The size of kSpecialKeyClose is 1.
     cursor = close_pos + 1;
   }
@@ -730,8 +731,6 @@ const Table &Table::GetDefaultTable() {
 // ========================================
 TableManager::TableManager()
     : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {}
-
-TableManager::~TableManager() = default;
 
 const Table *TableManager::GetTable(
     const mozc::commands::Request &request, const mozc::config::Config &config,

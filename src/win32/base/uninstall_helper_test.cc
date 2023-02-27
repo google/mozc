@@ -108,11 +108,11 @@ TEST(UninstallHelperTest, BasicCaseForVista) {
       current_profiles, installed_profiles, &current_default, &new_default,
       &removed_profiles));
 
-  EXPECT_EQ(1, removed_profiles.size());
-  EXPECT_EQ(kJapaneseKLID, removed_profiles.at(0).klid);
+  EXPECT_EQ(removed_profiles.size(), 1);
+  EXPECT_EQ(removed_profiles.at(0).klid, kJapaneseKLID);
 
-  EXPECT_EQ(kJapaneseKLID, current_default.klid);
-  EXPECT_EQ(GUID_IMJPTIP, new_default.profile_guid);
+  EXPECT_EQ(current_default.klid, kJapaneseKLID);
+  EXPECT_EQ(new_default.profile_guid, GUID_IMJPTIP);
 }
 
 TEST(UninstallHelperTest, BasicCaseForWin8) {
@@ -172,12 +172,12 @@ TEST(UninstallHelperTest, BasicCaseForWin8) {
       current_profiles, installed_profiles, &current_default, &new_default,
       &removed_profiles));
 
-  EXPECT_EQ(2, removed_profiles.size());
-  EXPECT_EQ(kJapaneseKLID, removed_profiles.at(0).klid);
-  EXPECT_EQ(TsfProfile::GetProfileGuid(), removed_profiles.at(1).profile_guid);
+  EXPECT_EQ(removed_profiles.size(), 2);
+  EXPECT_EQ(removed_profiles.at(0).klid, kJapaneseKLID);
+  EXPECT_EQ(removed_profiles.at(1).profile_guid, TsfProfile::GetProfileGuid());
 
-  EXPECT_EQ(kJapaneseKLID, current_default.klid);
-  EXPECT_EQ(GUID_IMJPTIP, new_default.profile_guid);
+  EXPECT_EQ(current_default.klid, kJapaneseKLID);
+  EXPECT_EQ(new_default.profile_guid, GUID_IMJPTIP);
 }
 
 // The results of following functions are not predictable.  So

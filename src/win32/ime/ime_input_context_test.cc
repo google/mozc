@@ -49,8 +49,8 @@ TEST(InputContextTest, InitializeTest) {
 
     InputContext *context(AsContext(&base_context));
     EXPECT_TRUE(context->Initialize());
-    EXPECT_EQ(IME_CMODE_NATIVE, context->fdwConversion);
-    EXPECT_EQ(INIT_CONVERSION, (context->fdwInit & INIT_CONVERSION));
+    EXPECT_EQ(context->fdwConversion, IME_CMODE_NATIVE);
+    EXPECT_EQ((context->fdwInit & INIT_CONVERSION), INIT_CONVERSION);
   }
 
   // If any conversion mode is set, keep it as it is.
@@ -62,8 +62,8 @@ TEST(InputContextTest, InitializeTest) {
     context->fdwInit |= INIT_CONVERSION;
 
     EXPECT_TRUE(context->Initialize());
-    EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE, context->fdwConversion);
-    EXPECT_EQ(INIT_CONVERSION, (context->fdwInit & INIT_CONVERSION));
+    EXPECT_EQ(context->fdwConversion, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
+    EXPECT_EQ((context->fdwInit & INIT_CONVERSION), INIT_CONVERSION);
   }
 
   // If the sentence mode is not initialized, initialize it with
@@ -73,8 +73,8 @@ TEST(InputContextTest, InitializeTest) {
 
     InputContext *context(AsContext(&base_context));
     EXPECT_TRUE(context->Initialize());
-    EXPECT_EQ(IME_SMODE_PHRASEPREDICT, context->fdwSentence);
-    EXPECT_EQ(INIT_SENTENCE, (context->fdwInit & INIT_SENTENCE));
+    EXPECT_EQ(context->fdwSentence, IME_SMODE_PHRASEPREDICT);
+    EXPECT_EQ((context->fdwInit & INIT_SENTENCE), INIT_SENTENCE);
   }
 
   // If any sentence mode is set, it should be updated to
@@ -87,8 +87,8 @@ TEST(InputContextTest, InitializeTest) {
     context->fdwInit |= INIT_SENTENCE;
 
     EXPECT_TRUE(context->Initialize());
-    EXPECT_EQ(IME_SMODE_PHRASEPREDICT, context->fdwSentence);
-    EXPECT_EQ(INIT_SENTENCE, (context->fdwInit & INIT_SENTENCE));
+    EXPECT_EQ(context->fdwSentence, IME_SMODE_PHRASEPREDICT);
+    EXPECT_EQ((context->fdwInit & INIT_SENTENCE), INIT_SENTENCE);
   }
 }
 }  // namespace win32

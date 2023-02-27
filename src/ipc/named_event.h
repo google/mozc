@@ -30,15 +30,14 @@
 #ifndef MOZC_IPC_NAMED_EVENT_H_
 #define MOZC_IPC_NAMED_EVENT_H_
 
+#include <cstddef>
+#include <string>
+
 #ifdef _WIN32
 #include <windows.h>
 #else  // _WIN32
 #include <semaphore.h>
 #endif  // _WIN32
-
-#include <string>
-
-#include "base/port.h"
 
 // Named Event class for Inter Process Communication:
 // This is a shallow wrapper for Windows CreateEvent() API.
@@ -93,7 +92,7 @@ class NamedEventUtil {
   // return real event name
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.<name>.event
-  static const std::string GetEventPath(const char *name);
+  static std::string GetEventPath(const char *name);
 };
 
 class NamedEventListener {
@@ -103,6 +102,12 @@ class NamedEventListener {
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.event.<name>
   explicit NamedEventListener(const char *name);
   virtual ~NamedEventListener();
+
+  NamedEventListener(const NamedEventListener &) = delete;
+  NamedEventListener &operator=(const NamedEventListener &) = delete;
+
+  NamedEventListener(NamedEventListener &&) = delete;
+  NamedEventListener &operator=(NamedEventListener &&) = delete;
 
   // Return true if NamedEventListener is available
   bool IsAvailable() const;
@@ -152,7 +157,7 @@ class NamedEventNotifier {
   // return true if NamedEventNotifier is available
   bool IsAvailable() const;
 
-  // send an wake-up signal to NamedEventListener
+  // send a wake-up signal to NamedEventListener
   bool Notify();
 
  private:

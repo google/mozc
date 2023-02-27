@@ -62,11 +62,11 @@
 #error "This platform is not supported."
 #endif  // __ANDROID__ || __wasm__
 
-#if defined(__APPLE__) || defined(OS_IOS)
+#ifdef __APPLE__
 #include <sys/sysctl.h>
 
 #include "base/mac/mac_util.h"
-#endif  // __APPLE__ || OS_IOS
+#endif  // __APPLE__
 
 #ifdef _WIN32
 // clang-format off

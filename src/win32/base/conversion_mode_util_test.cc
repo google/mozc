@@ -67,37 +67,36 @@ TEST(ConversionModeUtilTest, ToNativeMode) {
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, false,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HIRAGANA, false,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            native_code);
+  EXPECT_EQ(native_code,
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_KATAKANA,
                                                false, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_ROMAN,
-            native_code);
+  EXPECT_EQ(native_code,
+            IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_ROMAN);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_ASCII,
                                                false, &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_ASCII,
                                                false, &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            native_code);
+  EXPECT_EQ(native_code,
+            IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_KATAKANA,
                                                false, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_FULLSHAPE |
-                IME_CMODE_ROMAN,
-            native_code);
+  EXPECT_EQ(native_code, IME_CMODE_NATIVE | IME_CMODE_KATAKANA |
+                             IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 }
 
 TEST(ConversionModeUtilTest, ToNativeModeWithKanaLocked) {
@@ -106,33 +105,33 @@ TEST(ConversionModeUtilTest, ToNativeModeWithKanaLocked) {
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, true,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_ALPHANUMERIC);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HIRAGANA, true,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_KATAKANA,
                                                true, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_NATIVE | IME_CMODE_KATAKANA);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_ASCII, true,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_ALPHANUMERIC);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_ASCII, true,
                                                &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE, native_code);
+  EXPECT_EQ(native_code, IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE);
 
   native_code = 0;
   EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_KATAKANA,
                                                true, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_FULLSHAPE,
-            native_code);
+  EXPECT_EQ(native_code,
+            IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_FULLSHAPE);
 }
 
 TEST(ConversionModeUtilTest, ToMozcMode) {
@@ -142,37 +141,37 @@ TEST(ConversionModeUtilTest, ToMozcMode) {
   // NOTE: IME_CMODE_ALPHANUMERIC will be converted to HALF_ASCII, not DIRECT.
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(IME_CMODE_ALPHANUMERIC, &mode));
-  EXPECT_EQ(mozc::commands::HALF_ASCII, mode);
+  EXPECT_EQ(mode, mozc::commands::HALF_ASCII);
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, &mode));
-  EXPECT_EQ(mozc::commands::HALF_ASCII, mode);
+  EXPECT_EQ(mode, mozc::commands::HALF_ASCII);
 
   // Check for FULL_ASCII
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE, &mode));
-  EXPECT_EQ(mozc::commands::FULL_ASCII, mode);
+  EXPECT_EQ(mode, mozc::commands::FULL_ASCII);
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mode));
-  EXPECT_EQ(mozc::commands::FULL_ASCII, mode);
+  EXPECT_EQ(mode, mozc::commands::FULL_ASCII);
 
   // Check for HIRAGANA
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE, &mode));
-  EXPECT_EQ(mozc::commands::HIRAGANA, mode);
+  EXPECT_EQ(mode, mozc::commands::HIRAGANA);
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mode));
-  EXPECT_EQ(mozc::commands::HIRAGANA, mode);
+  EXPECT_EQ(mode, mozc::commands::HIRAGANA);
 
   // There is no "HALF_HIRAGANA"
   mode = mozc::commands::DIRECT;
@@ -187,7 +186,7 @@ TEST(ConversionModeUtilTest, ToMozcMode) {
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_KATAKANA, &mode));
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, mode);
+  EXPECT_EQ(mode, mozc::commands::FULL_KATAKANA);
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
@@ -195,19 +194,19 @@ TEST(ConversionModeUtilTest, ToMozcMode) {
       ConversionModeUtil::ToMozcMode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
                                          IME_CMODE_KATAKANA | IME_CMODE_ROMAN,
                                      &mode));
-  EXPECT_EQ(mozc::commands::FULL_KATAKANA, mode);
+  EXPECT_EQ(mode, mozc::commands::FULL_KATAKANA);
 
   // Check for HALF_KATAKANA
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_NATIVE | IME_CMODE_KATAKANA, &mode));
-  EXPECT_EQ(mozc::commands::HALF_KATAKANA, mode);
+  EXPECT_EQ(mode, mozc::commands::HALF_KATAKANA);
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
   EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
       IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_ROMAN, &mode));
-  EXPECT_EQ(mozc::commands::HALF_KATAKANA, mode);
+  EXPECT_EQ(mode, mozc::commands::HALF_KATAKANA);
 }
 
 TEST(ConversionModeUtilTest, ToMozcModeUnsupportedModes) {
@@ -302,9 +301,9 @@ TEST(ConversionModeUtilTest, ConvertStatusFromMozcToNative) {
   status.set_mode(commands::HALF_ASCII);
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
       status, false, &is_open, &logical_mode, &visible_mode));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            logical_mode);
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
+  EXPECT_EQ(logical_mode,
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
+  EXPECT_EQ(visible_mode, IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN);
 
   // The mode conversion should always be done regardless of open/close status.
   is_open = false;
@@ -316,9 +315,9 @@ TEST(ConversionModeUtilTest, ConvertStatusFromMozcToNative) {
   status.set_mode(commands::HALF_ASCII);
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
       status, false, &is_open, &logical_mode, &visible_mode));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-            logical_mode);
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
+  EXPECT_EQ(logical_mode,
+            IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
+  EXPECT_EQ(visible_mode, IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN);
 }
 
 TEST(ConversionModeUtilTest, GetMozcModeFromNativeMode) {
@@ -328,13 +327,13 @@ TEST(ConversionModeUtilTest, GetMozcModeFromNativeMode) {
   commands::CompositionMode mozc_mode = commands::HIRAGANA;
   EXPECT_TRUE(ConversionModeUtil::GetMozcModeFromNativeMode(
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mozc_mode));
-  EXPECT_EQ(commands::HIRAGANA, mozc_mode);
+  EXPECT_EQ(mozc_mode, commands::HIRAGANA);
 
   // The mode conversion should always be done regardless of open/close status,
   // that is, we no longer rely on |mozc::commands::DIRECT|.
   EXPECT_TRUE(ConversionModeUtil::GetMozcModeFromNativeMode(
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, &mozc_mode));
-  EXPECT_EQ(commands::HIRAGANA, mozc_mode);
+  EXPECT_EQ(mozc_mode, commands::HIRAGANA);
 }
 }  // namespace win32
 }  // namespace mozc

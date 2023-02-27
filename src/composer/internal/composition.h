@@ -40,6 +40,7 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -59,7 +60,7 @@ class Composition final {
   Composition(const Composition &);
   Composition &operator=(const Composition &);
 
-  ~Composition();
+  ~Composition() = default;
 
   // Deletes a right-hand character of the composition at the position.
   // e.g.
@@ -95,9 +96,9 @@ class Composition final {
   //   ["a", "{b}", "c"].DeleteAt(1) -> ["a"]
   size_t DeleteAt(size_t position);
 
-  size_t InsertAt(size_t position, const std::string &input);
-  size_t InsertKeyAndPreeditAt(size_t position, const std::string &key,
-                               const std::string &preedit);
+  size_t InsertAt(size_t position, absl::string_view input);
+  size_t InsertKeyAndPreeditAt(size_t position, absl::string_view key,
+                               absl::string_view preedit);
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
   size_t InsertInput(size_t position, const CompositionInput &input);

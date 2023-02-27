@@ -745,6 +745,12 @@ int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
   return copied_num_chars;
 }
 
+std::wstring Util::Utf8ToWide(absl::string_view input) {
+  std::wstring output;
+  Utf8ToWide(input, &output);
+  return output;
+}
+
 int Util::WideToUtf8(const wchar_t *input, std::string *output) {
   const int output_length =
       WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
@@ -764,6 +770,12 @@ int Util::WideToUtf8(const wchar_t *input, std::string *output) {
 
 int Util::WideToUtf8(const std::wstring &input, std::string *output) {
   return WideToUtf8(input.c_str(), output);
+}
+
+std::string Util::WideToUtf8(const std::wstring &input) {
+  std::string output;
+  WideToUtf8(input, &output);
+  return output;
 }
 #endif  // _WIN32
 
@@ -876,7 +888,8 @@ absl::string_view CloseBracket(absl::string_view pair) {
 
 }  // namespace
 
-bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
+bool Util::IsOpenBracket(absl::string_view key,
+                         absl::string_view *close_bracket) {
   const auto end = kSortedBrackets.end();
   const auto iter =
       std::lower_bound(kSortedBrackets.begin(), end, key,
@@ -886,11 +899,12 @@ bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
   if (iter == end || OpenBracket(*iter) != key) {
     return false;
   }
-  *close_bracket = std::string(CloseBracket(*iter));
+  *close_bracket = CloseBracket(*iter);
   return true;
 }
 
-bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
+bool Util::IsCloseBracket(absl::string_view key,
+                          absl::string_view *open_bracket) {
   const auto end = kSortedBrackets.end();
   const auto iter =
       std::lower_bound(kSortedBrackets.begin(), end, key,
@@ -900,7 +914,7 @@ bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
   if (iter == end || CloseBracket(*iter) != key) {
     return false;
   }
-  *open_bracket = std::string(OpenBracket(*iter));
+  *open_bracket = OpenBracket(*iter);
   return true;
 }
 

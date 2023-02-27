@@ -346,6 +346,7 @@ mozc_cc_library(
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -537,7 +538,7 @@ mozc_cc_test(
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
     requires_full_emulation = False,
-    tags = ["no_android"],
+    tags = ["noandroid"],
     deps = [
         ":session_watch_dog",
         "//base:cpu_stats",
