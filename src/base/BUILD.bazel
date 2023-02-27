@@ -1020,6 +1020,9 @@ mozc_cc_test(
         "password_manager_test.cc",
     ],
     requires_full_emulation = False,
+    # Skipped for Windows Presubmit as CryptProtectData doesn't work on a headless Windows VM.
+    # Background: https://github.com/Azure/azure-cli/issues/20695#issuecomment-992086316
+    tags = ["nowin"],
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
