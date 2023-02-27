@@ -97,6 +97,7 @@
       'sources': [
         '<(gen_out_dir)/character_set.inc',
         'environ.cc',
+        'file/recursive.cc',
         'file/temp_dir.cc',
         'file_stream.cc',
         'file_util.cc',
