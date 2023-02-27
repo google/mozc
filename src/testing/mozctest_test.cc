@@ -38,7 +38,7 @@ namespace mozc::testing {
 namespace {
 
 TEST(MozcTestTest, GetSourcePath) {
-  std::string path = GetSourcePath({"testing", "BUILD"});
+  std::string path = GetSourcePath({"testing", "mozctest_test.cc"});
   std::ifstream ifs(path);
   EXPECT_TRUE(ifs.good());
 }

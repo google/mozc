@@ -186,6 +186,12 @@ mozc_cc_library(
         ],
         default = ["@gtest//:gtest"],
         linux = ["@gtest//:gtest"],
+        oss = [
+            ":mozc_data_dir_header",
+            "//base:environ",
+            "//base/file:temp_dir",
+            "@com_google_absl//absl/flags:flag",
+        ],
     ),
 )
 
@@ -225,7 +231,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "mozctest_test",
     srcs = ["mozctest_test.cc"],
-    data = ["BUILD"],
+    data = ["mozctest_test.cc"],
     deps = [
         ":gunit_main",
         ":mozctest",
