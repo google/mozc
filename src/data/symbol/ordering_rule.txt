@@ -3,6 +3,7 @@
 # Halfwidth
 # Basically ordered by codepoint, but some characters are not
 # because of usefulness.
+# Note: single '#' here should not be treated as a comment line.
 .
 ,
 @
