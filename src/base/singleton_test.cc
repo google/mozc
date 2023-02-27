@@ -29,9 +29,10 @@
 
 #include "base/singleton.h"
 
-#include <cstdlib>
+#include <atomic>
+#include <string>
 
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "testing/gunit.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -39,45 +40,38 @@
 namespace mozc {
 namespace {
 
-static int g_counter = 0;
+struct TestInstance {
+  TestInstance() { ++counter; }
 
-class TestInstance {
- public:
-  TestInstance() { ++g_counter; }
+  static int counter;
 };
+int TestInstance::counter = 0;
 
-class ThreadInstance {
- public:
+struct ThreadInstance {
   ThreadInstance() {
     // Wait two secs to test the singleton
     // can safely block the initialization procedure.
     absl::SleepFor(absl::Seconds(2));
-    ++g_counter;
+    counter.fetch_add(1);
   }
+
+  // Although the constructor is expected to run at most once, that's the
+  // property under test thus we shouldn't rely on that to avoid data races
+  // (otherwise tests may fail to detect multiple cuncurrent constructions).
+  static std::atomic<int> counter;
 };
-
-class ThreadTest : public Thread {
- public:
-  void Run() override { instance_ = Singleton<ThreadInstance>::get(); }
-
-  ThreadInstance *get() { return instance_; }
-
-  ThreadTest() : instance_(nullptr) {}
-
- private:
-  ThreadInstance *instance_;
-};
+std::atomic<int> ThreadInstance::counter = 0;
 
 // Cannot have a testcase for Singleton::SingletonFinalizer,
 // since it affects other tests using Singleton objects.
 TEST(SingletonTest, BasicTest) {
-  g_counter = 0;
+  TestInstance::counter = 0;
   TestInstance *t1 = Singleton<TestInstance>::get();
   TestInstance *t2 = Singleton<TestInstance>::get();
   TestInstance *t3 = Singleton<TestInstance>::get();
   EXPECT_EQ(t1, t2);
   EXPECT_EQ(t2, t3);
-  EXPECT_EQ(g_counter, 1);
+  EXPECT_EQ(TestInstance::counter, 1);
 }
 
 TEST(SingletonTest, ThreadTest) {
@@ -85,26 +79,23 @@ TEST(SingletonTest, ThreadTest) {
   // different threads. Make sure that get() returns
   // the same instance
 
-  g_counter = 0;
+  ThreadInstance::counter.store(0);
 
-  ThreadTest test1;
-  ThreadTest test2;
-  ThreadTest test3;
+  ThreadInstance *t1;
+  ThreadInstance *t2;
+  ThreadInstance *t3;
+  mozc::Thread2 thread1([&t1] { t1 = Singleton<ThreadInstance>::get(); });
+  mozc::Thread2 thread2([&t2] { t2 = Singleton<ThreadInstance>::get(); });
+  mozc::Thread2 thread3([&t3] { t3 = Singleton<ThreadInstance>::get(); });
+  thread1.Join();
+  thread2.Join();
+  thread3.Join();
 
-  // Create the ThreadInstance simultaneously.
-  test1.Start("ThreadTest");
-  test2.Start("ThreadTest");
-  test3.Start("ThreadTest");
-
-  test1.Join();
-  test2.Join();
-  test3.Join();
-
-  EXPECT_EQ(g_counter, 1);
+  EXPECT_EQ(ThreadInstance::counter.load(), 1);
 
   // three instances must be the same.
-  EXPECT_EQ(test1.get(), test2.get());
-  EXPECT_EQ(test2.get(), test3.get());
+  EXPECT_EQ(t1, t2);
+  EXPECT_EQ(t2, t3);
 }
 
 class ValueHolder {
