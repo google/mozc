@@ -78,15 +78,9 @@ constexpr char kFileDelimiter = '/';
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
-#ifdef CreateDirectory
 #undef CreateDirectory
-#endif  // CreateDirectory
-#ifdef RemoveDirectory
 #undef RemoveDirectory
-#endif  // RemoveDirectory
-#ifdef CopyFile
 #undef CopyFile
-#endif  // CopyFile
 
 namespace mozc {
 namespace {
