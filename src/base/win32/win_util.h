@@ -168,23 +168,6 @@ class WinUtil {
                                       const wchar_t *parameters);
 };
 
-// Initializes COM in the constructor (STA), and uninitializes COM in the
-// destructor.
-class ScopedCOMInitializer {
- public:
-  ScopedCOMInitializer();
-  ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
-  ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
-  ~ScopedCOMInitializer();
-
-  // Returns the error code from CoInitialize(nullptr)
-  // (called in constructor)
-  inline HRESULT error_code() const { return hr_; }
-
- protected:
-  HRESULT hr_;
-};
-
 }  // namespace mozc
 
 #endif  // _WIN32

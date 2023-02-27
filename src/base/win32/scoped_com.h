@@ -27,49 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QGuiApplication>
-#include <QTextCodec>
-#include <QTranslator>
-#include <string>
+#ifndef MOZC_BASE_WIN32_SCOPED_COM_H_
+#define MOZC_BASE_WIN32_SCOPED_COM_H_
 
-#include "base/logging.h"
-#include "base/system_util.h"
-#include "gui/base/singleton_window_helper.h"
-#include "gui/base/util.h"
-#include "gui/dictionary_tool/dictionary_tool.h"
+#include <objbase.h>
 
-#ifdef _WIN32
-#include "base/win32/scoped_com.h"
-#endif  // _WIN32
+namespace mozc {
 
-int RunDictionaryTool(int argc, char *argv[]) {
-#ifdef _WIN32
-  // For MSIMEImportIterator.
-  mozc::ScopedCOMInitializer com_initializer;
-#endif  // _WIN32
-
-  Q_INIT_RESOURCE(qrc_dictionary_tool);
-  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
-
-  std::string name = "dictionary_tool.";
-  name += mozc::SystemUtil::GetDesktopNameAsString();
-  mozc::gui::SingletonWindowHelper window_helper(name);
-  if (window_helper.FindPreviousWindow()) {
-    // already running
-    window_helper.ActivatePreviousWindow();
-    return -1;
+// Initializes COM in the constructor (STA), and uninitializes COM in the
+// destructor.
+class ScopedCOMInitializer {
+ public:
+  ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}
+  ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
+  ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
+  ~ScopedCOMInitializer() {
+    if (SUCCEEDED(hr_)) {
+      ::CoUninitialize();
+    }
   }
 
-  mozc::gui::GuiUtil::InstallTranslator("dictionary_tool");
-  mozc::gui::DictionaryTool window;
+  // Returns the error code from CoInitialize(nullptr)
+  // (called in constructor)
+  constexpr HRESULT error_code() const { return hr_; }
 
-  if (!window.IsAvailable()) {
-    LOG(ERROR) << "DictionaryTool is not available.";
-    return -1;
-  }
+ private:
+  const HRESULT hr_;
+};
 
-  window.show();
-  window.raise();
+}  // namespace mozc
 
-  return app->exec();
-}
+#endif  // MOZC_BASE_WIN32_SCOPED_COM_H_

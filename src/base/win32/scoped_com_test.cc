@@ -27,49 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QGuiApplication>
-#include <QTextCodec>
-#include <QTranslator>
-#include <string>
-
-#include "base/logging.h"
-#include "base/system_util.h"
-#include "gui/base/singleton_window_helper.h"
-#include "gui/base/util.h"
-#include "gui/dictionary_tool/dictionary_tool.h"
-
-#ifdef _WIN32
 #include "base/win32/scoped_com.h"
-#endif  // _WIN32
 
-int RunDictionaryTool(int argc, char *argv[]) {
-#ifdef _WIN32
-  // For MSIMEImportIterator.
-  mozc::ScopedCOMInitializer com_initializer;
-#endif  // _WIN32
+#include <objbase.h>
 
-  Q_INIT_RESOURCE(qrc_dictionary_tool);
-  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
+#include "testing/gunit.h"
 
-  std::string name = "dictionary_tool.";
-  name += mozc::SystemUtil::GetDesktopNameAsString();
-  mozc::gui::SingletonWindowHelper window_helper(name);
-  if (window_helper.FindPreviousWindow()) {
-    // already running
-    window_helper.ActivatePreviousWindow();
-    return -1;
+namespace mozc {
+namespace {
+
+TEST(ScopedCOMTest, Initializer) {
+  {
+    ScopedCOMInitializer com;
+    EXPECT_EQ(::CoInitialize(nullptr), S_FALSE);
+    ::CoUninitialize();
   }
-
-  mozc::gui::GuiUtil::InstallTranslator("dictionary_tool");
-  mozc::gui::DictionaryTool window;
-
-  if (!window.IsAvailable()) {
-    LOG(ERROR) << "DictionaryTool is not available.";
-    return -1;
-  }
-
-  window.show();
-  window.raise();
-
-  return app->exec();
+  EXPECT_EQ(::CoInitialize(nullptr), S_OK);
+  ::CoUninitialize();
 }
+
+}  // namespace
+}  // namespace mozc

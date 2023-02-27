@@ -44,6 +44,7 @@
 #include "protocol/config.pb.h"
 
 #ifdef _WIN32
+#include "base/win32/scoped_com.h"
 #include "win32/base/migration_util.h"
 #endif  // _WIN32
 

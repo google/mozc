@@ -36,6 +36,7 @@ load(
     "mozc_qt_rcc",
     "mozc_qt_uic",
 )
+load("//:build_defs.bzl", "mozc_select")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
@@ -93,7 +94,9 @@ mozc_cc_qt_library(
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
         "//protocol:config_cc_proto",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:scoped_com"],
+    ),
 )
 
 mozc_cc_qt_library(

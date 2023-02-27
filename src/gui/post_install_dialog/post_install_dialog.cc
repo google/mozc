@@ -45,7 +45,7 @@
 #include "usage_stats/usage_stats.h"
 
 #ifdef _WIN32
-#include "base/win32/win_util.h"
+#include "base/win32/scoped_com.h"
 #include "win32/base/imm_util.h"
 #endif  // _WIN32
 

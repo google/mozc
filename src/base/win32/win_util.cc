@@ -542,15 +542,6 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
   return result > 32;
 }
 
-
-ScopedCOMInitializer::ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}
-
-ScopedCOMInitializer::~ScopedCOMInitializer() {
-  if (SUCCEEDED(hr_)) {
-    ::CoUninitialize();
-  }
-}
-
 }  // namespace mozc
 
 #endif  // _WIN32
