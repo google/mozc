@@ -49,7 +49,7 @@ namespace mozc {
 // encodings except UTF-8 for internationalized file names.
 class InputFileStream : public std::ifstream {
  public:
-  InputFileStream();
+  InputFileStream() = default;
   explicit InputFileStream(absl::string_view filename,
                            std::ios_base::openmode mode = std::ios_base::in);
 
@@ -66,7 +66,7 @@ class InputFileStream : public std::ifstream {
 
 class OutputFileStream : public std::ofstream {
  public:
-  OutputFileStream();
+  OutputFileStream() = default;
   explicit OutputFileStream(absl::string_view filename,
                             std::ios_base::openmode mode = std::ios_base::out);
 

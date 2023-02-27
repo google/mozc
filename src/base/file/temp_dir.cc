@@ -43,7 +43,7 @@
 #ifdef _WIN32
 #include <windows.h>
 
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 #endif  // _WIN32
@@ -95,7 +95,7 @@ DWORD GetTempPath(const absl::Span<wchar_t> buf) {
 
 UINT GetTempFileNameW(const absl::string_view path, const wchar_t *prefix,
                       wchar_t *output) {
-  return ::GetTempFileNameW(Util::Utf8ToWide(path).c_str(), prefix, 0, output);
+  return ::GetTempFileNameW(win32::Utf8ToWide(path).c_str(), prefix, 0, output);
 }
 
 #endif  // _WIN32
@@ -124,7 +124,7 @@ TempDirectory TempDirectory::Default() {
   // On Win32, GetTempPath/2 is the recommended method.
   wchar_t wtmp[MAX_PATH + 1];
   if (GetTempPath(absl::MakeSpan(wtmp)) != 0) {
-    std::string tmp = Util::WideToUtf8(wtmp);
+    std::string tmp = win32::WideToUtf8(wtmp);
     if (TryTempDirectory(tmp)) {
       return TempDirectory(tmp);
     }
@@ -174,7 +174,7 @@ absl::StatusOr<TempFile> TempDirectory::CreateTempFile() const {
         absl::StrCat("GetTempFileNameW failed (temp path too long), error = ",
                      GetLastError()));
   }
-  return TempFile(Util::WideToUtf8(wtemp_file));
+  return TempFile(win32::WideToUtf8(wtemp_file));
 #else   // _WIN32
   std::string temp_file = FileUtil::JoinPath(path_, "mozc-XXXXXX");  // six X's
   int fd = mkstemp(temp_file.data());
@@ -214,7 +214,7 @@ absl::StatusOr<TempDirectory> TempDirectory::CreateTempDirectory() const {
     // name. We'll retry in that case.
     if (CreateDirectoryW(new_dir_path, nullptr) != 0) {
       // Success.
-      return TempDirectory(Util::WideToUtf8(new_dir_path), false);
+      return TempDirectory(win32::WideToUtf8(new_dir_path), false);
     }
     const DWORD err = GetLastError();
     if (err != ERROR_ALREADY_EXISTS) {

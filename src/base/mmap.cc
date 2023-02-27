@@ -44,8 +44,8 @@
 
 #include <string>
 
-#include "base/util.h"  // for Util::Utf8ToWide
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #else  // _WIN32
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -78,8 +78,8 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  std::wstring filename_wide;
-  if (Util::Utf8ToWide(filename, &filename_wide) <= 0) {
+  const std::wstring filename_wide = win32::Utf8ToWide(filename);
+  if (filename_wide.empty()) {
     return false;
   }
 

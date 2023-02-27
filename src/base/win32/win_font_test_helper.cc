@@ -38,7 +38,7 @@
 
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 namespace {
@@ -67,11 +67,9 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
     LOG(ERROR) << "PathAppend failed.";
     return nullptr;
   }
-  std::string path;
-  Util::WideToUtf8(w_path, &path);
 
   Mmap mmap;
-  if (!mmap.Open(path.c_str())) {
+  if (!mmap.Open(win32::WideToUtf8(w_path).c_str())) {
     LOG(ERROR) << "Mmap::Open failed.";
     return nullptr;
   }

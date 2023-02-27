@@ -442,7 +442,9 @@ mozc_cc_library(
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = ["@com_google_absl//absl/strings"] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_binary(
@@ -548,7 +550,10 @@ mozc_cc_library(
         ":port",
         ":util",
     ] + mozc_select(
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
+        ],
     ),
 )
 
@@ -602,6 +607,7 @@ mozc_cc_library(
         windows = [
             ":util",
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
         ],
     ),
 )
@@ -641,7 +647,9 @@ mozc_cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_library(
@@ -685,6 +693,7 @@ mozc_cc_library(
         macos = ["//base/mac:mac_util"],
         windows = [
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
             # win_util.h includes gunit_prod.h for FRIEND_TEST.
             "//testing:gunit_prod",
         ],
@@ -722,12 +731,14 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":system_util",
-        ":util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         macos = ["//base/mac:mac_process"],
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:wide_char",
+            "//base/win32:scoped_handle",
+        ],
     ),
 )
 
@@ -758,6 +769,7 @@ mozc_cc_library(
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
             "//base/win32:win_sandbox",
         ],
     ),
@@ -799,6 +811,7 @@ mozc_cc_library(
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
             "//base/win32:win_sandbox",
         ],
     ),
@@ -929,7 +942,9 @@ mozc_cc_library(
         ":port",
         ":util",
         "@com_google_absl//absl/strings",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_test(
@@ -1014,6 +1029,7 @@ mozc_cc_library(
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
+        windows = ["//base/win32:wide_char"],
     ),
 )
 
@@ -1206,9 +1222,10 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":system_util",
-        ":util",
         ":version",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_library(

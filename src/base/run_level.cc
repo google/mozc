@@ -42,8 +42,8 @@
 
 #include "base/const.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
@@ -203,11 +203,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // See http://b/2301066 for details.
     const std::string user_dir = SystemUtil::GetUserProfileDirectory();
 
-    std::wstring dir;
-    Util::Utf8ToWide(user_dir, &dir);
-    ScopedHandle dir_handle(::CreateFile(dir.c_str(), READ_CONTROL | WRITE_DAC,
-                                         0, nullptr, OPEN_EXISTING,
-                                         FILE_FLAG_BACKUP_SEMANTICS, 0));
+    ScopedHandle dir_handle(::CreateFile(
+        win32::Utf8ToWide(user_dir).c_str(), READ_CONTROL | WRITE_DAC, 0,
+        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
     if (nullptr != dir_handle.get()) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;

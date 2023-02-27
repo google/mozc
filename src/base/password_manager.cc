@@ -47,9 +47,12 @@
 #include "base/random.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
+
+#ifdef _WIN32
+#include "base/win32/wide_char.h"
+#endif  // _WIN32
 
 namespace mozc {
 namespace {
@@ -77,9 +80,8 @@ class ScopedReadWriteFile {
       return;
     }
 #ifdef _WIN32
-    std::wstring wfilename;
-    Util::Utf8ToWide(filename_, &wfilename);
-    if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
+    if (!::SetFileAttributesW(win32::Utf8ToWide(filename).c_str(),
+                              FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
 #else   // _WIN32
