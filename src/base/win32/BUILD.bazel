@@ -171,3 +171,26 @@ filegroup(
     name = "win_util_cc",
     srcs = ["win_util.cc"],
 )
+
+mozc_cc_library(
+    name = "wide_char",
+    srcs = ["wide_char.cc"],
+    hdrs = ["wide_char.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "wide_char_test",
+    srcs = ["wide_char_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":wide_char",
+        "//testing:gunit_main",
+    ],
+)

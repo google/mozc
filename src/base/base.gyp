@@ -109,7 +109,6 @@
         'thread.cc',
         'thread2.cc',
         'util.cc',
-        'win32/win_util.cc',
       ],
       'dependencies': [
         'clock',
@@ -125,6 +124,10 @@
       ],
       'conditions': [
         ['OS=="win"', {
+          'sources': [
+            'win32/wide_char.cc',
+            'win32/win_util.cc',
+          ],
           'dependencies': [
             'scoped_handle',
             'absl.gyp:absl_base',

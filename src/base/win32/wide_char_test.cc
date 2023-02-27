@@ -1,0 +1,69 @@
+// Copyright 2010-2021, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#include "base/win32/wide_char.h"
+
+#include "testing/gunit.h"
+
+namespace mozc::win32 {
+namespace {
+
+constexpr char kTwoSurrogatePairs[] = "𝄞𝄁";  // U+1D11E, U+1D101
+constexpr wchar_t kTwoSurrogatePairsW[] = L"𝄞𝄁";
+
+TEST(WideCharTest, WideCharsLen) {
+  EXPECT_EQ(WideCharsLen(""), 0);
+  EXPECT_EQ(WideCharsLen("mozc"), 4);
+  EXPECT_EQ(WideCharsLen("私の名前は中野です。"), 10);
+  EXPECT_EQ(WideCharsLen("𡈽"), 2);  // 𡈽 = U+2123D
+  EXPECT_EQ(WideCharsLen(kTwoSurrogatePairs), 4);
+  EXPECT_EQ(WideCharsLen("\xFF\xFF"), 2);  // invalid Utf-8 still counts
+}
+
+TEST(WideCharTest, Utf8ToWide) {
+  EXPECT_EQ(Utf8ToWide(""), L"");
+  EXPECT_EQ(Utf8ToWide("mozc"), L"mozc");
+  EXPECT_EQ(Utf8ToWide("私の名前は中野です。"), L"私の名前は中野です。");
+  EXPECT_EQ(Utf8ToWide("𡈽"), L"𡈽");
+  EXPECT_EQ(Utf8ToWide(kTwoSurrogatePairs), kTwoSurrogatePairsW);
+  EXPECT_EQ(Utf8ToWide("\xFF\xFF"), L"\uFFFD\uFFFD");  // invalid Utf-8
+}
+
+TEST(WideCharTest, WideToUtf8) {
+  EXPECT_EQ(WideToUtf8(L""), "");
+  EXPECT_EQ(WideToUtf8(L"mozc"), "mozc");
+  EXPECT_EQ(WideToUtf8(L"私の名前は中野です。"), "私の名前は中野です。");
+  EXPECT_EQ(WideToUtf8(L"𡈽"), "𡈽");
+  EXPECT_EQ(WideToUtf8(kTwoSurrogatePairsW), kTwoSurrogatePairs);
+  constexpr wchar_t kInvalid[] = {0xD800, 0};
+  EXPECT_EQ(WideToUtf8(kInvalid), "\uFFFD");
+}
+
+}  // namespace
+}  // namespace mozc::win32

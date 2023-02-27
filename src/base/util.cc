@@ -29,26 +29,6 @@
 
 #include "base/util.h"
 
-#ifdef _WIN32
-// clang-format off
-#include <windows.h>
-#include <wincrypt.h>  // WinCrypt.h must be included after Windows.h
-// clang-format on
-#include <stdio.h>  // MSVC requires this for _vsnprintf
-#include <time.h>
-#endif  // _WIN32
-
-#ifdef __APPLE__
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#endif  // __APPLE__
-
-#ifndef _WIN32
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif  // !_WIN32
-
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -77,6 +57,25 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
+
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#endif  // __APPLE__
+
+#ifdef _WIN32
+// clang-format off
+#include <windows.h>
+#include <wincrypt.h>  // wincrypt.h must be included after windows.h
+// clang-format on
+#include <time.h>
+
+#include "base/win32/wide_char.h"
+#else  // _WIN32
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif  // _WIN32
 
 namespace mozc {
 
@@ -721,51 +720,24 @@ size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
 
 #ifdef _WIN32
 size_t Util::WideCharsLen(absl::string_view src) {
-  const int num_chars =
-      ::MultiByteToWideChar(CP_UTF8, 0, src.data(), src.size(), nullptr, 0);
-  if (num_chars <= 0) {
-    return 0;
-  }
-  return num_chars;
+  return win32::WideCharsLen(src);
 }
 
 int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
-  const size_t output_length = WideCharsLen(input);
-  if (output_length == 0) {
-    return 0;
-  }
-
-  const size_t buffer_len = output_length + 1;
-  std::unique_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
-  const int copied_num_chars = ::MultiByteToWideChar(
-      CP_UTF8, 0, input.data(), input.size(), input_wide.get(), buffer_len);
-  if (0 <= copied_num_chars && copied_num_chars < buffer_len) {
-    output->assign(input_wide.get(), copied_num_chars);
-  }
-  return copied_num_chars;
+  *output = win32::Utf8ToWide(input);
+  return output->size();
 }
 
 std::wstring Util::Utf8ToWide(absl::string_view input) {
-  std::wstring output;
-  Utf8ToWide(input, &output);
-  return output;
+  return win32::Utf8ToWide(input);
 }
 
 int Util::WideToUtf8(const wchar_t *input, std::string *output) {
-  const int output_length =
-      WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
-  if (output_length == 0) {
+  if (input == nullptr) {
     return 0;
   }
-
-  std::unique_ptr<char[]> input_encoded(new char[output_length + 1]);
-  const int result =
-      WideCharToMultiByte(CP_UTF8, 0, input, -1, input_encoded.get(),
-                          output_length + 1, nullptr, nullptr);
-  if (result > 0) {
-    output->assign(input_encoded.get());
-  }
-  return result;
+  *output = win32::WideToUtf8(input);
+  return output->size();
 }
 
 int Util::WideToUtf8(const std::wstring &input, std::string *output) {
@@ -773,9 +745,7 @@ int Util::WideToUtf8(const std::wstring &input, std::string *output) {
 }
 
 std::string Util::WideToUtf8(const std::wstring &input) {
-  std::string output;
-  WideToUtf8(input, &output);
-  return output;
+  return win32::WideToUtf8(input);
 }
 #endif  // _WIN32
 
