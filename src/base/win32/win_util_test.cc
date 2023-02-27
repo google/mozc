@@ -31,23 +31,21 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "base/system_util.h"
 #include "base/util.h"
+#include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 
-namespace {
+constexpr std::wstring_view kNtPathPrefix = L"\\Device\\";
 
-bool LooksLikeNtPath(const std::wstring &nt_path) {
-  const wchar_t kPrefix[] = L"\\Device\\";
-
-  return nt_path.find(kPrefix) != std::wstring::npos;
+MATCHER(LooksLikeNtPath, "") {
+  return arg.find(kNtPathPrefix) != std::wstring::npos;
 }
-
-}  // namespace
 
 class WinUtilLoaderLockTest : public testing::Test {
  protected:
@@ -75,7 +73,7 @@ class WinUtilLoaderLockTest : public testing::Test {
 TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   ASSERT_NE(nullptr, module_);
 
-  typedef int(__stdcall * CheckProc)();
+  using CheckProc = int(__stdcall *)();
 
   CheckProc is_lock_check_succeeded = reinterpret_cast<CheckProc>(
       ::GetProcAddress(module_, "IsLockCheckSucceeded"));
@@ -180,16 +178,16 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
 
 TEST(WinUtilTest, AreEqualFileSystemObjectTest) {
   const std::wstring system_dir = SystemUtil::GetSystemDir();
-  const std::wstring notepad = system_dir + L"\\notepad.exe";
-  const std::wstring notepad_with_prefix = L"\\\\?\\" + notepad;
-  const wchar_t kThisFileNeverExists[] = L"/this/file/never/exists";
+  const std::wstring valid_path = system_dir + L"\\kernel32.dll";
+  const std::wstring with_prefix = L"\\\\?\\" + valid_path;
+  constexpr wchar_t kThisFileNeverExists[] = L"/this/file/never/exists";
 
   EXPECT_TRUE(WinUtil::AreEqualFileSystemObject(system_dir, system_dir))
       << "Can work against a directory";
 
-  EXPECT_FALSE(WinUtil::AreEqualFileSystemObject(system_dir, notepad));
+  EXPECT_FALSE(WinUtil::AreEqualFileSystemObject(system_dir, valid_path));
 
-  EXPECT_TRUE(WinUtil::AreEqualFileSystemObject(notepad, notepad_with_prefix))
+  EXPECT_TRUE(WinUtil::AreEqualFileSystemObject(valid_path, with_prefix))
       << "Long path prefix should be supported.";
 
   EXPECT_FALSE(WinUtil::AreEqualFileSystemObject(kThisFileNeverExists,
@@ -199,23 +197,23 @@ TEST(WinUtilTest, AreEqualFileSystemObjectTest) {
 
 TEST(WinUtilTest, GetNtPath) {
   const std::wstring system_dir = SystemUtil::GetSystemDir();
-  const std::wstring notepad = system_dir + L"\\notepad.exe";
-  const wchar_t kThisFileNeverExists[] = L"/this/file/never/exists";
+  const std::wstring valid_path = system_dir + L"\\kernel32.dll";
+  constexpr wchar_t kThisFileNeverExists[] = L"/this/file/never/exists";
 
   std::wstring nt_system_dir;
   EXPECT_TRUE(WinUtil::GetNtPath(system_dir, &nt_system_dir))
       << "Can work against a directory.";
-  EXPECT_TRUE(LooksLikeNtPath(nt_system_dir));
+  EXPECT_THAT(nt_system_dir, LooksLikeNtPath());
 
   EXPECT_FALSE(WinUtil::GetNtPath(system_dir, nullptr))
       << "Must fail against a nullptr argument.";
 
-  std::wstring nt_notepad;
-  EXPECT_TRUE(WinUtil::GetNtPath(notepad, &nt_notepad))
+  std::wstring nt_valid_path;
+  EXPECT_TRUE(WinUtil::GetNtPath(valid_path, &nt_valid_path))
       << "Can work against a file.";
-  EXPECT_TRUE(LooksLikeNtPath(nt_notepad));
+  EXPECT_THAT(nt_valid_path, LooksLikeNtPath());
 
-  EXPECT_TRUE(nt_system_dir != nt_notepad);
+  EXPECT_TRUE(nt_system_dir != nt_valid_path);
 
   std::wstring nt_not_exists = L"foo";
   EXPECT_FALSE(WinUtil::GetNtPath(kThisFileNeverExists, &nt_not_exists))
@@ -227,7 +225,7 @@ TEST(WinUtilTest, GetProcessInitialNtPath) {
   std::wstring nt_path;
   EXPECT_TRUE(
       WinUtil::GetProcessInitialNtPath(::GetCurrentProcessId(), &nt_path));
-  EXPECT_TRUE(LooksLikeNtPath(nt_path));
+  EXPECT_THAT(nt_path, LooksLikeNtPath());
 }
 
 }  // namespace mozc
