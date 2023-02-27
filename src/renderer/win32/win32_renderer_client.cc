@@ -189,7 +189,7 @@ SenderThread *CreateSenderThread() {
   }
 
   std::unique_ptr<SenderThread> thread(
-      new SenderThread(command_event.take(), quit_event.take()));
+      new SenderThread(command_event.release(), quit_event.release()));
 
   // Resume the thread.
   if (::ResumeThread(thread_handle.get()) == -1) {
