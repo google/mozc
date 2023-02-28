@@ -30,8 +30,10 @@
 // skip all unless _WIN32
 #ifdef _WIN32
 
-#include <sddl.h>
+// clang-format off
 #include <windows.h>
+#include <sddl.h>  // needs to be after windows.h
+// clang-format on
 
 #include <algorithm>
 #include <cstdint>
