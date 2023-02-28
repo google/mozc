@@ -30,12 +30,13 @@
 #include "win32/base/indicator_visibility_tracker.h"
 
 #include "base/stopwatch.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 
-constexpr double kIgnoreMoveWindowDuration = 500.0;  // msec
+constexpr absl::Duration kIgnoreMoveWindowDuration = absl::Milliseconds(500);
 
 IndicatorVisibilityTracker::Action GetDefaultAction(bool previously_visible,
                                                     bool now_visible) {
@@ -47,27 +48,13 @@ IndicatorVisibilityTracker::Action GetDefaultAction(bool previously_visible,
 
 }  // namespace
 
-struct IndicatorVisibilityTracker::InternalState {
- public:
-  InternalState() : visible(false) {}
-  InternalState(const InternalState &) = delete;
-  InternalState &operator=(const InternalState &) = delete;
-
-  bool visible;
-  Stopwatch mode_changed_;
-};
-
-IndicatorVisibilityTracker::IndicatorVisibilityTracker()
-    : state_(new InternalState) {}
-
-IndicatorVisibilityTracker::~IndicatorVisibilityTracker() {}
 
 IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnDissociateContext() {
-  const bool original = state_->visible;
-  state_->visible = false;
-  state_->mode_changed_.Reset();
-  return GetDefaultAction(original, state_->visible);
+  const bool original = visible_;
+  visible_ = false;
+  mode_changed_.Reset();
+  return GetDefaultAction(original, visible_);
 }
 
 IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnTestKey(
@@ -75,10 +62,10 @@ IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnTestKey(
   if (!is_down) {
     return kNothing;
   }
-  const bool original = state_->visible;
-  state_->visible = false;
-  state_->mode_changed_.Reset();
-  return GetDefaultAction(original, state_->visible);
+  const bool original = visible_;
+  visible_ = false;
+  mode_changed_.Reset();
+  return GetDefaultAction(original, visible_);
 }
 
 IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnKey(
@@ -86,38 +73,35 @@ IndicatorVisibilityTracker::Action IndicatorVisibilityTracker::OnKey(
   if (!is_down) {
     return kNothing;
   }
-  const bool original = state_->visible;
-  state_->visible = false;
-  state_->mode_changed_.Reset();
-  return GetDefaultAction(original, state_->visible);
+  const bool original = visible_;
+  visible_ = false;
+  mode_changed_.Reset();
+  return GetDefaultAction(original, visible_);
 }
 
 IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnMoveFocusedWindow() {
-  const bool original = state_->visible;
-  if (state_->mode_changed_.IsRunning()) {
-    if (state_->mode_changed_.GetElapsedMilliseconds() >=
-        kIgnoreMoveWindowDuration) {
-      state_->mode_changed_.Reset();
-      state_->visible = false;
+  const bool original = visible_;
+  if (mode_changed_.IsRunning()) {
+    if (mode_changed_.GetElapsed() >= kIgnoreMoveWindowDuration) {
+      mode_changed_.Reset();
+      visible_ = false;
     }
   } else {
-    state_->visible = false;
+    visible_ = false;
   }
-  return GetDefaultAction(original, state_->visible);
+  return GetDefaultAction(original, visible_);
 }
 
 IndicatorVisibilityTracker::Action
 IndicatorVisibilityTracker::OnChangeInputMode() {
-  const bool original = state_->visible;
-  state_->visible = true;
-  state_->mode_changed_.Stop();
-  state_->mode_changed_.Reset();
-  state_->mode_changed_.Start();
-  return GetDefaultAction(original, state_->visible);
+  const bool original = visible_;
+  visible_ = true;
+  mode_changed_.Stop();
+  mode_changed_.Reset();
+  mode_changed_.Start();
+  return GetDefaultAction(original, visible_);
 }
-
-bool IndicatorVisibilityTracker::IsVisible() const { return state_->visible; }
 
 }  // namespace win32
 }  // namespace mozc
