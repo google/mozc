@@ -55,8 +55,8 @@ class CharChunk final {
   CharChunk(Transliterators::Transliterator transliterator, const Table *table);
 
   // Copyable.
-  CharChunk(const CharChunk &x);
-  CharChunk &operator=(const CharChunk &x);
+  CharChunk(const CharChunk &x) = default;
+  CharChunk &operator=(const CharChunk &x) = default;
 
   void Clear();
 

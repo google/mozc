@@ -43,7 +43,6 @@ namespace composer {
 // ========================================
 // Converter
 // ========================================
-Converter::Converter(const Table& table) : table_(table) {}
 
 void Converter::Convert(const absl::string_view input,
                         std::string* output) const {

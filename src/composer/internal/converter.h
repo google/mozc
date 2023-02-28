@@ -44,7 +44,8 @@ class Table;
 
 class Converter {
  public:
-  explicit Converter(const Table& table);
+  explicit Converter(const Table& table) : table_(table) {}
+
   Converter(const Converter&) = delete;
   Converter& operator=(const Converter&) = delete;
 

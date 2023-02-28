@@ -35,10 +35,6 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-Louds::Louds() : select0_cache_size_(0), select1_cache_size_(0) {}
-
-Louds::~Louds() {}
-
 void Louds::Init(const uint8_t *image, int length, size_t bitvec_lb0_cache_size,
                  size_t bitvec_lb1_cache_size, size_t select0_cache_size,
                  size_t select1_cache_size) {

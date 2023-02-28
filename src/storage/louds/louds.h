@@ -69,31 +69,23 @@ class Louds {
   // copy-efficient.
   class Node {
    public:
-    // Default instance represents the root node (not the super-root).
-    Node() : edge_index_(0), node_id_(1) {}
-    Node(const Node &n) : edge_index_(n.edge_index_), node_id_(n.node_id_) {}
-    Node &operator=(const Node &n) {
-      edge_index_ = n.edge_index_;
-      node_id_ = n.node_id_;
-      return *this;
-    }
+    constexpr int node_id() const { return node_id_; }
 
-    int node_id() const { return node_id_; }
-
-    friend bool operator==(const Node &x, const Node &y) {
+    friend constexpr bool operator==(const Node &x, const Node &y) {
       return x.edge_index_ == y.edge_index_ && x.node_id_ == y.node_id_;
     }
 
    private:
-    int edge_index_;
-    int node_id_;
+    // Default instance represents the root node (not the super-root).
+    int edge_index_ = 0;
+    int node_id_ = 1;
     friend class Louds;
   };
 
-  Louds();
+  Louds() = default;
   Louds(const Louds &) = delete;
   Louds &operator=(const Louds &) = delete;
-  ~Louds();
+  ~Louds() = default;
 
   // Initializes this LOUDS from bit array.  To improve the performance of
   // downward traversal (i.e., from root to leaves), set |bitvec_lb0_cache_size|
@@ -172,8 +164,8 @@ class Louds {
 
  private:
   SimpleSuccinctBitVectorIndex index_;
-  size_t select0_cache_size_;
-  size_t select1_cache_size_;
+  size_t select0_cache_size_ = 0;
+  size_t select1_cache_size_ = 0;
   std::unique_ptr<int[]> select_cache_;
   int *select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
 };

@@ -114,9 +114,6 @@ CharChunk::CharChunk(Transliterators::Transliterator transliterator,
   DCHECK_NE(Transliterators::LOCAL, transliterator);
 }
 
-CharChunk::CharChunk(const CharChunk &x) = default;
-CharChunk &CharChunk::operator=(const CharChunk &x) = default;
-
 void CharChunk::Clear() {
   raw_.clear();
   conversion_.clear();

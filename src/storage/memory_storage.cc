@@ -41,6 +41,9 @@ namespace {
 
 class MemoryStorageImpl : public storage::StorageInterface {
  public:
+  MemoryStorageImpl() = default;
+  ~MemoryStorageImpl() override = default;
+
   bool Open(const std::string &filename) override {
     data_.clear();
     return true;
@@ -78,9 +81,6 @@ class MemoryStorageImpl : public storage::StorageInterface {
   }
 
   size_t Size() const override { return data_.size(); }
-
-  MemoryStorageImpl() {}
-  ~MemoryStorageImpl() override {}
 
  private:
   std::map<std::string, std::string> data_;
