@@ -65,7 +65,7 @@ class ClockImpl : public ClockInterface {
     timezone_ = absl::FixedTimeZone(offset_sec);
 #endif  // defined(OS_CHROMEOS) || defined(_WIN32)
   }
-  ~ClockImpl() override {}
+  ~ClockImpl() override = default;
 
   void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override {
 #ifdef _WIN32
@@ -106,45 +106,6 @@ class ClockImpl : public ClockInterface {
     return absl::Now();
   }
 
-  uint64_t GetFrequency() override {
-#if defined(_WIN32)
-    LARGE_INTEGER timestamp;
-    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-    // available.
-    const BOOL result = ::QueryPerformanceFrequency(&timestamp);
-    return static_cast<uint64_t>(timestamp.QuadPart);
-#elif defined(__APPLE__)
-    static mach_timebase_info_data_t timebase_info;
-    mach_timebase_info(&timebase_info);
-    return static_cast<uint64_t>(1.0e9 * timebase_info.denom /
-                                 timebase_info.numer);
-#elif defined(__linux__) || defined(__wasm__)
-    return 1000000uLL;
-#else  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
-#error "Not supported platform"
-#endif  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
-  }
-
-  uint64_t GetTicks() override {
-    // TODO(team): Use functions in <chrono> once the use of it is approved.
-#if defined(_WIN32)
-    LARGE_INTEGER timestamp;
-    // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
-    // available.
-    const BOOL result = ::QueryPerformanceCounter(&timestamp);
-    return static_cast<uint64_t>(timestamp.QuadPart);
-#elif defined(__APPLE__)
-    return static_cast<uint64_t>(mach_absolute_time());
-#elif defined(__linux__) || defined(__wasm__)
-    uint64_t sec;
-    uint32_t usec;
-    GetTimeOfDay(&sec, &usec);
-    return sec * 1000000 + usec;
-#else  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
-#error "Not supported platform"
-#endif  // platforms (_WIN32, __APPLE__, __linux__, __wasm__)
-  }
-
   const absl::TimeZone& GetTimeZone() override {
     return timezone_;
   }
@@ -169,10 +130,6 @@ void Clock::GetTimeOfDay(uint64_t *sec, uint32_t *usec) {
 uint64_t Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
 
 absl::Time Clock::GetAbslTime() { return ClockSingleton::Get()->GetAbslTime(); }
-
-uint64_t Clock::GetFrequency() { return ClockSingleton::Get()->GetFrequency(); }
-
-uint64_t Clock::GetTicks() { return ClockSingleton::Get()->GetTicks(); }
 
 const absl::TimeZone& Clock::GetTimeZone() {
   return ClockSingleton::Get()->GetTimeZone();

@@ -49,8 +49,6 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
  protected:
   virtual void SetUp() {
     clock_mock_.reset(new ClockMock(0, 0));
-    // 1 kHz (Accuracy = 1msec)
-    clock_mock_->SetFrequency(1000uLL);
     Clock::SetClockForUnitTest(clock_mock_.get());
   }
 

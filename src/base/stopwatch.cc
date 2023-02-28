@@ -42,8 +42,6 @@ Stopwatch Stopwatch::StartNew() {
   return stopwatch;
 }
 
-Stopwatch::Stopwatch() : state_(STOPWATCH_STOPPED) {}
-
 void Stopwatch::Reset() {
   state_ = STOPWATCH_STOPPED;
   elapsed_ = absl::ZeroDuration();
@@ -61,22 +59,6 @@ void Stopwatch::Stop() {
     elapsed_ += GetElapsed();
     state_ = STOPWATCH_STOPPED;
   }
-}
-
-int64_t Stopwatch::GetElapsedMilliseconds() {
-  return absl::ToInt64Milliseconds(GetElapsed());
-}
-
-double Stopwatch::GetElapsedMicroseconds() {
-  return absl::ToDoubleMicroseconds(GetElapsed());
-}
-
-double Stopwatch::GetElapsedNanoseconds() {
-  return absl::ToDoubleNanoseconds(GetElapsed());
-}
-
-int64_t Stopwatch::GetElapsedTicks() {
-  return Clock::GetFrequency() * absl::ToDoubleSeconds(GetElapsed());
 }
 
 absl::Duration Stopwatch::GetElapsed() const {

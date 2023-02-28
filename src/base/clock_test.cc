@@ -34,6 +34,7 @@
 
 #include "base/clock_mock.h"
 #include "testing/gunit.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -91,24 +92,8 @@ TEST(ClockTest, TimeTestWithMock) {
     EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::friday);
   }
 
-  // GetFrequency / GetTicks
-  {
-    constexpr uint64_t kFrequency = 12345;
-    constexpr uint64_t kTicks = 54321;
-    clock_mock.SetFrequency(kFrequency);
-    EXPECT_EQ(Clock::GetFrequency(), kFrequency);
-    clock_mock.SetTicks(kTicks);
-    EXPECT_EQ(Clock::GetTicks(), kTicks);
-  }
-
   // Restore the default clock
   Clock::SetClockForUnitTest(nullptr);
-
-  // GetFrequency / GetTicks without ClockMock
-  {
-    EXPECT_NE(0, Clock::GetFrequency());
-    EXPECT_NE(0, Clock::GetTicks());
-  }
 }
 
 TEST(ClockTest, TimeTestWithoutMock) {

@@ -361,6 +361,7 @@ mozc_cc_test(
         ":clock",
         ":clock_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -523,8 +524,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        ":port",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
@@ -536,8 +535,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":clock_mock",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -1125,7 +1124,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )

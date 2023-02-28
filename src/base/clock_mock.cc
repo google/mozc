@@ -36,8 +36,6 @@ namespace mozc {
 
 ClockMock::ClockMock(uint64_t sec, uint32_t usec)
     : seconds_(sec),
-      frequency_(1000000000),
-      ticks_(0),
       timezone_(absl::UTCTimeZone()),
       timezone_offset_sec_(0),
       micro_seconds_(usec),
@@ -64,10 +62,6 @@ absl::Time ClockMock::GetAbslTime() {
   return at;
 }
 
-uint64_t ClockMock::GetFrequency() { return frequency_; }
-
-uint64_t ClockMock::GetTicks() { return ticks_; }
-
 const absl::TimeZone& ClockMock::GetTimeZone() {
   return timezone_;
 }
@@ -89,8 +83,6 @@ void ClockMock::PutClockForward(uint64_t delta_sec, uint32_t delta_usec) {
   }
 }
 
-void ClockMock::PutClockForwardByTicks(uint64_t ticks) { ticks_ += ticks; }
-
 void ClockMock::SetAutoPutClockForward(uint64_t delta_sec,
                                        uint32_t delta_usec) {
   delta_seconds_ = delta_sec;
@@ -101,9 +93,5 @@ void ClockMock::SetTime(uint64_t sec, uint32_t usec) {
   seconds_ = sec;
   micro_seconds_ = usec;
 }
-
-void ClockMock::SetFrequency(uint64_t frequency) { frequency_ = frequency; }
-
-void ClockMock::SetTicks(uint64_t ticks) { ticks_ = ticks; }
 
 }  // namespace mozc

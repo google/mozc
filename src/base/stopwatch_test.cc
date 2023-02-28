@@ -45,7 +45,6 @@ class StopwatchTest : public testing::Test {
   void SetUp() override {
     clock_mock_ = std::make_unique<ClockMock>(0, 0);
     // 1GHz (Accuracy = 1ns)
-    clock_mock_->SetFrequency(uint64_t{1000000000});
     Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
@@ -69,13 +68,13 @@ TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {
 
   // GetElapsedX should return the same value if the stopwatch is not running.
   EXPECT_FALSE(stopwatch.IsRunning());
-  const uint64_t elapsed_time1 = stopwatch.GetElapsedMilliseconds();
+  const absl::Duration elapsed1 = stopwatch.GetElapsed();
   PutForward(kWait);
-  const uint64_t elapsed_time2 = stopwatch.GetElapsedMilliseconds();
+  const absl::Duration elapsed2 = stopwatch.GetElapsed();
   PutForward(kWait);
-  const uint64_t elapsed_time3 = stopwatch.GetElapsedMilliseconds();
-  EXPECT_EQ(elapsed_time2, elapsed_time1);
-  EXPECT_EQ(elapsed_time3, elapsed_time1);
+  const absl::Duration elapsed3 = stopwatch.GetElapsed();
+  EXPECT_EQ(elapsed2, elapsed1);
+  EXPECT_EQ(elapsed3, elapsed1);
 }
 
 TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
@@ -85,12 +84,7 @@ TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
   PutForward(kWait);
   stopwatch.Stop();
 
-  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(),
-            absl::ToDoubleNanoseconds(kWait));
-  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(),
-            absl::ToDoubleMicroseconds(kWait));
-  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(),
-            absl::ToInt64Milliseconds(kWait));
+  EXPECT_EQ(stopwatch.GetElapsed(), kWait);
 }
 
 TEST_F(StopwatchTest, RestartTest) {
@@ -107,12 +101,7 @@ TEST_F(StopwatchTest, RestartTest) {
   stopwatch.Stop();
 
   const absl::Duration kExpected = kWait1 + kWait3;
-  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(),
-            absl::ToDoubleNanoseconds(kExpected));
-  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(),
-            absl::ToDoubleMicroseconds(kExpected));
-  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(),
-            absl::ToInt64Milliseconds(kExpected));
+  EXPECT_EQ(stopwatch.GetElapsed(), kExpected);
 }
 
 TEST_F(StopwatchTest, ResetTest) {
@@ -127,12 +116,7 @@ TEST_F(StopwatchTest, ResetTest) {
   PutForward(kWait2);
   stopwatch.Stop();
 
-  EXPECT_EQ(stopwatch.GetElapsedNanoseconds(),
-            absl::ToDoubleNanoseconds(kWait2));
-  EXPECT_EQ(stopwatch.GetElapsedMicroseconds(),
-            absl::ToDoubleMicroseconds(kWait2));
-  EXPECT_EQ(stopwatch.GetElapsedMilliseconds(),
-            absl::ToInt64Milliseconds(kWait2));
+  EXPECT_EQ(stopwatch.GetElapsed(), kWait2);
 }
 
 }  // namespace mozc
