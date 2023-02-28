@@ -30,8 +30,8 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -41,7 +41,6 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/connector.h"
@@ -49,6 +48,7 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/dictionary_prediction_aggregator.h"
@@ -58,11 +58,13 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 #ifndef NDEBUG
@@ -305,10 +307,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   }
 
 #ifdef MOZC_DEBUG
-  auto add_debug_candidate = [&](Result result, const std::string &log) {
+  auto add_debug_candidate = [&](Result result, const absl::string_view log) {
     std::string key, value;
     GetCandidateKeyAndValue(result, history_key, history_value, &key, &value);
-    result.log.append(log);
+    absl::StrAppend(&result.log, log);
     Segment::Candidate candidate;
     FillCandidate(request, result, key, value, merged_types, &candidate);
     segment->removed_candidates_for_debug_.push_back(std::move(candidate));
@@ -609,7 +611,7 @@ void DictionaryPredictor::SetPredictionCost(
   const std::string &input_key = segments.conversion_segment(0).key();
   std::string history_key, history_value;
   GetHistoryKeyAndValue(segments, &history_key, &history_value);
-  const std::string bigram_key = history_key + input_key;
+  const std::string bigram_key = absl::StrCat(history_key, input_key);
   const bool is_suggestion = (request_type == ConversionRequest::SUGGESTION);
 
   // use the same scoring function for both unigram/bigram.
@@ -846,8 +848,8 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
 }
 
 // static
-size_t DictionaryPredictor::GetMissSpelledPosition(const std::string &key,
-                                                   const std::string &value) {
+size_t DictionaryPredictor::GetMissSpelledPosition(
+    const absl::string_view key, const absl::string_view value) {
   std::string hiragana_value;
   japanese_util::KatakanaToHiragana(value, &hiragana_value);
   // value is mixed type. return true if key == request_key.
@@ -963,7 +965,7 @@ bool DictionaryPredictor::IsAggressiveSuggestion(size_t query_len,
 }
 
 int DictionaryPredictor::CalculatePrefixPenalty(
-    const ConversionRequest &request, const std::string &input_key,
+    const ConversionRequest &request, const absl::string_view input_key,
     const Result &result,
     const ImmutableConverterInterface *immutable_converter,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {

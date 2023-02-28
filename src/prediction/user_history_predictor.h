@@ -60,7 +60,7 @@ class UserHistoryPredictorSyncer;
 // Added serialization method for UserHistory.
 class UserHistoryStorage {
  public:
-  explicit UserHistoryStorage(const std::string &filename);
+  explicit UserHistoryStorage(absl::string_view filename);
   ~UserHistoryStorage();
 
   // Loads from encrypted file.
@@ -305,18 +305,17 @@ class UserHistoryPredictor : public PredictorInterface {
   static uint16_t revert_id();
 
   // Gets match type from two strings
-  static MatchType GetMatchType(const std::string &lstr,
-                                const std::string &rstr);
+  static MatchType GetMatchType(absl::string_view lstr, absl::string_view rstr);
 
   // Gets match type with ambiguity expansion
-  static MatchType GetMatchTypeFromInput(const std::string &input_key,
-                                         const std::string &key_base,
+  static MatchType GetMatchTypeFromInput(absl::string_view input_key,
+                                         absl::string_view key_base,
                                          const Trie<std::string> *key_expanded,
-                                         const std::string &target);
+                                         absl::string_view target);
 
   // Uint32 <=> string conversion
   static std::string Uint32ToString(uint32_t fp);
-  static uint32_t StringToUint32(const std::string &input);
+  static uint32_t StringToUint32(absl::string_view input);
 
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry &entry, const Entry &prev_entry);
@@ -371,8 +370,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // |prev_entry| is an optional field. If set nullptr, this field is just
   // ignored. This method adds a new result entry with score,
   // pair<score, entry>, to |results|.
-  bool LookupEntry(RequestType request_type, const std::string &input_key,
-                   const std::string &key_base,
+  bool LookupEntry(RequestType request_type, absl::string_view input_key,
+                   absl::string_view key_base,
                    const Trie<std::string> *key_expanded, const Entry *entry,
                    const Entry *prev_entry, EntryPriorityQueue *results) const;
 
@@ -385,7 +384,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // |left_last_access_time| and |left_most_last_access_time| will be updated
   // according to the entry lookup.
   bool GetKeyValueForExactAndRightPrefixMatch(
-      const std::string &input_key, const Entry *entry,
+      absl::string_view input_key, const Entry *entry,
       const Entry **result_last_entry, uint64_t *left_last_access_time,
       uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
@@ -396,8 +395,8 @@ class UserHistoryPredictor : public PredictorInterface {
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
-  Entry *AddEntryWithNewKeyValue(const std::string &key,
-                                 const std::string &value, const Entry &entry,
+  Entry *AddEntryWithNewKeyValue(absl::string_view key, absl::string_view value,
+                                 const Entry &entry,
                                  EntryPriorityQueue *results) const;
 
   void GetResultsFromHistoryDictionary(RequestType request_type,
@@ -426,8 +425,8 @@ class UserHistoryPredictor : public PredictorInterface {
   // 'Fuzzy' means that
   // 1) Allows one character deletation in the |prefix|.
   // 2) Allows one character swap in the |prefix|.
-  static bool RomanFuzzyPrefixMatch(const std::string &str,
-                                    const std::string &prefix);
+  static bool RomanFuzzyPrefixMatch(absl::string_view str,
+                                    absl::string_view prefix);
 
   // Returns romanized preedit string if the preedit looks
   // misspelled. It first tries to get the preedit string with
@@ -441,13 +440,13 @@ class UserHistoryPredictor : public PredictorInterface {
   // Currently, this function returns true if
   // 1) key contains only one alphabet.
   // 2) other characters of key are all hiragana.
-  static bool MaybeRomanMisspelledKey(const std::string &key);
+  static bool MaybeRomanMisspelledKey(absl::string_view key);
 
   // If roman_input_key can be a target key of entry->key(), creat a new
   // result and insert it to |results|.
   // This method adds a new result entry with score, pair<score, entry>, to
   // |results|.
-  bool RomanFuzzyLookupEntry(const std::string &roman_input_key,
+  bool RomanFuzzyLookupEntry(absl::string_view roman_input_key,
                              const Entry *entry,
                              EntryPriorityQueue *results) const;
 
@@ -458,14 +457,14 @@ class UserHistoryPredictor : public PredictorInterface {
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprint of the next segment.
   // |last_access_time|: the time when this entrty was created
-  void Insert(const std::string &key, const std::string &value,
-              const std::string &description, bool is_suggestion_selected,
+  void Insert(absl::string_view key, absl::string_view value,
+              absl::string_view description, bool is_suggestion_selected,
               uint32_t next_fp, uint64_t last_access_time, Segments *segments);
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insersion.
-  void TryInsert(RequestType request_type, const std::string &key,
-                 const std::string &value, const std::string &description,
+  void TryInsert(RequestType request_type, absl::string_view key,
+                 absl::string_view value, absl::string_view description,
                  bool is_suggestion_selected, uint32_t next_fp,
                  uint64_t last_access_time, Segments *segments);
 

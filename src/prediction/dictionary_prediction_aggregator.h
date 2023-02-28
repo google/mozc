@@ -30,8 +30,8 @@
 #ifndef MOZC_PREDICTION_DICTIONARY_PREDICTION_AGGREGATOR_H_
 #define MOZC_PREDICTION_DICTIONARY_PREDICTION_AGGREGATOR_H_
 
+#include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,8 +49,7 @@
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
-// for FRIEND_TEST()
-#include "testing/gunit_prod.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace prediction {
@@ -101,7 +100,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // to |results|.
   // Returns false if there is no result for |key|.
   static bool GetZeroQueryCandidatesForKey(
-      const ConversionRequest &request, const std::string &key,
+      const ConversionRequest &request, absl::string_view key,
       const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results);
 
   static void AppendZeroQueryToResults(
@@ -121,8 +120,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
                                     std::vector<Result> *results) const;
 
   // Adds prediction results from history key and value.
-  void AddBigramResultsFromHistory(const std::string &history_key,
-                                   const std::string &history_value,
+  void AddBigramResultsFromHistory(absl::string_view history_key,
+                                   absl::string_view history_value,
                                    const ConversionRequest &request,
                                    const Segments &segments,
                                    Segment::Candidate::SourceInfo source_info,
@@ -137,14 +136,14 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
 
   static void GetPredictiveResults(
       const dictionary::DictionaryInterface &dictionary,
-      const std::string &history_key, const ConversionRequest &request,
+      absl::string_view history_key, const ConversionRequest &request,
       const Segments &segments, PredictionTypes types, size_t lookup_limit,
       Segment::Candidate::SourceInfo source_info, int zip_code_id,
       int unknown_id, std::vector<Result> *results);
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
-      const std::string &history_key, const std::string &history_value,
+      absl::string_view history_key, absl::string_view history_value,
       const ConversionRequest &request, const Segments &segments,
       PredictionTypes types, size_t lookup_limit,
       Segment::Candidate::SourceInfo source_info, int unknown_id,
@@ -154,7 +153,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // applied to lookup key and/or output results.
   void GetPredictiveResultsForEnglishKey(
       const dictionary::DictionaryInterface &dictionary,
-      const ConversionRequest &request, const std::string &input_key,
+      const ConversionRequest &request, absl::string_view input_key,
       PredictionTypes types, size_t lookup_limit,
       std::vector<Result> *results) const;
 
@@ -162,7 +161,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   // involves multiple look-ups from dictionary.
   void GetPredictiveResultsUsingTypingCorrection(
       const dictionary::DictionaryInterface &dictionary,
-      const std::string &history_key, const ConversionRequest &request,
+      absl::string_view history_key, const ConversionRequest &request,
       const Segments &segments, PredictionTypes types, size_t lookup_limit,
       std::vector<Result> *results) const;
 
@@ -173,7 +172,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ConversionRequest &request, const Segments &segments);
 
   // Returns true if key consistes of '0'-'9' or '-'
-  static bool IsZipCodeRequest(const std::string &key);
+  static bool IsZipCodeRequest(absl::string_view key);
 
   // Returns max size of realtime candidates.
   size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request,
