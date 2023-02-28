@@ -45,6 +45,7 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/win32/scoped_com.h"
 #include "base/win32/scoped_handle.h"
 #include "base/win32/win_util.h"
 #include "win32/base/imm_registrar.h"

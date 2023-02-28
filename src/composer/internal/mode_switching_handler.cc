@@ -33,10 +33,10 @@
 #include "composer/internal/mode_switching_handler.h"
 
 #include <string>
-#include <utility>
 
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 
@@ -45,53 +45,39 @@ namespace composer {
 
 ModeSwitchingHandler::ModeSwitchingHandler() {
   // Default patterns are fixed right now.
-  // AddRule(key, display_mode, input_mode);
-  AddRule("google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Google", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("chrome", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("Android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("android", PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE);
-  AddRule("http", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
-  AddRule("www.", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
-  AddRule("\\\\", HALF_ALPHANUMERIC, HALF_ALPHANUMERIC);
+  // AddRule(key, {display_mode, input_mode});
+  AddRule("google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("Google", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("Chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("chrome", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("Android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("android", {PREFERRED_ALPHANUMERIC, REVERT_TO_PREVIOUS_MODE});
+  AddRule("http", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
+  AddRule("www.", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
+  AddRule("\\\\", {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC});
 }
 
-bool ModeSwitchingHandler::GetModeSwitchingRule(
-    const absl::string_view key, ModeSwitching *display_mode,
-    ModeSwitching *input_mode) const {
-  if (display_mode == nullptr || input_mode == nullptr) {
-    LOG(ERROR) << "display_mode/input_mode is nullptr.";
-    return false;
-  }
-
-  auto it = patterns_.find(key);
+ModeSwitchingHandler::Rule ModeSwitchingHandler::GetModeSwitchingRule(
+    absl::string_view key) const {
+  const auto it = patterns_.find(key);
   if (it != patterns_.end()) {
-    *display_mode = it->second.first;
-    *input_mode = it->second.second;
-    return true;
+    return it->second;
   }
 
   if (IsDriveLetter(key)) {
-    *display_mode = HALF_ALPHANUMERIC;
-    *input_mode = HALF_ALPHANUMERIC;
-    return true;
+    return {HALF_ALPHANUMERIC, HALF_ALPHANUMERIC};
   }
 
-  *display_mode = NO_CHANGE;
-  *input_mode = NO_CHANGE;
-  return false;
+  return {NO_CHANGE, NO_CHANGE};
 }
 
-bool ModeSwitchingHandler::IsDriveLetter(const absl::string_view key) {
+bool ModeSwitchingHandler::IsDriveLetter(absl::string_view key) {
   return key.size() == 3 && absl::ascii_isalpha(key[0]) && key[1] == ':' &&
          key[2] == '\\';
 }
 
-void ModeSwitchingHandler::AddRule(const absl::string_view key,
-                                   const ModeSwitching display_mode,
-                                   const ModeSwitching input_mode) {
-  patterns_.emplace(key, std::make_pair(display_mode, input_mode));
+void ModeSwitchingHandler::AddRule(absl::string_view key, const Rule rule) {
+  patterns_.emplace(key, rule);
 }
 
 ModeSwitchingHandler *ModeSwitchingHandler::GetModeSwitchingHandler() {

@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -46,7 +47,7 @@ class KeyParser {
   KeyParser(const KeyParser &) = delete;
   KeyParser &operator=(const KeyParser &) = delete;
 
-  static bool ParseKey(const std::string &key_string,
+  static bool ParseKey(absl::string_view key_string,
                        commands::KeyEvent *key_event);
   static bool ParseKeyVector(const std::vector<std::string> &keys,
                              commands::KeyEvent *key_event);

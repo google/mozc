@@ -30,6 +30,7 @@
 #include "base/run_level.h"
 
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -41,8 +42,8 @@
 
 #include "base/const.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
@@ -54,17 +55,6 @@ namespace {
 
 #ifdef _WIN32
 const wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
-
-// Returns true if both array have the same content.
-template <typename T, size_t ArraySize>
-bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {
-  for (size_t i = 0; i < ArraySize; ++i) {
-    if (lhs[i] != rhs[i]) {
-      return false;
-    }
-  }
-  return true;
-}
 
 // returns true if the token was created by Secondary Logon
 // (typically via RunAs command) or UAC (w/ alternative credential provided)
@@ -85,15 +75,12 @@ bool IsDifferentUser(const HANDLE hToken) {
   //  Vista SP1 (Normal)                     "User32 \0"
   //  ->  Vista SP1 (RunAs):                 "seclogo\0"
   //  ->  Vista SP1 (Over-the-shoulder UAC): "CredPro\0"
+  constexpr absl::string_view kSeclogo("seclogo", TOKEN_SOURCE_LENGTH);
+  constexpr absl::string_view kCredPro("CredPro", TOKEN_SOURCE_LENGTH);
 
-  // Sacrifice the last character. That is practically ok for our purpose.
-  src.SourceName[TOKEN_SOURCE_LENGTH - 1] = '\0';
+  absl::string_view source_name(src.SourceName, TOKEN_SOURCE_LENGTH);
 
-  constexpr char kSeclogo[] = "seclogo";
-  constexpr char kCredPro[] = "CredPro";
-
-  return (AreEqualArray(kSeclogo, src.SourceName) ||
-          AreEqualArray(kCredPro, src.SourceName));
+  return source_name == kSeclogo|| source_name == kCredPro;
 }
 
 // Returns true if UAC gave the high integrity level to the token
@@ -216,11 +203,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // See http://b/2301066 for details.
     const std::string user_dir = SystemUtil::GetUserProfileDirectory();
 
-    std::wstring dir;
-    Util::Utf8ToWide(user_dir, &dir);
-    ScopedHandle dir_handle(::CreateFile(dir.c_str(), READ_CONTROL | WRITE_DAC,
-                                         0, nullptr, OPEN_EXISTING,
-                                         FILE_FLAG_BACKUP_SEMANTICS, 0));
+    ScopedHandle dir_handle(::CreateFile(
+        win32::Utf8ToWide(user_dir).c_str(), READ_CONTROL | WRITE_DAC, 0,
+        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
     if (nullptr != dir_handle.get()) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;

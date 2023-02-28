@@ -30,20 +30,10 @@
 
 #include "testing/googletest.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else  // _WIN32
-#include <unistd.h>
-#endif  // _WIN32
-
-#include <climits>
 #include <string>
 
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/status.h"
-#include "base/util.h"
-#include "absl/flags/declare.h"
+#include "base/environ.h"
+#include "base/file/temp_dir.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, test_srcdir, "",
@@ -52,101 +42,20 @@ ABSL_FLAG(std::string, test_srcdir, "",
 ABSL_FLAG(std::string, test_tmpdir, "",
           "Directory for all temporary testing files.");
 
-ABSL_DECLARE_FLAG(std::string, program_invocation_name);
 
 namespace mozc {
 namespace {
 
 #include "testing/mozc_data_dir.h"
 
-#ifdef _WIN32
-std::string GetProgramPath() {
-  wchar_t w_path[MAX_PATH];
-  const DWORD char_size =
-      GetModuleFileNameW(nullptr, w_path, std::size(w_path));
-  if (char_size == 0) {
-    LOG(ERROR) << "GetModuleFileNameW failed.  error = " << ::GetLastError();
-    return "";
-  } else if (char_size >= std::size(w_path)) {
-    LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
-    return "";
-  }
-  std::string path;
-  Util::WideToUtf8(w_path, &path);
-  return path;
-}
-
 std::string GetTestSrcdir() {
-  const std::string srcdir(kMozcDataDir);
-  CHECK_OK(FileUtil::DirectoryExists(srcdir))
-      << srcdir << " is not a directory.";
-  return srcdir;
-}
-
-std::string GetTestTmpdir() {
-  const std::string tmpdir = GetProgramPath() + ".tmp";
-
-  if (!FileUtil::DirectoryExists(tmpdir).ok()) {
-    CHECK_OK(FileUtil::CreateDirectory(tmpdir));
-  }
-  return tmpdir;
-}
-
-#else  // _WIN32
-
-// Get absolute path to this executable. Corresponds to argv[0] plus
-// directory information. E.g. like "/spam/eggs/foo_unittest".
-std::string GetProgramPath() {
-  const std::string& program_invocation_name =
-      absl::GetFlag(FLAGS_program_invocation_name);
-  if (program_invocation_name.empty() || program_invocation_name[0] == '/') {
-    return program_invocation_name;
-  }
-
-  // Turn relative filename into absolute
-  char cwd_buf[PATH_MAX + 1];
-  CHECK_NE(getcwd(cwd_buf, PATH_MAX), nullptr);
-  cwd_buf[PATH_MAX] = '\0';  // make sure it's terminated
-  return FileUtil::JoinPath(cwd_buf, program_invocation_name);
-}
-
-std::string GetTestSrcdir() {
-  const char* srcdir_env = getenv("TEST_SRCDIR");
+  const char* srcdir_env = Environ::GetEnv("TEST_SRCDIR");
   if (srcdir_env && srcdir_env[0]) {
     return srcdir_env;
   }
 
-  const std::string srcdir(kMozcDataDir);
-
-#if !defined(__ANDROID__)
-  // TestSrcdir is not supported in Android.
-  // FIXME(komatsu): We should implement "genrule" and "exports_files"
-  // in build.py to install the data files into srcdir.
-  if (access(srcdir.c_str(), R_OK | X_OK) != 0) {
-    LOG(ERROR)  << "Failed to access the default srcdir: " << srcdir << "\n"
-                << "Set TEST_SRCDIR env var to specify the directory.";
-  }
-#endif  // !defined(__ANDROID__)
-  return srcdir;
+  return kMozcDataDir;
 }
-
-std::string GetTestTmpdir() {
-  std::string tmpdir;
-  const char* value = getenv("TEST_TMPDIR");
-  if (value && value[0]) {
-    tmpdir = value;
-  } else {
-    tmpdir = GetProgramPath() + ".tmp";
-  }
-
-  if (access(tmpdir.c_str(), R_OK | X_OK) != 0 &&
-      !FileUtil::CreateDirectory(tmpdir).ok()) {
-    LOG(ERROR)  << "Failed to create the default tmpdir: " << tmpdir << "\n"
-                << "Set TEST_TMPDIR env var to specify the directory.";
-  }
-  return tmpdir;
-}
-#endif  // _WIN32
 
 }  // namespace
 
@@ -155,7 +64,8 @@ void InitTestFlags() {
     absl::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
   }
   if (absl::GetFlag(FLAGS_test_tmpdir).empty()) {
-    absl::SetFlag(&FLAGS_test_tmpdir, GetTestTmpdir());
+    TempDirectory tempdir = TempDirectory::Default();
+    absl::SetFlag(&FLAGS_test_tmpdir, tempdir.path());
   }
 }
 

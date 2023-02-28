@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -54,8 +55,8 @@ class CharChunk final {
   CharChunk(Transliterators::Transliterator transliterator, const Table *table);
 
   // Copyable.
-  CharChunk(const CharChunk &x);
-  CharChunk &operator=(const CharChunk &x);
+  CharChunk(const CharChunk &x) = default;
+  CharChunk &operator=(const CharChunk &x) = default;
 
   void Clear();
 
@@ -78,7 +79,7 @@ class CharChunk final {
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
   bool IsConvertible(Transliterators::Transliterator t12r, const Table *table,
-                     const std::string &input) const;
+                     absl::string_view input) const;
 
   // Combines all fields with |left_chunk|.
   // [this chunk] := [left_chunk]+[this chunk]
@@ -126,8 +127,8 @@ class CharChunk final {
       Transliterators::Transliterator transliterator) const;
 
   std::string Transliterate(Transliterators::Transliterator transliterator,
-                            const std::string &raw,
-                            const std::string &converted) const;
+                            absl::string_view raw,
+                            absl::string_view converted) const;
 
   // The following accessors and mutators are for test only.
   Transliterators::Transliterator transliterator() const {
@@ -136,16 +137,16 @@ class CharChunk final {
   const Table *table() const { return table_; }
 
   const std::string &raw() const { return raw_; }
-  void set_raw(const std::string &raw);
+  void set_raw(absl::string_view raw);
 
   const std::string &conversion() const { return conversion_; }
-  void set_conversion(const std::string &conversion);
+  void set_conversion(absl::string_view conversion);
 
   const std::string &pending() const { return pending_; }
-  void set_pending(const std::string &pending);
+  void set_pending(absl::string_view pending);
 
   const std::string &ambiguous() const { return ambiguous_; }
-  void set_ambiguous(const std::string &ambiguous);
+  void set_ambiguous(absl::string_view ambiguous);
 
   TableAttributes attributes() const { return attributes_; }
   void set_attributes(TableAttributes attributes);

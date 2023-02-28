@@ -61,7 +61,7 @@
 #ifdef _WIN32
 #include <windows.h>
 
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
 #include <unistd.h>
@@ -890,10 +890,9 @@ bool Client::LaunchTool(const std::string &mode,
 
   if (mode == "administration_dialog") {
 #ifdef _WIN32
-    const absl::string_view path = mozc::SystemUtil::GetToolPath();
-    std::wstring wpath;
-    Util::Utf8ToWide(path, &wpath);
-    wpath = L"\"" + wpath + L"\"";
+    std::wstring wpath = L"\"";
+    wpath += win32::Utf8ToWide(mozc::SystemUtil::GetToolPath());
+    wpath += L"\"";
     // Run administration dialog with UAC.
     // AFAIK, ShellExecute is only the way to launch process with
     // UAC protection.

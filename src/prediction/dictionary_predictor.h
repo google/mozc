@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 #define MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -37,7 +38,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/util.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -45,16 +45,15 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
-#include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -153,8 +152,8 @@ class DictionaryPredictor : public PredictorInterface {
   // key: "ろっぽんぎ"
   // value: "六本木"
   // returns 5 (charslen("ろっぽんぎ"))
-  static size_t GetMissSpelledPosition(const std::string &key,
-                                       const std::string &value);
+  static size_t GetMissSpelledPosition(absl::string_view key,
+                                       absl::string_view value);
 
   // Returns language model cost of |token| given prediction type |type|.
   // |rid| is the right id of previous word (token).
@@ -235,7 +234,7 @@ class DictionaryPredictor : public PredictorInterface {
   static std::string GetPredictionTypeDebugString(PredictionTypes types);
 
   int CalculatePrefixPenalty(
-      const ConversionRequest &request, const std::string &input_key,
+      const ConversionRequest &request, absl::string_view input_key,
       const Result &result,
       const ImmutableConverterInterface *immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;

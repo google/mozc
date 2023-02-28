@@ -56,8 +56,6 @@ TypingModel::TypingModel(const char *characters, size_t characters_size,
   }
 }
 
-TypingModel::~TypingModel() = default;
-
 int TypingModel::GetCost(absl::string_view key) const {
   size_t index = GetIndex(key);
   if (index >= cost_table_size_) {

@@ -35,13 +35,16 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/util.h"
 
 // Import the generated version_def.h.
 #include "base/version_def.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+
+#ifdef _WIN32
+#include "base/win32/wide_char.h"
+#endif  // _WIN32
 
 namespace mozc {
 namespace {
@@ -56,9 +59,7 @@ std::string Version::GetMozcVersion() { return version::kMozcVersion; }
 
 #ifdef _WIN32
 std::wstring Version::GetMozcVersionW() {
-  std::wstring version;
-  Util::Utf8ToWide(version::kMozcVersion, &version);
-  return version;
+  return win32::Utf8ToWide(version::kMozcVersion);
 }
 #endif  // _WIN32
 

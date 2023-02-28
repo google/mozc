@@ -46,10 +46,6 @@ class ClockInterface {
   virtual uint64_t GetTime() = 0;
   virtual absl::Time GetAbslTime() = 0;
 
-  // High accuracy clock.
-  virtual uint64_t GetFrequency() = 0;
-  virtual uint64_t GetTicks() = 0;
-
   virtual const absl::TimeZone& GetTimeZone() = 0;
   virtual void SetTimeZoneOffset(int32_t timezone_offset_sec) = 0;
 
@@ -77,16 +73,6 @@ class Clock {
 
   // Returns the current time in absl::Time.
   static absl::Time GetAbslTime();
-
-  // Gets the system frequency to calculate the time from ticks.
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  static uint64_t GetFrequency();
-
-  // Gets the current ticks. It may return incorrect value on Virtual Machines.
-  // If you'd like to get a value in secs, it is necessary to divide a result by
-  // GetFrequency().
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  static uint64_t GetTicks();
 
   // Returns the timezone. LocalTimeZone is usually returned.
   static const absl::TimeZone& GetTimeZone();

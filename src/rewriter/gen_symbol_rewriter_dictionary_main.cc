@@ -82,7 +82,9 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
   InputFileStream rule_ifs(rule_file);
   CHECK(rule_ifs.good());
   while (!std::getline(rule_ifs, line).fail()) {
-    if (line.empty() || line[0] == '#') {
+    if (line.empty() ||
+        // Support comment and single '#'
+        (line[0] == '#' && line.size() > 1)) {
       continue;
     }
     sorting_map->insert(std::make_pair(line, sorting_key));

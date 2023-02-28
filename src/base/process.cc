@@ -70,8 +70,8 @@
 #include "absl/time/time.h"
 
 #ifdef _WIN32
-#include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #endif  // _WIN32
 
@@ -100,9 +100,8 @@ bool Process::OpenBrowser(const std::string &url) {
   }
 
 #ifdef _WIN32
-  std::wstring wurl;
-  Util::Utf8ToWide(url, &wurl);
-  return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
+  return WinUtil::ShellExecuteInSystemDir(
+      L"open", win32::Utf8ToWide(url).c_str(), nullptr);
 #endif  // _WIN32
 
 #ifdef __linux__
@@ -125,12 +124,10 @@ bool Process::OpenBrowser(const std::string &url) {
 bool Process::SpawnProcess(const std::string &path, const std::string &arg,
                            size_t *pid) {
 #ifdef _WIN32
-  std::wstring wpath;
-  Util::Utf8ToWide(path, &wpath);
+  std::wstring wpath = win32::Utf8ToWide(path);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
-    std::wstring warg;
-    Util::Utf8ToWide(arg, &warg);
+    std::wstring warg = win32::Utf8ToWide(arg);
     wpath += L" ";
     wpath += warg;
   }

@@ -38,7 +38,10 @@
       'dependencies': [
         '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_synchronization',
         "../base/absl.gyp:absl_time",
+        '../base/base.gyp:base',
+        '../base/base.gyp:clock',
         '../base/base_test.gyp:clock_mock',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',

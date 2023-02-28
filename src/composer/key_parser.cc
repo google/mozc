@@ -42,6 +42,7 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 using commands::KeyEvent;
@@ -178,7 +179,8 @@ class KeyParserData {
 }  // namespace
 
 // static
-bool KeyParser::ParseKey(const std::string &key_string, KeyEvent *key_event) {
+bool KeyParser::ParseKey(const absl::string_view key_string,
+                         KeyEvent *key_event) {
   std::vector<std::string> keys =
       absl::StrSplit(key_string, ' ', absl::SkipEmpty());
   if (keys.empty()) {
@@ -209,7 +211,7 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
       continue;
     }
 
-    std::string lower_key = key;
+    std::string lower_key(key);
     Util::LowerString(&lower_key);
 
     if (const auto &it = modifiers.find(lower_key); it != modifiers.end()) {

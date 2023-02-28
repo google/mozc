@@ -33,30 +33,14 @@
 
 #include "base/double_array.h"
 #include "base/japanese_util_rule.h"
+#include "base/strings/unicode.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
 namespace {
 
-// Table of UTF-8 character lengths, based on first byte
-const unsigned char kUTF8LenTbl[256] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
-
-// Return length of a single UTF-8 source character
-size_t OneCharLen(const char *src) {
-  return kUTF8LenTbl[*reinterpret_cast<const uint8_t *>(src)];
-}
+using strings::OneCharLen;
 
 int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
                       const char *key, int len, int *result) {
@@ -113,7 +97,7 @@ void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
       mblen -= static_cast<int32_t>(p[len + 1]);
       begin += mblen;
     } else {
-      mblen = OneCharLen(begin);
+      mblen = OneCharLen(*begin);
       output->append(begin, mblen);
       begin += mblen;
     }

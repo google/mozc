@@ -30,9 +30,12 @@
 #include "prediction/user_history_predictor.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <set>
@@ -154,7 +157,7 @@ bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
 }
 
 // Returns romanaized string.
-std::string ToRoman(const std::string &str) {
+std::string ToRoman(const absl::string_view str) {
   std::string result;
   japanese_util::HiraganaToRomanji(str, &result);
   return result;
@@ -162,7 +165,7 @@ std::string ToRoman(const std::string &str) {
 
 // Returns true if value looks like a content word.
 // Currently, just checks the script type.
-bool IsContentWord(const std::string &value) {
+bool IsContentWord(const absl::string_view value) {
   return Util::CharsLen(value) > 1 ||
          Util::GetScriptType(value) != Util::UNKNOWN_SCRIPT;
 }
@@ -231,7 +234,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   return kNonSensitive;
 }
 
-UserHistoryStorage::UserHistoryStorage(const std::string &filename)
+UserHistoryStorage::UserHistoryStorage(const absl::string_view filename)
     : storage_(new storage::EncryptedStringStorage(filename)) {}
 
 UserHistoryStorage::~UserHistoryStorage() = default;
@@ -756,7 +759,8 @@ std::string UserHistoryPredictor::GetRomanMisspelledKey(
 }
 
 // static
-bool UserHistoryPredictor::MaybeRomanMisspelledKey(const std::string &key) {
+bool UserHistoryPredictor::MaybeRomanMisspelledKey(
+    const absl::string_view key) {
   int num_alpha = 0;
   int num_hiragana = 0;
   int num_unknown = 0;
@@ -783,8 +787,8 @@ bool UserHistoryPredictor::MaybeRomanMisspelledKey(const std::string &key) {
 }
 
 // static
-bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
-                                                 const std::string &prefix) {
+bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
+    const absl::string_view str, const absl::string_view prefix) {
   if (prefix.empty() || prefix.size() > str.size()) {
     return false;
   }
@@ -800,7 +804,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
       // '-' voice sound mark can be matched to any
       // non-alphanum character.
       if (!isalnum(prefix[i])) {
-        std::string replaced_prefix = prefix;
+        std::string replaced_prefix(prefix);
         replaced_prefix[i] = str[i];
         if (absl::StartsWith(str, replaced_prefix)) {
           return true;
@@ -808,7 +812,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
       }
     } else {
       // deletion.
-      std::string inserted_prefix = prefix;
+      std::string inserted_prefix(prefix);
       inserted_prefix.insert(i, 1, str[i]);
       if (absl::StartsWith(str, inserted_prefix)) {
         return true;
@@ -816,9 +820,8 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
 
       // swap.
       if (i + 1 < prefix.size()) {
-        std::string swapped_prefix = prefix;
-        using std::swap;
-        swap(swapped_prefix[i], swapped_prefix[i + 1]);
+        std::string swapped_prefix(prefix);
+        std::swap(swapped_prefix[i], swapped_prefix[i + 1]);
         if (absl::StartsWith(str, swapped_prefix)) {
           return true;
         }
@@ -833,7 +836,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
 }
 
 bool UserHistoryPredictor::RomanFuzzyLookupEntry(
-    const std::string &roman_input_key, const Entry *entry,
+    const absl::string_view roman_input_key, const Entry *entry,
     EntryPriorityQueue *results) const {
   if (roman_input_key.empty()) {
     return false;
@@ -866,15 +869,15 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntry(
 }
 
 UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
-    const std::string &key, const std::string &value, const Entry &entry,
-    EntryPriorityQueue *results) const {
+    const absl::string_view key, const absl::string_view value,
+    const Entry &entry, EntryPriorityQueue *results) const {
   // We add an entry even if it was marked as removed so that it can be used to
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
   Entry *new_entry = results->NewEntry();
   *new_entry = entry;
-  new_entry->set_key(key);
-  new_entry->set_value(value);
+  new_entry->set_key(std::string(key));
+  new_entry->set_value(std::string(value));
 
   // Sets removed field true if the new key and value were removed.
   const Entry *e = dic_->LookupWithoutInsert(Fingerprint(key, value));
@@ -884,7 +887,7 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
 }
 
 bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
-    const std::string &input_key, const Entry *entry,
+    const absl::string_view input_key, const Entry *entry,
     const Entry **result_last_entry, uint64_t *left_last_access_time,
     uint64_t *left_most_last_access_time, std::string *result_key,
     std::string *result_value) const {
@@ -984,8 +987,8 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
 }
 
 bool UserHistoryPredictor::LookupEntry(RequestType request_type,
-                                       const std::string &input_key,
-                                       const std::string &key_base,
+                                       const absl::string_view input_key,
+                                       const absl::string_view key_base,
                                        const Trie<std::string> *key_expanded,
                                        const Entry *entry,
                                        const Entry *prev_entry,
@@ -1569,9 +1572,10 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
 }
 
 void UserHistoryPredictor::TryInsert(
-    RequestType request_type, const std::string &key, const std::string &value,
-    const std::string &description, bool is_suggestion_selected,
-    uint32_t next_fp, uint64_t last_access_time, Segments *segments) {
+    RequestType request_type, const absl::string_view key,
+    const absl::string_view value, const absl::string_view description,
+    bool is_suggestion_selected, uint32_t next_fp, uint64_t last_access_time,
+    Segments *segments) {
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
       description.size() > kMaxStringLength) {
@@ -1588,9 +1592,9 @@ void UserHistoryPredictor::TryInsert(
          last_access_time, segments);
 }
 
-void UserHistoryPredictor::Insert(const std::string &key,
-                                  const std::string &value,
-                                  const std::string &description,
+void UserHistoryPredictor::Insert(const absl::string_view key,
+                                  const absl::string_view value,
+                                  const absl::string_view description,
                                   bool is_suggestion_selected, uint32_t next_fp,
                                   uint64_t last_access_time,
                                   Segments *segments) {
@@ -1620,14 +1624,14 @@ void UserHistoryPredictor::Insert(const std::string &key,
   Entry *entry = &(e->value);
   DCHECK(entry);
 
-  entry->set_key(key);
-  entry->set_value(value);
+  entry->set_key(std::string(key));
+  entry->set_value(std::string(value));
   entry->set_removed(false);
 
   if (description.empty()) {
     entry->clear_description();
   } else {
-    entry->set_description(description);
+    entry->set_description(std::string(description));
   }
 
   entry->set_last_access_time(last_access_time);
@@ -1954,7 +1958,7 @@ void UserHistoryPredictor::Revert(Segments *segments) {
 
 // static
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
-    const std::string &lstr, const std::string &rstr) {
+    const absl::string_view lstr, const absl::string_view rstr) {
   if (lstr.empty() && !rstr.empty()) {
     return LEFT_EMPTY_MATCH;
   }
@@ -1982,8 +1986,8 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchType(
 
 // static
 UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
-    const std::string &input_key, const std::string &key_base,
-    const Trie<std::string> *key_expanded, const std::string &target) {
+    const absl::string_view input_key, const absl::string_view key_base,
+    const Trie<std::string> *key_expanded, const absl::string_view target) {
   if (key_expanded == nullptr) {
     // |input_key| and |key_base| can be different by compoesr modification.
     // For example, |input_key|, "８，＋", and |base| "８、＋".
@@ -2022,7 +2026,7 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
                                     &key_length, &has_subtrie)) {
       return NO_MATCH;
     }
-    const std::string matched = key_base + value;
+    const std::string matched = absl::StrCat(key_base, value);
     if (matched == target && matched == input_key) {
       return EXACT_MATCH;
     } else {
@@ -2079,7 +2083,7 @@ std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
 }
 
 // static
-uint32_t UserHistoryPredictor::StringToUint32(const std::string &input) {
+uint32_t UserHistoryPredictor::StringToUint32(const absl::string_view input) {
   uint32_t result = 0;
   if (input.size() == sizeof(result)) {
     memcpy(reinterpret_cast<char *>(&result), input.data(), input.size());

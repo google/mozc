@@ -30,10 +30,11 @@
 #ifndef MOZC_PREDICTION_SUGGESTION_FILTER_H_
 #define MOZC_PREDICTION_SUGGESTION_FILTER_H_
 
+#include <cstddef>
 #include <memory>
-#include <string>
 
-#include "base/port.h"
+#include "storage/existence_filter.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -46,9 +47,9 @@ class SuggestionFilter {
   SuggestionFilter(const SuggestionFilter &) = delete;
   SuggestionFilter &operator=(const SuggestionFilter &) = delete;
   SuggestionFilter(const char *data, size_t size);
-  ~SuggestionFilter();
+  ~SuggestionFilter() = default;
 
-  bool IsBadSuggestion(const std::string &text) const;
+  bool IsBadSuggestion(absl::string_view text) const;
 
  private:
   std::unique_ptr<mozc::storage::ExistenceFilter> filter_;

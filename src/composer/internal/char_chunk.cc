@@ -35,16 +35,22 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "absl/container/btree_set.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
 
 namespace {
+
+using strings::OneCharLen;
+
 // Max recursion count for looking up pending loop.
 constexpr int kMaxRecursion = 4;
 
@@ -65,7 +71,7 @@ constexpr int kMaxRecursion = 4;
 // '{*}ぃ' -> '', '{*}い'
 // '{*}い' -> '', '{*}ぃ'
 // Here, we want to get '{*}あ' <-> '{*}ぁ' loop from the input, 'あ'
-bool GetFromPending(const Table *table, const std::string &key,
+bool GetFromPending(const Table *table, const absl::string_view key,
                     int recursion_count, absl::btree_set<std::string> *result) {
   DCHECK(result);
   if (recursion_count == 0) {
@@ -77,7 +83,7 @@ bool GetFromPending(const Table *table, const std::string &key,
     // Return true because we found the loop.
     return true;
   }
-  result->insert(key);
+  result->emplace(key);
 
   std::vector<const Entry *> entries;
   table->LookUpPredictiveAll(key, &entries);
@@ -107,9 +113,6 @@ CharChunk::CharChunk(Transliterators::Transliterator transliterator,
       local_length_cache_(std::string::npos) {
   DCHECK_NE(Transliterators::LOCAL, transliterator);
 }
-
-CharChunk::CharChunk(const CharChunk &x) = default;
-CharChunk &CharChunk::operator=(const CharChunk &x) = default;
 
 void CharChunk::Clear() {
   raw_.clear();
@@ -257,14 +260,14 @@ bool CharChunk::IsAppendable(Transliterators::Transliterator t12r,
 
 bool CharChunk::IsConvertible(Transliterators::Transliterator t12r,
                               const Table *table,
-                              const std::string &input) const {
+                              const absl::string_view input) const {
   if (!IsAppendable(t12r, table)) {
     return false;
   }
 
   size_t key_length = 0;
   bool fixed = false;
-  std::string key = pending_ + input;
+  std::string key = absl::StrCat(pending_, input);
   const Entry *entry = table->LookUpPrefix(key, &key_length, &fixed);
 
   return entry && (key.size() == key_length) && fixed;
@@ -310,7 +313,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
       // operation is performed.
       if (pending_.empty()) {
         // Conversion data was not found. Add one character to the chunk.
-        const size_t one_char_len = Util::OneCharLen(input->data());
+        const int one_char_len = OneCharLen(input->front());
         raw_.append(*input, 0, one_char_len);
         conversion_.append(*input, 0, one_char_len);
         input->erase(0, one_char_len);
@@ -510,23 +513,23 @@ void CharChunk::SetTransliterator(
   transliterator_ = transliterator;
 }
 
-void CharChunk::set_raw(const std::string &raw) {
-  raw_ = raw;
+void CharChunk::set_raw(const absl::string_view raw) {
+  raw_ = std::string(raw);
   local_length_cache_ = std::string::npos;
 }
 
-void CharChunk::set_conversion(const std::string &conversion) {
-  conversion_ = conversion;
+void CharChunk::set_conversion(const absl::string_view conversion) {
+  conversion_ = std::string(conversion);
   local_length_cache_ = std::string::npos;
 }
 
-void CharChunk::set_pending(const std::string &pending) {
-  pending_ = pending;
+void CharChunk::set_pending(const absl::string_view pending) {
+  pending_ = std::string(pending);
   local_length_cache_ = std::string::npos;
 }
 
-void CharChunk::set_ambiguous(const std::string &ambiguous) {
-  ambiguous_ = ambiguous;
+void CharChunk::set_ambiguous(const absl::string_view ambiguous) {
+  ambiguous_ = std::string(ambiguous);
   local_length_cache_ = std::string::npos;
 }
 
@@ -590,8 +593,8 @@ Transliterators::Transliterator CharChunk::GetTransliterator(
 }
 
 std::string CharChunk::Transliterate(
-    Transliterators::Transliterator transliterator, const std::string &raw,
-    const std::string &converted) const {
+    Transliterators::Transliterator transliterator, const absl::string_view raw,
+    const absl::string_view converted) const {
   return Transliterators::GetTransliterator(GetTransliterator(transliterator))
       ->Transliterate(raw, converted);
 }

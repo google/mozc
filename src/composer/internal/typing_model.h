@@ -54,7 +54,7 @@ class TypingModel {
               const uint8_t *cost_table, size_t cost_table_size,
               const int32_t *mapping_table);
 
-  virtual ~TypingModel();
+  virtual ~TypingModel() = default;
 
   // Gets cost value from key.
   // virtual for mocking.

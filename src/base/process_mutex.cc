@@ -47,8 +47,8 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #ifdef _WIN32
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #endif  // _WIN32
 #include "absl/synchronization/mutex.h"
@@ -89,8 +89,7 @@ bool ProcessMutex::LockAndWrite(const std::string &message) {
     return false;
   }
 
-  std::wstring wfilename;
-  Util::Utf8ToWide(filename_, &wfilename);
+  const std::wstring wfilename = win32::Utf8ToWide(filename_);
   constexpr DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_FLAG_DELETE_ON_CLOSE;

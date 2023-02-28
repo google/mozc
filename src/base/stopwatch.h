@@ -32,7 +32,6 @@
 
 #include <cstdint>
 
-#include "absl/base/attributes.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -48,8 +47,6 @@ class Stopwatch {
   // and returns the stopwatch object.
   static Stopwatch StartNew();
 
-  Stopwatch();
-
   // Sets elapsed time to zero.
   // Stops the time counting.
   void Reset();
@@ -64,30 +61,15 @@ class Stopwatch {
   // to accumulate a periodic activity.
   void Stop();
 
-  // Returns the elapsed time as millisecond.
-  ABSL_DEPRECATED("Use GetElapsed() instead.")
-  int64_t GetElapsedMilliseconds();
-
-  // Returns the elapsed time as microsecond.
-  ABSL_DEPRECATED("Use GetElapsed() instead.")
-  double GetElapsedMicroseconds();
-
-  // Returns the elapsed time as nanosecond.
-  ABSL_DEPRECATED("Use GetElapsed() instead.")
-  double GetElapsedNanoseconds();
-
-  // Returns the elapsed time as ticks.
-  ABSL_DEPRECATED("Use GetElapsed() instead.")
-  int64_t GetElapsedTicks();
-
+  // Returns the elapsed time.
   absl::Duration GetElapsed() const;
 
   // Returns true if the time counting is on-going.
   bool IsRunning() const;
 
  private:
-  StopwatchState state_;
-  absl::Time start_;
+  StopwatchState state_ = STOPWATCH_STOPPED;
+  absl::Time start_ = absl::InfinitePast();
   absl::Duration elapsed_;
 };
 

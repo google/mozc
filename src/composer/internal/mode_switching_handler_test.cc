@@ -31,70 +31,71 @@
 
 #include <string>
 
+#include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
+namespace {
+
+using ::testing::PrintToString;
+
+MATCHER_P2(RuleEq, display_mode, input_mode,
+           absl::StrFormat("%s to %s", negation ? "equals" : "doesn't equal",
+                           PrintToString(ModeSwitchingHandler::Rule{
+                               display_mode, input_mode}))) {
+  return arg.display_mode == display_mode && arg.input_mode == input_mode;
+}
 
 TEST(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
   ModeSwitchingHandler handler;
 
-  ModeSwitchingHandler::ModeSwitching display_mode =
-      ModeSwitchingHandler::NO_CHANGE;
-  ModeSwitchingHandler::ModeSwitching input_mode =
-      ModeSwitchingHandler::NO_CHANGE;
+  EXPECT_THAT(handler.GetModeSwitchingRule("google"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("google", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("Google"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("Google", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("Chrome"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("Chrome", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("chrome"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("chrome", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("Android"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("Android", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("android"),
+              RuleEq(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC,
+                     ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE));
 
-  EXPECT_TRUE(
-      handler.GetModeSwitchingRule("android", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::PREFERRED_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE);
+  EXPECT_THAT(handler.GetModeSwitchingRule("http"),
+              RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
+                     ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("http", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_THAT(handler.GetModeSwitchingRule("www."),
+              RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
+                     ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("www.", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_THAT(handler.GetModeSwitchingRule("\\\\"),
+              RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
+                     ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("\\\\", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
+  EXPECT_THAT(handler.GetModeSwitchingRule("C:\\"),
+              RuleEq(ModeSwitchingHandler::HALF_ALPHANUMERIC,
+                     ModeSwitchingHandler::HALF_ALPHANUMERIC));
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("C:\\", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::HALF_ALPHANUMERIC);
-
-  // Normal text should return false.
-  EXPECT_FALSE(
-      handler.GetModeSwitchingRule("foobar", &display_mode, &input_mode));
-  EXPECT_EQ(display_mode, ModeSwitchingHandler::NO_CHANGE);
-  EXPECT_EQ(input_mode, ModeSwitchingHandler::NO_CHANGE);
+  // Normal text should return NO_CHANGE.
+  EXPECT_THAT(
+      handler.GetModeSwitchingRule("foobar"),
+      RuleEq(ModeSwitchingHandler::NO_CHANGE, ModeSwitchingHandler::NO_CHANGE));
 }
 
 TEST(ModeSwitchingHandlerTest, IsDriveLetter) {
@@ -104,5 +105,6 @@ TEST(ModeSwitchingHandlerTest, IsDriveLetter) {
   EXPECT_FALSE(ModeSwitchingHandler::IsDriveLetter("6:\\"));
 }
 
+}  // namespace
 }  // namespace composer
 }  // namespace mozc

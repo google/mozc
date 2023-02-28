@@ -34,7 +34,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
 

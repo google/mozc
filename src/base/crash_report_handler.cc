@@ -43,8 +43,8 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/version.h"
+#include "base/win32/wide_char.h"
 #include "third_party/breakpad/src/client/windows/handler/exception_handler.h"
 
 namespace {
@@ -265,8 +265,8 @@ bool CrashReportHandler::Initialize(bool check_address) {
       FileUtil::CreateDirectory(acrashdump_directory);
     }
 
-    std::wstring crashdump_directory;
-    Util::Utf8ToWide(acrashdump_directory, &crashdump_directory);
+    const std::wstring crashdump_directory =
+        win32::Utf8ToWide(acrashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
         check_address ? FilterHandler : nullptr;

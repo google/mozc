@@ -34,6 +34,8 @@
 #include <string>
 
 #include "composer/table.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -41,10 +43,10 @@ namespace composer {
 // ========================================
 // Converter
 // ========================================
-Converter::Converter(const Table& table) : table_(table) {}
 
-void Converter::Convert(const std::string& input, std::string* output) const {
-  std::string key = input;
+void Converter::Convert(const absl::string_view input,
+                        std::string* output) const {
+  std::string key(input);
   output->clear();  // equivalent to output->assign("")
   while (!key.empty()) {
     size_t key_length;
@@ -55,7 +57,7 @@ void Converter::Convert(const std::string& input, std::string* output) const {
       key.erase(0, 1);
     } else {
       output->append(entry->result());
-      key = entry->pending() + key.substr(key_length);
+      key = absl::StrCat(entry->pending(), key.substr(key_length));
     }
   }
 }

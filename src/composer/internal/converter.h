@@ -35,6 +35,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -43,11 +44,12 @@ class Table;
 
 class Converter {
  public:
-  explicit Converter(const Table& table);
+  explicit Converter(const Table& table) : table_(table) {}
+
   Converter(const Converter&) = delete;
   Converter& operator=(const Converter&) = delete;
 
-  void Convert(const std::string& input, std::string* output) const;
+  void Convert(absl::string_view input, std::string* output) const;
 
  private:
   const Table& table_;

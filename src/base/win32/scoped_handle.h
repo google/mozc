@@ -45,12 +45,19 @@ class ScopedHandle {
   typedef void *Win32Handle;
 
   // Initializes with nullptr.
-  ScopedHandle();
+  ScopedHandle() = default;
 
   // Initializes with taking ownership of |handle|.
   // Covert: If |handle| is INVALID_HANDLE_VALUE, this wrapper treat
   //     it as nullptr.
   explicit ScopedHandle(Win32Handle handle);
+
+  // This class is movable.
+  ScopedHandle(ScopedHandle&& other): handle_(other.release()){}
+  ScopedHandle& operator=(ScopedHandle&& other) {
+    reset(other.release());
+    return *this;
+  }
 
   // Call ::CloseHandle API against the current object (if any).
   ~ScopedHandle();
@@ -60,15 +67,15 @@ class ScopedHandle {
   void reset(Win32Handle handle);
 
   // Returns the object pointer without transferring the ownership.
-  Win32Handle get() const;
+  constexpr Win32Handle get() const { return handle_; }
 
   // Transfers ownership away from this object.
-  Win32Handle take();
+  Win32Handle release();
 
  private:
   void Close();
 
-  Win32Handle handle_;
+  Win32Handle handle_ = nullptr;
 };
 
 }  // namespace mozc

@@ -49,6 +49,7 @@
 #include "base/url.h"
 #include "base/util.h"
 #include "base/version.h"
+#include "base/win32/scoped_com.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
 #include "client/client_interface.h"

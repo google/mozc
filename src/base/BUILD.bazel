@@ -277,7 +277,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":singleton",
-        ":thread",
+        ":thread2",
         "//testing:gunit_main",
         "@com_google_absl//absl/time",
     ],
@@ -361,6 +361,7 @@ mozc_cc_test(
         ":clock",
         ":clock_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -376,6 +377,7 @@ mozc_cc_library(
     deps = [
         ":double_array_def",
         ":japanese_util_rule",
+        "//base/strings:unicode",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -406,6 +408,7 @@ mozc_cc_library(
     deps = [
         ":logging",
         ":port",
+        "//base/strings:unicode",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/numeric:bits",
@@ -414,7 +417,9 @@ mozc_cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_test(
@@ -438,7 +443,9 @@ mozc_cc_library(
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = ["@com_google_absl//absl/strings"] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_binary(
@@ -517,8 +524,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        ":port",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
@@ -530,8 +535,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":clock_mock",
-        ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -544,7 +549,10 @@ mozc_cc_library(
         ":port",
         ":util",
     ] + mozc_select(
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
+        ],
     ),
 )
 
@@ -589,6 +597,7 @@ mozc_cc_library(
         ":logging",
         ":mmap",
         ":singleton",
+        "//bazel/win32:ktmw32",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -597,6 +606,7 @@ mozc_cc_library(
         windows = [
             ":util",
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
         ],
     ),
 )
@@ -634,8 +644,11 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_library(
@@ -664,7 +677,11 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
+        "//bazel/win32:aux_ulib",  # win_util
+        "//bazel/win32:imm32",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         android = [
@@ -673,6 +690,12 @@ mozc_cc_library(
         ],
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
+        windows = [
+            "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
+            # win_util.h includes gunit_prod.h for FRIEND_TEST.
+            "//testing:gunit_prod",
+        ],
     ),
 )
 
@@ -707,12 +730,14 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":system_util",
-        ":util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         macos = ["//base/mac:mac_process"],
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:wide_char",
+            "//base/win32:scoped_handle",
+        ],
     ),
 )
 
@@ -743,6 +768,7 @@ mozc_cc_library(
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
             "//base/win32:win_sandbox",
         ],
     ),
@@ -780,9 +806,11 @@ mozc_cc_library(
         ":port",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
             "//base/win32:win_sandbox",
         ],
     ),
@@ -913,7 +941,9 @@ mozc_cc_library(
         ":port",
         ":util",
         "@com_google_absl//absl/strings",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_test(
@@ -991,12 +1021,14 @@ mozc_cc_library(
         ":singleton",
         ":system_util",
         ":util",
+        "//bazel/win32:crypt32",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/strings:str_format",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
+        windows = ["//base/win32:wide_char"],
     ),
 )
 
@@ -1008,6 +1040,9 @@ mozc_cc_test(
         "password_manager_test.cc",
     ],
     requires_full_emulation = False,
+    # Skipped for Windows Presubmit as CryptProtectData doesn't work on a headless Windows VM.
+    # Background: https://github.com/Azure/azure-cli/issues/20695#issuecomment-992086316
+    tags = ["nowin"],
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
@@ -1089,7 +1124,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
@@ -1186,9 +1220,10 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":system_util",
-        ":util",
         ":version",
-    ],
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_cc_library(
@@ -1231,6 +1266,8 @@ mozc_cc_library(
     hdrs = ["status.h"],
     deps = [
         ":logging",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

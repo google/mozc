@@ -32,18 +32,20 @@
 // skipp all unless _WIN32
 #ifdef _WIN32
 #include <aclapi.h>
-#include <windows.h>
 #include <atlsecurity.h>
 #include <sddl.h>
-#include <strsafe.h>
+#include <windows.h>
+// clang-format off
+#include <strsafe.h>  // needs to come after other headers
+// clang-format on
 
 #include <memory>
 #include <string>
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 namespace {
@@ -781,12 +783,10 @@ WinSandbox::SecurityInfo::SecurityInfo()
 bool WinSandbox::SpawnSandboxedProcess(const std::string &path,
                                        const std::string &arg,
                                        const SecurityInfo &info, DWORD *pid) {
-  std::wstring wpath;
-  Util::Utf8ToWide(path, &wpath);
+  std::wstring wpath = win32::Utf8ToWide(path);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
-    std::wstring warg;
-    Util::Utf8ToWide(arg, &warg);
+    std::wstring warg = win32::Utf8ToWide(arg);
     wpath += L" ";
     wpath += warg;
   }

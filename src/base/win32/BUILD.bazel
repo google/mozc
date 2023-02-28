@@ -32,7 +32,9 @@
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
+    "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = [
@@ -44,14 +46,36 @@ mozc_cc_library(
     srcs = ["scoped_handle.cc"],
     hdrs = ["scoped_handle.h"],
     tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_library(
+    name = "scoped_com",
+    hdrs = ["scoped_com.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//bazel/win32:ole32",
+    ],
+)
+
+mozc_cc_test(
+    name = "scoped_com_test",
+    srcs = ["scoped_com_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":scoped_com",
+        "//testing:gunit_main",
+    ],
 )
 
 mozc_cc_library(
     name = "win_api_test_helper",
-    # TODO(b/180075250): Add when we support win32 builds.
-    # srcs = ["win_api_test_helper.cc"],
+    srcs = ["win_api_test_helper.cc"],
     hdrs = ["win_api_test_helper.h"],
     tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     visibility = [
         # For //config:stats_config_util_test.
         "//config:__pkg__",
@@ -63,23 +87,27 @@ mozc_cc_library(
     ],
 )
 
-# TODO (b/180075250): Add when we support win32 builds.
-# mozc_cc_test(
-#     name = "win_api_test_helper_test",
-#     srcs = ["win_api_test_helper_test.cc"],
-#     deps = [
-#         ":win_api_test_helper",
-#         "//testing:gunit_main_objc",
-#     ],
-# )
+mozc_cc_test(
+    name = "win_api_test_helper_test",
+    srcs = ["win_api_test_helper_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win_api_test_helper",
+        "//testing:gunit_main",
+    ],
+)
 
 mozc_cc_library(
     name = "win_font_test_helper",
     testonly = True,
     srcs = ["win_font_test_helper.cc"],
     hdrs = ["win_font_test_helper.h"],
+    features = ["gdi"],
     tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":wide_char",
         "//base:logging",
         "//base:mmap",
         "//base:port",
@@ -92,50 +120,57 @@ mozc_cc_library(
     srcs = ["win_sandbox.cc"],
     hdrs = ["win_sandbox.h"],
     tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":scoped_handle",
         "//base:logging",
         "//base:port",
         "//base:system_util",
-        "//base:util",
+        "//base/win32:wide_char",
     ],
 )
 
-# TODO (b/180075250): Add when we support win32 builds.
-# mozc_cc_test(
-#     name = "win_sandbox_test",
-#     srcs = ["win_sandbox_test.cc"],
-#     deps = [
-#         ":scoped_handle",
-#         ":win_sandbox",
-#         "//testing:gunit_main_objc",
-#     ],
-# )
+mozc_cc_test(
+    name = "win_sandbox_test",
+    srcs = ["win_sandbox_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":scoped_handle",
+        ":win_sandbox",
+        "//testing:gunit_main",
+    ],
+)
 
-# TODO (b/180075250): Add when we support win32 builds.
-# mozc_cc_test(
-#     name = "win_util_test",
-#     srcs = ["win_util_test.cc"],
-#     deps = [
-#         ":win_util",
-#         "//base:system_util",
-#         "//base:util",
-#         "//testing:gunit_main_objc",
-#     ],
-# )
+mozc_cc_test(
+    name = "win_util_test",
+    srcs = ["win_util_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win_util_test_dll",  # fixdeps: keep
+        "//base:system_util",
+        "//base:util",
+        "//testing:gunit_main",
+    ],
+)
 
-# TODO (b/180075250): Add when we support win32 builds.
-# mozc_cc_library(
-#     name = "win_util_test_dll",
-#     testonly = True,
-#     srcs = ["win_util_test_dll.cc"],
-#     deps = [":win_util"],
-# )
+mozc_cc_binary(
+    name = "win_util_test_dll",
+    testonly = True,
+    srcs = ["win_util_test_dll.cc"],
+    linkshared = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "win_util_test_dll.def",
+    deps = ["//base:system_util"],
+)
 
 mozc_cc_library(
     name = "winmain",
     hdrs = ["winmain.h"],
     tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     visibility = [
         # For //server:mozc_server.
         "//server:__pkg__",
@@ -157,4 +192,27 @@ filegroup(
 filegroup(
     name = "win_util_cc",
     srcs = ["win_util.cc"],
+)
+
+mozc_cc_library(
+    name = "wide_char",
+    srcs = ["wide_char.cc"],
+    hdrs = ["wide_char.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "wide_char_test",
+    srcs = ["wide_char_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":wide_char",
+        "//testing:gunit_main",
+    ],
 )

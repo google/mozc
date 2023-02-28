@@ -32,9 +32,12 @@
 #ifdef _WIN32
 #include <windows.h>
 
+#include <type_traits>
+
 namespace mozc {
 
-ScopedHandle::ScopedHandle() : handle_(nullptr) {}
+static_assert(std::is_same_v<ScopedHandle::Win32Handle, HANDLE>,
+              "Win32Handle and HANDLE must be the same");
 
 ScopedHandle::ScopedHandle(Win32Handle handle) : handle_(nullptr) {
   reset(handle);
@@ -64,10 +67,8 @@ void ScopedHandle::reset(Win32Handle handle) {
   }
 }
 
-ScopedHandle::Win32Handle ScopedHandle::get() const { return handle_; }
-
 // transfers ownership away from this object
-ScopedHandle::Win32Handle ScopedHandle::take() {
+ScopedHandle::Win32Handle ScopedHandle::release() {
   HANDLE handle = handle_;
   handle_ = nullptr;
   return handle;

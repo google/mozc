@@ -31,9 +31,9 @@
 
 #include <cstdint>
 
-#include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -99,20 +99,6 @@ TEST(ClockMockTest, GetCurrentTmWithOffsetWithTimeZoneOffsetTest) {
   EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::wednesday);
 }
 
-TEST(ClockMockTest, GetFrequencyAndTicks) {
-  ClockMock mock(0, 0);
-  EXPECT_NE(mock.GetFrequency(), 0);
-  EXPECT_EQ(mock.GetTicks(), 0);
-
-  constexpr uint64_t kFrequency = 123456789uLL;
-  mock.SetFrequency(kFrequency);
-  EXPECT_EQ(mock.GetFrequency(), kFrequency);
-
-  constexpr uint64_t kTicks = 987654321uLL;
-  mock.SetTicks(kTicks);
-  EXPECT_EQ(mock.GetTicks(), kTicks);
-}
-
 TEST(ClockMockTest, PutClockForwardTest) {
   // 2024/02/22 23:11:15
   uint64_t current_sec;
@@ -154,15 +140,6 @@ TEST(ClockMockTest, PutClockForwardTest) {
         kTestMicroSeconds + offset_micro_seconds - 1000000;
     EXPECT_EQ(current_usec, expected_usec);
   }
-}
-
-TEST(ClockMockTest, PutClockForwardByTicksTest) {
-  ClockMock mock(0, 0);
-  ASSERT_EQ(0, mock.GetTicks());
-
-  constexpr uint64_t kPutForwardTicks = 100;
-  mock.PutClockForwardByTicks(kPutForwardTicks);
-  EXPECT_EQ(mock.GetTicks(), kPutForwardTicks);
 }
 
 TEST(ClockMockTest, AutoPutForwardTest) {

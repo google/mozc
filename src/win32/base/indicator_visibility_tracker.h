@@ -32,9 +32,7 @@
 
 #include <windows.h>
 
-#include <memory>
-
-#include "base/port.h"
+#include "base/stopwatch.h"
 #include "win32/base/keyboard.h"
 
 namespace mozc {
@@ -46,11 +44,11 @@ class IndicatorVisibilityTracker {
     kNothing,   // The caller has nothing to do.
     kUpdateUI,  // The caller must update UI for the indicator.
   };
-  IndicatorVisibilityTracker();
+  IndicatorVisibilityTracker() = default;
   IndicatorVisibilityTracker(const IndicatorVisibilityTracker &) = delete;
   IndicatorVisibilityTracker &operator=(const IndicatorVisibilityTracker &) =
       delete;
-  ~IndicatorVisibilityTracker();
+  ~IndicatorVisibilityTracker() = default;
 
   // Event call back endpoints.
   Action OnDissociateContext();
@@ -60,11 +58,11 @@ class IndicatorVisibilityTracker {
   Action OnChangeInputMode();
 
   // Returns if the indicator should be displayed or not.
-  bool IsVisible() const;
+  constexpr bool IsVisible() const { return visible_; }
 
  private:
-  struct InternalState;
-  std::unique_ptr<InternalState> state_;
+  bool visible_ = false;
+  Stopwatch mode_changed_;
 };
 
 }  // namespace win32

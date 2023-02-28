@@ -39,6 +39,7 @@
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -61,7 +62,7 @@ static void InitTable(Table *table) {
   table->AddRule("nn", "ん", "");
 }
 
-std::string GetResult(const Table &table, const std::string &key) {
+std::string GetResult(const Table &table, const absl::string_view key) {
   const Entry *entry = table.LookUp(key);
   if (entry == nullptr) {
     return "<nullptr>";
@@ -69,7 +70,7 @@ std::string GetResult(const Table &table, const std::string &key) {
   return entry->result();
 }
 
-std::string GetInput(const Table &table, const std::string &key) {
+std::string GetInput(const Table &table, const absl::string_view key) {
   const Entry *entry = table.LookUp(key);
   if (entry == nullptr) {
     return "<nullptr>";

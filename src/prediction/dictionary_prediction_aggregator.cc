@@ -41,6 +41,7 @@
 #include "base/japanese_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -53,7 +54,10 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "transliteration/transliteration.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -89,7 +93,8 @@ bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
 }
 
 // Returns true if the |target| may be reduncant result.
-bool MaybeRedundant(const std::string &reference, const std::string &target) {
+bool MaybeRedundant(const absl::string_view reference,
+                    const absl::string_view target) {
   return absl::StartsWith(target, reference);
 }
 
@@ -963,7 +968,7 @@ void DictionaryPredictionAggregator::AggregateBigramPrediction(
 }
 
 void DictionaryPredictionAggregator::AddBigramResultsFromHistory(
-    const std::string &history_key, const std::string &history_value,
+    const absl::string_view history_key, const absl::string_view history_value,
     const ConversionRequest &request, const Segments &segments,
     Segment::Candidate::SourceInfo source_info,
     std::vector<Result> *results) const {
@@ -1103,13 +1108,13 @@ void DictionaryPredictionAggregator::CheckBigramResult(
 }
 
 void DictionaryPredictionAggregator::GetPredictiveResults(
-    const DictionaryInterface &dictionary, const std::string &history_key,
+    const DictionaryInterface &dictionary, const absl::string_view history_key,
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes types, size_t lookup_limit,
     Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
     std::vector<Result> *results) {
   if (!request.has_composer()) {
-    std::string input_key = history_key;
+    std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, source_info,
@@ -1128,7 +1133,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   request.composer().GetQueriesForPrediction(&base, &expanded);
   std::string input_key;
   if (expanded.empty()) {
-    input_key.assign(history_key).append(base);
+    input_key = absl::StrCat(history_key, base);
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, source_info,
         zip_code_id, unknown_id, "", GetSpatialCostParams(request), results);
@@ -1141,14 +1146,14 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // identify whether the key is actually expanded or not.
   const std::string non_expanded_original_key =
       IsEnableNewSpatialScoring(request)
-          ? history_key + segments.conversion_segment(0).key()
+          ? absl::StrCat(history_key, segments.conversion_segment(0).key())
           : "";
 
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
   // by |lookup_limit|.
   for (const std::string &expanded_char : expanded) {
-    input_key.assign(history_key).append(base).append(expanded_char);
+    input_key = absl::StrCat(history_key, base, expanded_char);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       nullptr, source_info, zip_code_id,
                                       unknown_id, non_expanded_original_key,
@@ -1158,13 +1163,13 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
 }
 
 void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
-    const DictionaryInterface &dictionary, const std::string &history_key,
-    const std::string &history_value, const ConversionRequest &request,
+    const DictionaryInterface &dictionary, const absl::string_view history_key,
+    const absl::string_view history_value, const ConversionRequest &request,
     const Segments &segments, PredictionTypes types, size_t lookup_limit,
     Segment::Candidate::SourceInfo source_info, int unknown_id_,
     std::vector<Result> *results) const {
   if (!request.has_composer()) {
-    std::string input_key = history_key;
+    std::string input_key(history_key);
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, history_value,
@@ -1182,10 +1187,10 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   std::string base;
   std::set<std::string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
-  const std::string input_key = history_key + base;
+  const std::string input_key = absl::StrCat(history_key, base);
   const std::string non_expanded_original_key =
       IsEnableNewSpatialScoring(request)
-          ? history_key + segments.conversion_segment(0).key()
+          ? absl::StrCat(history_key, segments.conversion_segment(0).key())
           : "";
 
   PredictiveBigramLookupCallback callback(
@@ -1198,8 +1203,8 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
 
 void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
     const DictionaryInterface &dictionary, const ConversionRequest &request,
-    const std::string &input_key, PredictionTypes types, size_t lookup_limit,
-    std::vector<Result> *results) const {
+    const absl::string_view input_key, PredictionTypes types,
+    size_t lookup_limit, std::vector<Result> *results) const {
   const size_t prev_results_size = results->size();
   if (Util::IsUpperAscii(input_key)) {
     // For upper case key, look up its lower case version and then transform
@@ -1247,7 +1252,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
 }
 
 void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
-    const DictionaryInterface &dictionary, const std::string &history_key,
+    const DictionaryInterface &dictionary, const absl::string_view history_key,
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes types, size_t lookup_limit,
     std::vector<Result> *results) const {
@@ -1259,7 +1264,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
   request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
   for (size_t query_index = 0; query_index < queries.size(); ++query_index) {
     const composer::TypeCorrectedQuery &query = queries[query_index];
-    const std::string input_key = history_key + query.base;
+    const std::string input_key(absl::StrCat(history_key, query.base));
     const size_t previous_results_size = results->size();
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
@@ -1280,7 +1285,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
 
 // static
 bool DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
-    const ConversionRequest &request, const std::string &key,
+    const ConversionRequest &request, const absl::string_view key,
     const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results) {
   DCHECK(results);
   results->clear();
@@ -1598,7 +1603,8 @@ bool DictionaryPredictionAggregator::ShouldAggregateRealTimeConversionResults(
           IsMixedConversionEnabled(request.request()));
 }
 
-bool DictionaryPredictionAggregator::IsZipCodeRequest(const std::string &key) {
+bool DictionaryPredictionAggregator::IsZipCodeRequest(
+    const absl::string_view key) {
   if (key.empty()) {
     return false;
   }

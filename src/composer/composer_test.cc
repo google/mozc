@@ -63,7 +63,7 @@ using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
 using ProbableKeyEvents = ::mozc::protobuf::RepeatedPtrField<ProbableKeyEvent>;
 using Request = ::mozc::commands::Request;
 
-bool InsertKey(const std::string &key_string, Composer *composer) {
+bool InsertKey(const absl::string_view key_string, Composer *composer) {
   commands::KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return false;
@@ -71,7 +71,7 @@ bool InsertKey(const std::string &key_string, Composer *composer) {
   return composer->InsertCharacterKeyEvent(key);
 }
 
-bool InsertKeyWithMode(const std::string &key_string,
+bool InsertKeyWithMode(const absl::string_view key_string,
                        const commands::CompositionMode mode,
                        Composer *composer) {
   commands::KeyEvent key;
@@ -2571,7 +2571,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
     const commands::Context::InputFieldType field_type;
     const bool expected_return;
     const size_t expected_commit_length;
-    TestData(const std::string &input_text,
+    TestData(const absl::string_view input_text,
              commands::Context::InputFieldType field_type, bool expected_return,
              size_t expected_commit_length)
         : input_text(input_text),
@@ -2821,7 +2821,7 @@ ProbableKeyEvents GetStubProbableKeyEvent(int key_code, double probability) {
   return result;
 }
 
-KeyEvent GetKeyEvent(const std::string &raw,
+KeyEvent GetKeyEvent(const absl::string_view raw,
                      ProbableKeyEvents probable_key_events) {
   KeyEvent key_event;
   key_event.set_key_code(Util::Utf8ToUcs4(raw));

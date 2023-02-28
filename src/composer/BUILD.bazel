@@ -50,6 +50,7 @@ mozc_cc_library(
         "//base:japanese_util",
         "//base:logging",
         "//base:util",
+        "//base/strings:unicode",
         "//composer/internal:composition",
         "//composer/internal:composition_input",
         "//composer/internal:mode_switching_handler",
@@ -151,6 +152,7 @@ mozc_cc_test(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -29,15 +29,10 @@
 
 #include "base/file_util.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <fstream>
 #include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
@@ -45,20 +40,20 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 
+#ifdef _WIN32
+#include <windows.h>
+
+#include "base/win32/wide_char.h"
+#endif  // _WIN32
+
 // Ad-hoc workadound against macro problem on Windows.
 // On Windows, following macros, defined when you include <windows.h>,
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
-#ifdef CreateDirectory
 #undef CreateDirectory
-#endif  // CreateDirectory
-#ifdef RemoveDirectory
 #undef RemoveDirectory
-#endif  // RemoveDirectory
-#ifdef CopyFile
 #undef CopyFile
-#endif  // CopyFile
 
 namespace mozc {
 namespace {
@@ -123,8 +118,7 @@ TEST(FileUtilTest, Unlink) {
       FILE_ATTRIBUTE_SYSTEM,  FILE_ATTRIBUTE_TEMPORARY,
   };
 
-  std::wstring wfilepath;
-  Util::Utf8ToWide(filepath, &wfilepath);
+  const std::wstring wfilepath = win32::Utf8ToWide(filepath);
   for (size_t i = 0; i < std::size(kTestAttributeList); ++i) {
     SCOPED_TRACE(absl::StrFormat("AttributeTest %zd", i));
     CreateTestFile(filepath, "attribute_test");
@@ -147,8 +141,7 @@ TEST(FileUtilTest, HideFile) {
 
   EXPECT_FALSE(FileUtil::HideFile(filename));
 
-  std::wstring wfilename;
-  Util::Utf8ToWide(filename.c_str(), &wfilename);
+  const std::wstring wfilename = win32::Utf8ToWide(filename);
 
   CreateTestFile(filename, "test data");
   EXPECT_OK(FileUtil::FileExists(filename));
@@ -298,9 +291,8 @@ TEST(FileUtilTest, CopyFile) {
     CreateTestFile(from, test_label);
 
     const TestData &kData = kTestDataList[i];
-    std::wstring wfrom, wto;
-    Util::Utf8ToWide(from.c_str(), &wfrom);
-    Util::Utf8ToWide(to.c_str(), &wto);
+    const std::wstring wfrom = win32::Utf8ToWide(from);
+    const std::wstring wto = win32::Utf8ToWide(to);
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
@@ -386,9 +378,8 @@ TEST(FileUtilTest, AtomicRename) {
     CreateTestFile(from, test_label);
 
     const TestData &kData = kTestDataList[i];
-    std::wstring wfrom, wto;
-    Util::Utf8ToWide(from.c_str(), &wfrom);
-    Util::Utf8ToWide(to.c_str(), &wto);
+    const std::wstring wfrom = win32::Utf8ToWide(from);
+    const std::wstring wto = win32::Utf8ToWide(to);
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));

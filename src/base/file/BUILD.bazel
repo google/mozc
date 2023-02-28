@@ -1,0 +1,108 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# File and path utilities.
+# This is an alternative for <filesystem> and boost as it's banned by Google's C++ style guide.
+# https://google.github.io/styleguide/cppguide.html#Other_Features
+
+load(
+    "//:build_defs.bzl",
+    "mozc_cc_library",
+    "mozc_cc_test",
+    "mozc_select",
+)
+
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
+mozc_cc_library(
+    name = "temp_dir",
+    srcs = ["temp_dir.cc"],
+    hdrs = ["temp_dir.h"],
+    deps = [
+        "//base:environ",
+        "//base:file_util",
+        "//base:logging",
+        "//base:util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
+)
+
+mozc_cc_test(
+    name = "temp_dir_test",
+    srcs = ["temp_dir_test.cc"],
+    deps = [
+        ":temp_dir",
+        "//base:environ_mock",
+        "//base:file_util",
+        "//base:logging",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "recursive",
+    srcs = ["recursive.cc"],
+    hdrs = ["recursive.h"],
+    deps = [
+        "//base:file_util",
+        "//base:logging",
+        "//base:system_util",  # for ScopedCOMInitializer
+        "//base:util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ] + mozc_select(
+        windows = [
+            "//base/win32:scoped_com",
+            "//base/win32:wide_char",
+        ],
+    ),
+)
+
+mozc_cc_test(
+    name = "recursive_test",
+    srcs = ["recursive_test.cc"],
+    deps = [
+        ":recursive",
+        ":temp_dir",
+        "//base:file_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)

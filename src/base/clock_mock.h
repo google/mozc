@@ -33,7 +33,7 @@
 #include <cstdint>
 
 #include "base/clock.h"
-#include "base/port.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -51,8 +51,6 @@ class ClockMock : public ClockInterface {
   void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override;
   uint64_t GetTime() override;
   absl::Time GetAbslTime() override;
-  uint64_t GetFrequency() override;
-  uint64_t GetTicks() override;
 
   const absl::TimeZone& GetTimeZone() override;
   void SetTimeZoneOffset(int32_t timezone_offset_sec) override;
@@ -70,13 +68,9 @@ class ClockMock : public ClockInterface {
   void SetAutoPutClockForward(uint64_t delta_sec, uint32_t delta_usec);
 
   void SetTime(uint64_t sec, uint32_t usec);
-  void SetFrequency(uint64_t frequency);
-  void SetTicks(uint64_t ticks);
 
  private:
   uint64_t seconds_;
-  uint64_t frequency_;
-  uint64_t ticks_;
   absl::TimeZone timezone_;
   int32_t timezone_offset_sec_;
   // To optimize the padding, micro_seconds_ is after another int32_t value.

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <ios>
 #include <memory>
@@ -43,6 +44,7 @@
 #include "base/util.h"
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "per-line suggestion filter list");
 ABSL_FLAG(std::string, output, "", "output bloom filter");
@@ -57,7 +59,7 @@ ABSL_FLAG(std::string, safe_list_files, "",
 namespace {
 using mozc::storage::ExistenceFilter;
 
-void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
+void ReadHashList(const absl::string_view name, std::vector<uint64_t> *words) {
   std::string line;
   mozc::InputFileStream input(name);
   while (std::getline(input, line)) {
@@ -69,12 +71,12 @@ void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
   }
 }
 
-void ReadSafeWords(const std::string &safe_list_files,
+void ReadSafeWords(const absl::string_view safe_list_files,
                    std::vector<std::string> *safe_word_list) {
   if (safe_list_files.empty()) {
     return;
   }
-  mozc::InputMultiFile input(safe_list_files.c_str());
+  mozc::InputMultiFile input(safe_list_files);
   std::string line;
   while (input.ReadLine(&line)) {
     if (line.empty() || line[0] == '#') {

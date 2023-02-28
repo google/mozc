@@ -29,14 +29,11 @@
 
 #include "prediction/predictor.h"
 
-#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
 
 #include "base/logging.h"
-#include "base/singleton.h"
-#include "base/system_util.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -51,7 +48,6 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

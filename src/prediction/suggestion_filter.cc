@@ -29,12 +29,15 @@
 
 #include "prediction/suggestion_filter.h"
 
+#include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -43,13 +46,11 @@ SuggestionFilter::SuggestionFilter(const char *data, size_t size) {
   LOG_IF(ERROR, filter_.get() == nullptr) << "SuggestionFilterData is broken";
 }
 
-SuggestionFilter::~SuggestionFilter() {}
-
-bool SuggestionFilter::IsBadSuggestion(const std::string &text) const {
+bool SuggestionFilter::IsBadSuggestion(const absl::string_view text) const {
   if (filter_ == nullptr) {
     return false;
   }
-  std::string lower_text = text;
+  std::string lower_text(text);
   Util::LowerString(&lower_text);
   return filter_->Exists(Hash::Fingerprint(lower_text));
 }

@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -39,13 +40,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
@@ -53,20 +51,13 @@
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/node_allocator.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_group.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/suffix_dictionary.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/system/system_dictionary.h"
 #include "prediction/suggestion_filter.h"
-#include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -74,13 +65,12 @@
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -114,8 +104,8 @@ class DictionaryPredictorTestPeer {
         query_len, key_len, cost, is_suggestion, total_candidates_size);
   }
 
-  static size_t GetMissSpelledPosition(const std::string &key,
-                                       const std::string &value) {
+  static size_t GetMissSpelledPosition(const absl::string_view key,
+                                       const absl::string_view value) {
     return DictionaryPredictor::GetMissSpelledPosition(key, value);
   }
 

@@ -58,6 +58,7 @@
 
 #include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #else  // _WIN32
 #include <sys/stat.h>
 #include <unistd.h>
@@ -78,15 +79,9 @@ constexpr char kFileDelimiter = '/';
 // should be removed here because they affects the method name definition of
 // Util class.
 // TODO(yukawa): Use different method name if applicable.
-#ifdef CreateDirectory
 #undef CreateDirectory
-#endif  // CreateDirectory
-#ifdef RemoveDirectory
 #undef RemoveDirectory
-#endif  // RemoveDirectory
-#ifdef CopyFile
 #undef CopyFile
-#endif  // CopyFile
 
 namespace mozc {
 namespace {
@@ -174,8 +169,7 @@ absl::Status StripWritePreventingAttributesIfExists(
   } else if (!s.ok()) {
     return s;
   }
-  std::wstring wide_filename;
-  Util::Utf8ToWide(filename, &wide_filename);
+  const std::wstring wide_filename = win32::Utf8ToWide(filename);
   constexpr DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
   absl::StatusOr<DWORD> attributes = GetFileAttributes(wide_filename);
@@ -204,8 +198,8 @@ absl::Status FileUtil::CreateDirectory(const std::string &path) {
 
 absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
 #if defined(_WIN32)
-  std::wstring wide;
-  if (Util::Utf8ToWide(path, &wide) <= 0) {
+  const std::wstring wide = win32::Utf8ToWide(path);
+  if (wide.empty()) {
     return absl::InvalidArgumentError("Failed to convert to wstring");
   }
   if (!::CreateDirectoryW(wide.c_str(), nullptr)) {
@@ -227,8 +221,8 @@ absl::Status FileUtil::RemoveDirectory(const std::string &dirname) {
 
 absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #ifdef _WIN32
-  std::wstring wide;
-  if (Util::Utf8ToWide(dirname, &wide) <= 0) {
+  const std::wstring wide = win32::Utf8ToWide(dirname);
+  if (wide.empty()) {
     return absl::InvalidArgumentError("Failed to convert to wstring");
   }
   if (!::RemoveDirectoryW(wide.c_str())) {
@@ -266,8 +260,8 @@ absl::Status FileUtilImpl::Unlink(const std::string &filename) const {
     return absl::UnknownError(absl::StrFormat(
         "StripWritePreventingAttributesIfExists failed: %s", s.ToString()));
   }
-  std::wstring wide;
-  if (Util::Utf8ToWide(filename, &wide) <= 0) {
+  const std::wstring wide = win32::Utf8ToWide(filename);
+  if (wide.empty()) {
     return absl::InvalidArgumentError("Utf8ToWide failed");
   }
   if (!::DeleteFileW(wide.c_str())) {
@@ -308,8 +302,8 @@ absl::Status FileUtil::FileExists(const std::string &filename) {
 
 absl::Status FileUtilImpl::FileExists(const std::string &filename) const {
 #ifdef _WIN32
-  std::wstring wide;
-  if (Util::Utf8ToWide(filename, &wide) <= 0) {
+  const std::wstring wide = win32::Utf8ToWide(filename);
+  if (wide.empty()) {
     return absl::InvalidArgumentError("Utf8ToWide failed");
   }
   return GetFileAttributes(wide).status();
@@ -329,8 +323,8 @@ absl::Status FileUtil::DirectoryExists(const std::string &dirname) {
 
 absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 #ifdef _WIN32
-  std::wstring wide;
-  if (Util::Utf8ToWide(dirname, &wide) <= 0) {
+  const std::wstring wide = win32::Utf8ToWide(dirname);
+  if (wide.empty()) {
     return absl::InvalidArgumentError("Utf8ToWide failed");
   }
 
@@ -411,9 +405,7 @@ bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
     return false;
   }
 
-  std::wstring wfilename;
-  Util::Utf8ToWide(filename, &wfilename);
-
+  const std::wstring wfilename = win32::Utf8ToWide(filename);
   const absl::StatusOr<DWORD> original_attributes =
       GetFileAttributes(wfilename);
   if (!original_attributes.ok()) {
@@ -440,12 +432,13 @@ absl::Status FileUtil::CopyFile(const std::string &from,
 absl::Status FileUtilImpl::CopyFile(const std::string &from,
                                     const std::string &to) const {
 #ifdef _WIN32
-  std::wstring wfrom, wto;
-  if (Util::Utf8ToWide(from, &wfrom) <= 0) {
+  const std::wstring wfrom = win32::Utf8ToWide(from);
+  if (wfrom.empty()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Cannot convert to wstring: ", from));
   }
-  if (Util::Utf8ToWide(to, &wto) <= 0) {
+  const std::wstring wto = win32::Utf8ToWide(to);
+  if (wto.empty()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Cannot convert to wstring: ", to));
   }
@@ -544,9 +537,8 @@ absl::Status FileUtil::AtomicRename(const std::string &from,
 absl::Status FileUtilImpl::AtomicRename(const std::string &from,
                                         const std::string &to) const {
 #ifdef _WIN32
-  std::wstring fromw, tow;
-  Util::Utf8ToWide(from, &fromw);
-  Util::Utf8ToWide(to, &tow);
+  const std::wstring fromw = win32::Utf8ToWide(from);
+  const std::wstring tow = win32::Utf8ToWide(to);
 
   absl::Status move_status = TransactionalMoveFile(fromw, tow);
   if (move_status.ok()) {
@@ -680,8 +672,8 @@ absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
 absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
     const std::string &filename) const {
 #if defined(_WIN32)
-  std::wstring wide;
-  if (!Util::Utf8ToWide(filename, &wide)) {
+  const std::wstring wide = win32::Utf8ToWide(filename);
+  if (wide.empty()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Utf8ToWide failed: ", filename));
   }

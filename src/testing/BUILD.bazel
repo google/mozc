@@ -30,6 +30,7 @@
 load(
     "//:build_defs.bzl",
     "mozc_cc_library",
+    "mozc_cc_test",
     "mozc_objc_library",
     "mozc_select",
 )
@@ -124,6 +125,10 @@ mozc_cc_library(
         ],
         oss = [":gunit_main_internal"],
         wasm = [":gunit_main_internal"],
+        windows = [
+            ":gunit_main_internal",
+            "@gtest//:gtest",
+        ],
     ),
 )
 
@@ -175,23 +180,30 @@ mozc_cc_library(
     deps = mozc_select(
         client = [
             ":mozc_data_dir_header",
-            "//base:status",
-            "//base:logging",
-            "//base:file_util",
+            "//base:environ",
+            "//base/file:temp_dir",
             "@com_google_absl//absl/flags:flag",
-            "//base:util",
         ],
         default = ["@gtest//:gtest"],
         linux = ["@gtest//:gtest"],
         oss = [
             ":mozc_data_dir_header",
-            "//base:status",
-            "//base:logging",
-            "//base:file_util",
+            "//base:environ",
+            "//base/file:temp_dir",
             "@com_google_absl//absl/flags:flag",
-            "//base:util",
         ],
     ),
+)
+
+mozc_cc_test(
+    name = "googletest_test",
+    srcs = ["googletest_test.cc"],
+    data = ["googletest_test.cc"],  # Use the source file as test data.
+    deps = [
+        ":gunit_main",
+        "//base:file_util",
+        "@com_google_absl//absl/flags:flag",
+    ],
 )
 
 mozc_cc_library(
@@ -213,5 +225,15 @@ mozc_cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "mozctest_test",
+    srcs = ["mozctest_test.cc"],
+    data = ["mozctest_test.cc"],
+    deps = [
+        ":gunit_main",
+        ":mozctest",
     ],
 )

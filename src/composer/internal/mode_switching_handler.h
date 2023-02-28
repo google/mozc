@@ -34,7 +34,6 @@
 #define MOZC_COMPOSER_INTERNAL_MODE_SWITCHING_HANDLER_H_
 
 #include <string>
-#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
@@ -55,11 +54,18 @@ class ModeSwitchingHandler {
     FULL_ALPHANUMERIC,
   };
 
-  // Returns true if the current preedit matches to patterns.  |key|
-  // is the string which the user actually typed.  display_mode and
-  // input_mode are stored rules controlling the composer.
-  bool GetModeSwitchingRule(absl::string_view key, ModeSwitching *display_mode,
-                            ModeSwitching *input_mode) const;
+  struct Rule {
+    // |display_mode| affects the existing composition the user typed.
+    ModeSwitching display_mode;
+    // |input_mode| affects current input mode to be used for the user's new
+    // typing.
+    ModeSwitching input_mode;
+  };
+
+  // Returns a Rule for the current preedit. |key| is the string which the user
+  // actually typed. display_mode and input_mode are stored rules controlling
+  // the composer. Returns NO_CHANGE if the key doesn't match the stored rules.
+  Rule GetModeSwitchingRule(absl::string_view key) const;
 
   // Gets the singleton instance of this class.
   static ModeSwitchingHandler *GetModeSwitchingHandler();
@@ -70,15 +76,10 @@ class ModeSwitchingHandler {
   static bool IsDriveLetter(absl::string_view key);
 
  private:
-  // Adds a rule for mode switching.  |display_mode| affects the
-  // existing composition the user typed.  |input_mode| affects the
-  // current input mode to be used for the user's new typing.
-  void AddRule(absl::string_view key, ModeSwitching display_mode,
-               ModeSwitching input_mode);
+  // Adds a rule for mode switching. The rule is passed by value as it's small.
+  void AddRule(absl::string_view key, Rule rule);
 
-  // map<key, pair<display_mode, input_mode>>.
-  absl::flat_hash_map<std::string, std::pair<ModeSwitching, ModeSwitching>>
-      patterns_;
+  absl::flat_hash_map<std::string, Rule> patterns_;
 };
 
 }  // namespace composer

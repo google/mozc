@@ -97,6 +97,8 @@
       'sources': [
         '<(gen_out_dir)/character_set.inc',
         'environ.cc',
+        'file/recursive.cc',
+        'file/temp_dir.cc',
         'file_stream.cc',
         'file_util.cc',
         'init_mozc.cc',
@@ -108,7 +110,6 @@
         'thread.cc',
         'thread2.cc',
         'util.cc',
-        'win32/win_util.cc',
       ],
       'dependencies': [
         'clock',
@@ -124,6 +125,10 @@
       ],
       'conditions': [
         ['OS=="win"', {
+          'sources': [
+            'win32/wide_char.cc',
+            'win32/win_util.cc',
+          ],
           'dependencies': [
             'scoped_handle',
             'absl.gyp:absl_base',

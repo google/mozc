@@ -29,19 +29,17 @@
 
 #include "config/config_handler.h"
 
-#include <atomic>
+#include <array>
 #include <cstddef>
-#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
-#include "base/thread.h"
-#include "base/util.h"
+#include "base/thread2.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
@@ -51,13 +49,15 @@
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 #ifdef _WIN32
 #include <windows.h>
+
+#include "base/util.h"
 #endif  // _WIN32
 
 namespace mozc {
@@ -258,14 +258,13 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
   // TODO(yukawa): Generate test data automatically so that we can keep
   //     the compatibility among variety of config files.
   // TODO(yukawa): Enumerate test data in the directory automatically.
-  const char *kDataFiles[] = {
+  constexpr std::array<absl::string_view, 3> kDataFiles = {
       "linux_config1.db",
       "mac_config1.db",
       "win_config1.db",
   };
 
-  for (size_t i = 0; i < std::size(kDataFiles); ++i) {
-    const char *file_name = kDataFiles[i];
+  for (absl::string_view file_name : kDataFiles) {
     const std::string src_path = mozc::testing::GetSourceFileOrDie(
         {"data", "test", "config", file_name});
     const std::string dest_path =
@@ -309,11 +308,12 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
-    const char *group;
+    absl::string_view group;
     Config::CharacterForm preedit_character_form;
     Config::CharacterForm conversion_character_form;
   };
-  const TestCase testcases[] = {
+
+  constexpr std::array<TestCase, 13> kTestCases = {{
       // "ア"
       {"ア", Config::FULL_WIDTH, Config::FULL_WIDTH},
       {"A", Config::FULL_WIDTH, Config::LAST_FORM},
@@ -330,14 +330,14 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
       {"~", Config::FULL_WIDTH, Config::LAST_FORM},
       {"<>=+-/*", Config::FULL_WIDTH, Config::LAST_FORM},
       {"?!", Config::FULL_WIDTH, Config::LAST_FORM},
-  };
-  EXPECT_EQ(output.character_form_rules_size(), std::size(testcases));
-  for (size_t i = 0; i < std::size(testcases); ++i) {
-    EXPECT_EQ(output.character_form_rules(i).group(), testcases[i].group);
+  }};
+  EXPECT_EQ(output.character_form_rules_size(), kTestCases.size());
+  for (size_t i = 0; i < kTestCases.size(); ++i) {
+    EXPECT_EQ(output.character_form_rules(i).group(), kTestCases[i].group);
     EXPECT_EQ(output.character_form_rules(i).preedit_character_form(),
-              testcases[i].preedit_character_form);
+              kTestCases[i].preedit_character_form);
     EXPECT_EQ(output.character_form_rules(i).conversion_character_form(),
-              testcases[i].conversion_character_form);
+              kTestCases[i].conversion_character_form);
   }
 
 #if defined(__ANDROID__) && defined(CHANNEL_DEV)
@@ -352,30 +352,6 @@ TEST_F(ConfigHandlerTest, DefaultConfig) {
   EXPECT_EQ(ConfigHandler::DefaultConfig().DebugString(), config.DebugString());
 }
 
-class SetConfigThread final : public Thread {
- public:
-  explicit SetConfigThread(const std::vector<Config> &configs)
-      : quitting_(false), configs_(configs) {}
-
-  ~SetConfigThread() override {
-    quitting_ = true;
-    Join();
-  }
-
- protected:
-  void Run() override {
-    absl::BitGen gen;
-    while (!quitting_) {
-      const size_t next_index = absl::Uniform(gen, 0u, configs_.size());
-      ConfigHandler::SetConfig(configs_.at(next_index));
-    }
-  }
-
- private:
-  std::atomic<bool> quitting_;
-  std::vector<Config> configs_;
-};
-
 // Returns concatenated serialized data of |Config::character_form_rules|.
 std::string ExtractCharacterFormRules(const Config &config) {
   std::string rules;
@@ -384,33 +360,6 @@ std::string ExtractCharacterFormRules(const Config &config) {
   }
   return rules;
 }
-
-class GetConfigThread final : public Thread {
- public:
-  explicit GetConfigThread(
-      const absl::flat_hash_set<std::string> &character_form_rules_set)
-      : quitting_(false), character_form_rules_set_(character_form_rules_set) {}
-
-  ~GetConfigThread() override {
-    quitting_ = true;
-    Join();
-  }
-
- protected:
-  void Run() override {
-    while (!quitting_) {
-      Config config;
-      ConfigHandler::GetConfig(&config);
-      const auto &rules = ExtractCharacterFormRules(config);
-      EXPECT_NE(character_form_rules_set_.end(),
-                character_form_rules_set_.find(rules));
-    }
-  }
-
- private:
-  std::atomic<bool> quitting_;
-  const absl::flat_hash_set<std::string> character_form_rules_set_;
-};
 
 TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   std::vector<Config> configs;
@@ -480,39 +429,45 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
               character_form_rules_set.find(rules));
   }
 
-  // 250 msec is good enough to crash the code if it is not guarded by
-  // the lock, but feel free to change the duration.  It is basically an
-  // arbitrary number.
-  constexpr auto kTestDuration = absl::Milliseconds(250);
-  constexpr size_t kNumSetThread = 2;
-  constexpr size_t kNumGetThread = 4;
   {
-    // Set up background threads for concurrent access.
-    std::vector<std::unique_ptr<SetConfigThread>> set_threads;
-    for (size_t i = 0; i < kNumSetThread; ++i) {
-      set_threads.emplace_back(std::make_unique<SetConfigThread>(configs));
+    absl::Notification cancel;
+
+    std::vector<mozc::Thread2> set_threads;
+    for (int i = 0; i < 2; ++i) {
+      set_threads.push_back(mozc::Thread2([&cancel, &configs] {
+        absl::BitGen gen;
+        while (!cancel.HasBeenNotified()) {
+          const size_t next_index = absl::Uniform(gen, 0u, configs.size());
+          ConfigHandler::SetConfig(configs[next_index]);
+        }
+      }));
     }
-    std::vector<std::unique_ptr<GetConfigThread>> get_threads;
-    for (size_t i = 0; i < kNumGetThread; ++i) {
-      get_threads.emplace_back(
-          std::make_unique<GetConfigThread>(character_form_rules_set));
+
+    std::vector<mozc::Thread2> get_threads;
+    for (int i = 0; i < 4; ++i) {
+      get_threads.push_back(mozc::Thread2([&cancel, &character_form_rules_set] {
+        while (!cancel.HasBeenNotified()) {
+          Config config;
+          ConfigHandler::GetConfig(&config);
+          const auto &rules = ExtractCharacterFormRules(config);
+          EXPECT_TRUE(character_form_rules_set.contains(rules));
+        }
+      }));
     }
-    // Let background threads start accessing ConfigHandler from multiple
-    // background threads.
-    for (size_t i = 0; i < set_threads.size(); ++i) {
-      set_threads[i]->Start(
-          absl::StrFormat("SetConfigThread%d", static_cast<int>(i)));
-    }
-    for (size_t i = 0; i < get_threads.size(); ++i) {
-      get_threads[i]->Start(
-          absl::StrFormat("GetConfigThread%d", static_cast<int>(i)));
-    }
+
     // Wait for a while to see if everything goes well.
-    absl::SleepFor(kTestDuration);
-    // Destructors of |SetConfigThread| and |GetConfigThread| will take
-    // care of their background threads (in a blocking way).
-    set_threads.clear();
-    get_threads.clear();
+    // 250 msec is good enough to crash the code if it is not guarded by
+    // the lock, but feel free to change the duration.  It is basically an
+    // arbitrary number.
+    absl::SleepFor(absl::Milliseconds(250));
+
+    cancel.Notify();
+    for (auto &set_thread : set_threads) {
+      set_thread.Join();
+    }
+    for (auto &get_thread : get_threads) {
+      get_thread.Join();
+    }
   }
 }
 

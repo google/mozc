@@ -68,7 +68,7 @@
 
 #include <memory>  // for unique_ptr
 
-#include "base/util.h"  // for Util::WideToUtf8
+#include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
 #include <pwd.h>
@@ -185,7 +185,8 @@ class LocalAppDataDirectoryCache {
     }
     path.erase(local_pos);
     path += L"Low";
-    if (Util::WideToUtf8(path, dir) == 0) {
+    *dir = win32::WideToUtf8(path);
+    if (dir->empty()) {
       return E_FAIL;
     }
     return S_OK;
@@ -214,8 +215,8 @@ class LocalAppDataDirectoryCache {
     std::wstring wpath = task_mem_buffer;
     ::CoTaskMemFree(task_mem_buffer);
 
-    std::string path;
-    if (Util::WideToUtf8(wpath, &path) == 0) {
+    const std::string path = win32::WideToUtf8(wpath);
+    if (path.empty()) {
       return E_UNEXPECTED;
     }
 
@@ -395,8 +396,9 @@ class ProgramFilesX86Cache {
       return result;
     }
 
-    std::string program_files;
-    if (Util::WideToUtf8(program_files_path_buffer, &program_files) == 0) {
+    const std::string program_files =
+        win32::WideToUtf8(program_files_path_buffer);
+    if (program_files.empty()) {
       return E_FAIL;
     }
     *path = program_files;
@@ -495,9 +497,7 @@ std::string SystemUtil::GetUserNameAsString() {
   //   or will be impersonated.
   const BOOL result = ::GetUserName(wusername, &name_size);
   DCHECK_NE(FALSE, result);
-  std::string username;
-  Util::WideToUtf8(&wusername[0], &username);
-  return username;
+  return win32::WideToUtf8(wusername);
 #endif  // _WIN32
 
 #if defined(__ANDROID__)
@@ -557,7 +557,7 @@ UserSidImpl::UserSidImpl() {
     return;
   }
 
-  Util::WideToUtf8(p_sid_user_name, &sid_);
+  sid_ = win32::WideToUtf8(p_sid_user_name);
 
   ::LocalFree(p_sid_user_name);
   ::CloseHandle(htoken);

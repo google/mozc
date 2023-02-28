@@ -30,12 +30,14 @@
 #ifndef MOZC_PREDICTION_NUMBER_DECODER_H_
 #define MOZC_PREDICTION_NUMBER_DECODER_H_
 
-#include <istream>
+#include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
 
 #include "base/container/trie.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -100,7 +102,7 @@ struct NumberDecoderResult {
   size_t consumed_key_byte_len;
   std::string candidate;
 
-  NumberDecoderResult(size_t len, const std::string &c)
+  NumberDecoderResult(size_t len, const absl::string_view c)
       : consumed_key_byte_len(len), candidate(c) {}
 
   bool operator==(const NumberDecoderResult &other) const {

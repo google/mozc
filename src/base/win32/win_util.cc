@@ -34,9 +34,9 @@
 
 #include <aux_ulib.h>
 #include <psapi.h>
+#include <shellapi.h>
 #include <stringapiset.h>
 #include <winternl.h>
-#include <shellapi.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -48,8 +48,8 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "absl/base/call_once.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -107,8 +107,7 @@ HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
 }
 
 HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
-  std::wstring fullpath;
-  Util::Utf8ToWide(SystemUtil::GetServerDirectory(), &fullpath);
+  std::wstring fullpath = win32::Utf8ToWide(SystemUtil::GetServerDirectory());
   fullpath += L"\\";
   fullpath += base_filename;
 
@@ -540,15 +539,6 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
       << ", error:" << result << ", verb: " << verb << ", file: " << file
       << ", parameters: " << parameters;
   return result > 32;
-}
-
-
-ScopedCOMInitializer::ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}
-
-ScopedCOMInitializer::~ScopedCOMInitializer() {
-  if (SUCCEEDED(hr_)) {
-    ::CoUninitialize();
-  }
 }
 
 }  // namespace mozc

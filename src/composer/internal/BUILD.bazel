@@ -54,13 +54,14 @@ mozc_cc_library(
     hdrs = ["char_chunk.h"],
     deps = [
         ":composition_input",
-        ":transliterator_interface",
         ":transliterators",
         "//base:logging",
         "//base:port",
         "//base:util",
+        "//base/strings:unicode",
         "//composer:table",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -109,6 +110,7 @@ mozc_cc_test(
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -197,6 +199,7 @@ mozc_cc_library(
     deps = [
         "//base:port",
         "//composer:table",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -232,6 +235,8 @@ mozc_cc_test(
     deps = [
         ":mode_switching_handler",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

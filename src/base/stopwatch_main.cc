@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   stopwatch.Start();
   absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_sleep_time)));
   stopwatch.Stop();
-  std::cout << stopwatch.GetElapsedMicroseconds() << std::endl;
+  std::cout << stopwatch.GetElapsed() << std::endl;
 
   return 0;
 }

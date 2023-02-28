@@ -30,12 +30,15 @@
 // skip all unless _WIN32
 #ifdef _WIN32
 
-#include <sddl.h>
+// clang-format off
 #include <windows.h>
+#include <sddl.h>  // needs to be after windows.h
+// clang-format on
 
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "base/const.h"
 #include "base/cpu_stats.h"
@@ -702,7 +705,7 @@ void IPCClient::Init(const absl::string_view name,
     const DWORD create_file_error = ::GetLastError();
     // ScopedHandle returns nullptr even when it received INVALID_HANDLE_VALUE.
     if (new_handle.get() != nullptr) {
-      pipe_handle_.reset(new_handle.take());
+      pipe_handle_ = std::move(new_handle);
       MaybeDisableFileCompletionNotification(pipe_handle_.get());
       if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),
                                   server_path)) {

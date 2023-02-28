@@ -75,7 +75,6 @@ mozc_cc_library(
         "//base:run_level",
         "//base:singleton",
         "//base:system_util",
-        "//base:util",
         "//base:version",
         "//composer:key_event_util",
         "//config:config_handler",
@@ -96,6 +95,9 @@ mozc_cc_library(
         macos = [
             "//base/mac:mac_process",
             "//base/mac:mac_util",
+        ],
+        windows = [
+            "//base/win32:wide_char",
         ],
     ),
 )
