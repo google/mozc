@@ -32,10 +32,9 @@
 #include <string>
 #include <vector>
 
-#include "base/logging.h"
-#include "base/thread.h"
-#include "testing/googletest.h"
+#include "base/thread2.h"
 #include "testing/gunit.h"
+#include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
@@ -109,54 +108,34 @@ TEST(SuppressionDictionary, BasicTest) {
   }
 }
 
-class DictionaryLoaderThread : public Thread {
- public:
-  explicit DictionaryLoaderThread(SuppressionDictionary *dic) : dic_{dic} {}
-
-  void Run() override {
-    const SuppressionDictionaryLock l(dic_);
-    dic_->Clear();
-    for (int i = 0; i < 100; ++i) {
-      const std::string key = "key" + std::to_string(i);
-      const std::string value = "value" + std::to_string(i);
-      EXPECT_TRUE(dic_->AddEntry(key, value));
-#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
-      // Sleep only for 1 msec. On iOS, sleep takes a very longer time
-      // like 30 times compaired with MacOS. This should be a temporary
-      // solution.
-      absl::SleepFor(absl::Milliseconds(1));
-#else   // TARGET_OS_IPHONE
-      absl::SleepFor(absl::Milliseconds(5));
-#endif  // TARGET_OS_IPHONE
-    }
-  }
-
- private:
-  SuppressionDictionary *dic_;
-};
-
 TEST(SuppressionDictionary, ThreadTest) {
   // Keys and values for testing.
   std::vector<std::string> keys, values;
   for (int i = 0; i < 100; ++i) {
-    keys.push_back("key" + std::to_string(i));
-    values.push_back("value" + std::to_string(i));
+    keys.push_back(absl::StrCat("key", i));
+    values.push_back(absl::StrCat("value", i));
   }
 
   SuppressionDictionary dic;
   for (int iter = 0; iter < 3; ++iter) {
-    DictionaryLoaderThread thread(&dic);
-
     // Load dictionary in another thread. `dic` will be locked.
-    thread.Start("SuppressionDictionaryTest");
-
-    for (int i = 0; i < 100; ++i) {
-      if (!thread.IsRunning()) {
-        EXPECT_TRUE(dic.SuppressEntry(keys[i], values[i]));
+    mozc::Thread2([&dic] {
+      const SuppressionDictionaryLock l(&dic);
+      dic.Clear();
+      for (int i = 0; i < 100; ++i) {
+        const std::string key = absl::StrCat("key", i);
+        const std::string value = absl::StrCat("value", i);
+        EXPECT_TRUE(dic.AddEntry(key, value));
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+        // Sleep only for 1 msec. On iOS, sleep takes a very longer time
+        // like 30 times compaired with MacOS. This should be a temporary
+        // solution.
+        absl::SleepFor(absl::Milliseconds(1));
+#else   // TARGET_OS_IPHONE
+        absl::SleepFor(absl::Milliseconds(5));
+#endif  // TARGET_OS_IPHONE
       }
-    }
-
-    thread.Join();
+    }).Join();
 
     for (int i = 0; i < 100; ++i) {
       EXPECT_TRUE(dic.SuppressEntry(keys[i], values[i]));

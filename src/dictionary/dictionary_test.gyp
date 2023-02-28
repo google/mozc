@@ -77,6 +77,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_time',
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:suppression_dictionary',
