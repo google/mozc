@@ -1110,9 +1110,10 @@ mozc_cc_binary(
     deps = [
         ":cpu_stats",
         ":init_mozc",
-        ":port",
-        ":thread",
+        ":thread2",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
 )

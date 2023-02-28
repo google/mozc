@@ -29,49 +29,38 @@
 
 #include <cstdint>
 #include <iostream>
-#include <memory>
 #include <ostream>
-#include <string>
+#include <vector>
 
 #include "base/cpu_stats.h"
 #include "base/init_mozc.h"
-#include "base/port.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 ABSL_FLAG(int32_t, iterations, 1000, "number of iterations");
-ABSL_FLAG(int32_t, polling_duration, 1000, "duration period in msec");
+ABSL_FLAG(absl::Duration, polling_interval, absl::Seconds(1),
+          "polling interval e.g. 1s, 500ms");
 ABSL_FLAG(int32_t, dummy_threads_size, 0, "number of dummy threads");
 
-namespace {
-class DummyThread : public mozc::Thread {
- public:
-  DummyThread() = default;
-  DummyThread(const DummyThread&) = delete;
-  DummyThread& operator=(const DummyThread&) = delete;
-  void Run() override {
-    volatile uint64_t n = 0;
-    while (true) {
-      ++n;
-      --n;
-    }
-  }
-};
-}  // namespace
-
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  std::unique_ptr<DummyThread[]> threads;
+  absl::Notification cancel;
 
-  if (absl::GetFlag(FLAGS_dummy_threads_size) > 0) {
-    threads = std::make_unique<DummyThread[]>(
-        absl::GetFlag(FLAGS_dummy_threads_size));
-    for (int i = 0; i < absl::GetFlag(FLAGS_dummy_threads_size); ++i) {
-      threads[i].Start("CpuStatsMain");
-    }
+  std::vector<mozc::Thread2> threads;
+  threads.reserve(absl::GetFlag(FLAGS_dummy_threads_size));
+  for (int i = 0; i < absl::GetFlag(FLAGS_dummy_threads_size); ++i) {
+    threads.push_back(mozc::Thread2([&cancel] {
+      volatile uint64_t n = 0;
+      while (!cancel.HasBeenNotified()) {
+        ++n;
+        --n;
+      }
+    }));
   }
 
   mozc::CPUStats stats;
@@ -80,8 +69,10 @@ int main(int argc, char **argv) {
   for (int i = 0; i < absl::GetFlag(FLAGS_iterations); ++i) {
     std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
               << stats.GetCurrentProcessCPULoad() << std::endl;
-    absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_polling_duration)));
+    absl::SleepFor(absl::GetFlag(FLAGS_polling_interval));
   }
+
+  cancel.Notify();
 
   return 0;
 }
