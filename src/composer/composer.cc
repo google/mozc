@@ -42,6 +42,7 @@
 #include "base/clock.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
@@ -70,7 +71,8 @@ namespace mozc {
 namespace composer {
 namespace {
 
-using ::mozc::config::CharacterFormManager;
+using config::CharacterFormManager;
+using strings::OneCharLen;
 
 Transliterators::Transliterator GetTransliterator(
     transliteration::TransliterationType comp_mode) {
@@ -124,7 +126,7 @@ transliteration::TransliterationType GetTransliterationType(
 }
 
 void Transliterate(const transliteration::TransliterationType mode,
-                   const std::string &input, std::string *output) {
+                   const absl::string_view input, std::string *output) {
   // When the mode is HALF_KATAKANA, Full width ASCII is also
   // transformed.
   if (mode == transliteration::HALF_KATAKANA) {
@@ -171,11 +173,11 @@ void Transliterate(const transliteration::TransliterationType mode,
       japanese_util::HiraganaToKatakana(input, output);
       break;
     case transliteration::HIRAGANA:
-      *output = input;
+      *output = std::string(input);
       break;
     default:
       LOG(ERROR) << "Unknown TransliterationType: " << mode;
-      *output = input;
+      *output = std::string(input);
       break;
   }
 }
@@ -377,7 +379,7 @@ void Composer::ApplyTemporaryInputMode(const absl::string_view input,
 
   // When input is not an ASCII code, reset the input mode to the one before
   // temporary input mode.
-  if (Util::OneCharLen(input.data()) != 1) {
+  if (OneCharLen(input.front()) != 1) {
     // Call SetInputMode() only when the current input mode is temporary, which
     // is detected by the if-condition below.  Without this check,
     // SetInputMode() is called always for multi-byte charactesrs.  This causes
@@ -444,7 +446,7 @@ bool Composer::ProcessCompositionInput(const CompositionInput &input) {
   return true;
 }
 
-void Composer::InsertCharacter(const std::string &key) {
+void Composer::InsertCharacter(const absl::string_view key) {
   CompositionInput input;
   input.InitFromRaw(key, is_new_input_);
   ProcessCompositionInput(input);
@@ -466,12 +468,12 @@ void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
   }
 }
 
-void Composer::InsertCharacterPreedit(const std::string &input) {
+void Composer::InsertCharacterPreedit(const absl::string_view input) {
   size_t begin = 0;
   const size_t end = input.size();
   while (begin < end) {
-    const size_t mblen = Util::OneCharLen(input.c_str() + begin);
-    const std::string character(input, begin, mblen);
+    const size_t mblen = OneCharLen(input[begin]);
+    const absl::string_view character(input.substr(begin, mblen));
     if (!InsertCharacterKeyAndPreedit(character, character)) {
       return;
     }
@@ -486,7 +488,7 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
   size_t begin = 0;
   const size_t end = input.size();
   while (begin < end) {
-    const size_t mblen = Util::OneCharLen(input.data() + begin);
+    const size_t mblen = OneCharLen(input[begin]);
     CompositionInput composition_input;
     composition_input.set_raw(input.substr(begin, mblen));
     composition_input.set_is_new_input(is_new_input_);
@@ -505,8 +507,8 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
   }
 }
 
-bool Composer::InsertCharacterKeyAndPreedit(const std::string &key,
-                                            const std::string &preedit) {
+bool Composer::InsertCharacterKeyAndPreedit(const absl::string_view key,
+                                            const absl::string_view preedit) {
   CompositionInput input;
   input.InitFromRawAndConv(key, preedit, is_new_input_);
   return ProcessCompositionInput(input);

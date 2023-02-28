@@ -60,7 +60,7 @@ std::string GetRawString(const Composition& composition) {
   return output;
 }
 
-size_t InsertCharacters(const std::string& input, size_t pos,
+size_t InsertCharacters(const absl::string_view input, size_t pos,
                         Composition* composition) {
   for (size_t i = 0; i < input.size(); ++i) {
     pos = composition->InsertAt(pos, input.substr(i, 1));
@@ -167,7 +167,7 @@ class CompositionTest : public testing::Test {
     composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 
-  void SetInput(const std::string& raw, const std::string& conversion,
+  void SetInput(const absl::string_view raw, const absl::string_view conversion,
                 const bool is_new_input, CompositionInput* input) {
     input->Clear();
     input->set_raw(table_->ParseSpecialKey(raw));
@@ -625,7 +625,8 @@ void InitTable(Table* table) {
 }
 
 std::string GetInsertedString(Transliterators::Transliterator t12r,
-                              const size_t position, const std::string& input) {
+                              const size_t position,
+                              const absl::string_view input) {
   std::unique_ptr<Table> table(new Table);
   InitTable(table.get());
   std::unique_ptr<Composition> comp(new Composition(table.get()));

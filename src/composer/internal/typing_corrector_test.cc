@@ -317,7 +317,7 @@ class TypingCorrectorTest : public ::testing::Test {
   }
 
   bool FindKey(const std::vector<TypeCorrectedQuery> &queries,
-               const std::string &key) {
+               const absl::string_view key) {
     for (size_t i = 0; i < queries.size(); ++i) {
       const std::set<std::string> &expanded = queries[i].expanded;
       if (expanded.empty() && queries[i].base == key) {

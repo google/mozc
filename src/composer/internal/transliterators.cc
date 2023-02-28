@@ -36,6 +36,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {

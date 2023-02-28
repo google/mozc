@@ -45,6 +45,7 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "absl/container/btree_set.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -52,7 +53,8 @@ namespace composer {
 namespace {
 
 // Looks up model cost for current key given previous keys.
-int LookupModelCost(const std::string &prev, const std::string &current,
+int LookupModelCost(const absl::string_view prev,
+                    const absl::string_view current,
                     const TypingModel &typing_model) {
   if (current.size() != 1) {
     return TypingModel::kInfinity;
@@ -198,7 +200,7 @@ void TypingCorrector::GetQueriesForPrediction(
       raw_queries.insert(raw_base);
     } else {
       for (const std::string &raw : raw_expanded) {
-        raw_queries.insert(raw_base + raw);
+        raw_queries.insert(absl::StrCat(raw_base, raw));
       }
     }
   }

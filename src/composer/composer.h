@@ -142,7 +142,7 @@ class Composer final {
   // Delete multiple characters beginning at specified position.
   void DeleteRange(size_t pos, size_t length);
 
-  void InsertCharacter(const std::string &key);
+  void InsertCharacter(absl::string_view key);
 
   // Set preedit text to composer.
   //
@@ -151,7 +151,7 @@ class Composer final {
   // you should use SetPreeditTextForTestOnly().
   // With the current implementation, prediction queries can be transliterated
   // and you will not be able to get right candidates.
-  void InsertCharacterPreedit(const std::string &input);
+  void InsertCharacterPreedit(absl::string_view input);
 
   // TEST ONLY: Set preedit text to composer.
   //
@@ -167,8 +167,8 @@ class Composer final {
   // This is useful to test the behavior of alphabet keyboard.
   void SetPreeditTextForTestOnly(absl::string_view input);
 
-  bool InsertCharacterKeyAndPreedit(const std::string &key,
-                                    const std::string &preedit);
+  bool InsertCharacterKeyAndPreedit(absl::string_view key,
+                                    absl::string_view preedit);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
   void InsertCommandCharacter(InternalCommand internal_command);
   void Delete();
