@@ -29,10 +29,13 @@
 
 #include "base/strings/unicode.h"
 
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc::strings{
 namespace {
+
+using ::testing::Pair;
 
 TEST(UnicodeTest, OneCharLen) {
   EXPECT_EQ(OneCharLen(0x00), 1);
@@ -43,6 +46,18 @@ TEST(UnicodeTest, OneCharLen) {
   EXPECT_EQ(OneCharLen(0xEF), 3);
   EXPECT_EQ(OneCharLen(0xF0), 4);
   EXPECT_EQ(OneCharLen(0xF4), 4);
+}
+
+TEST(UnicodeTest, FrontChar) {
+  EXPECT_THAT(FrontChar(""), Pair("", ""));
+  EXPECT_THAT(FrontChar("01"), Pair("0", "1"));
+  EXPECT_THAT(FrontChar("\x01"), Pair("\x01", ""));
+  EXPECT_THAT(FrontChar("あいうえお"), Pair("あ", "いうえお"));
+  EXPECT_THAT(FrontChar("𧜎𧝒"), Pair("𧜎", "𧝒"));
+  // Invalid length
+  EXPECT_THAT(FrontChar("\xC2"), Pair("\xC2", ""));
+  // BOM
+  EXPECT_THAT(FrontChar("\xEF\xBB\xBF""abc"), Pair("\xEF\xBB\xBF", "abc"));
 }
 
 }  // namespace
