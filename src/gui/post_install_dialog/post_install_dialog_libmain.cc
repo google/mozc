@@ -42,7 +42,7 @@
 #include "gui/post_install_dialog/post_install_dialog.h"
 
 #ifdef _WIN32
-#include "base/win32/win_util.h"
+#include "base/win32/scoped_com.h"
 #endif  // _WIN32
 
 int RunPostInstallDialog(int argc, char *argv[]) {
