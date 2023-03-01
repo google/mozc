@@ -33,8 +33,10 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 
 #include "base/port.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "absl/strings/string_view.h"
@@ -151,7 +153,9 @@ class CharChunk final {
   TableAttributes attributes() const { return attributes_; }
   void set_attributes(TableAttributes attributes);
 
-  bool AddInputInternal(std::string *input);
+  // bool = should loop
+  // string_view = rest of the input
+  std::pair<bool, absl::string_view> AddInputInternal(absl::string_view input);
 
  private:
   void AddInputAndConvertedChar(CompositionInput *composition_input);

@@ -48,6 +48,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "composer/internal/special_key.h"
 #include "composer/internal/typing_model.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -59,16 +60,22 @@
 namespace mozc {
 namespace composer {
 namespace {
+using internal::IsSpecialKey;
+using internal::kSpecialKeyBegin;
+using internal::kSpecialKeyClose;
+using internal::kSpecialKeyEnd;
+using internal::kSpecialKeyOpen;
+
 constexpr char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
 constexpr char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
 // Table for Kana combinations like "か゛" → "が".
 constexpr char kKanaCombinationTableFile[] = "system://kana.tsv";
 
 // Special tables for 12keys
-const char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
-const char k12keysHiraganaIntuitiveTableFile[] =
+constexpr char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
+constexpr char k12keysHiraganaIntuitiveTableFile[] =
     "system://12keys-hiragana_intuitive.tsv";
-const char k12keysHalfwidthasciiTableFile[] =
+constexpr char k12keysHalfwidthasciiTableFile[] =
     "system://12keys-halfwidthascii.tsv";
 constexpr char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
 constexpr char kFlickHalfwidthasciiIosTableFile[] =
@@ -102,19 +109,6 @@ constexpr char kNotouchHalfwidthasciiTableFile[] =
 constexpr char k50KeysHiraganaTableFile[] = "system://50keys-hiragana.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
-
-// Use [U+F000, U+F8FF] to represent special keys (e.g. {!}, {abc}).
-// The range of Unicode PUA is [U+E000, U+F8FF], and we use them from U+F000.
-// * The range of [U+E000, U+F000) is used for user defined PUA characters.
-// * The users can still use [U+F000, U+F8FF] for their user dictionary.
-//   but, they should not use them for composing rules.
-constexpr char32_t kSpecialKeyBegin = 0xF000;
-constexpr char32_t kSpecialKeyEnd = 0xF8FF;
-
-// U+000F and U+000E are used as fallback for special keys that are not
-// registered in the table. "{abc}" is converted to "\u000Fabc\u000E".
-constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
-constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
 
 }  // namespace
 
@@ -660,12 +654,6 @@ std::string Table::ParseSpecialKey(const absl::string_view input) const {
   return ParseBlock(input, callback);
 }
 
-namespace {
-bool IsSpecialKey(char32_t c) {
-  return (kSpecialKeyBegin <= c && c <= kSpecialKeyEnd);
-}
-}  // namespace
-
 // static
 std::string Table::DeleteSpecialKey(const absl::string_view input) {
   std::string output;
@@ -692,29 +680,6 @@ std::string Table::DeleteSpecialKey(const absl::string_view input) {
   }
   codepoints.erase(last, codepoints.end());
   return Util::CodepointsToUtf8(codepoints);
-}
-
-// static
-bool Table::TrimLeadingSpecialKey(std::string *input) {
-  // Check if the first character is a Unicode PUA converted from a special key.
-  char32_t first_char;
-  absl::string_view rest;
-  Util::SplitFirstChar32(*input, &first_char, &rest);
-  if (IsSpecialKey(first_char)) {
-    input->erase(0, input->size() - rest.size());
-    return true;
-  }
-
-  // Check if the input starts from open and close of a special key.
-  if (!absl::StartsWith(*input, kSpecialKeyOpen)) {
-    return false;
-  }
-  size_t close_pos = input->find(kSpecialKeyClose, 1);
-  if (close_pos == std::string::npos) {
-    return false;
-  }
-  input->erase(0, close_pos + 1);
-  return true;
 }
 
 // static

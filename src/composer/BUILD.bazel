@@ -104,6 +104,7 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
         "//base/container:trie",
+        "//composer/internal:special_key",
         "//composer/internal:typing_model",
         "//data_manager:data_manager_interface",
         "//protocol:commands_cc_proto",

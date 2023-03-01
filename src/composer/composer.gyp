@@ -44,6 +44,7 @@
         'internal/composition_input.cc',
         'internal/converter.cc',
         'internal/mode_switching_handler.cc',
+        'internal/special_key.cc',
         'internal/transliterators.cc',
         'internal/typing_corrector.cc',
         'internal/typing_model.cc',
