@@ -107,9 +107,8 @@ class BalloonImageTest : public ::testing::Test,
     using BalloonImage::CreateInternal;
   };
 
-  static void BalloonImageTest::SaveTestImage(
-      const TestableBalloonImage::BalloonImageInfo &info,
-      const std::wstring filename) {
+  static void SaveTestImage(const TestableBalloonImage::BalloonImageInfo &info,
+                            const std::wstring filename) {
     CPoint tail_offset;
     CSize size;
     std::vector<ARGBColor> buffer;
@@ -118,8 +117,12 @@ class BalloonImageTest : public ::testing::Test,
 
     Json::Value tail;
     BalloonInfoToJson(info, &tail);
-    tail["output"]["tail_offset_x"] = tail_offset.x;
-    tail["output"]["tail_offset_y"] = tail_offset.y;
+    // Explicitly cast to int32_t to avoid ambiguity between multiple
+    // Json::Value constructors. On Windows, LONG is always a 32-bit int.
+    // https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types
+    static_assert(sizeof(int32_t) == sizeof(LONG));
+    tail["output"]["tail_offset_x"] = static_cast<int32_t>(tail_offset.x);
+    tail["output"]["tail_offset_y"] = static_cast<int32_t>(tail_offset.y);
 
     Gdiplus::Bitmap bitmap(size.cx, size.cy);
     for (size_t y = 0; y < size.cy; ++y) {
@@ -253,39 +256,39 @@ ULONG_PTR BalloonImageTest::gdiplus_token_;
 
 // Tests should be passed.
 const char *kRenderingResultList[] = {
-    "data/test/renderer/win32/balloon_blur_alpha_-1.png",
-    "data/test/renderer/win32/balloon_blur_alpha_0.png",
-    "data/test/renderer/win32/balloon_blur_alpha_10.png",
-    "data/test/renderer/win32/balloon_blur_color_32_64_128.png",
-    "data/test/renderer/win32/balloon_blur_offset_-20_-10.png",
-    "data/test/renderer/win32/balloon_blur_offset_0_0.png",
-    "data/test/renderer/win32/balloon_blur_offset_20_5.png",
-    "data/test/renderer/win32/balloon_blur_sigma_0.0.png",
-    "data/test/renderer/win32/balloon_blur_sigma_0.5.png",
-    "data/test/renderer/win32/balloon_blur_sigma_1.0.png",
-    "data/test/renderer/win32/balloon_blur_sigma_2.0.png",
-    "data/test/renderer/win32/balloon_frame_thickness_-1.png",
-    "data/test/renderer/win32/balloon_frame_thickness_0.png",
-    "data/test/renderer/win32/balloon_frame_thickness_1.5.png",
-    "data/test/renderer/win32/balloon_frame_thickness_3.png",
-    "data/test/renderer/win32/balloon_inside_color_32_64_128.png",
-    "data/test/renderer/win32/balloon_no_label.png",
-    "data/test/renderer/win32/balloon_tail_bottom.png",
-    "data/test/renderer/win32/balloon_tail_left.png",
-    "data/test/renderer/win32/balloon_tail_right.png",
-    "data/test/renderer/win32/balloon_tail_top.png",
-    "data/test/renderer/win32/balloon_tail_width_height_-10_-10.png",
-    "data/test/renderer/win32/balloon_tail_width_height_0_0.png",
-    "data/test/renderer/win32/balloon_tail_width_height_10_20.png",
-    "data/test/renderer/win32/balloon_width_height_40_30.png",
+    "balloon_blur_alpha_-1.png",
+    "balloon_blur_alpha_0.png",
+    "balloon_blur_alpha_10.png",
+    "balloon_blur_color_32_64_128.png",
+    "balloon_blur_offset_-20_-10.png",
+    "balloon_blur_offset_0_0.png",
+    "balloon_blur_offset_20_5.png",
+    "balloon_blur_sigma_0.0.png",
+    "balloon_blur_sigma_0.5.png",
+    "balloon_blur_sigma_1.0.png",
+    "balloon_blur_sigma_2.0.png",
+    "balloon_frame_thickness_-1.png",
+    "balloon_frame_thickness_0.png",
+    "balloon_frame_thickness_1.5.png",
+    "balloon_frame_thickness_3.png",
+    "balloon_inside_color_32_64_128.png",
+    "balloon_no_label.png",
+    "balloon_tail_bottom.png",
+    "balloon_tail_left.png",
+    "balloon_tail_right.png",
+    "balloon_tail_top.png",
+    "balloon_tail_width_height_-10_-10.png",
+    "balloon_tail_width_height_0_0.png",
+    "balloon_tail_width_height_10_20.png",
+    "balloon_width_height_40_30.png",
 };
 
 INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
-  const std::string &expected_image_path =
-      mozc::testing::GetSourceFileOrDie({GetParam()});
+  const std::string &expected_image_path = mozc::testing::GetSourceFileOrDie(
+      {"data", "test", "renderer", "win32", GetParam()});
   const std::string json_path = expected_image_path + ".json";
   ASSERT_OK(FileUtil::FileExists(json_path))
       << "Manifest file is not found: " << json_path;
