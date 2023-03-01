@@ -32,6 +32,7 @@ load(
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_select",
 )
 
 package(default_visibility = [
@@ -69,6 +70,11 @@ mozc_cc_library(
     name = "spellchecker_service",
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
+    tags = ["nowin"],
+    target_compatible_with = mozc_select(
+        default = [],
+        windows = ["@platforms//:incompatible"],
+    ),
     deps = [
         ":rulebased_filter",
         ":spellchecker_service_interface",
@@ -94,6 +100,11 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "spellchecker_service_main",
     srcs = ["spellchecker_service_main.cc"],
+    tags = ["nowin"],
+    target_compatible_with = mozc_select(
+        default = [],
+        windows = ["@platforms//:incompatible"],
+    ),
     deps = [
         ":spellchecker_service_interface",
         ":spellchecker_service_registration",
@@ -111,6 +122,11 @@ mozc_cc_test(
     name = "spellchecker_service_test",
     size = "small",
     srcs = ["spellchecker_service_test.cc"],
+    tags = ["nowin"],
+    target_compatible_with = mozc_select(
+        default = [],
+        windows = ["@platforms//:incompatible"],
+    ),
     deps = [
         ":spellchecker_service",
         "//base:file_stream",
