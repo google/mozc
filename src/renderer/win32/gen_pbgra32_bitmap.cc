@@ -37,7 +37,6 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "absl/base/attributes.h"
 #include "absl/flags/flag.h"

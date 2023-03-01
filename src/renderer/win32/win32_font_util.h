@@ -34,11 +34,9 @@
 
 #include <windows.h>
 
-namespace mozc {
-namespace commands {
-class RendererCommand_WinLogFont;
-}  // namespace commands
+#include "protocol/renderer_command.pb.h"
 
+namespace mozc {
 namespace win32 {
 
 class FontUtil {

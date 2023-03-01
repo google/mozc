@@ -47,25 +47,15 @@
 
 #include "base/const.h"
 #include "base/coordinates.h"
-#include "base/port.h"
+#include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
+#include "renderer/table_layout.h"
+#include "renderer/win32/text_renderer.h"
 
 namespace mozc {
-
-namespace client {
-class SendCommandInterface;
-}  // namespace client
-
-namespace commands {
-class Candidates;
-}  // namespace commands
-
 namespace renderer {
-
-class TableLayout;
-
 namespace win32 {
-
-class TextRenderer;
 
 // As Discussed in b/2317702, UI windows are disabled by default because it is
 // hard for a user to find out what caused the problem than finding that the

@@ -36,23 +36,12 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-#include "testing/gunit_prod.h"
-// for FRIEND_TEST()
+#include "protocol/renderer_command.pb.h"
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
 #ifdef _WIN32
 namespace mozc {
-
-namespace commands {
-class RendererCommand;
-// We cannot use RendererCommand::ApplicationInfo nor
-// RendererCommand::CandidateForm because C++ does not
-// allow forward declaration of a nested-type.
-class RendererCommand_ApplicationInfo;
-class RendererCommand_CandidateForm;
-}  // namespace commands
-
 namespace renderer {
 namespace win32 {
 

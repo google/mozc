@@ -130,6 +130,8 @@ class Balloon {
           break;
         case kOutside:
           return;
+        default:
+          break;
       }
     }
     for (SubdivisionalPixel::SubdivisionalPixelIterator it(x, y); !it.Done();
@@ -141,6 +143,8 @@ class Balloon {
           break;
         case kInside:
           pixel->SetSubdivisionalPixel(it.GetFraction(), inside_color_);
+          break;
+        default:
           break;
       }
     }
@@ -854,6 +858,8 @@ void SubdivisionalPixel::SetColorToFilledPixels(const ColorType &color) {
       colors_.reset();
       single_color_ = color;
       break;
+    default:
+      break;
   }
 }
 
@@ -953,8 +959,8 @@ size_t SafeFrameBuffer::GetIndex(int x, int y) const {
 TextLabel::TextLabel(double left, double top, double width, double height,
                      const std::string &text, const std::string &font,
                      size_t font_point, const RGBColor text_color)
-    : bounding_rect_(GetBoundingRect(left, top, width, height)),
-      pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
+    : pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
+      bounding_rect_(GetBoundingRect(left, top, width, height)),
       text_color_(text_color) {}
 
 TextLabel::~TextLabel() = default;

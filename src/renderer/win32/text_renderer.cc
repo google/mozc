@@ -78,6 +78,8 @@ COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
       return RGB(0x4c, 0x4c, 0x4c);
     case TextRenderer::FONTSET_FOOTER_SUBLABEL:
       return RGB(0xA7, 0xA7, 0xA7);
+    default:
+      break;
   }
 
   // TODO(horo): Not only infolist fonts but also candidate fonts
@@ -98,6 +100,8 @@ COLORREF GetTextColor(TextRenderer::FONT_TYPE type) {
       return RGB(infostyle.description_style().foreground_color().r(),
                  infostyle.description_style().foreground_color().g(),
                  infostyle.description_style().foreground_color().b());
+    default:
+      break;
   }
 
   LOG(DFATAL) << "Unknown type: " << type;
@@ -129,6 +133,8 @@ CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
       font.lfWeight = FW_NORMAL;
       return font;
     }
+    default:
+      break;
   }
 
   // TODO(horo): Not only infolist fonts but also candidate fonts
@@ -155,6 +161,8 @@ CLogFont GetLogFont(TextRenderer::FONT_TYPE type) {
       font.lfHeight = -infostyle.description_style().font_size();
       return font;
     }
+    default:
+      break;
   }
 
   LOG(DFATAL) << "Unknown type: " << type;

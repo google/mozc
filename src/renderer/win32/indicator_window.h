@@ -33,18 +33,12 @@
 #include <memory>
 
 #include "base/coordinates.h"
-#include "base/port.h"
+#include "protocol/renderer_command.pb.h"
+#include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-
 namespace renderer {
 namespace win32 {
-
-class LayoutManager;
 
 class IndicatorWindow {
  public:
@@ -68,4 +62,4 @@ class IndicatorWindow {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_WIN32_INFOLIST_WINDOW_H_
+#endif  // MOZC_RENDERER_WIN32_INDICATOR_WINDOW_H_

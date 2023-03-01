@@ -29,6 +29,8 @@
 
 #include "renderer/win32/win32_font_util.h"
 
+#include <windows.h>
+
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 

@@ -34,27 +34,17 @@
 
 #include <memory>
 
-#include "base/port.h"
+#include "client/client_interface.h"
+#include "protocol/renderer_command.pb.h"
+#include "renderer/win32/candidate_window.h"
+#include "renderer/win32/composition_window.h"
+#include "renderer/win32/indicator_window.h"
+#include "renderer/win32/infolist_window.h"
+#include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {
-
-namespace client {
-class SendCommandInterface;
-}  // namespace client
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-
 namespace renderer {
 namespace win32 {
-
-class CandidateWindow;
-class CompositionWindowList;
-class IndicatorWindow;
-class InfolistWindow;
-class LayoutManager;
-class WorkingAreaInterface;
 
 // This class is the controller of the candidate windows.
 class WindowManager {

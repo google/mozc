@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "base/coordinates.h"
-#include "base/port.h"
 #include "renderer/win32/win32_renderer_util.h"
 
 namespace mozc {
