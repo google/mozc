@@ -32,12 +32,15 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "composer/internal/composition_input.h"
+#include "composer/internal/special_key.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "absl/container/btree_set.h"
@@ -48,8 +51,8 @@ namespace mozc {
 namespace composer {
 
 namespace {
-
-using strings::OneCharLen;
+using internal::TrimLeadingSpecialKey;
+using strings::FrontChar;
 
 // Max recursion count for looking up pending loop.
 constexpr int kMaxRecursion = 4;
@@ -291,13 +294,14 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
   pending_ = left_chunk.pending_ + pending_;
 }
 
-bool CharChunk::AddInputInternal(std::string *input) {
+std::pair<bool, absl::string_view> CharChunk::AddInputInternal(
+    absl::string_view input) {
   constexpr bool kLoop = true;
   constexpr bool kNoLoop = false;
 
   size_t used_key_length = 0;
   bool fixed = false;
-  std::string key = pending_ + *input;
+  std::string key = absl::StrCat(pending_, input);
   const Entry *entry = table_->LookUpPrefix(key, &used_key_length, &fixed);
   local_length_cache_ = std::string::npos;
 
@@ -305,20 +309,21 @@ bool CharChunk::AddInputInternal(std::string *input) {
     if (used_key_length == 0) {
       // If `input` starts with a special key, erases it and keeps the loop.
       // For example, if `input` is "{!}ab{?}", `input` becomes "ab{?}".
-      if (Table::TrimLeadingSpecialKey(input)) {
-        return kLoop;
+      const absl::string_view trimmed = TrimLeadingSpecialKey(input);
+      if (trimmed.size() < input.size()) {
+        return {kLoop, trimmed};
       }
 
       // The prefix characters are not contained in the table, fallback
       // operation is performed.
       if (pending_.empty()) {
         // Conversion data was not found. Add one character to the chunk.
-        const int one_char_len = OneCharLen(input->front());
-        raw_.append(*input, 0, one_char_len);
-        conversion_.append(*input, 0, one_char_len);
-        input->erase(0, one_char_len);
+        const auto [front, rest] = FrontChar(input);
+        absl::StrAppend(&raw_, front);
+        absl::StrAppend(&conversion_, front);
+        input = rest;
       }
-      return kNoLoop;
+      return {kNoLoop, input};
     }
 
     if (used_key_length == pending_.size()) {
@@ -328,18 +333,19 @@ bool CharChunk::AddInputInternal(std::string *input) {
       size_t used_length = 0;
       bool next_fixed = false;
       const Entry *next_entry =
-          table_->LookUpPrefix(*input, &used_length, &next_fixed);
+          table_->LookUpPrefix(input, &used_length, &next_fixed);
       const bool no_entry = (next_entry == nullptr && used_length == 0);
-      if (no_entry && Table::TrimLeadingSpecialKey(input)) {
-        return kLoop;
+      const absl::string_view trimmed = TrimLeadingSpecialKey(input);
+      if (no_entry && trimmed.size() < input.size()) {
+        return {kLoop, trimmed};
       }
-      return kNoLoop;
+      return {kNoLoop, input};
     }
 
     if (used_key_length < pending_.size()) {
       // Do not modify this char_chunk, all key characters will be used
       // by the next char_chunk.
-      return kNoLoop;
+      return {kNoLoop, input};
     }
 
     // Some prefix character is contained in the table, but not
@@ -349,12 +355,12 @@ bool CharChunk::AddInputInternal(std::string *input) {
     // Move used input characters to CharChunk data.
     DCHECK_GT(used_key_length, pending_.size());
     const size_t used_input_length = used_key_length - pending_.size();
-    const std::string used_input_chars(*input, 0, used_input_length);
-    raw_.append(used_input_chars);
-    pending_.append(used_input_chars);
+    const absl::string_view used_input_chars =
+        input.substr(0, used_input_length);
+    absl::StrAppend(&raw_, used_input_chars);
+    absl::StrAppend(&pending_, used_input_chars);
     ambiguous_.clear();
-    input->erase(0, used_input_length);
-    return kNoLoop;
+    return {kNoLoop, input.substr(used_input_length)};
   }
 
   // The prefix of key reached a conversion result, thus entry is not nullptr.
@@ -370,8 +376,8 @@ bool CharChunk::AddInputInternal(std::string *input) {
 
   // Move used input characters to raw_.
   const size_t used_input_length = used_key_length - pending_.size();
-  raw_.append(*input, 0, used_input_length);
-  input->erase(0, used_input_length);
+  absl::StrAppend(&raw_, input.substr(0, used_input_length));
+  input = input.substr(used_input_length);
 
   if (fixed || key.size() > used_key_length) {
     // A result was found. Ambiguity is resolved because `fixed` is true or
@@ -387,18 +393,22 @@ bool CharChunk::AddInputInternal(std::string *input) {
     ambiguous_ = entry->result();
   }
 
-  if (input->empty() || pending_.empty()) {
+  if (input.empty() || pending_.empty()) {
     // If the remaining input character or pending character is empty,
     // there is no reason to continue the looping.
-    return kNoLoop;
+    return {kNoLoop, input};
   }
 
-  return kLoop;
+  return {kLoop, input};
 }
 
 void CharChunk::AddInput(std::string *input) {
-  while (AddInputInternal(input)) {
+  absl::string_view tmp = *input;
+  bool loop = true;
+  while (loop) {
+    std::tie(loop, tmp) = AddInputInternal(tmp);
   }
+  input->erase(0, input->size() - tmp.size());
 }
 
 void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {

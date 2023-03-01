@@ -29,6 +29,8 @@
 
 #include "renderer/win32/win32_renderer_client.h"
 
+#include <windows.h>
+
 #include <memory>
 
 #include "base/logging.h"

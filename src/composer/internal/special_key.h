@@ -27,38 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/strings/unicode.h"
+#ifndef MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
+#define MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
 
-#include "testing/gmock.h"
-#include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
-namespace mozc::strings{
-namespace {
+namespace mozc::composer::internal {
 
-using ::testing::Pair;
+// Use [U+F000, U+F8FF] to represent special keys (e.g. {!}, {abc}).
+// The range of Unicode PUA is [U+E000, U+F8FF], and we use them from U+F000.
+// * The range of [U+E000, U+F000) is used for user defined PUA characters.
+// * The users can still use [U+F000, U+F8FF] for their user dictionary.
+//   but, they should not use them for composing rules.
+constexpr char32_t kSpecialKeyBegin = 0xF000;
+constexpr char32_t kSpecialKeyEnd = 0xF8FF;
 
-TEST(UnicodeTest, OneCharLen) {
-  EXPECT_EQ(OneCharLen(0x00), 1);
-  EXPECT_EQ(OneCharLen(0x7F), 1);
-  EXPECT_EQ(OneCharLen(0xC2), 2);
-  EXPECT_EQ(OneCharLen(0xDF), 2);
-  EXPECT_EQ(OneCharLen(0xE0), 3);
-  EXPECT_EQ(OneCharLen(0xEF), 3);
-  EXPECT_EQ(OneCharLen(0xF0), 4);
-  EXPECT_EQ(OneCharLen(0xF4), 4);
+// U+000F and U+000E are used as fallback for special keys that are not
+// registered in the table. "{abc}" is converted to "\u000Fabc\u000E".
+constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
+constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
+
+constexpr bool IsSpecialKey(char32_t c) {
+  return (kSpecialKeyBegin <= c && c <= kSpecialKeyEnd);
 }
 
-TEST(UnicodeTest, FrontChar) {
-  EXPECT_THAT(FrontChar(""), Pair("", ""));
-  EXPECT_THAT(FrontChar("01"), Pair("0", "1"));
-  EXPECT_THAT(FrontChar("\x01"), Pair("\x01", ""));
-  EXPECT_THAT(FrontChar("あいうえお"), Pair("あ", "いうえお"));
-  EXPECT_THAT(FrontChar("𧜎𧝒"), Pair("𧜎", "𧝒"));
-  // Invalid length
-  EXPECT_THAT(FrontChar("\xC2"), Pair("\xC2", ""));
-  // BOM
-  EXPECT_THAT(FrontChar("\xEF\xBB\xBF""abc"), Pair("\xEF\xBB\xBF", "abc"));
-}
+// Trims a special key from input and returns the rest.
+// If the input doesn't have any special keys at the beginning, it returns the
+// entire string.
+absl::string_view TrimLeadingSpecialKey(absl::string_view input);
 
-}  // namespace
-}  // namespace mozc::strings
+}  // namespace mozc::composer::internal
+
+#endif  // MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_

@@ -38,6 +38,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/table_layout.h"
@@ -223,13 +224,13 @@ HBITMAP LoadBitmapFromResource(HMODULE module, int resource_id) {
 
 CandidateWindow::CandidateWindow()
     : candidates_(new commands::Candidates),
-      indicator_width_(0),
       footer_logo_display_size_(0, 0),
-      metrics_changed_(false),
-      mouse_moving_(true),
-      text_renderer_(TextRenderer::Create()),
+      send_command_interface_(nullptr),
       table_layout_(new TableLayout),
-      send_command_interface_(nullptr) {
+      text_renderer_(TextRenderer::Create()),
+      indicator_width_(0),
+      metrics_changed_(false),
+      mouse_moving_(true) {
   double scale_factor_x = 1.0;
   double scale_factor_y = 1.0;
   RendererStyleHandler::GetDPIScalingFactor(&scale_factor_x, &scale_factor_y);

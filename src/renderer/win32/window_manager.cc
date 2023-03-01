@@ -29,6 +29,8 @@
 
 #include "renderer/win32/window_manager.h"
 
+#include <windows.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -39,6 +41,8 @@
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/win32/candidate_window.h"

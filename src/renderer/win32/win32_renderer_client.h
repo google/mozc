@@ -27,19 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_HANDLER_
-#define MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_HANDLER_
+#ifndef MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_H_
+#define MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_H_
 
 #include <windows.h>
 
-#include "base/port.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-
 namespace renderer {
 namespace win32 {
 
@@ -66,4 +61,4 @@ class Win32RendererClient {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_HANDLER_
+#endif  // MOZC_RENDERER_WIN32_WIN32_RENDERER_CLIENT_H_

@@ -33,6 +33,9 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
+#include <utility>
+
+#include "absl/strings/string_view.h"
 
 namespace mozc::strings {
 namespace internal {
@@ -60,6 +63,17 @@ static_assert(std::size(kUtf8LenTbl) ==
 constexpr uint8_t OneCharLen(const char c) {
   return static_cast<uint8_t>(
       internal::kUtf8LenTbl[static_cast<uint_fast8_t>(c)]);
+}
+
+// Returns <first char, rest> of the string.
+// The result is clipped if the input string isn't long enough.
+constexpr std::pair<absl::string_view, absl::string_view> FrontChar(
+    absl::string_view s) {
+  if (s.empty()) {
+    return {s, s};
+  }
+  const uint8_t len = OneCharLen(s.front());
+  return {absl::ClippedSubstr(s, 0, len), absl::ClippedSubstr(s, len)};
 }
 
 }  // namespace mozc::strings

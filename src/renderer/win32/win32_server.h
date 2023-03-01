@@ -38,14 +38,13 @@
 #include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
+#include "renderer/win32/window_manager.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
-
-class WindowManager;
 
 // This is an implementation class of UI-renderer server based on
 // Win32 Event object and Win32 window messages.

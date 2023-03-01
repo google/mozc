@@ -103,10 +103,8 @@ class Table {
 
   // Return true if adding the input-pending pair makes a loop of
   // conversion rules.
-  bool IsLoopingEntry(absl::string_view input,
-                      absl::string_view pending) const;
-  const Entry *AddRule(absl::string_view input,
-                       absl::string_view output,
+  bool IsLoopingEntry(absl::string_view input, absl::string_view pending) const;
+  const Entry *AddRule(absl::string_view input, absl::string_view output,
                        absl::string_view pending);
 
   const Entry *AddRuleWithAttributes(absl::string_view input,
@@ -146,10 +144,6 @@ class Table {
   // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
   // return the trimmed visible string.
   static std::string DeleteSpecialKey(absl::string_view input);
-
-  // If the string starts with a special key wrapped with ("\x0F", "\x0E"),
-  // erases it and returns true. Otherwise returns false.
-  static bool TrimLeadingSpecialKey(std::string *input);
 
   // Return the default table.
   static const Table &GetDefaultTable();

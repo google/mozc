@@ -368,6 +368,7 @@ mozc_cc_library(
             "//spelling:spellchecker_service_interface",
             "//spelling:spellchecker_service_registration",
         ],
+        windows = [],
     ) + [
         ":session_handler",
         ":session_handler_interface",

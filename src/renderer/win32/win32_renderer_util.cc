@@ -51,6 +51,8 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win32/win_util.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "absl/base/macros.h"
@@ -71,6 +73,7 @@ typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
 namespace {
 // This template class is used to represent rendering information which may
 // or may not be available depends on the application and operations.
+// TODO(yuryu): Replace with std::optional<T>.
 template <typename T>
 class Optional {
  public:
@@ -1655,8 +1658,8 @@ SegmentMarkerLayout::SegmentMarkerLayout()
 
 CompositionWindowLayout::CompositionWindowLayout()
     : window_position_in_screen_coordinate(CRect()),
-      caret_rect(CRect()),
       text_area(CRect()),
+      caret_rect(CRect()),
       base_position(CPoint()),
       log_font(CLogFont()) {}
 

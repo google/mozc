@@ -48,57 +48,11 @@ inline uint64_t RotateLeft64(uint64_t original, int num_bits) {
   return (original << (64 - num_bits)) | (original >> num_bits);
 }
 
-inline uint32_t BitsToWords(uint32_t bits) {
-  uint32_t words = (bits + 31) >> 5;
-  if (bits > 0 && words == 0) {
-    words = 1 << (32 - 5);  // possible overflow
-  }
-  return words;
-}
-
 }  // namespace
 
-class ExistenceFilter::BlockBitmap {
- public:
-  BlockBitmap(uint32_t length, bool is_mutable);
-  BlockBitmap(const BlockBitmap &) = delete;
-  BlockBitmap &operator=(const BlockBitmap &) = delete;
-  ~BlockBitmap();
-  void Clear();
-  bool Get(uint32_t index) const;
-  void Set(uint32_t index);
+namespace internal {
 
-  // REQUIRES: "iter" is zero, or was set by a preceding call
-  // to GetMutableFragment().
-  //
-  // This allows caller to peek into and write to the underlying bitmap
-  // as a series of non-empty fragments in whole number of 4-byte words.
-  // If the entire bitmap has been exhausted, return false.  Otherwise,
-  // return true and point caller to the next non-empty fragment.
-  //
-  // Usage:
-  //    char** ptr;
-  //    size_t bytes;
-  //    for (uint32_t iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
-  //      Process(*ptr, bytes);
-  //    }
-  bool GetMutableFragment(uint32_t *iter, char ***ptr, size_t *size);
-
- private:
-  static constexpr int kBlockShift = 21;  // 2^21 bits == 256KB block
-  static constexpr int kBlockBits = 1 << kBlockShift;
-  static constexpr int kBlockMask = kBlockBits - 1;
-  static constexpr int kBlockBytes = kBlockBits >> 3;
-  static constexpr int kBlockWords = kBlockBits >> 5;
-
-  // Array of blocks. Each block has kBlockBits region except for last block.
-  uint32_t **block_;
-  uint32_t num_blocks_;
-  uint32_t bytes_in_last_;
-  const bool is_mutable_;
-};
-
-ExistenceFilter::BlockBitmap::BlockBitmap(uint32_t length, bool is_mutable)
+BlockBitmap::BlockBitmap(uint32_t length, bool is_mutable)
     : is_mutable_(is_mutable) {
   CHECK_GT(length, 0);
   const uint32_t bits_in_last_block = (length & kBlockMask);
@@ -131,7 +85,7 @@ ExistenceFilter::BlockBitmap::BlockBitmap(uint32_t length, bool is_mutable)
       is_mutable_ ? new uint32_t[bytes_in_last_ / sizeof(uint32_t)] : nullptr;
 }
 
-ExistenceFilter::BlockBitmap::~BlockBitmap() {
+BlockBitmap::~BlockBitmap() {
   if (is_mutable_) {
     for (int i = 0; i < num_blocks_; ++i) {
       delete[] block_[i];
@@ -140,7 +94,7 @@ ExistenceFilter::BlockBitmap::~BlockBitmap() {
   delete[] block_;
 }
 
-void ExistenceFilter::BlockBitmap::Clear() {
+void BlockBitmap::Clear() {
   if (!is_mutable_) {
     return;
   }
@@ -149,6 +103,26 @@ void ExistenceFilter::BlockBitmap::Clear() {
   }
   memset(block_[num_blocks_ - 1], 0, bytes_in_last_);
 }
+
+bool BlockBitmap::GetMutableFragment(uint32_t *iter,
+                                                      char ***ptr,
+                                                      size_t *size) {
+  const uint32_t b = *iter;
+  if (b >= num_blocks_) {
+    // |iter| reached to the end of the block.
+    return false;
+  }
+
+  (*iter)++;
+  *ptr = reinterpret_cast<char **>(&block_[b]);
+  *size = (b == num_blocks_ - 1) ? bytes_in_last_ : kBlockBytes;
+  return true;
+}
+
+}  // namespace internal
+
+using internal::BlockBitmap;
+using internal::BitsToWords;
 
 ExistenceFilter::ExistenceFilter(uint32_t m, uint32_t n, int k)
     : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
@@ -188,38 +162,7 @@ ExistenceFilter *ExistenceFilter::CreateOptimal(size_t size_in_bytes,
   return filter;
 }
 
-ExistenceFilter::~ExistenceFilter() {}
-
 void ExistenceFilter::Clear() { rep_->Clear(); }
-
-inline bool ExistenceFilter::BlockBitmap::Get(uint32_t index) const {
-  const uint32_t bindex = index >> kBlockShift;
-  const uint32_t windex = (index & kBlockMask) >> 5;
-  const uint32_t bitpos = index & 31;
-  return (block_[bindex][windex] >> bitpos) & 1;
-}
-
-inline void ExistenceFilter::BlockBitmap::Set(uint32_t index) {
-  const uint32_t bindex = index >> kBlockShift;
-  const uint32_t windex = (index & kBlockMask) >> 5;
-  const uint32_t bitpos = index & 31;
-  block_[bindex][windex] |= (static_cast<uint32_t>(1) << bitpos);
-}
-
-bool ExistenceFilter::BlockBitmap::GetMutableFragment(uint32_t *iter,
-                                                      char ***ptr,
-                                                      size_t *size) {
-  const uint32_t b = *iter;
-  if (b >= num_blocks_) {
-    // |iter| reached to the end of the block.
-    return false;
-  }
-
-  (*iter)++;
-  *ptr = reinterpret_cast<char **>(&block_[b]);
-  *size = (b == num_blocks_ - 1) ? bytes_in_last_ : kBlockBytes;
-  return true;
-}
 
 bool ExistenceFilter::Exists(uint64_t hash) const {
   for (size_t i = 0; i < num_hashes_; ++i) {
@@ -238,10 +181,6 @@ void ExistenceFilter::Insert(uint64_t hash) {
     uint32_t index = hash % vec_size_;
     rep_->Set(index);
   }
-}
-
-size_t ExistenceFilter::Size() const {
-  return (BitsToWords(vec_size_) * sizeof(uint32_t));
 }
 
 size_t ExistenceFilter::MinFilterSizeInBytesForErrorRate(float error_rate,

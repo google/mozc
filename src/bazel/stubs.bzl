@@ -70,3 +70,23 @@ def register_extension_info(**kwargs):
     # Do nothing for OSS.
     _ignore = kwargs  # @unused
     pass
+
+def _cc_stub_impl(ctx):
+    _ignore = ctx  # @unused
+    return [CcInfo()]
+
+_cc_stub = rule(
+    implementation = _cc_stub_impl,
+)
+
+def cc_stub(name, tags = None, target_compatible_with = None, **kwargs):
+    _ignore = kwargs  # @unused
+    _cc_stub(
+        name = name,
+        tags = tags,
+        target_compatible_with = target_compatible_with,
+    )
+
+lexan = struct(
+    resource_files = cc_stub,
+)

@@ -52,15 +52,27 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
-    name = "ktmw32",
-)
-
-mozc_win32_lib(
     name = "crypt32",
 )
 
 mozc_win32_lib(
+    name = "d2d1",
+)
+
+mozc_win32_lib(
+    name = "dwrite",
+)
+
+mozc_win32_lib(
+    name = "gdiplus",
+)
+
+mozc_win32_lib(
     name = "imm32",
+)
+
+mozc_win32_lib(
+    name = "ktmw32",
 )
 
 mozc_win32_lib(

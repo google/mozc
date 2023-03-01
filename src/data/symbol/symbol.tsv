@@ -126,7 +126,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	£	ぽんど  つうか たんい	通貨記号	ポンド	OTHER
 記号	€	ゆーろ つうか たんい	通貨記号	ユーロ	OTHER
 記号	％	ぱーせんと たんい %	パーセント		GENERAL
-記号	＃	しゃーぷ なんばー いげた #	井げた		GENERAL
+記号	＃	しゃーぷ なんばー いげた はっしゅ #	井げた／ハッシュ		GENERAL
 記号	＆	あんど あんぱさんど &	アンパサンド		GENERAL
 記号	＊	あすたりすく あすてりすく ほし *	アスタリスク		GENERAL
 記号	＠	あっとまーく あっと @	アットマーク		GENERAL
@@ -218,7 +218,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	∅	すうがく くうしゅうごう	空集合		SYMBOL		U+2205
 記号	Å	おんぐすとろーむ たんい A きごう	オングストローム		SYMBOL
 記号	‰	ぱーみる  たんい きごう	単位		SYMBOL
-記号	♯	しゃーぷ  おんがく # きごう	シャープ		SYMBOL
+記号	♯	しゃーぷ  おんがく # きごう	シャープ(音楽記号)		SYMBOL
 記号	♭	ふらっと  おんがく きごう	フラット		SYMBOL
 記号	♪	おんぷ おんがく きごう	音符		SYMBOL
 記号	♫	おんぷ おんがく きごう	音符		SYMBOL

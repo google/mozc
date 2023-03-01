@@ -43,7 +43,6 @@
 #include <vector>
 
 #include "base/coordinates.h"
-#include "base/port.h"
 
 namespace mozc {
 namespace renderer {

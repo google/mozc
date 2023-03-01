@@ -29,6 +29,8 @@
 
 #include "renderer/win32/win32_font_util.h"
 
+#include <windows.h>
+
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 
@@ -87,7 +89,7 @@ bool FontUtil::ToLOGFONT(
     return false;
   }
 
-  ::ZeroMemory(log_font, sizeof(log_font));
+  ::ZeroMemory(log_font, sizeof(LOGFONTW));
 
   log_font->lfHeight = win_log_font.height();
   log_font->lfWidth = win_log_font.width();

@@ -27,38 +27,42 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/strings/unicode.h"
+#include "composer/internal/special_key.h"
 
+#include <string>
+
+#include "composer/table.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-namespace mozc::strings{
+namespace mozc::composer::internal {
 namespace {
 
-using ::testing::Pair;
+using ::testing::IsEmpty;
 
-TEST(UnicodeTest, OneCharLen) {
-  EXPECT_EQ(OneCharLen(0x00), 1);
-  EXPECT_EQ(OneCharLen(0x7F), 1);
-  EXPECT_EQ(OneCharLen(0xC2), 2);
-  EXPECT_EQ(OneCharLen(0xDF), 2);
-  EXPECT_EQ(OneCharLen(0xE0), 3);
-  EXPECT_EQ(OneCharLen(0xEF), 3);
-  EXPECT_EQ(OneCharLen(0xF0), 4);
-  EXPECT_EQ(OneCharLen(0xF4), 4);
-}
+TEST(SpecialKeyTest, TrimLeadingpecialKey) {
+  const Table table;
+  std::string input = table.ParseSpecialKey("{!}ab");
+  EXPECT_EQ(TrimLeadingSpecialKey(input), "ab");
 
-TEST(UnicodeTest, FrontChar) {
-  EXPECT_THAT(FrontChar(""), Pair("", ""));
-  EXPECT_THAT(FrontChar("01"), Pair("0", "1"));
-  EXPECT_THAT(FrontChar("\x01"), Pair("\x01", ""));
-  EXPECT_THAT(FrontChar("あいうえお"), Pair("あ", "いうえお"));
-  EXPECT_THAT(FrontChar("𧜎𧝒"), Pair("𧜎", "𧝒"));
-  // Invalid length
-  EXPECT_THAT(FrontChar("\xC2"), Pair("\xC2", ""));
-  // BOM
-  EXPECT_THAT(FrontChar("\xEF\xBB\xBF""abc"), Pair("\xEF\xBB\xBF", "abc"));
+  input = table.ParseSpecialKey("{!}{?}ab");
+  EXPECT_EQ(TrimLeadingSpecialKey(input), table.ParseSpecialKey("{?}ab"));
+
+  input = table.ParseSpecialKey("a{!}b");
+  EXPECT_EQ(TrimLeadingSpecialKey(input), input);
+
+  // Invalid patterns
+  //   "\u000F" = parsed-"{"
+  //   "\u000E" = parsed-"}"
+  input = "\u000Fab";  // "{ab"
+  EXPECT_EQ(TrimLeadingSpecialKey(input), input);
+  input = "ab\u000E";  // "ab}"
+  EXPECT_EQ(TrimLeadingSpecialKey(input), input);
+  input = "\u000F\u000Fab\u000E";  // "{{ab}"
+  EXPECT_THAT(TrimLeadingSpecialKey(input), IsEmpty());
+  input = "\u000Fab\u000E\u000E";  // "{ab}}"
+  EXPECT_EQ(TrimLeadingSpecialKey(input), "\u000E");
 }
 
 }  // namespace
-}  // namespace mozc::strings
+}  // namespace mozc::composer::internal

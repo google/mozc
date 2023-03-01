@@ -54,6 +54,7 @@ mozc_cc_library(
     hdrs = ["char_chunk.h"],
     deps = [
         ":composition_input",
+        ":special_key",
         ":transliterators",
         "//base:logging",
         "//base:port",
@@ -106,7 +107,6 @@ mozc_cc_test(
     deps = [
         ":char_chunk",
         ":composition_input",
-        ":transliterator_interface",
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
@@ -329,5 +329,25 @@ mozc_cc_test(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "special_key",
+    srcs = ["special_key.cc"],
+    hdrs = ["special_key.h"],
+    deps = [
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "special_key_test",
+    srcs = ["special_key_test.cc"],
+    deps = [
+        ":special_key",
+        "//composer:table",
+        "//testing:gunit_main",
     ],
 )

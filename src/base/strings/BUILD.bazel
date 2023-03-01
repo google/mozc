@@ -44,6 +44,7 @@ package(
 mozc_cc_library(
     name = "unicode",
     hdrs = ["unicode.h"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_test(

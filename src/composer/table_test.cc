@@ -991,35 +991,6 @@ TEST_F(TableTest, DeleteSpecialKey) {
   EXPECT_EQ(Table::DeleteSpecialKey("\u000Fab\u000E\u000E"), "\u000E");
 }
 
-TEST_F(TableTest, TrimLeadingpecialKey) {
-  const Table table;
-  std::string input = table.ParseSpecialKey("{!}ab");
-  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, "ab");
-
-  input = table.ParseSpecialKey("{!}{?}ab");
-  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, table.ParseSpecialKey("{?}ab"));
-
-  input = table.ParseSpecialKey("a{!}b");
-  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, table.ParseSpecialKey("a{!}b"));
-
-  // Invalid patterns
-  //   "\u000F" = parsed-"{"
-  //   "\u000E" = parsed-"}"
-  input = "\u000Fab";  // "{ab"
-  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
-  input = "ab\u000E";  // "ab}"
-  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
-  input = "\u000F\u000Fab\u000E";  // "{{ab}"
-  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_TRUE(input.empty());
-  input = "\u000Fab\u000E\u000E";  // "{ab}}"
-  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
-  EXPECT_EQ(input, "\u000E");
-}
-
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
   absl::flat_hash_set<const Table *> table_set;

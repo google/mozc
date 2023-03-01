@@ -37,6 +37,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
@@ -86,12 +88,12 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
 // ------------------------------------------------------------------------
 
 InfolistWindow::InfolistWindow()
-    : candidates_(new commands::Candidates),
-      metrics_changed_(false),
+    : send_command_interface_(nullptr),
+      candidates_(new commands::Candidates),
       text_renderer_(TextRenderer::Create()),
       style_(new RendererStyle),
-      visible_(false),
-      send_command_interface_(nullptr) {
+      metrics_changed_(false),
+      visible_(false) {
   mozc::renderer::RendererStyleHandler::GetRendererStyle(style_.get());
 }
 

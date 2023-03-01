@@ -80,6 +80,8 @@ mozc_cc_library(
     name = "recursive",
     srcs = ["recursive.cc"],
     hdrs = ["recursive.h"],
+    # TODO(b/271087668) false positive
+    tags = ["nomsan"],
     deps = [
         "//base:file_util",
         "//base:logging",

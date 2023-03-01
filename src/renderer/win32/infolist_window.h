@@ -48,23 +48,14 @@
 
 #include "base/const.h"
 #include "base/coordinates.h"
-#include "base/port.h"
+#include "client/client_interface.h"
+#include "protocol/renderer_command.pb.h"
+#include "protocol/renderer_style.pb.h"
+#include "renderer/win32/text_renderer.h"
 
 namespace mozc {
-
-namespace client {
-class SendCommandInterface;
-}  // namespace client
-
-namespace commands {
-class Candidates;
-}  // namespace commands
-
 namespace renderer {
-class RendererStyle;
 namespace win32 {
-
-class TextRenderer;
 
 typedef ATL::CWinTraits<WS_POPUP | WS_DISABLED,
                         WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>

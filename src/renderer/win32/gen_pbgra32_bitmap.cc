@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <windows.h>
 #include <objbase.h>
+#include <windows.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -37,8 +37,8 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
+#include "absl/base/attributes.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, src, "", "path to the input PNG file");
@@ -83,12 +83,14 @@ bool ConvertMain() {
   const uint32_t num_pixels = static_cast<uint32_t>(width * height);
   const uint32_t pixel_data_bytes = num_pixels * 4;
 
-  // Use <pshpack2.h> header to match the actual file BMP file format,
-  // which uses 2 byte packing.  Include <poppack.h> to restore the
-  // current packing mode.
-  // c.f. https://msdn.microsoft.com/en-us/library/2e70t5y1.aspx
+  // Pack the PBGR32Bitmap to match the actual file BMP file format.
+  // In MSVC, include pshpack2.h and poppack.h.
+  // In clang, we use ABSL_ATTRIBUTE_PACKED.
+  // pshpack: https://msdn.microsoft.com/en-us/library/2e70t5y1.aspx
+#if !ABSL_HAVE_ATTRIBUTE(packed)
 #include <pshpack2.h>  // NOLINT
-  struct PBGR32Bitmap {
+#endif                 // !ABSL_HAVE_ATTRIBUTE(packed)
+  struct ABSL_ATTRIBUTE_PACKED PBGR32Bitmap {
     uint16_t file_signature;
     uint32_t file_size;
     uint16_t reserved1;
@@ -106,7 +108,10 @@ bool ConvertMain() {
     uint32_t num_pallete;
     uint32_t important_color;
   };
+  static_assert(sizeof(PBGR32Bitmap) == 54);
+#if !ABSL_HAVE_ATTRIBUTE(packed)
 #include <poppack.h>  // NOLINT
+#endif                // !ABSL_HAVE_ATTRIBUTE(packed)
 
   PBGR32Bitmap header = {};
   header.file_signature = 0x4d42;  // 'BM'

@@ -27,38 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/strings/unicode.h"
+#include "composer/internal/special_key.h"
 
-#include "testing/gmock.h"
-#include "testing/gunit.h"
+#include "base/util.h"
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
-namespace mozc::strings{
-namespace {
+namespace mozc::composer::internal {
 
-using ::testing::Pair;
+absl::string_view TrimLeadingSpecialKey(absl::string_view input) {
+  // Check if the first character is a Unicode PUA converted from a special key.
+  char32_t first_char;
+  absl::string_view rest;
+  Util::SplitFirstChar32(input, &first_char, &rest);
+  if (IsSpecialKey(first_char)) {
+    return input.substr(input.size() - rest.size());
+  }
 
-TEST(UnicodeTest, OneCharLen) {
-  EXPECT_EQ(OneCharLen(0x00), 1);
-  EXPECT_EQ(OneCharLen(0x7F), 1);
-  EXPECT_EQ(OneCharLen(0xC2), 2);
-  EXPECT_EQ(OneCharLen(0xDF), 2);
-  EXPECT_EQ(OneCharLen(0xE0), 3);
-  EXPECT_EQ(OneCharLen(0xEF), 3);
-  EXPECT_EQ(OneCharLen(0xF0), 4);
-  EXPECT_EQ(OneCharLen(0xF4), 4);
+  // Check if the input starts from open and close of a special key.
+  if (!absl::StartsWith(input, kSpecialKeyOpen)) {
+    return input;
+  }
+  size_t close_pos = input.find(kSpecialKeyClose, 1);
+  if (close_pos == absl::string_view::npos) {
+    return input;
+  }
+  return input.substr(close_pos + 1);
 }
 
-TEST(UnicodeTest, FrontChar) {
-  EXPECT_THAT(FrontChar(""), Pair("", ""));
-  EXPECT_THAT(FrontChar("01"), Pair("0", "1"));
-  EXPECT_THAT(FrontChar("\x01"), Pair("\x01", ""));
-  EXPECT_THAT(FrontChar("あいうえお"), Pair("あ", "いうえお"));
-  EXPECT_THAT(FrontChar("𧜎𧝒"), Pair("𧜎", "𧝒"));
-  // Invalid length
-  EXPECT_THAT(FrontChar("\xC2"), Pair("\xC2", ""));
-  // BOM
-  EXPECT_THAT(FrontChar("\xEF\xBB\xBF""abc"), Pair("\xEF\xBB\xBF", "abc"));
-}
-
-}  // namespace
-}  // namespace mozc::strings
+}  // namespace mozc::composer::internal
