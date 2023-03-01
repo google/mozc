@@ -169,6 +169,8 @@ mozc_cc_binary(
 mozc_cc_library(
     name = "winmain",
     hdrs = ["winmain.h"],
+    # Force the Windows subsystem
+    linkopts = ["/SUBSYSTEM:WINDOWS"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = [
