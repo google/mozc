@@ -337,7 +337,9 @@ mozc_cc_library(
     srcs = ["special_key.cc"],
     hdrs = ["special_key.h"],
     deps = [
+        "//base:logging",
         "//base:util",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

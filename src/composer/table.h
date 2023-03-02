@@ -42,7 +42,7 @@
 #include <vector>
 
 #include "base/container/trie.h"
-#include "base/port.h"
+#include "composer/internal/special_key.h"
 #include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
@@ -132,18 +132,11 @@ class Table {
 
   const TypingModel *typing_model() const;
 
-  // Parse special key strings escaped with the pair of "{" and "}"
-  // and register them to be used by ParseSpecialKey().
-  // Also returns the parsed string.
-  std::string RegisterSpecialKey(absl::string_view input);
-
-  // Parse special key strings escaped with the pair of "{" and "}"
-  // and return the parsed string.
-  std::string ParseSpecialKey(absl::string_view input) const;
-
-  // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
-  // return the trimmed visible string.
-  static std::string DeleteSpecialKey(absl::string_view input);
+  // Parses special key strings escaped with the pair of "{" and "}"
+  // and returns the parsed string.
+  std::string ParseSpecialKey(const absl::string_view input) const {
+    return special_key_map_.Parse(input);
+  }
 
   // Return the default table.
   static const Table &GetDefaultTable();
@@ -166,8 +159,7 @@ class Table {
   using EntrySet = absl::flat_hash_set<const Entry *>;
   EntrySet entry_set_;
 
-  using SpecialKeyMap = absl::flat_hash_map<std::string, std::string>;
-  SpecialKeyMap special_key_map_;
+  internal::SpecialKeyMap special_key_map_;
 
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.

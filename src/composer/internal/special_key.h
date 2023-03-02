@@ -30,31 +30,35 @@
 #ifndef MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
 #define MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
 
+#include <string>
+
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::composer::internal {
 
-// Use [U+F000, U+F8FF] to represent special keys (e.g. {!}, {abc}).
-// The range of Unicode PUA is [U+E000, U+F8FF], and we use them from U+F000.
-// * The range of [U+E000, U+F000) is used for user defined PUA characters.
-// * The users can still use [U+F000, U+F8FF] for their user dictionary.
-//   but, they should not use them for composing rules.
-constexpr char32_t kSpecialKeyBegin = 0xF000;
-constexpr char32_t kSpecialKeyEnd = 0xF8FF;
+class SpecialKeyMap {
+ public:
+  // Parses special key strings escaped with the pair of "{" and "}"" and
+  // registers them to be used by Parse(). Also returns the parsed string.
+  std::string Register(absl::string_view input);
 
-// U+000F and U+000E are used as fallback for special keys that are not
-// registered in the table. "{abc}" is converted to "\u000Fabc\u000E".
-constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
-constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
+  // Parses special key strings escaped with the pair of "{" and "}" and returns
+  // the parsed string.
+  std::string Parse(absl::string_view input) const;
 
-constexpr bool IsSpecialKey(char32_t c) {
-  return (kSpecialKeyBegin <= c && c <= kSpecialKeyEnd);
-}
+ private:
+  absl::flat_hash_map<std::string, std::string> map_;
+};
 
 // Trims a special key from input and returns the rest.
 // If the input doesn't have any special keys at the beginning, it returns the
 // entire string.
 absl::string_view TrimLeadingSpecialKey(absl::string_view input);
+
+// Deletes invisible special keys wrapped with ("\x0F", "\x0E") and returns the
+// trimmed visible string.
+std::string DeleteSpecialKeys(absl::string_view input);
 
 }  // namespace mozc::composer::internal
 

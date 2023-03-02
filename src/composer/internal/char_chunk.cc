@@ -51,6 +51,7 @@ namespace mozc {
 namespace composer {
 
 namespace {
+using internal::DeleteSpecialKeys;
 using internal::TrimLeadingSpecialKey;
 using strings::FrontChar;
 
@@ -130,9 +131,8 @@ size_t CharChunk::GetLength(Transliterators::Transliterator t12r) const {
       local_length_cache_ != std::string::npos) {
     return local_length_cache_;
   }
-  const std::string t13n =
-      Transliterate(t12r, Table::DeleteSpecialKey(raw_),
-                    Table::DeleteSpecialKey(conversion_ + pending_));
+  const std::string t13n = Transliterate(
+      t12r, DeleteSpecialKeys(raw_), DeleteSpecialKeys(conversion_ + pending_));
   size_t length = Util::CharsLen(t13n);
   if (t12r == Transliterators::LOCAL) {
     local_length_cache_ = length;
@@ -142,9 +142,8 @@ size_t CharChunk::GetLength(Transliterators::Transliterator t12r) const {
 
 void CharChunk::AppendResult(Transliterators::Transliterator t12r,
                              std::string *result) const {
-  const std::string t13n =
-      Transliterate(t12r, Table::DeleteSpecialKey(raw_),
-                    Table::DeleteSpecialKey(conversion_ + pending_));
+  const std::string t13n = Transliterate(
+      t12r, DeleteSpecialKeys(raw_), DeleteSpecialKeys(conversion_ + pending_));
   result->append(t13n);
 }
 
@@ -160,8 +159,8 @@ void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
       converted.append(entry->result());
     }
   }
-  result->append(Transliterate(t12r, Table::DeleteSpecialKey(raw_),
-                               Table::DeleteSpecialKey(converted)));
+  result->append(Transliterate(t12r, DeleteSpecialKeys(raw_),
+                               DeleteSpecialKeys(converted)));
 }
 
 void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
@@ -179,8 +178,8 @@ void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
     // appended.
     converted.append(pending_);
   }
-  result->append(Transliterate(t12r, Table::DeleteSpecialKey(raw_),
-                               Table::DeleteSpecialKey(converted)));
+  result->append(Transliterate(t12r, DeleteSpecialKeys(raw_),
+                               DeleteSpecialKeys(converted)));
 }
 
 // If we have the rule (roman),
@@ -230,13 +229,13 @@ void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
   }
   // Append current pending string
   if (conversion_.empty()) {
-    results->insert(Table::DeleteSpecialKey(pending_));
+    results->insert(DeleteSpecialKeys(pending_));
   }
   std::vector<const Entry *> entries;
   table_->LookUpPredictiveAll(pending_, &entries);
   for (const Entry *entry : entries) {
     if (!entry->result().empty()) {
-      results->insert(Table::DeleteSpecialKey(entry->result()));
+      results->insert(DeleteSpecialKeys(entry->result()));
     }
     if (entry->pending().empty()) {
       continue;
@@ -247,7 +246,7 @@ void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
       continue;
     }
     for (const std::string &result : loop_result) {
-      results->insert(Table::DeleteSpecialKey(result));
+      results->insert(DeleteSpecialKeys(result));
     }
   }
 }
@@ -558,9 +557,9 @@ std::unique_ptr<CharChunk> CharChunk::SplitChunk(
   local_length_cache_ = std::string::npos;
   std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
   Transliterators::GetTransliterator(GetTransliterator(t12r))
-      ->Split(position, Table::DeleteSpecialKey(raw_),
-              Table::DeleteSpecialKey(conversion_ + pending_), &raw_lhs,
-              &raw_rhs, &converted_lhs, &converted_rhs);
+      ->Split(position, DeleteSpecialKeys(raw_),
+              DeleteSpecialKeys(conversion_ + pending_), &raw_lhs, &raw_rhs,
+              &converted_lhs, &converted_rhs);
 
   auto left_new_chunk = std::make_unique<CharChunk>(transliterator_, table_);
   left_new_chunk->set_raw(raw_lhs);
