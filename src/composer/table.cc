@@ -43,7 +43,6 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -121,9 +120,11 @@ Entry::Entry(const absl::string_view input, const absl::string_view result,
 // ========================================
 // Table
 // ========================================
-Table::Table() : entries_(new EntryTrie), case_sensitive_(false) {}
-
-Table::~Table() { ResetEntrySet(); }
+Table::~Table() {
+  for (const auto entry : entry_set_) {
+    delete entry;
+  }
+}
 
 static constexpr char kKuten[] = "、";
 static constexpr char kTouten[] = "。";
@@ -376,12 +377,12 @@ const Entry *Table::AddRuleWithAttributes(
   }
 
   const Entry *old_entry = nullptr;
-  if (entries_->LookUp(input, &old_entry)) {
+  if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
 
   Entry *entry = new Entry(input, output, pending, attributes);
-  entries_->AddEntry(input, entry);
+  entries_.AddEntry(input, entry);
   entry_set_.insert(entry);
 
   // Check if the input has a large captal character.
@@ -409,10 +410,10 @@ void Table::DeleteRule(const absl::string_view input) {
   //     - This method has no tests.
   //     - This method is private scope.
   const Entry *old_entry;
-  if (entries_->LookUp(input, &old_entry)) {
+  if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
-  entries_->DeleteEntry(input);
+  entries_.DeleteEntry(input);
 }
 
 bool Table::LoadFromString(const std::string &str) {
@@ -488,11 +489,11 @@ bool Table::LoadFromStream(std::istream *is) {
 const Entry *Table::LookUp(const absl::string_view input) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
-    entries_->LookUp(input, &entry);
+    entries_.LookUp(input, &entry);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUp(normalized_input, &entry);
+    entries_.LookUp(normalized_input, &entry);
   }
   return entry;
 }
@@ -501,11 +502,11 @@ const Entry *Table::LookUpPrefix(const absl::string_view input,
                                  size_t *key_length, bool *fixed) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
-    entries_->LookUpPrefix(input, &entry, key_length, fixed);
+    entries_.LookUpPrefix(input, &entry, key_length, fixed);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUpPrefix(normalized_input, &entry, key_length, fixed);
+    entries_.LookUpPrefix(normalized_input, &entry, key_length, fixed);
   }
   return entry;
 }
@@ -513,11 +514,11 @@ const Entry *Table::LookUpPrefix(const absl::string_view input,
 void Table::LookUpPredictiveAll(const absl::string_view input,
                                 std::vector<const Entry *> *results) const {
   if (case_sensitive_) {
-    entries_->LookUpPredictiveAll(input, results);
+    entries_.LookUpPredictiveAll(input, results);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUpPredictiveAll(normalized_input, results);
+    entries_.LookUpPredictiveAll(normalized_input, results);
   }
 }
 
@@ -539,25 +540,17 @@ bool Table::HasNewChunkEntry(const absl::string_view input) const {
 
 bool Table::HasSubRules(const absl::string_view input) const {
   if (case_sensitive_) {
-    return entries_->HasSubTrie(input);
+    return entries_.HasSubTrie(input);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    return entries_->HasSubTrie(normalized_input);
+    return entries_.HasSubTrie(normalized_input);
   }
 }
 
 void Table::DeleteEntry(const Entry *entry) {
   entry_set_.erase(entry);
   delete entry;
-}
-
-void Table::ResetEntrySet() {
-  for (EntrySet::iterator it = entry_set_.begin(); it != entry_set_.end();
-       ++it) {
-    delete *it;
-  }
-  entry_set_.clear();
 }
 
 bool Table::case_sensitive() const { return case_sensitive_; }

@@ -73,15 +73,14 @@ enum TableAttribute {
 };
 typedef uint32_t TableAttributes;
 
-class Entry {
+class Entry final {
  public:
   Entry(absl::string_view input, absl::string_view result,
         absl::string_view pending, TableAttributes attributes);
-  virtual ~Entry() = default;
-  const std::string &input() const { return input_; }
-  const std::string &result() const { return result_; }
-  const std::string &pending() const { return pending_; }
-  TableAttributes attributes() const { return attributes_; }
+  constexpr const std::string &input() const { return input_; }
+  constexpr const std::string &result() const { return result_; }
+  constexpr const std::string &pending() const { return pending_; }
+  constexpr TableAttributes attributes() const { return attributes_; }
 
  private:
   const std::string input_;
@@ -90,12 +89,12 @@ class Entry {
   TableAttributes attributes_;
 };
 
-class Table {
+class Table final {
  public:
-  Table();
+  Table() = default;
   Table(const Table &) = delete;
   Table &operator=(const Table &) = delete;
-  virtual ~Table();
+  ~Table();
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
                                       const config::Config &config,
@@ -152,10 +151,9 @@ class Table {
 
   bool LoadFromStream(std::istream *is);
   void DeleteEntry(const Entry *entry);
-  void ResetEntrySet();
 
   using EntryTrie = Trie<const Entry *>;
-  std::unique_ptr<EntryTrie> entries_;
+  EntryTrie entries_;
   using EntrySet = absl::flat_hash_set<const Entry *>;
   EntrySet entry_set_;
 
@@ -163,7 +161,7 @@ class Table {
 
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.
-  bool case_sensitive_;
+  bool case_sensitive_ = false;
 
   // Typing model. nullptr if no corresponding model is available.
   std::unique_ptr<const TypingModel> typing_model_;
