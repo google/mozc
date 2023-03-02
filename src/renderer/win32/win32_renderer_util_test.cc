@@ -45,9 +45,12 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "base/win32/win_font_test_helper.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_font_util.h"
 #include "testing/gunit.h"
+#include "absl/base/casts.h"
 
 // Following functions should be placed in global namespace for Koenig look-up
 // trick used in GTest.
@@ -105,7 +108,14 @@ using WTL::CLogFont;
 using WTL::PrintTo;
 
 constexpr int kDefaultFontHeightInPixel = 18;
-const wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
+constexpr wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
+
+// Casts HWND to uint32_t. HWND can be 64 bits, but it's safe to downcast to
+// uint32_t as 64-bit Windows still uses 32-bit handles.
+// https://learn.microsoft.com/en-us/windows/win32/winprog64/interprocess-communication
+inline uint32_t HwndToUint32(HWND hwnd) {
+  return static_cast<uint32_t>(absl::bit_cast<uintptr_t>(hwnd));
+}
 
 #define EXPECT_COMPOSITION_WINDOW_LAYOUT(                                      \
     window_pos_left, window_pos_top, window_pos_right, window_pos_bottom,      \
@@ -189,7 +199,7 @@ class AppInfoUtil {
     app_info->set_ui_visibilities(visibility);
     app_info->set_process_id(1234);
     app_info->set_thread_id(5678);
-    app_info->set_target_window_handle(reinterpret_cast<uint32_t>(hwnd));
+    app_info->set_target_window_handle(HwndToUint32(hwnd));
     app_info->set_input_framework(ApplicationInfo::IMM32);
   }
 
@@ -250,8 +260,7 @@ class AppInfoUtil {
                            HWND target_window_handle) {
     CaretInfo *info = app_info->mutable_caret_info();
     info->set_blinking(blinking);
-    info->set_target_window_handle(
-        reinterpret_cast<uint32_t>(target_window_handle));
+    info->set_target_window_handle(HwndToUint32(target_window_handle));
     Rectangle *rect = info->mutable_caret_rect();
     rect->set_left(left);
     rect->set_top(top);
@@ -759,7 +768,7 @@ class Win32RendererUtilTest : public testing::Test {
     ApplicationInfo *app = command->mutable_application_info();
     app->set_process_id(1234);
     app->set_thread_id(5678);
-    app->set_target_window_handle(reinterpret_cast<uint32_t>(hwnd));
+    app->set_target_window_handle(HwndToUint32(hwnd));
     WinLogFont *font = app->mutable_composition_font();
     font->set_height(-45);
     font->set_width(0);
