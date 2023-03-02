@@ -347,7 +347,7 @@
             'win32/win32_renderer_util_test.cc',
           ],
           'dependencies': [
-            '../base/base.gyp:win_font_test_helper',
+            '../base/win32/base_win32.gyp:win_font_test_helper',
             '../net/jsoncpp.gyp:jsoncpp',
             '../testing/testing.gyp:gtest_main',
             '../testing/testing.gyp:mozctest',

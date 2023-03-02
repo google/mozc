@@ -507,29 +507,6 @@
         },
       ]},
     ],
-    ['OS=="win"', {
-      'targets': [
-        {
-          'target_name': 'win_font_test_helper',
-          'type': 'static_library',
-          'sources': [
-            'win32/win_font_test_helper.cc',
-          ],
-          'dependencies': [
-            'base',
-          ],
-          'copies': [
-            {
-              'files': [
-                '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
-                '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
-              ],
-              'destination': '<(PRODUCT_DIR)/data',
-            },
-          ],
-        },
-      ]},
-    ],
     ['OS=="mac"', {
       'targets': [
         {
