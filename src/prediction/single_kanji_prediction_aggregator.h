@@ -27,35 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_PREDICTION_PREDICTION_AGGREGATOR_INTERFACE_H_
-#define MOZC_PREDICTION_PREDICTION_AGGREGATOR_INTERFACE_H_
+#ifndef MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
+#define MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
 
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
+#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
-namespace mozc {
-namespace prediction {
+namespace mozc::prediction {
 
-class PredictionAggregatorInterface {
+class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
  public:
-  PredictionAggregatorInterface(const PredictionAggregatorInterface &) = delete;
-  PredictionAggregatorInterface &operator=(
-      const PredictionAggregatorInterface &) = delete;
+  explicit SingleKanjiPredictionAggregator(
+      const DataManagerInterface &data_manager);
+  ~SingleKanjiPredictionAggregator() override;
 
-  virtual ~PredictionAggregatorInterface() = default;
+  std::vector<Result> AggregateResults(const ConversionRequest &request,
+                                       const Segments &Segments) const override;
 
-  // Returns the prediction result entries for the `request` and `segments`.
-  virtual std::vector<Result> AggregateResults(
-      const ConversionRequest &request, const Segments &segments) const = 0;
+ private:
+  void AppendResults(absl::string_view kanji_key,
+                     absl::string_view original_input_key,
+                     const std::vector<std::string> &kanji_list,
+                     std::vector<Result> *results) const;
 
- protected:
-  PredictionAggregatorInterface() = default;
+  std::unique_ptr<dictionary::SingleKanjiDictionary> single_kanji_dictionary_;
+  std::unique_ptr<dictionary::PosMatcher> pos_matcher_;
+  const uint16_t general_symbol_id_;
 };
 
-}  // namespace prediction
-}  // namespace mozc
+}  // namespace mozc::prediction
 
-#endif  // MOZC_PREDICTION_PREDICTION_AGGREGATOR_INTERFACE_H_
+#endif  // MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_

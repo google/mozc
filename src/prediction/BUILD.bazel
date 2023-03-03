@@ -165,6 +165,7 @@ mozc_cc_library(
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher_lib",
+        "//dictionary:single_kanji_dictionary",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -213,6 +214,7 @@ mozc_cc_library(
         ":number_decoder",
         ":prediction_aggregator_interface",
         ":result",
+        ":single_kanji_prediction_aggregator",
         ":zero_query_dict",
         "//base:japanese_util",
         "//base:util",
@@ -247,6 +249,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_prediction_aggregator",
+        ":prediction_aggregator_interface",
         "//base:logging",
         "//base:system_util",
         "//base/container:serialized_string_array",
@@ -314,6 +317,49 @@ mozc_cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+mozc_cc_library(
+    name = "single_kanji_prediction_aggregator",
+    srcs = [
+        "single_kanji_prediction_aggregator.cc",
+    ],
+    hdrs = ["single_kanji_prediction_aggregator.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":prediction_aggregator_interface",
+        ":result",
+        "//base:util",
+        "//composer",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:single_kanji_dictionary",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "single_kanji_prediction_aggregator_test",
+    srcs = [
+        "single_kanji_prediction_aggregator_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":single_kanji_prediction_aggregator",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:config_cc_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
     ],
 )
 

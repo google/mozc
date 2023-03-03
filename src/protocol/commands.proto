@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 14
+// Next ID: 16
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -601,6 +601,14 @@ message DecoderExperimentParams {
   // Use actual converter for realtime conversion.
   optional bool use_actual_converter_for_realtime_conversion = 13
       [default = false];
+
+  // Enable single kanji prediction feature to generate single kanji candidates
+  // in predictor rather than rewriter.
+  optional bool enable_single_kanji_prediction = 14 [default = false];
+
+  // Cost offset for single kanji prediction feature.
+  // The default cost is 800(~= 500*ln(5)).
+  optional int32 single_kanji_prediction_cost_offset = 15 [default = 800];
 }
 
 // Clients' request to the server.

@@ -32,6 +32,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -47,6 +48,7 @@
 #include "prediction/number_decoder.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
@@ -70,11 +72,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::PosMatcher *pos_matcher);
 
-  // Returns the bitfield that indicates what prediction subroutines
-  // were used.  NO_PREDICTION means that no prediction was made.
-  PredictionTypes AggregatePredictionForRequest(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const override;
+  std::vector<Result> AggregateResults(const ConversionRequest &request,
+                                       const Segments &segments) const override;
 
  private:
   class PredictiveLookupCallback;
@@ -89,6 +88,23 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
     AggregateUnigramFn unigram_fn;
     size_t min_key_len;
   };
+
+  // For testing
+  DictionaryPredictionAggregator(
+      const DataManagerInterface &data_manager,
+      const ConverterInterface *converter,
+      const ImmutableConverterInterface *immutable_converter,
+      const dictionary::DictionaryInterface *dictionary,
+      const dictionary::DictionaryInterface *suffix_dictionary,
+      const dictionary::PosMatcher *pos_matcher,
+      std::unique_ptr<PredictionAggregatorInterface>
+          single_kanji_prediction_aggregator);
+
+  // Returns the bitfield that indicates what prediction subroutines
+  // were used.  NO_PREDICTION means that no prediction was made.
+  PredictionTypes AggregatePredictionForTesting(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<Result> *results) const;
 
   PredictionTypes AggregatePrediction(const ConversionRequest &request,
                                       size_t realtime_max_size,
@@ -270,6 +286,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
   NumberDecoder number_decoder_;
+  std::unique_ptr<PredictionAggregatorInterface>
+      single_kanji_prediction_aggregator_;
 };
 
 }  // namespace prediction

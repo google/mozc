@@ -46,6 +46,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
@@ -123,6 +124,7 @@ class DictionaryPredictor : public PredictorInterface {
   DictionaryPredictor(
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
+      const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
       const Connector *connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
@@ -217,6 +219,13 @@ class DictionaryPredictor : public PredictorInterface {
                                            const Segments &segments,
                                            std::vector<Result> *results) const;
 
+  // Returns the cost offset for SINGLE_KANJI results.
+  // Aggregated SINGLE_KANJI results does not have LM based wcost(word cost),
+  // so we want to add the offset based on the other entries.
+  int CalculateSingleKanjiCostOffset(const ConversionRequest &request,
+                                     uint16_t rid,
+                                     const std::vector<Result> &results) const;
+
   // Returns true if the suggestion is classified
   // as "aggressive".
   static bool IsAggressiveSuggestion(size_t query_len, size_t key_len, int cost,
@@ -226,7 +235,8 @@ class DictionaryPredictor : public PredictorInterface {
   void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
 
   // Sets candidate description.
-  static void SetDescription(PredictionTypes types, std::string *description);
+  void SetDescription(PredictionTypes types,
+                      Segment::Candidate *candidate) const;
   // Description for DEBUG mode.
   static void SetDebugDescription(PredictionTypes types,
                                   std::string *description);
@@ -254,6 +264,8 @@ class DictionaryPredictor : public PredictorInterface {
   const Connector *connector_;
   const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
+  std::unique_ptr<const dictionary::SingleKanjiDictionary>
+      single_kanji_dictionary_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
 };
