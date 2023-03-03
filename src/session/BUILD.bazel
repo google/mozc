@@ -317,6 +317,10 @@ mozc_cc_library(
             ":session_watch_dog",
             "//base:process",
         ],
+        windows = [
+            ":session_watch_dog",
+            "//base:process",
+        ],
     ) + [
         ":session",
         ":session_handler_interface",
