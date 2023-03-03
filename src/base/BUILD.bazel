@@ -524,6 +524,7 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
