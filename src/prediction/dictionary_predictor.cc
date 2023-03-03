@@ -51,6 +51,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "prediction/dictionary_prediction_aggregator.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/result.h"
@@ -152,11 +153,14 @@ DictionaryPredictor::DictionaryPredictor(
       connector_(connector),
       segmenter_(segmenter),
       suggestion_filter_(suggestion_filter),
+      single_kanji_dictionary_(
+          new dictionary::SingleKanjiDictionary(data_manager)),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictor") {}
 
 DictionaryPredictor::DictionaryPredictor(
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
+    const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
     const Connector *connector, const Segmenter *segmenter,
     const PosMatcher *pos_matcher, const SuggestionFilter *suggestion_filter)
@@ -165,6 +169,8 @@ DictionaryPredictor::DictionaryPredictor(
       connector_(connector),
       segmenter_(segmenter),
       suggestion_filter_(suggestion_filter),
+      single_kanji_dictionary_(
+          new dictionary::SingleKanjiDictionary(data_manager)),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictorForTest") {}
 
@@ -241,12 +247,12 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  std::vector<Result> results;
   // Mixed conversion is the feature that mixes prediction and
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
-  aggregator_->AggregatePredictionForRequest(request, *segments, &results);
+  std::vector<Result> results =
+      aggregator_->AggregateResults(request, *segments);
   if (results.empty()) {
     return false;
   }
@@ -351,6 +357,50 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 #undef MOZC_ADD_DEBUG_CANDIDATE
 }
 
+int DictionaryPredictor::CalculateSingleKanjiCostOffset(
+    const ConversionRequest &request, uint16_t rid,
+    const std::vector<Result> &results) const {
+  // Make a map from single kanji to min-cost result.
+  // Here, cost is calculated with transition cost + wcost.
+  using CostPair = std::pair<int, int>;  // (transition cost, wcost)
+  absl::flat_hash_map<absl::string_view, CostPair> min_cost_map;
+  for (const auto &result : results) {
+    if (!(result.types & (prediction::REALTIME | prediction::UNIGRAM |
+                          prediction::PREFIX | prediction::NUMBER)) ||
+        Util::CharsLen(result.value) != 1) {
+      continue;
+    }
+    const int transition_cost = connector_->GetTransitionCost(rid, result.lid);
+    const CostPair cost_pair = std::make_pair(transition_cost, result.wcost);
+    const auto &it = min_cost_map.find(result.value);
+    if (it == min_cost_map.end()) {
+      min_cost_map[result.value] = cost_pair;
+      continue;
+    }
+    const int cost_in_map = it->second.first + it->second.second;
+    const int cost = transition_cost + result.wcost;
+    if (cost < cost_in_map) {
+      min_cost_map[result.value] = cost_pair;
+    }
+  }
+
+  // Use the wcost of the highest cost to calculate the single kanji cost
+  // offset.
+  int single_kanji_max_cost = 0;
+  int wcost_diff = 0;
+  for (const auto &it : min_cost_map) {
+    const int cost = it.second.first + it.second.second;
+    if (cost > single_kanji_max_cost) {
+      single_kanji_max_cost = cost;
+      wcost_diff = it.second.second;
+    }
+  }
+  const int single_kanji_offset = request.request()
+                                      .decoder_experiment_params()
+                                      .single_kanji_prediction_cost_offset();
+  return wcost_diff + single_kanji_offset;
+}
+
 DictionaryPredictor::ResultFilter::ResultFilter(
     const ConversionRequest &request, const Segments &segments,
     const SuggestionFilter *suggestion_filter)
@@ -430,10 +480,12 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
   if ((result.types & PredictionType::REALTIME) &&
-      // Do not remove one-segment realtime candidates
+      // Do not remove one-segment / on-char realtime candidates
       // example:
-      // "勝った" for the reading, "かった".
+      // - "勝った" for the reading, "かった".
+      // - "勝" for the reading, "かつ".
       result.inner_segment_boundary.size() != 1 &&
+      Util::CharsLen(result.value) != 1 &&
       (realtime_count_++ >= 3 || added_num >= 5)) {
     *log_message = "Added realtime >= 3 || added >= 5";
     return true;
@@ -511,7 +563,7 @@ void DictionaryPredictor::FillCandidate(
     candidate->attributes |= Segment::Candidate::TYPING_CORRECTION;
   }
 
-  SetDescription(result.types, &candidate->description);
+  SetDescription(result.types, candidate);
   if (IsDebug(request)) {
     auto it = merged_types.find(result.value);
     SetDebugDescription(it == merged_types.end() ? 0 : it->second,
@@ -523,9 +575,13 @@ void DictionaryPredictor::FillCandidate(
 }
 
 void DictionaryPredictor::SetDescription(PredictionTypes types,
-                                         std::string *description) {
+                                         Segment::Candidate *candidate) const {
+  if (candidate->description.empty()) {
+    single_kanji_dictionary_->GenerateDescription(candidate->value,
+                                                  &candidate->description);
+  }
   if (types & PredictionType::TYPING_CORRECTION) {
-    Util::AppendStringWithDelimiter(" ", "補正", description);
+    Util::AppendStringWithDelimiter(" ", "補正", &candidate->description);
   }
 }
 
@@ -726,9 +782,10 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     }
   }
 
-  const std::string &input_key = segments.conversion_segment(0).key();
-
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
+  const int single_kanji_offset =
+      CalculateSingleKanjiCostOffset(request, rid, *results);
+  const std::string &input_key = segments.conversion_segment(0).key();
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
@@ -748,26 +805,20 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Make exact candidates to have higher ranking.
     // Because for mobile, suggestion is the main candidates and
     // users expect the candidates for the input key on the candidates.
-    if (result.types &
-        (PredictionType::UNIGRAM | PredictionType::TYPING_CORRECTION)) {
+    //
+    // Note:
+    // For TYPING_CORRECTION, query cost is already added.
+    // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
+    if (result.types & PredictionType::UNIGRAM) {
       const size_t input_key_len = Util::CharsLen(input_key);
       const size_t key_len = Util::CharsLen(result.key);
       if (key_len > input_key_len) {
-        // Skip to add additional penalty for TYPING_CORRECTION because
-        // query cost is already added for them.
-        // (DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection)
-        //
-        // Without this handling, a lot of TYPING_CORRECTION candidates
-        // can be appended at the end of the candidate list.
-        if (result.types & PredictionType::UNIGRAM) {
-          const size_t predicted_key_len = key_len - input_key_len;
-          // -500 * log(prob)
-          // See also: mozc/converter/candidate_filter.cc
-          const int predictive_penalty = 500 * log(50 * predicted_key_len);
-          cost += predictive_penalty;
-        }
-        MOZC_WORD_LOG(result,
-                      absl::StrCat("Unigram | Typing correction: ", cost));
+        const size_t predicted_key_len = key_len - input_key_len;
+        // -500 * log(prob)
+        // See also: mozc/converter/candidate_filter.cc
+        const int predictive_penalty = 500 * log(50 * predicted_key_len);
+        cost += predictive_penalty;
+        MOZC_WORD_LOG(result, absl::StrCat("Predictive Uniram: ", cost));
       }
     }
 
@@ -789,6 +840,17 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       constexpr int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
       MOZC_WORD_LOG(result, absl::StrCat("Bigram: ", cost));
+    }
+
+    if (result.types & PredictionType::SINGLE_KANJI) {
+      cost += single_kanji_offset;
+
+      if (cost <= 0) {
+        // single_kanji_offset can be negative.
+        // cost should be larger than 0.
+        cost = result.wcost + 1;
+      }
+      MOZC_WORD_LOG(result, absl::StrCat("SingleKanji: ", cost));
     }
 
     if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&

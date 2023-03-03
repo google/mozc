@@ -27,12 +27,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Macros to define Win32 toolchain options """
+""" Macros to define Win32 toolchain options (internal) """
 
-load("//:build_defs.bzl", "mozc_select")
+load("//:build_defs.bzl", "mozc_cc_library", "mozc_select")
 
-def copts_wtl():
-    return mozc_select(windows = ["-Ithird_party/wtl/files/include"])
-
-def features_gdi():
-    return mozc_select(windows = ["gdi"])
+def mozc_win32_lib(name, **kwargs):
+    mozc_cc_library(
+        name = name,
+        linkopts = mozc_select(windows = [name + ".lib"]),
+        **kwargs
+    )

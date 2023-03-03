@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -51,6 +52,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/number_decoder.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -90,6 +92,12 @@ bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
       .enable_new_spatial_scoring();
+}
+
+bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_single_kanji_prediction();
 }
 
 // Returns true if the |target| may be reduncant result.
@@ -404,10 +412,11 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     : public DictionaryInterface::Callback {
  public:
   PrefixLookupCallback(size_t limit, int kanji_number_id, int unknown_id,
-                       std::vector<Result> *results)
+                       int min_value_chars_len, std::vector<Result> *results)
       : limit_(limit),
         kanji_number_id_(kanji_number_id),
         unknown_id_(unknown_id),
+        min_value_chars_len_(min_value_chars_len),
         results_(results) {}
 
   PrefixLookupCallback(const PrefixLookupCallback &) = delete;
@@ -434,6 +443,9 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
         script_type == Util::EMOJI) {
       return TRAVERSE_CONTINUE;
     }
+    if (Util::CharsLen(token.value) < min_value_chars_len_) {
+      return TRAVERSE_CONTINUE;
+    }
     Result result;
     result.InitializeByTokenAndTypes(token, PREFIX);
     if (key != actual_key) {
@@ -448,6 +460,7 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
   const size_t limit_;
   const int kanji_number_id_;
   const int unknown_id_;
+  const int min_value_chars_len_;
   std::vector<Result> *results_;
 };
 
@@ -458,6 +471,20 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const dictionary::DictionaryInterface *dictionary,
     const dictionary::DictionaryInterface *suffix_dictionary,
     const dictionary::PosMatcher *pos_matcher)
+    : DictionaryPredictionAggregator(
+          data_manager, converter, immutable_converter, dictionary,
+          suffix_dictionary, pos_matcher,
+          std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {}
+
+DictionaryPredictionAggregator::DictionaryPredictionAggregator(
+    const DataManagerInterface &data_manager,
+    const ConverterInterface *converter,
+    const ImmutableConverterInterface *immutable_converter,
+    const dictionary::DictionaryInterface *dictionary,
+    const dictionary::DictionaryInterface *suffix_dictionary,
+    const dictionary::PosMatcher *pos_matcher,
+    std::unique_ptr<PredictionAggregatorInterface>
+        single_kanji_prediction_aggregator)
     : converter_(converter),
       immutable_converter_(immutable_converter),
       dictionary_(dictionary),
@@ -466,7 +493,9 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
       kanji_number_id_(pos_matcher->GetKanjiNumberId()),
       zip_code_id_(pos_matcher->GetZipcodeId()),
       number_id_(pos_matcher->GetNumberId()),
-      unknown_id_(pos_matcher->GetUnknownId()) {
+      unknown_id_(pos_matcher->GetUnknownId()),
+      single_kanji_prediction_aggregator_(
+          std::move(single_kanji_prediction_aggregator)) {
   absl::string_view zero_query_token_array_data;
   absl::string_view zero_query_string_array_data;
   absl::string_view zero_query_number_token_array_data;
@@ -481,7 +510,14 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
                                zero_query_number_string_array_data);
 }
 
-PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForRequest(
+std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
+    const ConversionRequest &request, const Segments &segments) const {
+  std::vector<Result> results;
+  AggregatePredictionForTesting(request, segments, &results);
+  return results;
+}
+
+PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForTesting(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
@@ -603,6 +639,17 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   if (IsMixedConversionEnabled(request.request())) {
     AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
+  }
+
+  if (IsEnableSingleKanjiPrediction(request)) {
+    const std::vector<Result> single_kanji_results =
+        single_kanji_prediction_aggregator_->AggregateResults(request,
+                                                              segments);
+    if (!single_kanji_results.empty()) {
+      results->insert(results->end(), single_kanji_results.begin(),
+                      single_kanji_results.end());
+      selected_types |= SINGLE_KANJI;
+    }
   }
 
   return selected_types;
@@ -1579,8 +1626,10 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
   // Excludes exact match nodes.
   Util::Utf8SubString(input_key, 0, input_key_len - 1, &input_key);
 
+  const int min_value_chars_len =
+      IsEnableSingleKanjiPrediction(request) ? 2 : 1;
   PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
-                                results);
+                                min_value_chars_len, results);
   dictionary_->LookupPrefix(input_key, request, &callback);
   const size_t prefix_results_size = results->size() - prev_results_size;
   if (prefix_results_size >= cutoff_threshold) {

@@ -47,12 +47,9 @@ class PredictionAggregatorInterface {
 
   virtual ~PredictionAggregatorInterface() = default;
 
-  // Aggregates the prediction result entries for the `request` and `segments`
-  // to `results`, and returns the PredictionTypes bit field for the aggregated
-  // types.
-  virtual PredictionTypes AggregatePredictionForRequest(
-      const ConversionRequest &request, const Segments &segments,
-      std::vector<Result> *results) const = 0;
+  // Returns the prediction result entries for the `request` and `segments`.
+  virtual std::vector<Result> AggregateResults(
+      const ConversionRequest &request, const Segments &segments) const = 0;
 
  protected:
   PredictionAggregatorInterface() = default;

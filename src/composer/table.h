@@ -42,7 +42,7 @@
 #include <vector>
 
 #include "base/container/trie.h"
-#include "base/port.h"
+#include "composer/internal/special_key.h"
 #include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
@@ -73,15 +73,14 @@ enum TableAttribute {
 };
 typedef uint32_t TableAttributes;
 
-class Entry {
+class Entry final {
  public:
   Entry(absl::string_view input, absl::string_view result,
         absl::string_view pending, TableAttributes attributes);
-  virtual ~Entry() = default;
-  const std::string &input() const { return input_; }
-  const std::string &result() const { return result_; }
-  const std::string &pending() const { return pending_; }
-  TableAttributes attributes() const { return attributes_; }
+  constexpr const std::string &input() const { return input_; }
+  constexpr const std::string &result() const { return result_; }
+  constexpr const std::string &pending() const { return pending_; }
+  constexpr TableAttributes attributes() const { return attributes_; }
 
  private:
   const std::string input_;
@@ -90,12 +89,12 @@ class Entry {
   TableAttributes attributes_;
 };
 
-class Table {
+class Table final {
  public:
-  Table();
+  Table() = default;
   Table(const Table &) = delete;
   Table &operator=(const Table &) = delete;
-  virtual ~Table();
+  ~Table();
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
                                       const config::Config &config,
@@ -132,18 +131,11 @@ class Table {
 
   const TypingModel *typing_model() const;
 
-  // Parse special key strings escaped with the pair of "{" and "}"
-  // and register them to be used by ParseSpecialKey().
-  // Also returns the parsed string.
-  std::string RegisterSpecialKey(absl::string_view input);
-
-  // Parse special key strings escaped with the pair of "{" and "}"
-  // and return the parsed string.
-  std::string ParseSpecialKey(absl::string_view input) const;
-
-  // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
-  // return the trimmed visible string.
-  static std::string DeleteSpecialKey(absl::string_view input);
+  // Parses special key strings escaped with the pair of "{" and "}"
+  // and returns the parsed string.
+  std::string ParseSpecialKey(const absl::string_view input) const {
+    return special_key_map_.Parse(input);
+  }
 
   // Return the default table.
   static const Table &GetDefaultTable();
@@ -159,19 +151,17 @@ class Table {
 
   bool LoadFromStream(std::istream *is);
   void DeleteEntry(const Entry *entry);
-  void ResetEntrySet();
 
   using EntryTrie = Trie<const Entry *>;
-  std::unique_ptr<EntryTrie> entries_;
+  EntryTrie entries_;
   using EntrySet = absl::flat_hash_set<const Entry *>;
   EntrySet entry_set_;
 
-  using SpecialKeyMap = absl::flat_hash_map<std::string, std::string>;
-  SpecialKeyMap special_key_map_;
+  internal::SpecialKeyMap special_key_map_;
 
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.
-  bool case_sensitive_;
+  bool case_sensitive_ = false;
 
   // Typing model. nullptr if no corresponding model is available.
   std::unique_ptr<const TypingModel> typing_model_;

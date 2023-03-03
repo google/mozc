@@ -80,12 +80,13 @@ class DictionaryPredictorTestPeer {
   DictionaryPredictorTestPeer(
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
+      const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
       const Connector *connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
-      : predictor_(std::move(aggregator), immutable_converter, connector,
-                   segmenter, pos_matcher, suggestion_filter) {}
+      : predictor_(std::move(aggregator), data_manager, immutable_converter,
+                   connector, segmenter, pos_matcher, suggestion_filter) {}
   ~DictionaryPredictorTestPeer() = default;
 
   bool PredictForRequest(const ConversionRequest &request,
@@ -150,9 +151,7 @@ namespace {
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::testing::_;
-using ::testing::DoAll;
 using ::testing::Return;
-using ::testing::SetArgPointee;
 
 constexpr int kInfinity = (2 << 20);
 
@@ -317,9 +316,8 @@ class MockAggregator : public prediction::PredictionAggregatorInterface {
   MockAggregator() = default;
   ~MockAggregator() override = default;
 
-  MOCK_METHOD(prediction::PredictionTypes, AggregatePredictionForRequest,
-              (const ConversionRequest &request, const Segments &segments,
-               std::vector<prediction::Result> *results),
+  MOCK_METHOD(std::vector<prediction::Result>, AggregateResults,
+              (const ConversionRequest &request, const Segments &segments),
               (const override));
 };
 
@@ -335,9 +333,9 @@ class MockDataAndPredictor {
 
     mock_aggregator_ = new MockAggregator;
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
-        absl::WrapUnique(mock_aggregator_), &mock_immutable_converter_,
-        connector_.get(), segmenter_.get(), &pos_matcher_,
-        suggestion_filter_.get());
+        absl::WrapUnique(mock_aggregator_), data_manager_,
+        &mock_immutable_converter_, connector_.get(), segmenter_.get(),
+        &pos_matcher_, suggestion_filter_.get());
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
@@ -721,15 +719,12 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   const DictionaryPredictorTestPeer &predictor =
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
-  EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-      .WillOnce(DoAll(
-          SetArgPointee<2>(std::vector<Result>{
-              CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
-                            Token::SPELLING_CORRECTION),
-              CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
-                            Token::NONE),
-          }),
-          Return(prediction::UNIGRAM)));
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
+                        Token::SPELLING_CORRECTION),
+          CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
+                        Token::NONE)}));
 
   Segments segments;
   InitSegmentsWithKey("あぼがど", &segments);
@@ -746,15 +741,13 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-  EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-      .WillOnce(DoAll(
-          SetArgPointee<2>(std::vector<Result>{
-              CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
-                            Token::SPELLING_CORRECTION),
-              CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
-                            Token::NONE),
-          }),
-          Return(prediction::UNIGRAM)));
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("あぼがど", "アボカド", 500, prediction::UNIGRAM,
+                        Token::SPELLING_CORRECTION),
+          CreateResult5("あぼがど", "アボガド", 500, prediction::UNIGRAM,
+                        Token::NONE),
+      }));
 
   Segments segments;
   InitSegmentsWithKey("あぼが", &segments);
@@ -772,25 +765,23 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
       data_and_predictor->predictor();
   MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-  EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-      .WillOnce(DoAll(
-          SetArgPointee<2>(std::vector<Result>{
-              CreateResult5("だいがく", "大学", 500, prediction::BIGRAM,
-                            Token::NONE),
-              CreateResult5("だいがくいん", "大学院", 600, prediction::BIGRAM,
-                            Token::NONE),
-              CreateResult5("だいがくせい", "大学生", 600, prediction::BIGRAM,
-                            Token::NONE),
-              CreateResult5("だいがくやきゅう", "大学野球", 1000,
-                            prediction::BIGRAM, Token::NONE),
-              CreateResult5("だいがくじゅけん", "大学受験", 1000,
-                            prediction::BIGRAM, Token::NONE),
-              CreateResult5("だいがくにゅうし", "大学入試", 1000,
-                            prediction::BIGRAM, Token::NONE),
-              CreateResult5("だいがくにゅうしせんたー", "大学入試センター",
-                            2000, prediction::BIGRAM, Token::NONE),
-          }),
-          Return(prediction::BIGRAM)));
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("だいがく", "大学", 500, prediction::BIGRAM,
+                        Token::NONE),
+          CreateResult5("だいがくいん", "大学院", 600, prediction::BIGRAM,
+                        Token::NONE),
+          CreateResult5("だいがくせい", "大学生", 600, prediction::BIGRAM,
+                        Token::NONE),
+          CreateResult5("だいがくやきゅう", "大学野球", 1000,
+                        prediction::BIGRAM, Token::NONE),
+          CreateResult5("だいがくじゅけん", "大学受験", 1000,
+                        prediction::BIGRAM, Token::NONE),
+          CreateResult5("だいがくにゅうし", "大学入試", 1000,
+                        prediction::BIGRAM, Token::NONE),
+          CreateResult5("だいがくにゅうしせんたー", "大学入試センター", 2000,
+                        prediction::BIGRAM, Token::NONE),
+      }));
 
   Segments segments;
   InitSegmentsWithKey("", &segments);
@@ -826,10 +817,8 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
                                const Result &aggregator_result,
                                PredictionTypes prediction_types,
                                Segment::Candidate *candidate) {
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillOnce(
-            DoAll(SetArgPointee<2>(std::vector<Result>({aggregator_result})),
-                  Return(prediction_types)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillOnce(Return(std::vector<Result>({aggregator_result})));
     Segments segments;
     InitSegmentsWithKey("てすと", &segments);
     if (!predictor.PredictForRequest(*convreq_for_prediction_, &segments) ||
@@ -982,6 +971,39 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   }
 }
 
+TEST_F(DictionaryPredictorTest, SetDescription) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+
+  std::vector<Result> results = {
+      CreateResult6("ほせい", "補正", 0, 0, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("あ", "亞", 0, 10, prediction::UNIGRAM, Token::NONE),
+      CreateResult6("たんご", "単語", 0, 20, prediction::UNIGRAM, Token::NONE),
+  };
+
+  Segments segments;
+  InitSegmentsWithKey("test", &segments);
+
+  predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                      &results);
+
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  const Segment &segment = segments.conversion_segment(0);
+  EXPECT_EQ(segment.candidates_size(), 3);
+  EXPECT_EQ(segment.candidate(0).value, "補正");
+  EXPECT_TRUE(absl::StrContains(segment.candidate(0).description, "補正"));
+  EXPECT_EQ(segment.candidate(1).value, "亞");
+  // "亜の旧字体"
+  // We cannot compare the description as-is, since the other description
+  // may be appended in the dbg build.
+  EXPECT_TRUE(absl::StrContains(segment.candidate(1).description, "の"));
+  EXPECT_EQ(segment.candidate(2).value, "単語");
+  EXPECT_FALSE(absl::StrContains(segment.candidate(2).description, "の"));
+}
+
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();
@@ -1070,15 +1092,13 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillRepeatedly(
-            DoAll(SetArgPointee<2>(std::vector<Result>{
-                      CreateResult5("ふぃるたーたいしょう", "フィルター対象",
-                                    100, prediction::UNIGRAM, Token::NONE),
-                      CreateResult5("ふぃるたーたいしょう", "フィルター大将",
-                                    200, prediction::UNIGRAM, Token::NONE),
-                  }),
-                  Return(prediction::UNIGRAM)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(std::vector<Result>{
+            CreateResult5("ふぃるたーたいしょう", "フィルター対象", 100,
+                          prediction::UNIGRAM, Token::NONE),
+            CreateResult5("ふぃるたーたいしょう", "フィルター大将", 200,
+                          prediction::UNIGRAM, Token::NONE),
+        }));
   }
 
   Segments segments;
@@ -1114,15 +1134,13 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillRepeatedly(
-            DoAll(SetArgPointee<2>(std::vector<Result>{
-                      CreateResult5("ふぃるたーたいしょう", "フィルター対象",
-                                    100, prediction::UNIGRAM, Token::NONE),
-                      CreateResult5("ふぃるたーたいしょう", "フィルター大将",
-                                    200, prediction::UNIGRAM, Token::NONE),
-                  }),
-                  Return(prediction::UNIGRAM)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(std::vector<Result>{
+            CreateResult5("ふぃるたーたいしょう", "フィルター対象", 100,
+                          prediction::UNIGRAM, Token::NONE),
+            CreateResult5("ふぃるたーたいしょう", "フィルター大将", 200,
+                          prediction::UNIGRAM, Token::NONE),
+        }));
   }
 
   Segments segments;
@@ -1159,9 +1177,7 @@ TEST_F(DictionaryPredictorTest, DoNotFilterExactUnigramOnMobile) {
                                       Token::NONE));
     }
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillOnce(
-            DoAll(SetArgPointee<2>(results), Return(prediction::UNIGRAM)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _)).WillOnce(Return(results));
   }
 
   Segments segments;
@@ -1196,9 +1212,8 @@ TEST_F(DictionaryPredictorTest, DoNotFilterZeroQueryCandidatesOnMobile) {
                                       prediction::SUFFIX, Token::NONE));
     }
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillRepeatedly(
-            DoAll(SetArgPointee<2>(results), Return(prediction::SUFFIX)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
   }
 
   Segments segments;
@@ -1246,16 +1261,102 @@ TEST_F(DictionaryPredictorTest,
                                     prediction::REALTIME, Token::NONE));
     PushBackInnerSegmentBoundary(9, 9, 9, 9, &results.back());
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillRepeatedly(
-            DoAll(SetArgPointee<2>(results),
-                  Return(prediction::REALTIME_TOP | prediction::REALTIME)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
   }
 
   Segments segments;
   InitSegmentsWithKey("かつた", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
+}
+
+TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  {
+    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    std::vector<Result> results;
+    results.push_back(
+        CreateResult5("さか", "坂", 400, prediction::REALTIME, Token::NONE));
+    results.push_back(
+        CreateResult5("さが", "佐賀", 500, prediction::REALTIME, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "サカ", 600, prediction::REALTIME, Token::NONE));
+    results.push_back(
+        CreateResult5("さがす", "探す", 300, prediction::UNIGRAM, Token::NONE));
+    results.push_back(CreateResult5("さがし", "探し", 3000, prediction::UNIGRAM,
+                                    Token::NONE));
+    results.push_back(
+        CreateResult5("さかい", "堺", 800, prediction::UNIGRAM, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "坂", 3000, prediction::UNIGRAM, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "逆", 0, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "坂", 1, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "酒", 2, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "栄", 3, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "盛", 4, prediction::SINGLE_KANJI, Token::NONE));
+
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
+  }
+
+  Segments segments;
+  auto get_rank_by_value = [&](absl::string_view value) {
+    const Segment &seg = segments.conversion_segment(0);
+    for (int i = 0; i < seg.candidates_size(); ++i) {
+      if (seg.candidate(i).value == value) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  {
+    InitSegmentsWithKey("さか", &segments);
+    EXPECT_TRUE(
+        predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_NE(get_rank_by_value("盛"), -1);
+    EXPECT_LT(get_rank_by_value("盛"),
+              segments.conversion_segment(0).candidates_size() - 1);
+    EXPECT_LT(get_rank_by_value("坂"), get_rank_by_value("逆"));
+  }
+  // Cost offset
+  {
+    segments.Clear();
+    request_->mutable_decoder_experiment_params()
+        ->set_single_kanji_prediction_cost_offset(10000);
+    InitSegmentsWithKey("さか", &segments);
+    EXPECT_TRUE(
+        predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_NE(get_rank_by_value("盛"), -1);
+    EXPECT_EQ(get_rank_by_value("盛"),
+              segments.conversion_segment(0).candidates_size() - 1);
+  }
+  {
+    segments.Clear();
+    request_->mutable_decoder_experiment_params()
+        ->set_single_kanji_prediction_cost_offset(-10000);
+    InitSegmentsWithKey("さか", &segments);
+    EXPECT_TRUE(
+        predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+    EXPECT_EQ(segments.conversion_segments_size(), 1);
+    const auto top_candidate = segments.conversion_segment(0).candidate(0);
+    EXPECT_EQ(top_candidate.value, "逆");
+    EXPECT_GT(top_candidate.cost, 0);
+  }
 }
 
 TEST_F(DictionaryPredictorTest, Dedup) {
@@ -1300,15 +1401,13 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   {
     MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
 
-    EXPECT_CALL(*aggregator, AggregatePredictionForRequest(_, _, _))
-        .WillOnce(DoAll(
-            SetArgPointee<2>(std::vector<Result>{
-                CreateResult5("あいう", "会いう", 100,
-                              prediction::REALTIME_TOP | prediction::REALTIME,
-                              Token::NONE),
-                CreateResult5("あいうえ", "会いうえ", 1000,
-                              prediction::REALTIME, Token::NONE)}),
-            Return(prediction::BIGRAM)));
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillOnce(Return(std::vector<Result>{
+            CreateResult5("あいう", "会いう", 100,
+                          prediction::REALTIME_TOP | prediction::REALTIME,
+                          Token::NONE),
+            CreateResult5("あいうえ", "会いうえ", 1000, prediction::REALTIME,
+                          Token::NONE)}));
   }
 
   Segments segments;

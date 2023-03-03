@@ -43,10 +43,8 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "composer/internal/special_key.h"
 #include "composer/internal/typing_model.h"
@@ -60,11 +58,8 @@
 namespace mozc {
 namespace composer {
 namespace {
-using internal::IsSpecialKey;
-using internal::kSpecialKeyBegin;
-using internal::kSpecialKeyClose;
-using internal::kSpecialKeyEnd;
-using internal::kSpecialKeyOpen;
+
+using internal::DeleteSpecialKeys;
 
 constexpr char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
 constexpr char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
@@ -125,9 +120,11 @@ Entry::Entry(const absl::string_view input, const absl::string_view result,
 // ========================================
 // Table
 // ========================================
-Table::Table() : entries_(new EntryTrie), case_sensitive_(false) {}
-
-Table::~Table() { ResetEntrySet(); }
+Table::~Table() {
+  for (const auto entry : entry_set_) {
+    delete entry;
+  }
+}
 
 static constexpr char kKuten[] = "、";
 static constexpr char kTouten[] = "。";
@@ -371,8 +368,8 @@ const Entry *Table::AddRuleWithAttributes(
     return nullptr;
   }
 
-  const std::string input = RegisterSpecialKey(escaped_input);
-  const std::string pending = RegisterSpecialKey(escaped_pending);
+  const std::string input = special_key_map_.Register(escaped_input);
+  const std::string pending = special_key_map_.Register(escaped_pending);
   if (IsLoopingEntry(input, pending)) {
     LOG(WARNING) << "Entry " << input << " " << output << " " << pending
                  << " is removed, since the rule is looping";
@@ -380,18 +377,18 @@ const Entry *Table::AddRuleWithAttributes(
   }
 
   const Entry *old_entry = nullptr;
-  if (entries_->LookUp(input, &old_entry)) {
+  if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
 
   Entry *entry = new Entry(input, output, pending, attributes);
-  entries_->AddEntry(input, entry);
+  entries_.AddEntry(input, entry);
   entry_set_.insert(entry);
 
   // Check if the input has a large captal character.
   // Invisible character is exception.
   if (!case_sensitive_) {
-    const std::string trimed_input = DeleteSpecialKey(input);
+    const std::string trimed_input = DeleteSpecialKeys(input);
     for (ConstChar32Iterator iter(trimed_input); !iter.Done(); iter.Next()) {
       const char32_t ucs4 = iter.Get();
       if ('A' <= ucs4 && ucs4 <= 'Z') {
@@ -413,10 +410,10 @@ void Table::DeleteRule(const absl::string_view input) {
   //     - This method has no tests.
   //     - This method is private scope.
   const Entry *old_entry;
-  if (entries_->LookUp(input, &old_entry)) {
+  if (entries_.LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
-  entries_->DeleteEntry(input);
+  entries_.DeleteEntry(input);
 }
 
 bool Table::LoadFromString(const std::string &str) {
@@ -492,11 +489,11 @@ bool Table::LoadFromStream(std::istream *is) {
 const Entry *Table::LookUp(const absl::string_view input) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
-    entries_->LookUp(input, &entry);
+    entries_.LookUp(input, &entry);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUp(normalized_input, &entry);
+    entries_.LookUp(normalized_input, &entry);
   }
   return entry;
 }
@@ -505,11 +502,11 @@ const Entry *Table::LookUpPrefix(const absl::string_view input,
                                  size_t *key_length, bool *fixed) const {
   const Entry *entry = nullptr;
   if (case_sensitive_) {
-    entries_->LookUpPrefix(input, &entry, key_length, fixed);
+    entries_.LookUpPrefix(input, &entry, key_length, fixed);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUpPrefix(normalized_input, &entry, key_length, fixed);
+    entries_.LookUpPrefix(normalized_input, &entry, key_length, fixed);
   }
   return entry;
 }
@@ -517,11 +514,11 @@ const Entry *Table::LookUpPrefix(const absl::string_view input,
 void Table::LookUpPredictiveAll(const absl::string_view input,
                                 std::vector<const Entry *> *results) const {
   if (case_sensitive_) {
-    entries_->LookUpPredictiveAll(input, results);
+    entries_.LookUpPredictiveAll(input, results);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    entries_->LookUpPredictiveAll(normalized_input, results);
+    entries_.LookUpPredictiveAll(normalized_input, results);
   }
 }
 
@@ -543,11 +540,11 @@ bool Table::HasNewChunkEntry(const absl::string_view input) const {
 
 bool Table::HasSubRules(const absl::string_view input) const {
   if (case_sensitive_) {
-    return entries_->HasSubTrie(input);
+    return entries_.HasSubTrie(input);
   } else {
     std::string normalized_input(input);
     Util::LowerString(&normalized_input);
-    return entries_->HasSubTrie(normalized_input);
+    return entries_.HasSubTrie(normalized_input);
   }
 }
 
@@ -556,130 +553,10 @@ void Table::DeleteEntry(const Entry *entry) {
   delete entry;
 }
 
-void Table::ResetEntrySet() {
-  for (EntrySet::iterator it = entry_set_.begin(); it != entry_set_.end();
-       ++it) {
-    delete *it;
-  }
-  entry_set_.clear();
-}
-
 bool Table::case_sensitive() const { return case_sensitive_; }
 
 void Table::set_case_sensitive(const bool case_sensitive) {
   case_sensitive_ = case_sensitive;
-}
-
-namespace {
-bool FindBlock(const absl::string_view input, const absl::string_view open,
-               const absl::string_view close, const size_t offset,
-               size_t *open_pos, size_t *close_pos) {
-  DCHECK(open_pos);
-  DCHECK(close_pos);
-
-  *open_pos = input.find(open, offset);
-  if (*open_pos == std::string::npos) {
-    return false;
-  }
-
-  *close_pos = input.find(close, *open_pos);
-  if (*close_pos == std::string::npos) {
-    return false;
-  }
-
-  return true;
-}
-
-using OnKeyFound = std::function<std::string(const absl::string_view)>;
-
-std::string ParseBlock(const absl::string_view input,
-                       const OnKeyFound &callback) {
-  std::string output;
-  size_t open_pos = 0;
-  size_t close_pos = 0;
-  for (size_t cursor = 0; cursor < input.size();) {
-    if (!FindBlock(input, "{", "}", cursor, &open_pos, &close_pos)) {
-      absl::StrAppend(&output, input.substr(cursor));
-      break;
-    }
-
-    absl::StrAppend(&output, input.substr(cursor, open_pos - cursor));
-
-    // The both sizes of "{" and "}" is 1.
-    const absl::string_view key =
-        input.substr(open_pos + 1, close_pos - open_pos - 1);
-    if (key == "{") {
-      // "{{}" is treated as "{".
-      absl::StrAppend(&output, "{");
-    } else {
-      absl::StrAppend(&output, callback(key));
-    }
-
-    cursor = close_pos + 1;
-  }
-  return output;
-}
-
-}  // namespace
-
-std::string Table::RegisterSpecialKey(const absl::string_view input) {
-  OnKeyFound callback = [this](const absl::string_view key) {
-    if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
-      return it->second;  // existing entry
-    }
-    char32_t keycode = kSpecialKeyBegin + special_key_map_.size();
-    if (keycode > kSpecialKeyEnd) {
-      // 2304 (0x900 = [Begin, End]) is the max size of special keys.
-      keycode = kSpecialKeyEnd;
-      LOG(WARNING) << "The size of special keys exceeded: " << key;
-    }
-    // New special key is replaced with a Unicode PUA and registered.
-    std::string special_key;
-    Util::Ucs4ToUtf8(keycode, &special_key);
-    special_key_map_.emplace(key, special_key);
-    return special_key;
-  };
-  return ParseBlock(input, callback);
-}
-
-std::string Table::ParseSpecialKey(const absl::string_view input) const {
-  OnKeyFound callback = [this](const absl::string_view key) {
-    if (auto it = special_key_map_.find(key); it != special_key_map_.end()) {
-      return it->second;  // existing entry
-    }
-    // Unregistered key is replaced with the fallback format.
-    LOG(WARNING) << "Unregistered special key: " << key;
-    return absl::StrCat(kSpecialKeyOpen, key, kSpecialKeyClose);
-  };
-  return ParseBlock(input, callback);
-}
-
-// static
-std::string Table::DeleteSpecialKey(const absl::string_view input) {
-  std::string output;
-  size_t open_pos = 0;
-  size_t close_pos = 0;
-  for (size_t cursor = 0; cursor < input.size();) {
-    if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose, cursor, &open_pos,
-                   &close_pos)) {
-      absl::StrAppend(&output, input.substr(cursor));
-      break;
-    }
-
-    absl::StrAppend(&output, input.substr(cursor, open_pos - cursor));
-    // The size of kSpecialKeyClose is 1.
-    cursor = close_pos + 1;
-  }
-
-  // Delete Unicode PUA characters converted from special keys.
-  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(output);
-  auto last =
-      std::remove_if(codepoints.begin(), codepoints.end(), IsSpecialKey);
-  if (last == codepoints.end()) {
-    return output;
-  }
-  codepoints.erase(last, codepoints.end());
-  return Util::CodepointsToUtf8(codepoints);
 }
 
 // static

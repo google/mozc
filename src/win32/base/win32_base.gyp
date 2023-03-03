@@ -216,7 +216,7 @@
             'text_icon_test.cc',
           ],
           'dependencies': [
-            '../../base/base.gyp:win_font_test_helper',
+            '../../base/win32/base_win32.gyp:win_font_test_helper',
             '../../testing/testing.gyp:gtest_main',
             'text_icon',
           ],

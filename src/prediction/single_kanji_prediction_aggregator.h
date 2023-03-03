@@ -27,39 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
-#define MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
+#ifndef MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
+#define MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_
 
+#include <memory>
 #include <string>
+#include <vector>
 
-#include "absl/container/flat_hash_map.h"
+#include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
+#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc::composer::internal {
+namespace mozc::prediction {
 
-class SpecialKeyMap {
+class SingleKanjiPredictionAggregator : public PredictionAggregatorInterface {
  public:
-  // Parses special key strings escaped with the pair of "{" and "}"" and
-  // registers them to be used by Parse(). Also returns the parsed string.
-  std::string Register(absl::string_view input);
+  explicit SingleKanjiPredictionAggregator(
+      const DataManagerInterface &data_manager);
+  ~SingleKanjiPredictionAggregator() override;
 
-  // Parses special key strings escaped with the pair of "{" and "}" and returns
-  // the parsed string.
-  std::string Parse(absl::string_view input) const;
+  std::vector<Result> AggregateResults(const ConversionRequest &request,
+                                       const Segments &Segments) const override;
 
  private:
-  absl::flat_hash_map<std::string, std::string> map_;
+  void AppendResults(absl::string_view kanji_key,
+                     absl::string_view original_input_key,
+                     const std::vector<std::string> &kanji_list,
+                     std::vector<Result> *results) const;
+
+  std::unique_ptr<dictionary::SingleKanjiDictionary> single_kanji_dictionary_;
+  std::unique_ptr<dictionary::PosMatcher> pos_matcher_;
+  const uint16_t general_symbol_id_;
 };
 
-// Trims a special key from input and returns the rest.
-// If the input doesn't have any special keys at the beginning, it returns the
-// entire string.
-absl::string_view TrimLeadingSpecialKey(absl::string_view input);
+}  // namespace mozc::prediction
 
-// Deletes invisible special keys wrapped with ("\x0F", "\x0E") and returns the
-// trimmed visible string.
-std::string DeleteSpecialKeys(absl::string_view input);
-
-}  // namespace mozc::composer::internal
-
-#endif  // MOZC_COMPOSER_INTERNAL_SPECIAL_KEY_H_
+#endif  // MOZC_PREDICTION_SINGLE_KANJI_PREDICTION_AGGREGATOR_H_

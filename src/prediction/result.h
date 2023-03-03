@@ -58,8 +58,10 @@ enum PredictionType {
   // prefix candidates
   // "今日", "教" for the input, "きょうは"
   PREFIX = 64,
-
+  // entries from number decoder.
   NUMBER = 128,
+  // entries from single kanji dictionary.
+  SINGLE_KANJI = 256,
 
   // Suggests from |converter_|. The difference from REALTIME is that it uses
   // the full converter with rewriter, history, etc.

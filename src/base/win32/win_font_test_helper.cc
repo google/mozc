@@ -33,12 +33,13 @@
 
 // skip all unless _WIN32
 #ifdef _WIN32
-#include <windows.h>
 #include <shlwapi.h>
+#include <windows.h>
 
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/win32/wide_char.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -90,10 +91,14 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
 // static
 bool WinFontTestHelper::Initialize() {
   if (g_ipa_gothic_ == nullptr) {
-    g_ipa_gothic_ = LoadPrivateFont(L"data\\ipaexg.ttf");
+    const std::string path = testing::GetSourceFileOrDie(
+        {"..", "..", "..", "third_party", "ipa_font", "ipaexg.ttf"});
+    g_ipa_gothic_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
   }
   if (g_ipa_mincho_ == nullptr) {
-    g_ipa_mincho_ = LoadPrivateFont(L"data\\ipaexm.ttf");
+    const std::string path = testing::GetSourceFileOrDie(
+        {"..", "..", "..", "third_party", "ipa_font", "ipaexm.ttf"});
+    g_ipa_mincho_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
   }
   if (g_ipa_gothic_ == nullptr || g_ipa_mincho_ == nullptr) {
     Uninitialize();

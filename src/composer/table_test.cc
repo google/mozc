@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "composer/internal/special_key.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
@@ -41,9 +42,10 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
-namespace composer {
+namespace mozc::composer {
+namespace {
 
+using internal::DeleteSpecialKeys;
 using mozc::commands::Request;
 using mozc::config::Config;
 
@@ -972,23 +974,23 @@ TEST_F(TableTest, SpecialKeys) {
 
 TEST_F(TableTest, DeleteSpecialKey) {
   const Table table;
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{!}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}")), "");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("a{bcd}")), "a");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}{abc}d")), "d");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}a{bc}d")), "ad");
-  EXPECT_EQ(Table::DeleteSpecialKey(table.ParseSpecialKey("{!}ab{cd}")), "ab");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{!}")), "");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("a{!}")), "a");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{!}a")), "a");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{abc}")), "");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("a{bcd}")), "a");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{abc}d")), "d");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{!}{abc}d")), "d");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{!}a{bc}d")), "ad");
+  EXPECT_EQ(DeleteSpecialKeys(table.ParseSpecialKey("{!}ab{cd}")), "ab");
 
   // Invalid patterns
   //   "\u000F" = parsed-"{"
   //   "\u000E" = parsed-"}"
-  EXPECT_EQ(Table::DeleteSpecialKey("\u000Fab"), "\u000Fab");
-  EXPECT_EQ(Table::DeleteSpecialKey("ab\u000E"), "ab\u000E");
-  EXPECT_EQ(Table::DeleteSpecialKey("\u000F\u000Fab\u000E"), "");
-  EXPECT_EQ(Table::DeleteSpecialKey("\u000Fab\u000E\u000E"), "\u000E");
+  EXPECT_EQ(DeleteSpecialKeys("\u000Fab"), "\u000Fab");
+  EXPECT_EQ(DeleteSpecialKeys("ab\u000E"), "ab\u000E");
+  EXPECT_EQ(DeleteSpecialKeys("\u000F\u000Fab\u000E"), "");
+  EXPECT_EQ(DeleteSpecialKeys("\u000Fab\u000E\u000E"), "\u000E");
 }
 
 TEST_F(TableTest, TableManager) {
@@ -1075,5 +1077,5 @@ TEST_F(TableTest, TableManager) {
   }
 }
 
-}  // namespace composer
-}  // namespace mozc
+}  // namespace
+}  // namespace mozc::composer

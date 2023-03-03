@@ -27,12 +27,37 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-""" Macros to define Win32 toolchain options """
-
-load("//:build_defs.bzl", "mozc_select")
-
-def copts_wtl():
-    return mozc_select(windows = ["-Ithird_party/wtl/files/include"])
-
-def features_gdi():
-    return mozc_select(windows = ["gdi"])
+{
+  'variables': {
+    'relative_dir': 'base/win32',
+    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
+  },
+  'targets': [
+  ],
+  'conditions': [
+    ['OS=="win"', {
+      'targets': [
+        {
+          'target_name': 'win_font_test_helper',
+          'type': 'static_library',
+          'sources': [
+            'win_font_test_helper.cc',
+          ],
+          'dependencies': [
+            '../base.gyp:base',
+            '../../testing/testing.gyp:mozctest',
+          ],
+          'copies': [
+            {
+              'files': [
+                '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
+                '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
+              ],
+              'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/ipa_font',
+            },
+          ],
+        },
+      ]},
+    ],
+  ],
+}

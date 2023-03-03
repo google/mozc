@@ -101,7 +101,6 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:hash",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//base/container:trie",
         "//composer/internal:special_key",
@@ -147,6 +146,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":table",
+        "//composer/internal:special_key",
         "//config:config_handler",
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",

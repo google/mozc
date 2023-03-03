@@ -32,7 +32,7 @@
 #  - Windows SDK library link options.
 #  - (that's it for now)
 
-load("//bazel/win32:build_defs.bzl", "mozc_win32_lib")
+load("//bazel/win32:internal.bzl", "mozc_win32_lib")
 load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = [
@@ -42,6 +42,14 @@ package(default_visibility = [
 bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
+    test_size = "small",
+    visibility = ["//visibility:private"],
+    deps = ["//:build_defs_bzl"],
+)
+
+bzl_library(
+    name = "internal_bzl",
+    srcs = ["internal.bzl"],
     test_size = "small",
     visibility = ["//visibility:private"],
     deps = ["//:build_defs_bzl"],
