@@ -748,26 +748,20 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Make exact candidates to have higher ranking.
     // Because for mobile, suggestion is the main candidates and
     // users expect the candidates for the input key on the candidates.
-    if (result.types &
-        (PredictionType::UNIGRAM | PredictionType::TYPING_CORRECTION)) {
+    //
+    // Note:
+    // For TYPING_CORRECTION, query cost is already added.
+    // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
+    if (result.types & PredictionType::UNIGRAM) {
       const size_t input_key_len = Util::CharsLen(input_key);
       const size_t key_len = Util::CharsLen(result.key);
       if (key_len > input_key_len) {
-        // Skip to add additional penalty for TYPING_CORRECTION because
-        // query cost is already added for them.
-        // (DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection)
-        //
-        // Without this handling, a lot of TYPING_CORRECTION candidates
-        // can be appended at the end of the candidate list.
-        if (result.types & PredictionType::UNIGRAM) {
-          const size_t predicted_key_len = key_len - input_key_len;
-          // -500 * log(prob)
-          // See also: mozc/converter/candidate_filter.cc
-          const int predictive_penalty = 500 * log(50 * predicted_key_len);
-          cost += predictive_penalty;
-        }
-        MOZC_WORD_LOG(result,
-                      absl::StrCat("Unigram | Typing correction: ", cost));
+        const size_t predicted_key_len = key_len - input_key_len;
+        // -500 * log(prob)
+        // See also: mozc/converter/candidate_filter.cc
+        const int predictive_penalty = 500 * log(50 * predicted_key_len);
+        cost += predictive_penalty;
+        MOZC_WORD_LOG(result, absl::StrCat("Predictive Uniram: ", cost));
       }
     }
 
