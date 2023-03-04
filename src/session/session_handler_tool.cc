@@ -359,7 +359,7 @@ const Output &SessionHandlerInterpreter::LastOutput() const {
 }
 
 const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
-    const absl::string_view value) {
+    const absl::string_view value) const {
   const Output &output = LastOutput();
 
   for (const CandidateWord &candidate :
@@ -381,7 +381,7 @@ const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
 }
 
 bool SessionHandlerInterpreter::GetCandidateIdByValue(
-    const absl::string_view value, uint32_t *id) {
+    const absl::string_view value, uint32_t *id) const {
   const Output &output = LastOutput();
 
   auto find_id = [&value](const CandidateList &candidate_list,
@@ -406,6 +406,30 @@ bool SessionHandlerInterpreter::GetCandidateIdByValue(
   }
 
   return false;
+}
+
+std::vector<uint32_t> SessionHandlerInterpreter::GetCandidateIdsByValue(
+    absl::string_view value) const {
+  const Output &output = LastOutput();
+
+  auto find_ids = [&value](const CandidateList &candidate_list,
+                           std::vector<uint32_t> *ids) -> void {
+    for (const CandidateWord &candidate : candidate_list.candidates()) {
+      if (candidate.has_value() && candidate.value() == value) {
+        ids->push_back(candidate.id());
+      }
+    }
+  };
+  std::vector<uint32_t> ids;
+  if (output.has_all_candidate_words()) {
+    find_ids(output.all_candidate_words(), &ids);
+  }
+
+  if (output.has_removed_candidate_words_for_debug()) {
+    find_ids(output.removed_candidate_words_for_debug(), &ids);
+  }
+
+  return ids;
 }
 
 bool SetOrAddFieldValueFromString(const std::string &name,
