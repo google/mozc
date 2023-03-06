@@ -49,6 +49,7 @@ mozc_cc_library(
     srcs = ["temp_dir.cc"],
     hdrs = ["temp_dir.h"],
     deps = [
+        ":recursive",
         "//base:environ",
         "//base:file_util",
         "//base:logging",
