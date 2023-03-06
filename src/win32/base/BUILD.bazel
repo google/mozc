@@ -1,0 +1,620 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Additional common libraries for Windows support.
+
+load(
+    "//:build_defs.bzl",
+    "MOZC_TAGS",
+    "mozc_cc_library",
+    "mozc_cc_test",
+)
+load(
+    "//bazel/win32:build_defs.bzl",
+    "copts_wtl",
+    "features_gdi",
+)
+load("//bazel:stubs.bzl", "lexan")
+
+package(
+    default_visibility = ["//win32:__subpackages__"],
+)
+
+mozc_cc_library(
+    name = "accessible_object",
+    srcs = ["accessible_object.cc"],
+    hdrs = ["accessible_object.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":accessible_object_info",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "accessible_object_info",
+    srcs = ["accessible_object_info.cc"],
+    hdrs = ["accessible_object_info.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "browser_info",
+    srcs = ["browser_info.cc"],
+    hdrs = ["browser_info.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":accessible_object",
+        ":focus_hierarchy_observer",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "config_snapshot",
+    srcs = ["config_snapshot.cc"],
+    hdrs = ["config_snapshot.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:port",
+        "//base:system_util",
+        "//client:client_interface",
+        "//config:config_handler",
+        "//protocol:config_cc_proto",
+        "//session:key_info_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "conversion_mode_util",
+    srcs = ["conversion_mode_util.cc"],
+    hdrs = ["conversion_mode_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_test(
+    name = "conversion_mode_util_test",
+    srcs = ["conversion_mode_util_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":conversion_mode_util",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "deleter",
+    srcs = ["deleter.cc"],
+    hdrs = ["deleter.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":input_state",
+        ":keyboard",
+        "//base:logging",
+        "//base:port",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_test(
+    name = "deleter_test",
+    srcs = ["deleter_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":deleter",
+        ":input_state",
+        ":keyboard",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "display_name_resource_h",
+    hdrs = ["display_name_resource.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_library(
+    name = "focus_hierarchy_observer",
+    srcs = ["focus_hierarchy_observer.cc"],
+    hdrs = ["focus_hierarchy_observer.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":accessible_object",
+        ":accessible_object_info",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "immdev_h",
+    hdrs = ["immdev.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_test(
+    name = "imm_reconvert_string_test",
+    srcs = ["imm_reconvert_string_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":imm_reconvert_string",
+        "//base:util",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "imm_reconvert_string",
+    srcs = ["imm_reconvert_string.cc"],
+    hdrs = ["imm_reconvert_string.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "imm_registrar",
+    srcs = ["imm_registrar.cc"],
+    hdrs = ["imm_registrar.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":display_name_resource_h",
+        ":immdev_h",
+        ":keyboard_layout_id",
+        "//base:const",
+        "//base:file_util",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "imm_util",
+    srcs = ["imm_util.cc"],
+    hdrs = ["imm_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":imm_registrar",
+        ":input_dll",
+        ":keyboard_layout_id",
+        ":tsf_profile",
+        "//base:const",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//base/win32:scoped_com",
+        "//base/win32:scoped_handle",
+    ],
+)
+
+mozc_cc_library(
+    name = "indicator_visibility_tracker",
+    srcs = ["indicator_visibility_tracker.cc"],
+    hdrs = ["indicator_visibility_tracker.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard",
+        "//base:stopwatch",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_test(
+    name = "indicator_visibility_tracker_test",
+    srcs = ["indicator_visibility_tracker_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":indicator_visibility_tracker",
+        "//base:clock",
+        "//base:clock_mock",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+mozc_cc_library(
+    name = "input_state",
+    srcs = ["input_state.cc"],
+    hdrs = ["input_state.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard",
+        "//session:key_info_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "keyboard",
+    srcs = ["keyboard.cc"],
+    hdrs = ["keyboard.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//bazel/win32:user32",
+    ],
+)
+
+mozc_cc_test(
+    name = "keyboard_test",
+    srcs = ["keyboard_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "keyboard_layout_id",
+    srcs = ["keyboard_layout_id.cc"],
+    hdrs = ["keyboard_layout_id.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:logging"],
+)
+
+mozc_cc_test(
+    name = "keyboard_layout_id_test",
+    srcs = ["keyboard_layout_id_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard_layout_id",
+        "//base:util",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "keyevent_handler",
+    srcs = ["keyevent_handler.cc"],
+    hdrs = ["keyevent_handler.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":conversion_mode_util",
+        ":input_state",
+        ":keyboard",
+        "//base:japanese_util",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//client:client_interface",
+        "//config:config_handler",
+        "//protocol:commands_cc_proto",
+        "//session:key_info_util",
+    ],
+)
+
+mozc_cc_test(
+    name = "keyevent_handler_test",
+    srcs = ["keyevent_handler_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":input_state",
+        ":keyboard",
+        ":keyevent_handler",
+        "//base:logging",
+        "//base:system_util",
+        "//base:version",
+        "//client",
+        "//client:client_interface",
+        "//config:config_handler",
+        "//ipc:ipc_mock",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "migration_util",
+    srcs = ["migration_util.cc"],
+    hdrs = ["migration_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":imm_registrar",
+        ":imm_util",
+        ":immdev_h",
+        ":input_dll",
+        ":keyboard_layout_id",
+        ":tsf_profile",
+        ":uninstall_helper",
+        "//base:const",
+        "//base:logging",
+        "//base:port",
+        "//base:process",
+        "//base:system_util",
+        "//base/win32:scoped_handle",
+    ],
+)
+
+mozc_cc_library(
+    name = "surrogate_pair_observer",
+    srcs = ["surrogate_pair_observer.cc"],
+    hdrs = ["surrogate_pair_observer.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+mozc_cc_test(
+    name = "surrogate_pair_observer_test",
+    srcs = ["surrogate_pair_observer_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":keyboard",
+        ":surrogate_pair_observer",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "text_icon",
+    srcs = ["text_icon.cc"],
+    hdrs = ["text_icon.h"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//third_party/wtl",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "text_icon_test",
+    srcs = ["text_icon_test.cc"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":text_icon",
+        "//base:logging",
+        "//base:mmap",
+        "//base:util",
+        "//base/win32:win_font_test_helper",
+        "//testing:gunit_main",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "omaha_util",
+    srcs = ["omaha_util.cc"],
+    hdrs = ["omaha_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:port",
+        "//base:system_util",
+    ],
+)
+
+mozc_cc_test(
+    name = "omaha_util_test",
+    srcs = ["omaha_util_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":omaha_util",
+        "//base:logging",
+        "//base:singleton",
+        "//base:system_util",
+        "//base/win32:win_api_test_helper",
+        "//testing:gunit_main",
+    ],
+)
+
+lexan.cc_windows_dll(
+    name = "input_dll",
+    srcs = [
+        "input_dll.cc",
+    ],
+    hdrs = [
+        "input_dll.h",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "input_dll.def",
+    deps = [
+        "//base:logging",
+    ],
+)
+
+mozc_cc_test(
+    name = "input_dll_test",
+    srcs = ["input_dll_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":input_dll",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "string_util",
+    srcs = ["string_util.cc"],
+    hdrs = ["string_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:japanese_util",
+        "//base:util",
+        "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "string_util_test",
+    srcs = ["string_util_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":string_util",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
+    name = "tsf_profile",
+    srcs = ["tsf_profile.cc"],
+    hdrs = ["tsf_profile.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":display_name_resource_h",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tsf_registrar",
+    srcs = ["tsf_registrar.cc"],
+    hdrs = ["tsf_registrar.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":input_dll",
+        ":tsf_profile",
+        "//base:const",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_window_util",
+    srcs = ["win32_window_util.cc"],
+    hdrs = ["win32_window_util.h"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "uninstall_helper",
+    srcs = ["uninstall_helper.cc"],
+    hdrs = ["uninstall_helper.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":imm_registrar",
+        ":imm_util",
+        ":immdev_h",
+        ":input_dll",
+        ":keyboard_layout_id",
+        ":tsf_profile",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base/win32:scoped_com",
+        "//base/win32:scoped_handle",
+        "//testing:gunit_prod",
+    ],
+)
+
+mozc_cc_test(
+    name = "uninstall_helper_test",
+    srcs = ["uninstall_helper_test.cc"],
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tsf_profile",
+        ":uninstall_helper",
+        "//base:const",
+        "//base:util",
+        "//testing:gunit_main",
+    ],
+)
