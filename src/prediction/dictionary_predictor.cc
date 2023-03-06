@@ -899,7 +899,9 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   const std::string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
     Result &result = results->at(i);
-    if (result.types & PredictionType::TYPING_CORRECTION) {
+    if (result.types & PredictionType::TYPING_CORRECTION ||
+        result.candidate_attributes &
+            Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       continue;
     }
     if (!absl::StartsWith(result.key, conversion_key)) {
@@ -1056,6 +1058,9 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);
   }
+  constexpr int kPrefixCandidateCostOffset = 1151;  // 500 * log(10)
+  // TODO(toshiyuki): Optimize the cost offset.
+  penalty += kPrefixCandidateCostOffset;
   (*cache)[cache_key] = penalty;
   return penalty;
 }
