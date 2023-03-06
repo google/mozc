@@ -41,6 +41,7 @@ load(
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
+load("//bazel/win32:build_defs.bzl", "copts_wtl", "features_gdi")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -99,6 +100,8 @@ mozc_cc_library(
     name = "renderer_server",
     srcs = ["renderer_server.cc"],
     hdrs = ["renderer_server.h"],
+    # TODO(b/180075250): IPC tests don't pass in forge
+    tags = ["nowin"],
     deps = [
         ":renderer_interface",
         "//base:compiler_specific",
@@ -216,10 +219,14 @@ mozc_cc_library(
     name = "renderer_style_handler",
     srcs = ["renderer_style_handler.cc"],
     hdrs = ["renderer_style_handler.h"],
+    copts = copts_wtl(),  # for Windows
+    features = features_gdi(),  # for Windows
     deps = [
         "//base:singleton",
         "//protocol:renderer_cc_proto",
-    ],
+    ] + mozc_select(
+        windows = ["//third_party/wtl"],
+    ),
 )
 
 mozc_cc_test(

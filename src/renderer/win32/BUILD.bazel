@@ -1,0 +1,369 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "MOZC_TAGS",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+)
+load("//bazel/win32:build_defs.bzl", "copts_wtl")
+load("//bazel:stubs.bzl", "lexan")
+
+package(
+    # Package default option is not configurable with select.
+    features = ["gdi"],
+)
+
+mozc_cc_binary(
+    name = "win32_renderer_main",
+    srcs = ["win32_renderer_main.cc"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_renderer_main_resources",
+        ":win32_server",
+        "//base/win32:scoped_com",
+        "//base/win32:winmain",
+        "//renderer:init_mozc_renderer",
+    ],
+)
+
+lexan.resource_files(
+    name = "win32_renderer_main_resources",
+    manifests = [
+        "mozc_renderer.exe.manifest",
+    ],
+    rc_files = [
+        "mozc_renderer.rc",
+    ],
+    resources = [
+        "resource.h",
+        "//data/images/win:candidate_window_logo",
+    ],
+)
+
+mozc_cc_library(
+    name = "resource_h",
+    hdrs = ["resource.h"],
+)
+
+mozc_cc_binary(
+    name = "gen_pbgra32_bitmap",
+    srcs = ["gen_pbgra32_bitmap.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:file_stream",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:util",
+        "//bazel/win32:gdiplus",  # fixdeps: keep
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
+
+mozc_cc_library(
+    name = "candidate_window",
+    srcs = ["candidate_window.cc"],
+    hdrs = ["candidate_window.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":resource_h",
+        ":text_renderer",
+        "//base:const",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_style_handler",
+        "//renderer:table_layout",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_renderer_client",
+    srcs = ["win32_renderer_client.cc"],
+    hdrs = ["win32_renderer_client.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//base/win32:scoped_handle",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_client",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_font_util",
+    srcs = ["win32_font_util.cc"],
+    hdrs = ["win32_font_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:util",
+        "//protocol:renderer_cc_proto",
+    ],
+)
+
+mozc_cc_library(
+    name = "indicator_window",
+    srcs = ["indicator_window.cc"],
+    hdrs = ["indicator_window.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_image_util",
+        ":win32_renderer_util",
+        "//base:const",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:util",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "text_renderer",
+    srcs = ["text_renderer.cc"],
+    hdrs = ["text_renderer.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:coordinates",
+        "//base:logging",
+        "//base:system_util",
+        "//bazel/win32:d2d1",  # fixdeps: keep
+        "//bazel/win32:dwrite",  # fixdeps: keep
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_style_handler",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_server",
+    srcs = ["win32_server.cc"],
+    hdrs = ["win32_server.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":window_manager",
+        "//base:logging",
+        "//base:port",
+        "//base:run_level",
+        "//base:util",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_interface",
+        "//renderer:renderer_server",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+mozc_cc_library(
+    name = "infolist_window",
+    srcs = ["infolist_window.cc"],
+    hdrs = ["infolist_window.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":resource_h",
+        ":text_renderer",
+        "//base:const",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_style_handler",
+        "//renderer:table_layout",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "window_manager",
+    srcs = ["window_manager.cc"],
+    hdrs = ["window_manager.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":candidate_window",
+        ":composition_window",
+        ":indicator_window",
+        ":infolist_window",
+        ":win32_renderer_util",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//renderer:renderer_interface",
+        "//renderer:window_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "composition_window",
+    srcs = ["composition_window.cc"],
+    hdrs = ["composition_window.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_renderer_util",
+        "//base:const",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:util",
+        "//protocol:renderer_cc_proto",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_image_util",
+    srcs = ["win32_image_util.cc"],
+    hdrs = ["win32_image_util.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:coordinates",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "win32_renderer_util",
+    srcs = ["win32_renderer_util.cc"],
+    hdrs = ["win32_renderer_util.h"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_font_util",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//testing:gunit_prod",
+        "//third_party/wtl",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+mozc_cc_test(
+    name = "win32_renderer_util_test",
+    srcs = ["win32_renderer_util_test.cc"],
+    copts = copts_wtl(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_font_util",
+        ":win32_renderer_util",
+        "//base:logging",
+        "//base:mmap",
+        "//base:util",
+        "//base/win32:win_font_test_helper",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//testing:gunit_main",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_test(
+    name = "win32_image_util_test",
+    srcs = ["win32_image_util_test.cc"],
+    copts = copts_wtl(),
+    data = [
+        "//data/test/renderer/win32",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_image_util",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:mmap",
+        "//base:util",
+        "//base/win32:win_font_test_helper",
+        "//bazel/win32:gdiplus",
+        "//net:jsoncpp",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_test(
+    name = "win32_font_util_test",
+    srcs = ["win32_font_util_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_font_util",
+        "//base:util",
+        "//protocol:renderer_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
