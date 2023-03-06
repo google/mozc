@@ -32,11 +32,13 @@
 
 #include <cstddef>
 
+#include "absl/types/span.h"
+
 namespace mozc {
 
 class Mmap final {
  public:
-  Mmap();
+  Mmap() = default;
 
   Mmap(const Mmap &) = delete;
   Mmap &operator=(const Mmap &) = delete;
@@ -61,18 +63,21 @@ class Mmap final {
   static int MaybeMLock(const void *addr, size_t len);
   static int MaybeMUnlock(const void *addr, size_t len);
 
-  char &operator[](size_t n) { return *(text_ + n); }
-  char operator[](size_t n) const { return *(text_ + n); }
-  char *begin() { return text_; }
-  const char *begin() const { return text_; }
-  char *end() { return text_ + size_; }
-  const char *end() const { return text_ + size_; }
+  constexpr char &operator[](size_t i) { return data_[i]; }
+  constexpr char operator[](size_t i) const { return data_[i]; }
+  constexpr char *begin() { return data_.begin(); }
+  constexpr const char *begin() const { return data_.begin(); }
+  constexpr char *end() { return data_.end(); }
+  constexpr const char *end() const { return data_.end() ; }
+  constexpr char *data() { return data_.data(); }
+  constexpr const char *data() const { return data_.data(); }
+  constexpr absl::Span<char> span() { return data_; }
+  constexpr absl::Span<const char> span() const { return data_; }
 
-  size_t size() const { return size_; }
+  constexpr size_t size() const { return data_.size(); }
 
  private:
-  char *text_;
-  size_t size_;
+  absl::Span<char> data_;
 };
 
 }  // namespace mozc

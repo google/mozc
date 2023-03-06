@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/cleanup/cleanup.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
@@ -57,8 +58,6 @@
 namespace mozc {
 
 #ifdef _WIN32
-
-Mmap::Mmap() : text_(nullptr), size_(0) {}
 
 bool Mmap::Open(const char *filename, const char *mode) {
   Close();
@@ -102,41 +101,25 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  text_ = reinterpret_cast<char *>(ptr);
-  size_ = ::GetFileSize(handle.get(), 0);
+  data_ = absl::MakeSpan(reinterpret_cast<char *>(ptr),
+                         ::GetFileSize(handle.get(), 0));
 
   return true;
 }
 
 void Mmap::Close() {
-  if (text_ != nullptr) {
-    ::UnmapViewOfFile(text_);
+  if (data_.data() != nullptr) {
+    ::UnmapViewOfFile(data_.data());
   }
 
-  text_ = nullptr;
-  size_ = 0;
+  data_ = absl::Span<char>();
 }
 
 #else  // !_WIN32
 
-Mmap::Mmap() : text_(nullptr), size_(0) {}
-
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif  // O_BINARY
-
-namespace {
-class ScopedCloser {
- public:
-  explicit ScopedCloser(int fd) : fd_(fd) {}
-  ScopedCloser(const ScopedCloser &) = delete;
-  ScopedCloser &operator=(const ScopedCloser &) = delete;
-  ~ScopedCloser() { ::close(fd_); }
-
- private:
-  int fd_;
-};
-}  // namespace
 
 bool Mmap::Open(const char *filename, const char *mode) {
   Close();
@@ -156,7 +139,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
     LOG(WARNING) << "open failed: " << filename;
     return false;
   }
-  ScopedCloser closer(fd);
+  absl::Cleanup closer = [fd] { ::close(fd); };
 
   struct stat st;
   if (fstat(fd, &st) < 0) {
@@ -175,20 +158,18 @@ bool Mmap::Open(const char *filename, const char *mode) {
     return false;
   }
 
-  MaybeMLock(ptr, size_);
-  text_ = reinterpret_cast<char *>(ptr);
-  size_ = st.st_size;
+  MaybeMLock(ptr, st.st_size);
+  data_ = absl::MakeSpan(reinterpret_cast<char *>(ptr), st.st_size);
   return true;
 }
 
 void Mmap::Close() {
-  if (text_ != nullptr) {
-    MaybeMUnlock(text_, size_);
-    munmap(reinterpret_cast<char *>(text_), size_);
+  if (data_.data() != nullptr) {
+    MaybeMUnlock(data_.data(), data_.size());
+    munmap(data_.data(), data_.size());
   }
 
-  text_ = nullptr;
-  size_ = 0;
+  data_ = absl::Span<char>();
 }
 #endif  // !_WIN32
 
