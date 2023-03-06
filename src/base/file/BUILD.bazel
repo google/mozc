@@ -105,6 +105,7 @@ mozc_cc_test(
         ":temp_dir",
         "//base:file_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
 )

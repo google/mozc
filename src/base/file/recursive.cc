@@ -153,18 +153,23 @@ absl::Status DeleteRecursively(const absl::string_view path) {
     switch (ent->fts_info) {
       case FTS_DP:  // directory postorder
         s = FileUtil::RemoveDirectory(ent->fts_path);
-        if (!s.ok()) {
+        if (!s.ok() && !absl::IsNotFound(s)) {
           LOG(ERROR) << "Cannot remove directory " << ent->fts_path << ":" << s;
         }
         break;
       case FTS_F:  // regular file
+        [[fallthrough]];
+      case FTS_NSOK:  // no stat requested (FTS_NOSTAT)
         [[fallthrough]];
       case FTS_SL:  // symlink
         [[fallthrough]];
       case FTS_SLNONE:  // broken symlink
         [[fallthrough]];
       case FTS_DEFAULT:  // others
-        FileUtil::UnlinkOrLogError(ent->fts_path);
+        s = FileUtil::Unlink(ent->fts_path);
+        if (!s.ok() && !absl::IsNotFound(s)) {
+          LOG(ERROR) << "Cannot unlink " << ent->fts_path << ":" << s;
+        }
         break;
       default:
         break;

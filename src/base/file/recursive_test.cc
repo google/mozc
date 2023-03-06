@@ -29,49 +29,57 @@
 
 #include "base/file/recursive.h"
 
+#include <fstream>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
 namespace mozc::file {
 namespace {
 
-TempFile CreateTempFile(const TempDirectory &t) {
-  absl::StatusOr<TempFile> f = t.CreateTempFile();
-  EXPECT_OK(f);
-  return *std::move(f);
-}
+class RecursiveTest : public testing::Test {
+ protected:
+  TempDirectory CreateTempDirectory(const TempDirectory &t) {
+    absl::StatusOr<TempDirectory> d = t.CreateTempDirectory();
+    EXPECT_OK(d);
+    return *std::move(d);
+  }
+};
 
-TempDirectory CreateTempDirectory(const TempDirectory &t) {
-  absl::StatusOr<TempDirectory> d = t.CreateTempDirectory();
-  EXPECT_OK(d);
-  return *std::move(d);
-}
-
-TEST(RecursiveTest, DeleteRecursively) {
+TEST_F(RecursiveTest, DeleteRecursively) {
   TempDirectory temp = TempDirectory::Default();
 
   TempDirectory dir = CreateTempDirectory(temp);
-  CreateTempFile(dir);
-  CreateTempFile(dir);
-  CreateTempFile(dir);
+  {
+    std::ofstream of1(FileUtil::JoinPath(dir.path(), "file1"));
+    std::ofstream of2(FileUtil::JoinPath(dir.path(), "file2"));
+  }
 
   TempDirectory dir2 = CreateTempDirectory(dir);
-  CreateTempFile(dir2);
-
-  TempDirectory dir3 = CreateTempDirectory(dir2);
-  CreateTempFile(dir3);
+  {
+    std::ofstream of1(FileUtil::JoinPath(dir2.path(), "file1"));
+    std::ofstream of2(FileUtil::JoinPath(dir2.path(), "file2"));
+  }
 
   EXPECT_OK(DeleteRecursively(dir.path()));
-  EXPECT_FALSE(FileUtil::DirectoryExists(dir.path()).ok());
-  // Path leaf doesn't exist.
-  EXPECT_OK(DeleteRecursively(dir.path()));
-  // Path component doesn't exist.
-  EXPECT_OK(DeleteRecursively(dir3.path()));
+  EXPECT_TRUE(absl::IsNotFound(FileUtil::DirectoryExists(dir.path())));
+}
+
+TEST_F(RecursiveTest, DeleteRecursivelyNonExistent) {
+  TempDirectory temp = TempDirectory::Default();
+  TempDirectory dir = CreateTempDirectory(temp);
+  // Path leaf that doesn't exist.
+  EXPECT_OK(DeleteRecursively(FileUtil::JoinPath(dir.path(), "non_existent")));
+  // Path component that doesn't exist.
+  EXPECT_OK(DeleteRecursively(
+      FileUtil::JoinPath({dir.path(), "non_existent", "non_existent"})));
 }
 
 }  // namespace
