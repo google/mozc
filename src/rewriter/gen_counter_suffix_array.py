@@ -30,9 +30,8 @@
 
 """Generate embedded counter suffix data."""
 
+import argparse
 import codecs
-import optparse
-import sys
 
 from build_tools import code_generator_util
 from build_tools import serialized_string_array_builder
@@ -60,24 +59,30 @@ def ReadCounterSuffixes(dictionary_files, ids):
     with codecs.open(filename, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.ParseColumnStream(stream, num_column=5,
                                                      delimiter='\t')
-      for x, lid, rid, y, value in stream:
+      for _, lid, rid, _, value in stream:
         if (lid == rid) and (lid in ids) and (rid in ids):
           suffixes.add(value)
   return sorted(s.encode('utf-8') for s in suffixes)
 
 
-def ParseOptions():
-  parser = optparse.OptionParser()
-  parser.add_option('--id_file', dest='id_file')
-  parser.add_option('--output', dest='output')
+def ParseArguments():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('dictionary_files', nargs='+')
+  parser.add_argument('--id_file')
+  parser.add_argument('--output')
+  parser.add_argument('--text', action='store_true', default=False)
   return parser.parse_args()
 
 
 def main():
-  options, args = ParseOptions()
-  ids = ReadCounterSuffixPosIds(options.id_file)
-  suffixes = ReadCounterSuffixes(args, ids)
-  serialized_string_array_builder.SerializeToFile(suffixes, options.output)
+  args = ParseArguments()
+  ids = ReadCounterSuffixPosIds(args.id_file)
+  suffixes = ReadCounterSuffixes(args.dictionary_files, ids)
+  if args.text:
+    with open(args.output, 'wb') as f:
+      f.write(b'\n'.join(suffixes))
+  else:
+    serialized_string_array_builder.SerializeToFile(suffixes, args.output)
 
 
 if __name__ == '__main__':
