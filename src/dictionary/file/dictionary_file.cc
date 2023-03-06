@@ -48,8 +48,6 @@ DictionaryFile::DictionaryFile(const DictionaryFileCodecInterface *file_codec)
   DCHECK(file_codec_);
 }
 
-DictionaryFile::~DictionaryFile() = default;
-
 absl::Status DictionaryFile::OpenFromFile(const std::string &file) {
   mapping_ = std::make_unique<Mmap>();
   if (!mapping_->Open(file.c_str())) {

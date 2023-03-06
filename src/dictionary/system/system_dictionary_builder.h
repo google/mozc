@@ -39,6 +39,8 @@
 #include <vector>
 
 #include "base/port.h"
+#include "dictionary/file/codec_factory.h"
+#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
@@ -50,7 +52,7 @@ class SystemDictionaryCodecInterface;
 class DictionaryFileCodecInterface;
 struct Token;
 
-class SystemDictionaryBuilder {
+class SystemDictionaryBuilder final {
  public:
   // Represents words info for a certain key(=reading).
   struct KeyInfo {
@@ -60,14 +62,14 @@ class SystemDictionaryBuilder {
     std::vector<TokenInfo> tokens;
   };
 
-  SystemDictionaryBuilder();
+  SystemDictionaryBuilder() = default;
+  // This class does not have the ownership of |codec|.
   SystemDictionaryBuilder(const SystemDictionaryCodecInterface *codec,
-                          const DictionaryFileCodecInterface *file_codec);
+                          const DictionaryFileCodecInterface *file_codec)
+      : codec_(codec), file_codec_(file_codec) {}
 
   SystemDictionaryBuilder(const SystemDictionaryBuilder &) = delete;
   SystemDictionaryBuilder &operator=(const SystemDictionaryBuilder &) = delete;
-
-  virtual ~SystemDictionaryBuilder();
 
   void BuildFromTokens(const std::vector<Token *> &tokens) {
     BuildFromTokensInternal(tokens);
@@ -108,8 +110,10 @@ class SystemDictionaryBuilder {
   // mapping from {left_id, right_id} to POS index (0--255)
   std::map<uint32_t, int> frequent_pos_;
 
-  const SystemDictionaryCodecInterface *codec_;
-  const DictionaryFileCodecInterface *file_codec_;
+  const SystemDictionaryCodecInterface *codec_ =
+      SystemDictionaryCodecFactory::GetCodec();
+  const DictionaryFileCodecInterface *file_codec_ =
+      DictionaryFileCodecFactory::GetCodec();
 };
 
 }  // namespace dictionary

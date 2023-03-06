@@ -53,11 +53,6 @@ class Unlocker final {
 
 }  // namespace
 
-SuppressionDictionary::SuppressionDictionary()
-    : has_key_empty_(false), has_value_empty_(false), locked_(false) {}
-
-SuppressionDictionary::~SuppressionDictionary() = default;
-
 bool SuppressionDictionary::AddEntry(const std::string &key,
                                      const std::string &value) {
   if (!locked_.load(std::memory_order_relaxed)) {

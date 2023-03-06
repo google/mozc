@@ -48,12 +48,9 @@ namespace dictionary {
 
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
  public:
-  DictionaryFileCodec();
-
+  DictionaryFileCodec() = default;
   DictionaryFileCodec(const DictionaryFileCodec &) = delete;
   DictionaryFileCodec &operator=(const DictionaryFileCodec &) = delete;
-
-  ~DictionaryFileCodec() override;
 
   void WriteSections(const std::vector<DictionaryFileSection> &sections,
                      std::ostream *ofs) const override;
@@ -69,9 +66,9 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 
   // Seed value for name string finger print
   // Made it mutable for reading sections.
-  mutable int32_t seed_;
+  mutable int32_t seed_ = 2135654146;
   // Magic value for simple file validation
-  const int32_t filemagic_;
+  const int32_t filemagic_ = 20110701;
 };
 
 }  // namespace dictionary

@@ -183,7 +183,6 @@ class UserPos : public UserPosInterface {
           absl::string_view string_array_data);
   UserPos(const UserPos &) = delete;
   UserPos &operator=(const UserPos &) = delete;
-  ~UserPos() override;
 
   // Implementation of UserPosInterface.
   void GetPosList(std::vector<std::string> *pos_list) const override;

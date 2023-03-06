@@ -48,10 +48,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/codec.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "dictionary/text_dictionary_loader.h"
@@ -95,18 +93,6 @@ void WriteSectionToFile(const DictionaryFileSection &section,
 }
 
 }  // namespace
-
-SystemDictionaryBuilder::SystemDictionaryBuilder()
-    : codec_(SystemDictionaryCodecFactory::GetCodec()),
-      file_codec_(DictionaryFileCodecFactory::GetCodec()) {}
-
-// This class does not have the ownership of |codec|.
-SystemDictionaryBuilder::SystemDictionaryBuilder(
-    const SystemDictionaryCodecInterface *codec,
-    const DictionaryFileCodecInterface *file_codec)
-    : codec_(codec), file_codec_(file_codec) {}
-
-SystemDictionaryBuilder::~SystemDictionaryBuilder() = default;
 
 void SystemDictionaryBuilder::BuildFromTokens(
     const std::vector<std::unique_ptr<Token>> &tokens) {

@@ -46,9 +46,7 @@ namespace dictionary {
 // the consumer is the main converter thread.
 class SuppressionDictionary final {
  public:
-  SuppressionDictionary();
-  ~SuppressionDictionary();
-
+  SuppressionDictionary() = default;
   SuppressionDictionary(const SuppressionDictionary &) = delete;
   SuppressionDictionary &operator=(const SuppressionDictionary &) = delete;
 
@@ -88,9 +86,9 @@ class SuppressionDictionary final {
 
  private:
   std::set<std::string> dic_;
-  bool has_key_empty_;
-  bool has_value_empty_;
-  mutable std::atomic<bool> locked_;
+  bool has_key_empty_ = false;
+  bool has_value_empty_ = false;
+  mutable std::atomic<bool> locked_ = false;
   // TODO(noriyukit): Check if this mutex is still necessary.
   absl::Mutex mutex_;
 };

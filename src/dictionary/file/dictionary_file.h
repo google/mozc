@@ -49,7 +49,6 @@ struct DictionaryFileSection;
 class DictionaryFile {
  public:
   explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
-  ~DictionaryFile();
 
   DictionaryFile(const DictionaryFile &) = delete;
   DictionaryFile &operator=(const DictionaryFile &) = delete;

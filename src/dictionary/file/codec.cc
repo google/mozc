@@ -47,11 +47,6 @@
 namespace mozc {
 namespace dictionary {
 
-DictionaryFileCodec::DictionaryFileCodec()
-    : seed_(2135654146), filemagic_(20110701) {}
-
-DictionaryFileCodec::~DictionaryFileCodec() = default;
-
 void DictionaryFileCodec::WriteSections(
     const std::vector<DictionaryFileSection> &sections,
     std::ostream *ofs) const {
