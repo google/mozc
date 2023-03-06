@@ -47,7 +47,6 @@
 #include "base/util.h"
 #include "base/win32/win_util.h"
 #include "win32/base/display_name_resource.h"
-#include "win32/base/imm_util.h"
 #include "win32/base/immdev.h"
 #include "win32/base/keyboard_layout_id.h"
 

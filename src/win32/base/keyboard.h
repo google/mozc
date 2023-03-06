@@ -78,7 +78,7 @@ class LParamKeyInfo {
 
 class VirtualKey {
  public:
-  VirtualKey();
+  VirtualKey() = default;
 
   // Construct an instance from a given |virtual_key|.
   // You cannot specify VK_PACKET for |virtual_key|.
@@ -98,10 +98,14 @@ class VirtualKey {
   BYTE virtual_key() const;
 
  private:
-  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32_t unicode_char);
-  char32_t unicode_char_;
-  wchar_t wide_char_;
-  BYTE virtual_key_;
+  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32_t unicode_char)
+      : unicode_char_(unicode_char),
+        wide_char_(wide_char),
+        virtual_key_(virtual_key) {}
+
+  char32_t unicode_char_ = 0;
+  wchar_t wide_char_ = 0;
+  BYTE virtual_key_ = 0;
 };
 
 // We intentionally wrap some APIs as virthal methods so that unit tests can

@@ -57,7 +57,7 @@ class AccessibleObject {
   AccessibleObject GetParent() const;
   AccessibleObject GetFocus() const;
   bool GetWindowHandle(HWND *window_handle) const;
-  bool AccessibleObject::GetProcessId(DWORD *process_id) const;
+  bool GetProcessId(DWORD *process_id) const;
   bool IsValid() const;
 
   static AccessibleObject FromWindow(HWND window_handle);

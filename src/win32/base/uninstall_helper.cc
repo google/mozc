@@ -212,7 +212,8 @@ bool GetInstalledProfilesByLanguageForTSF(
 
   while (true) {
     ULONG num_fetched = 0;
-    TF_LANGUAGEPROFILE src = {0};
+    TF_LANGUAGEPROFILE src;
+    ZeroMemory(&src, sizeof(src));
     hr = enum_profiles->Next(1, &src, &num_fetched);
     if (FAILED(hr)) {
       return false;
@@ -491,7 +492,8 @@ void EnableAndSetDefaultIfLayoutIsTIP(const KeyboardLayoutInfo &layout) {
 
   while (true) {
     ULONG num_fetched = 0;
-    TF_LANGUAGEPROFILE profile = {0};
+    TF_LANGUAGEPROFILE profile;
+    ZeroMemory(&profile, sizeof(profile));
     hr = enum_profiles->Next(1, &profile, &num_fetched);
     if (FAILED(hr)) {
       return;

@@ -27,8 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// clang-format off
+#include <windows.h>  // include windows.h first
 #include <cguid.h>
-#include <windows.h>
+// clang-format on
 
 #include "base/const.h"
 #include "base/util.h"
