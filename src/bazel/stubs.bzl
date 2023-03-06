@@ -89,4 +89,5 @@ def cc_stub(name, tags = None, target_compatible_with = None, **kwargs):
 
 lexan = struct(
     resource_files = cc_stub,
+    cc_windows_dll = cc_stub,
 )
