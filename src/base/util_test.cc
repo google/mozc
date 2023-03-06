@@ -841,6 +841,10 @@ TEST(UtilTest, BracketTest) {
 }
 
 TEST(UtilTest, IsBracketPairText) {
+  EXPECT_TRUE(Util::IsBracketPairText("\"\""));
+  EXPECT_TRUE(Util::IsBracketPairText("''"));
+  EXPECT_TRUE(Util::IsBracketPairText("<>"));
+  EXPECT_TRUE(Util::IsBracketPairText("``"));
   EXPECT_TRUE(Util::IsBracketPairText("«»"));
   EXPECT_TRUE(Util::IsBracketPairText("()"));
   EXPECT_TRUE(Util::IsBracketPairText("[]"));
