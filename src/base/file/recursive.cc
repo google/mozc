@@ -29,10 +29,10 @@
 
 #include "base/file/recursive.h"
 
-#include <memory>
 #include <string>
 
 #include "base/logging.h"
+#include "absl/cleanup/cleanup.h"
 #include "absl/status/status.h"
 
 #ifdef _WIN32
@@ -142,13 +142,12 @@ absl::Status DeleteRecursively(const absl::string_view path) {
   if (ftsp == nullptr) {
     return absl::ErrnoToStatus(errno, "fts_open failed");
   }
-  const auto fts_deleter = [](FTS *p) {
-    if (fts_close(p) < 0) {
+  absl::Cleanup fts_closer = [ftsp]() {
+    if (fts_close(ftsp) < 0) {
       LOG(ERROR) << "fts_close failed : errno = " << errno;
     }
   };
-  const std::unique_ptr<FTS, decltype(fts_deleter)> fts_closer(ftsp,
-                                                               fts_deleter);
+
   while (FTSENT *ent = fts_read(ftsp)) {
     absl::Status s;
     switch (ent->fts_info) {
