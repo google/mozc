@@ -38,6 +38,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -107,8 +108,8 @@ class UserDictionarySessionHandler {
   void GetStorage(const UserDictionaryCommand &command,
                   UserDictionaryCommandStatus *status);
 
-  void set_dictionary_path(const std::string &dictionary_path) {
-    dictionary_path_ = dictionary_path;
+  void set_dictionary_path(absl::string_view dictionary_path) {
+    dictionary_path_ = std::string(dictionary_path);
   }
 
  private:

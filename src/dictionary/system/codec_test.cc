@@ -59,8 +59,8 @@ namespace {
          << message << " c = " << absl::StrFormat("U+%05X", c);
 }
 
-::testing::AssertionResult IsExpectedEncodedSize(char32_t c,
-                                                 const std::string &encoded) {
+::testing::AssertionResult IsExpectedEncodedSize(
+    char32_t c, const absl::string_view encoded) {
   const std::string::size_type size = encoded.size();
   if (c == 0x00) {
     return ::testing::AssertionFailure() << "NUL is not supported.";

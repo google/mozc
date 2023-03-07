@@ -38,6 +38,7 @@
 
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/file/dictionary_file.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/words_info.h"
@@ -49,10 +50,6 @@
 
 namespace mozc {
 namespace dictionary {
-
-class DictionaryFile;
-class DictionaryFileCodecInterface;
-class SystemDictionaryCodecInterface;
 
 class SystemDictionary : public DictionaryInterface {
  public:
@@ -76,12 +73,12 @@ class SystemDictionary : public DictionaryInterface {
   class Builder {
    public:
     // Creates Builder from filename
-    explicit Builder(const std::string &filename);
+    explicit Builder(absl::string_view filename);
     // Creates Builder from image
     Builder(const char *ptr, int len);
     Builder(const Builder &) = delete;
     Builder &operator=(const Builder &) = delete;
-    ~Builder();
+    ~Builder() = default;
 
     // Sets options (default: NONE)
     Builder &SetOptions(Options options);
@@ -95,7 +92,37 @@ class SystemDictionary : public DictionaryInterface {
     absl::StatusOr<std::unique_ptr<SystemDictionary>> Build();
 
    private:
-    struct Specification;
+    struct Specification {
+      enum InputType {
+        FILENAME,
+        IMAGE,
+      };
+
+      Specification(InputType t, absl::string_view fn, const char *p, int l,
+                    Options o, const SystemDictionaryCodecInterface *codec,
+                    const DictionaryFileCodecInterface *file_codec)
+          : type(t),
+            filename(fn),
+            ptr(p),
+            len(l),
+            options(o),
+            codec(codec),
+            file_codec(file_codec) {}
+
+      InputType type;
+
+      // For InputType::FILENAME
+      const std::string filename;
+
+      // For InputType::IMAGE
+      const char *ptr;
+      const int len;
+
+      Options options;
+      const SystemDictionaryCodecInterface *codec;
+      const DictionaryFileCodecInterface *file_codec;
+    };
+
     std::unique_ptr<Specification> spec_;
   };
 

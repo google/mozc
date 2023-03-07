@@ -43,6 +43,7 @@
 #include "base/util.h"
 #include "dictionary/user_pos_interface.h"
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -80,7 +81,7 @@ namespace {
 
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
 
-bool InternalValidateNormalizedReading(const std::string &reading) {
+bool InternalValidateNormalizedReading(const absl::string_view reading) {
   if (!Util::IsValidUtf8(reading)) {
     return false;
   }
@@ -105,13 +106,13 @@ bool InternalValidateNormalizedReading(const std::string &reading) {
 
 }  // namespace
 
-bool UserDictionaryUtil::IsValidReading(const std::string &reading) {
+bool UserDictionaryUtil::IsValidReading(const absl::string_view reading) {
   std::string normalized;
   NormalizeReading(reading, &normalized);
   return InternalValidateNormalizedReading(normalized);
 }
 
-void UserDictionaryUtil::NormalizeReading(const std::string &input,
+void UserDictionaryUtil::NormalizeReading(const absl::string_view input,
                                           std::string *output) {
   output->clear();
   std::string tmp1, tmp2;
@@ -275,7 +276,7 @@ bool UserDictionaryUtil::Sanitize(std::string *str, size_t max_size) {
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
     const user_dictionary::UserDictionaryStorage &storage,
-    const std::string &dictionary_name) {
+    const absl::string_view dictionary_name) {
   if (dictionary_name.empty()) {
     VLOG(1) << "Empty dictionary name.";
     return UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY;
@@ -366,7 +367,7 @@ uint64_t UserDictionaryUtil::CreateNewDictionaryId(
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
     user_dictionary::UserDictionaryStorage *storage,
-    const std::string &dictionary_name, uint64_t *new_dictionary_id) {
+    const absl::string_view dictionary_name, uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       ValidateDictionaryName(*storage, dictionary_name);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
@@ -392,7 +393,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
   }
 
   dictionary->set_id(*new_dictionary_id);
-  dictionary->set_name(dictionary_name);
+  dictionary->set_name(std::string(dictionary_name));
   return UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 

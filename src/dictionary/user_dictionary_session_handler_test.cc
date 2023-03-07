@@ -45,6 +45,7 @@
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -113,11 +114,12 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
               (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
   }
 
-  uint64_t CreateUserDictionary(uint64_t session_id, const std::string &name) {
+  uint64_t CreateUserDictionary(const uint64_t session_id,
+                                const absl::string_view name) {
     Clear();
     command_->set_type(UserDictionaryCommand::CREATE_DICTIONARY);
     command_->set_session_id(session_id);
-    command_->set_dictionary_name(name);
+    command_->set_dictionary_name(std::string(name));
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
     EXPECT_EQ(status_->status(),
               (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
@@ -125,19 +127,21 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->dictionary_id();
   }
 
-  void AddUserDictionaryEntry(uint64_t session_id, uint64_t dictionary_id,
-                              const std::string &key, const std::string &value,
-                              UserDictionary::PosType pos,
-                              const std::string &comment) {
+  void AddUserDictionaryEntry(const uint64_t session_id,
+                              const uint64_t dictionary_id,
+                              const absl::string_view key,
+                              const absl::string_view value,
+                              const UserDictionary::PosType pos,
+                              const absl::string_view comment) {
     Clear();
     command_->set_type(UserDictionaryCommand::ADD_ENTRY);
     command_->set_session_id(session_id);
     command_->set_dictionary_id(dictionary_id);
     UserDictionary::Entry *entry = command_->mutable_entry();
-    entry->set_key(key);
-    entry->set_value(value);
+    entry->set_key(std::string(key));
+    entry->set_value(std::string(value));
     entry->set_pos(pos);
-    entry->set_comment(comment);
+    entry->set_comment(std::string(comment));
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
     EXPECT_EQ(status_->status(),
               (UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS));
@@ -930,9 +934,9 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   // kDictionaryData contains 4 entries.
   std::string data = kDictionaryData;
   // Adding 3 entries, but the last one is invalid. So the total should be 6.
-  data.append("☻\tEMOTICON\t名詞\n");  // Symbol reading (valid).
-  data.append("読み\tYOMI\t名詞\n");   // Kanji reading (valid).
-  data.append("あ\x81\x84う\tINVALID\t名詞\n");   // Invalid UTF-8 string.
+  data.append("☻\tEMOTICON\t名詞\n");            // Symbol reading (valid).
+  data.append("読み\tYOMI\t名詞\n");             // Kanji reading (valid).
+  data.append("あ\x81\x84う\tINVALID\t名詞\n");  // Invalid UTF-8 string.
 
   // Import data to a new dictionary.
   Clear();

@@ -46,6 +46,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -227,8 +228,8 @@ bool UserDictionaryStorage::UnLock() {
   return true;
 }
 
-bool UserDictionaryStorage::ExportDictionary(uint64_t dic_id,
-                                             const std::string &file_name) {
+bool UserDictionaryStorage::ExportDictionary(
+    const uint64_t dic_id, const absl::string_view file_name) {
   const int index = GetUserDictionaryIndex(dic_id);
   if (index < 0) {
     last_error_type_ = INVALID_DICTIONARY_ID;
@@ -254,7 +255,7 @@ bool UserDictionaryStorage::ExportDictionary(uint64_t dic_id,
   return true;
 }
 
-bool UserDictionaryStorage::CreateDictionary(const std::string &dic_name,
+bool UserDictionaryStorage::CreateDictionary(const absl::string_view dic_name,
                                              uint64_t *new_dic_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(&proto_, dic_name, new_dic_id);
@@ -299,8 +300,8 @@ bool UserDictionaryStorage::DeleteDictionary(uint64_t dic_id) {
   return true;
 }
 
-bool UserDictionaryStorage::RenameDictionary(uint64_t dic_id,
-                                             const std::string &dic_name) {
+bool UserDictionaryStorage::RenameDictionary(const uint64_t dic_id,
+                                             const absl::string_view dic_name) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   if (!UserDictionaryStorage::IsValidDictionaryName(dic_name)) {
@@ -328,7 +329,7 @@ bool UserDictionaryStorage::RenameDictionary(uint64_t dic_id,
     }
   }
 
-  dic->set_name(dic_name);
+  dic->set_name(std::string(dic_name));
 
   return true;
 }
@@ -337,8 +338,8 @@ int UserDictionaryStorage::GetUserDictionaryIndex(uint64_t dic_id) const {
   return UserDictionaryUtil::GetUserDictionaryIndexById(proto_, dic_id);
 }
 
-bool UserDictionaryStorage::GetUserDictionaryId(const std::string &dic_name,
-                                                uint64_t *dic_id) {
+bool UserDictionaryStorage::GetUserDictionaryId(
+    const absl::string_view dic_name, uint64_t *dic_id) {
   for (size_t i = 0; i < proto_.dictionaries_size(); ++i) {
     if (dic_name == proto_.dictionaries(i).name()) {
       *dic_id = proto_.dictionaries(i).id();
@@ -434,7 +435,8 @@ size_t UserDictionaryStorage::max_dictionary_size() {
   return UserDictionaryUtil::max_entry_size();
 }
 
-bool UserDictionaryStorage::IsValidDictionaryName(const std::string &name) {
+bool UserDictionaryStorage::IsValidDictionaryName(
+    const absl::string_view name) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::ValidateDictionaryName(
           user_dictionary::UserDictionaryStorage::default_instance(), name);

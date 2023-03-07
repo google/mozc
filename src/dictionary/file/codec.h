@@ -42,6 +42,7 @@
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -57,7 +58,7 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
   absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const override;
-  std::string GetSectionName(const std::string &name) const override;
+  std::string GetSectionName(absl::string_view name) const override;
 
  private:
   void WriteHeader(std::ostream *ofs) const;

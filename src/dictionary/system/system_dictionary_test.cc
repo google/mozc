@@ -115,7 +115,7 @@ class SystemDictionaryTest : public ::testing::Test {
 
   void BuildAndWriteSystemDictionary(const std::vector<Token *> &source,
                                      size_t num_tokens,
-                                     const std::string &filename);
+                                     absl::string_view filename);
   std::unique_ptr<SystemDictionary> BuildSystemDictionary(
       const std::vector<Token *> &source,
       size_t num_tokens = std::numeric_limits<size_t>::max());
@@ -153,7 +153,7 @@ std::vector<Token *> MakeTokenPointers(C *token_container) {
 
 void SystemDictionaryTest::BuildAndWriteSystemDictionary(
     const std::vector<Token *> &source, size_t num_tokens,
-    const std::string &filename) {
+    const absl::string_view filename) {
   SystemDictionaryBuilder builder;
   std::vector<Token *> tokens;
   tokens.reserve(std::min(source.size(), num_tokens));

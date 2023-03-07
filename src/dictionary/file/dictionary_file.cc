@@ -37,8 +37,10 @@
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "absl/algorithm/container.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -62,10 +64,10 @@ absl::Status DictionaryFile::OpenFromImage(const char *image, int length) {
   return file_codec_->ReadSections(image, length, &sections_);
 }
 
-const char *DictionaryFile::GetSection(const std::string &section_name,
+const char *DictionaryFile::GetSection(const absl::string_view section_name,
                                        int *len) const {
   DCHECK(len);
-  const std::string name = file_codec_->GetSectionName(section_name);
+  const std::string &name = file_codec_->GetSectionName(section_name);
   for (const auto &section : sections_) {
     if (section.name == name) {
       *len = section.len;

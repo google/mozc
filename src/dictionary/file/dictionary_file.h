@@ -40,6 +40,7 @@
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -61,7 +62,7 @@ class DictionaryFile {
 
   // Gets a pointer to the section having |section_name|. Image size is set to
   // |len|. Returns nullptr when not found.
-  const char *GetSection(const std::string &section_name, int *len) const;
+  const char *GetSection(absl::string_view section_name, int *len) const;
 
  private:
   // DictionaryFile does not take the ownership of |file_codec_|.

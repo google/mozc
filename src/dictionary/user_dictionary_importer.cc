@@ -79,7 +79,7 @@ uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
                            static_cast<char>(entry.pos()));
 }
 
-void NormalizePos(const std::string &input, std::string *output) {
+void NormalizePos(const absl::string_view input, std::string *output) {
   std::string tmp;
   output->clear();
   japanese_util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
@@ -255,7 +255,8 @@ UserDictionaryImporter::StringTextLineIterator::StringTextLineIterator(
     absl::string_view data)
     : data_(data), position_(0) {}
 
-UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() {}
+UserDictionaryImporter::StringTextLineIterator::~StringTextLineIterator() =
+    default;
 
 bool UserDictionaryImporter::StringTextLineIterator::IsAvailable() const {
   return position_ < data_.length();
@@ -307,8 +308,6 @@ UserDictionaryImporter::TextInputIterator::TextInputIterator(
 
   VLOG(1) << "Setting type to: " << static_cast<int>(ime_type_);
 }
-
-UserDictionaryImporter::TextInputIterator::~TextInputIterator() {}
 
 bool UserDictionaryImporter::TextInputIterator::IsAvailable() const {
   DCHECK(iter_);

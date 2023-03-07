@@ -42,6 +42,7 @@
 #include "request/conversion_request.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 using mozc::storage::louds::LoudsTrie;
 using mozc::storage::louds::LoudsTrieBuilder;
@@ -62,7 +63,7 @@ class ValueDictionaryTest : public ::testing::Test {
     louds_trie_builder_.reset();
   }
 
-  void AddValue(const std::string &value) {
+  void AddValue(const absl::string_view value) {
     std::string encoded;
     SystemDictionaryCodecFactory::GetCodec()->EncodeValue(value, &encoded);
     louds_trie_builder_->Add(encoded);
@@ -75,8 +76,8 @@ class ValueDictionaryTest : public ::testing::Test {
     return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 
-  void InitToken(const std::string &value, Token *token) const {
-    token->key = token->value = value;
+  void InitToken(const absl::string_view value, Token *token) const {
+    token->key = token->value = std::string(value);
     token->cost = 10000;
     token->lid = token->rid = pos_matcher_.GetSuggestOnlyWordId();
     token->attributes = Token::NONE;

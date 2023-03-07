@@ -70,7 +70,7 @@ namespace {
 constexpr char kReadingCorrectionFile[] = "reading_correction.tsv";
 
 // convert space delimtered text to CSV
-void GetInputFileName(const std::string &input_file,
+void GetInputFileName(const absl::string_view input_file,
                       std::string *system_dictionary_input,
                       std::string *reading_correction_input) {
   CHECK(system_dictionary_input);

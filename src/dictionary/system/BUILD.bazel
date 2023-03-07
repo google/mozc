@@ -171,9 +171,6 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
         "//dictionary:dictionary_token",
-        "//dictionary:pos_matcher_lib",
-        "//dictionary:text_dictionary_loader",
-        "//dictionary/file:codec",
         "//dictionary/file:codec_factory",
         "//dictionary/file:codec_interface",
         "//storage/louds:bit_vector_based_array_builder",
@@ -181,6 +178,7 @@ mozc_cc_library(
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -247,7 +245,10 @@ mozc_cc_test(
 mozc_cc_library(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],
-    deps = ["//base:port"],
+    deps = [
+        "//base:port",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 mozc_cc_test(

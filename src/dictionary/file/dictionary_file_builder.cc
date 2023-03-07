@@ -38,6 +38,7 @@
 #include "dictionary/file/codec.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -55,13 +56,13 @@ DictionaryFileBuilder::~DictionaryFileBuilder() {
   }
 }
 
-bool DictionaryFileBuilder::AddSectionFromFile(const std::string &section_name,
-                                               const std::string &file_name) {
+bool DictionaryFileBuilder::AddSectionFromFile(
+    const absl::string_view section_name, const absl::string_view file_name) {
   if (added_.find(section_name) != added_.end()) {
     DLOG(INFO) << "Already added: " << section_name;
     return false;
   }
-  added_.insert(section_name);
+  added_.emplace(section_name);
 
   InputFileStream ifs(file_name, std::ios::binary);
   CHECK(ifs) << "Failed to read" << file_name;
@@ -80,7 +81,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(const std::string &section_name,
 }
 
 void DictionaryFileBuilder::WriteImageToFile(
-    const std::string &file_name) const {
+    const absl::string_view file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
   OutputFileStream ofs(file_name, std::ios::binary);
   file_codec_->WriteSections(sections_, &ofs);

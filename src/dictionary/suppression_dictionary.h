@@ -34,6 +34,8 @@
 #include <set>
 #include <string>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -66,7 +68,7 @@ class SuppressionDictionary final {
   void UnLock();
 
   // Adds an entry into the dictionary.
-  bool AddEntry(const std::string &key, const std::string &value);
+  bool AddEntry(absl::string_view key, absl::string_view value);
 
   // Clears the dictionary.
   void Clear();
@@ -82,10 +84,10 @@ class SuppressionDictionary final {
   bool IsEmpty() const;
 
   // Returns true if a word having `key` and `value` should be suppressed.
-  bool SuppressEntry(const std::string &key, const std::string &value) const;
+  bool SuppressEntry(absl::string_view key, absl::string_view value) const;
 
  private:
-  std::set<std::string> dic_;
+  absl::flat_hash_set<std::string> dic_;
   bool has_key_empty_ = false;
   bool has_value_empty_ = false;
   mutable std::atomic<bool> locked_ = false;

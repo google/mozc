@@ -163,7 +163,7 @@ class UserDictionaryImporter {
     TextInputIterator(IMEType ime_type, TextLineIteratorInterface *iter);
     TextInputIterator(const TextInputIterator &) = delete;
     TextInputIterator &operator=(const TextInputIterator &) = delete;
-    ~TextInputIterator() override;
+    ~TextInputIterator() override = default;
 
     bool IsAvailable() const override;
     bool Next(RawEntry *entry) override;

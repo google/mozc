@@ -33,11 +33,13 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace dictionary {
 
 struct DictionaryFileSection {
-  DictionaryFileSection(const char *ptr, size_t len, const std::string &name)
+  DictionaryFileSection(const char *ptr, size_t len, absl::string_view name)
       : ptr(ptr), len(len), name(name) {}
 
   const char *ptr;

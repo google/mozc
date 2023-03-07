@@ -96,7 +96,7 @@ class UserDictionary : public DictionaryInterface {
   std::vector<std::string> GetPosList() const;
 
   // Sets user dicitonary filename for unittesting
-  static void SetUserDictionaryName(const std::string &filename);
+  static void SetUserDictionaryName(absl::string_view filename);
 
   enum RequestType { PREFIX, PREDICTIVE, EXACT };
 

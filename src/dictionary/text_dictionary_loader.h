@@ -32,7 +32,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -56,7 +55,7 @@ class TextDictionaryLoader {
   TextDictionaryLoader(const TextDictionaryLoader &) = delete;
   TextDictionaryLoader &operator=(const TextDictionaryLoader &) = delete;
 
-  virtual ~TextDictionaryLoader();
+  virtual ~TextDictionaryLoader() = default;
 
   // Loads tokens from system dictionary files and reading correction
   // files. Each file name can take multiple file names by separating commas.
@@ -64,13 +63,13 @@ class TextDictionaryLoader {
   // that the tokens loaded so far are all cleared and that this class takes the
   // ownership of the loaded tokens, i.e., they are deleted on destruction of
   // this loader instance.
-  void Load(const std::string &dictionary_filename,
-            const std::string &reading_correction_filename);
+  void Load(absl::string_view dictionary_filename,
+            absl::string_view reading_correction_filename);
 
   // The same as Load() method above except that the number of tokens to be
   // loaded is limited up to first |limit| entries.
-  void LoadWithLineLimit(const std::string &dictionary_filename,
-                         const std::string &reading_correction_filename,
+  void LoadWithLineLimit(absl::string_view dictionary_filename,
+                         absl::string_view reading_correction_filename,
                          int limit);
 
   // Clears the loaded tokens.
@@ -89,7 +88,7 @@ class TextDictionaryLoader {
 
  private:
   static std::vector<std::unique_ptr<Token>> LoadReadingCorrectionTokens(
-      const std::string &reading_correction_filename,
+      absl::string_view reading_correction_filename,
       const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit);
 
   // Encodes special information into |token| with the |label|.

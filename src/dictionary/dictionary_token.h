@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -57,8 +58,8 @@ struct Token {
   };
 
   Token() = default;
-  Token(const std::string &k, const std::string &v) : key(k), value(v) {}
-  Token(const std::string &k, const std::string &v, int c, int l, int r,
+  Token(absl::string_view k, absl::string_view v) : key(k), value(v) {}
+  Token(absl::string_view k, absl::string_view v, int c, int l, int r,
         AttributesBitfield a)
       : key(k), value(v), cost(c), lid(l), rid(r), attributes(a) {}
 

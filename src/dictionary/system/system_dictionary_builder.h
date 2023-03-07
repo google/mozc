@@ -44,6 +44,7 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -76,8 +77,8 @@ class SystemDictionaryBuilder final {
   }
   void BuildFromTokens(const std::vector<std::unique_ptr<Token>> &tokens);
 
-  void WriteToFile(const std::string &output_file) const;
-  void WriteToStream(const std::string &intermediate_output_file_base_path,
+  void WriteToFile(absl::string_view output_file) const;
+  void WriteToStream(absl::string_view intermediate_output_file_base_path,
                      std::ostream *output_stream) const;
 
  private:
