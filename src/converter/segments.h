@@ -294,7 +294,7 @@ class Segment final {
   Segment(const Segment &x);
   Segment &operator=(const Segment &x);
 
-  ~Segment();
+  ~Segment() = default;
 
   SegmentType segment_type() const;
   void set_segment_type(const SegmentType &segment_type);
@@ -424,7 +424,7 @@ class Segments final {
   Segments(const Segments &x);
   Segments &operator=(const Segments &x);
 
-  ~Segments();
+  ~Segments() = default;
 
   // getter
   const Segment &segment(size_t i) const;
