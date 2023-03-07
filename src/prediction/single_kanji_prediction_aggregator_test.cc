@@ -119,7 +119,11 @@ TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
   EXPECT_TRUE(FindResultByKey(results, "あけぼの"));
   EXPECT_TRUE(FindResultByKey(results, "あけ"));
   for (int i = 0; i < results.size(); ++i) {
-    EXPECT_EQ(results[i].wcost, i);
+    if (results[i].key == "あけぼの") {
+      EXPECT_EQ(results[i].wcost, i);
+    } else {
+      EXPECT_GT(results[i].wcost, i);  // Cost offset should be added
+    }
   }
 }
 
