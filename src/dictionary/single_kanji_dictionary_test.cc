@@ -49,8 +49,6 @@ class SingleKanjiDictionaryTest : public ::testing::Test {
     data_manager_ = std::make_unique<testing::MockDataManager>();
   }
 
-  ~SingleKanjiDictionaryTest() override = default;
-
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }

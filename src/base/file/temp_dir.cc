@@ -35,6 +35,7 @@
 #include <utility>
 
 #include "base/environ.h"
+#include "base/file/recursive.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "absl/status/status.h"
@@ -105,8 +106,7 @@ TempDirectory::~TempDirectory() {
   if (keep_) {
     return;
   }
-  // TODO(yuryu): Remove recursively.
-  const absl::Status s = FileUtil::RemoveDirectoryIfExists(path_);
+  const absl::Status s = file::DeleteRecursively(path_);
   if (!s.ok()) {
     LOG(WARNING) << "Failed to remove temporary directory (" << path_
                  << ") :" << s;

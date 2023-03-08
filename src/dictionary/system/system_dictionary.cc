@@ -116,19 +116,7 @@ const char *kHiraganaExpansionTable[] = {
     "へへべぺ", "ほほぼぽ", "ややゃ",   "ゆゆゅ",   "よよょ",   "わわゎ",
 };
 
-constexpr uint32_t kAsciiRange = 0x80;
-
-// Confirm that all the characters are within ASCII range.
-bool ContainsAsciiCodeOnly(const std::string &str) {
-  for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-    if (static_cast<unsigned char>(*it) >= kAsciiRange) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void SetKeyExpansion(char key, const std::string &expansion,
+void SetKeyExpansion(const char key, const absl::string_view expansion,
                      KeyExpansionTable *key_expansion_table) {
   key_expansion_table->Add(key, expansion);
 }
@@ -138,7 +126,7 @@ void BuildHiraganaExpansionTable(const SystemDictionaryCodecInterface &codec,
   for (size_t index = 0; index < std::size(kHiraganaExpansionTable); ++index) {
     std::string encoded;
     codec.EncodeKey(kHiraganaExpansionTable[index], &encoded);
-    DCHECK(ContainsAsciiCodeOnly(encoded))
+    DCHECK(Util::IsAscii(encoded))
         << "Encoded expansion data are supposed to fit within ASCII";
 
     DCHECK_GT(encoded.size(), 0) << "Expansion data is empty";
@@ -197,7 +185,7 @@ class TokenScanIterator {
     NextInternal();
   }
 
-  ~TokenScanIterator() {}
+  ~TokenScanIterator() = default;
 
   const Result &Get() const { return result_; }
 
@@ -261,7 +249,7 @@ struct ReverseLookupResult {
 
 class SystemDictionary::ReverseLookupCache {
  public:
-  ReverseLookupCache() {}
+  ReverseLookupCache() = default;
   ReverseLookupCache(const ReverseLookupCache &) = delete;
   ReverseLookupCache &operator=(const ReverseLookupCache &) = delete;
 
@@ -341,7 +329,7 @@ class SystemDictionary::ReverseLookupIndex {
     CHECK(index_ != nullptr);
   }
 
-  ~ReverseLookupIndex() {}
+  ~ReverseLookupIndex() = default;
 
   void FillResultMap(const absl::btree_set<int> &id_set,
                      std::multimap<int, ReverseLookupResult> *result_map) {
@@ -380,46 +368,13 @@ struct SystemDictionary::PredictiveLookupSearchState {
   int num_expanded;
 };
 
-struct SystemDictionary::Builder::Specification {
-  enum InputType {
-    FILENAME,
-    IMAGE,
-  };
-
-  Specification(InputType t, const std::string &fn, const char *p, int l,
-                Options o, const SystemDictionaryCodecInterface *codec,
-                const DictionaryFileCodecInterface *file_codec)
-      : type(t),
-        filename(fn),
-        ptr(p),
-        len(l),
-        options(o),
-        codec(codec),
-        file_codec(file_codec) {}
-
-  InputType type;
-
-  // For InputType::FILENAME
-  const std::string filename;
-
-  // For InputType::IMAGE
-  const char *ptr;
-  const int len;
-
-  Options options;
-  const SystemDictionaryCodecInterface *codec;
-  const DictionaryFileCodecInterface *file_codec;
-};
-
-SystemDictionary::Builder::Builder(const std::string &filename)
+SystemDictionary::Builder::Builder(absl::string_view filename)
     : spec_(new Specification(Specification::FILENAME, filename, nullptr, -1,
                               NONE, nullptr, nullptr)) {}
 
 SystemDictionary::Builder::Builder(const char *ptr, int len)
     : spec_(new Specification(Specification::IMAGE, "", ptr, len, NONE, nullptr,
                               nullptr)) {}
-
-SystemDictionary::Builder::~Builder() {}
 
 SystemDictionary::Builder &SystemDictionary::Builder::SetOptions(
     Options options) {
@@ -487,7 +442,7 @@ SystemDictionary::SystemDictionary(
       codec_(codec),
       dictionary_file_(new DictionaryFile(file_codec)) {}
 
-SystemDictionary::~SystemDictionary() {}
+SystemDictionary::~SystemDictionary() = default;
 
 bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
   int len;

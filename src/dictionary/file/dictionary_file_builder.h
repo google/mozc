@@ -30,13 +30,14 @@
 #ifndef MOZC_DICTIONARY_FILE_DICTIONARY_FILE_BUILDER_H_
 #define MOZC_DICTIONARY_FILE_DICTIONARY_FILE_BUILDER_H_
 
-#include <set>
 #include <string>
 #include <vector>
 
 #include "base/port.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -49,17 +50,17 @@ class DictionaryFileBuilder {
   virtual ~DictionaryFileBuilder();
 
   // Adds a section from a file
-  bool AddSectionFromFile(const std::string &section_name,
-                          const std::string &file_name);
+  bool AddSectionFromFile(absl::string_view section_name,
+                          absl::string_view file_name);
 
   // Writes the image of dictionary file to a file.
-  void WriteImageToFile(const std::string &file_name) const;
+  void WriteImageToFile(absl::string_view file_name) const;
 
  private:
   // DictionaryFileBuilder does not take the ownership of |file_codec_|.
   DictionaryFileCodecInterface *file_codec_;
   std::vector<DictionaryFileSection> sections_;
-  std::set<std::string> added_;
+  absl::flat_hash_set<std::string> added_;
 };
 
 }  // namespace dictionary

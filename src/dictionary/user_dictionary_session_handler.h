@@ -34,24 +34,22 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
+#include "dictionary/user_dictionary_session.h"
+#include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace user_dictionary {
 
-class UserDictionaryCommand;
-class UserDictionaryCommandStatus;
-class UserDictionarySession;
-
 // Interface between UserDictionarySession and protocol buffers.
 class UserDictionarySessionHandler {
  public:
-  UserDictionarySessionHandler();
+  UserDictionarySessionHandler() = default;
   UserDictionarySessionHandler(const UserDictionarySessionHandler &) = delete;
   UserDictionarySessionHandler &operator=(
       const UserDictionarySessionHandler &) = delete;
-  ~UserDictionarySessionHandler();
 
   bool Evaluate(const UserDictionaryCommand &command,
                 UserDictionaryCommandStatus *status);
@@ -110,23 +108,24 @@ class UserDictionarySessionHandler {
   void GetStorage(const UserDictionaryCommand &command,
                   UserDictionaryCommandStatus *status);
 
-  void set_dictionary_path(const std::string &dictionary_path) {
-    dictionary_path_ = dictionary_path;
+  void set_dictionary_path(absl::string_view dictionary_path) {
+    dictionary_path_ = std::string(dictionary_path);
   }
 
  private:
   static constexpr uint64_t kInvalidSessionId = 0;
 
-  // As an interface, this class can hold multiple sessions,
-  // but currently only one latest session is held.
-  // (From the different point of view, this is LRU with max capacity '1'.)
-  uint64_t session_id_;
-  std::unique_ptr<UserDictionarySession> session_;
-  std::string dictionary_path_;
-
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,
                                     UserDictionaryCommandStatus *status);
   uint64_t CreateNewSessionId() const;
+
+  // As an interface, this class can hold multiple sessions,
+  // but currently only one latest session is held.
+  // (From the different point of view, this is LRU with max capacity '1'.)
+  uint64_t session_id_ = kInvalidSessionId;
+  std::unique_ptr<UserDictionarySession> session_;
+  std::string dictionary_path_ =
+      UserDictionaryUtil::GetUserDictionaryFileName();
   mutable absl::BitGen bitgen_;
 };
 

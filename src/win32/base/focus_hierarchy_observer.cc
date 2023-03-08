@@ -40,7 +40,6 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "win32/base/accessible_object.h"
-#include "win32/base/browser_info.h"
 
 namespace mozc {
 namespace win32 {
@@ -178,14 +177,14 @@ class ThreadLocalInfo {
       return;
     }
 
-    AccessibleObject accesible = AccessibleObject::FromWindow(focused_window);
-    if (accesible.IsValid()) {
-      AccessibleObject focused_accesible = accesible.GetFocus();
-      if (focused_accesible.IsValid()) {
-        accesible = focused_accesible;
+    AccessibleObject accessible = AccessibleObject::FromWindow(focused_window);
+    if (accessible.IsValid()) {
+      AccessibleObject focused_accessible = accessible.GetFocus();
+      if (focused_accessible.IsValid()) {
+        accessible = focused_accessible;
       }
     }
-    OnInitialize(focused_window, accesible);
+    OnInitialize(focused_window, accessible);
   }
 
   void AddRef() { ++ref_count_; }

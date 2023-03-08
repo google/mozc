@@ -33,6 +33,7 @@
 #include <cstdint>
 
 #include "base/clock.h"
+#include "absl/base/attributes.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -41,49 +42,49 @@ namespace mozc {
 // This mock behaves in UTC
 class ClockMock : public ClockInterface {
  public:
+  explicit ClockMock(absl::Time time) : time_(time) {}
+  ABSL_DEPRECATED("Use the constructor with absl::Time")
   ClockMock(uint64_t sec, uint32_t usec);
 
   ClockMock(const ClockMock &) = delete;
   ClockMock &operator=(const ClockMock &) = delete;
 
-  ~ClockMock() override;
+  ~ClockMock() override = default;
 
+  ABSL_DEPRECATED("Use GetAbslTime()")
   void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override;
+  ABSL_DEPRECATED("Use GetAbslTime()")
   uint64_t GetTime() override;
   absl::Time GetAbslTime() override;
 
-  const absl::TimeZone& GetTimeZone() override;
-  void SetTimeZoneOffset(int32_t timezone_offset_sec) override;
+  absl::TimeZone GetTimeZone() override;
 
-  // Puts this clock forward.
-  // It has no impact on ticks.
+  // Advances the clock.
+  ABSL_DEPRECATED("Use Advance()")
   void PutClockForward(uint64_t delta_sec, uint32_t delta_usec);
+  void Advance(absl::Duration delta) { time_ += delta; }
 
-  // Puts this clock forward by ticks
-  // It has no impact on seconds and micro seconds.
-  void PutClockForwardByTicks(uint64_t ticks);
-
-  // Automatically puts this clock forward on every time after it returns time.
-  // It has no impact on ticks.
+  // Automatically advances the clock every time it returns time.
+  ABSL_DEPRECATED("Use AutoAdvance()")
   void SetAutoPutClockForward(uint64_t delta_sec, uint32_t delta_usec);
+  void AutoAdvance(absl::Duration delta) { auto_delta_ = delta; }
 
+  ABSL_DEPRECATED("Use the overload with absl::Time")
   void SetTime(uint64_t sec, uint32_t usec);
+  void SetTime(absl::Time time) { time_ = time; }
 
  private:
-  uint64_t seconds_;
-  absl::TimeZone timezone_;
-  int32_t timezone_offset_sec_;
-  // To optimize the padding, micro_seconds_ is after another int32_t value.
-  uint32_t micro_seconds_;
-  // Everytime user requests time clock, following time is added to the
-  // internal clock.
-  uint64_t delta_seconds_;
-  uint32_t delta_micro_seconds_;
+  absl::Time time_ = absl::InfinitePast();
+  absl::TimeZone timezone_ = absl::UTCTimeZone();
+  // Every time user requests the time, auto_delta_ is added to time_.
+  absl::Duration auto_delta_ = absl::ZeroDuration();
 };
 
 // Changes the global clock with a mock during the life time of this object.
 class ScopedClockMock {
  public:
+  explicit ScopedClockMock(absl::Time time) : mock_(time) {}
+  ABSL_DEPRECATED("Use the constructor with absl::Time")
   ScopedClockMock(uint64_t sec, uint32_t usec) : mock_(sec, usec) {
     Clock::SetClockForUnitTest(&mock_);
   }
@@ -93,8 +94,8 @@ class ScopedClockMock {
 
   ~ScopedClockMock() { Clock::SetClockForUnitTest(nullptr); }
 
-  ClockMock *operator->() { return &mock_; }
-  const ClockMock *operator->() const { return &mock_; }
+  constexpr ClockMock *operator->() { return &mock_; }
+  constexpr const ClockMock *operator->() const { return &mock_; }
 
  private:
   ClockMock mock_;

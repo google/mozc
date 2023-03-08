@@ -67,6 +67,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -359,27 +360,41 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
     const ConversionRequest &request, uint16_t rid,
-    const std::vector<Result> &results) const {
-  // Make a map from single kanji to min-cost result.
-  // Here, cost is calculated with transition cost + wcost.
-  using CostPair = std::pair<int, int>;  // (transition cost, wcost)
+    const absl::string_view input_key, absl::Span<const Result> results,
+    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
+  // Make a map from reference value to min-cost result.
+  // Reference entry:
+  //  - single-char REALTIME or UNIGRAM entry
+  //  - PREFIX or NUMBER entry
+  // cost is calculated with LM cost (with prefix penalty)
+  using CostPair = std::pair<int, const Result *>;  // (lm cost, result)
   absl::flat_hash_map<absl::string_view, CostPair> min_cost_map;
   for (const auto &result : results) {
-    if (!(result.types & (prediction::REALTIME | prediction::UNIGRAM |
-                          prediction::PREFIX | prediction::NUMBER)) ||
-        Util::CharsLen(result.value) != 1) {
+    if (result.removed) {
       continue;
     }
-    const int transition_cost = connector_->GetTransitionCost(rid, result.lid);
-    const CostPair cost_pair = std::make_pair(transition_cost, result.wcost);
+    if (!(result.types & (prediction::REALTIME | prediction::UNIGRAM |
+                          prediction::PREFIX | prediction::NUMBER))) {
+      continue;
+    }
+    if (((result.types & (prediction::REALTIME | prediction::UNIGRAM)) &&
+         Util::CharsLen(result.value) != 1)) {
+      continue;
+    }
+    int lm_cost = GetLMCost(result, rid);
+    if (result.candidate_attributes &
+        Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+      lm_cost += CalculatePrefixPenalty(request, input_key, result,
+                                        immutable_converter_, cache);
+    }
+    const CostPair cost_pair = std::make_pair(lm_cost, &result);
     const auto &it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
       min_cost_map[result.value] = cost_pair;
       continue;
     }
-    const int cost_in_map = it->second.first + it->second.second;
-    const int cost = transition_cost + result.wcost;
-    if (cost < cost_in_map) {
+    const int cost_in_map = it->second.first;
+    if (lm_cost < cost_in_map) {
       min_cost_map[result.value] = cost_pair;
     }
   }
@@ -388,11 +403,14 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   // offset.
   int single_kanji_max_cost = 0;
   int wcost_diff = 0;
+  const int single_kanji_transition_cost =
+      std::min(connector_->GetTransitionCost(rid, general_symbol_id_),
+               connector_->GetTransitionCost(0, general_symbol_id_));
   for (const auto &it : min_cost_map) {
-    const int cost = it.second.first + it.second.second;
+    const int cost = it.second.first;
     if (cost > single_kanji_max_cost) {
       single_kanji_max_cost = cost;
-      wcost_diff = it.second.second;
+      wcost_diff = cost - single_kanji_transition_cost;
     }
   }
   const int single_kanji_offset = request.request()
@@ -783,9 +801,9 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   }
 
   absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
-  const int single_kanji_offset =
-      CalculateSingleKanjiCostOffset(request, rid, *results);
   const std::string &input_key = segments.conversion_segment(0).key();
+  const int single_kanji_offset = CalculateSingleKanjiCostOffset(
+      request, rid, input_key, *results, &prefix_penalty_cache);
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
@@ -844,7 +862,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
     if (result.types & PredictionType::SINGLE_KANJI) {
       cost += single_kanji_offset;
-
       if (cost <= 0) {
         // single_kanji_offset can be negative.
         // cost should be larger than 0.
@@ -899,7 +916,9 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   const std::string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
     Result &result = results->at(i);
-    if (result.types & PredictionType::TYPING_CORRECTION) {
+    if (result.types & PredictionType::TYPING_CORRECTION ||
+        result.candidate_attributes &
+            Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       continue;
     }
     if (!absl::StartsWith(result.key, conversion_key)) {
@@ -1056,6 +1075,9 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);
   }
+  constexpr int kPrefixCandidateCostOffset = 1151;  // 500 * log(10)
+  // TODO(toshiyuki): Optimize the cost offset.
+  penalty += kPrefixCandidateCostOffset;
   (*cache)[cache_key] = penalty;
   return penalty;
 }

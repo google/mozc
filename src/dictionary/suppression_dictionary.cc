@@ -34,13 +34,15 @@
 #include <thread>  // NOLINT for portability
 
 #include "base/logging.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
-constexpr char kDelimiter = '\t';
+constexpr absl::string_view kDelimiter = "\t";
 
 class Unlocker final {
  public:
@@ -53,13 +55,8 @@ class Unlocker final {
 
 }  // namespace
 
-SuppressionDictionary::SuppressionDictionary()
-    : has_key_empty_(false), has_value_empty_(false), locked_(false) {}
-
-SuppressionDictionary::~SuppressionDictionary() = default;
-
-bool SuppressionDictionary::AddEntry(const std::string &key,
-                                     const std::string &value) {
+bool SuppressionDictionary::AddEntry(const absl::string_view key,
+                                     const absl::string_view value) {
   if (!locked_.load(std::memory_order_relaxed)) {
     LOG(ERROR) << "Dictionary is not locked";
     return false;
@@ -78,7 +75,7 @@ bool SuppressionDictionary::AddEntry(const std::string &key,
     has_value_empty_ = true;
   }
 
-  dic_.insert(key + kDelimiter + value);
+  dic_.insert(absl::StrCat(key, kDelimiter, value));
 
   return true;
 }
@@ -125,8 +122,8 @@ bool SuppressionDictionary::IsEmpty() const {
   return dic_.empty();
 }
 
-bool SuppressionDictionary::SuppressEntry(const std::string &key,
-                                          const std::string &value) const {
+bool SuppressionDictionary::SuppressEntry(const absl::string_view key,
+                                          const absl::string_view value) const {
   bool expected = false;
   if (!locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
                                      std::memory_order_relaxed)) {
@@ -141,21 +138,20 @@ bool SuppressionDictionary::SuppressEntry(const std::string &key,
     return false;
   }
 
-  std::string lookup_key = key;
-  lookup_key.append(1, kDelimiter).append(value);
+  std::string lookup_key(absl::StrCat(key, kDelimiter, value));
   if (dic_.find(lookup_key) != dic_.end()) {
     return true;
   }
 
   if (has_key_empty_) {
-    lookup_key.assign(1, kDelimiter).append(value);
+    lookup_key = absl::StrCat(kDelimiter, value);
     if (dic_.find(lookup_key) != dic_.end()) {
       return true;
     }
   }
 
   if (has_value_empty_) {
-    lookup_key.assign(key).append(1, kDelimiter);
+    lookup_key = absl::StrCat(key, kDelimiter);
     if (dic_.find(lookup_key) != dic_.end()) {
       return true;
     }

@@ -36,7 +36,6 @@
 #include "absl/time/time.h"
 
 namespace mozc {
-
 namespace {
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
@@ -45,12 +44,19 @@ constexpr uint32_t kTestMicroSeconds = 123456u;
 
 constexpr uint64_t kDeltaSeconds = 12uLL;
 constexpr uint32_t kDeltaMicroSeconds = 654321u;
-}  // namespace
+
+constexpr absl::Time kTestTime = absl::FromUnixMicros(1608729875123456);
+constexpr absl::Duration kDelta = absl::Microseconds(12654321);
 
 TEST(ClockMockTest, GetTimeTest) {
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
   uint64_t current_time = mock.GetTime();
   EXPECT_EQ(current_time, kTestSeconds);
+}
+
+TEST(ClockMockTest, AbslTimeTest) {
+  ClockMock mock(kTestTime);
+  EXPECT_EQ(mock.GetAbslTime(), kTestTime);
 }
 
 TEST(ClockMockTest, GetTimeOfDayTest) {
@@ -75,25 +81,6 @@ TEST(ClockMockTest, GetCurrentTmWithOffsetTest) {
   EXPECT_EQ(cs.month(), 12);
   EXPECT_EQ(cs.day(), 23);
   EXPECT_EQ(cs.hour(), 13);
-  EXPECT_EQ(cs.minute(), 24);
-  EXPECT_EQ(cs.second(), 0);
-  EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::wednesday);
-}
-
-TEST(ClockMockTest, GetCurrentTmWithOffsetWithTimeZoneOffsetTest) {
-  // 2020-12-23 13:24:00 (Wed)
-  ClockMock mock(kTestSeconds, kTestMicroSeconds);
-  mock.SetTimeZoneOffset(3600);
-  const int offset = -35;
-
-  const absl::Time at = mock.GetAbslTime();
-  const absl::TimeZone &tz = mock.GetTimeZone();
-  const absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset;
-
-  EXPECT_EQ(cs.year(), 2020);
-  EXPECT_EQ(cs.month(), 12);
-  EXPECT_EQ(cs.day(), 23);
-  EXPECT_EQ(cs.hour(), 14);
   EXPECT_EQ(cs.minute(), 24);
   EXPECT_EQ(cs.second(), 0);
   EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::wednesday);
@@ -139,6 +126,13 @@ TEST(ClockMockTest, PutClockForwardTest) {
     const uint32_t expected_usec =
         kTestMicroSeconds + offset_micro_seconds - 1000000;
     EXPECT_EQ(current_usec, expected_usec);
+  }
+
+  // Add absl::Duration
+  {
+    ClockMock mock(kTestTime);
+    mock.Advance(kDelta);
+    EXPECT_EQ(mock.GetAbslTime(), kTestTime + kDelta);
   }
 }
 
@@ -194,6 +188,16 @@ TEST(ClockMockTest, AutoPutForwardTest) {
     EXPECT_EQ(cs.second(), kDeltaSeconds);
     EXPECT_EQ(absl::GetWeekday(cs), absl::Weekday::wednesday);
   }
+
+  // absl::Duration delta
+  {
+    ClockMock mock(kTestTime);
+    mock.AutoAdvance(kDelta);
+    EXPECT_EQ(mock.GetAbslTime(), kTestTime);
+    EXPECT_EQ(mock.GetAbslTime(), kTestTime + kDelta);
+    EXPECT_EQ(mock.GetAbslTime(), kTestTime + 2 * kDelta);
+  }
 }
 
+}  // namespace
 }  // namespace mozc

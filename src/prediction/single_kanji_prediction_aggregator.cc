@@ -41,6 +41,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc::prediction {
 
@@ -92,6 +93,7 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
 
   std::vector<Result> results;
   std::string original_input_key = GetKey(request, segments);
+  int offset = 0;
   for (std::string key = original_input_key; !key.empty();
        StripLastChar(&key)) {
     std::vector<std::string> kanji_list;
@@ -99,7 +101,11 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
                                                       &kanji_list)) {
       continue;
     }
-    AppendResults(key, original_input_key, kanji_list, &results);
+    AppendResults(key, original_input_key, kanji_list, offset, &results);
+    // Make sure that single kanji entries for shorter key should be
+    // ranked lower than the entries for longer key.
+    constexpr int kShorterKeyOffst = 3450;  // 500 * log(1000)
+    offset += kShorterKeyOffst;
     if (results.size() > kMinSingleKanjiSize) {
       break;
     }
@@ -109,12 +115,12 @@ std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
 
 void SingleKanjiPredictionAggregator::AppendResults(
     absl::string_view kanji_key, absl::string_view original_input_key,
-    const std::vector<std::string> &kanji_list,
+    absl::Span<const std::string> kanji_list, const int offset,
     std::vector<Result> *results) const {
   for (const std::string &kanji : kanji_list) {
     Result result;
     // Set the wcost to keep the `kanji_list` order.
-    result.wcost = results->size();
+    result.wcost = offset + results->size();
     result.types = SINGLE_KANJI;
     result.key = std::string(kanji_key);
     result.value = kanji;

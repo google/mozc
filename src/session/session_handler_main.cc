@@ -33,14 +33,14 @@
 // session_handler_main --logtostderr --input input.txt --profile /tmp/mozc
 //                      --dictionary oss --engine desktop
 //
-/* Example of input.txt
+/* Example of input.txt (tsv format)
 # Enable IME
 SEND_KEY        ON
 
 SET_MOBILE_REQUEST
 
 RESET_CONTEXT
-UPDATE_MOBILE_KEYBOARD  QWERTY_MOBILE_TO_HIRAGANA
+UPDATE_MOBILE_KEYBOARD  QWERTY_MOBILE_TO_HIRAGANA        COMMIT
 SWITCH_INPUT_MODE       HIRAGANA
 
 SEND_KEYS       arigatou
@@ -116,8 +116,26 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   const std::string &command = args[0];
 
-  if (command == "SHOW_OUTPUT") {
+  if (command == "SHOW_ALL") {
     std::cout << handler.LastOutput().Utf8DebugString() << std::endl;
+    return;
+  }
+  if (command == "SHOW_OUTPUT") {
+    commands::Output output = handler.LastOutput();
+    output.mutable_removed_candidate_words_for_debug()->Clear();
+    std::cout << output.Utf8DebugString() << std::endl;
+    return;
+  }
+  if (command == "SHOW_CANDIDATES") {
+    std::cout << handler.LastOutput().candidates().Utf8DebugString()
+              << std::endl;
+    return;
+  }
+  if (command == "SHOW_REMOVED_CANDIDATES") {
+    std::cout << handler.LastOutput()
+                     .removed_candidate_words_for_debug()
+                     .Utf8DebugString()
+              << std::endl;
     return;
   }
   if (command == "SHOW") {
@@ -134,17 +152,19 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
   if (command == "SHOW_LOG_BY_VALUE") {
-    uint32_t id;
-    if (args.size() == 2 && handler.GetCandidateIdByValue(args[1], &id)) {
-      ShowLog(handler.LastOutput(), id);
-    } else {
+    if (args.size() != 2) {
       std::cout << "ERROR: " << line << std::endl;
+      return;
+    }
+    for (const uint32_t id : handler.GetCandidateIdsByValue(args[1])) {
+      ShowLog(handler.LastOutput(), id);
     }
     return;
   }
 
   const absl::Status status = handler.Eval(args);
   if (!status.ok()) {
+    std::cout << "ERROR: " << line << std::endl;
     std::cout << "ERROR: " << status.message() << std::endl;
   }
 }

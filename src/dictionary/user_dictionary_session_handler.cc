@@ -43,11 +43,6 @@
 namespace mozc {
 namespace user_dictionary {
 
-UserDictionarySessionHandler::UserDictionarySessionHandler()
-    : session_id_(kInvalidSessionId),
-      dictionary_path_(UserDictionaryUtil::GetUserDictionaryFileName()) {}
-UserDictionarySessionHandler::~UserDictionarySessionHandler() = default;
-
 bool UserDictionarySessionHandler::Evaluate(
     const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
   if (!command.has_type()) {

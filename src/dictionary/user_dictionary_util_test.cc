@@ -36,14 +36,15 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 using user_dictionary::UserDictionary;
 using user_dictionary::UserDictionaryCommandStatus;
 
-static void TestNormalizeReading(const std::string &golden,
-                                 const std::string &input) {
+static void TestNormalizeReading(const absl::string_view golden,
+                                 const absl::string_view input) {
   std::string output;
   UserDictionaryUtil::NormalizeReading(input, &output);
   EXPECT_EQ(golden, output);

@@ -33,9 +33,6 @@
     'third_party_dir': '<(DEPTH)/third_party',
     'absl_dir': '<(DEPTH)/third_party/abseil-cpp',
 
-    # Top directory of additional third party libraries.
-    'ext_third_party_dir%': '<(abs_depth)/third_party',
-
     # TODO(komatsu): This can be replaced with 'android_ndk_dir'.
     'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
 

@@ -94,14 +94,6 @@ bool LParamKeyInfo::IsKeyDownInImeProcessKey() const {
 
 LPARAM LParamKeyInfo::lparam() const { return lparam_; }
 
-VirtualKey::VirtualKey()
-    : virtual_key_(0), wide_char_(L'\0'), unicode_char_(L'\0') {}
-
-VirtualKey::VirtualKey(BYTE virtual_key, wchar_t wide_char,
-                       char32_t unicode_char)
-    : virtual_key_(virtual_key),
-      wide_char_(wide_char),
-      unicode_char_(unicode_char) {}
 
 VirtualKey VirtualKey::FromVirtualKey(BYTE virtual_key) {
   return VirtualKey(virtual_key, L'\0', L'\0');

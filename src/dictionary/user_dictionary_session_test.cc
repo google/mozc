@@ -46,6 +46,7 @@
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace {
 
@@ -82,11 +83,12 @@ class UserDictionarySessionTest : public ::testing::Test {
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
-  void ResetEntry(const std::string &key, const std::string &value,
-                  UserDictionary::PosType pos, UserDictionary::Entry *entry) {
+  void ResetEntry(const absl::string_view key, const absl::string_view value,
+                  const UserDictionary::PosType pos,
+                  UserDictionary::Entry *entry) {
     entry->Clear();
-    entry->set_key(key);
-    entry->set_value(value);
+    entry->set_key(std::string(key));
+    entry->set_value(std::string(value));
     entry->set_pos(pos);
   }
 

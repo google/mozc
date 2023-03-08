@@ -47,6 +47,7 @@
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -69,7 +70,7 @@ class CodecTest : public ::testing::Test {
   }
 
   void AddSection(const DictionaryFileCodecInterface *codec,
-                  const std::string &name, const char *ptr, int len,
+                  const absl::string_view name, const char *ptr, int len,
                   std::vector<DictionaryFileSection> *sections) const {
     CHECK(codec);
     CHECK(sections);
@@ -79,7 +80,7 @@ class CodecTest : public ::testing::Test {
 
   bool FindSection(const DictionaryFileCodecInterface *codec,
                    const std::vector<DictionaryFileSection> &sections,
-                   const std::string &name, int *index) const {
+                   const absl::string_view name, int *index) const {
     CHECK(codec);
     CHECK(index);
     const std::string name_find = codec->GetSectionName(name);
@@ -93,7 +94,7 @@ class CodecTest : public ::testing::Test {
   }
 
   bool CheckValue(const DictionaryFileSection &section,
-                  const std::string &expected) const {
+                  const absl::string_view expected) const {
     const std::string value(section.ptr, section.len);
     return (expected == value);
   }
@@ -116,7 +117,7 @@ class CodecMock : public DictionaryFileCodecInterface {
     return absl::Status();
   }
 
-  std::string GetSectionName(const std::string &name) const override {
+  std::string GetSectionName(const absl::string_view name) const override {
     return "placeholder section name";
   }
 };

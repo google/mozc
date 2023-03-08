@@ -53,8 +53,6 @@ UserPos::UserPos(absl::string_view token_array_data,
   string_array_.Set(string_array_data);
 }
 
-UserPos::~UserPos() = default;
-
 void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
   std::set<uint16_t> seen;

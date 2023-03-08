@@ -43,14 +43,10 @@
 #include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
-
-DictionaryFileCodec::DictionaryFileCodec()
-    : seed_(2135654146), filemagic_(20110701) {}
-
-DictionaryFileCodec::~DictionaryFileCodec() = default;
 
 void DictionaryFileCodec::WriteSections(
     const std::vector<DictionaryFileSection> &sections,
@@ -101,7 +97,8 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
   filecodec_util::Pad4(section.len, ofs);
 }
 
-std::string DictionaryFileCodec::GetSectionName(const std::string &name) const {
+std::string DictionaryFileCodec::GetSectionName(
+    const absl::string_view name) const {
   VLOG(1) << "seed\t" << seed_;
   const uint64_t name_fp = Hash::FingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char *>(&name_fp),

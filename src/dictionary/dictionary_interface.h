@@ -83,7 +83,7 @@ class DictionaryInterface {
       TRAVERSE_CONTINUE,
     };
 
-    virtual ~Callback() {}
+    virtual ~Callback() = default;
 
     // Called back when key is found.
     virtual ResultType OnKey(absl::string_view key) {
@@ -106,10 +106,10 @@ class DictionaryInterface {
     }
 
    protected:
-    Callback() {}
+    Callback() = default;
   };
 
-  virtual ~DictionaryInterface() {}
+  virtual ~DictionaryInterface() = default;
 
   // Returns true if the dictionary has an entry for the given key.
   virtual bool HasKey(absl::string_view key) const = 0;
@@ -164,7 +164,7 @@ class DictionaryInterface {
 
  protected:
   // Do not allow instantiation
-  DictionaryInterface() {}
+  DictionaryInterface() = default;
 };
 
 }  // namespace dictionary

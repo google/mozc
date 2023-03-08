@@ -315,8 +315,7 @@ void NumberDecoder::MayAppendResults(const State &state,
         consumed_byte_len, absl::StrCat(state.current_num_str, small_digit)});
   } else if (!state.current_num_str.empty()) {
     // "1万"
-    results->emplace_back(
-        Result{consumed_byte_len, absl::StrCat(state.current_num_str)});
+    results->emplace_back(Result{consumed_byte_len, state.current_num_str});
   } else if (small_digit == 0) {
     // "0"
     results->emplace_back(Result{consumed_byte_len, absl::StrCat(0)});

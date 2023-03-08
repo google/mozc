@@ -32,6 +32,7 @@
 
 load(
     "//:build_defs.bzl",
+    "MOZC_TAGS",
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_macos_application",
@@ -42,12 +43,27 @@ load(
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
 )
+load("//bazel:stubs.bzl", "lexan")
 
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_binary(
     name = "mozc_server",
-    deps = [":mozc_server_lib"],
+    deps = [
+        ":mozc_server_lib",
+    ] + mozc_select(
+        windows = ["mozc_server_resources"],
+    ),
+)
+
+lexan.resource_files(
+    name = "mozc_server_resources",
+    manifests = [
+        "mozc_server.exe.manifest",
+    ],
+    rc_files = [
+        "mozc_server.rc",
+    ],
 )
 
 mozc_cc_library(
@@ -74,7 +90,9 @@ mozc_cc_library(
         "//session:session_server",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/flags:flag",
-    ] + mozc_select(windows = ["//base:winmain"]),
+    ] + mozc_select(
+        windows = ["//base/win32:winmain"],
+    ),
 )
 
 mozc_cc_binary(
@@ -104,4 +122,62 @@ mozc_macos_application(
     # additional_contents = {
     #     "[Breakpad]" : "Frameworks",
     # },
+)
+
+mozc_cc_binary(
+    name = "mozc_cache_service",
+    srcs = ["mozc_cache_service.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":cache_service_manager",
+        ":mozc_cache_service_resources",
+        "//base:file_util",
+        "//base:system_util",
+        "//base:util",
+        "//base/win32:scoped_handle",
+        "//base/win32:winmain",
+    ],
+)
+
+lexan.resource_files(
+    name = "mozc_cache_service_resources",
+    manifests = [
+        "mozc_cache_service.exe.manifest",
+    ],
+    rc_files = [
+        "mozc_cache_service.rc",
+    ],
+    resources = [
+        "mozc_cache_service_resource.h",
+    ],
+)
+
+mozc_cc_library(
+    name = "cache_service_manager",
+    srcs = ["cache_service_manager.cc"],
+    hdrs = ["cache_service_manager.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":win32_service_state_cc_proto",
+        "//base:const",
+        "//base:file_util",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//base/protobuf",
+        "//base/win32:scoped_handle",
+        "//bazel/win32:crypt32",
+    ],
+)
+
+proto_library(
+    name = "win32_service_state_proto",
+    srcs = ["win32_service_state.proto"],
+)
+
+cc_proto_library(
+    name = "win32_service_state_cc_proto",
+    deps = [":win32_service_state_proto"],
 )

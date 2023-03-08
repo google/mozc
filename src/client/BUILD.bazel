@@ -45,6 +45,7 @@ mozc_cc_library(
     hdrs = ["client_interface.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/strings",

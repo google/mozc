@@ -42,25 +42,23 @@
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
 class DictionaryFileCodec : public DictionaryFileCodecInterface {
  public:
-  DictionaryFileCodec();
-
+  DictionaryFileCodec() = default;
   DictionaryFileCodec(const DictionaryFileCodec &) = delete;
   DictionaryFileCodec &operator=(const DictionaryFileCodec &) = delete;
-
-  ~DictionaryFileCodec() override;
 
   void WriteSections(const std::vector<DictionaryFileSection> &sections,
                      std::ostream *ofs) const override;
   absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const override;
-  std::string GetSectionName(const std::string &name) const override;
+  std::string GetSectionName(absl::string_view name) const override;
 
  private:
   void WriteHeader(std::ostream *ofs) const;
@@ -69,9 +67,9 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 
   // Seed value for name string finger print
   // Made it mutable for reading sections.
-  mutable int32_t seed_;
+  mutable int32_t seed_ = 2135654146;
   // Magic value for simple file validation
-  const int32_t filemagic_;
+  const int32_t filemagic_ = 20110701;
 };
 
 }  // namespace dictionary

@@ -38,6 +38,7 @@
 
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -66,7 +67,7 @@ class UserDictionarySession {
 
   // Sets the default dictionary name.
   UserDictionaryCommandStatus::Status SetDefaultDictionaryName(
-      const std::string &dictionary_name);
+      absl::string_view dictionary_name);
 
   // Loads the data from local storage.
   UserDictionaryCommandStatus::Status Load();
@@ -85,7 +86,7 @@ class UserDictionarySession {
 
   // Creates a new dictionary.
   UserDictionaryCommandStatus::Status CreateDictionary(
-      const std::string &dictionary_name, uint64_t *new_dictionary_id);
+      absl::string_view dictionary_name, uint64_t *new_dictionary_id);
 
   // Deletes the dictionary of the given dictionary_id.
   UserDictionaryCommandStatus::Status DeleteDictionary(uint64_t dictionary_id);
@@ -98,7 +99,7 @@ class UserDictionarySession {
 
   // Renames the dictionary of the given dictionary_id to dictionary_name.
   UserDictionaryCommandStatus::Status RenameDictionary(
-      uint64_t dictionary_id, const std::string &dictionary_name);
+      uint64_t dictionary_id, absl::string_view dictionary_name);
 
   // Adds an entry with given key, value and pos_type to the dictionary
   // specified by the dicitonary_id.
@@ -116,11 +117,11 @@ class UserDictionarySession {
 
   // Imports entries from the text data into the dictionary with dictionary_id.
   UserDictionaryCommandStatus::Status ImportFromString(uint64_t dictionary_id,
-                                                       const std::string &data);
+                                                       absl::string_view data);
 
   // Imports entries from the text data into a newly created dictionary.
   UserDictionaryCommandStatus::Status ImportToNewDictionaryFromString(
-      const std::string &dictionary_name, const std::string &data,
+      absl::string_view dictionary_name, absl::string_view data,
       uint64_t *new_dictionary_id);
 
   // Clears all the dictionaries and undo history (doesn't save to the file).
@@ -137,7 +138,7 @@ class UserDictionarySession {
   UserDictionaryCommandStatus::Status DeleteDictionaryInternal(
       uint64_t dictionary_id, bool ensure_non_empty_storage);
   UserDictionaryCommandStatus::Status ImportFromStringInternal(
-      UserDictionary *dictionary, const std::string &data);
+      UserDictionary *dictionary, absl::string_view data);
 
   void ClearUndoHistory();
   void AddUndoCommand(UndoCommand *undo_command);

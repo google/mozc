@@ -58,7 +58,7 @@ class SuffixDictionary : public DictionaryInterface {
                    const uint32_t *token_array);
   SuffixDictionary(const SuffixDictionary &) = delete;
   SuffixDictionary &operator=(const SuffixDictionary &) = delete;
-  ~SuffixDictionary() override;
+  ~SuffixDictionary() override = default;
 
   bool HasKey(absl::string_view key) const override;
   bool HasValue(absl::string_view value) const override;

@@ -29,6 +29,7 @@
 
 #include "base/file/temp_dir.h"
 
+#include <fstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -92,11 +93,16 @@ TEST_F(TempDirectoryTest, Default) {
   std::string content;
   EXPECT_OK(FileUtil::GetContents(temp_file.path(), &content));
   EXPECT_EQ(content, kTestContent);
+  std::ofstream of1(FileUtil::JoinPath(temp_dir.path(), "test"));
+  EXPECT_TRUE(of1.good());
 
   // Create some more directories and files.
   TempDirectory nested_dir = CreateDirectory(temp_dir);
   TempFile nested1 = CreateFile(nested_dir);
   TempFile nested2 = CreateFile(nested_dir);
+
+  std::ofstream of2(FileUtil::JoinPath(nested_dir.path(), "test"));
+  EXPECT_TRUE(of2.good());
 
   TempDirectory nested_nested_dir = CreateDirectory(nested_dir);
   TempFile nested_nested = CreateFile(nested_nested_dir);

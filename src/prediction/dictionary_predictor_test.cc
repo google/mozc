@@ -1287,7 +1287,11 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     results.push_back(
         CreateResult5("さが", "佐賀", 500, prediction::REALTIME, Token::NONE));
     results.push_back(
-        CreateResult5("さか", "サカ", 600, prediction::REALTIME, Token::NONE));
+        CreateResult5("さか", "咲か", 2000, prediction::PREFIX, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "差か", 2500, prediction::PREFIX, Token::NONE));
+    results.push_back(
+        CreateResult5("さか", "サカ", 10000, prediction::UNIGRAM, Token::NONE));
     results.push_back(
         CreateResult5("さがす", "探す", 300, prediction::UNIGRAM, Token::NONE));
     results.push_back(CreateResult5("さがし", "探し", 3000, prediction::UNIGRAM,
@@ -1295,7 +1299,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     results.push_back(
         CreateResult5("さかい", "堺", 800, prediction::UNIGRAM, Token::NONE));
     results.push_back(
-        CreateResult5("さか", "坂", 3000, prediction::UNIGRAM, Token::NONE));
+        CreateResult5("さか", "坂", 9000, prediction::UNIGRAM, Token::NONE));
     results.push_back(
         CreateResult5("さか", "逆", 0, prediction::SINGLE_KANJI, Token::NONE));
     results.push_back(
@@ -1306,6 +1310,19 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
         CreateResult5("さか", "栄", 3, prediction::SINGLE_KANJI, Token::NONE));
     results.push_back(
         CreateResult5("さか", "盛", 4, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さ", "差", 1000, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("さ", "佐", 1001, prediction::SINGLE_KANJI, Token::NONE));
+    for (int i = 0; i < results.size(); ++i) {
+      if (results[i].types == prediction::SINGLE_KANJI) {
+        results[i].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
+        results[i].rid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
+      } else {
+        results[i].lid = data_and_predictor->pos_matcher().GetGeneralNounId();
+        results[i].rid = data_and_predictor->pos_matcher().GetGeneralNounId();
+      }
+    }
 
     EXPECT_CALL(*aggregator, AggregateResults(_, _))
         .WillRepeatedly(Return(results));
@@ -1327,10 +1344,13 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     EXPECT_TRUE(
         predictor.PredictForRequest(*convreq_for_prediction_, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_NE(get_rank_by_value("盛"), -1);
-    EXPECT_LT(get_rank_by_value("盛"),
+    EXPECT_NE(get_rank_by_value("佐"), -1);
+    EXPECT_LT(get_rank_by_value("佐"),
               segments.conversion_segment(0).candidates_size() - 1);
     EXPECT_LT(get_rank_by_value("坂"), get_rank_by_value("逆"));
+    EXPECT_LT(get_rank_by_value("咲か"), get_rank_by_value("逆"));
+    EXPECT_LT(get_rank_by_value("差か"), get_rank_by_value("逆"));
+    EXPECT_LT(get_rank_by_value("逆"), get_rank_by_value("差"));
   }
   // Cost offset
   {
@@ -1341,8 +1361,8 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     EXPECT_TRUE(
         predictor.PredictForRequest(*convreq_for_prediction_, &segments));
     EXPECT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_NE(get_rank_by_value("盛"), -1);
-    EXPECT_EQ(get_rank_by_value("盛"),
+    EXPECT_NE(get_rank_by_value("佐"), -1);
+    EXPECT_EQ(get_rank_by_value("佐"),
               segments.conversion_segment(0).candidates_size() - 1);
   }
   {

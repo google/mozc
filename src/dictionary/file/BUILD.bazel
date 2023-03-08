@@ -49,6 +49,7 @@ mozc_cc_library(
         ":section",
         "//base:logging",
         "//base:mmap",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -65,6 +66,8 @@ mozc_cc_library(
         "//base:file_stream",
         "//base:logging",
         "//base:port",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -91,6 +94,7 @@ mozc_cc_library(
         ":section",
         "//base:port",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -119,6 +123,7 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -142,6 +147,7 @@ mozc_cc_library(
     name = "section",
     hdrs = ["section.h"],
     visibility = ["//visibility:private"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_test(
@@ -161,5 +167,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
     ],
 )

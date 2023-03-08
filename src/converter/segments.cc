@@ -224,8 +224,6 @@ Segment &Segment::operator=(const Segment &x) {
   return *this;
 }
 
-Segment::~Segment() = default;
-
 Segment::SegmentType Segment::segment_type() const { return segment_type_; }
 
 void Segment::set_segment_type(const Segment::SegmentType &segment_type) {
@@ -501,8 +499,6 @@ Segments &Segments::operator=(const Segments &x) {
   // constructor.
   return *this;
 }
-
-Segments::~Segments() = default;
 
 const Segment &Segments::segment(size_t i) const { return *segments_[i]; }
 

@@ -46,6 +46,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/container/fixed_array.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -56,7 +57,7 @@ class UserDictionarySession::UndoCommand {
  public:
   UndoCommand(const UndoCommand &) = delete;
   UndoCommand &operator=(const UndoCommand &) = delete;
-  virtual ~UndoCommand() {}
+  virtual ~UndoCommand() = default;
   virtual bool RunUndo(mozc::UserDictionaryStorage *storage) = 0;
 
  protected:
@@ -68,7 +69,7 @@ namespace {
 
 class UndoCreateDictionaryCommand : public UserDictionarySession::UndoCommand {
  public:
-  UndoCreateDictionaryCommand() {}
+  UndoCreateDictionaryCommand() = default;
   UndoCreateDictionaryCommand(const UndoCreateDictionaryCommand &) = delete;
   UndoCreateDictionaryCommand &operator=(const UndoCreateDictionaryCommand &) =
       delete;
@@ -140,7 +141,7 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
 class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
  public:
   UndoRenameDictionaryCommand(uint64_t dictionary_id,
-                              const std::string &original_name)
+                              absl::string_view original_name)
       : dictionary_id_(dictionary_id), original_name_(original_name) {}
   UndoRenameDictionaryCommand(const UndoRenameDictionaryCommand &) = delete;
   UndoRenameDictionaryCommand &operator=(const UndoRenameDictionaryCommand &) =
@@ -349,7 +350,7 @@ mozc::UserDictionaryStorage *UserDictionarySession::mutable_storage() {
 
 UserDictionaryCommandStatus::Status
 UserDictionarySession::SetDefaultDictionaryName(
-    const std::string &dictionary_name) {
+    const absl::string_view dictionary_name) {
   // Validate the name for the default dictionary. The name is used to create
   // a dictionary "for an empty storage", so check the validity with the
   // default instance of UserDictionaryStorage.
@@ -357,7 +358,7 @@ UserDictionarySession::SetDefaultDictionaryName(
       UserDictionaryUtil::ValidateDictionaryName(
           UserDictionaryStorage::default_instance(), dictionary_name);
   if (status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-    default_dictionary_name_ = dictionary_name;
+    default_dictionary_name_ = std::string(dictionary_name);
   }
   return status;
 }
@@ -460,7 +461,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Undo() {
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::CreateDictionary(
-    const std::string &dictionary_name, uint64_t *new_dictionary_id) {
+    const absl::string_view dictionary_name, uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(&storage_->GetProto(),
                                            dictionary_name, new_dictionary_id);
@@ -506,7 +507,7 @@ UserDictionarySession::DeleteDictionaryInternal(uint64_t dictionary_id,
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
-    uint64_t dictionary_id, const std::string &dictionary_name) {
+    const uint64_t dictionary_id, const absl::string_view dictionary_name) {
   std::string original_name;
   const UserDictionary *dictionary = UserDictionaryUtil::GetUserDictionaryById(
       storage_->GetProto(), dictionary_id);
@@ -632,7 +633,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
-    uint64_t dictionary_id, const std::string &data) {
+    const uint64_t dictionary_id, const absl::string_view data) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -654,7 +655,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
 
 UserDictionaryCommandStatus::Status
 UserDictionarySession::ImportFromStringInternal(UserDictionary *dictionary,
-                                                const std::string &data) {
+                                                const absl::string_view data) {
   UserDictionaryImporter::ErrorType import_result;
   {
     UserDictionaryImporter::StringTextLineIterator iter(data);
@@ -684,7 +685,7 @@ UserDictionarySession::ImportFromStringInternal(UserDictionary *dictionary,
 
 UserDictionaryCommandStatus::Status
 UserDictionarySession::ImportToNewDictionaryFromString(
-    const std::string &dictionary_name, const std::string &data,
+    const absl::string_view dictionary_name, const absl::string_view data,
     uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(&storage_->GetProto(),

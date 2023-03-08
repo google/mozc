@@ -100,7 +100,7 @@ struct OrderByValue {
 
 // Parses one line of reading correction file.  Since the result is returned as
 // string views, |line| needs to outlive |value_key|.
-ValueAndKey ParseReadingCorrectionTSV(const std::string &line) {
+ValueAndKey ParseReadingCorrectionTSV(const absl::string_view line) {
   // Format: value\terror\tcorrect
   SplitIterator<SingleDelimiter> iter(line, "\t");
   CHECK(!iter.Done());
@@ -121,8 +121,6 @@ TextDictionaryLoader::TextDictionaryLoader(const PosMatcher &pos_matcher)
 TextDictionaryLoader::TextDictionaryLoader(uint16_t zipcode_id,
                                            uint16_t isolated_word_id)
     : zipcode_id_(zipcode_id), isolated_word_id_(isolated_word_id) {}
-
-TextDictionaryLoader::~TextDictionaryLoader() = default;
 
 bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
                                                absl::string_view label) const {
@@ -150,14 +148,14 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
 }
 
 void TextDictionaryLoader::Load(
-    const std::string &dictionary_filename,
-    const std::string &reading_correction_filename) {
+    const absl::string_view dictionary_filename,
+    const absl::string_view reading_correction_filename) {
   LoadWithLineLimit(dictionary_filename, reading_correction_filename, -1);
 }
 
 void TextDictionaryLoader::LoadWithLineLimit(
-    const std::string &dictionary_filename,
-    const std::string &reading_correction_filename, int limit) {
+    const absl::string_view dictionary_filename,
+    const absl::string_view reading_correction_filename, int limit) {
   tokens_.clear();
 
   // Roughly allocate buffers for Token pointers.
@@ -210,7 +208,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
 // caller is responsible to delete them.
 std::vector<std::unique_ptr<Token>>
 TextDictionaryLoader::LoadReadingCorrectionTokens(
-    const std::string &reading_correction_filename,
+    const absl::string_view reading_correction_filename,
     const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit) {
   // Load reading correction entries.
   std::vector<std::unique_ptr<Token>> tokens;

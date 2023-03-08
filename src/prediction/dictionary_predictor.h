@@ -55,6 +55,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -222,9 +223,10 @@ class DictionaryPredictor : public PredictorInterface {
   // Returns the cost offset for SINGLE_KANJI results.
   // Aggregated SINGLE_KANJI results does not have LM based wcost(word cost),
   // so we want to add the offset based on the other entries.
-  int CalculateSingleKanjiCostOffset(const ConversionRequest &request,
-                                     uint16_t rid,
-                                     const std::vector<Result> &results) const;
+  int CalculateSingleKanjiCostOffset(
+      const ConversionRequest &request, uint16_t rid,
+      absl::string_view input_key, absl::Span<const Result> results,
+      absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   // Returns true if the suggestion is classified
   // as "aggressive".

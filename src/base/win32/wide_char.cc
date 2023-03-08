@@ -58,15 +58,16 @@ std::wstring Utf8ToWide(const absl::string_view input) {
 
   size_t wchar_count = WideCharsLen(input);
   std::wstring result;
-  result.resize(wchar_count + 1);  // +1 for the null-terminating character.
+  // MultiByteToWideChar doesn't null-terminate the output string when the
+  // length is explicitly specified.
+  result.resize(wchar_count);
+
   // This API call should always succeed as long as the codepage (CP_UTF8) and
   // flag (0) are valid.
   const int copied_wchars = ::MultiByteToWideChar(
       CP_UTF8, 0, input.data(), input.size(), result.data(), result.size());
   CHECK_GE(copied_wchars, 0);
   DCHECK_EQ(wchar_count, copied_wchars);
-
-  result.resize(copied_wchars);  // Drop the null-terminating character.
   return result;
 }
 
@@ -77,22 +78,22 @@ std::string WideToUtf8(const std::wstring_view input) {
 
   // These API calls should always succeed as long as the codepage (CP_UTF8) and
   // flag (0) are valid.
-  const int char_count = WideCharToMultiByte(
+  const int char_count = ::WideCharToMultiByte(
       CP_UTF8, 0, input.data(), input.size(), nullptr, 0, nullptr, nullptr);
   if (char_count < 0) {
     return std::string();
   }
 
   std::string result;
-  result.resize(char_count + 1);  // +1 for the null-terminating character.
+  // WideCharToMultiByte doesn't null-terminate the output string when the
+  // length is explicitly specified.
+  result.resize(char_count);
   const int copied_chars =
-      WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(), result.data(),
-                          result.size(), nullptr, nullptr);
+      ::WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(),
+                            result.data(), result.size(), nullptr, nullptr);
 
   CHECK_GE(copied_chars, 0);
   DCHECK_EQ(char_count, copied_chars);
-
-  result.resize(copied_chars);  // Drop the null-terminating character.
   return result;
 }
 

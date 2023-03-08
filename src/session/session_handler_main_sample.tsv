@@ -1,0 +1,51 @@
+# Enable IME
+SEND_KEY	ON
+
+SET_MOBILE_REQUEST
+
+RESET_CONTEXT
+UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HIRAGANA	COMMIT
+SWITCH_INPUT_MODE	HIRAGANA
+
+SEND_KEYS	arigatou
+SEND_KEY	Enter
+# EXPAND_SUGGESTION
+# SHOW_OUTPUT
+SHOW
+SHOW_LOG_BY_VALUE	ございます
+SHOW_LOG_BY_VALUE	ございました
+
+# See the files in data/test/session/scenario/ as more examples.
+#
+# SHOW(): show the composing text and candidates.
+# SHOW_OUTPUT(): show the Output protobuf w/o removed candidates.
+# SHOW_ALL(): show the Output protobuf with removed candidates.
+# SHOW_CANDIDATES(): show the candidate words.
+# SHOW_REMOVED_CANDIDATES(): show the removed candidates.
+# SHOW_LOG(id): show the log of the candidate of the `id`.
+# SHOW_LOG_BY_VALUE(value): show the log of the candidates of the `value`.
+#
+# RESET_CONTEXT(): reset the input context.
+# SEND_KEYS(keys): send each character as key events ("aiu" sends 3 events).
+# SEND_KEY(key): send a key event ("Shift" sends a modifier key event).
+# SEND_KANA_KEYS(keys, kanas): send each character as Kana key events.
+# SEND_KEY_WITH_OPTION(key, ...options): send a key event with options.
+# TEST_SEND_KEY(key): send a test key event.
+# TEST_SEND_KEY_WITH_OPTION(key, ...options): send a test key event with opts.
+# SELECT_CANDIDATE(id): select the candidate of `id`.
+# SELECT_CANDIDATE_BY_VALUE(value): select the candidate of `value`.
+# SUBMIT_CANDIDATE(id): submit the candidate of `id`.
+# SUBMIT_CANDIDATE_BY_VALUE(value): submit the candidate of `value`.
+# UNDO_OR_REWIND(): send the UNDO_OR_REWIND command.
+# SWITCH_INPUT_MODE(mode): siwtch the composition mode.
+#
+# SET_DEFAULT_REQUEST(): set the default request for desktop.
+# SET_MOBILE_REQUEST(): set the default request for mobile.
+# SET_REQUEST(key, value): set the request of `key` with `value`.
+# SET_CONFIG(key, value): set the config of `key` with `value`.
+# SET_SELECTION_TEXT(text): set the selection text.
+# UPDATE_MOBILE_KEYBOARD(table, behavor): update the composing table.
+#
+# CLEAR_ALL(): clear all.
+# CLEAR_USER_PREDICTION(): clear the user prediction.
+# CLEAR_USAGE_STATS(): clear the usage stats.

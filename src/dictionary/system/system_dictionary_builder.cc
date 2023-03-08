@@ -48,18 +48,16 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/system/codec.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
-#include "dictionary/text_dictionary_loader.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(bool, preserve_intermediate_dictionary, false,
           "preserve inetemediate dictionary file.");
@@ -96,18 +94,6 @@ void WriteSectionToFile(const DictionaryFileSection &section,
 
 }  // namespace
 
-SystemDictionaryBuilder::SystemDictionaryBuilder()
-    : codec_(SystemDictionaryCodecFactory::GetCodec()),
-      file_codec_(DictionaryFileCodecFactory::GetCodec()) {}
-
-// This class does not have the ownership of |codec|.
-SystemDictionaryBuilder::SystemDictionaryBuilder(
-    const SystemDictionaryCodecInterface *codec,
-    const DictionaryFileCodecInterface *file_codec)
-    : codec_(codec), file_codec_(file_codec) {}
-
-SystemDictionaryBuilder::~SystemDictionaryBuilder() = default;
-
 void SystemDictionaryBuilder::BuildFromTokens(
     const std::vector<std::unique_ptr<Token>> &tokens) {
   std::vector<Token *> ptrs;
@@ -137,13 +123,13 @@ void SystemDictionaryBuilder::BuildFromTokensInternal(
 }
 
 void SystemDictionaryBuilder::WriteToFile(
-    const std::string &output_file) const {
+    const absl::string_view output_file) const {
   OutputFileStream ofs(output_file, std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 
 void SystemDictionaryBuilder::WriteToStream(
-    const std::string &intermediate_output_file_base_path,
+    const absl::string_view intermediate_output_file_base_path,
     std::ostream *output_stream) const {
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;
@@ -176,12 +162,13 @@ void SystemDictionaryBuilder::WriteToStream(
   if (absl::GetFlag(FLAGS_preserve_intermediate_dictionary) &&
       !intermediate_output_file_base_path.empty()) {
     // Write out intermediate results to files.
-    const std::string &basepath = intermediate_output_file_base_path;
+    const absl::string_view basepath = intermediate_output_file_base_path;
     LOG(INFO) << "Writing intermediate files.";
-    WriteSectionToFile(value_trie_section, basepath + ".value");
-    WriteSectionToFile(key_trie_section, basepath + ".key");
-    WriteSectionToFile(token_array_section, basepath + ".tokens");
-    WriteSectionToFile(frequent_pos_section, basepath + ".freq_pos");
+    WriteSectionToFile(value_trie_section, absl::StrCat(basepath, ".value"));
+    WriteSectionToFile(key_trie_section, absl::StrCat(basepath, ".key"));
+    WriteSectionToFile(token_array_section, absl::StrCat(basepath, ".tokens"));
+    WriteSectionToFile(frequent_pos_section,
+                       absl::StrCat(basepath, ".freq_pos"));
   }
 
   LOG(INFO) << "Start writing dictionary file.";

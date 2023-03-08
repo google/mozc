@@ -32,66 +32,44 @@
 #include <cstdint>
 #include <ctime>
 
+#include "absl/time/time.h"
+
 namespace mozc {
 
-ClockMock::ClockMock(uint64_t sec, uint32_t usec)
-    : seconds_(sec),
-      timezone_(absl::UTCTimeZone()),
-      timezone_offset_sec_(0),
-      micro_seconds_(usec),
-      delta_seconds_(0),
-      delta_micro_seconds_(0) {}
+namespace {
+constexpr uint64_t kMicro = 1'000'000;
+}
 
-ClockMock::~ClockMock() {}
+ClockMock::ClockMock(uint64_t sec, uint32_t usec)
+    : time_(absl::FromUnixMicros(sec * kMicro + usec)) {}
 
 void ClockMock::GetTimeOfDay(uint64_t *sec, uint32_t *usec) {
-  *sec = seconds_;
-  *usec = micro_seconds_;
-  PutClockForward(delta_seconds_, delta_micro_seconds_);
+  const absl::Time time = GetAbslTime();
+  *sec = absl::ToUnixSeconds(time);
+  *usec = absl::ToUnixMicros(time) % kMicro;
 }
 
-uint64_t ClockMock::GetTime() {
-  const uint64_t ret_sec = seconds_;
-  PutClockForward(delta_seconds_, delta_micro_seconds_);
-  return ret_sec;
-}
+uint64_t ClockMock::GetTime() { return absl::ToUnixSeconds(GetAbslTime()); }
 
 absl::Time ClockMock::GetAbslTime() {
-  absl::Time at = absl::FromUnixMicros(seconds_ * 1'000'000 + micro_seconds_);
-  PutClockForward(delta_seconds_, delta_micro_seconds_);
-  return at;
+  const absl::Time output = time_;
+  Advance(auto_delta_);
+  return output;
 }
 
-const absl::TimeZone& ClockMock::GetTimeZone() {
-  return timezone_;
-}
-
-void ClockMock::SetTimeZoneOffset(int32_t timezone_offset_sec) {
-  timezone_offset_sec_ = timezone_offset_sec;
-  timezone_ = absl::FixedTimeZone(timezone_offset_sec);
-}
+absl::TimeZone ClockMock::GetTimeZone() { return timezone_; }
 
 void ClockMock::PutClockForward(uint64_t delta_sec, uint32_t delta_usec) {
-  const uint32_t one_second = 1000000u;
-
-  if (micro_seconds_ + delta_usec < one_second) {
-    seconds_ += delta_sec;
-    micro_seconds_ += delta_usec;
-  } else {
-    seconds_ += delta_sec + 1uLL;
-    micro_seconds_ += delta_usec - one_second;
-  }
+  time_ += absl::Seconds(delta_sec) + absl::Microseconds(delta_usec);
 }
 
 void ClockMock::SetAutoPutClockForward(uint64_t delta_sec,
                                        uint32_t delta_usec) {
-  delta_seconds_ = delta_sec;
-  delta_micro_seconds_ = delta_usec;
+  auto_delta_ = absl::Seconds(delta_sec) + absl::Microseconds(delta_usec);
 }
 
 void ClockMock::SetTime(uint64_t sec, uint32_t usec) {
-  seconds_ = sec;
-  micro_seconds_ = usec;
+  time_ = absl::FromUnixMicros(sec * kMicro + usec);
 }
 
 }  // namespace mozc

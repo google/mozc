@@ -45,9 +45,7 @@ class ClockInterface {
   virtual void GetTimeOfDay(uint64_t *sec, uint32_t *usec) = 0;
   virtual uint64_t GetTime() = 0;
   virtual absl::Time GetAbslTime() = 0;
-
-  virtual const absl::TimeZone& GetTimeZone() = 0;
-  virtual void SetTimeZoneOffset(int32_t timezone_offset_sec) = 0;
+  virtual absl::TimeZone GetTimeZone() = 0;
 
  protected:
   ClockInterface() = default;
@@ -75,12 +73,7 @@ class Clock {
   static absl::Time GetAbslTime();
 
   // Returns the timezone. LocalTimeZone is usually returned.
-  static const absl::TimeZone& GetTimeZone();
-
-  // Sets the time difference between local time and UTC time in seconds.
-  // We use this function in NaCl Mozc because we can't know the local timezone
-  // in NaCl environment.
-  static void SetTimeZoneOffset(int32_t timezone_offset_sec);
+  static absl::TimeZone GetTimeZone();
 
   // TESTONLY: The behavior of global system clock can be overridden by using
   // this method.  Set to nullptr to restore the default clock.  This method

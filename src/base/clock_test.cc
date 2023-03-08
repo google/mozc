@@ -36,6 +36,12 @@
 #include "testing/gunit.h"
 #include "absl/time/time.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else  // _WIN32
+#include <sys/time.h>
+#endif  // !_WIN32
+
 namespace mozc {
 namespace {
 
@@ -43,6 +49,37 @@ namespace {
 // 123456 [usec]
 constexpr uint64_t kTestSeconds = 1608729875uLL;
 constexpr uint32_t kTestMicroSeconds = 123456u;
+
+// This is the previous implementation of GetTimeOfDay to check the
+// compatibility.
+// TODO(yuryu): Delete this function and related tests when we remove
+// GetTimeOfDay().
+void LegacyGetTimeOfDay(uint64_t *sec, uint32_t *usec) {
+#ifdef _WIN32
+  FILETIME file_time;
+  GetSystemTimeAsFileTime(&file_time);
+  ULARGE_INTEGER time_value;
+  time_value.HighPart = file_time.dwHighDateTime;
+  time_value.LowPart = file_time.dwLowDateTime;
+  // Convert into microseconds
+  time_value.QuadPart /= 10;
+  // kDeltaEpochInMicroSecs is difference between January 1, 1970 and
+  // January 1, 1601 in microsecond.
+  // This number is calculated as follows.
+  // ((1970 - 1601) * 365 + 89) * 24 * 60 * 60 * 1000000
+  // 89 is the number of leap years between 1970 and 1601.
+  const uint64_t kDeltaEpochInMicroSecs = 11644473600000000ULL;
+  // Convert file time to unix epoch
+  time_value.QuadPart -= kDeltaEpochInMicroSecs;
+  *sec = static_cast<uint64_t>(time_value.QuadPart / 1000000UL);
+  *usec = static_cast<uint32_t>(time_value.QuadPart % 1000000UL);
+#else   // _WIN32
+  struct timeval tv;
+  gettimeofday(&tv, nullptr);
+  *sec = tv.tv_sec;
+  *usec = tv.tv_usec;
+#endif  // !_WIN32
+}
 
 TEST(ClockTest, TimeTestWithMock) {
   ClockMock clock_mock(kTestSeconds, kTestMicroSeconds);
@@ -104,10 +141,29 @@ TEST(ClockTest, TimeTestWithoutMock) {
   get_time_sec = Clock::GetTime();
 
   // hmm, unstable test.
-  const int margin = 1;
+  constexpr int margin = 1;
   EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
       << ": This test have possibilities to fail "
       << "when system is busy and slow.";
+}
+
+TEST(ClockTest, CompatibilityTest) {
+  uint64_t sec, legacy_sec;
+  uint32_t usec, legacy_usec;
+  Clock::GetTimeOfDay(&sec, &usec);
+  LegacyGetTimeOfDay(&legacy_sec, &legacy_usec);
+  const absl::Time current =
+      absl::FromUnixSeconds(sec) + absl::Microseconds(usec);
+  const absl::Time legacy =
+      absl::FromUnixSeconds(legacy_sec) + absl::Microseconds(legacy_usec);
+#ifdef _WIN32
+  // On Windows, the resolution of GetSystemTimeAsFileTime is 55 ms.
+  constexpr absl::Duration margin = absl::Milliseconds(55 * 2);
+#else   // _WIN32
+  // On other platforms, gettimeofday usually has ~10 us resolution.
+  constexpr absl::Duration margin = absl::Microseconds(50);
+#endif  // !_WIN32
+  EXPECT_LE(absl::AbsDuration(current - legacy), margin);
 }
 
 TEST(ClockTest, TimeZone) {
@@ -119,8 +175,8 @@ TEST(ClockTest, TimeZone) {
   const std::tm *offset = std::localtime(&epoch);
   const int tm_offset =
       (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
-      + offset->tm_hour * 60 * 60  // hour offset from 00 am.
-      + offset->tm_min * 60;  // minute offset.
+      + offset->tm_hour * 60 * 60           // hour offset from 00 am.
+      + offset->tm_min * 60;                // minute offset.
 
   EXPECT_EQ(tm_offset, absl_offset);
 }

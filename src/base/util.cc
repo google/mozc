@@ -48,8 +48,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/strings/unicode.h"
 #include "base/port.h"
+#include "base/strings/unicode.h"
 #include "absl/algorithm/container.h"
 #include "absl/numeric/bits.h"
 #include "absl/random/random.h"
@@ -876,12 +876,25 @@ bool Util::IsCloseBracket(absl::string_view key,
 }
 
 bool Util::IsBracketPairText(absl::string_view input) {
-  const auto end = kSortedBrackets.end();
-  const auto iter = std::lower_bound(kSortedBrackets.begin(), end, input);
-  if (iter == end || *iter != input) {
-    return false;
+  // The characters like ", ' <, > and ` are not always considered as "brackets"
+  // themselves but they also have bracket-like usages by doubling, or coupling
+  // with the corresponding characters. (e.g. "", '', <>, ``)
+  // This function considers such character sequences as "bracket pairs".
+  static const std::array<absl::string_view, 4> kAdditionalBracketPairs{
+      "\"\"", "''", "<>", "``"};  // sorted
+  const auto iter0 = std::lower_bound(kAdditionalBracketPairs.begin(),
+                                      kAdditionalBracketPairs.end(), input);
+  if (*iter0 == input) {
+    return true;
   }
-  return true;
+
+  const auto iter1 =
+      std::lower_bound(kSortedBrackets.begin(), kSortedBrackets.end(), input);
+  if (*iter1 == input) {
+    return true;
+  }
+
+  return false;
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input) {

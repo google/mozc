@@ -28,8 +28,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "win32/base/keyboard.h"
+
+#include <cstddef>
+
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/base/casts.h"
 
 namespace mozc {
 namespace win32 {
@@ -51,8 +55,8 @@ class ImeKeyboardTest : public testing::Test {
 
     // In 32-bit Windows, |hkl| is like 04110411.
     // In 64-bit Windows, |hkl| is like 0000000004110411.
-    const DWORD dword_hkl = reinterpret_cast<DWORD>(hkl);
-    constexpr DWORD kExpectedHKL = 0x04110411;
+    const ptrdiff_t dword_hkl = absl::bit_cast<ptrdiff_t>(hkl);
+    constexpr ptrdiff_t kExpectedHKL = 0x04110411;
     if (dword_hkl != kExpectedHKL) {
       // seems to fall back to non-Japanese keyboard layout.
       return;

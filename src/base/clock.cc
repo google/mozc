@@ -29,38 +29,33 @@
 
 #include "base/clock.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#include <time.h>
-#else  // _WIN32
-#ifdef __APPLE__
-#include <mach/mach_time.h>
-#endif  // __APPLE__
-#include <sys/time.h>
-#endif  // _WIN32
-
 #include <cstdint>
 
 #include "base/singleton.h"
 #include "absl/time/clock.h"
+#include "absl/time/time.h"
+
+#if defined(OS_CHROMEOS) || defined(_WIN32)
+#include <time.h>
+#endif  // defined(OS_CHROMEOS) || defined(_WIN32)
 
 namespace mozc {
 namespace {
 
 class ClockImpl : public ClockInterface {
  public:
-  ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {
+  ClockImpl() : timezone_(absl::LocalTimeZone()) {
 #if defined(OS_CHROMEOS) || defined(_WIN32)
     // Because absl::LocalTimeZone() always returns UTC timezone on Chrome OS
     // and Windows, a work-around for Chrome OS and Windows is required.
-    int offset_sec = 9 * 60 * 60;  // JST as fallback
+    int offset_sec = 9 * 60 * 60;      // JST as fallback
     const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
     const std::tm *offset = std::localtime(&epoch);
     if (offset) {
       offset_sec =
           (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
-          + offset->tm_hour * 60 * 60  // hour offset from 00 am.
-          + offset->tm_min * 60;  // minute offset.
+          + offset->tm_hour * 60 * 60           // hour offset from 00 am.
+          + offset->tm_min * 60;                // minute offset.
     }
     timezone_ = absl::FixedTimeZone(offset_sec);
 #endif  // defined(OS_CHROMEOS) || defined(_WIN32)
@@ -68,55 +63,18 @@ class ClockImpl : public ClockInterface {
   ~ClockImpl() override = default;
 
   void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override {
-#ifdef _WIN32
-    FILETIME file_time;
-    GetSystemTimeAsFileTime(&file_time);
-    ULARGE_INTEGER time_value;
-    time_value.HighPart = file_time.dwHighDateTime;
-    time_value.LowPart = file_time.dwLowDateTime;
-    // Convert into microseconds
-    time_value.QuadPart /= 10;
-    // kDeltaEpochInMicroSecs is difference between January 1, 1970 and
-    // January 1, 1601 in microsecond.
-    // This number is calculated as follows.
-    // ((1970 - 1601) * 365 + 89) * 24 * 60 * 60 * 1000000
-    // 89 is the number of leap years between 1970 and 1601.
-    const uint64_t kDeltaEpochInMicroSecs = 11644473600000000ULL;
-    // Convert file time to unix epoch
-    time_value.QuadPart -= kDeltaEpochInMicroSecs;
-    *sec = static_cast<uint64_t>(time_value.QuadPart / 1000000UL);
-    *usec = static_cast<uint32_t>(time_value.QuadPart % 1000000UL);
-#else   // _WIN32
-    struct timeval tv;
-    gettimeofday(&tv, nullptr);
-    *sec = tv.tv_sec;
-    *usec = tv.tv_usec;
-#endif  // _WIN32
+    const absl::Time now = absl::Now();
+    *sec = absl::ToUnixSeconds(now);
+    *usec = absl::ToUnixMicros(now) % 1'000'000;
   }
 
-  uint64_t GetTime() override {
-#ifdef _WIN32
-    return static_cast<uint64_t>(_time64(nullptr));
-#else   // _WIN32
-    return static_cast<uint64_t>(time(nullptr));
-#endif  // _WIN32
-  }
+  uint64_t GetTime() override { return absl::ToUnixSeconds(absl::Now()); }
 
-  absl::Time GetAbslTime() override {
-    return absl::Now();
-  }
+  absl::Time GetAbslTime() override { return absl::Now(); }
 
-  const absl::TimeZone& GetTimeZone() override {
-    return timezone_;
-  }
-
-  void SetTimeZoneOffset(int32_t timezone_offset_sec) override {
-    timezone_offset_sec_ = timezone_offset_sec;
-    timezone_ = absl::FixedTimeZone(timezone_offset_sec);
-  }
+  absl::TimeZone GetTimeZone() override { return timezone_; }
 
  private:
-  int32_t timezone_offset_sec_;
   absl::TimeZone timezone_;
 };
 }  // namespace
@@ -131,17 +89,12 @@ uint64_t Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
 
 absl::Time Clock::GetAbslTime() { return ClockSingleton::Get()->GetAbslTime(); }
 
-const absl::TimeZone& Clock::GetTimeZone() {
+absl::TimeZone Clock::GetTimeZone() {
   return ClockSingleton::Get()->GetTimeZone();
-}
-
-void Clock::SetTimeZoneOffset(int32_t timezone_offset_sec) {
-  return ClockSingleton::Get()->SetTimeZoneOffset(timezone_offset_sec);
 }
 
 void Clock::SetClockForUnitTest(ClockInterface *clock) {
   ClockSingleton::SetMock(clock);
 }
-
 
 }  // namespace mozc

@@ -32,9 +32,9 @@
 
 #include <cstdint>
 #include <cstring>
-#include <string>
 
 #include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -76,15 +76,13 @@ class KeyExpansionTable {
   KeyExpansionTable &operator=(const KeyExpansionTable &) = delete;
 
   // Add expanding data of the given key.
-  void Add(char key, const std::string &data) {
+  void Add(const char key, const absl::string_view data) {
     for (size_t i = 0; i < data.length(); ++i) {
       SetBit(key, data[i]);
     }
   }
 
-  const ExpandedKey ExpandKey(char key) const {
-    return ExpandedKey(table_[key]);
-  }
+  ExpandedKey ExpandKey(char key) const { return ExpandedKey(table_[key]); }
 
   // Returns the default (no-effective) KeyExpansionTable instance.
   // (in other words, the result holds identity-bitmap matrix).

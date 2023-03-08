@@ -107,9 +107,9 @@ class UserDictionaryFileManager {
     }
   }
 
-  void SetFileName(const std::string &filename) {
+  void SetFileName(const absl::string_view filename) {
     absl::MutexLock l(&mutex_);
-    filename_ = filename;
+    filename_ = std::string(filename);
   }
 
  private:
@@ -570,7 +570,7 @@ std::vector<std::string> UserDictionary::GetPosList() const {
   return pos_list;
 }
 
-void UserDictionary::SetUserDictionaryName(const std::string &filename) {
+void UserDictionary::SetUserDictionaryName(const absl::string_view filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }
 

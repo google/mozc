@@ -34,6 +34,8 @@
 #include <set>
 #include <string>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -46,9 +48,7 @@ namespace dictionary {
 // the consumer is the main converter thread.
 class SuppressionDictionary final {
  public:
-  SuppressionDictionary();
-  ~SuppressionDictionary();
-
+  SuppressionDictionary() = default;
   SuppressionDictionary(const SuppressionDictionary &) = delete;
   SuppressionDictionary &operator=(const SuppressionDictionary &) = delete;
 
@@ -68,7 +68,7 @@ class SuppressionDictionary final {
   void UnLock();
 
   // Adds an entry into the dictionary.
-  bool AddEntry(const std::string &key, const std::string &value);
+  bool AddEntry(absl::string_view key, absl::string_view value);
 
   // Clears the dictionary.
   void Clear();
@@ -84,13 +84,13 @@ class SuppressionDictionary final {
   bool IsEmpty() const;
 
   // Returns true if a word having `key` and `value` should be suppressed.
-  bool SuppressEntry(const std::string &key, const std::string &value) const;
+  bool SuppressEntry(absl::string_view key, absl::string_view value) const;
 
  private:
-  std::set<std::string> dic_;
-  bool has_key_empty_;
-  bool has_value_empty_;
-  mutable std::atomic<bool> locked_;
+  absl::flat_hash_set<std::string> dic_;
+  bool has_key_empty_ = false;
+  bool has_value_empty_ = false;
+  mutable std::atomic<bool> locked_ = false;
   // TODO(noriyukit): Check if this mutex is still necessary.
   absl::Mutex mutex_;
 };

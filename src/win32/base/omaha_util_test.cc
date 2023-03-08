@@ -106,14 +106,14 @@ class RegistryEmulator {
     DCHECK(has_##field_name##_);                                \
     return field_name##_;                                       \
   }                                                             \
-  void clear_##field_name##() {                                 \
+  void clear_##field_name() {                                   \
     has_##field_name##_ = false;                                \
     field_name##_ = type();                                     \
   }                                                             \
   bool has_##field_name() const { return has_##field_name##_; } \
   type *mutable_##field_name() {                                \
     has_##field_name##_ = true;                                 \
-    return &##field_name##_;                                    \
+    return &field_name##_;                                      \
   }
     DEFINE_FIELD(std::wstring, ap_value)
     DEFINE_FIELD(DWORD, installer_result)

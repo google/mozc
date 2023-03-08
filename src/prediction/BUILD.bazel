@@ -125,7 +125,6 @@ mozc_cc_test(
         "//request:conversion_request",
         "//session:request_test_util",
         "//storage:encrypted_string_storage",
-        "//storage:existence_filter",
         "//storage:lru_cache",
         "//testing:gunit_main",
         "//usage_stats",
@@ -146,12 +145,10 @@ mozc_cc_library(
     hdrs = ["dictionary_predictor.h"],
     deps = [
         ":dictionary_prediction_aggregator",
-        ":number_decoder",
         ":prediction_aggregator_interface",
         ":predictor_interface",
         ":result",
         ":suggestion_filter",
-        ":zero_query_dict",
         "//base:japanese_util",
         "//base:logging",
         "//base:util",
@@ -163,7 +160,6 @@ mozc_cc_library(
         "//converter:segments",
         "//data_manager:data_manager_interface",
         "//dictionary:dictionary_interface",
-        "//dictionary:dictionary_token",
         "//dictionary:pos_matcher_lib",
         "//dictionary:single_kanji_dictionary",
         "//protocol:commands_cc_proto",
@@ -175,6 +171,7 @@ mozc_cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
     alwayslink = 1,
 )
@@ -339,6 +336,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

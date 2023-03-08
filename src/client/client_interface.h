@@ -35,13 +35,12 @@
 #include <cstdint>
 #include <string>
 
+#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class IPCClientFactoryInterface;
 
 namespace client {
 class ClientInterface;

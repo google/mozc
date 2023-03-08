@@ -69,7 +69,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -2212,14 +2211,14 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     auto *entry = history.add_entries();
     entry->set_key(absl::StrFormat("old_key%d", i));
     entry->set_value(absl::StrFormat("old_value%d", i));
-    entry->set_last_access_time(clock->GetTime());
+    entry->set_last_access_time(absl::ToUnixSeconds(clock->GetAbslTime()));
   }
   clock->PutClockForward(63 * 24 * 60 * 60, 0);  // Advance clock for 63 days.
   for (int i = 0; i < 10; ++i) {
     auto *entry = history.add_entries();
     entry->set_key(absl::StrFormat("new_key%d", i));
     entry->set_value(absl::StrFormat("new_value%d", i));
-    entry->set_last_access_time(clock->GetTime());
+    entry->set_last_access_time(absl::ToUnixSeconds(clock->GetAbslTime()));
   }
 
   // Test Load().

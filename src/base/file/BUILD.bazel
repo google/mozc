@@ -49,6 +49,7 @@ mozc_cc_library(
     srcs = ["temp_dir.cc"],
     hdrs = ["temp_dir.h"],
     deps = [
+        ":recursive",
         "//base:environ",
         "//base:file_util",
         "//base:logging",
@@ -85,8 +86,8 @@ mozc_cc_library(
     deps = [
         "//base:file_util",
         "//base:logging",
-        "//base:system_util",  # for ScopedCOMInitializer
         "//base:util",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
@@ -105,6 +106,7 @@ mozc_cc_test(
         ":temp_dir",
         "//base:file_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
 )

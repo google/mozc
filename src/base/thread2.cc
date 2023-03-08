@@ -35,11 +35,6 @@
 
 namespace mozc {
 
-Thread2::Thread2() noexcept = default;
-Thread2::~Thread2() = default;
-Thread2::Thread2(Thread2 &&) noexcept = default;
-Thread2 &Thread2::operator=(Thread2 &&) noexcept = default;
-
 void Thread2::Join() { thread_->Join(); }
 
 }  // namespace mozc

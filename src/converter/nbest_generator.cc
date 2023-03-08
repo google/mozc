@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -57,17 +56,6 @@ constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
 using converter::CandidateFilter;
 
-struct NBestGenerator::QueueElement {
-  const Node *node;
-  const QueueElement *next;
-  int32_t fx;  // f(x) = h(x) + g(x): cost function for A* search
-  int32_t gx;  // g(x)
-  // transition cost part of g(x).
-  // Do not take the transition costs to edge nodes.
-  int32_t structure_gx;
-  int32_t w_gx;
-};
-
 const NBestGenerator::QueueElement *NBestGenerator::CreateNewElement(
     const Node *node, const QueueElement *next, int32_t fx, int32_t gx,
     int32_t structure_gx, int32_t w_gx) {
@@ -82,24 +70,23 @@ const NBestGenerator::QueueElement *NBestGenerator::CreateNewElement(
   return elm;
 }
 
-struct NBestGenerator::QueueElementComparator {
-  bool operator()(const NBestGenerator::QueueElement *q1,
-                  const NBestGenerator::QueueElement *q2) const {
-    return (q1->fx > q2->fx);
-  }
-};
+bool NBestGenerator::QueueElement::Comparator(
+    const NBestGenerator::QueueElement *q1,
+    const NBestGenerator::QueueElement *q2) {
+  return (q1->fx > q2->fx);
+}
 
 inline void NBestGenerator::Agenda::Push(
     const NBestGenerator::QueueElement *element) {
   priority_queue_.push_back(element);
   std::push_heap(priority_queue_.begin(), priority_queue_.end(),
-                 QueueElementComparator());
+                 QueueElement::Comparator);
 }
 
 inline void NBestGenerator::Agenda::Pop() {
   DCHECK(!priority_queue_.empty());
   std::pop_heap(priority_queue_.begin(), priority_queue_.end(),
-                QueueElementComparator());
+                QueueElement::Comparator);
   priority_queue_.pop_back();
 }
 
@@ -130,8 +117,6 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
   agenda_.Reserve(kFreeListSize);
 }
 
-NBestGenerator::~NBestGenerator() {}
-
 void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
                            const BoundaryCheckMode mode) {
   agenda_.Clear();
@@ -152,21 +137,6 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
       // Push "EOS" nodes.
       agenda_.Push(CreateNewElement(node, nullptr, node->cost, 0, 0, 0));
     }
-  }
-
-  switch (check_mode_) {
-    case STRICT:
-      boundary_checker_ = &NBestGenerator::CheckStrict;
-      break;
-    case ONLY_MID:
-      boundary_checker_ = &NBestGenerator::CheckOnlyMid;
-      break;
-    case ONLY_EDGE:
-      boundary_checker_ = &NBestGenerator::CheckOnlyEdge;
-      break;
-    default:
-      LOG(ERROR) << "Invalid check mode";
-      break;
   }
 }
 
@@ -281,6 +251,24 @@ void NBestGenerator::MakeCandidate(
   }
 }
 
+// Set candidates.
+void NBestGenerator::SetCandidates(const ConversionRequest &request,
+                                   const std::string &original_key,
+                                   const size_t expand_size,
+                                   Segment *segment) {
+  while (segment->candidates_size() < expand_size) {
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    DCHECK(candidate);
+    candidate->Init();
+
+    // if Next() returns false, no more entries are generated.
+    if (!Next(request, original_key, candidate)) {
+      segment->pop_back_candidate();
+      break;
+    }
+  }
+}
+
 bool NBestGenerator::Next(const ConversionRequest &request,
                           const std::string &original_key,
                           Segment::Candidate *candidate) {
@@ -378,127 +366,127 @@ bool NBestGenerator::Next(const ConversionRequest &request,
           break;
           // do nothing
       }
-    } else {
-      const QueueElement *best_left_elm = nullptr;
-      const bool is_right_edge = rnode->begin_pos == end_node_->begin_pos;
-      const bool is_left_edge = rnode->begin_pos == begin_node_->end_pos;
-      DCHECK(!(is_right_edge && is_left_edge));
+      continue;
+    }
 
-      // is_edge is true if current lnode/rnode has same boundary as
-      // begin/end node regardless of its value.
-      const bool is_edge = (is_right_edge || is_left_edge);
+    DCHECK_NE(rnode->end_pos, begin_node_->end_pos);
 
-      for (Node *lnode = lattice_->end_nodes(rnode->begin_pos);
-           lnode != nullptr; lnode = lnode->enext) {
-        // is_invalid_position is true if the lnode's location is invalid
-        //  1.   |<-- begin_node_-->|
-        //                    |<--lnode-->|  <== overlapped.
-        //
-        //  2.   |<-- begin_node_-->|
-        //         |<--lnode-->|    <== exceeds begin_node.
-        // This case can't be happened because the |rnode| is always at just
-        // right of the |lnode|. By avoiding case1, this can't be happen.
-        //  2'.  |<-- begin_node_-->|
-        //         |<--lnode-->||<--rnode-->|
-        const bool is_valid_position =
-            !((lnode->begin_pos < begin_node_->end_pos &&
-               begin_node_->end_pos < lnode->end_pos));
-        if (!is_valid_position) {
-          continue;
-        }
+    const QueueElement *best_left_elm = nullptr;
+    const bool is_right_edge = rnode->begin_pos == end_node_->begin_pos;
+    const bool is_left_edge = rnode->begin_pos == begin_node_->end_pos;
+    DCHECK(!(is_right_edge && is_left_edge));
 
-        // If left_node is left edge, there is a cost-based constraint.
-        const bool is_valid_cost =
-            (lnode->cost - begin_node_->cost) <= kCostDiff;
-        if (is_left_edge && !is_valid_cost) {
-          continue;
-        }
+    // is_edge is true if current lnode/rnode has same boundary as
+    // begin/end node regardless of its value.
+    const bool is_edge = (is_right_edge || is_left_edge);
 
-        // We can omit the search for the node which has the
-        // same rid with |begin_node_| because:
-        //  1. |begin_node_| is the part of the best route.
-        //  2. The cost diff of 'LEFT_EDGE' is decided only by
-        //     transition_cost for lnode.
-        // Actually, checking for each rid once is enough.
-        const bool can_omit_search =
-            lnode->rid == begin_node_->rid && lnode != begin_node_;
-        if (is_left_edge && can_omit_search) {
-          continue;
-        }
-
-        DCHECK(this->boundary_checker_ != nullptr);
-        BoundaryCheckResult boundary_result =
-            (this->*boundary_checker_)(lnode, rnode, is_edge);
-        if (boundary_result == INVALID) {
-          continue;
-        }
-
-        // We can expand candidates from |rnode| to |lnode|.
-        const int transition_cost = GetTransitionCost(lnode, rnode);
-
-        // How likely the costs get increased after expanding rnode.
-        int cost_diff = 0;
-        int structure_cost_diff = 0;
-        int wcost_diff = 0;
-
-        if (is_right_edge) {
-          // use |rnode->cost - end_node_->cost| is an approximation
-          // of marginalized word cost.
-          cost_diff = transition_cost + (rnode->cost - end_node_->cost);
-          structure_cost_diff = 0;
-          wcost_diff = 0;
-        } else if (is_left_edge) {
-          // use |lnode->cost - begin_node_->cost| is an approximation
-          // of marginalized word cost.
-          cost_diff = transition_cost + rnode->wcost +
-                      (lnode->cost - begin_node_->cost);
-          structure_cost_diff = 0;
-          wcost_diff = rnode->wcost;
-        } else {
-          // use rnode->wcost.
-          cost_diff = transition_cost + rnode->wcost;
-          structure_cost_diff = transition_cost;
-          wcost_diff = transition_cost + rnode->wcost;
-        }
-
-        if (boundary_result == VALID_WEAK_CONNECTED) {
-          constexpr int kWeakConnectedPenalty = 3453;  // log prob of 1/1000
-          cost_diff += kWeakConnectedPenalty;
-          structure_cost_diff += kWeakConnectedPenalty / 2;
-          wcost_diff += kWeakConnectedPenalty / 2;
-        }
-
-        const int32_t gx = cost_diff + top->gx;
-        // |lnode->cost| is heuristics function of A* search, h(x).
-        // After Viterbi search, we already know an exact value of h(x).
-        const int32_t fx = lnode->cost + gx;
-        const int32_t structure_gx = structure_cost_diff + top->structure_gx;
-        const int32_t w_gx = wcost_diff + top->w_gx;
-        if (is_left_edge) {
-          // We only need to only 1 left node here.
-          // Even if expand all left nodes, all the |value| part should
-          // be identical. Here, we simply use the best left edge node.
-          // This hack reduces the number of redundant calls of pop().
-          if (best_left_elm == nullptr || best_left_elm->fx > fx) {
-            best_left_elm =
-                CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx);
-          }
-        } else {
-          agenda_.Push(
-              CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx));
-        }
+    for (Node *lnode = lattice_->end_nodes(rnode->begin_pos); lnode != nullptr;
+         lnode = lnode->enext) {
+      // is_invalid_position is true if the lnode's location is invalid
+      //  1.   |<-- begin_node_-->|
+      //                    |<--lnode-->|  <== overlapped.
+      //
+      //  2.   |<-- begin_node_-->|
+      //         |<--lnode-->|    <== exceeds begin_node.
+      // This case can't be happened because the |rnode| is always at just
+      // right of the |lnode|. By avoiding case1, this can't be happen.
+      //  2'.  |<-- begin_node_-->|
+      //         |<--lnode-->||<--rnode-->|
+      const bool is_valid_position =
+          !((lnode->begin_pos < begin_node_->end_pos &&
+             begin_node_->end_pos < lnode->end_pos));
+      if (!is_valid_position) {
+        continue;
       }
 
-      if (best_left_elm != nullptr) {
-        agenda_.Push(best_left_elm);
+      // If left_node is left edge, there is a cost-based constraint.
+      const bool is_valid_cost = (lnode->cost - begin_node_->cost) <= kCostDiff;
+      if (is_left_edge && !is_valid_cost) {
+        continue;
       }
+
+      // We can omit the search for the node which has the
+      // same rid with |begin_node_| because:
+      //  1. |begin_node_| is the part of the best route.
+      //  2. The cost diff of 'LEFT_EDGE' is decided only by
+      //     transition_cost for lnode.
+      // Actually, checking for each rid once is enough.
+      const bool can_omit_search =
+          lnode->rid == begin_node_->rid && lnode != begin_node_;
+      if (is_left_edge && can_omit_search) {
+        continue;
+      }
+
+      const BoundaryCheckResult boundary_result =
+          BoundaryCheck(lnode, rnode, is_edge);
+      if (boundary_result == INVALID) {
+        continue;
+      }
+
+      // We can expand candidates from |rnode| to |lnode|.
+      const int transition_cost = GetTransitionCost(lnode, rnode);
+
+      // How likely the costs get increased after expanding rnode.
+      int cost_diff = 0;
+      int structure_cost_diff = 0;
+      int wcost_diff = 0;
+
+      if (is_right_edge) {
+        // use |rnode->cost - end_node_->cost| is an approximation
+        // of marginalized word cost.
+        cost_diff = transition_cost + (rnode->cost - end_node_->cost);
+        structure_cost_diff = 0;
+        wcost_diff = 0;
+      } else if (is_left_edge) {
+        // use |lnode->cost - begin_node_->cost| is an approximation
+        // of marginalized word cost.
+        cost_diff =
+            transition_cost + rnode->wcost + (lnode->cost - begin_node_->cost);
+        structure_cost_diff = 0;
+        wcost_diff = rnode->wcost;
+      } else {
+        // use rnode->wcost.
+        cost_diff = transition_cost + rnode->wcost;
+        structure_cost_diff = transition_cost;
+        wcost_diff = transition_cost + rnode->wcost;
+      }
+
+      if (boundary_result == VALID_WEAK_CONNECTED) {
+        constexpr int kWeakConnectedPenalty = 3453;  // log prob of 1/1000
+        cost_diff += kWeakConnectedPenalty;
+        structure_cost_diff += kWeakConnectedPenalty / 2;
+        wcost_diff += kWeakConnectedPenalty / 2;
+      }
+
+      const int32_t gx = cost_diff + top->gx;
+      // |lnode->cost| is heuristics function of A* search, h(x).
+      // After Viterbi search, we already know an exact value of h(x).
+      const int32_t fx = lnode->cost + gx;
+      const int32_t structure_gx = structure_cost_diff + top->structure_gx;
+      const int32_t w_gx = wcost_diff + top->w_gx;
+      if (is_left_edge) {
+        // We only need to only 1 left node here.
+        // Even if expand all left nodes, all the |value| part should
+        // be identical. Here, we simply use the best left edge node.
+        // This hack reduces the number of redundant calls of pop().
+        if (best_left_elm == nullptr || best_left_elm->fx > fx) {
+          best_left_elm =
+              CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx);
+        }
+      } else {
+        agenda_.Push(CreateNewElement(lnode, top, fx, gx, structure_gx, w_gx));
+      }
+    }
+
+    if (best_left_elm != nullptr) {
+      agenda_.Push(best_left_elm);
     }
   }
 
   return false;
 }
 
-NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
+NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
     const Node *lnode, const Node *rnode, bool is_edge) const {
   // Special case, no boundary check
   if (rnode->node_type == Node::CON_NODE ||
@@ -506,6 +494,21 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
     return VALID;
   }
 
+  switch (check_mode_) {
+    case STRICT:
+      return NBestGenerator::CheckStrict(lnode, rnode, is_edge);
+    case ONLY_MID:
+      return NBestGenerator::CheckOnlyMid(lnode, rnode, is_edge);
+    case ONLY_EDGE:
+      return NBestGenerator::CheckOnlyEdge(lnode, rnode, is_edge);
+    default:
+      LOG(ERROR) << "Invalid check mode";
+  }
+  return INVALID;
+}
+
+NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
+    const Node *lnode, const Node *rnode, bool is_edge) const {
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
@@ -526,12 +529,6 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
     const Node *lnode, const Node *rnode, bool is_edge) const {
-  // Special case, no boundary check
-  if (rnode->node_type == Node::CON_NODE ||
-      lnode->node_type == Node::CON_NODE) {
-    return VALID;
-  }
-
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
@@ -547,12 +544,6 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
 
 NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
     const Node *lnode, const Node *rnode, bool is_edge) const {
-  // Special case, no boundary check
-  if (rnode->node_type == Node::CON_NODE ||
-      lnode->node_type == Node::CON_NODE) {
-    return VALID;
-  }
-
   // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||

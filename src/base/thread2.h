@@ -62,16 +62,16 @@ namespace mozc {
 // `mozc::Thread` usages are all removed.
 class Thread2 {
  public:
-  Thread2() noexcept;
+  Thread2() noexcept = default;
   template <class Function, class... Args>
   explicit Thread2(Function &&f, Args &&...args);
-  ~Thread2();
+  ~Thread2() = default;
 
   Thread2(const Thread2 &) = delete;
-  Thread2(Thread2 &&) noexcept;
+  Thread2(Thread2 &&) noexcept = default;
 
   Thread2 &operator=(const Thread2 &) = delete;
-  Thread2 &operator=(Thread2 &&) noexcept;
+  Thread2 &operator=(Thread2 &&) noexcept = default;
 
   void Join();
 

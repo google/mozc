@@ -130,6 +130,8 @@ bool BrowserInfo::IsInIncognitoMode(
       suffix_ja = "[InPrivate]";
       suffix_en = "[InPrivate]";
       break;
+    default:
+      break;
   }
   if (suffix_ja != nullptr && absl::EndsWith(root_window_name, suffix_ja)) {
     return true;
