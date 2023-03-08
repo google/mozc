@@ -47,23 +47,23 @@
 namespace mozc {
 namespace {
 
-Segment *AddSegment(const std::string &key, Segments *segments) {
+Segment *AddSegment(const absl::string_view key, Segments *segments) {
   Segment *segment = segments->push_back_segment();
   segment->set_key(key);
   return segment;
 }
 
-Segment::Candidate *AddCandidate(const std::string &key,
-                                 const std::string &value,
-                                 const std::string &content_key,
-                                 const std::string &content_value,
+Segment::Candidate *AddCandidate(const absl::string_view key,
+                                 const absl::string_view value,
+                                 const absl::string_view content_key,
+                                 const absl::string_view content_value,
                                  Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->key = key;
-  candidate->value = value;
-  candidate->content_key = content_key;
-  candidate->content_value = content_value;
+  candidate->key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_key = std::string(content_key);
+  candidate->content_value = std::string(content_value);
   return candidate;
 }
 }  // namespace

@@ -40,6 +40,7 @@
 #include "rewriter/rewriter_util.h"
 #include "transliteration/transliteration.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 

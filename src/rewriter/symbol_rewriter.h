@@ -51,7 +51,7 @@ class SymbolRewriter : public RewriterInterface {
  public:
   explicit SymbolRewriter(const ConverterInterface *parent_converter,
                           const DataManagerInterface *data_manager);
-  ~SymbolRewriter() override;
+  ~SymbolRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 
@@ -67,12 +67,12 @@ class SymbolRewriter : public RewriterInterface {
 
   // Some characters may have different description for full/half width forms.
   // Here we just change the description in this function.
-  static const std::string GetDescription(
-      const std::string &value, absl::string_view description,
-      absl::string_view additional_description);
+  static std::string GetDescription(absl::string_view value,
+                                    absl::string_view description,
+                                    absl::string_view additional_description);
 
   // return true key has no-hiragana
-  static bool IsSymbol(const std::string &key);
+  static bool IsSymbol(absl::string_view key);
 
   // Insert alternative form of space.
   static void ExpandSpace(Segment *segment);

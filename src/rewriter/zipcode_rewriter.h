@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -52,8 +53,8 @@ class ZipcodeRewriter : public RewriterInterface {
   bool GetZipcodeCandidatePositions(const Segment &seg, std::string *zipcode,
                                     std::string *address,
                                     size_t *insert_pos) const;
-  bool InsertCandidate(size_t insert_pos, const std::string &zipcode,
-                       const std::string &address,
+  bool InsertCandidate(size_t insert_pos, absl::string_view zipcode,
+                       absl::string_view address,
                        const ConversionRequest &request,
                        Segment *segment) const;
 

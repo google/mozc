@@ -41,7 +41,7 @@ class Segments;
 class UnicodeRewriter : public RewriterInterface {
  public:
   explicit UnicodeRewriter(const ConverterInterface *parent_converter);
-  ~UnicodeRewriter() override;
+  ~UnicodeRewriter() override = default;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

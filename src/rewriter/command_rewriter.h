@@ -44,8 +44,8 @@ class Segment;
 // of Suggestions and/or Incogito mode.
 class CommandRewriter : public RewriterInterface {
  public:
-  CommandRewriter();
-  ~CommandRewriter() override;
+  CommandRewriter() = default;
+  ~CommandRewriter() override = default;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

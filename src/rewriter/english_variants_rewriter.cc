@@ -41,15 +41,12 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
-EnglishVariantsRewriter::EnglishVariantsRewriter() {}
-
-EnglishVariantsRewriter::~EnglishVariantsRewriter() {}
-
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
-    const std::string &input, std::vector<std::string> *variants) const {
+    const absl::string_view input, std::vector<std::string> *variants) const {
   DCHECK(variants);
 
   if (input.empty()) {
@@ -61,9 +58,9 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
     return false;
   }
 
-  std::string lower = input;
-  std::string upper = input;
-  std::string capitalized = input;
+  std::string lower(input);
+  std::string upper(input);
+  std::string capitalized(input);
   Util::LowerString(&lower);
   Util::UpperString(&upper);
   Util::CapitalizeString(&capitalized);

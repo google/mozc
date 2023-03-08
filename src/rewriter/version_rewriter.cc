@@ -43,6 +43,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -76,8 +77,8 @@ class VersionRewriter::VersionDataImpl {
  public:
   class VersionEntry {
    public:
-    VersionEntry(const std::string &base_candidate, const std::string &output,
-                 size_t rank)
+    VersionEntry(const absl::string_view base_candidate,
+                 const absl::string_view output, size_t rank)
         : base_candidate_(base_candidate), output_(output), rank_(rank) {}
 
     const std::string &base_candidate() const { return base_candidate_; }
@@ -90,7 +91,7 @@ class VersionRewriter::VersionDataImpl {
     size_t rank_;
   };
 
-  const VersionEntry *Lookup(const std::string &key) const {
+  const VersionEntry *Lookup(const absl::string_view key) const {
     const auto it = entries_.find(key);
     if (it == entries_.end()) {
       return nullptr;
@@ -110,7 +111,7 @@ class VersionRewriter::VersionDataImpl {
   }
 
  private:
-  std::map<std::string, std::unique_ptr<VersionEntry>> entries_;
+  absl::flat_hash_map<std::string, std::unique_ptr<VersionEntry>> entries_;
 };
 
 VersionRewriter::VersionRewriter(absl::string_view data_version)

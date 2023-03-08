@@ -43,6 +43,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -51,12 +52,10 @@ UnicodeRewriter::UnicodeRewriter(const ConverterInterface *parent_converter)
   DCHECK(parent_converter_);
 }
 
-UnicodeRewriter::~UnicodeRewriter() = default;
-
 namespace {
 
 // Checks given string is ucs4 expression or not.
-bool IsValidUcs4Expression(const std::string &input) {
+bool IsValidUcs4Expression(const absl::string_view input) {
   if (input.size() < 3 || input.size() > 8) {
     return false;
   }
@@ -65,7 +64,7 @@ bool IsValidUcs4Expression(const std::string &input) {
     return false;
   }
 
-  const std::string hexcode(input, 2, input.npos);
+  const std::string hexcode(input.substr(2));
 
   for (size_t i = 0; i < hexcode.size(); ++i) {
     if (!::isxdigit(hexcode.at(i))) {
@@ -76,14 +75,14 @@ bool IsValidUcs4Expression(const std::string &input) {
 }
 
 // Converts given string to 32bit unsigned integer.
-bool UCS4ExpressionToInteger(const std::string &input, uint32_t *ucs4) {
+bool UCS4ExpressionToInteger(const absl::string_view input, uint32_t *ucs4) {
   DCHECK(ucs4);
-  const std::string hexcode(input, 2, input.npos);
+  const std::string hexcode(input.substr(2));
   return absl::SimpleHexAtoi(hexcode, ucs4);
 }
 
-void AddCandidate(const std::string &key, const std::string &value, int index,
-                  Segment *segment) {
+void AddCandidate(const absl::string_view key, const absl::string_view value,
+                  int index, Segment *segment) {
   DCHECK(segment);
 
   if (index > segment->candidates_size()) {
@@ -95,10 +94,10 @@ void AddCandidate(const std::string &key, const std::string &value, int index,
 
   candidate->Init();
   segment->set_key(key);
-  candidate->key = key;
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->description = "Unicode 変換 (" + key + ")";
+  candidate->key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
+  candidate->description = absl::StrCat("Unicode 変換 (", key, ")");
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
   // UnicodeRewriter will be removed because they are unrenderable.

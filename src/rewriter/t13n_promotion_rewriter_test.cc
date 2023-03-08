@@ -42,21 +42,23 @@
 #include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddCandidateWithValue(const std::string &value, Segment *segment) {
+void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
 }
 
 // Returns -1 if not found.
-int GetCandidateIndexByValue(const std::string &value, const Segment &segment) {
+int GetCandidateIndexByValue(const absl::string_view value,
+                             const Segment &segment) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       return i;

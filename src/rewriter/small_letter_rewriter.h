@@ -44,7 +44,7 @@ class Segments;
 class SmallLetterRewriter : public RewriterInterface {
  public:
   explicit SmallLetterRewriter(const ConverterInterface *parent_converter);
-  ~SmallLetterRewriter() override;
+  ~SmallLetterRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 

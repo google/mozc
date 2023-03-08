@@ -36,17 +36,18 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddCandidateWithValue(const std::string &value, Segment *segment) {
+void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
 }
 
 class A11yDescriptionRewriterTest : public ::testing::Test {

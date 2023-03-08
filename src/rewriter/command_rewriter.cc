@@ -39,6 +39,7 @@
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -72,7 +73,8 @@ constexpr char kIncoginitoModeOff[] = "シークレットモードをオフ";
 constexpr char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
 constexpr char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
 
-bool FindString(const std::string &query, const char **values, size_t size) {
+bool FindString(const absl::string_view query, const char **values,
+                const size_t size) {
   DCHECK(values);
   DCHECK_GT(size, 0);
   for (size_t i = 0; i < size; ++i) {
@@ -106,10 +108,6 @@ bool IsSuggestionEnabled(const config::Config &config) {
          config.use_realtime_conversion();
 }
 }  // namespace
-
-CommandRewriter::CommandRewriter() {}
-
-CommandRewriter::~CommandRewriter() {}
 
 void CommandRewriter::InsertIncognitoModeToggleCommand(
     const config::Config &config, Segment *segment, size_t reference_pos,

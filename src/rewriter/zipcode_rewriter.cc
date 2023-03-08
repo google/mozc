@@ -38,6 +38,8 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -65,9 +67,9 @@ bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
 }
 
 // Insert zipcode into the |segment|
-bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
-                                      const std::string &zipcode,
-                                      const std::string &address,
+bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
+                                      const absl::string_view zipcode,
+                                      const absl::string_view address,
                                       const ConversionRequest &request,
                                       Segment *segment) const {
   DCHECK(segment);
@@ -109,7 +111,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
     space = " ";
   }
 
-  const std::string value = zipcode + space + address;
+  const std::string value = absl::StrCat(zipcode, space, address);
 
   candidate->Init();
   candidate->lid = pos_matcher_->GetZipcodeId();
@@ -117,8 +119,8 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
   candidate->cost = base_candidate.cost;
   candidate->value = value;
   candidate->content_value = value;
-  candidate->key = zipcode;
-  candidate->content_key = zipcode;
+  candidate->key = std::string(zipcode);
+  candidate->content_key = std::string(zipcode);
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::NO_LEARNING;
   candidate->description = "郵便番号と住所";
@@ -138,7 +140,7 @@ bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
   }
 
   const Segment &segment = segments->conversion_segment(0);
-  const std::string &key = segment.key();
+  const absl::string_view key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";
     return false;

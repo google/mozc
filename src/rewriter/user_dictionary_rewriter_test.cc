@@ -42,11 +42,12 @@
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 namespace {
-void AddCandidate(const std::string &value, bool is_user_dictionary,
+void AddCandidate(const absl::string_view value, const bool is_user_dictionary,
                   Segments *segments) {
   Segment *seg = nullptr;
   if (segments->segments_size() == 0) {
@@ -57,10 +58,10 @@ void AddCandidate(const std::string &value, bool is_user_dictionary,
   }
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->key = value;
-  candidate->content_key = value;
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->key = std::string(value);
+  candidate->content_key = std::string(value);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
   if (is_user_dictionary) {
     candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
   }

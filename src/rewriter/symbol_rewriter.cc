@@ -89,25 +89,23 @@ size_t SymbolRewriter::GetOffset(const ConversionRequest &request,
 // Return merged description.
 // TODO(taku): allow us to define two descriptions in *.tsv file
 // static function
-const std::string SymbolRewriter::GetDescription(
-    const std::string &value, absl::string_view description,
-    absl::string_view additional_description) {
+std::string SymbolRewriter::GetDescription(
+    const absl::string_view value, const absl::string_view description,
+    const absl::string_view additional_description) {
   if (description.empty()) {
     return "";
   }
   std::string result = std::string(description);
   // Merge description
   if (!additional_description.empty()) {
-    result.append(1, '(');
-    result.append(additional_description.data(), additional_description.size());
-    result.append(1, ')');
+    absl::StrAppend(&result, "(", additional_description, ")");
   }
   return result;
 }
 
 // return true key has no-hiragana
 // static function
-bool SymbolRewriter::IsSymbol(const std::string &key) {
+bool SymbolRewriter::IsSymbol(const absl::string_view key) {
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
     const char32_t ucs4 = iter.Get();
     if (ucs4 >= 0x3041 && ucs4 <= 0x309F) {  // hiragana
@@ -366,8 +364,6 @@ SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
   dictionary_ = std::make_unique<SerializedDictionary>(token_array_data,
                                                        string_array_data);
 }
-
-SymbolRewriter::~SymbolRewriter() {}
 
 int SymbolRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {

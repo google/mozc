@@ -32,7 +32,6 @@
 
 #include <map>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
@@ -86,7 +85,7 @@ class CorrectionRewriter : public RewriterInterface {
   // If |value| is empty, looks up corrections only using the key.
   // The matched results are saved in |results|.
   // Return false if |results| is empty.
-  bool LookupCorrection(const std::string &key, const std::string &value,
+  bool LookupCorrection(absl::string_view key, absl::string_view value,
                         std::vector<ReadingCorrectionItem> *results) const;
 
   SerializedStringArray value_array_;

@@ -103,7 +103,7 @@ enum ParserState : char {
 // This function allows conversion of digits sequence. For example, _123 will be
 // converted into ₁₂₃. Other symbols requires prefix as `^+` or `_(` for each
 // occurrence. `^()` does not mean ⁽⁾ but means ⁽).
-bool ConvertExpressions(const std::string &input, std::string *value) {
+bool ConvertExpressions(const absl::string_view input, std::string *value) {
   // Check preconditions
   if (input.empty()) {
     return false;
@@ -195,7 +195,7 @@ bool ConvertExpressions(const std::string &input, std::string *value) {
 
 bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
                          const ConverterInterface *parent_converter,
-                         const std::string &key) {
+                         const absl::string_view key) {
   if (segments->conversion_segments_size() == 1) {
     return true;
   }
@@ -215,8 +215,9 @@ bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
   return true;
 }
 
-void AddCandidate(const std::string &key, const std::string &description,
-                  const std::string &value, int index, Segment *segment) {
+void AddCandidate(const absl::string_view key,
+                  const absl::string_view description,
+                  const absl::string_view value, int index, Segment *segment) {
   DCHECK(segment);
 
   if (index < 0 || index > segment->candidates_size()) {
@@ -228,10 +229,10 @@ void AddCandidate(const std::string &key, const std::string &description,
 
   candidate->Init();
   segment->set_key(key);
-  candidate->key = key;
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->description = description;
+  candidate->key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
+  candidate->description = std::string(description);
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
 }
@@ -243,8 +244,6 @@ SmallLetterRewriter::SmallLetterRewriter(
     : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
 }
-
-SmallLetterRewriter::~SmallLetterRewriter() = default;
 
 int SmallLetterRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {

@@ -49,6 +49,7 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -63,7 +64,7 @@ using ::testing::Pointee;
 using ::testing::Return;
 using ::testing::StrEq;
 
-void InsertASCIISequence(const std::string &text,
+void InsertASCIISequence(const absl::string_view text,
                          composer::Composer *composer) {
   for (size_t i = 0; i < text.size(); ++i) {
     commands::KeyEvent key;
@@ -83,7 +84,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
   void TearDown() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
   bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
-                                     const std::string &key,
+                                     const absl::string_view key,
                                      std::string *composition,
                                      Segments *segments) {
     commands::Request client_request;
@@ -118,13 +119,13 @@ class LanguageAwareRewriterTest : public ::testing::Test {
   const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
 };
 
-void PushFrontCandidate(const std::string &data, Segment *segment) {
+void PushFrontCandidate(const absl::string_view data, Segment *segment) {
   Segment::Candidate *candidate = segment->push_front_candidate();
   candidate->Init();
-  candidate->value = data;
-  candidate->key = data;
-  candidate->content_value = data;
-  candidate->content_key = data;
+  candidate->value = std::string(data);
+  candidate->key = std::string(data);
+  candidate->content_value = std::string(data);
+  candidate->content_key = std::string(data);
 }
 
 // A matcher for Segment::Candidate to test if a candidate has the given value.

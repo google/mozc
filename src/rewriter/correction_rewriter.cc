@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -58,7 +57,7 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
 }
 
 bool CorrectionRewriter::LookupCorrection(
-    const std::string &key, const std::string &value,
+    const absl::string_view key, const absl::string_view value,
     std::vector<ReadingCorrectionItem> *results) const {
   CHECK(results);
   results->clear();

@@ -37,6 +37,7 @@
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -181,8 +182,7 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
 void A11yDescriptionRewriter::AddA11yDescription(
     Segment::Candidate *candidate) const {
   const std::string &content_value = candidate->content_value;
-  std::string buf;
-  absl::StrAppend(&buf, content_value);
+  std::string buf(content_value);
   CharacterType previous_type = INITIAL_STATE;
   CharacterType current_type = INITIAL_STATE;
   std::vector<std::string> graphemes;

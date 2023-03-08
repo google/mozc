@@ -44,6 +44,7 @@
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -53,7 +54,7 @@ class UsageRewriter : public RewriterInterface {
  public:
   UsageRewriter(const DataManagerInterface *data_manager,
                 const dictionary::DictionaryInterface *dictionary);
-  ~UsageRewriter() override;
+  ~UsageRewriter() override = default;
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
@@ -108,7 +109,7 @@ class UsageRewriter : public RewriterInterface {
   };
 
   using StrPair = std::pair<std::string, std::string>;
-  static std::string GetKanjiPrefixAndOneHiragana(const std::string &word);
+  static std::string GetKanjiPrefixAndOneHiragana(absl::string_view word);
 
   UsageDictItemIterator LookupUnmatchedUsageHeuristically(
       const Segment::Candidate &candidate) const;

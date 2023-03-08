@@ -35,10 +35,12 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 
 void OutputExistenceHeader(const std::vector<std::string> &entries,
-                           const std::string &data_namespace, std::ostream *ofs,
+                           absl::string_view data_namespace, std::ostream *ofs,
                            double error_rate);
 void OutputExistenceBinary(const std::vector<std::string> &entries,
                            std::ostream *ofs, double error_rate);

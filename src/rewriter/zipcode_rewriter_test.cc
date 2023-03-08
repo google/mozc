@@ -41,6 +41,7 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 
 using mozc::dictionary::PosMatcher;
 
@@ -52,7 +53,7 @@ enum SegmentType {
   NON_ZIPCODE = 2,
 };
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 SegmentType type, const PosMatcher &pos_matcher,
                 Segments *segments) {
   segments->Clear();
@@ -60,9 +61,9 @@ void AddSegment(const std::string &key, const std::string &value,
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = key;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->value = std::string(key);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
 
   if (type == ZIPCODE) {
     candidate->lid = pos_matcher.GetZipcodeId();
@@ -71,7 +72,7 @@ void AddSegment(const std::string &key, const std::string &value,
 }
 
 bool HasZipcodeAndAddress(const Segments &segments,
-                          const std::string &expected) {
+                          const absl::string_view expected) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);

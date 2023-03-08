@@ -39,6 +39,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
