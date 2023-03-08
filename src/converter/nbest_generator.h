@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/container/freelist.h"
-#include "base/port.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -91,16 +90,16 @@ class NBestGenerator {
       bool apply_suggestion_filter_for_exact_match);
   NBestGenerator(const NBestGenerator &) = delete;
   NBestGenerator &operator=(const NBestGenerator &) = delete;
-  ~NBestGenerator();
+  ~NBestGenerator() = default;
 
   // Reset the iterator status.
   void Reset(const Node *begin_node, const Node *end_node,
-             const BoundaryCheckMode mode);
+             BoundaryCheckMode mode);
 
-  // Iterator:
-  // Can obtain N-best results by calling Next() in sequence.
-  bool Next(const ConversionRequest &request, const std::string &original_key,
-            Segment::Candidate *candidate);
+  // Set candidates.
+  void SetCandidates(const ConversionRequest &request,
+                     const std::string &original_key, size_t expand_size,
+                     Segment *segment);
 
  private:
   enum BoundaryCheckResult {
@@ -109,21 +108,27 @@ class NBestGenerator {
     INVALID,
   };
 
-  typedef BoundaryCheckResult (NBestGenerator::*BoundaryChecker)(const Node *,
-                                                                 const Node *,
-                                                                 bool) const;
+  struct QueueElement {
+    const Node *node;
+    const QueueElement *next;
+    int32_t fx;  // f(x) = h(x) + g(x): cost function for A* search
+    int32_t gx;  // g(x)
+    // transition cost part of g(x).
+    // Do not take the transition costs to edge nodes.
+    int32_t structure_gx;
+    int32_t w_gx;
 
-  struct QueueElement;
-  struct QueueElementComparator;
+    static bool Comparator(const QueueElement *q1, const QueueElement *q2);
+  };
 
   // This is just a priority_queue of const QueueElement*, but supports
   // more operations in addition to std::priority_queue.
   class Agenda {
    public:
-    Agenda() {}
+    Agenda() = default;
     Agenda(const Agenda &) = delete;
     Agenda &operator=(const Agenda &) = delete;
-    ~Agenda() {}
+    ~Agenda() = default;
 
     const QueueElement *Top() const { return priority_queue_.front(); }
     bool IsEmpty() const { return priority_queue_.empty(); }
@@ -137,6 +142,11 @@ class NBestGenerator {
     std::vector<const QueueElement *> priority_queue_;
   };
 
+  // Iterator:
+  // Can obtain N-best results by calling Next() in sequence.
+  bool Next(const ConversionRequest &request, const std::string &original_key,
+            Segment::Candidate *candidate);
+
   int InsertTopResult(const ConversionRequest &request,
                       const std::string &original_key,
                       Segment::Candidate *candidate);
@@ -145,7 +155,10 @@ class NBestGenerator {
                      int32_t structure_cost, int32_t wcost,
                      const std::vector<const Node *> &nodes) const;
 
-  // Helper functions for Next(). Checks node boundary conditions.
+  // Helper function for Next(). Checks node boundary conditions.
+  BoundaryCheckResult BoundaryCheck(const Node *lnode, const Node *rnode,
+                                    bool is_edge) const;
+  // Helper functions for BoundaryCheck.
   BoundaryCheckResult CheckStrict(const Node *lnode, const Node *rnode,
                                   bool is_edge) const;
   BoundaryCheckResult CheckOnlyMid(const Node *lnode, const Node *rnode,
@@ -178,8 +191,6 @@ class NBestGenerator {
   std::unique_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_ = false;
   BoundaryCheckMode check_mode_ = STRICT;
-
-  BoundaryChecker boundary_checker_ = nullptr;
 };
 
 }  // namespace mozc

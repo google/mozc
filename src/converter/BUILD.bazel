@@ -196,8 +196,6 @@ mozc_cc_library(
         ":segmenter",
         ":segments",
         "//base:logging",
-        "//base:port",
-        "//base:util",
         "//base/container:freelist",
         "//dictionary:pos_matcher_lib",
         "//dictionary:suppression_dictionary",

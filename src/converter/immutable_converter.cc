@@ -309,29 +309,6 @@ ImmutableConverterImpl::ImmutableConverterImpl(
   DCHECK(suggestion_filter_);
 }
 
-void ImmutableConverterImpl::ExpandCandidates(const ConversionRequest &request,
-                                              const std::string &original_key,
-                                              NBestGenerator *nbest,
-                                              Segment *segment,
-                                              size_t expand_size) const {
-  DCHECK(nbest);
-  DCHECK(segment);
-  CHECK_GT(expand_size, 0);
-
-  while (segment->candidates_size() < expand_size) {
-    Segment::Candidate *candidate = segment->push_back_candidate();
-    DCHECK(candidate);
-    candidate->Init();
-
-    // if NBestGenerator::Next() returns nullptr,
-    // no more entries are generated.
-    if (!nbest->Next(request, original_key, candidate)) {
-      segment->pop_back_candidate();
-      break;
-    }
-  }
-}
-
 void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
                                                    size_t expand_size) const {
   const Segment::Candidate *top_candidate =
@@ -1941,9 +1918,7 @@ void ImmutableConverterImpl::InsertCandidates(
       mode = NBestGenerator::ONLY_MID;
     }
     nbest_generator.Reset(prev, node->next, mode);
-
-    ExpandCandidates(request, original_key, &nbest_generator, segment,
-                     expand_size);
+    nbest_generator.SetCandidates(request, original_key, expand_size, segment);
 
     if (type == MULTI_SEGMENTS || type == SINGLE_SEGMENT) {
       InsertDummyCandidates(segment, expand_size);

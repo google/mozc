@@ -150,19 +150,6 @@ class MockDataAndImmutableConverter {
 
 class NBestGeneratorTest : public ::testing::Test {
  protected:
-  void GatherCandidates(size_t size, const ConversionRequest &request,
-                        NBestGenerator *nbest, Segment *segment) const {
-    while (segment->candidates_size() < size) {
-      Segment::Candidate *candidate = segment->push_back_candidate();
-      candidate->Init();
-
-      if (!nbest->Next(request, segment->key(), candidate)) {
-        segment->pop_back_candidate();
-        break;
-      }
-    }
-  }
-
   const Node *GetEndNode(const ConversionRequest &request,
                          const ImmutableConverterImpl &converter,
                          const Segments &segments, const Node &begin_node,
@@ -216,7 +203,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
+    nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // The top result is treated exceptionally and has no boundary check
     // in NBestGenerator.
     // The best route is calculated in ImmutalbeConverter with boundary check.
@@ -229,7 +216,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_MID);
     Segment result_segment;
-    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
+    nbest_generator->SetCandidates(request, "", 10, &result_segment);
     ASSERT_EQ(result_segment.candidates_size(), 3);
     EXPECT_EQ(result_segment.candidate(0).value, "進行");
     EXPECT_EQ(result_segment.candidate(1).value, "信仰");
@@ -269,7 +256,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
+    nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // Top result should be inserted, but other candidates will be cut
     // due to boundary check.
     ASSERT_EQ(result_segment.candidates_size(), 1);
@@ -278,7 +265,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
     Segment result_segment;
-    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
+    nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // We can get several candidates.
     ASSERT_LT(1, result_segment.candidates_size());
     EXPECT_EQ(result_segment.candidate(0).value, "私の名前は中ノです");
@@ -317,7 +304,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
 
   nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
   Segment result_segment;
-  GatherCandidates(10, request, nbest_generator.get(), &result_segment);
+  nbest_generator->SetCandidates(request, "", 10, &result_segment);
   ASSERT_LE(1, result_segment.candidates_size());
 
   const Segment::Candidate &top_cand = result_segment.candidate(0);
