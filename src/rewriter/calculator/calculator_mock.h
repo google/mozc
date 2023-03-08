@@ -33,22 +33,23 @@
 #ifndef MOZC_REWRITER_CALCULATOR_CALCULATOR_MOCK_H_
 #define MOZC_REWRITER_CALCULATOR_CALCULATOR_MOCK_H_
 
-#include <map>
 #include <string>
 #include <utility>
 
 #include "rewriter/calculator/calculator_interface.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class CalculatorMock : public CalculatorInterface {
  public:
-  CalculatorMock();
-  ~CalculatorMock() override;
+  CalculatorMock() = default;
+  ~CalculatorMock() override = default;
 
   // Injects the behavior that CalculateString converts |key| to |value| and
   // returns |return_value|.
-  void SetCalculatePair(const std::string &key, const std::string &value,
+  void SetCalculatePair(absl::string_view key, absl::string_view value,
                         bool return_value);
 
   // The number that CalculateString() has been called.
@@ -57,14 +58,15 @@ class CalculatorMock : public CalculatorInterface {
   // If |key| has been set by SetCalculatePair, then sets |*result| to the
   // corresponding value and returns |return_value|, otherwise clear |*result|
   // and returns false.
-  bool CalculateString(const std::string &key,
+  bool CalculateString(absl::string_view key,
                        std::string *result) const override;
 
  private:
-  typedef std::map<std::string, std::pair<std::string, bool> > CalculationMap;
+  using CalculationMap =
+      absl::flat_hash_map<std::string, std::pair<std::string, bool>>;
 
   CalculationMap calculation_map_;
-  mutable int calculation_counter_;
+  mutable int calculation_counter_ = 0;
 };
 
 }  // namespace mozc

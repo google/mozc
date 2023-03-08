@@ -33,21 +33,19 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-CalculatorMock::CalculatorMock() : calculation_counter_(0) {}
 
-CalculatorMock::~CalculatorMock() {}
-
-void CalculatorMock::SetCalculatePair(const std::string &key,
-                                      const std::string &value,
+void CalculatorMock::SetCalculatePair(const absl::string_view key,
+                                      const absl::string_view value,
                                       bool return_value) {
-  calculation_map_[key] = std::make_pair(value, return_value);
+  calculation_map_[key] = {std::string(value), return_value};
 }
 
 int CalculatorMock::calculation_counter() const { return calculation_counter_; }
 
-bool CalculatorMock::CalculateString(const std::string &key,
+bool CalculatorMock::CalculateString(const absl::string_view key,
                                      std::string *result) const {
   ++calculation_counter_;
   DCHECK(result);

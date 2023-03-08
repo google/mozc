@@ -42,6 +42,8 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -50,8 +52,6 @@ CalculatorRewriter::CalculatorRewriter(
     : parent_converter_(parent_converter) {
   DCHECK(parent_converter_);
 }
-
-CalculatorRewriter::~CalculatorRewriter() {}
 
 int CalculatorRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -122,8 +122,8 @@ bool CalculatorRewriter::Rewrite(const ConversionRequest &request,
   return true;
 }
 
-bool CalculatorRewriter::InsertCandidate(const std::string &value,
-                                         size_t insert_pos,
+bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
+                                         const size_t insert_pos,
                                          Segment *segment) const {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candidates_size is 0";
@@ -170,20 +170,20 @@ bool CalculatorRewriter::InsertCandidate(const std::string &value,
     candidate->description = "計算結果";
 
     if (n == 0) {  // without expression
-      candidate->value = value;
-      candidate->content_value = value;
+      candidate->value = std::string(value);
+      candidate->content_value = std::string(value);
     } else {  // with expression
       DCHECK(!expression.empty());
       if (expression.front() == '=') {
         // Expression starts with '='.
         // Appends value to the left of expression.
-        candidate->value = value + expression;
-        candidate->content_value = value + expression;
+        candidate->value = absl::StrCat(value, expression);
+        candidate->content_value = absl::StrCat(value, expression);
       } else {
         // Expression ends with '='.
         // Appends value to the right of expression.
-        candidate->value = expression + value;
-        candidate->content_value = expression + value;
+        candidate->value = absl::StrCat(expression, value);
+        candidate->content_value = absl::StrCat(expression, value);
       }
     }
   }

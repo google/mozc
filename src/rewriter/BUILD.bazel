@@ -754,6 +754,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//rewriter/calculator",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )

@@ -30,10 +30,9 @@
 #ifndef MOZC_REWRITER_CALCULATOR_REWRITER_H_
 #define MOZC_REWRITER_CALCULATOR_REWRITER_H_
 
-#include <string>
-
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -48,7 +47,6 @@ class CalculatorRewriter : public RewriterInterface {
   friend class CalculatorRewriterTest;
 
   explicit CalculatorRewriter(const ConverterInterface *parent_converter);
-  ~CalculatorRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
 
@@ -59,7 +57,7 @@ class CalculatorRewriter : public RewriterInterface {
   // Inserts a candidate with the string into the |segment|.
   // Position of insertion is indicated by |insert_pos|. It returns false if
   // insertion is failed.
-  bool InsertCandidate(const std::string &value, size_t insert_pos,
+  bool InsertCandidate(absl::string_view value, size_t insert_pos,
                        Segment *segment) const;
 
   const ConverterInterface *parent_converter_;

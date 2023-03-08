@@ -51,27 +51,28 @@
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddCandidate(const std::string &key, const std::string &value,
+void AddCandidate(const absl::string_view key, const absl::string_view value,
                   Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->content_key = key;
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
+  candidate->content_key = std::string(key);
 }
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   Segment *segment = segments->push_back_segment();
   segment->set_key(key);
   AddCandidate(key, value, segment);
 }
 
-void SetSegment(const std::string &key, const std::string &value,
+void SetSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   segments->Clear();
   AddSegment(key, value, segments);
@@ -106,7 +107,7 @@ class CalculatorRewriterTest : public ::testing::Test {
   }
 
   static bool InsertCandidate(const CalculatorRewriter &calculator_rewriter,
-                              const std::string &value, size_t insert_pos,
+                              const absl::string_view value, size_t insert_pos,
                               Segment *segment) {
     return calculator_rewriter.InsertCandidate(value, insert_pos, segment);
   }
