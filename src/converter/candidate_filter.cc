@@ -280,6 +280,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // in this mode.
       CHECK(suggestion_filter_);
       if (suggestion_filter_->IsBadSuggestion(candidate->value)) {
+        MOZC_CANDIDATE_LOG(candidate, "IsBadsuggestion(candidate)");
         return BAD_CANDIDATE;
       }
       // TODO(noriyukit): In the implementation below, the possibility remains
@@ -287,6 +288,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // we may want to check all the possibilities.
       for (size_t i = 0; i < nodes.size(); ++i) {
         if (suggestion_filter_->IsBadSuggestion(nodes[i]->value)) {
+          MOZC_CANDIDATE_LOG(candidate, "IsBadsuggestion(node)");
           return BAD_CANDIDATE;
         }
       }
@@ -314,6 +316,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // from user dictionary is converted to "記号,一般" in Mozc engine.
   if (nodes.size() > 1 &&
       ContainsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes)) {
+    MOZC_CANDIDATE_LOG(candidate, "ContainsIsolatedWordOrGeneralSymbol");
     return CandidateFilter::BAD_CANDIDATE;
   }
   // This case tests the case where the isolated word or general symbol is in
@@ -321,6 +324,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (IsIsolatedWordOrGeneralSymbol(*pos_matcher_, nodes[0]->lid) &&
       (IsNormalOrConstrainedNode(nodes[0]->prev) ||
        IsNormalOrConstrainedNode(nodes[0]->next))) {
+    MOZC_CANDIDATE_LOG(candidate, "IsIsolatedWordOrGeneralSymbol");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -331,6 +335,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
        candidate->value != candidate->content_value &&
        suppression_dictionary_->SuppressEntry(candidate->content_key,
                                               candidate->content_value))) {
+    MOZC_CANDIDATE_LOG(candidate, "SuppressEntry");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -346,6 +351,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // The candidate is already seen.
   if (seen_.find(candidate->value) != seen_.end()) {
+    MOZC_CANDIDATE_LOG(candidate, "already seen");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -366,11 +372,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
           pos_matcher_->IsVerbSuffix(nodes[1]->lid) &&
           !pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
         // "書い" | "ます", "過ぎ", etc
+        MOZC_CANDIDATE_LOG(candidate, "IsKagyoTaConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
       if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->rid) &&
           pos_matcher_->IsTeSuffix(nodes[1]->lid)) {
         // "買い" | "て"
+        MOZC_CANDIDATE_LOG(candidate, "IsWagyoRenyoConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
     }
@@ -380,11 +388,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
           pos_matcher_->IsVerbSuffix(nodes[0]->rid) &&
           !pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
         // "書い" | "ます", "過ぎ", etc
+        MOZC_CANDIDATE_LOG(candidate, "IsKagyoTaConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
       if (pos_matcher_->IsWagyoRenyoConnectionVerb(nodes[0]->lid) &&
           pos_matcher_->IsTeSuffix(nodes[0]->rid)) {
         // "買い" | "て"
+        MOZC_CANDIDATE_LOG(candidate, "IsWagyoRenyoConnectionVerb");
         return CandidateFilter::BAD_CANDIDATE;
       }
     }
@@ -418,11 +428,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       IsConnectedWeakCompound(nodes, pos_matcher_);
 
   if (is_noisy_weak_compound && candidate_size >= 1) {
+    MOZC_CANDIDATE_LOG(candidate, "is_noisy_weak_compound");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
   if (is_connected_weak_compound &&
       candidate_size >= kSizeThresholdForWeakCompound) {
+    MOZC_CANDIDATE_LOG(candidate, "is_connected_weak_compound");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -471,12 +483,14 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // EnglishT13N must be the prefix of the candidate.
       if (Util::GetScriptType(nodes[i]->key) == Util::HIRAGANA &&
           Util::IsEnglishTransliteration(nodes[i]->value)) {
+        MOZC_CANDIDATE_LOG(candidate, "IsEnglishTransliteration");
         return CandidateFilter::BAD_CANDIDATE;
       }
       // nodes[1..] are non-functional candidates.
       // In other words, the node just after KatakanaT13n candidate should
       // be a functional word.
       if (is_top_english_t13n && !pos_matcher_->IsFunctional(nodes[i]->lid)) {
+        MOZC_CANDIDATE_LOG(candidate, "!IsFunctional");
         return CandidateFilter::BAD_CANDIDATE;
       }
     }
@@ -524,6 +538,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // When the current candidate is removed only with the "structure_cost",
       // there might exist valid candidates just after the current candidate.
       // We don't want to miss them.
+      MOZC_CANDIDATE_LOG(candidate, "invalid cost");
       return CandidateFilter::BAD_CANDIDATE;
     } else {
       return CandidateFilter::STOP_ENUMERATION;
@@ -545,6 +560,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     VLOG(2) << "structure cost is invalid:  " << candidate->value << " "
             << candidate->content_value << " " << candidate->structure_cost
             << " " << candidate->cost;
+    MOZC_CANDIDATE_LOG(candidate, "structure cost is invalid");
     return CandidateFilter::BAD_CANDIDATE;
   }
 
@@ -578,6 +594,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       prev_lid = node->lid;
     }
     if (number_nodes >= 2) {
+      MOZC_CANDIDATE_LOG(candidate, "multile number node");
       return CandidateFilter::BAD_CANDIDATE;
     }
   }
@@ -588,6 +605,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     // 2) which have atypical Pos structure
     if (!IsSameNodeStructure(top_nodes, nodes) &&
         !IsTypicalNodeStructure(*pos_matcher_, nodes)) {
+      MOZC_CANDIDATE_LOG(candidate, "is_strict_mode");
       return CandidateFilter::BAD_CANDIDATE;
     }
   }

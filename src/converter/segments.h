@@ -43,6 +43,17 @@
 #include "converter/lattice.h"
 #include "absl/strings/string_view.h"
 
+#ifndef NDEBUG
+#define MOZC_CANDIDATE_DEBUG
+#define MOZC_CANDIDATE_LOG(result, message) \
+  (result)->Dlog(__FILE__, __LINE__, message)
+
+#else  // NDEBUG
+#define MOZC_CANDIDATE_LOG(result, message) \
+  {}
+
+#endif  // NDEBUG
+
 namespace mozc {
 
 class Segment final {
@@ -201,11 +212,13 @@ class Segment final {
     // realtime conversion result candidates.  Each element is the encoded
     // lengths of key, value, content key and content value.
     std::vector<uint32_t> inner_segment_boundary;
-
-#ifndef NDEBUG
-    std::string log;
-#endif  // NDEBUG
     // LINT.ThenChange(//converter/segments_matchers.h)
+
+#ifdef MOZC_CANDIDATE_DEBUG
+    void Dlog(absl::string_view filename, int line,
+              absl::string_view message) const;
+    mutable std::string log;
+#endif  // MOZC_CANDIDATE_DEBUG
 
     static bool EncodeLengths(size_t key_len, size_t value_len,
                               size_t content_key_len, size_t content_value_len,

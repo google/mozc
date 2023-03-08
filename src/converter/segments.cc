@@ -42,7 +42,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/number_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -91,6 +92,13 @@ void Segment::Candidate::Init() {
   log.clear();
 #endif  // NDEBUG
 }
+
+#ifndef NDEBUG
+void Segment::Candidate::Dlog(absl::string_view filename, int line,
+                              absl::string_view message) const {
+  absl::StrAppend(&log, filename, ":", line, " ", message, "\n");
+}
+#endif  // NDEBUG
 
 bool Segment::Candidate::IsValid() const {
   if (inner_segment_boundary.empty()) {
@@ -338,12 +346,14 @@ void Segment::insert_candidates(
 
 void Segment::pop_front_candidate() {
   if (!candidates_.empty()) {
+    // The unique_ptr in pool_ is deleted when the candidate is deleted.
     candidates_.pop_front();
   }
 }
 
 void Segment::pop_back_candidate() {
   if (!candidates_.empty()) {
+    // The unique_ptr in pool_ is deleted when the candidate is deleted.
     candidates_.pop_back();
   }
 }
