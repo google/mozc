@@ -790,14 +790,6 @@ bool Util::ChopReturns(std::string *line) {
   return false;
 }
 
-void Util::Sleep(uint32_t msec) {
-#ifdef _WIN32
-  ::Sleep(msec);
-#else   // _WIN32
-  usleep(msec * 1000);
-#endif  // _WIN32
-}
-
 namespace {
 
 void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
