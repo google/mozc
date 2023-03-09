@@ -47,6 +47,8 @@ class RendererLauncherInterface {
  public:
   enum RendererErrorType { RENDERER_VERSION_MISMATCH, RENDERER_FATAL };
 
+  virtual ~RendererLauncherInterface() = default;
+
   // implement StartRenderer
   virtual void StartRenderer(
       const std::string &name, const std::string &renderer_path,
@@ -72,9 +74,6 @@ class RendererLauncherInterface {
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
-
-  RendererLauncherInterface() {}
-  virtual ~RendererLauncherInterface() {}
 };
 
 // IPC-based client for out-proc renderer.
