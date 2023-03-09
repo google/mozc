@@ -27,62 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "win32/broker/prelauncher.h"
+#ifndef MOZC_WIN32_BROKER_PRELAUNCHER_H_
+#define MOZC_WIN32_BROKER_PRELAUNCHER_H_
 
-#include <memory>
+namespace mozc::win32 {
 
-#include "base/logging.h"
-#include "base/run_level.h"
-#include "base/system_util.h"
-#include "base/win32/win_util.h"
-#include "client/client_interface.h"
-#include "renderer/renderer_client.h"
-#include "win32/base/imm_util.h"
+int RunPrelaunchProcesses(int argc, char *argv[]);
 
-namespace mozc {
-namespace win32 {
-namespace {
+}  // namespace mozc::win32
 
-constexpr int kErrorLevelSuccess = 0;
-constexpr int kErrorLevelGeneralError = 1;
-
-}  // namespace
-
-int RunPrelaunchProcesses(int argc, char *argv[]) {
-  if (RunLevel::IsProcessInJob()) {
-    return kErrorLevelGeneralError;
-  }
-
-  bool is_service_process = false;
-  if (!WinUtil::IsServiceProcess(&is_service_process)) {
-    // Returns DENY conservatively.
-    return kErrorLevelGeneralError;
-  }
-  if (is_service_process) {
-    return kErrorLevelGeneralError;
-  }
-
-  if (!SystemUtil::IsWindows8OrLater() && !ImeUtil::IsDefault()) {
-    // If Mozc is not default on Windows 7 or former, do nothing.
-    return kErrorLevelSuccess;
-  }
-
-  {
-    std::unique_ptr<client::ClientInterface> converter_client(
-        client::ClientFactory::NewClient());
-    converter_client->set_suppress_error_dialog(true);
-    converter_client->EnsureConnection();
-  }
-
-  {
-    std::unique_ptr<renderer::RendererClient> renderer_client(
-        new mozc::renderer::RendererClient);
-    renderer_client->set_suppress_error_dialog(true);
-    renderer_client->Activate();
-  }
-
-  return kErrorLevelSuccess;
-}
-
-}  // namespace win32
-}  // namespace mozc
+#endif  // MOZC_WIN32_BROKER_PRELAUNCHER_H_
