@@ -30,8 +30,6 @@
 #ifndef MOZC_BASE_UPDATE_UTIL_H_
 #define MOZC_BASE_UPDATE_UTIL_H_
 
-#include "base/port.h"
-
 namespace mozc {
 
 class UpdateUtil {

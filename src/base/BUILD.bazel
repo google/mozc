@@ -1320,3 +1320,20 @@ mozc_cc_test(
         "@com_google_absl//absl/random",
     ],
 )
+
+mozc_cc_library(
+    name = "update_util",
+    srcs = ["update_util.cc"],
+    hdrs = ["update_util.h"],
+)
+
+mozc_cc_test(
+    name = "update_util_test",
+    srcs = ["update_util_test.cc"],
+    deps = [
+        ":update_util",
+        "//testing:gunit_main",
+    ] + mozc_select(
+        windows = ["//base/win32:win_api_test_helper"],
+    ),
+)
