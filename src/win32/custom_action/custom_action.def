@@ -1,10 +1,6 @@
 EXPORTS
     EnsureAllApplicationPackagesPermisssions
     CallIERefreshElevationPolicy
-    InstallIME
-    InstallIMERollback
-    UninstallIME
-    UninstallIMERollback
     RegisterTIP
     RegisterTIPRollback
     UnregisterTIP

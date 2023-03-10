@@ -44,18 +44,6 @@ UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle);
 // Makes ieuser.exe update the cache of the elevation policies.
 UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle);
 
-// Install Mozc as an IME.
-UINT __stdcall InstallIME(MSIHANDLE msi_handle);
-
-// A rollback custom action for InstallIME.
-UINT __stdcall InstallIMERollback(MSIHANDLE msi_handle);
-
-// Unregister Mozc from IMEs.
-UINT __stdcall UninstallIME(MSIHANDLE msi_handle);
-
-// A rollback custom action for UninstallIME.
-UINT __stdcall UninstallIMERollback(MSIHANDLE msi_handle);
-
 // Install Mozc as a TIP.
 UINT __stdcall RegisterTIP(MSIHANDLE msi_handle);
 

@@ -57,7 +57,6 @@
 #include "protocol/commands.pb.h"
 #include "renderer/renderer_client.h"
 #include "server/cache_service_manager.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/keyboard_layout_id.h"
 #include "win32/base/omaha_util.h"
@@ -205,18 +204,6 @@ bool WriteOmahaError(const wchar_t (&function)[num_elements], int line) {
 // This message will be displayed by Omaha meta installer on the error
 // dialog.
 #define LOG_ERROR_FOR_OMAHA() WriteOmahaError(_T(__FUNCTION__), __LINE__)
-
-UINT RemovePreloadKeyByKLID(const mozc::win32::KeyboardLayoutID &klid) {
-  if (!klid.has_id()) {
-    // already removed.
-    return ERROR_SUCCESS;
-  }
-  const mozc::win32::KeyboardLayoutID default_klid(
-      mozc::kDefaultKeyboardLayout);
-  const HRESULT result =
-      mozc::win32::ImmRegistrar::RemoveKeyFromPreload(klid, default_klid);
-  return SUCCEEDED(result) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
-}
 
 }  // namespace
 
@@ -454,58 +441,6 @@ UINT __stdcall WriteApValueRollback(MSIHANDLE msi_handle) {
     LOG_ERROR_FOR_OMAHA();
     return ERROR_INSTALL_FAILURE;
   }
-  return ERROR_SUCCESS;
-}
-
-UINT __stdcall InstallIME(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-
-  const std::wstring ime_path = mozc::win32::ImmRegistrar::GetFullPathForIME();
-  if (ime_path.empty()) {
-    LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
-  }
-  const std::wstring ime_filename =
-      mozc::win32::ImmRegistrar::GetFileNameForIME();
-
-  const std::wstring layout_name = mozc::win32::ImmRegistrar::GetLayoutName();
-  if (layout_name.empty()) {
-    LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
-  }
-
-  // Install IME and obtain the corresponding HKL value.
-  HKL hkl = nullptr;
-  HRESULT result = mozc::win32::ImmRegistrar::Register(
-      ime_filename, layout_name, ime_path,
-      mozc::win32::ImmRegistrar::GetLayoutDisplayNameResourceId(), &hkl);
-  if (result != S_OK) {
-    LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
-  }
-
-  return ERROR_SUCCESS;
-}
-
-UINT __stdcall InstallIMERollback(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-  return RemovePreloadKeyByKLID(mozc::win32::ImmRegistrar::GetKLIDForIME());
-}
-
-UINT __stdcall UninstallIME(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-  const std::wstring ime_filename =
-      mozc::win32::ImmRegistrar::GetFileNameForIME();
-  if (ime_filename.empty()) {
-    return ERROR_INSTALL_FAILURE;
-  }
-  mozc::win32::ImmRegistrar::Unregister(ime_filename);
-  return ERROR_SUCCESS;
-}
-
-UINT __stdcall UninstallIMERollback(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-
   return ERROR_SUCCESS;
 }
 
