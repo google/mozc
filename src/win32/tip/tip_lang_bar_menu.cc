@@ -67,7 +67,7 @@ using WTL::CMenuItemInfo;
 
 constexpr int kDefaultDPI = 96;
 
-// Represents the cookie for the sink to an TipLangBarButton object.
+// Represents the cookie for the sink to a TipLangBarButton object.
 constexpr int kTipLangBarMenuCookie =
     (('M' << 24) | ('o' << 16) | ('z' << 8) | ('c' << 0));
 
@@ -95,45 +95,18 @@ std::string GetIconStringIfNecessary(UINT icon_id) {
 
 // Loads an icon which is appropriate for the current theme.
 // An icon ID 0 represents "no icon".
-HICON LoadIconFromResource(HINSTANCE instance, UINT icon_id_for_non_theme,
-                           UINT icon_id_for_theme) {
-  // We use a 32-bpp icon if we can observe the uxtheme is running.
-  UINT id = icon_id_for_non_theme;
-  if (icon_id_for_theme != 0) {
-    const wchar_t kThemeDll[] = L"uxtheme.dll";
-    typedef BOOL(WINAPI * FPIsThemeActive)();
-
-    // Util::GetSystemModuleHandle is not safe when the specified DLL is
-    // unloaded by other threads.
-    const HMODULE theme_dll =
-        WinUtil::GetSystemModuleHandleAndIncrementRefCount(kThemeDll);
-    if (theme_dll != nullptr) {
-      FPIsThemeActive is_thread_active = reinterpret_cast<FPIsThemeActive>(
-          ::GetProcAddress(theme_dll, "IsThemeActive"));
-      if (is_thread_active != nullptr && is_thread_active()) {
-        id = icon_id_for_theme;
-      }
-    }
-    if (theme_dll != nullptr) {
-      ::FreeLibrary(theme_dll);
-    }
-  }
-
-  if (id == 0) {
-    return nullptr;
-  }
-
+HICON LoadIconFromResource(HINSTANCE instance, UINT icon_id) {
   const auto icon_size = ::GetSystemMetrics(SM_CYSMICON);
 
   // Replace some text icons with on-the-fly image drawn with MS-Gothic.
-  const auto &icon_text = GetIconStringIfNecessary(id);
+  const auto &icon_text = GetIconStringIfNecessary(icon_id);
   if (!icon_text.empty()) {
     const COLORREF text_color = ::GetSysColor(COLOR_WINDOWTEXT);
     return TextIcon::CreateMonochromeIcon(icon_size, icon_size, icon_text,
                                           kTextIconFont, text_color);
   }
 
-  return static_cast<HICON>(::LoadImage(instance, MAKEINTRESOURCE(id),
+  return static_cast<HICON>(::LoadImage(instance, MAKEINTRESOURCE(icon_id),
                                         IMAGE_ICON, icon_size, icon_size,
                                         LR_CREATEDIBSECTION));
 }
@@ -153,8 +126,7 @@ bool LoadIconAsBitmap(HINSTANCE instance, UINT icon_id_for_non_theme,
     *mask = nullptr;
   }
 
-  CIcon icon(
-      LoadIconFromResource(instance, icon_id_for_non_theme, icon_id_for_theme));
+  CIcon icon(LoadIconFromResource(instance, icon_id_for_theme));
 
   if (icon.IsNull()) {
     return false;
@@ -655,7 +627,6 @@ STDMETHODIMP TipLangBarMenuButton::GetIcon(HICON *icon) {
   //  The caller must free this icon when it is no longer required by
   //  calling DestroyIcon.
   *icon = LoadIconFromResource(TipDllModule::module_handle(),
-                               menu_icon_id_for_non_theme_,
                                menu_icon_id_for_theme_);
   return (*icon ? S_OK : E_FAIL);
 }
@@ -807,7 +778,6 @@ STDMETHODIMP TipLangBarToggleButton::GetIcon(HICON *icon) {
   //  The caller must free this icon when it is no longer required by
   //  calling DestroyIcon.
   *icon = LoadIconFromResource(TipDllModule::module_handle(),
-                               data.icon_id_for_non_theme_,
                                data.icon_id_for_theme_);
   return (*icon ? S_OK : E_FAIL);
 }
