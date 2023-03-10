@@ -94,7 +94,7 @@ TEST(IPCTest, IPCTest) {
   for (int i = 0; i < kNumThreads; ++i) {
     cons.push_back(mozc::Thread2([
 #ifdef __APPLE__
-                                     &manager,
+                                     &manager
 #endif  // __APPLE__
     ] {
       absl::SleepFor(absl::Seconds(2));
