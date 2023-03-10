@@ -45,8 +45,6 @@
         'outdir32_dynamic': '<(build_base)/<(CONFIGURATION_NAME)Dynamic',
         'outdir64': '<(build_base)/<(CONFIGURATION_NAME)_x64',
         'mozc_version_file': '<(gen_out_dir)/mozc_version.wxi',
-        'mozc_ime32_path': '<(outdir32)/GIMEJa.ime',
-        'mozc_ime64_path': '<(outdir64)/GIMEJa.ime',
         'mozc_tip32_path': '<(outdir32)/GoogleIMEJaTIP32.dll',
         'mozc_tip64_path': '<(outdir64)/GoogleIMEJaTIP64.dll',
         'mozc_server32_path': '<(outdir32)/GoogleIMEJaConverter.exe',
@@ -106,7 +104,6 @@
         'mozc_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
         'mozc_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
         'mozc_32bit_binaries': [
-          '<(mozc_ime32_path)',
           '<(mozc_tip32_path)',
           '<(mozc_server32_path)',
           '<(mozc_cache_service32_path)',
@@ -116,7 +113,6 @@
           '<(mozc_ca32_path)',
         ],
         'mozc_32bit_postbuild_targets': [
-          'mozc_ime32_postbuild',
           'mozc_tip32_postbuild',
           'mozc_server32_postbuild',
           'mozc_cache_service32_postbuild',
@@ -126,13 +122,11 @@
           'mozc_ca32_postbuild',
         ],
         'mozc_64bit_binaries': [
-          '<(mozc_ime64_path)',
           '<(mozc_tip64_path)',
           '<(mozc_broker64_path)',
           '<(mozc_ca64_path)',
         ],
         'mozc_64bit_postbuild_targets': [
-          'mozc_ime64_postbuild',
           'mozc_tip64_postbuild',
           'mozc_broker64_postbuild',
           'mozc_ca64_postbuild',
@@ -163,11 +157,6 @@
               'message': '<(mozc_version_file)',
             },
           ],
-        },
-        {
-          'target_name': 'mozc_ime32_postbuild',
-          'variables': { 'target_file': '<(mozc_ime32_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
         },
         {
           'target_name': 'mozc_tip32_postbuild',
@@ -217,11 +206,6 @@
         {
           'target_name': 'mozc_ca32_postbuild',
           'variables': { 'target_file': '<(mozc_ca32_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_ime64_postbuild',
-          'variables': { 'target_file': '<(mozc_ime64_path)' },
           'includes': [ 'postbuilds_win.gypi' ],
         },
         {

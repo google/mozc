@@ -158,8 +158,6 @@
         '-dMozcBroker32ElevationPolicyRegKey=<(broker32_elevation_policy_key)',
         '-dMozcBroker64ElevationPolicyRegKey=<(broker64_elevation_policy_key)',
         '-dAddRemoveProgramIconPath=<(icon_path)',
-        '-dMozcIME32Path=<(mozc_ime32_path)',
-        '-dMozcIME64Path=<(mozc_ime64_path)',
         '-dMozcTIP32Path=<(mozc_tip32_path)',
         '-dMozcTIP64Path=<(mozc_tip64_path)',
         '-dMozcBroker32Path=<(mozc_broker32_path)',
@@ -204,9 +202,6 @@
         '-sice:ICE60',
         '-sice:ICE82',
         '-sice:ICE83',
-        # We intentionally remove *.ime from system folders as a part
-        # of uninstallation.
-        '-sice:ICE09',
         # Suppress the validation to address the LGHT0217 error.
         '-sval',
         '-o', '<@(_outputs)',
