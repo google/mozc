@@ -49,7 +49,6 @@ mozc_cc_binary(
     deps = [
         ":ime_switcher",
         ":prelauncher",
-        ":register_ime",
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:system_util",

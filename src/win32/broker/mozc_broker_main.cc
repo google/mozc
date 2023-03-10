@@ -39,7 +39,6 @@
 #include "base/win32/winmain.h"
 #include "win32/broker/ime_switcher.h"
 #include "win32/broker/prelauncher.h"
-#include "win32/broker/register_ime.h"
 #endif  // _WIN32
 
 ABSL_FLAG(std::string, mode, "", "mozc_broker mode");
@@ -57,12 +56,8 @@ int main(int argc, char *argv[]) {
 
   int result = 0;
 #ifdef _WIN32
-  if (absl::GetFlag(FLAGS_mode) == "register_ime") {
-    result = mozc::win32::RunRegisterIME(argc, argv);
-  } else if (absl::GetFlag(FLAGS_mode) == "set_default") {
+  if (absl::GetFlag(FLAGS_mode) == "set_default") {
     result = mozc::win32::RunSetDefault(argc, argv);
-  } else if (absl::GetFlag(FLAGS_mode) == "unregister_ime") {
-    result = mozc::win32::RunUnregisterIME(argc, argv);
   } else if (absl::GetFlag(FLAGS_mode) == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
