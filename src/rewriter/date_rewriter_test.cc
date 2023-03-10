@@ -115,7 +115,7 @@ Matcher<const Segment::Candidate *> ValueAndDescAre(absl::string_view value,
 ACTION_P(InvokeCallbackWithUserDictionaryToken, value) {
   const absl::string_view key = arg0;
   DictionaryInterface::Callback *const callback = arg2;
-  const Token token(std::string(key), value, MockDictionary::kDefaultCost,
+  const Token token(key, value, MockDictionary::kDefaultCost,
                     MockDictionary::kDefaultPosId,
                     MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
   callback->OnToken(key, key, token);
