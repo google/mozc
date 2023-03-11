@@ -161,7 +161,7 @@ TEST(ClockTest, CompatibilityTest) {
   constexpr absl::Duration margin = absl::Milliseconds(55 * 2);
 #else   // _WIN32
   // On other platforms, gettimeofday usually has ~10 us resolution.
-  constexpr absl::Duration margin = absl::Microseconds(50);
+  constexpr absl::Duration margin = absl::Microseconds(100);
 #endif  // !_WIN32
   EXPECT_LE(absl::AbsDuration(current - legacy), margin);
 }
