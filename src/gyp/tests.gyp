@@ -60,7 +60,6 @@
         ['target_platform=="Windows"', {
           'dependencies': [
             '../win32/base/win32_base.gyp:win32_base_all_test',
-            '../win32/ime/ime.gyp:ime_all_test',
             '../win32/tip/tip.gyp:tip_all_test',
           ],
         }],

@@ -47,7 +47,6 @@
             '../../server/server.gyp:mozc_cache_service',
             '../../server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker64',
-            '../ime/ime.gyp:mozc_ime',
             '../tip/tip.gyp:mozc_tip64',
           ],
           'conditions': [
