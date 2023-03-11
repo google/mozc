@@ -182,7 +182,7 @@ class ConversionRequest {
 
   // If false, stop using user history for conversion.
   // This is used for supporting CONVERT_WITHOUT_HISTORY command.
-  // Please refer to session/internal/keymap_interface.h
+  // Please refer to session/internal/keymap.h
   bool enable_user_history_for_conversion_ = true;
 
   // If true, set conversion key to output segments in prediction.

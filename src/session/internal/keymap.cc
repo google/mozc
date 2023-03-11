@@ -52,7 +52,6 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap-inl.h"
 #include "absl/container/btree_set.h"
 #include "absl/strings/str_split.h"
 
@@ -69,12 +68,6 @@ static constexpr char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
 static constexpr char kOverlayHenkanMuhenkanToImeOnOffKeyMapFile[] =
     "system://overlay_henkan_muhenkan_to_ime_on_off.tsv";
 }  // namespace
-
-#if defined(__APPLE__)
-const bool KeyMapManager::kInputModeXCommandSupported = false;
-#else   // __APPLE__
-const bool KeyMapManager::kInputModeXCommandSupported = true;
-#endif  // __APPLE__
 
 // static
 bool KeyMapManager::IsSameKeyMapManagerApplicable(
@@ -110,8 +103,6 @@ KeyMapManager::KeyMapManager(const config::Config &config) {
                             config.custom_keymap_table());
   ApplyOverlaySessionKeymap(config.overlay_keymaps());
 }
-
-KeyMapManager::~KeyMapManager() {}
 
 void KeyMapManager::Reset() {
   keymap_direct_.Clear();

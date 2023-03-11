@@ -32,7 +32,7 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_H_
 
-#include <istream>  // NOLINT
+#include <istream>
 #include <map>
 #include <set>
 #include <string>
@@ -40,32 +40,177 @@
 
 #include "base/protobuf/protobuf.h"
 #include "composer/key_event_util.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap_interface.h"
 #include "testing/gunit_prod.h"
 #include "absl/container/btree_set.h"
 
 namespace mozc {
-
-namespace commands {
-class KeyEvent;
-}
-
 namespace keymap {
 
+struct DirectInputState {
+  enum Commands {
+    NONE = 0,
+    IME_ON,
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    RECONVERT,
+  };
+};
+
+struct PrecompositionState {
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,  // Move to Composition status.
+    INSERT_SPACE,      // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,         // Input half-width space
+    INSERT_FULL_SPACE,         // Input full-width space
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    INPUT_MODE_SWITCH_KANA_TYPE,  // rotate input mode
+    LAUNCH_CONFIG_DIALOG,
+    LAUNCH_DICTIONARY_TOOL,
+    LAUNCH_WORD_REGISTER_DIALOG,
+    REVERT,  // revert last operation (preedit still remains)
+    UNDO,    // undo last operation (preedit is restored)
+    RECONVERT,
+
+    // For ZeroQuerySuggestion
+    CANCEL,                   // Back to Composition status.
+    CANCEL_AND_IME_OFF,       // Cancel composition and turn off IME
+    COMMIT_FIRST_SUGGESTION,  // ATOK's Shift-Enter style
+    PREDICT_AND_CONVERT,
+  };
+};
+
+struct CompositionState {
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,
+    DEL,  // DELETE cannot be used on Windows.  It is defined as a macro.
+    BACKSPACE,
+    INSERT_SPACE,  // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,   // Input half-width space
+    INSERT_FULL_SPACE,   // Input full-width space
+    CANCEL,              // Move to Precomposition status.
+    CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
+    UNDO,
+    MOVE_CURSOR_LEFT,
+    MOVE_CURSOR_RIGHT,
+    MOVE_CURSOR_TO_BEGINNING,
+    MOVE_MOVE_CURSOR_TO_END,
+    COMMIT,                   // Move to Precomposition status.
+    COMMIT_FIRST_SUGGESTION,  // ATOK's Shift-Enter style
+    CONVERT,                  // Move to Conversion status.
+    CONVERT_WITHOUT_HISTORY,  // Move to Conversion status.
+    PREDICT_AND_CONVERT,
+    // Switching to ConversionState
+    CONVERT_TO_HIRAGANA,       // F6
+    CONVERT_TO_FULL_KATAKANA,  // F7
+    CONVERT_TO_HALF_KATAKANA,
+    CONVERT_TO_HALF_WIDTH,         // F8
+    CONVERT_TO_FULL_ALPHANUMERIC,  // F9
+    CONVERT_TO_HALF_ALPHANUMERIC,  // F10
+    SWITCH_KANA_TYPE,              // Muhenkan
+    // Rmaining CompositionState
+    DISPLAY_AS_HIRAGANA,       // F6
+    DISPLAY_AS_FULL_KATAKANA,  // F7
+    DISPLAY_AS_HALF_KATAKANA,
+    TRANSLATE_HALF_WIDTH,      // F8
+    TRANSLATE_FULL_ASCII,      // F9
+    TRANSLATE_HALF_ASCII,      // F10
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+  };
+};
+
+struct ConversionState {
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,  // Submit and Move to Composition status.
+    INSERT_SPACE,      // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,   // Input half-width space
+    INSERT_FULL_SPACE,   // Input full-width space
+    CANCEL,              // Back to Composition status.
+    CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
+    UNDO,
+    SEGMENT_FOCUS_LEFT,
+    SEGMENT_FOCUS_RIGHT,
+    SEGMENT_FOCUS_FIRST,
+    SEGMENT_FOCUS_LAST,
+    SEGMENT_WIDTH_EXPAND,
+    SEGMENT_WIDTH_SHRINK,
+    CONVERT_NEXT,
+    CONVERT_PREV,
+    CONVERT_NEXT_PAGE,
+    CONVERT_PREV_PAGE,
+    PREDICT_AND_CONVERT,
+    COMMIT,          // Move to Precomposition status.
+    COMMIT_SEGMENT,  // Down on the ATOK style.
+    // CONVERT_TO and TRANSLATE are same behavior on ConversionState.
+    CONVERT_TO_HIRAGANA,       // F6
+    CONVERT_TO_FULL_KATAKANA,  // F7
+    CONVERT_TO_HALF_KATAKANA,
+    CONVERT_TO_HALF_WIDTH,         // F8
+    CONVERT_TO_FULL_ALPHANUMERIC,  // F9
+    CONVERT_TO_HALF_ALPHANUMERIC,  // F10
+    SWITCH_KANA_TYPE,              // Muhenkan
+    DISPLAY_AS_HIRAGANA,           // F6
+    DISPLAY_AS_FULL_KATAKANA,      // F7
+    DISPLAY_AS_HALF_KATAKANA,
+    TRANSLATE_HALF_WIDTH,      // F8
+    TRANSLATE_FULL_ASCII,      // F9
+    TRANSLATE_HALF_ASCII,      // F10
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    DELETE_SELECTED_CANDIDATE,
+    REPORT_BUG,
+  };
+};
+
 template <typename T>
-class KeyMap : public KeyMapInterface<typename T::Commands> {
+class KeyMap {
  public:
-  typedef typename T::Commands CommandsType;
+  using CommandsType = typename T::Commands;
 
   bool GetCommand(const commands::KeyEvent &key_event,
-                  CommandsType *command) const override;
-  bool AddRule(const commands::KeyEvent &key_event,
-               CommandsType command) override;
+                  CommandsType *command) const;
+  bool AddRule(const commands::KeyEvent &key_event, CommandsType command);
   void Clear();
 
  private:
-  typedef std::map<KeyInformation, CommandsType> KeyToCommandMap;
+  using KeyToCommandMap = std::map<KeyInformation, CommandsType>;
   KeyToCommandMap keymap_;
 };
 
@@ -80,7 +225,7 @@ class KeyMapManager {
   explicit KeyMapManager(const config::Config &config);
   KeyMapManager(const KeyMapManager &) = delete;
   KeyMapManager &operator=(const KeyMapManager &) = delete;
-  ~KeyMapManager();
+  ~KeyMapManager() = default;
 
   bool GetCommandDirect(const commands::KeyEvent &key_event,
                         DirectInputState::Commands *command) const;
@@ -183,7 +328,11 @@ class KeyMapManager {
   void RegisterConversionCommand(const std::string &command_string,
                                  ConversionState::Commands command);
 
-  static const bool kInputModeXCommandSupported;
+#if defined(__APPLE__)
+  static constexpr bool kInputModeXCommandSupported = false;
+#else   // __APPLE__
+  static constexpr bool kInputModeXCommandSupported = true;
+#endif  // __APPLE__
 
   std::map<std::string, DirectInputState::Commands> command_direct_map_;
   std::map<std::string, PrecompositionState::Commands>
@@ -200,23 +349,68 @@ class KeyMapManager {
       reverse_command_conversion_map_;
 
   // Status should be out of keymap.
-  keymap::KeyMap<keymap::DirectInputState> keymap_direct_;
-  keymap::KeyMap<keymap::PrecompositionState> keymap_precomposition_;
-  keymap::KeyMap<keymap::CompositionState> keymap_composition_;
-  keymap::KeyMap<keymap::ConversionState> keymap_conversion_;
+  KeyMap<DirectInputState> keymap_direct_;
+  KeyMap<PrecompositionState> keymap_precomposition_;
+  KeyMap<CompositionState> keymap_composition_;
+  KeyMap<ConversionState> keymap_conversion_;
 
   // enabled only if zero query suggestion is shown. Otherwise, inherit from
   // keymap_precomposition
-  keymap::KeyMap<keymap::PrecompositionState> keymap_zero_query_suggestion_;
+  KeyMap<PrecompositionState> keymap_zero_query_suggestion_;
 
   // enabled only if suggestion is shown. Otherwise, inherit from
   // keymap_composition
-  keymap::KeyMap<keymap::CompositionState> keymap_suggestion_;
+  KeyMap<CompositionState> keymap_suggestion_;
 
   // enabled only if prediction is shown. Otherwise, inherit from
   // keymap_conversion
-  keymap::KeyMap<keymap::ConversionState> keymap_prediction_;
+  KeyMap<ConversionState> keymap_prediction_;
 };
+
+template <typename T>
+bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
+                           CommandsType *command) const {
+  // Shortcut keys should be available as if CapsLock was not enabled like
+  // other IMEs such as MS-IME or ATOK. b/5627459
+  commands::KeyEvent normalized_key_event;
+  KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
+  KeyInformation key;
+  if (!KeyEventUtil::GetKeyInformation(normalized_key_event, &key)) {
+    return false;
+  }
+
+  if (const auto it = keymap_.find(key); it != keymap_.end()) {
+    *command = it->second;
+    return true;
+  }
+
+  if (KeyEventUtil::MaybeGetKeyStub(normalized_key_event, &key)) {
+    const auto it = keymap_.find(key);
+    if (it != keymap_.end()) {
+      *command = it->second;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+template <typename T>
+bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
+                        CommandsType command) {
+  KeyInformation key;
+  if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {
+    return false;
+  }
+
+  keymap_[key] = command;
+  return true;
+}
+
+template <typename T>
+void KeyMap<T>::Clear() {
+  keymap_.clear();
+}
 
 }  // namespace keymap
 }  // namespace mozc
