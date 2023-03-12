@@ -46,11 +46,11 @@ class TempFile {
  public:
   // Creates a new TempFile for path.
   explicit TempFile(std::string path) : path_(std::move(path)) {}
-  TempFile(TempFile &&other)
+  TempFile(TempFile &&other) noexcept
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempFile &operator=(TempFile &&other) {
+  TempFile &operator=(TempFile &&other) noexcept {
     std::swap(path_, other.path_);
     std::swap(keep_, other.keep_);
     return *this;
@@ -69,11 +69,11 @@ class TempFile {
 
 class TempDirectory {
  public:
-  TempDirectory(TempDirectory &&other)
+  TempDirectory(TempDirectory &&other) noexcept
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempDirectory &operator=(TempDirectory &&other) {
+  TempDirectory &operator=(TempDirectory &&other) noexcept {
     std::swap(path_, other.path_);
     std::swap(keep_, other.keep_);
     return *this;
