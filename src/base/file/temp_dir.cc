@@ -29,7 +29,9 @@
 
 #include "base/file/temp_dir.h"
 
-#include <memory>
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <optional>
 #include <string>
 #include <utility>
@@ -46,7 +48,10 @@
 
 #include "base/win32/wide_char.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#else  // _WIN32
+#include <unistd.h>
 #endif  // _WIN32
 
 namespace mozc {
@@ -116,7 +121,7 @@ TempDirectory::~TempDirectory() {
 TempDirectory TempDirectory::Default() {
   // Try TEST_TMPDIR first. This is set by Blaze.
   if (std::optional<std::string> tmpdir = TryTempEnv("TEST_TMPDIR"); tmpdir) {
-    return TempDirectory(*tmpdir);
+    return TempDirectory(*std::move(tmpdir));
   }
 
 #ifdef _WIN32
@@ -126,14 +131,14 @@ TempDirectory TempDirectory::Default() {
   if (GetTempPath(absl::MakeSpan(wtmp)) != 0) {
     std::string tmp = win32::WideToUtf8(wtmp);
     if (TryTempDirectory(tmp)) {
-      return TempDirectory(tmp);
+      return TempDirectory(std::move(tmp));
     }
   }
 
 #else  // _WIN32
 
   if (std::optional<std::string> tmpdir = TryTempEnv("TMPDIR"); tmpdir) {
-    return TempDirectory(*tmpdir);
+    return TempDirectory(*std::move(tmpdir));
   }
   if (TryTempDirectory("/tmp")) {
     return TempDirectory("/tmp");
@@ -186,7 +191,7 @@ absl::StatusOr<TempFile> TempDirectory::CreateTempFile() const {
       return absl::ErrnoToStatus(errno, "close failed");
     }
   }
-  return TempFile(temp_file);
+  return TempFile(std::move(temp_file));
 #endif  // !_WIN32
 }
 
@@ -230,7 +235,7 @@ absl::StatusOr<TempDirectory> TempDirectory::CreateTempDirectory() const {
   if (mkdtemp(new_dir.data()) == nullptr) {
     return absl::ErrnoToStatus(errno, "mkdtemp failed");
   }
-  return TempDirectory(new_dir, false);
+  return TempDirectory(std::move(new_dir), false);
 #endif  // !_WIN32
 }
 

@@ -58,10 +58,12 @@ mozc_cc_library(
         "//base:util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
     ] + mozc_select(
-        windows = ["//base/win32:wide_char"],
+        windows = [
+            "//base/win32:wide_char",
+            "@com_google_absl//absl/strings",
+        ],
     ),
 )
 
