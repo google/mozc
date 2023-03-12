@@ -99,8 +99,8 @@ mozc_objc_library(
     ],
     deps = [
         "@com_google_absl//absl/flags:flag",
+        "@com_google_googletest//:gtest",
         "@google_toolbox_for_mac//:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
-        "@gtest",
     ],
 )
 
@@ -121,13 +121,13 @@ mozc_cc_library(
         linux = ["//testing/base/public:gunit_main"],
         macos = [
             ":gunit_main_internal",
-            "@gtest//:gtest",
+            "@com_google_googletest//:gtest",
         ],
         oss = [":gunit_main_internal"],
         wasm = [":gunit_main_internal"],
         windows = [
             ":gunit_main_internal",
-            "@gtest//:gtest",
+            "@com_google_googletest//:gtest",
         ],
     ),
 )
@@ -162,7 +162,7 @@ mozc_cc_library(
     ],
     deps = [
         ":googletest",
-        "@gtest",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -184,8 +184,8 @@ mozc_cc_library(
             "//base/file:temp_dir",
             "@com_google_absl//absl/flags:flag",
         ],
-        default = ["@gtest//:gtest"],
-        linux = ["@gtest//:gtest"],
+        default = ["@com_google_googletest//:gtest"],
+        linux = ["@com_google_googletest//:gtest"],
         oss = [
             ":mozc_data_dir_header",
             "//base:environ",
