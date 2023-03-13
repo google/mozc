@@ -47,6 +47,7 @@
 #include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 // To show the value of size_t, 'z' speficier should be used.
 // But MSVC doesn't support it yet so use 'l' instead.
@@ -68,7 +69,7 @@ constexpr char kMaruNumberDescription[] = "丸数字";
 constexpr char kRomanCapitalDescription[] = "ローマ数字(大文字)";
 constexpr char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
 
-bool FindValue(const Segment &segment, const std::string &value) {
+bool FindValue(const Segment &segment, const absl::string_view value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {
       return true;
@@ -78,19 +79,21 @@ bool FindValue(const Segment &segment, const std::string &value) {
 }
 
 Segment *SetupSegments(const PosMatcher &pos_matcher,
-                       const std::string &candidate_value, Segments *segments) {
+                       const absl::string_view candidate_value,
+                       Segments *segments) {
   segments->Clear();
   Segment *segment = segments->push_back_segment();
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->lid = pos_matcher.GetNumberId();
   candidate->rid = pos_matcher.GetNumberId();
-  candidate->value = candidate_value;
-  candidate->content_value = candidate_value;
+  candidate->value = std::string(candidate_value);
+  candidate->content_value = std::string(candidate_value);
   return segment;
 }
 
-bool HasDescription(const Segment &segment, const std::string &description) {
+bool HasDescription(const Segment &segment,
+                    const absl::string_view description) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).description == description) {
       return true;
@@ -100,7 +103,7 @@ bool HasDescription(const Segment &segment, const std::string &description) {
 }
 
 // Find candidate id
-bool FindCandidateId(const Segment &segment, const std::string &value,
+bool FindCandidateId(const Segment &segment, const absl::string_view value,
                      int *id) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).value == value) {

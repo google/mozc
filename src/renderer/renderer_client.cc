@@ -83,6 +83,58 @@ inline void CallCommand(IPCClientInterface *client,
 
 class RendererLauncher : public RendererLauncherInterface, public Thread {
  public:
+  RendererLauncher() = default;
+
+  ~RendererLauncher() override {
+    if (!IsRunning()) {
+      return;
+    }
+    NamedEventNotifier notify(name_.c_str());
+    notify.Notify();
+    Join();
+  }
+
+  void StartRenderer(
+      const std::string &name, const std::string &path,
+      bool disable_renderer_path_check,
+      IPCClientFactoryInterface *ipc_client_factory_interface) override {
+    renderer_status_ = RendererLauncher::RENDERER_LAUNCHING;
+    name_ = name;
+    path_ = path;
+    disable_renderer_path_check_ = disable_renderer_path_check;
+    ipc_client_factory_interface_ = ipc_client_factory_interface;
+    Thread::Start("Renderer");
+  }
+
+  bool ForceTerminateRenderer(const std::string &name) override {
+    return IPCClient::TerminateServer(name);
+  }
+
+  void OnFatal(RendererErrorType type) override {
+    LOG(ERROR) << "OnFatal is called: " << static_cast<int>(type);
+
+    std::string error_type;
+    switch (type) {
+      case RendererLauncherInterface::RENDERER_VERSION_MISMATCH:
+        error_type = "renderer_version_mismatch";
+        break;
+      case RendererLauncherInterface::RENDERER_FATAL:
+        error_type = "renderer_fatal";
+        break;
+      default:
+        LOG(ERROR) << "Unknown error: " << type;
+        return;
+    }
+
+    if (!suppress_error_dialog_) {
+      Process::LaunchErrorMessageDialog(error_type);
+    }
+  }
+
+  bool IsAvailable() const override {
+    return (renderer_status_ == RendererLauncher::RENDERER_READY);
+  }
+
   bool CanConnect() const override {
     switch (renderer_status_) {
       case RendererLauncher::RENDERER_UNKNOWN:
@@ -110,20 +162,19 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     return false;
   }
 
-  bool IsAvailable() const override {
-    return (renderer_status_ == RendererLauncher::RENDERER_READY);
+  void SetPendingCommand(const commands::RendererCommand &command) override {
+    // ignore NOOP|SHUTDOWN
+    if (command.type() == commands::RendererCommand::UPDATE) {
+      absl::MutexLock l(&pending_command_mutex_);
+      if (!pending_command_) {
+        pending_command_ = std::make_unique<commands::RendererCommand>();
+      }
+      *pending_command_ = command;
+    }
   }
 
-  void StartRenderer(
-      const std::string &name, const std::string &path,
-      bool disable_renderer_path_check,
-      IPCClientFactoryInterface *ipc_client_factory_interface) override {
-    renderer_status_ = RendererLauncher::RENDERER_LAUNCHING;
-    name_ = name;
-    path_ = path;
-    disable_renderer_path_check_ = disable_renderer_path_check;
-    ipc_client_factory_interface_ = ipc_client_factory_interface;
-    Thread::Start("Renderer");
+  void set_suppress_error_dialog(bool suppress) override {
+    suppress_error_dialog_ = suppress;
   }
 
   void Run() override {
@@ -204,63 +255,6 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     if (renderer_status_ == RendererLauncher::RENDERER_FATAL) {
       OnFatal(RendererLauncherInterface::RENDERER_FATAL);
     }
-  }
-
-  bool ForceTerminateRenderer(const std::string &name) override {
-    return IPCClient::TerminateServer(name);
-  }
-
-  void OnFatal(RendererErrorType type) override {
-    LOG(ERROR) << "OnFatal is called: " << static_cast<int>(type);
-
-    std::string error_type;
-    switch (type) {
-      case RendererLauncherInterface::RENDERER_VERSION_MISMATCH:
-        error_type = "renderer_version_mismatch";
-        break;
-      case RendererLauncherInterface::RENDERER_FATAL:
-        error_type = "renderer_fatal";
-        break;
-      default:
-        LOG(ERROR) << "Unknown error: " << type;
-        return;
-    }
-
-    if (!suppress_error_dialog_) {
-      Process::LaunchErrorMessageDialog(error_type);
-    }
-  }
-
-  void SetPendingCommand(const commands::RendererCommand &command) override {
-    // ignore NOOP|SHUTDOWN
-    if (command.type() == commands::RendererCommand::UPDATE) {
-      absl::MutexLock l(&pending_command_mutex_);
-      if (!pending_command_) {
-        pending_command_ = std::make_unique<commands::RendererCommand>();
-      }
-      *pending_command_ = command;
-    }
-  }
-
-  void set_suppress_error_dialog(bool suppress) override {
-    suppress_error_dialog_ = suppress;
-  }
-
-  RendererLauncher()
-      : last_launch_time_(0),
-        error_times_(0),
-        ipc_client_factory_interface_(nullptr),
-        renderer_status_(RendererLauncher::RENDERER_UNKNOWN),
-        disable_renderer_path_check_(false),
-        suppress_error_dialog_(false) {}
-
-  ~RendererLauncher() override {
-    if (!IsRunning()) {
-      return;
-    }
-    NamedEventNotifier notify(name_.c_str());
-    notify.Notify();
-    Join();
   }
 
  private:

@@ -1,0 +1,113 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Win32 broker
+
+load(
+    "//:build_defs.bzl",
+    "MOZC_TAGS",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+)
+load("//bazel:stubs.bzl", "lexan")
+
+package(
+    default_visibility = ["//visibility:private"],
+)
+
+mozc_cc_binary(
+    name = "mozc_broker_main",
+    srcs = ["mozc_broker_main.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":ime_switcher",
+        ":prelauncher",
+        "//base:crash_report_handler",
+        "//base:init_mozc",
+        "//base:system_util",
+        "//base/win32:winmain",
+        "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
+
+lexan.resource_files(
+    name = "mozc_broker_resource",
+    manifests = [
+        "mozc_broker.exe.manifest",
+    ],
+    rc_files = [
+        "mozc_broker.rc",
+    ],
+    resources = [
+        "mozc_broker_resource.h",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_library(
+    name = "ime_switcher",
+    srcs = ["ime_switcher.cc"],
+    hdrs = ["ime_switcher.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:const",
+        "//base:logging",
+        "//base:process_mutex",
+        "//base:system_util",
+        "//base/win32:scoped_com",
+        "//base/win32:scoped_handle",
+        "//client",
+        "//config:config_handler",
+        "//protocol:config_cc_proto",
+        "//win32/base:imm_registrar",
+        "//win32/base:imm_util",
+        "//win32/base:migration_util",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
+
+mozc_cc_library(
+    name = "prelauncher",
+    srcs = ["prelauncher.cc"],
+    hdrs = ["prelauncher.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:run_level",
+        "//base:system_util",
+        "//client:client_interface",
+        "//renderer:renderer_client",
+        "//win32/base:imm_util",
+    ],
+)

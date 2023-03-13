@@ -42,6 +42,7 @@
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -56,23 +57,23 @@ class VersionRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
-  static void AddSegment(const std::string &key, const std::string &value,
-                         Segments *segments) {
+  static void AddSegment(const absl::string_view key,
+                         const absl::string_view value, Segments *segments) {
     Segment *segment = segments->push_back_segment();
     segment->set_key(key);
     AddCandidate(key, value, segment);
   }
 
-  static void AddCandidate(const std::string &key, const std::string &value,
-                           Segment *segment) {
+  static void AddCandidate(const absl::string_view key,
+                           const absl::string_view value, Segment *segment) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->value = value;
-    candidate->content_value = value;
-    candidate->content_key = key;
+    candidate->value = std::string(value);
+    candidate->content_value = std::string(value);
+    candidate->content_key = std::string(key);
   }
 
-  static bool FindCandidateWithPrefix(const std::string &prefix,
+  static bool FindCandidateWithPrefix(const absl::string_view prefix,
                                       const Segments &segments) {
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       for (size_t j = 0; j < segments.segment(i).candidates_size(); ++j) {

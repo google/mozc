@@ -468,6 +468,12 @@ INSTANTIATE_TEST_SUITE_P(
               request.mutable_decoder_experiment_params()
                   ->set_enable_single_kanji_prediction(true);
               return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_use_typing_correction_diff_cost(true);
+              return request;
             }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {

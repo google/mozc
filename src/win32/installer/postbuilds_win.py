@@ -75,7 +75,7 @@ def PostProcessOnWindows(opts):
 
   # If the target looks like a PE image, update it.
   (_, extension) = os.path.splitext(opts.targetpath)
-  if extension.lower() in ['.exe', '.dll', '.ime']:
+  if extension.lower() in ['.exe', '.dll']:
     # Protect it against further binding, which invalidates code signing.
     RunOrDie(['editbin.exe', '/ALLOWBIND:NO', '/RELEASE', abs_target_path])
 

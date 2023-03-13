@@ -44,6 +44,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "storage/existence_filter.h"
+#include "absl/strings/string_view.h"
 
 using mozc::storage::ExistenceFilter;
 
@@ -71,8 +72,8 @@ void GenExistenceData(const std::vector<std::string> &entries,
 }  // namespace
 
 void OutputExistenceHeader(const std::vector<std::string> &entries,
-                           const std::string &data_namespace, std::ostream *ofs,
-                           double error_rate) {
+                           const absl::string_view data_namespace,
+                           std::ostream *ofs, double error_rate) {
   char *existence_data = nullptr;
   size_t existence_data_size = 0;
   GenExistenceData(entries, error_rate, &existence_data, &existence_data_size);

@@ -128,9 +128,6 @@ python build_mozc.py clean
 
 Although the code repository covers source files of the official Google Japanese Input installer (see `win32/custom_action` and `win32/installer`), building Windows Installer package for OSS Mozc is not supported yet. You need to manually copy Mozc binaries and run a command as follows.
 
-Note that Mozc now supports two input method APIs called IMM32 and TSF (Text Services Framework). Although you can register Mozc for both APIs at the same time, IMM32 is not recommended on Windows 8 and later.
-
-
 ---
 
 ## Install Mozc (32-bit)
@@ -150,18 +147,6 @@ Following files must be placed under %ProgramFiles%\Mozc.
 
 `Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
-### Register Mozc for IMM32 into 32-bit environment
-
-Following files must be placed under `%windir%\System32`.
-
-  * `C:\work\mozc\src\out_win\Release\mozc_ja.ime`
-
-Finally, you must run `mozc_broker32.exe` with administrator privilege to register IME module as follows.
-
-```
-"%ProgramFiles%\Mozc\mozc_broker32.exe" --mode=register_ime
-```
-
 ### Register Mozc for TSF into 32-bit environment
 
 Following file must be placed under `%ProgramFiles%\Mozc`.
@@ -177,18 +162,6 @@ regsvr32 "%ProgramFiles%\Mozc\mozc_ja_tip32.dll"
 ---
 
 ## Uninstall Mozc (32-bit)
-
-### Unregister Mozc for IMM32 from 32-bit environment
-
-Run `mozc_broker32.exe` with administrator privilege to unregister IME module as follows.
-
-```
-"%ProgramFiles%\Mozc\mozc_broker32.exe" --mode=unregister_ime
-```
-
-Then delete the following file.
-
-  * `%windir%\System32\mozc_ja.ime`
 
 ### Unregister Mozc for TSF from 32-bit environment
 
@@ -224,22 +197,6 @@ Following files must be placed under %ProgramFiles(x86)%\Mozc.
 
 `Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
-### Register Mozc for IMM32 into 64-bit environment
-
-Following files must be placed under `%windir%\System32`.
-
-  * `C:\work\mozc\src\out_win\Release_x64\mozc_ja.ime`
-
-Following files must be placed under `%windir%\SysWOW64`.
-
-  * `C:\work\mozc\src\out_win\Release\mozc_ja.ime`
-
-Finally, you must run `mozc_broker64.exe` with administrator privilege to register IME module as follows.
-
-```
-"%ProgramFiles(x86)%\Mozc\mozc_broker64.exe" --mode=register_ime
-```
-
 ### Register Mozc for TSF into 64-bit environment
 
 Following file must be placed under `%ProgramFiles(x86)%\Mozc`.
@@ -257,19 +214,6 @@ regsvr32 "%ProgramFiles(x86)%\Mozc\mozc_ja_tip64.dll"
 ---
 
 ## Uninstall Mozc (64-bit)
-
-### Unregister Mozc for IMM32 from 64-bit environment
-
-Run `mozc_broker64.exe` with administrator privilege to unregister IME module as follows.
-
-```
-"%ProgramFiles(x86)%\Mozc\mozc_broker64.exe" --mode=unregister_ime
-```
-
-Then delete the following files.
-
-  * `%windir%\System32\mozc_ja.ime`
-  * `%windir%\SysWOW64\mozc_ja.ime`
 
 ### Unregister Mozc for TSF from 64-bit environment
 

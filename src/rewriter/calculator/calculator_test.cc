@@ -38,20 +38,23 @@
 #include "rewriter/calculator/calculator_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
 // Runs calculation with |expression| and compares the result and |expect|.
 void VerifyCalculation(const CalculatorInterface *calculator,
-                       const std::string &expression,
-                       const std::string &expected) {
+                       const absl::string_view expression,
+                       const absl::string_view expected) {
   std::string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
-  const double result_val = atof(result.c_str());
-  const double expected_val = atof(expected.c_str());
-  const double err = fabs(result_val - expected_val);
+  double result_val;
+  EXPECT_TRUE(absl::SimpleAtod(result, &result_val));
+  double expected_val;
+  EXPECT_TRUE(absl::SimpleAtod(expected, &expected_val));
+  const double err = std::fabs(result_val - expected_val);
 
   EXPECT_DOUBLE_EQ(expected_val, result_val)
       << "comparison: " << result_val << " vs " << expected_val << std::endl
@@ -62,8 +65,8 @@ void VerifyCalculation(const CalculatorInterface *calculator,
 
 // Runs calculation and compare results in PRINTED string.
 void VerifyCalculationInString(const CalculatorInterface *calculator,
-                               const std::string &expression,
-                               const std::string &expected) {
+                               const absl::string_view expression,
+                               const absl::string_view expected) {
   std::string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
@@ -72,7 +75,7 @@ void VerifyCalculationInString(const CalculatorInterface *calculator,
 
 // Tries to calculate |wrong_key| and returns true if it fails.
 void VerifyRejection(const CalculatorInterface *calculator,
-                     const std::string &wrong_key) {
+                     const absl::string_view wrong_key) {
   std::string result;
   EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
       << "expression: " << wrong_key << std::endl;

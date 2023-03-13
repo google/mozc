@@ -27,32 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_NET_JSON_UTIL_H_
-#define MOZC_NET_JSON_UTIL_H_
+#ifndef MOZC_WIN32_BROKER_IME_SWITCHER_H_
+#define MOZC_WIN32_BROKER_IME_SWITCHER_H_
 
-#include "base/port.h"
-#include "base/protobuf/message.h"
-#include "net/jsoncpp.h"
+namespace mozc::win32 {
 
-namespace mozc {
-namespace net {
+int RunSetDefault(int argc, char *argv[]);
 
-class JsonUtil {
- public:
-  JsonUtil() = delete;
-  JsonUtil(const JsonUtil &) = delete;
-  JsonUtil &operator=(const JsonUtil &) = delete;
-  // Converts protobuf message to JSON value.
-  // Note: JavaScript JSON parser can't handle int64/uint64.
-  // So it converts int64/uint64 value in protobuf to string value in JSON.
-  static bool ProtobufMessageToJsonValue(const protobuf::Message &message,
-                                         Json::Value *value);
-  // Converts JSON value to protobuf message.
-  static bool JsonValueToProtobufMessage(const Json::Value &value,
-                                         protobuf::Message *message);
-};
+}  // namespace mozc::win32
 
-}  // namespace net
-}  // namespace mozc
-
-#endif  // MOZC_NET_JSON_UTIL_H_
+#endif  // MOZC_WIN32_BROKER_IME_SWITCHER_H_

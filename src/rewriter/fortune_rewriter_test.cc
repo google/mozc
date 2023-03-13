@@ -39,20 +39,21 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = key;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->value = std::string(key);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
 }
 
 bool HasFortune(const Segments &segments) {

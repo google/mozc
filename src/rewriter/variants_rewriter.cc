@@ -65,7 +65,7 @@ void AppendString(absl::string_view src, std::string *dst) {
 }
 
 // Returns true if |full| has the corresponding half width form.
-bool IsConvertibleToHalfWidthForm(const std::string &full) {
+bool IsConvertibleToHalfWidthForm(const absl::string_view full) {
   // TODO(b/209357879): remove this line once FullWidthToHalfWidth() itself will
   // support the conversion.
   const std::string tmp =
@@ -88,7 +88,7 @@ bool IsConvertibleToHalfWidthForm(const std::string &full) {
 // "google" => false (not symbol)
 // "㌫" => false (all symbol, all full but not convertible to the corresponding
 // half)
-bool HasCharacterFormDescription(const std::string &value) {
+bool HasCharacterFormDescription(const absl::string_view value) {
   if (value.empty()) {
     return false;
   }

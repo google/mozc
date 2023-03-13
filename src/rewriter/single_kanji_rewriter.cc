@@ -230,17 +230,18 @@ bool SingleKanjiRewriter::InsertCandidate(
   return true;
 }
 
-void SingleKanjiRewriter::FillCandidate(const std::string &key,
-                                        const std::string &value, int cost,
-                                        uint16_t single_kanji_id,
+void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
+                                        const absl::string_view value,
+                                        const int cost,
+                                        const uint16_t single_kanji_id,
                                         Segment::Candidate *cand) const {
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;
-  cand->content_key = key;
-  cand->content_value = value;
-  cand->key = key;
-  cand->value = value;
+  cand->content_key = std::string(key);
+  cand->content_value = std::string(value);
+  cand->key = std::string(key);
+  cand->value = std::string(value);
   cand->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
   cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   single_kanji_dictionary_->GenerateDescription(value, &cand->description);

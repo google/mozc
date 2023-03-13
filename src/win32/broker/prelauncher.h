@@ -27,65 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Keymap utils of Mozc interface.
+#ifndef MOZC_WIN32_BROKER_PRELAUNCHER_H_
+#define MOZC_WIN32_BROKER_PRELAUNCHER_H_
 
-#ifndef MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
-#define MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
+namespace mozc::win32 {
 
-#include "composer/key_event_util.h"
-#include "protocol/commands.pb.h"
-#include "session/internal/keymap.h"
+int RunPrelaunchProcesses(int argc, char *argv[]);
 
-namespace mozc {
-namespace keymap {
+}  // namespace mozc::win32
 
-template <typename T>
-bool KeyMap<T>::GetCommand(const commands::KeyEvent &key_event,
-                           CommandsType *command) const {
-  // Shortcut keys should be available as if CapsLock was not enabled like
-  // other IMEs such as MS-IME or ATOK. b/5627459
-  commands::KeyEvent normalized_key_event;
-  KeyEventUtil::NormalizeModifiers(key_event, &normalized_key_event);
-  KeyInformation key;
-  if (!KeyEventUtil::GetKeyInformation(normalized_key_event, &key)) {
-    return false;
-  }
-
-  typename KeyToCommandMap::const_iterator it = keymap_.find(key);
-  if (it != keymap_.end()) {
-    *command = it->second;
-    return true;
-  }
-
-  if (KeyEventUtil::MaybeGetKeyStub(normalized_key_event, &key)) {
-    it = keymap_.find(key);
-    if (it != keymap_.end()) {
-      *command = it->second;
-      return true;
-    }
-  }
-
-  return false;
-}
-
-template <typename T>
-bool KeyMap<T>::AddRule(const commands::KeyEvent &key_event,
-                        CommandsType command) {
-  KeyInformation key;
-  if (!KeyEventUtil::GetKeyInformation(key_event, &key)) {
-    return false;
-  }
-
-  keymap_[key] = command;
-  return true;
-}
-
-template <typename T>
-void KeyMap<T>::Clear() {
-  keymap_.clear();
-}
-
-}  // namespace keymap
-}  // namespace mozc
-
-#endif  // MOZC_SESSION_INTERNAL_KEYMAP_INL_H_
+#endif  // MOZC_WIN32_BROKER_PRELAUNCHER_H_

@@ -40,6 +40,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -49,7 +50,7 @@ class EnglishVariantsRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
-  bool GetRankFromValue(const Segment &segment, const std::string &value,
+  bool GetRankFromValue(const Segment &segment, const absl::string_view value,
                         int *rank) {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       if (segment.candidate(i).value == value) {

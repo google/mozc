@@ -168,7 +168,8 @@ int GetInsertOffset(RewriteType type) {
   return (type == ARABIC_FIRST) ? 2 : kArabicNumericOffset;
 }
 
-void PushBackCandidate(const std::string &value, const std::string &desc,
+void PushBackCandidate(const absl::string_view value,
+                       const absl::string_view desc,
                        NumberUtil::NumberString::Style style,
                        std::vector<Segment::Candidate> *results) {
   bool found = false;
@@ -181,8 +182,8 @@ void PushBackCandidate(const std::string &value, const std::string &desc,
   }
   if (!found) {
     Segment::Candidate cand;
-    cand.value = value;
-    cand.description = desc;
+    cand.value = std::string(value);
+    cand.description = std::string(desc);
     cand.style = style;
     results->push_back(cand);
   }
@@ -203,13 +204,13 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
 
 class CheckValueOperator {
  public:
-  explicit CheckValueOperator(const std::string &v) : find_value_(&v) {}
+  explicit CheckValueOperator(const absl::string_view v) : find_value_(v) {}
   bool operator()(const Segment::Candidate &cand) const {
-    return (cand.value == *find_value_);
+    return (cand.value == find_value_);
   }
 
  private:
-  const std::string *find_value_;
+  const absl::string_view find_value_;
 };
 
 // If we have the candidates to be inserted before the base candidate,
@@ -317,7 +318,8 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
   // For example, "千万" v.s. "一千万", or "一二三" v.s. "百二十三".
   // We don't want to rewrite "千万" to "一千万".
   {
-    const std::string &base_value = seg->candidate(base_candidate_pos).value;
+    const absl::string_view base_value =
+        seg->candidate(base_candidate_pos).value;
     std::vector<Segment::Candidate>::const_iterator itr = std::find_if(
         results.begin(), results.end(), CheckValueOperator(base_value));
     if (itr != results.end() &&
@@ -343,14 +345,14 @@ int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
                        segment.candidates_size());
 }
 
-void InsertHalfArabic(const std::string &half_arabic,
+void InsertHalfArabic(const absl::string_view half_arabic,
                       std::vector<NumberUtil::NumberString> *output) {
   output->push_back(NumberUtil::NumberString(
       half_arabic, "", NumberUtil::NumberString::DEFAULT_STYLE));
 }
 
 void GetNumbers(RewriteType type, bool exec_radix_conversion,
-                const std::string &arabic_content_value,
+                const absl::string_view arabic_content_value,
                 std::vector<NumberUtil::NumberString> *output) {
   DCHECK(output);
   if (type == ARABIC_FIRST) {

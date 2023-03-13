@@ -41,7 +41,6 @@
         '<(gen_out_dir)/mozc_broker_autogen.rc',
         'ime_switcher.cc',
         'prelauncher.cc',
-        'register_ime.cc',
       ],
       'dependencies': [
         '../../base/base.gyp:crash_report_handler',

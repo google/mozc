@@ -40,6 +40,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -48,14 +49,15 @@ namespace {
 // and what value should be returned.
 class TestRewriter : public RewriterInterface {
  public:
-  TestRewriter(std::string *buffer, const std::string &name, bool return_value)
+  TestRewriter(std::string *buffer, const absl::string_view name,
+               bool return_value)
       : buffer_(buffer),
         name_(name),
         return_value_(return_value),
         capability_(RewriterInterface::CONVERSION) {}
 
-  TestRewriter(std::string *buffer, const std::string &name, bool return_value,
-               int capability)
+  TestRewriter(std::string *buffer, const absl::string_view name,
+               bool return_value, int capability)
       : buffer_(buffer),
         name_(name),
         return_value_(return_value),

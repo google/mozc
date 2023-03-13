@@ -52,11 +52,12 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void InsertASCIISequence(const std::string &text,
+void InsertASCIISequence(const absl::string_view text,
                          composer::Composer *composer) {
   for (size_t i = 0; i < text.size(); ++i) {
     commands::KeyEvent key;

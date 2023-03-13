@@ -62,10 +62,8 @@ mozc_cc_library(
     ],
     hdrs = [
         "keymap.h",
-        "keymap-inl.h",
     ],
     deps = [
-        ":keymap_interface",
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:logging",
@@ -138,10 +136,7 @@ mozc_cc_test(
     srcs = ["ime_context_test.cc"],
     deps = [
         ":ime_context",
-        ":keymap",
-        ":keymap_interface",
         "//composer",
-        "//composer:key_parser",
         "//composer:table",
         "//converter:converter_interface",
         "//converter:converter_mock",
@@ -151,13 +146,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:testing_util",
     ],
-)
-
-mozc_cc_library(
-    name = "keymap_interface",
-    hdrs = ["keymap_interface.h"],
-    visibility = ["//visibility:private"],
-    deps = ["//base:port"],
 )
 
 mozc_cc_test(
@@ -171,7 +159,6 @@ mozc_cc_test(
         "//base:config_file_stream",
         "//base:system_util",
         "//composer:key_parser",
-        "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

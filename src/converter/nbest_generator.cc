@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -267,6 +268,14 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
       break;
     }
   }
+#ifdef MOZC_CANDIDATE_DEBUG
+  // Append moved bad_candidates_ to segment->removed_candidates_for_debug_.
+  segment->removed_candidates_for_debug_.insert(
+      segment->removed_candidates_for_debug_.end(),
+      std::make_move_iterator(bad_candidates_.begin()),
+      std::make_move_iterator(bad_candidates_.end()));
+  bad_candidates_.clear();
+#endif  // MOZC_CANDIDATE_DEBUG
 }
 
 bool NBestGenerator::Next(const ConversionRequest &request,
@@ -318,6 +327,10 @@ bool NBestGenerator::Next(const ConversionRequest &request,
         return false;
         // Viterbi best result was tried to be inserted but reverted.
       case CandidateFilter::BAD_CANDIDATE:
+#ifdef MOZC_CANDIDATE_DEBUG
+        bad_candidates_.push_back(*candidate);
+        break;
+#endif  // MOZC_CANDIDATE_DEBUG
       default:
         // do nothing
         break;
@@ -362,6 +375,10 @@ bool NBestGenerator::Next(const ConversionRequest &request,
         case CandidateFilter::STOP_ENUMERATION:
           return false;
         case CandidateFilter::BAD_CANDIDATE:
+#ifdef MOZC_CANDIDATE_DEBUG
+          bad_candidates_.push_back(*candidate);
+          break;
+#endif  // MOZC_CANDIDATE_DEBUG
         default:
           break;
           // do nothing

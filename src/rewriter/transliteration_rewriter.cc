@@ -45,6 +45,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 // For T13n normalize
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
@@ -115,7 +116,7 @@ struct IsNonnegativeAndLessThan<std::false_type> {
   }
 };
 
-void ModifyT13nsForGodan(const std::string &key,
+void ModifyT13nsForGodan(const absl::string_view key,
                          std::vector<std::string> *t13ns) {
   static const char *const kKeycodeToT13nMap[] = {
       nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -154,12 +155,12 @@ void ModifyT13nsForGodan(const std::string &key,
   //   Also, just clearing it (i.e. make it an empty string) doesn't work.
   //   Thus, as a work around, we set the original key, so that it'll be
   //   removed in the later phase of de-dupping.
-  const std::string &half_ascii = dst.empty() ? key : dst;
+  const absl::string_view half_ascii = dst.empty() ? key : dst;
   std::string full_ascii;
   japanese_util::HalfWidthAsciiToFullWidthAscii(half_ascii, &full_ascii);
-  std::string half_ascii_upper = half_ascii;
-  std::string half_ascii_lower = half_ascii;
-  std::string half_ascii_capitalized = half_ascii;
+  std::string half_ascii_upper(half_ascii);
+  std::string half_ascii_lower(half_ascii);
+  std::string half_ascii_capitalized(half_ascii);
   Util::UpperString(&half_ascii_upper);
   Util::LowerString(&half_ascii_lower);
   Util::CapitalizeString(&half_ascii_capitalized);
@@ -170,7 +171,7 @@ void ModifyT13nsForGodan(const std::string &key,
   Util::LowerString(&full_ascii_lower);
   Util::CapitalizeString(&full_ascii_capitalized);
 
-  (*t13ns)[transliteration::HALF_ASCII] = half_ascii;
+  (*t13ns)[transliteration::HALF_ASCII] = std::string(half_ascii);
   (*t13ns)[transliteration::HALF_ASCII_UPPER] = half_ascii_upper;
   (*t13ns)[transliteration::HALF_ASCII_LOWER] = half_ascii_lower;
   (*t13ns)[transliteration::HALF_ASCII_CAPITALIZED] = half_ascii_capitalized;
@@ -336,8 +337,6 @@ TransliterationRewriter::TransliterationRewriter(
     const dictionary::PosMatcher &pos_matcher)
     : unknown_id_(pos_matcher.GetUnknownId()) {}
 
-TransliterationRewriter::~TransliterationRewriter() {}
-
 int TransliterationRewriter::capability(
     const ConversionRequest &request) const {
   // For mobile, mixed conversion is on.  In this case t13n rewrite should be
@@ -425,20 +424,20 @@ bool TransliterationRewriter::Rewrite(const ConversionRequest &request,
 }
 
 void TransliterationRewriter::InitT13nCandidate(
-    const std::string &key, const std::string &value, uint16_t lid,
-    uint16_t rid, Segment::Candidate *cand) const {
+    const absl::string_view key, const absl::string_view value,
+    const uint16_t lid, const uint16_t rid, Segment::Candidate *cand) const {
   DCHECK(cand);
   cand->Init();
-  cand->value = value;
-  cand->key = key;
-  cand->content_value = value;
-  cand->content_key = key;
+  cand->value = std::string(value);
+  cand->key = std::string(key);
+  cand->content_value = std::string(value);
+  cand->content_key = std::string(key);
   cand->lid = (lid != 0) ? lid : unknown_id_;
   cand->rid = (rid != 0) ? rid : unknown_id_;
 }
 
 bool TransliterationRewriter::SetTransliterations(
-    const std::vector<std::string> &t13ns, const std::string &key,
+    const std::vector<std::string> &t13ns, const absl::string_view key,
     Segment *segment) const {
   if (t13ns.size() != transliteration::NUM_T13N_TYPES ||
       !IsTransliterated(t13ns)) {

@@ -50,7 +50,7 @@ class InputMultiFile {
                           std::ios_base::openmode mode = std::ios_base::in);
   InputMultiFile(const InputMultiFile&) = delete;
   InputMultiFile& operator=(const InputMultiFile&) = delete;
-  ~InputMultiFile();
+  ~InputMultiFile() = default;
 
   // Reads one line. Returns false after reading all the lines.
   bool ReadLine(std::string* line);

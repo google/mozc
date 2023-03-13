@@ -46,55 +46,12 @@
         'test_size': 'small',
       },
     },
-    {
-      'target_name': 'json_util_test',
-      'type': 'executable',
-      'sources': [
-        'json_util_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:testing_util',
-        'net.gyp:json_util',
-        'json_util_test_protocol',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
-      'target_name': 'genproto_json_util_test',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        'json_util_test.proto',
-      ],
-      'includes': [
-        '../protobuf/genproto.gypi',
-      ],
-    },
-    {
-      'target_name': 'json_util_test_protocol',
-      'type': 'static_library',
-      'hard_dependency': 1,
-      'sources': [
-        '<(proto_out_dir)/<(relative_dir)/json_util_test.pb.cc',
-      ],
-      'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
-        'genproto_json_util_test#host',
-      ],
-      'export_dependent_settings': [
-        'genproto_json_util_test#host',
-      ],
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'net_all_test',
       'type': 'none',
       'dependencies': [
         'jsonpath_test',
-        'json_util_test',
       ],
     },
   ],

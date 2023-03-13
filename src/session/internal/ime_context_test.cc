@@ -34,14 +34,11 @@
 #include <string>
 
 #include "composer/composer.h"
-#include "composer/key_parser.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
-#include "session/internal/keymap_interface.h"
 #include "session/session_converter.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"

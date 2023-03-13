@@ -240,7 +240,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "//testing:gunit_prod",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -257,12 +256,8 @@ mozc_cc_test(
         ":date_rewriter",
         "//base:clock",
         "//base:clock_mock",
-        "//base:port",
-        "//base:system_util",
-        "//base:util",
         "//composer",
         "//composer:table",
-        "//config:config_handler",
         "//converter:segments",
         "//converter:segments_matchers",
         "//dictionary:dictionary_mock",
@@ -354,6 +349,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -378,6 +374,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//transliteration",
         "//usage_stats",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -479,6 +476,7 @@ mozc_cc_library(
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -551,6 +549,7 @@ mozc_cc_test(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -686,6 +685,7 @@ mozc_cc_library(
         "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -717,6 +717,7 @@ mozc_cc_library(
         "//converter:segments",
         "//request:conversion_request",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
@@ -754,6 +755,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//rewriter/calculator",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -825,6 +827,7 @@ mozc_cc_test(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -879,6 +882,7 @@ mozc_cc_library(
         "//dictionary:pos_matcher_lib",
         "//dictionary:user_pos",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1153,6 +1157,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -1194,6 +1199,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//transliteration",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -1215,6 +1221,7 @@ mozc_cc_test(
         "//session:request_test_util",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1456,6 +1463,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1489,6 +1497,7 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

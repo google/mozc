@@ -251,10 +251,6 @@ class Util {
   // given line.
   static bool ChopReturns(std::string *line);
 
-  // Suspends the execution of the current thread until
-  // the time-out interval elapses.
-  ABSL_DEPRECATED("Use absl::SleepFor()") static void Sleep(uint32_t msec);
-
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area
   static bool IsFullWidthSymbolInHalfWidthKatakana(absl::string_view input);

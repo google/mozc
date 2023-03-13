@@ -39,27 +39,29 @@
 #include "protocol/config.pb.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   Segment *seg = segments->add_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
-  candidate->content_key = key;
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->content_key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
 }
 
-void InitSegments(const std::string &key, const std::string &value,
+void InitSegments(const absl::string_view key, const absl::string_view value,
                   Segments *segments) {
   segments->Clear();
   AddSegment(key, value, segments);
 }
 
-bool ContainCandidate(const Segments &segments, const std::string &candidate) {
+bool ContainCandidate(const Segments &segments,
+                      const absl::string_view candidate) {
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
     if (candidate == segment.candidate(i).value) {

@@ -45,18 +45,5 @@
         'jsoncpp.gyp:jsoncpp',
       ],
     },
-    {
-      'target_name': 'json_util',
-      'type': 'static_library',
-      'sources': [
-        'json_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:number_util',
-        '../protobuf/protobuf.gyp:protobuf',
-        'jsoncpp.gyp:jsoncpp',
-      ],
-    },
   ],
 }

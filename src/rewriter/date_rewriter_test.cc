@@ -39,12 +39,8 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "base/port.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "dictionary/dictionary_mock.h"
@@ -54,6 +50,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -69,32 +66,32 @@ using ::testing::Matcher;
 using ::testing::Not;
 using ::testing::StrEq;
 
-void InitCandidate(const std::string &key, const std::string &value,
+void InitCandidate(const absl::string_view key, const absl::string_view value,
                    Segment::Candidate *candidate) {
-  candidate->content_key = key;
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->content_key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
 }
 
-void AppendSegment(const std::string &key, const std::string &value,
+void AppendSegment(const absl::string_view key, const absl::string_view value,
                    Segments *segments) {
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   InitCandidate(key, value, seg->add_candidate());
 }
 
-void InitSegment(const std::string &key, const std::string &value,
+void InitSegment(const absl::string_view key, const absl::string_view value,
                  Segments *segments) {
   segments->Clear();
   AppendSegment(key, value, segments);
 }
 
-void InsertCandidate(const std::string &key, const std::string &value,
+void InsertCandidate(const absl::string_view key, const absl::string_view value,
                      const int position, Segment *segment) {
   Segment::Candidate *cand = segment->insert_candidate(position);
-  cand->content_key = key;
-  cand->value = value;
-  cand->content_value = value;
+  cand->content_key = std::string(key);
+  cand->value = std::string(value);
+  cand->content_value = std::string(value);
 }
 
 // "2011-04-18 15:06:31 (Mon)" UTC
@@ -118,7 +115,7 @@ Matcher<const Segment::Candidate *> ValueAndDescAre(absl::string_view value,
 ACTION_P(InvokeCallbackWithUserDictionaryToken, value) {
   const absl::string_view key = arg0;
   DictionaryInterface::Callback *const callback = arg2;
-  const Token token(std::string(key), value, MockDictionary::kDefaultCost,
+  const Token token(key, value, MockDictionary::kDefaultCost,
                     MockDictionary::kDefaultPosId,
                     MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
   callback->OnToken(key, key, token);
@@ -1144,7 +1141,8 @@ TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
   ClockMock clock(kTestSeconds, kTestMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
-  auto syntax_test = [](const std::string &input, const std::string &output) {
+  auto syntax_test = [](const absl::string_view input,
+                        const absl::string_view output) {
     MockDictionary dictionary;
     EXPECT_CALL(dictionary,
                 LookupExact(StrEq(DateRewriter::kExtraFormatKey), _, _))

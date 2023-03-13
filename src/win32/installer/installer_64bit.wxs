@@ -97,8 +97,8 @@
         Compressed='yes' Platform='x64' />
 
     <Condition
-        Message='Google 日本語入力をインストールするには Windows 7 Service Pack 1、Windows 8、Windows 8.1、または Windows 10 のいずれかにアップグレードする必要があります。'>
-      ((VersionNT = 601) AND (ServicePackLevel &gt;= 1)) OR (VersionNT &gt; 601)
+        Message='Google 日本語入力をインストールするには Windows 8 以降にアップグレードする必要があります。'>
+        VersionNT &gt;= 602
     </Condition>
 
     <!-- Check if the user have the administrative privileges. -->
@@ -164,21 +164,6 @@
               DiskId='1' SourceFile='$(var.ReleaseCrtMergeModulePath)' />
         <?endif?>
       <?endif?>
-      <Directory Id='SystemFolder'>
-        <Component Id='GIMEJaIME32' Guid='*' Permanent='no'>
-          <File Id='GIMEJa32.ime' Name='GIMEJa.ime'
-              DiskId='1' Checksum='yes'
-              Source='$(var.MozcIME32Path)' Vital='yes' />
-        </Component>
-      </Directory>
-      <Directory Id='System64Folder'>
-        <Component Id='GIMEJaIME64' Guid='*' Permanent='no' Win64='yes'>
-          <Condition>VersionNT64</Condition>
-          <File Id='GIMEJa64.ime' Name='GIMEJa.ime'
-              DiskId='1' Checksum='yes'
-              Source='$(var.MozcIME64Path)' Vital='yes' />
-        </Component>
-      </Directory>
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
         <Directory Id='GoogleDir' Name='Google'>
           <Directory Id='GIMEJaDir' Name='Google Japanese Input'>
@@ -365,7 +350,7 @@
                   Source='$(var.MozcBroker32Path)' Vital='yes' />
             </Component>
             <Component Id='GIMEJaBroker64' Guid='*' Permanent='no'>
-              <Condition>(VersionNT &gt;= 600) and (VersionNT64)</Condition>
+              <Condition>(VersionNT64)</Condition>
               <File Id='GoogleIMEJaBroker64.exe'
                   Name='GoogleIMEJaBroker64.exe'
                   DiskId='1' Checksum='yes'
@@ -695,8 +680,6 @@
         <ComponentRef Id='api_ms_win_crt_utility_l1_1_0' />
         <ComponentRef Id='ucrtbase' />
       <?endif?>
-      <ComponentRef Id='GIMEJaIME32' />
-      <ComponentRef Id='GIMEJaIME64' />
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaTIP64' />
       <ComponentRef Id='GIMEJaBroker32' />
@@ -744,25 +727,6 @@
     <Binary Id='CustomActions32' SourceFile='$(var.CustomActions32Path)' />
     <Binary Id='CustomActions64' SourceFile='$(var.CustomActions64Path)' />
 
-    <!--
-      InstallIME need to be called by an impersonated thread since it
-      registers per-user settings.
-    -->
-    <!--
-      On 64-bit Windows, it would better to use native (64-bit) version of
-      ImmInstallIME instead of WOW (32-bit) version.  See b/2931871 for
-      details.
-    -->
-    <CustomAction Id='InstallIME' BinaryKey='CustomActions64'
-        DllEntry='InstallIME' Execute='deferred' Impersonate='yes' />
-    <CustomAction Id='InstallIMERollback'
-        BinaryKey='CustomActions64' DllEntry='InstallIMERollback'
-        Execute='rollback' Impersonate='yes' />
-    <CustomAction Id='UninstallIME' BinaryKey='CustomActions64'
-        DllEntry='UninstallIME' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='UninstallIMERollback'
-        BinaryKey='CustomActions64' DllEntry='UninstallIMERollback'
-        Execute='rollback' Impersonate='no' />
     <CustomAction Id='RegisterTIP32' BinaryKey='CustomActions32'
         DllEntry='RegisterTIP' Execute='deferred' Impersonate='no' />
     <CustomAction Id='RegisterTIPRollback32' BinaryKey='CustomActions32'
@@ -846,40 +810,33 @@
       <!--
         EnsureIMEIsDisabledForServiceAccountBeforeUninstall should be invoked
         before Mozc's KLID is removed, which means you should call this action
-        before UninstallIME.
+        before UnregisterTIPRollback64.
       -->
       <Custom Action='EnsureIMEIsDisabledForServiceAccountBeforeUninstall'
           After='RestoreUserIMEEnvironment' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
       <!-- This action invoked only when removal of the old product failed. -->
-      <Custom Action='UninstallIMERollback'
+      <Custom Action='UnregisterTIPRollback64'
           After='EnsureIMEIsDisabledForServiceAccountBeforeUninstall' >
-        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE
-      </Custom>
-      <Custom Action='UninstallIME' After='UninstallIMERollback' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
-      </Custom>
-      <!-- This action invoked only when removal of the old product failed. -->
-      <Custom Action='UnregisterTIPRollback64' After='UninstallIME' >
-        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64) AND (VersionNT &gt;= 602)
+        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT64)
       </Custom>
       <Custom Action='UnregisterTIP64' After='UnregisterTIPRollback64' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64) AND (VersionNT &gt;= 602)
+        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
       </Custom>
       <!-- This action invoked only when removal of the old product failed. -->
       <Custom Action='UnregisterTIPRollback32' After='UnregisterTIP64' >
-        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE AND (VersionNT &gt;= 602)
+        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE
       </Custom>
       <Custom Action='UnregisterTIP32' After='UnregisterTIPRollback32' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT &gt;= 602)
+        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
       </Custom>
       <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP32' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
       <Custom Action='CallIERefreshElevationPolicy' After='SelfRegModules'>
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 600)
+        (NOT (REMOVE="ALL"))
       </Custom>
       <!--
         The InstallValidate action notifies the user
@@ -908,36 +865,30 @@
       <Custom Action='StopCacheServiceForRollback' Before='RestoreServiceState'>
         (NOT (REMOVE="ALL"))
       </Custom>
-      <Custom Action='RestoreServiceState' Before='InstallIMERollback'>
+      <Custom Action='RestoreServiceState' Before='RegisterTIPRollback32'>
         (NOT (REMOVE="ALL"))
       </Custom>
       <!--
-        If error occurs after InstallIME,
+        If error occurs after RegisterTIP32,
         the registration needs to be canceled by registering the old product.
-        So InstallIME needs to be scheduled after RemoveExistingProduct.
+        So RegisterTIP32 needs to be scheduled after RemoveExistingProduct.
       -->
-      <Custom Action='InstallIMERollback' Before='InstallIME' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &lt; 602) AND (NOT UPGRADING)
-      </Custom>
-      <Custom Action='InstallIME' Before='RegisterTIPRollback32' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &lt; 602)
-      </Custom>
       <Custom Action='RegisterTIPRollback32' Before='RegisterTIP32' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602) AND (NOT UPGRADING)
+        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <Custom Action='RegisterTIP32' Before='RegisterTIPRollback64' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602)
+        (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action='RegisterTIPRollback64' Before='RegisterTIP64' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602) AND (VersionNT64) AND (NOT UPGRADING)
+        (NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)
       </Custom>
       <Custom Action='RegisterTIP64'
           Before='EnsureAllApplicationPackagesPermisssions' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602) AND (VersionNT64)
+        (NOT (REMOVE="ALL")) AND (VersionNT64)
       </Custom>
       <Custom Action='EnsureAllApplicationPackagesPermisssions'
           Before='EnsureIMEIsDisabledForServiceAccountAfterInstall' >
-        (NOT (REMOVE="ALL")) AND (VersionNT &gt;= 602)
+        (NOT (REMOVE="ALL"))
       </Custom>
       <Custom Action='EnsureIMEIsDisabledForServiceAccountAfterInstall'
           Before='InstallFinalize' >

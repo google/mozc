@@ -160,7 +160,6 @@ def GetGypFileNames(options):
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
-    gyp_file_names.append('%s/win32/ime/ime.gyp' % SRC_DIR)
     # Add ibus.gyp if ibus version is >=1.4.1.
     if not PkgExists('ibus-1.0 >= 1.4.1'):
       logging.info('removing ibus.gyp.')

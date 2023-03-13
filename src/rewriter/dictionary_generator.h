@@ -43,6 +43,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_pos.h"
 #include "absl/container/btree_map.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace rewriter {
@@ -66,23 +67,24 @@ class Token final {
   void set_sorting_key(int sorting_key) { sorting_key_ = sorting_key; }
 
   const std::string &key() const { return key_; }
-  void set_key(const std::string &key) { key_ = key; }
+  void set_key(const absl::string_view key) { key_ = std::string(key); }
 
   const std::string &value() const { return value_; }
-  void set_value(const std::string &value) { value_ = value; }
+  void set_value(const absl::string_view value) { value_ = std::string(value); }
 
   const std::string &pos() const { return pos_; }
-  void set_pos(const std::string &pos) { pos_ = pos; }
+  void set_pos(const absl::string_view pos) { pos_ = std::string(pos); }
 
   const std::string &description() const { return description_; }
   const std::string &additional_description() const {
     return additional_description_;
   }
-  void set_description(const std::string &description) {
-    description_ = description;
+  void set_description(const absl::string_view description) {
+    description_ = std::string(description);
   }
-  void set_additional_description(const std::string &additional_description) {
-    additional_description_ = additional_description;
+  void set_additional_description(
+      const absl::string_view additional_description) {
+    additional_description_ = std::string(additional_description);
   }
 
  private:
@@ -108,7 +110,7 @@ class DictionaryGenerator {
   void AddToken(const Token &token);
 
   // Output the tokens into the filename.
-  bool Output(const std::string &filename) const;
+  bool Output(absl::string_view filename) const;
 
  private:
   ObjectPool<Token> token_pool_;

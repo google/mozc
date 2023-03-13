@@ -77,6 +77,8 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     visibility = [
+        # For //base:update_util_test
+        "//base:__subpackages__",
         # For //config:stats_config_util_test.
         "//config:__pkg__",
         # For //win32/base:omaha_util_test

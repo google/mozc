@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "win32\broker\mozc_broker_resource.h"
+#include "win32/broker/mozc_broker_resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

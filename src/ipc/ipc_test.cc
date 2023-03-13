@@ -29,19 +29,19 @@
 
 #include "ipc/ipc.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "base/random.h"
 #include "base/system_util.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/random/distributions.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
@@ -58,44 +58,10 @@ static constexpr char kServerAddress[] = "test_echo_server";
 #ifdef _WIN32
 // On windows, multiple-connections failed.
 static constexpr int kNumThreads = 1;
-#else  // _WIN32
+#else   // _WIN32
 static constexpr int kNumThreads = 5;
 #endif  // _WIN32
 static constexpr int kNumRequests = 2000;
-
-class MultiConnections : public mozc::Thread {
- public:
-#ifdef __APPLE__
-  MultiConnections() : mach_port_manager_(nullptr) {}
-
-  void SetMachPortManager(mozc::MachPortManagerInterface *manager) {
-    mach_port_manager_ = manager;
-  }
-#endif  // __APPLE__
-
-  void Run() override {
-    absl::SleepFor(absl::Seconds(2));
-    mozc::Random random;
-    for (int i = 0; i < kNumRequests; ++i) {
-      mozc::IPCClient con(kServerAddress, "");
-#ifdef __APPLE__
-      con.SetMachPortManager(mach_port_manager_);
-#endif  // __APPLE__
-      ASSERT_TRUE(con.Connected());
-      const int size = absl::Uniform(random, 1, 8000);
-      const std::string input = absl::StrCat("test", random.ByteString(size));
-      std::string output;
-      ASSERT_TRUE(con.Call(input, &output, 1000));
-      EXPECT_EQ(output.size(), input.size());
-      EXPECT_EQ(output, input);
-    }
-  }
-
- private:
-#ifdef __APPLE__
-  mozc::MachPortManagerInterface *mach_port_manager_;
-#endif  // __APPLE__
-};
 
 class EchoServer : public mozc::IPCServer {
  public:
@@ -124,21 +90,33 @@ TEST(IPCTest, IPCTest) {
 #endif  // __APPLE__
   con.LoopAndReturn();
 
-  // mozc::Thread is not designed as value-semantics.
-  // So here we use pointers to maintain these instances.
-  std::vector<MultiConnections *> cons(kNumThreads);
-  for (size_t i = 0; i < cons.size(); ++i) {
-    cons[i] = new MultiConnections;
+  std::vector<mozc::Thread2> cons;
+  for (int i = 0; i < kNumThreads; ++i) {
+    cons.push_back(mozc::Thread2([
 #ifdef __APPLE__
-    cons[i]->SetMachPortManager(&manager);
+                                     &manager
 #endif  // __APPLE__
-    cons[i]->SetJoinable(true);
-    cons[i]->Start("IPCTest");
+    ] {
+      absl::SleepFor(absl::Seconds(2));
+      mozc::Random random;
+      for (int i = 0; i < kNumRequests; ++i) {
+        mozc::IPCClient con(kServerAddress, "");
+#ifdef __APPLE__
+        con.SetMachPortManager(&manager);
+#endif  // __APPLE__
+        ASSERT_TRUE(con.Connected());
+        const int size = absl::Uniform(random, 1, 8000);
+        const std::string input = absl::StrCat("test", random.ByteString(size));
+        std::string output;
+        ASSERT_TRUE(con.Call(input, &output, 1000));
+        EXPECT_EQ(output.size(), input.size());
+        EXPECT_EQ(output, input);
+      }
+    }));
   }
-  for (size_t i = 0; i < cons.size(); ++i) {
-    cons[i]->Join();
-    delete cons[i];
-    cons[i] = nullptr;
+
+  for (mozc::Thread2 &con : cons) {
+    con.Join();
   }
 
   mozc::IPCClient kill(kServerAddress, "");

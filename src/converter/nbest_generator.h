@@ -191,6 +191,10 @@ class NBestGenerator {
   std::unique_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_ = false;
   BoundaryCheckMode check_mode_ = STRICT;
+
+#ifdef MOZC_CANDIDATE_DEBUG
+  std::vector<Segment::Candidate> bad_candidates_;
+#endif  // MOZC_CANDIDATE_DEBUG
 };
 
 }  // namespace mozc

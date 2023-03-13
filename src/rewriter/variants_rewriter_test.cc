@@ -81,7 +81,7 @@ class VariantsRewriterTest : public ::testing::Test {
     CharacterFormManager::GetCharacterFormManager()->ClearHistory();
   }
 
-  static void InitSegmentsForAlphabetRewrite(const std::string &value,
+  static void InitSegmentsForAlphabetRewrite(const absl::string_view value,
                                              Segments *segments) {
     Segment *segment = segments->push_back_segment();
     CHECK(segment);
@@ -89,10 +89,10 @@ class VariantsRewriterTest : public ::testing::Test {
     Segment::Candidate *candidate = segment->add_candidate();
     CHECK(candidate);
     candidate->Init();
-    candidate->key = value;
-    candidate->content_key = value;
-    candidate->value = value;
-    candidate->content_value = value;
+    candidate->key = std::string(value);
+    candidate->content_key = std::string(value);
+    candidate->value = std::string(value);
+    candidate->content_value = std::string(value);
   }
 
   VariantsRewriter *CreateVariantsRewriter() const {

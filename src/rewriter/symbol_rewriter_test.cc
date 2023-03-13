@@ -48,6 +48,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -56,28 +57,28 @@ using ::testing::_;
 using ::testing::Ref;
 using ::testing::Return;
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = value;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->value = std::string(value);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
 }
 
-void AddCandidate(const std::string &value, Segment *segment) {
+void AddCandidate(const absl::string_view value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->value = value;
+  candidate->value = std::string(value);
   candidate->content_key = segment->key();
-  candidate->content_value = value;
+  candidate->content_value = std::string(value);
 }
 
 bool HasCandidateAndDescription(const Segments &segments, int index,
-                                const std::string &key,
-                                const std::string &description) {
+                                const absl::string_view key,
+                                const absl::string_view description) {
   CHECK_GT(segments.segments_size(), index);
   bool check_description = !description.empty();
 
@@ -96,7 +97,7 @@ bool HasCandidateAndDescription(const Segments &segments, int index,
 }
 
 bool HasCandidate(const Segments &segments, int index,
-                  const std::string &value) {
+                  const absl::string_view value) {
   return HasCandidateAndDescription(segments, index, value, "");
 }
 

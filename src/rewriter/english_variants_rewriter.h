@@ -32,18 +32,19 @@
 
 #include <string>
 #include <vector>
+
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/gunit_prod.h"
-// for FRIEND_TEST()
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 class ConversionRequest;
 
 class EnglishVariantsRewriter : public RewriterInterface {
  public:
-  EnglishVariantsRewriter();
-  ~EnglishVariantsRewriter() override;
+  EnglishVariantsRewriter() = default;
+  ~EnglishVariantsRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 
@@ -54,7 +55,7 @@ class EnglishVariantsRewriter : public RewriterInterface {
   FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
   bool IsT13NCandidate(Segment::Candidate *candidate) const;
   bool IsEnglishCandidate(Segment::Candidate *candidate) const;
-  bool ExpandEnglishVariants(const std::string &input,
+  bool ExpandEnglishVariants(absl::string_view input,
                              std::vector<std::string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
 };

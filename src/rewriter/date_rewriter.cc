@@ -71,6 +71,8 @@
 
 namespace mozc {
 namespace {
+using date_rewriter_internal::DateCandidate;
+
 enum {
   YEAR,
   MONTH,
@@ -413,9 +415,9 @@ bool PrintUint32(const char *format, uint32_t num, char *buf, size_t buf_size) {
 }
 
 // Helper function to generate "H時M分" time formats.
-void GenerateKanjiTimeFormats(
-    const char *hour_format, const char *min_format, uint32_t hour,
-    uint32_t min, std::vector<std::pair<std::string, const char *>> *results) {
+void GenerateKanjiTimeFormats(const char *hour_format, const char *min_format,
+                              uint32_t hour, uint32_t min,
+                              std::vector<DateCandidate> *results) {
   char hour_s[4], min_s[4];
   if (!PrintUint32(hour_format, hour, hour_s, 4) ||
       !PrintUint32(min_format, min, min_s, 4)) {
@@ -431,9 +433,10 @@ void GenerateKanjiTimeFormats(
 }
 
 // Helper function to generate "午前..." and "午後..." time formats.
-void GenerateGozenGogoTimeFormats(
-    const char *hour_format, const char *min_format, uint32_t hour,
-    uint32_t min, std::vector<std::pair<std::string, const char *>> *results) {
+void GenerateGozenGogoTimeFormats(const char *hour_format,
+                                  const char *min_format, uint32_t hour,
+                                  uint32_t min,
+                                  std::vector<DateCandidate> *results) {
   // "午前" and "午後" prefixes are only used for [0, 11].
   if (hour >= 12) {
     return;
@@ -465,7 +468,7 @@ void GenerateGozenGogoTimeFormats(
 //      - output "result" : will be stored candidate strings
 // If the input year is invalid ( accept only [ 1 - 99 ] ) , this function
 // returns false and clear output vector.
-bool ExpandYear(const std::string &prefix, int year,
+bool ExpandYear(const absl::string_view prefix, int year,
                 std::vector<std::string> *result) {
   DCHECK(result);
   if (year <= 0 || year >= 100) {
@@ -475,11 +478,11 @@ bool ExpandYear(const std::string &prefix, int year,
 
   if (year == 1) {
     //  "元年"
-    result->push_back(prefix + "元");
+    result->push_back(absl::StrCat(prefix, "元"));
     return true;
   }
 
-  result->push_back(prefix + std::to_string(year));
+  result->push_back(absl::StrCat(prefix, year));
 
   std::string arabic = std::to_string(year);
 
@@ -489,7 +492,7 @@ bool ExpandYear(const std::string &prefix, int year,
 
   for (int i = 0; i < output.size(); i++) {
     if (output[i].style == NumberUtil::NumberString::NUMBER_KANJI) {
-      result->push_back(prefix + output[i].value);
+      result->push_back(absl::StrCat(prefix, output[i].value));
     }
   }
 
@@ -497,20 +500,20 @@ bool ExpandYear(const std::string &prefix, int year,
 }
 
 std::unique_ptr<Segment::Candidate> CreateCandidate(
-    const Segment::Candidate &base_candidate, const std::string &value,
-    const char *description) {
+    const Segment::Candidate &base_candidate, const absl::string_view value,
+    const absl::string_view description) {
   auto candidate = std::make_unique<Segment::Candidate>();
   candidate->Init();
   candidate->lid = base_candidate.lid;
   candidate->rid = base_candidate.rid;
   candidate->cost = base_candidate.cost;
-  candidate->value = value;
+  candidate->value = std::string(value);
   candidate->key = base_candidate.key;
   candidate->content_key = base_candidate.content_key;
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
-  if (description != nullptr) {
-    candidate->description = description;
+  if (!description.empty()) {
+    candidate->description = std::string(description);
   }
   return candidate;
 }
@@ -545,7 +548,7 @@ bool AdToEraForCourt(const YearData *data, int size, int year,
 constexpr char kNenKey[] = "ねん";
 constexpr char kNenValue[] = "年";
 
-bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
+bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
                         int *year, std::string *description) {
   constexpr char kGanKey[] = "がん";
   constexpr char kGanValue[] = "元";
@@ -581,7 +584,8 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
   return true;
 }
 
-bool EraToAdForCourt(const YearData *data, size_t size, const std::string &key,
+bool EraToAdForCourt(const YearData *data, size_t size,
+                     const absl::string_view key,
                      std::vector<std::string> *results,
                      std::vector<std::string> *descriptions) {
   if (!absl::EndsWith(key, kNenKey)) {
@@ -779,7 +783,7 @@ std::vector<std::string> DateRewriter::AdToEra(int year, int month) {
   return results;
 }
 
-bool DateRewriter::EraToAd(const std::string &key,
+bool DateRewriter::EraToAd(const absl::string_view key,
                            std::vector<std::string> *results,
                            std::vector<std::string> *descriptions) {
   bool ret = false;
@@ -878,7 +882,7 @@ absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff) {
 }
 
 std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
-                                        const std::string &extra_format) {
+                                        const absl::string_view extra_format) {
   std::vector<std::string> results;
   const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff);
 
@@ -947,7 +951,7 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
 }  // namespace
 
 bool DateRewriter::RewriteDate(Segment *segment,
-                               const std::string &extra_format) {
+                               const absl::string_view extra_format) {
   const std::string &key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
                           [&key](auto data) { return key == data.key; });
@@ -980,7 +984,7 @@ bool DateRewriter::RewriteDate(Segment *segment,
   const Segment::Candidate &base_cand = segment->candidate(cand_idx);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(conversions.size());
-  for (const std::string &conversion : conversions) {
+  for (const absl::string_view conversion : conversions) {
     candidates.emplace_back(
         CreateCandidate(base_cand, conversion, data.description));
   }
@@ -1031,7 +1035,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  constexpr char kDescription[] = "和暦";
+  constexpr absl::string_view kDescription = "和暦";
   const Segment::Candidate &base_cand = current_segment->candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
@@ -1064,8 +1068,8 @@ bool DateRewriter::RewriteAd(Segment *segment) {
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    candidates.emplace_back(
-        CreateCandidate(base_cand, results[i], descriptions[i].c_str()));
+    candidates.push_back(
+        CreateCandidate(base_cand, results[i], descriptions[i]));
   }
 
   // Insert position is the last of candidates
@@ -1075,7 +1079,7 @@ bool DateRewriter::RewriteAd(Segment *segment) {
 }
 
 namespace {
-bool IsNDigits(const std::string &value, int n) {
+bool IsNDigits(const absl::string_view value, int n) {
   return Util::CharsLen(value) == n &&
          Util::GetScriptType(value) == Util::NUMBER;
 }
@@ -1151,7 +1155,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
 
   // Generate candidates.  The results contain <candidate, description> pairs.
   std::string number_str;
-  std::vector<std::pair<std::string, const char *>> results;
+  std::vector<DateCandidate> results;
   if (GetNDigits(composer, *segments, 2, &number_str)) {
     if (!RewriteConsecutiveTwoDigits(number_str, &results)) {
       return false;
@@ -1178,7 +1182,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
   candidates.reserve(results.size());
   for (const auto &result : results) {
     candidates.emplace_back(
-        CreateCandidate(top_cand, result.first, result.second));
+        CreateCandidate(top_cand, result.candidate, result.description));
   }
 
   if (insert_position < 0) {
@@ -1189,8 +1193,7 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
 }
 
 bool DateRewriter::RewriteConsecutiveTwoDigits(
-    absl::string_view str,
-    std::vector<std::pair<std::string, const char *>> *results) {
+    absl::string_view str, std::vector<DateCandidate> *results) {
   DCHECK_EQ(2, str.size());
   const auto orig_size = results->size();
   const uint32_t high = static_cast<uint32_t>(str[0] - '0');
@@ -1211,8 +1214,7 @@ bool DateRewriter::RewriteConsecutiveTwoDigits(
 }
 
 bool DateRewriter::RewriteConsecutiveThreeDigits(
-    absl::string_view str,
-    std::vector<std::pair<std::string, const char *>> *results) {
+    absl::string_view str, std::vector<DateCandidate> *results) {
   DCHECK_EQ(3, str.size());
   const auto orig_size = results->size();
 
@@ -1280,8 +1282,7 @@ bool DateRewriter::RewriteConsecutiveThreeDigits(
 }
 
 bool DateRewriter::RewriteConsecutiveFourDigits(
-    absl::string_view str,
-    std::vector<std::pair<std::string, const char *>> *results) {
+    absl::string_view str, std::vector<DateCandidate> *results) {
   DCHECK_EQ(4, str.size());
   const auto orig_size = results->size();
 
@@ -1326,9 +1327,6 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
   return results->size() > orig_size;
 }
 
-DateRewriter::DateRewriter() = default;
-DateRewriter::~DateRewriter() = default;
-
 DateRewriter::DateRewriter(const dictionary::DictionaryInterface *dictionary)
     : dictionary_(dictionary) {}
 
@@ -1340,7 +1338,7 @@ int DateRewriter::capability(const ConversionRequest &request) const {
 }
 
 namespace {
-std::string ConvertExtraFormat(const std::string &base) {
+std::string ConvertExtraFormat(const absl::string_view base) {
   return absl::StrReplaceAll(base, {{"%", "%%"},
                                     {"{YEAR}", "%Y"},
                                     {"{MONTH}", "%m"},

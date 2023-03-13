@@ -89,7 +89,7 @@ class NumberUtil {
       NUMBER_BIN,
     };
 
-    NumberString(const std::string &value, absl::string_view description,
+    NumberString(absl::string_view value, absl::string_view description,
                  Style style)
         : value(value), description(description), style(style) {}
 

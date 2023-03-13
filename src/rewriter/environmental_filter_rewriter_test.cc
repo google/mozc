@@ -52,24 +52,24 @@ constexpr char kKanaSupplement_6_0[] = "\U0001B001";
 constexpr char kKanaSupplement_10_0[] = "\U0001B002";
 constexpr char kKanaExtendedA_14_0[] = "\U0001B122";
 
-void AddSegment(const std::string &key, const std::string &value,
+void AddSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = value;
-  candidate->content_value = value;
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
 }
 
-void AddSegment(const std::string &key, const std::vector<std::string> &values,
-                Segments *segments) {
+void AddSegment(const absl::string_view key,
+                const std::vector<std::string> &values, Segments *segments) {
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   for (const std::string &value : values) {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->content_key = key;
+    candidate->content_key = std::string(key);
     candidate->value = value;
     candidate->content_value = value;
   }

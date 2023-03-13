@@ -32,18 +32,20 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 
 class CalculatorInterface {
  public:
   // Calculates expression and outputs to |result|. If key is not an expression,
   // it returns false.
-  virtual bool CalculateString(const std::string &key,
+  virtual bool CalculateString(absl::string_view key,
                                std::string *result) const = 0;
 
  protected:
-  CalculatorInterface() {}
-  virtual ~CalculatorInterface() {}
+  CalculatorInterface() = default;
+  virtual ~CalculatorInterface() = default;
 };
 
 // factory for making "default" calculator
@@ -56,8 +58,8 @@ class CalculatorFactory {
   static void SetCalculator(CalculatorInterface *calculator);
 
  private:
-  CalculatorFactory() {}
-  virtual ~CalculatorFactory() {}
+  CalculatorFactory() = default;
+  virtual ~CalculatorFactory() = default;
 };
 
 }  // namespace mozc

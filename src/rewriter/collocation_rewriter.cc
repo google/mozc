@@ -67,7 +67,7 @@ enum SegmentLookupType {
 };
 
 // returns true if the given string contains number including Kanji.
-bool ContainsNumber(const std::string &str) {
+bool ContainsNumber(const absl::string_view str) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     if (CollocationUtil::IsNumber(iter.Get())) {
       return true;
@@ -128,8 +128,9 @@ inline void PushBackStringView(const absl::string_view s,
 // Handles compound such as "本を読む"(one segment)
 // we want to rewrite using it as if it was "<本|を><読む>"
 // so that we can use collocation data like "厚い本"
-void ResolveCompoundSegment(const std::string &top_value,
-                            const std::string &value, SegmentLookupType type,
+void ResolveCompoundSegment(const absl::string_view top_value,
+                            const absl::string_view value,
+                            const SegmentLookupType type,
                             std::vector<std::string> *output) {
   // see "http://ja.wikipedia.org/wiki/助詞"
   static constexpr char kPat1[] = "が";
@@ -166,7 +167,7 @@ void ResolveCompoundSegment(const std::string &top_value,
     if (ParseCompound(value, particle, &first_content, &second)) {
       if (type == LEFT) {
         output->emplace_back(second.data(), second.size());
-        output->push_back(absl::StrCat(first_content, particle));
+        output->emplace_back(absl::StrCat(first_content, particle));
       } else {
         output->emplace_back(first_content.data(), first_content.size());
       }
@@ -513,16 +514,14 @@ class CollocationRewriter::CollocationFilter {
       : filter_(ExistenceFilter::Read(existence_data, size)) {}
   CollocationFilter(const CollocationFilter &) = delete;
   CollocationFilter &operator=(const CollocationFilter &) = delete;
-  ~CollocationFilter() {}
+  ~CollocationFilter() = default;
 
-  bool Exists(const std::string &left, const std::string &right) const {
+  bool Exists(const absl::string_view left,
+              const absl::string_view right) const {
     if (left.empty() || right.empty()) {
       return false;
     }
-    std::string key;
-    key.reserve(left.size() + right.size());
-    key.assign(left).append(right);
-    const uint64_t id = Hash::Fingerprint(key);
+    const uint64_t id = Hash::Fingerprint(absl::StrCat(left, right));
     return filter_->Exists(id);
   }
 
@@ -536,15 +535,13 @@ class CollocationRewriter::SuppressionFilter {
       : filter_(ExistenceFilter::Read(suppression_data, size)) {}
   SuppressionFilter(const SuppressionFilter &) = delete;
   SuppressionFilter &operator=(const SuppressionFilter &) = delete;
-  ~SuppressionFilter() {}
+  ~SuppressionFilter() = default;
 
   bool Exists(const Segment::Candidate &cand) const {
     // TODO(noriyukit): We should share key generation rule with
     // gen_collocation_suppression_data_main.cc.
-    std::string key;
-    key.reserve(cand.content_value.size() + 1 + cand.content_key.size());
-    key.assign(cand.content_value).append("\t").append(cand.content_key);
-    const uint64_t id = Hash::Fingerprint(key);
+    const uint64_t id = Hash::Fingerprint(
+        absl::StrCat(cand.content_value, "\t", cand.content_key));
     return filter_->Exists(id);
   }
 
@@ -567,7 +564,7 @@ CollocationRewriter::CollocationRewriter(
   suppression_filter_ = std::make_unique<SuppressionFilter>(data, size);
 }
 
-CollocationRewriter::~CollocationRewriter() {}
+CollocationRewriter::~CollocationRewriter() = default;
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {

@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -46,7 +47,7 @@ class TransliterationRewriter : public RewriterInterface {
   explicit TransliterationRewriter(const dictionary::PosMatcher &pos_matcher);
   TransliterationRewriter(const TransliterationRewriter &) = delete;
   TransliterationRewriter &operator=(const TransliterationRewriter &) = delete;
-  ~TransliterationRewriter() override;
+  ~TransliterationRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 
@@ -56,13 +57,13 @@ class TransliterationRewriter : public RewriterInterface {
   void Finish(const ConversionRequest &request, Segments *segments) override {}
 
  private:
-  void InitT13nCandidate(const std::string &key, const std::string &value,
+  void InitT13nCandidate(absl::string_view key, absl::string_view value,
                          uint16_t lid, uint16_t rid,
                          Segment::Candidate *cand) const;
   // Sets transliteration values into segment.  If t13ns is invalid,
   // false is returned.
   bool SetTransliterations(const std::vector<std::string> &t13ns,
-                           const std::string &key, Segment *segment) const;
+                           absl::string_view key, Segment *segment) const;
   bool FillT13nsFromComposer(const ConversionRequest &request,
                              Segments *segments) const;
   bool FillT13nsFromKey(Segments *segments) const;

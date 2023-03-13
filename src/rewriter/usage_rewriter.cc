@@ -99,12 +99,10 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   }
 }
 
-UsageRewriter::~UsageRewriter() = default;
-
 // static
 // "合いました" => "合い"
 std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
-    const std::string &word) {
+    const absl::string_view word) {
   // TODO(hidehiko): Refactor more based on ConstChar32Iterator.
   std::string result;
   int pos = 0;
@@ -170,8 +168,8 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
 
 UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
     const Segment::Candidate &candidate) const {
-  const std::string &key = candidate.content_key;
-  const std::string &value = candidate.content_value;
+  const absl::string_view key = candidate.content_key;
+  const absl::string_view value = candidate.content_value;
   StrPair key_value(key, value);
   const auto itr = key_value_usageitem_map_.find(key_value);
   if (itr != key_value_usageitem_map_.end()) {

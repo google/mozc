@@ -109,6 +109,9 @@ class DictionaryPredictor : public PredictorInterface {
     std::string history_value_;
     std::string exact_bigram_key_;
 
+    int tc_max_count_;
+    int tc_max_rank_;
+
     int suffix_count_;
     int predictive_count_;
     int realtime_count_;

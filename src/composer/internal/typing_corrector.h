@@ -55,7 +55,8 @@ class TypingCorrector final {
   // insertion.
   // Returns up to |max_correction_query_results| results from
   // GetQueriesForPrediction.
-  TypingCorrector(const Table *table, size_t max_correction_query_candidates,
+  TypingCorrector(const commands::Request *request, const Table *table,
+                  size_t max_correction_query_candidates,
                   size_t max_correction_query_results);
 
   // Copyable.
@@ -67,6 +68,7 @@ class TypingCorrector final {
   // Sets a romaji table.
   void SetTable(const Table *table);
 
+  void SetRequest(const commands::Request *request);
   void SetConfig(const config::Config *config);
 
   // Returns true if there is typing correction available.
@@ -99,6 +101,7 @@ class TypingCorrector final {
   struct KeyAndPenaltyLess;
 
   bool available_;
+  const commands::Request *request_;
   const Table *table_;
   size_t max_correction_query_candidates_;
   size_t max_correction_query_results_;

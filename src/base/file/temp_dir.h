@@ -30,13 +30,10 @@
 #ifndef MOZC_BASE_FILE_TEMP_DIR_H_
 #define MOZC_BASE_FILE_TEMP_DIR_H_
 
-#include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -48,12 +45,12 @@ class TempDirectory;
 class TempFile {
  public:
   // Creates a new TempFile for path.
-  explicit TempFile(const absl::string_view path) : path_(path) {}
-  TempFile(TempFile &&other)
+  explicit TempFile(std::string path) : path_(std::move(path)) {}
+  TempFile(TempFile &&other) noexcept
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempFile &operator=(TempFile &&other) {
+  TempFile &operator=(TempFile &&other) noexcept {
     std::swap(path_, other.path_);
     std::swap(keep_, other.keep_);
     return *this;
@@ -72,11 +69,11 @@ class TempFile {
 
 class TempDirectory {
  public:
-  TempDirectory(TempDirectory &&other)
+  TempDirectory(TempDirectory &&other) noexcept
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempDirectory &operator=(TempDirectory &&other) {
+  TempDirectory &operator=(TempDirectory &&other) noexcept {
     std::swap(path_, other.path_);
     std::swap(keep_, other.keep_);
     return *this;
@@ -101,9 +98,9 @@ class TempDirectory {
   constexpr const std::string &path() const { return path_; }
 
  private:
-  explicit TempDirectory(const absl::string_view path) : path_(path) {}
-  TempDirectory(const absl::string_view path, bool keep)
-      : path_(path), keep_(keep) {}
+  explicit TempDirectory(std::string path) : path_(std::move(path)) {}
+  TempDirectory(std::string path, bool keep)
+      : path_(std::move(path)), keep_(keep) {}
 
   // path_ is the temporary directory path.
   std::string path_;

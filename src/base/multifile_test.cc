@@ -35,7 +35,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"

@@ -61,16 +61,16 @@ using mozc::commands::Request;
 constexpr char kEmoji[] = "えもじ";
 
 // Makes |segments| to have only a segment with a key-value paired candidate.
-void SetSegment(const std::string &key, const std::string &value,
+void SetSegment(const absl::string_view key, const absl::string_view value,
                 Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->value = key;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->value = std::string(key);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
 }
 
 // Counts the number of enumerated emoji candidates in the segments.
@@ -89,7 +89,7 @@ int CountEmojiCandidates(const Segments &segments) {
 
 // Checks if the first segment has a specific candidate.
 bool HasExpectedCandidate(const Segments &segments,
-                          const std::string &expect_value) {
+                          const absl::string_view expect_value) {
   CHECK_LE(1, segments.segments_size());
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {

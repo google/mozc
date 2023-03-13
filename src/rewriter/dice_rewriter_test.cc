@@ -38,6 +38,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -49,22 +50,22 @@ constexpr char kKey[] = "さいころ";
 // Candidate window size.
 constexpr int kPageSize = 9;
 
-void AddCandidate(const std::string &key, const std::string &value,
+void AddCandidate(const absl::string_view key, const absl::string_view value,
                   Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->value = value;
-  candidate->content_value = value;
-  candidate->content_key = key;
+  candidate->value = std::string(value);
+  candidate->content_value = std::string(value);
+  candidate->content_key = std::string(key);
 }
 
-void AddSegment(const std::string &key, Segments *segments) {
+void AddSegment(const absl::string_view key, Segments *segments) {
   Segment *segment = segments->push_back_segment();
   segment->set_key(key);
 }
 
 // Make a segments which has some dummy candidates.
-void MakeSegments(Segments *segments, const std::string &key,
+void MakeSegments(Segments *segments, const absl::string_view key,
                   const int num_segment, const int num_dummy_candidate) {
   segments->Clear();
 

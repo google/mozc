@@ -58,7 +58,7 @@ using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
 int LookupCount(const absl::flat_hash_map<std::string, int> &key_count,
-                const std::string &key) {
+                const absl::string_view key) {
   const auto iter = key_count.find(key);
   return (iter == key_count.end()) ? 0 : iter->second;
 }
@@ -71,7 +71,7 @@ std::string GetDescription(
   }
   KeyList sorted_key_list(key_list);
   std::sort(sorted_key_list.begin(), sorted_key_list.end(),
-            [&key_count](const std::string &x, const std::string &y) {
+            [&key_count](const absl::string_view x, const absl::string_view y) {
               const int x_count = LookupCount(key_count, x);
               const int y_count = LookupCount(key_count, y);
               if (x_count == y_count) {
@@ -83,7 +83,7 @@ std::string GetDescription(
                          sorted_key_list.front().c_str());
 }
 
-std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
+std::map<std::string, TokenList> ReadEmoticonTsv(const absl::string_view path) {
   InputFileStream ifs(path);
 
   std::string line;

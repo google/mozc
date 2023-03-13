@@ -71,7 +71,7 @@ class CalculatorImpl : public CalculatorInterface {
  public:
   CalculatorImpl();
 
-  bool CalculateString(const std::string &key,
+  bool CalculateString(absl::string_view key,
                        std::string *result) const override;
 
  private:
@@ -113,7 +113,7 @@ CalculatorImpl::CalculatorImpl() {
 
 // Basic arithmetic operations are available.
 // TODO(tok): Add more number of operators.
-bool CalculatorImpl::CalculateString(const std::string &key,
+bool CalculatorImpl::CalculateString(const absl::string_view key,
                                      std::string *result) const {
   DCHECK(result);
   if (key.empty()) {
