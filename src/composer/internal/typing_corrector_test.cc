@@ -31,6 +31,7 @@
 
 #include <iterator>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -50,6 +51,7 @@
 namespace mozc {
 namespace composer {
 
+using ::mozc::commands::Request;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
 
@@ -300,10 +302,10 @@ class TypingCorrectorTest : public ::testing::Test {
   void SetUp() override {
     ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_typing_correction(true);
-    commands::Request request;
-    request.set_special_romanji_table(
+    request_ = std::make_unique<Request>();
+    request_->set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-    qwerty_table_.InitializeWithRequestAndConfig(request, config_,
+    qwerty_table_.InitializeWithRequestAndConfig(*request_, config_,
                                                  mock_data_manager_);
     qwerty_table_.typing_model_ = TypingModel::CreateTypingModel(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA, mock_data_manager_);
@@ -348,6 +350,7 @@ class TypingCorrectorTest : public ::testing::Test {
   }
 
   const testing::MockDataManager mock_data_manager_;
+  std::unique_ptr<Request> request_;
   Config config_;
   Table qwerty_table_;
 };
@@ -355,8 +358,8 @@ class TypingCorrectorTest : public ::testing::Test {
 TEST_F(TypingCorrectorTest, TypingCorrection) {
   constexpr int kCorrectedQueryCandidates = 1000;
   constexpr int kCorrectedQueryResults = 1000;
-  TypingCorrector corrector(&qwerty_table_, kCorrectedQueryCandidates,
-                            kCorrectedQueryResults);
+  TypingCorrector corrector(request_.get(), &qwerty_table_,
+                            kCorrectedQueryCandidates, kCorrectedQueryResults);
   corrector.SetConfig(&config_);
   ASSERT_TRUE(corrector.IsAvailable());
 
@@ -422,7 +425,7 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
 TEST_F(TypingCorrectorTest, Invalidate) {
   const CostTableForTest *table = Singleton<CostTableForTest>::get();
 
-  TypingCorrector corrector(&qwerty_table_, 30, 30);
+  TypingCorrector corrector(request_.get(), &qwerty_table_, 30, 30);
   corrector.SetConfig(&config_);
 
   EXPECT_TRUE(corrector.IsAvailable());
@@ -443,14 +446,14 @@ TEST_F(TypingCorrectorTest, Invalidate) {
 }
 
 TEST_F(TypingCorrectorTest, Copy) {
-  TypingCorrector corrector(&qwerty_table_, 30, 30);
+  TypingCorrector corrector(request_.get(), &qwerty_table_, 30, 30);
   corrector.SetConfig(&config_);
   InsertOneByOne("phayou", &corrector);
 
   const TypingCorrector corrector2(corrector);
   ExpectTypingCorrectorEqual(corrector, corrector2);
 
-  TypingCorrector corrector3(nullptr, 1000, 1000);
+  TypingCorrector corrector3(request_.get(), nullptr, 1000, 1000);
   corrector3 = corrector;
   ExpectTypingCorrectorEqual(corrector, corrector3);
 }
@@ -459,15 +462,14 @@ TEST_F(TypingCorrectorTest, SupportNonAscii) {
   Config config;
   ConfigHandler::GetDefaultConfig(&config);
   config.set_use_typing_correction(true);
-  commands::Request request;
-  commands::RequestForUnitTest::FillMobileRequest(&request);
-  request.set_special_romanji_table(commands::Request::FLICK_TO_HIRAGANA);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_->set_special_romanji_table(commands::Request::FLICK_TO_HIRAGANA);
 
   Table table;
   testing::MockDataManager data_manager;
-  table.InitializeWithRequestAndConfig(request, config, data_manager);
+  table.InitializeWithRequestAndConfig(*request_, config, data_manager);
 
-  TypingCorrector corrector(&table, 30, 30);
+  TypingCorrector corrector(request_.get(), &table, 30, 30);
   corrector.SetConfig(&config_);
 
   EXPECT_TRUE(corrector.IsAvailable());
@@ -494,6 +496,61 @@ TEST_F(TypingCorrectorTest, SupportNonAscii) {
   // No model cost should be looked up.
   corrector.GetQueriesForPrediction(&queries);
   EXPECT_EQ(queries.size(), 0);
+}
+
+TEST_F(TypingCorrectorTest, Cost) {
+  Table table;
+
+  // Creates a typing model which always returns cost 0.
+  constexpr absl::string_view chars = "ab^";
+  // TypingCorrector looks up tri-gram.
+  // The maximum index will be (len(`chars`) + 1)^3 - 1.
+  const uint8_t costs[4 * 4 * 4] = {0};
+  const int32_t mapping_table[] = {0};
+  table.SetTypingModelForTesting(std::make_unique<TypingModel>(
+      chars.data(), chars.size(), costs, std::size(costs), mapping_table));
+
+  auto create_input = []() -> CompositionInput {
+    CompositionInput input;
+    input.InitFromRaw({"a", 1}, true);
+    ProbableKeyEvents probable_key_events;
+    ProbableKeyEvent *event = probable_key_events.Add();
+    event->set_key_code('a');
+    event->set_probability(0.75);
+    event = probable_key_events.Add();
+    event->set_key_code('b');
+    event->set_probability(0.25);
+    input.set_probable_key_events(probable_key_events);
+    return input;
+  };
+
+  {
+    TypingCorrector corrector(request_.get(), &table, 30, 30);
+    corrector.SetConfig(&config_);
+    corrector.InsertCharacter(create_input());
+
+    std::vector<TypeCorrectedQuery> queries;
+    corrector.GetQueriesForPrediction(&queries);
+    ASSERT_EQ(queries.size(), 1);
+    EXPECT_EQ(queries[0].base, "b");
+    EXPECT_NEAR(queries[0].cost, -500 * log(0.25), 2);
+  }
+
+  {
+    TypingCorrector corrector(request_.get(), &table, 30, 30);
+    Request request;
+    request.mutable_decoder_experiment_params()
+        ->set_use_typing_correction_diff_cost(true);
+    corrector.SetRequest(&request);
+    corrector.SetConfig(&config_);
+    corrector.InsertCharacter(create_input());
+
+    std::vector<TypeCorrectedQuery> queries;
+    corrector.GetQueriesForPrediction(&queries);
+    ASSERT_EQ(queries.size(), 1);
+    EXPECT_EQ(queries[0].base, "b");
+    EXPECT_NEAR(queries[0].cost, -500 * log(0.25 / 0.75), 2);
+  }
 }
 
 }  // namespace composer

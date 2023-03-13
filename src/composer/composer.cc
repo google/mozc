@@ -250,7 +250,8 @@ Composer::Composer(const Table *table, const commands::Request *request,
       shifted_sequence_count_(0),
       composition_(table),
       typing_corrector_(
-          table, absl::GetFlag(FLAGS_max_typing_correction_query_candidates),
+          request, table,
+          absl::GetFlag(FLAGS_max_typing_correction_query_candidates),
           absl::GetFlag(FLAGS_max_typing_correction_query_results)),
       max_length_(kMaxPreeditLength),
       request_(request),
@@ -294,6 +295,7 @@ void Composer::SetTable(const Table *table) {
 }
 
 void Composer::SetRequest(const commands::Request *request) {
+  typing_corrector_.SetRequest(request);
   request_ = request;
 }
 

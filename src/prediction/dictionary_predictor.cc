@@ -137,6 +137,12 @@ void GetCandidateKeyAndValue(const Result &result,
   *value = result.value;
 }
 
+int GetTypingCorrectionCostOffset(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .typing_correction_cost_offset();
+}
+
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
@@ -430,6 +436,10 @@ DictionaryPredictor::ResultFilter::ResultFilter(
   GetHistoryKeyAndValue(segments, &history_key_, &history_value_);
   exact_bigram_key_ = history_key_ + input_key_;
 
+  const auto &experiment_params = request.request().decoder_experiment_params();
+  tc_max_count_ = experiment_params.typing_correction_max_count();
+  tc_max_rank_ = experiment_params.typing_correction_max_rank();
+
   suffix_count_ = 0;
   predictive_count_ = 0;
   realtime_count_ = 0;
@@ -509,8 +519,9 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
   if ((result.types & PredictionType::TYPING_CORRECTION) &&
-      (tc_count_++ >= 3 || added_num >= 10)) {
-    *log_message = "Added typing correction >= 3 || added >= 10";
+      (tc_count_++ >= tc_max_count_ || added_num >= tc_max_rank_)) {
+    *log_message = absl::StrCat("Added typing correction >= ", tc_max_count_,
+                                " || added >= ", tc_max_rank_);
     return true;
   }
   if ((result.types & PredictionType::PREFIX) &&
@@ -837,6 +848,17 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
         const int predictive_penalty = 500 * log(50 * predicted_key_len);
         cost += predictive_penalty;
         MOZC_WORD_LOG(result, absl::StrCat("Predictive Uniram: ", cost));
+      }
+    }
+
+    if (result.types & PredictionType::TYPING_CORRECTION) {
+      const int typing_correction_cost_offset =
+          GetTypingCorrectionCostOffset(request);
+      if (typing_correction_cost_offset != 0) {
+        cost += typing_correction_cost_offset;
+        MOZC_WORD_LOG(
+            result, absl::StrCat("Typing correction: ", cost, " (with offset ",
+                                 typing_correction_cost_offset, ")"));
       }
     }
 

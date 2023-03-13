@@ -73,6 +73,10 @@ int LookupModelCost(const absl::string_view prev,
 
 int Cost(double prob) { return static_cast<int>(-500.0 * log(prob)); }
 
+bool UseDiffCost(const commands::Request &request) {
+  return request.decoder_experiment_params().use_typing_correction_diff_cost();
+}
+
 }  // namespace
 
 struct TypingCorrector::KeyAndPenaltyLess {
@@ -81,10 +85,12 @@ struct TypingCorrector::KeyAndPenaltyLess {
   }
 };
 
-TypingCorrector::TypingCorrector(const Table *table,
+TypingCorrector::TypingCorrector(const commands::Request *request,
+                                 const Table *table,
                                  size_t max_correction_query_candidates,
                                  size_t max_correction_query_results)
-    : table_(table),
+    : request_(request),
+      table_(table),
       max_correction_query_candidates_(max_correction_query_candidates),
       max_correction_query_results_(max_correction_query_results),
       config_(&config::ConfigHandler::DefaultConfig()) {
@@ -142,6 +148,10 @@ void TypingCorrector::Invalidate() { available_ = false; }
 bool TypingCorrector::IsAvailable() const {
   return config_->use_typing_correction() && available_ && table_ &&
          table_->typing_model();
+}
+
+void TypingCorrector::SetRequest(const commands::Request *request) {
+  request_ = request;
 }
 
 void TypingCorrector::SetTable(const Table *table) {
@@ -205,6 +215,16 @@ void TypingCorrector::GetQueriesForPrediction(
     }
   }
 
+  int top_cost = 0;
+  if (UseDiffCost(*request_)) {
+    for (const KeyAndPenalty &entry : top_n_) {
+      if (entry.first == raw_key_) {
+        top_cost = entry.second;
+        break;
+      }
+    }
+  }
+
   // Filter all the typing correction queries.
   // If no queries are filtered, the number of retured queries
   // is top_n_.size().
@@ -257,7 +277,11 @@ void TypingCorrector::GetQueriesForPrediction(
         continue;
       }
     }
-    query->cost = correction.second;
+    if (UseDiffCost(*request_)) {
+      query->cost = correction.second - top_cost;
+    } else {
+      query->cost = correction.second;
+    }
     ++result_count;
   }
   // If some queries are filtered, there are unused queries
