@@ -145,7 +145,7 @@
             'EnableUAC': 'true',
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
-            'MinimumRequiredVersion': '6.01',
+            'MinimumRequiredVersion': '6.02',
           },
         },
         'msvs_configuration_attributes': {
