@@ -54,8 +54,6 @@ InputMultiFile::InputMultiFile(const absl::string_view filenames,
   }
 }
 
-InputMultiFile::~InputMultiFile() { ifs_.reset(); }
-
 bool InputMultiFile::ReadLine(std::string *line) {
   if (ifs_ == nullptr) {
     return false;
@@ -70,13 +68,12 @@ bool InputMultiFile::ReadLine(std::string *line) {
 
 bool InputMultiFile::OpenNext() {
   while (next_iter_ != filenames_.end()) {
-    const char *filename = next_iter_->c_str();
-    ifs_ = std::make_unique<InputFileStream>(filename, mode_);
-    ++next_iter_;
+    const std::vector<std::string>::const_iterator iter = next_iter_++;
+    ifs_ = std::make_unique<InputFileStream>(*iter, mode_);
     if (!ifs_->fail()) {
       return true;
     }
-    LOG(ERROR) << "Cannot open " << filename << std::endl;
+    LOG(ERROR) << "Cannot open " << *iter << std::endl;
   }
   ifs_.reset();
   return false;

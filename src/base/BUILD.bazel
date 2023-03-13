@@ -1202,7 +1202,6 @@ mozc_cc_test(
         ":file_stream",
         ":file_util",
         ":multifile",
-        ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
