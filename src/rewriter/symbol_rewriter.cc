@@ -51,6 +51,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 // SymbolRewriter:
