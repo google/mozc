@@ -47,7 +47,6 @@ test_suite(
     name = "android_test",
     tests = [
         ":key_info_util_test_android",
-        ":output_util_test_android",
         ":random_keyevents_generator_test_android",
         ":request_test_util_test_android",
         ":session_converter_stress_test_android",
@@ -625,32 +624,6 @@ mozc_cc_test(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "output_util",
-    srcs = ["output_util.cc"],
-    hdrs = ["output_util.h"],
-    deps = [
-        "//base:logging",
-        "//base:port",
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
-    ],
-)
-
-mozc_cc_test(
-    name = "output_util_test",
-    size = "small",
-    srcs = ["output_util_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":output_util",
-        "//base:port",
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
 )

@@ -125,7 +125,6 @@
             '../../protocol/protocol.gyp:commands_proto',
             '../../protocol/protocol.gyp:config_proto',
             '../../session/session_base.gyp:key_info_util',
-            '../../session/session_base.gyp:output_util',
           ],
           'link_settings': {
             'msvs_settings': {

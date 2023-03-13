@@ -82,17 +82,6 @@
       ],
     },
     {
-      'target_name': 'output_util',
-      'type': 'static_library',
-      'sources': [
-        'output_util.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-      ],
-    },
-    {
       'target_name': 'session_usage_stats_util',
       'type': 'static_library',
       'sources': [
