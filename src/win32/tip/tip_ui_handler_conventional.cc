@@ -478,11 +478,6 @@ void TipUiHandlerConventional::OnDestroyElement(ITfUIElement *element) {
 }
 
 void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
-  static bool migrate_checked = false;
-  if (!migrate_checked) {
-    migrate_checked = true;
-    MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8();
-  }
   ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
   CComPtr<ITfDocumentMgr> document;
   if (FAILED(thread_mgr->GetFocus(&document))) {

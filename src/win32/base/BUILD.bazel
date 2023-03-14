@@ -383,9 +383,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":imm_registrar",
-        ":imm_util",
-        ":immdev_h",
-        ":input_dll",
         ":keyboard_layout_id",
         ":tsf_profile",
         ":uninstall_helper",
