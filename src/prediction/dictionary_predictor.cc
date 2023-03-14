@@ -478,6 +478,11 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   std::string key, value;
   GetCandidateKeyAndValue(result, history_key_, history_value_, &key, &value);
 
+  if (seen_.find(value) != seen_.end()) {
+    *log_message = "Duplicated";
+    return true;
+  }
+
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
