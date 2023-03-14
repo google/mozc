@@ -105,9 +105,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:run_level",
-        "//base:system_util",
         "//client:client_interface",
         "//renderer:renderer_client",
-        "//win32/base:imm_util",
     ],
 )
