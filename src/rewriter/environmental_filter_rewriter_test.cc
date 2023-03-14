@@ -324,6 +324,27 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
 
   {
     commands::Request request;
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // The second candidate that comes from the user dictionary is not filtered.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
+    segments.mutable_conversion_segment(0)->mutable_candidate(1)->attributes =
+        Segment::Candidate::USER_DICTIONARY;
+
+    EXPECT_TRUE(rewriter_->Rewrite(conversion_request, &segments));
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(0).value,
+              kKanaSupplement_10_0);
+  }
+
+  {
+    commands::Request request;
     request.add_additional_renderable_character_groups(
         commands::Request::EMPTY);
     ConversionRequest conversion_request;

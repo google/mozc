@@ -171,14 +171,16 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
   return result;
 }
 
+// If the candidate should not by modified by this rewriter, returns true.
+bool ShouldKeepCandidate(const Segment::Candidate &candidate) {
+  return candidate.attributes & (Segment::Candidate::NO_MODIFICATION |
+                                 Segment::Candidate::USER_DICTIONARY);
+}
+
 bool NormalizeCandidate(Segment::Candidate *candidate,
                         TextNormalizer::Flag flag) {
   DCHECK(candidate);
-  if (candidate->attributes & (Segment::Candidate::NO_MODIFICATION |
-                               Segment::Candidate::USER_DICTIONARY)) {
-    return false;
-  }
-
+  // ShouldKeepCandidate should be called before.
   const std::string value =
       TextNormalizer::NormalizeTextWithFlag(candidate->value, flag);
   const std::string content_value =
@@ -403,9 +405,11 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
 
     // Meta candidate
     for (size_t j = 0; j < segment->meta_candidates_size(); ++j) {
-      Segment::Candidate *candidate =
-          segment->mutable_candidate(-static_cast<int>(j) - 1);
+      Segment::Candidate *candidate = segment->mutable_meta_candidate(j);
       DCHECK(candidate);
+      if (ShouldKeepCandidate(*candidate)) {
+        continue;
+      }
       modified |= NormalizeCandidate(candidate, flag_);
     }
 
@@ -416,6 +420,10 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
       const size_t reversed_j = candidates_size - j - 1;
       Segment::Candidate *candidate = segment->mutable_candidate(reversed_j);
       DCHECK(candidate);
+
+      if (ShouldKeepCandidate(*candidate)) {
+        continue;
+      }
 
       // Character Normalization
       modified |= NormalizeCandidate(candidate, flag_);
