@@ -34,7 +34,6 @@
 #include <memory>
 
 #include "base/win32/win_util.h"
-#include "win32/base/focus_hierarchy_observer.h"
 #include "win32/tip/tip_input_mode_manager.h"
 
 namespace mozc {
@@ -55,7 +54,6 @@ class TipThreadContext::InternalState {
  public:
   InternalState() : input_mode_manager(GetConfig()), focus_revision(0) {}
   TipInputModeManager input_mode_manager;
-  std::unique_ptr<FocusHierarchyObserver> focus_hierarchy_observer;
   int32_t focus_revision;
 };
 
@@ -65,18 +63,6 @@ TipThreadContext::~TipThreadContext() {}
 
 TipInputModeManager *TipThreadContext::GetInputModeManager() {
   return &state_->input_mode_manager;
-}
-
-const FocusHierarchyObserver *TipThreadContext::GetFocusHierarchyObserver()
-    const {
-  return state_->focus_hierarchy_observer.get();
-}
-
-void TipThreadContext::InitializeFocusHierarchyObserver() {
-  if (state_->focus_hierarchy_observer.get() == nullptr) {
-    state_->focus_hierarchy_observer.reset(FocusHierarchyObserver::Create());
-    state_->focus_hierarchy_observer->SyncFocusHierarchy();
-  }
 }
 
 int32_t TipThreadContext::GetFocusRevision() const {

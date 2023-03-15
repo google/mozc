@@ -36,8 +36,6 @@
 #include "base/protobuf/protobuf.h"
 #include "base/singleton.h"
 #include "config/stats_config_util.h"
-#include "win32/base/browser_info.h"
-#include "win32/base/focus_hierarchy_observer.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/tsf_registrar.h"
 #include "win32/tip/tip_class_factory.h"
@@ -50,8 +48,6 @@ namespace {
 using mozc::CrashReportHandler;
 using mozc::SingletonFinalizer;
 using mozc::config::StatsConfigUtil;
-using mozc::win32::BrowserInfo;
-using mozc::win32::FocusHierarchyObserver;
 using mozc::win32::TsfProfile;
 using mozc::win32::TsfRegistrar;
 using mozc::win32::tsf::TipTextServiceFactory;
@@ -129,8 +125,6 @@ class ModuleImpl {
       return FALSE;
     }
     CrashReportHandler::SetCriticalSection(&critical_section_for_breakpad_);
-    BrowserInfo::OnDllProcessAttach(instance, static_loading);
-    FocusHierarchyObserver::OnDllProcessAttach(instance, static_loading);
     TipTextServiceFactory::OnDllProcessAttach(instance, static_loading);
     TipUiHandler::OnDllProcessAttach(instance, static_loading);
     return TRUE;
@@ -139,8 +133,6 @@ class ModuleImpl {
   static BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
     TipUiHandler::OnDllProcessDetach(instance, process_shutdown);
     TipTextServiceFactory::OnDllProcessDetach(instance, process_shutdown);
-    FocusHierarchyObserver::OnDllProcessDetach(instance, process_shutdown);
-    BrowserInfo::OnDllProcessDetach(instance, process_shutdown);
     if (!g_in_safe_mode && !process_shutdown) {
       // It is our responsibility to make sure that our code never touch
       // protobuf library after mozc::protobuf::ShutdownProtobufLibrary is

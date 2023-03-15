@@ -764,9 +764,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
           TipStatus::IsOpen(thread_mgr), native_mode);
     }
 
-    // Initialize focus hierarchy observer.
-    thread_context_->InitializeFocusHierarchyObserver();
-
     // Emulate document changed event against the current document manager.
     {
       CComPtr<ITfDocumentMgr> document_mgr;
