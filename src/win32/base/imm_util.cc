@@ -37,11 +37,9 @@
 #include <windows.h>
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "base/const.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -61,49 +59,6 @@ namespace {
 // - smaller than the default time-out used in IsHungAppWindow API.
 // - similar to the same timeout used by TSF.
 constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
-
-bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
-  const UINT num_element =
-      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-
-  std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
-      new LAYOUTORTIPPROFILE[num_element]);
-
-  const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
-                                                   buffer.get(), num_element);
-
-  for (size_t i = 0; i < num_copied; ++i) {
-    if ((buffer[i].dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
-      *profile = buffer[i];
-      return true;
-    }
-  }
-
-  return false;
-}
-
-const wchar_t kTIPKeyboardKey[] =
-    L"Software\\Microsoft\\CTF\\Assemblies\\"
-    L"0x00000411\\"
-    L"{34745C63-B2F0-4784-8B67-5E12C8701A31}";
-
-bool IsDefaultWin8() {
-  LAYOUTORTIPPROFILE profile = {};
-  if (!GetDefaultLayout(&profile)) {
-    return false;
-  }
-  // Check if this profile looks like TSF version of Mozc;
-  if (profile.dwProfileType != LOTP_INPUTPROCESSOR) {
-    return false;
-  }
-  if (!IsEqualCLSID(profile.clsid, TsfProfile::GetTextServiceGuid())) {
-    return false;
-  }
-  if (!IsEqualGUID(profile.guidProfile, TsfProfile::GetProfileGuid())) {
-    return false;
-  }
-  return true;
-}
 
 bool SetDefaultWin8() {
   wchar_t clsid[64] = {};
@@ -147,56 +102,6 @@ bool SetDefaultWin8() {
 }
 
 }  // namespace
-
-bool ImeUtil::IsDefault() {
-  if (SystemUtil::IsWindows8OrLater()) {
-    return IsDefaultWin8();
-  }
-
-  LAYOUTORTIPPROFILE profile = {};
-  if (GetDefaultLayout(&profile)) {
-    // Check if this profile looks like IMM32 version of Mozc;
-    if (profile.dwProfileType != LOTP_KEYBOARDLAYOUT) {
-      return false;
-    }
-    if (profile.clsid != GUID_NULL) {
-      return false;
-    }
-    if (profile.guidProfile != GUID_NULL) {
-      return false;
-    }
-
-    const std::wstring id(profile.szId);
-    // A valid |profile.szId| should consists of language ID (LANGID) and
-    // keyboard layout ID (KILD) as follows.
-    //  <LangID 1>:<KLID 1>
-    //       "0411:E0200411"
-    // Check if |id.size()| is expected.
-    if (id.size() != 13) {
-      return false;
-    }
-    // Extract KLID.  It should be 8-letter hexadecimal code begins at 6th
-    // character in the |id|, that is, |id.substr(5, 8)|.
-    const KeyboardLayoutID default_klid(id.substr(5, 8));
-    if (!default_klid.has_id()) {
-      return false;
-    }
-    const KeyboardLayoutID mozc_klid(ImmRegistrar::GetKLIDForIME());
-    if (!mozc_klid.has_id()) {
-      // This means Mozc is not installed.
-      return false;
-    }
-    return (default_klid.id() == mozc_klid.id());
-  }
-
-  HKL hkl = nullptr;
-  if (0 == ::SystemParametersInfo(SPI_GETDEFAULTINPUTLANG, 0,
-                                  reinterpret_cast<PVOID>(&hkl), 0)) {
-    LOG(ERROR) << "SystemParameterInfo failed: " << GetLastError();
-    return false;
-  }
-  return ImmRegistrar::IsIME(hkl, ImmRegistrar::GetFileNameForIME());
-}
 
 bool ImeUtil::SetDefault() {
   if (SystemUtil::IsWindows8OrLater()) {
