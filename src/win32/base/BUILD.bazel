@@ -330,7 +330,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":imm_registrar",
-        ":keyboard_layout_id",
         ":tsf_profile",
         ":uninstall_helper",
         "//base:const",

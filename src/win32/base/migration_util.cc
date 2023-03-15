@@ -42,7 +42,6 @@
 #include "base/system_util.h"
 #include "base/win32/scoped_handle.h"
 #include "win32/base/imm_registrar.h"
-#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/uninstall_helper.h"
 
@@ -84,14 +83,6 @@ bool MigrationUtil::IsFullTIPAvailable() {
     }
   }
   return false;
-}
-
-bool MigrationUtil::RestorePreload() {
-  const KeyboardLayoutID &mozc_klid = ImmRegistrar::GetKLIDForIME();
-  if (!mozc_klid.has_id()) {
-    return false;
-  }
-  return SUCCEEDED(ImmRegistrar::RestorePreload(mozc_klid));
 }
 
 bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {

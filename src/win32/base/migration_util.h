@@ -51,10 +51,6 @@ class MigrationUtil {
   // Returns true if the operation completed successfully.
   static bool IsFullTIPAvailable();
 
-  // Ensures preload key for the new IME exists.
-  // Returns true if the operation completed successfully.
-  static bool RestorePreload();
-
   // Launches an external process called mozc_broker to set the IMM32 version
   // to the default IME for the current user.  This function calls
   // |config.set_check_default(false)| when and only when |do_not_ask_me_again|
