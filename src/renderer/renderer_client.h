@@ -33,13 +33,11 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
+#include "ipc/ipc.h"
+#include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {
-
-class IPCClientFactoryInterface;
-class IPCClientInterface;
 
 namespace renderer {
 
