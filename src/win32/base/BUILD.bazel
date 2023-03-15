@@ -586,7 +586,6 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":imm_util",
         ":input_dll",
         ":keyboard_layout_id",

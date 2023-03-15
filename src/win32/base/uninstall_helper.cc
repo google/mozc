@@ -48,7 +48,6 @@
 #include "base/win32/scoped_com.h"
 #include "base/win32/scoped_handle.h"
 #include "base/win32/win_util.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/tsf_profile.h"
 
@@ -677,13 +676,6 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
       *current_default = profile;
     }
 
-    if (!profile.is_tip &&
-        WinUtil::SystemEqualString(profile.ime_filename,
-                                   ImmRegistrar::GetFileNameForIME(), true)) {
-      // This is the full IMM32 version of Google Japanese Input.
-      removed_profiles->push_back(profile);
-      continue;
-    }
     if (profile.is_tip &&
         ::IsEqualCLSID(TsfProfile::GetTextServiceGuid(), profile.clsid) &&
         ::IsEqualGUID(TsfProfile::GetProfileGuid(), profile.profile_guid)) {
