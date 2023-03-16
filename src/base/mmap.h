@@ -32,6 +32,7 @@
 
 #include <cstddef>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc {
@@ -45,7 +46,7 @@ class Mmap final {
 
   ~Mmap() { Close(); }
 
-  bool Open(const char *filename, const char *mode = "r");
+  bool Open(absl::string_view filename, absl::string_view mode = "r");
   void Close();
 
   // Following mlock/munlock related functions work based on target environment.
@@ -68,7 +69,7 @@ class Mmap final {
   constexpr char *begin() { return data_.begin(); }
   constexpr const char *begin() const { return data_.begin(); }
   constexpr char *end() { return data_.end(); }
-  constexpr const char *end() const { return data_.end() ; }
+  constexpr const char *end() const { return data_.end(); }
   constexpr char *data() { return data_.data(); }
   constexpr const char *data() const { return data_.data(); }
   constexpr absl::Span<char> span() { return data_; }

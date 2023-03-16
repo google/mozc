@@ -551,6 +551,7 @@ mozc_cc_library(
         ":util",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/types:span",
+        "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [
             "//base/win32:scoped_handle",

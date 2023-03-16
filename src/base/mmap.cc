@@ -30,7 +30,7 @@
 #include "base/mmap.h"
 
 #include <cstdint>
-#include <cstring>
+#include <string>
 
 #include "base/logging.h"
 #include "base/port.h"
@@ -42,8 +42,6 @@
 
 #ifdef _WIN32
 #include <windows.h>
-
-#include <string>
 
 #include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
@@ -59,15 +57,16 @@ namespace mozc {
 
 #ifdef _WIN32
 
-bool Mmap::Open(const char *filename, const char *mode) {
+bool Mmap::Open(const absl::string_view filename,
+                const absl::string_view mode) {
   Close();
   uint32_t mode1, mode2, mode3, mode4;
-  if (strcmp(mode, "r") == 0) {
+  if (mode == "r") {
     mode1 = GENERIC_READ;
     mode2 = PAGE_READONLY;
     mode3 = FILE_MAP_READ;
     mode4 = FILE_SHARE_READ;
-  } else if (strcmp(mode, "r+") == 0) {
+  } else if (mode == "r+") {
     mode1 = GENERIC_READ | GENERIC_WRITE;
     mode2 = PAGE_READWRITE;
     mode3 = FILE_MAP_ALL_ACCESS;
@@ -121,20 +120,22 @@ void Mmap::Close() {
 #define O_BINARY 0
 #endif  // O_BINARY
 
-bool Mmap::Open(const char *filename, const char *mode) {
+bool Mmap::Open(const absl::string_view filename,
+                const absl::string_view mode) {
   Close();
 
   int flag;
-  if (strcmp(mode, "r") == 0) {
+  if (mode == "r") {
     flag = O_RDONLY;
-  } else if (strcmp(mode, "r+") == 0) {
+  } else if (mode == "r+") {
     flag = O_RDWR;
   } else {
     LOG(WARNING) << "unknown open mode: " << filename;
     return false;
   }
 
-  int fd = ::open(filename, flag | O_BINARY);
+  const std::string filename_s(filename);
+  const int fd = ::open(filename_s.data(), flag | O_BINARY);
   if (fd < 0) {
     LOG(WARNING) << "open failed: " << filename;
     return false;
