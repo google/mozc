@@ -36,6 +36,20 @@
 namespace mozc {
 namespace prediction {
 
+namespace {
+
+// Returns true if `lhs` is less than `rhs`
+bool ValueCmp(absl::string_view lhs, absl::string_view rhs) {
+  const size_t lhs_len = Util::CharsLen(lhs);
+  const size_t rhs_len = Util::CharsLen(rhs);
+  if (lhs_len != rhs_len) {
+    return lhs_len < rhs_len;
+  }
+  return lhs < rhs;
+}
+
+}  // namespace
+
 using ::mozc::dictionary::Token;
 
 void Result::InitializeByTokenAndTypes(const Token &token,
@@ -104,6 +118,20 @@ void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
 
 bool Result::IsUserDictionaryResult() const {
   return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
+}
+
+bool ResultWCostLess::operator()(const Result &lhs, const Result &rhs) const {
+  if (lhs.wcost != rhs.wcost) {
+    return lhs.wcost < rhs.wcost;
+  }
+  return ValueCmp(lhs.value, rhs.value);
+}
+
+bool ResultCostLess::operator()(const Result &lhs, const Result &rhs) const {
+  if (lhs.cost != rhs.cost) {
+    return lhs.cost < rhs.cost;
+  }
+  return ValueCmp(lhs.value, rhs.value);
 }
 
 }  // namespace prediction

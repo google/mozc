@@ -1441,6 +1441,40 @@ TEST_F(DictionaryPredictorTest, Dedup) {
   }
 }
 
+TEST_F(DictionaryPredictorTest, SortResult) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  std::vector<Result> results = {
+      CreateResult6("test", "テスト１", 0, 10, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト２", 0, 100, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト０００", 0, 1, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト００", 0, 1, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト０", 0, 1, prediction::UNIGRAM, Token::NONE),
+  };
+  Segments segments;
+  InitSegmentsWithKey("test", &segments);
+  predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                      &results);
+
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment &segment = segments.conversion_segment(0);
+  ASSERT_EQ(segment.candidates_size(), 5);
+  ASSERT_EQ(segment.candidate(0).value, "テスト０");
+  ASSERT_EQ(segment.candidate(1).value, "テスト００");
+  ASSERT_EQ(segment.candidate(2).value, "テスト０００");
+  ASSERT_EQ(segment.candidate(3).value, "テスト１");
+  ASSERT_EQ(segment.candidate(4).value, "テスト２");
+}
+
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();
