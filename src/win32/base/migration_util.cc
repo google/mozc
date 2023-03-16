@@ -35,9 +35,6 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlstr.h>
-#include <strsafe.h>
-
-#include <memory>
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -45,10 +42,6 @@
 #include "base/system_util.h"
 #include "base/win32/scoped_handle.h"
 #include "win32/base/imm_registrar.h"
-#include "win32/base/imm_util.h"
-#include "win32/base/immdev.h"
-#include "win32/base/input_dll.h"
-#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/uninstall_helper.h"
 
@@ -92,14 +85,6 @@ bool MigrationUtil::IsFullTIPAvailable() {
   return false;
 }
 
-bool MigrationUtil::RestorePreload() {
-  const KeyboardLayoutID &mozc_klid = ImmRegistrar::GetKLIDForIME();
-  if (!mozc_klid.has_id()) {
-    return false;
-  }
-  return SUCCEEDED(ImmRegistrar::RestorePreload(mozc_klid));
-}
-
 bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
   if (SystemUtil::IsWindows8OrLater()) {
     if (!MigrationUtil::IsFullTIPAvailable()) {
@@ -120,106 +105,5 @@ bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
 
   return SpawnBroker(arg);
 }
-
-bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
-  if (!SystemUtil::IsWindows8OrLater()) {
-    return false;
-  }
-
-  const KeyboardLayoutID imm32_mozc_klid(ImmRegistrar::GetKLIDForIME());
-  if (!imm32_mozc_klid.has_id()) {
-    // This means Mozc is not installed.
-    return true;
-  }
-
-  const UINT num_element =
-      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-
-  std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
-      new LAYOUTORTIPPROFILE[num_element]);
-
-  const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
-                                                   buffer.get(), num_element);
-
-  // Look up IMM32 Mozc from |buffer|.
-  for (size_t i = 0; i < num_copied; ++i) {
-    const LAYOUTORTIPPROFILE &profile = buffer[i];
-    if (profile.dwProfileType != LOTP_KEYBOARDLAYOUT) {
-      // This profile is not a keyboard layout. Never be a IMM32 Mozc.
-      continue;
-    }
-    if (profile.clsid != GUID_NULL) {
-      // This profile is TIP. Never be a IMM32 Mozc.
-      continue;
-    }
-    if (profile.guidProfile != GUID_NULL) {
-      // This profile is TIP. Never be a IMM32 Mozc.
-      continue;
-    }
-    if ((profile.dwFlags & LOT_DISABLED) == LOT_DISABLED) {
-      // This profile is disabled.
-      continue;
-    }
-
-    const std::wstring id(profile.szId);
-    // A valid |profile.szId| should consists of language ID (LANGID) and
-    // keyboard layout ID (KILD) as follows.
-    //  <LangID 1>:<KLID 1>
-    //       "0411:E0200411"
-    // Check if |id.size()| is expected.
-    if (id.size() != 13) {
-      continue;
-    }
-
-    // Extract KLID.  It should be 8-letter hexadecimal code begins at 6th
-    // character in the |id|, that is, |id.substr(5, 8)|.
-    const KeyboardLayoutID klid(id.substr(5, 8));
-    if (klid.id() != imm32_mozc_klid.id()) {
-      continue;
-    }
-
-    // IMM32 Mozc is found.
-
-    // If IMM32 Mozc is the default IME, we need to set TSF Mozc to be the
-    // default IME before disabling the legacy IME.
-    if ((profile.dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
-      wchar_t clsid[64] = {};
-      if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
-                             std::size(clsid))) {
-        return false;
-      }
-      wchar_t profile_id[64] = {};
-      if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
-                             std::size(profile_id))) {
-        return false;
-      }
-
-      const std::wstring &profile =
-          std::wstring(L"0x0411:") + clsid + profile_id;
-      if (!::SetDefaultLayoutOrTip(profile.c_str(), 0)) {
-        DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
-        return false;
-      }
-    }
-
-    // Disable IMM32 Mozc.
-    {
-      wchar_t profile_str[32] = {};
-      if (FAILED(::StringCchPrintf(profile_str, std::size(profile_str),
-                                   L"%04x:%s", profile.langid,
-                                   klid.ToString().c_str()))) {
-        return false;
-      }
-      if (!::InstallLayoutOrTip(profile_str, ILOT_DISABLED)) {
-        DLOG(ERROR) << "InstallLayoutOrTip failed";
-        return false;
-      }
-    }
-    return true;
-  }
-
-  return true;
-}
-
 }  // namespace win32
 }  // namespace mozc

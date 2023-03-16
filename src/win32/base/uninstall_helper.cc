@@ -48,9 +48,7 @@
 #include "base/win32/scoped_com.h"
 #include "base/win32/scoped_handle.h"
 #include "base/win32/win_util.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
-#include "win32/base/immdev.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
@@ -636,67 +634,6 @@ bool IsEqualPreload(
   return true;
 }
 
-// Currently only keyboard layouts which have IME filename are supported.
-bool RemoveHotKeyForIME(
-    const std::vector<KeyboardLayoutInfo> &layouts_to_be_removed) {
-  bool succeeded = true;
-  for (DWORD id = IME_HOTKEY_DSWITCH_FIRST; id <= IME_HOTKEY_DSWITCH_LAST;
-       ++id) {
-    UINT modifiers = 0;
-    UINT virtual_key = 0;
-    HKL hkl = nullptr;
-    BOOL result = ::ImmGetHotKey(id, &modifiers, &virtual_key, &hkl);
-    if (result == FALSE) {
-      continue;
-    }
-    if (hkl == nullptr) {
-      continue;
-    }
-    const std::wstring ime_name = GetIMEFileName(hkl);
-    for (size_t i = 0; i < layouts_to_be_removed.size(); ++i) {
-      const KeyboardLayoutInfo &layout = layouts_to_be_removed[i];
-      if (layout.ime_filename.empty()) {
-        continue;
-      }
-      if (!WinUtil::SystemEqualString(layout.ime_filename, ime_name, true)) {
-        continue;
-      }
-      // ImmSetHotKey fails when both 2nd and 3rd arguments are valid while 4th
-      // argument is nullptr.  To remove the HotKey, pass 0 to them.
-      result = ::ImmSetHotKey(id, 0, 0, nullptr);
-      if (result == FALSE) {
-        succeeded = false;
-      }
-      break;
-    }
-  }
-  return succeeded;
-}
-
-// Currently this function is Mozc-specific.
-// TODO(yukawa): Generalize this function for any IME.
-void RemoveHotKeyForVista(
-    const std::vector<LayoutProfileInfo> &installed_profiles) {
-  std::vector<KeyboardLayoutInfo> hotkey_remove_targets;
-  for (size_t i = 0; i < installed_profiles.size(); ++i) {
-    const LayoutProfileInfo &profile = installed_profiles[i];
-    if (!profile.is_tip &&
-        WinUtil::SystemEqualString(profile.ime_filename,
-                                   ImmRegistrar::GetFileNameForIME(), true)) {
-      // This is the full IMM32 version of Google Japanese Input.
-      KeyboardLayoutInfo info;
-      info.klid = profile.klid;
-      info.ime_filename = profile.ime_filename;
-      hotkey_remove_targets.push_back(info);
-      continue;
-    }
-  }
-
-  if (!RemoveHotKeyForIME(hotkey_remove_targets)) {
-    DLOG(ERROR) << "RemoveHotKeyForIME failed.";
-  }
-}
-
 }  // namespace
 
 KeyboardLayoutInfo::KeyboardLayoutInfo() : klid(0) {}
@@ -739,13 +676,6 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
       *current_default = profile;
     }
 
-    if (!profile.is_tip &&
-        WinUtil::SystemEqualString(profile.ime_filename,
-                                   ImmRegistrar::GetFileNameForIME(), true)) {
-      // This is the full IMM32 version of Google Japanese Input.
-      removed_profiles->push_back(profile);
-      continue;
-    }
     if (profile.is_tip &&
         ::IsEqualCLSID(TsfProfile::GetTextServiceGuid(), profile.clsid) &&
         ::IsEqualGUID(TsfProfile::GetProfileGuid(), profile.profile_guid)) {
@@ -961,8 +891,6 @@ bool UninstallHelper::RestoreUserIMEEnvironmentForVista(bool broadcast_change) {
   if (!GetInstalledProfilesByLanguage(kLANGJaJP, &installed_profiles)) {
     return false;
   }
-
-  RemoveHotKeyForVista(installed_profiles);
 
   std::vector<LayoutProfileInfo> current_profiles;
   if (!GetCurrentProfilesForVista(&current_profiles)) {

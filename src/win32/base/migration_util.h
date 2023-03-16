@@ -51,10 +51,6 @@ class MigrationUtil {
   // Returns true if the operation completed successfully.
   static bool IsFullTIPAvailable();
 
-  // Ensures preload key for the new IME exists.
-  // Returns true if the operation completed successfully.
-  static bool RestorePreload();
-
   // Launches an external process called mozc_broker to set the IMM32 version
   // to the default IME for the current user.  This function calls
   // |config.set_check_default(false)| when and only when |do_not_ask_me_again|
@@ -63,11 +59,6 @@ class MigrationUtil {
   // change the default IME.
   // Returns true if the operation completed successfully.
   static bool LaunchBrokerForSetDefault(bool do_not_ask_me_again);
-
-  // Returns true if 1) IMM32 Mozc is not installed, 2) IMM32 Mozc is
-  // already disabled for the current user, or 3) IMM32 Mozc is successfully
-  // disabled by this method.
-  static bool DisableLegacyMozcForCurrentUserOnWin8();
 };
 
 }  // namespace win32

@@ -112,7 +112,6 @@
             '../../renderer/renderer.gyp:win32_renderer_core',
             '../../renderer/renderer.gyp:win32_text_renderer',
             '../../renderer/renderer.gyp:window_util',
-            '../../session/session_base.gyp:output_util',
             '../base/win32_base.gyp:ime_base',
             '../base/win32_base.gyp:ime_impl_base',
             '../base/win32_base.gyp:imframework_util',

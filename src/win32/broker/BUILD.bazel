@@ -80,18 +80,12 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        "//base:const",
         "//base:logging",
-        "//base:process_mutex",
         "//base:system_util",
-        "//base/win32:scoped_com",
-        "//base/win32:scoped_handle",
         "//client",
         "//config:config_handler",
         "//protocol:config_cc_proto",
-        "//win32/base:imm_registrar",
         "//win32/base:imm_util",
-        "//win32/base:migration_util",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -105,9 +99,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:run_level",
-        "//base:system_util",
         "//client:client_interface",
         "//renderer:renderer_client",
-        "//win32/base:imm_util",
     ],
 )

@@ -45,9 +45,6 @@ class ImeUtil {
   ImeUtil(const ImeUtil&) = delete;
   ImeUtil& operator=(const ImeUtil&) = delete;
 
-  // Returns true if Google Japanese Input is selected as the default IME.
-  static bool IsDefault();
-
   // Sets Google Japanese Input as the default IME and update the runtime
   // keyboard setting of the current session.
   // Returns true if the operation completed successfully.

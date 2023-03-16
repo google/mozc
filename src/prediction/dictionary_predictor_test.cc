@@ -1387,29 +1387,92 @@ TEST_F(DictionaryPredictorTest, Dedup) {
   // turn on mobile mode
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
-  constexpr int kSize = 5;
-  std::vector<Result> results;
-  for (int i = 0; i < kSize; ++i) {
-    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0, i,
-                                    prediction::REALTIME, Token::NONE));
-    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
-                                    kSize + i, prediction::PREFIX,
-                                    Token::NONE));
-    results.push_back(
-        CreateResult6("test", absl::StrCat("value", i), 0, 2 * kSize + i,
-                      prediction::TYPING_CORRECTION, Token::NONE));
-    results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
-                                    3 * kSize + i, prediction::UNIGRAM,
-                                    Token::NONE));
-  }
+  {
+    constexpr int kSize = 5;
+    std::vector<Result> results;
+    for (int i = 0; i < kSize; ++i) {
+      results.push_back(CreateResult6("test", absl::StrCat("value", i), 0, i,
+                                      prediction::REALTIME, Token::NONE));
+      results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
+                                      kSize + i, prediction::PREFIX,
+                                      Token::NONE));
+      results.push_back(
+          CreateResult6("test", absl::StrCat("value", i), 0, 2 * kSize + i,
+                        prediction::TYPING_CORRECTION, Token::NONE));
+      results.push_back(CreateResult6("test", absl::StrCat("value", i), 0,
+                                      3 * kSize + i, prediction::UNIGRAM,
+                                      Token::NONE));
+    }
 
+    Segments segments;
+    InitSegmentsWithKey("test", &segments);
+    predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                        &results);
+
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
+  }
+  {
+    request_->mutable_decoder_experiment_params()
+        ->set_typing_correction_max_count(5);
+    std::vector<Result> results = {
+        CreateResult6("test", "value0", 0, 0, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value0", 0, 1, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value0", 0, 2, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value0", 0, 3, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value0", 0, 4, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value1", 0, 5, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+        CreateResult6("test", "value2", 0, 6, prediction::TYPING_CORRECTION,
+                      Token::NONE),
+    };
+    Segments segments;
+    InitSegmentsWithKey("test", &segments);
+    predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                        &results);
+
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
+  }
+}
+
+TEST_F(DictionaryPredictorTest, SortResult) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  std::vector<Result> results = {
+      CreateResult6("test", "テスト１", 0, 10, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト２", 0, 100, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト０００", 0, 1, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト００", 0, 1, prediction::UNIGRAM,
+                    Token::NONE),
+      CreateResult6("test", "テスト０", 0, 1, prediction::UNIGRAM, Token::NONE),
+  };
   Segments segments;
   InitSegmentsWithKey("test", &segments);
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
                                       &results);
 
-  EXPECT_EQ(segments.conversion_segments_size(), 1);
-  EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment &segment = segments.conversion_segment(0);
+  ASSERT_EQ(segment.candidates_size(), 5);
+  ASSERT_EQ(segment.candidate(0).value, "テスト０");
+  ASSERT_EQ(segment.candidate(1).value, "テスト００");
+  ASSERT_EQ(segment.candidate(2).value, "テスト０００");
+  ASSERT_EQ(segment.candidate(3).value, "テスト１");
+  ASSERT_EQ(segment.candidate(4).value, "テスト２");
 }
 
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {

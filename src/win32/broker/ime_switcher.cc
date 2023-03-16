@@ -32,20 +32,13 @@
 #include <windows.h>
 
 #include <sstream>
-#include <vector>
 
-#include "base/const.h"
 #include "base/logging.h"
-#include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "base/win32/scoped_com.h"
-#include "base/win32/scoped_handle.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
-#include "win32/base/migration_util.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, set_default_do_not_ask_again, false,
@@ -85,42 +78,6 @@ std::string GetMutexName() {
           SystemUtil::GetDesktopNameAsString());
 }
 
-HKL EnsureKeyboardLoaded() {
-  // Check if the IMM32 version is installed.
-  const KeyboardLayoutID &target_klid = ImmRegistrar::GetKLIDForIME();
-  if (!target_klid.has_id()) {
-    LOG(ERROR) << "KLID is not found.";
-    return nullptr;
-  }
-
-  HKL hkl = ::LoadKeyboardLayoutW(target_klid.ToString().c_str(),
-                                  KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
-  if (hkl == nullptr) {
-    const int error = ::GetLastError();
-    LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;
-    return nullptr;
-  }
-
-  // Unload the keyboard layout once to ensure that the situation reported in
-  // b/2958563 will be recovered.
-  ::UnloadKeyboardLayout(hkl);
-
-  hkl = ::LoadKeyboardLayoutW(target_klid.ToString().c_str(),
-                              KLF_ACTIVATE | KLF_SUBSTITUTE_OK);
-  if (hkl == nullptr) {
-    const int error = ::GetLastError();
-    LOG(ERROR) << "LoadKeyboardLayoutW failed. error = " << error;
-    return nullptr;
-  }
-
-  if (!MigrationUtil::RestorePreload()) {
-    LOG(ERROR) << "RestorePreload() failed";
-    return nullptr;
-  }
-
-  return hkl;
-}
-
 bool ClearCheckDefault() {
   client::Client client;
   if (!client.PingServer() && !client.EnsureConnection()) {
@@ -134,46 +91,9 @@ bool ClearCheckDefault() {
   return true;
 }
 
-int RunSetDefaultWin8() {
-  if (!ImeUtil::SetDefault()) {
-    NotifyFatalMessage("SetDefault() failed.", __LINE__);
-    return kErrorLevelGeneralError;
-  }
-
-  if (absl::GetFlag(FLAGS_set_default_do_not_ask_again)) {
-    if (!ClearCheckDefault()) {
-      // Notify the error to user but never treat this as an error.
-      NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
-    }
-  }
-  return kErrorLevelSuccess;
-}
-
 }  // namespace
 
 int RunSetDefault(int argc, char *argv[]) {
-  if (SystemUtil::IsWindows8OrLater()) {
-    return RunSetDefaultWin8();
-  }
-
-  const std::string mutex_name = GetMutexName();
-
-  mozc::ProcessMutex mutex(mutex_name.c_str());
-  if (!mutex.Lock()) {
-    LOG(INFO) << "Another process is manipulating the IME settings.";
-    return kErrorLevelProcessMutexInUse;
-  }
-
-  // Some of TSF-related utilities depend on COM runtime libraries.
-  // We have to make sure that COM is initialized.
-  mozc::ScopedCOMInitializer com_initializer;
-
-  const HKL hkl = EnsureKeyboardLoaded();
-  if (hkl == nullptr) {
-    NotifyFatalMessage("EnsureKeyboardLoaded returns nullptr.", __LINE__);
-    return kErrorLevelGeneralError;
-  }
-
   if (!ImeUtil::SetDefault()) {
     NotifyFatalMessage("SetDefault() failed.", __LINE__);
     return kErrorLevelGeneralError;
@@ -185,8 +105,8 @@ int RunSetDefault(int argc, char *argv[]) {
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
     }
   }
-
   return kErrorLevelSuccess;
 }
+
 }  // namespace win32
 }  // namespace mozc

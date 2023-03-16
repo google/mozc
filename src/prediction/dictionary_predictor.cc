@@ -301,7 +301,12 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  std::make_heap(results->begin(), results->end(), ResultCostLess());
+  auto min_heap_cmp = [](const Result &lhs, const Result &rhs) {
+    // `rhs < lhs` instead of `lhs < rhs`, since `make_heap()` creates max heap
+    // by default.
+    return ResultCostLess()(rhs, lhs);
+  };
+  std::make_heap(results->begin(), results->end(), min_heap_cmp);
 
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results->size());
@@ -339,7 +344,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   for (size_t i = 0; i < results->size(); ++i) {
     // Pop a result from a heap. Please pay attention not to use results->at(i).
-    std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
+    std::pop_heap(results->begin(), results->end() - i, min_heap_cmp);
     const Result &result = results->at(results->size() - i - 1);
 
     if (added >= max_candidates_size || result.cost >= kInfinity) {
@@ -477,6 +482,11 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   std::string key, value;
   GetCandidateKeyAndValue(result, history_key_, history_value_, &key, &value);
+
+  if (seen_.find(value) != seen_.end()) {
+    *log_message = "Duplicated";
+    return true;
+  }
 
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)

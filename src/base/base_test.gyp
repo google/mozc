@@ -397,6 +397,18 @@
         'base.gyp:serialized_string_array',
       ],
     },
+    {
+      'target_name': 'platform_string_test',
+      'type': 'executable',
+      'sources': [
+        'strings/platform_string_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
+        'base.gyp:base',
+      ],
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',

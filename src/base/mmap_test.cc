@@ -63,7 +63,7 @@ TEST(MmapTest, MmapTest) {
     // Write Test
     {
       Mmap mmap;
-      EXPECT_TRUE(mmap.Open(filename.c_str(), "r+"));
+      EXPECT_TRUE(mmap.Open(filename, "r+"));
       memcpy(mmap.begin(), buf.data(), kFileNameSize[i]);
 
       for (int j = 0; j < kFileNameSize[i]; ++j) {
@@ -88,7 +88,7 @@ TEST(MmapTest, MmapTest) {
     // Read test
     {
       Mmap mmap;
-      EXPECT_TRUE(mmap.Open(filename.c_str(), "r"));
+      EXPECT_TRUE(mmap.Open(filename, "r"));
       for (int j = 0; j < kFileNameSize[i]; ++j) {
         EXPECT_EQ(mmap[j], buf[j]);
       }

@@ -33,11 +33,9 @@
 
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "base/system_util.h"
 #include "base/win32/win_util.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
-#include "win32/base/imm_util.h"
 
 namespace mozc {
 namespace win32 {
@@ -60,11 +58,6 @@ int RunPrelaunchProcesses(int argc, char *argv[]) {
   }
   if (is_service_process) {
     return kErrorLevelGeneralError;
-  }
-
-  if (!SystemUtil::IsWindows8OrLater() && !ImeUtil::IsDefault()) {
-    // If Mozc is not default on Windows 7 or former, do nothing.
-    return kErrorLevelSuccess;
   }
 
   {

@@ -33,11 +33,37 @@ load(
     "//:build_defs.bzl",
     "mozc_cc_library",
     "mozc_cc_test",
+    "mozc_select",
 )
 
 package(
     default_visibility = [
         "//:__subpackages__",
+    ],
+)
+
+mozc_cc_library(
+    name = "platform_string",
+    hdrs = ["platform_string.h"],
+    deps = [
+        "//base:logging",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
+)
+
+mozc_cc_test(
+    name = "platform_string_test",
+    srcs = ["platform_string_test.cc"],
+    deps = [
+        ":platform_string",
+        "//base:logging",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/hash:hash_testing",
     ],
 )
 

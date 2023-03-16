@@ -56,21 +56,23 @@ mozc_cc_library(
         ":renderer_interface",
         "//base:clock",
         "//base:logging",
-        "//base:port",
         "//base:process",
-        "//base:run_level",
         "//base:system_util",
-        "//base:thread",
-        "//base:util",
+        "//base:thread2",
         "//base:version",
         "//ipc",
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
+        windows = [
+            "//base/win32:win_sandbox",
+            "//base:run_level",
+        ],
     ),
 )
 

@@ -33,26 +33,30 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/process.h"
-#include "base/run_level.h"
 #include "base/system_util.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"
 #endif  // __APPLE__
 
 #ifdef _WIN32
+#include "base/run_level.h"
 #include "base/win32/win_sandbox.h"
 #endif  // _WIN32
 
@@ -60,9 +64,9 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-constexpr int kIPCTimeout = 100;                 // 100 msec
-constexpr int kRendererWaitTimeout = 30 * 1000;  // 30 sec
-constexpr absl::Duration kRendererWaitSleepTime = absl::Seconds(10);  // 10 sec
+constexpr int kIpcTimeoutMsec = 100;
+constexpr int kRendererWaitTimeoutMsec = 30 * 1000;  // 30 sec
+constexpr absl::Duration kRendererWaitSleepTime = absl::Seconds(10);
 constexpr size_t kMaxErrorTimes = 5;
 constexpr uint64_t kRetryIntervalTime = 30;  // 30 sec
 constexpr char kServiceName[] = "renderer";
@@ -75,35 +79,43 @@ inline void CallCommand(IPCClientInterface *client,
   // basically, we don't need to get the result
   std::string result;
 
-  if (!client->Call(buf, &result, kIPCTimeout)) {
+  if (!client->Call(buf, &result, kIpcTimeoutMsec)) {
     LOG(ERROR) << "Cannot send the request: ";
   }
 }
 }  // namespace
 
-class RendererLauncher : public RendererLauncherInterface, public Thread {
+class RendererLauncher : public RendererLauncherInterface {
  public:
   RendererLauncher() = default;
 
   ~RendererLauncher() override {
-    if (!IsRunning()) {
+    if (!thread_.has_value()) {
+      // StartRenderer has never been called.
       return;
     }
-    NamedEventNotifier notify(name_.c_str());
-    notify.Notify();
-    Join();
+
+    if (!done_.HasBeenNotified()) {
+      NamedEventNotifier notify(name_.c_str());
+      notify.Notify();
+    }
+    thread_->Join();
   }
 
   void StartRenderer(
       const std::string &name, const std::string &path,
       bool disable_renderer_path_check,
       IPCClientFactoryInterface *ipc_client_factory_interface) override {
-    renderer_status_ = RendererLauncher::RENDERER_LAUNCHING;
+    SetStatus(RendererStatus::RENDERER_LAUNCHING);
     name_ = name;
     path_ = path;
     disable_renderer_path_check_ = disable_renderer_path_check;
     ipc_client_factory_interface_ = ipc_client_factory_interface;
-    Thread::Start("Renderer");
+    if (thread_.has_value()) {
+      thread_->Join();
+    }
+    thread_ = mozc::CreateThreadWithDoneNotification(&done_,
+                                                     [this] { ThreadMain(); });
   }
 
   bool ForceTerminateRenderer(const std::string &name) override {
@@ -132,26 +144,26 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   }
 
   bool IsAvailable() const override {
-    return (renderer_status_ == RendererLauncher::RENDERER_READY);
+    return (Status() == RendererStatus::RENDERER_READY);
   }
 
   bool CanConnect() const override {
-    switch (renderer_status_) {
-      case RendererLauncher::RENDERER_UNKNOWN:
-      case RendererLauncher::RENDERER_READY:
+    switch (Status()) {
+      case RendererStatus::RENDERER_UNKNOWN:
+      case RendererStatus::RENDERER_READY:
         return true;
-      case RendererLauncher::RENDERER_LAUNCHING:
+      case RendererStatus::RENDERER_LAUNCHING:
         VLOG(1) << "now starting renderer";
         return false;
-      case RendererLauncher::RENDERER_TIMEOUT:
-      case RendererLauncher::RENDERER_TERMINATED:
+      case RendererStatus::RENDERER_TIMEOUT:
+      case RendererStatus::RENDERER_TERMINATED:
         if (error_times_ <= kMaxErrorTimes &&
             Clock::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
           return true;
         }
         VLOG(1) << "never re-launch renderer";
         return false;
-      case RendererLauncher::RENDERER_FATAL:
+      case RendererStatus::RENDERER_FATAL:
         VLOG(1) << "never re-launch renderer";
         return false;
       default:
@@ -162,14 +174,14 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     return false;
   }
 
-  void SetPendingCommand(const commands::RendererCommand &command) override {
+  void SetPendingCommand(const commands::RendererCommand &command) override
+      ABSL_LOCKS_EXCLUDED(mu_) {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
-      absl::MutexLock l(&pending_command_mutex_);
-      if (!pending_command_) {
-        pending_command_ = std::make_unique<commands::RendererCommand>();
+      absl::MutexLock l(&mu_);
+      if (!pending_command_.has_value()) {
+        pending_command_ = command;
       }
-      *pending_command_ = command;
     }
   }
 
@@ -177,7 +189,27 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     suppress_error_dialog_ = suppress;
   }
 
-  void Run() override {
+ private:
+  enum class RendererStatus {
+    RENDERER_UNKNOWN = 0,
+    RENDERER_LAUNCHING = 1,
+    RENDERER_READY = 2,
+    RENDERER_TIMEOUT = 3,
+    RENDERER_TERMINATED = 4,
+    RENDERER_FATAL = 5,
+  };
+
+  RendererStatus Status() const ABSL_LOCKS_EXCLUDED(mu_) {
+    absl::MutexLock l(&mu_);
+    return renderer_status_;
+  }
+
+  void SetStatus(RendererStatus status) ABSL_LOCKS_EXCLUDED(mu_) {
+    absl::MutexLock l(&mu_);
+    renderer_status_ = status;
+  }
+
+  void ThreadMain() {
     last_launch_time_ = Clock::GetTime();
 
     NamedEventListener listener(name_.c_str());
@@ -214,64 +246,54 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
 
     if (!result) {
       LOG(ERROR) << "Can't start process";
-      renderer_status_ = RendererLauncher::RENDERER_FATAL;
+      SetStatus(RendererStatus::RENDERER_FATAL);
       return;
     }
 
     if (listener_is_available) {
-      const int ret = listener.WaitEventOrProcess(kRendererWaitTimeout, pid);
+      const int ret =
+          listener.WaitEventOrProcess(kRendererWaitTimeoutMsec, pid);
       switch (ret) {
         case NamedEventListener::TIMEOUT:
           LOG(ERROR) << "seems that mozc_renderer is not ready within "
-                     << kRendererWaitTimeout << " msec";
-          renderer_status_ = RendererLauncher::RENDERER_TIMEOUT;
+                     << kRendererWaitTimeoutMsec << " msec";
+          SetStatus(RendererStatus::RENDERER_TIMEOUT);
           ++error_times_;
           break;
         case NamedEventListener::EVENT_SIGNALED:
           VLOG(1) << "mozc_renderer is launched successfully within "
-                  << kRendererWaitTimeout << " msec";
+                  << kRendererWaitTimeoutMsec << " msec";
           FlushPendingCommand();
-          renderer_status_ = RendererLauncher::RENDERER_READY;
           error_times_ = 0;
           break;
         case NamedEventListener::PROCESS_SIGNALED:
           LOG(ERROR) << "Mozc renderer is terminated";
-          renderer_status_ = RendererLauncher::RENDERER_TERMINATED;
+          SetStatus(RendererStatus::RENDERER_TERMINATED);
           ++error_times_;
           break;
         default:
           LOG(ERROR) << "Unknown status";
-          renderer_status_ = RendererLauncher::RENDERER_FATAL;
+          SetStatus(RendererStatus::RENDERER_FATAL);
           ++error_times_;
       }
     } else {
       LOG(ERROR) << "cannot make NamedEventListener ";
       absl::SleepFor(kRendererWaitSleepTime);
       FlushPendingCommand();
-      renderer_status_ = RendererLauncher::RENDERER_READY;
       error_times_ = 0;
     }
 
-    if (renderer_status_ == RendererLauncher::RENDERER_FATAL) {
+    if (Status() == RendererStatus::RENDERER_FATAL) {
       OnFatal(RendererLauncherInterface::RENDERER_FATAL);
     }
   }
 
- private:
-  enum RendererStatus {
-    RENDERER_UNKNOWN = 0,
-    RENDERER_LAUNCHING = 1,
-    RENDERER_READY = 2,
-    RENDERER_TIMEOUT = 3,
-    RENDERER_TERMINATED = 4,
-    RENDERER_FATAL = 5,
-  };
-
-  void FlushPendingCommand() {
-    absl::MutexLock l(&pending_command_mutex_);
-    if (ipc_client_factory_interface_ != nullptr && pending_command_) {
+  void FlushPendingCommand() ABSL_LOCKS_EXCLUDED(mu_) {
+    absl::MutexLock l(&mu_);
+    if (ipc_client_factory_interface_ != nullptr &&
+        pending_command_.has_value()) {
       std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
-      if (!client) {
+      if (client != nullptr) {
         CallCommand(client.get(), *pending_command_);
       }
     }
@@ -280,7 +302,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     // |renderer_status_| is also protected by mutex.
     // Until this method finsihs, SetPendingCommand is blocked.
     // RendererClint checks the status AGAIN after SetPendingCommand.
-    renderer_status_ = RendererLauncher::RENDERER_READY;
+    renderer_status_ = RendererStatus::RENDERER_READY;
     error_times_ = 0;
   }
 
@@ -299,11 +321,14 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   volatile uint64_t last_launch_time_;
   volatile size_t error_times_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
-  std::unique_ptr<commands::RendererCommand> pending_command_;
-  absl::Mutex pending_command_mutex_;
-  volatile RendererStatus renderer_status_;
+  mutable absl::Mutex mu_;
+  std::optional<commands::RendererCommand> pending_command_
+      ABSL_GUARDED_BY(mu_);
+  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_);
   bool disable_renderer_path_check_;
   bool suppress_error_dialog_;
+  absl::Notification done_;
+  std::optional<mozc::Thread2> thread_;
 };
 
 RendererClient::RendererClient()

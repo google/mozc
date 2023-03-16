@@ -129,22 +129,13 @@ struct Result {
 // assume that cost(A) < cost(AB).
 class ResultWCostLess {
  public:
-  bool operator()(const Result &lhs, const Result &rhs) const {
-    if (lhs.wcost != rhs.wcost) {
-      return lhs.wcost < rhs.wcost;
-    }
-    return lhs.value < rhs.value;
-  }
+  bool operator()(const Result &lhs, const Result &rhs) const;
 };
 
+// Returns true if `lhs` is less than `rhs`
 class ResultCostLess {
  public:
-  bool operator()(const Result &lhs, const Result &rhs) const {
-    if (lhs.cost != rhs.cost) {
-      return lhs.cost > rhs.cost;
-    }
-    return lhs.value < rhs.value;
-  }
+  bool operator()(const Result &lhs, const Result &rhs) const;
 };
 
 }  // namespace prediction

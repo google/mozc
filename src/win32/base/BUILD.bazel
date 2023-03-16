@@ -47,44 +47,6 @@ package(
 )
 
 mozc_cc_library(
-    name = "accessible_object",
-    srcs = ["accessible_object.cc"],
-    hdrs = ["accessible_object.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":accessible_object_info",
-        "//base:port",
-        "//base:util",
-    ],
-)
-
-mozc_cc_library(
-    name = "accessible_object_info",
-    srcs = ["accessible_object_info.cc"],
-    hdrs = ["accessible_object_info.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
-)
-
-mozc_cc_library(
-    name = "browser_info",
-    srcs = ["browser_info.cc"],
-    hdrs = ["browser_info.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":accessible_object",
-        ":focus_hierarchy_observer",
-        "//base:port",
-        "//base:system_util",
-        "//base:util",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
     name = "config_snapshot",
     srcs = ["config_snapshot.cc"],
     hdrs = ["config_snapshot.h"],
@@ -159,21 +121,6 @@ mozc_cc_library(
     hdrs = ["display_name_resource.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-)
-
-mozc_cc_library(
-    name = "focus_hierarchy_observer",
-    srcs = ["focus_hierarchy_observer.cc"],
-    hdrs = ["focus_hierarchy_observer.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":accessible_object",
-        ":accessible_object_info",
-        "//base:logging",
-        "//base:port",
-        "//base:util",
-    ],
 )
 
 mozc_cc_library(
@@ -383,10 +330,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":imm_registrar",
-        ":imm_util",
-        ":immdev_h",
-        ":input_dll",
-        ":keyboard_layout_id",
         ":tsf_profile",
         ":uninstall_helper",
         "//base:const",
@@ -589,9 +532,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":imm_util",
-        ":immdev_h",
         ":input_dll",
         ":keyboard_layout_id",
         ":tsf_profile",

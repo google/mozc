@@ -129,7 +129,6 @@
       'target_name': 'session_module_test',
       'type': 'executable',
       'sources': [
-        'output_util_test.cc',
         'session_observer_handler_test.cc',
         'session_usage_observer_test.cc',
         'session_usage_stats_util_test.cc',
@@ -147,7 +146,6 @@
         'session.gyp:session_handler',
         'session.gyp:session_usage_observer',
         'session_base.gyp:keymap',
-        'session_base.gyp:output_util',
         'session_base.gyp:session_usage_stats_util',
       ],
       'variables': {

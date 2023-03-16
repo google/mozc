@@ -66,22 +66,22 @@ std::wstring ToWideString(const std::string &str) {
 
 }  // namespace
 
-TEST(UninstallHelperTest, BasicCaseForVista) {
-  // 1. Install Google Japanese Input into Windows Vista.
-  // 2. Set Google Japanese Input as the default IME.
+TEST(UninstallHelperTest, BasicCaseForWin8) {
+  // 1. Install Google Japanese Input into Windows 8.
+  // 2. Set Google Japanese Input (TSF) as the default IME.
   // 3. Uninstall Google Japanese Input.
   //    -> MS-IME should be the default IME.
   std::vector<LayoutProfileInfo> current_profiles;
   {
-    // Full IMM32 version of Google Japanese Input.
+    // Full TSF version of Google Japanese Input.
     LayoutProfileInfo info;
     info.langid = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-    info.clsid = CLSID_NULL;
-    info.profile_guid = GUID_NULL;
-    info.klid = kJapaneseKLID;
-    info.ime_filename = ToWideString(kIMEFile);
+    info.clsid = TsfProfile::GetTextServiceGuid();
+    info.profile_guid = TsfProfile::GetProfileGuid();
+    info.klid = 0;
+    info.ime_filename.clear();
     info.is_default = true;
-    info.is_tip = false;
+    info.is_tip = true;
     info.is_enabled = true;
     current_profiles.push_back(info);
   }
@@ -111,74 +111,9 @@ TEST(UninstallHelperTest, BasicCaseForVista) {
       &removed_profiles));
 
   EXPECT_EQ(removed_profiles.size(), 1);
-  EXPECT_EQ(removed_profiles.at(0).klid, kJapaneseKLID);
+  EXPECT_EQ(removed_profiles.at(0).profile_guid, TsfProfile::GetProfileGuid());
 
-  EXPECT_EQ(current_default.klid, kJapaneseKLID);
-  EXPECT_EQ(new_default.profile_guid, GUID_IMJPTIP);
-}
-
-TEST(UninstallHelperTest, BasicCaseForWin8) {
-  // 1. Install Google Japanese Input into Windows 8.
-  // 2. Set Google Japanese Input (IMM32) as the default IME.
-  // 3. Uninstall Google Japanese Input.
-  //    -> MS-IME should be the default IME.
-  std::vector<LayoutProfileInfo> current_profiles;
-  {
-    // Full IMM32 version of Google Japanese Input.
-    LayoutProfileInfo info;
-    info.langid = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-    info.clsid = CLSID_NULL;
-    info.profile_guid = GUID_NULL;
-    info.klid = kJapaneseKLID;
-    info.ime_filename = ToWideString(kIMEFile);
-    info.is_default = true;
-    info.is_tip = false;
-    info.is_enabled = true;
-    current_profiles.push_back(info);
-  }
-  {
-    // Full TSF version of Google Japanese Input.
-    LayoutProfileInfo info;
-    info.langid = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-    info.clsid = TsfProfile::GetTextServiceGuid();
-    info.profile_guid = TsfProfile::GetProfileGuid();
-    info.klid = 0;
-    info.ime_filename.clear();
-    info.is_default = false;
-    info.is_tip = true;
-    info.is_enabled = true;
-    current_profiles.push_back(info);
-  }
-  {
-    // Built-in MS-IME.
-    LayoutProfileInfo info;
-    info.langid = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-    info.clsid = CLSID_IMJPTIP;
-    info.profile_guid = GUID_IMJPTIP;
-    info.klid = 0;
-    info.ime_filename.clear();
-    info.is_default = false;
-    info.is_tip = true;
-    info.is_enabled = true;
-    current_profiles.push_back(info);
-  }
-
-  std::vector<LayoutProfileInfo> installed_profiles;
-  installed_profiles = current_profiles;
-
-  LayoutProfileInfo current_default;
-  LayoutProfileInfo new_default;
-  std::vector<LayoutProfileInfo> removed_profiles;
-
-  EXPECT_TRUE(UninstallHelper::GetNewEnabledProfileForVista(
-      current_profiles, installed_profiles, &current_default, &new_default,
-      &removed_profiles));
-
-  EXPECT_EQ(removed_profiles.size(), 2);
-  EXPECT_EQ(removed_profiles.at(0).klid, kJapaneseKLID);
-  EXPECT_EQ(removed_profiles.at(1).profile_guid, TsfProfile::GetProfileGuid());
-
-  EXPECT_EQ(current_default.klid, kJapaneseKLID);
+  EXPECT_EQ(current_default.profile_guid, TsfProfile::GetProfileGuid());
   EXPECT_EQ(new_default.profile_guid, GUID_IMJPTIP);
 }
 
