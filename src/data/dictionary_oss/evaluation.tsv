@@ -256,6 +256,10 @@ OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
 OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
 OK:	はいたしょり	排他処理	Conversion Expected	排他処理	2.28.4960
 OK:	じきしょうそう	時期尚早	Conversion Expected	時期尚早	2.28.5000
+OK:	ひとり	一人	Conversion Expected 9	1人	2.28.5029
+OK:	ふたり	二人	Conversion Expected 9	2人	2.28.5029
+OK:	いっこ	一個	Conversion Expected 9	1個	2.28.5029
+FAILED:	いっぽん	一本	Conversion Expected 9	1本	2.28.5029
 OK:	そっかん	速乾	Conversion Expected 2	速乾	2.28.5017
 OK:	かんりめいがら	監理銘柄	Conversion Expected	監理銘柄	2.28.5017
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
