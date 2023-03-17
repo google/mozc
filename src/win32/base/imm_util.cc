@@ -45,9 +45,7 @@
 #include "base/util.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/scoped_handle.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/input_dll.h"
-#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
@@ -60,7 +58,9 @@ namespace {
 // - similar to the same timeout used by TSF.
 constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
-bool SetDefaultWin8() {
+}  // namespace
+
+bool ImeUtil::SetDefault() {
   wchar_t clsid[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
                          std::size(clsid))) {
@@ -99,56 +99,6 @@ bool SetDefaultWin8() {
   }
 
   return true;
-}
-
-}  // namespace
-
-bool ImeUtil::SetDefault() {
-  if (SystemUtil::IsWindows8OrLater()) {
-    return SetDefaultWin8();
-  }
-
-  const KeyboardLayoutID &mozc_klid = win32::ImmRegistrar::GetKLIDForIME();
-  if (!mozc_klid.has_id()) {
-    LOG(ERROR) << "GetKLIDForIME failed: ";
-    return false;
-  }
-
-  const std::wstring &profile_list = L"0x0411:0x" + mozc_klid.ToString();
-  if (!::SetDefaultLayoutOrTip(profile_list.c_str(), 0)) {
-    DLOG(ERROR) << "SetDefaultLayoutOrTip failed";
-    return false;
-  }
-
-  if (!ActivateForCurrentSession()) {
-    LOG(ERROR) << "ActivateIMEForCurrentSession failed";
-    return false;
-  }
-  return true;
-}
-
-bool ImeUtil::ActivateForCurrentSession() {
-  const KeyboardLayoutID &mozc_hkld = ImmRegistrar::GetKLIDForIME();
-  if (!mozc_hkld.has_id()) {
-    return false;
-  }
-  const HKL mozc_hkl =
-      ::LoadKeyboardLayout(mozc_hkld.ToString().c_str(), KLF_ACTIVATE);
-
-  if (!WaitForAsmCacheReady(kWaitForAsmCacheReadyEventTimeout)) {
-    LOG(ERROR) << "ImeUtil::WaitForAsmCacheReady failed.";
-  }
-
-  // Broadcasting WM_INPUTLANGCHANGEREQUEST so that existing process in the
-  // current session will change their input method to |hkl|. This mechanism
-  // also works against a HKL which is substituted by a TIP on Windows XP.
-  // Note: we have virtually the same code in uninstall_helper.cc too.
-  // TODO(yukawa): Make a common function around WM_INPUTLANGCHANGEREQUEST.
-  DWORD recipients = BSM_APPLICATIONS;
-  return (0 < ::BroadcastSystemMessage(BSF_POSTMESSAGE, &recipients,
-                                       WM_INPUTLANGCHANGEREQUEST,
-                                       INPUTLANGCHANGE_SYSCHARSET,
-                                       reinterpret_cast<LPARAM>(mozc_hkl)));
 }
 
 // Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to

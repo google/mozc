@@ -180,9 +180,7 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":input_dll",
-        ":keyboard_layout_id",
         ":tsf_profile",
         "//base:const",
         "//base:logging",
