@@ -43,10 +43,6 @@ class MigrationUtil {
   MigrationUtil(const MigrationUtil&) = delete;
   MigrationUtil& operator=(const MigrationUtil&) = delete;
 
-  // Checks if the IMM32 version is available.
-  // Returns true if the operation completed successfully.
-  static bool IsFullIMEAvailable();
-
   // Checks if the TSF version is available.
   // Returns true if the operation completed successfully.
   static bool IsFullTIPAvailable();

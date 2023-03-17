@@ -329,7 +329,6 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":tsf_profile",
         ":uninstall_helper",
         "//base:const",
