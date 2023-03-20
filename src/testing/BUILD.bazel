@@ -113,8 +113,8 @@ mozc_cc_library(
         "gunit.h",
     ],
     deps = [
-        ":gunit",
         ":googletest",
+        ":gunit",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         default = ["//testing/base/public:gunit_main"],

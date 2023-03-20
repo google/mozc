@@ -89,11 +89,11 @@ mozc_cc_library(
     hdrs = ["stats_config_util.h"],
     deps = [
         ":config_handler",
-        "//base:port",
-        "//protocol:config_cc_proto",
         "//base:file_util",
+        "//base:port",
         "//base:singleton",
         "//base:system_util",
+        "//protocol:config_cc_proto",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
