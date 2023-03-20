@@ -510,9 +510,7 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:logging",
         "//base:port",
-        "//base:system_util",
         "//base/win32:scoped_com",
-        "//base/win32:scoped_handle",
         "//testing:gunit_prod",
     ],
 )
