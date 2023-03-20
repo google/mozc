@@ -32,12 +32,11 @@
 
 #include <windows.h>
 
+#include <string>
 #include <vector>
 
 #include "base/port.h"
 #include "testing/gunit_prod.h"
-#include "win32/base/input_dll.h"
-#include "win32/base/keyboard_layout_id.h"
 // for FRIEND_TEST()
 
 namespace mozc {

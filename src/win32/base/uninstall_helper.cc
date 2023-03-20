@@ -38,14 +38,19 @@
 #include <strsafe.h>
 
 #include <cstdint>
+#include <iterator>
 #include <map>
 #include <memory>
+#include <string>
 #include <sstream>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/win_util.h"
 #include "win32/base/imm_util.h"
+#include "win32/base/input_dll.h"
+#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
