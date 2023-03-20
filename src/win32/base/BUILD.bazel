@@ -123,13 +123,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
 )
 
-mozc_cc_library(
-    name = "immdev_h",
-    hdrs = ["immdev.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-)
-
 mozc_cc_test(
     name = "imm_reconvert_string_test",
     srcs = ["imm_reconvert_string_test.cc"],
