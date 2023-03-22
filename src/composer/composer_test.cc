@@ -355,8 +355,8 @@ TEST_F(ComposerTest, GetTransliterations) {
   EXPECT_EQ(transliterations[transliteration::FULL_ASCII], "ａＩｕ");
   EXPECT_EQ(transliterations[transliteration::FULL_ASCII_UPPER], "ＡＩＵ");
   EXPECT_EQ(transliterations[transliteration::FULL_ASCII_LOWER], "ａｉｕ");
-  EXPECT_EQ(transliterations[transliteration::FULL_ASCII_CAPITALIZED], "Ａｉｕ"
-            );
+  EXPECT_EQ(transliterations[transliteration::FULL_ASCII_CAPITALIZED],
+            "Ａｉｕ");
   EXPECT_EQ(transliterations[transliteration::HALF_KATAKANA], "ｱｲｳ");
 
   // Transliterations for quote marks.  This is a test against
@@ -644,6 +644,78 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     EXPECT_EQ(base, "い");
     EXPECT_EQ(expanded.size(), 1);
     EXPECT_TRUE(expanded.end() != expanded.find("っ"));
+  }
+}
+
+TEST_F(ComposerTest, GetTypeCorrectedQueriesForPredictionMobile) {
+  config_->set_use_typing_correction(true);
+  request_->set_special_romanji_table(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  table_->InitializeWithRequestAndConfig(*request_, *config_,
+                                         mock_data_manager_);
+  table_->SetTypingModelForTesting(TypingModel::CreateTypingModel(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA, mock_data_manager_));
+
+  struct ProbableKeyInfo {
+    uint32_t key_code;
+    double prob;
+  };
+  struct KeyInfo {
+    uint32_t key_code;
+    std::vector<ProbableKeyInfo> prob_keys;
+  };
+
+  auto insert_key_events = [](const std::vector<KeyInfo> &keys,
+                              Composer *composer) {
+    composer->EditErase();
+    for (const auto &key : keys) {
+      commands::KeyEvent key_event;
+      key_event.set_key_code(key.key_code);
+      if (!key.prob_keys.empty()) {
+        ProbableKeyEvents *probable_key_events =
+            key_event.mutable_probable_key_event();
+        for (const ProbableKeyInfo &prob_key : key.prob_keys) {
+          ProbableKeyEvent *event = probable_key_events->Add();
+          event->set_key_code(prob_key.key_code);
+          event->set_probability(prob_key.prob);
+        }
+      }
+      composer->InsertCharacterKeyEvent(key_event);
+    }
+  };
+
+  auto contains = [](std::set<std::string> str_set, std::string str) {
+    return str_set.find(str) != str_set.end();
+  };
+
+  {
+    insert_key_events({{'4', {}},                          // た
+                       {'5', {{'5', 0.75}, {'2', 0.25}}},  // な
+                       {'2', {}}},                         // か
+                      composer_.get());
+    std::vector<TypeCorrectedQuery> queries;
+    composer_->GetTypeCorrectedQueriesForPrediction(&queries);
+    ASSERT_EQ(queries.size(), 1);
+    EXPECT_EQ(queries[0].base, "た");
+    EXPECT_EQ(queries[0].asis, "たき");
+    EXPECT_EQ(queries[0].expanded.size(), 2);
+    EXPECT_TRUE(contains(queries[0].expanded, "き"));
+    EXPECT_TRUE(contains(queries[0].expanded, "ぎ"));
+  }
+
+  {
+    insert_key_events({{'4', {}},                          // た
+                       {'5', {{'5', 0.75}, {'2', 0.25}}},  // な
+                       {'2', {}},                          // か
+                       {'*', {}}},                         // modifier key
+                      composer_.get());
+    std::vector<TypeCorrectedQuery> queries;
+    composer_->GetTypeCorrectedQueriesForPrediction(&queries);
+    ASSERT_EQ(queries.size(), 1);
+    EXPECT_EQ(queries[0].base, "た");
+    EXPECT_EQ(queries[0].asis, "たぎ");
+    EXPECT_EQ(queries[0].expanded.size(), 1);
+    EXPECT_TRUE(contains(queries[0].expanded, "ぎ"));
   }
 }
 
@@ -3228,7 +3300,7 @@ TEST_F(ComposerTest, SimultaneousInput) {
   table_->AddRule("か{!}", "か", "");  // d → か (timeout)
   table_->AddRule("かk", "れ", "");    // dk → れ
   table_->AddRule("いd", "れ", "");    // kd → れ
-  table_->AddRule("zl", "→", "");     // normal conversion w/o timeout
+  table_->AddRule("zl", "→", "");      // normal conversion w/o timeout
 
   constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
   mozc::ScopedClockMock clock(kBaseSeconds, 0);
@@ -3318,7 +3390,7 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey5) {
 }
 
 TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
-  table_->AddRule("{!}", "", "");  // no-op
+  table_->AddRule("{!}", "", "");          // no-op
   table_->AddRule("{henkan}{!}", "", "");  // no-op
   table_->AddRule("j", "", "と");
   table_->AddRule("と{!}", "と", "");

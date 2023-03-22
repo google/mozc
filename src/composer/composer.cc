@@ -213,7 +213,9 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
 // whereby we can suppress prediction from unmodified key when one modified a
 // character explicitly (e.g., we don't want to suggest words starting with
 // "さ" when one typed "ざ" with modified key).
-using ModifierRemovalMap = std::unordered_multimap<std::string, std::string>;
+using ModifierRemovalMap =
+    std::unordered_multimap<absl::string_view, absl::string_view,
+                            absl::Hash<absl::string_view>>;
 
 const ModifierRemovalMap *GetModifierRemovalMap() {
   static const ModifierRemovalMap *const removal_map = new ModifierRemovalMap{
@@ -229,6 +231,16 @@ const ModifierRemovalMap *GetModifierRemovalMap() {
       {"ぽ", "ぼ"}, {"ゃ", "や"}, {"ゅ", "ゆ"}, {"ょ", "よ"}, {"ゎ", "わ"},
   };
   return removal_map;
+}
+
+void RemoveExpandedCharsForModifier(absl::string_view asis,
+                                    absl::string_view base,
+                                    std::set<std::string> *expanded) {
+  const absl::string_view trailing(asis.substr(base.size()));
+  for (auto [iter, end] = GetModifierRemovalMap()->equal_range(trailing);
+       iter != end; ++iter) {
+    expanded->erase(std::string(iter->second));
+  }
 }
 
 constexpr size_t kMaxPreeditLength = 256;
@@ -864,11 +876,7 @@ void Composer::GetQueriesForPrediction(std::string *base,
   // following code removes such unnecessary expansion.
   std::string asis;
   composition_.GetStringWithTrimMode(ASIS, &asis);
-  const std::string trailing = asis.substr(base_query.size());
-  for (auto [iter, end] = GetModifierRemovalMap()->equal_range(trailing);
-       iter != end; ++iter) {
-    expanded->erase(iter->second);
-  }
+  RemoveExpandedCharsForModifier(asis, base_query, expanded);
 
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
@@ -876,6 +884,9 @@ void Composer::GetQueriesForPrediction(std::string *base,
 void Composer::GetTypeCorrectedQueriesForPrediction(
     std::vector<TypeCorrectedQuery> *queries) const {
   typing_corrector_.GetQueriesForPrediction(queries);
+  for (auto &query : *queries) {
+    RemoveExpandedCharsForModifier(query.asis, query.base, &query.expanded);
+  }
 }
 
 size_t Composer::GetLength() const { return composition_.GetLength(); }

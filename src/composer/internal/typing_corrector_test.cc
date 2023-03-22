@@ -553,5 +553,58 @@ TEST_F(TypingCorrectorTest, Cost) {
   }
 }
 
+TEST_F(TypingCorrectorTest, Asis) {
+  Table table;
+  request_->set_special_romanji_table(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA);
+  table.InitializeWithRequestAndConfig(*request_, config_, mock_data_manager_);
+  table.SetTypingModelForTesting(TypingModel::CreateTypingModel(
+      commands::Request::TWELVE_KEYS_TO_HIRAGANA, mock_data_manager_));
+
+  TypingCorrector corrector(request_.get(), &table, 30, 30);
+  corrector.SetConfig(&config_);
+  ASSERT_TRUE(corrector.IsAvailable());
+  {
+    CompositionInput input;
+    input.InitFromRaw({"4", 1}, true);  // "た"
+    corrector.InsertCharacter(input);
+  }
+  {
+    CompositionInput input;
+    input.InitFromRaw({"5", 1}, true);  // "な"
+    ProbableKeyEvents probable_key_events;
+    ProbableKeyEvent *event = probable_key_events.Add();
+    event->set_key_code('5');  // "な"
+    event->set_probability(0.75);
+    event = probable_key_events.Add();
+    event->set_key_code('2');  // "か"
+    event->set_probability(0.25);
+    input.set_probable_key_events(probable_key_events);
+    corrector.InsertCharacter(input);
+  }
+  {
+    CompositionInput input;
+    input.InitFromRaw({"2", 1}, true);  // "か"
+    corrector.InsertCharacter(input);
+  }
+  {
+    CompositionInput input;
+    input.InitFromRaw({"*", 1}, true);  // modifier key
+    corrector.InsertCharacter(input);
+  }
+
+  std::vector<TypeCorrectedQuery> queries;
+  corrector.GetQueriesForPrediction(&queries);
+  ASSERT_EQ(queries.size(), 1);
+  // raw: "422*" -> たぎ
+  ASSERT_EQ(queries[0].base, "た");
+  auto contains = [](std::set<std::string> str_set, std::string str) {
+    return str_set.find(str) != str_set.end();
+  };
+  ASSERT_TRUE(contains(queries[0].expanded, "ぎ"));
+  ASSERT_TRUE(contains(queries[0].expanded, "き"));
+  ASSERT_EQ(queries[0].asis, "たぎ");
+}
+
 }  // namespace composer
 }  // namespace mozc

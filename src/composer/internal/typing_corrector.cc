@@ -249,6 +249,7 @@ void TypingCorrector::GetQueriesForPrediction(
     c.Erase();
     c.InsertInput(0, input);
     c.GetExpandedStrings(&query->base, &query->expanded);
+    c.GetStringWithTrimMode(ASIS, &query->asis);
     if (query->expanded.empty()) {
       // This typing correction input has no ambiguity.
       // e.g. "syamoji" -> "しゃもじ".
