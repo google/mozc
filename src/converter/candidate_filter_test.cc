@@ -185,6 +185,8 @@ TEST_P(CandidateFilterTestWithParam, FilterTest) {
 
   // A candidate having the value seen before should be rejected.
   Segment::Candidate *c2 = NewCandidate();
+  c2->lid = 1;
+  c2->rid = 1;
   c2->key = "abc";
   c2->value = "abc";
 
@@ -232,6 +234,71 @@ TEST_P(CandidateFilterTestWithParam, FilterTest) {
   request_->set_request_type(type);
   EXPECT_EQ(filter->FilterCandidate(*request_, "", c4, n, n),
             CandidateFilter::STOP_ENUMERATION);
+}
+
+TEST_P(CandidateFilterTestWithParam, DeduplicationTest) {
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+
+  ConversionRequest::RequestType type = GetParam();
+  request_->set_request_type(type);
+
+  std::vector<const Node *> n;
+  GetDefaultNodes(&n);
+
+  {
+    Segment::Candidate *cand = NewCandidate();
+    cand->lid = 1;
+    cand->rid = 1;
+    cand->key = "abc";
+    cand->value = "abc";
+    EXPECT_EQ(filter->FilterCandidate(*request_, "abc", cand, n, n),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
+
+  {
+    // If all of lid, rid and value are the same with existing candidates,
+    // it is filtered.
+    Segment::Candidate *cand = NewCandidate();
+    cand->lid = 1;
+    cand->rid = 1;
+    cand->key = "abc";
+    cand->value = "abc";
+    EXPECT_EQ(filter->FilterCandidate(*request_, "abc", cand, n, n),
+              CandidateFilter::BAD_CANDIDATE);
+  }
+
+  {
+    // lid is different from existing candidates.
+    Segment::Candidate *cand = NewCandidate();
+    cand->lid = 2;
+    cand->rid = 1;
+    cand->key = "abc";
+    cand->value = "abc";
+    EXPECT_EQ(filter->FilterCandidate(*request_, "abc", cand, n, n),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
+
+  {
+    // rid is different from existing candidates.
+    Segment::Candidate *cand = NewCandidate();
+    cand->lid = 1;
+    cand->rid = 2;
+    cand->key = "abc";
+    cand->value = "abc";
+    EXPECT_EQ(filter->FilterCandidate(*request_, "abc", cand, n, n),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
+
+  {
+    // value is different from existing candidates.
+    Segment::Candidate *cand = NewCandidate();
+    cand->lid = 1;
+    cand->rid = 1;
+    cand->key = "abc";
+    cand->value = "xyz";
+    EXPECT_EQ(filter->FilterCandidate(*request_, "abc", cand, n, n),
+              CandidateFilter::GOOD_CANDIDATE);
+  }
 }
 
 TEST_P(CandidateFilterTestWithParam, KatakanaT13N) {
