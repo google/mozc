@@ -56,7 +56,7 @@ TEST(ConnectorTest, CompareWithRawData) {
   const std::string path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection.data"});
   Mmap cmmap;
-  ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
+  ASSERT_TRUE(cmmap.Open(path)) << "Failed to open image: " << path;
   auto status_or_connector =
       Connector::Create(cmmap.begin(), cmmap.size(), 256);
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
@@ -95,7 +95,7 @@ TEST(ConnectorTest, BrokenData) {
   const std::string path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection.data"});
   Mmap cmmap;
-  ASSERT_TRUE(cmmap.Open(path.c_str())) << "Failed to open image: " << path;
+  ASSERT_TRUE(cmmap.Open(path)) << "Failed to open image: " << path;
 
   std::string data;
 
