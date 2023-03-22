@@ -486,10 +486,10 @@ absl::StatusOr<bool> FileUtil::IsEqualFile(const std::string &filename1,
 absl::StatusOr<bool> FileUtilImpl::IsEqualFile(
     const std::string &filename1, const std::string &filename2) const {
   Mmap mmap1, mmap2;
-  if (!mmap1.Open(filename1.c_str(), "r")) {
+  if (!mmap1.Open(filename1, "r")) {
     return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename1));
   }
-  if (!mmap2.Open(filename2.c_str(), "r")) {
+  if (!mmap2.Open(filename2, "r")) {
     return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename2));
   }
   return mmap1.size() == mmap2.size() &&

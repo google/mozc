@@ -126,7 +126,7 @@ bool SavePassword(const std::string &password) {
 bool LoadPassword(std::string *password) {
   const std::string filename = GetFileName();
   Mmap mmap;
-  if (!mmap.Open(filename.c_str(), "r")) {
+  if (!mmap.Open(filename, "r")) {
     LOG(ERROR) << "cannot open: " << filename;
     return false;
   }
