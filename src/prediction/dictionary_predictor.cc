@@ -378,8 +378,10 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   //  - single-char REALTIME or UNIGRAM entry
   //  - PREFIX or NUMBER entry
   // cost is calculated with LM cost (with prefix penalty)
-  using CostPair = std::pair<int, const Result *>;  // (lm cost, result)
-  absl::flat_hash_map<absl::string_view, CostPair> min_cost_map;
+  // When the reference is not found, Hiragana (value == key) entry will be used
+  // as the fallback.
+  absl::flat_hash_map<absl::string_view, int> min_cost_map;
+  int fallback_cost = -1;
   for (const auto &result : results) {
     if (result.removed) {
       continue;
@@ -388,6 +390,14 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
                           prediction::PREFIX | prediction::NUMBER))) {
       continue;
     }
+
+    if (result.value == input_key) {
+      const int cost = GetLMCost(result, rid);
+      if (fallback_cost == -1 || fallback_cost > cost) {
+        fallback_cost = cost;
+      }
+    }
+
     if (((result.types & (prediction::REALTIME | prediction::UNIGRAM)) &&
          Util::CharsLen(result.value) != 1)) {
       continue;
@@ -398,32 +408,27 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
       lm_cost += CalculatePrefixPenalty(request, input_key, result,
                                         immutable_converter_, cache);
     }
-    const CostPair cost_pair = std::make_pair(lm_cost, &result);
     const auto &it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
-      min_cost_map[result.value] = cost_pair;
+      min_cost_map[result.value] = lm_cost;
       continue;
     }
-    const int cost_in_map = it->second.first;
-    if (lm_cost < cost_in_map) {
-      min_cost_map[result.value] = cost_pair;
-    }
+    min_cost_map[result.value] = std::min(it->second, lm_cost);
   }
 
   // Use the wcost of the highest cost to calculate the single kanji cost
   // offset.
   int single_kanji_max_cost = 0;
-  int wcost_diff = 0;
+  for (const auto &it : min_cost_map) {
+    single_kanji_max_cost = std::max(single_kanji_max_cost, it.second);
+  }
+  single_kanji_max_cost = std::max(single_kanji_max_cost, fallback_cost);
+
   const int single_kanji_transition_cost =
       std::min(connector_->GetTransitionCost(rid, general_symbol_id_),
                connector_->GetTransitionCost(0, general_symbol_id_));
-  for (const auto &it : min_cost_map) {
-    const int cost = it.second.first;
-    if (cost > single_kanji_max_cost) {
-      single_kanji_max_cost = cost;
-      wcost_diff = cost - single_kanji_transition_cost;
-    }
-  }
+  const int wcost_diff =
+      std::max(0, single_kanji_max_cost - single_kanji_transition_cost);
   const int single_kanji_offset = request.request()
                                       .decoder_experiment_params()
                                       .single_kanji_prediction_cost_offset();

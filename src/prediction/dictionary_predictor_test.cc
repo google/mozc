@@ -1379,6 +1379,54 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
   }
 }
 
+TEST_F(DictionaryPredictorTest, SingleKanjiFallbackOffsetCost) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  {
+    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    std::vector<Result> results;
+    results.push_back(
+        CreateResult5("ああ", "ああ", 5000, prediction::UNIGRAM, Token::NONE));
+    results.push_back(
+        CreateResult5("ああ", "アア", 4500, prediction::UNIGRAM, Token::NONE));
+    results.push_back(
+        CreateResult5("ああ", "吁", 0, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("ああ", "咨", 1, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("ああ", "噫", 2, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("あ", "亜", 1000, prediction::SINGLE_KANJI, Token::NONE));
+    results.push_back(
+        CreateResult5("あ", "亞", 1001, prediction::SINGLE_KANJI, Token::NONE));
+    for (int i = 0; i < results.size(); ++i) {
+      if (results[i].types == prediction::SINGLE_KANJI) {
+        results[i].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
+        results[i].rid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
+      } else {
+        results[i].lid = data_and_predictor->pos_matcher().GetGeneralNounId();
+        results[i].rid = data_and_predictor->pos_matcher().GetGeneralNounId();
+      }
+    }
+
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("ああ", &segments);
+  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_EQ(segments.conversion_segments_size(), 1);
+  ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 7);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(0).value, "アア");
+  ASSERT_EQ(segments.conversion_segment(0).candidate(1).value, "ああ");
+}
+
 TEST_F(DictionaryPredictorTest, Dedup) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();
