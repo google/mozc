@@ -31,16 +31,22 @@
 #define MOZC_ENGINE_ENGINE_BUILDER_H_
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
+#include <optional>
 
-#include "base/port.h"
+#include "base/thread2.h"
+#include "data_manager/data_manager.h"
 #include "engine/engine_builder_interface.h"
+#include "engine/engine_interface.h"
+#include "protocol/engine_builder.pb.h"
+#include "absl/synchronization/notification.h"
 
 namespace mozc {
 
 class EngineBuilder : public EngineBuilderInterface {
  public:
-  EngineBuilder();
+  EngineBuilder() = default;
   EngineBuilder(const EngineBuilder &) = delete;
   EngineBuilder &operator=(const EngineBuilder &) = delete;
   ~EngineBuilder() override;
@@ -58,10 +64,18 @@ class EngineBuilder : public EngineBuilderInterface {
   void Wait();
 
  private:
-  class Preparator;
-  std::unique_ptr<Preparator> preparator_;
+  std::atomic<uint64_t> model_path_fp_;
 
-  std::atomic<std::uint64_t> model_path_fp_ = 0;
+  struct Inflight {
+    absl::Notification done;
+    mozc::Thread2 thread;
+    // Parent thread must not access these until `done` is notified.
+    // NOTE: this is essentially a future/promise, so we may want to introduce
+    // std and Google bridge like `mozc::Thread2`.
+    EngineReloadResponse response;
+    std::unique_ptr<DataManager> data_manager;
+  };
+  std::optional<Inflight> inflight_;
 };
 
 }  // namespace mozc
