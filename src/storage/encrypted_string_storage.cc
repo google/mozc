@@ -71,7 +71,7 @@ bool EncryptedStringStorage::Load(std::string *output) const {
   // Reads encrypted message and salt from local file
   {
     Mmap mmap;
-    if (!mmap.Open(filename_.c_str(), "r")) {
+    if (!mmap.Open(filename_, "r")) {
       LOG(ERROR) << "cannot open user history file";
       return false;
     }

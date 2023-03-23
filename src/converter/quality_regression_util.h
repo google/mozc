@@ -35,8 +35,9 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "protocol/config.pb.h"
+#include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
@@ -75,7 +76,7 @@ class QualityRegressionUtil {
   explicit QualityRegressionUtil(ConverterInterface *converter);
   QualityRegressionUtil(const QualityRegressionUtil &) = delete;
   QualityRegressionUtil &operator=(const QualityRegressionUtil &) = delete;
-  virtual ~QualityRegressionUtil();
+  virtual ~QualityRegressionUtil() = default;
 
   // Pase |filename| and save the all test items into |outputs|.
   static absl::Status ParseFile(const std::string &filename,
@@ -92,9 +93,9 @@ class QualityRegressionUtil {
 
  private:
   ConverterInterface *converter_;
-  std::unique_ptr<commands::Request> request_;
-  std::unique_ptr<config::Config> config_;
-  std::unique_ptr<Segments> segments_;
+  commands::Request request_;
+  config::Config config_;
+  Segments segments_;
 };
 
 }  // namespace quality_regression

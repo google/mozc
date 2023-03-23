@@ -453,7 +453,7 @@ TEST_F(UserDictionaryStorageTest, Export) {
   }
 
   Mmap mapped_data;
-  ASSERT_TRUE(mapped_data.Open(kPath.c_str()));
+  ASSERT_TRUE(mapped_data.Open(kPath));
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.

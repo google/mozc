@@ -434,7 +434,7 @@ DataManager::Status DataManager::InitFromFile(const std::string &path) {
 
 DataManager::Status DataManager::InitFromFile(const std::string &path,
                                               absl::string_view magic) {
-  if (!mmap_.Open(path.c_str(), "r")) {
+  if (!mmap_.Open(path, "r")) {
     LOG(ERROR) << "Failed to mmap " << path;
     return Status::MMAP_FAILURE;
   }
@@ -458,7 +458,7 @@ DataManager::Status DataManager::InitUserPosManagerDataFromArray(
 
 DataManager::Status DataManager::InitUserPosManagerDataFromFile(
     const std::string &path, absl::string_view magic) {
-  if (!mmap_.Open(path.c_str(), "r")) {
+  if (!mmap_.Open(path, "r")) {
     LOG(ERROR) << "Failed to mmap " << path;
     return Status::MMAP_FAILURE;
   }

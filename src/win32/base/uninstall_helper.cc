@@ -38,17 +38,19 @@
 #include <strsafe.h>
 
 #include <cstdint>
-#include <iomanip>
+#include <iterator>
 #include <map>
 #include <memory>
+#include <string>
 #include <sstream>
+#include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/win32/scoped_com.h"
-#include "base/win32/scoped_handle.h"
 #include "base/win32/win_util.h"
 #include "win32/base/imm_util.h"
+#include "win32/base/input_dll.h"
+#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
@@ -74,7 +76,6 @@ const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
 const wchar_t kRegKeyboardLayouts[] =
     L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts";
-const wchar_t kPreloadKeyName[] = L"Keyboard Layout\\Preload";
 
 // Registry element size limits are described in the link below.
 // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
@@ -84,13 +85,6 @@ constexpr DWORD kMaxValueNameLength = 16383;
 // Note that the following timeout threshold is not well tested.
 // TODO(yukawa): Investigate the best timeout threshold. b/6165722
 constexpr uint32_t kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
-
-// Converts an unsigned integer to a wide string.
-std::wstring utow(unsigned int i) {
-  std::wstringstream ss;
-  ss << i;
-  return ss.str();
-}
 
 std::wstring GetIMEFileNameFromKeyboardLayout(const CRegKey &key,
                                               const KeyboardLayoutID &klid) {
@@ -267,47 +261,6 @@ bool GetInstalledProfilesByLanguageForIMM32(
   return true;
 }
 
-bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
-  if (preload_map == nullptr) {
-    return false;
-  }
-
-  // Retrieve keys under kPreloadKeyName.
-  CRegKey preload_key;
-  LONG result = preload_key.Open(HKEY_CURRENT_USER, kPreloadKeyName);
-  if (ERROR_SUCCESS != result) {
-    return false;
-  }
-
-  wchar_t value_name[kMaxValueNameLength];
-  constexpr DWORD kMaxValueLength = 256;
-  BYTE value[kMaxValueLength];
-  for (DWORD i = 0;; ++i) {
-    DWORD value_name_length = kMaxValueNameLength;
-    DWORD value_length = kMaxValueLength;
-    result = RegEnumValue(preload_key, i, value_name, &value_name_length,
-                          nullptr,  // reserved (must be nullptr)
-                          nullptr,  // type (optional)
-                          value, &value_length);
-    if (ERROR_NO_MORE_ITEMS == result) {
-      break;
-    }
-    if (ERROR_SUCCESS != result) {
-      return false;
-    }
-
-    const int ivalue_name = _wtoi(value_name);
-    const std::wstring wvalue(reinterpret_cast<wchar_t *>(value),
-                              (value_length / sizeof(wchar_t)) - 1);
-    KeyboardLayoutID klid(wvalue);
-    if (!klid.has_id()) {
-      continue;
-    }
-    (*preload_map)[ivalue_name] = klid.id();
-  }
-  return true;
-}
-
 std::wstring GUIDToString(const GUID &guid) {
   wchar_t buffer[256];
   const int character_length_with_null =
@@ -366,33 +319,6 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
   if (result == 0) {
     const int error = ::GetLastError();
     LOG(ERROR) << "BroadcastSystemMessage failed. error = " << error;
-    return false;
-  }
-
-  return true;
-}
-
-bool BroadcastNewTIPOnVista(const LayoutProfileInfo &profile) {
-  ScopedCOMInitializer com_initializer;
-  if (FAILED(com_initializer.error_code())) {
-    return false;
-  }
-
-  CComPtr<ITfInputProcessorProfileMgr> profile_manager;
-
-  HRESULT hr = S_OK;
-  hr = profile_manager.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
-  if (FAILED(hr)) {
-    return false;
-  }
-
-  const DWORD activate_flags = TF_IPPMF_FORSESSION | TF_IPPMF_ENABLEPROFILE |
-                               TF_IPPMF_DONTCARECURRENTINPUTLANGUAGE;
-
-  hr = profile_manager->ActivateProfile(
-      TF_PROFILETYPE_INPUTPROCESSOR, profile.langid, profile.clsid,
-      profile.profile_guid, nullptr, activate_flags);
-  if (FAILED(hr)) {
     return false;
   }
 
@@ -460,79 +386,6 @@ bool GetActiveKeyboardLayouts(std::vector<HKL> *keyboard_layouts) {
   keyboard_layouts->assign(buffer.get(), buffer.get() + num_copied);
 
   return true;
-}
-
-void EnableAndSetDefaultIfLayoutIsTIP(const KeyboardLayoutInfo &layout) {
-  ScopedCOMInitializer com_initializer;
-  if (FAILED(com_initializer.error_code())) {
-    return;
-  }
-
-  HRESULT hr = S_OK;
-
-  CComPtr<ITfInputProcessorProfiles> profiles;
-  hr = profiles.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
-  if (FAILED(hr)) {
-    return;
-  }
-  CComPtr<ITfInputProcessorProfileSubstituteLayout> substitute_layout;
-  hr = profiles.QueryInterface(&substitute_layout);
-  if (FAILED(hr)) {
-    return;
-  }
-
-  CComPtr<IEnumTfLanguageProfiles> enum_profiles;
-  const LANGID langid = static_cast<LANGID>(layout.klid);
-  hr = profiles->EnumLanguageProfiles(langid, &enum_profiles);
-  if (FAILED(hr)) {
-    return;
-  }
-
-  while (true) {
-    ULONG num_fetched = 0;
-    TF_LANGUAGEPROFILE profile;
-    ZeroMemory(&profile, sizeof(profile));
-    hr = enum_profiles->Next(1, &profile, &num_fetched);
-    if (FAILED(hr)) {
-      return;
-    }
-    if ((hr == S_FALSE) || (num_fetched != 1)) {
-      return;
-    }
-
-    if (profile.catid != GUID_TFCAT_TIP_KEYBOARD) {
-      continue;
-    }
-
-    HKL hkl = nullptr;
-    hr = substitute_layout->GetSubstituteKeyboardLayout(
-        profile.clsid, profile.langid, profile.guidProfile, &hkl);
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "GetSubstituteKeyboardLayout failed";
-      continue;
-    }
-    if (!WinUtil::SystemEqualString(GetIMEFileName(hkl), layout.ime_filename,
-                                    true)) {
-      continue;
-    }
-
-    BOOL enabled = TRUE;
-    hr = profiles->EnableLanguageProfile(profile.clsid, profile.langid,
-                                         profile.guidProfile, TRUE);
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "EnableLanguageProfile failed";
-      continue;
-    }
-
-    hr = profiles->SetDefaultLanguageProfile(profile.langid, profile.clsid,
-                                             profile.guidProfile);
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "SetDefaultLanguageProfile failed";
-      continue;
-    }
-    return;
-  }
-  return;
 }
 
 // This function lists all the active keyboard layouts up and unloads each

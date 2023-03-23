@@ -70,7 +70,6 @@
           'type': 'static_library',
           'sources': [
             'imm_reconvert_string.cc',
-            'imm_registrar.cc',
             'imm_util.cc',
             'keyboard_layout_id.cc',
             'tsf_profile.cc',

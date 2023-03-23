@@ -507,7 +507,7 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
 UserDictionaryImporter::EncodingType
 UserDictionaryImporter::GuessFileEncodingType(const std::string &filename) {
   Mmap mmap;
-  if (!mmap.Open(filename.c_str(), "r")) {
+  if (!mmap.Open(filename, "r")) {
     LOG(ERROR) << "cannot open: " << filename;
     return NUM_ENCODINGS;
   }

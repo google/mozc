@@ -42,6 +42,7 @@ struct TypeCorrectedQuery {
   // |cost| is a penalty for this query.
   std::string base;
   std::set<std::string> expanded;
+  std::string asis;
   int cost;
 };
 

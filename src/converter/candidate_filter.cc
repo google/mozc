@@ -84,7 +84,7 @@ constexpr int kMinCost = 100;
 constexpr int kCostOffset = 6907;
 constexpr int kStructureCostOffset = 3453;
 constexpr int kMinStructureCostOffset = 1151;
-const int32_t kStopEnmerationCacheSize = 15;
+constexpr int32_t kStopEnmerationCacheSize = 30;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
@@ -213,6 +213,11 @@ bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
 
 bool IsStrictModeEnabled(const ConversionRequest &request) {
   return request.request().mixed_conversion();
+}
+
+std::string CandidateId(const Segment::Candidate &candidate) {
+  return absl::StrCat(candidate.value, "\t", candidate.lid, "\t",
+                      candidate.rid);
 }
 
 }  // namespace
@@ -350,7 +355,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // The candidate is already seen.
-  if (seen_.find(candidate->value) != seen_.end()) {
+  if (seen_.find(CandidateId(*candidate)) != seen_.end()) {
     MOZC_CANDIDATE_LOG(candidate, "already seen");
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -622,7 +627,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     // In reverse conversion, only remove duplicates because the filtering
     // criteria of FilterCandidateInternal() are completely designed for
     // (forward) conversion.
-    const bool inserted = seen_.insert(candidate->value).second;
+    const bool inserted = seen_.insert(CandidateId(*candidate)).second;
     return inserted ? GOOD_CANDIDATE : BAD_CANDIDATE;
   } else {
     const ResultType result = FilterCandidateInternal(
@@ -630,7 +635,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     if (result != GOOD_CANDIDATE) {
       return result;
     }
-    seen_.insert(candidate->value);
+    seen_.insert(CandidateId(*candidate));
     return result;
   }
 }

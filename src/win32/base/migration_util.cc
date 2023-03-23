@@ -41,7 +41,6 @@
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/win32/scoped_handle.h"
-#include "win32/base/imm_registrar.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/uninstall_helper.h"
 
@@ -63,10 +62,6 @@ bool SpawnBroker(const std::string &arg) {
 
 }  // namespace
 
-bool MigrationUtil::IsFullIMEAvailable() {
-  return ImmRegistrar::GetKLIDForIME().has_id();
-}
-
 bool MigrationUtil::IsFullTIPAvailable() {
   const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
   std::vector<LayoutProfileInfo> profile_list;
@@ -86,16 +81,9 @@ bool MigrationUtil::IsFullTIPAvailable() {
 }
 
 bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
-  if (SystemUtil::IsWindows8OrLater()) {
-    if (!MigrationUtil::IsFullTIPAvailable()) {
-      LOG(ERROR) << "Full TIP is not available";
-      return false;
-    }
-  } else {
-    if (!MigrationUtil::IsFullIMEAvailable()) {
-      LOG(ERROR) << "Full IME is not available";
-      return false;
-    }
+  if (!MigrationUtil::IsFullTIPAvailable()) {
+    LOG(ERROR) << "Full TIP is not available";
+    return false;
   }
 
   std::string arg = "--mode=set_default";

@@ -87,8 +87,8 @@ mozc_cc_library(
     srcs = ["ipc_path_manager.cc"],
     hdrs = ["ipc_path_manager.h"],
     deps = [
-        ":ipc_hdr",
         ":ipc_cc_proto",
+        ":ipc_hdr",
         "//base:const",
         "//base:file_stream",
         "//base:file_util",

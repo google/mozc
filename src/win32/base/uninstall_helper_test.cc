@@ -27,17 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// clang-format off
-#include <windows.h>  // include windows.h first
-#include <cguid.h>
-// clang-format on
+#include "win32/base/uninstall_helper.h"
+
+#include <windows.h>
+
+#include <string>
+#include <vector>
 
 #include "base/const.h"
 #include "base/util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/base/tsf_profile.h"
-#include "win32/base/uninstall_helper.h"
 
 namespace mozc {
 namespace win32 {

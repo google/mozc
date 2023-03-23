@@ -126,7 +126,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
   Mmap mmap;
   dic_.clear();
   filename_ = filename;
-  if (!mmap.Open(filename.c_str(), "r")) {
+  if (!mmap.Open(filename, "r")) {
     LOG(WARNING) << "cannot open:" << filename;
     // here we return true if we cannot open the file.
     // it happens mostly when file doesn't exist.

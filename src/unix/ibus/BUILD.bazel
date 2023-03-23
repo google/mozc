@@ -113,7 +113,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:system_util",
-        "//client:client",
+        "//client",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/strings",
     ] + mozc_select(

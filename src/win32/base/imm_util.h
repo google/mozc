@@ -75,11 +75,6 @@ class ImeUtil {
   // not exist.
   // Otherwise returns false.
   static bool WaitForAsmCacheReady(uint32_t timeout_msec);
-
-  // Activates the IMM32 version of Google Japanese Input for all existing
-  // applications running in the current session.
-  // Returns true if the operation completed successfully.
-  static bool ActivateForCurrentSession();
 };
 
 }  // namespace win32

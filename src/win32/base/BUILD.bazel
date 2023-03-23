@@ -123,13 +123,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
 )
 
-mozc_cc_library(
-    name = "immdev_h",
-    hdrs = ["immdev.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-)
-
 mozc_cc_test(
     name = "imm_reconvert_string_test",
     srcs = ["imm_reconvert_string_test.cc"],
@@ -156,33 +149,13 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "imm_registrar",
-    srcs = ["imm_registrar.cc"],
-    hdrs = ["imm_registrar.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":display_name_resource_h",
-        ":immdev_h",
-        ":keyboard_layout_id",
-        "//base:const",
-        "//base:file_util",
-        "//base:logging",
-        "//base:system_util",
-        "//base:util",
-    ],
-)
-
-mozc_cc_library(
     name = "imm_util",
     srcs = ["imm_util.cc"],
     hdrs = ["imm_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":input_dll",
-        ":keyboard_layout_id",
         ":tsf_profile",
         "//base:const",
         "//base:logging",
@@ -329,7 +302,6 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":imm_registrar",
         ":tsf_profile",
         ":uninstall_helper",
         "//base:const",
@@ -538,9 +510,7 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:logging",
         "//base:port",
-        "//base:system_util",
         "//base/win32:scoped_com",
-        "//base/win32:scoped_handle",
         "//testing:gunit_prod",
     ],
 )
