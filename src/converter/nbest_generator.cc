@@ -257,6 +257,14 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
                                    const std::string &original_key,
                                    const size_t expand_size,
                                    Segment *segment) {
+  DCHECK(begin_node_);
+  DCHECK(end_node_);
+
+  if (lattice_ == nullptr || !lattice_->has_lattice()) {
+    LOG(ERROR) << "Must create lattice in advance";
+    return;
+  }
+
   while (segment->candidates_size() < expand_size) {
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
@@ -281,15 +289,6 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
 bool NBestGenerator::Next(const ConversionRequest &request,
                           const std::string &original_key,
                           Segment::Candidate *candidate) {
-  DCHECK(begin_node_);
-  DCHECK(end_node_);
-
-  DCHECK(candidate);
-  if (lattice_ == nullptr || !lattice_->has_lattice()) {
-    LOG(ERROR) << "Must create lattice in advance";
-    return false;
-  }
-
   // |cost| and |structure_cost| are calculated as follows:
   //
   // Example:
@@ -318,6 +317,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
   // Insert Viterbi best result here to make sure that
   // the top result is Viterbi best result.
   if (!viterbi_result_checked_) {
+    viterbi_result_checked_ = true;
     // Use CandidateFilter so that filter is initialized with the
     // Viterbi-best path.
     switch (InsertTopResult(request, original_key, candidate)) {
@@ -354,20 +354,17 @@ bool NBestGenerator::Next(const ConversionRequest &request,
 
     // reached to the goal.
     if (rnode->end_pos == begin_node_->end_pos) {
-      nodes_.clear();
+      std::vector<const Node *> nodes;
       for (const QueueElement *elm = top->next; elm->next != nullptr;
            elm = elm->next) {
-        nodes_.push_back(elm->node);
+        nodes.push_back(elm->node);
       }
-      CHECK(!nodes_.empty());
-      if (top_nodes_.empty()) {
-        top_nodes_ = nodes_;
-      }
+      CHECK(!nodes.empty());
+      CHECK(!top_nodes_.empty());
 
-      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes_);
+      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes);
       const int filter_result = filter_->FilterCandidate(
-          request, original_key, candidate, top_nodes_, nodes_);
-      nodes_.clear();
+          request, original_key, candidate, top_nodes_, nodes);
 
       switch (filter_result) {
         case CandidateFilter::GOOD_CANDIDATE:
@@ -578,20 +575,16 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
 int NBestGenerator::InsertTopResult(const ConversionRequest &request,
                                     const std::string &original_key,
                                     Segment::Candidate *candidate) {
-  nodes_.clear();
+  top_nodes_.clear();
   int total_wcost = 0;
   for (const Node *node = begin_node_->next; node != end_node_;
        node = node->next) {
-    nodes_.push_back(node);
+    top_nodes_.push_back(node);
     if (node != begin_node_->next) {
       total_wcost += node->wcost;
     }
   }
-  DCHECK(!nodes_.empty());
-
-  if (top_nodes_.empty()) {
-    top_nodes_ = nodes_;
-  }
+  DCHECK(!top_nodes_.empty());
 
   const int cost = end_node_->cost - begin_node_->cost - end_node_->wcost;
   const int structure_cost =
@@ -599,16 +592,14 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
   const int wcost = end_node_->prev->cost - begin_node_->next->cost +
                     begin_node_->next->wcost;
 
-  MakeCandidate(candidate, cost, structure_cost, wcost, nodes_);
+  MakeCandidate(candidate, cost, structure_cost, wcost, top_nodes_);
 
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
   }
 
-  viterbi_result_checked_ = true;
   const int result = filter_->FilterCandidate(request, original_key, candidate,
-                                              top_nodes_, nodes_);
-  nodes_.clear();
+                                              top_nodes_, top_nodes_);
   return result;
 }
 
