@@ -146,19 +146,19 @@ int Loop(std::istream *input) {
       if (absl::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
-        VLOG(2) << "Output of TestSendKey: " << output.DebugString();
+        VLOG(2) << "Output of TestSendKey: " << output;
         absl::SleepFor(absl::Milliseconds(10));
       }
 
       VLOG(2) << "Sending to Server: " << keys[i].DebugString();
       client.SendKey(keys[i], &output);
-      VLOG(2) << "Output of SendKey: " << output.DebugString();
+      VLOG(2) << "Output of SendKey: " << output;
 
       if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
         *renderer_command.mutable_output() = output;
-        VLOG(2) << "Sending to Renderer: " << renderer_command.DebugString();
+        VLOG(2) << "Sending to Renderer: " << renderer_command;
         renderer_client->ExecCommand(renderer_command);
       }
     }

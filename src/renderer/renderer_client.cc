@@ -453,7 +453,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
     return true;
   }
 
-  VLOG(2) << "Sending: " << command.DebugString();
+  VLOG(2) << "Sending: " << command;
 
   std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 

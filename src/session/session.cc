@@ -393,7 +393,7 @@ bool Session::SendCommand(commands::Command *command) {
       result = StopKeyToggling(command);
       break;
     default:
-      LOG(WARNING) << "Unknown command" << command->DebugString();
+      LOG(WARNING) << "Unknown command" << *command;
       result = DoNothing(command);
       break;
   }
@@ -1432,7 +1432,7 @@ uint64_t Session::last_command_time() const {
 
 bool Session::InsertCharacter(commands::Command *command) {
   if (!command->input().has_key()) {
-    LOG(ERROR) << "No key event: " << command->input().DebugString();
+    LOG(ERROR) << "No key event: " << command->input();
     return false;
   }
 
