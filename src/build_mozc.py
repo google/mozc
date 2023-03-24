@@ -675,6 +675,9 @@ def BuildMain(options, targets):
   os.environ['PYTHONPATH'] = python_path
 
   if IsWindows():
+    # https://peps.python.org/pep-0540/
+    # https://peps.python.org/pep-0686/
+    os.environ['PYTHONUTF8'] = '1'
     BuildOnWindows(targets)
   else:
     BuildWithNinja(options, targets)
