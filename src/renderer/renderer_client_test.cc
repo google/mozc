@@ -202,6 +202,11 @@ TEST(RendererClient, InvalidTest) {
   EXPECT_FALSE(client.Activate());
 }
 
+TEST(RendererClient, InitialState) {
+  RendererClient client;
+  EXPECT_FALSE(client.IsAvailable());
+}
+
 TEST(RendererClient, ActivateTest) {
   TestIPCClientFactory factory;
   TestRendererLauncher launcher;
