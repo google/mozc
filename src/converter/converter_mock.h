@@ -35,10 +35,10 @@
 
 namespace mozc {
 
-class MockConverter final : public ConverterInterface {
+class StrictMockConverter : public ConverterInterface {
  public:
-  MockConverter() = default;
-  ~MockConverter() override = default;
+  StrictMockConverter() = default;
+  ~StrictMockConverter() override = default;
 
   MOCK_METHOD(bool, StartConversionForRequest,
               (const ConversionRequest &request, Segments *segments),
@@ -100,6 +100,8 @@ class MockConverter final : public ConverterInterface {
                absl::Span<const uint8_t> new_size_array),
               (const, override));
 };
+
+typedef ::testing::NiceMock<StrictMockConverter> MockConverter;
 
 }  // namespace mozc
 
