@@ -9,9 +9,6 @@ If you are not sure what the following commands do, please check the description
 and make sure the operations before running them.
 
 ```
-git config --global core.autocrlf false
-git config --global core.eol lf
-
 mkdir C:\work
 cd C:\work
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
@@ -41,17 +38,6 @@ Building Mozc on Windows requires the following software.
   * git
   * [Qt 5](https://download.qt.io/official_releases/qt/) (optional for GUI)
     + 32-bit version is required because `mozc_tool.exe` is build as a 32-bit executable.
-
-### Setup Git configurations
-
-The following commands change your global configuration.
-If you use different configurations, you might want to restore the previous
-configurations after the build.
-
-```
-git config --global core.autocrlf false
-git config --global core.eol lf
-```
 
 ### Download the repository from GitHub
 
