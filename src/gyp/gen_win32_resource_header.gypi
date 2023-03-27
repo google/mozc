@@ -38,8 +38,10 @@
         'script_path': '<(base_path)/build_tools/gen_win32_resource_header.py',
       },
       'inputs': [
-        '<(version_file_path)',
+        '<(base_path)/<(gen_main_resource_path)',
+        '<(base_path)/build_tools/mozc_win32_resource_template.rc',
         '<(script_path)',
+        '<(version_file_path)',
       ],
       'outputs': [
         '<(gen_output_resource_path)',

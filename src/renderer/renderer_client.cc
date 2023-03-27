@@ -318,15 +318,16 @@ class RendererLauncher : public RendererLauncherInterface {
 
   std::string name_;
   std::string path_;
-  volatile uint64_t last_launch_time_;
-  volatile size_t error_times_;
-  IPCClientFactoryInterface *ipc_client_factory_interface_;
+  volatile uint64_t last_launch_time_ = 0;
+  volatile size_t error_times_ = 0;
+  IPCClientFactoryInterface *ipc_client_factory_interface_ = nullptr;
   mutable absl::Mutex mu_;
   std::optional<commands::RendererCommand> pending_command_
       ABSL_GUARDED_BY(mu_);
-  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_);
-  bool disable_renderer_path_check_;
-  bool suppress_error_dialog_;
+  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_)
+      = RendererStatus::RENDERER_UNKNOWN;
+  bool disable_renderer_path_check_ = false;
+  bool suppress_error_dialog_ = false;
   absl::Notification done_;
   std::optional<mozc::Thread2> thread_;
 };
@@ -453,7 +454,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
     return true;
   }
 
-  VLOG(2) << "Sending: " << command.DebugString();
+  VLOG(2) << "Sending: " << MOZC_LOG_PROTOBUF(command);
 
   std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 

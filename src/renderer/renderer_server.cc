@@ -243,7 +243,7 @@ bool RendererServer::ExecCommandInternal(
     return false;
   }
 
-  VLOG(2) << command.DebugString();
+  VLOG(2) << MOZC_LOG_PROTOBUF(command);
 
   // Check process info if update mode
   if (command.type() == commands::RendererCommand::UPDATE) {

@@ -50,7 +50,6 @@ from build_tools.test_tools import test_launcher
 from build_tools.util import ColoredLoggingFilter
 from build_tools.util import ColoredText
 from build_tools.util import CopyFile
-from build_tools.util import GetNumberOfProcessors
 from build_tools.util import IsLinux
 from build_tools.util import IsMac
 from build_tools.util import IsWindows
@@ -359,7 +358,7 @@ def ParseRunTestsOptions(args):
   parser = optparse.OptionParser(
       usage='Usage: %prog runtests [options] [test_targets] [-- build options]')
   AddCommonOptions(parser)
-  default_test_jobs = GetNumberOfProcessors()
+  default_test_jobs = 1
   parser.add_option('--test_jobs', dest='test_jobs', type='int',
                     default=default_test_jobs,
                     metavar='N', help='run test jobs in parallel')
@@ -675,6 +674,9 @@ def BuildMain(options, targets):
   os.environ['PYTHONPATH'] = python_path
 
   if IsWindows():
+    # https://peps.python.org/pep-0540/
+    # https://peps.python.org/pep-0686/
+    os.environ['PYTHONUTF8'] = '1'
     BuildOnWindows(targets)
   else:
     BuildWithNinja(options, targets)

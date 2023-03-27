@@ -156,14 +156,14 @@ message RendererCommand {
     optional uint32 target_window_handle = 4;
     // used in Windows:
     // Preferred font for composition string.
-    optional WinLogFont composition_font = 5;
+    optional WinLogFont composition_font = 5 [deprecated = true];
 
     // Represents IM Framework used in the client.
     // Currently only Windows IM frameworks are supported.
     enum InputFrameworkType {
       UNKNOWN_FRAMEWORK = 0;  // Default. For backward compatibility.
       TSF = 1;
-      IMM32 = 2;
+      IMM32 = 2 [deprecated = true];
       IMKit = 3;
       IBus = 4;
     }
@@ -174,14 +174,14 @@ message RendererCommand {
     // used in Windows:
     // Specifies where and how the renderer process shows the composition
     // window (if necessary).
-    optional CompositionForm composition_form = 7;
+    optional CompositionForm composition_form = 7 [deprecated = true];
 
     // used in Windows:
     // Specifies where and how the renderer process shows the candidate
     // window (if necessary).
     // Currently only one candidate window is supported.
     // TODO(yukawa): support multiple candidate windows.
-    optional CandidateForm candidate_form = 8;
+    optional CandidateForm candidate_form = 8 [deprecated = true];
 
     // used in Windows:
     // Indicates if a UI element is expected to be displayed or not.  Note
@@ -190,7 +190,7 @@ message RendererCommand {
     // regardless of the visibility specified in this field.
     enum UIVisibility {
       ShowUIDefault = 0;
-      ShowCompositionWindow = 1;
+      ShowCompositionWindow = 1 [deprecated = true];
       ShowCandidateWindow = 2;
       ShowSuggestWindow = 4;
     }

@@ -30,6 +30,7 @@
 #include "dictionary/file/codec_util.h"
 
 #include <cstdint>
+#include <cstring>
 #include <ostream>
 
 #include "base/logging.h"
@@ -47,7 +48,9 @@ void WriteInt32(int32_t value, std::ostream *ofs) {
 
 int32_t ReadInt32ThenAdvance(const char **ptr) {
   DCHECK(ptr);
-  const int32_t value = *reinterpret_cast<const int32_t *>(*ptr);
+  DCHECK(*ptr);
+  int32_t value;
+  std::memcpy(&value, *ptr, sizeof(int32_t));
   *ptr += sizeof(int32_t);
   return value;
 }

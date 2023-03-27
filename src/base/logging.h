@@ -302,4 +302,8 @@ class NullLogFinalizer {
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
 #endif  // DVLOG_IF
 
+#ifndef MOZC_LOG_PROTOBUF
+#define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
+#endif  // MOZC_LOG_PROTOBUF
+
 #endif  // MOZC_BASE_LOGGING_H_

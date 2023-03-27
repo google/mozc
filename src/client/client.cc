@@ -645,7 +645,7 @@ bool Client::CallAndCheckVersion(const commands::Input &input,
 }
 
 bool Client::Call(const commands::Input &input, commands::Output *output) {
-  VLOG(2) << "commands::Input: " << std::endl << input.DebugString();
+  VLOG(2) << "commands::Input: " << std::endl << MOZC_LOG_PROTOBUF(input);
 
   // don't repeat Call() if the status is either
   // SERVER_FATAL, SERVER_TIMEOUT, or SERVER_BROKEN_MESSAGE
@@ -730,7 +730,7 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
          server_status_ == SERVER_UNKNOWN /* during StartServer() */)
       << " " << server_status_;
 
-  VLOG(2) << "commands::Output: " << std::endl << output->DebugString();
+  VLOG(2) << "commands::Output: " << std::endl << MOZC_LOG_PROTOBUF(*output);
 
   return true;
 }

@@ -186,7 +186,6 @@ class NBestGenerator {
 
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
-  std::vector<const Node *> nodes_;
   std::vector<const Node *> top_nodes_;
   std::unique_ptr<converter::CandidateFilter> filter_;
   bool viterbi_result_checked_ = false;

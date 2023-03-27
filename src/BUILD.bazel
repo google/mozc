@@ -59,7 +59,7 @@ config_setting(
 )
 
 # Special target so as to define special macros for each platforms.
-# Don't depend on this directly. Use cc_(library|binary|test)_mozc rule instead.
+# Don't depend on this directly. Use mozc_cc_(library|binary|test) rule instead.
 cc_library(
     name = "macro",
     defines = mozc_select(

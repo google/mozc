@@ -8989,7 +8989,7 @@ TEST_P(SessionTest, CursorKeysInPasswordMode) {
   EXPECT_EQ(command.output().result().type(), commands::Result::STRING);
   EXPECT_EQ(command.output().result().value(), "m");
   EXPECT_EQ(GetComposition(command), "");
-  VLOG(0) << command.DebugString();
+  VLOG(0) << MOZC_LOG_PROTOBUF(command);
   EXPECT_EQ(command.output().preedit().cursor(), 0);
   EXPECT_TRUE(command.output().consumed());
 

@@ -181,6 +181,7 @@
         'number_util.cc',
       ],
       'dependencies': [
+        'base_core',
         'japanese_util',
       ],
     },
@@ -360,6 +361,7 @@
         'config_file_stream.cc',
       ],
       'dependencies': [
+        'base_core',
         'gen_config_file_stream_data#host',
         'absl.gyp:absl_strings',
       ],
