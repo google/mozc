@@ -454,7 +454,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
     return true;
   }
 
-  VLOG(2) << "Sending: " << command;
+  VLOG(2) << "Sending: " << MOZC_LOG_PROTOBUF(command);
 
   std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
 
