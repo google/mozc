@@ -876,13 +876,13 @@ bool Util::IsBracketPairText(absl::string_view input) {
       "\"\"", "''", "<>", "``"};  // sorted
   const auto iter0 = std::lower_bound(kAdditionalBracketPairs.begin(),
                                       kAdditionalBracketPairs.end(), input);
-  if (*iter0 == input) {
+  if (iter0 != kAdditionalBracketPairs.end() && *iter0 == input) {
     return true;
   }
 
   const auto iter1 =
       std::lower_bound(kSortedBrackets.begin(), kSortedBrackets.end(), input);
-  if (*iter1 == input) {
+  if (iter1 != kSortedBrackets.end() && *iter1 == input) {
     return true;
   }
 
