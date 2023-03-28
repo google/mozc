@@ -4096,43 +4096,6 @@ TEST_F(Win32RendererUtilTest, PidginSuggest) {
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(56, 667, 56, 651, 57, 667, layout);
 }
 
-// Pidgin 2.6.1
-TEST_F(Win32RendererUtilTest, PidginConvert) {
-  const wchar_t kClassName[] = L"gdkWindowToplevel";
-  const CRect kWindowRect(0, 20, 2016, 1050);
-  const CPoint kClientOffset(8, 42);
-  const CSize kClientSize(2000, 1000);
-  constexpr double kScaleFactor = 1.0;
-
-  HWND hwnd = nullptr;
-  LayoutManager layout_mgr(
-      CreateDefaultGUIFontEmulator(),
-      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
-                           kScaleFactor, &hwnd));
-
-  ApplicationInfo app_info;
-
-  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
-                                       ApplicationInfo::ShowCandidateWindow |
-                                           ApplicationInfo::ShowSuggestWindow);
-
-  AppInfoUtil::SetCompositionFont(
-      &app_info, -16, 0, 0, 0, FW_NORMAL, SHIFTJIS_CHARSET, OUT_STROKE_PRECIS,
-      CLIP_STROKE_PRECIS, DRAFT_QUALITY, 50, "メイリオ");
-
-  AppInfoUtil::SetCompositionForm(&app_info, CompositionForm::POINT, 48, 589,
-                                  96504880, 2617504, 97141432, 2617480);
-
-  AppInfoUtil::SetCandidateForm(&app_info, CandidateForm::CANDIDATEPOS, 32, 636,
-                                40706080, 96552944, 2615824, 1815374140);
-
-  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
-
-  CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(app_info, &layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(32, 656, 32, 640, 33, 656, layout);
-}
-
 // V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
 TEST_F(Win32RendererUtilTest, V2CIndicator) {
   const wchar_t kClassName[] = L"SunAwtFrame";
@@ -4192,42 +4155,6 @@ TEST_F(Win32RendererUtilTest, V2CSuggest) {
   CandidateWindowLayout layout;
   EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(app_info, &layout));
   EXPECT_NON_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(985, 1023, layout);
-}
-
-// V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
-TEST_F(Win32RendererUtilTest, V2CConvert) {
-  const wchar_t kClassName[] = L"SunAwtFrame";
-  const CRect kWindowRect(977, 446, 2042, 1052);
-  const CPoint kClientOffset(8, 8);
-  const CSize kClientSize(1049, 569);
-  constexpr double kScaleFactor = 1.0;
-
-  HWND hwnd = nullptr;
-  LayoutManager layout_mgr(
-      CreateDefaultGUIFontEmulator(),
-      CreateWindowEmulator(kClassName, kWindowRect, kClientOffset, kClientSize,
-                           kScaleFactor, &hwnd));
-
-  ApplicationInfo app_info;
-
-  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
-                                       ApplicationInfo::ShowCandidateWindow |
-                                           ApplicationInfo::ShowSuggestWindow);
-
-  // V2C occasionally creates zero-initialized CANDIDATEFORM and maintains
-  // it regardless of the actual position of the composition.
-  AppInfoUtil::SetCompositionForm(&app_info, CompositionForm::DEFAULT, 0, 0, 0,
-                                  0, 0, 0);
-
-  AppInfoUtil::SetCandidateForm(&app_info, CandidateForm::CANDIDATEPOS, 234,
-                                523, 1272967816, 1974044135, -348494668, -2);
-
-  AppInfoUtil::SetCaretInfo(&app_info, false, 0, 0, 0, 0, nullptr);
-
-  CandidateWindowLayout layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(app_info, &layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(1211, 969, 1211, 951, 1212, 969,
-                                         layout);
 }
 
 // Qt 4.6.3

@@ -236,13 +236,6 @@ enum CompatibilityMode {
   // window can be shown at more appropriate position.  Qt-based applications
   // match this category.
   CAN_USE_CANDIDATE_FORM_FOR_SUGGEST = 1,
-  // Some applications interpret the coordinate system of CandidateForm as
-  // the offset from the upper-left corner of the window as opposed to most
-  // of other applications which simply use local coordinate.  When this flag
-  // is specified, positional fields in CandidateForm are transformed as if
-  // they are the offset from the upper-left corner of the window.  GTK-based
-  // applications and Java AWT-based applications match this category.
-  USE_LOCAL_COORD_FOR_CANDIDATE_FORM = 2,
 };
 
 class LayoutManager {
@@ -309,20 +302,6 @@ class LayoutManager {
   // RECT version of GetPointInPhysicalCoords.  This method is thread-safe.
   void GetRectInPhysicalCoords(HWND window_handle, const RECT &rect,
                                RECT *result) const;
-
-  // Converts a local coordinate into a logical screen coordinate assuming
-  // |src_point| is the relative offset from the top-left of the
-  // window specified by the |src_window_handle|.
-  // Returns false if fails.
-  bool LocalPointToScreen(HWND src_window_handle, const POINT &src_point,
-                          POINT *dest_point) const;
-
-  // Converts a local coordinate into a logical screen coordinate assuming
-  // |src_point| is the relative offset from the top-left of the
-  // window specified by the |src_window_handle|.
-  // Returns false if fails.
-  bool LocalRectToScreen(HWND src_window_handle, const RECT &src_rect,
-                         RECT *dest_rect) const;
 
   // Converts a local coordinate into a logical screen coordinate assuming
   // |src_point| is the client coorinate in the window specified by

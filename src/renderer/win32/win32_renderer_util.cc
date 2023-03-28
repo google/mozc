@@ -205,7 +205,7 @@ bool IsCompatibleCompositionForm(const CompositionForm &form) {
   return false;
 }
 
-bool ExtractParams(LayoutManager *layout, int compatibility_mode,
+bool ExtractParams(LayoutManager *layout,
                    const commands::RendererCommand::ApplicationInfo &app_info,
                    CandidateWindowLayoutParams *params) {
   DCHECK_NE(nullptr, layout);
@@ -279,22 +279,11 @@ bool ExtractParams(LayoutManager *layout, int compatibility_mode,
     // Check the availability of optional fields.
     if ((has_candidate_pos_style_bit || has_exclude_style_bit) &&
         form.has_current_position() && IsValidPoint(form.current_position())) {
-      const bool use_local_coord =
-          (compatibility_mode & USE_LOCAL_COORD_FOR_CANDIDATE_FORM) ==
-          USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
       Optional<CPoint> screen_pos;
-      if (use_local_coord) {
-        if (!layout->LocalPointToScreen(target_window,
-                                        ToPoint(form.current_position()),
-                                        screen_pos.mutable_value())) {
-          screen_pos.Clear();
-        }
-      } else {
-        if (!layout->ClientPointToScreen(target_window,
-                                         ToPoint(form.current_position()),
-                                         screen_pos.mutable_value())) {
-          screen_pos.Clear();
-        }
+      if (!layout->ClientPointToScreen(target_window,
+                                       ToPoint(form.current_position()),
+                                       screen_pos.mutable_value())) {
+        screen_pos.Clear();
       }
       if (screen_pos.has_value()) {
         // Here, we got an appropriate position where the candidate window
@@ -307,16 +296,9 @@ bool ExtractParams(LayoutManager *layout, int compatibility_mode,
         if (has_exclude_style_bit && form.has_area() &&
             IsValidRect(form.area())) {
           Optional<CRect> screen_rect;
-          if (use_local_coord) {
-            if (!layout->LocalRectToScreen(target_window, ToRect(form.area()),
-                                           screen_rect.mutable_value())) {
-              screen_rect.Clear();
-            }
-          } else {
-            if (!layout->ClientRectToScreen(target_window, ToRect(form.area()),
-                                            screen_rect.mutable_value())) {
-              screen_rect.Clear();
-            }
+          if (!layout->ClientRectToScreen(target_window, ToRect(form.area()),
+                                          screen_rect.mutable_value())) {
+            screen_rect.Clear();
           }
           if (screen_rect.has_value()) {
             // Here we got an appropriate exclude region too.
@@ -2184,58 +2166,6 @@ bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
   return true;
 }
 
-bool LayoutManager::LocalPointToScreen(HWND src_window_handle,
-                                       const POINT &src_point,
-                                       POINT *dest_point) const {
-  if (dest_point == nullptr) {
-    return false;
-  }
-
-  if (!window_position_->IsWindow(src_window_handle)) {
-    DLOG(ERROR) << "Invalid window handle.";
-    return false;
-  }
-
-  CRect window_rect;
-  if (window_position_->GetWindowRect(src_window_handle, &window_rect) ==
-      FALSE) {
-    return false;
-  }
-
-  const CPoint offset(window_rect.TopLeft());
-  dest_point->x = src_point.x + offset.x;
-  dest_point->y = src_point.y + offset.y;
-
-  return true;
-}
-
-bool LayoutManager::LocalRectToScreen(HWND src_window_handle,
-                                      const RECT &src_rect,
-                                      RECT *dest_rect) const {
-  if (dest_rect == nullptr) {
-    return false;
-  }
-
-  if (!window_position_->IsWindow(src_window_handle)) {
-    DLOG(ERROR) << "Invalid window handle.";
-    return false;
-  }
-
-  CRect window_rect;
-  if (window_position_->GetWindowRect(src_window_handle, &window_rect) ==
-      FALSE) {
-    return false;
-  }
-
-  const CPoint offset(window_rect.TopLeft());
-  dest_rect->left = src_rect.left + offset.x;
-  dest_rect->top = src_rect.top + offset.y;
-  dest_rect->right = src_rect.right + offset.x;
-  dest_rect->bottom = src_rect.bottom + offset.y;
-
-  return true;
-}
-
 bool LayoutManager::GetClientRect(HWND window_handle, RECT *client_rect) const {
   return window_position_->GetClientRect(window_handle, client_rect);
 }
@@ -2329,7 +2259,7 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
   const int compatibility_mode = GetCompatibilityMode(app_info);
 
   CandidateWindowLayoutParams params;
-  if (!ExtractParams(this, compatibility_mode, app_info, &params)) {
+  if (!ExtractParams(this, app_info, &params)) {
     return false;
   }
 
@@ -2375,7 +2305,7 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
   const int compatibility_mode = GetCompatibilityMode(app_info);
 
   CandidateWindowLayoutParams params;
-  if (!ExtractParams(this, compatibility_mode, app_info, &params)) {
+  if (!ExtractParams(this, app_info, &params)) {
     return false;
   }
 
@@ -2446,20 +2376,6 @@ int LayoutManager::GetCompatibilityMode(
     }
   }
 
-  {
-    const wchar_t *kUseLocalCoord[] = {
-        L"gdkWindowToplevel",
-        L"SunAwtDialog",
-        L"SunAwtFrame",
-    };
-    for (size_t i = 0; i < std::size(kUseLocalCoord); ++i) {
-      if (kUseLocalCoord[i] == class_name) {
-        mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
-        break;
-      }
-    }
-  }
-
   return mode;
 }
 
@@ -2472,7 +2388,7 @@ bool LayoutManager::LayoutIndicatorWindow(
   indicator_layout->Clear();
 
   CandidateWindowLayoutParams params;
-  if (!ExtractParams(this, GetCompatibilityMode(app_info), app_info, &params)) {
+  if (!ExtractParams(this, app_info, &params)) {
     return false;
   }
 
