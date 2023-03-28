@@ -355,33 +355,20 @@ void WindowManager::UpdateLayout(
         HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-    const int mode = layout_manager_->GetCompatibilityMode(app_info);
-
-    // If SHOW_INFOLIST_IMMEDIATELY flag is set, we should show the InfoList
-    // without delay. See the comment of SHOW_INFOLIST_IMMEDIATELY in
-    // win32_renderer_util.h or b/5824433 for details.
-    uint32_t maximum_delay = std::numeric_limits<int32_t>::max();
-    if ((mode & SHOW_INFOLIST_IMMEDIATELY) == SHOW_INFOLIST_IMMEDIATELY) {
-      maximum_delay = 0;
-    }
-
-    const uint32_t hide_window_delay =
-        std::min(maximum_delay, kHideWindowDelay);
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
       const int focused_row =
           candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        const uint32_t raw_delay =
+        const uint32_t delay =
             std::max(static_cast<uint32_t>(0),
                      command.output().candidates().usages().delay());
-        const uint32_t delay = std::min(maximum_delay, raw_delay);
         infolist_window_->DelayShow(delay);
       } else {
-        infolist_window_->DelayHide(hide_window_delay);
+        infolist_window_->DelayHide(kHideWindowDelay);
       }
     } else {
-      infolist_window_->DelayHide(hide_window_delay);
+      infolist_window_->DelayHide(kHideWindowDelay);
     }
   } else {
     // Hide infolist window immediately.

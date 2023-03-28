@@ -2484,19 +2484,6 @@ int LayoutManager::GetCompatibilityMode(
     }
   }
 
-  {
-    const wchar_t *kShowInfolistImmediately[] = {
-        L"Emacs",
-        L"MEADOW",
-    };
-    for (size_t i = 0; i < std::size(kShowInfolistImmediately); ++i) {
-      if (kShowInfolistImmediately[i] == class_name) {
-        mode |= SHOW_INFOLIST_IMMEDIATELY;
-        break;
-      }
-    }
-  }
-
   return mode;
 }
 
