@@ -58,8 +58,7 @@ class WindowManager {
   void AsyncQuitAllWindows();
   void DestroyAllWindows();
   void HideAllWindows();
-  void UpdateLayoutIMM32(const commands::RendererCommand &command);
-  void UpdateLayoutTSF(const commands::RendererCommand &command);
+  void UpdateLayout(const commands::RendererCommand &command);
   bool IsAvailable() const;
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);

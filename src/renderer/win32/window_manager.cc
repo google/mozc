@@ -132,7 +132,7 @@ void WindowManager::HideAllWindows() {
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayoutIMM32(
+void WindowManager::UpdateLayout(
     const commands::RendererCommand &command) {
   typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
@@ -148,12 +148,12 @@ void WindowManager::UpdateLayoutIMM32(
   }
 
   // We assume |output| exists in the renderer command
-  // for all IMM32 renderer messages.
+  // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_output());
   const commands::Output &output = command.output();
 
   // We assume |application_info| exists in the renderer command
-  // for all IMM32 renderer messages.
+  // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_application_info());
 
   const commands::RendererCommand::ApplicationInfo &app_info =
@@ -434,12 +434,6 @@ void WindowManager::UpdateLayoutIMM32(
     }
     cascading_window_->ShowWindow(SW_HIDE);
   }
-}
-
-void WindowManager::UpdateLayoutTSF(const commands::RendererCommand &command) {
-  // Currently implemented by IMM32 implementation.
-  // TODO(yukawa): Implement TSF version.
-  UpdateLayoutIMM32(command);
 }
 
 bool WindowManager::IsAvailable() const {
