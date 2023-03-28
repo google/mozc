@@ -35,9 +35,11 @@
 #include "base/port.h"
 #include "ipc/named_event.h"
 #include "absl/flags/flag.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(bool, listener, true, "listener mode");
 ABSL_FLAG(bool, notifier, false, "notifier mode");
+// TODO(b/275437228): Convert this to `absl::Duration`.
 ABSL_FLAG(int32_t, timeout, -1, "timeout (msec)");
 ABSL_FLAG(int32_t, pid, -1, "process id");
 ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Waiting event " << absl::GetFlag(FLAGS_name);
     if (absl::GetFlag(FLAGS_pid) != -1) {
       switch (listener.WaitEventOrProcess(
-          absl::GetFlag(FLAGS_timeout),
+          absl::Milliseconds(absl::GetFlag(FLAGS_timeout)),
           static_cast<size_t>(absl::GetFlag(FLAGS_pid)))) {
         case mozc::NamedEventListener::TIMEOUT:
           LOG(INFO) << "timeout";
@@ -77,7 +79,7 @@ int main(int argc, char **argv) {
           break;
       }
     } else {
-      if (listener.Wait(absl::GetFlag(FLAGS_timeout))) {
+      if (listener.Wait(absl::Milliseconds(absl::GetFlag(FLAGS_timeout)))) {
         LOG(INFO) << "Event comes";
       }
     }

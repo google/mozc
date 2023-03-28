@@ -67,7 +67,7 @@ namespace {
 constexpr char kServerName[] = "session";
 
 // Wait at most kServerWaitTimeout msec until server gets ready
-constexpr uint32_t kServerWaitTimeout = 20000;  // 20 sec
+constexpr absl::Duration kServerWaitTimeout = absl::Seconds(20);
 
 // for every 1000m sec, check server
 constexpr absl::Duration kRetryIntervalForServer = absl::Milliseconds(1000);

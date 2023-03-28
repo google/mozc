@@ -61,6 +61,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "gui/base/util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace gui {
@@ -71,7 +72,7 @@ using mozc::user_dictionary::UserDictionarySession;
 using mozc::user_dictionary::UserDictionaryStorage;
 
 namespace {
-constexpr int kSessionTimeout = 100000;
+constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);
 constexpr int kMaxEditLength = 100;
 constexpr int kMaxReverseConversionLength = 30;
 

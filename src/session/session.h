@@ -50,6 +50,7 @@
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace session {
@@ -257,10 +258,10 @@ class Session : public SessionInterface {
   const mozc::commands::ApplicationInfo &application_info() const override;
 
   // Return the time when this instance was created.
-  uint64_t create_session_time() const override;
+  absl::Time create_session_time() const override;
 
   // return 0 (default value) if no command is executed in this session.
-  uint64_t last_command_time() const override;
+  absl::Time last_command_time() const override;
 
   // TODO(komatsu): delete this function.
   // For unittest only

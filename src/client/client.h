@@ -44,6 +44,7 @@
 #include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 // for FRIEND_TEST()
 
 namespace mozc {
@@ -141,7 +142,7 @@ class Client : public ClientInterface {
 
   void EnableCascadingWindow(bool enable) override;
 
-  void set_timeout(int timeout) override;
+  void set_timeout(absl::Duration timeout) override;
   void set_restricted(bool restricted) override;
   void set_server_program(absl::string_view program_path) override;
   void set_suppress_error_dialog(bool suppress) override;
@@ -247,7 +248,7 @@ class Client : public ClientInterface {
   std::unique_ptr<config::Config> preferences_;
   std::unique_ptr<commands::Request> request_;
   std::string response_;
-  int timeout_;
+  absl::Duration timeout_;
   ServerStatus server_status_;
   uint32_t server_protocol_version_;
   uint32_t server_process_id_;

@@ -45,6 +45,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace renderer {
@@ -85,7 +86,7 @@ class TestIPCClient : public IPCClientInterface {
 
   // just count up how many times Call is called.
   bool Call(const std::string &request, std::string *response,
-            int32_t timeout) override {
+            absl::Duration timeout) override {
     g_counter++;
     return true;
   }

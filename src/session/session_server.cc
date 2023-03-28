@@ -43,6 +43,7 @@
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
+#include "absl/time/time.h"
 
 namespace {
 
@@ -55,7 +56,7 @@ constexpr int kNumConnections = 1;
 constexpr int kNumConnections = 10;
 #endif  // _WIN32
 
-constexpr int kTimeOut = 5000;  // 5000msec
+constexpr absl::Duration kTimeOut = absl::Milliseconds(5000);
 constexpr char kSessionName[] = "session";
 constexpr char kEventName[] = "session";
 

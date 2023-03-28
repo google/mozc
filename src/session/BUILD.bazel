@@ -178,6 +178,7 @@ mozc_cc_library(
         "//transliteration",
         "//usage_stats",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -222,6 +223,7 @@ mozc_cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -258,6 +260,7 @@ mozc_cc_test(
         "//session/internal:keymap",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -393,6 +396,7 @@ mozc_cc_library(
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -445,6 +449,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//usage_stats:usage_stats_uploader",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -499,6 +504,7 @@ mozc_cc_binary(
         "//session/internal:keymap",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
     ],
 )
 

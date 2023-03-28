@@ -64,6 +64,7 @@ mozc_cc_library(
         "//base:util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
@@ -153,6 +154,7 @@ mozc_cc_library(
     deps = [
         ":ipc",
         "//base:version",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -197,6 +199,7 @@ mozc_cc_binary(
         "//base:thread2",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -228,6 +231,7 @@ mozc_cc_binary(
         "//base:logging",
         "//base:port",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -273,6 +277,7 @@ mozc_cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ] + mozc_select(
         windows = ["//base/win32:scoped_handle"],
     ),

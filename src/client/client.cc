@@ -57,6 +57,7 @@
 #include "absl/base/attributes.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -80,9 +81,10 @@ constexpr int kResultBufferSize = 8192 * 32;  // size of IPC buffer
 constexpr size_t kMaxPlayBackSize = 512;      // size of maximum history
 
 #ifdef DEBUG
-constexpr int kDefaultTimeout = 100000;  // 100 sec for dbg
+constexpr absl::Duration kDefaultTimeout =
+    absl::Seconds(100);                  // 100 sec for dbg
 #else                                    // DEBUG
-constexpr int kDefaultTimeout = 30000;  // 30 sec for opt
+constexpr absl::Duration kDefaultTimeout = absl::Seconds(30);  // 30 sec for opt
 #endif                                   // DEBUG
 
 // Delete Session is called inside the Destructor of Client class.
@@ -91,7 +93,7 @@ constexpr int kDefaultTimeout = 30000;  // 30 sec for opt
 // This timeout is only applied in the DeleteSessions command
 // called from Destructor. When an application calls DeleteSession
 // explicitly, the default timeout is used.
-constexpr int kDeleteSessionOnDestructorTimeout = 1000;  // 1 sec
+constexpr absl::Duration kDeleteSessionOnDestructorTimeout = absl::Seconds(1);
 }  // namespace
 
 Client::Client()
@@ -443,7 +445,7 @@ void Client::EnableCascadingWindow(const bool enable) {
   preferences_->set_use_cascading_window(enable);
 }
 
-void Client::set_timeout(int timeout) { timeout_ = timeout; }
+void Client::set_timeout(absl::Duration timeout) { timeout_ = timeout; }
 
 void Client::set_restricted(bool restricted) {
   server_launcher_->set_restricted(restricted);

@@ -31,6 +31,8 @@
 
 #include <cstdint>
 
+#include "absl/time/time.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif  // _WIN32
@@ -76,7 +78,7 @@ constexpr int kNumConnections = 1;
 #else   // _WIN32
 constexpr int kNumConnections = 10;
 #endif  // _WIN32
-constexpr int kIPCServerTimeOut = 1000;
+constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 
 std::string GetServiceName() {

@@ -54,6 +54,7 @@
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -329,7 +330,7 @@ IPCErrorType SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
 }
 
 IPCErrorType SendIpcMessage(HANDLE device_handle, HANDLE write_wait_handle,
-                            const std::string &msg, int timeout) {
+                            const std::string &msg, absl::Duration timeout) {
   if (msg.empty()) {
     LOG(WARNING) << "msg is empty.";
     return IPC_UNKNOWN_ERROR;
@@ -352,9 +353,9 @@ IPCErrorType SendIpcMessage(HANDLE device_handle, HANDLE write_wait_handle,
       LOG(ERROR) << "WriteFile() failed: " << write_file_error;
       return IPC_WRITE_ERROR;
     }
-    const IPCErrorType result =
-        SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
-                                 &num_bytes_written, kSendTypeData);
+    const IPCErrorType result = SafeWaitOverlappedResult(
+        device_handle, nullptr, absl::ToInt64Milliseconds(timeout), &overlapped,
+        &num_bytes_written, kSendTypeData);
     if (result != IPC_NO_ERROR) {
       return result;
     }
@@ -371,7 +372,8 @@ IPCErrorType SendIpcMessage(HANDLE device_handle, HANDLE write_wait_handle,
 }
 
 IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
-                    std::string *msg, int timeout, bool read_type_ack) {
+                            std::string *msg, absl::Duration timeout,
+                            bool read_type_ack) {
   if (!msg) {
     LOG(WARNING) << "msg is nullptr.";
     return IPC_UNKNOWN_ERROR;
@@ -404,9 +406,9 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
       return IPC_READ_ERROR;
     }
     // Actually this is an async operation. Let's wait for its completion.
-    const IPCErrorType result =
-        SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
-                                 &num_bytes_read, read_type_ack);
+    const IPCErrorType result = SafeWaitOverlappedResult(
+        device_handle, nullptr, absl::ToInt64Milliseconds(timeout), &overlapped,
+        &num_bytes_read, read_type_ack);
     if (result != IPC_NO_ERROR) {
       msg->clear();
       return result;
@@ -436,7 +438,7 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 }  // namespace
 
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
-                     int32_t timeout)
+                     absl::Duration timeout)
     : connected_(false),
       pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
@@ -600,7 +602,7 @@ void IPCServer::Loop() {
     // disconnect event, so far so good. If we receive more data, we assume it
     // is an ACK signal (the IPC client of Mozc 1.5.x or earlier does this).
     std::string ack_request;
-    static constexpr int kAckTimeout = 100;
+    static constexpr absl::Duration kAckTimeout = absl::Milliseconds(100);
     if (RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), &ack_request,
                        kAckTimeout, kReadTypeACK) != IPC_NO_ERROR) {
       // This case happens when the client did not receive the server's response
@@ -751,7 +753,7 @@ IPCClient::~IPCClient() {}
 bool IPCClient::Connected() const { return connected_; }
 
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32_t timeout) {
+                     absl::Duration timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";

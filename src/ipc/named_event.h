@@ -33,6 +33,8 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/time/time.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else  // _WIN32
@@ -49,7 +51,7 @@
 // (Process 1)
 // NamedEventListener listener("foo");  // Create named event listener named foo
 // CHECK(listener.IsAvailable());
-// listener.Wait(10000);  // Wait until an event comes.
+// listener.Wait(absl::Seconds(10));  // Wait until an event comes.
 // Access shared resource
 //
 // (Process 2)
@@ -71,7 +73,7 @@
 //   CreateProcess("mozc_server.exe" ...);
 //   mozc::NamedEventListener l("session");
 //   Display Splash Window
-//   l.Wait(10000);  // 10 second
+//   l.Wait(absl::Seconds(10));
 //   Close splash window
 //   Start conversion
 // }
@@ -118,9 +120,9 @@ class NamedEventListener {
 
   // Wait until the listener receives a notification
   // event from NamedEventNotifier.
-  // You can set the timeout (in msec)
+  // You can set the timeout
   // if timeout is negative, Waits forever.
-  bool Wait(int msec);
+  bool Wait(absl::Duration msec);
 
   // Wait until the listener receives a notification or
   // the process specified with pid is terminated.
@@ -133,7 +135,7 @@ class NamedEventListener {
     EVENT_SIGNALED = 1,
     PROCESS_SIGNALED = 2,
   };
-  int WaitEventOrProcess(int msec, size_t pid);
+  int WaitEventOrProcess(absl::Duration msec, size_t pid);
 
  private:
   bool is_owner_;

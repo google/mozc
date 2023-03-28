@@ -37,6 +37,7 @@
 
 #include "base/version.h"
 #include "ipc/ipc.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -63,7 +64,7 @@ uint32_t IPCClientMock::GetServerProcessId() const {
 }
 
 bool IPCClientMock::Call(const std::string &request, std::string *response,
-                         const int32_t timeout) {
+                         const absl::Duration timeout) {
   caller_->SetGeneratedRequest(request);
   if (!connected_ || !result_) {
     return false;

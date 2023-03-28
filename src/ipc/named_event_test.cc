@@ -60,7 +60,7 @@ class NamedEventListenerThread {
                        &first_triggered_time = first_triggered_time_]() {
           absl::SleepFor(initial_wait);
           for (int i = 0; i < max_num_wait; ++i) {
-            if (listener.Wait(absl::ToInt64Milliseconds(wait))) {
+            if (listener.Wait(wait)) {
               first_triggered_time = absl::ToUnixNanos(Clock::GetAbslTime());
               return;
             }

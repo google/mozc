@@ -43,6 +43,7 @@
 #include "base/thread.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -247,7 +248,7 @@ void IPCClient::Init(const absl::string_view name,
 }
 
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32_t timeout) {
+                     absl::Duration timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   MachPortManagerInterface *manager = mach_port_manager_;
   if (manager == nullptr) {
@@ -299,9 +300,9 @@ bool IPCClient::Call(const std::string &request, std::string *response,
   kr = mach_msg(send_header,
                 MACH_SEND_MSG | MACH_SEND_TIMEOUT,  // send with timeout
                 send_header->msgh_size,             // send size
-                0,                // receive size is 0 because sending
-                MACH_PORT_NULL,   // receive port
-                timeout,          // timeout in msec
+                0,               // receive size is 0 because sending
+                MACH_PORT_NULL,  // receive port
+                absl::ToInt64Milliseconds(timeout),  // timeout in msec
                 MACH_PORT_NULL);  // notoicication port in case of error
   if (kr == MACH_SEND_TIMED_OUT) {
     LOG(ERROR) << "sending message timeout";
@@ -329,9 +330,9 @@ bool IPCClient::Call(const std::string &request, std::string *response,
     kr = mach_msg(receive_header,
                   MACH_RCV_MSG | MACH_RCV_TIMEOUT,  // receive with timeout
                   0,  // send size is 0 because receiving
-                  receive_header->msgh_size,  // receive size
-                  client_port,                // receive port
-                  timeout,                    // timeout in msec
+                  receive_header->msgh_size,     // receive size
+                  client_port,                   // receive port
+                  ToInt64Milliseconds(timeout),  // timeout in msec
                   MACH_PORT_NULL);  // notification port in case of error
     if (kr == MACH_RCV_TIMED_OUT) {
       LOG(ERROR) << "receiving message timeout";
@@ -380,7 +381,7 @@ bool IPCClient::Connected() const {
 
 // Server implementation
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
-                     int32_t timeout)
+                     absl::Duration timeout)
     : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.
@@ -485,9 +486,9 @@ void IPCServer::Loop() {
     kr = mach_msg(send_header,
                   MACH_SEND_MSG | MACH_SEND_TIMEOUT,  // send with timeout
                   send_header->msgh_size,             // send size
-                  0,                // receive size is 0 because sending
-                  MACH_PORT_NULL,   // receive port
-                  timeout_,         // timeout
+                  0,               // receive size is 0 because sending
+                  MACH_PORT_NULL,  // receive port
+                  absl::ToInt64Milliseconds(timeout_),  // timeout
                   MACH_PORT_NULL);  // notification port in case of error
     if (kr != MACH_MSG_SUCCESS) {
       LOG(ERROR) << "Something around mach ports goes wrong: " << kr;

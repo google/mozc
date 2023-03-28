@@ -53,6 +53,7 @@
 #include "ipc/ipc_path_manager.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
@@ -74,16 +75,14 @@ absl::Status mkdir_p(const std::string &dirname) {
   return FileUtil::CreateDirectory(dirname);
 }
 
-bool IsReadTimeout(int socket, int timeout) {
-  if (timeout < 0) {
+bool IsReadTimeout(int socket, absl::Duration timeout) {
+  if (timeout < absl::ZeroDuration()) {
     return false;
   }
   fd_set fds;
-  struct timeval tv;
+  struct timeval tv = absl::ToTimeval(timeout);
   FD_ZERO(&fds);
   FD_SET(socket, &fds);
-  tv.tv_sec = timeout / 1000;
-  tv.tv_usec = 1000 * (timeout % 1000);
   if (select(socket + 1, &fds, nullptr, nullptr, &tv) < 0) {
     // Mac OS X and glibc implementations of strerror() return a pointer to a
     // string literal whenever errno is in a valid range, and thus thread-safe.
@@ -99,16 +98,14 @@ bool IsReadTimeout(int socket, int timeout) {
   return true;
 }
 
-bool IsWriteTimeout(int socket, int timeout) {
-  if (timeout < 0) {
+bool IsWriteTimeout(int socket, absl::Duration timeout) {
+  if (timeout < absl::ZeroDuration()) {
     return false;
   }
   fd_set fds;
-  struct timeval tv;
+  struct timeval tv = absl::ToTimeval(timeout);
   FD_ZERO(&fds);
   FD_SET(socket, &fds);
-  tv.tv_sec = timeout / 1000;
-  tv.tv_usec = 1000 * (timeout % 1000);
   if (select(socket + 1, nullptr, &fds, nullptr, &tv) < 0) {
     LOG(WARNING) << "select() failed: " << strerror(errno);
     return true;
@@ -149,7 +146,8 @@ bool IsPeerValid(int socket, pid_t *pid) {
   return true;
 }
 
-IPCErrorType SendMessage(int socket, const std::string &msg, int timeout) {
+IPCErrorType SendMessage(int socket, const std::string &msg,
+                         absl::Duration timeout) {
   int offset = 0;
   while (msg.size() != offset) {
     if (IsWriteTimeout(socket, timeout)) {
@@ -170,7 +168,7 @@ IPCErrorType SendMessage(int socket, const std::string &msg, int timeout) {
   return IPC_NO_ERROR;
 }
 
-IPCErrorType RecvMessage(int socket, std::string *msg, int timeout) {
+IPCErrorType RecvMessage(int socket, std::string *msg, absl::Duration timeout) {
   if (!msg) {
     LOG(WARNING) << "msg is nullptr";
     return IPC_UNKNOWN_ERROR;
@@ -315,7 +313,7 @@ IPCClient::~IPCClient() {
 
 // RPC call
 bool IPCClient::Call(const std::string &request, std::string *response,
-                     int32_t timeout) {
+                     absl::Duration timeout) {
   last_ipc_error_ = SendMessage(socket_, request, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendMessage failed";
@@ -343,7 +341,7 @@ bool IPCClient::Connected() const { return connected_; }
 
 // Server
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
-                     int32_t timeout)
+                     absl::Duration timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   if (!manager->CreateNewPathName() && !manager->LoadPathName()) {

@@ -59,6 +59,7 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -68,6 +69,8 @@
 
 using mozc::usage_stats::UsageStats;
 
+// TODO(b/275437228): Convert this to use `absl::Duration`. Note that existing
+// clients assume a negative value means we do not timeout at all.
 ABSL_FLAG(int32_t, timeout, -1,
           "server timeout. "
           "if sessions get empty for \"timeout\", "
@@ -78,15 +81,19 @@ ABSL_FLAG(int32_t, max_session_size, 64,
           "if size of sessions reaches to \"max_session_size\", "
           "oldest session is removed");
 
+// TODO(b/275437228): Convert this to `absl::Duration`.
 ABSL_FLAG(int32_t, create_session_min_interval, 0,
           "minimum interval (sec) for create session");
 
+// TODO(b/275437228): Convert this to `absl::Duration`.
 ABSL_FLAG(int32_t, watch_dog_interval, 180, "watch dog timer intaval (sec)");
 
+// TODO(b/275437228): Convert this to `absl::Duration`.
 ABSL_FLAG(int32_t, last_command_timeout, 3600,
           "remove session if it is not accessed for "
           "\"last_command_timeout\" sec");
 
+// TODO(b/275437228): Convert this to `absl::Duration`.
 ABSL_FLAG(int32_t, last_create_session_timeout, 300,
           "remove session if it is not accessed for "
           "\"last_create_session_timeout\" sec "
@@ -136,9 +143,9 @@ void SessionHandler::Init(
     std::unique_ptr<EngineBuilderInterface> engine_builder) {
   is_available_ = false;
   max_session_size_ = 0;
-  last_session_empty_time_ = Clock::GetTime();
-  last_cleanup_time_ = 0;
-  last_create_session_time_ = 0;
+  last_session_empty_time_ = Clock::GetAbslTime();
+  last_cleanup_time_ = absl::InfinitePast();
+  last_create_session_time_ = absl::InfinitePast();
   engine_ = std::move(engine);
   engine_builder_ = std::move(engine_builder);
   observer_handler_ = std::make_unique<session::SessionObserverHandler>();
@@ -165,7 +172,7 @@ void SessionHandler::Init(
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   session_watch_dog_ = std::make_unique<SessionWatchDog>(
-      absl::GetFlag(FLAGS_watch_dog_interval));
+      absl::Seconds(absl::GetFlag(FLAGS_watch_dog_interval)));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [2..128] sessions
@@ -481,13 +488,14 @@ bool SessionHandler::SendCommand(commands::Command *command) {
 bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
-  const int create_session_minimum_interval = std::max(
-      0, std::min(absl::GetFlag(FLAGS_create_session_min_interval), 10));
+  const absl::Duration create_session_minimum_interval = std::max(
+      absl::ZeroDuration(),
+      std::min(absl::Seconds(absl::GetFlag(FLAGS_create_session_min_interval)),
+               absl::Seconds(10)));
 
-  uint64_t current_time = Clock::GetTime();
-  if (last_create_session_time_ != 0 &&
-      (current_time - last_create_session_time_) <
-          create_session_minimum_interval) {
+  absl::Time current_time = Clock::GetAbslTime();
+  if ((current_time - last_create_session_time_) <
+      create_session_minimum_interval) {
     return false;
   }
 
@@ -555,7 +563,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
 
   // session is not empty.
-  last_session_empty_time_ = 0;
+  last_session_empty_time_ = absl::InfinitePast();
 
   UsageStats::IncrementCount("SessionCreated");
 
@@ -578,31 +586,35 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
 bool SessionHandler::Cleanup(commands::Command *command) {
-  const uint64_t current_time = Clock::GetTime();
+  const absl::Time current_time = Clock::GetAbslTime();
 
   // suspend/hibernation may happen
-  uint64_t suspend_time = 0;
+  absl::Duration suspend_time = absl::ZeroDuration();
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  if (last_cleanup_time_ != 0 && session_watch_dog_->IsRunning() &&
+  if (last_cleanup_time_ != absl::InfinitePast() &&
+      session_watch_dog_->IsRunning() &&
       (current_time - last_cleanup_time_) >
           2 * session_watch_dog_->interval()) {
     suspend_time =
         current_time - last_cleanup_time_ - session_watch_dog_->interval();
-    LOG(WARNING) << "server went to suspend mode for " << suspend_time
-                 << " sec";
+    LOG(WARNING) << "server went to suspend mode for " << suspend_time;
   }
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [1..600] sec. default: 300
-  const uint64_t create_session_timeout =
-      suspend_time +
-      std::max(1,
-               std::min(absl::GetFlag(FLAGS_last_create_session_timeout), 600));
+  const absl::Duration create_session_timeout =
+      suspend_time + std::max(absl::Seconds(1),
+                              std::min(absl::Seconds(absl::GetFlag(
+                                           FLAGS_last_create_session_timeout)),
+                                       absl::Seconds(600)));
 
   // allow [10..7200] sec. default 3600
-  const uint64_t last_command_timeout =
+  const absl::Duration last_command_timeout =
       suspend_time +
-      std::max(10, std::min(absl::GetFlag(FLAGS_last_command_timeout), 7200));
+      std::max(
+          absl::Seconds(10),
+          std::min(absl::Seconds(absl::GetFlag(FLAGS_last_command_timeout)),
+                   absl::Seconds(7200)));
 
   std::vector<SessionID> remove_ids;
   for (SessionElement *element =
@@ -612,7 +624,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     if (!IsApplicationAlive(session)) {
       VLOG(2) << "Application is not alive. Removing: " << element->key;
       remove_ids.push_back(element->key);
-    } else if (session->last_command_time() == 0) {
+    } else if (session->last_command_time() == absl::InfinitePast()) {
       // no command is exectuted
       if ((current_time - session->create_session_time()) >=
           create_session_timeout) {
@@ -635,9 +647,9 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   engine_->GetUserDataManager()->Sync();
 
   // timeout is enabled.
-  if (absl::GetFlag(FLAGS_timeout) > 0 && last_session_empty_time_ != 0 &&
+  if (absl::GetFlag(FLAGS_timeout) > 0 &&
       (current_time - last_session_empty_time_) >=
-          suspend_time + absl::GetFlag(FLAGS_timeout)) {
+          suspend_time + absl::Seconds(absl::GetFlag(FLAGS_timeout))) {
     Shutdown(command);
   }
 
@@ -711,8 +723,9 @@ bool SessionHandler::DeleteSessionID(SessionID id) {
   session_map_->Erase(id);  // remove from LRU
 
   // if session gets empty, save the timestamp
-  if (last_session_empty_time_ == 0 && session_map_->Size() == 0) {
-    last_session_empty_time_ = Clock::GetTime();
+  if (last_session_empty_time_ == absl::InfinitePast() &&
+      session_map_->Size() == 0) {
+    last_session_empty_time_ = Clock::GetAbslTime();
   }
 
   return true;

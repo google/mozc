@@ -47,7 +47,7 @@ constexpr int kInvalidSocket = -1;
 
 // Server
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
-                     int32_t timeout)
+                     absl::Duration timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   // do nothing
 }

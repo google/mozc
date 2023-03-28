@@ -74,6 +74,7 @@
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/time/time.h"
 
 #ifdef _WIN32
 #include "gui/base/win_util.h"
@@ -96,7 +97,7 @@ inline QString QUtf8(const std::string &str) {
 
 // set longer timeout because it takes longer time
 // to reload all user dictionary.
-constexpr int kSessionTimeout = 100000;
+constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);
 
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
