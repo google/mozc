@@ -243,12 +243,6 @@ enum CompatibilityMode {
   // they are the offset from the upper-left corner of the window.  GTK-based
   // applications and Java AWT-based applications match this category.
   USE_LOCAL_COORD_FOR_CANDIDATE_FORM = 2,
-  // Some applications such as V2C occasionally create zero-initialized
-  // CANDIDATEFORM and maintain it regardless of the actual position of the
-  // composition. This compatibility flag represents that it is better to
-  // ignore this phantom CANDIDATEFORM.  Currently all the Java AWT-based
-  // applications match this category.
-  IGNORE_DEFAULT_COMPOSITION_FORM = 4,
 };
 
 class LayoutManager {

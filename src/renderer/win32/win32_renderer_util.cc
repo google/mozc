@@ -180,15 +180,7 @@ CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION &char_pos,
 
 // Returns false if given |form| should be ignored for some compatibility
 // reason.  Otherwise, returns true.
-bool IsCompatibleCompositionForm(const CompositionForm &form,
-                                 int compatibility_mode) {
-  // If IGNORE_DEFAULT_COMPOSITION_FORM flag is specified and all the fields
-  // in the CompositionForm is 0, returns false.
-  if ((compatibility_mode & IGNORE_DEFAULT_COMPOSITION_FORM) !=
-      IGNORE_DEFAULT_COMPOSITION_FORM) {
-    return true;
-  }
-
+bool IsCompatibleCompositionForm(const CompositionForm &form) {
   // Note that CompositionForm::DEFAULT is defined as 0.
   if (form.style_bits() != CompositionForm::DEFAULT) {
     return true;
@@ -260,7 +252,7 @@ bool ExtractParams(LayoutManager *layout, int compatibility_mode,
 
     // Check the availability of optional fields.
     if (form.has_current_position() && IsValidPoint(form.current_position()) &&
-        IsCompatibleCompositionForm(form, compatibility_mode)) {
+        IsCompatibleCompositionForm(form)) {
       Optional<CPoint> screen_pos;
       if (!layout->ClientPointToScreen(
               target_window, ToPoint(form.current_position()),
@@ -963,7 +955,7 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool UpdateCandidateWindowFromBasePosAndFontHeight(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    const CandidateWindowLayoutParams &params,
     const CPoint &base_pos_in_logical_coord, LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
@@ -1023,8 +1015,8 @@ bool UpdateCandidateWindowFromBasePosAndFontHeight(
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCandidateForm(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
+    const CandidateWindowLayoutParams &params, LayoutManager *layout_manager,
+    CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -1047,8 +1039,7 @@ bool LayoutCandidateWindowByCandidateForm(
     // supplemental exclude region by using font height information.
     CandidateWindowLayout layout;
     if (UpdateCandidateWindowFromBasePosAndFontHeight(
-            params, compatibility_mode, form.position(), layout_manager,
-            &layout)) {
+            params, form.position(), layout_manager, &layout)) {
       // succeeded to compose exclude region.
       DCHECK(layout.initialized());
       *candidate_layout = layout;
@@ -2351,8 +2342,7 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
 
   if ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) ==
       CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) {
-    if (LayoutCandidateWindowByCandidateForm(params, compatibility_mode, this,
-                                             candidate_layout)) {
+    if (LayoutCandidateWindowByCandidateForm(params, this, candidate_layout)) {
       DCHECK(candidate_layout->initialized());
       return true;
     }
@@ -2396,8 +2386,7 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
     return true;
   }
 
-  if (LayoutCandidateWindowByCandidateForm(params, compatibility_mode, this,
-                                           candidate_layout)) {
+  if (LayoutCandidateWindowByCandidateForm(params, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -2466,19 +2455,6 @@ int LayoutManager::GetCompatibilityMode(
     for (size_t i = 0; i < std::size(kUseLocalCoord); ++i) {
       if (kUseLocalCoord[i] == class_name) {
         mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
-        break;
-      }
-    }
-  }
-
-  {
-    const wchar_t *kIgnoreDefaultCompositionForm[] = {
-        L"SunAwtDialog",
-        L"SunAwtFrame",
-    };
-    for (size_t i = 0; i < std::size(kIgnoreDefaultCompositionForm); ++i) {
-      if (kIgnoreDefaultCompositionForm[i] == class_name) {
-        mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
         break;
       }
     }
