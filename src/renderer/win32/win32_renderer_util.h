@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "protocol/renderer_command.pb.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
 #ifdef _WIN32
@@ -350,15 +349,6 @@ class LayoutManager {
       IndicatorWindowLayout *indicator_layout);
 
  private:
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalProportional);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalProportional);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalMonospaced);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalMonospaced);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalProportionalCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalProportionalCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalMonospacedCompositeGlyph);
-
   // Calculates text layout with taking text wrapping into account.  Returns
   // true when succeeds.
   //  font: The font information to be used for calculation.

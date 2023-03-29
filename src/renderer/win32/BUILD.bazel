@@ -316,13 +316,10 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":win32_font_util",
         ":win32_renderer_util",
         "//base:logging",
-        "//base:mmap",
         "//base:util",
         "//base/win32:win_font_test_helper",
-        "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
