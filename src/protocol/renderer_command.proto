@@ -131,14 +131,6 @@ message RendererCommand {
     optional Rectangle document_area = 4;
   }
 
-  // This message is a subset of Win32 GUITHREADINFO. (For Windows only)
-  // TODO(yukawa): make a common candidate form format for all platforms.
-  message CaretInfo {
-    optional bool blinking = 1 [default = false];
-    optional Rectangle caret_rect = 2;
-    optional uint32 target_window_handle = 3;
-  }
-
   // Visual information about mode indicator.
   message IndicatorInfo {
     optional Status status = 1;
@@ -202,9 +194,8 @@ message RendererCommand {
     // Specifies the target position in composition window.
     optional CharacterPosition composition_target = 10;
 
-    // used in Windows:
-    // Represents caret information.
-    optional CaretInfo caret_info = 11;
+    reserved 11;
+    reserved "caret_info";
 
     reserved 12;
     reserved "message_sender_type";

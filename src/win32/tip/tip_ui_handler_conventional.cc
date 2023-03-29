@@ -31,7 +31,6 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <commctrl.h>  // for CCSIZEOF_STRUCT
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
@@ -73,9 +72,6 @@ typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 typedef ::mozc::commands::RendererCommand RendererCommand;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
-
-constexpr size_t kSizeOfGUIThreadInfoV1 =
-    CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
 
 size_t GetTargetPos(const commands::Output &output) {
   if (!output.has_candidates() || !output.candidates().has_category()) {
@@ -160,31 +156,6 @@ bool FillVisibility(ITfUIElementMgr *ui_element_manager,
     visibility |= ApplicationInfo::ShowSuggestWindow;
   }
   app_info->set_ui_visibilities(visibility);
-
-  return true;
-}
-
-bool FillCaretInfo(ApplicationInfo *app_info) {
-  GUITHREADINFO thread_info = {};
-  thread_info.cbSize = kSizeOfGUIThreadInfoV1;
-  if (::GetGUIThreadInfo(::GetCurrentThreadId(), &thread_info) == FALSE) {
-    return false;
-  }
-
-  RendererCommand::CaretInfo *caret = app_info->mutable_caret_info();
-  caret->set_blinking((thread_info.flags & GUI_CARETBLINKING) ==
-                      GUI_CARETBLINKING);
-
-  // Set |caret_rect|
-  const RECT caret_rect = thread_info.rcCaret;
-  RendererCommand::Rectangle *rect = caret->mutable_caret_rect();
-  rect->set_left(thread_info.rcCaret.left);
-  rect->set_top(thread_info.rcCaret.top);
-  rect->set_right(thread_info.rcCaret.right);
-  rect->set_bottom(thread_info.rcCaret.bottom);
-
-  caret->set_target_window_handle(
-      WinUtil::EncodeWindowHandle(thread_info.hwndCaret));
 
   return true;
 }
@@ -347,7 +318,6 @@ void UpdateCommand(TipTextService *text_service, ITfContext *context,
       text_service->GetThreadManager());
   FillVisibility(ui_element_manager, private_context, command);
   FillWindowHandle(context, app_info);
-  FillCaretInfo(app_info);
   FillCharPosition(private_context, context, read_cookie,
                    command->output().has_preedit(), app_info, no_layout);
 

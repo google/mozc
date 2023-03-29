@@ -99,7 +99,6 @@ struct CandidateWindowLayoutParams {
   Optional<IMECHARPOSITION> char_pos;
   Optional<CPoint> composition_form_topleft;
   Optional<CandidateWindowLayout> candidate_form;
-  Optional<CRect> caret_rect;
   Optional<CLogFont> composition_font;
   Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
@@ -207,7 +206,6 @@ bool ExtractParams(LayoutManager *layout,
   params->char_pos.Clear();
   params->composition_form_topleft.Clear();
   params->candidate_form.Clear();
-  params->caret_rect.Clear();
   params->composition_font.Clear();
   params->default_gui_font.Clear();
   params->client_rect.Clear();
@@ -299,29 +297,6 @@ bool ExtractParams(LayoutManager *layout,
                 ->InitializeWithPositionAndExcludeRegion(screen_pos.value(),
                                                          screen_rect.value());
           }
-        }
-      }
-    }
-  }
-
-  if (app_info.has_caret_info()) {
-    const commands::RendererCommand::CaretInfo &caret_info =
-        app_info.caret_info();
-
-    // Check the availability of optional fields.
-    if (caret_info.has_blinking() && caret_info.has_caret_rect() &&
-        IsValidRect(caret_info.caret_rect()) &&
-        caret_info.has_target_window_handle()) {
-      const HWND caret_window =
-          WinUtil::DecodeWindowHandle(caret_info.target_window_handle());
-      const CRect caret_rect_in_client_coord(ToRect(caret_info.caret_rect()));
-      // It seems (0, 0, 0, 0) represents that the application does not have a
-      // valid caret now.
-      if (!caret_rect_in_client_coord.IsRectNull()) {
-        if (!layout->ClientRectToScreen(caret_window,
-                                        caret_rect_in_client_coord,
-                                        params->caret_rect.mutable_value())) {
-          params->caret_rect.Clear();
         }
       }
     }
