@@ -969,73 +969,6 @@ bool LayoutCandidateWindowByCompositionTarget(
   return true;
 }
 
-// This function calculates the candidate window position by using caret
-// information, which is generally unreliable but sometimes becomes a good
-// alternative even when no other positional information is available.
-// In fact, the position of suggest window sometimes relies on the caret
-// position because it is not guaranteed that the CANDIDATEFORM is valid before
-// the application receives IMN_OPENCANDIDATE message.
-// Another important consideration is how to calculate the exclude region.
-// One may consider that the caret rect seems to be used but very small number
-// of applications always use 1x1 rect regardless of the actual caret size.
-// To improve the positional accuracy of the exclude region, this function
-// adopt larger one between the caret height and font height when the exclude
-// region is calculated.
-//   Relevant applications and controls are:
-//     - Workaround against Google Chrome (b/3104035)
-//     - Suggest window on Hidemaru
-//     - Suggest window on Open Office Writer
-//     - Suggest window on Internet Explorer 8
-//   See also relevant unit tests.
-// Returns true if the |candidate_layout| is determined in successful.
-bool LayoutCandidateWindowByCaretInfo(const CandidateWindowLayoutParams &params,
-                                      int compatibility_mode,
-                                      LayoutManager *layout_manager,
-                                      CandidateWindowLayout *candidate_layout) {
-  DCHECK(candidate_layout);
-  candidate_layout->Clear();
-
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.caret_rect.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  CRect exclude_region_in_logical_coord = params.caret_rect.value();
-
-  // Use font height if available to improve the accuracy of exclude region.
-  const int font_height = GetAbsoluteFontHeight(params);
-  const bool is_vertical = IsVerticalWriting(params);
-
-  if (font_height > 0) {
-    if (is_vertical &&
-        (exclude_region_in_logical_coord.Width() < font_height)) {
-      // Vertical
-      exclude_region_in_logical_coord.right =
-          exclude_region_in_logical_coord.left + font_height;
-    } else if (!is_vertical &&
-               (exclude_region_in_logical_coord.Height() < font_height)) {
-      // Horizontal
-      exclude_region_in_logical_coord.bottom =
-          exclude_region_in_logical_coord.top + font_height;
-    }
-  }
-
-  CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(target_window,
-                                          exclude_region_in_logical_coord,
-                                          &exclude_region_in_physical_coord);
-
-  const CPoint base_pos_in_physical_coord = GetBasePositionFromExcludeRect(
-      exclude_region_in_physical_coord, is_vertical);
-
-  candidate_layout->InitializeWithPositionAndExcludeRegion(
-      base_pos_in_physical_coord, exclude_region_in_physical_coord);
-  return true;
-}
-
 bool LayoutIndicatorWindowByCompositionTarget(
     const CandidateWindowLayoutParams &params,
     const LayoutManager &layout_manager, CRect *target_rect) {
@@ -1471,12 +1404,6 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     }
   }
 
-  if (LayoutCandidateWindowByCaretInfo(params, compatibility_mode, this,
-                                       candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
   return false;
 }
 
@@ -1498,12 +1425,6 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
   }
 
   if (LayoutCandidateWindowByCandidateForm(params, this, candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  if (LayoutCandidateWindowByCaretInfo(params, compatibility_mode, this,
-                                       candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
