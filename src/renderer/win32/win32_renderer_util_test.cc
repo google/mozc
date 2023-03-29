@@ -90,6 +90,8 @@ typedef mozc::commands::Preedit Preedit;
 typedef mozc::commands::Preedit_Segment Segment;
 typedef mozc::commands::RendererCommand RendererCommand;
 typedef mozc::commands::RendererCommand_ApplicationInfo ApplicationInfo;
+typedef mozc::commands::RendererCommand_ApplicationInfo_InputFrameworkType
+    InputFrameworkType;
 typedef mozc::commands::RendererCommand_CandidateForm CandidateForm;
 typedef mozc::commands::RendererCommand_CaretInfo CaretInfo;
 typedef mozc::commands::RendererCommand_CharacterPosition CharacterPosition;
@@ -195,12 +197,18 @@ class AppInfoUtil {
   AppInfoUtil(const AppInfoUtil &) = delete;
   AppInfoUtil &operator=(const AppInfoUtil &) = delete;
   static void SetBasicApplicationInfo(ApplicationInfo *app_info, HWND hwnd,
-                                      int visibility) {
+                                      int visibility,
+                                      InputFrameworkType framework_type) {
     app_info->set_ui_visibilities(visibility);
     app_info->set_process_id(1234);
     app_info->set_thread_id(5678);
     app_info->set_target_window_handle(HwndToUint32(hwnd));
-    app_info->set_input_framework(ApplicationInfo::IMM32);
+    app_info->set_input_framework(framework_type);
+  }
+
+  static void SetBasicApplicationInfo(ApplicationInfo *app_info, HWND hwnd,
+                                      int visibility) {
+    SetBasicApplicationInfo(app_info, hwnd, visibility, ApplicationInfo::IMM32);
   }
 
   static void SetCompositionFont(ApplicationInfo *app_info, int height,
@@ -1070,6 +1078,94 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
     EXPECT_EQ(class_name, kWindowClassName);
   }
+}
+
+// How |LayoutManager| works for TSF Mozc isn't that complicated.
+//
+// TSF Mozc sends |RendererCommand::Update| only when |composition_target|
+// is available, and |composition_target| is sufficient for |LayoutManager| to
+// determine all the UI positions.
+TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
+  const CRect kWindowRect(507, 588, 1024, 698);
+  const CPoint kClientOffset(10, 12);
+  const CSize kClientSize(517, 110);
+  constexpr double kScaleFactor = 1.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+                           kClientSize, kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
+                                       ApplicationInfo::ShowCandidateWindow |
+                                           ApplicationInfo::ShowSuggestWindow,
+                                       ApplicationInfo::TSF);
+  AppInfoUtil::SetCompositionTarget(&app_info, 0, 86, 122, 20, 83, 119, 109,
+                                    525);
+
+  IndicatorWindowLayout indicator_layout;
+  EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &indicator_layout));
+  EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(86, 122, 87, 142));
+  EXPECT_FALSE(indicator_layout.is_vertical);
+
+  CandidateWindowLayout suggestion_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
+      app_info, &suggestion_layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
+                                         suggestion_layout);
+
+  CandidateWindowLayout conversion_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
+      app_info, &conversion_layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
+                                         conversion_layout);
+}
+
+// How |LayoutManager| works for TSF Mozc isn't that complicated.
+//
+// TSF Mozc sends |RendererCommand::Update| only when |composition_target|
+// is available, and |composition_target| is sufficient for |LayoutManager| to
+// determine all the UI positions.
+TEST_F(Win32RendererUtilTest, TSF_HighDPI) {
+  const CRect kWindowRect(507, 588, 1024, 698);
+  const CPoint kClientOffset(10, 12);
+  const CSize kClientSize(517, 110);
+  constexpr double kScaleFactor = 2.0;
+
+  HWND hwnd = nullptr;
+  LayoutManager layout_mgr(
+      CreateDefaultGUIFontEmulator(),
+      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+                           kClientSize, kScaleFactor, &hwnd));
+
+  ApplicationInfo app_info;
+
+  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
+                                       ApplicationInfo::ShowCandidateWindow |
+                                           ApplicationInfo::ShowSuggestWindow,
+                                       ApplicationInfo::TSF);
+  AppInfoUtil::SetCompositionTarget(&app_info, 0, 86, 122, 20, 83, 119, 109,
+                                    525);
+
+  IndicatorWindowLayout indicator_layout;
+  EXPECT_TRUE(layout_mgr.LayoutIndicatorWindow(app_info, &indicator_layout));
+  EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(172, 244, 174, 284));
+  EXPECT_FALSE(indicator_layout.is_vertical);
+
+  CandidateWindowLayout suggestion_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
+      app_info, &suggestion_layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
+                                         suggestion_layout);
+
+  CandidateWindowLayout conversion_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
+      app_info, &conversion_layout));
+  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
+                                         conversion_layout);
 }
 
 TEST_F(Win32RendererUtilTest, HorizontalProportional) {
