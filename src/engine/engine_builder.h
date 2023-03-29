@@ -64,7 +64,7 @@ class EngineBuilder : public EngineBuilderInterface {
   void Wait();
 
  private:
-  std::atomic<uint64_t> model_path_fp_;
+  std::atomic<uint64_t> model_path_fp_ = 0;
 
   struct Inflight {
     absl::Notification done;
