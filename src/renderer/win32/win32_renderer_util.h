@@ -135,10 +135,6 @@ class WorkingAreaFactory {
   // Returns an instance of WorkingAreaInterface. Caller must delete
   // the instance.
   static WorkingAreaInterface *Create();
-
-  // Returns an instance of WorkingAreaInterface. Caller must delete
-  // the instance.
-  static WorkingAreaInterface *CreateMock(const RECT &working_area);
 };
 
 // This interface is designed to hook API calls for unit test.

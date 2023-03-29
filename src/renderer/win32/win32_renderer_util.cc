@@ -1063,10 +1063,6 @@ WorkingAreaInterface *WorkingAreaFactory::Create() {
   return new NativeWorkingAreaAPI();
 }
 
-WorkingAreaInterface *WorkingAreaFactory::CreateMock(const RECT &working_area) {
-  return new WorkingAreaEmulatorImpl(working_area);
-}
-
 WindowPositionEmulator *WindowPositionEmulator::Create() {
   return new WindowPositionEmulatorImpl();
 }
