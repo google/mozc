@@ -37,7 +37,6 @@
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/candidate_window.h"
-#include "renderer/win32/composition_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
@@ -67,7 +66,6 @@ class WindowManager {
  private:
   std::unique_ptr<CandidateWindow> main_window_;
   std::unique_ptr<CandidateWindow> cascading_window_;
-  std::unique_ptr<CompositionWindowList> composition_window_list_;
   std::unique_ptr<IndicatorWindow> indicator_window_;
   std::unique_ptr<InfolistWindow> infolist_window_;
   std::unique_ptr<LayoutManager> layout_manager_;

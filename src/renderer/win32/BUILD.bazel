@@ -238,37 +238,17 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":candidate_window",
-        ":composition_window",
         ":indicator_window",
         ":infolist_window",
         ":win32_renderer_util",
         "//base:coordinates",
         "//base:logging",
-        "//base:util",
         "//client:client_interface",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_interface",
         "//renderer:window_util",
-    ],
-)
-
-mozc_cc_library(
-    name = "composition_window",
-    srcs = ["composition_window.cc"],
-    hdrs = ["composition_window.h"],
-    copts = copts_wtl(),
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":win32_renderer_util",
-        "//base:const",
-        "//base:coordinates",
-        "//base:logging",
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-        "//third_party/wtl",
     ],
 )
 

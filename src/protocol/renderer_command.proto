@@ -190,7 +190,8 @@ message RendererCommand {
     // regardless of the visibility specified in this field.
     enum UIVisibility {
       ShowUIDefault = 0;
-      ShowCompositionWindow = 1 [deprecated = true];
+      reserved 1;
+      reserved "ShowCompositionWindow";
       ShowCandidateWindow = 2;
       ShowSuggestWindow = 4;
     }

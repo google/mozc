@@ -415,7 +415,6 @@
             'win32/win32_server.cc',
             'win32/window_manager.cc',
             'win32/candidate_window.cc',
-            'win32/composition_window.cc',
             'win32/infolist_window.cc',
             'win32/indicator_window.cc',
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
