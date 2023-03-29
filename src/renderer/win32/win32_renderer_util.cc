@@ -1119,56 +1119,6 @@ bool LayoutCandidateWindowByCaretInfo(const CandidateWindowLayoutParams &params,
   return true;
 }
 
-// On some applications, no positional information is available especially when
-// the client want to show the suggest window.  In this case, we might want to
-// show the (suggest) window next to the target window so that the candidate
-// window will not cover the target window.
-//   Expected applications and controls are:
-//     - Suggest window on Fudemame 21
-//   See also relevant unit tests.
-// Returns true if the |candidate_layout| is determined in successful.
-bool LayoutCandidateWindowByClientRect(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
-  DCHECK(candidate_layout);
-  candidate_layout->Clear();
-
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.client_rect.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  const CRect &client_rect_in_logical_coord = params.client_rect.value();
-  const bool is_vertical = IsVerticalWriting(params);
-
-  CRect client_rect_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(target_window,
-                                          client_rect_in_logical_coord,
-                                          &client_rect_in_physical_coord);
-
-  if (is_vertical) {
-    // Vertical
-    // Current candidate window has not fully supported vertical writing yet so
-    // it would be rather better to show the candidate window at the right side
-    // of the target window.
-    // This is why we do not use GetBasePositionFromExcludeRect here.
-    // TODO(yukawa): use GetBasePositionFromExcludeRect once the vertical
-    //   writing is fully supported by the candidate window.
-    candidate_layout->InitializeWithPosition(
-        CPoint(client_rect_in_physical_coord.right,
-               client_rect_in_physical_coord.top));
-  } else {
-    // Horizontal
-    candidate_layout->InitializeWithPosition(
-        CPoint(client_rect_in_physical_coord.left,
-               client_rect_in_physical_coord.bottom));
-  }
-  return true;
-}
-
 bool LayoutIndicatorWindowByCompositionTarget(
     const CandidateWindowLayoutParams &params,
     const LayoutManager &layout_manager, CRect *target_rect) {
@@ -1616,12 +1566,6 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     return true;
   }
 
-  if (LayoutCandidateWindowByClientRect(params, compatibility_mode, this,
-                                        candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
   return false;
 }
 
@@ -1655,12 +1599,6 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
 
   if (LayoutCandidateWindowByCompositionForm(params, compatibility_mode, this,
                                              candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  if (LayoutCandidateWindowByClientRect(params, compatibility_mode, this,
-                                        candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
