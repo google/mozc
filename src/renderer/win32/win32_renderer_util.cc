@@ -969,89 +969,6 @@ bool LayoutCandidateWindowByCompositionTarget(
   return true;
 }
 
-// COMPOSITIONFORM contains the expected position of top-left corner of the
-// composition window, which might be used to determine the position of the
-// candidate window if no other relevant information is available.
-// Actually the top left corner might be good enough for vertical writing.
-// As for horizontal writing, the base position can be calculated if the height
-// of the composition string is available.  This function supposes that the
-// font height approximates to the height of the composition string.
-// In both cases, this function also tries to compose an exclude region to
-// improve the UX around suggest/candidate window if font height is available.
-//   Expected applications and controls are:
-//     - Suggest window on Pidgin 2.6.1
-//   See also relevant unit tests.
-// Returns true if the |candidate_layout| is determined in successful.
-bool LayoutCandidateWindowByCompositionForm(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
-  DCHECK(candidate_layout);
-  candidate_layout->Clear();
-
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.composition_form_topleft.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  const CPoint &topleft_in_logical_coord =
-      params.composition_form_topleft.value();
-  const bool is_vertical = IsVerticalWriting(params);
-  const int font_height = GetAbsoluteFontHeight(params);
-
-  if (!is_vertical) {
-    // For horizontal writing, a valid |font_height| is necessary to calculate
-    // an appropriate position of suggest/candidate window.
-    if (font_height == 0) {
-      return false;
-    }
-    DCHECK_LT(0, font_height);
-
-    const CRect rect_in_logical_coord(topleft_in_logical_coord.x,
-                                      topleft_in_logical_coord.y,
-                                      topleft_in_logical_coord.x + 1,
-                                      topleft_in_logical_coord.y + font_height);
-
-    CRect rect_in_physical_coord;
-    layout_manager->GetRectInPhysicalCoords(
-        target_window, rect_in_logical_coord, &rect_in_physical_coord);
-
-    const CPoint bottom_left_in_physical_coord(rect_in_physical_coord.left,
-                                               rect_in_physical_coord.bottom);
-    candidate_layout->InitializeWithPositionAndExcludeRegion(
-        bottom_left_in_physical_coord, rect_in_physical_coord);
-    return true;
-  }
-
-  // Vertical
-  DCHECK(is_vertical);
-  CPoint topleft_in_physical_coord;
-  layout_manager->GetPointInPhysicalCoords(
-      target_window, topleft_in_logical_coord, &topleft_in_physical_coord);
-
-  if (font_height == 0) {
-    // For vertical writing, top-left cornier is acceptable.
-    // Use CANDIDATEPOS-style by compromise.
-    candidate_layout->InitializeWithPosition(topleft_in_physical_coord);
-    return true;
-  }
-  DCHECK_LT(0, font_height);
-
-  const CRect rect_in_logical_coord(
-      topleft_in_logical_coord.x, topleft_in_logical_coord.y,
-      topleft_in_logical_coord.x + font_height, topleft_in_logical_coord.y + 1);
-
-  CRect rect_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
-                                          &rect_in_physical_coord);
-
-  candidate_layout->InitializeWithPositionAndExcludeRegion(
-      topleft_in_physical_coord, rect_in_physical_coord);
-  return true;
-}
-
 // This function calculates the candidate window position by using caret
 // information, which is generally unreliable but sometimes becomes a good
 // alternative even when no other positional information is available.
@@ -1560,12 +1477,6 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     return true;
   }
 
-  if (LayoutCandidateWindowByCompositionForm(params, compatibility_mode, this,
-                                             candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
   return false;
 }
 
@@ -1593,12 +1504,6 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
 
   if (LayoutCandidateWindowByCaretInfo(params, compatibility_mode, this,
                                        candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  if (LayoutCandidateWindowByCompositionForm(params, compatibility_mode, this,
-                                             candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
