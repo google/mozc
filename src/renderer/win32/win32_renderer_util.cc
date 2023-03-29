@@ -1056,40 +1056,6 @@ bool LayoutIndicatorWindowByCompositionForm(
   return true;
 }
 
-bool LayoutIndicatorWindowByCaretInfo(const CandidateWindowLayoutParams &params,
-                                      const LayoutManager &layout_manager,
-                                      CRect *target_rect) {
-  DCHECK(target_rect);
-  *target_rect = CRect();
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.caret_rect.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  CRect rect_in_logical_coord = params.caret_rect.value();
-
-  // Use font height if available to improve the accuracy of exclude region.
-  const int font_height = GetAbsoluteFontHeight(params);
-  const bool is_vertical = IsVerticalWriting(params);
-
-  if (font_height > 0) {
-    if (is_vertical && (rect_in_logical_coord.Width() < font_height)) {
-      // Vertical
-      rect_in_logical_coord.right = rect_in_logical_coord.left + font_height;
-    } else if (!is_vertical && (rect_in_logical_coord.Height() < font_height)) {
-      // Horizontal
-      rect_in_logical_coord.bottom = rect_in_logical_coord.top + font_height;
-    }
-  }
-
-  layout_manager.GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
-                                         target_rect);
-  return true;
-}
-
 bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
                                const LayoutManager &layout_manager,
                                CRect *focus_rect) {
@@ -1103,9 +1069,6 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
   }
   if (LayoutIndicatorWindowByCompositionForm(params, layout_manager,
                                              focus_rect)) {
-    return true;
-  }
-  if (LayoutIndicatorWindowByCaretInfo(params, layout_manager, focus_rect)) {
     return true;
   }
 
