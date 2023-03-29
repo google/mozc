@@ -34,7 +34,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "protocol/renderer_command.pb.h"
 
@@ -43,39 +42,6 @@
 namespace mozc {
 namespace renderer {
 namespace win32 {
-
-struct CharacterRange {
-  CharacterRange();
-  int begin;
-  int length;
-};
-
-struct LineLayout {
-  std::wstring text;
-  int line_length;
-  int line_width;
-  int line_start_offset;
-  std::vector<CharacterRange> character_positions;
-  LineLayout();
-};
-
-struct SegmentMarkerLayout {
-  POINT from;
-  POINT to;
-  bool highlighted;
-  SegmentMarkerLayout();
-};
-
-struct CompositionWindowLayout {
-  RECT window_position_in_screen_coordinate;
-  RECT text_area;
-  RECT caret_rect;
-  POINT base_position;
-  LOGFONT log_font;
-  std::wstring text;
-  std::vector<SegmentMarkerLayout> marker_layouts;
-  CompositionWindowLayout();
-};
 
 // A POD-like class which represents positional information about where the
 // candidate window should be displayed.
@@ -250,19 +216,6 @@ class LayoutManager {
   LayoutManager(SystemPreferenceInterface *mock_system_preference,
                 WindowPositionInterface *mock_window_position);
 
-  // Calculates layout of composition windows including preferred position of
-  // the candidate window and text attributes such as underline or text
-  // highlighting in the composition windows.  Returns true when succeeds.
-  // This method is thread-safe.
-  //  command: The renderer commant to be rendered.
-  //  composition_window_layouts: calculated layout for composition windows.
-  //  candidate_form: calculated position for the candidate window to be
-  //    displayed.
-  bool LayoutCompositionWindow(
-      const commands::RendererCommand &command,
-      std::vector<CompositionWindowLayout> *composition_window_layouts,
-      CandidateWindowLayout *candidate_layout) const;
-
   // Returns compatibility bits for given target application.
   int GetCompatibilityMode(
       const commands::RendererCommand_ApplicationInfo &app_info);
@@ -349,24 +302,6 @@ class LayoutManager {
       IndicatorWindowLayout *indicator_layout);
 
  private:
-  // Calculates text layout with taking text wrapping into account.  Returns
-  // true when succeeds.
-  //  font: The font information to be used for calculation.
-  //  str: The string to be calculated.  Non-printable characters are not fully
-  //    supported.  For example, this function may not work well if |str|
-  //    contains CR, LF, HT, and VT.
-  //  maximum_line_length: The maximum length which limits the grows of text
-  //    for each line.
-  //  initial_offset: Represents cursor position where the first character in
-  //    the |str| starts from if there is enough space to show the first
-  //    character.
-  //  LineLayout: Layout information for each split line.
-  static bool CalcLayoutWithTextWrapping(const LOGFONTW &font,
-                                         const std::wstring &text,
-                                         int maximum_line_length,
-                                         int initial_offset,
-                                         std::vector<LineLayout> *line_layouts);
-
   std::unique_ptr<SystemPreferenceInterface> system_preference_;
   std::unique_ptr<WindowPositionInterface> window_position_;
 };
