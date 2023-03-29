@@ -37,30 +37,42 @@ glob_files.py "*.cc" --base "absl/**" --exclude "*wrapper.cc" --notest
 import argparse
 import glob
 import os
+import re
 
 
 def _ParseArguments():
   parser = argparse.ArgumentParser()
   parser.add_argument('include', nargs='+')
   parser.add_argument('--base', default='')
+  parser.add_argument('--subdir', default='')
   parser.add_argument('--exclude', nargs='+', default=[])
   parser.add_argument('--notest', action='store_true')
   return parser.parse_args()
 
 
+def _Glob(base, subdir, queries):
+  paths = []
+  for query in queries:
+    glob_paths = glob.glob(os.path.join(base, subdir, query), recursive=True)
+    # Normalizes the path separator to '/'.
+    paths.extend([path.replace(os.path.sep, '/') for path in glob_paths])
+  return set(paths)
+
+
+def _Contain(name, query):
+  sep = r'(_|\b)'
+  return bool(re.search(f'{sep}{query}{sep}', name))
+
+
 def main():
   args = _ParseArguments()
-  includes = []
-  excludes = []
-  for include in args.include:
-    includes.extend(glob.glob(os.path.join(args.base, include), recursive=True))
-  for exclude in args.exclude:
-    excludes.extend(glob.glob(os.path.join(args.base, exclude), recursive=True))
+  includes = _Glob(args.base, args.subdir, args.include)
+  excludes = _Glob(args.base, args.subdir, args.exclude)
 
   for file in sorted(list(set(includes) - set(excludes))):
     if args.notest:
       basename = os.path.splitext(file)[0]
-      if basename.endswith('_test') or basename.endswith('_benchmark'):
+      if _Contain(basename, 'test') or _Contain(basename, 'benchmark'):
         continue
     print(file)
 
