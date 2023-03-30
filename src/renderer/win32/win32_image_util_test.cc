@@ -41,14 +41,13 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
-#include <list>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mmap.h"
 #include "base/util.h"
 #include "base/win32/win_font_test_helper.h"
 #include "net/jsoncpp.h"
@@ -70,16 +69,15 @@ using ::mozc::renderer::win32::internal::SubdivisionalPixel;
 using ::mozc::renderer::win32::internal::TextLabel;
 
 using ::WTL::CBitmap;
-using ::WTL::CDC;
-using ::WTL::CLogFont;
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
 namespace {
 
-typedef SubdivisionalPixel::SubdivisionalPixelIterator
-    SubdivisionalPixelIterator;
+using BalloonImageInfo = BalloonImage::BalloonImageInfo;
+using SubdivisionalPixelIterator =
+    SubdivisionalPixel::SubdivisionalPixelIterator;
 
 class BalloonImageTest : public ::testing::Test,
                          public ::testing::WithParamInterface<const char *> {
@@ -107,8 +105,8 @@ class BalloonImageTest : public ::testing::Test,
     using BalloonImage::CreateInternal;
   };
 
-  static void SaveTestImage(const TestableBalloonImage::BalloonImageInfo &info,
-                            const std::wstring filename) {
+  static void SaveTestImage(const BalloonImageInfo &info,
+                            const std::wstring &filename) {
     CPoint tail_offset;
     CSize size;
     std::vector<ARGBColor> buffer;
@@ -137,13 +135,13 @@ class BalloonImageTest : public ::testing::Test,
 
     std::string utf8_filename;
     Util::WideToUtf8(filename + L".json", &utf8_filename);
-    OutputFileStream os(utf8_filename.c_str());
+    OutputFileStream os(utf8_filename);
     Json::StyledWriter writer;
     os << writer.write(tail);
   }
 
-  static void BalloonInfoToJson(
-      const TestableBalloonImage::BalloonImageInfo &info, Json::Value *tail) {
+  static void BalloonInfoToJson(const BalloonImageInfo &info,
+                                Json::Value *tail) {
     Json::Value input(Json::objectValue);
     input["frame_color"] = Json::Value(ColorToInteger(info.frame_color));
     input["inside_color"] = Json::Value(ColorToInteger(info.inside_color));
@@ -169,10 +167,10 @@ class BalloonImageTest : public ::testing::Test,
   }
 
   static void JsonToBalloonInfo(const Json::Value &tail,
-                                TestableBalloonImage::BalloonImageInfo *info) {
+                                BalloonImageInfo *info) {
     const Json::Value &input = tail["input"];
 
-    *info = TestableBalloonImage::BalloonImageInfo();
+    *info = BalloonImageInfo();
     info->frame_color = IntegerToColor(input["frame_color"].asInt());
     info->inside_color = IntegerToColor(input["inside_color"].asInt());
     info->label_color = IntegerToColor(input["label_color"].asInt());
@@ -188,7 +186,7 @@ class BalloonImageTest : public ::testing::Test,
     info->tail_height = input["tail_height"].asDouble();
     info->tail_width = input["tail_width"].asDouble();
     info->tail_direction =
-        static_cast<TestableBalloonImage::BalloonImageInfo::TailDirection>(
+        static_cast<BalloonImageInfo::TailDirection>(
             input["tail_direction"].asInt());
     info->blur_sigma = input["blur_sigma"].asDouble();
     info->blur_offset_x = input["blur_offset_x"].asInt();
@@ -295,11 +293,11 @@ TEST_P(BalloonImageTest, TestImpl) {
 
   Json::Value tail;
   {
-    InputFileStream fs(json_path.c_str());
+    InputFileStream fs(json_path);
     ASSERT_TRUE(fs.good());
     fs >> tail;
   }
-  TestableBalloonImage::BalloonImageInfo info;
+  BalloonImageInfo info;
   JsonToBalloonInfo(tail, &info);
 
   CPoint actual_tail_offset;
