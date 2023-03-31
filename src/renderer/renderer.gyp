@@ -276,7 +276,6 @@
             '../protocol/protocol.gyp:commands_proto',
             '../protocol/protocol.gyp:config_proto',
             '../protocol/protocol.gyp:renderer_proto',
-            'win32_font_util',
           ],
         },
         {

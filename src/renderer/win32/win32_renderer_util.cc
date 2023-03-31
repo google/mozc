@@ -47,7 +47,6 @@
 #include "base/system_util.h"
 #include "base/win32/win_util.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/win32/win32_font_util.h"
 #include "absl/base/macros.h"
 
 namespace mozc {
@@ -95,7 +94,7 @@ struct CandidateWindowLayoutParams {
   const Optional<CPoint> composition_form_topleft = Optional<CPoint>();
   const Optional<CandidateWindowLayout> candidate_form =
       Optional<CandidateWindowLayout>();
-  Optional<CLogFont> composition_font;
+  const Optional<CLogFont> composition_font = Optional<CLogFont>();
   Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
   Optional<bool> vertical_writing;
@@ -173,7 +172,6 @@ bool ExtractParams(LayoutManager *layout,
 
   params->window_handle.Clear();
   params->char_pos.Clear();
-  params->composition_font.Clear();
   params->default_gui_font.Clear();
   params->client_rect.Clear();
   params->vertical_writing.Clear();
@@ -200,14 +198,6 @@ bool ExtractParams(LayoutManager *layout,
       dest->pt = ToPoint(char_pos.top_left());
       dest->cLineHeight = char_pos.line_height();
       dest->rcDocument = ToRect(char_pos.document_area());
-    }
-  }
-
-  if (app_info.has_composition_font()) {
-    if (!mozc::win32::FontUtil::ToLOGFONT(
-            app_info.composition_font(),
-            params->composition_font.mutable_value())) {
-      params->composition_font.Clear();
     }
   }
 
@@ -1165,30 +1155,10 @@ bool LayoutManager::GetDefaultGuiFont(LOGFONTW *logfont) const {
 
 LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
     const commands::RendererCommand_ApplicationInfo &app_info) {
-  // |escapement| is the angle between the escapement vector and the x-axis
-  // of the device, in tenths of degrees.  In Windows, (Japanese) vertical
-  // writing is usually implemented by setting 2700 to the |escapement|,
-  // which means the escapement vector is parallel to |Rot(270 deg) * (1, 0)|
-  // in the display coordinate.  Note that |escapement| and |orientation| are
-  // different concept.  But we only check |escapement| here for application
-  // compatibility.
-  // Any |escapement| except for 2700 is treated as horizontal, on the
-  // strength of IMEINFO::fdwUICaps has only UI_CAP_2700 as for Mozc.
-  // See the document of LOGFONT structure and ImmGetProperty API for
-  // details.
-  // http://msdn.microsoft.com/en-us/library/dd145037.aspx
-  // http://msdn.microsoft.com/en-us/library/dd318567.aspx
-  // TODO(yukawa): Support arbitrary angle.
-  if (!app_info.has_composition_font() ||
-      !app_info.composition_font().has_escapement()) {
-    return WRITING_DIRECTION_UNSPECIFIED;
-  }
-
-  if (app_info.composition_font().escapement() == 2700) {
-    return VERTICAL_WRITING;
-  }
-
-  return HORIZONTAL_WRITING;
+  // TODO(https://github.com/google/mozc/issues/362): Implement this for TSF.
+  // When fixing this, we also need to update Chromium.
+  //   https://chromium-review.googlesource.com/c/chromium/src/+/4023235
+  return WRITING_DIRECTION_UNSPECIFIED;
 }
 
 bool LayoutManager::LayoutCandidateWindowForSuggestion(
