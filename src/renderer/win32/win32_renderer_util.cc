@@ -59,7 +59,6 @@ using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
 
-typedef mozc::commands::RendererCommand::CompositionForm CompositionForm;
 typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
 
 namespace {
@@ -97,7 +96,7 @@ class Optional {
 struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
-  Optional<CPoint> composition_form_topleft;
+  const Optional<CPoint> composition_form_topleft = Optional<CPoint>();
   Optional<CandidateWindowLayout> candidate_form;
   Optional<CLogFont> composition_font;
   Optional<CLogFont> default_gui_font;
@@ -169,33 +168,6 @@ CPoint GetBasePositionFromIMECHARPOSITION(const IMECHARPOSITION &char_pos,
   return CPoint(char_pos.pt.x, char_pos.pt.y + char_pos.cLineHeight);
 }
 
-// Returns false if given |form| should be ignored for some compatibility
-// reason.  Otherwise, returns true.
-bool IsCompatibleCompositionForm(const CompositionForm &form) {
-  // Note that CompositionForm::DEFAULT is defined as 0.
-  if (form.style_bits() != CompositionForm::DEFAULT) {
-    return true;
-  }
-
-  if (!IsValidPoint(form.current_position())) {
-    return true;
-  }
-  const CPoint current_position = ToPoint(form.current_position());
-  if (current_position != CPoint(0, 0)) {
-    return true;
-  }
-
-  if (!IsValidRect(form.area())) {
-    return true;
-  }
-  const CRect area = ToRect(form.area());
-  if (!area.IsRectNull()) {
-    return true;
-  }
-
-  return false;
-}
-
 bool ExtractParams(LayoutManager *layout,
                    const commands::RendererCommand::ApplicationInfo &app_info,
                    CandidateWindowLayoutParams *params) {
@@ -204,7 +176,6 @@ bool ExtractParams(LayoutManager *layout,
 
   params->window_handle.Clear();
   params->char_pos.Clear();
-  params->composition_form_topleft.Clear();
   params->candidate_form.Clear();
   params->composition_font.Clear();
   params->default_gui_font.Clear();
@@ -233,22 +204,6 @@ bool ExtractParams(LayoutManager *layout,
       dest->pt = ToPoint(char_pos.top_left());
       dest->cLineHeight = char_pos.line_height();
       dest->rcDocument = ToRect(char_pos.document_area());
-    }
-  }
-
-  if (app_info.has_composition_form()) {
-    const commands::RendererCommand::CompositionForm &form =
-        app_info.composition_form();
-
-    // Check the availability of optional fields.
-    if (form.has_current_position() && IsValidPoint(form.current_position()) &&
-        IsCompatibleCompositionForm(form)) {
-      Optional<CPoint> screen_pos;
-      if (!layout->ClientPointToScreen(
-              target_window, ToPoint(form.current_position()),
-              params->composition_form_topleft.mutable_value())) {
-        params->composition_form_topleft.Clear();
-      }
     }
   }
 
