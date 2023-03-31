@@ -23,6 +23,7 @@
 *.rc text
 *.sh text
 *.svg text
+*.textproto text
 *.tsv text
 *.txt text
 *.TXT text
