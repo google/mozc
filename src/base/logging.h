@@ -30,11 +30,11 @@
 #ifndef MOZC_BASE_LOGGING_H_
 #define MOZC_BASE_LOGGING_H_
 
-
-#include <iostream>
 #include <string>
 
-#include "base/port.h"
+
+#include <iostream>
+
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -55,7 +55,7 @@ enum LogSeverity {
   LOG_FATAL = 7,    // ANDROID_LOG_FATAL
   LOG_SILENT = 8,   // ANDROID_LOG_SILENT
   LOG_SEVERITY_SIZE = 9,
-#else   // __ANDROID__
+#else  // __ANDROID__
   LOG_INFO = 0,
   LOG_WARNING = 1,
   LOG_ERROR = 2,
@@ -71,7 +71,7 @@ enum LogSeverity {
 // DFATAL is FATAL in debug mode, ERROR in normal mode
 #ifdef DEBUG
 #define LOG_DFATAL LOG_FATAL
-#else   // DEBUG
+#else  // DEBUG
 #define LOG_DFATAL LOG_ERROR
 #endif  // DEBUG
 
