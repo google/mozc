@@ -40,10 +40,8 @@
 #include <winuser.h>
 // clang-format on
 
-#include <cstdint>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "base/logging.h"
 #include "base/system_util.h"
@@ -58,8 +56,6 @@ namespace win32 {
 using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
-
-typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
 
 namespace {
 // This template class is used to represent rendering information which may
@@ -97,7 +93,8 @@ struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
   const Optional<CPoint> composition_form_topleft = Optional<CPoint>();
-  Optional<CandidateWindowLayout> candidate_form;
+  const Optional<CandidateWindowLayout> candidate_form =
+      Optional<CandidateWindowLayout>();
   Optional<CLogFont> composition_font;
   Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
@@ -176,7 +173,6 @@ bool ExtractParams(LayoutManager *layout,
 
   params->window_handle.Clear();
   params->char_pos.Clear();
-  params->candidate_form.Clear();
   params->composition_font.Clear();
   params->default_gui_font.Clear();
   params->client_rect.Clear();
@@ -204,56 +200,6 @@ bool ExtractParams(LayoutManager *layout,
       dest->pt = ToPoint(char_pos.top_left());
       dest->cLineHeight = char_pos.line_height();
       dest->rcDocument = ToRect(char_pos.document_area());
-    }
-  }
-
-  if (app_info.has_candidate_form()) {
-    const commands::RendererCommand::CandidateForm &form =
-        app_info.candidate_form();
-
-    const uint32_t candidate_style_bits = form.style_bits();
-
-    const bool has_candidate_pos_style_bit =
-        ((candidate_style_bits & CandidateForm::CANDIDATEPOS) ==
-         CandidateForm::CANDIDATEPOS);
-
-    const bool has_exclude_style_bit =
-        ((candidate_style_bits & CandidateForm::EXCLUDE) ==
-         CandidateForm::EXCLUDE);
-
-    // Check the availability of optional fields.
-    if ((has_candidate_pos_style_bit || has_exclude_style_bit) &&
-        form.has_current_position() && IsValidPoint(form.current_position())) {
-      Optional<CPoint> screen_pos;
-      if (!layout->ClientPointToScreen(target_window,
-                                       ToPoint(form.current_position()),
-                                       screen_pos.mutable_value())) {
-        screen_pos.Clear();
-      }
-      if (screen_pos.has_value()) {
-        // Here, we got an appropriate position where the candidate window
-        // can be placed.
-        params->candidate_form.mutable_value()->InitializeWithPosition(
-            screen_pos.value());
-
-        // If |CandidateForm::EXCLUDE| is specified, try to use the |area|
-        // field as an exclude region.
-        if (has_exclude_style_bit && form.has_area() &&
-            IsValidRect(form.area())) {
-          Optional<CRect> screen_rect;
-          if (!layout->ClientRectToScreen(target_window, ToRect(form.area()),
-                                          screen_rect.mutable_value())) {
-            screen_rect.Clear();
-          }
-          if (screen_rect.has_value()) {
-            // Here we got an appropriate exclude region too.
-            // Update the |candidate_form| with them.
-            params->candidate_form.mutable_value()
-                ->InitializeWithPositionAndExcludeRegion(screen_pos.value(),
-                                                         screen_rect.value());
-          }
-        }
-      }
     }
   }
 
@@ -1125,29 +1071,6 @@ LayoutManager::LayoutManager(SystemPreferenceInterface *mock_system_preference,
       window_position_(mock_window_position) {}
 
 LayoutManager::~LayoutManager() {}
-
-bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
-                                        const POINT &src_point,
-                                        POINT *dest_point) const {
-  if (dest_point == nullptr) {
-    return false;
-  }
-
-  if (!window_position_->IsWindow(src_window_handle)) {
-    DLOG(ERROR) << "Invalid window handle.";
-    return false;
-  }
-
-  CPoint converted = src_point;
-  if (window_position_->ClientToScreen(src_window_handle, &converted) ==
-      FALSE) {
-    DLOG(ERROR) << "ClientToScreen failed.";
-    return false;
-  }
-
-  *dest_point = converted;
-  return true;
-}
 
 bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
                                        const RECT &src_rect,

@@ -258,13 +258,6 @@ class LayoutManager {
   bool ClientRectToScreen(HWND src_window_handle, const RECT &src_rect,
                           RECT *dest_rect) const;
 
-  // Converts a local coordinate into a logical screen coordinate assuming
-  // |src_point| is the client coorinate in the window specified by
-  // |src_window_handle|.
-  // Returns false if fails.
-  bool ClientPointToScreen(HWND src_window_handle, const POINT &src_point,
-                           POINT *dest_point) const;
-
   // Returns true if the client rect of the target window specified by
   // |src_window_handle| is retrieved in a logical screen coordinate.
   // Returns false if fails.
