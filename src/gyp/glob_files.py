@@ -59,9 +59,12 @@ def _Glob(base, subdir, queries):
   return set(paths)
 
 
-def _Contain(name, query):
+def _Contain(name, queries):
   sep = r'(_|\b)'
-  return bool(re.search(f'{sep}{query}{sep}', name))
+  for query in queries:
+    if re.search(f'{sep}{query}{sep}', name):
+      return True
+  return False
 
 
 def main():
@@ -72,7 +75,7 @@ def main():
   for file in sorted(list(set(includes) - set(excludes))):
     if args.notest:
       basename = os.path.splitext(file)[0]
-      if _Contain(basename, 'test') or _Contain(basename, 'benchmark'):
+      if _Contain(basename, ['benchmark', 'mock', 'test', 'unittest']):
         continue
     print(file)
 
