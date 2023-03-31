@@ -125,7 +125,6 @@ void WindowManager::HideAllWindows() {
 //   and candidate windows.
 void WindowManager::UpdateLayout(
     const commands::RendererCommand &command) {
-  typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
   // Hide all UI elements if |command.visible()| is false.

@@ -1062,6 +1062,29 @@ LayoutManager::LayoutManager(SystemPreferenceInterface *mock_system_preference,
 
 LayoutManager::~LayoutManager() {}
 
+bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
+                                        const POINT &src_point,
+                                        POINT *dest_point) const {
+  if (dest_point == nullptr) {
+    return false;
+  }
+
+  if (!window_position_->IsWindow(src_window_handle)) {
+    DLOG(ERROR) << "Invalid window handle.";
+    return false;
+  }
+
+  CPoint converted = src_point;
+  if (window_position_->ClientToScreen(src_window_handle, &converted) ==
+      FALSE) {
+    DLOG(ERROR) << "ClientToScreen failed.";
+    return false;
+  }
+
+  *dest_point = converted;
+  return true;
+}
+
 bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
                                        const RECT &src_rect,
                                        RECT *dest_rect) const {
