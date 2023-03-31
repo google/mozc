@@ -32,8 +32,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
-#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -260,13 +258,6 @@ ConversionRequest CreateConversionRequestWithType(
 }
 
 }  // namespace
-
-ConverterImpl::ConverterImpl()
-    : pos_matcher_(nullptr),
-      immutable_converter_(nullptr),
-      general_noun_id_(std::numeric_limits<uint16_t>::max()) {}
-
-ConverterImpl::~ConverterImpl() = default;
 
 void ConverterImpl::Init(const PosMatcher *pos_matcher,
                          const SuppressionDictionary *suppression_dictionary,

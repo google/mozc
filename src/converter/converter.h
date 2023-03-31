@@ -32,33 +32,29 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
-//  for FRIEND_TEST()
-#include "testing/gunit_prod.h"
+#include "rewriter/rewriter_interface.h"
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class ImmutableConverterInterface;
-class PredictorInterface;
-class RewriterInterface;
-class Segments;
-
 class ConverterImpl final : public ConverterInterface {
  public:
-  ConverterImpl();
-  ~ConverterImpl() override;
+  ConverterImpl() = default;
 
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const dictionary::PosMatcher *pos_matcher,
@@ -191,12 +187,12 @@ class ConverterImpl final : public ConverterInterface {
                                     absl::string_view key,
                                     Segments *segments) const;
 
-  const dictionary::PosMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_ = nullptr;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   std::unique_ptr<PredictorInterface> predictor_;
   std::unique_ptr<RewriterInterface> rewriter_;
-  const ImmutableConverterInterface *immutable_converter_;
-  uint16_t general_noun_id_;
+  const ImmutableConverterInterface *immutable_converter_ = nullptr;
+  uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();
 };
 
 }  // namespace mozc

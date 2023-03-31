@@ -30,17 +30,16 @@
 #ifndef MOZC_CONVERTER_CONNECTOR_H_
 #define MOZC_CONVERTER_CONNECTOR_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <vector>
 
-#include "base/port.h"
+#include "data_manager/data_manager_interface.h"
+#include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
 namespace mozc {
-
-class DataManagerInterface;
 
 class Connector final {
  public:
@@ -52,8 +51,7 @@ class Connector final {
   static absl::StatusOr<std::unique_ptr<Connector>> Create(
       const char *connection_data, size_t connection_size, int cache_size);
 
-  Connector();
-  ~Connector();
+  Connector() = default;
 
   Connector(const Connector &) = delete;
   Connector &operator=(const Connector &) = delete;
@@ -78,6 +76,29 @@ class Connector final {
   uint32_t cache_hash_mask_ = 0;
   mutable std::unique_ptr<uint32_t[]> cache_key_;
   mutable std::unique_ptr<int[]> cache_value_;
+};
+
+class Connector::Row final {
+ public:
+  Row()
+      : chunk_bits_index_(sizeof(uint32_t)),
+        compact_bits_index_(sizeof(uint32_t)) {}
+
+  Row(const Row &) = delete;
+  Row &operator=(const Row &) = delete;
+
+  void Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
+            const uint8_t *compact_bits, size_t compact_bits_size,
+            const uint8_t *values, bool use_1byte_value);
+  // Returns true if the value is found in the row and then store the found
+  // value into |value|. Otherwise returns false.
+  bool GetValue(uint16_t index, uint16_t *value) const;
+
+ private:
+  storage::louds::SimpleSuccinctBitVectorIndex chunk_bits_index_;
+  storage::louds::SimpleSuccinctBitVectorIndex compact_bits_index_;
+  const uint8_t *values_ = nullptr;
+  bool use_1byte_value_ = false;
 };
 
 }  // namespace mozc
