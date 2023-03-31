@@ -209,7 +209,6 @@
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            'win32_font_util_test',
             'win32_renderer_core_test',
           ],
         }],
@@ -236,33 +235,6 @@
           'includes': [
             '../gyp/gen_win32_resource_header.gypi',
           ],
-        },
-        {
-          'target_name': 'win32_font_util',
-          'type': 'static_library',
-          'sources': [
-            'win32/win32_font_util.cc',
-          ],
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../protocol/protocol.gyp:commands_proto',
-            '../protocol/protocol.gyp:config_proto',
-            '../protocol/protocol.gyp:renderer_proto',
-          ],
-        },
-        {
-          'target_name': 'win32_font_util_test',
-          'type': 'executable',
-          'sources': [
-            'win32/win32_font_util_test.cc',
-          ],
-          'dependencies': [
-            '../testing/testing.gyp:gtest_main',
-            'win32_font_util',
-          ],
-          'variables': {
-            'test_size': 'small',
-          },
         },
         {
           'target_name': 'win32_renderer_core',

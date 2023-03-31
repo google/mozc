@@ -134,18 +134,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "win32_font_util",
-    srcs = ["win32_font_util.cc"],
-    hdrs = ["win32_font_util.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-    ],
-)
-
-mozc_cc_library(
     name = "indicator_window",
     srcs = ["indicator_window.cc"],
     hdrs = ["indicator_window.h"],
@@ -325,18 +313,5 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//third_party/wtl",
-    ],
-)
-
-mozc_cc_test(
-    name = "win32_font_util_test",
-    srcs = ["win32_font_util_test.cc"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":win32_font_util",
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-        "//testing:gunit_main",
     ],
 )
