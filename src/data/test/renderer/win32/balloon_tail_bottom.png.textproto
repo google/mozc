@@ -27,26 +27,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Renderer test images.
+# proto-file: data/test/renderer/win32/test_spec.proto
+# proto-message: TestSpec
 
-package(
-    default_visibility = ["//renderer/win32:__subpackages__"],
-)
-
-proto_library(
-    name = "test_spec_proto",
-    srcs = ["test_spec.proto"],
-)
-
-cc_proto_library(
-    name = "test_spec_cc_proto",
-    deps = [":test_spec_proto"],
-)
-
-filegroup(
-    name = "win32",
-    srcs = glob([
-        "*.png",
-        "*.textproto",  # TODO: Consider using `proto_data` for parsing these files at build time.
-    ]),
-)
+input {
+  blur_alpha: 1.0
+  blur_color: 8355839
+  blur_offset_x: 0
+  blur_offset_y: 0
+  blur_sigma: 3.0
+  corner_radius: 0.0
+  frame_color: 96972
+  frame_thickness: 1.0
+  inside_color: 16777215
+  label: "A"
+  label_color: 0
+  label_font: "IPAexゴシック"
+  label_size: 13
+  rect_height: 39.0
+  rect_width: 39.0
+  tail_direction: BOTTOM
+  tail_height: 5.0
+  tail_width: 10.0
+}
+output {
+   tail_offset_x: 28
+   tail_offset_y: 53
+}

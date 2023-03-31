@@ -27,29 +27,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-   "input" : {
-      "blur_alpha" : 1.0,
-      "blur_color" : 8355839,
-      "blur_offset_x" : 0,
-      "blur_offset_y" : 0,
-      "blur_sigma" : 3.0,
-      "corner_radius" : 0.0,
-      "frame_color" : 96972,
-      "frame_thickness" : 1.0,
-      "inside_color" : 16777215,
-      "label" : "A",
-      "label_color" : 0,
-      "label_font" : "IPAexゴシック",
-      "label_size" : 13,
-      "rect_height" : 39.0,
-      "rect_width" : 39.0,
-      "tail_direction" : 2,
-      "tail_height" : 5.0,
-      "tail_width" : 10.0
-   },
-   "output" : {
-      "tail_offset_x" : 28,
-      "tail_offset_y" : 53
-   }
+syntax = "proto2";
+
+package mozc.test.renderer.win32;
+
+message TestSpec {
+  enum TailDirection {
+    UNSPECIFIED = 0;
+    TOP = 1;
+    RIGHT = 2;
+    BOTTOM = 3;
+    LEFT = 4;
+  }
+
+  message Input {
+    optional double blur_alpha = 1;
+    optional uint32 blur_color = 2;
+    optional int32 blur_offset_x = 3;
+    optional int32 blur_offset_y = 4;
+    optional double blur_sigma = 5;
+    optional double corner_radius = 6;
+    optional uint32 frame_color = 7;
+    optional double frame_thickness = 8;
+    optional uint32 inside_color = 9;
+    optional string label = 10;
+    optional uint32 label_color = 11;
+    optional string label_font = 12;
+    optional int32 label_size = 13;
+    optional double rect_height = 14;
+    optional double rect_width = 15;
+    optional TailDirection tail_direction = 16;
+    optional double tail_height = 17;
+    optional double tail_width = 18;
+  }
+
+  message Output {
+    optional int32 tail_offset_x = 1;
+    optional int32 tail_offset_y = 2;
+  }
+
+  optional Input input = 1;
+  optional Output output = 2;
 }
