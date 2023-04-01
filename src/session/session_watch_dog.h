@@ -38,6 +38,7 @@
 #include "base/port.h"
 #include "base/thread.h"
 #include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 class CPUStatsInterface;
@@ -53,7 +54,7 @@ class SessionWatchDog : public Thread {
   SessionWatchDog &operator=(const SessionWatchDog &) = delete;
 
   // return the interval sec of watch dog timer
-  int32_t interval() const { return interval_sec_; }
+  absl::Duration interval() const { return interval_sec_; }
 
   // Set client interface. This method doesn't take the owership.
   // mainly for unittesting.
@@ -63,7 +64,7 @@ class SessionWatchDog : public Thread {
   // mainly for unittesting.
   void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
 
-  explicit SessionWatchDog(int32_t interval_sec);
+  explicit SessionWatchDog(absl::Duration interval_sec);
   ~SessionWatchDog() override;
 
   // inherited from Thread class
@@ -79,13 +80,14 @@ class SessionWatchDog : public Thread {
   // |last_cleanup_time|: the last UTC time cleanup is executed
   // TODO(taku): want to define it inside private with FRIEND_TEST
   bool CanSendCleanupCommand(const volatile float *cpu_loads,
-                             int cpu_loads_index, uint64_t current_cleanup_time,
-                             uint64_t last_cleanup_time) const;
+                             int cpu_loads_index,
+                             absl::Time current_cleanup_time,
+                             absl::Time last_cleanup_time) const;
 
  private:
   void Run() override;
 
-  int32_t interval_sec_;
+  absl::Duration interval_sec_;
   client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
   absl::Notification terminate_;

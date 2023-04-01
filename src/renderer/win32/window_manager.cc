@@ -33,20 +33,17 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <limits>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 
 #include "base/coordinates.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/win32/candidate_window.h"
-#include "renderer/win32/composition_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"
 #include "renderer/win32/win32_renderer_util.h"
@@ -66,7 +63,6 @@ const POINT kInvalidMousePosition = {-65535, -65535};
 WindowManager::WindowManager()
     : main_window_(new CandidateWindow),
       cascading_window_(new CandidateWindow),
-      composition_window_list_(CompositionWindowList::CreateInstance()),
       indicator_window_(new IndicatorWindow),
       infolist_window_(new InfolistWindow),
       layout_manager_(new LayoutManager),
@@ -90,21 +86,18 @@ void WindowManager::Initialize() {
   indicator_window_->Initialize();
   infolist_window_->Create(nullptr);
   infolist_window_->ShowWindow(SW_HIDE);
-  composition_window_list_->Initialize();
 }
 
 void WindowManager::AsyncHideAllWindows() {
   cascading_window_->ShowWindowAsync(SW_HIDE);
   main_window_->ShowWindowAsync(SW_HIDE);
   infolist_window_->ShowWindowAsync(SW_HIDE);
-  composition_window_list_->AsyncHide();
 }
 
 void WindowManager::AsyncQuitAllWindows() {
   cascading_window_->PostMessage(WM_CLOSE, 0, 0);
   main_window_->PostMessage(WM_CLOSE, 0, 0);
   infolist_window_->PostMessage(WM_CLOSE, 0, 0);
-  composition_window_list_->AsyncQuit();
 }
 
 void WindowManager::DestroyAllWindows() {
@@ -118,7 +111,6 @@ void WindowManager::DestroyAllWindows() {
   if (infolist_window_->IsWindow()) {
     infolist_window_->DestroyWindow();
   }
-  composition_window_list_->Destroy();
 }
 
 void WindowManager::HideAllWindows() {
@@ -126,20 +118,17 @@ void WindowManager::HideAllWindows() {
   cascading_window_->ShowWindow(SW_HIDE);
   indicator_window_->Hide();
   infolist_window_->DelayHide(0);
-  composition_window_list_->Hide();
 }
 
 // TODO(yukawa): Refactor this method by making a new method in LayoutManager
 //   with unit tests so that LayoutManager can handle both composition windows
 //   and candidate windows.
-void WindowManager::UpdateLayoutIMM32(
+void WindowManager::UpdateLayout(
     const commands::RendererCommand &command) {
-  typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
   typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
   // Hide all UI elements if |command.visible()| is false.
   if (!command.visible()) {
-    composition_window_list_->Hide();
     cascading_window_->ShowWindow(SW_HIDE);
     main_window_->ShowWindow(SW_HIDE);
     indicator_window_->Hide();
@@ -148,12 +137,12 @@ void WindowManager::UpdateLayoutIMM32(
   }
 
   // We assume |output| exists in the renderer command
-  // for all IMM32 renderer messages.
+  // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_output());
   const commands::Output &output = command.output();
 
   // We assume |application_info| exists in the renderer command
-  // for all IMM32 renderer messages.
+  // for all |RendererCommand::UPDATE| renderer messages.
   DCHECK(command.has_application_info());
 
   const commands::RendererCommand::ApplicationInfo &app_info =
@@ -167,21 +156,8 @@ void WindowManager::UpdateLayoutIMM32(
   bool show_suggest =
       ((app_info.ui_visibilities() & ApplicationInfo::ShowSuggestWindow) ==
        ApplicationInfo::ShowSuggestWindow);
-  const bool show_composition =
-      ((app_info.ui_visibilities() & ApplicationInfo::ShowCompositionWindow) ==
-       ApplicationInfo::ShowCompositionWindow);
 
   CandidateWindowLayout candidate_layout;
-  std::vector<CompositionWindowLayout> layouts;
-  if (show_composition) {
-    if (!layout_manager_->LayoutCompositionWindow(command, &layouts,
-                                                  &candidate_layout)) {
-      candidate_layout.Clear();
-      layouts.clear();
-      show_candidate = false;
-      show_suggest = false;
-    }
-  }
 
   bool is_suggest = false;
   bool is_convert_or_predict = false;
@@ -207,10 +183,6 @@ void WindowManager::UpdateLayoutIMM32(
   } else if (app_info.has_indicator_info()) {
     indicator_window_->OnUpdate(command, layout_manager_.get());
   }
-
-  // CompositionWindowList::UpdateLayout will hides all windows if
-  // |layouts| is empty.
-  composition_window_list_->UpdateLayout(layouts);
 
   if (!output.has_candidates()) {
     // Hide candidate windows because there is no candidate to be displayed.
@@ -355,33 +327,20 @@ void WindowManager::UpdateLayoutIMM32(
         HWND_TOPMOST, 0, 0, 0, 0,
         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-    const int mode = layout_manager_->GetCompatibilityMode(app_info);
-
-    // If SHOW_INFOLIST_IMMEDIATELY flag is set, we should show the InfoList
-    // without delay. See the comment of SHOW_INFOLIST_IMMEDIATELY in
-    // win32_renderer_util.h or b/5824433 for details.
-    uint32_t maximum_delay = std::numeric_limits<int32_t>::max();
-    if ((mode & SHOW_INFOLIST_IMMEDIATELY) == SHOW_INFOLIST_IMMEDIATELY) {
-      maximum_delay = 0;
-    }
-
-    const uint32_t hide_window_delay =
-        std::min(maximum_delay, kHideWindowDelay);
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
       const int focused_row =
           candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
-        const uint32_t raw_delay =
+        const uint32_t delay =
             std::max(static_cast<uint32_t>(0),
                      command.output().candidates().usages().delay());
-        const uint32_t delay = std::min(maximum_delay, raw_delay);
         infolist_window_->DelayShow(delay);
       } else {
-        infolist_window_->DelayHide(hide_window_delay);
+        infolist_window_->DelayHide(kHideWindowDelay);
       }
     } else {
-      infolist_window_->DelayHide(hide_window_delay);
+      infolist_window_->DelayHide(kHideWindowDelay);
     }
   } else {
     // Hide infolist window immediately.
@@ -434,12 +393,6 @@ void WindowManager::UpdateLayoutIMM32(
     }
     cascading_window_->ShowWindow(SW_HIDE);
   }
-}
-
-void WindowManager::UpdateLayoutTSF(const commands::RendererCommand &command) {
-  // Currently implemented by IMM32 implementation.
-  // TODO(yukawa): Implement TSF version.
-  UpdateLayoutIMM32(command);
 }
 
 bool WindowManager::IsAvailable() const {

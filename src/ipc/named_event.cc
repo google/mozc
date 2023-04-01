@@ -142,17 +142,15 @@ bool NamedEventListener::IsOwner() const {
   return (IsAvailable() && is_owner_);
 }
 
-bool NamedEventListener::Wait(int msec) {
+bool NamedEventListener::Wait(absl::Duration msec) {
   if (!IsAvailable()) {
     LOG(ERROR) << "NamedEventListener is not available";
     return false;
   }
 
-  if (msec < 0) {
-    msec = INFINITE;
-  }
-
-  const DWORD result = ::WaitForSingleObject(handle_, msec);
+  const DWORD result = ::WaitForSingleObject(
+      handle_,
+      msec < absl::ZeroDuration() ? INFINITE : absl::ToInt64Milliseconds(msec));
   if (result == WAIT_TIMEOUT) {
     LOG(WARNING) << "NamedEvent timeout " << ::GetLastError();
     return false;
@@ -161,7 +159,7 @@ bool NamedEventListener::Wait(int msec) {
   return true;
 }
 
-int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
+int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   if (!IsAvailable()) {
     return TIMEOUT;
   }
@@ -175,16 +173,13 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
     }
   }
 
-  if (msec < 0) {
-    msec = INFINITE;
-  }
-
   HANDLE handles[2] = {handle_, handle};
 
   const DWORD handles_size = (handle == nullptr) ? 1 : 2;
 
-  const DWORD ret =
-      ::WaitForMultipleObjects(handles_size, handles, FALSE, msec);
+  const DWORD ret = ::WaitForMultipleObjects(
+      handles_size, handles, FALSE,
+      msec < absl::ZeroDuration() ? INFINITE : absl::ToInt64Milliseconds(msec));
   int result = TIMEOUT;
   switch (ret) {
     case WAIT_OBJECT_0:
@@ -281,21 +276,21 @@ bool NamedEventListener::IsOwner() const {
   return (IsAvailable() && is_owner_);
 }
 
-bool NamedEventListener::Wait(int msec) {
+bool NamedEventListener::Wait(absl::Duration msec) {
   return WaitEventOrProcess(msec, kInvalidPid /* don't check pid */) ==
          NamedEventListener::EVENT_SIGNALED;
 }
 
-int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
+int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
   if (!IsAvailable()) {
     return NamedEventListener::TIMEOUT;
   }
 
-  const bool infinite = msec < 0 ? true : false;
-  constexpr int kWaitMsec = 200;
+  const bool infinite = msec < absl::ZeroDuration() ? true : false;
+  constexpr absl::Duration kWait = absl::Milliseconds(200);
 
-  while (infinite || msec > 0) {
-    absl::SleepFor(absl::Milliseconds(kWaitMsec));
+  while (infinite || msec > absl::ZeroDuration()) {
+    absl::SleepFor(kWait);
 
     if (!IsProcessAlive(pid)) {
       return NamedEventListener::PROCESS_SIGNALED;
@@ -314,7 +309,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
       return EVENT_SIGNALED;
     }
 
-    msec -= kWaitMsec;
+    msec -= kWait;
   }
 
   // timeout.

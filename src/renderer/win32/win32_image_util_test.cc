@@ -41,17 +41,17 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
-#include <list>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mmap.h"
 #include "base/util.h"
+#include "base/protobuf/text_format.h"
 #include "base/win32/win_font_test_helper.h"
-#include "net/jsoncpp.h"
+#include "data/test/renderer/win32/test_spec.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -70,16 +70,16 @@ using ::mozc::renderer::win32::internal::SubdivisionalPixel;
 using ::mozc::renderer::win32::internal::TextLabel;
 
 using ::WTL::CBitmap;
-using ::WTL::CDC;
-using ::WTL::CLogFont;
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
 namespace {
 
-typedef SubdivisionalPixel::SubdivisionalPixelIterator
-    SubdivisionalPixelIterator;
+using BalloonImageInfo = BalloonImage::BalloonImageInfo;
+using SubdivisionalPixelIterator =
+    SubdivisionalPixel::SubdivisionalPixelIterator;
+using TestSpec = ::mozc::test::renderer::win32::TestSpec;
 
 class BalloonImageTest : public ::testing::Test,
                          public ::testing::WithParamInterface<const char *> {
@@ -107,22 +107,18 @@ class BalloonImageTest : public ::testing::Test,
     using BalloonImage::CreateInternal;
   };
 
-  static void SaveTestImage(const TestableBalloonImage::BalloonImageInfo &info,
-                            const std::wstring filename) {
+  static void SaveTestImage(const BalloonImageInfo &info,
+                            const std::wstring &filename) {
     CPoint tail_offset;
     CSize size;
     std::vector<ARGBColor> buffer;
     CBitmap dib = TestableBalloonImage::CreateInternal(info, &tail_offset,
                                                        &size, &buffer);
 
-    Json::Value tail;
-    BalloonInfoToJson(info, &tail);
-    // Explicitly cast to int32_t to avoid ambiguity between multiple
-    // Json::Value constructors. On Windows, LONG is always a 32-bit int.
-    // https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types
-    static_assert(sizeof(int32_t) == sizeof(LONG));
-    tail["output"]["tail_offset_x"] = static_cast<int32_t>(tail_offset.x);
-    tail["output"]["tail_offset_y"] = static_cast<int32_t>(tail_offset.y);
+    TestSpec spec = TestSpec();
+    BalloonInfoToTextProto(info, &spec);
+    spec.mutable_output()->set_tail_offset_x(tail_offset.x);
+    spec.mutable_output()->set_tail_offset_y(tail_offset.y);
 
     Gdiplus::Bitmap bitmap(size.cx, size.cy);
     for (size_t y = 0; y < size.cy; ++y) {
@@ -136,63 +132,58 @@ class BalloonImageTest : public ::testing::Test,
     bitmap.Save(filename.c_str(), &clsid_png_);
 
     std::string utf8_filename;
-    Util::WideToUtf8(filename + L".json", &utf8_filename);
-    OutputFileStream os(utf8_filename.c_str());
-    Json::StyledWriter writer;
-    os << writer.write(tail);
+    Util::WideToUtf8(filename + L".textproto", &utf8_filename);
+    OutputFileStream os(utf8_filename);
+    std::string textproto;
+    mozc::protobuf::TextFormat::PrintToString(spec, &textproto);
+    os << textproto;
   }
 
-  static void BalloonInfoToJson(
-      const TestableBalloonImage::BalloonImageInfo &info, Json::Value *tail) {
-    Json::Value input(Json::objectValue);
-    input["frame_color"] = Json::Value(ColorToInteger(info.frame_color));
-    input["inside_color"] = Json::Value(ColorToInteger(info.inside_color));
-    input["label_color"] = Json::Value(ColorToInteger(info.label_color));
-    input["blur_color"] = Json::Value(ColorToInteger(info.blur_color));
-    input["blur_alpha"] = Json::Value(info.blur_alpha);
-    input["label_size"] = Json::Value(info.label_size);
-    input["label_font"] = Json::Value(info.label_font);
-    input["label"] = Json::Value(info.label);
-    input["rect_width"] = Json::Value(info.rect_width);
-    input["rect_height"] = Json::Value(info.rect_height);
-    input["frame_thickness"] = Json::Value(info.frame_thickness);
-    input["corner_radius"] = Json::Value(info.corner_radius);
-    input["tail_height"] = Json::Value(info.tail_height);
-    input["tail_width"] = Json::Value(info.tail_width);
-    input["tail_direction"] =
-        Json::Value(static_cast<int>(info.tail_direction));
-    input["blur_sigma"] = Json::Value(info.blur_sigma);
-    input["blur_offset_x"] = Json::Value(info.blur_offset_x);
-    input["blur_offset_y"] = Json::Value(info.blur_offset_y);
-
-    (*tail)["input"] = input;
+  static void BalloonInfoToTextProto(
+      const BalloonImageInfo &info, TestSpec *spec) {
+    TestSpec::Input *input = spec->mutable_input();
+    input->set_frame_color(ColorToInteger(info.frame_color));
+    input->set_inside_color(ColorToInteger(info.inside_color));
+    input->set_label_color(ColorToInteger(info.label_color));
+    input->set_blur_color(ColorToInteger(info.blur_color));
+    input->set_blur_alpha(info.blur_alpha);
+    input->set_label_size(info.label_size);
+    input->set_label_font(info.label_font);
+    input->set_label(info.label);
+    input->set_rect_width(info.rect_width);
+    input->set_rect_height(info.rect_height);
+    input->set_frame_thickness(info.frame_thickness);
+    input->set_corner_radius(info.corner_radius);
+    input->set_tail_height(info.tail_height);
+    input->set_tail_width(info.tail_width);
+    input->set_tail_direction(TranslateEnum(info.tail_direction));
+    input->set_blur_sigma(info.blur_sigma);
+    input->set_blur_offset_x(info.blur_offset_x);
+    input->set_blur_offset_y(info.blur_offset_y);
   }
 
-  static void JsonToBalloonInfo(const Json::Value &tail,
-                                TestableBalloonImage::BalloonImageInfo *info) {
-    const Json::Value &input = tail["input"];
-
-    *info = TestableBalloonImage::BalloonImageInfo();
-    info->frame_color = IntegerToColor(input["frame_color"].asInt());
-    info->inside_color = IntegerToColor(input["inside_color"].asInt());
-    info->label_color = IntegerToColor(input["label_color"].asInt());
-    info->blur_color = IntegerToColor(input["blur_color"].asInt());
-    info->blur_alpha = input["blur_alpha"].asDouble();
-    info->label_size = input["label_size"].asInt();
-    info->label_font = input["label_font"].asString();
-    info->label = input["label"].asString();
-    info->rect_width = input["rect_width"].asDouble();
-    info->rect_height = input["rect_height"].asDouble();
-    info->frame_thickness = input["frame_thickness"].asDouble();
-    info->corner_radius = input["corner_radius"].asDouble();
-    info->tail_height = input["tail_height"].asDouble();
-    info->tail_width = input["tail_width"].asDouble();
-    info->tail_direction =
-        static_cast<TestableBalloonImage::BalloonImageInfo::TailDirection>(
-            input["tail_direction"].asInt());
-    info->blur_sigma = input["blur_sigma"].asDouble();
-    info->blur_offset_x = input["blur_offset_x"].asInt();
-    info->blur_offset_y = input["blur_offset_y"].asInt();
+  static void TextProtoToBalloonInfo(
+      const TestSpec &spec, BalloonImageInfo *info) {
+    const TestSpec::Input &input = spec.input();
+    *info = BalloonImageInfo();
+    info->frame_color = IntegerToColor(input.frame_color());
+    info->inside_color = IntegerToColor(input.inside_color());
+    info->label_color = IntegerToColor(input.label_color());
+    info->blur_color = IntegerToColor(input.blur_color());
+    info->blur_alpha = input.blur_alpha();
+    info->label_size = input.label_size();
+    info->label_font = input.label_font();
+    info->label = input.label();
+    info->rect_width = input.rect_width();
+    info->rect_height = input.rect_height();
+    info->frame_thickness = input.frame_thickness();
+    info->corner_radius = input.corner_radius();
+    info->tail_height = input.tail_height();
+    info->tail_width = input.tail_width();
+    info->tail_direction = TranslateEnum(input.tail_direction());
+    info->blur_sigma = input.blur_sigma();
+    info->blur_offset_x = input.blur_offset_x();
+    info->blur_offset_y = input.blur_offset_y();
   }
 
  private:
@@ -233,13 +224,52 @@ class BalloonImageTest : public ::testing::Test,
 
   static void UninitGdiplus() { Gdiplus::GdiplusShutdown(gdiplus_token_); }
 
-  static int32_t ColorToInteger(RGBColor color) {
-    return static_cast<int32_t>(color.r) << 16 |
-           static_cast<int32_t>(color.g) << 8 | static_cast<int32_t>(color.b);
+  static uint32_t ColorToInteger(RGBColor color) {
+    return static_cast<uint32_t>(color.r) << 16 |
+           static_cast<uint32_t>(color.g) << 8 | static_cast<uint32_t>(color.b);
   }
 
-  static RGBColor IntegerToColor(int32_t color) {
+  static RGBColor IntegerToColor(uint32_t color) {
     return RGBColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+  }
+
+  static TestSpec::TailDirection TranslateEnum(
+      BalloonImageInfo::TailDirection direction) {
+    switch (direction) {
+      case BalloonImageInfo::kTop:
+        return TestSpec::TOP;
+      case BalloonImageInfo::kBottom:
+        return TestSpec::BOTTOM;
+      case BalloonImageInfo::kLeft:
+        return TestSpec::LEFT;
+      case BalloonImageInfo::kRight:
+        return TestSpec::RIGHT;
+      default:
+        CHECK(false) << "Unexpected direction=" << direction;
+        return TestSpec::UNSPECIFIED;  // must not reach here.
+    }
+  }
+
+  static BalloonImageInfo::TailDirection TranslateEnum(
+      TestSpec::TailDirection direction) {
+    switch (direction) {
+      case TestSpec::UNSPECIFIED:
+        CHECK(false) << "TailDirection must be set";
+        // must not reach here.
+        return BalloonImageInfo::TailDirection::kTop;
+      case TestSpec::TOP:
+        return BalloonImageInfo::TailDirection::kTop;
+      case TestSpec::BOTTOM:
+        return BalloonImageInfo::TailDirection::kBottom;
+      case TestSpec::LEFT:
+        return BalloonImageInfo::TailDirection::kLeft;
+      case TestSpec::RIGHT:
+        return BalloonImageInfo::TailDirection::kRight;
+      default:
+        CHECK(false) << "Unexpected direction=" << direction;
+        // must not reach here.
+        return BalloonImageInfo::TailDirection::kTop;
+    }
   }
 
   static CLSID clsid_png_;
@@ -289,18 +319,19 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
 TEST_P(BalloonImageTest, TestImpl) {
   const std::string &expected_image_path = mozc::testing::GetSourceFileOrDie(
       {"data", "test", "renderer", "win32", GetParam()});
-  const std::string json_path = expected_image_path + ".json";
-  ASSERT_OK(FileUtil::FileExists(json_path))
-      << "Manifest file is not found: " << json_path;
+  const std::string textproto_path = expected_image_path + ".textproto";
+  ASSERT_OK(FileUtil::FileExists(textproto_path))
+      << "Manifest file is not found: " << textproto_path;
 
-  Json::Value tail;
+  TestSpec spec;
   {
-    InputFileStream fs(json_path.c_str());
-    ASSERT_TRUE(fs.good());
-    fs >> tail;
+    absl::StatusOr<std::string> data = FileUtil::GetContents(textproto_path);
+    ASSERT_OK(data);
+    ASSERT_TRUE(mozc::protobuf::TextFormat::ParseFromString(data.value(),
+                                                            &spec));
   }
-  TestableBalloonImage::BalloonImageInfo info;
-  JsonToBalloonInfo(tail, &info);
+  BalloonImageInfo info;
+  TextProtoToBalloonInfo(spec, &info);
 
   CPoint actual_tail_offset;
   CSize actual_size;
@@ -308,8 +339,8 @@ TEST_P(BalloonImageTest, TestImpl) {
   CBitmap dib = TestableBalloonImage::CreateInternal(
       info, &actual_tail_offset, &actual_size, &actual_buffer);
 
-  EXPECT_EQ(actual_tail_offset.x, tail["output"]["tail_offset_x"].asInt());
-  EXPECT_EQ(actual_tail_offset.y, tail["output"]["tail_offset_y"].asInt());
+  EXPECT_EQ(actual_tail_offset.x, spec.output().tail_offset_x());
+  EXPECT_EQ(actual_tail_offset.y, spec.output().tail_offset_y());
 
   std::wstring wide_path;
   Util::Utf8ToWide(expected_image_path, &wide_path);

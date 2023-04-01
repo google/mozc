@@ -1,0 +1,40 @@
+# Mozc project expects all the checked out text files to have LF line ending
+# not only on mac/Linux but also on Windows.
+# See https://stackoverflow.com/a/42135910
+* text=auto eol=lf
+
+# Known text files
+*.bazel text
+*.bzl text
+*.c text
+*.cc text
+*.def text
+*.el text
+*.gyp text diff=python
+*.gypi text diff=python
+*.h text
+*.kcm text
+*.m text diff=objc
+*.mm text diff=objcpp
+*.manifest text
+*.md text
+*.proto text
+*.py text
+*.rc text
+*.sh text
+*.svg text
+*.textproto text
+*.tsv text
+*.txt text
+*.TXT text
+*.wxi text
+*.wxs text
+*.xml text
+
+# Known binary files
+*.deflate binary
+*.png binary
+*.jpg binary
+*.bmp binary
+*.ico binary
+*.tiff binary

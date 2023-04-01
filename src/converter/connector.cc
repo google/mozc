@@ -37,18 +37,17 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+
 
 namespace mozc {
 namespace {
-
-using ::mozc::storage::louds::SimpleSuccinctBitVectorIndex;
 
 constexpr uint32_t kInvalidCacheKey = 0xFFFFFFFF;
 constexpr uint16_t kConnectorMagicNumber = 0xCDAB;
@@ -136,57 +135,37 @@ absl::StatusOr<Metadata> ParseMetadata(const char *connection_data,
 
 }  // namespace
 
-class Connector::Row final {
- public:
-  Row()
-      : chunk_bits_index_(sizeof(uint32_t)),
-        compact_bits_index_(sizeof(uint32_t)) {}
+void Connector::Row::Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
+                          const uint8_t *compact_bits, size_t compact_bits_size,
+                          const uint8_t *values, bool use_1byte_value) {
+  chunk_bits_index_.Init(chunk_bits, chunk_bits_size);
+  compact_bits_index_.Init(compact_bits, compact_bits_size);
+  values_ = values;
+  use_1byte_value_ = use_1byte_value;
+}
 
-  Row(const Row &) = delete;
-  Row &operator=(const Row &) = delete;
-
-  ~Row() = default;
-
-  void Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
-            const uint8_t *compact_bits, size_t compact_bits_size,
-            const uint8_t *values, bool use_1byte_value) {
-    chunk_bits_index_.Init(chunk_bits, chunk_bits_size);
-    compact_bits_index_.Init(compact_bits, compact_bits_size);
-    values_ = values;
-    use_1byte_value_ = use_1byte_value;
+bool Connector::Row::GetValue(uint16_t index, uint16_t *value) const {
+  int chunk_bit_position = index / 8;
+  if (!chunk_bits_index_.Get(chunk_bit_position)) {
+    return false;
+  }
+  int compact_bit_position =
+      chunk_bits_index_.Rank1(chunk_bit_position) * 8 + index % 8;
+  if (!compact_bits_index_.Get(compact_bit_position)) {
+    return false;
+  }
+  int value_position = compact_bits_index_.Rank1(compact_bit_position);
+  if (use_1byte_value_) {
+    *value = values_[value_position];
+    if (*value == kInvalid1ByteCostValue) {
+      *value = kInvalidCost;
+    }
+  } else {
+    *value = reinterpret_cast<const uint16_t *>(values_)[value_position];
   }
 
-  // Returns true if the value is found in the row and then store the found
-  // value into |value|. Otherwise returns false.
-  bool GetValue(uint16_t index, uint16_t *value) const {
-    int chunk_bit_position = index / 8;
-    if (!chunk_bits_index_.Get(chunk_bit_position)) {
-      return false;
-    }
-    int compact_bit_position =
-        chunk_bits_index_.Rank1(chunk_bit_position) * 8 + index % 8;
-    if (!compact_bits_index_.Get(compact_bit_position)) {
-      return false;
-    }
-    int value_position = compact_bits_index_.Rank1(compact_bit_position);
-    if (use_1byte_value_) {
-      *value = values_[value_position];
-      if (*value == kInvalid1ByteCostValue) {
-        *value = kInvalidCost;
-      }
-    } else {
-      *value = reinterpret_cast<const uint16_t *>(values_)[value_position];
-    }
-
-    return true;
-  }
-
- private:
-  SimpleSuccinctBitVectorIndex chunk_bits_index_;
-  SimpleSuccinctBitVectorIndex compact_bits_index_;
-  const uint8_t *values_ = nullptr;
-  bool use_1byte_value_ = false;
-};
+  return true;
+}
 
 absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
@@ -210,9 +189,6 @@ absl::StatusOr<std::unique_ptr<Connector>> Connector::Create(
   }
   return connector;
 }
-
-Connector::Connector() = default;
-Connector::~Connector() = default;
 
 absl::Status Connector::Init(const char *connection_data,
                              size_t connection_size, int cache_size) {

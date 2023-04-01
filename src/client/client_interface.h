@@ -39,6 +39,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -191,7 +192,7 @@ class ClientInterface {
   virtual void EnableCascadingWindow(bool enable) = 0;
 
   // Sets the time out in milli second used for the IPC connection.
-  virtual void set_timeout(int timeout) = 0;
+  virtual void set_timeout(absl::Duration timeout) = 0;
 
   // Sets restricted mode.
   // server is launched inside restricted environment.

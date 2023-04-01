@@ -34,49 +34,14 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "protocol/renderer_command.pb.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
 // TODO(yukawa): Use platform independent primitive types.
 #ifdef _WIN32
 namespace mozc {
 namespace renderer {
 namespace win32 {
-
-struct CharacterRange {
-  CharacterRange();
-  int begin;
-  int length;
-};
-
-struct LineLayout {
-  std::wstring text;
-  int line_length;
-  int line_width;
-  int line_start_offset;
-  std::vector<CharacterRange> character_positions;
-  LineLayout();
-};
-
-struct SegmentMarkerLayout {
-  POINT from;
-  POINT to;
-  bool highlighted;
-  SegmentMarkerLayout();
-};
-
-struct CompositionWindowLayout {
-  RECT window_position_in_screen_coordinate;
-  RECT text_area;
-  RECT caret_rect;
-  POINT base_position;
-  LOGFONT log_font;
-  std::wstring text;
-  std::vector<SegmentMarkerLayout> marker_layouts;
-  CompositionWindowLayout();
-};
 
 // A POD-like class which represents positional information about where the
 // candidate window should be displayed.
@@ -170,10 +135,6 @@ class WorkingAreaFactory {
   // Returns an instance of WorkingAreaInterface. Caller must delete
   // the instance.
   static WorkingAreaInterface *Create();
-
-  // Returns an instance of WorkingAreaInterface. Caller must delete
-  // the instance.
-  static WorkingAreaInterface *CreateMock(const RECT &working_area);
 };
 
 // This interface is designed to hook API calls for unit test.
@@ -236,31 +197,6 @@ enum CompatibilityMode {
   // window can be shown at more appropriate position.  Qt-based applications
   // match this category.
   CAN_USE_CANDIDATE_FORM_FOR_SUGGEST = 1,
-  // Some applications interpret the coordinate system of CandidateForm as
-  // the offset from the upper-left corner of the window as opposed to most
-  // of other applications which simply use local coordinate.  When this flag
-  // is specified, positional fields in CandidateForm are transformed as if
-  // they are the offset from the upper-left corner of the window.  GTK-based
-  // applications and Java AWT-based applications match this category.
-  USE_LOCAL_COORD_FOR_CANDIDATE_FORM = 2,
-  // Some applications such as V2C occasionally create zero-initialized
-  // CANDIDATEFORM and maintain it regardless of the actual position of the
-  // composition. This compatibility flag represents that it is better to
-  // ignore this phantom CANDIDATEFORM.  Currently all the Java AWT-based
-  // applications match this category.
-  IGNORE_DEFAULT_COMPOSITION_FORM = 4,
-  // Some applications such as NTEmacs22 or Meadow3.0 automatically and
-  // frequently generates WM_IME_CONTROL/IMC_SETCOMPOSITIONWINDOW messages.
-  // In this case, the renderer might not be able to show the InfoList
-  // because new rendering messages will come before the InfoList is
-  // displayed with the default delay (~500 msec). This compatibility flag
-  // represents that we should show the InfoList immediately on such
-  // applications. See b/5824433 for details.
-  // TODO(horo, yukawa): Perhapes we can improve the rendering algorithm
-  //     when the renderer is receiving the same messages successively.
-  //     If we can safely ignore such successive messages, this flag
-  //     can be removed.
-  SHOW_INFOLIST_IMMEDIATELY = 8,
 };
 
 class LayoutManager {
@@ -275,19 +211,6 @@ class LayoutManager {
   // deleting the mock objects passed.
   LayoutManager(SystemPreferenceInterface *mock_system_preference,
                 WindowPositionInterface *mock_window_position);
-
-  // Calculates layout of composition windows including preferred position of
-  // the candidate window and text attributes such as underline or text
-  // highlighting in the composition windows.  Returns true when succeeds.
-  // This method is thread-safe.
-  //  command: The renderer commant to be rendered.
-  //  composition_window_layouts: calculated layout for composition windows.
-  //  candidate_form: calculated position for the candidate window to be
-  //    displayed.
-  bool LayoutCompositionWindow(
-      const commands::RendererCommand &command,
-      std::vector<CompositionWindowLayout> *composition_window_layouts,
-      CandidateWindowLayout *candidate_layout) const;
 
   // Returns compatibility bits for given target application.
   int GetCompatibilityMode(
@@ -327,20 +250,6 @@ class LayoutManager {
   // RECT version of GetPointInPhysicalCoords.  This method is thread-safe.
   void GetRectInPhysicalCoords(HWND window_handle, const RECT &rect,
                                RECT *result) const;
-
-  // Converts a local coordinate into a logical screen coordinate assuming
-  // |src_point| is the relative offset from the top-left of the
-  // window specified by the |src_window_handle|.
-  // Returns false if fails.
-  bool LocalPointToScreen(HWND src_window_handle, const POINT &src_point,
-                          POINT *dest_point) const;
-
-  // Converts a local coordinate into a logical screen coordinate assuming
-  // |src_point| is the relative offset from the top-left of the
-  // window specified by the |src_window_handle|.
-  // Returns false if fails.
-  bool LocalRectToScreen(HWND src_window_handle, const RECT &src_rect,
-                         RECT *dest_rect) const;
 
   // Converts a local coordinate into a logical screen coordinate assuming
   // |src_point| is the client coorinate in the window specified by
@@ -389,33 +298,6 @@ class LayoutManager {
       IndicatorWindowLayout *indicator_layout);
 
  private:
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalProportional);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalProportional);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalMonospaced);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalMonospaced);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalProportionalCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalProportionalCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, HorizontalMonospacedCompositeGlyph);
-  FRIEND_TEST(Win32RendererUtilTest, VerticalMonospacedCompositeGlyph);
-
-  // Calculates text layout with taking text wrapping into account.  Returns
-  // true when succeeds.
-  //  font: The font information to be used for calculation.
-  //  str: The string to be calculated.  Non-printable characters are not fully
-  //    supported.  For example, this function may not work well if |str|
-  //    contains CR, LF, HT, and VT.
-  //  maximum_line_length: The maximum length which limits the grows of text
-  //    for each line.
-  //  initial_offset: Represents cursor position where the first character in
-  //    the |str| starts from if there is enough space to show the first
-  //    character.
-  //  LineLayout: Layout information for each split line.
-  static bool CalcLayoutWithTextWrapping(const LOGFONTW &font,
-                                         const std::wstring &text,
-                                         int maximum_line_length,
-                                         int initial_offset,
-                                         std::vector<LineLayout> *line_layouts);
-
   std::unique_ptr<SystemPreferenceInterface> system_preference_;
   std::unique_ptr<WindowPositionInterface> window_position_;
 };

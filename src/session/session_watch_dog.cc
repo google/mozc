@@ -44,14 +44,16 @@
 #include "base/system_util.h"
 #include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 namespace mozc {
 namespace {
 
 // IPC timeout
-const int32_t kCleanupTimeout = 30 * 1000;  // 30 sec for Cleanup Command
-const int32_t kPingTimeout = 5 * 1000;      // 5 sec for Ping
+constexpr absl::Duration kCleanupTimeout =
+    absl::Seconds(30);  // 30 sec for Cleanup Command
+constexpr absl::Duration kPingTimeout = absl::Seconds(5);  // 5 sec for Ping
 
 // number of trials for ping
 const int32_t kPingTrial = 3;
@@ -66,10 +68,11 @@ constexpr float kMinimumAllCPULoad = 0.33f;
 constexpr float kMinimumLatestCPULoad = 0.66f;
 }  // namespace
 
-SessionWatchDog::SessionWatchDog(int32_t interval_sec)
+SessionWatchDog::SessionWatchDog(absl::Duration interval_sec)
     : interval_sec_(interval_sec), client_(nullptr), cpu_stats_(nullptr) {
   // allow [1..600].
-  interval_sec_ = std::max(1, std::min(interval_sec_, 600));
+  interval_sec_ =
+      std::max(absl::Seconds(1), std::min(interval_sec_, absl::Seconds(600)));
 }
 
 SessionWatchDog::~SessionWatchDog() { Terminate(); }
@@ -117,31 +120,33 @@ void SessionWatchDog::Run() {
   DCHECK_GE(number_of_processors, 1);
 
   // the first (interval_sec_ - 60) sec: -> Do nothing
-  const int32_t idle_interval_msec = std::max(0, (interval_sec_ - 60)) * 1000;
+  const absl::Duration idle_interval_msec =
+      std::max(absl::ZeroDuration(), (interval_sec_ - absl::Seconds(60)));
 
   // last 60 sec: -> check CPU usage
-  const int32_t cpu_check_interval_msec = std::min(60, interval_sec_) * 1000;
+  const absl::Duration cpu_check_interval_msec =
+      std::min(absl::Seconds(60), interval_sec_);
 
   // for every 5 second, get CPU load percentage
-  const int32_t cpu_check_duration_msec = std::min(5, interval_sec_) * 1000;
+  const absl::Duration cpu_check_duration_msec =
+      std::min(absl::Seconds(5), interval_sec_);
 
   std::fill(cpu_loads, cpu_loads + std::size(cpu_loads), 0.0);
 
-  uint64_t last_cleanup_time = Clock::GetTime();
+  absl::Time last_cleanup_time = Clock::GetAbslTime();
 
   while (true) {
     VLOG(1) << "Start sleeping " << idle_interval_msec;
-    if (terminate_.WaitForNotificationWithTimeout(
-            absl::Milliseconds(idle_interval_msec))) {
+    if (terminate_.WaitForNotificationWithTimeout(idle_interval_msec)) {
       VLOG(1) << "Received stop signal";
       return;
     }
     VLOG(1) << "Finish sleeping " << idle_interval_msec;
 
     int32_t cpu_loads_index = 0;
-    for (int n = 0; n < cpu_check_interval_msec; n += cpu_check_duration_msec) {
-      if (terminate_.WaitForNotificationWithTimeout(
-              absl::Milliseconds(cpu_check_duration_msec))) {
+    for (absl::Duration n = absl::ZeroDuration(); n < cpu_check_interval_msec;
+         n += cpu_check_duration_msec) {
+      if (terminate_.WaitForNotificationWithTimeout(cpu_check_duration_msec)) {
         VLOG(1) << "Received stop signal";
         return;
       }
@@ -161,7 +166,7 @@ void SessionWatchDog::Run() {
 
     DCHECK_GT(cpu_loads_index, 0);
 
-    const uint64_t current_cleanup_time = Clock::GetTime();
+    const absl::Time current_cleanup_time = Clock::GetAbslTime();
     if (!CanSendCleanupCommand(cpu_loads, cpu_loads_index, current_cleanup_time,
                                last_cleanup_time)) {
       VLOG(1) << "CanSendCleanupCommand returned false";
@@ -219,10 +224,9 @@ void SessionWatchDog::Run() {
   }
 }
 
-bool SessionWatchDog::CanSendCleanupCommand(const volatile float *cpu_loads,
-                                            int cpu_loads_index,
-                                            uint64_t current_cleanup_time,
-                                            uint64_t last_cleanup_time) const {
+bool SessionWatchDog::CanSendCleanupCommand(
+    const volatile float *cpu_loads, int cpu_loads_index,
+    absl::Time current_cleanup_time, absl::Time last_cleanup_time) const {
   if (current_cleanup_time <= last_cleanup_time) {
     LOG(ERROR) << "time stamps are the same. clock may be altered";
     return false;

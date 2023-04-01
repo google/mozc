@@ -52,7 +52,7 @@ DictionaryFile::DictionaryFile(const DictionaryFileCodecInterface *file_codec)
 
 absl::Status DictionaryFile::OpenFromFile(const std::string &file) {
   mapping_ = std::make_unique<Mmap>();
-  if (!mapping_->Open(file.c_str())) {
+  if (!mapping_->Open(file)) {
     return absl::UnknownError(
         absl::StrCat("dictionary_file.cc: Failed to mmap ", file));
   }

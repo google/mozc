@@ -85,7 +85,7 @@ class SessionWatchDogTest : public testing::Test {
 };
 
 TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
-  static const int32_t kInterval = 1;  // for every 1sec
+  static const absl::Duration kInterval = absl::Seconds(1);  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(watchdog.interval(), kInterval);
@@ -124,7 +124,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
 }
 
 TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
-  static const int32_t kInterval = 1;  // for every 1sec
+  static const absl::Duration kInterval = absl::Seconds(1);  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(watchdog.interval(), kInterval);
@@ -172,33 +172,38 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
 TEST_F(SessionWatchDogTest, SessionCanSendCleanupCommandTest) {
   volatile float cpu_loads[16];
 
-  mozc::SessionWatchDog watchdog(2);
+  mozc::SessionWatchDog watchdog(absl::Seconds(2));
 
   cpu_loads[0] = 0.0;
   cpu_loads[1] = 0.0;
 
   // suspend
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(cpu_loads, 2, 5, 0));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 2, absl::FromUnixSeconds(5), absl::FromUnixSeconds(0)));
 
   // not suspend
-  EXPECT_TRUE(watchdog.CanSendCleanupCommand(cpu_loads, 2, 1, 0));
+  EXPECT_TRUE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 2, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 
   // error (the same time stamp)
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(cpu_loads, 2, 0, 0));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 2, absl::FromUnixSeconds(0), absl::FromUnixSeconds(0)));
 
   cpu_loads[0] = 0.4;
   cpu_loads[1] = 0.5;
   cpu_loads[2] = 0.4;
   cpu_loads[3] = 0.6;
   // average CPU loads >= 0.33
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(cpu_loads, 4, 1, 0));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 
   cpu_loads[0] = 0.1;
   cpu_loads[1] = 0.1;
   cpu_loads[2] = 0.7;
   cpu_loads[3] = 0.7;
   // recent CPU loads >= 0.66
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(cpu_loads, 4, 1, 0));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 
   cpu_loads[0] = 1.0;
   cpu_loads[1] = 1.0;
@@ -207,13 +212,15 @@ TEST_F(SessionWatchDogTest, SessionCanSendCleanupCommandTest) {
   cpu_loads[4] = 0.1;
   cpu_loads[5] = 0.1;
   // average CPU loads >= 0.33
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(cpu_loads, 6, 1, 0));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 6, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 
   cpu_loads[0] = 0.1;
   cpu_loads[1] = 0.1;
   cpu_loads[2] = 0.1;
   cpu_loads[3] = 0.1;
-  EXPECT_TRUE(watchdog.CanSendCleanupCommand(cpu_loads, 4, 1, 0));
+  EXPECT_TRUE(watchdog.CanSendCleanupCommand(
+      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 }
 
 }  // namespace mozc

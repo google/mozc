@@ -38,13 +38,14 @@
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace renderer {
 
 namespace {
 constexpr int kNumConnections = 10;
-constexpr int kIPCServerTimeOut = 1000;
+constexpr absl::Duration kIPCServerTimeOut = absl::Milliseconds(1000);
 constexpr char kServiceName[] = "renderer";
 
 std::string GetServiceName() {

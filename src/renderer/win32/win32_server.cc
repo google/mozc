@@ -45,17 +45,6 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-bool IsIMM32Message(const commands::RendererCommand &command) {
-  if (!command.has_application_info()) {
-    return false;
-  }
-  if (!command.application_info().has_input_framework()) {
-    return false;
-  }
-  return (command.application_info().input_framework() ==
-          commands::RendererCommand::ApplicationInfo::IMM32);
-}
-
 bool IsTSFMessage(const commands::RendererCommand &command) {
   if (!command.has_application_info()) {
     return false;
@@ -124,10 +113,8 @@ bool Win32Server::ExecCommand(const commands::RendererCommand &command) {
     case commands::RendererCommand::UPDATE:
       if (!command.visible()) {
         window_manager_->HideAllWindows();
-      } else if (IsIMM32Message(command)) {
-        window_manager_->UpdateLayoutIMM32(command);
       } else if (IsTSFMessage(command)) {
-        window_manager_->UpdateLayoutTSF(command);
+        window_manager_->UpdateLayout(command);
       } else {
         LOG(WARNING) << "output/left/bottom are not set";
       }

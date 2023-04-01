@@ -52,6 +52,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:session_converter_interface",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -145,6 +146,7 @@ mozc_cc_test(
         "//session:session_converter",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/time",
     ],
 )
 

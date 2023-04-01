@@ -64,8 +64,8 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-constexpr int kIpcTimeoutMsec = 100;
-constexpr int kRendererWaitTimeoutMsec = 30 * 1000;  // 30 sec
+constexpr absl::Duration kIpcTimeout = absl::Milliseconds(100);
+constexpr absl::Duration kRendererWaitTimeout = absl::Seconds(30);
 constexpr absl::Duration kRendererWaitSleepTime = absl::Seconds(10);
 constexpr size_t kMaxErrorTimes = 5;
 constexpr uint64_t kRetryIntervalTime = 30;  // 30 sec
@@ -79,7 +79,7 @@ inline void CallCommand(IPCClientInterface *client,
   // basically, we don't need to get the result
   std::string result;
 
-  if (!client->Call(buf, &result, kIpcTimeoutMsec)) {
+  if (!client->Call(buf, &result, kIpcTimeout)) {
     LOG(ERROR) << "Cannot send the request: ";
   }
 }
@@ -251,18 +251,17 @@ class RendererLauncher : public RendererLauncherInterface {
     }
 
     if (listener_is_available) {
-      const int ret =
-          listener.WaitEventOrProcess(kRendererWaitTimeoutMsec, pid);
+      const int ret = listener.WaitEventOrProcess(kRendererWaitTimeout, pid);
       switch (ret) {
         case NamedEventListener::TIMEOUT:
           LOG(ERROR) << "seems that mozc_renderer is not ready within "
-                     << kRendererWaitTimeoutMsec << " msec";
+                     << kRendererWaitTimeout << " msec";
           SetStatus(RendererStatus::RENDERER_TIMEOUT);
           ++error_times_;
           break;
         case NamedEventListener::EVENT_SIGNALED:
           VLOG(1) << "mozc_renderer is launched successfully within "
-                  << kRendererWaitTimeoutMsec << " msec";
+                  << kRendererWaitTimeout << " msec";
           FlushPendingCommand();
           error_times_ = 0;
           break;

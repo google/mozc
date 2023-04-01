@@ -172,18 +172,10 @@ mozc_cc_library(
         default = [
             "//base",
             "//base:logging_extensions",
-        ],
-        linux = [
-            "//base",
-            "//base:logging_extensions",
+            "@com_google_absl//absl/log",
+            "@com_google_absl//absl/log:check",
         ],
         oss = [
-            ":clock",
-            ":const",
-            ":singleton",
-            "@com_google_absl//absl/strings",
-        ],
-        oss_linux = [
             ":clock",
             ":const",
             ":singleton",
@@ -196,7 +188,6 @@ mozc_cc_library(
             "@com_google_absl//absl/strings",
         ],
     ) + [
-        ":port",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/synchronization",
     ],

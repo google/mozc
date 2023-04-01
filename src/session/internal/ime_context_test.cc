@@ -43,6 +43,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace session {
@@ -55,8 +56,8 @@ using ::testing::SetArgPointee;
 
 TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
-  EXPECT_EQ(context.create_time(), 0);
-  EXPECT_EQ(context.last_command_time(), 0);
+  EXPECT_EQ(context.create_time(), absl::InfinitePast());
+  EXPECT_EQ(context.last_command_time(), absl::InfinitePast());
   EXPECT_TRUE(nullptr == context.mutable_converter());
   EXPECT_EQ(context.state(), ImeContext::NONE);
   EXPECT_PROTO_EQ(commands::Request::default_instance(), context.GetRequest());
@@ -66,11 +67,11 @@ TEST(ImeContextTest, BasicTest) {
   ImeContext context;
   config::Config config;
 
-  context.set_create_time(100);
-  EXPECT_EQ(context.create_time(), 100);
+  context.set_create_time(absl::FromUnixSeconds(100));
+  EXPECT_EQ(context.create_time(), absl::FromUnixSeconds(100));
 
-  context.set_last_command_time(12345);
-  EXPECT_EQ(context.last_command_time(), 12345);
+  context.set_last_command_time(absl::FromUnixSeconds(12345));
+  EXPECT_EQ(context.last_command_time(), absl::FromUnixSeconds(12345));
 
   const commands::Request request;
 
@@ -147,8 +148,8 @@ TEST(ImeContextTest, CopyContext) {
   }
 
   {
-    constexpr uint64_t kCreateTime = 100;
-    constexpr uint64_t kLastCommandTime = 200;
+    constexpr absl::Time kCreateTime = absl::FromUnixSeconds(100);
+    constexpr absl::Time kLastCommandTime = absl::FromUnixSeconds(200);
     ImeContext source;
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);

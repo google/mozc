@@ -153,7 +153,6 @@ mozc_cc_library(
     hdrs = ["connector.h"],
     deps = [
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//data_manager:data_manager_interface",
         "//storage/louds:simple_succinct_bit_vector_index",

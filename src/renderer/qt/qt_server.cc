@@ -122,7 +122,7 @@ int QtServer::StartServer(int argc, char **argv) {
 
 bool QtServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  VLOG(2) << command.DebugString();
+  VLOG(2) << MOZC_LOG_PROTOBUF(command);
 
   return renderer_.ExecCommand(command);
 }

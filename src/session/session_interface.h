@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 
@@ -89,10 +90,11 @@ class SessionInterface {
   virtual const commands::ApplicationInfo &application_info() const = 0;
 
   // Return the time when this instance was created.
-  virtual uint64_t create_session_time() const = 0;
+  virtual absl::Time create_session_time() const = 0;
 
-  // return 0 (default value) if no command is executed in this session.
-  virtual uint64_t last_command_time() const = 0;
+  // return absl::InfinitePast (default value) if no command is executed in this
+  // session.
+  virtual absl::Time last_command_time() const = 0;
 };
 
 }  // namespace session

@@ -45,6 +45,7 @@
 #include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/random/random.h"
+#include "absl/time/time.h"
 
 
 namespace mozc {
@@ -155,9 +156,9 @@ class SessionHandler : public SessionHandlerInterface {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_ = false;
   uint32_t max_session_size_ = 0;
-  uint64_t last_session_empty_time_ = 0;
-  uint64_t last_cleanup_time_ = 0;
-  uint64_t last_create_session_time_ = 0;
+  absl::Time last_session_empty_time_ = absl::InfinitePast();
+  absl::Time last_cleanup_time_ = absl::InfinitePast();
+  absl::Time last_create_session_time_ = absl::InfinitePast();
 
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<EngineBuilderInterface> engine_builder_;

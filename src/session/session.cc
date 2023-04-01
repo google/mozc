@@ -57,6 +57,7 @@
 #include "session/session_usage_stats_util.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
+#include "absl/time/time.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
@@ -215,8 +216,8 @@ Session::Session(EngineInterface *engine)
 Session::~Session() {}
 
 void Session::InitContext(ImeContext *context) const {
-  context->set_create_time(Clock::GetTime());
-  context->set_last_command_time(0);
+  context->set_create_time(Clock::GetAbslTime());
+  context->set_last_command_time(absl::InfinitePast());
   context->set_composer(std::make_unique<composer::Composer>(
       &composer::Table::GetDefaultTable(), &context->GetRequest(),
       &context->GetConfig()));
@@ -1422,11 +1423,11 @@ const commands::ApplicationInfo &Session::application_info() const {
   return context_->application_info();
 }
 
-uint64_t Session::create_session_time() const {
+absl::Time Session::create_session_time() const {
   return context_->create_time();
 }
 
-uint64_t Session::last_command_time() const {
+absl::Time Session::last_command_time() const {
   return context_->last_command_time();
 }
 
@@ -2887,7 +2888,7 @@ bool Session::CanStartAutoConversion(
 }
 
 void Session::UpdateTime() {
-  context_->set_last_command_time(Clock::GetTime());
+  context_->set_last_command_time(Clock::GetAbslTime());
 }
 
 void Session::TransformInput(commands::Input *input) {

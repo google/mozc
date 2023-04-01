@@ -39,6 +39,7 @@
 #include "ipc/ipc.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(std::string, server_address, "ipc_test", "");
 ABSL_FLAG(bool, test, false, "automatic test mode");
@@ -52,7 +53,8 @@ namespace mozc {
 
 class EchoServer : public IPCServer {
  public:
-  EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
+  EchoServer(const std::string &path, int32_t num_connections,
+             absl::Duration timeout)
       : IPCServer(path, num_connections, timeout) {}
   bool Process(absl::string_view input, std::string *output) override {
     output->assign(input.data(), input.size());
@@ -66,7 +68,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (absl::GetFlag(FLAGS_test)) {
-    mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10, 1000);
+    mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10,
+                         absl::Milliseconds(1000));
     mozc::Thread2 server_thread_main([&con] { con.Loop(); });
 
     std::vector<mozc::Thread2> cons;
@@ -79,7 +82,7 @@ int main(int argc, char **argv) {
           CHECK(con.Connected());
           std::string input = "testtesttesttest";
           std::string output;
-          CHECK(con.Call(input, &output, 1000));
+          CHECK(con.Call(input, &output, absl::Milliseconds(1000)));
           CHECK_EQ(input.size(), output.size());
           CHECK_EQ(input, output);
         }
@@ -93,13 +96,14 @@ int main(int argc, char **argv) {
                          absl::GetFlag(FLAGS_server_path));
     const std::string kill_cmd = "kill";
     std::string output;
-    kill.Call(kill_cmd, &output, 1000);
+    kill.Call(kill_cmd, &output, absl::Milliseconds(1000));
     server_thread_main.Join();
 
     LOG(INFO) << "Done";
 
   } else if (absl::GetFlag(FLAGS_server)) {
-    mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10, -1);
+    mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10,
+                         absl::Milliseconds(-1));
     CHECK(con.Connected());
     LOG(INFO) << "Start Server at " << absl::GetFlag(FLAGS_server_address);
     con.Loop();
@@ -110,7 +114,7 @@ int main(int argc, char **argv) {
       mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
-      CHECK(con.Call(line, &response, 1000));
+      CHECK(con.Call(line, &response, absl::Milliseconds(1000)));
       std::cout << "Request: " << line << std::endl;
       std::cout << "Response: " << response << std::endl;
     }

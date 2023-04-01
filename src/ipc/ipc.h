@@ -35,6 +35,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 #ifdef __APPLE__
 #include <mach/mach.h>  // for mach_port_t
@@ -77,7 +78,7 @@ class IPCClientInterface {
 
   virtual bool Connected() const = 0;
   virtual bool Call(const std::string &request, std::string *response,
-                    int32_t timeout) = 0;
+                    absl::Duration timeout) = 0;
 
   virtual uint32_t GetServerProtocolVersion() const = 0;
   virtual const std::string &GetServerProductVersion() const = 0;
@@ -109,7 +110,8 @@ class MachPortManagerInterface {
 //  string request = "foo";
 //  string result;
 //  CHECK(con.Connected());
-//  CHECK(con.Call(request, &result, 1000);  // wait for 1000msec
+//  // wait for 1000msec
+//  CHECK(con.Call(request, &result, absl::Milliseconds(1000));
 class IPCClient : public IPCClientInterface {
  public:
   // connect to an IPC server named "name".
@@ -144,7 +146,7 @@ class IPCClient : public IPCClientInterface {
   // Note that on Linux and Windows, Call() closes the socket_. This means you
   // cannot call the Call() function more than once.
   bool Call(const std::string &request, std::string *response,
-            int32_t timeout) override;  // msec
+            absl::Duration timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
 
@@ -226,7 +228,8 @@ class IPCServer {
   //          send a request within 'timeout'. If timeout is -1,
   //          IPCServer waits forever. Default setting is -1.
   // TODO(taku): timeout is not implemented properly
-  IPCServer(const std::string &name, int32_t num_connections, int32_t timeout);
+  IPCServer(const std::string &name, int32_t num_connections,
+            absl::Duration timeout);
   virtual ~IPCServer();
 
   // Return true if the connection is available
@@ -276,7 +279,7 @@ class IPCServer {
   std::string server_address_;
 #endif  // _WIN32
 
-  int timeout_;
+  absl::Duration timeout_;
 };
 
 }  // namespace mozc

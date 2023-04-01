@@ -33,10 +33,20 @@ package(
     default_visibility = ["//renderer/win32:__subpackages__"],
 )
 
+proto_library(
+    name = "test_spec_proto",
+    srcs = ["test_spec.proto"],
+)
+
+cc_proto_library(
+    name = "test_spec_cc_proto",
+    deps = [":test_spec_proto"],
+)
+
 filegroup(
     name = "win32",
     srcs = glob([
         "*.png",
-        "*.json",
+        "*.textproto",  # TODO: Consider using `proto_data` for parsing these files at build time.
     ]),
 )

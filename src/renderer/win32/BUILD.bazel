@@ -134,18 +134,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "win32_font_util",
-    srcs = ["win32_font_util.cc"],
-    hdrs = ["win32_font_util.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-    ],
-)
-
-mozc_cc_library(
     name = "indicator_window",
     srcs = ["indicator_window.cc"],
     hdrs = ["indicator_window.h"],
@@ -238,37 +226,17 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":candidate_window",
-        ":composition_window",
         ":indicator_window",
         ":infolist_window",
         ":win32_renderer_util",
         "//base:coordinates",
         "//base:logging",
-        "//base:util",
         "//client:client_interface",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_interface",
         "//renderer:window_util",
-    ],
-)
-
-mozc_cc_library(
-    name = "composition_window",
-    srcs = ["composition_window.cc"],
-    hdrs = ["composition_window.h"],
-    copts = copts_wtl(),
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":win32_renderer_util",
-        "//base:const",
-        "//base:coordinates",
-        "//base:logging",
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-        "//third_party/wtl",
     ],
 )
 
@@ -296,12 +264,8 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":win32_font_util",
         "//base:logging",
         "//base:system_util",
-        "//base:util",
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_prod",
         "//third_party/wtl",
@@ -316,13 +280,10 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":win32_font_util",
         ":win32_renderer_util",
         "//base:logging",
-        "//base:mmap",
         "//base:util",
         "//base/win32:win_font_test_helper",
-        "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
@@ -344,26 +305,13 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:mmap",
         "//base:util",
+        "//base/protobuf:text_format",
         "//base/win32:win_font_test_helper",
         "//bazel/win32:gdiplus",
-        "//net:jsoncpp",
+        "//data/test/renderer/win32:test_spec_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
         "//third_party/wtl",
-    ],
-)
-
-mozc_cc_test(
-    name = "win32_font_util_test",
-    srcs = ["win32_font_util_test.cc"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":win32_font_util",
-        "//base:util",
-        "//protocol:renderer_cc_proto",
-        "//testing:gunit_main",
     ],
 )

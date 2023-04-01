@@ -65,7 +65,8 @@ static constexpr int kNumRequests = 2000;
 
 class EchoServer : public mozc::IPCServer {
  public:
-  EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
+  EchoServer(const std::string &path, int32_t num_connections,
+             absl::Duration timeout)
       : IPCServer(path, num_connections, timeout) {}
   bool Process(absl::string_view input, std::string *output) override {
     if (input == "kill") {
@@ -84,7 +85,7 @@ TEST(IPCTest, IPCTest) {
   mozc::TestMachPortManager manager;
 #endif  // __APPLE__
 
-  EchoServer con(kServerAddress, 10, 1000);
+  EchoServer con(kServerAddress, 10, absl::Milliseconds(1000));
 #ifdef __APPLE__
   con.SetMachPortManager(&manager);
 #endif  // __APPLE__
@@ -108,7 +109,7 @@ TEST(IPCTest, IPCTest) {
         const int size = absl::Uniform(random, 1, 8000);
         const std::string input = absl::StrCat("test", random.ByteString(size));
         std::string output;
-        ASSERT_TRUE(con.Call(input, &output, 1000));
+        ASSERT_TRUE(con.Call(input, &output, absl::Milliseconds(1000)));
         EXPECT_EQ(output.size(), input.size());
         EXPECT_EQ(output, input);
       }
@@ -130,7 +131,7 @@ TEST(IPCTest, IPCTest) {
   // implementations.
   // TODO(mukai, team): determine the spec of return value for that
   // case and add EXPECT_(TRUE|FALSE) here.
-  kill.Call(kill_cmd, &output, 1000);
+  kill.Call(kill_cmd, &output, absl::Milliseconds(1000));
 
   con.Wait();
 }

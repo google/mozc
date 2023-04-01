@@ -38,6 +38,7 @@
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace client {
@@ -74,7 +75,7 @@ class ClientMock : public client::ClientInterface {
   bool PingServer() const override;
   bool NoOperation() override;
   void EnableCascadingWindow(bool enable) override;
-  void set_timeout(int timeout) override;
+  void set_timeout(absl::Duration timeout) override;
   void set_restricted(bool restricted) override;
   void set_server_program(absl::string_view program_path) override;
   void set_suppress_error_dialog(bool suppress) override;

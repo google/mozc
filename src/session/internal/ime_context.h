@@ -44,6 +44,7 @@
 #include "session/internal/key_event_transformer.h"
 #include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace session {
@@ -57,11 +58,11 @@ class ImeContext final {
 
   ~ImeContext();
 
-  uint64_t create_time() const { return create_time_; }
-  void set_create_time(uint64_t create_time) { create_time_ = create_time; }
+  absl::Time create_time() const { return create_time_; }
+  void set_create_time(absl::Time create_time) { create_time_ = create_time; }
 
-  uint64_t last_command_time() const { return last_command_time_; }
-  void set_last_command_time(uint64_t last_command_time) {
+  absl::Time last_command_time() const { return last_command_time_; }
+  void set_last_command_time(absl::Time last_command_time) {
     last_command_time_ = last_command_time;
   }
 
@@ -135,8 +136,8 @@ class ImeContext final {
   // session holding this instance is created and not the time when this
   // instance is created. We may want to move out |create_time_| from ImeContext
   // to Session, or somewhere more appropriate.
-  uint64_t create_time_ = 0;
-  uint64_t last_command_time_ = 0;
+  absl::Time create_time_ = absl::InfinitePast();
+  absl::Time last_command_time_ = absl::InfinitePast();
 
   std::unique_ptr<composer::Composer> composer_;
   std::unique_ptr<SessionConverterInterface> converter_;

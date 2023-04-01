@@ -38,6 +38,7 @@
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace client {
@@ -93,7 +94,7 @@ MockVoidImplementation(Reset, void);
 MockConstBoolImplementation(PingServer, void);
 MockBoolImplementation(NoOperation, void);
 MockVoidImplementation(EnableCascadingWindow, bool enable);
-MockVoidImplementation(set_timeout, int timeout);
+MockVoidImplementation(set_timeout, absl::Duration timeout);
 MockVoidImplementation(set_restricted, bool restricted);
 MockVoidImplementation(set_server_program,
                        const absl::string_view program_path);
