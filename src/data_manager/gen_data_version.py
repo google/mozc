@@ -52,6 +52,10 @@ def _ParseOption():
 
 
 
+def GetVersionString(engine_version, data_version, tag):
+  return '.'.join((engine_version, data_version, tag))
+
+
 def main():
   opts = _ParseOption()
   data = {}
@@ -66,7 +70,8 @@ def main():
     data['DATA_VERSION'] = opts.data_version_override
 
   with open(opts.output, 'w') as f:
-    f.write('.'.join((data['ENGINE_VERSION'], data['DATA_VERSION'], opts.tag)))
+    f.write(GetVersionString(
+        data['ENGINE_VERSION'], data['DATA_VERSION'], opts.tag))
 
 
 if __name__ == '__main__':
