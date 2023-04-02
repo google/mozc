@@ -39,7 +39,8 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        '<!@(<(glob_absl) base "**/*.cc")',
+        '<!@(<(glob_absl) base "**/*.cc"' +
+        ' --exclude "**/*_benchmark.cc" "**/*_test*.cc")',
         '<(absl_srcdir)/profiling/internal/exponential_biased.cc',
       ],
       'sources!': [
