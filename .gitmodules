@@ -10,9 +10,6 @@
 [submodule "src/third_party/japanese_usage_dictionary"]
 	path = src/third_party/japanese_usage_dictionary
 	url = https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git
-[submodule "src/third_party/jsoncpp"]
-	path = src/third_party/jsoncpp
-	url = https://github.com/open-source-parsers/jsoncpp.git
 [submodule "src/third_party/protobuf"]
 	path = src/third_party/protobuf
 	url = https://github.com/google/protobuf.git
