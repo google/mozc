@@ -91,7 +91,6 @@ class Optional {
 struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
-  const Optional<CPoint> composition_form_topleft = Optional<CPoint>();
   const Optional<CandidateWindowLayout> candidate_form =
       Optional<CandidateWindowLayout>();
   const Optional<CLogFont> composition_font = Optional<CLogFont>();
@@ -892,36 +891,6 @@ bool LayoutIndicatorWindowByCompositionTarget(
   return true;
 }
 
-bool LayoutIndicatorWindowByCompositionForm(
-    const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager, CRect *target_rect) {
-  DCHECK(target_rect);
-  *target_rect = CRect();
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.composition_form_topleft.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  const CPoint &topleft_in_logical_coord =
-      params.composition_form_topleft.value();
-  const bool is_vertical = IsVerticalWriting(params);
-  const int font_height = GetAbsoluteFontHeight(params);
-  if (font_height <= 0) {
-    return false;
-  }
-
-  const CRect rect_in_logical_coord(
-      topleft_in_logical_coord,
-      is_vertical ? CSize(font_height, 1) : CSize(1, font_height));
-
-  layout_manager.GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
-                                         target_rect);
-  return true;
-}
-
 bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
                                const LayoutManager &layout_manager,
                                CRect *focus_rect) {
@@ -931,10 +900,6 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
 
   if (LayoutIndicatorWindowByCompositionTarget(params, layout_manager,
                                                focus_rect)) {
-    return true;
-  }
-  if (LayoutIndicatorWindowByCompositionForm(params, layout_manager,
-                                             focus_rect)) {
     return true;
   }
 
