@@ -125,9 +125,9 @@ bool SavePassword(const std::string &password) {
 
 bool LoadPassword(std::string *password) {
   const std::string filename = GetFileName();
-  Mmap mmap;
-  if (!mmap.Open(filename, "r")) {
-    LOG(ERROR) << "cannot open: " << filename;
+  const absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+  if (!mmap.ok()) {
+    LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();
     return false;
   }
 
@@ -135,12 +135,12 @@ bool LoadPassword(std::string *password) {
   // becomes bigger than the original message.
   // Typical file size is 32 * 5 = 160byte.
   // We just set the maximum file size to be 4096byte just in case.
-  if (mmap.size() == 0 || mmap.size() > 4096) {
+  if (mmap->empty() || mmap->size() > 4096) {
     LOG(ERROR) << "Invalid password is saved";
     return false;
   }
 
-  password->assign(mmap.begin(), mmap.size());
+  password->assign(mmap->begin(), mmap->size());
 
   return true;
 }

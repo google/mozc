@@ -452,16 +452,16 @@ TEST_F(UserDictionaryStorageTest, Export) {
     storage.ExportDictionary(kDummyDictionaryId, kPath);
   }
 
-  Mmap mapped_data;
-  ASSERT_TRUE(mapped_data.Open(kPath));
+  const absl::StatusOr<Mmap> mapped_data = Mmap::Map(kPath);
+  ASSERT_OK(mapped_data) << mapped_data.status();
 
   // Make sure the exported format, especially that the pos is exported in
   // Japanese.
 #ifdef _WIN32
-  EXPECT_EQ(std::string(mapped_data.begin(), mapped_data.size()),
+  EXPECT_EQ(std::string(mapped_data->begin(), mapped_data->size()),
             "key\tvalue\t名詞\tcomment\r\n");
 #else   // _WIN32
-  EXPECT_EQ(std::string(mapped_data.begin(), mapped_data.size()),
+  EXPECT_EQ(std::string(mapped_data->begin(), mapped_data->size()),
             "key\tvalue\t名詞\tcomment\n");
 #endif  // _WIN32
 }

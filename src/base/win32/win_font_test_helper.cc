@@ -69,15 +69,15 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
     return nullptr;
   }
 
-  Mmap mmap;
-  if (!mmap.Open(win32::WideToUtf8(w_path).c_str())) {
-    LOG(ERROR) << "Mmap::Open failed.";
+  absl::StatusOr<Mmap> mmap = Mmap::Map(win32::WideToUtf8(w_path));
+  if (!mmap.ok()) {
+    LOG(ERROR) << mmap.status();
     return nullptr;
   }
 
   DWORD num_font = 0;
   const HANDLE handle =
-      ::AddFontMemResourceEx(mmap.begin(), mmap.size(), nullptr, &num_font);
+      ::AddFontMemResourceEx(mmap->begin(), mmap->size(), nullptr, &num_font);
   if (handle == nullptr) {
     const int error = ::GetLastError();
     LOG(ERROR) << "AddFontMemResourceEx failed. error = " << error;

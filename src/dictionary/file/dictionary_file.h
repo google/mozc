@@ -47,12 +47,14 @@ namespace dictionary {
 
 struct DictionaryFileSection;
 
-class DictionaryFile {
+class DictionaryFile final {
  public:
   explicit DictionaryFile(const DictionaryFileCodecInterface *file_codec);
 
   DictionaryFile(const DictionaryFile &) = delete;
   DictionaryFile &operator=(const DictionaryFile &) = delete;
+
+  ~DictionaryFile() = default;
 
   // Opens from a file.
   absl::Status OpenFromFile(const std::string &file);
@@ -67,8 +69,7 @@ class DictionaryFile {
  private:
   // DictionaryFile does not take the ownership of |file_codec_|.
   const DictionaryFileCodecInterface *file_codec_;
-  // This will be nullptr if the mapping source is given as a pointer.
-  std::unique_ptr<Mmap> mapping_;
+  Mmap mapping_;
   std::vector<DictionaryFileSection> sections_;
 };
 

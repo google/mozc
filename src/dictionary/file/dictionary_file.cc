@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -51,12 +52,12 @@ DictionaryFile::DictionaryFile(const DictionaryFileCodecInterface *file_codec)
 }
 
 absl::Status DictionaryFile::OpenFromFile(const std::string &file) {
-  mapping_ = std::make_unique<Mmap>();
-  if (!mapping_->Open(file)) {
-    return absl::UnknownError(
-        absl::StrCat("dictionary_file.cc: Failed to mmap ", file));
+  absl::StatusOr<Mmap> mapping = Mmap::Map(file);
+  if (!mapping.ok()) {
+    return std::move(mapping).status();
   }
-  return OpenFromImage(mapping_->begin(), mapping_->size());
+  mapping_ = *std::move(mapping);
+  return OpenFromImage(mapping_.begin(), mapping_.size());
 }
 
 absl::Status DictionaryFile::OpenFromImage(const char *image, int length) {

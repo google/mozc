@@ -40,6 +40,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "data_manager/connection_file_reader.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 
@@ -55,10 +56,10 @@ struct ConnectionDataEntry {
 TEST(ConnectorTest, CompareWithRawData) {
   const std::string path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection.data"});
-  Mmap cmmap;
-  ASSERT_TRUE(cmmap.Open(path)) << "Failed to open image: " << path;
+  absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
+  ASSERT_OK(cmmap) << cmmap.status();
   auto status_or_connector =
-      Connector::Create(cmmap.begin(), cmmap.size(), 256);
+      Connector::Create(cmmap->begin(), cmmap->size(), 256);
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
   auto connector = std::move(status_or_connector).value();
   ASSERT_EQ(1, connector->GetResolution());
@@ -94,14 +95,14 @@ TEST(ConnectorTest, CompareWithRawData) {
 TEST(ConnectorTest, BrokenData) {
   const std::string path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection.data"});
-  Mmap cmmap;
-  ASSERT_TRUE(cmmap.Open(path)) << "Failed to open image: " << path;
+  absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
+  ASSERT_OK(cmmap) << cmmap.status();
 
   std::string data;
 
   // Invalid magic number.
   {
-    data.assign(cmmap.begin(), cmmap.size());
+    data.assign(cmmap->begin(), cmmap->size());
     *reinterpret_cast<uint16_t *>(&data[0]) = 0;
     const auto status =
         Connector::Create(data.data(), data.size(), 256).status();
@@ -110,7 +111,7 @@ TEST(ConnectorTest, BrokenData) {
   }
   // Not square.
   {
-    data.assign(cmmap.begin(), cmmap.size());
+    data.assign(cmmap->begin(), cmmap->size());
     uint16_t *array = reinterpret_cast<uint16_t *>(&data[0]);
     array[2] = 100;
     array[3] = 200;
@@ -121,7 +122,7 @@ TEST(ConnectorTest, BrokenData) {
   }
   // Incomplete data.
   {
-    data.assign(cmmap.begin(), cmmap.size());
+    data.assign(cmmap->begin(), cmmap->size());
     for (size_t divider : {2, 3, 5, 7, 10, 100, 1000}) {
       const auto size = data.size() / divider;
       const auto status = Connector::Create(data.data(), size, 256).status();
@@ -131,10 +132,10 @@ TEST(ConnectorTest, BrokenData) {
   }
   // Not aligned at 32-bit bounary.
   {
-    data.resize(cmmap.size() + 2);
-    data.insert(2, cmmap.begin(), cmmap.size());  // Align at 16-bit boundary.
+    data.resize(cmmap->size() + 2);
+    data.insert(2, cmmap->begin(), cmmap->size());  // Align at 16-bit boundary.
     const auto status =
-        Connector::Create(data.data() + 2, cmmap.size(), 256).status();
+        Connector::Create(data.data() + 2, cmmap->size(), 256).status();
     VLOG(1) << status;
     EXPECT_FALSE(status.ok());
   }

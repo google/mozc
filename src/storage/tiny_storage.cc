@@ -123,24 +123,24 @@ TinyStorageImpl::~TinyStorageImpl() {
 }
 
 bool TinyStorageImpl::Open(const std::string &filename) {
-  Mmap mmap;
   dic_.clear();
   filename_ = filename;
-  if (!mmap.Open(filename, "r")) {
-    LOG(WARNING) << "cannot open:" << filename;
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+  if (!mmap.ok()) {
+    LOG(WARNING) << "cannot open:" << filename << ": " << mmap.status();
     // here we return true if we cannot open the file.
     // it happens mostly when file doesn't exist.
     // we just make an empty file from scratch here.
     return true;
   }
 
-  if (mmap.size() > kMaxFileSize) {
+  if (mmap->size() > kMaxFileSize) {
     LOG(ERROR) << "tring to open too big file";
     return false;
   }
 
-  char *begin = mmap.begin();
-  const char *end = mmap.end();
+  char *begin = mmap->begin();
+  const char *end = mmap->end();
 
   uint32_t version = 0;
   uint32_t magic = 0;
@@ -152,7 +152,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     return false;
   }
 
-  if ((magic ^ kStorageMagicId) != mmap.size()) {
+  if ((magic ^ kStorageMagicId) != mmap->size()) {
     LOG(ERROR) << "file magic is broken";
     return false;
   }
@@ -208,7 +208,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     dic_.insert(std::make_pair(key, value));
   }
 
-  if (static_cast<size_t>(begin - mmap.begin()) != mmap.size()) {
+  if (static_cast<size_t>(begin - mmap->begin()) != mmap->size()) {
     LOG(ERROR) << "file is broken: " << filename_;
     dic_.clear();
     return false;

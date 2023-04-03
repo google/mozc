@@ -39,6 +39,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/clock.h"
@@ -179,17 +180,17 @@ bool LruStorage::CreateStorageFile(const char *filename, size_t value_size,
 // Reopen file after initializing mapped page.
 bool LruStorage::Clear() {
   // Don't need to clear the page if the lru list is empty
-  if (mmap_ == nullptr || lru_list_.empty()) {
+  if (mmap_.empty() || lru_list_.empty()) {
     return true;
   }
   const size_t offset = sizeof(value_size_) + sizeof(size_) + sizeof(seed_);
-  if (offset >= mmap_->size()) {  // should not happen
+  if (offset >= mmap_.size()) {  // should not happen
     return false;
   }
-  memset(mmap_->begin() + offset, '\0', mmap_->size() - offset);
+  memset(mmap_.begin() + offset, '\0', mmap_.size() - offset);
   lru_list_.clear();
   lru_map_.clear();
-  Open(mmap_->begin(), mmap_->size());
+  Open(mmap_.begin(), mmap_.size());
   return true;
 }
 
@@ -254,7 +255,7 @@ bool LruStorage::Merge(const LruStorage &storage) {
     memset(begin_ + new_size, '\0', old_size - new_size);
   }
 
-  return Open(mmap_->begin(), mmap_->size());
+  return Open(mmap_.begin(), mmap_.size());
 }
 
 LruStorage::LruStorage()
@@ -327,25 +328,21 @@ bool LruStorage::OpenOrCreate(const char *filename, size_t new_value_size,
 }
 
 bool LruStorage::Open(const char *filename) {
-  mmap_ = std::make_unique<Mmap>();
-
-  if (!mmap_) {
-    LOG(ERROR) << "cannot make Mmap object";
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_WRITE);
+  if (!mmap.ok()) {
+    LOG(ERROR) << "Cannot open " << filename
+               << " with read+write mode: " << mmap.status();
     return false;
   }
+  mmap_ = *std::move(mmap);
 
-  if (!mmap_->Open(filename, "r+")) {
-    LOG(ERROR) << "cannot open " << filename << " with read+write mode";
-    return false;
-  }
-
-  if (mmap_->size() < 8) {
+  if (mmap_.size() < 8) {
     LOG(ERROR) << "file size is too small";
     return false;
   }
 
   filename_ = filename;
-  return Open(mmap_->begin(), mmap_->size());
+  return Open(mmap_.begin(), mmap_.size());
 }
 
 bool LruStorage::Open(char *ptr, size_t ptr_size) {
@@ -377,7 +374,7 @@ bool LruStorage::Open(char *ptr, size_t ptr_size) {
     return false;
   }
 
-  if (mmap_->size() != kFileHeaderSize + item_size() * size_) {
+  if (mmap_.size() != kFileHeaderSize + item_size() * size_) {
     LOG(ERROR) << "LRU file is broken";
     return false;
   }
@@ -413,7 +410,7 @@ void LruStorage::Close() {
   DeleteElementsUntouchedFor62Days();
 
   filename_.clear();
-  mmap_.reset();
+  mmap_.Close();
   lru_list_.clear();
   lru_map_.clear();
 }
@@ -571,7 +568,7 @@ bool LruStorage::Delete(uint64_t fp, std::list<char *>::iterator it) {
 }
 
 int LruStorage::DeleteElementsBefore(uint32_t timestamp) {
-  if (!mmap_ || begin_ >= end_) {
+  if (mmap_.empty() || begin_ >= end_) {
     return 0;
   }
   int num_deleted = 0;

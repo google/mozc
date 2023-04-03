@@ -168,7 +168,7 @@ class LruStorage {
   std::string filename_;
   std::list<char *> lru_list_;  // Front is the most recently used data.
   absl::flat_hash_map<uint64_t, std::list<char *>::iterator> lru_map_;
-  std::unique_ptr<Mmap> mmap_;
+  Mmap mmap_;
 };
 
 }  // namespace storage
