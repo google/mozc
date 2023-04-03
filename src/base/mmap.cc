@@ -30,11 +30,15 @@
 #include "base/mmap.h"
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/cleanup/cleanup.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
@@ -42,6 +46,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+
+#include <limits>
 
 #include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
@@ -51,128 +57,325 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <cerrno>
 #endif  // _WIN32
 
 namespace mozc {
+namespace {
 
+// In what follows, the following helper functions are defined that wrap
+// platform dependent system calls:
+//
+//      SyscallParams: Parameters for system calls.
+//     FileDescriptor: A native file handle.
+//           FdCloser: RAII for FileDescriptor.
+// GetSyscallParams(): Converts Mmap::Mode value to parameters of file APIs.
+//         OpenFile(): Opens a file and returns FileDescriptor.
+//      GetFileSize(): Gets the file size.
+//      GetPageSize(): Gets the number satisfying mmap alignment.
+//          MapFile(): Performs mmap.
+//            Unmap(): Releases a mmap.
 #ifdef _WIN32
 
-bool Mmap::Open(const absl::string_view filename,
-                const absl::string_view mode) {
-  Close();
-  uint32_t mode1, mode2, mode3, mode4;
-  if (mode == "r") {
-    mode1 = GENERIC_READ;
-    mode2 = PAGE_READONLY;
-    mode3 = FILE_MAP_READ;
-    mode4 = FILE_SHARE_READ;
-  } else if (mode == "r+") {
-    mode1 = GENERIC_READ | GENERIC_WRITE;
-    mode2 = PAGE_READWRITE;
-    mode3 = FILE_MAP_ALL_ACCESS;
-    mode4 = FILE_SHARE_READ | FILE_SHARE_WRITE;
-  } else {
-    LOG(ERROR) << "unknown open mode:" << filename;
-    return false;
-  }
+struct SyscallParams {
+  DWORD desired_access;      // for CreateFileW()
+  DWORD share_mode;          // for CreateFileW()
+  DWORD protect;             // for CreateFileMapping()
+  DWORD map_desired_access;  // for MapViewOfFile()
+};
 
-  const std::wstring filename_wide = win32::Utf8ToWide(filename);
-  if (filename_wide.empty()) {
-    return false;
-  }
+using FileDescriptor = HANDLE;
+using FdCloser = ScopedHandle;
 
-  ScopedHandle handle(::CreateFileW(filename_wide.c_str(), mode1, mode4, 0,
-                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0));
-  if (handle.get() == nullptr) {
-    LOG(ERROR) << "CreateFile() failed: " << filename;
-    return false;
+absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
+  SyscallParams params;
+  switch (mode) {
+    case Mmap::READ_ONLY:
+      params.desired_access = GENERIC_READ;
+      params.share_mode = FILE_SHARE_READ;
+      params.protect = PAGE_READONLY;
+      params.map_desired_access = FILE_MAP_READ;
+      break;
+    case Mmap::READ_WRITE:
+      params.desired_access = GENERIC_READ | GENERIC_WRITE;
+      params.share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+      params.protect = PAGE_READWRITE;
+      params.map_desired_access = FILE_MAP_ALL_ACCESS;
+      break;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Invalid mode %s", mode));
   }
+  return params;
+}
 
-  ScopedHandle map_handle(::CreateFileMapping(handle.get(), 0, mode2, 0, 0, 0));
-  if (map_handle.get() == nullptr) {
-    LOG(ERROR) << "CreateFileMapping() failed: " << filename;
-    return false;
+absl::StatusOr<FileDescriptor> OpenFile(absl::string_view filename,
+                                        const SyscallParams &params) {
+  const std::wstring filename_w = win32::Utf8ToWide(filename);
+  if (filename_w.empty()) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("Invalid file name: %s", filename));
   }
+  FileDescriptor fd = ::CreateFileW(filename_w.c_str(), params.desired_access,
+                                    params.share_mode, 0, OPEN_EXISTING,
+                                    FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (fd == nullptr) {
+    return absl::UnknownError(absl::StrFormat(
+        "Error %d: CreateFileW failed for %s", GetLastError(), filename));
+  }
+  return fd;
+}
 
-  void *ptr = ::MapViewOfFile(map_handle.get(), mode3, 0, 0, 0);
+absl::StatusOr<size_t> GetFileSize(FileDescriptor fd) {
+  const DWORD size = ::GetFileSize(fd, 0);
+  if (size == INVALID_FILE_SIZE) {
+    return absl::UnknownError(
+        absl::StrFormat("Error %d: GetFileSize failed", GetLastError()));
+  }
+  return size;
+}
+
+absl::StatusOr<size_t> GetPageSize() {
+  SYSTEM_INFO info;
+  GetSystemInfo(&info);
+  // We should use `dwAllocationGranularity` instead of `dwPageSize` because
+  // `MapViewOfFile()` requires the offset to be a multiple of the allocation
+  // granularity.
+  return info.dwAllocationGranularity;
+}
+
+constexpr std::pair<DWORD, DWORD> GetHiAndLo(size_t value) {
+  static_assert(sizeof(size_t) <= 2 * sizeof(DWORD), "");
+  const DWORD hi = sizeof(size_t) > sizeof(DWORD)
+                       ? (value >> (CHAR_BIT * sizeof(DWORD)))
+                       : 0;
+  const DWORD lo = value & std::numeric_limits<DWORD>::max();
+  return {hi, lo};
+}
+
+absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
+                               const SyscallParams &params) {
+  const auto [max_size_hi, max_size_lo] = GetHiAndLo(size);
+  const HANDLE handle = ::CreateFileMapping(fd, 0, params.protect, max_size_hi,
+                                            max_size_lo, nullptr);
+  if (handle == nullptr) {
+    return absl::UnknownError(
+        absl::StrFormat("Error %d: CreateFileMapping failed", GetLastError()));
+  }
+  const ScopedHandle closer(handle);
+
+  const auto [offset_hi, offset_lo] = GetHiAndLo(offset);
+  const LPVOID ptr = ::MapViewOfFile(handle, params.map_desired_access,
+                                     offset_hi, offset_lo, size);
   if (ptr == nullptr) {
-    LOG(ERROR) << "MapViewOfFile() failed: " << filename;
-    return false;
+    return absl::UnknownError(
+        absl::StrFormat("Error %d: MapViewOfFile failed", GetLastError()));
   }
-
-  data_ = absl::MakeSpan(reinterpret_cast<char *>(ptr),
-                         ::GetFileSize(handle.get(), 0));
-
-  return true;
+  return ptr;
 }
 
-void Mmap::Close() {
-  if (data_.data() != nullptr) {
-    ::UnmapViewOfFile(data_.data());
+void Unmap(void *ptr, size_t /*unused_size*/) {
+  if (::UnmapViewOfFile(ptr) == 0) {
+    LOG(ERROR) << "Failed to unmap a view of file";
   }
-
-  data_ = absl::Span<char>();
 }
 
-#else  // !_WIN32
+#else  // _WIN32
+
+struct SyscallParams {
+  int flags;  // for open()
+  int prot;   // for mmap()
+};
+
+using FileDescriptor = int;
+
+class FdCloser final {
+ public:
+  explicit FdCloser(FileDescriptor fd) : fd_{fd} {}
+
+  FdCloser(const FdCloser &) = delete;
+  FdCloser &operator=(const FdCloser &) = delete;
+
+  FdCloser(FdCloser &&) = delete;
+  FdCloser &operator=(FdCloser &&) = delete;
+
+  ~FdCloser() { ::close(fd_); }
+
+ private:
+  FileDescriptor fd_;
+};
 
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif  // O_BINARY
 
+absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
+  SyscallParams params;
+  switch (mode) {
+    case Mmap::READ_ONLY:
+      params.flags = O_RDONLY | O_BINARY;
+      params.prot = PROT_READ;
+      break;
+    case Mmap::READ_WRITE:
+      params.flags = O_RDWR | O_BINARY;
+      params.prot = PROT_READ | PROT_WRITE;
+      break;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Unknown mode: %d", mode));
+  }
+  return params;
+}
+
+absl::StatusOr<FileDescriptor> OpenFile(absl::string_view filename,
+                                        const SyscallParams &params) {
+  const std::string filename_s(filename);
+  const FileDescriptor fd = ::open(filename_s.data(), params.flags);
+  if (fd == -1) {
+    const int err = errno;
+    return absl::ErrnoToStatus(
+        err, absl::StrFormat("Failed to open %s with flags %d", filename,
+                             params.flags));
+  }
+  return fd;
+}
+
+absl::StatusOr<size_t> GetFileSize(FileDescriptor fd) {
+  struct stat st;
+  if (fstat(fd, &st) == -1) {
+    return absl::ErrnoToStatus(errno, "fstat failed");
+  }
+  return st.st_size;
+}
+
+absl::StatusOr<size_t> GetPageSize() {
+  const long size = sysconf(_SC_PAGESIZE);  // NOLINT
+  if (size == -1) {
+    return absl::ErrnoToStatus(errno, "sysconf(_SC_PAGESIZE) failed");
+  }
+  return size;
+}
+
+absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
+                               const SyscallParams &params) {
+  void *const ptr = mmap(nullptr, size, params.prot, MAP_SHARED, fd, offset);
+  if (ptr == MAP_FAILED) {
+    return absl::ErrnoToStatus(errno, "mmap() failed");
+  }
+  return ptr;
+}
+
+void Unmap(void *ptr, size_t size) {
+  if (munmap(ptr, size) == -1) {
+    LOG(ERROR) << absl::ErrnoToStatus(errno, "munmap() failed");
+  }
+}
+
+#endif  // _WIN32
+
+}  // namespace
+
+absl::StatusOr<Mmap> Mmap::Map(absl::string_view filename, size_t offset,
+                               std::optional<size_t> size, Mode mode) {
+  absl::StatusOr<SyscallParams> params = GetSyscallParams(mode);
+  if (!params.ok()) {
+    return std::move(params).status();
+  }
+
+  absl::StatusOr<FileDescriptor> fd = OpenFile(filename, *params);
+  if (!fd.ok()) {
+    return std::move(fd).status();
+  }
+  const FdCloser closer(*fd);
+
+  // If the size is not given, calculate the mapping size from file size and
+  // offset.
+  if (!size.has_value()) {
+    absl::StatusOr<size_t> file_size = GetFileSize(*fd);
+    if (!file_size.ok()) {
+      return std::move(file_size).status();
+    }
+    if (offset > *file_size) {
+      return absl::InvalidArgumentError(absl::StrFormat(
+          "offset %d exceeds the file size %d", offset, *file_size));
+    }
+    size = *file_size - offset;
+  }
+  if (*size == 0) {
+    return absl::InvalidArgumentError("Mapping of zero byte is invalid");
+  }
+
+  absl::StatusOr<size_t> page_size = GetPageSize();
+  if (!page_size.ok()) {
+    return std::move(page_size).status();
+  }
+
+  // Mmap offset must be a multiple of page size. Therefore, we adjust the mmap
+  // start offset to the nearest page boundary before `offset`.
+  const size_t adjust = offset % *page_size;
+  const size_t map_offset = offset - adjust;
+  const size_t map_size = *size + adjust;
+
+  absl::StatusOr<void *> ptr = MapFile(*fd, map_offset, map_size, *params);
+  if (!ptr.ok()) {
+    return std::move(ptr).status();
+  }
+
+  MaybeMLock(*ptr, map_size);
+
+  Mmap mmap;
+  mmap.data_ = absl::MakeSpan(static_cast<char *>(*ptr) + adjust, *size);
+  mmap.adjust_ = adjust;
+  return mmap;
+}
+
+Mmap::Mmap(Mmap &&x) : data_{x.data_}, adjust_{x.adjust_} {
+  x.data_ = absl::Span<char>();
+  x.adjust_ = 0;
+}
+
+Mmap &Mmap::operator=(Mmap &&x) {
+  Close();
+  data_ = x.data_;
+  adjust_ = x.adjust_;
+  x.data_ = absl::Span<char>();
+  x.adjust_ = 0;
+  return *this;
+}
+
 bool Mmap::Open(const absl::string_view filename,
                 const absl::string_view mode) {
   Close();
-
-  int flag;
+  Mmap::Mode map_mode;
   if (mode == "r") {
-    flag = O_RDONLY;
+    map_mode = Mmap::READ_ONLY;
   } else if (mode == "r+") {
-    flag = O_RDWR;
+    map_mode = Mmap::READ_WRITE;
   } else {
-    LOG(WARNING) << "unknown open mode: " << filename;
+    LOG(ERROR) << "Unknown mode: " << mode;
     return false;
   }
-
-  const std::string filename_s(filename);
-  const int fd = ::open(filename_s.data(), flag | O_BINARY);
-  if (fd < 0) {
-    LOG(WARNING) << "open failed: " << filename;
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, map_mode);
+  if (!mmap.ok()) {
+    LOG(ERROR) << "Failed to mmap " << filename << "in mode " << mode << ": "
+               << mmap.status();
     return false;
   }
-  absl::Cleanup closer = [fd] { ::close(fd); };
-
-  struct stat st;
-  if (fstat(fd, &st) < 0) {
-    LOG(WARNING) << "failed to get file size: " << filename;
-    return false;
-  }
-
-  int prot = PROT_READ;
-  if (flag == O_RDWR) {
-    prot |= PROT_WRITE;
-  }
-
-  void *ptr = mmap(nullptr, st.st_size, prot, MAP_SHARED, fd, 0);
-  if (ptr == MAP_FAILED) {
-    LOG(WARNING) << "mmap() failed: " << filename;
-    return false;
-  }
-
-  MaybeMLock(ptr, st.st_size);
-  data_ = absl::MakeSpan(reinterpret_cast<char *>(ptr), st.st_size);
+  *this = *std::move(mmap);
   return true;
 }
 
 void Mmap::Close() {
   if (data_.data() != nullptr) {
-    MaybeMUnlock(data_.data(), data_.size());
-    munmap(data_.data(), data_.size());
+    void *const ptr = data_.data() - adjust_;
+    const size_t map_size = data_.size() + adjust_;
+    MaybeMUnlock(ptr, map_size);
+    Unmap(ptr, map_size);
   }
-
   data_ = absl::Span<char>();
+  adjust_ = 0;
 }
-#endif  // !_WIN32
 
 // Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
 
