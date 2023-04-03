@@ -105,7 +105,7 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
       break;
     default:
       return absl::InvalidArgumentError(
-          absl::StrFormat("Invalid mode %s", mode));
+          absl::StrFormat("Invalid mode %d", mode));
   }
   return params;
 }
