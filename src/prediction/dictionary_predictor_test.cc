@@ -151,7 +151,9 @@ namespace {
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::testing::_;
+using ::testing::DoAll;
 using ::testing::Return;
+using ::testing::SetArgPointee;
 
 constexpr int kInfinity = (2 << 20);
 
@@ -809,9 +811,15 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   // Exact key will not be filtered in mobile request
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
-  // No prefix penalty
-  EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
-      .WillRepeatedly(Return(false));
+  // Small prefix penalty
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->cost = 10;
+    EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
 
   auto get_top_candidate = [&aggregator, &predictor, this](
                                const Result &aggregator_result,
@@ -834,7 +842,7 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   {
     // PREFIX: consumed_key_size
     Result result =
-        CreateResult5("てすと", "てす", 50, prediction::PREFIX, Token::NONE);
+        CreateResult5("てす", "てす", 50, prediction::PREFIX, Token::NONE);
     result.consumed_key_size = Util::CharsLen("てす");
 
     EXPECT_TRUE(get_top_candidate(result, prediction::PREFIX, &c));
@@ -1287,9 +1295,9 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     results.push_back(
         CreateResult5("さが", "佐賀", 500, prediction::REALTIME, Token::NONE));
     results.push_back(
-        CreateResult5("さか", "咲か", 2000, prediction::PREFIX, Token::NONE));
+        CreateResult5("さか", "咲か", 2000, prediction::UNIGRAM, Token::NONE));
     results.push_back(
-        CreateResult5("さか", "差か", 2500, prediction::PREFIX, Token::NONE));
+        CreateResult5("さか", "阪", 2500, prediction::UNIGRAM, Token::NONE));
     results.push_back(
         CreateResult5("さか", "サカ", 10000, prediction::UNIGRAM, Token::NONE));
     results.push_back(
@@ -1349,7 +1357,7 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
               segments.conversion_segment(0).candidates_size() - 1);
     EXPECT_LT(get_rank_by_value("坂"), get_rank_by_value("逆"));
     EXPECT_LT(get_rank_by_value("咲か"), get_rank_by_value("逆"));
-    EXPECT_LT(get_rank_by_value("差か"), get_rank_by_value("逆"));
+    EXPECT_LT(get_rank_by_value("阪"), get_rank_by_value("逆"));
     EXPECT_LT(get_rank_by_value("逆"), get_rank_by_value("差"));
   }
   // Cost offset
@@ -1600,6 +1608,49 @@ TEST_F(DictionaryPredictorTest, UsageStats) {
       &segments);
   predictor->Finish(*convreq_for_suggestion_, &segments);
   EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 1);
+}
+
+TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  MockImmutableConverter *immutable_converter =
+      data_and_predictor->mutable_immutable_converter();
+
+  // Exact key will not be filtered in mobile request
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_key("ーひー");
+    // Dummy candidate
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "ーひー";
+    candidate->key = "ーひー";
+    candidate->cost = 0;
+    EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  {
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(std::vector<Result>{
+            CreateResult6("こ", "子", 0, 10, prediction::PREFIX, Token::NONE),
+            CreateResult6("こーひー", "コーヒー", 0, 100, prediction::UNIGRAM,
+                          Token::NONE),
+            CreateResult6("こーひー", "珈琲", 0, 200, prediction::UNIGRAM,
+                          Token::NONE),
+            CreateResult6("こーひー", "coffee", 0, 300, prediction::UNIGRAM,
+                          Token::NONE)}));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("こーひー", &segments);
+  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
 }
 
 }  // namespace

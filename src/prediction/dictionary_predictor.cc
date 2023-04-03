@@ -465,6 +465,11 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
+  if (result.cost >= kInfinity) {
+    *log_message = "Too large cost";
+    return true;
+  }
+
   // When |include_exact_key| is true, we don't filter the results
   // which have the exactly same key as the input even if it's a bad
   // suggestion.
@@ -1087,6 +1092,10 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     const Result &result,
     const ImmutableConverterInterface *immutable_converter,
     absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
+  if (input_key == result.key) {
+    LOG(WARNING) << "Invalid prefix key: " << result.key;
+    return 0;
+  }
   const std::string &candidate_key = result.key;
   const uint16_t result_rid = result.rid;
   const size_t key_len = Util::CharsLen(candidate_key);
@@ -1111,6 +1120,11 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     const Segment::Candidate &top_candidate = segment->candidate(0);
     penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);
+  }
+  // ConvertForRequest() can return placeholder candidate with cost 0 when it
+  // failed to generate candidates.
+  if (penalty <= 0) {
+    penalty = kInfinity;
   }
   constexpr int kPrefixCandidateCostOffset = 1151;  // 500 * log(10)
   // TODO(toshiyuki): Optimize the cost offset.

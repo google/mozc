@@ -29,10 +29,12 @@
 
 #include "base/mmap.h"
 
-#include <cstring>
-#include <iterator>
+#include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "base/file_util.h"
@@ -42,73 +44,219 @@
 #include "absl/algorithm/container.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-TEST(MmapTest, MmapTest) {
-  const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
-  absl::BitGen gen;
+std::string GetRandomFilename() {
+  const uint32_t n = absl::Uniform<uint32_t>(absl::SharedBitGen());
+  return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
+                            absl::StrCat("test_", n));
+}
 
-  constexpr size_t kFileNameSize[] = {1, 100, 1024, 8192};
-  for (int i = 0; i < std::size(kFileNameSize); ++i) {
-    ASSERT_OK(FileUtil::UnlinkIfExists(filename));
-    std::vector<char> buf(kFileNameSize[i]);
-    ASSERT_OK(FileUtil::SetContents(
-        filename, absl::string_view(buf.data(), kFileNameSize[i])));
-    absl::c_generate(
-        buf, [&gen]() -> char { return absl::Uniform<unsigned char>(gen); });
+std::vector<char> GetRandomContents(size_t size) {
+  std::vector<char> data(size);
+  absl::c_generate(data, []() -> char {
+    return absl::Uniform<unsigned char>(absl::SharedBitGen());
+  });
+  return data;
+}
 
-    // Write Test
-    {
-      Mmap mmap;
-      EXPECT_TRUE(mmap.Open(filename, "r+"));
-      memcpy(mmap.begin(), buf.data(), kFileNameSize[i]);
+TEST(MmapTest, DefaultCtor) {
+  Mmap mmap;  // Nothing is mapped.
+  EXPECT_TRUE(mmap.empty());
+}
 
-      for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(mmap[j], buf[j]);
-      }
+TEST(MmapTest, MoveCtor) {
+  constexpr absl::string_view kTestContents = "mmap test";
 
-      memset(mmap.begin(), 0, kFileNameSize[i]);
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename, kTestContents));
 
-      for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(mmap[j], 0);
-      }
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename);
+  ASSERT_OK(mmap);
+  EXPECT_EQ(mmap->span(), kTestContents);
 
-      for (int j = 0; j < kFileNameSize[i]; ++j) {
-        mmap[j] = buf[j];
-      }
+  Mmap moved(*std::move(mmap));
+  EXPECT_EQ(moved.span(), kTestContents);
+  EXPECT_TRUE(mmap->span().empty());  // NOLINT
+}
 
-      for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(mmap[j], buf[j]);
-      }
-    }
+TEST(MmapTest, MoveAssign) {
+  constexpr absl::string_view kTestContents[2] = {"mmap test 1", "mmap test 2"};
 
-    // Read test
-    {
-      Mmap mmap;
-      EXPECT_TRUE(mmap.Open(filename, "r"));
-      for (int j = 0; j < kFileNameSize[i]; ++j) {
-        EXPECT_EQ(mmap[j], buf[j]);
-      }
-    }
+  const std::string filename[2] = {GetRandomFilename(), GetRandomFilename()};
+  for (size_t i = 0; i < 2; ++i)
+    ASSERT_OK(FileUtil::SetContents(filename[i], kTestContents[i]));
 
-    EXPECT_OK(FileUtil::Unlink(filename));
-  }
+  absl::StatusOr<Mmap> mmap1 = Mmap::Map(filename[0]);
+  ASSERT_OK(mmap1);
+  EXPECT_EQ(mmap1->span(), kTestContents[0]);
+
+  absl::StatusOr<Mmap> mmap2 = Mmap::Map(filename[1]);
+  ASSERT_OK(mmap2);
+  EXPECT_EQ(mmap2->span(), kTestContents[1]);
+
+  *mmap1 = *std::move(mmap2);
+  EXPECT_EQ(mmap1->span(), kTestContents[1]);
+  EXPECT_TRUE(mmap2->span().empty());  // NOLINT
+}
+
+TEST(MmapTest, FailsIfFileDoesNotExist) {
+  const absl::StatusOr<Mmap> mmap = Mmap::Map("");
+  EXPECT_FALSE(mmap.ok());
+}
+
+TEST(MmapTest, FailsIfOffsetExceedsFileSize) {
+  constexpr size_t kFileSize = 128;
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename, std::string(kFileSize, 'a')));
+  EXPECT_FALSE(Mmap::Map(filename, 512, std::nullopt, Mmap::READ_ONLY).ok());
+}
+
+TEST(MmapTest, FailsIfMapSizeIsZero) {
+  constexpr size_t kFileSize = 128;
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename, std::string(kFileSize, 'a')));
+
+  EXPECT_FALSE(Mmap::Map(filename, 0, 0, Mmap::READ_ONLY).ok());
+  EXPECT_FALSE(Mmap::Map(filename, 100, 0, Mmap::READ_ONLY).ok());
+
+  // If offset is at the end of file, the resulting size is zero.
+  EXPECT_FALSE(
+      Mmap::Map(filename, kFileSize, std::nullopt, Mmap::READ_ONLY).ok());
 }
 
 TEST(MmapTest, MaybeMLockTest) {
-  const size_t data_len = 32;
-  std::unique_ptr<void, void (*)(void*)> addr(malloc(data_len), &free);
+  constexpr size_t kDataLen = 32;
+  std::unique_ptr<void, void (*)(void *)> addr(malloc(kDataLen), &free);
   if (Mmap::IsMLockSupported()) {
-    ASSERT_EQ(Mmap::MaybeMLock(addr.get(), data_len), 0);
-    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), data_len), 0);
+    ASSERT_EQ(Mmap::MaybeMLock(addr.get(), kDataLen), 0);
+    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), kDataLen), 0);
   } else {
-    EXPECT_EQ(Mmap::MaybeMLock(addr.get(), data_len), -1);
-    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), data_len), -1);
+    EXPECT_EQ(Mmap::MaybeMLock(addr.get(), kDataLen), -1);
+    EXPECT_EQ(Mmap::MaybeMUnlock(addr.get(), kDataLen), -1);
   }
 }
+
+class MmapEntireFileTest : public ::testing::TestWithParam<size_t> {};
+
+TEST_P(MmapEntireFileTest, Read) {
+  // Create a file with random contents.
+  const size_t filesize = GetParam();
+  const std::vector<char> &data = GetRandomContents(filesize);
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename,
+                                  absl::string_view(data.data(), data.size())));
+
+  // Mmap the file and check its contents.
+  const absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+  ASSERT_OK(mmap);
+  EXPECT_EQ(mmap->span(), data);
+}
+
+TEST_P(MmapEntireFileTest, Write) {
+  // Create a file with full of a's.
+  const size_t filesize = GetParam();
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename, std::string(filesize, 'a')));
+
+  // Mmap the file and writes random contents.
+  const std::vector<char> &data = GetRandomContents(filesize);
+  {
+    absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_WRITE);
+    ASSERT_OK(mmap);
+    ASSERT_EQ(mmap->size(), data.size());
+    absl::c_copy(data, mmap->begin());
+  }
+
+  // Read the file and check its contents.
+  absl::StatusOr<std::string> contents = FileUtil::GetContents(filename);
+  ASSERT_OK(contents);
+  EXPECT_EQ(*contents, absl::string_view(data.data(), data.size()));
+}
+
+INSTANTIATE_TEST_SUITE_P(MmapTestSuite, MmapEntireFileTest,
+                         ::testing::Values(1, 8, 1024, 4096, 7777, 8192));
+
+// File size, offset, and length to mmap.
+using Params = std::tuple<size_t, size_t, std::optional<size_t>>;
+
+class MmapPartialFileTest : public ::testing::TestWithParam<Params> {};
+
+TEST_P(MmapPartialFileTest, Read) {
+  const auto [filesize, offset, size] = GetParam();
+
+  const std::vector<char> &data = GetRandomContents(filesize);
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename,
+                                  absl::string_view(data.data(), data.size())));
+
+  const absl::string_view expected(data.data() + offset,
+                                   size.value_or(filesize - offset));
+  absl::StatusOr<Mmap> mmap =
+      Mmap::Map(filename, offset, size, Mmap::READ_ONLY);
+  ASSERT_OK(mmap) << mmap.status();
+  EXPECT_EQ(mmap->span(), expected);
+
+  // Test move operations for partial mmap.
+  Mmap mmap2(*std::move(mmap));  // Move constructed.
+  EXPECT_EQ(mmap2.span(), expected);
+
+  Mmap mmap3;
+  EXPECT_TRUE(mmap3.empty());
+  mmap3 = std::move(mmap2);  // Move assigned.
+  EXPECT_EQ(mmap3.span(), expected);
+}
+
+TEST_P(MmapPartialFileTest, Write) {
+  const auto [filesize, offset, size] = GetParam();
+  const size_t map_size = size.value_or(filesize - offset);
+
+  const std::string &filename = GetRandomFilename();
+  ASSERT_OK(FileUtil::SetContents(filename, std::string(filesize, 'a')));
+
+  const std::vector<char> &data = GetRandomContents(map_size);
+  {
+    absl::StatusOr<Mmap> mmap =
+        Mmap::Map(filename, offset, map_size, Mmap::READ_WRITE);
+    ASSERT_OK(mmap) << mmap.status();
+    ASSERT_EQ(mmap->size(), data.size());
+    absl::c_copy(data, mmap->begin());
+  }
+  absl::StatusOr<std::string> contents = FileUtil::GetContents(filename);
+  ASSERT_OK(contents);
+  EXPECT_EQ(contents->substr(0, offset), std::string(offset, 'a'));
+  EXPECT_EQ(contents->substr(offset, map_size),
+            absl::string_view(data.data(), data.size()));
+  EXPECT_EQ(contents->substr(offset + map_size),
+            std::string(filesize - offset - map_size, 'a'));
+}
+
+INSTANTIATE_TEST_SUITE_P(MmapTestSuite, MmapPartialFileTest,
+                         ::testing::Values(Params(1, 0, 1),                   //
+                                           Params(1024, 0, 1024),             //
+                                           Params(1024, 0, 321),              //
+                                           Params(1024, 1000, std::nullopt),  //
+                                           Params(1024, 1000, 24),            //
+                                           Params(1024, 321, 567),            //
+                                           Params(4096, 0, 4096),             //
+                                           Params(4096, 3000, 1096),          //
+                                           Params(4096, 500, std::nullopt),   //
+                                           Params(4096, 500, 3000),           //
+                                           Params(7777, 0, 7777),             //
+                                           Params(7777, 2500, 5000),          //
+                                           Params(7777, 5000, std::nullopt),  //
+                                           Params(7777, 5000, 2000),          //
+                                           Params(8192, 0, 8192),             //
+                                           Params(8192, 1000, 3000),          //
+                                           Params(8192, 1000, 7000),          //
+                                           Params(8192, 5000, std::nullopt),  //
+                                           Params(8192, 5000, 2000),          //
+                                           Params(8192, 5000, 3192)));
 
 }  // namespace
 }  // namespace mozc

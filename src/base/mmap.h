@@ -31,7 +31,10 @@
 #define MOZC_BASE_MMAP_H_
 
 #include <cstddef>
+#include <optional>
 
+#include "absl/base/attributes.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -39,14 +42,38 @@ namespace mozc {
 
 class Mmap final {
  public:
+  enum Mode {
+    READ_ONLY,
+    READ_WRITE,
+  };
+
+  // Creates a mapping of an entire file into the address space.
+  static absl::StatusOr<Mmap> Map(absl::string_view filename,
+                                  Mode mode = READ_ONLY) {
+    return Map(filename, 0, std::nullopt, mode);
+  }
+
+  // Creates a mapping of a partial region of a file into the address space. The
+  // file region `[offset, offset + size)` is mapped to the returned instance.
+  // If `size` is std::nullopt, the region from `offset` to the end of file is
+  // mapped.
+  static absl::StatusOr<Mmap> Map(absl::string_view filename, size_t offset,
+                                  std::optional<size_t> size,
+                                  Mode mode = READ_ONLY);
+
   Mmap() = default;
 
   Mmap(const Mmap &) = delete;
   Mmap &operator=(const Mmap &) = delete;
 
+  Mmap(Mmap &&);
+  Mmap &operator=(Mmap &&);
+
   ~Mmap() { Close(); }
 
+  ABSL_DEPRECATED("Use Map() instead")
   bool Open(absl::string_view filename, absl::string_view mode = "r");
+
   void Close();
 
   // Following mlock/munlock related functions work based on target environment.
@@ -75,10 +102,12 @@ class Mmap final {
   constexpr absl::Span<char> span() { return data_; }
   constexpr absl::Span<const char> span() const { return data_; }
 
+  constexpr bool empty() const { return data_.empty(); }
   constexpr size_t size() const { return data_.size(); }
 
  private:
   absl::Span<char> data_;
+  size_t adjust_ = 0;
 };
 
 }  // namespace mozc
