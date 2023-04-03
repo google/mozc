@@ -90,13 +90,13 @@ Install paths are configurable by modifying
 ### Unittests
 
 ```
-bazel test ... --config oss_linux -c dbg -- -net/... -third_party/...
+bazel test ... --config oss_linux -c dbg -- -third_party/...
 ```
 
 * `...` means all targets under the current and subdirectories.
 * `--` means the end of the flags which start from `-`.
 * `-<dir>/...` means exclusion of all targets under the `dir`.
-  + `net` and `third_party` are not supported yet.
+  + `third_party` are not supported yet.
 
 Here is a sample command to run a specific test.
 
