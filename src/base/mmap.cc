@@ -105,7 +105,7 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
       break;
     default:
       return absl::InvalidArgumentError(
-          absl::StrFormat("Invalid mode %s", mode));
+          absl::StrFormat("Invalid mode %d", mode));
   }
   return params;
 }
@@ -342,28 +342,6 @@ Mmap &Mmap::operator=(Mmap &&x) {
   x.data_ = absl::Span<char>();
   x.adjust_ = 0;
   return *this;
-}
-
-bool Mmap::Open(const absl::string_view filename,
-                const absl::string_view mode) {
-  Close();
-  Mmap::Mode map_mode;
-  if (mode == "r") {
-    map_mode = Mmap::READ_ONLY;
-  } else if (mode == "r+") {
-    map_mode = Mmap::READ_WRITE;
-  } else {
-    LOG(ERROR) << "Unknown mode: " << mode;
-    return false;
-  }
-  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, map_mode);
-  if (!mmap.ok()) {
-    LOG(ERROR) << "Failed to mmap " << filename << "in mode " << mode << ": "
-               << mmap.status();
-    return false;
-  }
-  *this = *std::move(mmap);
-  return true;
 }
 
 void Mmap::Close() {

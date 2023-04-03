@@ -71,9 +71,6 @@ class Mmap final {
 
   ~Mmap() { Close(); }
 
-  ABSL_DEPRECATED("Use Map() instead")
-  bool Open(absl::string_view filename, absl::string_view mode = "r");
-
   void Close();
 
   // Following mlock/munlock related functions work based on target environment.

@@ -50,9 +50,10 @@
 
 namespace mozc {
 namespace {
+using SharedBitGen = absl::random_internal::PoolURBG<uint32_t, 8>;
 
 std::string GetRandomFilename() {
-  const uint32_t n = absl::Uniform<uint32_t>(absl::SharedBitGen());
+  const uint32_t n = absl::Uniform<uint32_t>(SharedBitGen());
   return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                             absl::StrCat("test_", n));
 }
@@ -60,7 +61,7 @@ std::string GetRandomFilename() {
 std::vector<char> GetRandomContents(size_t size) {
   std::vector<char> data(size);
   absl::c_generate(data, []() -> char {
-    return absl::Uniform<unsigned char>(absl::SharedBitGen());
+    return absl::Uniform<unsigned char>(SharedBitGen());
   });
   return data;
 }

@@ -506,15 +506,14 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
 
 UserDictionaryImporter::EncodingType
 UserDictionaryImporter::GuessFileEncodingType(const std::string &filename) {
-  Mmap mmap;
-  if (!mmap.Open(filename, "r")) {
-    LOG(ERROR) << "cannot open: " << filename;
+  absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+  if (!mmap.ok()) {
+    LOG(ERROR) << "cannot open: " << filename << ": " << mmap.status();
     return NUM_ENCODINGS;
   }
   constexpr size_t kMaxCheckSize = 1024;
-  const size_t size = std::min<size_t>(kMaxCheckSize, mmap.size());
-  const absl::string_view mapped_data(static_cast<const char *>(mmap.begin()),
-                                      size);
+  const size_t size = std::min<size_t>(kMaxCheckSize, mmap->size());
+  const absl::string_view mapped_data(mmap->begin(), size);
   return GuessEncodingType(mapped_data);
 }
 

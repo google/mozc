@@ -70,27 +70,27 @@ bool EncryptedStringStorage::Load(std::string *output) const {
 
   // Reads encrypted message and salt from local file
   {
-    Mmap mmap;
-    if (!mmap.Open(filename_, "r")) {
-      LOG(ERROR) << "cannot open user history file";
+    const absl::StatusOr<Mmap> mmap = Mmap::Map(filename_, Mmap::READ_ONLY);
+    if (!mmap.ok()) {
+      LOG(ERROR) << "cannot open user history file: " << mmap.status();
       return false;
     }
 
-    if (mmap.size() < kSaltSize) {
+    if (mmap->size() < kSaltSize) {
       LOG(ERROR) << "file size is too small";
       return false;
     }
 
-    if (mmap.size() > kMaxFileSize) {
+    if (mmap->size() > kMaxFileSize) {
       LOG(ERROR) << "file size is too big.";
       return false;
     }
 
     // copy salt
-    salt.assign(mmap.begin(), kSaltSize);
+    salt.assign(mmap->begin(), kSaltSize);
 
     // copy body
-    output->assign(mmap.begin() + kSaltSize, mmap.size() - kSaltSize);
+    output->assign(mmap->begin() + kSaltSize, mmap->size() - kSaltSize);
   }
 
   return Decrypt(salt, output);

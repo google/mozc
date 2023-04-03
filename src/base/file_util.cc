@@ -32,12 +32,12 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
-#include <cstring>
 #include <filesystem>
 #include <ios>
 #include <iterator>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -485,15 +485,15 @@ absl::StatusOr<bool> FileUtil::IsEqualFile(const std::string &filename1,
 
 absl::StatusOr<bool> FileUtilImpl::IsEqualFile(
     const std::string &filename1, const std::string &filename2) const {
-  Mmap mmap1, mmap2;
-  if (!mmap1.Open(filename1, "r")) {
-    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename1));
+  absl::StatusOr<Mmap> mmap1 = Mmap::Map(filename1, Mmap::READ_ONLY);
+  if (!mmap1.ok()) {
+    return std::move(mmap1).status();
   }
-  if (!mmap2.Open(filename2, "r")) {
-    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename2));
+  absl::StatusOr<Mmap> mmap2 = Mmap::Map(filename2, Mmap::READ_ONLY);
+  if (!mmap2.ok()) {
+    return std::move(mmap2).status();
   }
-  return mmap1.size() == mmap2.size() &&
-         memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
+  return mmap1->span() == mmap2->span();
 }
 
 absl::StatusOr<bool> FileUtil::IsEquivalent(const std::string &filename1,

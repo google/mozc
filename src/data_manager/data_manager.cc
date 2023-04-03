@@ -434,10 +434,12 @@ DataManager::Status DataManager::InitFromFile(const std::string &path) {
 
 DataManager::Status DataManager::InitFromFile(const std::string &path,
                                               absl::string_view magic) {
-  if (!mmap_.Open(path, "r")) {
-    LOG(ERROR) << "Failed to mmap " << path;
+  absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
+  if (!mmap.ok()) {
+    LOG(ERROR) << mmap.status();
     return Status::MMAP_FAILURE;
   }
+  mmap_ = *std::move(mmap);
   const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitFromArray(data, magic);
 }
@@ -458,10 +460,12 @@ DataManager::Status DataManager::InitUserPosManagerDataFromArray(
 
 DataManager::Status DataManager::InitUserPosManagerDataFromFile(
     const std::string &path, absl::string_view magic) {
-  if (!mmap_.Open(path, "r")) {
-    LOG(ERROR) << "Failed to mmap " << path;
+  absl::StatusOr<Mmap> mmap = Mmap::Map(path, Mmap::READ_ONLY);
+  if (!mmap.ok()) {
+    LOG(ERROR) << mmap.status();
     return Status::MMAP_FAILURE;
   }
+  mmap_ = *std::move(mmap);
   const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitUserPosManagerDataFromArray(data, magic);
 }
