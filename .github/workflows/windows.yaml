@@ -28,10 +28,22 @@ jobs:
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
           python -m pip install six
 
-      - name: build
+      - name: gyp
         shell: cmd
         working-directory: .\src
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py gyp --noqt --msvs_version=2019
-          python build_mozc.py build package
+      - name: build
+        shell: cmd
+        working-directory: .\src
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py build package -c Release
+
+      - name: runtests
+        shell: cmd
+        working-directory: .\src
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py runtests -c Debug
