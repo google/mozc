@@ -313,6 +313,7 @@ void InsertInputSequence(absl::string_view text, composer::Composer *composer) {
 
 void InsertInputSequenceForProbableKeyEvent(absl::string_view text,
                                             const uint32_t *corrected_key_codes,
+                                            float corrected_prob,
                                             composer::Composer *composer) {
   std::vector<commands::KeyEvent> keys;
   GenerateKeyEvents(text, &keys);
@@ -323,11 +324,11 @@ void InsertInputSequenceForProbableKeyEvent(absl::string_view text,
 
       probable_key_event = keys[i].add_probable_key_event();
       probable_key_event->set_key_code(keys[i].key_code());
-      probable_key_event->set_probability(0.9f);
+      probable_key_event->set_probability(1 - corrected_prob);
 
       probable_key_event = keys[i].add_probable_key_event();
       probable_key_event->set_key_code(corrected_key_codes[i]);
-      probable_key_event->set_probability(0.1f);
+      probable_key_event->set_probability(corrected_prob);
     }
     composer->InsertCharacterKeyEvent(keys[i]);
   }
@@ -1924,7 +1925,7 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateTypeCorrectingPrediction) {
       commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
   table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
   table_->SetTypingModelForTesting(std::make_unique<MockTypingModel>());
-  InsertInputSequenceForProbableKeyEvent(kInputText, kCorrectedKeyCodes,
+  InsertInputSequenceForProbableKeyEvent(kInputText, kCorrectedKeyCodes, 0.1f,
                                          composer_.get());
   Segments segments;
   InitSegmentsWithKey(kInputText, &segments);
@@ -1936,6 +1937,51 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateTypeCorrectingPrediction) {
   std::set<std::string> values;
   for (const auto &result : results) {
     EXPECT_EQ(result.types, TYPING_CORRECTION);
+    values.insert(result.value);
+  }
+  for (const auto expected_value : kExpectedValues) {
+    EXPECT_TRUE(values.find(expected_value) != values.end())
+        << expected_value << " isn't in the results";
+  }
+}
+
+TEST_F(DictionaryPredictionAggregatorTest,
+       AggregateTypeCorrectingPredictionWithDiffCost) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_use_typing_correction_diff_cost(true);
+
+  constexpr char kInputText[] = "gu-huru";
+  constexpr uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
+  const char *kExpectedValues[] = {
+      "グーグルアドセンス",
+      "グーグルアドワーズ",
+  };
+
+  config_->set_use_typing_correction(true);
+  request_->set_special_romanji_table(
+      commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
+  table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
+  table_->SetTypingModelForTesting(std::make_unique<MockTypingModel>());
+  // Correctd key may have smaller query cost.
+  InsertInputSequenceForProbableKeyEvent(kInputText, kCorrectedKeyCodes, 0.8f,
+                                         composer_.get());
+  Segments segments;
+  InitSegmentsWithKey(kInputText, &segments);
+
+  std::vector<Result> results;
+  aggregator.AggregateTypeCorrectingPrediction(*prediction_convreq_, segments,
+                                               &results);
+
+  std::set<std::string> values;
+  for (const auto &result : results) {
+    EXPECT_EQ(result.types, TYPING_CORRECTION);
+    // Should not have the smaller cost than the original entry wcost (= 0).
+    EXPECT_GE(result.wcost, 0);
     values.insert(result.value);
   }
   for (const auto expected_value : kExpectedValues) {
