@@ -265,8 +265,6 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
       dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      // Deny remote acccess
-      dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
@@ -284,8 +282,6 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Strip implicit owner rights
       // http://technet.microsoft.com/en-us/library/dd125370.aspx
       dacl += Allow(L"", SDDL_OWNER_RIGHTS);
-      // Deny remote acccess
-      dacl += Deny(SDDL_GENERIC_ALL, SDDL_NETWORK);
       // Allow general access to LocalSystem
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators

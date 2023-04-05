@@ -107,8 +107,9 @@ class WinSandbox {
   // }
   // handle_ = ::CreateNamedPipe(..
   //                             PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
+  //                             FILE_FLAG_FIRST_PIPE_INSTANCE,
+  //                             PIPE_REJECT_REMOTE_CLIENTS | ...,
   //                             ...
-  //                             0,
   //                             &security_attributes);
   // ::LocalFree(security_attributes.lpSecurityDescriptor);
   enum ObjectSecurityType {
