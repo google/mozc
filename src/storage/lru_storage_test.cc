@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <set>
@@ -58,7 +59,7 @@ constexpr uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
 void RunTest(LruStorage *storage, uint32_t size) {
   mozc::storage::LruCache<std::string, uint32_t> cache(size);
-  std::set<std::string> used;
+  std::set<std::string, std::less<>> used;
   std::vector<std::pair<std::string, uint32_t> > values;
   mozc::Random random;
   for (int i = 0; i < size * 2; ++i) {
