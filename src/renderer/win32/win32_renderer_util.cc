@@ -91,7 +91,6 @@ class Optional {
 struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
-  const Optional<CLogFont> composition_font = Optional<CLogFont>();
   Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
   Optional<bool> vertical_writing;
@@ -126,9 +125,6 @@ int GetAbsoluteFontHeight(const CandidateWindowLayoutParams &params) {
   // A negative font height is also valid in the LONGFONT structure.
   // Use |abs| for normalization.
   // http://msdn.microsoft.com/en-us/library/dd145037.aspx
-  if (params.composition_font.has_value()) {
-    return abs(params.composition_font.value().lfHeight);
-  }
   if (params.default_gui_font.has_value()) {
     return abs(params.default_gui_font.value().lfHeight);
   }
