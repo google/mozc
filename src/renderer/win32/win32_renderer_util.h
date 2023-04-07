@@ -58,10 +58,6 @@ class CandidateWindowLayout {
   // Returns true if this object is initialized with valid parameter.
   bool initialized() const;
 
-  // Initializes fields with given target position and sets true
-  // to |initialized_|.
-  void InitializeWithPosition(const POINT &position);
-
   // Initializes fields with given target position and exclude region and
   // sets true to |initialized_|.
   void InitializeWithPositionAndExcludeRegion(const POINT &position,

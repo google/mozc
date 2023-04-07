@@ -692,13 +692,6 @@ void CandidateWindowLayout::Clear() {
   initialized_ = false;
 }
 
-void CandidateWindowLayout::InitializeWithPosition(const POINT &position) {
-  position_ = position;
-  exclude_region_ = CRect();
-  has_exclude_region_ = false;
-  initialized_ = true;
-}
-
 void CandidateWindowLayout::InitializeWithPositionAndExcludeRegion(
     const POINT &position, const RECT &exclude_region) {
   position_ = position;
