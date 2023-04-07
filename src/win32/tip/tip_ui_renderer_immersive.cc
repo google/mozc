@@ -41,6 +41,7 @@
 #include <memory>
 
 #include "base/util.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "renderer/table_layout.h"
 #include "renderer/win32/text_renderer.h"

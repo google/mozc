@@ -39,6 +39,7 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "win32/base/input_state.h"

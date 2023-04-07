@@ -33,21 +33,11 @@
 #include <windows.h>
 
 #include "base/port.h"
+#include "protocol/candidates.pb.h"
+#include "renderer/table_layout.h"
+#include "renderer/win32/text_renderer.h"
 
 namespace mozc {
-namespace commands {
-class Candidates;
-}  // namespace commands
-
-namespace renderer {
-class TableLayout;
-
-namespace win32 {
-class TextRenderer;
-}  // namespace win32
-
-}  // namespace renderer
-
 namespace win32 {
 namespace tsf {
 
