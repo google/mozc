@@ -29,66 +29,68 @@
 
 #include "win32/tip/tip_display_attributes.h"
 
+#include <windows.h>
+
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 namespace {
 
-const wchar_t kInputDescription[] = L"TextService Display Attribute Input";
-const TF_DISPLAYATTRIBUTE kInputAttribute = {
-    {TF_CT_NONE, 0},  // text color
-    {TF_CT_NONE, 0},  // background color
-    TF_LS_DOT,        // underline style
-    FALSE,            // underline boldness
-    {TF_CT_NONE, 0},  // underline color
-    TF_ATTR_INPUT     // attribute info
+constexpr wchar_t kInputDescription[] = L"TextService Display Attribute Input";
+constexpr TF_DISPLAYATTRIBUTE kInputAttribute = {
+    {TF_CT_NONE, {}},  // text color
+    {TF_CT_NONE, {}},  // background color
+    TF_LS_DOT,         // underline style
+    FALSE,             // underline boldness
+    {TF_CT_NONE, {}},  // underline color
+    TF_ATTR_INPUT      // attribute info
 };
 
-const wchar_t kConvertedDescription[] =
+constexpr wchar_t kConvertedDescription[] =
     L"TextService Display Attribute Converted";
-const TF_DISPLAYATTRIBUTE kConvertedAttribute = {
-    {TF_CT_NONE, 0},          // text color
-    {TF_CT_NONE, 0},          // background color
+constexpr TF_DISPLAYATTRIBUTE kConvertedAttribute = {
+    {TF_CT_NONE, {}},         // text color
+    {TF_CT_NONE, {}},         // background color
     TF_LS_SOLID,              // underline style
     TRUE,                     // underline boldness
-    {TF_CT_NONE, 0},          // underline color
+    {TF_CT_NONE, {}},         // underline color
     TF_ATTR_TARGET_CONVERTED  // attribute info
 };
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 // {DDF5CDBA-C3FF-4BAF-B817-CC9210FAD27E}
-const GUID kDisplayAttributeInput = {
+constexpr GUID kDisplayAttributeInput = {
     0xddf5cdba,
     0xc3ff,
     0x4baf,
     {0xb8, 0x17, 0xcc, 0x92, 0x10, 0xfa, 0xd2, 0x7e}};
 
 // {F829C8C0-0EBB-4D29-BD2F-E413A944B7E4}
-const GUID kDisplayAttributeConverted = {
+constexpr GUID kDisplayAttributeConverted = {
     0xf829c8c0,
     0x0ebb,
     0x4d29,
     {0xbd, 0x2f, 0xe4, 0x13, 0xa9, 0x44, 0xb7, 0xe4}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {84CA1E7E-3020-4D1C-8968-DDA372D1E067}
-const GUID kDisplayAttributeInput = {
+constexpr GUID kDisplayAttributeInput = {
     0x84ca1e7e,
     0x3020,
     0x4d1c,
     {0x89, 0x68, 0xdd, 0xa3, 0x72, 0xd1, 0xe0, 0x67}};
 
 // {8A4028E5-2DCD-4365-A5DC-71F67E797437}
-const GUID kDisplayAttributeConverted = {
+constexpr GUID kDisplayAttributeConverted = {
     0x8a4028e5,
     0x2dcd,
     0x4365,
     {0xa5, 0xdc, 0x71, 0xf6, 0x7e, 0x79, 0x74, 0x37}};
 
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 }  // namespace
 
