@@ -66,7 +66,6 @@ WindowManager::WindowManager()
       indicator_window_(new IndicatorWindow),
       infolist_window_(new InfolistWindow),
       layout_manager_(new LayoutManager),
-      working_area_(WorkingAreaFactory::Create()),
       send_command_interface_(nullptr),
       last_position_(kInvalidMousePosition),
       candidates_finger_print_(0),
@@ -244,7 +243,7 @@ void WindowManager::UpdateLayout(
   Rect working_area;
   {
     CRect area;
-    if (working_area_->GetWorkingAreaFromPoint(
+    if (GetWorkingAreaFromPoint(
             CPoint(target_point.x, target_point.y), &area)) {
       working_area = Rect(area.left, area.top, area.Width(), area.Height());
     }

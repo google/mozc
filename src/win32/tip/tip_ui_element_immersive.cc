@@ -267,7 +267,6 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kImmersiveCandidateWindow)),
-        working_area_(renderer::win32::WorkingAreaFactory::Create()),
         text_renderer_(renderer::win32::TextRenderer::Create()),
         window_(window_handle),
         window_visible_(false) {}
@@ -457,7 +456,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
       const Point zero_point_offset(left_offset, 0);
       Rect working_area;
       CRect area;
-      if (working_area_->GetWorkingAreaFromPoint(target_point, &area)) {
+      if (renderer::win32::GetWorkingAreaFromPoint(target_point, &area)) {
         working_area = Rect(area.left, area.top, area.Width(), area.Height());
       }
       new_position =
@@ -562,7 +561,6 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
-  std::unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
   std::unique_ptr<renderer::win32::TextRenderer> text_renderer_;
   CWindow window_;
   bool window_visible_;

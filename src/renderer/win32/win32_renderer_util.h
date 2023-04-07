@@ -96,24 +96,8 @@ struct IndicatorWindowLayout {
   bool is_vertical;
 };
 
-// This interface is designed to hook API calls for unit test.
-class WorkingAreaInterface {
- public:
-  virtual ~WorkingAreaInterface() {}
-
-  virtual bool GetWorkingAreaFromPoint(const POINT &point,
-                                       RECT *working_area) = 0;
-};
-
-class WorkingAreaFactory {
- public:
-  WorkingAreaFactory() = delete;
-  WorkingAreaFactory(const WorkingAreaFactory &) = delete;
-  WorkingAreaFactory &operator=(const WorkingAreaFactory &) = delete;
-  // Returns an instance of WorkingAreaInterface. Caller must delete
-  // the instance.
-  static WorkingAreaInterface *Create();
-};
+// Retrieves the working area that contains the specified |point|.
+bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area);
 
 // This interface is designed to hook API calls for unit test.
 class WindowPositionInterface {

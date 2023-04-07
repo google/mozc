@@ -196,36 +196,29 @@ bool ExtractParams(LayoutManager *layout,
   return true;
 }
 
-class NativeWorkingAreaAPI : public WorkingAreaInterface {
- public:
-  NativeWorkingAreaAPI() {}
-
- private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
-    if (working_area == nullptr) {
-      return false;
-    }
-    ::SetRect(working_area, 0, 0, 0, 0);
-
-    // Obtain the monitor's working area
-    const HMONITOR monitor =
-        ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
-    if (monitor == nullptr) {
-      return false;
-    }
-
-    MONITORINFO monitor_info = {};
-    monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
-    if (!::GetMonitorInfo(monitor, &monitor_info)) {
-      const DWORD error = GetLastError();
-      LOG(ERROR) << "GetMonitorInfo failed. Error: " << error;
-      return false;
-    }
-
-    *working_area = monitor_info.rcWork;
-    return true;
+bool GetWorkingAreaFromPointImpl(const POINT &point, RECT *working_area) {
+  if (working_area == nullptr) {
+    return false;
   }
-};
+  ::SetRect(working_area, 0, 0, 0, 0);
+
+  // Obtain the monitor's working area
+  const HMONITOR monitor = ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+  if (monitor == nullptr) {
+    return false;
+  }
+
+  MONITORINFO monitor_info = {};
+  monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
+  if (!::GetMonitorInfo(monitor, &monitor_info)) {
+    const DWORD error = GetLastError();
+    LOG(ERROR) << "GetMonitorInfo failed. Error: " << error;
+    return false;
+  }
+
+  *working_area = monitor_info.rcWork;
+  return true;
+}
 
 class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
@@ -358,21 +351,6 @@ struct WindowInfo {
   CSize client_area_size;
   double scale_factor;
   WindowInfo() : scale_factor(1.0) {}
-};
-
-class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
- public:
-  explicit WorkingAreaEmulatorImpl(const CRect &area) : area_(area) {}
-
- private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
-    if (working_area == nullptr) {
-      return false;
-    }
-    *working_area = area_;
-    return true;
-  }
-  const CRect area_;
 };
 
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
@@ -691,8 +669,8 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
 
 }  // namespace
 
-WorkingAreaInterface *WorkingAreaFactory::Create() {
-  return new NativeWorkingAreaAPI();
+bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
+  return GetWorkingAreaFromPointImpl(point, working_area);
 }
 
 WindowPositionEmulator *WindowPositionEmulator::Create() {
