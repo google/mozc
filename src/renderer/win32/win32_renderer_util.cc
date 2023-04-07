@@ -91,7 +91,6 @@ class Optional {
 struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
-  Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
   Optional<bool> vertical_writing;
 };
@@ -113,22 +112,6 @@ bool IsValidPoint(const commands::RendererCommand::Point &point) {
 CPoint ToPoint(const commands::RendererCommand::Point &point) {
   DCHECK(IsValidPoint(point));
   return CPoint(point.x(), point.y());
-}
-
-// Returns an absolute font height of the composition font.
-// Note that this function does not take the DPI virtualization into
-// consideration so the caller is responsible to multiply an appropriate
-// scaling factor.
-// If a composition font is not available, this function try to use
-// the default GUI font on this session.
-int GetAbsoluteFontHeight(const CandidateWindowLayoutParams &params) {
-  // A negative font height is also valid in the LONGFONT structure.
-  // Use |abs| for normalization.
-  // http://msdn.microsoft.com/en-us/library/dd145037.aspx
-  if (params.default_gui_font.has_value()) {
-    return abs(params.default_gui_font.value().lfHeight);
-  }
-  return 0;
 }
 
 // "base_pos" is an ideal position where the candidate window is placed.
@@ -165,7 +148,6 @@ bool ExtractParams(LayoutManager *layout,
 
   params->window_handle.Clear();
   params->char_pos.Clear();
-  params->default_gui_font.Clear();
   params->client_rect.Clear();
   params->vertical_writing.Clear();
 
@@ -192,10 +174,6 @@ bool ExtractParams(LayoutManager *layout,
       dest->cLineHeight = char_pos.line_height();
       dest->rcDocument = ToRect(char_pos.document_area());
     }
-  }
-
-  if (!layout->GetDefaultGuiFont(params->default_gui_font.mutable_value())) {
-    params->default_gui_font.Clear();
   }
 
   {
