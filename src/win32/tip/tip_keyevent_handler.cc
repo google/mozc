@@ -461,7 +461,7 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     const TipInputModeManager::Action action =
         text_service->GetThreadContext()->GetInputModeManager()->OnKey(
             vk, is_key_down, result.should_be_eaten);
-    if (action == IndicatorVisibilityTracker::kUpdateUI) {
+    if (action == TipInputModeManager::Action::kUpdateUI) {
       text_service->PostUIUpdateMessage();
     }
 
