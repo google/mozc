@@ -271,6 +271,7 @@ class DictionaryPredictor : public PredictorInterface {
   const SuggestionFilter *suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>
       single_kanji_dictionary_;
+  const dictionary::PosMatcher *pos_matcher_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
 };

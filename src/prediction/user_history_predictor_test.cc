@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -641,7 +642,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
     Segments segments;
     SetUpInputForSuggestion("かま", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
-    std::set<std::string> expected_candidates;
+    std::set<std::string, std::less<>> expected_candidates;
     expected_candidates.insert("火魔汰");
     // We can get this entry even if Segmtnts's type is not CONVERSION.
     expected_candidates.insert("火魔汰摩");

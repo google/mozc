@@ -163,12 +163,12 @@ TEST(WinSandboxTest, GetSDDLForSharablePipe) {
   EXPECT_EQ(GetSDDLForVista(WinSandbox::kSharablePipe),
             L"O:S-8"
             L"G:S-9"
-            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
             L"S:(ML;;NX;;;LW)");
   EXPECT_EQ(GetSDDLForWin8(WinSandbox::kSharablePipe),
             L"O:S-8"
             L"G:S-9"
-            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
             L"(A;;GA;;;S-8)"
             L"S:(ML;;NX;;;LW)");
 }
@@ -177,13 +177,13 @@ TEST(WinSandboxTest, GetSDDLForLooseSharablePipe) {
   EXPECT_EQ(GetSDDLForVista(WinSandbox::kLooseSharablePipe),
             L"O:S-8"
             L"G:S-9"
-            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;S-8)"
             L"(A;;GA;;;RC)"
             L"S:(ML;;NX;;;LW)");
   EXPECT_EQ(GetSDDLForWin8(WinSandbox::kLooseSharablePipe),
             L"O:S-8"
             L"G:S-9"
-            L"D:(A;;;;;OW)(D;;GA;;;NU)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
+            L"D:(A;;;;;OW)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;AC)"
             L"(A;;GA;;;S-8)(A;;GA;;;RC)"
             L"S:(ML;;NX;;;LW)");
 }

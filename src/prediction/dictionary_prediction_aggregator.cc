@@ -1321,7 +1321,10 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
     dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {
-      (*results)[i].wcost += query.cost;
+      // Query cost can be negative in 'diff cost' due to typing model.
+      // We do not want to strongly promote TC candidates even if the query cost
+      // is negative.
+      (*results)[i].wcost += std::max(0, query.cost);
     }
     lookup_limit -= results->size() - previous_results_size;
     if (lookup_limit <= 0) {

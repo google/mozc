@@ -379,32 +379,28 @@ def ParseCleanOptions(args):
   return parser.parse_args(args)
 
 
-def AddPythonPathToEnvironmentFilesForWindows(out_dir):
-  """Add PYTHONPATH to environment files for Ninja."""
+def UpdateEnvironmentFilesForWindows(out_dir):
+  """Add required environment variables for Ninja build."""
   python_path_root = MOZC_ROOT
   python_path = os.path.abspath(python_path_root)
   original_python_paths = os.environ.get('PYTHONPATH', '')
   if original_python_paths:
     python_path = os.pathsep.join([original_python_paths, python_path])
   nul = chr(0)
+  additional_content = nul.join([
+      'PYTHONPATH=' + python_path,
+      'VSLANG=1033',  # 1033 == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US)
+      nul]).encode('utf-8')
   for d in os.listdir(out_dir):
     abs_dir = os.path.abspath(os.path.join(out_dir, d))
     with open(os.path.join(abs_dir, 'environment.x86'), 'rb') as x86_file:
-      x86_content = (
-          x86_file.read()[:-1] +
-          ('PYTHONPATH=' + python_path + nul + nul).encode('utf-8'))
+      x86_content = x86_file.read()[:-1] + additional_content
     with open(os.path.join(abs_dir, 'environment.x86'), 'wb') as x86_file:
       x86_file.write(x86_content)
-      print('== x86_content ==')
-      print(x86_content.decode('utf-8'))
     with open(os.path.join(abs_dir, 'environment.x64'), 'rb') as x64_file:
-      x64_content = (
-          x64_file.read()[:-1] +
-          ('PYTHONPATH=' + python_path + nul + nul).encode('utf-8'))
+      x64_content = x64_file.read()[:-1] + additional_content
     with open(os.path.join(abs_dir, 'environment.x64'), 'wb') as x64_file:
       x64_file.write(x64_content)
-      print('== x64_content ==')
-      print(x64_content.decode('utf-8'))
 
 
 def GypMain(options, unused_args):
@@ -581,7 +577,7 @@ def GypMain(options, unused_args):
   # For internal Ninja build on Windows, set up environment files
   if IsWindows():
     out_dir = os.path.join(MOZC_ROOT, 'out_win')
-    AddPythonPathToEnvironmentFilesForWindows(out_dir)
+    UpdateEnvironmentFilesForWindows(out_dir)
 
   if IsWindows() and (not options.noqt):
     # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs

@@ -143,6 +143,12 @@ int GetTypingCorrectionCostOffset(const ConversionRequest &request) {
       .typing_correction_cost_offset();
 }
 
+bool CancelContentWordSuffixPenalty(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .cancel_content_word_suffix_penalty();
+}
+
 }  // namespace
 
 DictionaryPredictor::DictionaryPredictor(
@@ -162,6 +168,7 @@ DictionaryPredictor::DictionaryPredictor(
       suggestion_filter_(suggestion_filter),
       single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)),
+      pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictor") {}
 
@@ -178,6 +185,7 @@ DictionaryPredictor::DictionaryPredictor(
       suggestion_filter_(suggestion_filter),
       single_kanji_dictionary_(
           new dictionary::SingleKanjiDictionary(data_manager)),
+      pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictorForTest") {}
 
@@ -835,10 +843,25 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   const std::string &input_key = segments.conversion_segment(0).key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, rid, input_key, *results, &prefix_penalty_cache);
+  const bool cancel_content_word_suffix_penalty =
+      CancelContentWordSuffixPenalty(request);
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
+    if (cancel_content_word_suffix_penalty && result.lid == result.rid &&
+        !pos_matcher_->IsSuffixWord(result.rid) &&
+        !pos_matcher_->IsFunctional(result.rid) &&
+        !pos_matcher_->IsWeakCompoundVerbSuffix(result.rid)) {
+      // TODO(b/242683049): It's better to define a new POS matcher rule once
+      // we decide to make this behavior default.
+      // Implementation note:
+      // Suffix penalty is added in the above GetLMCost(), which is also used
+      // for calculating non-mobile prediction cost. So we modify the cost
+      // calculation here for now.
+      cost -= segmenter_->GetSuffixPenalty(result.rid);
+      MOZC_WORD_LOG(result, absl::StrCat("Cancel Suffix Penalty: ", cost));
+    }
 
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words with high
