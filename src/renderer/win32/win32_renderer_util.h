@@ -189,16 +189,6 @@ class WindowPositionEmulator : public WindowPositionInterface {
   virtual void SetRoot(HWND child_window, HWND root_window) = 0;
 };
 
-enum CompatibilityMode {
-  // This flag represents the position can be calculated with default strategy.
-  COMPATIBILITY_MODE_NONE = 0,
-  // Some applications always keep CandidateForm up-to-date.  When this flag
-  // is specified, CandidateForm is taken into account so that the suggest
-  // window can be shown at more appropriate position.  Qt-based applications
-  // match this category.
-  CAN_USE_CANDIDATE_FORM_FOR_SUGGEST = 1,
-};
-
 class LayoutManager {
  public:
   LayoutManager();
@@ -211,10 +201,6 @@ class LayoutManager {
   // deleting the mock objects passed.
   LayoutManager(SystemPreferenceInterface *mock_system_preference,
                 WindowPositionInterface *mock_window_position);
-
-  // Returns compatibility bits for given target application.
-  int GetCompatibilityMode(
-      const commands::RendererCommand_ApplicationInfo &app_info);
 
   // Determines the position where the candidate/predict/suggestion window
   // should be placed.  This function does not take DPI virtualization into

@@ -981,7 +981,6 @@ LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
 bool LayoutManager::LayoutCandidateWindow(
     const commands::RendererCommand::ApplicationInfo &app_info,
     CandidateWindowLayout *candidate_layout) {
-  const int compatibility_mode = GetCompatibilityMode(app_info);
 
   CandidateWindowLayoutParams params;
   if (!ExtractParams(this, app_info, &params)) {
@@ -997,42 +996,6 @@ bool LayoutManager::LayoutCandidateWindow(
   return false;
 }
 
-int LayoutManager::GetCompatibilityMode(
-    const commands::RendererCommand_ApplicationInfo &app_info) {
-  if (!app_info.has_target_window_handle()) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-  const HWND target_window =
-      WinUtil::DecodeWindowHandle(app_info.target_window_handle());
-
-  if (!window_position_->IsWindow(target_window)) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-
-  std::wstring class_name;
-  if (!window_position_->GetWindowClassName(target_window, &class_name)) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-
-  int mode = COMPATIBILITY_MODE_NONE;
-  {
-    const wchar_t *kUseCandidateFormForSuggest[] = {
-        L"Chrome_RenderWidgetHostHWND",
-        L"JsTaroCtrl",
-        L"MozillaWindowClass",
-        L"OperaWindowClass",
-        L"QWidget",
-    };
-    for (size_t i = 0; i < std::size(kUseCandidateFormForSuggest); ++i) {
-      if (kUseCandidateFormForSuggest[i] == class_name) {
-        mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
-        break;
-      }
-    }
-  }
-
-  return mode;
-}
 
 bool LayoutManager::LayoutIndicatorWindow(
     const commands::RendererCommand_ApplicationInfo &app_info,
