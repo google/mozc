@@ -588,8 +588,7 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCompositionTarget(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    bool for_suggestion, LayoutManager *layout_manager,
+    const CandidateWindowLayoutParams &params, LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
@@ -989,9 +988,8 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     return false;
   }
 
-  const bool is_suggestion = true;
   if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
+          params, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -1009,9 +1007,8 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
     return false;
   }
 
-  const bool is_suggestion = false;
   if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
+          params, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
