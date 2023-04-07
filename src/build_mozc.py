@@ -389,6 +389,7 @@ def UpdateEnvironmentFilesForWindows(out_dir):
   nul = chr(0)
   additional_content = nul.join([
       'PYTHONPATH=' + python_path,
+      'VSLANG=1033',  # 1033 == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US)
       nul]).encode('utf-8')
   for d in os.listdir(out_dir):
     abs_dir = os.path.abspath(os.path.join(out_dir, d))
