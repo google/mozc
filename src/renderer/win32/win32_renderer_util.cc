@@ -52,9 +52,6 @@
 namespace mozc {
 namespace renderer {
 namespace win32 {
-using WTL::CFont;
-using WTL::CFontHandle;
-using WTL::CLogFont;
 
 namespace {
 // This template class is used to represent rendering information which may
@@ -198,32 +195,6 @@ bool ExtractParams(LayoutManager *layout,
   }
   return true;
 }
-
-class NativeSystemPreferenceAPI : public SystemPreferenceInterface {
- public:
-  virtual ~NativeSystemPreferenceAPI() {}
-
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == nullptr) {
-      return false;
-    }
-
-    CLogFont message_box_font;
-    // Use message box font as a default font to be consistent with
-    // the candidate window.
-    // TODO(yukawa): make a theme layer which is responsible for
-    //   the look and feel of both composition window and candidate window.
-    // TODO(yukawa): verify the font can render U+005C as a yen sign.
-    //               (http://b/1992773)
-    message_box_font.SetMessageBoxFont();
-    // Use factor "3" to be consistent with the candidate window.
-    message_box_font.MakeLarger(3);
-    message_box_font.lfWeight = FW_NORMAL;
-
-    *log_font = message_box_font;
-    return true;
-  }
-};
 
 class NativeWorkingAreaAPI : public WorkingAreaInterface {
  public:
@@ -387,25 +358,6 @@ struct WindowInfo {
   CSize client_area_size;
   double scale_factor;
   WindowInfo() : scale_factor(1.0) {}
-};
-
-class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
- public:
-  explicit SystemPreferenceEmulatorImpl(const LOGFONTW &gui_font)
-      : default_gui_font_(gui_font) {}
-
-  virtual ~SystemPreferenceEmulatorImpl() {}
-
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == nullptr) {
-      return false;
-    }
-    *log_font = default_gui_font_;
-    return true;
-  }
-
- private:
-  CLogFont default_gui_font_;
 };
 
 class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
@@ -739,11 +691,6 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
 
 }  // namespace
 
-SystemPreferenceInterface *SystemPreferenceFactory::CreateMock(
-    const LOGFONTW &gui_font) {
-  return new SystemPreferenceEmulatorImpl(gui_font);
-}
-
 WorkingAreaInterface *WorkingAreaFactory::Create() {
   return new NativeWorkingAreaAPI();
 }
@@ -846,13 +793,10 @@ void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
 }
 
 LayoutManager::LayoutManager()
-    : system_preference_(new NativeSystemPreferenceAPI),
-      window_position_(new NativeWindowPositionAPI) {}
+    : window_position_(new NativeWindowPositionAPI) {}
 
-LayoutManager::LayoutManager(SystemPreferenceInterface *mock_system_preference,
-                             WindowPositionInterface *mock_window_position)
-    : system_preference_(mock_system_preference),
-      window_position_(mock_window_position) {}
+LayoutManager::LayoutManager(WindowPositionInterface *mock_window_position)
+    : window_position_(mock_window_position) {}
 
 LayoutManager::~LayoutManager() {}
 
@@ -964,10 +908,6 @@ double LayoutManager::GetScalingFactor(HWND window_handle) const {
     return (static_cast<double>(window_rect_in_physical_coord.Height()) /
             window_rect_in_logical_coord.Height());
   }
-}
-
-bool LayoutManager::GetDefaultGuiFont(LOGFONTW *logfont) const {
-  return system_preference_->GetDefaultGuiFont(logfont);
 }
 
 LayoutManager::WritingDirection LayoutManager::GetWritingDirection(

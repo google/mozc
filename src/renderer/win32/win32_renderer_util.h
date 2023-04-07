@@ -97,28 +97,6 @@ struct IndicatorWindowLayout {
 };
 
 // This interface is designed to hook API calls for unit test.
-class SystemPreferenceInterface {
- public:
-  virtual ~SystemPreferenceInterface() {}
-
-  // This method can be used to retrieve some kind of default font
-  // for GUI rendering.
-  // Returns true if succeeds.
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) = 0;
-};
-
-// This class implements SystemPreferenceInterface for unit tests.
-class SystemPreferenceFactory {
- public:
-  SystemPreferenceFactory() = delete;
-  SystemPreferenceFactory(const SystemPreferenceFactory &) = delete;
-  SystemPreferenceFactory &operator=(const SystemPreferenceFactory &) = delete;
-  // Returns an instance of WindowPositionEmulator. Caller must delete
-  // the instance.
-  static SystemPreferenceInterface *CreateMock(const LOGFONTW &gui_font);
-};
-
-// This interface is designed to hook API calls for unit test.
 class WorkingAreaInterface {
  public:
   virtual ~WorkingAreaInterface() {}
@@ -199,8 +177,7 @@ class LayoutManager {
   // A special constructor for unit tests.  You can set a mock object which
   // emulates native APIs for unit test.  This class is responsible for
   // deleting the mock objects passed.
-  LayoutManager(SystemPreferenceInterface *mock_system_preference,
-                WindowPositionInterface *mock_window_position);
+  explicit LayoutManager(WindowPositionInterface *mock_window_position);
 
   // Determines the position where the candidate/predict/suggestion window
   // should be placed.  This function does not take DPI virtualization into
@@ -250,10 +227,6 @@ class LayoutManager {
   // Returns 1.0 if any error occurs.
   double GetScalingFactor(HWND window_handle) const;
 
-  // Returns true if the default GUI font is retrieved.
-  // Returns false if fails.
-  bool GetDefaultGuiFont(LOGFONTW *logfong) const;
-
   // Represents preferred writing direction, especially for composition string.
   enum WritingDirection {
     // The writing direction is not specified.
@@ -274,7 +247,6 @@ class LayoutManager {
       IndicatorWindowLayout *indicator_layout);
 
  private:
-  std::unique_ptr<SystemPreferenceInterface> system_preference_;
   std::unique_ptr<WindowPositionInterface> window_position_;
 };
 
