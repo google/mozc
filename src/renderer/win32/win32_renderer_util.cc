@@ -91,8 +91,6 @@ class Optional {
 struct CandidateWindowLayoutParams {
   Optional<HWND> window_handle;
   Optional<IMECHARPOSITION> char_pos;
-  const Optional<CandidateWindowLayout> candidate_form =
-      Optional<CandidateWindowLayout>();
   const Optional<CLogFont> composition_font = Optional<CLogFont>();
   Optional<CLogFont> default_gui_font;
   Optional<CRect> client_rect;
@@ -223,25 +221,6 @@ bool ExtractParams(LayoutManager *layout,
     } else if (direction == LayoutManager::HORIZONTAL_WRITING) {
       *params->vertical_writing.mutable_value() = false;
     }
-  }
-  return true;
-}
-
-bool CanUseExcludeRegionInCandidateFrom(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    bool for_suggestion) {
-  if (for_suggestion &&
-      ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) !=
-       CAN_USE_CANDIDATE_FORM_FOR_SUGGEST)) {
-    // This is suggestion and |CAN_USE_CANDIDATE_FORM_FOR_SUGGEST| is not
-    // specified.  We cannot assume that |CANDIDATEFORM| is valid in this case.
-    return false;
-  }
-  if (!params.candidate_form.has_value()) {
-    return false;
-  }
-  if (!params.candidate_form.value().has_exclude_region()) {
-    return false;
   }
   return true;
 }
@@ -621,123 +600,6 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
   return params.vertical_writing.has_value() && params.vertical_writing.value();
 }
 
-// This is a helper function for LayoutCandidateWindowByCandidateForm.
-// Some applications give us only the base position of candidate window.
-// However, the exclude region is definitely important in terms of UX around
-// candidate/suggest window.  As a workaround, we try to use font height to
-// compose a virtual exclude region from the base position.
-//   Expected applications and controls are:
-//     - Candidate Window on Pidgin 2.6.1
-//     - Candidate Window on V2C 2.1.6 on JRE 1.6.0.21
-//     - Candidate Window on Fudemame 21
-//   See also relevant unit tests.
-// Returns true if the |candidate_layout| is determined in successful.
-bool UpdateCandidateWindowFromBasePosAndFontHeight(
-    const CandidateWindowLayoutParams &params,
-    const CPoint &base_pos_in_logical_coord, LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
-  DCHECK(candidate_layout);
-  candidate_layout->Clear();
-
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  const HWND target_window = params.window_handle.value();
-
-  const int font_height = GetAbsoluteFontHeight(params);
-  if (font_height == 0) {
-    return false;
-  }
-  DCHECK_LT(0, font_height);
-
-  const bool is_vertical = IsVerticalWriting(params);
-  CRect exclude_region_in_logical_coord;
-  if (is_vertical) {
-    // Vertical
-    exclude_region_in_logical_coord.SetRect(
-        base_pos_in_logical_coord.x, base_pos_in_logical_coord.y,
-        base_pos_in_logical_coord.x + font_height,
-        base_pos_in_logical_coord.y + 1);
-  } else {
-    // Horizontal
-    exclude_region_in_logical_coord.SetRect(
-        base_pos_in_logical_coord.x, base_pos_in_logical_coord.y - font_height,
-        base_pos_in_logical_coord.x + 1, base_pos_in_logical_coord.y);
-  }
-
-  CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(target_window,
-                                          exclude_region_in_logical_coord,
-                                          &exclude_region_in_physical_coord);
-
-  const CPoint base_pos_in_physical_coord = GetBasePositionFromExcludeRect(
-      exclude_region_in_physical_coord, is_vertical);
-  candidate_layout->InitializeWithPositionAndExcludeRegion(
-      base_pos_in_physical_coord, exclude_region_in_physical_coord);
-  return true;
-}
-
-// CANDIDATEFORM is most standard way to specify the position of a candidate
-// window.  There are two major cases; one has an exclude region and the other
-// has no exclude region.  The second case is virtually handled by
-// UpdateCandidateWindowFromBasePosAndFontHeight function.
-//   Expected applications and controls (for the first case) are:
-//     - Suggest Window on apps with CAN_USE_CANDIDATE_FORM_FOR_SUGGEST
-//     -- Qt-related windows whose class name is "QWidget"
-//     -- Google Chrome-related windows whose class name is
-//        "Chrome_RenderWidgetHostHWND"
-//     - Candidate Window on windows which do not support IMECHARPOSITION
-//     -- Internet Explorer
-//     -- Open Office Writer
-//     -- Qt-based applications
-//   See also relevant unit tests.
-// Returns true if the |candidate_layout| is determined in successful.
-bool LayoutCandidateWindowByCandidateForm(
-    const CandidateWindowLayoutParams &params, LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
-  DCHECK(candidate_layout);
-  candidate_layout->Clear();
-
-  if (!params.window_handle.has_value()) {
-    return false;
-  }
-  if (!params.candidate_form.has_value()) {
-    return false;
-  }
-
-  const HWND target_window = params.window_handle.value();
-  const CandidateWindowLayout &form = params.candidate_form.value();
-
-  CPoint base_pos_in_physical_coord;
-  layout_manager->GetPointInPhysicalCoords(target_window, form.position(),
-                                           &base_pos_in_physical_coord);
-
-  if (!form.has_exclude_region()) {
-    // If the candidate form does not have the exclude region, try to compose
-    // supplemental exclude region by using font height information.
-    CandidateWindowLayout layout;
-    if (UpdateCandidateWindowFromBasePosAndFontHeight(
-            params, form.position(), layout_manager, &layout)) {
-      // succeeded to compose exclude region.
-      DCHECK(layout.initialized());
-      *candidate_layout = layout;
-      return true;
-    }
-    candidate_layout->InitializeWithPosition(base_pos_in_physical_coord);
-    return true;
-  }
-
-  DCHECK(form.has_exclude_region());
-
-  CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(target_window, form.exclude_region(),
-                                          &exclude_region_in_physical_coord);
-
-  candidate_layout->InitializeWithPositionAndExcludeRegion(
-      base_pos_in_physical_coord, exclude_region_in_physical_coord);
-  return true;
-}
-
 // This function tries to use IMECHARPOSITION structure, which gives us
 // sufficient information around the focused segment to use EXCLUDE-style
 // positioning.  However, relatively small number of applications support
@@ -794,15 +656,9 @@ bool LayoutCandidateWindowByCompositionTarget(
   //    v
   //   (Base Line)
 
-  const bool can_use_candidate_form_exclude_region =
-      CanUseExcludeRegionInCandidateFrom(params, compatibility_mode,
-                                         for_suggestion);
   const bool is_vertical = IsVerticalWriting(params);
   CRect exclude_region_in_logical_coord;
-  if (can_use_candidate_form_exclude_region) {
-    exclude_region_in_logical_coord =
-        params.candidate_form.value().exclude_region();
-  } else if (is_vertical) {
+  if (is_vertical) {
     // Vertical
     exclude_region_in_logical_coord.left = char_pos.pt.x - char_pos.cLineHeight;
     exclude_region_in_logical_coord.top = char_pos.pt.y;
@@ -1166,14 +1022,6 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
     return true;
   }
 
-  if ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) ==
-      CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) {
-    if (LayoutCandidateWindowByCandidateForm(params, this, candidate_layout)) {
-      DCHECK(candidate_layout->initialized());
-      return true;
-    }
-  }
-
   return false;
 }
 
@@ -1190,11 +1038,6 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
   const bool is_suggestion = false;
   if (LayoutCandidateWindowByCompositionTarget(
           params, compatibility_mode, is_suggestion, this, candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  if (LayoutCandidateWindowByCandidateForm(params, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
