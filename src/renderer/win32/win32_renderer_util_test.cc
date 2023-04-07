@@ -494,17 +494,11 @@ TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
   EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(86, 122, 87, 142));
   EXPECT_FALSE(indicator_layout.is_vertical);
 
-  CandidateWindowLayout suggestion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &suggestion_layout));
+  CandidateWindowLayout candidate_window_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
+                                               &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
-                                         suggestion_layout);
-
-  CandidateWindowLayout conversion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
-      app_info, &conversion_layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
-                                         conversion_layout);
+                                         candidate_window_layout);
 }
 
 // How |LayoutManager| works for TSF Mozc isn't that complicated.
@@ -538,17 +532,11 @@ TEST_F(Win32RendererUtilTest, TSF_HighDPI) {
   EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(172, 244, 174, 284));
   EXPECT_FALSE(indicator_layout.is_vertical);
 
-  CandidateWindowLayout suggestion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &suggestion_layout));
+  CandidateWindowLayout candidate_window_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
+                                               &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
-                                         suggestion_layout);
-
-  CandidateWindowLayout conversion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
-      app_info, &conversion_layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
-                                         conversion_layout);
+                                         candidate_window_layout);
 }
 
 }  // namespace win32

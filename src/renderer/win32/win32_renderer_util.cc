@@ -978,26 +978,7 @@ LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
   return WRITING_DIRECTION_UNSPECIFIED;
 }
 
-bool LayoutManager::LayoutCandidateWindowForSuggestion(
-    const commands::RendererCommand::ApplicationInfo &app_info,
-    CandidateWindowLayout *candidate_layout) {
-  const int compatibility_mode = GetCompatibilityMode(app_info);
-
-  CandidateWindowLayoutParams params;
-  if (!ExtractParams(this, app_info, &params)) {
-    return false;
-  }
-
-  if (LayoutCandidateWindowByCompositionTarget(
-          params, this, candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  return false;
-}
-
-bool LayoutManager::LayoutCandidateWindowForConversion(
+bool LayoutManager::LayoutCandidateWindow(
     const commands::RendererCommand::ApplicationInfo &app_info,
     CandidateWindowLayout *candidate_layout) {
   const int compatibility_mode = GetCompatibilityMode(app_info);

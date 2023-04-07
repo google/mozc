@@ -216,21 +216,11 @@ class LayoutManager {
   int GetCompatibilityMode(
       const commands::RendererCommand_ApplicationInfo &app_info);
 
-  // Determines the position where the suggest window should be placed when the
-  // composition window is drawn by the application.  This function does not
-  // take DPI virtualization into account.  In other words, any positional
-  // field in |candidate_form| is calculated in virtualized screen coordinates
-  // for the target application window.
-  bool LayoutCandidateWindowForSuggestion(
-      const commands::RendererCommand_ApplicationInfo &app_info,
-      CandidateWindowLayout *candidate_layout);
-
-  // Determines the position where the candidate/predict window should be
-  // placed when the composition window is drawn by the application.  This
-  // function does not take DPI virtualization into account.  In other words,
-  // any positional field in |candidate_form| is calculated in virtualized
-  // screen coordinates for the target application window.
-  bool LayoutCandidateWindowForConversion(
+  // Determines the position where the candidate/predict/suggestion window
+  // should be placed.  This function does not take DPI virtualization into
+  // account.  In other words, any positional field in |app_info| is stored in
+  // virtualized screen coordinates for the target application window.
+  bool LayoutCandidateWindow(
       const commands::RendererCommand_ApplicationInfo &app_info,
       CandidateWindowLayout *candidate_layout);
 

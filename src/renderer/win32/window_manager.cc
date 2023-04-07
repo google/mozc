@@ -219,13 +219,7 @@ void WindowManager::UpdateLayout(
 
   if (!candidate_layout.initialized()) {
     candidate_layout.Clear();
-    if (is_suggest) {
-      layout_manager_->LayoutCandidateWindowForSuggestion(app_info,
-                                                          &candidate_layout);
-    } else if (is_convert_or_predict) {
-      layout_manager_->LayoutCandidateWindowForConversion(app_info,
-                                                          &candidate_layout);
-    }
+    layout_manager_->LayoutCandidateWindow(app_info, &candidate_layout);
   }
 
   if (!candidate_layout.initialized()) {
