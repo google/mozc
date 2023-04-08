@@ -60,7 +60,7 @@ const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 const wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
+class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
  public:
   GetLinguisticAlternatesImpl(TipTextService *text_service,
                               TipQueryProvider *provider)

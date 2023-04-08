@@ -40,9 +40,9 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipClassFactory : public IClassFactory {
+class TipClassFactory final : public IClassFactory {
  public:
-  TipClassFactory();
+  TipClassFactory() = default;
   TipClassFactory(const TipClassFactory &) = delete;
   TipClassFactory &operator=(const TipClassFactory &) = delete;
 

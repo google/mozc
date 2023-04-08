@@ -52,12 +52,12 @@ namespace tsf {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
+constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kSearchCandidateProviderName[] = L"Mozc";
+constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class SearchCandidateProviderImpl : public ITfFnSearchCandidateProvider {
+class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
  public:
   explicit SearchCandidateProviderImpl(TipQueryProvider *provider)
       : provider_(provider) {}

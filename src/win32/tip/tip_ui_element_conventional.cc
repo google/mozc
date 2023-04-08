@@ -60,7 +60,7 @@ using ATL::CComQIPtr;
 using ATL::CComVariant;
 using ATL::CStringW;
 
-class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
+class TipCandidateListImpl final : public ITfCandidateListUIElementBehavior {
  public:
   TipCandidateListImpl(TipUiElementConventional::UIType type,
                        TipTextService *text_service, ITfContext *context)
@@ -183,7 +183,7 @@ class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
   std::unique_ptr<TipUiElementDelegate> delegate_;
 };
 
-class TipIndicatorImpl : public ITfToolTipUIElement {
+class TipIndicatorImpl final : public ITfToolTipUIElement {
  public:
   TipIndicatorImpl(TipTextService *text_service, ITfContext *context)
       : delegate_(TipUiElementDelegateFactory::Create(

@@ -82,13 +82,13 @@ class CandidateListCallbackImpl : public TipCandidateListCallback {
   CComPtr<ITfRange> range_;
 };
 
-class ReconvertFunctionImpl : public ITfFnReconversion {
+class ReconvertFunctionImpl final : public ITfFnReconversion {
  public:
   explicit ReconvertFunctionImpl(TipTextService *text_service)
       : text_service_(text_service) {}
   ReconvertFunctionImpl(const ReconvertFunctionImpl &) = delete;
   ReconvertFunctionImpl &operator=(const ReconvertFunctionImpl &) = delete;
-  ~ReconvertFunctionImpl() {}
+  ~ReconvertFunctionImpl() = default;
 
   // The IUnknown interface methods.
   STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
