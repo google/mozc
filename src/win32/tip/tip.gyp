@@ -60,6 +60,7 @@
           'target_name': 'tip_core',
           'type': 'static_library',
           'sources': [
+            'mozc_tip_main.cc',
             'tip_candidate_list.cc',
             'tip_class_factory.cc',
             'tip_compartment_util.cc',
@@ -153,7 +154,7 @@
           'type': 'shared_library',
           'sources': [
             '<(gen_out_dir)/tip_resource_autogen.rc',
-            'tip_dll_module.def',
+            'mozc_tip.def',
           ],
           'dependencies': [
             'gen_mozc_tip_resource_header',
@@ -172,7 +173,7 @@
           'type': 'shared_library',
           'sources': [
             '<(gen_out_dir)/tip_resource_autogen.rc',
-            'tip_dll_module.def',
+            'mozc_tip.def',
           ],
           'dependencies': [
             'gen_mozc_tip_resource_header',
