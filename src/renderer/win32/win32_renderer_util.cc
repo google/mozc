@@ -704,10 +704,6 @@ const RECT &CandidateWindowLayout::exclude_region() const {
   return exclude_region_;
 }
 
-bool CandidateWindowLayout::has_exclude_region() const {
-  return initialized_;
-}
-
 bool CandidateWindowLayout::initialized() const { return initialized_; }
 
 IndicatorWindowLayout::IndicatorWindowLayout() : is_vertical(false) {

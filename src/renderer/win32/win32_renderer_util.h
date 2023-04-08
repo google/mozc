@@ -73,9 +73,6 @@ class CandidateWindowLayout {
   // when |has_exclude_region| returns true.
   const RECT &exclude_region() const;
 
-  // Returns true if |exclude_region| is available.
-  bool has_exclude_region() const;
-
  private:
   POINT position_;
   RECT exclude_region_;

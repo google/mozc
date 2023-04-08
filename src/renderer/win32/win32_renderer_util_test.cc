@@ -101,7 +101,6 @@ inline uint32_t HwndToUint32(HWND hwnd) {
     exclude_rect_right, exclude_rect_bottom, layout)                \
   do {                                                              \
     EXPECT_TRUE((layout).initialized());                            \
-    EXPECT_TRUE((layout).has_exclude_region());                     \
     EXPECT_EQ(CPoint((target_x), (target_y)), (layout).position()); \
     EXPECT_EQ(CRect((exclude_rect_left), (exclude_rect_top),        \
                     (exclude_rect_right), (exclude_rect_bottom)),   \

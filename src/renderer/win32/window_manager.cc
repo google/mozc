@@ -255,7 +255,7 @@ void WindowManager::UpdateLayout(
       main_window_->GetCandidateColumnInClientCord().Left(), 0);
 
   Rect main_window_rect;
-  if (candidate_layout.has_exclude_region()) {
+  {
     // Equating |exclusion_area| with |preedit_rect| generally works well and
     // makes most of users happy.
     const CRect rect(candidate_layout.exclude_region());
@@ -276,9 +276,6 @@ void WindowManager::UpdateLayout(
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
             new_target_point, preedit_rect, main_window_size,
             main_window_zero_point, working_area, vertical);
-  } else {
-    main_window_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
-        target_point, main_window_size, main_window_zero_point, working_area);
   }
 
   const DWORD set_windows_pos_flags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
