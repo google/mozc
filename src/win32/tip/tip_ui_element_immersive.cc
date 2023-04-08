@@ -59,7 +59,6 @@
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
-#include "win32/tip/tip_ui_handler_immersive.h"
 #include "win32/tip/tip_ui_renderer_immersive.h"
 
 namespace mozc {

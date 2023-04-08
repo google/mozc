@@ -36,9 +36,6 @@
 #include "base/port.h"
 #include "win32/tip/tip_ui_handler.h"
 
-// A private message to notify the candidate window should be updated.
-#define WM_MOZC_IMMERSIVE_WINDOW_UPDATE WM_USER
-
 namespace mozc {
 namespace win32 {
 namespace tsf {

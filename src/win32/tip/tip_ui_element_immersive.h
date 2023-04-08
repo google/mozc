@@ -34,6 +34,9 @@
 
 #include "base/port.h"
 
+// A private message to notify the candidate window should be updated.
+#define WM_MOZC_IMMERSIVE_WINDOW_UPDATE WM_USER
+
 struct ITfContext;
 struct ITfUIElement;
 
