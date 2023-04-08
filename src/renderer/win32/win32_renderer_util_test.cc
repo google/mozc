@@ -350,10 +350,6 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
-
-    std::wstring class_name;
-    EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(class_name, kWindowClassName);
   }
 
   // Interestingly, the following results are independent of DPI scaling.
@@ -381,10 +377,6 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
-
-    std::wstring class_name;
-    EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(class_name, kWindowClassName);
   }
 }
 

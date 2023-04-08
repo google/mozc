@@ -118,10 +118,6 @@ class WindowPositionInterface {
 
   // This method wraps API call of GetAncestor/GA_ROOT.
   virtual HWND GetRootWindow(HWND window_handle) = 0;
-
-  // This method wraps API call of GetClassName.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) = 0;
 };
 
 // This class implements WindowPositionInterface and emulates APIs

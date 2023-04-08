@@ -303,24 +303,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     return ::GetAncestor(window_handle, GA_ROOT);
   }
 
-  // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) {
-    if (class_name == nullptr) {
-      return false;
-    }
-    wchar_t class_name_buffer[1024] = {};
-    const size_t num_copied_without_null = ::GetClassNameW(
-        window_handle, class_name_buffer, std::size(class_name_buffer));
-    if (num_copied_without_null >= (std::size(class_name_buffer) - 1)) {
-      DLOG(ERROR) << "buffer length is insufficient.";
-      return false;
-    }
-    class_name_buffer[num_copied_without_null] = L'\0';
-    class_name->assign(class_name_buffer);
-    return (::IsWindow(window_handle) != FALSE);
-  }
-
  private:
   typedef BOOL(WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
       HWND window_handle, POINT *point);
@@ -417,20 +399,6 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
       return window_handle;
     }
     return it->second;
-  }
-
-  // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) {
-    if (class_name == nullptr) {
-      return false;
-    }
-    const WindowInfo *info = GetWindowInformation(window_handle);
-    if (info == nullptr) {
-      return false;
-    }
-    *class_name = info->class_name;
-    return true;
   }
 
   // This method is not const to implement Win32WindowInterface.
