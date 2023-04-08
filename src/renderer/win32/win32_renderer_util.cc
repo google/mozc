@@ -680,7 +680,6 @@ WindowPositionEmulator *WindowPositionEmulator::Create() {
 CandidateWindowLayout::CandidateWindowLayout()
     : position_(CPoint()),
       exclude_region_(CRect()),
-      has_exclude_region_(false),
       initialized_(false) {}
 
 CandidateWindowLayout::~CandidateWindowLayout() {}
@@ -688,7 +687,6 @@ CandidateWindowLayout::~CandidateWindowLayout() {}
 void CandidateWindowLayout::Clear() {
   position_ = CPoint();
   exclude_region_ = CRect();
-  has_exclude_region_ = false;
   initialized_ = false;
 }
 
@@ -696,19 +694,18 @@ void CandidateWindowLayout::InitializeWithPositionAndExcludeRegion(
     const POINT &position, const RECT &exclude_region) {
   position_ = position;
   exclude_region_ = exclude_region;
-  has_exclude_region_ = true;
   initialized_ = true;
 }
 
 const POINT &CandidateWindowLayout::position() const { return position_; }
 
 const RECT &CandidateWindowLayout::exclude_region() const {
-  DCHECK(has_exclude_region_);
+  DCHECK(initialized_);
   return exclude_region_;
 }
 
 bool CandidateWindowLayout::has_exclude_region() const {
-  return has_exclude_region_;
+  return initialized_;
 }
 
 bool CandidateWindowLayout::initialized() const { return initialized_; }

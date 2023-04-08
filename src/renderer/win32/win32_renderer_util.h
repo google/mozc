@@ -79,7 +79,6 @@ class CandidateWindowLayout {
  private:
   POINT position_;
   RECT exclude_region_;
-  bool has_exclude_region_;
   bool initialized_;
 };
 
