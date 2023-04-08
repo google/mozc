@@ -23,9 +23,8 @@ jobs:
 
       - name: setup
         shell: cmd
-        working-directory: .\src\third_party
+        working-directory: .\src
         run: |
-          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
           python -m pip install six
 
       - name: gyp
@@ -55,9 +54,8 @@ jobs:
 
       - name: setup
         shell: cmd
-        working-directory: .\src\third_party
+        working-directory: .\src
         run: |
-          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
           python -m pip install six
 
       - name: gyp

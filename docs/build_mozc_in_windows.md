@@ -13,8 +13,6 @@ mkdir C:\work
 cd C:\work
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 
-cd C:\work\mozc\src\third_party
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 python3 -m pip install six
 
 "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
@@ -33,7 +31,7 @@ python build_mozc.py build -c Release package
 
 Building Mozc on Windows requires the following software.
 
-  * [Visual Studio 2017](http://visualstudio.com/free), or any greater edition.
+  * [Visual Studio 2019](http://visualstudio.com/free), or any greater edition.
   * Python 3.7 or later
   * git
   * [Qt 5](https://download.qt.io/official_releases/qt/) (optional for GUI)
@@ -50,8 +48,6 @@ git clone https://github.com/google/mozc.git -b master --single-branch --recursi
 ### Download build tools
 
 ```
-cd C:\work\mozc\src\third_party
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 python3 -m pip install six
 ```
 
@@ -90,7 +86,7 @@ instead of `--qtdir=<dir to Qt>`, mozc\_tool will be built as a mock version,
 which does nothing.
 
 You need to specify your Visual Studio version to `--msvs_version`.
-The default value is `2017`.
+The default value is `2019`.
 
 If you need debug information, you can build debug version of Mozc as follows.
 
