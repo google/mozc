@@ -30,20 +30,14 @@
 #ifndef MOZC_WIN32_TIP_TIP_CANDIDATE_LIST_H_
 #define MOZC_WIN32_TIP_TIP_CANDIDATE_LIST_H_
 
+#include <ctffunc.h>
 #include <unknwn.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-
-struct ITfCandidateList;
-
 namespace mozc {
-namespace commands {
-class Output;
-}  // namespace commands
-
 namespace win32 {
 namespace tsf {
 

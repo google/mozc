@@ -58,10 +58,6 @@ class CandidateWindowLayout {
   // Returns true if this object is initialized with valid parameter.
   bool initialized() const;
 
-  // Initializes fields with given target position and sets true
-  // to |initialized_|.
-  void InitializeWithPosition(const POINT &position);
-
   // Initializes fields with given target position and exclude region and
   // sets true to |initialized_|.
   void InitializeWithPositionAndExcludeRegion(const POINT &position,
@@ -77,13 +73,9 @@ class CandidateWindowLayout {
   // when |has_exclude_region| returns true.
   const RECT &exclude_region() const;
 
-  // Returns true if |exclude_region| is available.
-  bool has_exclude_region() const;
-
  private:
   POINT position_;
   RECT exclude_region_;
-  bool has_exclude_region_;
   bool initialized_;
 };
 
@@ -96,46 +88,8 @@ struct IndicatorWindowLayout {
   bool is_vertical;
 };
 
-// This interface is designed to hook API calls for unit test.
-class SystemPreferenceInterface {
- public:
-  virtual ~SystemPreferenceInterface() {}
-
-  // This method can be used to retrieve some kind of default font
-  // for GUI rendering.
-  // Returns true if succeeds.
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) = 0;
-};
-
-// This class implements SystemPreferenceInterface for unit tests.
-class SystemPreferenceFactory {
- public:
-  SystemPreferenceFactory() = delete;
-  SystemPreferenceFactory(const SystemPreferenceFactory &) = delete;
-  SystemPreferenceFactory &operator=(const SystemPreferenceFactory &) = delete;
-  // Returns an instance of WindowPositionEmulator. Caller must delete
-  // the instance.
-  static SystemPreferenceInterface *CreateMock(const LOGFONTW &gui_font);
-};
-
-// This interface is designed to hook API calls for unit test.
-class WorkingAreaInterface {
- public:
-  virtual ~WorkingAreaInterface() {}
-
-  virtual bool GetWorkingAreaFromPoint(const POINT &point,
-                                       RECT *working_area) = 0;
-};
-
-class WorkingAreaFactory {
- public:
-  WorkingAreaFactory() = delete;
-  WorkingAreaFactory(const WorkingAreaFactory &) = delete;
-  WorkingAreaFactory &operator=(const WorkingAreaFactory &) = delete;
-  // Returns an instance of WorkingAreaInterface. Caller must delete
-  // the instance.
-  static WorkingAreaInterface *Create();
-};
+// Retrieves the working area that contains the specified |point|.
+bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area);
 
 // This interface is designed to hook API calls for unit test.
 class WindowPositionInterface {
@@ -164,10 +118,6 @@ class WindowPositionInterface {
 
   // This method wraps API call of GetAncestor/GA_ROOT.
   virtual HWND GetRootWindow(HWND window_handle) = 0;
-
-  // This method wraps API call of GetClassName.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) = 0;
 };
 
 // This class implements WindowPositionInterface and emulates APIs
@@ -180,23 +130,12 @@ class WindowPositionEmulator : public WindowPositionInterface {
   // Returns a dummy window handle for this emulator.  You can call methods of
   // WindowPositionInterface with this dummy handle.  You need not to release
   // the returned handle.
-  virtual HWND RegisterWindow(const std::wstring &class_name,
-                              const RECT &window_rect,
+  virtual HWND RegisterWindow(const RECT &window_rect,
                               const POINT &client_area_offset,
                               const SIZE &client_area_size,
                               double scale_factor) = 0;
 
   virtual void SetRoot(HWND child_window, HWND root_window) = 0;
-};
-
-enum CompatibilityMode {
-  // This flag represents the position can be calculated with default strategy.
-  COMPATIBILITY_MODE_NONE = 0,
-  // Some applications always keep CandidateForm up-to-date.  When this flag
-  // is specified, CandidateForm is taken into account so that the suggest
-  // window can be shown at more appropriate position.  Qt-based applications
-  // match this category.
-  CAN_USE_CANDIDATE_FORM_FOR_SUGGEST = 1,
 };
 
 class LayoutManager {
@@ -209,28 +148,13 @@ class LayoutManager {
   // A special constructor for unit tests.  You can set a mock object which
   // emulates native APIs for unit test.  This class is responsible for
   // deleting the mock objects passed.
-  LayoutManager(SystemPreferenceInterface *mock_system_preference,
-                WindowPositionInterface *mock_window_position);
+  explicit LayoutManager(WindowPositionInterface *mock_window_position);
 
-  // Returns compatibility bits for given target application.
-  int GetCompatibilityMode(
-      const commands::RendererCommand_ApplicationInfo &app_info);
-
-  // Determines the position where the suggest window should be placed when the
-  // composition window is drawn by the application.  This function does not
-  // take DPI virtualization into account.  In other words, any positional
-  // field in |candidate_form| is calculated in virtualized screen coordinates
-  // for the target application window.
-  bool LayoutCandidateWindowForSuggestion(
-      const commands::RendererCommand_ApplicationInfo &app_info,
-      CandidateWindowLayout *candidate_layout);
-
-  // Determines the position where the candidate/predict window should be
-  // placed when the composition window is drawn by the application.  This
-  // function does not take DPI virtualization into account.  In other words,
-  // any positional field in |candidate_form| is calculated in virtualized
-  // screen coordinates for the target application window.
-  bool LayoutCandidateWindowForConversion(
+  // Determines the position where the candidate/predict/suggestion window
+  // should be placed.  This function does not take DPI virtualization into
+  // account.  In other words, any positional field in |app_info| is stored in
+  // virtualized screen coordinates for the target application window.
+  bool LayoutCandidateWindow(
       const commands::RendererCommand_ApplicationInfo &app_info,
       CandidateWindowLayout *candidate_layout);
 
@@ -274,10 +198,6 @@ class LayoutManager {
   // Returns 1.0 if any error occurs.
   double GetScalingFactor(HWND window_handle) const;
 
-  // Returns true if the default GUI font is retrieved.
-  // Returns false if fails.
-  bool GetDefaultGuiFont(LOGFONTW *logfong) const;
-
   // Represents preferred writing direction, especially for composition string.
   enum WritingDirection {
     // The writing direction is not specified.
@@ -298,7 +218,6 @@ class LayoutManager {
       IndicatorWindowLayout *indicator_layout);
 
  private:
-  std::unique_ptr<SystemPreferenceInterface> system_preference_;
   std::unique_ptr<WindowPositionInterface> window_position_;
 };
 

@@ -9,16 +9,15 @@ If you are not sure what the following commands do, please check the description
 and make sure the operations before running them.
 
 ```
-mkdir C:\work
-cd C:\work
+if not exist "%USERPROFILE%\source\repos" mkdir "%USERPROFILE%\source\repos"
+cd "%USERPROFILE%\source\repos"
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
+cd mozc\src
 
-cd C:\work\mozc\src\third_party
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 python3 -m pip install six
 
 "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-cd C:\work\mozc\src
+
 python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019 --msvs_version=2019
 python build_mozc.py build -c Release package
 ```
@@ -33,7 +32,7 @@ python build_mozc.py build -c Release package
 
 Building Mozc on Windows requires the following software.
 
-  * [Visual Studio 2017](http://visualstudio.com/free), or any greater edition.
+  * [Visual Studio 2019](http://visualstudio.com/free), or any greater edition.
   * Python 3.7 or later
   * git
   * [Qt 5](https://download.qt.io/official_releases/qt/) (optional for GUI)
@@ -42,16 +41,17 @@ Building Mozc on Windows requires the following software.
 ### Download the repository from GitHub
 
 ```
-mkdir C:\work
-cd C:\work
+if not exist "%USERPROFILE%\source\repos" mkdir "%USERPROFILE%\source\repos"
+cd "%USERPROFILE%\source\repos"
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
+cd mozc\src
 ```
+
+Hereafter you can do all the operations without changing directory.
 
 ### Download build tools
 
 ```
-cd C:\work\mozc\src\third_party
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 python3 -m pip install six
 ```
 
@@ -71,7 +71,6 @@ to execute the setup command like this.
 The following command builds Mozc without Qt based GUI tools.
 
 ```
-cd C:\work\mozc\src
 python build_mozc.py gyp --noqt --msvs_version=2019
 python build_mozc.py build -c Release package
 ```
@@ -79,7 +78,6 @@ python build_mozc.py build -c Release package
 To build Mozc with GUI tools, you need to specify the Qt directory.
 
 ```
-cd C:\work\mozc\src
 python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019 --msvs_version=2019
 python build_mozc.py build -c Release package
 ```
@@ -90,7 +88,7 @@ instead of `--qtdir=<dir to Qt>`, mozc\_tool will be built as a mock version,
 which does nothing.
 
 You need to specify your Visual Studio version to `--msvs_version`.
-The default value is `2017`.
+The default value is `2019`.
 
 If you need debug information, you can build debug version of Mozc as follows.
 
@@ -100,7 +98,7 @@ python build_mozc.py build -c Debug package
 
 ### Executables
 
-You have release build binaries in `C:\work\mozc\src\out_win\Release` and `C:\work\mozc\src\out_win\Release_x64`.
+You have release build binaries in `out_win\Release` and `out_win\Release_x64`.
 
 ### Clean up the Tree
 
@@ -120,16 +118,16 @@ Although the code repository covers source files of the official Google Japanese
 
 Following files must be placed under %ProgramFiles%\Mozc.
 
-  * `C:\work\mozc\src\out_win\Release\mozc_broker32.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_cache_service.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_renderer.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_server.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_tool.exe` (if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\mozc_tool.exe` (if you didn't specify `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
+  * `out_win\Release\mozc_broker32.exe`
+  * `out_win\Release\mozc_cache_service.exe`
+  * `out_win\Release\mozc_renderer.exe`
+  * `out_win\Release\mozc_server.exe`
+  * `out_win\Release\mozc_tool.exe` (if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\mozc_tool.exe` (if you didn't specify `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
 
 `Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
@@ -137,7 +135,7 @@ Following files must be placed under %ProgramFiles%\Mozc.
 
 Following file must be placed under `%ProgramFiles%\Mozc`.
 
-  * `C:\work\mozc\src\out_win\Release\mozc_ja_tip32.dll`
+  * `out_win\Release\mozc_ja_tip32.dll`
 
 Finally, you must run `regsvr32` with administrator privilege to register IME module as follows.
 
@@ -169,17 +167,17 @@ Delete following directory and files after unregistering Mozc from IMM32/TSF.
 
 Following files must be placed under %ProgramFiles(x86)%\Mozc.
 
-  * `C:\work\mozc\src\out_win\Release\mozc_broker32.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_cache_service.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_renderer.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_server.exe`
-  * `C:\work\mozc\src\out_win\Release\mozc_tool.exe` (if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\mozc\_tool.exe` (if you didn't specify `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
-  * `C:\work\mozc\src\out_win\Release_x64\mozc_broker64.exe`
+  * `out_win\Release\mozc_broker32.exe`
+  * `out_win\Release\mozc_cache_service.exe`
+  * `out_win\Release\mozc_renderer.exe`
+  * `out_win\Release\mozc_server.exe`
+  * `out_win\Release\mozc_tool.exe` (if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\mozc\_tool.exe` (if you didn't specify `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Core.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
+  * `out_win\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
+  * `out_win\Release_x64\mozc_broker64.exe`
 
 `Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 
@@ -187,8 +185,8 @@ Following files must be placed under %ProgramFiles(x86)%\Mozc.
 
 Following file must be placed under `%ProgramFiles(x86)%\Mozc`.
 
-  * `C:\work\mozc\src\out_win\Release\mozc_ja_tip32.dll`
-  * `C:\work\mozc\src\out_win\Release_x64\mozc_ja_tip64.dll`
+  * `out_win\Release\mozc_ja_tip32.dll`
+  * `out_win\Release_x64\mozc_ja_tip64.dll`
 
 Finally, you must run `regsvr32` with administrator privilege to register IME module as follows.
 
@@ -224,7 +222,6 @@ Delete following directory and files after unregistering Mozc from IMM32/TSF.
 You can run unit tests as follows.
 
 ```
-cd C:\work\mozc\src
 python build_mozc.py gyp --noqt
 python build_mozc.py runtests -c Release
 ```

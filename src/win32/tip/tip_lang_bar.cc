@@ -29,7 +29,12 @@
 
 #include "win32/tip/tip_lang_bar.h"
 
+#include <guiddef.h>
+#include <windows.h>
+#include <wrl/client.h>
+
 #include <cstdint>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/system_util.h"
@@ -44,8 +49,7 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using ATL::CComPtr;
-using ATL::CComQIPtr;
+using Microsoft::WRL::ComPtr;
 
 // The GUID of the help menu in the system language bar.
 
@@ -111,7 +115,7 @@ const GUID kTipLangBarItem_HelpMenu = {
 
 constexpr bool kShowInTaskbar = true;
 
-CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
+ComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable
   // TSF completely.  In this case, the "msctf.dll" is not loaded.
   // Note that "msctf.dll" never be unloaded when it exists because we
@@ -126,11 +130,9 @@ CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   if (function == nullptr) {
     return nullptr;
   }
-  typedef HRESULT(WINAPI * FPTF_CreateLangBarItemMgr)(ITfLangBarItemMgr *
-                                                      *pplbim);
-  CComPtr<ITfLangBarItemMgr> ptr;
+  ComPtr<ITfLangBarItemMgr> ptr;
   const HRESULT result =
-      reinterpret_cast<FPTF_CreateLangBarItemMgr>(function)(&ptr);
+      reinterpret_cast<decltype(&TF_CreateLangBarItemMgr)>(function)(&ptr);
   if (FAILED(result)) {
     return nullptr;
   }
@@ -179,7 +181,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
   // A workaround to satisfy both b/6106437 and b/6641460.
   // On Windows 8, keep the instance into |lang_bar_item_mgr_for_win8_|.
   // On prior OSes, always instantiate new LangBarItemMgr object.
-  CComPtr<ITfLangBarItemMgr> item;
+  ComPtr<ITfLangBarItemMgr> item;
   if (SystemUtil::IsWindows8OrLater()) {
     if (!lang_bar_item_mgr_for_win8_) {
       lang_bar_item_mgr_for_win8_ = GetLangBarItemMgr();
@@ -220,9 +222,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     };
 
     constexpr bool kMenuButton = true;
-    CComPtr<TipLangBarToggleButton> input_button_menu(
-        new TipLangBarToggleButton(text_service, kTipLangBarItem_Button,
-                                   kMenuButton, kShowInTaskbar));
+    ComPtr<TipLangBarToggleButton> input_button_menu(new TipLangBarToggleButton(
+        text_service, kTipLangBarItem_Button, kMenuButton, kShowInTaskbar));
     if (input_button_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
@@ -233,8 +234,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     if (result != S_OK) {
       return result;
     }
-    item->AddItem(input_button_menu);
-    input_button_menu.QueryInterface(&input_button_menu_);
+    item->AddItem(input_button_menu.Get());
+    input_button_menu.As(&input_button_menu_);
   }
 
   if (SystemUtil::IsWindows8OrLater() && !input_mode_button_for_win8_) {
@@ -268,7 +269,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     };
 
     constexpr bool kNonMenuButton = false;
-    CComPtr<TipLangBarToggleButton> input_mode_menu(new TipLangBarToggleButton(
+    ComPtr<TipLangBarToggleButton> input_mode_menu(new TipLangBarToggleButton(
         text_service, kSystemInputMode, kNonMenuButton, kShowInTaskbar));
     if (input_mode_menu == nullptr) {
       return E_OUTOFMEMORY;
@@ -280,8 +281,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     if (FAILED(result)) {
       return result;
     }
-    result = item->AddItem(input_mode_menu);
-    input_mode_menu.QueryInterface(&input_mode_button_for_win8_);
+    result = item->AddItem(input_mode_menu.Get());
+    input_mode_menu.As(&input_mode_button_for_win8_);
   }
 
   if (tool_button_menu_ == nullptr) {
@@ -303,7 +304,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     // Always show the tool icon so that a user can find the icon.
     // This setting is different from that of MS-IME but we believe this is
     // more friendly. See b/2275683
-    CComPtr<TipLangBarMenuButton> tool_button(new TipLangBarMenuButton(
+    ComPtr<TipLangBarMenuButton> tool_button(new TipLangBarMenuButton(
         text_service, kTipLangBarItem_ToolButton, kShowInTaskbar));
     if (tool_button == nullptr) {
       return E_OUTOFMEMORY;
@@ -315,8 +316,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     if (result != S_OK) {
       return result;
     }
-    item->AddItem(tool_button);
-    tool_button.QueryInterface(&tool_button_menu_);
+    item->AddItem(tool_button.Get());
+    tool_button.As(&tool_button_menu_);
   }
 
   if (help_menu_ == nullptr) {
@@ -326,7 +327,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
         {0, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
-    CComPtr<TipSystemLangBarMenu> help_menu(
+    ComPtr<TipSystemLangBarMenu> help_menu(
         new TipSystemLangBarMenu(text_service, kTipLangBarItem_HelpMenu));
     if (help_menu == nullptr) {
       return E_OUTOFMEMORY;
@@ -338,19 +339,20 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
       return result;
     }
 
-    CComPtr<ITfLangBarItem> help_menu_item;
+    ComPtr<ITfLangBarItem> help_menu_item;
     result = item->GetItem(kSystemLangBarHelpMenu, &help_menu_item);
     if (result != S_OK) {
       return result;
     }
-    CComPtr<ITfSource> source;
-    result = help_menu_item.QueryInterface(&source);
+    ComPtr<ITfSource> source;
+    result = help_menu_item.As(&source);
     if (result != S_OK) {
       return result;
     }
     result = source->AdviseSink(
         IID_ITfSystemLangBarItemSink,
-        static_cast<ITfSystemLangBarItemSink *>(help_menu), &help_menu_cookie_);
+        static_cast<ITfSystemLangBarItemSink *>(help_menu.Get()),
+        &help_menu_cookie_);
     if (result != S_OK) {
       return result;
     }
@@ -368,11 +370,10 @@ HRESULT TipLangBar::UninitLangBar() {
   // A workaround to satisfy both b/6106437 and b/6641460.
   // On Windows 8, retrieves the instance from |lang_bar_item_mgr_for_win8_|.
   // On prior OSes, always instantiates new LangBarItemMgr object.
-  CComPtr<ITfLangBarItemMgr> item;
+  ComPtr<ITfLangBarItemMgr> item;
   if (SystemUtil::IsWindows8OrLater()) {
     // Move the ownership.
-    item = lang_bar_item_mgr_for_win8_;
-    lang_bar_item_mgr_for_win8_.Release();
+    item = std::move(lang_bar_item_mgr_for_win8_);
   } else {
     item = GetLangBarItemMgr();
   }
@@ -380,30 +381,30 @@ HRESULT TipLangBar::UninitLangBar() {
     return E_FAIL;
   }
 
-  if (input_mode_button_for_win8_ != nullptr) {
-    item->RemoveItem(input_mode_button_for_win8_);
-    input_mode_button_for_win8_ = nullptr;
+  if (input_mode_button_for_win8_) {
+    item->RemoveItem(input_mode_button_for_win8_.Get());
+    input_mode_button_for_win8_.Reset();
   }
-  if (input_button_menu_ != nullptr) {
-    item->RemoveItem(input_button_menu_);
-    input_button_menu_ = nullptr;
+  if (input_button_menu_) {
+    item->RemoveItem(input_button_menu_.Get());
+    input_button_menu_.Reset();
   }
-  if (tool_button_menu_ != nullptr) {
-    item->RemoveItem(tool_button_menu_);
-    tool_button_menu_ = nullptr;
+  if (tool_button_menu_) {
+    item->RemoveItem(tool_button_menu_.Get());
+    tool_button_menu_.Reset();
   }
 
-  if ((help_menu_ != nullptr) && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
-    CComPtr<ITfLangBarItem> help_menu_item;
+  if (help_menu_ && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
+    ComPtr<ITfLangBarItem> help_menu_item;
     result = item->GetItem(kSystemLangBarHelpMenu, &help_menu_item);
     if (result == S_OK) {
-      CComPtr<ITfSource> source;
-      result = help_menu_item.QueryInterface(&source);
+      ComPtr<ITfSource> source;
+      result = help_menu_item.As(&source);
       if (result == S_OK) {
         result = source->UnadviseSink(help_menu_cookie_);
         if (result == S_OK) {
           help_menu_cookie_ = TF_INVALID_COOKIE;
-          help_menu_ = nullptr;
+          help_menu_.Reset();
         }
       }
     }
@@ -417,26 +418,26 @@ HRESULT TipLangBar::UpdateMenu(bool enabled, uint32_t composition_mode) {
 
   const UINT menu_id = GetItemId(composition_mode);
   {
-    CComQIPtr<IMozcLangBarToggleItem> mode_menu(input_button_menu_);
-    if (mode_menu) {
+    ComPtr<IMozcLangBarToggleItem> mode_menu;
+    if (SUCCEEDED(input_button_menu_.As(&mode_menu))) {
       mode_menu->SelectMenuItem(menu_id);
     }
-    CComQIPtr<IMozcLangBarToggleItem> mode_button(input_mode_button_for_win8_);
-    if (mode_button) {
+    ComPtr<IMozcLangBarToggleItem> mode_button;
+    if (SUCCEEDED(input_mode_button_for_win8_.As(&mode_button))) {
       mode_button->SelectMenuItem(menu_id);
     }
   }
   {
-    CComQIPtr<IMozcLangBarItem> mode_menu_item(input_button_menu_);
-    if (mode_menu_item) {
+    ComPtr<IMozcLangBarItem> mode_menu_item;
+    if (SUCCEEDED(input_button_menu_.As(&mode_menu_item))) {
       mode_menu_item->SetEnabled(enabled);
     }
-    CComQIPtr<IMozcLangBarItem> tool_menu_item(tool_button_menu_);
-    if (tool_menu_item) {
+    ComPtr<IMozcLangBarItem> tool_menu_item;
+    if (SUCCEEDED(tool_button_menu_.As(&tool_menu_item))) {
       tool_menu_item->SetEnabled(enabled);
     }
-    CComQIPtr<IMozcLangBarItem> mode_button_item(input_mode_button_for_win8_);
-    if (mode_button_item) {
+    ComPtr<IMozcLangBarItem> mode_button_item;
+    if (SUCCEEDED(input_mode_button_for_win8_.As(&mode_button_item))) {
       mode_button_item->SetEnabled(enabled);
     }
   }

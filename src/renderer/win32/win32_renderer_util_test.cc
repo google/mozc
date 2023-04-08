@@ -43,8 +43,6 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/util.h"
-#include "base/win32/win_font_test_helper.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "testing/gunit.h"
@@ -87,11 +85,7 @@ typedef mozc::commands::RendererCommand_Rectangle Rectangle;
 
 namespace {
 
-using WTL::CLogFont;
 using WTL::PrintTo;
-
-constexpr int kDefaultFontHeightInPixel = 18;
-constexpr wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
 
 // Casts HWND to uint32_t. HWND can be 64 bits, but it's safe to downcast to
 // uint32_t as 64-bit Windows still uses 32-bit handles.
@@ -105,7 +99,6 @@ inline uint32_t HwndToUint32(HWND hwnd) {
     exclude_rect_right, exclude_rect_bottom, layout)                \
   do {                                                              \
     EXPECT_TRUE((layout).initialized());                            \
-    EXPECT_TRUE((layout).has_exclude_region());                     \
     EXPECT_EQ(CPoint((target_x), (target_y)), (layout).position()); \
     EXPECT_EQ(CRect((exclude_rect_left), (exclude_rect_top),        \
                     (exclude_rect_right), (exclude_rect_bottom)),   \
@@ -117,13 +110,12 @@ static CRect ToCRect(const RECT &rect) {
   return CRect(rect.left, rect.top, rect.right, rect.bottom);
 }
 
-WindowPositionEmulator *CreateWindowEmulator(const std::wstring &class_name,
-                                             const RECT &window_rect,
+WindowPositionEmulator *CreateWindowEmulator(const RECT &window_rect,
                                              const POINT &client_area_offset,
                                              const SIZE &client_area_size,
                                              double scale_factor, HWND *hwnd) {
   WindowPositionEmulator *emulator = WindowPositionEmulator::Create();
-  *hwnd = emulator->RegisterWindow(class_name, window_rect, client_area_offset,
+  *hwnd = emulator->RegisterWindow(window_rect, client_area_offset,
                                    client_area_size, scale_factor);
   return emulator;
 }
@@ -161,69 +153,7 @@ class AppInfoUtil {
 
 }  // namespace
 
-class Win32RendererUtilTest : public testing::Test {
- public:
-  static std::string GetMonospacedFontFaceForTest() {
-    return WinFontTestHelper::GetIPAexGothicFontName();
-  }
-
-  static std::string GetPropotionalFontFaceForTest() {
-    return WinFontTestHelper::GetIPAexMinchoFontName();
-  }
-
-  static CLogFont GetFont(bool is_proportional, bool is_vertical) {
-    std::wstring font_face;
-    Util::Utf8ToWide((is_proportional ? GetPropotionalFontFaceForTest()
-                                      : GetMonospacedFontFaceForTest()),
-                     &font_face);
-    if (is_vertical) {
-      font_face = L"@" + font_face;
-    }
-
-    CLogFont font;
-    font.lfWeight = FW_NORMAL;
-    font.lfCharSet = DEFAULT_CHARSET;
-
-    // We use negative value here to specify absolute font height in pixel,
-    // assuming the mapping mode is MM_TEXT.
-    // http://msdn.microsoft.com/en-us/library/ms901140.aspx
-    font.lfHeight = -kDefaultFontHeightInPixel;
-
-    const errno_t error = wcscpy_s(font.lfFaceName, font_face.c_str());
-    CHECK_EQ(0, error) << "wcscpy_s failed";
-
-    if (is_vertical) {
-      // 2700 means the text grows from top to bottom.
-      font.lfEscapement = 2700;
-      font.lfOrientation = 2700;
-    }
-
-    return font;
-  }
-
-  static SystemPreferenceInterface *CreateDefaultGUIFontEmulator() {
-    CLogFont font = GetFont(true, false);
-    font.lfHeight = 18;
-    font.lfWidth = 0;
-    return SystemPreferenceFactory::CreateMock(font);
-  }
-
- protected:
-  static void SetUpTestCase() {
-    // On Windows XP, the availability of typical Japanese fonts such are as
-    // MS Gothic depends on the language edition and language packs.
-    // So we will register a private font for unit test.
-    EXPECT_TRUE(WinFontTestHelper::Initialize());
-  }
-
-  static void TearDownTestCase() {
-    // Free private fonts although the system automatically frees them when
-    // this process is terminated.
-    WinFontTestHelper::Uninitialize();
-  }
-};
-
-TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
+TEST(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(100, 200);
   const CRect kWindowRect(1000, 500, 1116, 750);
@@ -235,8 +165,7 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
@@ -257,8 +186,7 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
@@ -276,7 +204,7 @@ TEST_F(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   }
 }
 
-TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
+TEST(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(100, 200);
   const CRect kWindowRect(1000, 500, 1116, 750);
@@ -288,8 +216,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
@@ -310,8 +237,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
@@ -329,7 +255,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   }
 }
 
-TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
+TEST(Win32RendererUtilTest, GetScalingFactorTest) {
   constexpr double kScalingFactor = 1.5;
 
   {
@@ -338,8 +264,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1100, 700);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -353,8 +278,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
 
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -367,8 +291,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1100, 500);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -381,8 +304,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1000, 500);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateDefaultGUIFontEmulator(),
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     // If the window size is zero, the result should be fallen back 1.0.
@@ -390,7 +312,7 @@ TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
   }
 }
 
-TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
+TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(100, 200);
   const CRect kWindowRect(1000, 500, 1116, 750);
@@ -404,7 +326,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
   {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
-    const HWND hwnd = emulator->RegisterWindow(kWindowClassName, kWindowRect,
+    const HWND hwnd = emulator->RegisterWindow(kWindowRect,
                                                kClientOffset, kClientSize, 1.0);
 
     CRect rect;
@@ -425,10 +347,6 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
-
-    std::wstring class_name;
-    EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(class_name, kWindowClassName);
   }
 
   // Interestingly, the following results are independent of DPI scaling.
@@ -436,7 +354,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
     const HWND hwnd = emulator->RegisterWindow(
-        kWindowClassName, kWindowRect, kClientOffset, kClientSize, 10.0);
+        kWindowRect, kClientOffset, kClientSize, 10.0);
 
     CRect rect;
     CPoint point;
@@ -456,10 +374,6 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     point = CPoint(0, 0);
     EXPECT_TRUE(emulator->ClientToScreen(hwnd, &point));
     EXPECT_EQ(point, kWindowRect.TopLeft() + kClientOffset);
-
-    std::wstring class_name;
-    EXPECT_TRUE(emulator->GetWindowClassName(hwnd, &class_name));
-    EXPECT_EQ(class_name, kWindowClassName);
   }
 }
 
@@ -468,7 +382,7 @@ TEST_F(Win32RendererUtilTest, WindowPositionEmulatorTest) {
 // TSF Mozc sends |RendererCommand::Update| only when |composition_target|
 // is available, and |composition_target| is sufficient for |LayoutManager| to
 // determine all the UI positions.
-TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
+TEST(Win32RendererUtilTest, TSF_NormalDPI) {
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(10, 12);
   const CSize kClientSize(517, 110);
@@ -476,8 +390,7 @@ TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
-      CreateDefaultGUIFontEmulator(),
-      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+      CreateWindowEmulator(kWindowRect, kClientOffset,
                            kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;
@@ -494,17 +407,11 @@ TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
   EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(86, 122, 87, 142));
   EXPECT_FALSE(indicator_layout.is_vertical);
 
-  CandidateWindowLayout suggestion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &suggestion_layout));
+  CandidateWindowLayout candidate_window_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
+                                               &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
-                                         suggestion_layout);
-
-  CandidateWindowLayout conversion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
-      app_info, &conversion_layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
-                                         conversion_layout);
+                                         candidate_window_layout);
 }
 
 // How |LayoutManager| works for TSF Mozc isn't that complicated.
@@ -512,7 +419,7 @@ TEST_F(Win32RendererUtilTest, TSF_NormalDPI) {
 // TSF Mozc sends |RendererCommand::Update| only when |composition_target|
 // is available, and |composition_target| is sufficient for |LayoutManager| to
 // determine all the UI positions.
-TEST_F(Win32RendererUtilTest, TSF_HighDPI) {
+TEST(Win32RendererUtilTest, TSF_HighDPI) {
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(10, 12);
   const CSize kClientSize(517, 110);
@@ -520,8 +427,7 @@ TEST_F(Win32RendererUtilTest, TSF_HighDPI) {
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
-      CreateDefaultGUIFontEmulator(),
-      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+      CreateWindowEmulator(kWindowRect, kClientOffset,
                            kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;
@@ -538,17 +444,11 @@ TEST_F(Win32RendererUtilTest, TSF_HighDPI) {
   EXPECT_EQ(ToCRect(indicator_layout.window_rect), CRect(172, 244, 174, 284));
   EXPECT_FALSE(indicator_layout.is_vertical);
 
-  CandidateWindowLayout suggestion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForSuggestion(
-      app_info, &suggestion_layout));
+  CandidateWindowLayout candidate_window_layout;
+  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
+                                               &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
-                                         suggestion_layout);
-
-  CandidateWindowLayout conversion_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindowForConversion(
-      app_info, &conversion_layout));
-  EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
-                                         conversion_layout);
+                                         candidate_window_layout);
 }
 
 }  // namespace win32

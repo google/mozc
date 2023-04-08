@@ -283,7 +283,6 @@ mozc_cc_test(
         ":win32_renderer_util",
         "//base:logging",
         "//base:util",
-        "//base/win32:win_font_test_helper",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",

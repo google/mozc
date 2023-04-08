@@ -69,7 +69,6 @@ class WindowManager {
   std::unique_ptr<IndicatorWindow> indicator_window_;
   std::unique_ptr<InfolistWindow> infolist_window_;
   std::unique_ptr<LayoutManager> layout_manager_;
-  std::unique_ptr<WorkingAreaInterface> working_area_;
   client::SendCommandInterface *send_command_interface_;
   POINT last_position_;
   int candidates_finger_print_;

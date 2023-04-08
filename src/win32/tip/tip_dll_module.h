@@ -32,7 +32,9 @@
 
 #include <windows.h>
 
-#include "base/port.h"
+#include <atomic>
+
+#include "absl/base/call_once.h"
 
 namespace mozc {
 namespace win32 {
@@ -47,15 +49,23 @@ class TipDllModule {
   // Increases and decreases the reference count to this module.
   // This reference count is used for preventing Windows from unloading
   // this module.
-  static LONG AddRef();
-  static LONG Release();
+  static LONG AddRef() noexcept { return ::InterlockedIncrement(&ref_count_); }
+  static LONG Release() noexcept;
 
-  static bool IsUnloaded();
-  static bool CanUnload();
+  static bool IsUnloaded() { return unloaded_; }
+  static bool CanUnload() { return ref_count_ <= 0; }
+  static void Unload() { unloaded_ = true; }
 
-  static HMODULE module_handle();
+  static void set_module_handle(HMODULE handle) { module_handle_ = handle; }
+  static HMODULE module_handle() { return module_handle_; }
 
   static void InitForUnitTest();
+
+ private:
+  static volatile LONG ref_count_;
+  static HMODULE module_handle_;
+  static bool unloaded_;
+  static absl::once_flag uninitialize_once_;
 };
 
 }  // namespace tsf

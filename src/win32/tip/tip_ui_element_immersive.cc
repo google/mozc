@@ -41,25 +41,27 @@
 #include <atlwin.h>
 #include <msctf.h>
 // clang-format on
+#include <wrl/client.h>
 
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 
 #include "base/util.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "renderer/table_layout.h"
 #include "renderer/win32/text_renderer.h"
 #include "renderer/win32/win32_renderer_util.h"
 #include "renderer/window_util.h"
 #include "win32/tip/tip_composition_util.h"
-#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
-#include "win32/tip/tip_ui_handler_immersive.h"
 #include "win32/tip/tip_ui_renderer_immersive.h"
 
 namespace mozc {
@@ -68,12 +70,11 @@ namespace tsf {
 
 namespace {
 
-using ATL::CComPtr;
 using ATL::CWindow;
+using Microsoft::WRL::ComPtr;
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
-using WTL::CPaintDC;
 
 using ::mozc::commands::Candidates;
 using ::mozc::commands::Output;
@@ -149,9 +150,11 @@ size_t GetTargetPos(const commands::Output &output) {
 // This function updates RendererCommand::CharacterPosition to emulate
 // IMM32-based client. Ideally we'd better to define new field for TSF Mozc
 // into which the result of ITfContextView::GetTextExt is stored.
-bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
-                    TfEditCookie read_cookie, RenderingInfo *info) {
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+bool FillRenderInfo(TipTextService *text_service,
+                    const ComPtr<ITfContext> &context, TfEditCookie read_cookie,
+                    RenderingInfo *info) {
+  TipPrivateContext *private_context =
+      text_service->GetPrivateContext(context.Get());
   if (private_context == nullptr) {
     return false;
   }
@@ -161,13 +164,13 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
   info->has_target_rect = false;
   const Output &output = private_context->last_output();
 
-  CComPtr<ITfCompositionView> composition_view =
+  ComPtr<ITfCompositionView> composition_view =
       TipCompositionUtil::GetComposition(context, read_cookie);
   if (!composition_view) {
     return false;
   }
 
-  CComPtr<ITfRange> composition_range;
+  ComPtr<ITfRange> composition_range;
   if (FAILED(composition_view->GetRange(&composition_range))) {
     return false;
   }
@@ -175,7 +178,7 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
     return false;
   }
 
-  CComPtr<ITfRange> target_range;
+  ComPtr<ITfRange> target_range;
   if (FAILED(composition_range->Clone(&target_range))) {
     return false;
   }
@@ -197,7 +200,7 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
     }
   }
 
-  CComPtr<ITfContextView> context_view;
+  ComPtr<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
     return false;
   }
@@ -209,8 +212,9 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
 
   RECT text_rect = {};
   bool clipped = false;
-  const HRESULT hr = TipRangeUtil::GetTextExt(
-      context_view, read_cookie, target_range, &text_rect, &clipped);
+  const HRESULT hr =
+      TipRangeUtil::GetTextExt(context_view.Get(), read_cookie,
+                               target_range.Get(), &text_rect, &clipped);
   if (SUCCEEDED(hr)) {
     info->target_rect = text_rect;
     info->has_target_rect = true;
@@ -258,7 +262,8 @@ int GetFocusedArrayIndex(const Candidates &candidates) {
   return GetCandidateArrayIndexByCandidateIndex(candidates, focused_index);
 }
 
-class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
+class TipImmersiveUiElementImpl final
+    : public ITfCandidateListUIElementBehavior {
  public:
   TipImmersiveUiElementImpl(TipTextService *text_service, ITfContext *context,
                             HWND window_handle)
@@ -267,7 +272,6 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kImmersiveCandidateWindow)),
-        working_area_(renderer::win32::WorkingAreaFactory::Create()),
         text_renderer_(renderer::win32::TextRenderer::Create()),
         window_(window_handle),
         window_visible_(false) {}
@@ -326,12 +330,12 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
-    CComPtr<ITfEditSession> edit_session(
+    ComPtr<ITfEditSession> edit_session(
         new UpdateUiEditSession(text_service_, context_, this));
 
     HRESULT edit_session_result = S_OK;
     const HRESULT result = context_->RequestEditSession(
-        text_service_->GetClientID(), edit_session,
+        text_service_->GetClientID(), edit_session.Get(),
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   }
 
@@ -345,14 +349,14 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
       const CRect rect = ToCRect(table_layout_.GetRowRect(i));
       if (rect.PtInRect(point)) {
         if (select_candidate) {
-          TipEditSession::SelectCandidateAsync(text_service_, context_,
-                                               candidate.id());
+          TipEditSession::SelectCandidateAsync(text_service_.Get(),
+                                               context_.Get(), candidate.id());
           return true;
         } else {
           const int focused_array_index = GetFocusedArrayIndex(candidates);
           if (i != focused_array_index) {
-            TipEditSession::HilightCandidateAsync(text_service_, context_,
-                                                  candidate.id());
+            TipEditSession::HilightCandidateAsync(
+                text_service_.Get(), context_.Get(), candidate.id());
             return true;
           }
           return false;
@@ -457,7 +461,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
       const Point zero_point_offset(left_offset, 0);
       Rect working_area;
       CRect area;
-      if (working_area_->GetWorkingAreaFromPoint(target_point, &area)) {
+      if (renderer::win32::GetWorkingAreaFromPoint(target_point, &area)) {
         working_area = Rect(area.left, area.top, area.Width(), area.Height());
       }
       new_position =
@@ -479,16 +483,14 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
 
   // This class is an implementation class for the ITfEditSession classes,
   // which is an observer for exclusively read the date from the text store.
-  class UpdateUiEditSession : public ITfEditSession {
+  class UpdateUiEditSession final : public ITfEditSession {
    public:
     UpdateUiEditSession(const UpdateUiEditSession &) = delete;
     UpdateUiEditSession &operator=(const UpdateUiEditSession &) = delete;
 
     // Destructor is kept as non-virtual because this class is designed to be
     // destroyed only by "delete this" in Release() method.
-    // TODO(yukawa): put "final" keyword to the class declaration when C++11
-    //     is allowed.
-    ~UpdateUiEditSession();
+    ~UpdateUiEditSession() = default;
 
     // The IUnknown interface methods.
     virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object);
@@ -499,14 +501,15 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
     // This function is called back by the TSF thread manager when an edit
     // request is granted.
     virtual HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie read_cookie);
-    UpdateUiEditSession(TipTextService *text_service, ITfContext *context,
-                        TipImmersiveUiElementImpl *ui_element);
+    UpdateUiEditSession(ComPtr<TipTextService> text_service,
+                        ComPtr<ITfContext> context,
+                        ComPtr<TipImmersiveUiElementImpl> ui_element);
 
    private:
     TipRefCount ref_count_;
-    CComPtr<TipTextService> text_service_;
-    CComPtr<ITfContext> context_;
-    CComPtr<TipImmersiveUiElementImpl> ui_element_;
+    ComPtr<TipTextService> text_service_;
+    ComPtr<ITfContext> context_;
+    ComPtr<TipImmersiveUiElementImpl> ui_element_;
   };
 
   // The ITfUIElement interface methods
@@ -559,10 +562,9 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   virtual HRESULT STDMETHODCALLTYPE Abort() { return delegate_->Abort(); }
 
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
-  std::unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
   std::unique_ptr<renderer::win32::TextRenderer> text_renderer_;
   CWindow window_;
   bool window_visible_;
@@ -572,7 +574,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
 };
 
 HWND GetOwnerWindow(ITfContext *context) {
-  CComPtr<ITfContextView> context_view;
+  ComPtr<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
     return nullptr;
   }
@@ -589,7 +591,7 @@ using WindowMap = std::unordered_map<HWND, TipImmersiveUiElementImpl *>;
 
 class ThreadLocalInfo {
  public:
-  ThreadLocalInfo() {}
+  ThreadLocalInfo() = default;
   ThreadLocalInfo(const ThreadLocalInfo &) = delete;
   ThreadLocalInfo &operator=(const ThreadLocalInfo &) = delete;
   WindowMap *window_map() { return &window_map_; }
@@ -657,8 +659,6 @@ LRESULT WINAPI WindowProc(HWND window_handle, UINT message, WPARAM wparam,
   }
 }
 
-TipImmersiveUiElementImpl::UpdateUiEditSession::~UpdateUiEditSession() {}
-
 // The IUnknown interface methods.
 STDMETHODIMP TipImmersiveUiElementImpl::UpdateUiEditSession::QueryInterface(
     REFIID interface_id, void **object) {
@@ -702,16 +702,18 @@ HRESULT STDMETHODCALLTYPE
 TipImmersiveUiElementImpl::UpdateUiEditSession::DoEditSession(
     TfEditCookie read_cookie) {
   RenderingInfo info;
-  if (FillRenderInfo(text_service_, context_, read_cookie, &info)) {
+  if (FillRenderInfo(text_service_.Get(), context_, read_cookie, &info)) {
     ui_element_->Render(info);
   }
   return S_OK;
 }
 
 TipImmersiveUiElementImpl::UpdateUiEditSession::UpdateUiEditSession(
-    TipTextService *text_service, ITfContext *context,
-    TipImmersiveUiElementImpl *ui_element)
-    : text_service_(text_service), context_(context), ui_element_(ui_element) {}
+    const ComPtr<TipTextService> text_service, const ComPtr<ITfContext> context,
+    const ComPtr<TipImmersiveUiElementImpl> ui_element)
+    : text_service_(std::move(text_service)),
+      context_(std::move(context)),
+      ui_element_(std::move(ui_element)) {}
 
 }  // namespace
 

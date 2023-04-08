@@ -230,8 +230,9 @@ def ParseGypOptions(args):
                     'is installed. This option is used only on Linux.')
 
   if IsWindows():
+    default_msvs_version = '2019'
     parser.add_option('--msvs_version', dest='msvs_version',
-                      default='2017',
+                      default=default_msvs_version,
                       help='Version of the Visual Studio.')
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),

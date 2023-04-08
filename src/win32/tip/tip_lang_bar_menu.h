@@ -49,10 +49,10 @@ namespace tsf {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #define IIDSTR_IMozcLangBarItem "C6057858-8A94-4B40-8C99-D1C4B4A0B9DB"
 #define IIDSTR_IMozcLangBarToggleItem "72B4C4E3-B9F3-478A-B8A8-753AFF37EB94"
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 #define IIDSTR_IMozcLangBarItem "75B2153A-504B-48C9-9257-BA8D60E523E6"
 #define IIDSTR_IMozcLangBarToggleItem "9ABF0C3B-4AC6-4DED-9EF6-97E728852CF3"
-#endif
+#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 class TipBarCallback;
 
@@ -207,7 +207,7 @@ class TipLangBarButton : public ITfLangBarItemButton,
 
 // Represents the common operations for a button-menu item with an icon in the
 // language bar.
-class TipLangBarMenuButton : public TipLangBarButton {
+class TipLangBarMenuButton final : public TipLangBarButton {
  public:
   TipLangBarMenuButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                        bool show_in_tray);

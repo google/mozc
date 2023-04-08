@@ -34,6 +34,7 @@
 
 #include "base/util.h"
 #include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_ref_count.h"
 

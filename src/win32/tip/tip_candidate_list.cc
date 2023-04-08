@@ -50,7 +50,7 @@ namespace tsf {
 
 namespace {
 
-class CandidateStringImpl : public ITfCandidateString {
+class CandidateStringImpl final : public ITfCandidateString {
  public:
   CandidateStringImpl(ULONG index, const std::wstring &value)
       : index_(index), value_(value) {}
@@ -112,7 +112,7 @@ class CandidateStringImpl : public ITfCandidateString {
   const std::wstring value_;
 };
 
-class EnumTfCandidatesImpl : public IEnumTfCandidates {
+class EnumTfCandidatesImpl final : public IEnumTfCandidates {
  public:
   explicit EnumTfCandidatesImpl(const std::vector<std::wstring> &candidates)
       : candidates_(candidates), current_(0) {}
@@ -207,7 +207,7 @@ class EnumTfCandidatesImpl : public IEnumTfCandidates {
   size_t current_;
 };
 
-class CandidateListImpl : public ITfCandidateList {
+class CandidateListImpl final : public ITfCandidateList {
  public:
   CandidateListImpl(const std::vector<std::wstring> &candidates,
                     TipCandidateListCallback *callback)

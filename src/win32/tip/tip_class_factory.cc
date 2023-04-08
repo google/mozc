@@ -35,6 +35,7 @@
 #include <atlcom.h>
 
 #include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 
 namespace mozc {
@@ -42,8 +43,6 @@ namespace win32 {
 namespace tsf {
 
 using ATL::CComPtr;
-
-TipClassFactory::TipClassFactory() {}
 
 HRESULT STDMETHODCALLTYPE TipClassFactory::QueryInterface(REFIID interface_id,
                                                           void **object) {

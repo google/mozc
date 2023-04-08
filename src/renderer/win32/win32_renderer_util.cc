@@ -52,9 +52,6 @@
 namespace mozc {
 namespace renderer {
 namespace win32 {
-using WTL::CFont;
-using WTL::CFontHandle;
-using WTL::CLogFont;
 
 namespace {
 // This template class is used to represent rendering information which may
@@ -199,62 +196,29 @@ bool ExtractParams(LayoutManager *layout,
   return true;
 }
 
-class NativeSystemPreferenceAPI : public SystemPreferenceInterface {
- public:
-  virtual ~NativeSystemPreferenceAPI() {}
-
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == nullptr) {
-      return false;
-    }
-
-    CLogFont message_box_font;
-    // Use message box font as a default font to be consistent with
-    // the candidate window.
-    // TODO(yukawa): make a theme layer which is responsible for
-    //   the look and feel of both composition window and candidate window.
-    // TODO(yukawa): verify the font can render U+005C as a yen sign.
-    //               (http://b/1992773)
-    message_box_font.SetMessageBoxFont();
-    // Use factor "3" to be consistent with the candidate window.
-    message_box_font.MakeLarger(3);
-    message_box_font.lfWeight = FW_NORMAL;
-
-    *log_font = message_box_font;
-    return true;
+bool GetWorkingAreaFromPointImpl(const POINT &point, RECT *working_area) {
+  if (working_area == nullptr) {
+    return false;
   }
-};
+  ::SetRect(working_area, 0, 0, 0, 0);
 
-class NativeWorkingAreaAPI : public WorkingAreaInterface {
- public:
-  NativeWorkingAreaAPI() {}
-
- private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
-    if (working_area == nullptr) {
-      return false;
-    }
-    ::SetRect(working_area, 0, 0, 0, 0);
-
-    // Obtain the monitor's working area
-    const HMONITOR monitor =
-        ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
-    if (monitor == nullptr) {
-      return false;
-    }
-
-    MONITORINFO monitor_info = {};
-    monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
-    if (!::GetMonitorInfo(monitor, &monitor_info)) {
-      const DWORD error = GetLastError();
-      LOG(ERROR) << "GetMonitorInfo failed. Error: " << error;
-      return false;
-    }
-
-    *working_area = monitor_info.rcWork;
-    return true;
+  // Obtain the monitor's working area
+  const HMONITOR monitor = ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+  if (monitor == nullptr) {
+    return false;
   }
-};
+
+  MONITORINFO monitor_info = {};
+  monitor_info.cbSize = CCSIZEOF_STRUCT(MONITORINFO, dwFlags);
+  if (!::GetMonitorInfo(monitor, &monitor_info)) {
+    const DWORD error = GetLastError();
+    LOG(ERROR) << "GetMonitorInfo failed. Error: " << error;
+    return false;
+  }
+
+  *working_area = monitor_info.rcWork;
+  return true;
+}
 
 class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
@@ -339,24 +303,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     return ::GetAncestor(window_handle, GA_ROOT);
   }
 
-  // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) {
-    if (class_name == nullptr) {
-      return false;
-    }
-    wchar_t class_name_buffer[1024] = {};
-    const size_t num_copied_without_null = ::GetClassNameW(
-        window_handle, class_name_buffer, std::size(class_name_buffer));
-    if (num_copied_without_null >= (std::size(class_name_buffer) - 1)) {
-      DLOG(ERROR) << "buffer length is insufficient.";
-      return false;
-    }
-    class_name_buffer[num_copied_without_null] = L'\0';
-    class_name->assign(class_name_buffer);
-    return (::IsWindow(window_handle) != FALSE);
-  }
-
  private:
   typedef BOOL(WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
       HWND window_handle, POINT *point);
@@ -381,46 +327,11 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 };
 
 struct WindowInfo {
-  std::wstring class_name;
   CRect window_rect;
   CPoint client_area_offset;
   CSize client_area_size;
   double scale_factor;
   WindowInfo() : scale_factor(1.0) {}
-};
-
-class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
- public:
-  explicit SystemPreferenceEmulatorImpl(const LOGFONTW &gui_font)
-      : default_gui_font_(gui_font) {}
-
-  virtual ~SystemPreferenceEmulatorImpl() {}
-
-  virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == nullptr) {
-      return false;
-    }
-    *log_font = default_gui_font_;
-    return true;
-  }
-
- private:
-  CLogFont default_gui_font_;
-};
-
-class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
- public:
-  explicit WorkingAreaEmulatorImpl(const CRect &area) : area_(area) {}
-
- private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
-    if (working_area == nullptr) {
-      return false;
-    }
-    *working_area = area_;
-    return true;
-  }
-  const CRect area_;
 };
 
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
@@ -490,20 +401,6 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool GetWindowClassName(HWND window_handle,
-                                  std::wstring *class_name) {
-    if (class_name == nullptr) {
-      return false;
-    }
-    const WindowInfo *info = GetWindowInformation(window_handle);
-    if (info == nullptr) {
-      return false;
-    }
-    *class_name = info->class_name;
-    return true;
-  }
-
-  // This method is not const to implement Win32WindowInterface.
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
                                       const POINT &logical_coordinate,
                                       POINT *physical_coordinate) {
@@ -530,13 +427,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
     return true;
   }
 
-  virtual HWND RegisterWindow(const std::wstring &class_name,
-                              const RECT &window_rect,
+  virtual HWND RegisterWindow(const RECT &window_rect,
                               const POINT &client_area_offset,
                               const SIZE &client_area_size,
                               double scale_factor) {
     const HWND hwnd = GetNextWindowHandle();
-    window_map_[hwnd].class_name = class_name;
     window_map_[hwnd].window_rect = window_rect;
     window_map_[hwnd].client_area_offset = client_area_offset;
     window_map_[hwnd].client_area_size = client_area_size;
@@ -588,8 +483,7 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCompositionTarget(
-    const CandidateWindowLayoutParams &params, int compatibility_mode,
-    bool for_suggestion, LayoutManager *layout_manager,
+    const CandidateWindowLayoutParams &params, LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
@@ -740,13 +634,8 @@ bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
 
 }  // namespace
 
-SystemPreferenceInterface *SystemPreferenceFactory::CreateMock(
-    const LOGFONTW &gui_font) {
-  return new SystemPreferenceEmulatorImpl(gui_font);
-}
-
-WorkingAreaInterface *WorkingAreaFactory::Create() {
-  return new NativeWorkingAreaAPI();
+bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
+  return GetWorkingAreaFromPointImpl(point, working_area);
 }
 
 WindowPositionEmulator *WindowPositionEmulator::Create() {
@@ -756,7 +645,6 @@ WindowPositionEmulator *WindowPositionEmulator::Create() {
 CandidateWindowLayout::CandidateWindowLayout()
     : position_(CPoint()),
       exclude_region_(CRect()),
-      has_exclude_region_(false),
       initialized_(false) {}
 
 CandidateWindowLayout::~CandidateWindowLayout() {}
@@ -764,34 +652,21 @@ CandidateWindowLayout::~CandidateWindowLayout() {}
 void CandidateWindowLayout::Clear() {
   position_ = CPoint();
   exclude_region_ = CRect();
-  has_exclude_region_ = false;
   initialized_ = false;
-}
-
-void CandidateWindowLayout::InitializeWithPosition(const POINT &position) {
-  position_ = position;
-  exclude_region_ = CRect();
-  has_exclude_region_ = false;
-  initialized_ = true;
 }
 
 void CandidateWindowLayout::InitializeWithPositionAndExcludeRegion(
     const POINT &position, const RECT &exclude_region) {
   position_ = position;
   exclude_region_ = exclude_region;
-  has_exclude_region_ = true;
   initialized_ = true;
 }
 
 const POINT &CandidateWindowLayout::position() const { return position_; }
 
 const RECT &CandidateWindowLayout::exclude_region() const {
-  DCHECK(has_exclude_region_);
+  DCHECK(initialized_);
   return exclude_region_;
-}
-
-bool CandidateWindowLayout::has_exclude_region() const {
-  return has_exclude_region_;
 }
 
 bool CandidateWindowLayout::initialized() const { return initialized_; }
@@ -847,13 +722,10 @@ void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
 }
 
 LayoutManager::LayoutManager()
-    : system_preference_(new NativeSystemPreferenceAPI),
-      window_position_(new NativeWindowPositionAPI) {}
+    : window_position_(new NativeWindowPositionAPI) {}
 
-LayoutManager::LayoutManager(SystemPreferenceInterface *mock_system_preference,
-                             WindowPositionInterface *mock_window_position)
-    : system_preference_(mock_system_preference),
-      window_position_(mock_window_position) {}
+LayoutManager::LayoutManager(WindowPositionInterface *mock_window_position)
+    : window_position_(mock_window_position) {}
 
 LayoutManager::~LayoutManager() {}
 
@@ -967,10 +839,6 @@ double LayoutManager::GetScalingFactor(HWND window_handle) const {
   }
 }
 
-bool LayoutManager::GetDefaultGuiFont(LOGFONTW *logfont) const {
-  return system_preference_->GetDefaultGuiFont(logfont);
-}
-
 LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
     const commands::RendererCommand_ApplicationInfo &app_info) {
   // TODO(https://github.com/google/mozc/issues/362): Implement this for TSF.
@@ -979,19 +847,17 @@ LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
   return WRITING_DIRECTION_UNSPECIFIED;
 }
 
-bool LayoutManager::LayoutCandidateWindowForSuggestion(
+bool LayoutManager::LayoutCandidateWindow(
     const commands::RendererCommand::ApplicationInfo &app_info,
     CandidateWindowLayout *candidate_layout) {
-  const int compatibility_mode = GetCompatibilityMode(app_info);
 
   CandidateWindowLayoutParams params;
   if (!ExtractParams(this, app_info, &params)) {
     return false;
   }
 
-  const bool is_suggestion = true;
   if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
+          params, this, candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -999,62 +865,6 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
   return false;
 }
 
-bool LayoutManager::LayoutCandidateWindowForConversion(
-    const commands::RendererCommand::ApplicationInfo &app_info,
-    CandidateWindowLayout *candidate_layout) {
-  const int compatibility_mode = GetCompatibilityMode(app_info);
-
-  CandidateWindowLayoutParams params;
-  if (!ExtractParams(this, app_info, &params)) {
-    return false;
-  }
-
-  const bool is_suggestion = false;
-  if (LayoutCandidateWindowByCompositionTarget(
-          params, compatibility_mode, is_suggestion, this, candidate_layout)) {
-    DCHECK(candidate_layout->initialized());
-    return true;
-  }
-
-  return false;
-}
-
-int LayoutManager::GetCompatibilityMode(
-    const commands::RendererCommand_ApplicationInfo &app_info) {
-  if (!app_info.has_target_window_handle()) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-  const HWND target_window =
-      WinUtil::DecodeWindowHandle(app_info.target_window_handle());
-
-  if (!window_position_->IsWindow(target_window)) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-
-  std::wstring class_name;
-  if (!window_position_->GetWindowClassName(target_window, &class_name)) {
-    return COMPATIBILITY_MODE_NONE;
-  }
-
-  int mode = COMPATIBILITY_MODE_NONE;
-  {
-    const wchar_t *kUseCandidateFormForSuggest[] = {
-        L"Chrome_RenderWidgetHostHWND",
-        L"JsTaroCtrl",
-        L"MozillaWindowClass",
-        L"OperaWindowClass",
-        L"QWidget",
-    };
-    for (size_t i = 0; i < std::size(kUseCandidateFormForSuggest); ++i) {
-      if (kUseCandidateFormForSuggest[i] == class_name) {
-        mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
-        break;
-      }
-    }
-  }
-
-  return mode;
-}
 
 bool LayoutManager::LayoutIndicatorWindow(
     const commands::RendererCommand_ApplicationInfo &app_info,

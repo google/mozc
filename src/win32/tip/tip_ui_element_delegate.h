@@ -45,10 +45,10 @@ class TipTextService;
 
 class TipUiElementDelegate {
  public:
-  TipUiElementDelegate();
+  TipUiElementDelegate() = default;
   TipUiElementDelegate(const TipUiElementDelegate &) = delete;
   TipUiElementDelegate &operator=(const TipUiElementDelegate &) = delete;
-  virtual ~TipUiElementDelegate();
+  virtual ~TipUiElementDelegate() = default;
 
   virtual bool IsObservable() const = 0;
 

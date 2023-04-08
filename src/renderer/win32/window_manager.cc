@@ -66,7 +66,6 @@ WindowManager::WindowManager()
       indicator_window_(new IndicatorWindow),
       infolist_window_(new InfolistWindow),
       layout_manager_(new LayoutManager),
-      working_area_(WorkingAreaFactory::Create()),
       send_command_interface_(nullptr),
       last_position_(kInvalidMousePosition),
       candidates_finger_print_(0),
@@ -219,13 +218,7 @@ void WindowManager::UpdateLayout(
 
   if (!candidate_layout.initialized()) {
     candidate_layout.Clear();
-    if (is_suggest) {
-      layout_manager_->LayoutCandidateWindowForSuggestion(app_info,
-                                                          &candidate_layout);
-    } else if (is_convert_or_predict) {
-      layout_manager_->LayoutCandidateWindowForConversion(app_info,
-                                                          &candidate_layout);
-    }
+    layout_manager_->LayoutCandidateWindow(app_info, &candidate_layout);
   }
 
   if (!candidate_layout.initialized()) {
@@ -250,7 +243,7 @@ void WindowManager::UpdateLayout(
   Rect working_area;
   {
     CRect area;
-    if (working_area_->GetWorkingAreaFromPoint(
+    if (GetWorkingAreaFromPoint(
             CPoint(target_point.x, target_point.y), &area)) {
       working_area = Rect(area.left, area.top, area.Width(), area.Height());
     }
@@ -262,7 +255,7 @@ void WindowManager::UpdateLayout(
       main_window_->GetCandidateColumnInClientCord().Left(), 0);
 
   Rect main_window_rect;
-  if (candidate_layout.has_exclude_region()) {
+  {
     // Equating |exclusion_area| with |preedit_rect| generally works well and
     // makes most of users happy.
     const CRect rect(candidate_layout.exclude_region());
@@ -283,9 +276,6 @@ void WindowManager::UpdateLayout(
         WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
             new_target_point, preedit_rect, main_window_size,
             main_window_zero_point, working_area, vertical);
-  } else {
-    main_window_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
-        target_point, main_window_size, main_window_zero_point, working_area);
   }
 
   const DWORD set_windows_pos_flags = SWP_NOACTIVATE | SWP_SHOWWINDOW;
