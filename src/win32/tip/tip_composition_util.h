@@ -31,11 +31,13 @@
 #define MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
 
 #include <windows.h>
+
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
+#include <wrl/client.h>
 
 #include "base/port.h"
 
@@ -53,8 +55,9 @@ class TipCompositionUtil {
 
   // Returns composition view object if there is an composition which belongs
   // to Mozc in |context|. Otherwise returns nullptr.
-  static ATL::CComPtr<ITfCompositionView> GetComposition(
-      ATL::CComPtr<ITfContext> context, TfEditCookie edit_cookie);
+  static Microsoft::WRL::ComPtr<ITfCompositionView> GetComposition(
+      const Microsoft::WRL::ComPtr<ITfContext> &context,
+      TfEditCookie edit_cookie);
 
   // Removes display attributes from |composition|. Returns the result.
   static HRESULT ClearDisplayAttributes(ITfContext *context,

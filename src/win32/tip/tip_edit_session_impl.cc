@@ -35,6 +35,7 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
+#include <wrl/client.h>
 
 #include <cstdint>
 #include <string>
@@ -64,6 +65,7 @@ using ATL::CComBSTR;
 using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
+using Microsoft::WRL::ComPtr;
 using ::mozc::commands::Output;
 using ::mozc::commands::Preedit;
 using ::mozc::commands::Result;
@@ -447,29 +449,29 @@ HRESULT UpdatePreeditAndComposition(TipTextService *text_service,
                                     ITfContext *context,
                                     TfEditCookie write_cookie,
                                     const Output &output) {
-  CComPtr<ITfComposition> composition = CComQIPtr<ITfComposition>(
-      TipCompositionUtil::GetComposition(context, write_cookie));
+  ComPtr<ITfComposition> composition;
 
   // Clear the display attributes first.
-  if (composition) {
+  if (SUCCEEDED(TipCompositionUtil::GetComposition(context, write_cookie)
+                    .As(&composition))) {
     const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
-        context, composition, write_cookie);
+        context, composition.Get(), write_cookie);
     if (FAILED(result)) {
       return result;
     }
   }
 
   if (output.has_result()) {
-    CComPtr<ITfComposition> new_composition =
-        CommitText(text_service, context, write_cookie, composition, output);
+    CComPtr<ITfComposition> new_composition = CommitText(
+        text_service, context, write_cookie, composition.Get(), output);
     composition = new_composition;
     if (!new_composition) {
       return E_FAIL;
     }
   }
 
-  return UpdateComposition(text_service, context, composition, write_cookie,
-                           output);
+  return UpdateComposition(text_service, context, composition.Get(),
+                           write_cookie, output);
 }
 
 HRESULT DoEditSessionInComposition(TipTextService *text_service,
@@ -526,14 +528,14 @@ HRESULT OnEndEditImpl(TipTextService *text_service, ITfContext *context,
     }
   }
 
-  CComPtr<ITfCompositionView> composition_view =
+  ComPtr<ITfCompositionView> composition_view =
       TipCompositionUtil::GetComposition(context, write_cookie);
   if (!composition_view) {
     // If there is no composition, nothing to check.
     return S_OK;
   }
-  CComPtr<ITfComposition> composition;
-  result = composition_view.QueryInterface(&composition);
+  ComPtr<ITfComposition> composition;
+  result = composition_view.As(&composition);
   if (FAILED(result)) {
     return result;
   }

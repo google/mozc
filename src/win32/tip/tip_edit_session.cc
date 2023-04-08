@@ -35,6 +35,7 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
+#include <wrl/client.h>
 
 #include <cstdint>
 #include <string>
@@ -42,6 +43,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
@@ -64,7 +66,7 @@ namespace tsf {
 
 namespace {
 
-using ::ATL::CComPtr;
+using ::Microsoft::WRL::ComPtr;
 using ::mozc::commands::Candidates;
 using ::mozc::commands::DeletionRange;
 using ::mozc::commands::KeyEvent;
@@ -100,10 +102,10 @@ HRESULT QueryInterfaceImpl(ITfEditSession *edit_session, REFIID interface_id,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
+class AsyncLayoutChangeEditSessionImpl final : public ITfEditSession {
  public:
-  AsyncLayoutChangeEditSessionImpl(CComPtr<TipTextService> text_service,
-                                   CComPtr<ITfContext> context)
+  AsyncLayoutChangeEditSessionImpl(ComPtr<TipTextService> text_service,
+                                   ComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
   AsyncLayoutChangeEditSessionImpl(const AsyncLayoutChangeEditSessionImpl &) =
       delete;
@@ -136,14 +138,15 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
         ->GetInputModeManager()
         ->OnMoveFocusedWindow();
 
-    TipEditSessionImpl::UpdateUI(text_service_, context_, read_cookie);
+    TipEditSessionImpl::UpdateUI(text_service_.Get(), context_.Get(),
+                                 read_cookie);
     return S_OK;
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
 };
 
 bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
@@ -156,12 +159,12 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
     return false;
   }
 
-  CComPtr<ITfEditSession> edit_session(
+  ComPtr<ITfEditSession> edit_session(
       new AsyncLayoutChangeEditSessionImpl(text_service, context));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session,
+      text_service->GetClientID(), edit_session.Get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -172,10 +175,10 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSetFocusEditSessionImpl : public ITfEditSession {
+class AsyncSetFocusEditSessionImpl final : public ITfEditSession {
  public:
-  AsyncSetFocusEditSessionImpl(CComPtr<TipTextService> text_service,
-                               CComPtr<ITfContext> context)
+  AsyncSetFocusEditSessionImpl(ComPtr<TipTextService> text_service,
+                               ComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
   AsyncSetFocusEditSessionImpl(const AsyncSetFocusEditSessionImpl &) = delete;
   AsyncSetFocusEditSessionImpl &operator=(
@@ -202,11 +205,12 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
     std::vector<InputScope> input_scopes;
-    CComPtr<ITfRange> selection_range;
+    ComPtr<ITfRange> selection_range;
     TfActiveSelEnd active_sel_end = TF_AE_NONE;
     if (SUCCEEDED(TipRangeUtil::GetDefaultSelection(
-            context_, read_cookie, &selection_range, &active_sel_end))) {
-      TipRangeUtil::GetInputScopes(selection_range, read_cookie, &input_scopes);
+            context_.Get(), read_cookie, &selection_range, &active_sel_end))) {
+      TipRangeUtil::GetInputScopes(selection_range.Get(), read_cookie,
+                                   &input_scopes);
     }
     ITfThreadMgr *thread_manager = text_service_->GetThreadManager();
     TipThreadContext *thread_context = text_service_->GetThreadContext();
@@ -218,15 +222,16 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
     const auto action = thread_context->GetInputModeManager()->OnSetFocus(
         TipStatus::IsOpen(thread_manager), system_input_mode, input_scopes);
     if (action == TipInputModeManager::kUpdateUI) {
-      TipEditSessionImpl::UpdateUI(text_service_, context_, read_cookie);
+      TipEditSessionImpl::UpdateUI(text_service_.Get(), context_.Get(),
+                                   read_cookie);
     }
     return S_OK;
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
 };
 
 bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
@@ -243,13 +248,13 @@ bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
+class AsyncSwitchInputModeEditSessionImpl final : public ITfEditSession {
  public:
-  AsyncSwitchInputModeEditSessionImpl(CComPtr<TipTextService> text_service,
-                                      CComPtr<ITfContext> context, bool open,
+  AsyncSwitchInputModeEditSessionImpl(ComPtr<TipTextService> text_service,
+                                      ComPtr<ITfContext> context, bool open,
                                       uint32_t native_mode)
-      : text_service_(text_service),
-        context_(context),
+      : text_service_(std::move(text_service)),
+        context_(std::move(context)),
         open_(open),
         native_mode_(native_mode) {}
   AsyncSwitchInputModeEditSessionImpl(
@@ -278,7 +283,7 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_);
+        text_service_->GetPrivateContext(context_.Get());
     if (!private_context) {
       // This is an unmanaged context. It's OK. Nothing to do.
       return S_OK;
@@ -320,14 +325,14 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
         return E_FAIL;
       }
     }
-    return TipEditSessionImpl::UpdateContext(text_service_, context_,
-                                             write_cookie, output);
+    return TipEditSessionImpl::UpdateContext(
+        text_service_.Get(), context_.Get(), write_cookie, output);
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
   bool open_;
   uint32_t native_mode_;
 };
@@ -337,12 +342,12 @@ bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(new AsyncSwitchInputModeEditSessionImpl(
+  ComPtr<ITfEditSession> edit_session(new AsyncSwitchInputModeEditSessionImpl(
       text_service, context, open, native_mode));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session,
+      text_service->GetClientID(), edit_session.Get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -353,14 +358,14 @@ bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
+class AsyncSessionCommandEditSessionImpl final : public ITfEditSession {
  public:
-  AsyncSessionCommandEditSessionImpl(CComPtr<TipTextService> text_service,
-                                     CComPtr<ITfContext> context,
+  AsyncSessionCommandEditSessionImpl(ComPtr<TipTextService> text_service,
+                                     ComPtr<ITfContext> context,
                                      const SessionCommand &session_command)
-      : text_service_(text_service), context_(context) {
-    session_command_ = session_command;
-  }
+      : text_service_(std::move(text_service)),
+        context_(std::move(context)),
+        session_command_(session_command) {}
   AsyncSessionCommandEditSessionImpl(
       const AsyncSessionCommandEditSessionImpl &) = delete;
   AsyncSessionCommandEditSessionImpl &operator=(
@@ -388,21 +393,21 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
     Output output;
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_);
+        text_service_->GetPrivateContext(context_.Get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
     if (!private_context->GetClient()->SendCommand(session_command_, &output)) {
       return E_FAIL;
     }
-    return TipEditSessionImpl::UpdateContext(text_service_, context_,
-                                             write_cookie, output);
+    return TipEditSessionImpl::UpdateContext(
+        text_service_.Get(), context_.Get(), write_cookie, output);
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
   SessionCommand session_command_;
 };
 
@@ -411,12 +416,12 @@ bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(new AsyncSessionCommandEditSessionImpl(
+  ComPtr<ITfEditSession> edit_session(new AsyncSessionCommandEditSessionImpl(
       text_service, context, session_command));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session,
+      text_service->GetClientID(), edit_session.Get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -569,10 +574,10 @@ bool IsCandidateFocused(const Output &output, uint32_t candidate_id) {
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class SyncEditSessionImpl : public ITfEditSession {
+class SyncEditSessionImpl final : public ITfEditSession {
  public:
-  SyncEditSessionImpl(CComPtr<TipTextService> text_service,
-                      CComPtr<ITfContext> context, const Output &output)
+  SyncEditSessionImpl(ComPtr<TipTextService> text_service,
+                      ComPtr<ITfContext> context, const Output &output)
       : text_service_(text_service), context_(context) {
     output_ = output;
   }
@@ -599,14 +604,14 @@ class SyncEditSessionImpl : public ITfEditSession {
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
-    return TipEditSessionImpl::UpdateContext(text_service_, context_,
-                                             write_cookie, output_);
+    return TipEditSessionImpl::UpdateContext(
+        text_service_.Get(), context_.Get(), write_cookie, output_);
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
   Output output_;
 };
 
@@ -629,13 +634,15 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
         return TurnOnImeAndTryToReconvertFromIme(text_service, context);
       case SessionCommand::UNDO:
         return UndoCommint(text_service, context);
+      default:
+        break;
     }
   }
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(
+  ComPtr<ITfEditSession> edit_session(
       new SyncEditSessionImpl(text_service, context, new_output));
 
   DWORD edit_session_flag = TF_ES_READWRITE;
@@ -655,9 +662,9 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
   }
 
   HRESULT edit_session_result = S_OK;
-  const HRESULT hr =
-      context->RequestEditSession(text_service->GetClientID(), edit_session,
-                                  edit_session_flag, &edit_session_result);
+  const HRESULT hr = context->RequestEditSession(
+      text_service->GetClientID(), edit_session.Get(), edit_session_flag,
+      &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -667,7 +674,7 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class SyncGetTextEditSessionImpl : public ITfEditSession {
+class SyncGetTextEditSessionImpl final : public ITfEditSession {
  public:
   SyncGetTextEditSessionImpl(TipTextService *text_service, ITfRange *range)
       : text_service_(text_service), range_(range) {}
@@ -695,7 +702,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
-    TipRangeUtil::GetText(range_, read_cookie, &text_);
+    TipRangeUtil::GetText(range_.Get(), read_cookie, &text_);
     return S_OK;
   }
 
@@ -703,15 +710,15 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfRange> range_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfRange> range_;
   std::wstring text_;
 };
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSetTextEditSessionImpl : public ITfEditSession {
+class AsyncSetTextEditSessionImpl final : public ITfEditSession {
  public:
   AsyncSetTextEditSessionImpl(TipTextService *text_service,
                               const std::wstring &text, ITfRange *range)
@@ -746,9 +753,9 @@ class AsyncSetTextEditSessionImpl : public ITfEditSession {
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
+  ComPtr<TipTextService> text_service_;
   const std::wstring text_;
-  CComPtr<ITfRange> range_;
+  ComPtr<ITfRange> range_;
 };
 
 }  // namespace
@@ -777,7 +784,7 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
     return true;
   }
 
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(document_manager->GetBase(&context))) {
     return false;
   }
@@ -785,12 +792,12 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(
+  ComPtr<ITfEditSession> edit_session(
       new AsyncSetFocusEditSessionImpl(text_service, context));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session,
+      text_service->GetClientID(), edit_session.Get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -804,7 +811,7 @@ bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
     return false;
   }
 
-  CComPtr<ITfDocumentMgr> document_manager;
+  ComPtr<ITfDocumentMgr> document_manager;
   if (FAILED(thread_mgr->GetFocus(&document_manager))) {
     return false;
   }
@@ -813,7 +820,7 @@ bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
     return true;
   }
 
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(document_manager->GetBase(&context))) {
     return false;
   }
@@ -827,13 +834,13 @@ bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
                           ->GetInputModeManager()
                           ->OnChangeConversionMode(native_mode);
   if (action == TipInputModeManager::kUpdateUI) {
-    return OnLayoutChangedAsyncImpl(text_service, context);
+    return OnLayoutChangedAsyncImpl(text_service, context.Get());
   }
   return true;
 }
 
 bool TipEditSession::OnOpenCloseChangedAsync(TipTextService *text_service) {
-  CComPtr<ITfDocumentMgr> document_manager;
+  ComPtr<ITfDocumentMgr> document_manager;
   if (FAILED(text_service->GetThreadManager()->GetFocus(&document_manager))) {
     return false;
   }
@@ -842,12 +849,12 @@ bool TipEditSession::OnOpenCloseChangedAsync(TipTextService *text_service) {
     return true;
   }
 
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(document_manager->GetBase(&context))) {
     return false;
   }
   return OnUpdateOnOffModeAsync(
-      text_service, context,
+      text_service, context.Get(),
       TipStatus::IsOpen(text_service->GetThreadManager()));
 }
 
@@ -952,18 +959,19 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   if (range == nullptr) {
     return false;
   }
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
   }
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context =
+      text_service->GetPrivateContext(context.Get());
   if (!private_context) {
     // This is an unmanaged context.
     return false;
   }
 
   TipSurroundingTextInfo info;
-  if (!TipSurroundingText::Get(text_service, context, &info)) {
+  if (!TipSurroundingText::Get(text_service, context.Get(), &info)) {
     return false;
   }
 
@@ -995,7 +1003,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   if (!private_context->GetClient()->SendCommand(command, &output)) {
     return false;
   }
-  return OnOutputReceivedSync(text_service, context, output);
+  return OnOutputReceivedSync(text_service, context.Get(), output);
 }
 
 bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
@@ -1011,7 +1019,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
     return false;
   }
 
-  CComPtr<ITfDocumentMgr> document;
+  ComPtr<ITfDocumentMgr> document;
   if (FAILED(thread_mgr->GetFocus(&document))) {
     return false;
   }
@@ -1020,7 +1028,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
     return true;
   }
 
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(document->GetBase(&context))) {
     return false;
   }
@@ -1033,9 +1041,11 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
                                            &native_mode)) {
       return false;
     }
-    return OnSwitchInputModeAsync(text_service, context, false, native_mode);
+    return OnSwitchInputModeAsync(text_service, context.Get(), false,
+                                  native_mode);
   }
-  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context =
+      text_service->GetPrivateContext(context.Get());
   if (!private_context) {
     // This is an unmanaged context.
     return false;
@@ -1048,21 +1058,21 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
     return false;
   }
 
-  return OnSwitchInputModeAsync(text_service, context, true, native_mode);
+  return OnSwitchInputModeAsync(text_service, context.Get(), true, native_mode);
 }
 
 bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
                                  std::wstring *text) {
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
   }
-  CComPtr<SyncGetTextEditSessionImpl> get_text(
+  ComPtr<SyncGetTextEditSessionImpl> get_text(
       new SyncGetTextEditSessionImpl(text_service, range));
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(), get_text,
+  hr = context->RequestEditSession(text_service->GetClientID(), get_text.Get(),
                                    TF_ES_SYNC | TF_ES_READ, &hr_session);
   if (FAILED(hr)) {
     return false;
@@ -1074,16 +1084,16 @@ bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
 // static
 bool TipEditSession::SetTextAsync(TipTextService *text_service,
                                   const std::wstring &text, ITfRange *range) {
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
   }
-  CComPtr<AsyncSetTextEditSessionImpl> set_text(
+  ComPtr<AsyncSetTextEditSessionImpl> set_text(
       new AsyncSetTextEditSessionImpl(text_service, text, range));
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(), set_text,
+  hr = context->RequestEditSession(text_service->GetClientID(), set_text.Get(),
                                    TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
                                    &hr_session);
   if (FAILED(hr)) {

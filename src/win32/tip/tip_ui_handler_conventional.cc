@@ -34,10 +34,12 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
+#include <wrl/client.h>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "base/win32/win_util.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/win32_renderer_client.h"
@@ -64,6 +66,7 @@ namespace {
 
 using ATL::CComPtr;
 using ATL::CComQIPtr;
+using Microsoft::WRL::ComPtr;
 using ::mozc::commands::CompositionMode;
 using ::mozc::commands::Preedit;
 using ::mozc::renderer::win32::Win32RendererClient;
@@ -177,7 +180,7 @@ bool FillWindowHandle(ITfContext *context, ApplicationInfo *app_info) {
 
 CComPtr<ITfRange> GetCompositionRange(ITfContext *context,
                                       TfEditCookie read_cookie) {
-  CComPtr<ITfCompositionView> composition_view =
+  ComPtr<ITfCompositionView> composition_view =
       TipCompositionUtil::GetComposition(context, read_cookie);
   if (!composition_view) {
     return nullptr;
@@ -347,11 +350,11 @@ void UpdateCommand(TipTextService *text_service, ITfContext *context,
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively read the date from the text store.
-class UpdateUiEditSessionImpl : public ITfEditSession {
+class UpdateUiEditSessionImpl final : public ITfEditSession {
  public:
   UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
   UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
-  ~UpdateUiEditSessionImpl() {}
+  ~UpdateUiEditSessionImpl() = default;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {

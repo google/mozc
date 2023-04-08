@@ -32,11 +32,13 @@
 #include <ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <versionhelpers.h>
 #include <atlbase.h>
 #include <atlcom.h>
 #include <objbase.h>
+#include <versionhelpers.h>
+#include <wrl/client.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -83,8 +85,7 @@ namespace tsf {
 namespace {
 
 using ATL::CComBSTR;
-using ATL::CComPtr;
-using ATL::CComQIPtr;
+using Microsoft::WRL::ComPtr;
 
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
@@ -226,7 +227,7 @@ void EnsureKanaLockUnlocked() {
 }
 
 // A COM-independent way to instantiate Category Manager object.
-CComPtr<ITfCategoryMgr> GetCategoryMgr() {
+ComPtr<ITfCategoryMgr> GetCategoryMgr() {
   const HMODULE module = WinUtil::GetSystemModuleHandle(L"msctf.dll");
   if (module == nullptr) {
     return nullptr;
@@ -236,7 +237,7 @@ CComPtr<ITfCategoryMgr> GetCategoryMgr() {
     return nullptr;
   }
   typedef HRESULT(WINAPI * FPTF_CreateCategoryMgr)(ITfCategoryMgr * *object);
-  CComPtr<ITfCategoryMgr> ptr;
+  ComPtr<ITfCategoryMgr> ptr;
   const HRESULT result =
       reinterpret_cast<FPTF_CreateCategoryMgr>(function)(&ptr);
   if (FAILED(result)) {
@@ -245,10 +246,10 @@ CComPtr<ITfCategoryMgr> GetCategoryMgr() {
   return ptr;
 }
 
-// Custom hash function for ATL::CComPtr.
+// Custom hash function for WRL::ComPtr.
 template <typename T>
-struct CComPtrHash {
-  size_t operator()(const CComPtr<T> &value) const {
+struct ComPtrHash {
+  size_t operator()(const ComPtr<T> &value) const {
     // Caveats: On x86 environment, both _M_X64 and _M_IX86 are defined. So we
     //     need to check _M_X64 first.
 #if defined(_M_X64)
@@ -259,7 +260,7 @@ struct CComPtrHash {
 #error "unsupported platform"
 #endif  // defined(_M_IX86)
     // Compress the data by shifting unused bits.
-    return reinterpret_cast<size_t>(value.p) >> kUnusedBits;
+    return reinterpret_cast<size_t>(value.Get()) >> kUnusedBits;
   }
 };
 
@@ -273,7 +274,7 @@ struct GuidHash {
 
 // An observer that binds ITfCompositionSink::OnCompositionTerminated callback
 // to TipEditSession::OnCompositionTerminated.
-class CompositionSinkImpl : public ITfCompositionSink {
+class CompositionSinkImpl final : public ITfCompositionSink {
  public:
   CompositionSinkImpl(TipTextService *text_service, ITfContext *context)
       : text_service_(text_service), context_(context) {}
@@ -317,17 +318,17 @@ class CompositionSinkImpl : public ITfCompositionSink {
   virtual STDMETHODIMP OnCompositionTerminated(TfEditCookie write_cookie,
                                                ITfComposition *composition) {
     return TipEditSessionImpl::OnCompositionTerminated(
-        text_service_, context_, composition, write_cookie);
+        text_service_.Get(), context_.Get(), composition, write_cookie);
   }
 
  private:
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
 };
 
 void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
-  CComPtr<ITfUIElement> element;
+  ComPtr<ITfUIElement> element;
   ui_element_mgr->GetUIElement(id, &element);
   if (element) {
     element->Show(FALSE);
@@ -337,7 +338,7 @@ void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
     // This corresponds to the additional AddRef just after
     // ITfUIElementMgr::BeginUIElement. See the comment in
     // tip_edit_session.cc.
-    static_cast<ITfUIElement *>(element)->Release();
+    element->Release();
   }
 }
 
@@ -388,7 +389,7 @@ const PreserveKeyItem kPreservedKeyItems[] = {
      std::size(kTipKeyF10) - 1},
 };
 
-class UpdateUiEditSessionImpl : public ITfEditSession {
+class UpdateUiEditSessionImpl final : public ITfEditSession {
  public:
   UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
   UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
@@ -432,7 +433,7 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie edit_cookie) {
-    TipUiHandler::Update(text_service_, context_, edit_cookie);
+    TipUiHandler::Update(text_service_.Get(), context_.Get(), edit_cookie);
     return S_OK;
   }
 
@@ -440,12 +441,12 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
-    CComPtr<ITfEditSession> edit_session(
+    ComPtr<ITfEditSession> edit_session(
         new UpdateUiEditSessionImpl(text_service, context));
 
     HRESULT edit_session_result = S_OK;
     const HRESULT result = context->RequestEditSession(
-        text_service->GetClientID(), edit_session,
+        text_service->GetClientID(), edit_session.Get(),
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
     return SUCCEEDED(result);
   }
@@ -455,8 +456,8 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
       : text_service_(text_service), context_(context) {}
 
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfContext> context_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfContext> context_;
 };
 
 bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
@@ -616,13 +617,13 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     UninitTaskWindow();
 
     // Release the ITfCategoryMgr.
-    category_.Release();
+    category_.Reset();
 
     // Release the client ID who communicates with this IME.
     client_id_ = TF_CLIENTID_NULL;
 
     // Release the ITfThreadMgr object who owns this object.
-    thread_mgr_.Release();
+    thread_mgr_.Reset();
 
     TipUiHandler::OnDeactivate(this);
 
@@ -661,10 +662,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     }
 
     // Copy the given thread manager.
-    {
-      CComQIPtr<ITfThreadMgr> tmp_thread_mgr = thread_mgr;
-      thread_mgr_ = tmp_thread_mgr;
-    }
+    thread_mgr_ = thread_mgr;
     if (!thread_mgr_) {
       LOG(ERROR) << "Failed to retrieve ITfThreadMgr interface.";
       return E_UNEXPECTED;
@@ -766,22 +764,22 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
 
     // Emulate document changed event against the current document manager.
     {
-      CComPtr<ITfDocumentMgr> document_mgr;
+      ComPtr<ITfDocumentMgr> document_mgr;
       result = thread_mgr_->GetFocus(&document_mgr);
       if (FAILED(result)) {
         return Deactivate();
       }
       if (document_mgr != nullptr) {
-        CComPtr<ITfContext> context;
+        ComPtr<ITfContext> context;
         result = document_mgr->GetBase(&context);
         if (SUCCEEDED(result)) {
-          EnsurePrivateContextExists(context);
+          EnsurePrivateContextExists(context.Get());
         }
       }
 
       TipUiHandler::OnActivate(this);
 
-      result = OnDocumentMgrChanged(document_mgr);
+      result = OnDocumentMgrChanged(document_mgr.Get());
       if (FAILED(result)) {
         return Deactivate();
       }
@@ -840,13 +838,13 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_INVALIDARG;
     }
 
-    CComPtr<IEnumTfContexts> enum_context;
+    ComPtr<IEnumTfContexts> enum_context;
     hr = document->EnumContexts(&enum_context);
     if (FAILED(hr)) {
       return hr;
     }
     while (true) {
-      CComPtr<ITfContext> context;
+      ComPtr<ITfContext> context;
       ULONG fetched = 0;
       hr = enum_context->Next(1, &context, &fetched);
       if (FAILED(hr)) {
@@ -892,14 +890,14 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     // While ITfThreadMgrEventSink::OnSetFocus notifies the logical focus inside
     // the application, ITfThreadFocusSink notifies the OS-level keyboard focus
     // events. In both cases, Mozc's UI visibility should be updated.
-    CComPtr<ITfDocumentMgr> document_manager;
+    ComPtr<ITfDocumentMgr> document_manager;
     if (FAILED(thread_mgr_->GetFocus(&document_manager))) {
       return S_OK;
     }
     if (!document_manager) {
       return S_OK;
     }
-    TipUiHandler::OnFocusChange(this, document_manager);
+    TipUiHandler::OnFocusChange(this, document_manager.Get());
     return S_OK;
   }
   virtual HRESULT STDMETHODCALLTYPE OnKillThreadFocus() {
@@ -1091,8 +1089,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     const bool open =
         thread_context_->GetInputModeManager()->GetEffectiveOpenClose();
     if (open) {
-      return TipStatus::SetIMEOpen(thread_mgr_, client_id_, false) ? S_OK
-                                                                   : E_FAIL;
+      return TipStatus::SetIMEOpen(thread_mgr_.Get(), client_id_, false)
+                 ? S_OK
+                 : E_FAIL;
     }
 
     // Like MSIME 2012, switch to Hiragana mode when the LangBar button is
@@ -1102,7 +1101,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
 
   // TipTextService
   virtual TfClientId GetClientID() const { return client_id_; }
-  virtual ITfThreadMgr *GetThreadManager() const { return thread_mgr_; }
+  virtual ITfThreadMgr *GetThreadManager() const { return thread_mgr_.Get(); }
   virtual TfGuidAtom input_attribute() const { return input_attribute_; }
   virtual TfGuidAtom converted_attribute() const {
     return converted_attribute_;
@@ -1168,12 +1167,12 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   HRESULT OnDocumentMgrChanged(ITfDocumentMgr *document_mgr) {
     // nullptr document is not an error.
     if (document_mgr != nullptr) {
-      CComPtr<ITfContext> context;
+      ComPtr<ITfContext> context;
       const HRESULT result = document_mgr->GetTop(&context);
       if (FAILED(result)) {
         return result;
       }
-      EnsurePrivateContextExists(context);
+      EnsurePrivateContextExists(context.Get());
     }
     TipUiHandler::OnDocumentMgrChanged(this, document_mgr);
     TipEditSession::OnSetFocusAsync(this, document_mgr);
@@ -1193,9 +1192,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       DWORD text_edit_sink_cookie = TF_INVALID_COOKIE;
       DWORD text_layout_sink_cookie = TF_INVALID_COOKIE;
       {
-        CComPtr<ITfSource> source;
-        CComPtr<ITfContext> context_ptr(context);
-        if (SUCCEEDED(context_ptr.QueryInterface(&source))) {
+        ComPtr<ITfSource> source;
+        ComPtr<ITfContext> context_ptr(context);
+        if (SUCCEEDED(context_ptr.As(&source))) {
           if (FAILED(source->AdviseSink(IID_ITfTextEditSink,
                                         static_cast<ITfTextEditSink *>(this),
                                         &text_edit_sink_cookie))) {
@@ -1214,7 +1213,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     return;
   }
 
-  void RemovePrivateContextIfExists(ITfContext *context) {
+  void RemovePrivateContextIfExists(const ComPtr<ITfContext> &context) {
     // Remove private context associated with |context|.
     const PrivateContextMap::iterator it = private_context_map_.find(context);
     if (it == private_context_map_.end()) {
@@ -1226,8 +1225,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (private_context.get() == nullptr) {
       return;
     }
-    CComQIPtr<ITfSource> source = context;
-    if (source) {
+    ComPtr<ITfSource> source;
+    if (SUCCEEDED(context.As(&source))) {
       if (private_context->text_edit_sink_cookie() != TF_INVALID_COOKIE) {
         source->UnadviseSink(private_context->text_edit_sink_cookie());
       }
@@ -1244,18 +1243,18 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   TipPrivateContext *GetFocusedPrivateContext() {
-    CComPtr<ITfDocumentMgr> focused_document;
+    ComPtr<ITfDocumentMgr> focused_document;
     if (FAILED(thread_mgr_->GetFocus(&focused_document))) {
       return nullptr;
     }
     if (!focused_document) {
       return nullptr;
     }
-    CComPtr<ITfContext> current_context;
+    ComPtr<ITfContext> current_context;
     if (FAILED(focused_document->GetTop(&current_context))) {
       return nullptr;
     }
-    return GetPrivateContext(current_context);
+    return GetPrivateContext(current_context.Get());
   }
 
   HRESULT InitThreadManagerEventSink() {
@@ -1264,9 +1263,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     // Retrieve the event source for this thread and start advising the
     // ITfThreadMgrEventSink events to this object, i.e. register this object
     // as a listener for the TSF thread events.
-    CComPtr<ITfSource> source;
-    result = thread_mgr_.QueryInterface(&source);
-    if (FAILED(result)) {
+    ComPtr<ITfSource> source;
+
+    if (FAILED(thread_mgr_.As(&source))) {
       return result;
     }
 
@@ -1294,8 +1293,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComPtr<ITfSource> source;
-    result = thread_mgr_.QueryInterface(&source);
+    ComPtr<ITfSource> source;
+    result = thread_mgr_.As(&source);
     if (SUCCEEDED(result)) {
       result = source->UnadviseSink(thread_mgr_cookie_);
     }
@@ -1314,8 +1313,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComPtr<ITfKeystrokeMgr> keystroke;
-    result = thread_mgr_.QueryInterface(&keystroke);
+    ComPtr<ITfKeystrokeMgr> keystroke;
+    result = thread_mgr_.As(&keystroke);
     if (FAILED(result)) {
       return result;
     }
@@ -1330,8 +1329,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComPtr<ITfKeystrokeMgr> keystroke;
-    result = thread_mgr_.QueryInterface(&keystroke);
+    ComPtr<ITfKeystrokeMgr> keystroke;
+    result = thread_mgr_.As(&keystroke);
     if (FAILED(result)) {
       return result;
     }
@@ -1341,21 +1340,20 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   HRESULT InitCompartmentEventSink() {
     HRESULT result = S_OK;
 
-    CComPtr<ITfCompartmentMgr> manager;
-    result = thread_mgr_.QueryInterface(&manager);
-    if (FAILED(result)) {
+    ComPtr<ITfCompartmentMgr> manager;
+    if (FAILED(thread_mgr_.As(&manager))) {
       return result;
     }
 
-    result =
-        AdviseCompartmentEventSink(manager, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-                                   &keyboard_openclose_cookie_);
+    result = AdviseCompartmentEventSink(manager.Get(),
+                                        GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+                                        &keyboard_openclose_cookie_);
     if (FAILED(result)) {
       return result;
     }
 
     result = AdviseCompartmentEventSink(
-        manager, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+        manager.Get(), GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
         &keyboard_inputmode_conversion_cookie_);
     if (FAILED(result)) {
       return result;
@@ -1371,15 +1369,16 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComPtr<ITfCompartmentMgr> manager;
-    result = thread_mgr_.QueryInterface(&manager);
+    ComPtr<ITfCompartmentMgr> manager;
+    result = thread_mgr_.As(&manager);
     if (FAILED(result)) {
       return result;
     }
 
-    UnadviseCompartmentEventSink(manager, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+    UnadviseCompartmentEventSink(manager.Get(),
+                                 GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
                                  &keyboard_openclose_cookie_);
-    UnadviseCompartmentEventSink(manager,
+    UnadviseCompartmentEventSink(manager.Get(),
                                  GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
                                  &keyboard_inputmode_conversion_cookie_);
 
@@ -1394,14 +1393,14 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_INVALIDARG;
     }
 
-    CComPtr<ITfCompartment> compartment;
+    ComPtr<ITfCompartment> compartment;
     result = manager->GetCompartment(guid, &compartment);
     if (FAILED(result)) {
       return result;
     }
-    CComPtr<ITfSource> source;
-    result = compartment.QueryInterface(&source);
-    if (FAILED(result)) {
+    ComPtr<ITfSource> source;
+    result = compartment.As(&source);
+    if (FAILED(compartment.As(&source))) {
       return result;
     }
     result = source->AdviseSink(IID_ITfCompartmentEventSink,
@@ -1423,13 +1422,13 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_UNEXPECTED;
     }
 
-    CComPtr<ITfCompartment> compartment;
+    ComPtr<ITfCompartment> compartment;
     result = manager->GetCompartment(guid, &compartment);
     if (FAILED(result)) {
       return result;
     }
-    CComPtr<ITfSource> source;
-    result = compartment.QueryInterface(&source);
+    ComPtr<ITfSource> source;
+    result = compartment.As(&source);
     if (FAILED(result)) {
       return result;
     }
@@ -1448,8 +1447,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (thread_mgr_ == nullptr) {
       return E_FAIL;
     }
-    CComPtr<ITfKeystrokeMgr> keystroke;
-    result = thread_mgr_.QueryInterface(&keystroke);
+    ComPtr<ITfKeystrokeMgr> keystroke;
+    result = thread_mgr_.As(&keystroke);
     if (FAILED(result)) {
       return result;
     }
@@ -1471,8 +1470,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (thread_mgr_ == nullptr) {
       return E_FAIL;
     }
-    CComPtr<ITfKeystrokeMgr> keystroke;
-    result = thread_mgr_.QueryInterface(&keystroke);
+    ComPtr<ITfKeystrokeMgr> keystroke;
+    result = thread_mgr_.As(&keystroke);
     if (FAILED(result)) {
       return result;
     }
@@ -1495,8 +1494,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     }
 
     HRESULT result = E_FAIL;
-    CComPtr<ITfSource> source = nullptr;
-    result = thread_mgr_.QueryInterface(&source);
+    ComPtr<ITfSource> source;
+    result = thread_mgr_.As(&source);
     if (FAILED(result)) {
       return result;
     }
@@ -1519,8 +1518,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     }
 
     HRESULT result = E_FAIL;
-    CComPtr<ITfSource> source;
-    result = thread_mgr_.QueryInterface(&source);
+    ComPtr<ITfSource> source;
+    result = thread_mgr_.As(&source);
     if (FAILED(result)) {
       return result;
     }
@@ -1535,8 +1534,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComQIPtr<ITfSourceSingle> source = thread_mgr_;
-    if (!source) {
+    ComPtr<ITfSourceSingle> source;
+    HRESULT result = thread_mgr_.As(&source);
+    if (FAILED(result)) {
       return E_FAIL;
     }
 
@@ -1549,8 +1549,9 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return E_FAIL;
     }
 
-    CComQIPtr<ITfSourceSingle> source = thread_mgr_;
-    if (!source) {
+    ComPtr<ITfSourceSingle> source;
+
+    if (FAILED(thread_mgr_.As(&source))) {
       return E_FAIL;
     }
 
@@ -1614,21 +1615,21 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   void OnUpdateUI() {
-    CComPtr<ITfDocumentMgr> document_manager;
+    ComPtr<ITfDocumentMgr> document_manager;
     if (FAILED(thread_mgr_->GetFocus(&document_manager))) {
       return;
     }
     if (!document_manager) {
       return;
     }
-    CComPtr<ITfContext> context;
+    ComPtr<ITfContext> context;
     if (FAILED(document_manager->GetBase(&context))) {
       return;
     }
     if (!context) {
       return;
     }
-    UpdateUiEditSessionImpl::BeginRequest(this, context);
+    UpdateUiEditSessionImpl::BeginRequest(this, context.Get());
   }
 
   HRESULT InitRendererCallbackWindow() {
@@ -1693,27 +1694,28 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   void OnRendererCallback(WPARAM wparam, LPARAM lparam) {
-    CComPtr<ITfDocumentMgr> document_manager;
+    ComPtr<ITfDocumentMgr> document_manager;
     if (FAILED(thread_mgr_->GetFocus(&document_manager))) {
       return;
     }
     if (!document_manager) {
       return;
     }
-    CComPtr<ITfContext> context;
+    ComPtr<ITfContext> context;
     if (FAILED(document_manager->GetBase(&context))) {
       return;
     }
     if (!context) {
       return;
     }
-    TipEditSession::OnRendererCallbackAsync(this, context, wparam, lparam);
+    TipEditSession::OnRendererCallbackAsync(this, context.Get(), wparam,
+                                            lparam);
   }
 
   TipRefCount ref_count_;
 
   // Represents the status of the thread manager which owns this IME object.
-  CComPtr<ITfThreadMgr> thread_mgr_;
+  ComPtr<ITfThreadMgr> thread_mgr_;
 
   // Represents the ID of the client application using this IME object.
   TfClientId client_id_;
@@ -1734,7 +1736,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   DWORD empty_context_cookie_;
 
   // The category manager object to register or query a GUID.
-  CComPtr<ITfCategoryMgr> category_;
+  ComPtr<ITfCategoryMgr> category_;
 
   // Represents the display attributes.
   TfGuidAtom input_attribute_;
@@ -1745,8 +1747,8 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
 
   using PreservedKeyMap = std::unordered_map<GUID, UINT, GuidHash>;
   using PrivateContextMap =
-      std::unordered_map<CComPtr<ITfContext>, TipPrivateContext *,
-                         CComPtrHash<ITfContext>>;
+      std::unordered_map<ComPtr<ITfContext>, TipPrivateContext *,
+                         ComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
   std::unique_ptr<TipThreadContext> thread_context_;

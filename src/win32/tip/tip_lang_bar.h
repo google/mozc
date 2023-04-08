@@ -32,6 +32,7 @@
 
 #include <unknwn.h>
 #include <windows.h>
+#include <wrl/client.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -107,21 +108,21 @@ class TipLangBar {
   //     around refcount on Windows 8 release preview. b/6106437
   // NOTE: Currently we cannot use the same logic for Windows 7 due to another
   //     crash issue as filed as b/6641460.
-  ATL::CComPtr<ITfLangBarItemMgr> lang_bar_item_mgr_for_win8_;
+  Microsoft::WRL::ComPtr<ITfLangBarItemMgr> lang_bar_item_mgr_for_win8_;
 
   // Represents the button menu in the language bar.
   // NOTE: ImeToggleButtonMenu inherits ITfLangBarItemButton and ITfSource,
   // which inherit IUnknown. Because of this, using CComPtr<ImeIconButtonMenu>
   // causes a compile error due to the ambiguous overload resolution.
   // To avoid the compile error we use CComPtr<ITfLangBarItemButton> instead.
-  ATL::CComPtr<ITfLangBarItemButton> input_button_menu_;
-  ATL::CComPtr<ITfLangBarItemButton> input_mode_button_for_win8_;
+  Microsoft::WRL::ComPtr<ITfLangBarItemButton> input_button_menu_;
+  Microsoft::WRL::ComPtr<ITfLangBarItemButton> input_mode_button_for_win8_;
 
   // Represents the tool button menu in the language bar.
-  ATL::CComPtr<ITfLangBarItemButton> tool_button_menu_;
+  Microsoft::WRL::ComPtr<ITfLangBarItemButton> tool_button_menu_;
 
   // Represents the help menu in the system language bar.
-  ATL::CComPtr<TipSystemLangBarMenu> help_menu_;
+  Microsoft::WRL::ComPtr<TipSystemLangBarMenu> help_menu_;
 
   // The cookie issued for installing ITfSystemLangBarItemSink of help_menu_.
   DWORD help_menu_cookie_;
