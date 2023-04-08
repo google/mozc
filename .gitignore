@@ -16,6 +16,9 @@
 # Temporary dir for Docker
 /docker/ubuntu20.04/src/
 
+# VSCode per-project settings
+/.vscode/
+
 # Temporary working dirs
 /oss
 /src-*
