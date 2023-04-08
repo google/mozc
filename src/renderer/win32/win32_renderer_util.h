@@ -130,8 +130,7 @@ class WindowPositionEmulator : public WindowPositionInterface {
   // Returns a dummy window handle for this emulator.  You can call methods of
   // WindowPositionInterface with this dummy handle.  You need not to release
   // the returned handle.
-  virtual HWND RegisterWindow(const std::wstring &class_name,
-                              const RECT &window_rect,
+  virtual HWND RegisterWindow(const RECT &window_rect,
                               const POINT &client_area_offset,
                               const SIZE &client_area_size,
                               double scale_factor) = 0;

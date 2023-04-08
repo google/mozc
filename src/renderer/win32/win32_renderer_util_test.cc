@@ -87,8 +87,6 @@ namespace {
 
 using WTL::PrintTo;
 
-constexpr wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
-
 // Casts HWND to uint32_t. HWND can be 64 bits, but it's safe to downcast to
 // uint32_t as 64-bit Windows still uses 32-bit handles.
 // https://learn.microsoft.com/en-us/windows/win32/winprog64/interprocess-communication
@@ -112,13 +110,12 @@ static CRect ToCRect(const RECT &rect) {
   return CRect(rect.left, rect.top, rect.right, rect.bottom);
 }
 
-WindowPositionEmulator *CreateWindowEmulator(const std::wstring &class_name,
-                                             const RECT &window_rect,
+WindowPositionEmulator *CreateWindowEmulator(const RECT &window_rect,
                                              const POINT &client_area_offset,
                                              const SIZE &client_area_size,
                                              double scale_factor, HWND *hwnd) {
   WindowPositionEmulator *emulator = WindowPositionEmulator::Create();
-  *hwnd = emulator->RegisterWindow(class_name, window_rect, client_area_offset,
+  *hwnd = emulator->RegisterWindow(window_rect, client_area_offset,
                                    client_area_size, scale_factor);
   return emulator;
 }
@@ -168,7 +165,7 @@ TEST(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
@@ -189,7 +186,7 @@ TEST(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
@@ -219,7 +216,7 @@ TEST(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
@@ -240,7 +237,7 @@ TEST(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   {
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
@@ -267,7 +264,7 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1100, 700);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -281,7 +278,7 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
 
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -294,7 +291,7 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1100, 500);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
@@ -307,7 +304,7 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1000, 500);
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+        CreateWindowEmulator(kWindowRect, kClientOffset,
                              kClientSize, kScalingFactor, &hwnd));
 
     // If the window size is zero, the result should be fallen back 1.0.
@@ -329,7 +326,7 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
   {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
-    const HWND hwnd = emulator->RegisterWindow(kWindowClassName, kWindowRect,
+    const HWND hwnd = emulator->RegisterWindow(kWindowRect,
                                                kClientOffset, kClientSize, 1.0);
 
     CRect rect;
@@ -357,7 +354,7 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
     const HWND hwnd = emulator->RegisterWindow(
-        kWindowClassName, kWindowRect, kClientOffset, kClientSize, 10.0);
+        kWindowRect, kClientOffset, kClientSize, 10.0);
 
     CRect rect;
     CPoint point;
@@ -393,7 +390,7 @@ TEST(Win32RendererUtilTest, TSF_NormalDPI) {
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
-      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+      CreateWindowEmulator(kWindowRect, kClientOffset,
                            kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;
@@ -430,7 +427,7 @@ TEST(Win32RendererUtilTest, TSF_HighDPI) {
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
-      CreateWindowEmulator(kWindowClassName, kWindowRect, kClientOffset,
+      CreateWindowEmulator(kWindowRect, kClientOffset,
                            kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;

@@ -327,7 +327,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 };
 
 struct WindowInfo {
-  std::wstring class_name;
   CRect window_rect;
   CPoint client_area_offset;
   CSize client_area_size;
@@ -428,13 +427,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
     return true;
   }
 
-  virtual HWND RegisterWindow(const std::wstring &class_name,
-                              const RECT &window_rect,
+  virtual HWND RegisterWindow(const RECT &window_rect,
                               const POINT &client_area_offset,
                               const SIZE &client_area_size,
                               double scale_factor) {
     const HWND hwnd = GetNextWindowHandle();
-    window_map_[hwnd].class_name = class_name;
     window_map_[hwnd].window_rect = window_rect;
     window_map_[hwnd].client_area_offset = client_area_offset;
     window_map_[hwnd].client_area_size = client_area_size;
