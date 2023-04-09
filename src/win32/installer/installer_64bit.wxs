@@ -295,12 +295,12 @@
             <Component Id='GIMEJaConverter' Guid='*'>
               <File Id='GoogleIMEJaConverter.exe'
                   Name='GoogleIMEJaConverter.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcServer32Path)' Vital='yes' />
+                  Checksum='yes' Source='$(var.MozcServer64Path)' Vital='yes' />
             </Component>
             <Component Id='GIMEJaCacheService' Guid='*'>
               <File Id='GoogleIMEJaCacheService.exe'
                   Name='GoogleIMEJaCacheService.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcCacheService32Path)'
+                  Checksum='yes' Source='$(var.MozcCacheService64Path)'
                   Vital='yes' KeyPath='yes' />
               <!--
                 To use localized description, set Description as follows:
@@ -359,7 +359,7 @@
             <Component Id='GIMEJaRenderer' Guid='*'>
               <File Id='GoogleIMEJaRenderer.exe'
                   Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.MozcRenderer32Path)' />
+                  Checksum='yes' Source='$(var.MozcRenderer64Path)' />
             </Component>
             <Component Id='GIMEJaTool' Guid='*'>
               <File Id='GoogleIMEJaTool.exe'
