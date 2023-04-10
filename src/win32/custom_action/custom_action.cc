@@ -56,12 +56,12 @@
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"
 #include "renderer/renderer_client.h"
-#include "server/cache_service_manager.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/keyboard_layout_id.h"
 #include "win32/base/omaha_util.h"
 #include "win32/base/tsf_registrar.h"
 #include "win32/base/uninstall_helper.h"
+#include "win32/cache_service/cache_service_manager.h"
 #include "win32/custom_action/resource.h"
 
 #ifdef _DEBUG

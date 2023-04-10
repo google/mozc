@@ -32,93 +32,68 @@
 
 load(
     "//:build_defs.bzl",
+    "MOZC_TAGS",
     "mozc_cc_binary",
     "mozc_cc_library",
-    "mozc_macos_application",
-    "mozc_select",
-)
-load(
-    "//:config.bzl",
-    "BRANDING",
-    "MACOS_BUNDLE_ID_PREFIX",
 )
 load("//bazel:stubs.bzl", "lexan")
 
 package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_binary(
-    name = "mozc_server",
+    name = "mozc_cache_service",
+    srcs = ["mozc_cache_service.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":mozc_server_lib",
-    ] + mozc_select(
-        windows = ["mozc_server_resources"],
-    ),
+        ":cache_service_manager",
+        ":mozc_cache_service_resources",
+        "//base:file_util",
+        "//base:system_util",
+        "//base:util",
+        "//base/win32:scoped_handle",
+        "//base/win32:winmain",
+    ],
 )
 
 lexan.resource_files(
-    name = "mozc_server_resources",
+    name = "mozc_cache_service_resources",
     manifests = [
-        "mozc_server.exe.manifest",
+        "mozc_cache_service.exe.manifest",
     ],
     rc_files = [
-        "mozc_server.rc",
+        "mozc_cache_service.rc",
+    ],
+    resources = [
+        "mozc_cache_service_resource.h",
     ],
 )
 
 mozc_cc_library(
-    name = "mozc_server_lib",
-    srcs = [
-        "mozc_server.cc",
-        "mozc_server_main.cc",
-    ],
-    hdrs = [
-        "mozc_server.h",
-    ],
-    copts = ["$(STACK_FRAME_UNLIMITED)"],  # mozc_server.cc
+    name = "cache_service_manager",
+    srcs = ["cache_service_manager.cc"],
+    hdrs = ["cache_service_manager.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        "//base:crash_report_handler",
-        "//base:init_mozc",
+        ":win32_service_state_cc_proto",
+        "//base:const",
+        "//base:file_util",
         "//base:logging",
-        "//base:port",
-        "//base:process_mutex",
-        "//base:run_level",
-        "//base:singleton",
         "//base:system_util",
-        "//config:stats_config_util",
-        "//session",
-        "//session:session_server",
-        "@com_google_absl//absl/base:config",
-        "@com_google_absl//absl/flags:flag",
-    ] + mozc_select(
-        windows = ["//base/win32:winmain"],
-    ),
-)
-
-mozc_cc_binary(
-    name = "mozc_rpc_server_main",
-    srcs = ["mozc_rpc_server_main.cc"],
-    deps = [
-        "//base:init_mozc",
-        "//base:singleton",
-        "//base:system_util",
-        "//engine:engine_factory",
-        "//protocol:commands_cc_proto",
-        "//session:random_keyevents_generator",
-        "//session:session_handler",
-        "//session:session_usage_observer",
-        "@com_google_absl//absl/flags:flag",
+        "//base:util",
+        "//base/protobuf",
+        "//base/win32:scoped_handle",
+        "//bazel/win32:crypt32",
     ],
 )
 
-mozc_macos_application(
-    name = "mozc_server_macos",
-    app_icons = ["//data/images/mac:product_icon.icns"],
-    bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",
-    bundle_name = BRANDING + "Converter",
-    infoplists = ["Info.plist"],
-    deps = [":mozc_server_lib"],
-    # When we support Breakpad, uncomment the following block.
-    # additional_contents = {
-    #     "[Breakpad]" : "Frameworks",
-    # },
+proto_library(
+    name = "win32_service_state_proto",
+    srcs = ["win32_service_state.proto"],
+)
+
+cc_proto_library(
+    name = "win32_service_state_cc_proto",
+    deps = [":win32_service_state_proto"],
 )

@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "server/mozc_cache_service_resource.h"
+#include "win32/cache_service/mozc_cache_service_resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

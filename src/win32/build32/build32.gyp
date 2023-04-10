@@ -44,9 +44,9 @@
           'type': 'none',
           'dependencies': [
             '../../renderer/renderer.gyp:mozc_renderer',
-            '../../server/server.gyp:mozc_cache_service',
             '../../server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker32',
+            '../cache_service/cache_service.gyp:mozc_cache_service',
             '../tip/tip.gyp:mozc_tip32',
           ],
           'conditions': [

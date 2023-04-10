@@ -40,9 +40,9 @@
     '../../client/client.gyp:client',
     '../../config/config.gyp:stats_config_util',
     '../../renderer/renderer.gyp:renderer_client',
-    '../../server/server.gyp:cache_service_manager',
     '../base/win32_base.gyp:ime_base',
     '../base/win32_base.gyp:imframework_util',
+    '../cache_service/cache_service.gyp:cache_service_manager',
     'gen_custom_action_resource_header',
   ],
   'msvs_settings': {

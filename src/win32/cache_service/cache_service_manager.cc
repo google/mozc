@@ -29,7 +29,7 @@
 
 #ifdef _WIN32
 
-#include "server/cache_service_manager.h"
+#include "win32/cache_service/cache_service_manager.h"
 
 // clang-format off
 #include <windows.h>
@@ -47,7 +47,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "base/win32/scoped_handle.h"
-#include "server/win32_service_state.pb.h"
+#include "win32/cache_service/win32_service_state.pb.h"
 
 namespace mozc {
 namespace {
