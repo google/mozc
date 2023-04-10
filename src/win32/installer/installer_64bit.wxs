@@ -343,12 +343,6 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcTIP64Path)' Vital='yes' />
             </Component>
-            <Component Id='GIMEJaBroker32' Guid='*' Permanent='no'>
-              <File Id='GoogleIMEJaBroker32.exe'
-                  Name='GoogleIMEJaBroker32.exe'
-                  DiskId='1' Checksum='yes'
-                  Source='$(var.MozcBroker32Path)' Vital='yes' />
-            </Component>
             <Component Id='GIMEJaBroker64' Guid='*' Permanent='no'>
               <Condition>(VersionNT64)</Condition>
               <File Id='GoogleIMEJaBroker64.exe'
@@ -518,18 +512,6 @@
             Key='$(var.MozcToolElevationPolicyRegKey)'
             Name='Policy' Action='write' Type='integer'
             Value='3' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker32.exe' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
         <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppPath32' Root='HKLM'
             Key='$(var.MozcBroker64ElevationPolicyRegKey)'
             Name='AppPath' Action='write' Type='string'
@@ -555,18 +537,6 @@
             Value='GoogleIMEJaTool.exe' />
         <RegistryValue Id='GIMEJaToolElevationPolicyPolicy64' Root='HKLM'
             Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppPat64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppName64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker32.exe' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyPolicy64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
             Name='Policy' Action='write' Type='integer'
             Value='3' />
         <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppPath64' Root='HKLM'
@@ -599,7 +569,7 @@
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
             Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker32.exe&quot; --mode=prelaunch_processes' />
+            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker64.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
 
@@ -682,7 +652,6 @@
       <?endif?>
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaTIP64' />
-      <ComponentRef Id='GIMEJaBroker32' />
       <ComponentRef Id='GIMEJaBroker64' />
       <ComponentRef Id='GIMEJaConverter' />
       <ComponentRef Id='GIMEJaCacheService' />
