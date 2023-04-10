@@ -165,7 +165,7 @@ bool FillRenderInfo(TipTextService *text_service,
   const Output &output = private_context->last_output();
 
   ComPtr<ITfCompositionView> composition_view =
-      TipCompositionUtil::GetComposition(context, read_cookie);
+      TipCompositionUtil::GetCompositionView(context, read_cookie);
   if (!composition_view) {
     return false;
   }

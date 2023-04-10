@@ -53,9 +53,15 @@ class TipCompositionUtil {
   TipCompositionUtil(const TipCompositionUtil &) = delete;
   TipCompositionUtil &operator=(const TipCompositionUtil &) = delete;
 
-  // Returns composition view object if there is an composition which belongs
+  // Returns composition object if there is a composition which belongs
   // to Mozc in |context|. Otherwise returns nullptr.
-  static Microsoft::WRL::ComPtr<ITfCompositionView> GetComposition(
+  static Microsoft::WRL::ComPtr<ITfComposition> GetComposition(
+      const Microsoft::WRL::ComPtr<ITfContext> &context,
+      TfEditCookie edit_cookie);
+
+  // Returns composition view object if there is a composition which belongs
+  // to Mozc in |context|. Otherwise returns nullptr.
+  static Microsoft::WRL::ComPtr<ITfCompositionView> GetCompositionView(
       const Microsoft::WRL::ComPtr<ITfContext> &context,
       TfEditCookie edit_cookie);
 

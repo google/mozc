@@ -449,11 +449,11 @@ HRESULT UpdatePreeditAndComposition(TipTextService *text_service,
                                     ITfContext *context,
                                     TfEditCookie write_cookie,
                                     const Output &output) {
-  ComPtr<ITfComposition> composition;
+  ComPtr<ITfComposition> composition =
+      TipCompositionUtil::GetComposition(context, write_cookie);
 
   // Clear the display attributes first.
-  if (SUCCEEDED(TipCompositionUtil::GetComposition(context, write_cookie)
-                    .As(&composition))) {
+  if (composition) {
     const HRESULT result = TipCompositionUtil::ClearDisplayAttributes(
         context, composition.Get(), write_cookie);
     if (FAILED(result)) {
@@ -528,18 +528,8 @@ HRESULT OnEndEditImpl(TipTextService *text_service, ITfContext *context,
     }
   }
 
-  ComPtr<ITfCompositionView> composition_view =
+  ComPtr<ITfComposition> composition =
       TipCompositionUtil::GetComposition(context, write_cookie);
-  if (!composition_view) {
-    // If there is no composition, nothing to check.
-    return S_OK;
-  }
-  ComPtr<ITfComposition> composition;
-  result = composition_view.As(&composition);
-  if (FAILED(result)) {
-    return result;
-  }
-
   if (!composition) {
     // Nothing to do.
     return S_OK;

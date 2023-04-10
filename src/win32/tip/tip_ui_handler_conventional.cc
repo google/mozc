@@ -181,7 +181,7 @@ bool FillWindowHandle(ITfContext *context, ApplicationInfo *app_info) {
 CComPtr<ITfRange> GetCompositionRange(ITfContext *context,
                                       TfEditCookie read_cookie) {
   ComPtr<ITfCompositionView> composition_view =
-      TipCompositionUtil::GetComposition(context, read_cookie);
+      TipCompositionUtil::GetCompositionView(context, read_cookie);
   if (!composition_view) {
     return nullptr;
   }
