@@ -33,7 +33,6 @@
 #include <cstdint>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
@@ -49,6 +48,7 @@ namespace mozc {
 static const int32_t kKanaModifierInsensitivePenalty = 1700;
 
 struct SpatialCostParams {
+  bool enable_new_spatial_scoring = false;
   int penalty = kKanaModifierInsensitivePenalty;
   int min_char_length = 0;
   int GetPenalty(absl::string_view key) const {
@@ -65,6 +65,7 @@ inline SpatialCostParams GetSpatialCostParams(
   const auto &experiment_params = request.request().decoder_experiment_params();
   SpatialCostParams result;
   if (experiment_params.enable_new_spatial_scoring()) {
+    result.enable_new_spatial_scoring = true;
     result.penalty = experiment_params.spatial_cost_penalty();
     result.min_char_length =
         experiment_params.spatial_cost_penalty_min_char_length();

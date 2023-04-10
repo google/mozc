@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -87,12 +86,6 @@ using ::mozc::dictionary::Token;
 // Number of prediction calls should be minimized.
 constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
-
-bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_new_spatial_scoring();
-}
 
 bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
   return request.request()
@@ -283,7 +276,8 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
                          int num_expanded) override {
     penalty_ = 0;
     if (num_expanded > 0 ||
-        (!non_expanded_original_key_.empty() &&
+        (spatial_cost_params_.enable_new_spatial_scoring &&
+         !non_expanded_original_key_.empty() &&
          !absl::StartsWith(actual_key, non_expanded_original_key_))) {
       penalty_ = spatial_cost_params_.GetPenalty(key);
     }
@@ -315,6 +309,8 @@ class DictionaryPredictionAggregator::PredictiveLookupCallback
     results_->back().InitializeByTokenAndTypes(token, types_);
     results_->back().wcost += penalty_;
     results_->back().source_info |= source_info_;
+    results_->back().non_expanded_original_key =
+        std::string(non_expanded_original_key_);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
 
@@ -1192,9 +1188,7 @@ void DictionaryPredictionAggregator::GetPredictiveResults(
   // key expansions. This key is passed to the callback so that it can
   // identify whether the key is actually expanded or not.
   const std::string non_expanded_original_key =
-      IsEnableNewSpatialScoring(request)
-          ? absl::StrCat(history_key, segments.conversion_segment(0).key())
-          : "";
+      absl::StrCat(history_key, segments.conversion_segment(0).key());
 
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
@@ -1236,9 +1230,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForBigram(
   request.composer().GetQueriesForPrediction(&base, &expanded);
   const std::string input_key = absl::StrCat(history_key, base);
   const std::string non_expanded_original_key =
-      IsEnableNewSpatialScoring(request)
-          ? absl::StrCat(history_key, segments.conversion_segment(0).key())
-          : "";
+      absl::StrCat(history_key, segments.conversion_segment(0).key());
 
   PredictiveBigramLookupCallback callback(
       types, lookup_limit, input_key.size(),
@@ -1316,8 +1308,8 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
         query.expanded.empty() ? nullptr : &query.expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_, "",
-        GetSpatialCostParams(request), results);
+        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
+        query.asis, GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {
