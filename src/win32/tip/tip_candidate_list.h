@@ -31,7 +31,7 @@
 #define MOZC_WIN32_TIP_TIP_CANDIDATE_LIST_H_
 
 #include <ctffunc.h>
-#include <unknwn.h>
+#include <guiddef.h>
 
 #include <cstddef>
 #include <string>
@@ -43,7 +43,7 @@ namespace tsf {
 
 class TipCandidateListCallback {
  public:
-  virtual ~TipCandidateListCallback();
+  virtual ~TipCandidateListCallback() = default;
   virtual void OnFinalize(size_t index, const std::wstring &candidate) = 0;
 };
 

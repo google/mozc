@@ -224,10 +224,7 @@ mozc_cc_library(
     hdrs = ["tip_candidate_list.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tip_ref_count",
-        "//base:util",
-    ],
+    deps = [":tip_ref_count"],
 )
 
 mozc_cc_library(
