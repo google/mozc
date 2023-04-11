@@ -109,17 +109,7 @@
               '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
             ],
           }],
-          ['MSVS_VERSION=="2015" and use_qt=="YES"', {
-            'additional_args': [
-              r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
-            ],
-          }],
-          ['MSVS_VERSION=="2017" and use_qt=="YES"', {
-            'additional_args': [
-              r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
-            ],
-          }],
-          ['MSVS_VERSION=="2019" and use_qt=="YES"', {
+          ['use_qt=="YES"', {
             'additional_args': [
               r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
             ],
