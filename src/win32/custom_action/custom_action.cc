@@ -31,7 +31,6 @@
 
 // clang-format off
 #include <windows.h>
-#include <iepmapi.h>
 #include <atlbase.h>
 #if !defined(MOZC_NO_LOGGING)
 #include <atlstr.h>
@@ -78,9 +77,6 @@
 namespace {
 
 using mozc::win32::OmahaUtil;
-
-constexpr char kIEFrameDll[] = "ieframe.dll";
-const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
 HMODULE g_module = nullptr;
 
@@ -244,16 +240,6 @@ UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle) {
             GetMozcComponentPath(mozc::kMozcTIP64))) {
       return ERROR_INSTALL_FAILURE;
     }
-  }
-  return ERROR_SUCCESS;
-}
-
-UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
-  DEBUG_BREAK_FOR_DEBUGGER();
-  HRESULT result = ::IERefreshElevationPolicy();
-  if (FAILED(result)) {
-    LOG_ERROR_FOR_OMAHA();
-    return ERROR_INSTALL_FAILURE;
   }
   return ERROR_SUCCESS;
 }

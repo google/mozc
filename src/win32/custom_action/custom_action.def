@@ -1,6 +1,5 @@
 EXPORTS
     EnsureAllApplicationPackagesPermisssions
-    CallIERefreshElevationPolicy
     RegisterTIP
     RegisterTIPRollback
     UnregisterTIP

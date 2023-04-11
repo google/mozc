@@ -41,9 +41,6 @@
 // to server, renderer, and TIP DLL files.
 UINT __stdcall EnsureAllApplicationPackagesPermisssions(MSIHANDLE msi_handle);
 
-// Makes ieuser.exe update the cache of the elevation policies.
-UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle);
-
 // Install Mozc as a TIP.
 UINT __stdcall RegisterTIP(MSIHANDLE msi_handle);
 

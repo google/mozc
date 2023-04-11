@@ -490,39 +490,6 @@
             Type='integer' />
       </Component>
 
-      <!--
-        Write registry keys to set an elevation policy of Internet Explorer 7
-        so that IE does not prompt the user when GoogleIMEJaTool.exe are
-        launched. See the following link for more information.
-        http://msdn.microsoft.com/en-us/library/bb250462.aspx
-      -->
-      <Component Id='GIMEJaElevationPolicy32' Guid='*'>
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaTool.exe' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker32.exe' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-      </Component>
-
       <Component Id='OmahaRegLaunchCmdLine' Guid='*' Permanent='no'>
         <Condition>(NOT UPGRADING)</Condition>
         <RegistryValue Id='OmahaLaunchCmdLineValue' Root='HKLM'
@@ -656,7 +623,6 @@
       <ComponentRef Id='OmahaRegLaunchCmdLine' />
       <ComponentRef Id='SysProcs' />
       <ComponentRef Id='PrelaunchProcesses' />
-      <ComponentRef Id='GIMEJaElevationPolicy32' />
       <ComponentRef Id='CreditsEn' />
     </Feature>
 
@@ -676,8 +642,6 @@
         BinaryKey='CustomActions32'
         DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
         Impersonate='no' Return='ignore' />
-    <CustomAction Id='CallIERefreshElevationPolicy' BinaryKey='CustomActions32'
-        DllEntry='CallIERefreshElevationPolicy' Execute='commit' Impersonate='no' />
     <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions32'
         DllEntry='OpenUninstallSurveyPage' Impersonate='yes' Return='ignore' />
     <CustomAction Id='ShutdownServer' BinaryKey='CustomActions32'
@@ -752,9 +716,6 @@
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
-      <Custom Action='CallIERefreshElevationPolicy' After='SelfRegModules'>
-        (NOT (REMOVE="ALL"))
-      </Custom>
       <!--
         The InstallValidate action notifies the user
         if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe

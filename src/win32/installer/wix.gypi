@@ -131,9 +131,6 @@
         # Letters contained in the UpgradeCode property must be uppercase.
         # http://msdn.microsoft.com/en-us/library/465253cd.aspx
         'upgrade_code': 'C1A818AF-6EC9-49EF-ADCF-35A40475D156',
-        'tool_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{94F14A1B-94E6-4303-A0DD-C1CED3D89DD4}',
-        'broker32_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{F568BB28-0957-4A34-BEA7-D5F566B52410}',
-        'broker64_elevation_policy_key': r'Software\Microsoft\Internet Explorer\Low Rights\ElevationPolicy\{04F68DA0-E43F-4CDC-8B79-C034A192787E}',
         'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
         'document_dir': '<(mozc_content_dir)/installer',
       },
@@ -154,9 +151,6 @@
         '-dOmahaClientStateKey=<(omaha_clientstate_key)',
         '-dOmahaChannelType=<(omaha_channel_type)',
         '-dVSConfigurationName=<(CONFIGURATION_NAME)',
-        '-dMozcToolElevationPolicyRegKey=<(tool_elevation_policy_key)',
-        '-dMozcBroker32ElevationPolicyRegKey=<(broker32_elevation_policy_key)',
-        '-dMozcBroker64ElevationPolicyRegKey=<(broker64_elevation_policy_key)',
         '-dAddRemoveProgramIconPath=<(icon_path)',
         '-dMozcTIP32Path=<(mozc_tip32_path)',
         '-dMozcTIP64Path=<(mozc_tip64_path)',
