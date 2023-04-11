@@ -1,7 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "win32\base\display_name_resource.h"
-#include "win32\tip\tip_resource.h"
+#include "win32/base/display_name_resource.h"
+#include "win32/tip/tip_resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
