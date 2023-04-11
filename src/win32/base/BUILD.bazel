@@ -165,13 +165,11 @@ mozc_cc_library(
     deps = [
         ":input_dll",
         ":tsf_profile",
-        "//base:const",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
-        "//base:util",
         "//base/win32:scoped_com",
         "//base/win32:scoped_handle",
+        "//base/win32:wide_char",
     ],
 )
 
@@ -480,12 +478,12 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":display_name_resource_h",
         ":input_dll",
         ":tsf_profile",
         "//base:const",
         "//base:logging",
-        "//base:port",
-        "//base:util",
+        "//base/win32:wide_char",
     ],
 )
 
@@ -517,7 +515,7 @@ mozc_cc_library(
         ":keyboard_layout_id",
         ":tsf_profile",
         "//base:logging",
-        "//base:port",
+        "//base:system_util",
         "//base/win32:scoped_com",
         "//testing:gunit_prod",
     ],
@@ -533,7 +531,7 @@ mozc_cc_test(
         ":tsf_profile",
         ":uninstall_helper",
         "//base:const",
-        "//base:util",
+        "//base/win32:wide_char",
         "//testing:gunit_main",
     ],
 )

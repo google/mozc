@@ -29,36 +29,40 @@
 
 #include "win32/base/tsf_registrar.h"
 
-#include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <msctf.h>
 #include <objbase.h>
+#include <windows.h>
+#include <wrl/client.h>
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "win32/base/display_name_resource.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
 namespace win32 {
-
 namespace {
+
+using Microsoft::WRL::ComPtr;
 
 // Defines the constant strings used in the TsfRegistrar::RegisterCOMServer()
 // function and the TsfRegistrar::UnregisterCOMServer() function.
-const wchar_t kTipInfoKeyPrefix[] = L"CLSID\\";
-const wchar_t kTipInProcServer32[] = L"InProcServer32";
-const wchar_t kTipThreadingModel[] = L"ThreadingModel";
-const wchar_t kTipTextServiceModel[] = L"Apartment";
+constexpr wchar_t kTipInfoKeyPrefix[] = L"CLSID\\";
+constexpr wchar_t kTipInProcServer32[] = L"InProcServer32";
+constexpr wchar_t kTipThreadingModel[] = L"ThreadingModel";
+constexpr wchar_t kTipTextServiceModel[] = L"Apartment";
 
 // The categories this text service is registered under.
+// This needs to be const as the included constants are defined as const.
 const GUID kCategories[] = {
     GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,     // It supports inline input.
     GUID_TFCAT_TIPCAP_COMLESS,               // It's a COM-Less module.
@@ -113,8 +117,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
     return HRESULT_FROM_WIN32(result);
   }
 
-  std::wstring description;
-  mozc::Util::Utf8ToWide(mozc::kProductNameInEnglish, &description);
+  std::wstring description = Utf8ToWide(mozc::kProductNameInEnglish);
 
   result = key.SetStringValue(nullptr, description.c_str(), REG_SZ);
   if (result != ERROR_SUCCESS) {
@@ -177,20 +180,20 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
   // object.
   // http://msdn.microsoft.com/en-us/library/ms629059.aspx
-  ATL::CComPtr<ITfInputProcessorProfiles> profiles;
-  HRESULT result = profiles.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
-  if (result != S_OK) {
+  ComPtr<ITfInputProcessorProfiles> profiles;
+  HRESULT result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
+                                    CLSCTX_ALL, IID_PPV_ARGS(&profiles));
+  if (FAILED(result)) {
     return result;
   }
 
   // Register this COM server as an input processor, and add this module as an
   // input processor for the language |kTextServiceLanguage|.
   result = profiles->Register(TsfProfile::GetTextServiceGuid());
-  if (result == S_OK) {
+  if (SUCCEEDED(result)) {
     // We use English name here as culture-invariant description.
     // Localized name is specified later by SetLanguageProfileDisplayName.
-    std::wstring description;
-    mozc::Util::Utf8ToWide(mozc::kProductNameInEnglish, &description);
+    std::wstring description = Utf8ToWide(mozc::kProductNameInEnglish);
 
     result = profiles->AddLanguageProfile(
         TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
@@ -198,8 +201,8 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
         path, path_length, TsfProfile::GetIconIndex());
 
     HRESULT set_display_name_result = S_OK;
-    ATL::CComPtr<ITfInputProcessorProfilesEx> profiles_ex;
-    set_display_name_result = profiles.QueryInterface(&profiles_ex);
+    ComPtr<ITfInputProcessorProfilesEx> profiles_ex;
+    set_display_name_result = profiles.As(&profiles_ex);
     if (SUCCEEDED(set_display_name_result) && profiles_ex != nullptr) {
       // Unfortunately, the document of SetLanguageProfileDisplayName is very
       // poor but we can guess that the mechanism of MUI is similar to that of
@@ -241,9 +244,10 @@ void TsfRegistrar::UnregisterProfiles() {
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
   // object.
   // http://msdn.microsoft.com/en-us/library/ms629059.aspx
-  ATL::CComPtr<ITfInputProcessorProfiles> profiles;
-  HRESULT result = profiles.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
-  if (result == S_OK) {
+  ComPtr<ITfInputProcessorProfiles> profiles;
+  HRESULT result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
+                                    CLSCTX_ALL, IID_PPV_ARGS(&profiles));
+  if (SUCCEEDED(result)) {
     result = profiles->Unregister(TsfProfile::GetTextServiceGuid());
   }
 }
@@ -255,9 +259,10 @@ HRESULT TsfRegistrar::RegisterCategories() {
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
   // object.
   // http://msdn.microsoft.com/en-us/library/aa383439.aspx
-  ATL::CComPtr<ITfCategoryMgr> category;
-  HRESULT result = category.CoCreateInstance(CLSID_TF_CategoryMgr);
-  if (result == S_OK) {
+  ComPtr<ITfCategoryMgr> category;
+  HRESULT result = CoCreateInstance(CLSID_TF_CategoryMgr, nullptr, CLSCTX_ALL,
+                                    IID_PPV_ARGS(&category));
+  if (SUCCEEDED(result)) {
     for (int i = 0; i < std::size(kCategories); ++i) {
       result = category->RegisterCategory(TsfProfile::GetTextServiceGuid(),
                                           kCategories[i],
@@ -275,13 +280,14 @@ void TsfRegistrar::UnregisterCategories() {
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
   // object.
   // http://msdn.microsoft.com/en-us/library/aa383439.aspx
-  ATL::CComPtr<ITfCategoryMgr> category;
-  HRESULT result = category.CoCreateInstance(CLSID_TF_CategoryMgr);
-  if (result == S_OK) {
-    for (int i = 0; i < std::size(kCategories); ++i) {
-      result = category->UnregisterCategory(TsfProfile::GetTextServiceGuid(),
-                                            kCategories[i],
-                                            TsfProfile::GetTextServiceGuid());
+  ComPtr<ITfCategoryMgr> category_mgr;
+  HRESULT result = CoCreateInstance(CLSID_TF_CategoryMgr, nullptr, CLSCTX_ALL,
+                                    IID_PPV_ARGS(&category_mgr));
+  if (SUCCEEDED(result)) {
+    for (const auto &category : kCategories) {
+      result = category_mgr->UnregisterCategory(
+          TsfProfile::GetTextServiceGuid(), category,
+          TsfProfile::GetTextServiceGuid());
     }
   }
 }
@@ -333,8 +339,9 @@ HRESULT TsfRegistrar::SetProfileEnabled(BOOL enable) {
   // as opposed to ITfInputProcessorProfiles::EnableLanguageProfile, which
   // sometimes fails on those environment for some reason.  See b/3002349.
   if (enable == FALSE) {
-    ATL::CComPtr<ITfInputProcessorProfileMgr> profile_mgr;
-    result = profile_mgr.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
+    ComPtr<ITfInputProcessorProfileMgr> profile_mgr;
+    result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
+                              CLSCTX_ALL, IID_PPV_ARGS(&profile_mgr));
     if (SUCCEEDED(result)) {
       result = profile_mgr->DeactivateProfile(
           TF_PROFILETYPE_INPUTPROCESSOR, TsfProfile::GetLangId(),
@@ -351,8 +358,9 @@ HRESULT TsfRegistrar::SetProfileEnabled(BOOL enable) {
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
   // object.
   // http://msdn.microsoft.com/en-us/library/ms629059.aspx
-  ATL::CComPtr<ITfInputProcessorProfiles> profiles;
-  result = profiles.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
+  ComPtr<ITfInputProcessorProfiles> profiles;
+  result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
+                            CLSCTX_ALL, IID_PPV_ARGS(&profiles));
   if (FAILED(result)) {
     return result;
   }
