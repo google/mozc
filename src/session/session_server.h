@@ -35,17 +35,12 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "ipc/ipc.h"
+#include "session/session_handler_interface.h"
+#include "session/session_usage_observer.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-class EngineInterface;
-class SessionHandlerInterface;
-
-namespace session {
-class SessionUsageObserver;
-}  // namespace session
 
 // Session IPC Server
 // Usage:

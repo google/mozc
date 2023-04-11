@@ -440,6 +440,7 @@ mozc_cc_library(
     hdrs = ["session_server.h"],
     deps = [
         ":session_handler",
+        ":session_handler_interface",
         ":session_usage_observer",
         "//base:logging",
         "//base:port",
