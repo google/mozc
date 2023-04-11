@@ -30,10 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_HANDLER_H_
 #define MOZC_WIN32_TIP_TIP_UI_HANDLER_H_
 
-#include <windows.h>
 #include <msctf.h>
-
-#include "base/port.h"
+#include <windows.h>
 
 namespace mozc {
 namespace win32 {

@@ -109,7 +109,6 @@ mozc_cc_library(
         ":tip_dll_module",
         ":tip_ref_count",
         ":tip_text_service",
-        "//base:port",
     ],
 )
 
@@ -434,7 +433,6 @@ mozc_cc_library(
     hdrs = ["tip_compartment_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
 )
 
 mozc_cc_library(
@@ -513,13 +511,7 @@ mozc_cc_library(
     hdrs = ["tip_status.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tip_compartment_util",
-        "//base:logging",
-        "//base:port",
-        "//protocol:commands_cc_proto",
-        "//win32/base:conversion_mode_util",
-    ],
+    deps = [":tip_compartment_util"],
 )
 
 mozc_cc_library(
@@ -527,7 +519,6 @@ mozc_cc_library(
     hdrs = ["tip_ui_handler.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
 )
 
 mozc_cc_library(
