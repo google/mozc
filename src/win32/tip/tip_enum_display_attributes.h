@@ -34,7 +34,6 @@
 #include <rpcsal.h>
 #include <windows.h>
 
-#include "base/port.h"
 #include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
@@ -44,11 +43,11 @@ namespace tsf {
 // Represents the list of the display attributes used in this module.
 class TipEnumDisplayAttributes : public IEnumTfDisplayAttributeInfo {
  public:
-  TipEnumDisplayAttributes();
+  TipEnumDisplayAttributes() : index_(0) {}
   TipEnumDisplayAttributes(const TipEnumDisplayAttributes &) = delete;
   TipEnumDisplayAttributes &operator=(const TipEnumDisplayAttributes &) =
       delete;
-  virtual ~TipEnumDisplayAttributes();
+  virtual ~TipEnumDisplayAttributes() = default;
 
   // IUnknown
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,

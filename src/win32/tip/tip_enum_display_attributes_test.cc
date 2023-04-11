@@ -27,33 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
+#include "win32/tip/tip_enum_display_attributes.h"
+
+#include <objbase.h>
+#include <wrl/client.h>
+
+#include <iterator>
 
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_enum_display_attributes.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
 
-using ATL::CComPtr;
+using Microsoft::WRL::ComPtr;
 
 class TipEnumDisplayAttributesTest : public testing::Test {
  protected:
-  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
+  TipEnumDisplayAttributesTest() { TipDllModule::InitForUnitTest(); }
 };
 
-TEST(TipEnumDisplayAttributesTest, BasicTest) {
+TEST_F(TipEnumDisplayAttributesTest, BasicTest) {
   TipEnumDisplayAttributes enum_display_attribute;
   ASSERT_TRUE(SUCCEEDED(enum_display_attribute.Reset()));
 
   while (true) {
-    CComPtr<ITfDisplayAttributeInfo> info;
+    ComPtr<ITfDisplayAttributeInfo> info;
     ULONG fetched = 0;
     const HRESULT result = enum_display_attribute.Next(1, &info, &fetched);
     EXPECT_TRUE(SUCCEEDED(result));
@@ -69,7 +71,7 @@ TEST(TipEnumDisplayAttributesTest, BasicTest) {
   }
 }
 
-TEST(TipEnumDisplayAttributesTest, NextTest) {
+TEST_F(TipEnumDisplayAttributesTest, NextTest) {
   TipEnumDisplayAttributes enum_display_attribute;
 
   ITfDisplayAttributeInfo *infolist[4] = {};
@@ -86,14 +88,15 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
   EXPECT_EQ(infolist[3], nullptr);
 
   // Clean up.
-  for (size_t i = 0; i < std::size(infolist); ++i) {
-    if (infolist[i] != nullptr) {
-      infolist[i]->Release();
-      infolist[i] = nullptr;
+  for (auto &i : infolist) {
+    if (i != nullptr) {
+      i->Release();
+      i = nullptr;
     }
   }
 }
 
+}  // namespace
 }  // namespace tsf
 }  // namespace win32
 }  // namespace mozc

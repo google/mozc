@@ -423,7 +423,6 @@ mozc_cc_library(
     deps = [
         ":tip_display_attributes",
         ":tip_ref_count",
-        "//base:port",
     ],
 )
 

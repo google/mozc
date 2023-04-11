@@ -29,15 +29,15 @@
 
 #include "win32/tip/tip_enum_display_attributes.h"
 
+#include <msctf.h>
+#include <objbase.h>
+#include <unknwn.h>
+
 #include "win32/tip/tip_display_attributes.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-TipEnumDisplayAttributes::TipEnumDisplayAttributes() : index_(0) {}
-
-TipEnumDisplayAttributes::~TipEnumDisplayAttributes() {}
 
 // Implements the IUnknown::QueryInterface() function.
 HRESULT STDMETHODCALLTYPE
