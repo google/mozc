@@ -31,9 +31,10 @@
 
 load("//:build_defs.bzl", "mozc_cc_library", "mozc_select")
 
-def mozc_win32_lib(name, **kwargs):
+def mozc_win32_lib(name, tags = [], **kwargs):
     mozc_cc_library(
         name = name,
         linkopts = mozc_select(windows = [name + ".lib"]),
+        tags = ["keep_dep"] + tags,  # go/build-cleaner/troubleshooting-faq#keep-dep
         **kwargs
     )
