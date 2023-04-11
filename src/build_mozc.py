@@ -230,7 +230,7 @@ def ParseGypOptions(args):
                     'is installed. This option is used only on Linux.')
 
   if IsWindows():
-    default_msvs_version = '2019'
+    default_msvs_version = '2022'
     parser.add_option('--msvs_version', dest='msvs_version',
                       default=default_msvs_version,
                       help='Version of the Visual Studio.')

@@ -16,9 +16,9 @@ cd mozc\src
 
 python3 -m pip install six
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
 
-python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019 --msvs_version=2019
+python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019
 python build_mozc.py build -c Release package
 ```
 
@@ -32,10 +32,11 @@ python build_mozc.py build -c Release package
 
 Building Mozc on Windows requires the following software.
 
-  * [Visual Studio 2019](http://visualstudio.com/free), or any greater edition.
+  * [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/#visual-studio-community-2022)
+    * [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) should also work
   * Python 3.7 or later
   * git
-  * [Qt 5](https://download.qt.io/official_releases/qt/) (optional for GUI)
+  * (**optional**) [Qt 5](https://download.qt.io/official_releases/qt/)
     + 32-bit version is required because `mozc_tool.exe` is build as a 32-bit executable.
 
 ### Download the repository from GitHub
@@ -63,7 +64,7 @@ If you have not set up the build system in your command prompt, you might need
 to execute the setup command like this.
 
 ```
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
 ```
 
 ### Build Mozc
@@ -71,14 +72,14 @@ to execute the setup command like this.
 The following command builds Mozc without Qt based GUI tools.
 
 ```
-python build_mozc.py gyp --noqt --msvs_version=2019
+python build_mozc.py gyp --noqt
 python build_mozc.py build -c Release package
 ```
 
 To build Mozc with GUI tools, you need to specify the Qt directory.
 
 ```
-python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019 --msvs_version=2019
+python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019
 python build_mozc.py build -c Release package
 ```
 
@@ -87,8 +88,11 @@ based on Qt version. If you specify `--noqt` option
 instead of `--qtdir=<dir to Qt>`, mozc\_tool will be built as a mock version,
 which does nothing.
 
-You need to specify your Visual Studio version to `--msvs_version`.
-The default value is `2019`.
+To use other versions of Visual Studio, e.g. Visual Studio 2019, try `--msvs_version` option as follows.
+
+```
+python build_mozc.py gyp --qtdir=C:\Qt\Qt5.15.2\msvc2019 --msvs_version=2019
+```
 
 If you need debug information, you can build debug version of Mozc as follows.
 
