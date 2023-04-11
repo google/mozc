@@ -1,0 +1,760 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Mozc TIP (Text Input Processor) for Windows Text Services Framework.
+
+load(
+    "//:build_defs.bzl",
+    "MOZC_TAGS",
+    "mozc_cc_binary",
+    "mozc_cc_library",
+    "mozc_cc_test",
+)
+load(
+    "//bazel/win32:build_defs.bzl",
+    "copts_wtl",
+    "features_gdi",
+)
+load("//bazel:stubs.bzl", "lexan")
+
+mozc_cc_binary(
+    name = "mozc_tip",
+    srcs = ["mozc_tip_main.cc"],
+    linkshared = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "mozc_tip.def",
+    deps = [
+        ":mozc_tip_resource",
+        ":tip_class_factory",
+        ":tip_dll_module",
+        ":tip_private_context",
+        ":tip_ref_count",
+        ":tip_text_service",
+        ":tip_text_service_impl",
+        ":tip_ui_handler",
+        ":tip_ui_handler_impl",
+        "//base:crash_report_handler",
+        "//base:port",
+        "//base:singleton",
+        "//base/protobuf",
+        "//base/protobuf:message",
+        "//client",
+        "//config:stats_config_util",
+        "//win32/base:tsf_profile",
+        "//win32/base:tsf_registrar",
+        "@com_google_absl//absl/base",
+    ],
+)
+
+lexan.resource_files(
+    name = "mozc_tip_resource",
+    rc_files = [
+        "tip_resource.rc",
+    ],
+    resources = [
+        "tip_resource.h",
+        "//data/images/win:icons",
+        "//win32/base:display_name_resource_h_for_rc",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_library(
+    name = "tip_dll_module",
+    srcs = ["tip_dll_module.cc"],
+    hdrs = ["tip_dll_module.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:crash_report_handler",
+        "@com_google_absl//absl/base",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_class_factory",
+    srcs = ["tip_class_factory.cc"],
+    hdrs = ["tip_class_factory.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_ref_count",
+        ":tip_text_service",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_text_service",
+    hdrs = ["tip_text_service.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "tip_text_service_impl",
+    srcs = ["tip_text_service.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_class_factory",
+        ":tip_composition_util",
+        ":tip_display_attributes",
+        ":tip_dll_module",
+        ":tip_edit_session",
+        ":tip_enum_display_attributes",
+        ":tip_input_mode_manager",
+        ":tip_keyevent_handler",
+        ":tip_lang_bar",
+        ":tip_preferred_touch_keyboard",
+        ":tip_private_context_h",
+        ":tip_reconvert_function",
+        ":tip_ref_count",
+        ":tip_resource",
+        ":tip_status",
+        ":tip_text_service",
+        ":tip_thread_context",
+        ":tip_ui_handler",
+        "//base:const",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:process",
+        "//base:system_util",
+        "//base:update_util",
+        "//base:util",
+        "//protocol:commands_cc_proto",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:indicator_visibility_tracker",
+        "//win32/base:input_state",
+        "//win32/base:win32_window_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ui_element_conventional",
+    srcs = ["tip_ui_element_conventional.cc"],
+    hdrs = ["tip_ui_element_conventional.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_private_context_h",
+        ":tip_ref_count",
+        ":tip_text_service",
+        ":tip_ui_element_delegate",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ui_element_immersive",
+    srcs = ["tip_ui_element_immersive.cc"],
+    hdrs = ["tip_ui_element_immersive.h"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_composition_util",
+        ":tip_edit_session",
+        ":tip_private_context_h",
+        ":tip_range_util",
+        ":tip_ref_count",
+        ":tip_text_service",
+        ":tip_ui_element_delegate",
+        ":tip_ui_renderer_immersive",
+        "//base:port",
+        "//base:util",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//renderer:table_layout",
+        "//renderer:window_util",
+        "//renderer/win32:text_renderer",
+        "//renderer/win32:win32_renderer_util",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_transitory_extension",
+    srcs = ["tip_transitory_extension.cc"],
+    hdrs = ["tip_transitory_extension.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "tip_candidate_list",
+    srcs = ["tip_candidate_list.cc"],
+    hdrs = ["tip_candidate_list.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_ref_count",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_keyevent_handler",
+    srcs = ["tip_keyevent_handler.cc"],
+    hdrs = ["tip_keyevent_handler.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_edit_session",
+        ":tip_input_mode_manager",
+        ":tip_private_context_h",
+        ":tip_ref_count",
+        ":tip_status",
+        ":tip_surrounding_text",
+        ":tip_text_service",
+        ":tip_thread_context",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:commands_cc_proto",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:deleter",
+        "//win32/base:indicator_visibility_tracker",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+        "//win32/base:keyevent_handler",
+        "//win32/base:surrogate_pair_observer",
+        "//win32/base:win32_window_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_lang_bar",
+    srcs = [
+        "tip_lang_bar.cc",
+        "tip_lang_bar_menu.cc",
+    ],
+    hdrs = [
+        "tip_lang_bar.h",
+        "tip_lang_bar_menu.h",
+    ],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_ref_count",
+        ":tip_resource",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//protocol:commands_cc_proto",
+        "//third_party/wtl",
+        "//win32/base:text_icon",
+        "//win32/base:tsf_profile",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ui_element_manager",
+    srcs = ["tip_ui_element_manager.cc"],
+    hdrs = ["tip_ui_element_manager.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_input_mode_manager",
+        ":tip_private_context_h",
+        ":tip_text_service",
+        ":tip_thread_context",
+        ":tip_ui_handler",
+        "//base:port",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//win32/base:input_state",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ui_renderer_immersive",
+    srcs = ["tip_ui_renderer_immersive.cc"],
+    hdrs = ["tip_ui_renderer_immersive.h"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:port",
+        "//base:util",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//renderer:table_layout",
+        "//renderer/win32:text_renderer",
+        "//third_party/wtl",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_preferred_touch_keyboard",
+    srcs = ["tip_preferred_touch_keyboard.cc"],
+    hdrs = ["tip_preferred_touch_keyboard.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_ref_count",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_search_candidate_provider",
+    srcs = ["tip_search_candidate_provider.cc"],
+    hdrs = ["tip_search_candidate_provider.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_candidate_list",
+        ":tip_query_provider",
+        ":tip_ref_count",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_range_util",
+    srcs = ["tip_range_util.cc"],
+    hdrs = ["tip_range_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "tip_composition_util",
+    srcs = ["tip_composition_util.cc"],
+    hdrs = ["tip_composition_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:port",
+        "//win32/base:tsf_profile",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_thread_context",
+    srcs = ["tip_thread_context.cc"],
+    hdrs = ["tip_thread_context.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_input_mode_manager",
+        "//base:port",
+        "//base:system_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_query_provider",
+    srcs = ["tip_query_provider.cc"],
+    hdrs = ["tip_query_provider.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_ref_count",
+        "//base:port",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ref_count",
+    srcs = ["tip_ref_count.cc"],
+    hdrs = ["tip_ref_count.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_enum_display_attributes",
+    srcs = ["tip_enum_display_attributes.cc"],
+    hdrs = ["tip_enum_display_attributes.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_display_attributes",
+        ":tip_ref_count",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_compartment_util",
+    srcs = ["tip_compartment_util.cc"],
+    hdrs = ["tip_compartment_util.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "tip_ui_element_delegate",
+    srcs = ["tip_ui_element_delegate.cc"],
+    hdrs = ["tip_ui_element_delegate.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_edit_session",
+        ":tip_private_context_h",
+        ":tip_resource",
+        ":tip_text_service",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:input_state",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_private_context_h",
+    hdrs = ["tip_private_context.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    name = "tip_private_context",
+    srcs = ["tip_private_context.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_private_context_h",
+        ":tip_text_service",
+        ":tip_ui_element_manager",
+        "//base:system_util",
+        "//client:client_interface",
+        "//protocol:commands_cc_proto",
+        "//session:key_info_util",
+        "//win32/base:config_snapshot",
+        "//win32/base:deleter",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+        "//win32/base:surrogate_pair_observer",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_reconvert_function",
+    srcs = ["tip_reconvert_function.cc"],
+    hdrs = ["tip_reconvert_function.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_candidate_list",
+        ":tip_edit_session",
+        ":tip_query_provider",
+        ":tip_range_util",
+        ":tip_ref_count",
+        ":tip_surrounding_text",
+        ":tip_text_service",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_status",
+    srcs = ["tip_status.cc"],
+    hdrs = ["tip_status.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_compartment_util",
+        "//base:logging",
+        "//base:port",
+        "//protocol:commands_cc_proto",
+        "//win32/base:conversion_mode_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_ui_handler",
+    hdrs = ["tip_ui_handler.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//base:port"],
+)
+
+mozc_cc_library(
+    # TODO(yuryu): Fix cyclic dependency between tip_ui_handler*.cc.
+    name = "tip_ui_handler_impl",
+    srcs = [
+        "tip_ui_handler.cc",
+        "tip_ui_handler_conventional.cc",
+        "tip_ui_handler_immersive.cc",
+    ],
+    hdrs = [
+        "tip_ui_handler_conventional.h",
+        "tip_ui_handler_immersive.h",
+    ],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_composition_util",
+        ":tip_input_mode_manager",
+        ":tip_private_context_h",
+        ":tip_range_util",
+        ":tip_ref_count",
+        ":tip_status",
+        ":tip_text_service",
+        ":tip_thread_context",
+        ":tip_ui_element_conventional",
+        ":tip_ui_element_immersive",
+        ":tip_ui_element_manager",
+        ":tip_ui_handler",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
+        "//renderer/win32:win32_renderer_client",
+        "//third_party/wtl",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:indicator_visibility_tracker",
+        "//win32/base:input_state",
+        "//win32/base:migration_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_linguistic_alternates",
+    srcs = ["tip_linguistic_alternates.cc"],
+    hdrs = ["tip_linguistic_alternates.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_candidate_list",
+        ":tip_edit_session",
+        ":tip_query_provider",
+        ":tip_ref_count",
+        ":tip_text_service",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_edit_session",
+    srcs = [
+        "tip_edit_session.cc",
+        "tip_edit_session_impl.cc",
+    ],
+    hdrs = [
+        "tip_edit_session.h",
+        "tip_edit_session_impl.h",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_composition_util",
+        ":tip_input_mode_manager",
+        ":tip_private_context_h",
+        ":tip_range_util",
+        ":tip_ref_count",
+        ":tip_status",
+        ":tip_surrounding_text",
+        ":tip_text_service",
+        ":tip_thread_context",
+        ":tip_ui_handler",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:deleter",
+        "//win32/base:input_state",
+        "//win32/base:string_util",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_display_attributes",
+    srcs = ["tip_display_attributes.cc"],
+    hdrs = ["tip_display_attributes.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_ref_count",
+        "//base:port",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_surrounding_text",
+    srcs = ["tip_surrounding_text.cc"],
+    hdrs = ["tip_surrounding_text.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_composition_util",
+        ":tip_range_util",
+        ":tip_ref_count",
+        ":tip_text_service",
+        ":tip_transitory_extension",
+        "//base:port",
+        "//win32/base:imm_reconvert_string",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_input_mode_manager",
+    srcs = ["tip_input_mode_manager.cc"],
+    hdrs = ["tip_input_mode_manager.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:port",
+        "//win32/base:conversion_mode_util",
+        "//win32/base:indicator_visibility_tracker",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_resource",
+    hdrs = ["tip_resource.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+mozc_cc_test(
+    name = "tip_surrounding_text_test",
+    size = "small",
+    srcs = ["tip_surrounding_text_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_surrounding_text",
+        "//base:util",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_candidate_list_test",
+    size = "small",
+    srcs = ["tip_candidate_list_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_candidate_list",
+        ":tip_dll_module",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_ref_count_test",
+    size = "small",
+    srcs = ["tip_ref_count_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_ref_count",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_display_attributes_test",
+    size = "small",
+    srcs = ["tip_display_attributes_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_display_attributes",
+        ":tip_dll_module",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_enum_display_attributes_test",
+    size = "small",
+    srcs = ["tip_enum_display_attributes_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_dll_module",
+        ":tip_enum_display_attributes",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_test(
+    name = "tip_input_mode_manager_test",
+    size = "small",
+    srcs = ["tip_input_mode_manager_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":tip_input_mode_manager",
+        "//testing:gunit_main",
+    ],
+)

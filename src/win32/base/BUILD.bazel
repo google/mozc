@@ -116,6 +116,14 @@ mozc_cc_test(
     ],
 )
 
+filegroup(
+    # TODO(yuryu): lexan.resource_files doesn't seem to accept cc_library.
+    # This is a workaround for now.
+    name = "display_name_resource_h_for_rc",
+    srcs = ["display_name_resource.h"],
+    visibility = ["//win32/tip:__subpackages__"],
+)
+
 mozc_cc_library(
     name = "display_name_resource_h",
     hdrs = ["display_name_resource.h"],
