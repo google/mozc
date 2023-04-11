@@ -31,12 +31,13 @@
 #define MOZC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
 
 #ifdef _WIN32
-#include <stdio.h>
 #include <string>
 
 namespace mozc {
 class CacheServiceManager {
  public:
+  CacheServiceManager() = delete;
+
   // return true if the cache service is installed.
   static bool IsInstalled();
 
@@ -78,7 +79,7 @@ class CacheServiceManager {
   // to start the cache service
   static bool HasEnoughMemory();
 
-  // Return true if the current status of the serivice is successfully
+  // Return true if the current status of the service is successfully
   // serialized into the specified std::wstring instance.
   // You can assume that the serialized data consists of ASCII printable
   // characters.
@@ -97,11 +98,8 @@ class CacheServiceManager {
   // - The cache service is installed and running but successfully stopped by
   //   this function.
   static bool EnsureServiceStopped();
-
- private:
-  CacheServiceManager() {}
-  ~CacheServiceManager() {}
 };
 }  // namespace mozc
+
 #endif  // _WIN32
 #endif  // MOZC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_

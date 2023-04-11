@@ -83,7 +83,6 @@ mozc_cc_library(
         "//base:system_util",
         "//base:util",
         "//base/protobuf",
-        "//base/win32:scoped_handle",
         "//bazel/win32:crypt32",
     ],
 )
