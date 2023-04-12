@@ -25,35 +25,19 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 // Version
 //
 
-#ifdef _WIN64
-  #ifndef MOZC_RES_INTERNAL_NAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaBroker64"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_broker64"
-    #endif
+
+#ifndef MOZC_RES_INTERNAL_NAME
+  #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+    #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaBroker"
+  #elif defined(MOZC_BUILD)
+    #define MOZC_RES_INTERNAL_NAME "mozc_broker"
   #endif
-  #ifndef MOZC_RES_ORIGINAL_FILENAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaBroker64.exe"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_broker64.exe"
-    #endif
-  #endif
-#else
-  #ifndef MOZC_RES_INTERNAL_NAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaBroker32"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_broker32"
-    #endif
-  #endif
-  #ifndef MOZC_RES_ORIGINAL_FILENAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaBroker32.exe"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_broker32.exe"
-    #endif
+#endif
+#ifndef MOZC_RES_ORIGINAL_FILENAME
+  #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+    #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaBroker.exe"
+  #elif defined(MOZC_BUILD)
+    #define MOZC_RES_ORIGINAL_FILENAME "mozc_broker.exe"
   #endif
 #endif
 #ifndef MOZC_RES_FILE_DESCRIPTION

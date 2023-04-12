@@ -61,8 +61,7 @@ constexpr char kMozcServerName[] = "GoogleIMEJaConverter.exe";
 constexpr char kIMEFile[] = "GIMEJa.ime";
 constexpr char kMozcTIP32[] = "GoogleIMEJaTIP32.dll";
 constexpr char kMozcTIP64[] = "GoogleIMEJaTIP64.dll";
-constexpr char kMozcBroker32[] = "GoogleIMEJaBroker32.exe";
-constexpr char kMozcBroker64[] = "GoogleIMEJaBroker64.exe";
+constexpr char kMozcBroker[] = "GoogleIMEJaBroker.exe";
 constexpr char kMozcTool[] = "GoogleIMEJaTool.exe";
 constexpr char kMozcRenderer[] = "GoogleIMEJaRenderer.exe";
 constexpr char kMozcCacheServiceExeName[] = "GoogleIMEJaCacheService.exe";
@@ -94,7 +93,7 @@ constexpr wchar_t kConfigurationDisplayname[] =
 constexpr wchar_t kMozcRegKey[] = L"Software\\Google\\Google Japanese Input";
 constexpr wchar_t kElevatedProcessDisabledKey[] =
     L"Software\\Policies\\Google\\Google Japanese Input\\Preferences";
-#else
+#else  // !GOOGLE_JAPANESE_INPUT_BUILD
 constexpr char kCompanyNameInEnglish[] = "Mozc Project";
 // Use Local prefix so that modules running under AppContainer can access.
 constexpr char kEventPathPrefix[] = "Local\\Mozc.event.";
@@ -103,8 +102,7 @@ constexpr char kMozcServerName[] = "mozc_server.exe";
 constexpr char kIMEFile[] = "mozc_ja.ime";
 constexpr char kMozcTIP32[] = "mozc_tip32.dll";
 constexpr char kMozcTIP64[] = "mozc_tip64.dll";
-constexpr char kMozcBroker32[] = "mozc_broker32.exe";
-constexpr char kMozcBroker64[] = "mozc_broker64.exe";
+constexpr char kMozcBroker[] = "mozc_broker.exe";
 constexpr char kMozcTool[] = "mozc_tool.exe";
 constexpr char kMozcRenderer[] = "mozc_renderer.exe";
 constexpr char kMozcCacheServiceExeName[] = "mozc_cache_service.exe";
@@ -137,7 +135,7 @@ constexpr char kMozcServerName[] = "mozc_server";
 constexpr char kMozcRenderer[] = "mozc_renderer";
 constexpr char kEventPathPrefix[] = "mozc.event.";
 constexpr char kMozcTool[] = "mozc_tool";
-#endif
+#endif  // _WIN32, __APPLE__, or else
 
 constexpr char kWordRegisterEnvironmentName[] =
     "default_entry_of_word_register";

@@ -122,7 +122,7 @@ Although the code repository covers source files of the official Google Japanese
 
 Following files must be placed under %ProgramFiles%\Mozc.
 
-  * `out_win\Release\mozc_broker32.exe`
+  * `out_win\Release\mozc_broker.exe`
   * `out_win\Release\mozc_cache_service.exe`
   * `out_win\Release\mozc_renderer.exe`
   * `out_win\Release\mozc_server.exe`
@@ -171,7 +171,6 @@ Delete following directory and files after unregistering Mozc from IMM32/TSF.
 
 Following files must be placed under %ProgramFiles(x86)%\Mozc.
 
-  * `out_win\Release\mozc_broker32.exe`
   * `out_win\Release\mozc_cache_service.exe`
   * `out_win\Release\mozc_renderer.exe`
   * `out_win\Release\mozc_server.exe`
@@ -181,7 +180,7 @@ Following files must be placed under %ProgramFiles(x86)%\Mozc.
   * `out_win\ReleaseDynamic\Qt5Gui.dll` (not required if you specified `--noqt` option)
   * `out_win\ReleaseDynamic\Qt5Widgets.dll` (not required if you specified `--noqt` option)
   * `out_win\ReleaseDynamic\platforms\qwindows.dll` (not required if you specified `--noqt` option)
-  * `out_win\Release_x64\mozc_broker64.exe`
+  * `out_win\Release_x64\mozc_broker.exe`
 
 `Qt5Core.dll`, `Qt5Gui.dll`, `Qt5Widgets.dll`, and `qwindows.dll` are not required if you specified `--noqt` option into the gyp command.
 

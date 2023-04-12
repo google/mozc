@@ -64,15 +64,8 @@
           ],
         },
         {
-          'target_name': 'mozc_broker32',
-          'product_name': '<(broker_product_name_win)32',
-          'includes': [
-            'mozc_broker.gypi',
-          ],
-        },
-        {
-          'target_name': 'mozc_broker64',
-          'product_name': '<(broker_product_name_win)64',
+          'target_name': 'mozc_broker',
+          'product_name': '<(broker_product_name_win)',
           'includes': [
             'mozc_broker.gypi',
           ],

@@ -314,8 +314,6 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:process",
-        "//base:system_util",
-        "//base/win32:scoped_handle",
     ],
 )
 

@@ -343,10 +343,9 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcTIP64Path)' Vital='yes' />
             </Component>
-            <Component Id='GIMEJaBroker64' Guid='*' Permanent='no'>
-              <Condition>(VersionNT64)</Condition>
-              <File Id='GoogleIMEJaBroker64.exe'
-                  Name='GoogleIMEJaBroker64.exe'
+            <Component Id='GIMEJaBroker' Guid='*' Permanent='no'>
+              <File Id='GoogleIMEJaBroker.exe'
+                  Name='GoogleIMEJaBroker.exe'
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcBroker64Path)' Vital='yes' />
             </Component>
@@ -509,7 +508,7 @@
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
             Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker64.exe&quot; --mode=prelaunch_processes' />
+            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
 
@@ -592,7 +591,7 @@
       <?endif?>
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaTIP64' />
-      <ComponentRef Id='GIMEJaBroker64' />
+      <ComponentRef Id='GIMEJaBroker' />
       <ComponentRef Id='GIMEJaConverter' />
       <ComponentRef Id='GIMEJaCacheService' />
       <ComponentRef Id='GIMEJaRenderer' />

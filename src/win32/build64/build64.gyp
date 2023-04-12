@@ -45,7 +45,7 @@
           'dependencies': [
             '../../renderer/renderer.gyp:mozc_renderer',
             '../../server/server.gyp:mozc_server',
-            '../broker/broker.gyp:mozc_broker64',
+            '../broker/broker.gyp:mozc_broker',
             '../cache_service/cache_service.gyp:mozc_cache_service',
             '../tip/tip.gyp:mozc_tip64',
           ],
