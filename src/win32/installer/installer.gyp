@@ -103,15 +103,6 @@
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
         'mozc_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
-        'mozc_32bit_binaries': [
-          '<(mozc_tip32_path)',
-          '<(mozc_server32_path)',
-          '<(mozc_cache_service32_path)',
-          '<(mozc_renderer32_path)',
-          '<(mozc_tool_path)',
-          '<(mozc_broker32_path)',
-          '<(mozc_ca32_path)',
-        ],
         'mozc_32bit_postbuild_targets': [
           'mozc_tip32_postbuild',
           'mozc_server32_postbuild',
@@ -121,13 +112,11 @@
           'mozc_broker32_postbuild',
           'mozc_ca32_postbuild',
         ],
-        'mozc_64bit_binaries': [
-          '<(mozc_tip64_path)',
-          '<(mozc_broker64_path)',
-          '<(mozc_ca64_path)',
-        ],
         'mozc_64bit_postbuild_targets': [
           'mozc_tip64_postbuild',
+          'mozc_server64_postbuild',
+          'mozc_cache_service64_postbuild',
+          'mozc_renderer64_postbuild',
           'mozc_broker64_postbuild',
           'mozc_ca64_postbuild',
         ],
