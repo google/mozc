@@ -34,11 +34,9 @@
 #include <windows.h>
 
 #include <cstdint>
-#include <memory>
 #include <vector>
 
-#include "base/port.h"
-#include "win32/base/input_state.h"
+#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/keyboard.h"
 
 namespace mozc {
@@ -56,8 +54,7 @@ class TipInputModeManagerImpl {
     kFullAscii,
     kHalfKatakana,
   };
-  class StatePair {
-   public:
+  struct StatePair {
     StatePair();
     StatePair(bool open_close, ConversionMode conversion_mode);
     bool open_close;
@@ -92,17 +89,16 @@ class TipInputModeManager : public TipInputModeManagerImpl {
     kNotifySystemOpenClose = (1 << 0),
     kNotifySystemConversionMode = (1 << 1),
   };
-  class Config {
-   public:
-    Config();
-    bool use_global_mode;
+  struct Config {
+    bool use_global_mode = false;
   };
   typedef uint32_t NotifyActionSet;
 
-  explicit TipInputModeManager(const Config &config);
+  explicit TipInputModeManager(const Config &config)
+      : use_global_mode_(config.use_global_mode) {}
   TipInputModeManager(const TipInputModeManager &) = delete;
   TipInputModeManager &operator=(const TipInputModeManager &) = delete;
-  ~TipInputModeManager();
+  ~TipInputModeManager() = default;
 
   // Functions to access embedded IndicatorVisibilityTracker.
   Action OnDissociateContext();
@@ -121,18 +117,21 @@ class TipInputModeManager : public TipInputModeManagerImpl {
   Action OnChangeConversionMode(DWORD new_conversion_mode);
   Action OnChangeInputScope(const std::vector<InputScope> &input_scopes);
 
-  // Returns IME open/close state that is visible from Mozc session.
+  // Returns an IME open/close state that is visible from the Mozc session.
   bool GetEffectiveOpenClose() const;
-  // Returns IME open/close state that is visible from TSF.
+  // Returns an IME open/close state that is visible from TSF.
   bool GetTsfOpenClose() const;
-  // Returns IME conversion mode that is visible from Mozc session.
+  // Returns IME conversion mode that is visible from the Mozc session.
   ConversionMode GetEffectiveConversionMode() const;
   // Returns IME conversion mode that is visible from TSF.
   ConversionMode GetTsfConversionMode() const;
 
  private:
-  class InternalState;
-  std::unique_ptr<InternalState> state_;
+  bool use_global_mode_ = false;
+  StatePair mozc_state_;
+  StatePair tsf_state_;
+  IndicatorVisibilityTracker indicator_visibility_tracker_;
+  std::vector<InputScope> input_scope_;
 };
 
 }  // namespace tsf
