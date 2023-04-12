@@ -29,33 +29,27 @@
 
 #include "win32/tip/tip_keyevent_handler.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
+#include <windows.h>
+#include <wrl/client.h>
 
 #include <cstdint>
 #include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/conversion_mode_util.h"
 #include "win32/base/deleter.h"
-#include "win32/base/indicator_visibility_tracker.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
 #include "win32/base/keyevent_handler.h"
 #include "win32/base/surrogate_pair_observer.h"
-#include "win32/base/win32_window_util.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -64,19 +58,17 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-using ATL::CComPtr;
-using mozc::commands::Context;
-using mozc::commands::Output;
-typedef mozc::commands::CompositionMode CompositionMode;
-typedef mozc::commands::SessionCommand SessionCommand;
-
 namespace {
+
+using Microsoft::WRL::ComPtr;
+using mozc::commands::CompositionMode;
+using mozc::commands::Context;
+using mozc::commands::SessionCommand;
 
 // Defined in the following white paper.
 // http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx
-const UINT kTouchKeyboardNextPage = 0xf003;
-const UINT kTouchKeyboardPreviousPage = 0xf004;
+constexpr UINT kTouchKeyboardNextPage = 0xf003;
+constexpr UINT kTouchKeyboardPreviousPage = 0xf004;
 
 // Unlike IMM32 Mozc which is marked as IME_PROP_ACCEPT_WIDE_VKEY,
 // TSF Mozc cannot always receive a VK_PACKET keyevent whose high word consists
@@ -149,7 +141,7 @@ void FillMozcContextCommon(TipTextService *text_service, ITfContext *context,
   }
   mozc_context->set_revision(
       text_service->GetThreadContext()->GetFocusRevision());
-  CComPtr<ITfContextView> context_view;
+  ComPtr<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return;
   }
@@ -299,14 +291,10 @@ void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
     return;
   }
   if (info.has_preceding_text) {
-    std::string utf8_preceding_text;
-    Util::WideToUtf8(info.preceding_text, &utf8_preceding_text);
-    mozc_context->set_preceding_text(utf8_preceding_text);
+    mozc_context->set_preceding_text(WideToUtf8(info.preceding_text));
   }
   if (info.has_following_text) {
-    std::string utf8_following_text;
-    Util::WideToUtf8(info.following_text, &utf8_following_text);
-    mozc_context->set_following_text(utf8_following_text);
+    mozc_context->set_following_text(WideToUtf8(info.following_text));
   }
 }
 
