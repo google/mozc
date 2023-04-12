@@ -30,6 +30,7 @@
 # Description:
 #   Contains tools which are required to build mozc.
 
+load("@rules_python//python:defs.bzl", "py_test")
 load(
     "//:build_defs.bzl",
     "mozc_py_binary",
