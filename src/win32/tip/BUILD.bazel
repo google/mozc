@@ -126,7 +126,6 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":tip_class_factory",
         ":tip_composition_util",
         ":tip_display_attributes",
         ":tip_dll_module",
@@ -147,15 +146,10 @@ mozc_cc_library(
         "//base:const",
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:process",
         "//base:system_util",
         "//base:update_util",
-        "//base:util",
         "//protocol:commands_cc_proto",
-        "//win32/base:conversion_mode_util",
-        "//win32/base:indicator_visibility_tracker",
-        "//win32/base:input_state",
         "//win32/base:win32_window_util",
     ],
 )
@@ -327,10 +321,7 @@ mozc_cc_library(
     hdrs = ["tip_preferred_touch_keyboard.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tip_ref_count",
-        "//base:port",
-    ],
+    deps = [":tip_ref_count"],
 )
 
 mozc_cc_library(
@@ -492,11 +483,9 @@ mozc_cc_library(
         ":tip_candidate_list",
         ":tip_edit_session",
         ":tip_query_provider",
-        ":tip_range_util",
         ":tip_ref_count",
         ":tip_surrounding_text",
         ":tip_text_service",
-        "//base:port",
     ],
 )
 
@@ -573,8 +562,6 @@ mozc_cc_library(
         ":tip_query_provider",
         ":tip_ref_count",
         ":tip_text_service",
-        "//base:port",
-        "//base:util",
     ],
 )
 

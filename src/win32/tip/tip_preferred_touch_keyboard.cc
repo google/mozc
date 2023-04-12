@@ -29,12 +29,10 @@
 
 #include "win32/tip/tip_preferred_touch_keyboard.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <ctffunc.h>
-#include <atlbase.h>
-#include <atlcom.h>
+#include <guiddef.h>
+#include <windows.h>
+#include <wrl/client.h>
 
 #include "win32/tip/tip_ref_count.h"
 
@@ -44,20 +42,20 @@ namespace tsf {
 
 namespace {
 
-using ATL::CComPtr;
+using Microsoft::WRL::ComPtr;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
+constexpr wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Google Japanese Input: GetPreferredTouchKeyboardLayout Function";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
+constexpr wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Mozc: GetPreferredTouchKeyboardLayout Function";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetPreferredTouchKeyboardLayoutImpl final
     : public ITfFnGetPreferredTouchKeyboardLayout {
  public:
-  GetPreferredTouchKeyboardLayoutImpl() {}
+  GetPreferredTouchKeyboardLayoutImpl() = default;
   GetPreferredTouchKeyboardLayoutImpl(
       const GetPreferredTouchKeyboardLayoutImpl &) = delete;
   GetPreferredTouchKeyboardLayoutImpl &operator=(
@@ -126,7 +124,7 @@ class GetPreferredTouchKeyboardLayoutImpl final
 }  // namespace
 
 // static
-IUnknown *TipPreferredTouchKeyboard::New() {
+ComPtr<ITfFnGetPreferredTouchKeyboardLayout> TipPreferredTouchKeyboard::New() {
   return new GetPreferredTouchKeyboardLayoutImpl();
 }
 

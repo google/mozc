@@ -29,24 +29,20 @@
 
 #include "win32/tip/tip_linguistic_alternates.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <ctffunc.h>
-#include <atlbase.h>
-#include <atlcom.h>
+#include <guiddef.h>
+#include <windows.h>
+#include <wrl/client.h>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
-#include "base/util.h"
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
-
-using ::ATL::CComPtr;
 
 namespace mozc {
 namespace win32 {
@@ -54,17 +50,20 @@ namespace tsf {
 
 namespace {
 
+using Microsoft::WRL::ComPtr;
+
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
+constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kSearchCandidateProviderName[] = L"Mozc";
+constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
  public:
-  GetLinguisticAlternatesImpl(TipTextService *text_service,
-                              TipQueryProvider *provider)
-      : text_service_(text_service), provider_(provider) {}
+  GetLinguisticAlternatesImpl(ComPtr<TipTextService> text_service,
+                              std::unique_ptr<TipQueryProvider> provider)
+      : text_service_(std::move(text_service)),
+        provider_(std::move(provider)) {}
   GetLinguisticAlternatesImpl(const GetLinguisticAlternatesImpl &) = delete;
   GetLinguisticAlternatesImpl &operator=(const GetLinguisticAlternatesImpl &) =
       delete;
@@ -124,7 +123,7 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
     }
     *candidate_list = nullptr;
     std::wstring query;
-    if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
+    if (!TipEditSession::GetTextSync(text_service_.Get(), range, &query)) {
       return E_FAIL;
     }
     std::vector<std::wstring> candidates;
@@ -137,19 +136,20 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
   }
 
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
+  ComPtr<TipTextService> text_service_;
   std::unique_ptr<TipQueryProvider> provider_;
 };
 
 }  // namespace
 
 // static
-IUnknown *TipLinguisticAlternates::New(TipTextService *text_service) {
-  auto *provider = TipQueryProvider::Create();
-  if (provider == nullptr) {
+ComPtr<ITfFnGetLinguisticAlternates> TipLinguisticAlternates::New(
+    const ComPtr<TipTextService> &text_service) {
+  std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
+  if (!provider) {
     return nullptr;
   }
-  return new GetLinguisticAlternatesImpl(text_service, provider);
+  return new GetLinguisticAlternatesImpl(text_service, std::move(provider));
 }
 
 // static

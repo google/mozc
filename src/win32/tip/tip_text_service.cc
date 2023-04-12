@@ -29,11 +29,13 @@
 
 #include "win32/tip/tip_text_service.h"
 
-#include <ime.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
+#include <ctffunc.h>
+#include <ime.h>
+#include <msctf.h>
 #include <objbase.h>
 #include <versionhelpers.h>
 #include <wrl/client.h>
@@ -47,18 +49,12 @@
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/update_util.h"
-#include "base/util.h"
 #include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
-#include "win32/base/conversion_mode_util.h"
-#include "win32/base/indicator_visibility_tracker.h"
-#include "win32/base/input_state.h"
 #include "win32/base/win32_window_util.h"
-#include "win32/tip/tip_class_factory.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_display_attributes.h"
 #include "win32/tip/tip_dll_module.h"
@@ -68,7 +64,6 @@
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_keyevent_handler.h"
 #include "win32/tip/tip_lang_bar.h"
-#include "win32/tip/tip_lang_bar_menu.h"
 #include "win32/tip/tip_preferred_touch_keyboard.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_reconvert_function.h"
@@ -98,38 +93,38 @@ volatile bool g_module_unloaded = false;
 // value, the current thread is initialized.
 volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 
-const UINT kUpdateUIMessage = WM_USER;
+constexpr UINT kUpdateUIMessage = WM_USER;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
 constexpr char kLogFileName[] = "GoogleJapaneseInput_tsf_ui.log";
-const wchar_t kTaskWindowClassName[] =
+constexpr wchar_t kTaskWindowClassName[] =
     L"Google Japanese Input Task Message Window";
 
 // {67526BED-E4BE-47CA-97F8-3C84D5B408DA}
-const GUID kTipPreservedKey_Kanji = {
+constexpr GUID kTipPreservedKey_Kanji = {
     0x67526bed,
     0xe4be,
     0x47ca,
     {0x97, 0xf8, 0x3c, 0x84, 0xd5, 0xb4, 0x08, 0xda}};
 
 // {B62565AA-288A-432B-B517-EC333E0F99F3}
-const GUID kTipPreservedKey_F10 = {
+constexpr GUID kTipPreservedKey_F10 = {
     0xb62565aa,
     0x288a,
     0x432b,
     {0xb5, 0x17, 0xec, 0x33, 0x3e, 0xf, 0x99, 0xf3}};
 
 // {CF6E26FB-1A11-4D81-BD92-52FA852A42EB}
-const GUID kTipPreservedKey_Romaji = {
+constexpr GUID kTipPreservedKey_Romaji = {
     0xcf6e26fb,
     0x1a11,
     0x4d81,
     {0xbd, 0x92, 0x52, 0xfa, 0x85, 0x2a, 0x42, 0xeb}};
 
 // {EEBABC50-7FEC-4A08-9E1D-0BEF628B5F0E}
-const GUID kTipFunctionProvider = {
+constexpr GUID kTipFunctionProvider = {
     0xeebabc50,
     0x7fec,
     0x4a08,
@@ -139,31 +134,32 @@ const GUID kTipFunctionProvider = {
 
 constexpr char kHelpUrl[] = "https://github.com/google/mozc";
 constexpr char kLogFileName[] = "Mozc_tsf_ui.log";
-const wchar_t kTaskWindowClassName[] = L"Mozc Immersive Task Message Window";
+constexpr wchar_t kTaskWindowClassName[] =
+    L"Mozc Immersive Task Message Window";
 
 // {F16B7D92-84B0-4AC6-A35B-06EA77180A18}
-const GUID kTipPreservedKey_Kanji = {
+constexpr GUID kTipPreservedKey_Kanji = {
     0xf16b7d92,
     0x84b0,
     0x4ac6,
     {0xa3, 0x5b, 0x6, 0xea, 0x77, 0x18, 0x0a, 0x18}};
 
 // {80DAD291-1981-46FA-998D-B84D6C1BA02C}
-const GUID kTipPreservedKey_F10 = {
+constexpr GUID kTipPreservedKey_F10 = {
     0x80dad291,
     0x1981,
     0x46fa,
     {0x99, 0x8d, 0xb8, 0x4d, 0x6c, 0x1b, 0xa0, 0x2c}};
 
 // {95571C08-B05A-4ABA-B038-F3DEAE532F91}
-const GUID kTipPreservedKey_Romaji = {
+constexpr GUID kTipPreservedKey_Romaji = {
     0x95571c08,
     0xb05a,
     0x4aba,
     {0xb0, 0x38, 0xf3, 0xde, 0xae, 0x53, 0x2f, 0x91}};
 
 // {ECFB2528-E7D2-4CA0-BBE4-32FE08C148F4}
-const GUID kTipFunctionProvider = {
+constexpr GUID kTipFunctionProvider = {
     0xecfb2528,
     0xe7d2,
     0x4ca0,
@@ -343,11 +339,11 @@ void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
 }
 
 // Represents preserved keys used by this class.
-const wchar_t kTipKeyTilde[] = L"OnOff";
-const wchar_t kTipKeyKanji[] = L"Kanji";
-const wchar_t kTipKeyF10[] = L"Function 10";
-const wchar_t kTipKeyRoman[] = L"Roman";
-const wchar_t kTipKeyNoRoman[] = L"NoRoman";
+constexpr wchar_t kTipKeyTilde[] = L"OnOff";
+constexpr wchar_t kTipKeyKanji[] = L"Kanji";
+constexpr wchar_t kTipKeyF10[] = L"Function 10";
+constexpr wchar_t kTipKeyRoman[] = L"Roman";
+constexpr wchar_t kTipKeyNoRoman[] = L"NoRoman";
 
 struct PreserveKeyItem {
   const GUID &guid;
@@ -396,7 +392,7 @@ class UpdateUiEditSessionImpl final : public ITfEditSession {
 
   // This destructor is non-virtual because the instance of this class is
   // deleted by and only by "delete this" in the Release method.
-  ~UpdateUiEditSessionImpl() {}
+  ~UpdateUiEditSessionImpl() = default;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -523,7 +519,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
  private:
-  virtual ~TipTextServiceImpl() {}
+  ~TipTextServiceImpl() override = default;
 
   // IUnknown
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
@@ -640,7 +636,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       // unloaded. In such case, we can do nothing safely. b/7915484.
       return S_OK;  // the returned value will be ignored according to the MSDN.
     }
-    thread_context_.reset(new TipThreadContext());
+    thread_context_ = std::make_unique<TipThreadContext>();
     StorePointerForCurrentThread(this);
 
     HRESULT result = E_UNEXPECTED;
@@ -1031,18 +1027,18 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (unknown == nullptr) {
       return E_INVALIDARG;
     }
-    *unknown = nullptr;
+    ComPtr<IUnknown> tmp;
     if (::IsEqualGUID(IID_ITfFnReconversion, iid)) {
-      *unknown = TipReconvertFunction::New(this);
+      tmp = TipReconvertFunction::New(this);
     } else if (::IsEqualGUID(TipPreferredTouchKeyboard::GetIID(), iid)) {
-      *unknown = TipPreferredTouchKeyboard::New();
+      tmp = TipPreferredTouchKeyboard::New();
     } else {
       return E_NOINTERFACE;
     }
+    *unknown = tmp.Detach();
     if (*unknown == nullptr) {
       return E_FAIL;
     }
-    (*unknown)->AddRef();
     return S_OK;
   }
 
@@ -1118,7 +1114,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     // client app even if TF_TMF_IMMERSIVEMODE is specified.
     // See b/132702301 and crbug.com/962310 for more background.
     return !::IsWindows10OrGreater() &&
-        (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
+           (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
   }
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) {
     if (context == nullptr) {
@@ -1222,7 +1218,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     // Transfer the ownership.
     std::unique_ptr<TipPrivateContext> private_context(it->second);
     private_context_map_.erase(it);
-    if (private_context.get() == nullptr) {
+    if (!private_context) {
       return;
     }
     ComPtr<ITfSource> source;
@@ -1237,7 +1233,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   void UninitPrivateContexts() {
-    while (private_context_map_.size() > 0) {
+    while (!private_context_map_.empty()) {
       RemovePrivateContextIfExists(private_context_map_.begin()->first);
     }
   }

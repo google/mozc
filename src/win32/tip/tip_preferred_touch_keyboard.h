@@ -30,9 +30,10 @@
 #ifndef MOZC_WIN32_TIP_TIP_PREFERRED_TOUCH_KEYBOARD_H_
 #define MOZC_WIN32_TIP_TIP_PREFERRED_TOUCH_KEYBOARD_H_
 
+#include <ctffunc.h>
+#include <guiddef.h>
 #include <unknwn.h>
-
-#include "base/port.h"
+#include <wrl/client.h>
 
 namespace mozc {
 namespace win32 {
@@ -46,8 +47,7 @@ class TipPreferredTouchKeyboard {
       delete;
 
   // Returns a COM object that implements ITfFnGetPreferredTouchKeyboardLayout.
-  // Caller must maintain the reference count.
-  static IUnknown* New();
+  static Microsoft::WRL::ComPtr<ITfFnGetPreferredTouchKeyboardLayout> New();
   static const IID& GetIID();
 };
 
