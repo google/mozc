@@ -227,3 +227,27 @@ mozc_cc_test(
         "//testing:gunit_main",
     ],
 )
+
+mozc_cc_library(
+    name = "hresultor",
+    hdrs = ["hresultor.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+mozc_cc_test(
+    name = "hresultor_test",
+    size = "small",
+    srcs = ["hresultor_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":hresultor",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)

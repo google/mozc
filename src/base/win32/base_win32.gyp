@@ -57,6 +57,21 @@
             },
           ],
         },
+        {
+          'target_name': 'hresultor_test',
+          'type': 'executable',
+          'sources': [
+            'hresultor_test.cc',
+          ],
+          'dependencies': [
+            '../absl.gyp:absl_strings',
+            '../base.gyp:base',
+            '../../testing/testing.gyp:mozctest',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
       ]},
     ],
   ],
