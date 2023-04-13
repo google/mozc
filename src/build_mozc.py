@@ -64,6 +64,14 @@ SRC_DIR = '.'
 # Note that if any import above has already changed the current
 # directory, this code cannot work anymore.
 ABS_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+REAL_SCRIPT_DIR = os.path.realpath(ABS_SCRIPT_DIR)
+if (
+    ABS_SCRIPT_DIR != REAL_SCRIPT_DIR
+    and ABS_SCRIPT_DIR.casefold() == REAL_SCRIPT_DIR.casefold()
+):
+  # Normalize uppercases and lowercases to be consistent with the filesystem for
+  # Windows. See https://github.com/google/mozc/issues/719 for details.
+  ABS_SCRIPT_DIR = REAL_SCRIPT_DIR
 MOZC_ROOT = ABS_SCRIPT_DIR
 EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
