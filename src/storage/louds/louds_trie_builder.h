@@ -42,8 +42,14 @@ namespace louds {
 class LoudsTrieBuilder {
  public:
   LoudsTrieBuilder();
+
   LoudsTrieBuilder(const LoudsTrieBuilder &) = delete;
   LoudsTrieBuilder &operator=(const LoudsTrieBuilder &) = delete;
+
+  LoudsTrieBuilder(LoudsTrieBuilder &&) = default;
+  LoudsTrieBuilder &operator=(LoudsTrieBuilder &&) = default;
+
+  ~LoudsTrieBuilder() = default;
 
   // Adds the word to the builder. It is necessary to call this method,
   // before Build invocation.
