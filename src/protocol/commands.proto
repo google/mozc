@@ -1341,7 +1341,7 @@ message Output {
 
 message Command {
   required Input input = 1;
-  required Output output = 2;
+  optional Output output = 2;
 }
 
 message CommandList {
