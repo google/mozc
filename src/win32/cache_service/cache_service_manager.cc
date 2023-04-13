@@ -37,27 +37,43 @@
 // clang-format on
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
 #include "base/system_util.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "win32/cache_service/win32_service_state.pb.h"
 
 namespace mozc {
 namespace {
 
-const uint64_t kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
+using win32::Utf8ToWide;
+
+constexpr uint64_t kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
 
 class ScopedSCHandle {
  public:
   ScopedSCHandle() : handle_(nullptr) {}
   explicit ScopedSCHandle(SC_HANDLE handle) : handle_(handle) {}
+
+  ScopedSCHandle(const ScopedSCHandle &) = delete;
+  ScopedSCHandle &operator=(const ScopedSCHandle &) = delete;
+
+  ScopedSCHandle(ScopedSCHandle &&other) noexcept : handle_(other.handle_) {
+    other.handle_ = nullptr;
+  }
+  ScopedSCHandle &operator=(ScopedSCHandle &&other) noexcept {
+    std::swap(handle_, other.handle_);
+    return *this;
+  }
 
   ~ScopedSCHandle() {
     if (nullptr != handle_) {
@@ -66,12 +82,7 @@ class ScopedSCHandle {
   }
 
   SC_HANDLE get() const { return handle_; }
-
-  void swap(ScopedSCHandle &other) {
-    SC_HANDLE tmp = handle_;
-    handle_ = other.handle_;
-    other.handle_ = tmp;
-  }
+  explicit operator bool() const { return handle_ != nullptr; }
 
  private:
   SC_HANDLE handle_;
@@ -151,13 +162,13 @@ bool DeserializeFromBase64WString(const std::wstring &src,
 // Otherwise, returns false.
 bool GetCacheService(DWORD service_controller_rights, DWORD service_rights,
                      ScopedSCHandle *handle) {
-  if (nullptr == handle) {
+  if (handle == nullptr) {
     return false;
   }
 
   ScopedSCHandle sc_handle(
       ::OpenSCManager(nullptr, nullptr, service_controller_rights));
-  if (nullptr == sc_handle.get()) {
+  if (!sc_handle) {
     LOG(ERROR) << "OpenSCManager failed: " << ::GetLastError();
     return false;
   }
@@ -166,20 +177,19 @@ bool GetCacheService(DWORD service_controller_rights, DWORD service_rights,
       sc_handle.get(), CacheServiceManager::GetServiceName(), service_rights));
   const int error = ::GetLastError();
 
-  if (nullptr == service_handle.get() &&
-      ERROR_SERVICE_DOES_NOT_EXIST != error) {
+  if (!service_handle && ERROR_SERVICE_DOES_NOT_EXIST != error) {
     LOG(ERROR) << "OpenService failed: " << error;
     return false;
   }
 
   // |service_handle| is nullptr if and only if the cache service is not
   // installed.
-  service_handle.swap(*handle);
+  *handle = std::move(service_handle);
   return true;
 }
 
 bool IsServiceRunning(const ScopedSCHandle &service_handle) {
-  if (nullptr == service_handle.get()) {
+  if (!service_handle) {
     return false;
   }
 
@@ -194,7 +204,7 @@ bool IsServiceRunning(const ScopedSCHandle &service_handle) {
 
 bool StartServiceInternal(const ScopedSCHandle &service_handle,
                           const std::vector<std::wstring> &arguments) {
-  if (arguments.size() <= 0) {
+  if (arguments.empty()) {
     if (!::StartService(service_handle.get(), 0, nullptr)) {
       LOG(ERROR) << "StartService failed: " << ::GetLastError();
       return false;
@@ -259,9 +269,7 @@ void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
     required_privileges.push_back(L'\0');
     // |SERVICE_REQUIRED_PRIVILEGES_INFO::pmszRequiredPrivileges| needs to be
     // writable for some reasons.
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[required_privileges.size()]);
-    required_privileges.copy(buffer.get(), required_privileges.size());
-    privileges_info.pmszRequiredPrivileges = buffer.get();
+    privileges_info.pmszRequiredPrivileges = required_privileges.data();
     if (!::ChangeServiceConfig2(service_handle.get(),
                                 SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
                                 &privileges_info)) {
@@ -298,7 +306,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   constexpr DWORD kServiceRights =
       GENERIC_READ | GENERIC_WRITE | SERVICE_START | SERVICE_STOP;
   if (!GetCacheService(kSCRights, kServiceRights, &service_handle) ||
-      (nullptr == service_handle.get())) {
+      !service_handle) {
     return false;
   }
 
@@ -323,7 +331,8 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
     std::vector<std::wstring> arguments(state.arguments_size());
     arguments.resize(state.arguments_size());
     for (size_t i = 0; i < state.arguments_size(); ++i) {
-      if (Util::Utf8ToWide(state.arguments(i), &arguments[i]) <= 0) {
+      arguments[i] = Utf8ToWide(state.arguments(i));
+      if (arguments[i].empty()) {
         return false;
       }
     }
@@ -345,11 +354,11 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
 // memory addresses inside the retrieved byte array.
 bool GetServiceConfig(const ScopedSCHandle &service_handle,
                       std::unique_ptr<char[]> *result) {
-  if (nullptr == result) {
+  if (result == nullptr) {
     return false;
   }
 
-  if (nullptr == service_handle.get()) {
+  if (!service_handle) {
     return false;
   }
 
@@ -384,7 +393,7 @@ bool CacheServiceManager::IsInstalled() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_STATUS,
                        &service_handle) ||
-      (nullptr == service_handle.get())) {
+      !service_handle) {
     return false;
   }
   return true;
@@ -394,7 +403,7 @@ bool CacheServiceManager::IsRunning() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_STATUS,
                        &service_handle) ||
-      (nullptr == service_handle.get())) {
+      !service_handle) {
     return false;
   }
   return IsServiceRunning(service_handle);
@@ -404,7 +413,7 @@ bool CacheServiceManager::IsEnabled() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_CONFIG,
                        &service_handle) ||
-      (nullptr == service_handle.get())) {
+      !service_handle) {
     return false;
   }
 
@@ -428,11 +437,7 @@ const wchar_t *CacheServiceManager::GetServiceName() {
 std::wstring CacheServiceManager::GetUnquotedServicePath() {
   const std::string lock_service_path = FileUtil::JoinPath(
       SystemUtil::GetServerDirectory(), kMozcCacheServiceExeName);
-  std::wstring wlock_service_path;
-  if (Util::Utf8ToWide(lock_service_path, &wlock_service_path) <= 0) {
-    return L"";
-  }
-  return wlock_service_path;
+  return Utf8ToWide(lock_service_path);
 }
 
 std::wstring CacheServiceManager::GetQuotedServicePath() {
@@ -482,7 +487,7 @@ bool CacheServiceManager::RestartService() {
   if (!GetCacheService(SC_MANAGER_CONNECT,
                        SERVICE_START | SERVICE_STOP | SERVICE_QUERY_STATUS,
                        &service_handle) ||
-      (nullptr == service_handle.get())) {
+      !service_handle) {
     return false;
   }
 
@@ -582,7 +587,7 @@ bool CacheServiceManager::EnsureServiceStopped() {
     return false;
   }
 
-  if (nullptr == service_handle.get()) {
+  if (!service_handle) {
     return true;
   }
 

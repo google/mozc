@@ -81,8 +81,8 @@ mozc_cc_library(
         "//base:file_util",
         "//base:logging",
         "//base:system_util",
-        "//base:util",
         "//base/protobuf",
+        "//base/win32:wide_char",
         "//bazel/win32:crypt32",
     ],
 )
