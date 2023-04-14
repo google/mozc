@@ -37,7 +37,6 @@
 #include <map>
 #include <memory>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,6 +53,7 @@
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "absl/container/btree_map.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
@@ -212,6 +212,17 @@ bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
   return false;
 }
 
+bool HasHeterophones(
+    const SystemDictionaryBuilder::KeyInfo &key_info,
+    const absl::flat_hash_set<absl::string_view> &heteronym_values) {
+  for (const TokenInfo &token_info : key_info.tokens) {
+    if (heteronym_values.contains(token_info.token->value)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace
 
 SystemDictionaryBuilder::KeyInfoList SystemDictionaryBuilder::ReadTokens(
@@ -335,16 +346,51 @@ void SystemDictionaryBuilder::SortTokenInfo(KeyInfoList *key_info_list) const {
 }
 
 void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
+  // Values that have multiple keys.
+  absl::flat_hash_set<absl::string_view> heterophone_values;
+  {
+    // value → reading
+    absl::flat_hash_map<absl::string_view, absl::string_view> seen_reading_map;
+    for (const KeyInfo &key_info : *key_info_list) {
+      for (const TokenInfo &token_info : key_info.tokens) {
+        const Token *token = token_info.token;
+        if (heterophone_values.contains(token->value)) {
+          continue;
+        }
+        auto it = seen_reading_map.find(token->value);
+        if (it == seen_reading_map.end()) {
+          seen_reading_map[token->value] = token->key;
+          continue;
+        }
+        if (it->second == token->key) {
+          continue;
+        }
+        heterophone_values.insert(token->value);
+      }
+    }
+  }
+
+  const int min_key_len =
+      absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding);
   for (KeyInfo &key_info : *key_info_list) {
+    if (Util::CharsLen(key_info.key) < min_key_len) {
+      // Do not use small cost encoding for short keys.
+      continue;
+    }
     if (HasHomonymsInSamePos(key_info)) {
       continue;
     }
+    if (HasHeterophones(key_info, heterophone_values)) {
+      // We want to keep the cost order for LookupReverse().
+      continue;
+    }
+
     for (TokenInfo &token_info : key_info.tokens) {
-      const int key_len = Util::CharsLen(token_info.token->key);
-      if (key_len >=
-          absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding)) {
-        token_info.cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
+      if (token_info.token->cost < 0x100) {
+        // Small cost encoding ignores lower 8 bits.
+        continue;
       }
+      token_info.cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
     }
   }
 }
