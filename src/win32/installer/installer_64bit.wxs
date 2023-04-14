@@ -96,9 +96,17 @@
         InstallerVersion='405' InstallPrivileges='elevated'
         Compressed='yes' Platform='x64' />
 
+    <!--
+                     VersionNT
+       Windows 8.0      602
+       Windows 8.1      603
+       Windows 10       603
+       Windows 11       603
+       https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/versionnt-value-for-windows-10-server
+    -->
     <Condition
-        Message='Google 日本語入力をインストールするには Windows 8 以降にアップグレードする必要があります。'>
-        VersionNT &gt;= 602
+        Message='Google 日本語入力をインストールするには Windows 10 以降にアップグレードする必要があります。'>
+        VersionNT &gt;= 603
     </Condition>
 
     <!-- Check if the user have the administrative privileges. -->

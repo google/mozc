@@ -151,7 +151,7 @@
             'EnableUAC': 'true',
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
-            'MinimumRequiredVersion': '6.02',
+            'MinimumRequiredVersion': '10.0',
           },
         },
         'msvs_configuration_attributes': {
@@ -317,7 +317,7 @@
       '_STL_MSVC',
       '_UNICODE',
       '_WIN32',
-      '_WIN32_WINNT=0x0601',
+      '_WIN32_WINNT=0x0A00',
       '_WINDOWS',
       '_WTL_NO_WTYPES',  # TODO(yuryu): Remove after upgrading to WTL 10.
     ],
