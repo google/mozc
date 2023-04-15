@@ -157,6 +157,23 @@ class HResultOr {
   constexpr T* operator->() ABSL_ATTRIBUTE_LIFETIME_BOUND {
     return value_.operator->();
   }
+  // value_or() returns a value unlike value(). To avoid copy, you can write as:
+  //
+  // T value = std::move(hresultor).value_or(def);
+  template <typename U>
+  constexpr T value_or(U&& default_value) const& {
+    if (ok()) {
+      return *value_;
+    }
+    return std::forward<U>(default_value);
+  }
+  template <typename U>
+  constexpr T value_or(U&& default_value) && {
+    if (ok()) {
+      return *std::move(value_);
+    }
+    return std::forward<U>(default_value);
+  }
 
   template <typename U>
   friend void swap(HResultOr& a,

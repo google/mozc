@@ -130,9 +130,20 @@ TEST(HResultOr, HResultOk) {
   EXPECT_EQ(vstr, "hello");
   EXPECT_TRUE(vstr.ok());
 
+  // Using unique_ptr to quarantee copy-free.
   HResultOr<std::unique_ptr<int>> vptr = HResultOk(std::make_unique<int>(-1));
   EXPECT_TRUE(*vptr);
   EXPECT_EQ(**vptr, -1);
+}
+
+TEST(HResultOr, ValueOr) {
+  HResultOr<int> err(E_FAIL);
+  EXPECT_EQ(err.value_or(42), 42);
+  EXPECT_EQ(std::move(err).value_or(42), 42);
+
+  // Using unique_ptr to quarantee copy-free.
+  HResultOr<std::unique_ptr<int>> vptr = HResultOk(std::make_unique<int>(-1));
+  EXPECT_EQ(*std::move(vptr).value_or(nullptr), -1);
 }
 
 }  // namespace
