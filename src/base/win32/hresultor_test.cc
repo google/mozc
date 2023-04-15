@@ -43,12 +43,24 @@
 namespace mozc::win32 {
 namespace {
 
-using testing::IsEmpty;
+TEST(HResultOr, HResult) {
+  constexpr HResult hr(E_FAIL);
+  EXPECT_EQ(hr, E_FAIL);
+  EXPECT_EQ(hr.hr(), E_FAIL);
+  EXPECT_FALSE(hr.ok());
+
+  HResult hr1(S_OK), hr2(E_UNEXPECTED);
+  EXPECT_EQ(hr1.hr(), S_OK);
+  EXPECT_TRUE(hr1.ok());
+  EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
+  EXPECT_FALSE(hr2.ok());
+
+  std::swap(hr1, hr2);
+  EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
+  EXPECT_EQ(hr2.hr(), S_OK);
+}
 
 TEST(HResultOr, Int) {
-  constexpr HResultOr<int> v_default;
-  EXPECT_TRUE(v_default.ok());
-
   HResultOr<int> v(std::in_place, 42);
   EXPECT_TRUE(v.ok());
   EXPECT_EQ(v.value(), 42);
@@ -61,16 +73,15 @@ TEST(HResultOr, Int) {
   EXPECT_FALSE(error.ok());
   EXPECT_EQ(error.hr(), E_FAIL);
 
-  constexpr HResultOr<int> c(123);
-  EXPECT_EQ(c.hr(), 123);
+  EXPECT_EQ(v = HResult(E_FAIL), HResult(E_FAIL));
+  EXPECT_EQ(v.hr(), E_FAIL);
+  EXPECT_EQ(v = HResult(E_UNEXPECTED), HResult(E_UNEXPECTED));
+  EXPECT_EQ(v.hr(), E_UNEXPECTED);
+  EXPECT_EQ(v = HResult(S_OK), HResult(S_OK));
+  EXPECT_TRUE(v.ok());
 }
 
 TEST(HResultOr, String) {
-  const HResultOr<std::string> v_default;
-  EXPECT_THAT(*v_default, IsEmpty());
-  EXPECT_TRUE(v_default->empty());
-  EXPECT_THAT(v_default.value(), IsEmpty());
-
   constexpr absl::string_view kTestStr = "hello";
   HResultOr<std::string> v(kTestStr);
   EXPECT_TRUE(v.ok());
@@ -144,6 +155,40 @@ TEST(HResultOr, ValueOr) {
   // Using unique_ptr to quarantee copy-free.
   HResultOr<std::unique_ptr<int>> vptr = HResultOk(std::make_unique<int>(-1));
   EXPECT_EQ(*std::move(vptr).value_or(nullptr), -1);
+}
+
+TEST(HResultOr, AssignOrReturnHResult) {
+  auto f = []() -> HRESULT {
+    ASSIGN_OR_RETURN_HRESULT(int i, HResultOr<int>(std::in_place, 42));
+    EXPECT_EQ(i, 42);
+    ASSIGN_OR_RETURN_HRESULT(i, HResultOr<int>(E_FAIL));
+    ADD_FAILURE() << "should've returned at the previous line.";
+    return S_FALSE;
+  };
+  EXPECT_EQ(f(), E_FAIL);
+
+  auto g = []() -> HResultOr<std::unique_ptr<int>> {
+    ASSIGN_OR_RETURN_HRESULT(auto p, HResultOk(std::make_unique<int>(42)));
+    EXPECT_EQ(*p, 42);
+    ASSIGN_OR_RETURN_HRESULT(p, HResultOr<std::unique_ptr<int>>(E_FAIL));
+    return HResult(S_FALSE);
+  };
+  EXPECT_EQ(g().hr(), E_FAIL);
+}
+
+TEST(HResultOr, ReturnIfErrorHResult) {
+  auto f = []() -> HRESULT {
+    RETURN_IF_FAILED_HRESULT(S_OK);
+    RETURN_IF_FAILED_HRESULT(E_FAIL);
+    return S_FALSE;
+  };
+  EXPECT_EQ(f(), E_FAIL);
+
+  auto g = []() -> HResultOr<int> {
+    RETURN_IF_FAILED_HRESULT(E_FAIL);
+    return HResultOk(42);
+  };
+  EXPECT_EQ(g(), HResult(E_FAIL));
 }
 
 }  // namespace

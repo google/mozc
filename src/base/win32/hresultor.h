@@ -39,11 +39,40 @@
 
 #include "base/logging.h"
 #include "absl/base/attributes.h"
+#include "absl/base/optimization.h"
 
 namespace mozc::win32 {
 
 template <class T>
 class HResultOr;
+
+// HResult is a conversion class from HRESULT to HResultOr<T>.
+// Constructing HResultOr<T> for error codes directly requires the type name for
+// T every time, so you can instead write HResult(E_FAIL) and it gets implicitly
+// converted to HResultOr<T>.
+class HResult {
+ public:
+  HResult() = delete;
+  constexpr explicit HResult(const HRESULT hr) noexcept : hr_(hr) {}
+
+  // Implicitly converts to HRESULT. This implicit conversion is necessary for
+  // the RETURN_IF_FAILED_HRESULT macro to work both HRESULT and HResultOr<T>
+  // return types.
+  constexpr operator HRESULT() const noexcept  // NOLINT(runtime/explicit)
+  {
+    return hr_;
+  }
+
+  constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
+  constexpr HRESULT hr() const noexcept { return hr_; }
+
+  friend constexpr void swap(HResult& a, HResult& b) noexcept {
+    std::swap(a.hr_, b.hr_);
+  }
+
+ private:
+  HRESULT hr_;
+};
 
 // Helper function to construct HResultOr when T is convertible to HRESULT.
 // e.g.
@@ -69,9 +98,8 @@ class HResultOr {
   using value_type = T;
   using error_type = HRESULT;
 
-  // Default constructor. HResultOr is initialized with S_OK and value is set to
-  // T().
-  constexpr HResultOr() : HResultOr(T()) {}
+  // Delete the default constructor.
+  HResultOr() = delete;
 
   // Constructible from HRESULT. If hr is successful, value is set to T().
   constexpr explicit HResultOr(const HRESULT hr) : hr_(hr) {
@@ -79,6 +107,21 @@ class HResultOr {
       value_ = T();
     }
   }
+
+  // Disallow implicit conversions from non-HRESULT types to HRESULT as it's
+  // confusing.
+  template <typename U,
+            typename = std::enable_if_t<std::conjunction_v<
+                std::negation<std::is_same<std::decay_t<U>, HResultOr>>,
+                std::negation<std::is_same<std::decay_t<U>, HResult>>,
+                std::negation<std::is_same<std::decay_t<U>, HRESULT>>,
+                std::is_convertible<std::decay_t<U>, HRESULT>>>>
+  HResultOr(U) = delete;
+
+  // Implicit constructor to construct HRESULT from HResult.
+  constexpr HResultOr(const HResult hr)  // NOLINT(runtime/explicit)
+      noexcept
+      : HResultOr(hr.hr()) {}
 
   // Constructible from T. This constructor is disabled if T is convertible to
   // U. Use the HResultOk function or the in_place overload to construct HResult
@@ -107,6 +150,20 @@ class HResultOr {
                 std::is_constructible<T, U>, std::is_assignable<T&, U>>>>
   constexpr HResultOr& operator=(U&& value) {
     Assign(std::forward<U>(value));
+    return *this;
+  }
+
+  // Assignable from HResult. If HResult.ok() is true, value is default
+  // initialized.
+  constexpr HResultOr& operator=(const HResult hr) {
+    if (ok() != hr.ok()) {
+      if (hr.ok()) {
+        value_ = T();
+      } else {
+        value_.reset();
+      }
+    }
+    hr_ = hr.hr();
     return *this;
   }
 
@@ -205,6 +262,7 @@ class HResultOr {
   std::optional<T> value_;
 };
 
+// Comparison operators between HResult.
 template <typename T, typename U>
 constexpr bool operator==(const HResultOr<T>& a, const HResultOr<U>& b) {
   if (a.ok() && b.ok()) {
@@ -218,6 +276,7 @@ constexpr bool operator!=(const HResultOr<T>& a, const HResultOr<U>& b) {
   return !(a == b);
 }
 
+// Comparison operators between HResultOr<T> and value.
 template <typename T, typename U>
 constexpr bool operator==(const HResultOr<T>& a, const U& b) {
   if (!a.ok()) {
@@ -241,10 +300,65 @@ constexpr bool operator!=(const U& a, const HResultOr<T>& b) {
   return !(b == a);
 }
 
+// Comparison operators between HResultOr<T> and HResult.
+template <typename T>
+constexpr bool operator==(const HResultOr<T>& a, const HResult b) {
+  return a.hr() == b.hr();
+}
+
+template <typename T>
+constexpr bool operator==(const HResult a, const HResultOr<T>& b) {
+  return b == a;
+}
+
+template <typename T>
+constexpr bool operator!=(const HResultOr<T>& a, const HResult b) {
+  return !(a == b);
+}
+
+template <typename T>
+constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
+  return b != a;
+}
+
 template <typename U, typename T = std::decay_t<U>>
 constexpr HResultOr<T> HResultOk(U&& value) {
   return HResultOr<T>(S_OK, std::forward<U>(value));
 }
+
+#define HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y) x##y
+#define HRESULTOR_MACRO_IMPL_CONCAT_(x, y) \
+  HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y)
+
+#define ASSIGN_OR_RETURN_HRESULT_IMPL_(tmp, lhs, expr) \
+  auto tmp = expr;                                     \
+  if (ABSL_PREDICT_FALSE(!tmp.ok())) {                 \
+    return HResult(tmp.hr());                          \
+  }                                                    \
+  lhs = *std::move(tmp)
+
+// Helper macros for HResultOr.
+// ASSIGN_OR_RETURN_HRESULT Assigns expr to lhs if ok(), otherwise returns
+// HRESULT and exits the function.
+//
+// ASSIGN_OR_RETURN_HRESULT(std::wstring str, foo->Bar());
+// ASSIGN_OR_RETURN_HRESULT(auto i, ComQueryHR<IInterface>(p));
+//
+// Limitation: This macro doesn't work if lhs has a "," inside.
+#define ASSIGN_OR_RETURN_HRESULT(lhs, ...)                                    \
+  ASSIGN_OR_RETURN_HRESULT_IMPL_(                                             \
+      HRESULTOR_MACRO_IMPL_CONCAT_(hresultor_assign_or_return_tmp, __LINE__), \
+      lhs, (__VA_ARGS__))
+
+// RETURN_IF_FAILED_HRESULT Runs the statement and returns from the current
+// function if FAILED(statement) is true.
+#define RETURN_IF_FAILED_HRESULT(...)   \
+  do {                                  \
+    const HResult hr(__VA_ARGS__);      \
+    if (ABSL_PREDICT_FALSE(!hr.ok())) { \
+      return hr;                        \
+    }                                   \
+  } while (0)
 
 }  // namespace mozc::win32
 
