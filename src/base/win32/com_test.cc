@@ -126,7 +126,7 @@ TEST_F(ComTest, ComQuery) {
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
 
-  EXPECT_FALSE(ComQuery<IShellView>(mock2));
+  EXPECT_EQ(ComQueryHR<IShellView>(mock2).hr(), E_NOINTERFACE);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
 }
 

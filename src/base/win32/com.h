@@ -36,6 +36,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "base/win32/hresultor.h"
 #include "absl/base/casts.h"
 
 namespace mozc::win32 {
@@ -71,21 +72,30 @@ Microsoft::WRL::ComPtr<Interface> ComCreateInstance() {
   return ComCreateInstance<Interface>(__uuidof(T));
 }
 
-// Returns the result of QueryInterface as ComPtr<T>.
+// Returns the result of QueryInterface as HResultOr<ComPtr<T>>.
 template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(U&& source) {
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U&& source) {
+  using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
+
   auto ptr = com_internal::ComRawPtr(std::forward<U>(source));
   // If source is convertible to T, casting is faster than calling
   // QueryInterface.
   if constexpr (std::is_convertible_v<decltype(ptr), T*>) {
     // ComPtr will call AddRef here.
-    return absl::implicit_cast<T*>(ptr);
+    return ReturnType(absl::implicit_cast<T*>(ptr));
   }
   Microsoft::WRL::ComPtr<T> result;
-  if (SUCCEEDED(ptr->QueryInterface(IID_PPV_ARGS(&result)))) {
-    return result;
+  const HRESULT hr = ptr->QueryInterface(IID_PPV_ARGS(&result));
+  if (SUCCEEDED(hr)) {
+    return ReturnType(std::move(result));
   }
-  return nullptr;
+  return ReturnType(hr);
+}
+
+// Returns the result of QueryInterface as ComPtr<T>.
+template <typename T, typename U>
+Microsoft::WRL::ComPtr<T> ComQuery(U&& source) {
+  return std::move(ComQueryHR<T>(std::forward<U>(source))).value_or(nullptr);
 }
 
 // Similar to ComQuery but returns nullptr if source is nullptr.
