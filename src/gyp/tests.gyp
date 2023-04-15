@@ -58,6 +58,7 @@
       'conditions': [
         ['target_platform=="Windows"', {
           'dependencies': [
+            '../base/win32/base_win32.gyp:base_win32_all_test',
             '../win32/base/win32_base.gyp:win32_base_all_test',
             '../win32/tip/tip.gyp:tip_all_test',
           ],

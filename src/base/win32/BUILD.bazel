@@ -251,3 +251,23 @@ mozc_cc_test(
         "@com_google_absl//absl/strings",
     ],
 )
+
+mozc_cc_library(
+    name = "com",
+    hdrs = ["com.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["@com_google_absl//absl/base"],
+)
+
+mozc_cc_test(
+    name = "com_test",
+    srcs = ["com_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":com",
+        ":scoped_com",
+        "//testing:gunit_main",
+    ],
+)
