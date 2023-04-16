@@ -39,17 +39,17 @@
 #include <atlmisc.h>
 #include <atlwin.h>
 #include <msctf.h>
+#include <wrl/client.h>
 // clang-format on
 
-#include <unordered_map>
-
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_immersive.h"
 #include "win32/tip/tip_ui_element_manager.h"
+#include "win32/tip/tip_ui_handler.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
@@ -57,9 +57,8 @@ namespace tsf {
 
 namespace {
 
-using ATL::CComPtr;
-using ATL::CComQIPtr;
 using ATL::CWindow;
+using Microsoft::WRL::ComPtr;
 
 using ::mozc::commands::Output;
 using ::mozc::commands::Preedit;
@@ -77,14 +76,17 @@ volatile bool g_module_unloaded = false;
 // value, the current thread is initialized.
 volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 
-using UiElementMap = std::unordered_map<ITfUIElement *, HWND>;
+using UiElementMap = absl::flat_hash_map<ITfUIElement *, HWND>;
 
 class ThreadLocalInfo {
  public:
-  ThreadLocalInfo() {}
+  ThreadLocalInfo() = default;
   ThreadLocalInfo(const ThreadLocalInfo &) = delete;
   ThreadLocalInfo &operator=(const ThreadLocalInfo &) = delete;
-  UiElementMap *ui_element_map() { return &ui_element_map_; }
+  constexpr UiElementMap &ui_element_map() { return ui_element_map_; }
+  constexpr const UiElementMap &ui_element_map() const {
+    return ui_element_map_;
+  }
 
  private:
   UiElementMap ui_element_map_;
@@ -139,17 +141,17 @@ void UpdateUI(TipTextService *text_service, ITfContext *context) {
     return;
   }
   private_context->GetUiElementManager()->OnUpdate(text_service, context);
-  const UiElementMap &map = *info->ui_element_map();
+  const UiElementMap &map = info->ui_element_map();
 
-  const TipUiElementManager::UIElementFlags kUiFlags[] = {
+  constexpr TipUiElementManager::UIElementFlags kUiFlags[] = {
       TipUiElementManager::kSuggestWindow,
       TipUiElementManager::kCandidateWindow,
   };
-  for (size_t i = 0; i < std::size(kUiFlags); ++i) {
-    const CComPtr<ITfUIElement> ui_element =
-        private_context->GetUiElementManager()->GetElement(kUiFlags[i]);
+  for (const auto &flag : kUiFlags) {
+    const ComPtr<ITfUIElement> ui_element =
+        private_context->GetUiElementManager()->GetElement(flag);
     if (ui_element) {
-      const UiElementMap::const_iterator it = map.find(ui_element);
+      const UiElementMap::const_iterator it = map.find(ui_element.Get());
       if (it == map.end()) {
         continue;
       }
@@ -160,9 +162,9 @@ void UpdateUI(TipTextService *text_service, ITfContext *context) {
 
 }  // namespace
 
-ITfUIElement *TipUiHandlerImmersive::CreateUI(TipUiHandler::UiType type,
-                                              TipTextService *text_service,
-                                              ITfContext *context) {
+ComPtr<ITfUIElement> TipUiHandlerImmersive::CreateUI(
+    TipUiHandler::UiType type, const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context) {
   switch (type) {
     case TipUiHandler::kSuggestWindow:
     case TipUiHandler::kCandidateWindow: {
@@ -171,34 +173,33 @@ ITfUIElement *TipUiHandlerImmersive::CreateUI(TipUiHandler::UiType type,
         return nullptr;
       }
       HWND window_handle = nullptr;
-      CComPtr<ITfUIElement> element(
+      ComPtr<ITfUIElement> element(
           TipUiElementImmersive::New(text_service, context, &window_handle));
-      if (element == nullptr) {
+      if (!element) {
         return nullptr;
       }
       if (window_handle == nullptr) {
         return nullptr;
       }
-      (*info->ui_element_map())[element] = window_handle;
-      // pass the ownership to the caller.
-      return element.Detach();
+      info->ui_element_map()[element.Get()] = window_handle;
+      return element;
     }
     default:
       return nullptr;
   }
 }
 
-void TipUiHandlerImmersive::OnDestroyElement(ITfUIElement *element) {
+void TipUiHandlerImmersive::OnDestroyElement(
+    const ComPtr<ITfUIElement> &element) {
   ThreadLocalInfo *info = GetThreadLocalInfo();
   if (info == nullptr) {
     return;
   }
-  UiElementMap::iterator it = info->ui_element_map()->find(element);
-  if (it == info->ui_element_map()->end()) {
+  auto handle = info->ui_element_map().extract(element.Get());
+  if (handle.empty()) {
     return;
   }
-  ::DestroyWindow(it->second);
-  info->ui_element_map()->erase(it);
+  ::DestroyWindow(handle.mapped());
 }
 
 void TipUiHandlerImmersive::OnActivate() {
@@ -217,7 +218,7 @@ void TipUiHandlerImmersive::OnFocusChange(
     return;
   }
 
-  CComPtr<ITfContext> context;
+  ComPtr<ITfContext> context;
   if (FAILED(focused_document_manager->GetBase(&context))) {
     return;
   }
@@ -225,7 +226,7 @@ void TipUiHandlerImmersive::OnFocusChange(
     return;
   }
 
-  UpdateUI(text_service, context);
+  UpdateUI(text_service, context.Get());
 }
 
 bool TipUiHandlerImmersive::Update(TipTextService *text_service,

@@ -30,18 +30,15 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_ELEMENT_CONVENTIONAL_H_
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_CONVENTIONAL_H_
 
+#include <msctf.h>
 #include <windows.h>
+#include <wrl/client.h>
 
-#include "base/port.h"
-
-struct ITfContext;
-struct ITfUIElement;
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipUiElementConventional {
  public:
@@ -68,10 +65,10 @@ class TipUiElementConventional {
   TipUiElementConventional &operator=(const TipUiElementConventional &) =
       delete;
 
-  // Returns a ITfUIElement object based of the given parameters. Caller must
-  // maintain the reference count of the object returned.
-  static ITfUIElement *New(UIType type, TipTextService *text_service,
-                           ITfContext *contxt);
+  // Returns a ITfUIElement object based of the given parameters.
+  static Microsoft::WRL::ComPtr<ITfUIElement> New(
+      UIType type, const Microsoft::WRL::ComPtr<TipTextService> &text_service,
+      const Microsoft::WRL::ComPtr<ITfContext> &context);
 };
 
 }  // namespace tsf

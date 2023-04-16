@@ -161,15 +161,10 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":tip_dll_module",
-        ":tip_private_context_h",
         ":tip_ref_count",
         ":tip_text_service",
         ":tip_ui_element_delegate",
         "//base:logging",
-        "//base:port",
-        "//base:util",
-        "//protocol:commands_cc_proto",
     ],
 )
 
@@ -190,7 +185,6 @@ mozc_cc_library(
         ":tip_text_service",
         ":tip_ui_element_delegate",
         ":tip_ui_renderer_immersive",
-        "//base:port",
         "//base:util",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
@@ -199,6 +193,7 @@ mozc_cc_library(
         "//renderer/win32:text_renderer",
         "//renderer/win32:win32_renderer_util",
         "//third_party/wtl",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 
@@ -289,10 +284,12 @@ mozc_cc_library(
         ":tip_thread_context",
         ":tip_ui_handler",
         "//base:port",
+        "//base/win32:com",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//win32/base:input_state",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 
@@ -434,13 +431,11 @@ mozc_cc_library(
         ":tip_resource",
         ":tip_text_service",
         "//base:logging",
-        "//base:port",
         "//base:util",
+        "//base/win32:com",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
-        "//win32/base:conversion_mode_util",
-        "//win32/base:input_state",
     ],
 )
 
@@ -503,6 +498,7 @@ mozc_cc_library(
     hdrs = ["tip_ui_handler.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    deps = [":tip_text_service"],
 )
 
 mozc_cc_library(
@@ -535,18 +531,16 @@ mozc_cc_library(
         ":tip_ui_element_manager",
         ":tip_ui_handler",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
         "//base:util",
+        "//base/win32:com",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer/win32:win32_renderer_client",
         "//third_party/wtl",
-        "//win32/base:conversion_mode_util",
-        "//win32/base:indicator_visibility_tracker",
         "//win32/base:input_state",
-        "//win32/base:migration_util",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 

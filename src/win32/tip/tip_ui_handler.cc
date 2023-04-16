@@ -108,8 +108,9 @@ bool UpdateInternal(TipTextService *text_service, ITfContext *context,
 
 }  // namespace
 
-ITfUIElement *TipUiHandler::CreateUI(UiType type, TipTextService *text_service,
-                                     ITfContext *context) {
+ComPtr<ITfUIElement> TipUiHandler::CreateUI(
+    UiType type, const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context) {
   if (text_service->IsImmersiveUI()) {
     return TipUiHandlerImmersive::CreateUI(type, text_service, context);
   } else {
@@ -117,8 +118,8 @@ ITfUIElement *TipUiHandler::CreateUI(UiType type, TipTextService *text_service,
   }
 }
 
-void TipUiHandler::OnDestroyElement(TipTextService *text_service,
-                                    ITfUIElement *element) {
+void TipUiHandler::OnDestroyElement(const ComPtr<TipTextService> &text_service,
+                                    const ComPtr<ITfUIElement> &element) {
   if (text_service->IsImmersiveUI()) {
     TipUiHandlerImmersive::OnDestroyElement(element);
   } else {

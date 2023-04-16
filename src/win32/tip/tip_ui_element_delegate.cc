@@ -37,15 +37,17 @@
 #include <msctf.h>
 #include <wrl/client.h>
 
+#include <cstddef>
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "base/win32/com.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
-#include "win32/base/conversion_mode_util.h"
-#include "win32/base/input_state.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_private_context.h"
@@ -62,11 +64,10 @@ using ATL::CComBSTR;
 using ATL::CComVariant;
 using ATL::CStringW;
 using Microsoft::WRL::ComPtr;
-using ::mozc::commands::CandidateList;
-using mozc::commands::CompositionMode;
-using ::mozc::commands::Output;
-using ::mozc::commands::Status;
-typedef mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
+using mozc::commands::CandidateList;
+using mozc::commands::Output;
+using mozc::commands::Status;
+using IndicatorInfo = mozc::commands::RendererCommand_IndicatorInfo;
 
 constexpr size_t kPageSize = 9;
 
@@ -74,7 +75,7 @@ constexpr size_t kPageSize = 9;
 // candidate window is visible or not.
 // TODO(yukawa): Make sure if it is safe to use this GUID.
 // {B7A578D2-9332-438A-A403-4057D05C3958}
-const GUID kGuidCUASCandidateMessageCompartment = {
+constexpr GUID kGuidCUASCandidateMessageCompartment = {
     0xb7a578d2,
     0x9332,
     0x438a,
@@ -83,28 +84,28 @@ const GUID kGuidCUASCandidateMessageCompartment = {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 // {8F51B5E5-5CF9-45D8-83B3-53CE203354C2}
-const GUID KGuidNonobservableSuggestWindow = {
+constexpr GUID KGuidNonobservableSuggestWindow = {
     0x8f51b5e5,
     0x5cf9,
     0x45d8,
     {0x83, 0xb3, 0x53, 0xce, 0x20, 0x33, 0x54, 0xc2}};
 
 // {3D53878A-8596-4689-B50D-3338D52B2EFB}
-const GUID KGuidObservableSuggestWindow = {
+constexpr GUID KGuidObservableSuggestWindow = {
     0x3d53878a,
     0x8596,
     0x4689,
     {0xb5, 0xd, 0x33, 0x38, 0xd5, 0x2b, 0x2e, 0xfb}};
 
 // {FED897F2-940C-40F1-B149-A931E03FB821}
-const GUID KGuidCandidateWindow = {
+constexpr GUID KGuidCandidateWindow = {
     0xfed897f2,
     0x940c,
     0x40f1,
     {0xb1, 0x49, 0xa9, 0x31, 0xe0, 0x3f, 0xb8, 0x21}};
 
 // {170F6CC4-913D-4FF9-9DEA-432D08DCB0FF}
-const GUID KGuidIndicatorWindow = {
+constexpr GUID KGuidIndicatorWindow = {
     0x170f6cc4,
     0x913d,
     0x4ff9,
@@ -113,25 +114,25 @@ const GUID KGuidIndicatorWindow = {
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {AD2489FB-D4C4-4632-85A9-7F9F917AB0FD}
-const GUID KGuidNonobservableSuggestWindow = {
+constexpr GUID KGuidNonobservableSuggestWindow = {
     0xad2489fb,
     0xd4c4,
     0x4632,
     {0x85, 0xa9, 0x7f, 0x9f, 0x91, 0x7a, 0xb0, 0xfd}};
 
 // {0E2D447F-9B4A-490C-9C4D-61A6A707BE26}
-const GUID KGuidObservableSuggestWindow = {
+constexpr GUID KGuidObservableSuggestWindow = {
     0xe2d447f, 0x9b4a, 0x490c, {0x9c, 0x4d, 0x61, 0xa6, 0xa7, 0x7, 0xbe, 0x26}};
 
 // {ED70ECDE-C8AA-4170-96CC-0090DEA8AEC2}
-const GUID KGuidCandidateWindow = {
+constexpr GUID KGuidCandidateWindow = {
     0xed70ecde,
     0xc8aa,
     0x4170,
     {0x96, 0xcc, 0x0, 0x90, 0xde, 0xa8, 0xae, 0xc2}};
 
 // {0090BF80-5F33-41B1-843C-E3EC79ED25F9}
-const GUID KGuidIndicatorWindow = {
+constexpr GUID KGuidIndicatorWindow = {
     0x90bf80, 0x5f33, 0x41b1, {0x84, 0x3c, 0xe3, 0xec, 0x79, 0xed, 0x25, 0xf9}};
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
@@ -150,13 +151,15 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   TipUiElementDelegateImpl(const TipUiElementDelegateImpl &) = delete;
   TipUiElementDelegateImpl &operator=(const TipUiElementDelegateImpl &) =
       delete;
-  TipUiElementDelegateImpl(TipTextService *text_service, ITfContext *context,
+  TipUiElementDelegateImpl(ComPtr<TipTextService> text_service,
+                           ComPtr<ITfContext> context,
                            TipUiElementDelegateFactory::ElementType type)
-      : text_service_(text_service), context_(context), type_(type) {}
+      : text_service_(std::move(text_service)),
+        context_(std::move(context)),
+        type_(type) {}
+  ~TipUiElementDelegateImpl() override = default;
 
  private:
-  ~TipUiElementDelegateImpl() = default;
-
   virtual bool IsObservable() const {
     switch (type_) {
       case TipUiElementDelegateFactory::kConventionalObservableSuggestWindow:
@@ -232,8 +235,8 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     const bool old_shown = shown_;
     shown_ = !!show;
     if (old_shown != shown_ && IsObservable()) {
-      ComPtr<ITfCompartmentMgr> compartment_mgr;
-      if (SUCCEEDED(context_.As(&compartment_mgr))) {
+      auto compartment_mgr = ComQuery<ITfCompartmentMgr>(context_);
+      if (compartment_mgr) {
         // Update a hidden compartment to generate
         // IMN_OPENCANDIDATE/IMN_CLOSECANDIDATE notifications for the
         // application compatibility.
@@ -590,9 +593,11 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
 
 }  // namespace
 
-TipUiElementDelegate *TipUiElementDelegateFactory::Create(
-    TipTextService *text_service, ITfContext *context, ElementType type) {
-  return new TipUiElementDelegateImpl(text_service, context, type);
+std::unique_ptr<TipUiElementDelegate> TipUiElementDelegateFactory::Create(
+    const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context, ElementType type) {
+  return std::make_unique<TipUiElementDelegateImpl>(text_service, context,
+                                                    type);
 }
 
 }  // namespace tsf

@@ -30,12 +30,14 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
 
-#include <windows.h>
 #include <msctf.h>
+#include <windows.h>
+#include <wrl/client.h>
 
 #include <memory>
 
 #include "base/port.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
@@ -51,20 +53,29 @@ class TipUiElementManager {
     kCandidateWindow = 1 << 1,
     kIndicatorWindow = 1 << 2,
   };
-  TipUiElementManager();
+  TipUiElementManager() = default;
   TipUiElementManager(const TipUiElementManager &) = delete;
   TipUiElementManager &operator=(const TipUiElementManager &) = delete;
-  ~TipUiElementManager();
+  ~TipUiElementManager() = default;
 
   ITfUIElement *GetElement(UIElementFlags element) const;
   DWORD GetElementId(UIElementFlags element) const;
-  HRESULT OnUpdate(TipTextService *text_service, ITfContext *context);
-  bool IsVisible(ITfUIElementMgr *ui_element_manager,
-                 UIElementFlags element) const;
+  HRESULT OnUpdate(const Microsoft::WRL::ComPtr<TipTextService> &text_service,
+                   const Microsoft::WRL::ComPtr<ITfContext> &context);
+  bool IsVisible(
+      const Microsoft::WRL::ComPtr<ITfUIElementMgr> &ui_element_manager,
+      UIElementFlags element) const;
 
  private:
-  class UiElementMap;
-  std::unique_ptr<UiElementMap> ui_element_map_;
+  struct UIElementInfo {
+    UIElementInfo() : id(TF_INVALID_UIELEMENTID) {}
+    DWORD id;
+    Microsoft::WRL::ComPtr<ITfUIElement> element;
+  };
+
+  using UiElementMap =
+      absl::flat_hash_map<TipUiElementManager::UIElementFlags, UIElementInfo>;
+  UiElementMap ui_element_map_;
 };
 
 }  // namespace tsf

@@ -35,15 +35,11 @@
 #include <atlcom.h>
 #include <atlstr.h>
 #include <msctf.h>
+#include <wrl/client.h>
 
 #include <memory>
-#include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
-#include "protocol/commands.pb.h"
-#include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
@@ -54,23 +50,20 @@ namespace tsf {
 
 namespace {
 
-using ATL::CComBSTR;
-using ATL::CComPtr;
-using ATL::CComQIPtr;
-using ATL::CComVariant;
-using ATL::CStringW;
+using Microsoft::WRL::ComPtr;
 
 class TipCandidateListImpl final : public ITfCandidateListUIElementBehavior {
  public:
   TipCandidateListImpl(TipUiElementConventional::UIType type,
-                       TipTextService *text_service, ITfContext *context)
+                       const ComPtr<TipTextService> &text_service,
+                       const ComPtr<ITfContext> &context)
       : delegate_(TipUiElementDelegateFactory::Create(text_service, context,
                                                       ToDelegateType(type))) {}
   TipCandidateListImpl(const TipCandidateListImpl &) = delete;
   TipCandidateListImpl &operator=(const TipCandidateListImpl &) = delete;
 
  private:
-  ~TipCandidateListImpl() {}
+  ~TipCandidateListImpl() = default;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -185,7 +178,8 @@ class TipCandidateListImpl final : public ITfCandidateListUIElementBehavior {
 
 class TipIndicatorImpl final : public ITfToolTipUIElement {
  public:
-  TipIndicatorImpl(TipTextService *text_service, ITfContext *context)
+  TipIndicatorImpl(const ComPtr<TipTextService> &text_service,
+                   const ComPtr<ITfContext> &context)
       : delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
@@ -193,7 +187,7 @@ class TipIndicatorImpl final : public ITfToolTipUIElement {
   TipIndicatorImpl &operator=(const TipIndicatorImpl &) = delete;
 
  private:
-  ~TipIndicatorImpl() {}
+  ~TipIndicatorImpl() = default;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -255,15 +249,11 @@ class TipIndicatorImpl final : public ITfToolTipUIElement {
 
 }  // namespace
 
-ITfUIElement *TipUiElementConventional::New(
-    TipUiElementConventional::UIType type, TipTextService *text_service,
-    ITfContext *context) {
-  if (text_service == nullptr) {
-    return nullptr;
-  }
-  if (context == nullptr) {
-    return nullptr;
-  }
+ComPtr<ITfUIElement> TipUiElementConventional::New(
+    TipUiElementConventional::UIType type,
+    const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context) {
+  if (!text_service || !context) return nullptr;
   switch (type) {
     case TipUiElementConventional::kUnobservableSuggestWindow:
       return new TipCandidateListImpl(type, text_service, context);

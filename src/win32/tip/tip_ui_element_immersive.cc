@@ -45,7 +45,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <unordered_map>
 #include <utility>
 
 #include "base/util.h"
@@ -63,6 +62,7 @@
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
 #include "win32/tip/tip_ui_renderer_immersive.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
@@ -88,12 +88,12 @@ typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
-const wchar_t kImmersiveUIWindowClassName[] =
+constexpr wchar_t kImmersiveUIWindowClassName[] =
     L"Google Japanese Input Immersive UI Window";
 
 #else  // GOOGLE_JAPANESE_INPUT_BUILD
 
-const wchar_t kImmersiveUIWindowClassName[] = L"Mozc Immersive UI Window";
+constexpr wchar_t kImmersiveUIWindowClassName[] = L"Mozc Immersive UI Window";
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -265,7 +265,8 @@ int GetFocusedArrayIndex(const Candidates &candidates) {
 class TipImmersiveUiElementImpl final
     : public ITfCandidateListUIElementBehavior {
  public:
-  TipImmersiveUiElementImpl(TipTextService *text_service, ITfContext *context,
+  TipImmersiveUiElementImpl(const ComPtr<TipTextService> &text_service,
+                            const ComPtr<ITfContext> &context,
                             HWND window_handle)
       : text_service_(text_service),
         context_(context),
@@ -282,9 +283,7 @@ class TipImmersiveUiElementImpl final
 
   // Destructor is kept as non-virtual because this class is designed to be
   // destroyed only by "delete this" in Release() method.
-  // TODO(yukawa): put "final" keyword to the class declaration when C++11
-  //     is allowed.
-  ~TipImmersiveUiElementImpl() {}
+  ~TipImmersiveUiElementImpl() = default;
 
   // The IUnknown interface methods.
   virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
@@ -573,7 +572,7 @@ class TipImmersiveUiElementImpl final
   Output output_;
 };
 
-HWND GetOwnerWindow(ITfContext *context) {
+HWND GetOwnerWindow(const ComPtr<ITfContext> &context) {
   ComPtr<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
     return nullptr;
@@ -587,7 +586,7 @@ HWND GetOwnerWindow(ITfContext *context) {
   return window_handle;
 }
 
-using WindowMap = std::unordered_map<HWND, TipImmersiveUiElementImpl *>;
+using WindowMap = absl::flat_hash_map<HWND, TipImmersiveUiElementImpl *>;
 
 class ThreadLocalInfo {
  public:
@@ -709,17 +708,17 @@ TipImmersiveUiElementImpl::UpdateUiEditSession::DoEditSession(
 }
 
 TipImmersiveUiElementImpl::UpdateUiEditSession::UpdateUiEditSession(
-    const ComPtr<TipTextService> text_service, const ComPtr<ITfContext> context,
-    const ComPtr<TipImmersiveUiElementImpl> ui_element)
+    ComPtr<TipTextService> text_service, ComPtr<ITfContext> context,
+    ComPtr<TipImmersiveUiElementImpl> ui_element)
     : text_service_(std::move(text_service)),
       context_(std::move(context)),
       ui_element_(std::move(ui_element)) {}
 
 }  // namespace
 
-ITfUIElement *TipUiElementImmersive::New(TipTextService *text_service,
-                                         ITfContext *context,
-                                         HWND *window_handle) {
+ComPtr<ITfUIElement> TipUiElementImmersive::New(
+    const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context, HWND *window_handle) {
   if (window_handle == nullptr) {
     return nullptr;
   }
@@ -741,11 +740,12 @@ ITfUIElement *TipUiElementImmersive::New(TipTextService *text_service,
   if (window == nullptr) {
     return nullptr;
   }
+
   TipImmersiveUiElementImpl *impl =
       new TipImmersiveUiElementImpl(text_service, context, window);
   (*info->window_map())[window] = impl;
   *window_handle = window;
-  return static_cast<ITfCandidateListUIElement *>(impl);
+  return impl;
 }
 
 void TipUiElementImmersive::OnActivate() { GetThreadLocalInfo(); }
