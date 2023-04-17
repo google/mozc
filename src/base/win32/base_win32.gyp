@@ -33,6 +33,20 @@
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'targets': [
+    # Test cases meta target: this target is referred from gyp/tests.gyp
+    {
+      'target_name': 'base_win32_all_test',
+      'type': 'none',
+      'dependencies': [],
+      'conditions': [
+        ['OS=="win"', {
+          'dependencies': [
+              'com_test',
+              'hresultor_test',
+          ],
+        }],
+      ],
+    },
   ],
   'conditions': [
     ['OS=="win"', {
@@ -45,7 +59,6 @@
           ],
           'dependencies': [
             '../base.gyp:base',
-            '../../testing/testing.gyp:mozctest',
           ],
           'copies': [
             {
@@ -56,6 +69,35 @@
               'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/ipa_font',
             },
           ],
+        },
+        {
+          'target_name': 'hresultor_test',
+          'type': 'executable',
+          'sources': [
+            'hresultor_test.cc',
+          ],
+          'dependencies': [
+            '../absl.gyp:absl_strings',
+            '../base.gyp:base',
+            '../../testing/testing.gyp:gtest_main',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
+        {
+          'target_name': 'com_test',
+          'type': 'executable',
+          'sources': [
+            'com_test.cc',
+          ],
+          'dependencies': [
+            '../base.gyp:base',
+            '../../testing/testing.gyp:gtest_main',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
         },
       ]},
     ],

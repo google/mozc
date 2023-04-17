@@ -142,8 +142,8 @@ bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
   auto engine = std::make_unique<Engine>();
-  auto status = engine->Init(std::move(data_manager),
-                             &DefaultPredictor::CreateDefaultPredictor, false);
+  constexpr bool is_mobile = false;
+  auto status = engine->Init(std::move(data_manager), is_mobile);
   if (!status.ok()) {
     return status;
   }
@@ -153,8 +153,8 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
   auto engine = std::make_unique<Engine>();
-  auto status = engine->Init(std::move(data_manager),
-                             &MobilePredictor::CreateMobilePredictor, true);
+  constexpr bool is_mobile = true;
+  auto status = engine->Init(std::move(data_manager), is_mobile);
   if (!status.ok()) {
     return status;
   }
@@ -167,22 +167,14 @@ Engine::~Engine() = default;
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
 absl::Status Engine::Init(
-    std::unique_ptr<const DataManagerInterface> data_manager,
-    std::unique_ptr<PredictorInterface> (*predictor_factory)(
-        std::unique_ptr<PredictorInterface>,
-        std::unique_ptr<PredictorInterface>),
-    bool enable_content_word_learning) {
-  if (!data_manager || !predictor_factory) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "engine.cc: data_manager=", data_manager ? "non-null" : "null",
-        ", predictor_factory=", predictor_factory ? "non-null" : ":null"));
-  }
-
+    std::unique_ptr<const DataManagerInterface> data_manager, bool is_mobile) {
 #define RETURN_IF_NULL(ptr)                                                 \
   do {                                                                      \
     if (!(ptr))                                                             \
       return absl::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
   } while (false)
+
+  RETURN_IF_NULL(data_manager);
 
   suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
   RETURN_IF_NULL(suppression_dictionary_);
@@ -269,13 +261,19 @@ absl::Status Engine::Init(
         segmenter_.get(), pos_matcher_.get(), suggestion_filter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
+    const bool enable_content_word_learning = is_mobile;
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
         dictionary_.get(), pos_matcher_.get(), suppression_dictionary_.get(),
         enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
-    predictor = (*predictor_factory)(std::move(dictionary_predictor),
-                                     std::move(user_history_predictor));
+    if (is_mobile) {
+      predictor = MobilePredictor::CreateMobilePredictor(
+          std::move(dictionary_predictor), std::move(user_history_predictor));
+    } else {
+      predictor = DefaultPredictor::CreateDefaultPredictor(
+          std::move(dictionary_predictor), std::move(user_history_predictor));
+    }
     RETURN_IF_NULL(predictor);
   }
   predictor_ = predictor.get();  // Keep the reference

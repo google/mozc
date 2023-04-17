@@ -33,23 +33,20 @@
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
+#include <msctf.h>
+#include <windows.h>
+#include <wrl/client.h>
 
-#include <string>
-
-#include "base/logging.h"
-#include "protocol/commands.pb.h"
-#include "win32/base/conversion_mode_util.h"
 #include "win32/tip/tip_compartment_util.h"
-
-using ATL::CComPtr;
-using ATL::CComQIPtr;
-using ATL::CComVariant;
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
+using ATL::CComVariant;
+using Microsoft::WRL::ComPtr;
+
+bool TipStatus::IsOpen(const ComPtr<ITfThreadMgr> &thread_mgr) {
   CComVariant var;
 
   // Retrieve the compartment manager from the thread manager, which contains
@@ -62,7 +59,7 @@ bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
   return var.vt == VT_I4 && var.lVal != FALSE;
 }
 
-bool TipStatus::IsDisabledContext(ITfContext *context) {
+bool TipStatus::IsDisabledContext(const ComPtr<ITfContext> &context) {
   CComVariant var;
 
   // Retrieve the compartment manager from the |context|, which contains the
@@ -75,7 +72,7 @@ bool TipStatus::IsDisabledContext(ITfContext *context) {
   return var.vt == VT_I4 && var.lVal != FALSE;
 }
 
-bool TipStatus::IsEmptyContext(ITfContext *context) {
+bool TipStatus::IsEmptyContext(const ComPtr<ITfContext> &context) {
   CComVariant var;
 
   // Retrieve the compartment manager from the |context|, which contains the
@@ -87,7 +84,7 @@ bool TipStatus::IsEmptyContext(ITfContext *context) {
   return var.vt == VT_I4 && var.lVal != FALSE;
 }
 
-bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
+bool TipStatus::GetInputModeConversion(const ComPtr<ITfThreadMgr> &thread_mgr,
                                        TfClientId client_id, DWORD *mode) {
   if (mode == nullptr) {
     return false;
@@ -115,8 +112,8 @@ bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
   return true;
 }
 
-bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
-                           bool open) {
+bool TipStatus::SetIMEOpen(const ComPtr<ITfThreadMgr> &thread_mgr,
+                           TfClientId client_id, bool open) {
   CComVariant var;
   var.vt = VT_I4;
   var.lVal = open ? TRUE : FALSE;
@@ -124,7 +121,7 @@ bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
       thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, client_id, var);
 }
 
-bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
+bool TipStatus::SetInputModeConversion(const ComPtr<ITfThreadMgr> &thread_mgr,
                                        DWORD client_id, DWORD native_mode) {
   CComVariant var;
   var.vt = VT_I4;

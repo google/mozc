@@ -38,9 +38,6 @@
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->
-<?ifndef UCRTDir ?>
-  <?define UCRTDir="" ?>
-<?endif?>
 <?ifndef DebugCrtMergeModuleIdPrefix ?>
   <?define DebugCrtMergeModuleIdPrefix="" ?>
 <?endif?>
@@ -96,9 +93,17 @@
         InstallerVersion='405' InstallPrivileges='elevated'
         Compressed='yes' Platform='x64' />
 
+    <!--
+                     VersionNT
+       Windows 8.0      602
+       Windows 8.1      603
+       Windows 10       603
+       Windows 11       603
+       https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/versionnt-value-for-windows-10-server
+    -->
     <Condition
-        Message='Google 日本語入力をインストールするには Windows 8 以降にアップグレードする必要があります。'>
-        VersionNT &gt;= 602
+        Message='Google 日本語入力をインストールするには Windows 10 以降にアップグレードする必要があります。'>
+        VersionNT &gt;= 603
     </Condition>
 
     <!-- Check if the user have the administrative privileges. -->
@@ -167,140 +172,15 @@
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
         <Directory Id='GoogleDir' Name='Google'>
           <Directory Id='GIMEJaDir' Name='Google Japanese Input'>
-            <?if $(var.UCRTDir) != "" ?>
-              <Component Id='api_ms_win_core_console_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-console-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_datetime_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-datetime-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_debug_l1_1_0' Guid='*'>
-                <File  Source='$(var.UCRTDir)\api-ms-win-core-debug-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_errorhandling_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-errorhandling-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_file_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_file_l1_2_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_file_l2_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-file-l2-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_handle_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-handle-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_heap_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-heap-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_interlocked_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-interlocked-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_libraryloader_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-libraryloader-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_localization_l1_2_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-localization-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_memory_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-memory-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_namedpipe_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-namedpipe-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_processenvironment_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-processenvironment-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_processthreads_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-processthreads-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_processthreads_l1_1_1' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-processthreads-l1-1-1.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_profile_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-profile-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_rtlsupport_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-rtlsupport-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_string_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-string-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_synch_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-synch-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_synch_l1_2_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-synch-l1-2-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_sysinfo_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-sysinfo-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_timezone_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-timezone-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_core_util_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-core-util-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_conio_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-conio-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_convert_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-convert-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_environment_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-environment-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_filesystem_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-filesystem-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_heap_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-heap-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_locale_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-locale-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_math_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-math-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_multibyte_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-multibyte-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_private_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-private-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_process_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-process-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_runtime_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-runtime-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_stdio_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-stdio-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_string_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-string-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_time_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-time-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='api_ms_win_crt_utility_l1_1_0' Guid='*'>
-                <File Source='$(var.UCRTDir)\api-ms-win-crt-utility-l1-1-0.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-              <Component Id='ucrtbase' Guid='*'>
-                <File Source='$(var.UCRTDir)\ucrtbase.dll' DiskId='1' Checksum='yes' Vital='yes' KeyPath='yes' />
-              </Component>
-            <?endif?>
             <Component Id='GIMEJaConverter' Guid='*'>
               <File Id='GoogleIMEJaConverter.exe'
                   Name='GoogleIMEJaConverter.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcServer32Path)' Vital='yes' />
+                  Checksum='yes' Source='$(var.MozcServer64Path)' Vital='yes' />
             </Component>
             <Component Id='GIMEJaCacheService' Guid='*'>
               <File Id='GoogleIMEJaCacheService.exe'
                   Name='GoogleIMEJaCacheService.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcCacheService32Path)'
+                  Checksum='yes' Source='$(var.MozcCacheService64Path)'
                   Vital='yes' KeyPath='yes' />
               <!--
                 To use localized description, set Description as follows:
@@ -343,23 +223,16 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcTIP64Path)' Vital='yes' />
             </Component>
-            <Component Id='GIMEJaBroker32' Guid='*' Permanent='no'>
-              <File Id='GoogleIMEJaBroker32.exe'
-                  Name='GoogleIMEJaBroker32.exe'
-                  DiskId='1' Checksum='yes'
-                  Source='$(var.MozcBroker32Path)' Vital='yes' />
-            </Component>
-            <Component Id='GIMEJaBroker64' Guid='*' Permanent='no'>
-              <Condition>(VersionNT64)</Condition>
-              <File Id='GoogleIMEJaBroker64.exe'
-                  Name='GoogleIMEJaBroker64.exe'
+            <Component Id='GIMEJaBroker' Guid='*' Permanent='no'>
+              <File Id='GoogleIMEJaBroker.exe'
+                  Name='GoogleIMEJaBroker.exe'
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcBroker64Path)' Vital='yes' />
             </Component>
             <Component Id='GIMEJaRenderer' Guid='*'>
               <File Id='GoogleIMEJaRenderer.exe'
                   Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.MozcRenderer32Path)' />
+                  Checksum='yes' Source='$(var.MozcRenderer64Path)' />
             </Component>
             <Component Id='GIMEJaTool' Guid='*'>
               <File Id='GoogleIMEJaTool.exe'
@@ -499,90 +372,6 @@
             Type='integer' />
       </Component>
 
-      <!--
-        Write registry keys to set an elevation policy of Internet Explorer 7
-        so that IE does not prompt the user when GoogleIMEJaTool.exe are
-        launched. See the following link for more information.
-        http://msdn.microsoft.com/en-us/library/bb250462.aspx
-      -->
-      <Component Id='GIMEJaElevationPolicy32' Guid='*'>
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaTool.exe' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker32.exe' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppPath32' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppName32' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker64.exe' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyPolicy32' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-      </Component>
-
-      <Component Id='GIMEJaElevationPolicy64' Guid='*' Win64='yes'>
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppPath64' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyAppName64' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaTool.exe' />
-        <RegistryValue Id='GIMEJaToolElevationPolicyPolicy64' Root='HKLM'
-            Key='$(var.MozcToolElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppPat64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyAppName64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker32.exe' />
-        <RegistryValue Id='GIMEJaBroker32ElevationPolicyPolicy64' Root='HKLM'
-            Key='$(var.MozcBroker32ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppPath64' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='AppPath' Action='write' Type='string'
-            Value='[GIMEJaDir]' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyAppName64' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='AppName' Action='write' Type='string'
-            Value='GoogleIMEJaBroker64.exe' />
-        <RegistryValue Id='GIMEJaBroker64ElevationPolicyPolicy64' Root='HKLM'
-            Key='$(var.MozcBroker64ElevationPolicyRegKey)'
-            Name='Policy' Action='write' Type='integer'
-            Value='3' />
-      </Component>
-
       <Component Id='OmahaRegLaunchCmdLine' Guid='*' Permanent='no'>
         <Condition>(NOT UPGRADING)</Condition>
         <RegistryValue Id='OmahaLaunchCmdLineValue' Root='HKLM'
@@ -599,7 +388,7 @@
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
             Name='Google Japanese Input Prelauncher' Action='write' Type='string'
-            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker32.exe&quot; --mode=prelaunch_processes' />
+            Value='&quot;[GIMEJaDir]GoogleIMEJaBroker.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
 
@@ -637,53 +426,9 @@
     <?endif?>
 
     <Feature Id='GIMEJaInstall' Title='Google 日本語入力' Level='1'>
-      <?if $(var.UCRTDir) != "" ?>
-        <ComponentRef Id='api_ms_win_core_console_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_datetime_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_debug_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_errorhandling_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_file_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_file_l1_2_0' />
-        <ComponentRef Id='api_ms_win_core_file_l2_1_0' />
-        <ComponentRef Id='api_ms_win_core_handle_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_heap_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_interlocked_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_libraryloader_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_localization_l1_2_0' />
-        <ComponentRef Id='api_ms_win_core_memory_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_namedpipe_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_processenvironment_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_processthreads_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_processthreads_l1_1_1' />
-        <ComponentRef Id='api_ms_win_core_profile_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_rtlsupport_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_string_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_synch_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_synch_l1_2_0' />
-        <ComponentRef Id='api_ms_win_core_sysinfo_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_timezone_l1_1_0' />
-        <ComponentRef Id='api_ms_win_core_util_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_conio_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_convert_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_environment_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_filesystem_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_heap_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_locale_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_math_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_multibyte_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_private_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_process_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_runtime_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_stdio_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_string_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_time_l1_1_0' />
-        <ComponentRef Id='api_ms_win_crt_utility_l1_1_0' />
-        <ComponentRef Id='ucrtbase' />
-      <?endif?>
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaTIP64' />
-      <ComponentRef Id='GIMEJaBroker32' />
-      <ComponentRef Id='GIMEJaBroker64' />
+      <ComponentRef Id='GIMEJaBroker' />
       <ComponentRef Id='GIMEJaConverter' />
       <ComponentRef Id='GIMEJaCacheService' />
       <ComponentRef Id='GIMEJaRenderer' />
@@ -719,8 +464,6 @@
       <ComponentRef Id='OmahaRegLaunchCmdLine' />
       <ComponentRef Id='SysProcs' />
       <ComponentRef Id='PrelaunchProcesses' />
-      <ComponentRef Id='GIMEJaElevationPolicy32' />
-      <ComponentRef Id='GIMEJaElevationPolicy64' />
       <ComponentRef Id='CreditsEn' />
     </Feature>
 
@@ -751,8 +494,6 @@
         BinaryKey='CustomActions64'
         DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
         Impersonate='no' Return='ignore' />
-    <CustomAction Id='CallIERefreshElevationPolicy' BinaryKey='CustomActions32'
-        DllEntry='CallIERefreshElevationPolicy' Execute='commit' Impersonate='no' />
     <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions32'
         DllEntry='OpenUninstallSurveyPage' Impersonate='yes' Return='ignore' />
     <CustomAction Id='ShutdownServer' BinaryKey='CustomActions32'
@@ -835,9 +576,6 @@
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
-      <Custom Action='CallIERefreshElevationPolicy' After='SelfRegModules'>
-        (NOT (REMOVE="ALL"))
-      </Custom>
       <!--
         The InstallValidate action notifies the user
         if GoogleIMEJaConverter.exe and GoogleIMEJaRenderer.exe

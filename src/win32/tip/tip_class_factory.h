@@ -30,10 +30,10 @@
 #ifndef MOZC_WIN32_TIP_TIP_CLASS_FACTORY_H_
 #define MOZC_WIN32_TIP_TIP_CLASS_FACTORY_H_
 
+#include <guiddef.h>
 #include <unknwn.h>
 #include <windows.h>
 
-#include "base/port.h"
 #include "win32/tip/tip_ref_count.h"
 
 namespace mozc {

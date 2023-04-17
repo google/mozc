@@ -742,17 +742,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_cc_binary(
-    name = "process_main",
-    srcs = ["process_main.cc"],
-    deps = [
-        ":init_mozc",
-        ":logging",
-        ":process",
-        "@com_google_absl//absl/flags:flag",
-    ],
-)
-
 mozc_cc_library(
     name = "process_mutex",
     srcs = ["process_mutex.cc"],
@@ -815,16 +804,6 @@ mozc_cc_library(
             "//base/win32:win_sandbox",
         ],
     ),
-)
-
-mozc_cc_binary(
-    name = "run_level_main",
-    srcs = ["run_level_main.cc"],
-    deps = [
-        ":init_mozc",
-        ":run_level",
-        "@com_google_absl//absl/flags:flag",
-    ],
 )
 
 mozc_py_library(
@@ -1050,35 +1029,6 @@ mozc_cc_test(
         ":random",
         ":system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-mozc_cc_binary(
-    name = "encryptor_main",
-    srcs = ["encryptor_main.cc"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":encryptor",
-        ":file_util",
-        ":init_mozc",
-        ":logging",
-        ":status",
-        ":util",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_binary(
-    name = "password_manager_main",
-    srcs = ["password_manager_main.cc"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":encryptor",
-        ":init_mozc",
-        ":logging",
-        ":util",
         "@com_google_absl//absl/flags:flag",
     ],
 )

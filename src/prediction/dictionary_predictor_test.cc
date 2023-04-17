@@ -799,6 +799,45 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuery) {
                                       "にゅうしせんたー", "入試センター"));
 }
 
+TEST_F(DictionaryPredictorTest, PredictivePenaltyForBigramResults) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("だいがくにゅうし", "大学入試", 3000,
+                        prediction::BIGRAM, Token::NONE),
+          CreateResult5("だいがくにゅうしせんたー", "大学入試センター", 4000,
+                        prediction::BIGRAM, Token::NONE),
+          CreateResult5("だいがくにゅうしせんたーしけんたいさく",
+                        "大学入試センター試験対策", 5000, prediction::BIGRAM,
+                        Token::NONE),
+          CreateResult5("にゅうし", "乳歯", 2000, prediction::UNIGRAM,
+                        Token::NONE)}));
+
+  Segments segments;
+  InitSegmentsWithKey("にゅうし", &segments);
+  PrependHistorySegments("だいがく", "大学", &segments);
+
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  predictor.PredictForRequest(*convreq_for_prediction_, &segments);
+
+  auto get_rank_by_value = [&](absl::string_view value) {
+    const Segment &seg = segments.conversion_segment(0);
+    for (int i = 0; i < seg.candidates_size(); ++i) {
+      if (seg.candidate(i).value == value) {
+        return i;
+      }
+    }
+    return -1;
+  };
+  EXPECT_LT(get_rank_by_value("乳歯"),
+            get_rank_by_value("入試センター試験対策"));
+}
+
 TEST_F(DictionaryPredictorTest, PropagateAttributes) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();
@@ -1495,6 +1534,51 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
+}
+
+TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  request_->mutable_decoder_experiment_params()
+      ->set_use_typing_correction_diff_cost(true);
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_max_count(5);
+  std::vector<Result> results = {
+      CreateResult6("tc_key0", "tc_value0", 0, 0, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key0", "tc_value1", 0, 1, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key0", "tc_value2", 0, 2, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key1", "tc_value3", 0, 3, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key1", "tc_value4", 0, 4, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key1", "tc_value5", 0, 5, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+      CreateResult6("tc_key1", "tc_value6", 0, 6, prediction::TYPING_CORRECTION,
+                    Token::NONE),
+  };
+  for (auto &result : results) {
+    result.non_expanded_original_key = result.key;
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("original_key", &segments);
+  predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
+                                      &results);
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  const Segment segment = segments.conversion_segment(0);
+  EXPECT_EQ(segment.candidates_size(), 4);
+  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value0"));
+  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value1"));
+  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value3"));
+  EXPECT_TRUE(FindCandidateByValue(segment, "tc_value4"));
 }
 
 TEST_F(DictionaryPredictorTest, SortResult) {

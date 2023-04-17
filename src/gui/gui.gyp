@@ -175,7 +175,7 @@
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../server/server.gyp:cache_service_manager',
+            '../win32/cache_service/cache_service.gyp:cache_service_manager',
           ],
         }],
       ],

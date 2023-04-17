@@ -30,22 +30,16 @@
 #ifndef MOZC_WIN32_TIP_TIP_STATUS_H_
 #define MOZC_WIN32_TIP_TIP_STATUS_H_
 
-#include <windows.h>
 #include <msctf.h>
-
-#include "base/port.h"
+#include <windows.h>
+#include <wrl/client.h>
 
 namespace mozc {
-
-namespace commands {
-class Status;
-}  // namespace commands
-
 namespace win32 {
 namespace tsf {
 
 // A tentative, kitchen-sink class for getting/setting IME status via TSF APIs.
-// TODO(yukawa): Revisit and refactor when minimum implementation has done.
+// TODO(yukawa): Revisit and refactor when minimum implementation has been done.
 class TipStatus {
  public:
   TipStatus() = delete;
@@ -53,25 +47,28 @@ class TipStatus {
   TipStatus &operator=(const TipStatus &) = delete;
 
   // Returns true if the keyboard state specified by |thread_mgr| is open.
-  static bool IsOpen(ITfThreadMgr *thread_mgr);
+  static bool IsOpen(const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_mgr);
 
   // Returns true if the context state specified by |context| is disabled.
-  static bool IsDisabledContext(ITfContext *context);
+  static bool IsDisabledContext(
+      const Microsoft::WRL::ComPtr<ITfContext> &context);
 
   // Returns true if the context state specified by |context| is empty.
-  static bool IsEmptyContext(ITfContext *context);
+  static bool IsEmptyContext(const Microsoft::WRL::ComPtr<ITfContext> &context);
 
   // Returns true if TSF conversion mode is successfully retrieved into |mode|.
-  static bool GetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                     TfClientId client_id, DWORD *mode);
+  static bool GetInputModeConversion(
+      const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_mgr,
+      TfClientId client_id, DWORD *mode);
 
   // Returns true if TSF keyboard open/closed mode is updated.
-  static bool SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
-                         bool open);
+  static bool SetIMEOpen(const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_mgr,
+                         TfClientId client_id, bool open);
 
   // Returns true if TSF conversion mode is updated.
-  static bool SetInputModeConversion(ITfThreadMgr *thread_mgr, DWORD client_id,
-                                     DWORD native_mode);
+  static bool SetInputModeConversion(
+      const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_mgr, DWORD client_id,
+      DWORD native_mode);
 };
 
 }  // namespace tsf

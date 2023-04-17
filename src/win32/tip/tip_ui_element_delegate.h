@@ -30,18 +30,17 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_ELEMENT_DELEGATE_H_
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_DELEGATE_H_
 
-#include <windows.h>
 #include <msctf.h>
+#include <windows.h>
+#include <wrl/client.h>
 
-#include "base/port.h"
+#include <memory>
 
-struct ITfContext;
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipUiElementDelegate {
  public:
@@ -88,8 +87,9 @@ class TipUiElementDelegateFactory {
     kImmersiveIndicatorWindow,
   };
 
-  static TipUiElementDelegate *Create(TipTextService *text_service,
-                                      ITfContext *context, ElementType type);
+  static std::unique_ptr<TipUiElementDelegate> Create(
+      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
+      const Microsoft::WRL::ComPtr<ITfContext> &context, ElementType type);
 
   TipUiElementDelegateFactory() = delete;
   TipUiElementDelegateFactory(const TipUiElementDelegateFactory &) = delete;

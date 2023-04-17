@@ -30,12 +30,7 @@
 #ifndef MOZC_WIN32_BASE_IMM_UTIL_H_
 #define MOZC_WIN32_BASE_IMM_UTIL_H_
 
-#include <windows.h>
-
 #include <cstdint>
-#include <string>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {
@@ -70,7 +65,7 @@ class ImeUtil {
   //   "Local\MSCTF.AsmCacheReady.<desktop name><session #>"
   // event to cope with the above TSF's behavior.
   // You can pass INFINITE to |timeout_msec| to wait for the event forever.
-  // Returns true if the operation completed successfully.
+  // Returns true if the operation is completed successfully.
   // Returns true if "MSCTF.AsmCacheReady.<desktop name><session #>" event does
   // not exist.
   // Otherwise returns false.

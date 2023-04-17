@@ -29,12 +29,13 @@
 
 #include "win32/base/imm_util.h"
 
-#include <atlbase.h>
-#include <atlstr.h>
+// clang-format off
+#include <windows.h>  // windows.h needs to come before imm.h
+// clang-format on
 #include <imm.h>
 #include <msctf.h>
-#include <strsafe.h>
-#include <windows.h>
+#include <objbase.h>
+#include <wrl/client.h>
 
 #include <cstdint>
 #include <string>
@@ -42,15 +43,21 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
+
+// clang-format off
+#include <strsafe.h>  // NOLINT: strsafe.h needs to be the last include.
+// clang-format on
 
 namespace mozc {
 namespace win32 {
 namespace {
+
+using Microsoft::WRL::ComPtr;
 
 // Timeout value used by a work around against b/5765783. As b/6165722
 // this value is determined to be:
@@ -84,8 +91,9 @@ bool ImeUtil::SetDefault() {
 
   // Activate the TSF Mozc.
   ScopedCOMInitializer com_initializer;
-  CComPtr<ITfInputProcessorProfileMgr> profile_mgr;
-  if (FAILED(profile_mgr.CoCreateInstance(CLSID_TF_InputProcessorProfiles))) {
+  ComPtr<ITfInputProcessorProfileMgr> profile_mgr;
+  if (FAILED(CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
+                              CLSCTX_ALL, IID_PPV_ARGS(&profile_mgr)))) {
     DLOG(ERROR) << "CoCreateInstance CLSID_TF_InputProcessorProfiles failed";
     return false;
   }
@@ -104,9 +112,9 @@ bool ImeUtil::SetDefault() {
 // Wait for "MSCTF.AsmCacheReady.<desktop name><session #>" event signal to
 // work around b/5765783.
 bool ImeUtil::WaitForAsmCacheReady(uint32_t timeout_msec) {
-  std::wstring event_name;
-  if (Util::Utf8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
-                       &event_name) == 0) {
+  const std::wstring event_name =
+      Utf8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName());
+  if (event_name.empty()) {
     LOG(ERROR) << "Failed to compose event name.";
     return false;
   }

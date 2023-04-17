@@ -30,14 +30,13 @@
 #ifndef MOZC_WIN32_BASE_UNINSTALL_HELPER_H_
 #define MOZC_WIN32_BASE_UNINSTALL_HELPER_H_
 
+#include <guiddef.h>
 #include <windows.h>
 
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-#include "testing/gunit_prod.h"
-// for FRIEND_TEST()
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
 
 namespace mozc {
 namespace win32 {
@@ -120,7 +119,7 @@ class UninstallHelper {
 
   // Returns a string in which the list of profile information specified in
   // |profiles| is encoded.  See input_dll.h for the format.
-  // Returns an empty string if fails.
+  // Returns an empty string if it fails.
   static std::wstring ComposeProfileStringForVista(
       const std::vector<LayoutProfileInfo> &profiles);
 

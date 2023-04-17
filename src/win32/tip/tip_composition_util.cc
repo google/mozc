@@ -42,7 +42,21 @@ namespace tsf {
 
 using Microsoft::WRL::ComPtr;
 
-ComPtr<ITfCompositionView> TipCompositionUtil::GetComposition(
+ComPtr<ITfComposition> TipCompositionUtil::GetComposition(
+    const ComPtr<ITfContext> &context, TfEditCookie edit_cookie){
+  ComPtr<ITfCompositionView> composition_view =
+      GetCompositionView(context, edit_cookie);
+  if (!composition_view) {
+    return nullptr;
+  }
+  ComPtr<ITfComposition> composition;
+  if (FAILED(composition_view.As(&composition))) {
+    return nullptr;
+  }
+  return composition;
+}
+
+ComPtr<ITfCompositionView> TipCompositionUtil::GetCompositionView(
     const ComPtr<ITfContext> &context, TfEditCookie edit_cookie) {
   ComPtr<ITfContextComposition> context_composition;
   if (FAILED(context.As(&context_composition))) {

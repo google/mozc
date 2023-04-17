@@ -30,10 +30,10 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_HANDLER_IMMERSIVE_H_
 #define MOZC_WIN32_TIP_TIP_UI_HANDLER_IMMERSIVE_H_
 
-#include <windows.h>
 #include <msctf.h>
+#include <windows.h>
+#include <wrl/client.h>
 
-#include "base/port.h"
 #include "win32/tip/tip_ui_handler.h"
 
 namespace mozc {
@@ -47,10 +47,12 @@ class TipUiHandlerImmersive {
   TipUiHandlerImmersive() = delete;
   TipUiHandlerImmersive(const TipUiHandlerImmersive &) = delete;
   TipUiHandlerImmersive &operator=(const TipUiHandlerImmersive &) = delete;
-  static ITfUIElement *CreateUI(TipUiHandler::UiType type,
-                                TipTextService *text_service,
-                                ITfContext *context);
-  static void OnDestroyElement(ITfUIElement *element);
+  static Microsoft::WRL::ComPtr<ITfUIElement> CreateUI(
+      TipUiHandler::UiType type,
+      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
+      const Microsoft::WRL::ComPtr<ITfContext> &context);
+  static void OnDestroyElement(
+      const Microsoft::WRL::ComPtr<ITfUIElement> &element);
 
   static void OnActivate();
   static void OnDeactivate();

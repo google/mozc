@@ -30,21 +30,18 @@
 #ifndef MOZC_WIN32_TIP_TIP_UI_ELEMENT_IMMERSIVE_H_
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_IMMERSIVE_H_
 
+#include <msctf.h>
 #include <windows.h>
+#include <wrl/client.h>
 
-#include "base/port.h"
+#include "win32/tip/tip_text_service.h"
 
 // A private message to notify the candidate window should be updated.
 #define WM_MOZC_IMMERSIVE_WINDOW_UPDATE WM_USER
 
-struct ITfContext;
-struct ITfUIElement;
-
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipUiElementImmersive {
  public:
@@ -52,10 +49,10 @@ class TipUiElementImmersive {
   TipUiElementImmersive(const TipUiElementImmersive &) = delete;
   TipUiElementImmersive &operator=(const TipUiElementImmersive &) = delete;
 
-  // Returns a ITfUIElement object based of the given parameters. Caller must
-  // maintain the reference count of the object returned.
-  static ITfUIElement *New(TipTextService *text_service, ITfContext *contxt,
-                           HWND *window_handle);
+  // Returns a ITfUIElement object based of the given parameters.
+  static Microsoft::WRL::ComPtr<ITfUIElement> New(
+      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
+      const Microsoft::WRL::ComPtr<ITfContext> &context, HWND *window_handle);
 
   static void OnActivate();
   static void OnDeactivate();

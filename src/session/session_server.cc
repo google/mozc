@@ -27,7 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Session Server
+// SessionServer is a subclass of IPCServer. It receives requests from Mozc
+// clients via IPC connection. The requests and responses are serialized
+// protocol buffers in string.
 
 #include "session/session_server.h"
 
@@ -35,7 +37,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "engine/engine_factory.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
@@ -43,6 +44,7 @@
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
 namespace {
@@ -69,7 +71,6 @@ SessionServer::SessionServer()
       usage_observer_(std::make_unique<session::SessionUsageObserver>()),
       session_handler_(
           std::make_unique<SessionHandler>(EngineFactory::Create().value())) {
-  using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();
   session_handler_->AddObserver(usage_observer_.get());
@@ -94,7 +95,7 @@ bool SessionServer::Process(absl::string_view request, std::string *response) {
     return false;  // shutdown the server if handler doesn't exist
   }
 
-  commands::Command command;  // can define as a private member?
+  commands::Command command;
   if (!command.mutable_input()->ParseFromArray(request.data(),
                                                request.size())) {
     LOG(WARNING) << "Invalid request";

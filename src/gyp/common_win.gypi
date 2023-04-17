@@ -67,6 +67,12 @@
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1920,  # Visual C++ 2019 or higher
       }],
+      ['MSVS_VERSION=="2022"', {
+        'compiler_target': 'msvs',
+        'compiler_target_version_int': 1930,  # Visual C++ 2022 or higher
+        'compiler_host': 'msvs',
+        'compiler_host_version_int': 1930,  # Visual C++ 2022 or higher
+      }],
     ],
     'msvc_disabled_warnings': [
       # 'expression' : signed/unsigned mismatch
@@ -145,7 +151,7 @@
             'EnableUAC': 'true',
             'UACExecutionLevel': '0',  # level="asInvoker"
             'UACUIAccess': 'false',    # uiAccess="false"
-            'MinimumRequiredVersion': '6.02',
+            'MinimumRequiredVersion': '10.0',
           },
         },
         'msvs_configuration_attributes': {
@@ -311,7 +317,7 @@
       '_STL_MSVC',
       '_UNICODE',
       '_WIN32',
-      '_WIN32_WINNT=0x0601',
+      '_WIN32_WINNT=0x0A00',
       '_WINDOWS',
       '_WTL_NO_WTYPES',  # TODO(yuryu): Remove after upgrading to WTL 10.
     ],

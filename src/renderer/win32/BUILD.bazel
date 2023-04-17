@@ -27,6 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Mozc Windows renderer.
+
 load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
@@ -38,6 +40,7 @@ load("//bazel/win32:build_defs.bzl", "copts_wtl")
 load("//bazel:stubs.bzl", "lexan")
 
 package(
+    default_visibility = ["//renderer:__pkg__"],
     # Package default option is not configurable with select.
     features = ["gdi"],
 )
@@ -86,7 +89,7 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//base:logging",
         "//base:util",
-        "//bazel/win32:gdiplus",  # fixdeps: keep
+        "//bazel/win32:gdiplus",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
     ],
@@ -122,6 +125,7 @@ mozc_cc_library(
     hdrs = ["win32_renderer_client.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/tip:__subpackages__"],
     deps = [
         "//base:logging",
         "//base:system_util",
@@ -160,12 +164,13 @@ mozc_cc_library(
     copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/tip:__subpackages__"],
     deps = [
         "//base:coordinates",
         "//base:logging",
         "//base:system_util",
-        "//bazel/win32:d2d1",  # fixdeps: keep
-        "//bazel/win32:dwrite",  # fixdeps: keep
+        "//bazel/win32:d2d1",
+        "//bazel/win32:dwrite",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
         "//third_party/wtl",
@@ -263,6 +268,7 @@ mozc_cc_library(
     copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    visibility = ["//win32/tip:__subpackages__"],
     deps = [
         "//base:logging",
         "//base:system_util",
@@ -287,6 +293,7 @@ mozc_cc_test(
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "//third_party/wtl",
+        "@com_google_absl//absl/base",
     ],
 )
 

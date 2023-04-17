@@ -16,6 +16,9 @@
 # Temporary dir for Docker
 /docker/ubuntu20.04/src/
 
+# Visual Studio per-project settings
+/.vs/
+
 # VSCode per-project settings
 /.vscode/
 

@@ -57,13 +57,11 @@
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -123,6 +121,10 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
+bool UseTcDiffCost(const Request &request) {
+  return request.decoder_experiment_params().use_typing_correction_diff_cost();
+}
+
 void GetCandidateKeyAndValue(const Result &result,
                              absl::string_view history_key,
                              absl::string_view history_value, std::string *key,
@@ -135,6 +137,30 @@ void GetCandidateKeyAndValue(const Result &result,
   }
   *key = result.key;
   *value = result.value;
+}
+
+// Returns the non-expanded lookup key for the result
+std::string GetCandidateOriginalLookupKey(absl::string_view input_key,
+                                          const Result &result,
+                                          absl::string_view history_key) {
+  if (result.non_expanded_original_key.empty()) {
+    return std::string(input_key);
+  }
+
+  absl::string_view lookup_key = result.non_expanded_original_key;
+  if (result.types & PredictionType::BIGRAM) {
+    lookup_key.remove_prefix(history_key.size());
+  }
+  return std::string(lookup_key);
+}
+
+std::string GetCandidateKey(const Result &result,
+                            absl::string_view history_key) {
+  absl::string_view candidate_key = result.key;
+  if (result.types & PredictionType::BIGRAM) {
+    candidate_key.remove_prefix(history_key.size());
+  }
+  return std::string(candidate_key);
 }
 
 int GetTypingCorrectionCostOffset(const ConversionRequest &request) {
@@ -450,7 +476,8 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       input_key_len_(Util::CharsLen(input_key_)),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      include_exact_key_(IsMixedConversionEnabled(request.request())) {
+      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      limit_tc_per_key_(UseTcDiffCost(request.request())) {
   GetHistoryKeyAndValue(segments, &history_key_, &history_value_);
   exact_bigram_key_ = history_key_ + input_key_;
 
@@ -506,6 +533,14 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
+  if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION) &&
+      seen_tc_keys_.count(result.non_expanded_original_key) >=
+          kTcMaxCountPerKey) {
+    *log_message =
+        absl::StrCat("Too many TC for key: ", result.non_expanded_original_key);
+    return true;
+  }
+
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
@@ -523,12 +558,15 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   }
 
   if (!is_mixed_conversion_) {
-    return CheckDupAndReturn(value, log_message);
+    return CheckDupAndReturn(value, result, log_message);
   }
 
   // Suppress long candidates to show more candidates in the candidate view.
-  if (input_key_len_ > 0 &&  // Do not filter for zero query
-      (input_key_len_ < Util::CharsLen(result.key)) &&
+  const size_t lookup_key_len = Util::CharsLen(
+      GetCandidateOriginalLookupKey(input_key_, result, history_key_));
+  const size_t candidate_key_len = Util::CharsLen(key);
+  if (lookup_key_len > 0 &&  // Do not filter for zero query
+      lookup_key_len < candidate_key_len &&
       (predictive_count_++ >= 3 || added_num >= 10)) {
     *log_message = absl::StrCat("Added predictive (",
                                 GetPredictionTypeDebugString(result.types),
@@ -559,14 +597,18 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
-  return CheckDupAndReturn(value, log_message);
+  return CheckDupAndReturn(value, result, log_message);
 }
 
 bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
-    const std::string &value, std::string *log_message) {
+    const std::string &value, const Result &result, std::string *log_message) {
   if (!seen_.insert(value).second) {
     *log_message = "Duplicated";
     return true;
+  }
+
+  if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION)) {
+    seen_tc_keys_.insert(result.non_expanded_original_key);
   }
   return false;
 }
@@ -846,6 +888,9 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   const bool cancel_content_word_suffix_penalty =
       CancelContentWordSuffixPenalty(request);
 
+  std::string history_key, history_value;
+  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
@@ -872,26 +917,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       constexpr int kBadSuggestionPenalty = 3453;
       cost += kBadSuggestionPenalty;
       MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
-    }
-
-    // Make exact candidates to have higher ranking.
-    // Because for mobile, suggestion is the main candidates and
-    // users expect the candidates for the input key on the candidates.
-    //
-    // Note:
-    // For TYPING_CORRECTION, query cost is already added.
-    // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
-    if (result.types & PredictionType::UNIGRAM) {
-      const size_t input_key_len = Util::CharsLen(input_key);
-      const size_t key_len = Util::CharsLen(result.key);
-      if (key_len > input_key_len) {
-        const size_t predicted_key_len = key_len - input_key_len;
-        // -500 * log(prob)
-        // See also: mozc/converter/candidate_filter.cc
-        const int predictive_penalty = 500 * log(50 * predicted_key_len);
-        cost += predictive_penalty;
-        MOZC_WORD_LOG(result, absl::StrCat("Predictive Uniram: ", cost));
-      }
     }
 
     if (result.types & PredictionType::TYPING_CORRECTION) {
@@ -922,6 +947,10 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       // Promoting bigram candidates.
       constexpr int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
+      // The bonus can make the cost negative and promotes bigram results
+      // too much.
+      // Align the cost here bofore applying other cost modifications.
+      cost = std::max(1, cost);
       MOZC_WORD_LOG(result, absl::StrCat("Bigram: ", cost));
     }
 
@@ -949,6 +978,26 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
     }
 
+    // Demote predictive results for making exact candidates to have higher
+    // ranking.
+    // - Users expect the candidates for the input key on the candidates.
+    // - We want to show candidatey as many as possible in the limited
+    //   candidates area.
+    const size_t candidate_lookup_key_len = Util::CharsLen(
+        GetCandidateOriginalLookupKey(input_key, result, history_key));
+    const size_t candidate_key_len =
+        Util::CharsLen(GetCandidateKey(result, history_key));
+    if (!(result.types & PredictionType::SUFFIX) &&
+        candidate_key_len > candidate_lookup_key_len) {
+      const size_t predicted_key_len =
+          candidate_key_len - candidate_lookup_key_len;
+      // -500 * log(prob)
+      // See also: mozc/converter/candidate_filter.cc
+      const int predictive_penalty = 500 * log(50 * predicted_key_len);
+      cost += predictive_penalty;
+      MOZC_WORD_LOG(result, absl::StrCat("Predictive: ", cost));
+    }
+    // Penalty for prefix results.
     if (result.candidate_attributes &
         Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       cost +=
@@ -960,7 +1009,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Note that the cost is defined as -500 * log(prob).
     // Even after the ad hoc manipulations, cost must remain larger than 0.
     result.cost = std::max(1, cost);
-    MOZC_WORD_LOG(result, absl::StrCat("SetLMCost: ", result.cost));
+    MOZC_WORD_LOG(result, absl::StrCat("SetPredictionCost: ", result.cost));
   }
 }
 
@@ -973,20 +1022,35 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   if (segments.conversion_segments_size() == 0) {
     return;
   }
+  const std::string &conversion_key = segments.conversion_segment(0).key();
+  if (conversion_key.empty()) {  // Next word prediction
+    return;
+  }
+
+  std::string history_key, history_value;
+  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+
   // Cost penalty 1151 means that expanded candidates are evaluated
   // 10 times smaller in frequency.
   // Note that the cost is calcurated by cost = -500 * log(prob)
   // 1151 = 500 * log(10)
   constexpr int kKeyExpansionPenalty = 1151;
-  const std::string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
     Result &result = results->at(i);
+    // For TYPING_CORRECTION, query cost is already added.
+    // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
     if (result.types & PredictionType::TYPING_CORRECTION ||
+        result.types &
+            PredictionType::ENGLISH ||  // Can be looked up with raw query
         result.candidate_attributes &
             Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       continue;
     }
-    if (!absl::StartsWith(result.key, conversion_key)) {
+
+    const std::string lookup_key =
+        GetCandidateOriginalLookupKey(conversion_key, result, history_key);
+    const std::string result_key = GetCandidateKey(result, history_key);
+    if (!absl::StartsWith(result_key, lookup_key)) {
       result.cost += kKeyExpansionPenalty;
       MOZC_WORD_LOG(result, absl::StrCat("KeyExpansionPenalty: ", result.cost));
     }

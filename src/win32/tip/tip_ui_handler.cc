@@ -34,11 +34,10 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
+#include <wrl/client.h>
 
 #include <cstdint>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_status.h"
@@ -47,13 +46,13 @@
 #include "win32/tip/tip_ui_handler_conventional.h"
 #include "win32/tip/tip_ui_handler_immersive.h"
 
-using ATL::CComPtr;
-using ::mozc::commands::CompositionMode;
-
 namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
+
+using Microsoft::WRL::ComPtr;
+using mozc::commands::CompositionMode;
 
 void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
                                     ITfDocumentMgr *document_manager) {
@@ -80,7 +79,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
       // as if |ImmAssociateContext(window_handle, nullptr)| was called.
       disabled = true;
     } else {
-      CComPtr<ITfContext> context;
+      ComPtr<ITfContext> context;
       result = document_manager->GetTop(&context);
       if (SUCCEEDED(result)) {
         disabled = TipStatus::IsDisabledContext(context);
@@ -109,8 +108,9 @@ bool UpdateInternal(TipTextService *text_service, ITfContext *context,
 
 }  // namespace
 
-ITfUIElement *TipUiHandler::CreateUI(UiType type, TipTextService *text_service,
-                                     ITfContext *context) {
+ComPtr<ITfUIElement> TipUiHandler::CreateUI(
+    UiType type, const ComPtr<TipTextService> &text_service,
+    const ComPtr<ITfContext> &context) {
   if (text_service->IsImmersiveUI()) {
     return TipUiHandlerImmersive::CreateUI(type, text_service, context);
   } else {
@@ -118,8 +118,8 @@ ITfUIElement *TipUiHandler::CreateUI(UiType type, TipTextService *text_service,
   }
 }
 
-void TipUiHandler::OnDestroyElement(TipTextService *text_service,
-                                    ITfUIElement *element) {
+void TipUiHandler::OnDestroyElement(const ComPtr<TipTextService> &text_service,
+                                    const ComPtr<ITfUIElement> &element) {
   if (text_service->IsImmersiveUI()) {
     TipUiHandlerImmersive::OnDestroyElement(element);
   } else {

@@ -42,7 +42,7 @@
 #include "base/util.h"
 #include "base/win32/scoped_handle.h"
 #include "base/win32/winmain.h"  // use WinMain
-#include "server/cache_service_manager.h"
+#include "win32/cache_service/cache_service_manager.h"
 
 namespace {
 HANDLE g_stop_event = NULL;

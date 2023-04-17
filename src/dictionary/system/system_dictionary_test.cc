@@ -41,16 +41,11 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "protocol/commands.pb.h"
@@ -843,6 +838,32 @@ TEST_F(SystemDictionaryTest, DoNotReturnNoModifierTargetWithLoudsTrie) {
       EXPECT_FALSE(callback.found()) << "Token should not be found: "
                                      << PrintToken(*not_to_be_looked_up[i]);
     }
+  }
+}
+
+TEST_F(SystemDictionaryTest, ShouldNotUseSmallCostEncodingForHeteronyms) {
+  absl::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
+                original_flags_min_key_length_to_use_small_cost_encoding_);
+
+  std::vector<Token> tokens = {
+      {"しょうろんぽう", "ショウロンポウ", 5948, 100, 100, Token::NONE},
+      {"しょうろんぽう", "小籠包", 7692, 100, 100, Token::NONE},
+      {"しょーろんぽう", "ショーロンポウ", 6092, 200, 200, Token::NONE},
+      {"しょーろんぽう", "小籠包", 9000, 100, 100, Token::NONE},
+  };
+
+  std::vector<Token *> source_tokens = MakeTokenPointers(&tokens);
+  std::unique_ptr<SystemDictionary> system_dic =
+      BuildSystemDictionary(source_tokens, source_tokens.size());
+  ASSERT_TRUE(system_dic);
+
+  for (size_t i = 0; i < source_tokens.size(); ++i) {
+    CheckTokenExistenceCallback callback(source_tokens[i]);
+    system_dic->LookupPrefix(source_tokens[i]->key, convreq_, &callback);
+    // The original token will not be found when the token is encoded with
+    // small_cost_encoding
+    EXPECT_TRUE(callback.found())
+        << "Token " << i << " was not found: " << PrintToken(*source_tokens[i]);
   }
 }
 

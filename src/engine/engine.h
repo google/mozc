@@ -120,14 +120,10 @@ class Engine : public EngineInterface {
   }
 
  private:
-  // Initializes the object by the given data manager and predictor factory
-  // function.  Predictor factory is used to select DefaultPredictor and
-  // MobilePredictor.
+  // Initializes the object by the given data manager and is_mobile flag.
+  // The is_mobile flag is used to select DefaultPredictor and MobilePredictor.
   absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
-                    std::unique_ptr<PredictorInterface> (*predictor_factory)(
-                        std::unique_ptr<PredictorInterface>,
-                        std::unique_ptr<PredictorInterface>),
-                    bool enable_content_word_learning);
+                    bool is_mobile);
 
   std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;

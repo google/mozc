@@ -29,20 +29,17 @@
 
 #include "win32/tip/tip_candidate_list.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <ctffunc.h>
+#include <objbase.h>
+#include <windows.h>
 
+#include <cstddef>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <vector>
 
-#include "base/util.h"
 #include "win32/tip/tip_ref_count.h"
-
-using ::ATL::CComPtr;
 
 namespace mozc {
 namespace win32 {
@@ -52,7 +49,7 @@ namespace {
 
 class CandidateStringImpl final : public ITfCandidateString {
  public:
-  CandidateStringImpl(ULONG index, const std::wstring &value)
+  CandidateStringImpl(ULONG index, const std::wstring_view value)
       : index_(index), value_(value) {}
   CandidateStringImpl(const CandidateStringImpl &) = delete;
   CandidateStringImpl &operator=(const CandidateStringImpl &) = delete;
@@ -298,8 +295,6 @@ class CandidateListImpl final : public ITfCandidateList {
 };
 
 }  // namespace
-
-TipCandidateListCallback::~TipCandidateListCallback() {}
 
 // static
 ITfCandidateList *TipCandidateList::New(

@@ -11,8 +11,8 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
-    runs-on: windows-2019
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    runs-on: windows-2022
     timeout-minutes: 60
 
     steps:
@@ -27,23 +27,46 @@ jobs:
         run: |
           python -m pip install six
 
+      # `ninja.exe` bundled in VS 2022 on `windows-2022` image isn't compatible with gyp. Most
+      # likely it's built with some compiler other than `cl.exe` without the following commit, which
+      # should be available in `ninja 1.11.0` and any later releases.
+      # https://github.com/ninja-build/ninja/commit/66b05496ff0ef6114e3534418c970dd92d34accb
+      #
+      # To confirm, you are affected if `ninja -t list` doesn't have `msvc`.
+      #
+      # A strange thing is that VS 2022 17.5.3 Community Edition does bundle `ninja 1.11.0`. Thus
+      # probably most of contributors would not be affected.
+      #
+      # We can download `ninja 1.11.1` with `winget install Ninja-build.Ninja` on Windows 10/11.
+      # https://github.com/microsoft/winget-pkgs/issues/2004
+      #
+      # The problem is that `winget` itself is not yet officially supported on Windows Server 2022.
+      # https://github.com/microsoft/winget-cli/issues/702
+      #
+      # This is why we use Chocolatey here for now.
+      - name: workaround_incompatible_ninja
+        shell: cmd
+        working-directory: .\src
+        run: |
+          choco install ninja --version 1.11.0 -y --no-progress
+
       - name: gyp
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-          python build_mozc.py gyp --noqt --msvs_version=2019
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py gyp --noqt --msvs_version=2022
 
       - name: build
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py build package -c Release
 
   test:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
-    runs-on: windows-2019
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    runs-on: windows-2022
     timeout-minutes: 60
 
     steps:
@@ -58,16 +81,23 @@ jobs:
         run: |
           python -m pip install six
 
+      # See comment above about why we need this step.
+      - name: workaround_incompatible_ninja
+        shell: cmd
+        working-directory: .\src
+        run: |
+          choco install ninja --version 1.11.0 -y --no-progress
+
       - name: gyp
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-          python build_mozc.py gyp --noqt --msvs_version=2019
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py gyp --noqt --msvs_version=2022
 
       - name: runtests
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py runtests -c Debug

@@ -35,7 +35,7 @@
 #include "config/stats_config_util.h"
 #include "gui/base/util.h"
 #ifdef _WIN32
-#include "server/cache_service_manager.h"
+#include "win32/cache_service/cache_service_manager.h"
 #endif  // _WIN32
 
 namespace mozc {

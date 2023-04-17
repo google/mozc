@@ -29,22 +29,30 @@
 
 #include "win32/tip/tip_compartment_util.h"
 
+#define _ATL_NO_AUTOMATIC_NAMESPACE
+#define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <atlbase.h>
+#include <atlcom.h>
+#include <msctf.h>
+#include <objbase.h>
+#include <wrl/client.h>
+
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using ATL::CComPtr;
-using ATL::CComQIPtr;
 using ATL::CComVariant;
+using Microsoft::WRL::ComPtr;
 
-bool TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
-                             const GUID &compartment_guid, TfClientId client_id,
-                             const ATL::CComVariant &data) {
+bool TipCompartmentUtil::Set(
+    const ComPtr<ITfCompartmentMgr> &compartment_manager,
+    const GUID &compartment_guid, TfClientId client_id,
+    const CComVariant &data) {
   if (!compartment_manager) {
     return false;
   }
 
-  CComPtr<ITfCompartment> compartment;
+  ComPtr<ITfCompartment> compartment;
   if (FAILED(compartment_manager->GetCompartment(compartment_guid,
                                                  &compartment))) {
     return false;
@@ -69,29 +77,33 @@ bool TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
   return SUCCEEDED(compartment->SetValue(client_id, &nonconst_data));
 }
 
-bool TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
+bool TipCompartmentUtil::Set(const ComPtr<ITfThreadMgr> &thread_manager,
                              const GUID &compartment_guid, TfClientId client_id,
-                             const ATL::CComVariant &data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(thread_manager);
+                             const CComVariant &data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  thread_manager.As(&compartment_manager);
   return Set(compartment_manager, compartment_guid, client_id, data);
 }
 
-bool TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
+bool TipCompartmentUtil::Set(const ComPtr<ITfDocumentMgr> &document_manager,
                              const GUID &compartment_guid, TfClientId client_id,
-                             const ATL::CComVariant &data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(document_manager);
+                             const CComVariant &data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  document_manager.As(&compartment_manager);
   return Set(compartment_manager, compartment_guid, client_id, data);
 }
 
-bool TipCompartmentUtil::Set(ITfContext *context, const GUID &compartment_guid,
-                             TfClientId client_id,
-                             const ATL::CComVariant &data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
+bool TipCompartmentUtil::Set(const ComPtr<ITfContext> &context,
+                             const GUID &compartment_guid, TfClientId client_id,
+                             const CComVariant &data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  context.As(&compartment_manager);
   return Set(compartment_manager, compartment_guid, client_id, data);
 }
 
-bool TipCompartmentUtil::Get(ITfCompartmentMgr *compartment_manager,
-                             const GUID &compartment_guid, CComVariant *data) {
+bool TipCompartmentUtil::Get(
+    const ComPtr<ITfCompartmentMgr> &compartment_manager,
+    const GUID &compartment_guid, CComVariant *data) {
   if (data == nullptr) {
     return false;
   }
@@ -101,7 +113,7 @@ bool TipCompartmentUtil::Get(ITfCompartmentMgr *compartment_manager,
     return false;
   }
 
-  CComPtr<ITfCompartment> compartment;
+  ComPtr<ITfCompartment> compartment;
   if (FAILED(compartment_manager->GetCompartment(compartment_guid,
                                                  &compartment))) {
     return false;
@@ -113,29 +125,31 @@ bool TipCompartmentUtil::Get(ITfCompartmentMgr *compartment_manager,
   return SUCCEEDED(compartment->GetValue(data));
 }
 
-bool TipCompartmentUtil::Get(ITfThreadMgr *thread_manager,
-                             const GUID &compartment_guid,
-                             ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(thread_manager);
+bool TipCompartmentUtil::Get(const ComPtr<ITfThreadMgr> &thread_manager,
+                             const GUID &compartment_guid, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  thread_manager.As(&compartment_manager);
   return Get(compartment_manager, compartment_guid, data);
 }
 
-bool TipCompartmentUtil::Get(ITfDocumentMgr *document_manager,
-                             const GUID &compartment_guid,
-                             ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(document_manager);
+bool TipCompartmentUtil::Get(const ComPtr<ITfDocumentMgr> &document_manager,
+                             const GUID &compartment_guid, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  document_manager.As(&compartment_manager);
   return Get(compartment_manager, compartment_guid, data);
 }
 
-bool TipCompartmentUtil::Get(ITfContext *context, const GUID &compartment_guid,
-                             ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
+bool TipCompartmentUtil::Get(const ComPtr<ITfContext> &context,
+                             const GUID &compartment_guid, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  context.As(&compartment_manager);
   return Get(compartment_manager, compartment_guid, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-    ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid,
-    TfClientId client_id, const CComVariant &default_data, CComVariant *data) {
+    const ComPtr<ITfCompartmentMgr> &compartment_manager,
+    const GUID &compartment_guid, TfClientId client_id,
+    const CComVariant &default_data, CComVariant *data) {
   if (data == nullptr) {
     return false;
   }
@@ -145,7 +159,7 @@ bool TipCompartmentUtil::GetAndEnsureDataExists(
     return false;
   }
 
-  CComPtr<ITfCompartment> compartment;
+  ComPtr<ITfCompartment> compartment;
   if (FAILED(compartment_manager->GetCompartment(compartment_guid,
                                                  &compartment))) {
     return false;
@@ -168,27 +182,29 @@ bool TipCompartmentUtil::GetAndEnsureDataExists(
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-    ITfThreadMgr *thread_manager, const GUID &compartment_guid,
-    TfClientId client_id, const ATL::CComVariant &default_data,
-    ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(thread_manager);
+    const ComPtr<ITfThreadMgr> &thread_manager, const GUID &compartment_guid,
+    TfClientId client_id, const CComVariant &default_data, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  thread_manager.As(&compartment_manager);
   return GetAndEnsureDataExists(compartment_manager, compartment_guid,
                                 client_id, default_data, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-    ITfDocumentMgr *document_manager, const GUID &compartment_guid,
-    TfClientId client_id, const ATL::CComVariant &default_data,
-    ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(document_manager);
+    const ComPtr<ITfDocumentMgr> &document_manager,
+    const GUID &compartment_guid, TfClientId client_id,
+    const CComVariant &default_data, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  document_manager.As(&compartment_manager);
   return GetAndEnsureDataExists(compartment_manager, compartment_guid,
                                 client_id, default_data, data);
 }
 
 bool TipCompartmentUtil::GetAndEnsureDataExists(
-    ITfContext *context, const GUID &compartment_guid, TfClientId client_id,
-    const ATL::CComVariant &default_data, ATL::CComVariant *data) {
-  CComQIPtr<ITfCompartmentMgr> compartment_manager(context);
+    const ComPtr<ITfContext> &context, const GUID &compartment_guid,
+    TfClientId client_id, const CComVariant &default_data, CComVariant *data) {
+  ComPtr<ITfCompartmentMgr> compartment_manager;
+  context.As(&compartment_manager);
   return GetAndEnsureDataExists(compartment_manager, compartment_guid,
                                 client_id, default_data, data);
 }

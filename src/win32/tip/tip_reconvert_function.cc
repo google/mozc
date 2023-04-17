@@ -32,18 +32,21 @@
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <ctffunc.h>
 #include <atlbase.h>
 #include <atlcom.h>
+#include <ctffunc.h>
+#include <msctf.h>
+#include <wrl/client.h>
 
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
-#include "win32/tip/tip_range_util.h"
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -51,23 +54,24 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-using ATL::CComBSTR;
-using ATL::CComPtr;
-
 namespace {
 
+using ATL::CComBSTR;
+using Microsoft::WRL::ComPtr;
+
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kReconvertFunctionDisplayName[] =
+constexpr wchar_t kReconvertFunctionDisplayName[] =
     L"Google Japanese Input: Reconversion Function";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-const wchar_t kReconvertFunctionDisplayName[] = L"Mozc: Reconversion Function";
+constexpr wchar_t kReconvertFunctionDisplayName[] =
+    L"Mozc: Reconversion Function";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class CandidateListCallbackImpl : public TipCandidateListCallback {
  public:
-  CandidateListCallbackImpl(TipTextService *text_service, ITfRange *range)
-      : text_service_(text_service), range_(range) {}
+  CandidateListCallbackImpl(ComPtr<TipTextService> text_service,
+                            ComPtr<ITfRange> range)
+      : text_service_(std::move(text_service)), range_(std::move(range)) {}
   CandidateListCallbackImpl(const CandidateListCallbackImpl &) = delete;
   CandidateListCallbackImpl &operator=(const CandidateListCallbackImpl &) =
       delete;
@@ -75,17 +79,17 @@ class CandidateListCallbackImpl : public TipCandidateListCallback {
  private:
   // TipCandidateListCallback overrides:
   virtual void OnFinalize(size_t index, const std::wstring &candidate) {
-    TipEditSession::SetTextAsync(text_service_, candidate, range_);
+    TipEditSession::SetTextAsync(text_service_.Get(), candidate, range_.Get());
   }
 
-  CComPtr<TipTextService> text_service_;
-  CComPtr<ITfRange> range_;
+  ComPtr<TipTextService> text_service_;
+  ComPtr<ITfRange> range_;
 };
 
 class ReconvertFunctionImpl final : public ITfFnReconversion {
  public:
-  explicit ReconvertFunctionImpl(TipTextService *text_service)
-      : text_service_(text_service) {}
+  explicit ReconvertFunctionImpl(ComPtr<TipTextService> text_service)
+      : text_service_(std::move(text_service)) {}
   ReconvertFunctionImpl(const ReconvertFunctionImpl &) = delete;
   ReconvertFunctionImpl &operator=(const ReconvertFunctionImpl &) = delete;
   ~ReconvertFunctionImpl() = default;
@@ -150,13 +154,13 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
     *convertible = FALSE;
     *new_range = nullptr;
 
-    CComPtr<ITfContext> context;
+    ComPtr<ITfContext> context;
     if (FAILED(range->GetContext(&context))) {
       return E_FAIL;
     }
 
     TipSurroundingTextInfo info;
-    if (!TipSurroundingText::Get(text_service_, context, &info)) {
+    if (!TipSurroundingText::Get(text_service_.Get(), context.Get(), &info)) {
       return E_FAIL;
     }
 
@@ -195,7 +199,7 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
       return E_FAIL;
     }
     std::wstring query;
-    if (!TipEditSession::GetTextSync(text_service_, range, &query)) {
+    if (!TipEditSession::GetTextSync(text_service_.Get(), range, &query)) {
       return E_FAIL;
     }
     std::vector<std::wstring> candidates;
@@ -213,19 +217,21 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
       return E_INVALIDARG;
     }
 
-    if (!TipEditSession::ReconvertFromApplicationSync(text_service_, range)) {
+    if (!TipEditSession::ReconvertFromApplicationSync(text_service_.Get(),
+                                                      range)) {
       return E_FAIL;
     }
     return S_OK;
   }
 
   TipRefCount ref_count_;
-  CComPtr<TipTextService> text_service_;
+  ComPtr<TipTextService> text_service_;
 };
 
 }  // namespace
 
-ITfFnReconversion *TipReconvertFunction::New(TipTextService *text_service) {
+ComPtr<ITfFnReconversion> TipReconvertFunction::New(
+    const ComPtr<TipTextService> &text_service) {
   return new ReconvertFunctionImpl(text_service);
 }
 

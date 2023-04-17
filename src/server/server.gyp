@@ -34,10 +34,8 @@
     'conditions': [
       ['branding=="GoogleJapaneseInput"', {
         'converter_product_name_win': 'GoogleIMEJaConverter',
-        'cache_service_product_name_win': 'GoogleIMEJaCacheService',
       }, {  # else
         'converter_product_name_win': 'mozc_server',
-        'cache_service_product_name_win': 'mozc_cache_service',
       }],
     ],
   },
@@ -161,54 +159,6 @@
           'includes': [
             '../gyp/gen_win32_resource_header.gypi',
           ],
-        },
-        {
-          'target_name': 'gen_mozc_cache_service_resource_header',
-          'variables': {
-            'gen_resource_proj_name': 'mozc_cache_service',
-            'gen_main_resource_path': 'server/mozc_cache_service.rc',
-            'gen_output_resource_path':
-                '<(gen_out_dir)/mozc_cache_service_autogen.rc',
-          },
-          'includes': [
-            '../gyp/gen_win32_resource_header.gypi',
-          ],
-        },
-        {
-          'target_name': 'cache_service_manager',
-          'type': 'static_library',
-          'sources': [
-            'cache_service_manager.cc',
-          ],
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../base/base.gyp:encryptor',
-            'server_protocol',
-          ],
-        },
-        {
-          'target_name': 'mozc_cache_service',
-          'product_name': '<(cache_service_product_name_win)',
-          'type': 'executable',
-          'sources': [
-            'mozc_cache_service.cc',
-            '<(gen_out_dir)/mozc_cache_service_autogen.rc',
-          ],
-          'dependencies': [
-            'cache_service_manager',
-            'gen_mozc_cache_service_resource_header',
-          ],
-          'msvs_settings': {
-            'VCManifestTool': {
-              'AdditionalManifestFiles': 'mozc_cache_service.exe.manifest',
-              'EmbedManifest': 'true',
-            },
-            'VCLinkerTool': {
-              'AdditionalDependencies': [
-                'crypt32.lib',  # used in 'mozc_cache_service.cc'
-              ],
-            },
-          },
         },
       ],
     }],

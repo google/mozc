@@ -119,7 +119,7 @@ class SurroudingTextUpdater final : public ITfEditSession {
     }
     {
       ComPtr<ITfCompositionView> composition_view =
-          TipCompositionUtil::GetComposition(context_, edit_cookie);
+          TipCompositionUtil::GetCompositionView(context_, edit_cookie);
       result_.in_composition = !!composition_view;
     }
 

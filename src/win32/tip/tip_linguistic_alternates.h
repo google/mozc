@@ -30,15 +30,15 @@
 #ifndef MOZC_WIN32_TIP_TIP_LINGUISTIC_ALTERNATES_H_
 #define MOZC_WIN32_TIP_TIP_LINGUISTIC_ALTERNATES_H_
 
-#include <unknwn.h>
+#include <ctffunc.h>
+#include <guiddef.h>
+#include <wrl/client.h>
 
-#include "base/port.h"
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipLinguisticAlternates {
  public:
@@ -47,8 +47,8 @@ class TipLinguisticAlternates {
   TipLinguisticAlternates &operator=(const TipLinguisticAlternates &) = delete;
 
   // Returns a COM object that implements ITfFnGetLinguisticAlternates.
-  // Caller must maintain the reference count.
-  static IUnknown *New(TipTextService *text_service);
+  static Microsoft::WRL::ComPtr<ITfFnGetLinguisticAlternates> New(
+      const Microsoft::WRL::ComPtr<TipTextService> &text_service);
   static const IID &GetIID();
 };
 

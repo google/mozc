@@ -32,17 +32,17 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
 #include <objbase.h>
-#include <strsafe.h>
+#include <wrl/client.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <map>
 #include <memory>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "base/logging.h"
@@ -53,28 +53,34 @@
 #include "win32/base/keyboard_layout_id.h"
 #include "win32/base/tsf_profile.h"
 
+// clang-format off
+#include <strsafe.h>  // NOLINT: strsafe.h needs to be the last include.
+// clang-format on
+
 namespace mozc {
 namespace win32 {
-using ATL::CComPtr;
-using ATL::CRegKey;
-
 namespace {
+
+using ATL::CRegKey;
+using Microsoft::WRL::ComPtr;
 
 typedef std::map<int, DWORD> PreloadOrderToKLIDMap;
 
 // Windows NT 6.0, 6.1 and 6.2
-const CLSID CLSID_IMJPTIP = {0x03b5835f,
-                             0xf03c,
-                             0x411b,
-                             {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
-const GUID GUID_IMJPTIP = {0xa76c93d9,
-                           0x5523,
-                           0x4e90,
-                           {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
+constexpr CLSID CLSID_IMJPTIP = {
+    0x03b5835f,
+    0xf03c,
+    0x411b,
+    {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
+constexpr GUID GUID_IMJPTIP = {
+    0xa76c93d9,
+    0x5523,
+    0x4e90,
+    {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
 
-const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+constexpr LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
-const wchar_t kRegKeyboardLayouts[] =
+constexpr wchar_t kRegKeyboardLayouts[] =
     L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts";
 
 // Registry element size limits are described in the link below.
@@ -190,13 +196,14 @@ bool GetInstalledProfilesByLanguageForTSF(
 
   HRESULT hr = S_OK;
 
-  CComPtr<ITfInputProcessorProfiles> profiles;
-  hr = profiles.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
+  ComPtr<ITfInputProcessorProfiles> profiles;
+  hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_ALL,
+                        IID_PPV_ARGS(&profiles));
   if (FAILED(hr)) {
     return false;
   }
 
-  CComPtr<IEnumTfLanguageProfiles> enum_profiles;
+  ComPtr<IEnumTfLanguageProfiles> enum_profiles;
   hr = profiles->EnumLanguageProfiles(langid, &enum_profiles);
   if (FAILED(hr)) {
     return false;
@@ -243,8 +250,7 @@ bool GetInstalledProfilesByLanguageForIMM32(
     return false;
   }
 
-  for (size_t i = 0; i < keyboard_layouts.size(); ++i) {
-    const KeyboardLayoutInfo &info = keyboard_layouts[i];
+  for (const auto &info : keyboard_layouts) {
     const LANGID info_langid = static_cast<LANGID>(info.klid & 0xffff);
     if (info_langid == langid) {
       LayoutProfileInfo profile;
@@ -333,10 +339,11 @@ bool EnableAndBroadcastNewLayout(const LayoutProfileInfo &profile,
       return false;
     }
 
-    CComPtr<ITfInputProcessorProfileMgr> profile_manager;
+    ComPtr<ITfInputProcessorProfileMgr> profile_manager;
 
     HRESULT hr = S_OK;
-    hr = profile_manager.CoCreateInstance(CLSID_TF_InputProcessorProfiles);
+    hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_ALL,
+                          IID_PPV_ARGS(&profile_manager));
     if (FAILED(hr)) {
       return false;
     }
@@ -421,8 +428,9 @@ void UnloadActivatedKeyboardMain(const std::vector<std::wstring> &ime_filenames,
 void UnloadProfilesForVista(
     const std::vector<LayoutProfileInfo> &profiles_to_be_removed) {
   std::vector<std::wstring> ime_filenames;
-  for (size_t i = 0; i < profiles_to_be_removed.size(); ++i) {
-    ime_filenames.push_back(profiles_to_be_removed[i].ime_filename);
+  ime_filenames.reserve(profiles_to_be_removed.size());
+  for (const auto &profile : profiles_to_be_removed) {
+    ime_filenames.push_back(profile.ime_filename);
   }
   UnloadActivatedKeyboardMain(ime_filenames, true);
 }
@@ -523,8 +531,7 @@ bool UninstallHelper::GetNewEnabledProfileForVista(
 
   bool default_found = false;
   bool default_set = false;
-  for (size_t i = 0; i < current_profiles.size(); ++i) {
-    const LayoutProfileInfo &profile = current_profiles[i];
+  for (const auto &profile : current_profiles) {
     if (profile.is_default) {
       *current_default = profile;
     }
@@ -658,7 +665,7 @@ bool UninstallHelper::GetCurrentProfilesForVista(
 
 bool UninstallHelper::RemoveProfilesForVista(
     const std::vector<LayoutProfileInfo> &profiles_to_be_removed) {
-  if (profiles_to_be_removed.size() == 0) {
+  if (profiles_to_be_removed.empty()) {
     // Nothing to do.
     return true;
   }

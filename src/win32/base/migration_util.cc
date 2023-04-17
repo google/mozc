@@ -36,11 +36,12 @@
 #include <atlbase.h>
 #include <atlstr.h>
 
+#include <string>
+#include <vector>
+
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/process.h"
-#include "base/system_util.h"
-#include "base/win32/scoped_handle.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/uninstall_helper.h"
 
@@ -51,13 +52,7 @@ namespace {
 using ATL::CStringA;
 
 bool SpawnBroker(const std::string &arg) {
-  // To workaround a bug around WoW version of LoadKeyboardLayout, 64-bit
-  // version of mozc_broker should be launched on Windows x64.
-  // See b/2958563 for details.
-  const char *broker_name =
-      (SystemUtil::IsWindowsX64() ? kMozcBroker64 : kMozcBroker32);
-
-  return Process::SpawnMozcProcess(broker_name, arg);
+  return Process::SpawnMozcProcess(kMozcBroker, arg);
 }
 
 }  // namespace

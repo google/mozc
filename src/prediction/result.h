@@ -116,6 +116,9 @@ struct Result {
   // Segment::Candidate::SourceInfo.
   // Will be used for usage stats.
   uint32_t source_info;
+  // Lookup key without expansion.
+  // Please refer to Composer for query expansion.
+  std::string non_expanded_original_key;
   size_t consumed_key_size;
   // If removed is true, this result is not used for a candidate.
   bool removed;

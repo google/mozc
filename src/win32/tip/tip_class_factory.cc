@@ -29,10 +29,9 @@
 
 #include "win32/tip/tip_class_factory.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
+#include <guiddef.h>
+#include <windows.h>
+#include <wrl/client.h>
 
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_ref_count.h"
@@ -42,7 +41,7 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using ATL::CComPtr;
+using Microsoft::WRL::ComPtr;
 
 HRESULT STDMETHODCALLTYPE TipClassFactory::QueryInterface(REFIID interface_id,
                                                           void **object) {
@@ -86,8 +85,8 @@ HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
     return CLASS_E_NOAGGREGATION;
   }
 
-  // Create an TipTextService object and initialize it.
-  CComPtr<TipTextService> text_service(TipTextServiceFactory::Create());
+  // Create a TipTextService object and initialize it.
+  ComPtr<TipTextService> text_service(TipTextServiceFactory::Create());
 
   // Retrieve the requested interface from the TipTextService object.
   // If this TipTextService object implements the given interface, the

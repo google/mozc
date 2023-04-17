@@ -35,7 +35,7 @@
 #include <vector>
 
 #include "base/const.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/base/tsf_profile.h"
@@ -45,25 +45,19 @@ namespace win32 {
 namespace {
 
 // Windows NT 6.0, 6.1
-const CLSID CLSID_IMJPTIP = {0x03b5835f,
-                             0xf03c,
-                             0x411b,
-                             {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
-const GUID GUID_IMJPTIP = {0xa76c93d9,
-                           0x5523,
-                           0x4e90,
-                           {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
-const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+constexpr CLSID CLSID_IMJPTIP = {
+    0x03b5835f,
+    0xf03c,
+    0x411b,
+    {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
+constexpr GUID GUID_IMJPTIP = {
+    0xa76c93d9,
+    0x5523,
+    0x4e90,
+    {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
+constexpr LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
 constexpr DWORD kJapaneseKLID = 0xE0200411;
-
-std::wstring ToWideString(const std::string &str) {
-  std::wstring wide;
-  if (mozc::Util::Utf8ToWide(str, &wide) <= 0) {
-    return L"";
-  }
-  return wide;
-}
 
 }  // namespace
 
@@ -136,7 +130,7 @@ TEST(UninstallHelperTest, ComposeProfileStringForVistaTest) {
     LayoutProfileInfo info;
     info.langid = kLANGJaJP;
     info.klid = 0xE0220411;
-    info.ime_filename = ToWideString(kIMEFile);
+    info.ime_filename = Utf8ToWide(kIMEFile);
     profiles.push_back(info);
   }
   {

@@ -52,6 +52,7 @@
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -97,13 +98,17 @@ class DictionaryPredictor : public PredictorInterface {
                       std::string *log_message);
 
    private:
-    bool CheckDupAndReturn(const std::string &value, std::string *log_message);
+    static constexpr int kTcMaxCountPerKey = 2;
+
+    bool CheckDupAndReturn(const std::string &value, const Result &result,
+                           std::string *log_message);
 
     const std::string input_key_;
     const size_t input_key_len_;
     const SuggestionFilter *suggestion_filter_;
     const bool is_mixed_conversion_;
     const bool include_exact_key_;
+    const bool limit_tc_per_key_;
 
     std::string history_key_;
     std::string history_value_;
@@ -118,7 +123,10 @@ class DictionaryPredictor : public PredictorInterface {
     int prefix_tc_count_;
     int tc_count_;
 
+    // Seen set for dup value check.
     absl::flat_hash_set<std::string> seen_;
+    // Seen set for typing correction dup key check.
+    absl::btree_multiset<std::string> seen_tc_keys_;
   };
 
   // pair: <rid, key_length>

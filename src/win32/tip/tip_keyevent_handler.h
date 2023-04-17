@@ -30,18 +30,14 @@
 #ifndef MOZC_WIN32_TIP_TIP_KEYEVENT_HANDLER_H_
 #define MOZC_WIN32_TIP_TIP_KEYEVENT_HANDLER_H_
 
+#include <msctf.h>
 #include <windows.h>
 
-#include "base/port.h"
-
-struct ITfContext;
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipPrivateContext;
-class TipTextService;
 
 // A helper class to translate TSF-based keyevent messages for
 // mozc::win32::KeyEventHandler, which is originally designed to handle
@@ -51,6 +47,7 @@ class TipKeyeventHandler {
   TipKeyeventHandler() = delete;
   TipKeyeventHandler(const TipKeyeventHandler &) = delete;
   TipKeyeventHandler &operator=(const TipKeyeventHandler &) = delete;
+
   static HRESULT OnTestKeyDown(TipTextService *text_service,
                                ITfContext *context, WPARAM wparam,
                                LPARAM lparam, BOOL *eaten);
