@@ -66,7 +66,8 @@ class HResult {
   constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
   constexpr HRESULT hr() const noexcept { return hr_; }
 
-  friend constexpr void swap(HResult& a, HResult& b) noexcept {
+  friend void swap(HResult& a, HResult& b) noexcept {
+    // std::swap will support the constexpr version from C++20.
     std::swap(a.hr_, b.hr_);
   }
 
