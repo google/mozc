@@ -1209,7 +1209,11 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     return;
   }
 
-  void RemovePrivateContextIfExists(const ComPtr<ITfContext> &context) {
+  // Note that this method takes |ComPtr<ITfContext>| instead of
+  // |const ComPtr<ITfContext> &| to make sure |context| remains valid after
+  // calling |private_context_map_.erase(it)|.
+  // TODO(https://github.com/google/mozc/issues/721): Consolidete clean-up logic
+  void RemovePrivateContextIfExists(ComPtr<ITfContext> context) {
     // Remove private context associated with |context|.
     const PrivateContextMap::iterator it = private_context_map_.find(context);
     if (it == private_context_map_.end()) {
