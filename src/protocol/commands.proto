@@ -927,11 +927,7 @@ message Request {
 message ApplicationInfo {
   optional uint32 process_id = 1;
   optional uint32 thread_id = 2;
-  // The time difference between local time and UTC time in seconds.
-  // This field is not supported except for NaCl.
-  // We use this field in NaCl Mozc because we can't know the local timezone in
-  // NaCl environment.
-  optional int32 timezone_offset = 3;
+  reserved 3;  // deprecated timezone_offset
 }
 
 // Spellchecker request.
