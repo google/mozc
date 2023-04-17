@@ -34,7 +34,10 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <ctffunc.h>
+#include <wrl/client.h>
 
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -48,7 +51,7 @@ namespace tsf {
 namespace {
 
 using ATL::CComBSTR;
-using ATL::CComPtr;
+using Microsoft::WRL::ComPtr;
 using testing::AssertionFailure;
 using testing::AssertionResult;
 using testing::AssertionSuccess;
@@ -108,9 +111,9 @@ std::wstring ToWStr(const CComBSTR &bstr) {
   return std::wstring(static_cast<const wchar_t *>(bstr), bstr.Length());
 }
 
-AssertionResult ExpectCandidateString(ULONG expected_index,
-                                      const std::wstring &expected_text,
-                                      CComPtr<ITfCandidateString> candidate) {
+AssertionResult ExpectCandidateString(
+    ULONG expected_index, const std::wstring &expected_text,
+    const ComPtr<ITfCandidateString> &candidate) {
   if (candidate == nullptr) {
     return AssertionFailure() << "|actual| should be non-null";
   }
@@ -150,19 +153,19 @@ TEST(TipCandidateListTest, EmptyCandidate) {
   MockCallbackResult result;
 
   std::vector<std::wstring> empty;
-  CComPtr<ITfCandidateList> candidate_list(
-      TipCandidateList::New(empty, new MockCallback(&result)));
+  ComPtr<ITfCandidateList> candidate_list(
+      TipCandidateList::New(empty, std::make_unique<MockCallback>(&result)));
   ASSERT_NE(candidate_list, nullptr);
 
   ULONG num = 0;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
   EXPECT_EQ(num, 0);
 
-  CComPtr<ITfCandidateString> str;
+  ComPtr<ITfCandidateString> str;
   EXPECT_HRESULT_FAILED(candidate_list->GetCandidate(0, &str));
   EXPECT_EQ(str, nullptr);
 
-  CComPtr<IEnumTfCandidates> enum_candidates;
+  ComPtr<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
   ASSERT_NE(enum_candidates, nullptr);
 
@@ -186,8 +189,8 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
   for (wchar_t c = L'A'; c < L'Z'; ++c) {
     source.push_back(std::wstring(c, 1));
   }
-  CComPtr<ITfCandidateList> candidate_list(
-      TipCandidateList::New(source, new MockCallback(&result)));
+  ComPtr<ITfCandidateList> candidate_list(
+      TipCandidateList::New(source, std::make_unique<MockCallback>(&result)));
   ASSERT_NE(candidate_list, nullptr);
 
   ULONG num = 0;
@@ -195,20 +198,19 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
   ASSERT_EQ(num, source.size());
 
   for (size_t i = 0; i < source.size(); ++i) {
-    CComPtr<ITfCandidateString> candidate_str;
+    ComPtr<ITfCandidateString> candidate_str;
     EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidate(i, &candidate_str));
     EXPECT_CANDIDATE_STR(i, source[i], candidate_str);
   }
 
-  CComPtr<IEnumTfCandidates> enum_candidates;
+  ComPtr<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
   EXPECT_NE(enum_candidates, nullptr);
 
-  size_t offset = 0;
-  while (offset < source.size()) {
+  for (size_t offset = 0; offset < source.size();) {
     constexpr size_t kBufferSize = 10;
     ITfCandidateString *buffer[kBufferSize] = {};
-    CComPtr<ITfCandidateString> strings[kBufferSize];
+    ComPtr<ITfCandidateString> strings[kBufferSize];
     ULONG num_fetched = 0;
     HRESULT hr = enum_candidates->Next(kBufferSize, buffer, &num_fetched);
     for (size_t i = 0; i < kBufferSize; ++i) {

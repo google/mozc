@@ -32,8 +32,10 @@
 
 #include <ctffunc.h>
 #include <guiddef.h>
+#include <wrl/client.h>
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -57,9 +59,12 @@ class TipCandidateList {
   // |callback| will be called back when ITfCandidateList::SetResult
   // is called with CAND_FINALIZED. TipCandidateList will take the
   // ownership of |callback|. |callback| can be nullptr.
-  // Caller must maintain the reference count of the returned object.
-  static ITfCandidateList *New(const std::vector<std::wstring> &candidates,
-                               TipCandidateListCallback *callback);
+  static Microsoft::WRL::ComPtr<ITfCandidateList> New(
+      const std::vector<std::wstring> &candidates,
+      std::unique_ptr<TipCandidateListCallback> callback);
+  static Microsoft::WRL::ComPtr<ITfCandidateList> New(
+      std::vector<std::wstring> &&candidates,
+      std::unique_ptr<TipCandidateListCallback> callback);
   static const IID &GetIID();
 };
 

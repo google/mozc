@@ -29,7 +29,6 @@
 
 #include "win32/tip/tip_reconvert_function.h"
 
-#include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
@@ -44,6 +43,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/win32/com.h"
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
@@ -206,9 +206,11 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
     if (!provider->Query(query, TipQueryProvider::kReconversion, &candidates)) {
       return E_FAIL;
     }
-    auto *callback = new CandidateListCallbackImpl(text_service_, range);
-    *candidate_list = TipCandidateList::New(candidates, callback);
-    (*candidate_list)->AddRef();
+    auto callback =
+        std::make_unique<CandidateListCallbackImpl>(text_service_, range);
+    *candidate_list =
+        TipCandidateList::New(std::move(candidates), std::move(callback))
+            .Detach();
     return S_OK;
   }
 
@@ -231,8 +233,8 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
 }  // namespace
 
 ComPtr<ITfFnReconversion> TipReconvertFunction::New(
-    const ComPtr<TipTextService> &text_service) {
-  return new ReconvertFunctionImpl(text_service);
+    ComPtr<TipTextService> text_service) {
+  return MakeComPtr<ReconvertFunctionImpl>(std::move(text_service));
 }
 
 }  // namespace tsf

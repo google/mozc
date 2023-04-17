@@ -30,9 +30,9 @@
 #ifndef MOZC_WIN32_TIP_TIP_SEARCH_CANDIDATE_PROVIDER_H_
 #define MOZC_WIN32_TIP_TIP_SEARCH_CANDIDATE_PROVIDER_H_
 
+#include <guiddef.h>
 #include <unknwn.h>
-
-#include "base/port.h"
+#include <wrl/client.h>
 
 namespace mozc {
 namespace win32 {
@@ -46,8 +46,7 @@ class TipSearchCandidateProvider {
       delete;
 
   // Returns a COM object that implements ITfFnSearchCandidateProvider.
-  // Caller must maintain the reference count.
-  static IUnknown* New();
+  static Microsoft::WRL::ComPtr<IUnknown> New();
   static const IID& GetIID();
 };
 

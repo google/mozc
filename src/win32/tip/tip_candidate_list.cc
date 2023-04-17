@@ -31,14 +31,17 @@
 
 #include <ctffunc.h>
 #include <objbase.h>
-#include <windows.h>
+#include <oleauto.h>
+#include <wrl/client.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
+#include "base/win32/com.h"
 #include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
@@ -46,6 +49,8 @@ namespace win32 {
 namespace tsf {
 
 namespace {
+
+using Microsoft::WRL::ComPtr;
 
 class CandidateStringImpl final : public ITfCandidateString {
  public:
@@ -153,8 +158,11 @@ class EnumTfCandidatesImpl final : public IEnumTfCandidates {
     if (enum_candidates == nullptr) {
       return E_INVALIDARG;
     }
-    *enum_candidates = new EnumTfCandidatesImpl(candidates_);
-    (*enum_candidates)->AddRef();
+    auto impl = MakeComPtr<EnumTfCandidatesImpl>(candidates_);
+    if (!impl) {
+      return E_OUTOFMEMORY;
+    }
+    *enum_candidates = impl.Detach();
     return S_OK;
   }
 
@@ -176,8 +184,8 @@ class EnumTfCandidatesImpl final : public IEnumTfCandidates {
         return S_FALSE;
       }
       candidate_string[i] =
-          new CandidateStringImpl(current_, candidates_[current_]);
-      candidate_string[i]->AddRef();
+          MakeComPtr<CandidateStringImpl>(current_, candidates_[current_])
+              .Detach();
       ++current_;
     }
     *fetched_count = count;
@@ -206,9 +214,11 @@ class EnumTfCandidatesImpl final : public IEnumTfCandidates {
 
 class CandidateListImpl final : public ITfCandidateList {
  public:
-  CandidateListImpl(const std::vector<std::wstring> &candidates,
-                    TipCandidateListCallback *callback)
-      : candidates_(candidates), callback_(callback) {}
+  template <typename Candidates>
+  CandidateListImpl(Candidates &&candidates,
+                    std::unique_ptr<TipCandidateListCallback> callback)
+      : candidates_(std::forward<Candidates>(candidates)),
+        callback_(std::move(callback)) {}
   CandidateListImpl(const CandidateListImpl &) = delete;
   CandidateListImpl &operator=(const CandidateListImpl &) = delete;
 
@@ -251,8 +261,11 @@ class CandidateListImpl final : public ITfCandidateList {
     if (enum_candidate == nullptr) {
       return E_INVALIDARG;
     }
-    *enum_candidate = new EnumTfCandidatesImpl(candidates_);
-    (*enum_candidate)->AddRef();
+    auto impl = MakeComPtr<EnumTfCandidatesImpl>(candidates_);
+    if (!impl) {
+      return E_OUTOFMEMORY;
+    }
+    *enum_candidate = impl.Detach();
     return S_OK;
   }
 
@@ -264,8 +277,8 @@ class CandidateListImpl final : public ITfCandidateList {
     if (index >= candidates_.size()) {
       return E_FAIL;
     }
-    *candidate_string = new CandidateStringImpl(index, candidates_[index]);
-    (*candidate_string)->AddRef();
+    *candidate_string =
+        MakeComPtr<CandidateStringImpl>(index, candidates_[index]).Detach();
     return S_OK;
   }
 
@@ -297,10 +310,17 @@ class CandidateListImpl final : public ITfCandidateList {
 }  // namespace
 
 // static
-ITfCandidateList *TipCandidateList::New(
+ComPtr<ITfCandidateList> TipCandidateList::New(
     const std::vector<std::wstring> &candidates,
-    TipCandidateListCallback *callback) {
-  return new CandidateListImpl(candidates, callback);
+    std::unique_ptr<TipCandidateListCallback> callback) {
+  return MakeComPtr<CandidateListImpl>(candidates, std::move(callback));
+}
+
+ComPtr<ITfCandidateList> TipCandidateList::New(
+    std::vector<std::wstring> &&candidates,
+    std::unique_ptr<TipCandidateListCallback> callback) {
+  return MakeComPtr<CandidateListImpl>(std::move(candidates),
+                                       std::move(callback));
 }
 
 }  // namespace tsf

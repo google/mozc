@@ -48,7 +48,7 @@ class TipLinguisticAlternates {
 
   // Returns a COM object that implements ITfFnGetLinguisticAlternates.
   static Microsoft::WRL::ComPtr<ITfFnGetLinguisticAlternates> New(
-      const Microsoft::WRL::ComPtr<TipTextService> &text_service);
+      Microsoft::WRL::ComPtr<TipTextService> text_service);
   static const IID &GetIID();
 };
 

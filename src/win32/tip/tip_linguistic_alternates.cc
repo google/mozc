@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/win32/com.h"
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
@@ -68,7 +69,6 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
   GetLinguisticAlternatesImpl &operator=(const GetLinguisticAlternatesImpl &) =
       delete;
 
- private:
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
                                                    void **object) {
@@ -130,8 +130,8 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
     if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
       return E_FAIL;
     }
-    *candidate_list = TipCandidateList::New(candidates, nullptr);
-    (*candidate_list)->AddRef();
+    *candidate_list =
+        TipCandidateList::New(std::move(candidates), nullptr).Detach();
     return S_OK;
   }
 
@@ -144,12 +144,13 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
 
 // static
 ComPtr<ITfFnGetLinguisticAlternates> TipLinguisticAlternates::New(
-    const ComPtr<TipTextService> &text_service) {
+    ComPtr<TipTextService> text_service) {
   std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
   if (!provider) {
     return nullptr;
   }
-  return new GetLinguisticAlternatesImpl(text_service, std::move(provider));
+  return MakeComPtr<GetLinguisticAlternatesImpl>(std::move(text_service),
+                                                 std::move(provider));
 }
 
 // static
