@@ -37,7 +37,6 @@
 #include <ime.h>
 #include <msctf.h>
 #include <objbase.h>
-#include <versionhelpers.h>
 #include <wrl/client.h>
 
 #include <cstddef>
@@ -1109,13 +1108,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) {
     return new CompositionSinkImpl(this, context);
   }
-  virtual bool IsImmersiveUI() const {
-    // On Windows 10 and later, we assume that Mozc Renderer can overlap the IME
-    // client app even if TF_TMF_IMMERSIVEMODE is specified.
-    // See b/132702301 and crbug.com/962310 for more background.
-    return !::IsWindows10OrGreater() &&
-           (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
-  }
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) {
     if (context == nullptr) {
       return nullptr;
@@ -1633,10 +1625,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   HRESULT InitRendererCallbackWindow() {
-    if (IsImmersiveUI()) {
-      // The renderer callback is not required for Immersive mode.
-      return S_FALSE;
-    }
     if (::IsWindow(renderer_callback_window_handle_)) {
       return S_FALSE;
     }
@@ -1661,10 +1649,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   HRESULT UninitRendererCallbackWindow() {
-    if (IsImmersiveUI()) {
-      // The renderer callback is not required for Immersive mode.
-      return S_FALSE;
-    }
     if (!::IsWindow(renderer_callback_window_handle_)) {
       return S_FALSE;
     }

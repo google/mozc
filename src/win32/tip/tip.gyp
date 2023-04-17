@@ -89,12 +89,9 @@
             'tip_transitory_extension.cc',
             'tip_ui_element_conventional.cc',
             'tip_ui_element_delegate.cc',
-            'tip_ui_element_immersive.cc',
             'tip_ui_element_manager.cc',
             'tip_ui_handler.cc',
             'tip_ui_handler_conventional.cc',
-            'tip_ui_handler_immersive.cc',
-            'tip_ui_renderer_immersive.cc',
           ],
           'dependencies': [
             '../../base/absl.gyp:absl_base',

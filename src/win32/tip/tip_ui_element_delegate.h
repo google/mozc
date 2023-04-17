@@ -83,8 +83,6 @@ class TipUiElementDelegateFactory {
     kConventionalObservableSuggestWindow,
     kConventionalCandidateWindow,
     kConventionalIndicatorWindow,
-    kImmersiveCandidateWindow,
-    kImmersiveIndicatorWindow,
   };
 
   static std::unique_ptr<TipUiElementDelegate> Create(

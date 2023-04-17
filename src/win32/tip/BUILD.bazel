@@ -169,35 +169,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "tip_ui_element_immersive",
-    srcs = ["tip_ui_element_immersive.cc"],
-    hdrs = ["tip_ui_element_immersive.h"],
-    copts = copts_wtl(),
-    features = features_gdi(),
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tip_composition_util",
-        ":tip_edit_session",
-        ":tip_private_context_h",
-        ":tip_range_util",
-        ":tip_ref_count",
-        ":tip_text_service",
-        ":tip_ui_element_delegate",
-        ":tip_ui_renderer_immersive",
-        "//base:util",
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
-        "//renderer:table_layout",
-        "//renderer:window_util",
-        "//renderer/win32:text_renderer",
-        "//renderer/win32:win32_renderer_util",
-        "//third_party/wtl",
-        "@com_google_absl//absl/container:flat_hash_map",
-    ],
-)
-
-mozc_cc_library(
     name = "tip_transitory_extension",
     srcs = ["tip_transitory_extension.cc"],
     hdrs = ["tip_transitory_extension.h"],
@@ -293,25 +264,6 @@ mozc_cc_library(
         "//protocol:renderer_cc_proto",
         "//win32/base:input_state",
         "@com_google_absl//absl/container:flat_hash_map",
-    ],
-)
-
-mozc_cc_library(
-    name = "tip_ui_renderer_immersive",
-    srcs = ["tip_ui_renderer_immersive.cc"],
-    hdrs = ["tip_ui_renderer_immersive.h"],
-    copts = copts_wtl(),
-    features = features_gdi(),
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "//base:port",
-        "//base:util",
-        "//protocol:candidates_cc_proto",
-        "//protocol:commands_cc_proto",
-        "//renderer:table_layout",
-        "//renderer/win32:text_renderer",
-        "//third_party/wtl",
     ],
 )
 
@@ -509,11 +461,9 @@ mozc_cc_library(
     srcs = [
         "tip_ui_handler.cc",
         "tip_ui_handler_conventional.cc",
-        "tip_ui_handler_immersive.cc",
     ],
     hdrs = [
         "tip_ui_handler_conventional.h",
-        "tip_ui_handler_immersive.h",
     ],
     copts = copts_wtl(),
     features = features_gdi(),
@@ -529,7 +479,6 @@ mozc_cc_library(
         ":tip_text_service",
         ":tip_thread_context",
         ":tip_ui_element_conventional",
-        ":tip_ui_element_immersive",
         ":tip_ui_element_manager",
         ":tip_ui_handler",
         "//base:logging",
