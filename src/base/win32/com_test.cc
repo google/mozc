@@ -29,6 +29,7 @@
 
 #include "base/win32/com.h"
 
+#include <guiddef.h>
 #include <objbase.h>
 #include <rpc.h>
 #include <shobjidl.h>
@@ -64,7 +65,7 @@ class Mock
   Mock() { ++instance_count_; }
   ~Mock() override { --instance_count_; }
 
-  STDMETHODIMP QueryInterface(REFIID iid, void** out) override {
+  STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
     qi_count_++;
     return RuntimeClass::QueryInterface(iid, out);
   }
@@ -142,8 +143,48 @@ TEST_F(ComTest, ComCopy) {
   EXPECT_FALSE(ComCopy<IShellLink>(unknown));
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
 
-  IUnknown* null = nullptr;
+  IUnknown *null = nullptr;
   EXPECT_FALSE(ComCopy<IUnknown>(null));
+}
+
+// TODO(yuryu): This is a temporary test until we migrate to WRL to implement
+// COM interfaces.
+class MockNoWRL : public IUnknown {
+ public:
+  explicit MockNoWRL(ULONG &ref) : ref_(ref) {}
+  virtual ~MockNoWRL() = default;
+
+  STDMETHODIMP_(ULONG) AddRef() override { return ++ref_; }
+  STDMETHODIMP_(ULONG) Release() override {
+    if (--ref_ > 0) {
+      return ref_;
+    }
+    delete this;
+    return 0;
+  }
+  STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
+    if (!out) {
+      return E_INVALIDARG;
+    }
+    if (IsEqualIID(iid, IID_IUnknown)) {
+      *out = this;
+    }
+    *out = nullptr;
+    return E_NOINTERFACE;
+  }
+
+ private:
+  ULONG &ref_;
+};
+
+TEST_F(ComTest, MakeComPtr) {
+  ULONG ref = 0;
+  {
+    auto mock = MakeComPtr<MockNoWRL>(ref);
+    EXPECT_TRUE(mock);
+    EXPECT_EQ(ref, 1);
+  }
+  EXPECT_EQ(ref, 0);
 }
 
 }  // namespace

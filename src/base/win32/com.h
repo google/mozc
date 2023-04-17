@@ -31,8 +31,11 @@
 #define MOZC_BASE_WIN32_COM_H_
 
 #include <objbase.h>
+#include <unknwn.h>
 #include <wrl/client.h>
+#include <wrl/implements.h>
 
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -40,19 +43,29 @@
 #include "absl/base/casts.h"
 
 namespace mozc::win32 {
-namespace com_internal {
 
+// ComRawPtr returns a raw pointer of the COM object. It returns the parameter
+// as it is if it's already a raw pointer. If it's a ComPtr<T>, it calls
+// ComPtr<T>::Get().
 template <typename T>
-T* ComRawPtr(T* p) {
+T *ComRawPtr(T *p) {
   return p;
 }
 
 template <typename T>
-T* ComRawPtr(const Microsoft::WRL::ComPtr<T>& p) {
+T *ComRawPtr(const Microsoft::WRL::ComPtr<T> &p) {
   return p.Get();
 }
 
-}  // namespace com_internal
+// MakeComPtr is like std::make_unique but for ComPtr. Returns nullptr if new
+// fails.
+template <typename T, typename... Args>
+Microsoft::WRL::ComPtr<T> MakeComPtr(Args &&...args) {
+  static_assert(std::is_base_of_v<IUnknown, T>, "T must implement IUnknown.");
+
+  return Microsoft::WRL::ComPtr<T>(new (std::nothrow)
+                                       T(std::forward<Args>(args)...));
+}
 
 // Calls CoCreateInstance and returns the result as ComPtr<Interface>.
 template <typename Interface>
@@ -74,15 +87,15 @@ Microsoft::WRL::ComPtr<Interface> ComCreateInstance() {
 
 // Returns the result of QueryInterface as HResultOr<ComPtr<T>>.
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U&& source) {
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U &&source) {
   using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
 
-  auto ptr = com_internal::ComRawPtr(std::forward<U>(source));
+  auto ptr = ComRawPtr(std::forward<U>(source));
   // If source is convertible to T, casting is faster than calling
   // QueryInterface.
-  if constexpr (std::is_convertible_v<decltype(ptr), T*>) {
+  if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
     // ComPtr will call AddRef here.
-    return ReturnType(absl::implicit_cast<T*>(ptr));
+    return ReturnType(absl::implicit_cast<T *>(ptr));
   }
   Microsoft::WRL::ComPtr<T> result;
   const HRESULT hr = ptr->QueryInterface(IID_PPV_ARGS(&result));
@@ -94,14 +107,14 @@ HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U&& source) {
 
 // Returns the result of QueryInterface as ComPtr<T>.
 template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(U&& source) {
+Microsoft::WRL::ComPtr<T> ComQuery(U &&source) {
   return std::move(ComQueryHR<T>(std::forward<U>(source))).value_or(nullptr);
 }
 
 // Similar to ComQuery but returns nullptr if source is nullptr.
 template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComCopy(U&& source) {
-  auto ptr = com_internal::ComRawPtr(std::forward<U>(source));
+Microsoft::WRL::ComPtr<T> ComCopy(U &&source) {
+  auto ptr = ComRawPtr(std::forward<U>(source));
   if (ptr) {
     return ComQuery<T>(ptr);
   }
