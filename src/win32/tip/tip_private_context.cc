@@ -56,10 +56,8 @@ using ::mozc::commands::Output;
 
 class TipPrivateContext::InternalState {
  public:
-  InternalState(DWORD text_edit_sink_cookie, DWORD text_layout_sink_cookie)
-      : client_(ClientFactory::NewClient()),
-        text_edit_sink_cookie_(text_edit_sink_cookie),
-        text_layout_sink_cookie_(text_layout_sink_cookie) {}
+  InternalState()
+      : client_(ClientFactory::NewClient()) {}
   std::unique_ptr<client::ClientInterface> client_;
   SurrogatePairObserver surrogate_pair_observer_;
   commands::Output last_output_;
@@ -67,15 +65,10 @@ class TipPrivateContext::InternalState {
   InputBehavior input_behavior_;
   TipUiElementManager ui_element_manager_;
   VKBackBasedDeleter deleter_;
-
-  const DWORD text_edit_sink_cookie_;
-  const DWORD text_layout_sink_cookie_;
 };
 
-TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
-                                     DWORD text_layout_sink_cookie)
-    : state_(
-          new InternalState(text_edit_sink_cookie, text_layout_sink_cookie)) {
+TipPrivateContext::TipPrivateContext()
+    : state_(std::make_unique<InternalState>()) {
   EnsureInitialized();
 }
 
@@ -141,14 +134,6 @@ const InputBehavior &TipPrivateContext::input_behavior() const {
 
 InputBehavior *TipPrivateContext::mutable_input_behavior() {
   return &state_->input_behavior_;
-}
-
-DWORD TipPrivateContext::text_edit_sink_cookie() const {
-  return state_->text_edit_sink_cookie_;
-}
-
-DWORD TipPrivateContext::text_layout_sink_cookie() const {
-  return state_->text_layout_sink_cookie_;
 }
 
 }  // namespace tsf

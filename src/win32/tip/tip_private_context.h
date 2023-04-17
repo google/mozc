@@ -59,7 +59,7 @@ class TipUiElementManager;
 
 class TipPrivateContext {
  public:
-  TipPrivateContext(DWORD text_edit_sink_cookie, DWORD text_layout_sink_cookie);
+  TipPrivateContext();
   TipPrivateContext(const TipPrivateContext &) = delete;
   TipPrivateContext &operator=(const TipPrivateContext &) = delete;
   ~TipPrivateContext();
@@ -76,8 +76,6 @@ class TipPrivateContext {
   VirtualKey *mutable_last_down_key();
   const InputBehavior &input_behavior() const;
   InputBehavior *mutable_input_behavior();
-  DWORD text_edit_sink_cookie() const;
-  DWORD text_layout_sink_cookie() const;
 
  private:
   class InternalState;
