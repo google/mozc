@@ -533,7 +533,7 @@ def GypMain(options, unused_args):
 
   if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
-    gyp_options.extend(['-D', 'wix_dir=%s' % options.wix_dir])
+    gyp_options.extend(['-D', 'wix_dir="%s"' % options.wix_dir])
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 
