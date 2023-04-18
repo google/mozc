@@ -42,6 +42,9 @@
     'compiler_host%': '',
     'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
+    # Visual C++ Runtime Version.
+    'vcruntime_ver%': '',
+
     # Extra headers and libraries for Visual C++.
     'msvs_includes%': [],
     'msvs_libs_x86%': [],
@@ -54,24 +57,28 @@
         'compiler_target_version_int': 1900,  # Visual C++ 2015 or higher
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1900,  # Visual C++ 2015 or higher
+        'vcruntime_ver': '140',
       }],
       ['MSVS_VERSION=="2017"', {
         'compiler_target': 'msvs',
         'compiler_target_version_int': 1910,  # Visual C++ 2017 or higher
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1910,  # Visual C++ 2017 or higher
+        'vcruntime_ver': '141',
       }],
       ['MSVS_VERSION=="2019"', {
         'compiler_target': 'msvs',
         'compiler_target_version_int': 1920,  # Visual C++ 2019 or higher
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1920,  # Visual C++ 2019 or higher
+        'vcruntime_ver': '142',
       }],
       ['MSVS_VERSION=="2022"', {
         'compiler_target': 'msvs',
         'compiler_target_version_int': 1930,  # Visual C++ 2022 or higher
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1930,  # Visual C++ 2022 or higher
+        'vcruntime_ver': '143',
       }],
     ],
     'msvc_disabled_warnings': [
