@@ -96,22 +96,25 @@
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
         'mozc_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
-        'mozc_32bit_postbuild_targets': [
-          'mozc_tip32_postbuild',
-          'mozc_server32_postbuild',
-          'mozc_cache_service32_postbuild',
-          'mozc_renderer32_postbuild',
-          'mozc_tool_postbuild',
-          'mozc_broker32_postbuild',
-          'mozc_ca32_postbuild',
+        'mozc_32bit_postbuild_stamps': [
+          '<(mozc_broker32_path).postbuild',
+          '<(mozc_ca32_path).postbuild',
+          '<(mozc_cache_service32_path).postbuild',
+          '<(mozc_renderer32_path).postbuild',
+          '<(mozc_server32_path).postbuild',
+          '<(mozc_tip32_path).postbuild',
+          '<(mozc_tool_path).postbuild',
         ],
-        'mozc_64bit_postbuild_targets': [
-          'mozc_tip64_postbuild',
-          'mozc_server64_postbuild',
-          'mozc_cache_service64_postbuild',
-          'mozc_renderer64_postbuild',
-          'mozc_broker64_postbuild',
-          'mozc_ca64_postbuild',
+        'mozc_64bit_postbuild_stamps': [
+          '<(mozc_broker64_path).postbuild',
+          '<(mozc_ca32_path).postbuild',
+          '<(mozc_ca64_path).postbuild',
+          '<(mozc_cache_service64_path).postbuild',
+          '<(mozc_renderer64_path).postbuild',
+          '<(mozc_server64_path).postbuild',
+          '<(mozc_tip32_path).postbuild',
+          '<(mozc_tip64_path).postbuild',
+          '<(mozc_tool_path).postbuild',
         ],
       },
       'targets': [
@@ -210,11 +213,9 @@
           'variables': {
             'wxs_file': '<(DEPTH)/win32/installer/installer_32bit.wxs',
             'wixobj_file': '<(mozc_32bit_wixobj)',
+            'stamp_files': '<(mozc_32bit_postbuild_stamps)',
             'msi_file': '<(mozc_32bit_msi)',
           },
-          'dependencies': [
-            '<@(mozc_32bit_postbuild_targets)',
-          ],
           'includes': [
             'wix.gypi',
           ],
@@ -224,12 +225,9 @@
           'variables': {
             'wxs_file': '<(DEPTH)/win32/installer/installer_64bit.wxs',
             'wixobj_file': '<(mozc_64bit_wixobj)',
+            'stamp_files': '<(mozc_64bit_postbuild_stamps)',
             'msi_file': '<(mozc_64bit_msi)',
           },
-          'dependencies': [
-            '<@(mozc_32bit_postbuild_targets)',
-            '<@(mozc_64bit_postbuild_targets)',
-          ],
           'includes': [
             'wix.gypi',
           ],
@@ -238,17 +236,11 @@
           'target_name': 'mozc_installer32_postbuild',
           'variables': { 'target_file': '<(mozc_32bit_msi)' },
           'includes': [ 'postbuilds_win.gypi' ],
-          'dependencies': [
-            'mozc_32bit_installer',
-          ],
         },
         {
           'target_name': 'mozc_installer64_postbuild',
           'variables': { 'target_file': '<(mozc_64bit_msi)' },
           'includes': [ 'postbuilds_win.gypi' ],
-          'dependencies': [
-            'mozc_64bit_installer',
-          ],
         },
         {
           'target_name': 'mozc_installers_win',

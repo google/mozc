@@ -144,9 +144,10 @@
     {
       'action_name': 'generate_msi',
       'inputs': [
-        # vcbuild will invoke this action if any file listed here is
+        # ninja.exe will invoke this action if any file listed here is
         # newer than files in 'outputs'.
         '<(wixobj_file)',
+        '<@(stamp_files)',
       ],
       'outputs': [
         '<(msi_file)',
