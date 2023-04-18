@@ -295,6 +295,7 @@ def ExpandMetaTarget(options, meta_target_name):
         'out_win/%s:mozc_win32_build32' % config,
         'out_win/%sDynamic:mozc_win32_build32_dynamic' % config,
         'out_win/%s_x64:mozc_win32_build64' % config,
+        'out_win/%s:mozc_installers_win' % config,
     ]
 
   return dependencies + targets

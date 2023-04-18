@@ -29,15 +29,14 @@
 
 {
   'conditions': [
-    ['OS!="win" or use_wix!="YES" or branding!="GoogleJapaneseInput"', {
-      # Add a dummy target because at least one target is needed in a gyp file.
+    ['OS!="win" or use_wix!="YES"', {
       'targets': [
         {
-          'target_name': 'dummy_win32_installer',
+          'target_name': 'mozc_installers_win',
           'type': 'none',
         },
       ],
-    }, {  # else, that is: 'OS=="win" and use_wix=="YES" and branding=="GoogleJapaneseInput"'
+    }, {  # else, that is: 'OS=="win" and use_wix=="YES"'
       'variables': {
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
