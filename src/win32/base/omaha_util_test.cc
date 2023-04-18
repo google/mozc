@@ -34,8 +34,6 @@
 #include <strsafe.h>
 // clang-format on
 
-#include <clocale>
-
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -476,6 +474,8 @@ class OmahaUtilTestOn64bitMachine : public testing::Test {
   }
 };
 
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+
 TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
   RegistryEmulator<__COUNTER__> test;
 
@@ -605,6 +605,64 @@ TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
   EXPECT_EQ(test.property()->installer_result(), 0);
   EXPECT_EQ(test.property()->installer_result_ui_string(), L"");
 }
+
+#else   // !GOOGLE_JAPANESE_INPUT_BUILD
+
+TEST_F(OmahaUtilTestOn32bitMachine, ReadWriteClearChannel) {
+  RegistryEmulator<__COUNTER__> test;
+
+  // ClientStateKey does not exist.
+  test.property()->Clear();
+  test.property()->set_omaha_key_exists(false);
+  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
+  // The ClientState key should not be created.
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_TRUE(OmahaUtil::ClearChannel());
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_FALSE(test.property()->has_ap_value());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
+}
+
+TEST_F(OmahaUtilTestOn64bitMachine, ReadWriteClearChannel) {
+  RegistryEmulator<__COUNTER__> test;
+
+  // ClientStateKey does not exist.
+  test.property()->Clear();
+  test.property()->set_omaha_key_exists(false);
+  EXPECT_TRUE(OmahaUtil::WriteChannel(L"internal-stable"));
+  // The ClientState key should not be created.
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_TRUE(OmahaUtil::ClearChannel());
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_FALSE(test.property()->has_ap_value());
+  EXPECT_EQ(OmahaUtil::ReadChannel(), L"");
+}
+
+TEST_F(OmahaUtilTestOn32bitMachine, WriteClearOmahaError) {
+  RegistryEmulator<__COUNTER__> test;
+
+  // ClientStateKey does not exist.
+  test.property()->Clear();
+  test.property()->set_omaha_key_exists(false);
+  EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_FALSE(test.property()->has_installer_result());
+  EXPECT_FALSE(test.property()->has_installer_result_ui_string());
+}
+
+TEST_F(OmahaUtilTestOn64bitMachine, WriteClearOmahaError) {
+  RegistryEmulator<__COUNTER__> test;
+
+  // ClientStateKey does not exist.
+  test.property()->Clear();
+  test.property()->set_omaha_key_exists(false);
+  EXPECT_TRUE(OmahaUtil::WriteOmahaError(L"xx", L"yy"));
+  EXPECT_FALSE(test.property()->omaha_key_exists());
+  EXPECT_FALSE(test.property()->has_installer_result());
+  EXPECT_FALSE(test.property()->has_installer_result_ui_string());
+}
+
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 }  // namespace win32
 }  // namespace mozc

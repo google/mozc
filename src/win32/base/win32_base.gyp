@@ -146,14 +146,8 @@
           'type': 'static_library',
           'sources': [
             'migration_util.cc',
+            'omaha_util.cc',
             'uninstall_helper.cc',
-          ],
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'sources': [
-                'omaha_util.cc',
-              ],
-            }],
           ],
           'dependencies': [
             '../../base/base.gyp:base',
@@ -164,6 +158,7 @@
           'target_name': 'win32_base_test',
           'type': 'executable',
           'sources': [
+            'omaha_util_test.cc',
             'uninstall_helper_test.cc',
           ],
           'dependencies': [
@@ -171,13 +166,6 @@
             '../../protocol/protocol.gyp:commands_proto',
             '../../testing/testing.gyp:gtest_main',
             'ime_base',
-          ],
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'sources': [
-                'omaha_util_test.cc',
-              ],
-            }],
           ],
           'variables': {
             'test_size': 'small',

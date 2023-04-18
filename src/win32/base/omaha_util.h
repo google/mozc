@@ -30,12 +30,6 @@
 #ifndef MOZC_WIN32_BASE_OMAHA_UTIL_H_
 #define MOZC_WIN32_BASE_OMAHA_UTIL_H_
 
-// Omaha is the code name of Google Update, which is not used in
-// OSS version of Mozc.
-#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#error OmahaUtil must be used with Google Japanese Input, not OSS Mozc
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-
 #include <windows.h>
 #include <string>
 
@@ -43,7 +37,7 @@
 
 namespace mozc {
 namespace win32 {
-// TODO(yukawa): Add unit test for this class.
+
 class OmahaUtil {
  public:
   OmahaUtil(const OmahaUtil &) = delete;
