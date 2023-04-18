@@ -221,25 +221,16 @@ HRESULT TipUiElementManager::OnUpdate(
     EndUI(ui_element_manager, suggest_ui_id);
     suggest_ui_id = TF_INVALID_UIELEMENTID;
     ui_element_map_.erase(kSuggestWindow);
-    if (suggest_ui) {
-      TipUiHandler::OnDestroyElement(text_service, suggest_ui);
-    }
   }
   if (candidate_mode == kUIEnd) {
     EndUI(ui_element_manager, candidate_ui_id);
     candidate_ui_id = TF_INVALID_UIELEMENTID;
     ui_element_map_.erase(kCandidateWindow);
-    if (candidate_ui) {
-      TipUiHandler::OnDestroyElement(text_service, candidate_ui);
-    }
   }
   if (indicator_mode == kUIEnd) {
     EndUI(ui_element_manager, indicator_ui_id);
     indicator_ui_id = TF_INVALID_UIELEMENTID;
     ui_element_map_.erase(kIndicatorWindow);
-    if (indicator_ui) {
-      TipUiHandler::OnDestroyElement(text_service, indicator_ui);
-    }
   }
 
   if (suggest_mode == kUIBeginAndUpdate) {

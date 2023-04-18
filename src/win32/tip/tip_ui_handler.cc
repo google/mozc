@@ -109,11 +109,6 @@ ComPtr<ITfUIElement> TipUiHandler::CreateUI(
   return TipUiHandlerConventional::CreateUI(type, text_service, context);
 }
 
-void TipUiHandler::OnDestroyElement(const ComPtr<TipTextService> &text_service,
-                                    const ComPtr<ITfUIElement> &element) {
-  TipUiHandlerConventional::OnDestroyElement(element);
-}
-
 void TipUiHandler::OnActivate(TipTextService *text_service) {
   TipUiHandlerConventional::OnActivate(text_service);
 }

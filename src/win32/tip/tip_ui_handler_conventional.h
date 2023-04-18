@@ -51,8 +51,6 @@ class TipUiHandlerConventional {
       TipUiHandler::UiType type,
       const Microsoft::WRL::ComPtr<TipTextService> &text_service,
       const Microsoft::WRL::ComPtr<ITfContext> &context);
-  static void OnDestroyElement(
-      const Microsoft::WRL::ComPtr<ITfUIElement> &element);
 
   static void OnActivate(TipTextService *text_service);
   static void OnDeactivate();

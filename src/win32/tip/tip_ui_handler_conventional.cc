@@ -446,13 +446,6 @@ ComPtr<ITfUIElement> TipUiHandlerConventional::CreateUI(
   }
 }
 
-void TipUiHandlerConventional::OnDestroyElement(
-    const ComPtr<ITfUIElement> &element) {
-  // TipUiHandlerConventional does not have any hidden resource that is
-  // associated with |element|. So we have nothing to do here.
-  // Note that |element| will be destroyed by using ref count.
-}
-
 void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
   ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
   ComPtr<ITfDocumentMgr> document;
