@@ -44,7 +44,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
 #include "base/const.h"
@@ -75,6 +74,7 @@
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler.h"
 #include "absl/base/casts.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
@@ -1750,11 +1750,11 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   // Used for LangBar integration.
   TipLangBar langbar_;
 
-  using PreservedKeyMap = std::unordered_map<GUID, UINT, GuidHash>;
+  using PreservedKeyMap = absl::flat_hash_map<GUID, UINT, GuidHash>;
   using PrivateContextMap =
-      std::unordered_map<ComPtr<ITfContext>,
-                         std::unique_ptr<PrivateContextWrapper>,
-                         ComPtrHash<ITfContext>>;
+      absl::flat_hash_map<ComPtr<ITfContext>,
+                          std::unique_ptr<PrivateContextWrapper>,
+                          ComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
   std::unique_ptr<TipThreadContext> thread_context_;
