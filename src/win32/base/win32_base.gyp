@@ -205,6 +205,9 @@
             '../../testing/testing.gyp:gtest_main',
             'text_icon',
           ],
+          'variables': {
+            'test_size': 'small',
+          },
         },
       ],
     }],
@@ -219,6 +222,8 @@
           'dependencies': [
             'ime_impl_base_test',
             'imframework_util_test',
+            'text_icon_test',
+            'win32_base_test',
           ],
         }],
       ],
