@@ -366,13 +366,10 @@ mozc_cc_library(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:process_mutex",
-        "//base:util",
         "//base/protobuf:zero_copy_stream_impl",
         "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
@@ -749,6 +746,7 @@ mozc_cc_library(
     visibility = [
         "//data_manager:__subpackages__",
         "//engine:__subpackages__",
+        "//rewriter:__subpackages__",
     ],
     deps = [
         "//base:port",

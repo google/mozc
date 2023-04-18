@@ -35,7 +35,6 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "dictionary/file/codec.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "absl/strings/string_view.h"
@@ -57,7 +56,7 @@ DictionaryFileBuilder::~DictionaryFileBuilder() {
 }
 
 bool DictionaryFileBuilder::AddSectionFromFile(
-    const absl::string_view section_name, const absl::string_view file_name) {
+    const absl::string_view section_name, const std::string &file_name) {
   if (added_.find(section_name) != added_.end()) {
     DLOG(INFO) << "Already added: " << section_name;
     return false;
@@ -81,7 +80,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(
 }
 
 void DictionaryFileBuilder::WriteImageToFile(
-    const absl::string_view file_name) const {
+    const std::string &file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
   OutputFileStream ofs(file_name, std::ios::binary);
   file_codec_->WriteSections(sections_, &ofs);

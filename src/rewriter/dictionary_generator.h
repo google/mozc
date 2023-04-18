@@ -33,15 +33,12 @@
 #define MOZC_REWRITER_DICTIONARY_GENERATOR_H_
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "base/container/freelist.h"
-#include "base/port.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/user_pos.h"
+#include "dictionary/user_pos_interface.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 
@@ -110,7 +107,7 @@ class DictionaryGenerator {
   void AddToken(const Token &token);
 
   // Output the tokens into the filename.
-  bool Output(absl::string_view filename) const;
+  bool Output(const std::string &filename) const;
 
  private:
   ObjectPool<Token> token_pool_;

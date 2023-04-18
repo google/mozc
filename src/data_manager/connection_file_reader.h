@@ -30,12 +30,11 @@
 #ifndef MOZC_DATA_MANAGER_CONNECTION_FILE_READER_H_
 #define MOZC_DATA_MANAGER_CONNECTION_FILE_READER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
 #include "base/file_stream.h"
-#include "base/port.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -47,7 +46,7 @@ namespace mozc {
 // }
 class ConnectionFileReader {
  public:
-  explicit ConnectionFileReader(absl::string_view filename);
+  explicit ConnectionFileReader(const std::string& filename);
   ConnectionFileReader(const ConnectionFileReader&) = delete;
   ConnectionFileReader& operator=(const ConnectionFileReader&) = delete;
   ~ConnectionFileReader();

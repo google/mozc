@@ -59,7 +59,7 @@ ABSL_FLAG(std::string, safe_list_files, "",
 namespace {
 using mozc::storage::ExistenceFilter;
 
-void ReadHashList(const absl::string_view name, std::vector<uint64_t> *words) {
+void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
   std::string line;
   mozc::InputFileStream input(name);
   while (std::getline(input, line)) {

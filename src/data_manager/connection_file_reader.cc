@@ -36,7 +36,7 @@
 
 namespace mozc {
 
-ConnectionFileReader::ConnectionFileReader(absl::string_view filename)
+ConnectionFileReader::ConnectionFileReader(const std::string & filename)
     : stream_(filename), done_(false), array_index_(-1), cost_(0) {
   LOG(INFO) << "Loading " << filename;
   std::string header;

@@ -65,7 +65,6 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -128,7 +127,7 @@ class UserDictionaryStorage {
   bool UnLock();
 
   // Export a dictionary to a file in TSV format.
-  bool ExportDictionary(uint64_t dic_id, absl::string_view file_name);
+  bool ExportDictionary(uint64_t dic_id, const std::string & file_name);
 
   // Create a new dictionary with a specified name. Returns the id of
   // the new instance via new_dic_id.

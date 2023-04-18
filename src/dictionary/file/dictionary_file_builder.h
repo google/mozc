@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "absl/container/flat_hash_set.h"
@@ -51,10 +50,10 @@ class DictionaryFileBuilder {
 
   // Adds a section from a file
   bool AddSectionFromFile(absl::string_view section_name,
-                          absl::string_view file_name);
+                          const std::string &file_name);
 
   // Writes the image of dictionary file to a file.
-  void WriteImageToFile(absl::string_view file_name) const;
+  void WriteImageToFile(const std::string &file_name) const;
 
  private:
   // DictionaryFileBuilder does not take the ownership of |file_codec_|.
