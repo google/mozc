@@ -1,11 +1,12 @@
-URL: http://sourceforge.net/projects/wtl/files/WTL%209.1/WTL%209.1.5321%20Final/
-Version: WTL version 9.1.5321
+URL: https://sourceforge.net/projects/wtl/files/WTL%2010/WTL%2010.0.10320%20Release/
+Version: WTL version 10.0.10320 Release
 License: Ms-PL
 License File: LICENSE
 
 Local Modifications:
 Removed following non-essential directories, to save space.
   - AppWiz/
-  - AppWizCE/
-  - AppWizMobile/
   - Samples/
+
+Applied this patch from Chromium: https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/wtl/wtl10.patch
+
