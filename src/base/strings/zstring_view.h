@@ -62,10 +62,7 @@ namespace mozc {
 // Note: Although implicit constructor from std::basic_string<CharT> is allowed,
 // explicitly use the to_pfstring function when passing a std::string to
 // functions that needs a wchar_t pointer on Windows.
-template <typename CharT, typename StringViewT = std::basic_string_view<CharT>,
-          std::enable_if_t<std::is_same_v<CharT, char> ||
-                               std::is_same_v<CharT, wchar_t>,
-                           bool> = true>
+template <typename CharT, typename StringViewT>
 class basic_zstring_view {
  public:
   using pointer = CharT *;
@@ -220,9 +217,11 @@ std::basic_ostream<CharT> &operator<<(
   return os;
 }
 
-using zstring_view = basic_zstring_view<char>;
-using zwstring_view = basic_zstring_view<wchar_t>;
-using zpfstring_view = basic_zstring_view<pfchar_t>;
+using zstring_view = basic_zstring_view<char, absl::string_view>;
+using zwstring_view = basic_zstring_view<wchar_t, std::wstring_view>;
+using zpfstring_view = basic_zstring_view<pfchar_t, pfstring_view>;
+
+static_assert(std::is_convertible_v<zstring_view, absl::string_view>);
 
 }  // namespace mozc
 
