@@ -103,12 +103,6 @@ bool UpdateInternal(TipTextService *text_service, ITfContext *context,
 
 }  // namespace
 
-ComPtr<ITfUIElement> TipUiHandler::CreateUI(
-    UiType type, const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context) {
-  return TipUiHandlerConventional::CreateUI(type, text_service, context);
-}
-
 void TipUiHandler::OnActivate(TipTextService *text_service) {
   TipUiHandlerConventional::OnActivate(text_service);
 }

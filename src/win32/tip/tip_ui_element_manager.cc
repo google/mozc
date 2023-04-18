@@ -48,7 +48,7 @@
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_thread_context.h"
-#include "win32/tip/tip_ui_handler.h"
+#include "win32/tip/tip_ui_element_conventional.h"
 #include "absl/container/flat_hash_map.h"
 
 namespace mozc {
@@ -234,8 +234,9 @@ HRESULT TipUiElementManager::OnUpdate(
   }
 
   if (suggest_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> suggest_ui = TipUiHandler::CreateUI(
-        TipUiHandler::kSuggestWindow, text_service, context);
+    ComPtr<ITfUIElement> suggest_ui = TipUiElementConventional::New(
+          TipUiElementConventional::kUnobservableSuggestWindow, text_service,
+          context);
     if (suggest_ui) {
       DWORD new_suggest_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(
@@ -247,8 +248,8 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
   if (candidate_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> candidate_ui = TipUiHandler::CreateUI(
-        TipUiHandler::kCandidateWindow, text_service, context);
+    ComPtr<ITfUIElement> candidate_ui = TipUiElementConventional::New(
+          TipUiElementConventional::kCandidateWindow, text_service, context);
     if (candidate_ui) {
       DWORD new_candidate_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(BeginUI(ui_element_manager, candidate_ui,
@@ -260,8 +261,8 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
   if (indicator_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> indicator_ui = TipUiHandler::CreateUI(
-        TipUiHandler::kIndicatorWindow, text_service, context);
+    ComPtr<ITfUIElement> indicator_ui = TipUiElementConventional::New(
+          TipUiElementConventional::KIndicatorWindow, text_service, context);
     if (indicator_ui) {
       DWORD new_indicator_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(BeginUI(ui_element_manager, indicator_ui,
