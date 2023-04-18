@@ -35,13 +35,15 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "base/util.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
@@ -484,33 +486,52 @@ class SelectionMonitorServer {
   XcbAtoms atoms_;
 };
 
-class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
+class SelectionMonitorImpl : public SelectionMonitorInterface {
  public:
   SelectionMonitorImpl(SelectionMonitorServer *server, size_t max_text_bytes)
-      : server_(server), max_text_bytes_(max_text_bytes), quit_(false) {}
+      : server_(server), max_text_bytes_(max_text_bytes) {}
 
   SelectionMonitorImpl(const SelectionMonitorImpl &) = delete;
   SelectionMonitorImpl &operator=(const SelectionMonitorImpl &) = delete;
 
   ~SelectionMonitorImpl() override {
-    // Currently mozc::Thread cannot safely detach the attached thread since
-    // the detached thread continues running on a heap allocated to this
-    // object.
-    // TODO(yukawa): Implement safer thread termination.
-    if (Thread::IsRunning()) {
+    if (thread_.has_value()) {
       QueryQuit();
-      // TODO(yukawa): Add Wait method to mozc::Thread.
-      absl::SleepFor(absl::Milliseconds(100));
+      thread_->Join();
     }
   }
 
   // Implements SelectionMonitorInterface::StartMonitoring.
-  void StartMonitoring() override { Thread::Start("SelectionMonitor"); }
+  void StartMonitoring() override {
+    if (thread_.has_value()) {
+      QueryQuit();
+      thread_->Join();
+    }
+    thread_ = mozc::Thread2([this] {
+      while (!quit_.HasBeenNotified()) {
+        if (!server_->checkConnection()) {
+          absl::MutexLock l(&mutex_);
+          last_selection_info_ = SelectionInfo();
+          quit_.Notify();
+          break;
+        }
+
+        SelectionInfo next_info;
+        // Note that this is a blocking call and will not return until the next
+        // X11 message is received. In order to interrupt, you can call
+        // SendNoopEventMessage() from other threads.
+        if (server_->WaitForNextSelectionEvent(max_text_bytes_, &next_info)) {
+          absl::MutexLock l(&mutex_);
+          last_selection_info_ = next_info;
+        }
+      }
+    });
+  }
 
   // Implements SelectionMonitorInterface::QueryQuit.
   void QueryQuit() override {
-    if (Thread::IsRunning()) {
-      quit_ = true;
+    if (!quit_.HasBeenNotified()) {
+      quit_.Notify();
       // Awake the message pump thread so that it can see the updated
       // |quit_| immediately.
       server_->SendNoopEventMessage();
@@ -527,31 +548,11 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
     return info;
   }
 
-  // Implements Thread::Run.
-  void Run() override {
-    while (!quit_) {
-      if (!server_->checkConnection()) {
-        absl::MutexLock l(&mutex_);
-        last_selection_info_ = SelectionInfo();
-        quit_ = true;
-        break;
-      }
-
-      SelectionInfo next_info;
-      // Note that this is blocking call and will not return until the next
-      // X11 message is received. In order to interrupt, you can call
-      // SendNoopEventMessage() method from other threads.
-      if (server_->WaitForNextSelectionEvent(max_text_bytes_, &next_info)) {
-        absl::MutexLock l(&mutex_);
-        last_selection_info_ = next_info;
-      }
-    }
-  }
-
  private:
+  absl::Notification quit_;
+  std::optional<mozc::Thread2> thread_;
   std::unique_ptr<SelectionMonitorServer> server_;
   const size_t max_text_bytes_;
-  volatile bool quit_;
   absl::Mutex mutex_;
   SelectionInfo last_selection_info_;
 };
