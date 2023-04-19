@@ -33,10 +33,8 @@
 #include <string>
 
 #include "base/file_stream.h"
-#include "base/file_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace internal {
@@ -46,7 +44,7 @@ class PosIdPrinterTest : public ::testing::Test {
   void SetUp() override {
     const std::string test_id_def_path =
         testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"});
-    pos_id_ = std::make_unique<InputFileStream>(test_id_def_path.c_str());
+    pos_id_ = std::make_unique<InputFileStream>(test_id_def_path);
     pos_id_printer_ = std::make_unique<PosIdPrinter>(pos_id_.get());
   }
 

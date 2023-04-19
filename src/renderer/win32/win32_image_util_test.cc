@@ -39,7 +39,9 @@
 #include <atlmisc.h>
 // clang-format on
 
-#include <algorithm>
+#undef StrCat
+
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -48,13 +50,14 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/protobuf/text_format.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_font_test_helper.h"
 #include "data/test/renderer/win32/test_spec.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/str_cat.h"
 
 using ::std::max;
 using ::std::min;
@@ -64,17 +67,19 @@ using ::std::min;
 // TODO(yukawa): Use WIC (Windows Imaging Component) instead of GDI+.
 #include <gdiplus.h>  // NOLINT
 
-using ::mozc::renderer::win32::internal::GaussianBlur;
-using ::mozc::renderer::win32::internal::SafeFrameBuffer;
-using ::mozc::renderer::win32::internal::SubdivisionalPixel;
-using ::mozc::renderer::win32::internal::TextLabel;
-
-using ::WTL::CBitmap;
-
 namespace mozc {
 namespace renderer {
 namespace win32 {
 namespace {
+
+using ::mozc::renderer::win32::internal::GaussianBlur;
+using ::mozc::renderer::win32::internal::SafeFrameBuffer;
+using ::mozc::renderer::win32::internal::SubdivisionalPixel;
+using ::mozc::renderer::win32::internal::TextLabel;
+using ::mozc::win32::Utf8ToWide;
+using ::mozc::win32::WideToUtf8;
+
+using ::WTL::CBitmap;
 
 using BalloonImageInfo = BalloonImage::BalloonImageInfo;
 using SubdivisionalPixelIterator =
@@ -131,16 +136,14 @@ class BalloonImageTest : public ::testing::Test,
 
     bitmap.Save(filename.c_str(), &clsid_png_);
 
-    std::string utf8_filename;
-    Util::WideToUtf8(filename + L".textproto", &utf8_filename);
-    OutputFileStream os(utf8_filename);
+    OutputFileStream os(absl::StrCat(WideToUtf8(filename), ".textproto"));
     std::string textproto;
     mozc::protobuf::TextFormat::PrintToString(spec, &textproto);
     os << textproto;
   }
 
-  static void BalloonInfoToTextProto(
-      const BalloonImageInfo &info, TestSpec *spec) {
+  static void BalloonInfoToTextProto(const BalloonImageInfo &info,
+                                     TestSpec *spec) {
     TestSpec::Input *input = spec->mutable_input();
     input->set_frame_color(ColorToInteger(info.frame_color));
     input->set_inside_color(ColorToInteger(info.inside_color));
@@ -162,8 +165,8 @@ class BalloonImageTest : public ::testing::Test,
     input->set_blur_offset_y(info.blur_offset_y);
   }
 
-  static void TextProtoToBalloonInfo(
-      const TestSpec &spec, BalloonImageInfo *info) {
+  static void TextProtoToBalloonInfo(const TestSpec &spec,
+                                     BalloonImageInfo *info) {
     const TestSpec::Input &input = spec.input();
     *info = BalloonImageInfo();
     info->frame_color = IntegerToColor(input.frame_color());
@@ -327,8 +330,8 @@ TEST_P(BalloonImageTest, TestImpl) {
   {
     absl::StatusOr<std::string> data = FileUtil::GetContents(textproto_path);
     ASSERT_OK(data);
-    ASSERT_TRUE(mozc::protobuf::TextFormat::ParseFromString(data.value(),
-                                                            &spec));
+    ASSERT_TRUE(
+        mozc::protobuf::TextFormat::ParseFromString(data.value(), &spec));
   }
   BalloonImageInfo info;
   TextProtoToBalloonInfo(spec, &info);
@@ -342,10 +345,7 @@ TEST_P(BalloonImageTest, TestImpl) {
   EXPECT_EQ(actual_tail_offset.x, spec.output().tail_offset_x());
   EXPECT_EQ(actual_tail_offset.y, spec.output().tail_offset_y());
 
-  std::wstring wide_path;
-  Util::Utf8ToWide(expected_image_path, &wide_path);
-
-  Gdiplus::Bitmap bitmap(wide_path.c_str());
+  Gdiplus::Bitmap bitmap(Utf8ToWide(expected_image_path).c_str());
 
   ASSERT_EQ(actual_size.cx, bitmap.GetWidth());
   ASSERT_EQ(actual_size.cy, bitmap.GetHeight());

@@ -34,7 +34,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
@@ -42,24 +41,18 @@
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
+#include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
-#include "prediction/user_history_predictor.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
-#include "storage/registry.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -421,8 +414,8 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {
     ++line_number;
-    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text.c_str(),
-                                 scenario_path->c_str(), line_number));
+    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text,
+                                 *scenario_path, line_number));
     ParseLine(*handler_, line_text);
   }
 }
@@ -496,8 +489,8 @@ TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {
     ++line_number;
-    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text.c_str(),
-                                 scenario_path->c_str(), line_number));
+    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text,
+                                 *scenario_path, line_number));
     ParseLine(*handler_, line_text);
   }
 }

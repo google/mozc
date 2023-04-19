@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 
   if (!flags_input.empty()) {
     // Batch mode loading the input file.
-    input_file = std::make_unique<mozc::InputFileStream>(flags_input.c_str());
+    input_file = std::make_unique<mozc::InputFileStream>(flags_input);
     if (input_file->fail()) {
       LOG(ERROR) << "File not opend: " << flags_input;
       std::cerr << "File not opend: " << flags_input << std::endl;
@@ -125,8 +125,7 @@ int main(int argc, char **argv) {
   }
 
   if (!flags_output.empty()) {
-    output_file =
-        std::make_unique<mozc::OutputFileStream>(flags_output.c_str());
+    output_file = std::make_unique<mozc::OutputFileStream>(flags_output);
     if (output_file->fail()) {
       LOG(ERROR) << "File not opend: " << flags_output;
       std::cerr << "File not opend: " << flags_output << std::endl;
