@@ -41,7 +41,6 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
 
@@ -415,10 +414,8 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return hr;
     }
-    D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE;
-    if (SystemUtil::IsWindows8_1OrLater()) {
-      option |= D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
-    }
+    constexpr D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE |
+        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
     dc_render_target_->BeginDraw();
     dc_render_target_->SetTransform(D2D1::Matrix3x2F::Identity());
     for (size_t i = 0; i < display_list.size(); ++i) {
@@ -548,16 +545,9 @@ TextRenderer::~TextRenderer() {}
 
 // static
 TextRenderer *TextRenderer::Create() {
-  // In some environments, DirectWrite cannot render characters in the
-  // candidate window or even worse may cause crash.  As a workaround,
-  // we try to use DirectWrite only on Windows 8.1 and later.
-  // TODO(yukawa): Reactivate the following code for older OSes when
-  // the root cause of b/23803925 is identified.
-  if (SystemUtil::IsWindows8_1OrLater()) {
-    auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
-    if (dwrite_text_renderer != nullptr) {
-      return dwrite_text_renderer;
-    }
+  auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+  if (dwrite_text_renderer != nullptr) {
+    return dwrite_text_renderer;
   }
   return new GdiTextRenderer();
 }

@@ -168,7 +168,6 @@ mozc_cc_library(
     deps = [
         "//base:coordinates",
         "//base:logging",
-        "//base:system_util",
         "//bazel/win32:d2d1",
         "//bazel/win32:dwrite",
         "//protocol:renderer_cc_proto",
