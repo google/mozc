@@ -29,15 +29,14 @@
 
 {
   'conditions': [
-    ['OS!="win" or use_wix!="YES" or branding!="GoogleJapaneseInput"', {
-      # Add a dummy target because at least one target is needed in a gyp file.
+    ['OS!="win" or use_wix!="YES"', {
       'targets': [
         {
-          'target_name': 'dummy_win32_installer',
+          'target_name': 'mozc_installers_win',
           'type': 'none',
         },
       ],
-    }, {  # else, that is: 'OS=="win" and use_wix=="YES" and branding=="GoogleJapaneseInput"'
+    }, {  # else, that is: 'OS=="win" and use_wix=="YES"'
       'variables': {
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
@@ -54,10 +53,6 @@
         'mozc_renderer32_path': '<(outdir32)/GoogleIMEJaRenderer.exe',
         'mozc_renderer64_path': '<(outdir64)/GoogleIMEJaRenderer.exe',
         'variables': {
-          'debug_crt_merge_module_id_prefix': 'DebugCRT141',
-          'release_crt_merge_module_id_prefix': 'CRT141',
-          'debug_crt_merge_module_path': '<!(echo %VCToolsRedistDir%)/MergeModules/Microsoft_VC141_DebugCRT_x86.msm',
-          'release_crt_merge_module_path': '<!(echo %VCToolsRedistDir%)/MergeModules/Microsoft_VC141_CRT_x86.msm',
           'qt5core_dll_path': '',
           'qt5cored_dll_path': '',
           'qt5gui_dll_path': '',
@@ -81,10 +76,8 @@
             }],
           ],
         },
-        'debug_crt_merge_module_id_prefix': '<(debug_crt_merge_module_id_prefix)',
-        'release_crt_merge_module_id_prefix': '<(release_crt_merge_module_id_prefix)',
-        'debug_crt_merge_module_path': '<(debug_crt_merge_module_path)',
-        'release_crt_merge_module_path': '<(release_crt_merge_module_path)',
+        'release_redist_32bit_crt_dir': '<!(echo %VCToolsRedistDir%)/x86/Microsoft.VC<(vcruntime_ver).CRT',
+        'release_redist_64bit_crt_dir': '<!(echo %VCToolsRedistDir%)/x64/Microsoft.VC<(vcruntime_ver).CRT',
         'qt5core_dll_path': '<(qt5core_dll_path)',
         'qt5cored_dll_path': '<(qt5cored_dll_path)',
         'qt5gui_dll_path': '<(qt5gui_dll_path)',
@@ -103,22 +96,25 @@
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_32bit_msi': '<(outdir32)/GoogleJapaneseInput32.msi',
         'mozc_64bit_msi': '<(outdir32)/GoogleJapaneseInput64.msi',
-        'mozc_32bit_postbuild_targets': [
-          'mozc_tip32_postbuild',
-          'mozc_server32_postbuild',
-          'mozc_cache_service32_postbuild',
-          'mozc_renderer32_postbuild',
-          'mozc_tool_postbuild',
-          'mozc_broker32_postbuild',
-          'mozc_ca32_postbuild',
+        'mozc_32bit_postbuild_stamps': [
+          '<(mozc_broker32_path).postbuild',
+          '<(mozc_ca32_path).postbuild',
+          '<(mozc_cache_service32_path).postbuild',
+          '<(mozc_renderer32_path).postbuild',
+          '<(mozc_server32_path).postbuild',
+          '<(mozc_tip32_path).postbuild',
+          '<(mozc_tool_path).postbuild',
         ],
-        'mozc_64bit_postbuild_targets': [
-          'mozc_tip64_postbuild',
-          'mozc_server64_postbuild',
-          'mozc_cache_service64_postbuild',
-          'mozc_renderer64_postbuild',
-          'mozc_broker64_postbuild',
-          'mozc_ca64_postbuild',
+        'mozc_64bit_postbuild_stamps': [
+          '<(mozc_broker64_path).postbuild',
+          '<(mozc_ca32_path).postbuild',
+          '<(mozc_ca64_path).postbuild',
+          '<(mozc_cache_service64_path).postbuild',
+          '<(mozc_renderer64_path).postbuild',
+          '<(mozc_server64_path).postbuild',
+          '<(mozc_tip32_path).postbuild',
+          '<(mozc_tip64_path).postbuild',
+          '<(mozc_tool_path).postbuild',
         ],
       },
       'targets': [
@@ -217,11 +213,9 @@
           'variables': {
             'wxs_file': '<(DEPTH)/win32/installer/installer_32bit.wxs',
             'wixobj_file': '<(mozc_32bit_wixobj)',
+            'stamp_files': '<(mozc_32bit_postbuild_stamps)',
             'msi_file': '<(mozc_32bit_msi)',
           },
-          'dependencies': [
-            '<@(mozc_32bit_postbuild_targets)',
-          ],
           'includes': [
             'wix.gypi',
           ],
@@ -231,12 +225,9 @@
           'variables': {
             'wxs_file': '<(DEPTH)/win32/installer/installer_64bit.wxs',
             'wixobj_file': '<(mozc_64bit_wixobj)',
+            'stamp_files': '<(mozc_64bit_postbuild_stamps)',
             'msi_file': '<(mozc_64bit_msi)',
           },
-          'dependencies': [
-            '<@(mozc_32bit_postbuild_targets)',
-            '<@(mozc_64bit_postbuild_targets)',
-          ],
           'includes': [
             'wix.gypi',
           ],
@@ -245,17 +236,11 @@
           'target_name': 'mozc_installer32_postbuild',
           'variables': { 'target_file': '<(mozc_32bit_msi)' },
           'includes': [ 'postbuilds_win.gypi' ],
-          'dependencies': [
-            'mozc_32bit_installer',
-          ],
         },
         {
           'target_name': 'mozc_installer64_postbuild',
           'variables': { 'target_file': '<(mozc_64bit_msi)' },
           'includes': [ 'postbuilds_win.gypi' ],
-          'dependencies': [
-            'mozc_64bit_installer',
-          ],
         },
         {
           'target_name': 'mozc_installers_win',

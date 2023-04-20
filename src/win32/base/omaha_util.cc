@@ -29,12 +29,6 @@
 
 #include "win32/base/omaha_util.h"
 
-// Omaha is the code name of Google Update, which is not used in
-// OSS version of Mozc.
-#if !defined(GOOGLE_JAPANESE_INPUT_BUILD)
-#error OmahaUtil must be used with Google Japanese Input, not OSS Mozc
-#endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-
 #include <windows.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -47,6 +41,7 @@
 
 namespace mozc {
 namespace win32 {
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
 namespace {
 using ATL::CRegKey;
 
@@ -152,5 +147,32 @@ bool OmahaUtil::ClearChannel() {
   }
   return true;
 }
+
+#elif   // !GOOGLE_JAPANESE_INPUT_BUILD
+
+bool OmahaUtil::WriteChannel(const std::wstring &value) {
+  return true;
+}
+
+// Reads a REG_SZ channel name from "ap" in Mozc's client state key.
+std::wstring OmahaUtil::ReadChannel() {
+  return L"";
+}
+
+bool OmahaUtil::ClearOmahaError() {
+  return true;
+}
+
+bool OmahaUtil::WriteOmahaError(const std::wstring &ui_message,
+                                const std::wstring &header) {
+  return true;
+}
+
+bool OmahaUtil::ClearChannel() {
+  return true;
+}
+
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
 }  // namespace win32
 }  // namespace mozc

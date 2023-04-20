@@ -32,7 +32,6 @@
 
 #include <msctf.h>
 #include <windows.h>
-#include <wrl/client.h>
 
 #include "win32/tip/tip_text_service.h"
 
@@ -42,22 +41,9 @@ namespace tsf {
 
 class TipUiHandler {
  public:
-  enum UiType {
-    kSuggestWindow,
-    kCandidateWindow,
-    kIndicatorWindow,
-  };
-
   TipUiHandler() = delete;
   TipUiHandler(const TipUiHandler &) = delete;
   TipUiHandler &operator=(const TipUiHandler &) = delete;
-
-  static Microsoft::WRL::ComPtr<ITfUIElement> CreateUI(
-      UiType type, const Microsoft::WRL::ComPtr<TipTextService> &text_service,
-      const Microsoft::WRL::ComPtr<ITfContext> &context);
-  static void OnDestroyElement(
-      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
-      const Microsoft::WRL::ComPtr<ITfUIElement> &element);
 
   static void OnActivate(TipTextService *text_service);
   static void OnDeactivate(TipTextService *text_service);

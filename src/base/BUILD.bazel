@@ -434,9 +434,9 @@ mozc_cc_library(
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/strings"] + mozc_select(
-        windows = ["//base/win32:wide_char"],
-    ),
+    deps = [
+        "//base/strings:pfchar",
+    ],
 )
 
 mozc_cc_binary(

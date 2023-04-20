@@ -581,10 +581,8 @@ mozc_cc_test(
     deps = [
         ":pos_id_printer",
         "//base:file_stream",
-        "//base:file_util",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 

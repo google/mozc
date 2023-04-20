@@ -29,51 +29,52 @@
 
 #include "win32/tip/tip_query_provider.h"
 
+#include <cstddef>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "win32/tip/tip_ref_count.h"
 
+namespace mozc {
+namespace win32 {
+namespace tsf {
+namespace {
+
 using ::mozc::client::ClientFactory;
 using ::mozc::client::ClientInterface;
-using ::mozc::commands::Input;
 using ::mozc::commands::KeyEvent;
 using ::mozc::commands::Output;
 using ::mozc::commands::SessionCommand;
 
-namespace mozc {
-namespace win32 {
-namespace tsf {
-
-namespace {
-
 class TipQueryProviderImpl : public TipQueryProvider {
  public:
-  explicit TipQueryProviderImpl(ClientInterface *client) : client_(client) {}
+  explicit TipQueryProviderImpl(std::unique_ptr<ClientInterface> client)
+      : client_(std::move(client)) {}
   TipQueryProviderImpl(const TipQueryProviderImpl &) = delete;
   TipQueryProviderImpl &operator=(const TipQueryProviderImpl &) = delete;
 
  private:
   // The TipQueryProvider interface methods.
-  virtual bool Query(const std::wstring &query, QueryType type,
-                     std::vector<std::wstring> *result) {
+  bool Query(const std::wstring_view query, QueryType type,
+             std::vector<std::wstring> *result) override {
     if (type == kReconversion) {
       return ReconvertQuery(query, result);
     }
     return SimpleQuery(query, result);
   }
 
-  bool SimpleQuery(const std::wstring &query,
+  bool SimpleQuery(const std::wstring_view query,
                    std::vector<std::wstring> *result) {
     {
       KeyEvent key_event;
-      std::string utf8_query;
-      Util::WideToUtf8(query, &utf8_query);
-      key_event.set_key_string(utf8_query);
+      key_event.set_key_string(WideToUtf8(query));
       key_event.set_activated(true);
       Output output;
       // TODO(yukawa): Consider to introduce a new command that does 1) real
@@ -87,10 +88,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
       }
       const auto &candidates = output.all_candidate_words();
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
-        const auto &utf8 = candidates.candidates(i).value();
-        std::wstring wide;
-        Util::Utf8ToWide(utf8, &wide);
-        result->push_back(wide);
+        result->push_back(Utf8ToWide(candidates.candidates(i).value()));
       }
     }
     {
@@ -102,25 +100,19 @@ class TipQueryProviderImpl : public TipQueryProvider {
     return true;
   }
 
-  bool ReconvertQuery(const std::wstring &query,
+  bool ReconvertQuery(const std::wstring_view query,
                       std::vector<std::wstring> *result) {
     {
-      std::string utf8_query;
-      Util::WideToUtf8(query, &utf8_query);
       SessionCommand command;
       command.set_type(SessionCommand::CONVERT_REVERSE);
-
-      command.set_text(utf8_query);
+      command.set_text(WideToUtf8(query));
       Output output;
       if (!client_->SendCommand(command, &output)) {
         return false;
       }
       const auto &candidates = output.all_candidate_words();
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
-        const auto &utf8 = candidates.candidates(i).value();
-        std::wstring wide;
-        Util::Utf8ToWide(utf8, &wide);
-        result->push_back(wide);
+        result->push_back(Utf8ToWide(candidates.candidates(i).value()));
       }
     }
     {
@@ -138,16 +130,14 @@ class TipQueryProviderImpl : public TipQueryProvider {
 
 }  // namespace
 
-TipQueryProvider::~TipQueryProvider() {}
-
 // static
-TipQueryProvider *TipQueryProvider::Create() {
+std::unique_ptr<TipQueryProvider> TipQueryProvider::Create() {
   std::unique_ptr<ClientInterface> client(ClientFactory::NewClient());
   if (!client->EnsureSession()) {
     return nullptr;
   }
   client->set_suppress_error_dialog(true);
-  return new TipQueryProviderImpl(client.release());
+  return std::make_unique<TipQueryProviderImpl>(std::move(client));
 }
 
 }  // namespace tsf

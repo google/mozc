@@ -49,26 +49,6 @@
       'variables': {
         'additional_args%': [],
         'conditions': [
-          ['debug_crt_merge_module_id_prefix!=""', {
-            'additional_args': [
-              '-dDebugCrtMergeModuleIdPrefix=<(debug_crt_merge_module_id_prefix)',
-            ],
-          }],
-          ['release_crt_merge_module_id_prefix!=""', {
-            'additional_args': [
-              '-dReleaseCrtMergeModuleIdPrefix=<(release_crt_merge_module_id_prefix)',
-            ],
-          }],
-          ['debug_crt_merge_module_path!=""', {
-            'additional_args': [
-              '-dDebugCrtMergeModulePath=<(debug_crt_merge_module_path)',
-            ],
-          }],
-          ['release_crt_merge_module_path!=""', {
-            'additional_args': [
-              '-dReleaseCrtMergeModulePath=<(release_crt_merge_module_path)',
-            ],
-          }],
           ['qt5core_dll_path!=""', {
             'additional_args': [
               '-dQt5CoreDllPath=<(qt5core_dll_path)',
@@ -136,6 +116,8 @@
         '-dOmahaClientStateKey=<(omaha_clientstate_key)',
         '-dOmahaChannelType=<(omaha_channel_type)',
         '-dVSConfigurationName=<(CONFIGURATION_NAME)',
+        '-dReleaseRedistCrt32Dir=<(release_redist_32bit_crt_dir)',
+        '-dReleaseRedistCrt64Dir=<(release_redist_64bit_crt_dir)',
         '-dAddRemoveProgramIconPath=<(icon_path)',
         '-dMozcTIP32Path=<(mozc_tip32_path)',
         '-dMozcTIP64Path=<(mozc_tip64_path)',
@@ -162,9 +144,10 @@
     {
       'action_name': 'generate_msi',
       'inputs': [
-        # vcbuild will invoke this action if any file listed here is
+        # ninja.exe will invoke this action if any file listed here is
         # newer than files in 'outputs'.
         '<(wixobj_file)',
+        '<@(stamp_files)',
       ],
       'outputs': [
         '<(msi_file)',
@@ -172,15 +155,6 @@
       'action': [
         '<(wix_dir)/light.exe',
         '-nologo',
-        # Suppress harmless warnings caused by including VC runtime
-        # merge modules.  See the following document for more details.
-        # http://blogs.msdn.com/astebner/archive/2007/02/13/building-an-msi-using-wix-v3-0-that-includes-the-vc-8-0-runtime-merge-modules.aspx
-        '-sw1055',
-        '-sice:ICE03',
-        '-sice:ICE30',
-        '-sice:ICE60',
-        '-sice:ICE82',
-        '-sice:ICE83',
         # Suppress the validation to address the LGHT0217 error.
         '-sval',
         '-o', '<@(_outputs)',

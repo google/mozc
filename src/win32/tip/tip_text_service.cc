@@ -37,14 +37,14 @@
 #include <ime.h>
 #include <msctf.h>
 #include <objbase.h>
-#include <versionhelpers.h>
 #include <wrl/client.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <utility>
 
 #include "base/const.h"
 #include "base/file_util.h"
@@ -52,6 +52,7 @@
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/update_util.h"
+#include "base/win32/com.h"
 #include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/win32_window_util.h"
@@ -72,6 +73,8 @@
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler.h"
+#include "absl/base/casts.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
@@ -266,6 +269,31 @@ struct GuidHash {
     // Compress the data by shifting unused bits.
     return value.Data1;
   }
+};
+
+// Wraps |TipPrivateContext| with a sink cleanup callback.
+class PrivateContextWrapper final {
+ public:
+  PrivateContextWrapper() = delete;
+  PrivateContextWrapper(const PrivateContextWrapper &) = delete;
+  PrivateContextWrapper &operator=(const PrivateContextWrapper &) = delete;
+
+  // absl::AnyInvocable<T> causes an internal compiper error with VS2017.
+  // TODO(b/277086747): Update to VS2022 and switch to absl::AnyInvocable<T>
+  explicit PrivateContextWrapper(std::function<void()> &&sink_cleaner)
+      : sink_cleaner_(std::move(sink_cleaner)) {}
+
+  ~PrivateContextWrapper() {
+    sink_cleaner_();
+  }
+
+  TipPrivateContext *get() {
+    return &private_context_;
+  }
+
+ private:
+  std::function<void()>sink_cleaner_;
+  TipPrivateContext private_context_;
 };
 
 // An observer that binds ITfCompositionSink::OnCompositionTerminated callback
@@ -1109,13 +1137,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) {
     return new CompositionSinkImpl(this, context);
   }
-  virtual bool IsImmersiveUI() const {
-    // On Windows 10 and later, we assume that Mozc Renderer can overlap the IME
-    // client app even if TF_TMF_IMMERSIVEMODE is specified.
-    // See b/132702301 and crbug.com/962310 for more background.
-    return !::IsWindows10OrGreater() &&
-           (activate_flags_ & TF_TMF_IMMERSIVEMODE) == TF_TMF_IMMERSIVEMODE;
-  }
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) {
     if (context == nullptr) {
       return nullptr;
@@ -1124,7 +1145,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (it == private_context_map_.end()) {
       return nullptr;
     }
-    return it->second;
+    return it->second->get();
   }
   virtual TipThreadContext *GetThreadContext() { return thread_context_.get(); }
   virtual void PostUIUpdateMessage() {
@@ -1182,64 +1203,56 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     }
     const PrivateContextMap::const_iterator it =
         private_context_map_.find(context);
-    if (it == private_context_map_.end()) {
-      // If this |context| has not been registered, create our own private data
-      // then associate it with |context|.
-      DWORD text_edit_sink_cookie = TF_INVALID_COOKIE;
-      DWORD text_layout_sink_cookie = TF_INVALID_COOKIE;
-      {
-        ComPtr<ITfSource> source;
-        ComPtr<ITfContext> context_ptr(context);
-        if (SUCCEEDED(context_ptr.As(&source))) {
-          if (FAILED(source->AdviseSink(IID_ITfTextEditSink,
-                                        static_cast<ITfTextEditSink *>(this),
-                                        &text_edit_sink_cookie))) {
-            text_edit_sink_cookie = TF_INVALID_COOKIE;
-          }
-          if (FAILED(source->AdviseSink(IID_ITfTextLayoutSink,
-                                        static_cast<ITfTextLayoutSink *>(this),
-                                        &text_layout_sink_cookie))) {
-            text_layout_sink_cookie = TF_INVALID_COOKIE;
-          }
-        }
-      }
-      private_context_map_[context] =
-          new TipPrivateContext(text_edit_sink_cookie, text_layout_sink_cookie);
+    if (it != private_context_map_.end()) {
+      return;
     }
-    return;
+
+    // If this |context| has not been registered, create our own private data
+    // then associate it with |context|.
+    auto source = ComQuery<ITfSource>(context);
+    if (!source) {
+      // In general this should not happen.
+      // Register private context without sink-cleanup callback.
+      private_context_map_.emplace(
+          context, std::make_unique<PrivateContextWrapper>([]() {}));
+      return;
+    }
+
+    DWORD text_edit_sink_cookie = TF_INVALID_COOKIE;
+    DWORD text_layout_sink_cookie = TF_INVALID_COOKIE;
+    if (FAILED(source->AdviseSink(IID_ITfTextEditSink,
+                                  absl::implicit_cast<ITfTextEditSink *>(this),
+                                  &text_edit_sink_cookie))) {
+      // In general this should not happen.
+      text_edit_sink_cookie = TF_INVALID_COOKIE;
+    }
+    if (FAILED(source->AdviseSink(
+            IID_ITfTextLayoutSink,
+            absl::implicit_cast<ITfTextLayoutSink *>(this),
+            &text_layout_sink_cookie))) {
+      // In general this should not happen.
+      text_layout_sink_cookie = TF_INVALID_COOKIE;
+    }
+
+    // Register private context with sink-cleanup callback.
+    private_context_map_.emplace(
+        context, std::make_unique<PrivateContextWrapper>(
+            [=, source = std::move(source)]() {
+                if (text_edit_sink_cookie != TF_INVALID_COOKIE) {
+                    source->UnadviseSink(text_edit_sink_cookie);
+                }
+                if (text_layout_sink_cookie != TF_INVALID_COOKIE) {
+                    source->UnadviseSink(text_layout_sink_cookie);
+                }
+            }));
   }
 
-  // Note that this method takes |ComPtr<ITfContext>| instead of
-  // |const ComPtr<ITfContext> &| to make sure |context| remains valid after
-  // calling |private_context_map_.erase(it)|.
-  // TODO(https://github.com/google/mozc/issues/721): Consolidete clean-up logic
-  void RemovePrivateContextIfExists(ComPtr<ITfContext> context) {
-    // Remove private context associated with |context|.
-    const PrivateContextMap::iterator it = private_context_map_.find(context);
-    if (it == private_context_map_.end()) {
-      return;
-    }
-    // Transfer the ownership.
-    std::unique_ptr<TipPrivateContext> private_context(it->second);
-    private_context_map_.erase(it);
-    if (!private_context) {
-      return;
-    }
-    ComPtr<ITfSource> source;
-    if (SUCCEEDED(context.As(&source))) {
-      if (private_context->text_edit_sink_cookie() != TF_INVALID_COOKIE) {
-        source->UnadviseSink(private_context->text_edit_sink_cookie());
-      }
-      if (private_context->text_layout_sink_cookie() != TF_INVALID_COOKIE) {
-        source->UnadviseSink(private_context->text_layout_sink_cookie());
-      }
-    }
+  void RemovePrivateContextIfExists(const ComPtr<ITfContext> &context) {
+    private_context_map_.erase(context);
   }
 
   void UninitPrivateContexts() {
-    while (!private_context_map_.empty()) {
-      RemovePrivateContextIfExists(private_context_map_.begin()->first);
-    }
+    private_context_map_.clear();
   }
 
   TipPrivateContext *GetFocusedPrivateContext() {
@@ -1633,10 +1646,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   HRESULT InitRendererCallbackWindow() {
-    if (IsImmersiveUI()) {
-      // The renderer callback is not required for Immersive mode.
-      return S_FALSE;
-    }
     if (::IsWindow(renderer_callback_window_handle_)) {
       return S_FALSE;
     }
@@ -1661,10 +1670,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
   HRESULT UninitRendererCallbackWindow() {
-    if (IsImmersiveUI()) {
-      // The renderer callback is not required for Immersive mode.
-      return S_FALSE;
-    }
     if (!::IsWindow(renderer_callback_window_handle_)) {
       return S_FALSE;
     }
@@ -1745,10 +1750,11 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   // Used for LangBar integration.
   TipLangBar langbar_;
 
-  using PreservedKeyMap = std::unordered_map<GUID, UINT, GuidHash>;
+  using PreservedKeyMap = absl::flat_hash_map<GUID, UINT, GuidHash>;
   using PrivateContextMap =
-      std::unordered_map<ComPtr<ITfContext>, TipPrivateContext *,
-                         ComPtrHash<ITfContext>>;
+      absl::flat_hash_map<ComPtr<ITfContext>,
+                          std::unique_ptr<PrivateContextWrapper>,
+                          ComPtrHash<ITfContext>>;
   PrivateContextMap private_context_map_;
   PreservedKeyMap preserved_key_map_;
   std::unique_ptr<TipThreadContext> thread_context_;

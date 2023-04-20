@@ -27,46 +27,64 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_UI_HANDLER_IMMERSIVE_H_
-#define MOZC_WIN32_TIP_TIP_UI_HANDLER_IMMERSIVE_H_
+#include "base/strings/pfchar.h"
 
-#include <msctf.h>
+#include <string>
+#include <utility>
+
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "absl/strings/string_view.h"
+
+#ifdef _WIN32
 #include <windows.h>
-#include <wrl/client.h>
-
-#include "win32/tip/tip_ui_handler.h"
+#else  // _WIN32
+#include <unistd.h>
+#endif  // !_WIN32
 
 namespace mozc {
-namespace win32 {
-namespace tsf {
+namespace {
 
-class TipTextService;
+using testing::IsEmpty;
+using testing::Not;
 
-class TipUiHandlerImmersive {
- public:
-  TipUiHandlerImmersive() = delete;
-  TipUiHandlerImmersive(const TipUiHandlerImmersive &) = delete;
-  TipUiHandlerImmersive &operator=(const TipUiHandlerImmersive &) = delete;
-  static Microsoft::WRL::ComPtr<ITfUIElement> CreateUI(
-      TipUiHandler::UiType type,
-      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
-      const Microsoft::WRL::ComPtr<ITfContext> &context);
-  static void OnDestroyElement(
-      const Microsoft::WRL::ComPtr<ITfUIElement> &element);
+// Testing with an actual use case.
+pfstring GetHostName() {
+  pfstring result;
+#ifdef _WIN32
+  DWORD size = 0;
+  EXPECT_FALSE(GetComputerNameExW(ComputerNameDnsHostname, nullptr, &size));
+  EXPECT_EQ(GetLastError(), ERROR_MORE_DATA);
+  result.resize(size);
+  EXPECT_TRUE(
+      GetComputerNameExW(ComputerNameDnsHostname, result.data(), &size));
+  result.resize(size);
+#else   // _WIN32
+  char buf[_POSIX_HOST_NAME_MAX];
+  EXPECT_EQ(gethostname(buf, sizeof(buf)), 0);
+  result.assign(buf);
+#endif  // !_WIN32
+  return result;
+}
 
-  static void OnActivate();
-  static void OnDeactivate();
-  static void OnFocusChange(TipTextService *text_service,
-                            ITfDocumentMgr *focused_document_manager);
-  static bool Update(TipTextService *text_service, ITfContext *context,
-                     TfEditCookie read_cookie);
-  static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
-  static void OnDllProcessDetach(HINSTANCE module_handle,
-                                 bool process_shutdown);
-};
+TEST(PFCharTest, GetHostName) {
+  const pfstring s = GetHostName();
+  EXPECT_THAT(to_string(s), Not(IsEmpty()));
+}
 
-}  // namespace tsf
-}  // namespace win32
+TEST(PFCharTest, ToString) {
+  constexpr absl::string_view expected = "test string";
+  const pfstring ps = PF_STRING("test string");
+  EXPECT_EQ(to_string(ps), expected);
+  EXPECT_EQ(to_string(std::move(ps)), expected);
+}
+
+TEST(PFCharTest, ToPFString) {
+  constexpr pfstring_view expected = PF_STRING("test string");
+  const std::string s = "test string";
+  EXPECT_EQ(to_pfstring(s), expected);
+  EXPECT_EQ(to_pfstring(std::move(s)), expected);
+}
+
+}  // namespace
 }  // namespace mozc
-
-#endif  // MOZC_WIN32_TIP_TIP_UI_HANDLER_IMMERSIVE_H_

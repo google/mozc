@@ -374,7 +374,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:port",
-        "//base:thread",
+        "//base:thread2",
         "//base:util",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",

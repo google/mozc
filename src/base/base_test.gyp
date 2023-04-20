@@ -398,10 +398,22 @@
       ],
     },
     {
-      'target_name': 'platform_string_test',
+      'target_name': 'pfchar_test',
       'type': 'executable',
       'sources': [
-        'strings/platform_string_test.cc',
+        'strings/pfchar_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
+        'base.gyp:base',
+      ],
+    },
+    {
+      'target_name': 'zstring_view_test',
+      'type': 'executable',
+      'sources': [
+        'strings/zstring_view_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',

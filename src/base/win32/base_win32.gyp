@@ -58,6 +58,7 @@
             'win_font_test_helper.cc',
           ],
           'dependencies': [
+            '../../testing/testing.gyp:mozctest',
             '../base.gyp:base',
           ],
           'copies': [

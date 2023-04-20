@@ -30,14 +30,16 @@
 #include <objbase.h>
 #include <windows.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "absl/base/attributes.h"
 #include "absl/flags/flag.h"
 
@@ -54,6 +56,8 @@ using ::std::min;
 
 namespace {
 
+using ::mozc::win32::Utf8ToWide;
+
 constexpr int kErrorLevelSuccess = 0;
 constexpr int kErrorLevelFail = 1;
 
@@ -61,10 +65,8 @@ constexpr uint32_t kMaxBitmapWidth = 16384;
 constexpr uint32_t kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
-  std::wstring wide_src;
-  mozc::Util::Utf8ToWide(absl::GetFlag(FLAGS_src), &wide_src);
   std::unique_ptr<Gdiplus::Bitmap> image(
-      Gdiplus::Bitmap::FromFile(wide_src.c_str()));
+      Gdiplus::Bitmap::FromFile(Utf8ToWide(absl::GetFlag(FLAGS_src)).c_str()));
 
   const uint32_t width_original = image->GetWidth();
   if (width_original > kMaxBitmapWidth) {
@@ -125,7 +127,7 @@ bool ConvertMain() {
   header.pixel_data_size = pixel_data_bytes;
 
   mozc::OutputFileStream output_file(
-      absl::GetFlag(FLAGS_dest).c_str(),
+      absl::GetFlag(FLAGS_dest),
       std::ios::out | std::ios::binary | std::ios::trunc);
   if (!output_file.good()) {
     return false;

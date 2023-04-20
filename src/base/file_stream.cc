@@ -33,45 +33,30 @@
 #include <ios>
 #include <string>
 
-#include "absl/strings/string_view.h"
-
-#ifdef _WIN32
-#include "base/win32/wide_char.h"
-#endif  // _WIN32
+#include "base/strings/pfchar.h"
 
 namespace mozc {
-namespace {
 
-#ifdef _WIN32
-std::wstring ToPlatformString(absl::string_view filename) {
-  return win32::Utf8ToWide(filename);
-}
-#else   // _WIN32
-std::string ToPlatformString(absl::string_view filename) {
-  return std::string(filename.data(), filename.size());
-}
-#endif  // !_WIN32
-
-}  // namespace
-
-InputFileStream::InputFileStream(absl::string_view filename,
+InputFileStream::InputFileStream(const std::string &filename,
                                  std::ios_base::openmode mode) {
-  InputFileStream::open(filename, mode);
+  open(filename, mode);
 }
 
-void InputFileStream::open(absl::string_view filename,
+void InputFileStream::open(const std::string &filename,
                            std::ios_base::openmode mode) {
-  std::ifstream::open(ToPlatformString(filename), mode);
+  // to_pfstring() changes encoding to utf-16 on Windows.
+  std::ifstream::open(to_pfstring(filename), mode);
 }
 
-OutputFileStream::OutputFileStream(absl::string_view filename,
+OutputFileStream::OutputFileStream(const std::string &filename,
                                    std::ios_base::openmode mode) {
-  OutputFileStream::open(filename, mode);
+  open(filename, mode);
 }
 
-void OutputFileStream::open(absl::string_view filename,
+void OutputFileStream::open(const std::string &filename,
                             std::ios_base::openmode mode) {
-  std::ofstream::open(ToPlatformString(filename), mode);
+  // to_pfstring() changes encoding to utf-16 on Windows.
+  std::ofstream::open(to_pfstring(filename), mode);
 }
 
 // Common implementations.

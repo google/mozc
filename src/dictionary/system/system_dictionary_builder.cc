@@ -48,6 +48,7 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_interface.h"
+#include "dictionary/file/section.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
@@ -56,6 +57,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -123,7 +125,7 @@ void SystemDictionaryBuilder::BuildFromTokensInternal(
 }
 
 void SystemDictionaryBuilder::WriteToFile(
-    const absl::string_view output_file) const {
+    const std::string &output_file) const {
   OutputFileStream ofs(output_file, std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }

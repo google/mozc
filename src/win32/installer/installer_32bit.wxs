@@ -38,18 +38,6 @@
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->
-<?ifndef DebugCrtMergeModuleIdPrefix ?>
-  <?define DebugCrtMergeModuleIdPrefix="" ?>
-<?endif?>
-<?ifndef ReleaseCrtMergeModuleIdPrefix ?>
-  <?define ReleaseCrtMergeModuleIdPrefix="" ?>
-<?endif?>
-<?ifndef DebugCrtMergeModulePath ?>
-  <?define DebugCrtMergeModulePath="" ?>
-<?endif?>
-<?ifndef ReleaseCrtMergeModulePath ?>
-  <?define ReleaseCrtMergeModulePath="" ?>
-<?endif?>
 <?ifndef Qt5CoreDllPath ?>
   <?define Qt5CoreDllPath="" ?>
 <?endif?>
@@ -90,7 +78,7 @@
 
     <Package Keywords='Installer' Description='Google 日本語入力 インストーラー'
         Manufacturer='Google Inc.' Languages='1041' SummaryCodepage='932'
-        InstallerVersion='405' InstallPrivileges='elevated'
+        InstallerVersion='500' InstallPrivileges='elevated'
         Compressed='yes'/>
 
     <!--
@@ -158,21 +146,6 @@
     <?endif?>
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
-      <!-- Install CRT DLLs.
-        Better not to in include policy MSMs.
-        http://blogs.msdn.com/b/astebner/archive/2007/02/13/building-an-msi-using-wix-v3-0-that-includes-the-vc-8-0-runtime-merge-modules.aspx
-       -->
-      <?if $(var.VSConfigurationName) = "Debug" ?>
-        <?if $(var.DebugCrtMergeModuleIdPrefix) != "" ?>
-          <Merge Id='$(var.DebugCrtMergeModuleIdPrefix)' Language='0'
-              DiskId='1' SourceFile='$(var.DebugCrtMergeModulePath)' />
-        <?endif?>
-      <?else?>
-        <?if $(var.ReleaseCrtMergeModuleIdPrefix) != "" ?>
-          <Merge Id='$(var.ReleaseCrtMergeModuleIdPrefix)' Language='0'
-              DiskId='1' SourceFile='$(var.ReleaseCrtMergeModulePath)' />
-        <?endif?>
-      <?endif?>
       <Directory Id='ProgramFilesFolder' Name='PFiles'>
         <Directory Id='GoogleDir' Name='Google'>
           <Directory Id='GIMEJaDir' Name='Google Japanese Input'>
@@ -232,6 +205,18 @@
                   Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.MozcRenderer32Path)' />
             </Component>
+            <?if ($(var.VSConfigurationName) = "Release") and ($(var.Qt5CoreDllPath) != "") ?>
+              <Component Id='msvcp140' Guid='*'>
+                <File Id='msvcp140.dll' Name='msvcp140.dll'
+                    DiskId='1' Checksum='yes'
+                    Source='$(var.ReleaseRedistCrt32Dir)/msvcp140.dll' />
+              </Component>
+              <Component Id='vcruntime140' Guid='*'>
+                <File Id='vcruntime140.dll' Name='vcruntime140.dll'
+                    DiskId='1' Checksum='yes'
+                    Source='$(var.ReleaseRedistCrt32Dir)/vcruntime140.dll' />
+              </Component>
+            <?endif?>
             <Component Id='GIMEJaTool' Guid='*'>
               <File Id='GoogleIMEJaTool.exe'
                   Name='GoogleIMEJaTool.exe' DiskId='1'
@@ -404,25 +389,6 @@
       <Error Id="4000">新しいバージョンの Google 日本語入力が既にインストールされています。</Error>
     </UI>
 
-    <!-- List of actions to be performed. -->
-    <?if $(var.VSConfigurationName) = "Debug" ?>
-      <?if $(var.DebugCrtMergeModuleIdPrefix) != "" ?>
-        <Feature Id='$(var.DebugCrtMergeModuleIdPrefix)'
-            Title='Visual C++ Runtime Library' AllowAdvertise='no'
-            Display='hidden' Level='1'>
-          <MergeRef Id='$(var.DebugCrtMergeModuleIdPrefix)' />
-        </Feature>
-      <?endif?>
-    <?else?>
-      <?if $(var.ReleaseCrtMergeModuleIdPrefix) != "" ?>
-        <Feature Id='$(var.ReleaseCrtMergeModuleIdPrefix)'
-            Title='Visual C++ Runtime Library' AllowAdvertise='no'
-            Display='hidden' Level='1'>
-          <MergeRef Id='$(var.ReleaseCrtMergeModuleIdPrefix)' />
-        </Feature>
-      <?endif?>
-    <?endif?>
-
     <Feature Id='GIMEJaInstall' Title='Google 日本語入力' Level='1'>
       <ComponentRef Id='GIMEJaTIP32' />
       <ComponentRef Id='GIMEJaBroker' />
@@ -430,6 +396,10 @@
       <ComponentRef Id='GIMEJaCacheService' />
       <ComponentRef Id='GIMEJaRenderer' />
       <ComponentRef Id='GIMEJaTool' />
+      <?if ($(var.VSConfigurationName) = "Release") and ($(var.Qt5CoreDllPath) != "") ?>
+        <ComponentRef Id='msvcp140' />
+        <ComponentRef Id='vcruntime140' />
+      <?endif?>
       <?if $(var.VSConfigurationName) = "Debug" ?>
         <?if $(var.Qt5CoredDllPath) != "" ?>
           <ComponentRef Id='Qt5CoredDll' />

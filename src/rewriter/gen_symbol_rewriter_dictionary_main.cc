@@ -36,7 +36,6 @@
 //    --output_token_array=output_token_file
 //    --output_string_array=output_array_file
 
-#include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
@@ -73,8 +72,7 @@ ABSL_FLAG(std::string, output_string_array, "",
 namespace mozc {
 namespace {
 
-void GetSortingMap(const absl::string_view auto_file,
-                   const absl::string_view rule_file,
+void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
                    absl::btree_map<std::string, uint16_t> *sorting_map) {
   CHECK(sorting_map);
   sorting_map->clear();
@@ -158,9 +156,9 @@ void AddSymbolToDictionary(
 }
 
 // Read dic:
-void MakeDictionary(const absl::string_view symbol_dictionary_file,
-                    const absl::string_view sorting_map_file,
-                    const absl::string_view ordering_rule_file,
+void MakeDictionary(const std::string &symbol_dictionary_file,
+                    const std::string &sorting_map_file,
+                    const std::string &ordering_rule_file,
                     rewriter::DictionaryGenerator *dictionary) {
   absl::btree_set<std::string> seen;
   absl::btree_map<std::string, uint16_t> sorting_map;

@@ -83,7 +83,7 @@ std::string GetDescription(
                          sorted_key_list.front().c_str());
 }
 
-std::map<std::string, TokenList> ReadEmoticonTsv(const absl::string_view path) {
+std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
   InputFileStream ifs(path);
 
   std::string line;

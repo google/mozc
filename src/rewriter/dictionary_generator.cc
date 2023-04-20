@@ -33,7 +33,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <map>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -45,7 +44,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
 #include "absl/container/btree_map.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace rewriter {
@@ -129,7 +127,7 @@ std::vector<const Token *> GetSortedTokens(
 
 }  // namespace
 
-bool DictionaryGenerator::Output(const absl::string_view filename) const {
+bool DictionaryGenerator::Output(const std::string &filename) const {
   mozc::OutputFileStream ofs(filename);
   if (!ofs) {
     LOG(ERROR) << "Failed to open: " << filename;

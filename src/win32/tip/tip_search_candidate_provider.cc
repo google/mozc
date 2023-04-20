@@ -29,27 +29,27 @@
 
 #include "win32/tip/tip_search_candidate_provider.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <ctffunc.h>
-#include <atlbase.h>
-#include <atlcom.h>
+#include <objbase.h>
+#include <oleauto.h>
+#include <unknwn.h>
+#include <wrl/client.h>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
-#include "base/util.h"
+#include "base/win32/com.h"
 #include "win32/tip/tip_candidate_list.h"
 #include "win32/tip/tip_query_provider.h"
 #include "win32/tip/tip_ref_count.h"
-
-using ::ATL::CComPtr;
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
+
+using Microsoft::WRL::ComPtr;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
@@ -59,13 +59,13 @@ constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 
 class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
  public:
-  explicit SearchCandidateProviderImpl(TipQueryProvider *provider)
-      : provider_(provider) {}
+  explicit SearchCandidateProviderImpl(
+      std::unique_ptr<TipQueryProvider> provider)
+      : provider_(std::move(provider)) {}
   SearchCandidateProviderImpl(const SearchCandidateProviderImpl &) = delete;
   SearchCandidateProviderImpl &operator=(const SearchCandidateProviderImpl &) =
       delete;
 
- private:
   // The IUnknown interface methods.
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
                                                    void **object) {
@@ -119,8 +119,8 @@ class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
     if (!provider_->Query(query, TipQueryProvider::kDefault, &candidates)) {
       return E_FAIL;
     }
-    *candidate_list = TipCandidateList::New(candidates, nullptr);
-    (*candidate_list)->AddRef();
+    *candidate_list =
+        TipCandidateList::New(std::move(candidates), nullptr).Detach();
     return S_OK;
   }
 
@@ -137,12 +137,12 @@ class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
 }  // namespace
 
 // static
-IUnknown *TipSearchCandidateProvider::New() {
-  auto *provider = TipQueryProvider::Create();
-  if (provider == nullptr) {
+ComPtr<IUnknown> TipSearchCandidateProvider::New() {
+  std::unique_ptr<TipQueryProvider> provider = TipQueryProvider::Create();
+  if (!provider) {
     return nullptr;
   }
-  return new SearchCandidateProviderImpl(provider);
+  return MakeComPtr<SearchCandidateProviderImpl>(std::move(provider));
 }
 
 // static

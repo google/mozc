@@ -51,9 +51,7 @@
 #include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_thread_context.h"
-#include "win32/tip/tip_ui_element_conventional.h"
 #include "win32/tip/tip_ui_element_manager.h"
-#include "win32/tip/tip_ui_handler.h"
 
 namespace mozc {
 namespace win32 {
@@ -426,32 +424,6 @@ class UpdateUiEditSessionImpl final : public ITfEditSession {
 };
 
 }  // namespace
-
-ComPtr<ITfUIElement> TipUiHandlerConventional::CreateUI(
-    TipUiHandler::UiType type, const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context) {
-  switch (type) {
-    case TipUiHandler::kSuggestWindow:
-      return TipUiElementConventional::New(
-          TipUiElementConventional::kUnobservableSuggestWindow, text_service,
-          context);
-    case TipUiHandler::kCandidateWindow:
-      return TipUiElementConventional::New(
-          TipUiElementConventional::kCandidateWindow, text_service, context);
-    case TipUiHandler::kIndicatorWindow:
-      return TipUiElementConventional::New(
-          TipUiElementConventional::KIndicatorWindow, text_service, context);
-    default:
-      return nullptr;
-  }
-}
-
-void TipUiHandlerConventional::OnDestroyElement(
-    const ComPtr<ITfUIElement> &element) {
-  // TipUiHandlerConventional does not have any hidden resource that is
-  // associated with |element|. So we have nothing to do here.
-  // Note that |element| will be destroyed by using ref count.
-}
 
 void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
   ITfThreadMgr *thread_mgr = text_service->GetThreadManager();

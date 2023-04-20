@@ -47,6 +47,7 @@ import sys
 from build_tools import mozc_version
 from build_tools.mozc_version import GenerateVersionFile
 from build_tools.test_tools import test_launcher
+from build_tools.util import CaseAwareAbsPath
 from build_tools.util import ColoredLoggingFilter
 from build_tools.util import ColoredText
 from build_tools.util import CopyFile
@@ -63,15 +64,10 @@ SRC_DIR = '.'
 # We need to obtain the absolute path of this script before change directory.
 # Note that if any import above has already changed the current
 # directory, this code cannot work anymore.
-ABS_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
-REAL_SCRIPT_DIR = os.path.realpath(ABS_SCRIPT_DIR)
-if (
-    ABS_SCRIPT_DIR != REAL_SCRIPT_DIR
-    and ABS_SCRIPT_DIR.casefold() == REAL_SCRIPT_DIR.casefold()
-):
-  # Normalize uppercases and lowercases to be consistent with the filesystem for
-  # Windows. See https://github.com/google/mozc/issues/719 for details.
-  ABS_SCRIPT_DIR = REAL_SCRIPT_DIR
+# Here we use CaseAwareAbsPath to normalize uppercases and lowercases to be
+# consistent with the filesystem for Windows.
+# See https://github.com/google/mozc/issues/719 for details.
+ABS_SCRIPT_DIR = CaseAwareAbsPath(os.path.dirname(__file__))
 MOZC_ROOT = ABS_SCRIPT_DIR
 EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
@@ -295,6 +291,7 @@ def ExpandMetaTarget(options, meta_target_name):
         'out_win/%s:mozc_win32_build32' % config,
         'out_win/%sDynamic:mozc_win32_build32_dynamic' % config,
         'out_win/%s_x64:mozc_win32_build64' % config,
+        'out_win/%s:mozc_installers_win' % config,
     ]
 
   return dependencies + targets
@@ -532,7 +529,7 @@ def GypMain(options, unused_args):
 
   if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
-    gyp_options.extend(['-D', 'wix_dir=%s' % options.wix_dir])
+    gyp_options.extend(['-D', 'wix_dir="%s"' % options.wix_dir])
   else:
     gyp_options.extend(['-D', 'use_wix=NO'])
 

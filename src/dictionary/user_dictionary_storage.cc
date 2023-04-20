@@ -29,22 +29,21 @@
 
 #include "dictionary/user_dictionary_storage.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <ios>
 #include <ostream>
 #include <string>
-#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "base/util.h"
 #include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -228,8 +227,8 @@ bool UserDictionaryStorage::UnLock() {
   return true;
 }
 
-bool UserDictionaryStorage::ExportDictionary(
-    const uint64_t dic_id, const absl::string_view file_name) {
+bool UserDictionaryStorage::ExportDictionary(const uint64_t dic_id,
+                                             const std::string &file_name) {
   const int index = GetUserDictionaryIndex(dic_id);
   if (index < 0) {
     last_error_type_ = INVALID_DICTIONARY_ID;

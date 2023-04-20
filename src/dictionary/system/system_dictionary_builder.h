@@ -38,8 +38,9 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
+#include "dictionary/file/codec_interface.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
@@ -49,8 +50,6 @@
 namespace mozc {
 namespace dictionary {
 
-class SystemDictionaryCodecInterface;
-class DictionaryFileCodecInterface;
 struct Token;
 
 class SystemDictionaryBuilder final {
@@ -77,7 +76,7 @@ class SystemDictionaryBuilder final {
   }
   void BuildFromTokens(const std::vector<std::unique_ptr<Token>> &tokens);
 
-  void WriteToFile(absl::string_view output_file) const;
+  void WriteToFile(const std::string &output_file) const;
   void WriteToStream(absl::string_view intermediate_output_file_base_path,
                      std::ostream *output_stream) const;
 

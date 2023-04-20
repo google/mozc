@@ -44,7 +44,6 @@
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_handler_conventional.h"
-#include "win32/tip/tip_ui_handler_immersive.h"
 
 namespace mozc {
 namespace win32 {
@@ -99,48 +98,17 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
 
 bool UpdateInternal(TipTextService *text_service, ITfContext *context,
                     TfEditCookie read_cookie) {
-  if (text_service->IsImmersiveUI()) {
-    return TipUiHandlerImmersive::Update(text_service, context, read_cookie);
-  } else {
-    return TipUiHandlerConventional::Update(text_service, context, read_cookie);
-  }
+  return TipUiHandlerConventional::Update(text_service, context, read_cookie);
 }
 
 }  // namespace
 
-ComPtr<ITfUIElement> TipUiHandler::CreateUI(
-    UiType type, const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context) {
-  if (text_service->IsImmersiveUI()) {
-    return TipUiHandlerImmersive::CreateUI(type, text_service, context);
-  } else {
-    return TipUiHandlerConventional::CreateUI(type, text_service, context);
-  }
-}
-
-void TipUiHandler::OnDestroyElement(const ComPtr<TipTextService> &text_service,
-                                    const ComPtr<ITfUIElement> &element) {
-  if (text_service->IsImmersiveUI()) {
-    TipUiHandlerImmersive::OnDestroyElement(element);
-  } else {
-    TipUiHandlerConventional::OnDestroyElement(element);
-  }
-}
-
 void TipUiHandler::OnActivate(TipTextService *text_service) {
-  if (text_service->IsImmersiveUI()) {
-    TipUiHandlerImmersive::OnActivate();
-  } else {
-    TipUiHandlerConventional::OnActivate(text_service);
-  }
+  TipUiHandlerConventional::OnActivate(text_service);
 }
 
 void TipUiHandler::OnDeactivate(TipTextService *text_service) {
-  if (text_service->IsImmersiveUI()) {
-    TipUiHandlerImmersive::OnDeactivate();
-  } else {
-    TipUiHandlerConventional::OnDeactivate();
-  }
+  TipUiHandlerConventional::OnDeactivate();
 }
 
 void TipUiHandler::OnDocumentMgrChanged(TipTextService *text_service,
@@ -150,13 +118,8 @@ void TipUiHandler::OnDocumentMgrChanged(TipTextService *text_service,
 
 void TipUiHandler::OnFocusChange(TipTextService *text_service,
                                  ITfDocumentMgr *focused_document_manager) {
-  if (text_service->IsImmersiveUI()) {
-    TipUiHandlerImmersive::OnFocusChange(text_service,
-                                         focused_document_manager);
-  } else {
-    TipUiHandlerConventional::OnFocusChange(text_service,
-                                            focused_document_manager);
-  }
+  TipUiHandlerConventional::OnFocusChange(text_service,
+                                          focused_document_manager);
   UpdateLanguageBarOnFocusChange(text_service, focused_document_manager);
 }
 
@@ -178,21 +141,13 @@ bool TipUiHandler::Update(TipTextService *text_service, ITfContext *context,
 
 bool TipUiHandler::OnDllProcessAttach(HINSTANCE module_handle,
                                       bool static_loading) {
-  // In DllMain, we must not call functions exported by user32.dll, which means
-  // that we cannot determine if the current process is immersive mode or not.
-  // So we call both initializer here.
   TipUiHandlerConventional::OnDllProcessAttach(module_handle, static_loading);
-  TipUiHandlerImmersive::OnDllProcessAttach(module_handle, static_loading);
   return true;
 }
 
 void TipUiHandler::OnDllProcessDetach(HINSTANCE module_handle,
                                       bool process_shutdown) {
-  // In DllMain, we must not call functions exported by user32.dll, which means
-  // that we cannot determine if the current process is immersive mode or not.
-  // So we call both uninitializers here.
   TipUiHandlerConventional::OnDllProcessDetach(module_handle, process_shutdown);
-  TipUiHandlerImmersive::OnDllProcessDetach(module_handle, process_shutdown);
 }
 
 }  // namespace tsf

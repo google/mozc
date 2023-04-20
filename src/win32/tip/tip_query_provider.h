@@ -30,10 +30,10 @@
 #ifndef MOZC_WIN32_TIP_TIP_QUERY_PROVIDER_H_
 #define MOZC_WIN32_TIP_TIP_QUERY_PROVIDER_H_
 
+#include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {
@@ -42,17 +42,16 @@ namespace tsf {
 // This interface allows an application to use Mozc server as a query provider.
 class TipQueryProvider {
  public:
-  virtual ~TipQueryProvider();
+  virtual ~TipQueryProvider() = default;
 
   // Returns an instance of TipQueryProvider. Returns nullptr if fails.
-  // Caller must take ownership.
-  static TipQueryProvider *Create();
+  static std::unique_ptr<TipQueryProvider> Create();
 
   enum QueryType {
     kDefault,
     kReconversion,
   };
-  virtual bool Query(const std::wstring &query, QueryType type,
+  virtual bool Query(std::wstring_view query, QueryType type,
                      std::vector<std::wstring> *result) = 0;
 };
 

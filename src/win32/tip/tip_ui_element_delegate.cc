@@ -191,12 +191,6 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
       case TipUiElementDelegateFactory::kConventionalIndicatorWindow:
         *description = GetResourceString(IDS_INDICATOR_WINDOW).Detach();
         return S_OK;
-      case TipUiElementDelegateFactory::kImmersiveCandidateWindow:
-        *description = GetResourceString(IDS_CANDIDATE_WINDOW).Detach();
-        return S_OK;
-      case TipUiElementDelegateFactory::kImmersiveIndicatorWindow:
-        *description = GetResourceString(IDS_INDICATOR_WINDOW).Detach();
-        return S_OK;
       default:
         return E_UNEXPECTED;
     }
@@ -217,12 +211,6 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         *guid = KGuidCandidateWindow;
         return S_OK;
       case TipUiElementDelegateFactory::kConventionalIndicatorWindow:
-        *guid = KGuidIndicatorWindow;
-        return S_OK;
-      case TipUiElementDelegateFactory::kImmersiveCandidateWindow:
-        *guid = KGuidCandidateWindow;
-        return S_OK;
-      case TipUiElementDelegateFactory::kImmersiveIndicatorWindow:
         *guid = KGuidIndicatorWindow;
         return S_OK;
       default:
@@ -556,10 +544,6 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         return true;
       case TipUiElementDelegateFactory::kConventionalIndicatorWindow:
         return false;
-      case TipUiElementDelegateFactory::kImmersiveCandidateWindow:
-        return true;
-      case TipUiElementDelegateFactory::kImmersiveIndicatorWindow:
-        return false;
       default:
         return false;
     }
@@ -574,10 +558,6 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
       case TipUiElementDelegateFactory::kConventionalCandidateWindow:
         return false;
       case TipUiElementDelegateFactory::kConventionalIndicatorWindow:
-        return true;
-      case TipUiElementDelegateFactory::kImmersiveCandidateWindow:
-        return false;
-      case TipUiElementDelegateFactory::kImmersiveIndicatorWindow:
         return true;
       default:
         return false;

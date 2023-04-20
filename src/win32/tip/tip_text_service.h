@@ -51,9 +51,6 @@ class TipTextService : public IUnknown {
   // Retrieves the thread manager instance.
   virtual ITfThreadMgr *GetThreadManager() const = 0;
 
-  // Returns true if the UI thread is in immersive mode.
-  virtual bool IsImmersiveUI() const = 0;
-
   // Returns the associated private context. Returns nullptr if not found.
   virtual TipPrivateContext *GetPrivateContext(ITfContext *context) = 0;
 

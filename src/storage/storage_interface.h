@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_STORAGE_INTERFACE_H_
 #define MOZC_STORAGE_STORAGE_INTERFACE_H_
 
+#include <cstddef>
 #include <string>
 
 #include "base/port.h"
@@ -39,6 +40,9 @@ namespace storage {
 
 class StorageInterface {
  public:
+  StorageInterface() = default;
+  virtual ~StorageInterface() = default;
+
   // Binds |filename| to the storage but the interpretation of the
   // |filename| depends on the implementation. implementations can
   // - ignore the specified |filename|.
@@ -73,9 +77,6 @@ class StorageInterface {
 
   // Returns the number of keys, not a number of bytes.
   virtual size_t Size() const = 0;
-
-  StorageInterface() {}
-  virtual ~StorageInterface() {}
 };
 
 }  // namespace storage

@@ -83,7 +83,7 @@ const std::string LoadServerFlags() {
   const std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), kServerFlagsFile);
   std::string flags;
-  InputFileStream ifs(filename.c_str());
+  InputFileStream ifs(filename);
   if (ifs) {
     getline(ifs, flags);
   }

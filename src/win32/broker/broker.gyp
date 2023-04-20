@@ -66,8 +66,36 @@
         {
           'target_name': 'mozc_broker',
           'product_name': '<(broker_product_name_win)',
-          'includes': [
-            'mozc_broker.gypi',
+          'type': 'executable',
+          'sources': [
+            'mozc_broker_main.cc',
+          ],
+          'dependencies': [
+            '../../base/base.gyp:base',
+          ],
+          'conditions': [
+            ['OS=="win"', {
+              'sources': [
+                '<(gen_out_dir)/mozc_broker_autogen.rc',
+                'ime_switcher.cc',
+                'prelauncher.cc',
+              ],
+              'dependencies': [
+                '../../base/base.gyp:crash_report_handler',
+                '../../client/client.gyp:client',
+                '../../config/config.gyp:stats_config_util',
+                '../../protocol/protocol.gyp:config_proto',
+                '../../renderer/renderer.gyp:renderer_client',
+                '../base/win32_base.gyp:ime_base',
+                'gen_mozc_broker_resource_header',
+              ],
+              'msvs_settings': {
+                'VCManifestTool': {
+                  'AdditionalManifestFiles': 'mozc_broker.exe.manifest',
+                  'EmbedManifest': 'true',
+                },
+              },
+            }],
           ],
         },
       ],

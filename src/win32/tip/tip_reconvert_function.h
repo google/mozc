@@ -48,7 +48,7 @@ class TipReconvertFunction {
   // Returns a TSF function object that can be use to invoke reconversion from
   // an application.
   static Microsoft::WRL::ComPtr<ITfFnReconversion> New(
-      const Microsoft::WRL::ComPtr<TipTextService> &text_service);
+      Microsoft::WRL::ComPtr<TipTextService> text_service);
 };
 
 }  // namespace tsf

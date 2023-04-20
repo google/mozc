@@ -54,6 +54,55 @@ def IsLinux():
   return os.name == 'posix' and os.uname()[0] == 'Linux'
 
 
+def CaseAwareAbsPath(path: str) -> str:
+  """Wraps os.path.abspath() with case normalization.
+
+  On Windows the return value of os.path.abspath(path) may have different
+  upper/lowercase letters than the actual ones in the filesystem.
+  This function normalizes them to be consistent with the filesystem.
+
+  This function just returns os.path.abspath(path) on Linux with an assumption
+  that the filesystem is always case-sensitive.
+
+  This function does not normalize the result if 'path' contains any symlink.
+
+  See https://github.com/google/mozc/issues/719.
+
+  See also https://bugs.python.org/issue40368.
+
+  Args:
+    path: path to be passed to os.path.abspath() then normalized.
+  Returns:
+    os.path.abspath(path) with normalizing the result to be consistent with the
+    filesystem.
+  """
+  abs_path = os.path.abspath(path)
+  # Assume filesystem is always case-sensitive on Linux.
+  if IsLinux():
+    return abs_path
+
+  real_path = os.path.realpath(path)
+  if abs_path == real_path:
+    # Already the same. Nothing to worry about.
+    return abs_path
+
+  if abs_path.casefold() == real_path.casefold():
+    # Only different in cases. Use real_path to normalize it.
+    return real_path
+
+  # abs_path probably contains symlink.
+  logging.warning(
+      (
+          'Could not noramlize abs_path: %s (path: %s, real_path: %s), but you'
+          ' can still ignore this warning on case-sensitive filesystem.'
+      ),
+      abs_path,
+      path,
+      real_path,
+  )
+  return abs_path
+
+
 def GetNumberOfProcessors():
   """Returns the number of CPU cores available.
 

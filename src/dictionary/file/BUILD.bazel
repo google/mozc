@@ -60,12 +60,10 @@ mozc_cc_library(
     srcs = ["dictionary_file_builder.cc"],
     hdrs = ["dictionary_file_builder.h"],
     deps = [
-        ":codec",
         ":codec_interface",
         ":section",
         "//base:file_stream",
         "//base:logging",
-        "//base:port",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
@@ -146,7 +144,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "section",
     hdrs = ["section.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//dictionary:__subpackages__"],
     deps = ["@com_google_absl//absl/strings"],
 )
 
