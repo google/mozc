@@ -38,6 +38,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash_testing.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace {
@@ -85,13 +86,18 @@ TEST(ZStringViewTest, Container) {
   EXPECT_TRUE(btree_set.contains(s1));
 }
 
-TEST(PlatformStringViewTest, AbslHash) {
+TEST(ZStringViewTest, AbslHash) {
   EXPECT_TRUE(absl::VerifyTypeImplementsAbslHashCorrectly({
       pfstring_view(),
       pfstring_view(PF_STRING("")),
       pfstring_view(PF_STRING("test")),
       pfstring_view(PF_STRING("私の名前は中野です。")),
   }));
+}
+
+TEST(ZStringViewTest, AbslStringify) {
+  constexpr zstring_view a = "あいう", b = "えお";
+  EXPECT_EQ(absl::StrCat(a, b), "あいうえお");
 }
 
 }  // namespace

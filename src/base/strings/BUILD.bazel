@@ -75,6 +75,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "zstring_view_test",
+    size = "small",
     srcs = ["zstring_view_test.cc"],
     deps = [
         ":pfchar",
@@ -83,6 +84,7 @@ mozc_cc_test(
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/hash:hash_testing",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -94,6 +96,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "unicode_test",
+    size = "small",
     srcs = ["unicode_test.cc"],
     deps = [
         ":unicode",

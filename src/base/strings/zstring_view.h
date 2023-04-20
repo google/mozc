@@ -141,6 +141,20 @@ class basic_zstring_view {
     return H::combine(std::move(state), s.sv_);
   }
 
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const basic_zstring_view s) {
+    // This AbslStringify() implementation doesn't support implicit encoding
+    // conversions between char and wchar_t because doing so would allow
+    // zwstring_view in absl::StrAppend() and absl::StrCat(), which would result
+    // in two MultiByteToWideChar() API calls and a temporary object allocation
+    // for each string to concatenate. Use to_string() explicitly to avoid the
+    // overhead.
+    static_assert(std::is_same_v<CharT, char>,
+                  "Implicit encoding conversion is not allowed. Use "
+                  "to_string() explicitly.");
+    sink.Append(s.sv_);
+  }
+
  private:
   StringViewT sv_;
 };
