@@ -33,7 +33,7 @@
 A helper script to build Qt from the source code mainly for masOS and Windows
 with dropping unnecessary features to minimize the installer size.
 
-  python build_tools/build_qt.py --debug --release --confirm-license
+  python build_tools/build_qt.py --debug --release --confirm_license
 
 By default, this script assumes that Qt is checked out at src/third_party/qt.
 """
