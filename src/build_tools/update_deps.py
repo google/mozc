@@ -75,12 +75,13 @@ def DownloadQt(third_party_dir: pathlib.Path, dryrun: bool = False) -> None:
     dryrun: true to perform dryrun.
   """
   qt_dir = third_party_dir.joinpath('qt').absolute()
-  if dryrun:
-    print(f"dryrun: shutil.rmtree(r'{qt_dir}')")
-  else:
-    shutil.rmtree(qt_dir)
-  colmuns = os.get_terminal_size().columns
+  if qt_dir.exists():
+    if dryrun:
+      print(f"dryrun: shutil.rmtree(r'{qt_dir}')")
+    else:
+      shutil.rmtree(qt_dir)
   isatty = sys.stdout.isatty()
+  colmuns = os.get_terminal_size().columns if isatty else None
 
   def QtExtractFilter(
       members: Iterator[tarfile.TarInfo],
@@ -96,7 +97,8 @@ def DownloadQt(third_party_dir: pathlib.Path, dryrun: bool = False) -> None:
       info.name = '/'.join(paths[1:])
       if isatty:
         msg = 'extracting ' + info.name
-        msg = msg + ' ' * max(colmuns - len(msg) - 4, 0) + '\r'
+        msg = msg + ' ' * max(colmuns - len(msg), 0)
+        msg = msg[0:(colmuns)] + '\r'
         sys.stdout.write(msg)
         sys.stdout.flush()
       if dryrun:
@@ -125,10 +127,11 @@ def DownloadWiX(third_party_dir: pathlib.Path, dryrun: bool = False) -> None:
     dryrun: true to perform dryrun.
   """
   wix_dir = third_party_dir.joinpath('wix').absolute()
-  if dryrun:
-    print(f"dryrun: shutil.rmtree(r'{wix_dir}')")
-  else:
-    shutil.rmtree(wix_dir)
+  if wix_dir.exists():
+    if dryrun:
+      print(f"dryrun: shutil.rmtree(r'{wix_dir}')")
+    else:
+      shutil.rmtree(wix_dir)
 
   print('Downloading', WIX_ARCHIVE_URL)
   with requests.get(WIX_ARCHIVE_URL) as r:
