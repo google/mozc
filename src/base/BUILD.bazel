@@ -540,6 +540,7 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":util",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",

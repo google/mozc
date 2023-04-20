@@ -33,9 +33,8 @@
 #include <cstddef>
 #include <optional>
 
-#include "absl/base/attributes.h"
+#include "base/strings/zstring_view.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc {
@@ -48,7 +47,7 @@ class Mmap final {
   };
 
   // Creates a mapping of an entire file into the address space.
-  static absl::StatusOr<Mmap> Map(absl::string_view filename,
+  static absl::StatusOr<Mmap> Map(zstring_view filename,
                                   Mode mode = READ_ONLY) {
     return Map(filename, 0, std::nullopt, mode);
   }
@@ -57,7 +56,7 @@ class Mmap final {
   // file region `[offset, offset + size)` is mapped to the returned instance.
   // If `size` is std::nullopt, the region from `offset` to the end of file is
   // mapped.
-  static absl::StatusOr<Mmap> Map(absl::string_view filename, size_t offset,
+  static absl::StatusOr<Mmap> Map(zstring_view filename, size_t offset,
                                   std::optional<size_t> size,
                                   Mode mode = READ_ONLY);
 
