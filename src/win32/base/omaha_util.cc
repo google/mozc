@@ -148,7 +148,7 @@ bool OmahaUtil::ClearChannel() {
   return true;
 }
 
-#elif   // !GOOGLE_JAPANESE_INPUT_BUILD
+#else   // !GOOGLE_JAPANESE_INPUT_BUILD
 
 bool OmahaUtil::WriteChannel(const std::wstring &value) {
   return true;
