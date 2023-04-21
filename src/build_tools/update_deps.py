@@ -146,11 +146,11 @@ def RunUpdateSubmodules(dryrun: bool = False) -> None:
   Args:
     dryrun: true to perform dryrun.
   """
-  command = ['git', 'submodule', 'update', '--init', '--recursive']
+  command = ' '.join(['git', 'submodule', 'update', '--init', '--recursive'])
   if dryrun:
-    print(f'dryrun: subprocess.run({command}, shell=True)')
+    print(f'dryrun: subprocess.run({command}, shell=True, check=True)')
   else:
-    print('Running ' + ' '.join(command))
+    print(f'Running {command}')
     subprocess.run(command, shell=True, check=True)
 
 
