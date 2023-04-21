@@ -11,6 +11,9 @@ concurrency:
 
 jobs:
   build:
+    # For 'google/mozc', run this rule for any branch.
+    # For other repositories, run this rule only when the branch is not the defaul branch.
+    if: ${{ github.repository == 'google/mozc' || github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
     # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
     runs-on: ubuntu-20.04
     timeout-minutes: 60
