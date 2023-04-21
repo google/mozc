@@ -39,10 +39,13 @@ By default, this script assumes that Qt is checked out at src/third_party/qt.
 """
 
 import argparse
+import json
 import os
 import pathlib
 import subprocess
 import sys
+from typing import Union
+
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
 # src/build_tools/build_qt.py -> src/
@@ -164,9 +167,71 @@ def BuildOnMac(args: argparse.Namespace) -> None:
     RunOrDie(['make'])
 
 
+def GetVisualCppEnvironmentVariables(
+    msvs_version: str, arch: str
+) -> dict[str, str]:
+  """Returns environment variables for the specified Visual Studio C++ tool.
+
+  Oftentimes commandline build process for Windows requires to us to set up
+  environment variables (especially 'PATH') first by executing an appropriate
+  Visual C++ batch file ('vcvarsall.bat').  As a result, commands to be passed
+  to methods like subprocess.run() can easily become complicated and difficult
+  to maintain.
+
+  With GetEnvironmentVariable() you can easily decouple environment variable
+  handling from the actual command execution as follows.
+
+    cwd = ...
+    env = GetVisualCppEnvironmentVariables('2022', 'amd64_x86')
+    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+
+  or
+
+    cwd = ...
+    env = GetVisualCppEnvironmentVariables('2022', 'amd64_x86')
+    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
+
+  For the 'arch' argument, see the following link to find supported values.
+  https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line#vcvarsall-syntax
+
+  Args:
+    msvs_version: Visual Studio version to be used to build Qt, e.g. '2022'
+    arch: The architecture to be used to build Qt, e.g. 'amd64_x86'
+
+  Returns:
+    A dict of environment variable.
+
+  Raises:
+    ChildProcessError: When 'vcvarsall.bat' cannot be executed.
+    FileNotFoundError: When 'vcvarsall.bat' cannot be found.
+  """
+  if msvs_version == '2022':
+    program_files = 'Program Files'
+  else:
+    program_files = 'Program Files (x86)'
+  for edition in ['Community', 'Professional', 'Enterprise']:
+    vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
+                             msvs_version, edition, 'VC', 'Auxiliary', 'Build',
+                             'vcvarsall.bat')
+    if vcvarsall.exists():
+      break
+  if vcvarsall is None:
+    raise FileNotFoundError('Could not find vcvarsall.bat')
+
+  pycmd = (r'import json;'
+           r'import os;'
+           r'print(json.dumps(dict(os.environ), ensure_ascii=True))')
+  cmd = f'("{vcvarsall}" {arch}>nul)&&("{sys.executable}" -c "{pycmd}")'
+  process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+  stdout, _ = process.communicate()
+  exitcode = process.wait()
+  if exitcode != 0:
+    raise ChildProcessError(f'Failed to execute {vcvarsall}')
+  return json.loads(stdout.decode('ascii'))
+
+
 def BuildOnWindows(args: argparse.Namespace) -> None:
   """Build Qt from the source code on Windows.
-
 
   Args:
     args: build options to be used to customize configure options of Qt.
@@ -174,42 +239,29 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
   Raises:
     FileNotFoundError: when some required file is not found.
   """
-  vcvarsall = None
-  if args.msvs_version == '2022':
-    program_files = 'Program Files'
-  else:
-    program_files = 'Program Files (x86)'
-  for edition in ['Community', 'Professional', 'Enterprise']:
-    vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
-                             args.msvs_version, edition, 'VC', 'Auxiliary',
-                             'Build', 'vcvarsall.bat')
-    if vcvarsall.exists():
-      break
-  if vcvarsall is None:
-    raise FileNotFoundError('Could not find vcvarsall.bat')
-
   qt_dir = args.qt_dir.resolve()
 
   if not qt_dir.exists():
     raise FileNotFoundError('Could not find qt_dir=%s' % qt_dir)
 
-  has_jom = qt_dir.joinpath('jom.exe').exists()
+  env = GetVisualCppEnvironmentVariables(args.msvs_version, 'amd64_x86')
 
   options = MakeConfigureOption(args)
-
-  arch = 'amd64_x86'
   configs = ' '.join(options)
-  make = 'jom.exe' if has_jom else 'nmake.exe'
-  command = (
-      f'("{vcvarsall}" {arch})&&'
-      f'(cd {qt_dir})&&'
-      f'(configure.bat {configs})&&'
-      f'({make})'
-  )
+  command = f'configure.bat {configs}'
   if args.dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=True, check=True)")
+    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
+          f' cwd={qt_dir}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True)
+    subprocess.run(command, shell=True, check=True, cwd=qt_dir, env=env)
+
+  jom_path = qt_dir.joinpath('jom.exe')
+  make = jom_path if jom_path.exists() else 'nmake.exe'
+  if args.dryrun:
+    print(f'dryrun: subprocess.run(str({make}), shell=True, check=True,'
+          f' cwd={qt_dir}, env={env})')
+  else:
+    subprocess.run(str(make), shell=True, check=True, cwd=qt_dir, env=env)
 
   # Run post-build process for Windows
   post_build_script = ABS_MOZC_SRC_DIR.joinpath('win32', 'installer',
@@ -232,12 +284,15 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
                 '--pdbpath', abs_pdbpath,
                 '--targetpath', abs_targetpath]
     if args.dryrun:
-      print(f'dryrun: RunOrDie({commands})')
+      print(f'dryrun: RunOrDie({commands}, env={env})')
     else:
-      RunOrDie(commands)
+      RunOrDie(commands, env=env)
 
 
-def RunOrDie(argv: list[str | pathlib.Path]) -> None:
+def RunOrDie(
+    argv: list[Union[str, pathlib.Path]],
+    env: Union[dict[str, str], None] = None,
+) -> None:
   """Run the command, or die if it failed."""
 
   # Rest are the target program name and the parameters, but we special
@@ -247,7 +302,8 @@ def RunOrDie(argv: list[str | pathlib.Path]) -> None:
 
   print('Running: ' + ' '.join([str(arg) for arg in argv]))
   try:
-    subprocess.check_output(argv, stderr=subprocess.STDOUT)
+    subprocess.run(argv, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                   check=True, env=env)
   except subprocess.CalledProcessError as e:
     print(e.output.decode('utf-8'))
     sys.exit(e.returncode)

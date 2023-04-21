@@ -41,6 +41,7 @@ import glob
 import logging
 import optparse
 import os
+import pathlib
 import re
 import sys
 
@@ -200,8 +201,25 @@ def AddTargetPlatformOption(parser):
 
 def GetDefaultWixPath():
   """Returns the default Wix directory.."""
-  abs_path = ''
-  return abs_path
+  possible_wix_path = pathlib.Path(ABS_SCRIPT_DIR).joinpath(
+      'third_party', 'wix')
+  if possible_wix_path.exists():
+    return possible_wix_path
+  return ''
+
+
+def GetDefaultQtPath():
+  """Returns the default Qt directory.."""
+  qtdir_env = os.getenv('QTDIR', None)
+  if qtdir_env and pathlib.Path(qtdir_env).exists():
+    return qtdir_env
+  if IsLinux():
+    return None
+  possible_qt_path = pathlib.Path(ABS_SCRIPT_DIR).joinpath(
+      'third_party', 'qt')
+  if possible_qt_path.exists():
+    return possible_qt_path
+  return None
 
 
 def ParseGypOptions(args):
@@ -244,7 +262,7 @@ def ParseGypOptions(args):
 
   if IsWindows() or IsMac():
     parser.add_option('--qtdir', dest='qtdir',
-                      default=os.getenv('QTDIR', None),
+                      default=GetDefaultQtPath(),
                       help='Qt base directory to be used.')
 
   return parser.parse_args(args)
