@@ -44,6 +44,8 @@ import os
 import pathlib
 import subprocess
 import sys
+from typing import Union
+
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
 # src/build_tools/build_qt.py -> src/
@@ -288,7 +290,8 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
 
 
 def RunOrDie(
-    argv: list[str | pathlib.Path], env: dict[str, str] | None = None
+    argv: list[Union[str, pathlib.Path]],
+    env: Union[dict[str, str], None] = None,
 ) -> None:
   """Run the command, or die if it failed."""
 
