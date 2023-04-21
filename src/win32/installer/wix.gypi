@@ -90,12 +90,6 @@
             ],
           }],
         ],
-        'omaha_guid': 'DDCCD2A9-025E-4142-BCEB-F467B88CF830',
-        'omaha_client_key': r'Software\Google\Update\Clients\{<(omaha_guid)}',
-        'omaha_clientstate_key': r'Software\Google\Update\ClientState\{<(omaha_guid)}',
-        # Letters contained in the UpgradeCode property must be uppercase.
-        # http://msdn.microsoft.com/en-us/library/465253cd.aspx
-        'upgrade_code': 'C1A818AF-6EC9-49EF-ADCF-35A40475D156',
         'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
         'document_dir': '<(mozc_content_dir)/installer',
       },
