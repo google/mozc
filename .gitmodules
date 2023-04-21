@@ -16,3 +16,6 @@
 [submodule "src/third_party/abseil-cpp"]
 	path = src/third_party/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp.git
+[submodule "src/third_party/wil"]
+	path = src/third_party/wil
+	url = https://github.com/microsoft/wil.git
