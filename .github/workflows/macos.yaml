@@ -36,6 +36,13 @@ jobs:
         run: |
           bazel build --config oss_macos package
 
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mozc.pkg
+          path: src/bazel-bin/mac/Mozc.pkg
+          if-no-files-found: warn
+
       - name: tests
         working-directory: ./src
         run: |
