@@ -52,7 +52,7 @@ namespace mozc {
 namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n"
+constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
 constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
