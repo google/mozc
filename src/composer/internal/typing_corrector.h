@@ -30,18 +30,17 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TYPING_CORRECTOR_H_
 #define MOZC_COMPOSER_INTERNAL_TYPING_CORRECTOR_H_
 
+#include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "base/protobuf/repeated_field.h"
 #include "composer/internal/composition_input.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -101,6 +100,9 @@ class TypingCorrector final {
   struct KeyAndPenaltyLess;
 
   bool available_;
+  // If this is true, skips using the probable key events of the first input
+  // to generate type corrected queries.
+  bool skip_first_prob_keys_ = false;
   const commands::Request *request_;
   const Table *table_;
   size_t max_correction_query_candidates_;
