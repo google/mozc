@@ -31,8 +31,8 @@
 #define MOZC_BASE_RANDOM_H_
 
 #include <cstddef>
-#include <random>
 #include <string>
+#include <type_traits>
 
 #include "absl/random/random.h"
 
@@ -47,8 +47,11 @@ class Random {
   using result_type = absl::BitGen::result_type;
 
   Random() = default;
-  explicit Random(std::seed_seq &&seed);
-  explicit Random(absl::BitGen &&gen);
+  // Construct using an existing BitGen, std::seed_eq, or any other value that
+  // absl::BitGen can construct from.
+  template <typename Rng, typename = std::enable_if_t<
+                              !std::is_same_v<std::decay_t<Rng>, Random>>>
+  explicit Random(Rng &&rng) : bitgen_(std::forward<Rng>(rng)) {}
 
   // Disallow copy, allow move.
   Random(const Random &) = delete;
