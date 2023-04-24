@@ -422,6 +422,59 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
   }
 }
 
+TEST_F(TypingCorrectorTest, SkipFirstProbKeys) {
+  constexpr int kCorrectedQueryCandidates = 1000;
+  constexpr int kCorrectedQueryResults = 1000;
+  TypingCorrector corrector(request_.get(), &qwerty_table_,
+                            kCorrectedQueryCandidates, kCorrectedQueryResults);
+  corrector.SetConfig(&config_);
+  ASSERT_TRUE(corrector.IsAvailable());
+
+  struct {
+    const absl::string_view keys;
+    const absl::string_view correction;
+    const bool expected_default;
+    const bool expected_skip_first_prob_keys;
+  } kTestCases[] = {
+      {"phayou", "おはよう", true, false},
+      {"orukaresama", "おつかれさま", true, true},
+      {"gu-huru", "ぐーぐる", true, true},
+      {"bihongo", "にほんご", true, false},
+      {"yajiniku", "やきにく", true, true},
+      {"so-natsu", "どーなつ", true, false},
+      // No correction
+      {"ohayou", "おはよう", false, false},
+      {"syamozi", "しゃもじ", false, false},
+      {"kaish", "かいしゃ", false, false},
+  };
+
+  auto contains_correction = [this](absl::string_view keys,
+                                    absl::string_view correction,
+                                    TypingCorrector *corrector) {
+    SCOPED_TRACE(absl::StrCat("key: ", keys));
+    InsertOneByOne(keys.data(), corrector);
+    std::vector<TypeCorrectedQuery> queries;
+    corrector->GetQueriesForPrediction(&queries);
+    return FindKey(queries, correction);
+  };
+
+  Request default_request, mobile_request;
+  commands::RequestForUnitTest::FillMobileRequest(&mobile_request);
+  for (const auto &test_case : kTestCases) {
+    corrector.Reset();
+    corrector.SetRequest(&default_request);
+    EXPECT_EQ(
+        contains_correction(test_case.keys, test_case.correction, &corrector),
+        test_case.expected_default);
+
+    corrector.Reset();
+    corrector.SetRequest(&mobile_request);
+    EXPECT_EQ(
+        contains_correction(test_case.keys, test_case.correction, &corrector),
+        test_case.expected_skip_first_prob_keys);
+  }
+}
+
 TEST_F(TypingCorrectorTest, Invalidate) {
   const CostTableForTest *table = Singleton<CostTableForTest>::get();
 

@@ -56,6 +56,14 @@ new_local_repository(
     path = "third_party/gtest",
 )
 
+# Windows Implementation Library (WIL)
+# https://github.com/microsoft/wil/
+new_local_repository(
+  name = "com_microsoft_wil",
+  build_file = "@//:BUILD.wil.bazel",
+  path = "third_party/wil",
+)
+
 load("//:pkg_config_repository.bzl", "pkg_config_repository")
 
 # Gtk2

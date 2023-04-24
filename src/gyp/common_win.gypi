@@ -333,6 +333,7 @@
       '<(SHARED_INTERMEDIATE_DIR)',
       '<(absl_dir)',
       '<@(msvs_includes)',
+      '<(third_party_dir)/wil/include',
       '<(wtl_dir)/include',
     ],
     'msvs_configuration_attributes': {
@@ -394,5 +395,13 @@
         ],
       },
     },
+    'conditions': [
+      ['MSVS_VERSION=="2017"', {
+        'defines': [
+            # Workaround for WIL https://github.com/microsoft/wil/issues/25
+            '__WI_LIBCPP_HAS_NO_IS_AGGREGATE',
+        ],
+      }],
+    ],
   },
 }

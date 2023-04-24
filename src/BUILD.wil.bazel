@@ -1,0 +1,18 @@
+# Windows Implementation Library (WIL)
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "wil",
+    srcs = glob(["include/wil/*.h"]),
+    includes = ["include"],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "advapi32.lib",
+            "ole32.lib",
+            "oleaut32.lib",
+            "user32.lib",
+        ],
+        "//conditions:default": [],
+    }),
+)

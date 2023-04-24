@@ -36,13 +36,15 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "base/logging.h"
+#include "base/util.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "config/config_handler.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/btree_set.h"
 #include "absl/strings/str_cat.h"
@@ -100,10 +102,14 @@ TypingCorrector::TypingCorrector(const commands::Request *request,
 void TypingCorrector::InsertCharacter(const CompositionInput &input) {
   const std::string &key = input.raw();
   const ProbableKeyEvents &probable_key_events = input.probable_key_events();
+  const bool is_first_input = raw_key_.empty();
   raw_key_.append(key);
-  if (!IsAvailable() || probable_key_events.empty()) {
-    // If this corrector is not available or no ProbableKeyEvent is available,
+  if (!IsAvailable() || probable_key_events.empty() ||
+      (skip_first_prob_keys_ && is_first_input)) {
+    // - If this corrector is not available or no ProbableKeyEvent is available,
     // just append |key| to each corrections.
+    // - When skip_first_prob_keys_, skip adding probable_key_events for the
+    // first input.
     for (size_t i = 0; i < top_n_.size(); ++i) {
       top_n_[i].first.append(key);
     }
@@ -152,6 +158,7 @@ bool TypingCorrector::IsAvailable() const {
 
 void TypingCorrector::SetRequest(const commands::Request *request) {
   request_ = request;
+  skip_first_prob_keys_ = request->mixed_conversion();  // is mobile
 }
 
 void TypingCorrector::SetTable(const Table *table) {

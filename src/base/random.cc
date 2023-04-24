@@ -30,20 +30,13 @@
 #include "base/random.h"
 
 #include <cstddef>
-#include <random>
 #include <string>
-#include <utility>
 
 #include "base/util.h"
 #include "absl/algorithm/container.h"
 #include "absl/random/random.h"
 
 namespace mozc {
-
-Random::Random(std::seed_seq &&seed)
-    : bitgen_(std::forward<std::seed_seq>(seed)) {}
-
-Random::Random(absl::BitGen &&gen) : bitgen_(std::move(gen)) {}
 
 std::string Random::Utf8String(size_t len, char32_t lo, char32_t hi) {
   std::string result;
