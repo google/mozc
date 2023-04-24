@@ -29,10 +29,10 @@
 
 #include "base/win32/wide_char.h"
 
-#include <wchar.h>
 #include <windows.h>
 
 #include <cstddef>
+#include <initializer_list>
 #include <string>
 #include <string_view>  // for wstring_view
 
@@ -41,6 +41,21 @@
 #include "absl/strings/string_view.h"
 
 namespace mozc::win32 {
+namespace wide_char_internal {
+
+void StrAppendWInternal(std::wstring *dest,
+                        const std::initializer_list<std::wstring_view> slist) {
+  size_t size = 0;
+  for (const std::wstring_view view : slist) {
+    size += view.size();
+  }
+  dest->reserve(size);
+  for (const std::wstring_view view : slist) {
+    dest->append(view);
+  }
+}
+
+}  // namespace wide_char_internal
 
 size_t WideCharsLen(const absl::string_view input) {
   // This API call should always succeed as long as the codepage (CP_UTF8) and

@@ -29,6 +29,9 @@
 
 #include "base/win32/wide_char.h"
 
+#include <string>
+#include <string_view>
+
 #include "testing/gunit.h"
 
 namespace mozc::win32 {
@@ -63,6 +66,42 @@ TEST(WideCharTest, WideToUtf8) {
   EXPECT_EQ(WideToUtf8(kTwoSurrogatePairsW), kTwoSurrogatePairs);
   constexpr wchar_t kInvalid[] = {0xD800, 0};
   EXPECT_EQ(WideToUtf8(kInvalid), "\uFFFD");
+}
+
+TEST(WideCharTest, StrAppendW) {
+  {
+    std::wstring result;
+    StrAppendW(&result);
+    EXPECT_EQ(result, L"");
+  }
+  {
+    std::wstring result = L"Mozc, ";
+    StrAppendW(&result, L"こんにちは");
+    EXPECT_EQ(result, L"Mozc, こんにちは");
+  }
+  {
+    constexpr std::wstring_view s0 = L"Hello";
+    const std::wstring s1 = L"World";
+    std::wstring result;
+    StrAppendW(&result, s0, L", ", s1);
+    EXPECT_EQ(result, L"Hello, World");
+  }
+  {
+    std::wstring result = L"123";
+    StrAppendW(&result, L"4", L"5", L"6", L"7", L"8", L"9");
+    EXPECT_EQ(result, L"123456789");
+  }
+}
+
+TEST(WideCharTest, StrCatW) {
+  EXPECT_EQ(StrCatW(), L"");
+  EXPECT_EQ(StrCatW(L"こんにちは"), L"こんにちは");
+
+  constexpr std::wstring_view s0 = L"Hello";
+  const std::wstring s1 = L"World";
+  EXPECT_EQ(StrCatW(s0, L", ", s1, L"!"), L"Hello, World!");
+  EXPECT_EQ(StrCatW(s0, L"1", L"2", L"3", L"4", L"5", L"6", L"7"),
+            L"Hello1234567");
 }
 
 }  // namespace
