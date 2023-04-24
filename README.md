@@ -8,6 +8,8 @@ Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This
 OpenSource project originates from
 [Google Japanese Input](http://www.google.com/intl/ja/ime/).
 
+Mozc is not an officially supported Google product.
+
 Build Status
 ------------
 
