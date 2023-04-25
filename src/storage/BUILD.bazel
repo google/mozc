@@ -137,7 +137,10 @@ mozc_cc_library(
         "//base:file_util",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -149,10 +152,10 @@ mozc_cc_test(
         ":storage_interaface",
         ":tiny_storage",
         "//base:file_util",
-        "//base:port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -163,6 +166,7 @@ mozc_cc_library(
     deps = [
         ":storage_interaface",
         "//base:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 
@@ -172,9 +176,10 @@ mozc_cc_test(
     srcs = ["memory_storage_test.cc"],
     deps = [
         ":memory_storage",
-        "//base:port",
+        ":storage_interaface",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -190,6 +195,7 @@ mozc_cc_library(
         "//base:port",
         "//base:singleton",
         "//base:system_util",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
     ],
 )

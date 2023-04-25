@@ -38,6 +38,8 @@
 #include "base/system_util.h"
 #include "storage/storage_interface.h"
 #include "storage/tiny_storage.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {

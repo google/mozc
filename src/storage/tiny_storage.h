@@ -30,7 +30,9 @@
 #ifndef MOZC_STORAGE_TINY_STORAGE_H_
 #define MOZC_STORAGE_TINY_STORAGE_H_
 
-#include "base/port.h"
+#include <memory>
+#include <string>
+
 #include "storage/storage_interface.h"
 
 namespace mozc {
@@ -48,8 +50,8 @@ class TinyStorage {
   // Returns an implementation of StorageInterface.
   // Caller must take ownership of the returned object.
   // Returns NULL if fails.
-  static StorageInterface *New();
-  static StorageInterface *Create(const char *filename);
+  static std::unique_ptr<StorageInterface> New();
+  static std::unique_ptr<StorageInterface> Create(const std::string &filename);
 };
 
 }  // namespace storage

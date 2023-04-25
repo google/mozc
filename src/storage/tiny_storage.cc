@@ -29,14 +29,9 @@
 
 #include "storage/tiny_storage.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <cstdint>
 #include <cstring>
 #include <ios>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -45,7 +40,12 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/port.h"
+#include "storage/storage_interface.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -71,7 +71,8 @@ bool ReadData(char **begin, const char *end, T *value) {
   return true;
 }
 
-bool IsInvalid(const std::string &key, const std::string &value, size_t size) {
+bool IsInvalid(const absl::string_view key, const absl::string_view value,
+               const size_t size) {
   if (size >= kMaxElementSize) {
     LOG(ERROR) << "too many elements";
     return true;
@@ -105,7 +106,7 @@ class TinyStorageImpl : public StorageInterface {
  private:
   std::string filename_;
   bool should_sync_;
-  std::map<std::string, std::string> dic_;
+  absl::flat_hash_map<std::string, std::string> dic_;
 };
 
 TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {
@@ -185,7 +186,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
       return false;
     }
 
-    const std::string key(begin, key_size);
+    const absl::string_view key(begin, key_size);
     begin += key_size;
 
     if (!ReadData<uint32_t>(&begin, end, &value_size)) {
@@ -198,14 +199,14 @@ bool TinyStorageImpl::Open(const std::string &filename) {
       return false;
     }
 
-    const std::string value(begin, value_size);
+    const absl::string_view value(begin, value_size);
     begin += value_size;
 
     if (IsInvalid(key, value, dic_.size())) {
       return false;
     }
 
-    dic_.insert(std::make_pair(key, value));
+    dic_.emplace(key, value);
   }
 
   if (static_cast<size_t>(begin - mmap->begin()) != mmap->size()) {
@@ -228,7 +229,7 @@ bool TinyStorageImpl::Sync() {
     return true;
   }
 
-  const std::string output_filename = filename_ + ".tmp";
+  const std::string output_filename = absl::StrCat(filename_, ".tmp");
 
   OutputFileStream ofs(output_filename, std::ios::binary | std::ios::out);
   if (!ofs) {
@@ -243,13 +244,10 @@ bool TinyStorageImpl::Sync() {
             sizeof(kStorageVersion));
   ofs.write(reinterpret_cast<const char *>(&size), sizeof(size));
 
-  for (std::map<std::string, std::string>::const_iterator it = dic_.begin();
-       it != dic_.end(); ++it) {
-    if (it->first.empty()) {
+  for (auto &[key, value] : dic_) {
+    if (key.empty()) {
       continue;
     }
-    const std::string &key = it->first;
-    const std::string &value = it->second;
     const uint32_t key_size = static_cast<uint32_t>(key.size());
     const uint32_t value_size = static_cast<uint32_t>(value.size());
     ofs.write(reinterpret_cast<const char *>(&key_size), sizeof(key_size));
@@ -301,18 +299,17 @@ bool TinyStorageImpl::Insert(const std::string &key, const std::string &value) {
 }
 
 bool TinyStorageImpl::Erase(const std::string &key) {
-  std::map<std::string, std::string>::iterator it = dic_.find(key);
-  if (it == dic_.end()) {
+  auto node = dic_.extract(key);
+  if (node.empty()) {
     VLOG(2) << "cannot erase key: " << key;
     return false;
   }
-  dic_.erase(it);
   should_sync_ = true;
   return true;
 }
 
 bool TinyStorageImpl::Lookup(const std::string &key, std::string *value) const {
-  std::map<std::string, std::string>::const_iterator it = dic_.find(key);
+  const auto it = dic_.find(key);
   if (it == dic_.end()) {
     VLOG(3) << "cannot find key: " << key;
     return false;
@@ -329,16 +326,19 @@ bool TinyStorageImpl::Clear() {
 
 }  // namespace
 
-StorageInterface *TinyStorage::Create(const char *filename) {
-  std::unique_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
+std::unique_ptr<StorageInterface> TinyStorage::Create(
+    const std::string &filename) {
+  auto storage = std::make_unique<TinyStorageImpl>();
   if (!storage->Open(filename)) {
     LOG(ERROR) << "cannot open " << filename;
     return nullptr;
   }
-  return storage.release();
+  return storage;
 }
 
-StorageInterface *TinyStorage::New() { return new TinyStorageImpl; }
+std::unique_ptr<StorageInterface> TinyStorage::New() {
+  return std::make_unique<TinyStorageImpl>();
+}
 
 }  // namespace storage
 }  // namespace mozc

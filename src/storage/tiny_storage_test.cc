@@ -38,26 +38,24 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/port.h"
 #include "storage/storage_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace storage {
 namespace {
 
-void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
+using TargetMap = absl::flat_hash_map<std::string, std::string>;
+
+void CreateKeyValue(TargetMap *output, int size) {
   output->clear();
   for (int i = 0; i < size; ++i) {
-    char key[64];
-    char value[64];
-    absl::SNPrintF(key, sizeof(key), "key%d", i);
-    absl::SNPrintF(value, sizeof(value), "value%d", i);
-    output->insert(std::pair<std::string, std::string>(key, value));
+    output->emplace(absl::StrCat("key", i), absl::StrCat("value", i));
   }
 }
 
@@ -65,7 +63,7 @@ void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
 
 class TinyStorageTest : public testing::Test {
  protected:
-  TinyStorageTest() {}
+  TinyStorageTest() = default;
   TinyStorageTest(const TinyStorageTest &) = delete;
   TinyStorageTest &operator=(const TinyStorageTest &) = delete;
 
@@ -78,7 +76,9 @@ class TinyStorageTest : public testing::Test {
     EXPECT_OK(FileUtil::UnlinkIfExists(path));
   }
 
-  static StorageInterface *CreateStorage() { return TinyStorage::New(); }
+  static std::unique_ptr<StorageInterface> CreateStorage() {
+    return TinyStorage::New();
+  }
 
   static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
@@ -97,28 +97,24 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     std::unique_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert
-    std::map<std::string, std::string> target;
+    TargetMap target;
     CreateKeyValue(&target, kSize[i]);
     {
       EXPECT_TRUE(storage->Open(filename));
-      for (std::map<std::string, std::string>::const_iterator it =
-               target.begin();
-           it != target.end(); ++it) {
-        EXPECT_TRUE(storage->Insert(it->first, it->second));
+      for (const auto &[key, value] : target) {
+        EXPECT_TRUE(storage->Insert(key, value));
       }
     }
 
     // Lookup
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
+    for (const auto &[key, expected] : target) {
       std::string value;
-      EXPECT_TRUE(storage->Lookup(it->first, &value));
-      EXPECT_EQ(it->second, value);
+      EXPECT_TRUE(storage->Lookup(key, &value));
+      EXPECT_EQ(value, expected);
     }
 
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
-      const std::string key = it->first + ".dummy";
+    for (const auto &it : target) {
+      const std::string key = absl::StrCat(it.first, ".dummy");
       std::string value;
       EXPECT_FALSE(storage->Lookup(key, &value));
     }
@@ -130,40 +126,39 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     EXPECT_EQ(storage2->Size(), storage->Size());
 
     // Lookup
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
+    for (const auto &[key, expected] : target) {
       std::string value;
-      EXPECT_TRUE(storage2->Lookup(it->first, &value));
-      EXPECT_EQ(it->second, value);
+      EXPECT_TRUE(storage2->Lookup(key, &value));
+      EXPECT_EQ(value, expected);
     }
 
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
-      const std::string key = it->first + ".dummy";
+    for (const auto &it : target) {
+      const std::string key = it.first + ".dummy";
       std::string value;
       EXPECT_FALSE(storage2->Lookup(key, &value));
     }
 
     // Erase
     int id = 0;
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
+    for (const auto &it : target) {
       if (id % 2 == 0) {
-        EXPECT_TRUE(storage->Erase(it->first));
-        const std::string key = it->first + ".dummy";
+        EXPECT_TRUE(storage->Erase(it.first));
+        const std::string key = absl::StrCat(it.first, ".dummy");
         EXPECT_FALSE(storage->Erase(key));
       }
+      ++id;
     }
 
-    for (std::map<std::string, std::string>::const_iterator it = target.begin();
-         it != target.end(); ++it) {
+    id = 0;
+    for (const auto &it : target) {
       std::string value;
-      const std::string &key = it->first;
+      const std::string &key = it.first;
       if (id % 2 == 0) {
         EXPECT_FALSE(storage->Lookup(key, &value));
       } else {
         EXPECT_TRUE(storage->Lookup(key, &value));
       }
+      ++id;
     }
   }
 }

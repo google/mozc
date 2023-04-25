@@ -30,6 +30,8 @@
 #ifndef MOZC_STORAGE_MEMORY_STORAGE_H_
 #define MOZC_STORAGE_MEMORY_STORAGE_H_
 
+#include <memory>
+
 #include "storage/storage_interface.h"
 
 namespace mozc {
@@ -42,7 +44,7 @@ class MemoryStorage {
   MemoryStorage() = delete;
   MemoryStorage(const MemoryStorage&) = delete;
   MemoryStorage& operator=(const MemoryStorage&) = delete;
-  static StorageInterface *New();
+  static std::unique_ptr<StorageInterface> New();
 };
 
 }  // namespace storage

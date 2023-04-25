@@ -29,10 +29,13 @@
 
 #include "storage/memory_storage.h"
 
-#include <map>
+#include <cstddef>
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
+#include "storage/storage_interface.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace storage {
@@ -53,7 +56,7 @@ class MemoryStorageImpl : public storage::StorageInterface {
 
   bool Lookup(const std::string &key, std::string *value) const override {
     CHECK(value);
-    std::map<std::string, std::string>::const_iterator it = data_.find(key);
+    const auto it = data_.find(key);
     if (it == data_.end()) {
       return false;
     }
@@ -67,12 +70,8 @@ class MemoryStorageImpl : public storage::StorageInterface {
   }
 
   bool Erase(const std::string &key) override {
-    std::map<std::string, std::string>::iterator it = data_.find(key);
-    if (it != data_.end()) {
-      data_.erase(it);
-      return true;
-    }
-    return false;
+    const auto node = data_.extract(key);
+    return !node.empty();
   }
 
   bool Clear() override {
@@ -83,12 +82,14 @@ class MemoryStorageImpl : public storage::StorageInterface {
   size_t Size() const override { return data_.size(); }
 
  private:
-  std::map<std::string, std::string> data_;
+  absl::flat_hash_map<std::string, std::string> data_;
 };
 
 }  // namespace
 
-StorageInterface *MemoryStorage::New() { return new MemoryStorageImpl; }
+std::unique_ptr<StorageInterface> MemoryStorage::New() {
+  return std::make_unique<MemoryStorageImpl>();
+}
 
 }  // namespace storage
 }  // namespace mozc
