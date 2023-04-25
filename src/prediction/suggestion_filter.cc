@@ -30,7 +30,6 @@
 #include "prediction/suggestion_filter.h"
 
 #include <cstddef>
-#include <memory>
 #include <string>
 
 #include "base/hash.h"
@@ -38,16 +37,17 @@
 #include "base/util.h"
 #include "storage/existence_filter.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
-SuggestionFilter::SuggestionFilter(const char *data, size_t size) {
-  filter_.reset(mozc::storage::ExistenceFilter::Read(data, size));
-  LOG_IF(ERROR, filter_.get() == nullptr) << "SuggestionFilterData is broken";
+SuggestionFilter::SuggestionFilter(const char *data, size_t size)
+    : filter_(storage::ExistenceFilter::Read(absl::MakeSpan(data, size))) {
+  LOG_IF(ERROR, !filter_.ok()) << "SuggestionFilterData is broken";
 }
 
 bool SuggestionFilter::IsBadSuggestion(const absl::string_view text) const {
-  if (filter_ == nullptr) {
+  if (!filter_.ok()) {
     return false;
   }
   std::string lower_text(text);

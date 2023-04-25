@@ -83,7 +83,10 @@ mozc_cc_library(
     hdrs = ["existence_filter.h"],
     deps = [
         "//base:logging",
-        "//base:port",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -113,8 +116,8 @@ mozc_cc_test(
         ":existence_filter",
         "//base:hash",
         "//base:logging",
-        "//base:port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

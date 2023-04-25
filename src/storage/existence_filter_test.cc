@@ -30,26 +30,26 @@
 #include "storage/existence_filter.h"
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/port.h"
+#include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 namespace storage {
 namespace {
 
-void CheckValues(ExistenceFilter *filter, int m, int n) {
+void CheckValues(const ExistenceFilter &filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
     uint64_t hash = Hash::Fingerprint(i);
     bool should_exist = ((i % 2) == 0);
-    bool actual = filter->Exists(hash);
+    bool actual = filter.Exists(hash);
     if (should_exist) {
       CHECK(actual) << " Value = " << i;
     } else {
@@ -64,26 +64,21 @@ void CheckValues(ExistenceFilter *filter, int m, int n) {
 
 void RunTest(int m, int n) {
   LOG(INFO) << "Test " << m << " " << n;
-  ExistenceFilter *filter = ExistenceFilter::CreateOptimal(m, n);
+  ExistenceFilter filter = ExistenceFilter::CreateOptimal(m, n);
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
     uint64_t hash = Hash::Fingerprint(val);
-    filter->Insert(hash);
+    filter.Insert(hash);
   }
 
   CheckValues(filter, m, n);
 
-  char *buf = nullptr;
-  size_t size = 0;
-  filter->Write(&buf, &size);
-  LOG(INFO) << "write size: " << size;
-  ExistenceFilter *filter2 = ExistenceFilter::Read(buf, size);
-  CheckValues(filter2, m, n);
-  delete filter2;
-  delete[] buf;
-
-  delete filter;
+  const std::string buf = filter.Write();
+  LOG(INFO) << "write size: " << buf.size();
+  absl::StatusOr<ExistenceFilter> filter2 = ExistenceFilter::Read(buf);
+  EXPECT_OK(filter2);
+  CheckValues(*filter2, m, n);
 }
 
 }  // namespace
@@ -102,60 +97,45 @@ TEST(ExistenceFilterTest, MinFilterSizeEstimateTest) {
 }
 
 TEST(ExistenceFilterTest, ReadWriteTest) {
-  std::vector<std::string> words;
-  words.push_back("a");
-  words.push_back("b");
-  words.push_back("c");
+  const std::vector<std::string> words = {"a", "b", "c"};
 
   static constexpr float kErrorRate = 0.0001;
   int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
       kErrorRate, words.size());
 
-  std::unique_ptr<ExistenceFilter> filter(
+  ExistenceFilter filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
   for (int i = 0; i < words.size(); ++i) {
-    filter->Insert(Hash::Fingerprint(words[i]));
+    filter.Insert(Hash::Fingerprint(words[i]));
   }
 
-  char *buf = nullptr;
-  size_t size = 0;
-  filter->Write(&buf, &size);
-  std::unique_ptr<ExistenceFilter> filter_read(
-      ExistenceFilter::Read(buf, size));
+  const std::string buf = filter.Write();
+  absl::StatusOr<ExistenceFilter> filter_read(ExistenceFilter::Read(buf));
+  EXPECT_OK(filter_read);
 
-  for (int i = 0; i < words.size(); ++i) {
-    EXPECT_TRUE(filter_read->Exists(Hash::Fingerprint(words[i])));
+  for (const std::string &word : words) {
+    EXPECT_TRUE(filter_read->Exists(Hash::Fingerprint(word)));
   }
-
-  delete[] buf;
 }
 
 TEST(ExistenceFilterTest, InsertAndExistsTest) {
-  std::vector<std::string> words;
-  words.push_back("a");
-  words.push_back("b");
-  words.push_back("c");
-  words.push_back("d");
-  words.push_back("e");
-  words.push_back("f");
-  words.push_back("g");
-  words.push_back("h");
-  words.push_back("i");
+  const std::vector<std::string> words = {"a", "b", "c", "d", "e",
+                                          "f", "g", "h", "i"};
 
   static constexpr float kErrorRate = 0.0001;
   int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
       kErrorRate, words.size());
 
-  std::unique_ptr<ExistenceFilter> filter(
+  ExistenceFilter filter(
       ExistenceFilter::CreateOptimal(num_bytes, words.size()));
 
-  for (int i = 0; i < words.size(); ++i) {
-    filter->Insert(Hash::Fingerprint(words[i]));
+  for (const std::string &word : words) {
+    filter.Insert(Hash::Fingerprint(word));
   }
 
-  for (int i = 0; i < words.size(); ++i) {
-    EXPECT_TRUE(filter->Exists(Hash::Fingerprint(words[i])));
+  for (const std::string &word : words) {
+    EXPECT_TRUE(filter.Exists(Hash::Fingerprint(word)));
   }
 }
 
