@@ -841,9 +841,9 @@ mozc_cc_library(
         ":file_stream",
         ":file_util",
         ":logging",
-        ":port",
         ":singleton",
         ":system_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1181,10 +1181,7 @@ mozc_cc_library(
     name = "embedded_file",
     hdrs = ["embedded_file.h"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 genrule(

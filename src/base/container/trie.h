@@ -32,10 +32,9 @@
 #ifndef MOZC_BASE_CONTAINER_TRIE_H_
 #define MOZC_BASE_CONTAINER_TRIE_H_
 
-#include <map>
+#include <cstddef>
 #include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 #include <vector>
 

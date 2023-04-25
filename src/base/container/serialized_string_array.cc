@@ -29,16 +29,18 @@
 
 #include "base/container/serialized_string_array.h"
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/status.h"
 #include "absl/base/config.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

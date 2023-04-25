@@ -71,7 +71,6 @@ mozc_cc_library(
     name = "freelist",
     hdrs = ["freelist.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["//base:port"],
 )
 
 mozc_cc_test(
@@ -80,7 +79,6 @@ mozc_cc_test(
     deps = [
         ":freelist",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -91,7 +89,6 @@ mozc_cc_library(
     deps = [
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:status",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/strings",

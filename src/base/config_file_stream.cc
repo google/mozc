@@ -29,10 +29,6 @@
 
 #include "base/config_file_stream.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <cstring>
 #include <ios>
 #include <istream>
@@ -44,19 +40,22 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 
-namespace mozc {
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
+namespace mozc {
 namespace {
 
-static constexpr char kSystemPrefix[] = "system://";
-static constexpr char kUserPrefix[] = "user://";
-static constexpr char kFilePrefix[] = "file://";
-static constexpr char kMemoryPrefix[] = "memory://";
+constexpr char kSystemPrefix[] = "system://";
+constexpr char kUserPrefix[] = "user://";
+constexpr char kFilePrefix[] = "file://";
+constexpr char kMemoryPrefix[] = "memory://";
 
 struct FileData {
   const char *name;
