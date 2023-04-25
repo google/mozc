@@ -149,18 +149,19 @@ mozc_cc_library(
         ":user_dictionary_util",
         ":user_pos",
         ":user_pos_interface",
-        "//base:compiler_specific",
         "//base:file_util",
         "//base:hash",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:singleton",
         "//base:thread",
         "//base:util",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
+        "//request:conversion_request",
         "//usage_stats",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
@@ -223,10 +224,7 @@ mozc_cc_library(
         # For //rewriter:date_rewriter
         "//rewriter:__pkg__",
     ],
-    deps = [
-        "//base:port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_py_binary(
@@ -442,18 +440,15 @@ mozc_cc_library(
     hdrs = ["user_dictionary_importer.h"],
     visibility = ["//gui:__subpackages__"],
     deps = [
-        ":user_dictionary",
         ":user_dictionary_util",
-        "//base:compiler_specific",
         "//base:hash",
         "//base:japanese_util",
         "//base:logging",
         "//base:mmap",
         "//base:number_util",
-        "//base:port",
-        "//base:system_util",
         "//base:util",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

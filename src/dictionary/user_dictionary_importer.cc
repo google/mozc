@@ -31,32 +31,27 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/number_util.h"
-#include "base/port.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-
-#ifdef _WIN32
-#include <windows.h>
-
-#include "base/win32/win_util.h"
-#endif  // _WIN32
 
 namespace mozc {
 
@@ -66,15 +61,9 @@ using user_dictionary::UserDictionaryCommandStatus;
 namespace {
 
 uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
-  DCHECK_LE(0, entry.pos());
-  MOZC_CLANG_PUSH_WARNING();
-  // clang-format off
-#if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-  MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
-#endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-  // clang-format on
-  DCHECK_LE(entry.pos(), 255);
-  MOZC_CLANG_POP_WARNING();
+  DCHECK(UserDictionary::PosType_IsValid(entry.pos()));
+  static_assert(UserDictionary::PosType_MAX <=
+                std::numeric_limits<char>::max());
   return Hash::Fingerprint(entry.key() + "\t" + entry.value() + "\t" +
                            static_cast<char>(entry.pos()));
 }
