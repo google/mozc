@@ -39,15 +39,15 @@ from build_tools import code_generator_util
 HEADER = """// Copyright 2009 Google Inc. All Rights Reserved.
 // Author: keni
 
-#ifndef MOZC_DICTIONARY_POS_MAP_H_
-#define MOZC_DICTIONARY_POS_MAP_H_
+#ifndef MOZC_DICTIONARY_POS_MAP_INC_
+#define MOZC_DICTIONARY_POS_MAP_INC_
 
 // POS conversion rules
-const PosMap kPosMap[] = {
+constexpr PosMap kPosMap[] = {
 """
 FOOTER = """};
 
-#endif  // MOZC_DICTIONARY_POS_MAP_H_
+#endif  // MOZC_DICTIONARY_POS_MAP_INC_
 """
 
 
