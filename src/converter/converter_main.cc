@@ -59,6 +59,7 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
