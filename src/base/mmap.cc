@@ -115,14 +115,14 @@ absl::StatusOr<FileDescriptor> OpenFile(zstring_view filename,
   const std::wstring filename_w = win32::Utf8ToWide(filename);
   if (filename_w.empty()) {
     return absl::InvalidArgumentError(
-        absl::StrFormat("Invalid file name: %s", filename));
+        absl::StrFormat("Invalid file name: %v", filename));
   }
   FileDescriptor fd = ::CreateFileW(filename_w.c_str(), params.desired_access,
                                     params.share_mode, 0, OPEN_EXISTING,
                                     FILE_ATTRIBUTE_NORMAL, nullptr);
   if (fd == nullptr) {
     return absl::UnknownError(absl::StrFormat(
-        "Error %d: CreateFileW failed for %s", GetLastError(), filename));
+        "Error %d: CreateFileW failed for %v", GetLastError(), filename));
   }
   return fd;
 }
