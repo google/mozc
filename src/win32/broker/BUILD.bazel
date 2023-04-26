@@ -99,6 +99,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:run_level",
+        "//client",
         "//client:client_interface",
         "//renderer:renderer_client",
     ],
