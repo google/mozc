@@ -29,6 +29,7 @@
 
 #include "prediction/single_kanji_prediction_aggregator.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -36,8 +37,10 @@
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
+#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
@@ -87,11 +90,14 @@ SingleKanjiPredictionAggregator::~SingleKanjiPredictionAggregator() = default;
 
 std::vector<Result> SingleKanjiPredictionAggregator::AggregateResults(
     const ConversionRequest &request, const Segments &segments) const {
+  std::vector<Result> results;
+  if (!request.request().mixed_conversion()) {
+    return results;
+  }
   constexpr int kMinSingleKanjiSize = 5;
 
   const bool use_svs = UseSvs(request);
 
-  std::vector<Result> results;
   std::string original_input_key = GetKey(request, segments);
   int offset = 0;
   for (std::string key = original_input_key; !key.empty();

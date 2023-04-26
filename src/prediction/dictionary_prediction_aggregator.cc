@@ -30,6 +30,7 @@
 #include "prediction/dictionary_prediction_aggregator.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -39,6 +40,8 @@
 #include <vector>
 
 #include "base/japanese_util.h"
+#include "base/logging.h"
+#include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/type_corrected_query.h"
@@ -605,7 +608,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= type;
   }
 
-  if (key_len > 0 && AggregateNumberCandidates(request, segments, results)) {
+  if (IsMixedConversionEnabled(request.request()) && key_len > 0 &&
+      AggregateNumberCandidates(request, segments, results)) {
     selected_types |= NUMBER;
   }
 
@@ -637,7 +641,11 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= PREFIX;
   }
 
-  if (IsEnableSingleKanjiPrediction(request)) {
+  if (IsMixedConversionEnabled(request.request()) &&
+      IsEnableSingleKanjiPrediction(request)) {
+    // We do not want to add single kanji results for non mixed conversion
+    // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
+    // partial results.
     const std::vector<Result> single_kanji_results =
         single_kanji_prediction_aggregator_->AggregateResults(request,
                                                               segments);

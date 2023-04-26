@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "session/request_test_util.h"
+
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 
@@ -40,6 +41,18 @@ TEST(RequestForUnitTest, CheckFillMobileRequest) {
   EXPECT_TRUE(request.zero_query_suggestion());
   EXPECT_TRUE(request.mixed_conversion());
   EXPECT_FALSE(request.update_input_mode_from_surrounding_text());
+  EXPECT_TRUE(request.auto_partial_suggestion());
+  EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
+}
+
+TEST(RequestForUnitTest, CheckFillMobileRequestWithHardwareKeyboard) {
+  Request request;
+  RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(&request);
+  EXPECT_FALSE(request.zero_query_suggestion());
+  EXPECT_FALSE(request.mixed_conversion());
+  EXPECT_TRUE(request.update_input_mode_from_surrounding_text());
+  EXPECT_FALSE(request.auto_partial_suggestion());
+  EXPECT_EQ(request.candidate_page_size(), 2);
   EXPECT_EQ(request.special_romanji_table(), Request::TWELVE_KEYS_TO_HIRAGANA);
 }
 }  // namespace commands

@@ -42,6 +42,7 @@
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/internal/typing_model.h"
 #include "composer/table.h"
@@ -54,9 +55,12 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
+#include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -66,6 +70,7 @@
 #include "testing/gunit.h"
 #include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -2689,23 +2694,60 @@ TEST_F(DictionaryPredictionAggregatorTest, SingleKanji) {
       ->set_enable_single_kanji_prediction(true);
 
   {
+    auto create_single_kanji_result = [](absl::string_view key,
+                                         absl::string_view value) {
+      Result result;
+      result.key = std::string(key);
+      result.value = std::string(value);
+      result.SetTypesAndTokenAttributes(SINGLE_KANJI, Token::NONE);
+      return result;
+    };
     MockSingleKanjiPredictionAggregator *mock =
         data_and_aggregator->mutable_single_kanji_prediction_aggregator();
-    EXPECT_CALL(*mock, AggregateResults(_, _));
+    EXPECT_CALL(*mock, AggregateResults(_, _))
+        .WillOnce(Return(
+            std::vector<Result>{create_single_kanji_result("て", "手")}));
   }
 
   Segments segments;
   SetUpInputForSuggestion("てすと", composer_.get(), &segments);
 
   std::vector<Result> results;
-  aggregator.AggregatePredictionForRequest(*prediction_convreq_, segments,
-                                           &results);
+  EXPECT_TRUE(aggregator.AggregatePredictionForRequest(*prediction_convreq_,
+                                                       segments, &results) &
+              SINGLE_KANJI);
   EXPECT_FALSE(results.empty());
   for (const auto &result : results) {
     if (!(result.types & SINGLE_KANJI)) {
       EXPECT_GT(Util::CharsLen(result.value), 1);
     }
   }
+}
+
+TEST_F(DictionaryPredictionAggregatorTest,
+       SingleKanjiForMobileHardwareKeyboard) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+      request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_enable_single_kanji_prediction(true);
+
+  {
+    MockSingleKanjiPredictionAggregator *mock =
+        data_and_aggregator->mutable_single_kanji_prediction_aggregator();
+    EXPECT_CALL(*mock, AggregateResults(_, _)).Times(0);
+  }
+
+  Segments segments;
+  SetUpInputForSuggestion("てすと", composer_.get(), &segments);
+
+  std::vector<Result> results;
+  EXPECT_FALSE(aggregator.AggregatePredictionForRequest(*prediction_convreq_,
+                                                        segments, &results) &
+               SINGLE_KANJI);
 }
 
 }  // namespace

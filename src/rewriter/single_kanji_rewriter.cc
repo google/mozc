@@ -29,18 +29,14 @@
 
 #include "rewriter/single_kanji_rewriter.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <iterator>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
+#include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "protocol/commands.pb.h"
@@ -56,10 +52,11 @@ namespace mozc {
 
 namespace {
 
-bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_single_kanji_prediction();
+bool IsEnableSingleKanjiPrediction(
+    const ConversionRequest &conversion_request) {
+  const commands::Request &request = conversion_request.request();
+  return request.mixed_conversion() &&
+         request.decoder_experiment_params().enable_single_kanji_prediction();
 }
 
 void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,

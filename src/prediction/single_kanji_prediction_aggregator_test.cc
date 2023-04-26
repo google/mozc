@@ -39,12 +39,15 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/result.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc::prediction {
 namespace {
@@ -80,6 +83,7 @@ class SingleKanjiPredictionAggregatorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     request_ = std::make_unique<commands::Request>();
+    commands::RequestForUnitTest::FillMobileRequest(request_.get());
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
     table_ = std::make_unique<composer::Table>();
@@ -107,6 +111,17 @@ TEST_F(SingleKanjiPredictionAggregatorTest, NoResult) {
   const std::vector<Result> results =
       aggregator.AggregateResults(*convreq_, segments);
   EXPECT_TRUE(results.empty());
+}
+
+TEST_F(SingleKanjiPredictionAggregatorTest, NoResultForHardwareKeyboard) {
+  Segments segments;
+  SetUpInputWithKey("あけぼのの", composer_.get(), &segments);
+  SingleKanjiPredictionAggregator aggregator(*data_manager_);
+  commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+      request_.get());
+  const std::vector<Result> results =
+      aggregator.AggregateResults(*convreq_, segments);
+  EXPECT_EQ(results.size(), 0);
 }
 
 TEST_F(SingleKanjiPredictionAggregatorTest, ResultsFromPrefix) {
