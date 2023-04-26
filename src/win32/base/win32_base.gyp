@@ -145,7 +145,6 @@
           'target_name': 'ime_base',
           'type': 'static_library',
           'sources': [
-            'migration_util.cc',
             'omaha_util.cc',
             'uninstall_helper.cc',
           ],

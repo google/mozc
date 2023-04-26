@@ -302,22 +302,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "migration_util",
-    srcs = ["migration_util.cc"],
-    hdrs = ["migration_util.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        ":tsf_profile",
-        ":uninstall_helper",
-        "//base:const",
-        "//base:logging",
-        "//base:port",
-        "//base:process",
-    ],
-)
-
-mozc_cc_library(
     name = "surrogate_pair_observer",
     srcs = ["surrogate_pair_observer.cc"],
     hdrs = ["surrogate_pair_observer.h"],
