@@ -32,11 +32,12 @@
 #ifndef MOZC_CONVERTER_POS_ID_PRINTER_H_
 #define MOZC_CONVERTER_POS_ID_PRINTER_H_
 
-#include <istream>
-#include <map>
 #include <string>
 
-#include "base/port.h"
+#include "base/file_stream.h"
+#include "absl/base/attributes.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace internal {
@@ -48,18 +49,19 @@ namespace internal {
 //           "");
 class PosIdPrinter {
  public:
-  PosIdPrinter(const PosIdPrinter&) = delete;
-  PosIdPrinter& operator=(const PosIdPrinter&) = delete;
-  explicit PosIdPrinter(std::istream *id_def);
+  explicit PosIdPrinter(InputFileStream id_def);
+  // Movable.
+  PosIdPrinter(PosIdPrinter &&) = default;
+  PosIdPrinter &operator=(PosIdPrinter &&) = default;
 
-  ~PosIdPrinter();
+  ~PosIdPrinter() = default;
 
-  // Returns POS string for the given id.
+  // Returns a string_view to the POS string for the given id.
   // For an invalid id, returns empty string.
-  std::string IdToString(int id) const;
+  absl::string_view IdToString(int id) const ABSL_ATTRIBUTE_LIFETIME_BOUND;
 
  private:
-  std::map<int, std::string> id_to_pos_map_;
+  absl::flat_hash_map<int, std::string> id_to_pos_map_;
 };
 
 }  // namespace internal

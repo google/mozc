@@ -29,9 +29,6 @@
 
 #include "converter/pos_id_printer.h"
 
-#include <memory>
-#include <string>
-
 #include "base/file_stream.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -39,33 +36,16 @@
 namespace mozc {
 namespace internal {
 
-class PosIdPrinterTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    const std::string test_id_def_path =
-        testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"});
-    pos_id_ = std::make_unique<InputFileStream>(test_id_def_path);
-    pos_id_printer_ = std::make_unique<PosIdPrinter>(pos_id_.get());
-  }
+TEST(PosIdPrinterTest, BasicIdTest) {
+  PosIdPrinter printer(InputFileStream(
+      testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"})));
 
-  std::unique_ptr<InputFileStream> pos_id_;
-  std::unique_ptr<PosIdPrinter> pos_id_printer_;
-};
+  EXPECT_EQ(printer.IdToString(1934), "名詞,サ変接続,*,*,*,*,*");
+  EXPECT_EQ(printer.IdToString(1935), "名詞,サ変接続,*,*,*,*,*,使用");
+  EXPECT_EQ(printer.IdToString(0), "BOS/EOS,*,*,*,*,*,*");
 
-TEST_F(PosIdPrinterTest, BasicIdTest) {
-  EXPECT_EQ(pos_id_printer_->IdToString(1934), "名詞,サ変接続,*,*,*,*,*");
-  EXPECT_EQ(pos_id_printer_->IdToString(1935), "名詞,サ変接続,*,*,*,*,*,使用");
-  EXPECT_EQ(pos_id_printer_->IdToString(0), "BOS/EOS,*,*,*,*,*,*");
-}
-
-TEST_F(PosIdPrinterTest, InvalidId) {
-  EXPECT_EQ(pos_id_printer_->IdToString(-1), "");
-}
-
-TEST_F(PosIdPrinterTest, NullInput) {
-  PosIdPrinter pos_id_printer(nullptr);
-  EXPECT_EQ(pos_id_printer.IdToString(-1), "");
-  EXPECT_EQ(pos_id_printer.IdToString(1934), "");
+  // Invalid ID returns an empty string.
+  EXPECT_EQ(printer.IdToString(-1), "");
 }
 
 }  // namespace internal
