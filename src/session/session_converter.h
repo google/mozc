@@ -32,31 +32,24 @@
 #ifndef MOZC_SESSION_SESSION_CONVERTER_H_
 #define MOZC_SESSION_SESSION_CONVERTER_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
+#include "request/conversion_request.h"
+#include "session/internal/candidate_list.h"
 #include "session/session_converter_interface.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
-namespace commands {
-class CandidateList;
-class Candidates;
-class Context;
-class Output;
-class Preedit;
-class Request;
-class Result;
-}  // namespace commands
-
-namespace config {
-class Config;
-}  // namespace config
-
 namespace session {
-class CandidateList;
 
 // Class handling ConverterInterface with a session state.  This class
 // support stateful operations related with the converter.
@@ -268,7 +261,8 @@ class SessionConverter : public SessionConverterInterface {
 
   // Meaning that all the composition characters are consumed.
   // c.f. CommitSuggestionInternal
-  static const size_t kConsumedAllCharacters;
+  static constexpr size_t kConsumedAllCharacters =
+      std::numeric_limits<size_t>::max();
 
  private:
   friend class SessionConverterTest;

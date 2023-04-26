@@ -35,22 +35,14 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
 #include "session/session_observer_interface.h"
 #include "usage_stats/usage_stats.h"
 
 namespace mozc {
-namespace commands {
-class Command;
-class Input;
-// We cannot use Input::TouchEvent because C++ does not allow forward
-// declaration of a nested-type.
-class Input_TouchEvent;
-class Output;
-}  // namespace commands
-
 namespace session {
+
 class SessionUsageObserver : public SessionObserverInterface {
  public:
   SessionUsageObserver();

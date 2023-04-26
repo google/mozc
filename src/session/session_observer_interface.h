@@ -32,21 +32,17 @@
 #ifndef MOZC_SESSION_SESSION_OBSERVER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_OBSERVER_INTERFACE_H_
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
-namespace commands {
-class Command;
-}
-
 namespace session {
 
 class SessionObserverInterface {
  public:
-  SessionObserverInterface() {}
+  SessionObserverInterface() = default;
   SessionObserverInterface(const SessionObserverInterface&) = delete;
   SessionObserverInterface& operator=(const SessionObserverInterface&) = delete;
-  virtual ~SessionObserverInterface() {}
+  virtual ~SessionObserverInterface() = default;
 
   virtual void EvalCommandHandler(const commands::Command &command) = 0;
 };

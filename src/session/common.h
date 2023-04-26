@@ -34,8 +34,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
-
 namespace mozc {
 
 typedef uint64_t SessionID;

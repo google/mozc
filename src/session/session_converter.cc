@@ -32,17 +32,15 @@
 #include "session/session_converter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_util.h"
 #include "converter/segments.h"
@@ -52,13 +50,12 @@
 #include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/internal/session_output.h"
+#include "session/session_converter_interface.h"
 #include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
-
-using mozc::usage_stats::UsageStats;
 
 #ifdef __ANDROID__
 constexpr bool kDefaultUseActualConverterForRealtimeConversion = false;
@@ -73,20 +70,20 @@ ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion,
 
 namespace mozc {
 namespace session {
-
 namespace {
 
-using mozc::commands::Request;
-using mozc::config::Config;
+using ::mozc::commands::Request;
+using ::mozc::config::Config;
+using ::mozc::usage_stats::UsageStats;
 
 constexpr size_t kDefaultMaxHistorySize = 3;
 
 const char *GetCandidateShortcuts(
     config::Config::SelectionShortcut selection_shortcut) {
   // Keyboard shortcut for candidates.
-  const char *kShortcut123456789 = "123456789";
-  const char *kShortcutASDFGHJKL = "asdfghjkl";
-  const char *kNoShortcut = "";
+  constexpr const char *kShortcut123456789 = "123456789";
+  constexpr const char *kShortcutASDFGHJKL = "asdfghjkl";
+  constexpr const char *kNoShortcut = "";
 
   const char *shortcut = kNoShortcut;
   switch (selection_shortcut) {
@@ -131,9 +128,6 @@ void SetUseActualConverterForRealtimeConversion(
 }
 
 }  // namespace
-
-const size_t SessionConverter::kConsumedAllCharacters =
-    std::numeric_limits<size_t>::max();
 
 SessionConverter::SessionConverter(const ConverterInterface *converter,
                                    const Request *request, const Config *config)

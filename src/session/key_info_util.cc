@@ -38,8 +38,8 @@
 
 #include "base/config_file_stream.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
+#include "composer/key_event_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -48,10 +48,9 @@
 #include "absl/strings/str_split.h"
 
 namespace mozc {
-
 namespace {
 
-using config::Config;
+using ::mozc::config::Config;
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
     std::istream *ifs) {

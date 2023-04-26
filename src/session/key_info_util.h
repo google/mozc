@@ -32,16 +32,11 @@
 
 #include <vector>
 
-#include "base/port.h"
 #include "composer/key_event_util.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
-namespace commands {
-class KeyEvent;
-}  // namespace commands
-namespace config {
-class Config;
-}  // namespace config
 
 class KeyInfoUtil {
  public:

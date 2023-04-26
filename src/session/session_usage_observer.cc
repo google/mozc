@@ -29,7 +29,7 @@
 
 #include "session/session_usage_observer.h"
 
-#include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <map>
@@ -39,14 +39,14 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/number_util.h"
-#include "base/port.h"
 #include "config/stats_config_util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {

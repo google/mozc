@@ -29,28 +29,27 @@
 
 #include "session/session_usage_stats_util.h"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/protobuf/descriptor.h"
-#include "base/protobuf/message.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
-using mozc::commands::Input;
-using mozc::commands::Output;
-using mozc::usage_stats::UsageStats;
-
 namespace mozc {
 namespace session {
 namespace {
 
-// Splits a text by delimitor, capitalizes each piece and joins them.
-// ex. "AbCd_efgH" => "AbcdEfgh" (delimitor = '_')
+using ::mozc::commands::Input;
+using ::mozc::commands::Output;
+using ::mozc::usage_stats::UsageStats;
+
+// Splits a text by delimiter, capitalizes each piece and joins them.
+// ex. "AbCd_efgH" => "AbcdEfgh" (delimiter = '_')
 void CamelCaseString(std::string *str, char delm) {
   std::vector<std::string> pieces =
       absl::StrSplit(*str, delm, absl::SkipEmpty());

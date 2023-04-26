@@ -33,17 +33,13 @@
 
 #include <vector>
 
+#include "protocol/commands.pb.h"
 #include "session/session_observer_interface.h"
 
 namespace mozc {
 namespace session {
 
 typedef std::vector<SessionObserverInterface *>::iterator ItObservers;
-
-SessionObserverHandler::SessionObserverHandler() {}
-SessionObserverHandler::~SessionObserverHandler() {
-  // TODO(komatsu):  Need finalizing?
-}
 
 void SessionObserverHandler::AddObserver(SessionObserverInterface *observer) {
   observers_.push_back(observer);

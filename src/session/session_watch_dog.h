@@ -32,19 +32,13 @@
 #ifndef MOZC_SESSION_SESSION_WATCH_DOG_H_
 #define MOZC_SESSION_SESSION_WATCH_DOG_H_
 
-#include <cstdint>
-#include <memory>
-
-#include "base/port.h"
+#include "base/cpu_stats.h"
 #include "base/thread.h"
+#include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 
 namespace mozc {
-class CPUStatsInterface;
-namespace client {
-class ClientInterface;
-}
 
 // SessionWatchDog class sends Cleanup command to Sessionhandler
 // for every some specified seconds.
@@ -56,12 +50,12 @@ class SessionWatchDog : public Thread {
   // return the interval sec of watch dog timer
   absl::Duration interval() const { return interval_sec_; }
 
-  // Set client interface. This method doesn't take the owership.
-  // mainly for unittesting.
+  // Set client interface. This method doesn't take the ownership.
+  // mainly for unit testing.
   void SetClientInterface(client::ClientInterface *client);
 
-  // Set CPUStats interface. This method doesn't take the owership.
-  // mainly for unittesting.
+  // Set CPUStats interface. This method doesn't take the ownership.
+  // mainly for unit testing.
   void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
 
   explicit SessionWatchDog(absl::Duration interval_sec);

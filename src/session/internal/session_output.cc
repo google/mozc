@@ -32,6 +32,7 @@
 #include "session/internal/session_output.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -39,7 +40,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"

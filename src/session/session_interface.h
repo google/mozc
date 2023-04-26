@@ -32,30 +32,18 @@
 #ifndef MOZC_SESSION_SESSION_INTERFACE_H_
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
-#include <cstdint>
-
-#include "base/port.h"
+#include "composer/table.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 #include "absl/time/time.h"
 
 namespace mozc {
-
-namespace commands {
-class ApplicationInfo;
-class Capability;
-class Command;
-class Request;
-}  // namespace commands
-
-namespace composer {
-class Table;
-}  // namespace composer
-
 namespace session {
+
 class SessionInterface {
  public:
-  virtual ~SessionInterface() {}
+  virtual ~SessionInterface() = default;
 
   virtual bool SendKey(commands::Command *command) = 0;
 

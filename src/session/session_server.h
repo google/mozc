@@ -57,7 +57,6 @@ class SessionServer : public IPCServer {
   SessionServer();
   SessionServer(const SessionServer&) = delete;
   SessionServer& operator=(const SessionServer&) = delete;
-  ~SessionServer() override;
 
   bool Connected() const;
 
