@@ -160,30 +160,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "memory_storage",
-    srcs = ["memory_storage.cc"],
-    hdrs = ["memory_storage.h"],
-    deps = [
-        ":storage_interaface",
-        "//base:logging",
-        "@com_google_absl//absl/container:flat_hash_map",
-    ],
-)
-
-mozc_cc_test(
-    name = "memory_storage_test",
-    size = "small",
-    srcs = ["memory_storage_test.cc"],
-    deps = [
-        ":memory_storage",
-        ":storage_interaface",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
     name = "registry",
     srcs = ["registry.cc"],
     hdrs = ["registry.h"],
