@@ -81,11 +81,6 @@
             '../unix/emacs/emacs.gyp:emacs_all_test',
           ],
         }],
-        ['target_platform=="Linux" and use_libibus==1', {
-          'dependencies': [
-            '../unix/ibus/ibus.gyp:ibus_all_test',
-          ],
-        }],
       ],
     },
   ],
