@@ -275,3 +275,28 @@ mozc_cc_test(
         "//testing:gunit_main",
     ],
 )
+
+mozc_cc_library(
+    name = "com_implements",
+    srcs = ["com_implements.cc"],
+    hdrs = ["com_implements.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+mozc_cc_test(
+    name = "com_implements_test",
+    srcs = ["com_implements_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":com",
+        ":com_implements",
+        "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
+    ],
+)
