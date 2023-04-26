@@ -29,6 +29,7 @@
 
 """Qt build rules."""
 
+load("//bazel:stubs.bzl", "register_extension_info")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -53,6 +54,11 @@ def mozc_cc_qt_library(name, deps = [], **kwargs):
         **kwargs
     )
 
+register_extension_info(
+    extension = "mozc_cc_qt_library",
+    label_regex_for_dep = "{extension_name}",
+)
+
 def mozc_cc_qt_binary(name, deps = [], **kwargs):
     mozc_cc_binary(
         name = name,
@@ -63,6 +69,11 @@ def mozc_cc_qt_binary(name, deps = [], **kwargs):
         ),
         **kwargs
     )
+
+register_extension_info(
+    extension = "mozc_cc_qt_binary",
+    label_regex_for_dep = "{extension_name}",
+)
 
 def mozc_qt_moc(name, srcs, outs):
     native.genrule(
@@ -143,3 +154,8 @@ def mozc_macos_qt_application(name, bundle_name, deps):
             ],
         ),
     )
+
+register_extension_info(
+    extension = "mozc_macos_qt_application",
+    label_regex_for_dep = "{extension_name}",
+)

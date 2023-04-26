@@ -36,6 +36,7 @@ bzl_library(
     deps = [
         "//:build_defs_bzl",
         "//:config_bzl",
+        "//devtools/build_cleaner/skylark:build_defs_lib",
         "@build_bazel_rules_apple//apple:macos",
     ],
 )
