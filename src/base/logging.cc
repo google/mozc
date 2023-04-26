@@ -112,7 +112,7 @@ std::string Logging::GetLogMessageHeader() {
 
 #if defined(__wasm__)
   return absl::StrCat(timestamp, ::getpid(), " ",
-                      static_cast<unsigned int>(pthread_self());
+                      static_cast<unsigned int>(pthread_self()));
 #elif defined(__linux__)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       // It returns unsigned long.
@@ -338,12 +338,12 @@ namespace {
 // Blue:    "\x1b[34m"
 // Magenta: "\x1b[35m"
 // White    "\x1b[37m"
-const char *kClearEscapeSequence = "\x1b[0m";
-const char *kRedEscapeSequence = "\x1b[31m";
-const char *kYellowEscapeSequence = "\x1b[33m";
-const char *kCyanEscapeSequence = "\x1b[36m";
+constexpr const char kClearEscapeSequence[] = "\x1b[0m";
+constexpr const char kRedEscapeSequence[] = "\x1b[31m";
+constexpr const char kYellowEscapeSequence[] = "\x1b[33m";
+constexpr const char kCyanEscapeSequence[] = "\x1b[36m";
 
-const struct SeverityProperty {
+constexpr struct SeverityProperty {
  public:
   const char *label;
   const char *color_escape_sequence;

@@ -44,11 +44,11 @@ constexpr char kVersionRewriterVersionPrefix[] = kProductPrefix "-";
 #if defined(_WIN32)
 // Safe length of IME name in terms of IME_ESC_IME_NAME request.
 // See http://msdn.microsoft.com/en-us/library/dd318166.aspx for details.
-const int kSafeIMENameLengthForNTInTchars = 64;
+constexpr int kSafeIMENameLengthForNTInTchars = 64;
 
 // UIWnd class name (including the null terminator) for the IMM32 can be up to
 // 16 TCHARs.
-const int kIMEUIwndClassNameLimitInTchars = 16;
+constexpr int kIMEUIwndClassNameLimitInTchars = 16;
 
 constexpr wchar_t kDefaultKeyboardLayout[] = L"00000411";
 

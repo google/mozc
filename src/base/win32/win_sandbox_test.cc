@@ -147,8 +147,8 @@ TEST(WinSandboxTest, GetSidsToRestrict) {
   VerifySidContained(interactive, WinBuiltinUsersSid);
 }
 
-const wchar_t kDummyUserSID[] = L"S-8";
-const wchar_t kDummyGroupSID[] = L"S-9";
+constexpr wchar_t kDummyUserSID[] = L"S-8";
+constexpr wchar_t kDummyGroupSID[] = L"S-9";
 
 std::wstring GetSDDLForVista(WinSandbox::ObjectSecurityType type) {
   return TestableWinSandbox::GetSDDL(type, kDummyUserSID, kDummyGroupSID,
