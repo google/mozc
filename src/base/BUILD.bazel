@@ -1031,10 +1031,7 @@ mozc_cc_library(
     srcs = ["cpu_stats.cc"],
     hdrs = ["cpu_stats.h"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":port",
-    ],
+    deps = [":logging"],
 )
 
 mozc_cc_test(

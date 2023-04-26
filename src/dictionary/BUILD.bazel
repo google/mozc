@@ -239,7 +239,6 @@ mozc_cc_library(
     name = "pos_group",
     hdrs = ["pos_group.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["//base:port"],
 )
 
 mozc_py_library(

@@ -29,6 +29,11 @@
 
 #include "base/cpu_stats.h"
 
+#include <cstddef>
+#include <cstdint>
+
+#include "base/logging.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif  // _WIN32
@@ -40,11 +45,6 @@
 #include <mach/task.h>
 #include <sys/time.h>
 #endif  // __APPLE__
-
-#include <cstdint>
-
-#include "base/logging.h"
-#include "base/port.h"
 
 namespace mozc {
 namespace {
@@ -81,14 +81,6 @@ float UpdateCPULoad(uint64_t current_total_times, uint64_t current_cpu_times,
   return result;
 }
 }  // namespace
-
-CPUStats::CPUStats()
-    : prev_system_total_times_(0),
-      prev_system_cpu_times_(0),
-      prev_current_process_total_times_(0),
-      prev_current_process_cpu_times_(0) {}
-
-CPUStats::~CPUStats() {}
 
 float CPUStats::GetSystemCPULoad() {
 #ifdef _WIN32
