@@ -45,6 +45,8 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
+licenses(["notice"])
+
 mozc_py_binary(
     name = "gen_mozc_xml_main",
     srcs = ["gen_mozc_xml.py"],

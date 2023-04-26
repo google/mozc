@@ -48,13 +48,24 @@ load("//bazel:stubs.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
 
-def mozc_cc_library(deps = [], copts = [], **kwargs):
+def _update_visibility(visibility = None):
+    """
+    Returns updated visibility. This is temporarily used for the code location migration.
+    """
+    if not visibility:
+        return visibility
+    if ("//:__subpackages__" in visibility):
+        return visibility + ["//third_party/mozc:__subpackages__"]
+    return visibility
+
+def mozc_cc_library(deps = [], copts = [], visibility = None, **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
     native.cc_library(
         deps = deps + ["//:macro"],
         copts = copts + ["-funsigned-char"],
+        visibility = _update_visibility(visibility),
         **kwargs
     )
 
