@@ -72,8 +72,7 @@ int RunWordRegisterDialog(int argc, char *argv[]);
 int RunErrorMessageDialog(int argc, char *argv[]);
 
 #ifdef _WIN32
-// (SetDefault|PostInstall|RunAdministartion)Dialog are used for Windows only.
-int RunSetDefaultDialog(int argc, char *argv[]);
+// (PostInstall|RunAdministartion)Dialog are used for Windows only.
 int RunPostInstallDialog(int argc, char *argv[]);
 int RunAdministrationDialog(int argc, char *argv[]);
 #endif  // _WIN32
@@ -157,9 +156,6 @@ int RunMozcTool(int argc, char *argv[]) {
   } else if (absl::GetFlag(FLAGS_mode) == "about_dialog") {
     return RunAboutDialog(argc, argv);
 #ifdef _WIN32
-  } else if (absl::GetFlag(FLAGS_mode) == "set_default_dialog") {
-    // set_default_dialog is used on Windows only.
-    return RunSetDefaultDialog(argc, argv);
   } else if (absl::GetFlag(FLAGS_mode) == "post_install_dialog") {
     // post_install_dialog is used on Windows only.
     return RunPostInstallDialog(argc, argv);
