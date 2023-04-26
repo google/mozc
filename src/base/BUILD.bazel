@@ -79,14 +79,6 @@ test_suite(
 )
 
 mozc_cc_library(
-    name = "compiler_specific",
-    hdrs = ["compiler_specific.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-)
-
-mozc_cc_library(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],

@@ -29,33 +29,30 @@
 
 #include "renderer/renderer_server.h"
 
-#include <cstdint>
-
-#include "absl/time/time.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 
-#include "base/compiler_specific.h"
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "ipc/process_watch_dog.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -64,12 +61,6 @@ ABSL_FLAG(bool, restricted, false,
           "launch candidates server with restricted mode");
 
 namespace mozc {
-
-namespace commands {
-class Output;
-class SessionCommand;
-}  // namespace commands
-
 namespace renderer {
 
 namespace {
@@ -99,7 +90,7 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
       delete;
   explicit ParentApplicationWatchDog(RendererServer *renderer_server)
       : renderer_server_(renderer_server) {}
-  ~ParentApplicationWatchDog() override {}
+  ~ParentApplicationWatchDog() override = default;
 
   void Signaled(ProcessWatchDog::SignalType type) override {
     if (renderer_server_ == nullptr) {
@@ -131,7 +122,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
   RendererServerSendCommand(const RendererServerSendCommand &) = delete;
   RendererServerSendCommand &operator=(const RendererServerSendCommand &) =
       delete;
-  ~RendererServerSendCommand() override {}
+  ~RendererServerSendCommand() override = default;
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
                    mozc::commands::Output *output) override {
@@ -189,8 +180,8 @@ RendererServer::RendererServer()
                   std::min(absl::GetFlag(FLAGS_timeout), 60));
   }
 
-  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
-                                         absl::GetFlag(FLAGS_timeout)));
+  timeout_ =
+      1000 * std::max(3, std::min(24 * 60 * 60, absl::GetFlag(FLAGS_timeout)));
   VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING
@@ -200,9 +191,7 @@ RendererServer::RendererServer()
 #endif  // MOZC_NO_LOGGING
 }
 
-RendererServer::~RendererServer() {
-  watch_dog_->StopWatchDog();
-}
+RendererServer::~RendererServer() { watch_dog_->StopWatchDog(); }
 
 void RendererServer::SetRendererInterface(
     RendererInterface *renderer_interface) {
