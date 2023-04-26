@@ -32,10 +32,9 @@
 #ifndef MOZC_RENDERER_WINDOW_UTIL_H_
 #define MOZC_RENDERER_WINDOW_UTIL_H_
 
+#include "base/coordinates.h"
+
 namespace mozc {
-struct Point;
-struct Rect;
-struct Size;
 namespace renderer {
 
 class WindowUtil {
