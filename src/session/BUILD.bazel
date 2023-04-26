@@ -203,7 +203,7 @@ mozc_cc_test(
         "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
-        "//dictionary:pos_matcher_lib",
+        "//dictionary:pos_matcher",
         "//engine",
         "//engine:engine_mock",
         "//engine:mock_data_engine_factory",

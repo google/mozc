@@ -73,7 +73,7 @@
           'action_name': 'gen_pos_matcher',
           'variables': {
             'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
-            'pos_matcher_header': '<(gen_out_dir)/pos_matcher.h',
+            'pos_matcher_header': '<(gen_out_dir)/pos_matcher_impl.inc',
           },
           'inputs': [
             'gen_pos_matcher_code.py',
