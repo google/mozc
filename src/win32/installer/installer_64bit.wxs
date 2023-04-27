@@ -31,10 +31,6 @@
 -->
 
 
-<?ifdef var.MozcVersionFile ?>
-  <?include $(var.MozcVersionFile) ?>
-<?endif?>
-
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->

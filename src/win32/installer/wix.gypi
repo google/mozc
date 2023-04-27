@@ -29,9 +29,6 @@
 
 {
   'type': 'none',
-  'dependencies': [
-    'mozc_installer_version_file',
-  ],
   'actions': [
     {
       'action_name': 'candle',
@@ -95,7 +92,6 @@
       },
       'inputs': [
         '<(wxs_file)',
-        '<(mozc_version_file)',
       ],
       'outputs': [
         '<(wixobj_file)',
@@ -103,7 +99,7 @@
       'action': [
         '<(wix_dir)/candle.exe',
         '-nologo',
-        '-dMozcVersionFile=<(mozc_version_file)',
+        '-dMozcVersion=<(version)',
         '-dUpgradeCode=<(upgrade_code)',
         '-dOmahaGuid=<(omaha_guid)',
         '-dOmahaClientKey=<(omaha_client_key)',
