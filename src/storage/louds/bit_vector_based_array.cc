@@ -39,10 +39,9 @@
 namespace mozc {
 namespace storage {
 namespace louds {
+namespace {
 
 using internal::ReadInt32;
-
-namespace {
 
 // Select1 is not used, so cache is unnecessary.
 constexpr size_t kLb0CacheSize = 1024;

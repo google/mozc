@@ -199,8 +199,8 @@ mozc_cc_library(
         "//base:logging",
         "//base:mmap",
         "//base:random",
-        "//base:util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

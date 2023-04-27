@@ -29,10 +29,6 @@
 
 #include "storage/encrypted_string_storage.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <cstddef>
 #include <ios>
 #include <string>
@@ -43,9 +39,12 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/password_manager.h"
-#include "base/util.h"
 #include "absl/status/status.h"
-#include "absl/strings/string_view.h"
+#include "absl/status/statusor.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif  // _WIN32
 
 namespace mozc {
 namespace storage {
@@ -57,11 +56,6 @@ constexpr size_t kSaltSize = 32;
 // Maximum file size (64Mbyte)
 constexpr size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
-
-EncryptedStringStorage::EncryptedStringStorage(const absl::string_view filename)
-    : filename_(filename) {}
-
-EncryptedStringStorage::~EncryptedStringStorage() = default;
 
 bool EncryptedStringStorage::Load(std::string *output) const {
   DCHECK(output);

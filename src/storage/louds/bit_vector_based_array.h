@@ -30,9 +30,9 @@
 #ifndef MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_H_
 #define MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_H_
 
+#include <cstddef>
 #include <cstdint>
 
-#include "base/port.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
@@ -43,7 +43,7 @@ namespace louds {
 // supporting Rank/Select operations.
 class BitVectorBasedArray {
  public:
-  BitVectorBasedArray() {}
+  BitVectorBasedArray() = default;
   BitVectorBasedArray(const BitVectorBasedArray &) = delete;
   BitVectorBasedArray &operator=(const BitVectorBasedArray &) = delete;
 

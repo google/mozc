@@ -30,10 +30,9 @@
 #ifndef MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 #define MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 
+#include <cstddef>
 #include <cstdint>
-#include <memory>
 
-#include "base/port.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/strings/string_view.h"
@@ -50,10 +49,9 @@ class LoudsTrie {
   // This class stores a traversal state.
   typedef Louds::Node Node;
 
-  LoudsTrie() : edge_character_(nullptr) {}
+  LoudsTrie() = default;
   LoudsTrie(const LoudsTrie &) = delete;
   LoudsTrie &operator=(const LoudsTrie &) = delete;
-  ~LoudsTrie() {}
 
   // Opens the binary image and constructs the data structure.  The first four
   // cache sizes are passed to the underlying LOUDS.  See louds.h for more
@@ -201,7 +199,7 @@ class LoudsTrie {
   // A sequence of characters, annotated to each edge.
   // This array also doesn't have an entry for super root.
   // In other words, id=2 in louds_ corresponds to edge_character_[1].
-  const char *edge_character_;
+  const char *edge_character_ = nullptr;
 };
 
 }  // namespace louds

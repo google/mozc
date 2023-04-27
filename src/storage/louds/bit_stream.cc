@@ -42,8 +42,6 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-BitStream::BitStream() : num_bits_(0) {}
-
 void BitStream::PushBit(int bit) {
   DCHECK(bit == 0 || bit == 1);
 

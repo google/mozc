@@ -30,10 +30,10 @@
 #ifndef MOZC_STORAGE_LOUDS_LOUDS_H_
 #define MOZC_STORAGE_LOUDS_LOUDS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
-#include "base/port.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {

@@ -30,12 +30,12 @@
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "absl/base/internal/endian.h"
 #include "absl/numeric/bits.h"
 
@@ -96,7 +96,7 @@ int Count1Bits(const uint8_t *data, int length) {
   return num_bits;
 }
 
-// Stores index (the camulative number of the 1-bits from begin of each chunk).
+// Stores index (the cumulative number of the 1-bits from begin of each chunk).
 void InitIndex(const uint8_t *data, int length, int chunk_size,
                std::vector<int> *index) {
   DCHECK_GE(chunk_size, 4);

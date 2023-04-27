@@ -41,18 +41,9 @@
 namespace mozc {
 namespace storage {
 namespace louds {
-
-using internal::PushInt32;
-
-LoudsTrieBuilder::LoudsTrieBuilder() : built_(false) {}
-
-void LoudsTrieBuilder::Add(const std::string &word) {
-  CHECK(!built_);
-  CHECK(!word.empty());
-  word_list_.push_back(word);
-}
-
 namespace {
+
+using ::mozc::storage::louds::internal::PushInt32;
 
 // A pair of word and its original index in the (sorted) word_list_.
 class Entry {
@@ -81,6 +72,12 @@ class EntryLengthLessThan {
 };
 
 }  // namespace
+
+void LoudsTrieBuilder::Add(const std::string &word) {
+  CHECK(!built_);
+  CHECK(!word.empty());
+  word_list_.push_back(word);
+}
 
 void LoudsTrieBuilder::Build() {
   CHECK(!built_);

@@ -40,9 +40,7 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-// Initial values of base_length_ and step_length_ is (4, 1) bytes.
-BitVectorBasedArrayBuilder::BitVectorBasedArrayBuilder()
-    : built_(false), base_length_(4), step_length_(1) {}
+using ::mozc::storage::louds::internal::PushInt32;
 
 void BitVectorBasedArrayBuilder::Add(const std::string &element) {
   CHECK(!built_);
@@ -55,8 +53,6 @@ void BitVectorBasedArrayBuilder::SetSize(size_t base_length,
   base_length_ = base_length;
   step_length_ = step_length;
 }
-
-using internal::PushInt32;
 
 void BitVectorBasedArrayBuilder::Build() {
   CHECK(!built_);
