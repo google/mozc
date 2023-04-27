@@ -42,7 +42,7 @@
 #include <vector>
 
 #include "base/win32/com.h"
-#include "win32/tip/tip_ref_count.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
@@ -52,44 +52,10 @@ namespace {
 
 using Microsoft::WRL::ComPtr;
 
-class CandidateStringImpl final : public ITfCandidateString {
+class CandidateStringImpl final : public TipComImplements<ITfCandidateString> {
  public:
   CandidateStringImpl(ULONG index, const std::wstring_view value)
       : index_(index), value_(value) {}
-  CandidateStringImpl(const CandidateStringImpl &) = delete;
-  CandidateStringImpl &operator=(const CandidateStringImpl &) = delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfCandidateString)) {
-      *object = static_cast<ITfCandidateString *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
  private:
   // The ITfCandidateString interface methods.
@@ -109,49 +75,14 @@ class CandidateStringImpl final : public ITfCandidateString {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   const ULONG index_;
   const std::wstring value_;
 };
 
-class EnumTfCandidatesImpl final : public IEnumTfCandidates {
+class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
  public:
   explicit EnumTfCandidatesImpl(const std::vector<std::wstring> &candidates)
       : candidates_(candidates), current_(0) {}
-  EnumTfCandidatesImpl(const EnumTfCandidatesImpl &) = delete;
-  EnumTfCandidatesImpl &operator=(const EnumTfCandidatesImpl &) = delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_IEnumTfCandidates)) {
-      *object = static_cast<IEnumTfCandidates *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
  private:
   virtual HRESULT STDMETHODCALLTYPE Clone(IEnumTfCandidates **enum_candidates) {
@@ -206,53 +137,17 @@ class EnumTfCandidatesImpl final : public IEnumTfCandidates {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
-
   std::vector<std::wstring> candidates_;
   size_t current_;
 };
 
-class CandidateListImpl final : public ITfCandidateList {
+class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
  public:
   template <typename Candidates>
   CandidateListImpl(Candidates &&candidates,
                     std::unique_ptr<TipCandidateListCallback> callback)
       : candidates_(std::forward<Candidates>(candidates)),
         callback_(std::move(callback)) {}
-  CandidateListImpl(const CandidateListImpl &) = delete;
-  CandidateListImpl &operator=(const CandidateListImpl &) = delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfCandidateList)) {
-      *object = static_cast<ITfCandidateList *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
  private:
   // The ITfCandidateList interface methods.
@@ -302,7 +197,6 @@ class CandidateListImpl final : public ITfCandidateList {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   std::vector<std::wstring> candidates_;
   std::unique_ptr<TipCandidateListCallback> callback_;
 };

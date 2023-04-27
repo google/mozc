@@ -34,32 +34,19 @@
 #include <unknwn.h>
 #include <windows.h>
 
-#include "win32/tip/tip_ref_count.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipClassFactory final : public IClassFactory {
+class TipClassFactory final : public TipComImplements<IClassFactory> {
  public:
-  TipClassFactory() = default;
-  TipClassFactory(const TipClassFactory &) = delete;
-  TipClassFactory &operator=(const TipClassFactory &) = delete;
-
-  // IUnknown methods
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
-                                                   void **object);
-  virtual ULONG STDMETHODCALLTYPE AddRef();
-  virtual ULONG STDMETHODCALLTYPE Release();
-
   // IClassFactory methods
   virtual HRESULT STDMETHODCALLTYPE CreateInstance(IUnknown *unknown,
                                                    REFIID interface_id,
                                                    void **object);
   virtual HRESULT STDMETHODCALLTYPE LockServer(BOOL lock);
-
- private:
-  TipRefCount ref_count_;
 };
 
 }  // namespace tsf

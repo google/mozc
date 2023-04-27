@@ -29,6 +29,7 @@
 
 #include "win32/tip/tip_edit_session.h"
 
+#include <msctf.h>
 #include <windows.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
@@ -49,11 +50,11 @@
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"
 #include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_range_util.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -78,55 +79,15 @@ typedef ::mozc::commands::KeyEvent_SpecialKey SpecialKey;
 typedef ::mozc::commands::SessionCommand::CommandType CommandType;
 typedef ::mozc::commands::SessionCommand::UsageStatsEvent UsageStatsEvent;
 
-HRESULT QueryInterfaceImpl(ITfEditSession *edit_session, REFIID interface_id,
-                           void **object) {
-  if (!object) {
-    return E_INVALIDARG;
-  }
-
-  // Find a matching interface from the ones implemented by this object.
-  // This object implements IUnknown and ITfEditSession.
-  if (::IsEqualIID(interface_id, IID_IUnknown)) {
-    *object = static_cast<IUnknown *>(edit_session);
-  } else if (IsEqualIID(interface_id, IID_ITfEditSession)) {
-    *object = static_cast<ITfEditSession *>(edit_session);
-  } else {
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
-
-  edit_session->AddRef();
-  return S_OK;
-}
-
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncLayoutChangeEditSessionImpl final : public ITfEditSession {
+class AsyncLayoutChangeEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   AsyncLayoutChangeEditSessionImpl(ComPtr<TipTextService> text_service,
                                    ComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
-  AsyncLayoutChangeEditSessionImpl(const AsyncLayoutChangeEditSessionImpl &) =
-      delete;
-  AsyncLayoutChangeEditSessionImpl &operator=(
-      const AsyncLayoutChangeEditSessionImpl &) = delete;
-  ~AsyncLayoutChangeEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -144,7 +105,6 @@ class AsyncLayoutChangeEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
 };
@@ -175,30 +135,12 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSetFocusEditSessionImpl final : public ITfEditSession {
+class AsyncSetFocusEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   AsyncSetFocusEditSessionImpl(ComPtr<TipTextService> text_service,
                                ComPtr<ITfContext> context)
       : text_service_(text_service), context_(context) {}
-  AsyncSetFocusEditSessionImpl(const AsyncSetFocusEditSessionImpl &) = delete;
-  AsyncSetFocusEditSessionImpl &operator=(
-      const AsyncSetFocusEditSessionImpl &) = delete;
-  ~AsyncSetFocusEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -229,7 +171,6 @@ class AsyncSetFocusEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
 };
@@ -248,7 +189,8 @@ bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSwitchInputModeEditSessionImpl final : public ITfEditSession {
+class AsyncSwitchInputModeEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   AsyncSwitchInputModeEditSessionImpl(ComPtr<TipTextService> text_service,
                                       ComPtr<ITfContext> context, bool open,
@@ -257,26 +199,6 @@ class AsyncSwitchInputModeEditSessionImpl final : public ITfEditSession {
         context_(std::move(context)),
         open_(open),
         native_mode_(native_mode) {}
-  AsyncSwitchInputModeEditSessionImpl(
-      const AsyncSwitchInputModeEditSessionImpl &) = delete;
-  AsyncSwitchInputModeEditSessionImpl &operator=(
-      const AsyncSwitchInputModeEditSessionImpl &) = delete;
-  ~AsyncSwitchInputModeEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -330,7 +252,6 @@ class AsyncSwitchInputModeEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
   bool open_;
@@ -358,7 +279,8 @@ bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSessionCommandEditSessionImpl final : public ITfEditSession {
+class AsyncSessionCommandEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   AsyncSessionCommandEditSessionImpl(ComPtr<TipTextService> text_service,
                                      ComPtr<ITfContext> context,
@@ -366,26 +288,6 @@ class AsyncSessionCommandEditSessionImpl final : public ITfEditSession {
       : text_service_(std::move(text_service)),
         context_(std::move(context)),
         session_command_(session_command) {}
-  AsyncSessionCommandEditSessionImpl(
-      const AsyncSessionCommandEditSessionImpl &) = delete;
-  AsyncSessionCommandEditSessionImpl &operator=(
-      const AsyncSessionCommandEditSessionImpl &) = delete;
-  ~AsyncSessionCommandEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -405,7 +307,6 @@ class AsyncSessionCommandEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
   SessionCommand session_command_;
@@ -574,30 +475,12 @@ bool IsCandidateFocused(const Output &output, uint32_t candidate_id) {
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class SyncEditSessionImpl final : public ITfEditSession {
+class SyncEditSessionImpl final : public TipComImplements<ITfEditSession> {
  public:
   SyncEditSessionImpl(ComPtr<TipTextService> text_service,
                       ComPtr<ITfContext> context, const Output &output)
       : text_service_(text_service), context_(context) {
     output_ = output;
-  }
-  SyncEditSessionImpl(const SyncEditSessionImpl &) = delete;
-  SyncEditSessionImpl &operator=(const SyncEditSessionImpl &) = delete;
-  ~SyncEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
   }
 
   // The ITfEditSession interface method.
@@ -609,7 +492,6 @@ class SyncEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
   Output output_;
@@ -674,29 +556,11 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class SyncGetTextEditSessionImpl final : public ITfEditSession {
+class SyncGetTextEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   SyncGetTextEditSessionImpl(TipTextService *text_service, ITfRange *range)
       : text_service_(text_service), range_(range) {}
-  SyncGetTextEditSessionImpl(const SyncGetTextEditSessionImpl &) = delete;
-  SyncGetTextEditSessionImpl &operator=(const SyncGetTextEditSessionImpl &) =
-      delete;
-  ~SyncGetTextEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -709,7 +573,6 @@ class SyncGetTextEditSessionImpl final : public ITfEditSession {
   const std::wstring &text() const { return text_; }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfRange> range_;
   std::wstring text_;
@@ -718,30 +581,12 @@ class SyncGetTextEditSessionImpl final : public ITfEditSession {
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively updating the text store of a TSF thread
 // manager.
-class AsyncSetTextEditSessionImpl final : public ITfEditSession {
+class AsyncSetTextEditSessionImpl final
+    : public TipComImplements<ITfEditSession> {
  public:
   AsyncSetTextEditSessionImpl(TipTextService *text_service,
                               const std::wstring &text, ITfRange *range)
       : text_service_(text_service), text_(text), range_(range) {}
-  AsyncSetTextEditSessionImpl(const AsyncSetTextEditSessionImpl &) = delete;
-  AsyncSetTextEditSessionImpl &operator=(const AsyncSetTextEditSessionImpl &) =
-      delete;
-  ~AsyncSetTextEditSessionImpl() {}
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    return QueryInterfaceImpl(this, interface_id, object);
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
@@ -752,7 +597,6 @@ class AsyncSetTextEditSessionImpl final : public ITfEditSession {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   const std::wstring text_;
   ComPtr<ITfRange> range_;

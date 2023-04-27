@@ -38,6 +38,7 @@
 #include <atlmisc.h>
 #include <atlgdi.h>
 #include <atluser.h>
+#include <ctfutb.h>
 #include <ole2.h>
 #include <olectl.h>
 #include <strsafe.h>
@@ -46,6 +47,7 @@
 #include <limits>
 #include <string>
 
+#include "base/win32/com_implements.h"
 #include "base/win32/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
@@ -55,8 +57,13 @@
 
 namespace mozc {
 namespace win32 {
-namespace tsf {
 
+template <>
+bool IsIIDOf<ITfLangBarItemButton>(REFIID riid) {
+  return IsIIDOf<ITfLangBarItemButton, ITfLangBarItem>(riid);
+}
+
+namespace tsf {
 namespace {
 
 using WTL::CBitmap;
@@ -458,55 +465,6 @@ void TipLangBarButton::SetContextMenuEnabled(bool enabled) {
   context_menu_enabled_ = enabled;
 }
 
-// Basic implements the IUnknown::QueryInterface() function.
-STDMETHODIMP TipLangBarButton::QueryInterfaceBase(REFIID interface_id,
-                                                  void **object) {
-  if (!object) {
-    return E_INVALIDARG;
-  }
-
-  // Find a matching interface from the ones implemented by this object
-  // (i.e. IUnknown, ITfLangBarItem, ITfLangBarItemButton, ITfSource).
-  if (::IsEqualIID(interface_id, __uuidof(IMozcLangBarItem))) {
-    IMozcLangBarItem *ptr = static_cast<IMozcLangBarItem *>(this);
-    ptr->AddRef();
-    *object = ptr;
-    return S_OK;
-  }
-
-  if (::IsEqualIID(interface_id, IID_IUnknown)) {
-    ITfLangBarItemButton *ptr = static_cast<ITfLangBarItemButton *>(this);
-    ptr->AddRef();
-    *object = static_cast<IUnknown *>(ptr);
-    return S_OK;
-  }
-
-  if (::IsEqualIID(interface_id, IID_ITfLangBarItem)) {
-    ITfLangBarItem *ptr = static_cast<ITfLangBarItem *>(this);
-    ptr->AddRef();
-    *object = ptr;
-    return S_OK;
-  }
-
-  if (::IsEqualIID(interface_id, IID_ITfLangBarItemButton)) {
-    ITfLangBarItemButton *ptr = static_cast<ITfLangBarItemButton *>(this);
-    ptr->AddRef();
-    *object = ptr;
-    return S_OK;
-  }
-
-  if (::IsEqualIID(interface_id, IID_ITfSource)) {
-    ITfSource *ptr = static_cast<ITfSource *>(this);
-    ptr->AddRef();
-    *object = ptr;
-    return S_OK;
-  }
-
-  // This object does not implement the given interface.
-  *object = nullptr;
-  return E_NOINTERFACE;
-}
-
 void TipLangBarButton::SetDescription(const std::wstring &description) {
   ::StringCchCopy(item_info_.szDescription, std::size(item_info_.szDescription),
                   description.c_str());
@@ -517,26 +475,6 @@ TipLangBarMenuButton::TipLangBarMenuButton(TipLangBarCallback *langbar_callback,
     : TipLangBarButton(langbar_callback, guid, true, show_in_tray),
       menu_icon_id_for_theme_(0),
       menu_icon_id_for_non_theme_(0) {}
-
-// Implements the IUnknown::QueryInterface() function.
-// This function is used by Windows to retrieve the interfaces implemented by
-// this class.
-STDMETHODIMP TipLangBarMenuButton::QueryInterface(REFIID interface_id,
-                                                  void **object) {
-  return QueryInterfaceBase(interface_id, object);
-}
-
-STDMETHODIMP_(ULONG) TipLangBarMenuButton::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-STDMETHODIMP_(ULONG) TipLangBarMenuButton::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
-}
 
 STDMETHODIMP TipLangBarMenuButton::InitMenu(ITfMenu *menu) {
   HRESULT result = S_OK;
@@ -649,36 +587,22 @@ TipLangBarToggleButton::TipLangBarToggleButton(
       menu_selected_(0),
       disabled_(false) {}
 
-TipLangBarToggleButton::~TipLangBarToggleButton() {}
-
 // Implements the IUnknown::QueryInterface() function.
 // This function is used by Windows to retrieve the interfaces implemented by
 // this class.
 STDMETHODIMP TipLangBarToggleButton::QueryInterface(REFIID interface_id,
                                                     void **object) {
   if (!object) {
-    return E_INVALIDARG;
+    return E_POINTER;
   }
 
-  if (::IsEqualIID(interface_id, __uuidof(IMozcLangBarToggleItem))) {
-    *object = static_cast<IMozcLangBarToggleItem *>(this);
+  // Respond to IMozcLangBarToggleItem in addition to base.
+  if (IsIIDOf<IMozcLangBarToggleItem>(interface_id)) {
+    *object = this;
     AddRef();
     return S_OK;
   }
-
-  return QueryInterfaceBase(interface_id, object);
-}
-
-STDMETHODIMP_(ULONG) TipLangBarToggleButton::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-STDMETHODIMP_(ULONG) TipLangBarToggleButton::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
+  return TipLangBarButton::QueryInterface(interface_id, object);
 }
 
 // Implements the ITfLangBarItem::GetInfo() function.
@@ -865,41 +789,6 @@ TipSystemLangBarMenu::~TipSystemLangBarMenu() {
     langbar_callback_->Release();
   }
   langbar_callback_ = nullptr;
-}
-
-// Implements the IUnknown::QueryInterface() function.
-// This function is used by Windows to retrieve the interfaces implemented by
-// this class.
-STDMETHODIMP TipSystemLangBarMenu::QueryInterface(REFIID interface_id,
-                                                  void **object) {
-  if (!object) {
-    return E_INVALIDARG;
-  }
-
-  // Find a matching interface from the ones implemented by this object
-  // (i.e. IUnknown, ITfSystemLangBarItemSink, ITfSource).
-  if (IsEqualIID(interface_id, IID_IUnknown) ||
-      IsEqualIID(interface_id, IID_ITfSystemLangBarItemSink)) {
-    *object = static_cast<ITfSystemLangBarItemSink *>(this);
-    AddRef();
-    return S_OK;
-  } else {
-    // This object does not implement the given interface.
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
-}
-
-STDMETHODIMP_(ULONG) TipSystemLangBarMenu::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-STDMETHODIMP_(ULONG) TipSystemLangBarMenu::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
 }
 
 // Implements the ITfLangBarItemButton::InitMenu() function.

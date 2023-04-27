@@ -102,40 +102,6 @@ TipDisplayAttribute::TipDisplayAttribute(const GUID &guid,
   ::CopyMemory(&attribute_, &attribute, sizeof(attribute_));
 }
 
-TipDisplayAttribute::~TipDisplayAttribute() {}
-
-STDAPI TipDisplayAttribute::QueryInterface(REFIID interface_id, void **object) {
-  if (object == nullptr) {
-    return E_INVALIDARG;
-  }
-
-  // Find a matching interface from the ones implemented by this object.
-  if (::IsEqualIID(interface_id, IID_IUnknown)) {
-    *object = static_cast<IUnknown *>(this);
-    AddRef();
-    return S_OK;
-  } else if (::IsEqualIID(interface_id, IID_ITfDisplayAttributeInfo)) {
-    *object = static_cast<ITfDisplayAttributeInfo *>(this);
-    AddRef();
-    return S_OK;
-  }
-
-  *object = nullptr;
-  return E_NOINTERFACE;
-}
-
-ULONG STDMETHODCALLTYPE TipDisplayAttribute::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-ULONG STDMETHODCALLTYPE TipDisplayAttribute::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
-}
-
 HRESULT STDMETHODCALLTYPE TipDisplayAttribute::GetGUID(GUID *guid) {
   if (guid == nullptr) {
     return E_INVALIDARG;

@@ -31,10 +31,9 @@
 #define MOZC_WIN32_TIP_TIP_TEXT_SERVICE_H_
 
 #include <msctf.h>
+#include <unknwn.h>
 
 #include <cstdint>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {

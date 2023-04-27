@@ -34,12 +34,18 @@
 #include <windows.h>
 #include <wrl/client.h>
 
-#include "win32/tip/tip_ref_count.h"
+#include "base/win32/com_implements.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
-namespace tsf {
 
+template <>
+bool IsIIDOf<ITfFnGetPreferredTouchKeyboardLayout>(REFIID riid) {
+  return IsIIDOf<ITfFnGetPreferredTouchKeyboardLayout, ITfFunction>(riid);
+}
+
+namespace tsf {
 namespace {
 
 using Microsoft::WRL::ComPtr;
@@ -53,49 +59,8 @@ constexpr wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetPreferredTouchKeyboardLayoutImpl final
-    : public ITfFnGetPreferredTouchKeyboardLayout {
+    : public TipComImplements<ITfFnGetPreferredTouchKeyboardLayout> {
  public:
-  GetPreferredTouchKeyboardLayoutImpl() = default;
-  GetPreferredTouchKeyboardLayoutImpl(
-      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
-  GetPreferredTouchKeyboardLayoutImpl &operator=(
-      const GetPreferredTouchKeyboardLayoutImpl &) = delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFunction *>(this);
-    } else if (IsEqualIID(interface_id,
-                          IID_ITfFnGetPreferredTouchKeyboardLayout)) {
-      *object = static_cast<ITfFnGetPreferredTouchKeyboardLayout *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
  private:
   // The ITfFunction interface method.
   virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
@@ -117,8 +82,6 @@ class GetPreferredTouchKeyboardLayoutImpl final
     }
     return S_OK;
   }
-
-  TipRefCount ref_count_;
 };
 
 }  // namespace

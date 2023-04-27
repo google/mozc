@@ -45,10 +45,10 @@
 #include "renderer/win32/win32_renderer_client.h"
 #include "win32/base/input_state.h"
 #include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_range_util.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_element_manager.h"
@@ -348,43 +348,8 @@ void UpdateCommand(const ComPtr<TipTextService> &text_service,
 
 // This class is an implementation class for the ITfEditSession classes, which
 // is an observer for exclusively read the date from the text store.
-class UpdateUiEditSessionImpl final : public ITfEditSession {
+class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
  public:
-  UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
-  UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
-  ~UpdateUiEditSessionImpl() = default;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfEditSession)) {
-      *object = static_cast<ITfEditSession *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
@@ -418,7 +383,6 @@ class UpdateUiEditSessionImpl final : public ITfEditSession {
                           ComPtr<ITfContext> context)
       : text_service_(std::move(text_service)), context_(std::move(context)) {}
 
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
 };

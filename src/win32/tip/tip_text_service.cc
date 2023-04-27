@@ -53,6 +53,7 @@
 #include "base/system_util.h"
 #include "base/update_util.h"
 #include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/win32_window_util.h"
@@ -68,7 +69,6 @@
 #include "win32/tip/tip_preferred_touch_keyboard.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_reconvert_function.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_resource.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_thread_context.h"
@@ -78,8 +78,25 @@
 
 namespace mozc {
 namespace win32 {
-namespace tsf {
 
+template <>
+bool IsIIDOf<ITfTextInputProcessorEx>(REFIID riid) {
+  return IsIIDOf<ITfTextInputProcessorEx, ITfTextInputProcessor>(riid);
+}
+
+// Do not respond to QueryInterface calls for internal interfaces and for now.
+// TODO(yuryu): Give them a UUID or stop deriving from IUnknown.
+template <>
+bool IsIIDOf<tsf::TipTextService>(REFIID riid) {
+  return false;
+}
+
+template <>
+bool IsIIDOf<tsf::TipLangBarCallback>(REFIID riid) {
+  return false;
+}
+
+namespace tsf {
 namespace {
 
 using ATL::CComBSTR;
@@ -283,58 +300,21 @@ class PrivateContextWrapper final {
   explicit PrivateContextWrapper(std::function<void()> &&sink_cleaner)
       : sink_cleaner_(std::move(sink_cleaner)) {}
 
-  ~PrivateContextWrapper() {
-    sink_cleaner_();
-  }
+  ~PrivateContextWrapper() { sink_cleaner_(); }
 
-  TipPrivateContext *get() {
-    return &private_context_;
-  }
+  TipPrivateContext *get() { return &private_context_; }
 
  private:
-  std::function<void()>sink_cleaner_;
+  std::function<void()> sink_cleaner_;
   TipPrivateContext private_context_;
 };
 
 // An observer that binds ITfCompositionSink::OnCompositionTerminated callback
 // to TipEditSession::OnCompositionTerminated.
-class CompositionSinkImpl final : public ITfCompositionSink {
+class CompositionSinkImpl final : public TipComImplements<ITfCompositionSink> {
  public:
   CompositionSinkImpl(TipTextService *text_service, ITfContext *context)
       : text_service_(text_service), context_(context) {}
-  CompositionSinkImpl(const CompositionSinkImpl &) = delete;
-  CompositionSinkImpl &operator=(const CompositionSinkImpl &) = delete;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfCompositionSink)) {
-      *object = static_cast<ITfCompositionSink *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // Implements the ITfCompositionSink::OnCompositionTerminated() function.
   // This function is called by Windows when an ongoing composition is
@@ -346,7 +326,6 @@ class CompositionSinkImpl final : public ITfCompositionSink {
   }
 
  private:
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
 };
@@ -413,46 +392,8 @@ const PreserveKeyItem kPreservedKeyItems[] = {
      std::size(kTipKeyF10) - 1},
 };
 
-class UpdateUiEditSessionImpl final : public ITfEditSession {
+class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
  public:
-  UpdateUiEditSessionImpl(const UpdateUiEditSessionImpl &) = delete;
-  UpdateUiEditSessionImpl &operator=(const UpdateUiEditSessionImpl &) = delete;
-
-  // This destructor is non-virtual because the instance of this class is
-  // deleted by and only by "delete this" in the Release method.
-  ~UpdateUiEditSessionImpl() = default;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfEditSession)) {
-      *object = static_cast<ITfEditSession *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
@@ -479,7 +420,6 @@ class UpdateUiEditSessionImpl final : public ITfEditSession {
   UpdateUiEditSessionImpl(TipTextService *text_service, ITfContext *context)
       : text_service_(text_service), context_(context) {}
 
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   ComPtr<ITfContext> context_;
 };
@@ -497,18 +437,13 @@ bool RegisterWindowClass(HINSTANCE module_handle, const wchar_t *class_name,
   return atom != INVALID_ATOM;
 }
 
-class TipTextServiceImpl : public ITfTextInputProcessorEx,
-                           public ITfDisplayAttributeProvider,
-                           public ITfThreadMgrEventSink,
-                           public ITfThreadFocusSink,
-                           public ITfTextEditSink,
-                           public ITfTextLayoutSink,
-                           public ITfKeyEventSink,
-                           public ITfFnConfigure,
-                           public ITfFunctionProvider,
-                           public ITfCompartmentEventSink,
-                           public TipLangBarCallback,
-                           public TipTextService {
+class TipTextServiceImpl
+    : public TipComImplements<
+          ITfTextInputProcessorEx, ITfDisplayAttributeProvider,
+          ITfThreadMgrEventSink, ITfThreadFocusSink, ITfTextEditSink,
+          ITfTextLayoutSink, ITfKeyEventSink, ITfFnConfigure,
+          ITfFunctionProvider, ITfCompartmentEventSink, TipLangBarCallback,
+          TipTextService> {
  public:
   TipTextServiceImpl()
       : client_id_(TF_CLIENTID_NULL),
@@ -524,9 +459,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
         thread_context_(nullptr),
         task_window_handle_(nullptr),
         renderer_callback_window_handle_(nullptr) {}
-
-  TipTextServiceImpl(const TipTextServiceImpl &) = delete;
-  TipTextServiceImpl &operator=(const TipTextServiceImpl &) = delete;
 
   static bool OnDllProcessAttach(HMODULE module_handle) {
     if (!RegisterWindowClass(module_handle, kTaskWindowClassName,
@@ -547,60 +479,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   }
 
  private:
-  ~TipTextServiceImpl() override = default;
-
-  // IUnknown
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
-                                                   void **object) {
-    if (object == nullptr) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object =
-          static_cast<IUnknown *>(static_cast<ITfTextInputProcessorEx *>(this));
-    } else if (::IsEqualIID(interface_id, IID_ITfTextInputProcessor)) {
-      *object = static_cast<ITfTextInputProcessor *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfTextInputProcessorEx)) {
-      *object = static_cast<ITfTextInputProcessorEx *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfDisplayAttributeProvider)) {
-      *object = static_cast<ITfDisplayAttributeProvider *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfThreadMgrEventSink)) {
-      *object = static_cast<ITfThreadMgrEventSink *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfThreadFocusSink)) {
-      *object = static_cast<ITfThreadFocusSink *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfTextEditSink)) {
-      *object = static_cast<ITfTextEditSink *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfTextLayoutSink)) {
-      *object = static_cast<ITfTextLayoutSink *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfKeyEventSink)) {
-      *object = static_cast<ITfKeyEventSink *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFnConfigure *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfFnConfigure)) {
-      *object = static_cast<ITfFnConfigure *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfFunctionProvider)) {
-      *object = static_cast<ITfFunctionProvider *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfCompartmentEventSink)) {
-      *object = static_cast<ITfCompartmentEventSink *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
   // ITfTextInputProcessorEx
   virtual HRESULT STDMETHODCALLTYPE Activate(ITfThreadMgr *thread_mgr,
                                              TfClientId client_id) {
@@ -1226,10 +1104,10 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       // In general this should not happen.
       text_edit_sink_cookie = TF_INVALID_COOKIE;
     }
-    if (FAILED(source->AdviseSink(
-            IID_ITfTextLayoutSink,
-            absl::implicit_cast<ITfTextLayoutSink *>(this),
-            &text_layout_sink_cookie))) {
+    if (FAILED(
+            source->AdviseSink(IID_ITfTextLayoutSink,
+                               absl::implicit_cast<ITfTextLayoutSink *>(this),
+                               &text_layout_sink_cookie))) {
       // In general this should not happen.
       text_layout_sink_cookie = TF_INVALID_COOKIE;
     }
@@ -1237,23 +1115,21 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     // Register private context with sink-cleanup callback.
     private_context_map_.emplace(
         context, std::make_unique<PrivateContextWrapper>(
-            [=, source = std::move(source)]() {
-                if (text_edit_sink_cookie != TF_INVALID_COOKIE) {
-                    source->UnadviseSink(text_edit_sink_cookie);
-                }
-                if (text_layout_sink_cookie != TF_INVALID_COOKIE) {
-                    source->UnadviseSink(text_layout_sink_cookie);
-                }
-            }));
+                     [=, source = std::move(source)]() {
+                       if (text_edit_sink_cookie != TF_INVALID_COOKIE) {
+                         source->UnadviseSink(text_edit_sink_cookie);
+                       }
+                       if (text_layout_sink_cookie != TF_INVALID_COOKIE) {
+                         source->UnadviseSink(text_layout_sink_cookie);
+                       }
+                     }));
   }
 
   void RemovePrivateContextIfExists(const ComPtr<ITfContext> &context) {
     private_context_map_.erase(context);
   }
 
-  void UninitPrivateContexts() {
-    private_context_map_.clear();
-  }
+  void UninitPrivateContexts() { private_context_map_.clear(); }
 
   TipPrivateContext *GetFocusedPrivateContext() {
     ComPtr<ITfDocumentMgr> focused_document;
@@ -1716,8 +1592,6 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     TipEditSession::OnRendererCallbackAsync(this, context.Get(), wparam,
                                             lparam);
   }
-
-  TipRefCount ref_count_;
 
   // Represents the status of the thread manager which owns this IME object.
   ComPtr<ITfThreadMgr> thread_mgr_;

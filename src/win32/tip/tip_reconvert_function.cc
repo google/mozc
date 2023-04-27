@@ -44,15 +44,22 @@
 #include <vector>
 
 #include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "win32/tip/tip_candidate_list.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
+
+template <>
+bool IsIIDOf<ITfFnReconversion>(REFIID riid) {
+  return IsIIDOf<ITfFnReconversion, ITfFunction>(riid);
+}
+
 namespace tsf {
 namespace {
 
@@ -86,46 +93,10 @@ class CandidateListCallbackImpl : public TipCandidateListCallback {
   ComPtr<ITfRange> range_;
 };
 
-class ReconvertFunctionImpl final : public ITfFnReconversion {
+class ReconvertFunctionImpl final : public TipComImplements<ITfFnReconversion> {
  public:
   explicit ReconvertFunctionImpl(ComPtr<TipTextService> text_service)
       : text_service_(std::move(text_service)) {}
-  ReconvertFunctionImpl(const ReconvertFunctionImpl &) = delete;
-  ReconvertFunctionImpl &operator=(const ReconvertFunctionImpl &) = delete;
-  ~ReconvertFunctionImpl() = default;
-
-  // The IUnknown interface methods.
-  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFunction *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFnReconversion)) {
-      *object = static_cast<ITfFnReconversion *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
  private:
   // The ITfFunction interface method.
@@ -226,7 +197,6 @@ class ReconvertFunctionImpl final : public ITfFnReconversion {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
 };
 

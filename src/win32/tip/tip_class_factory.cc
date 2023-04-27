@@ -30,11 +30,10 @@
 #include "win32/tip/tip_class_factory.h"
 
 #include <guiddef.h>
+#include <unknwn.h>
 #include <windows.h>
 #include <wrl/client.h>
 
-#include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 
 namespace mozc {
@@ -42,35 +41,6 @@ namespace win32 {
 namespace tsf {
 
 using Microsoft::WRL::ComPtr;
-
-HRESULT STDMETHODCALLTYPE TipClassFactory::QueryInterface(REFIID interface_id,
-                                                          void **object) {
-  if (object == nullptr) {
-    return E_INVALIDARG;
-  }
-  if (::IsEqualIID(interface_id, IID_IUnknown)) {
-    *object = static_cast<IUnknown *>(this);
-  } else if (::IsEqualIID(interface_id, IID_IClassFactory)) {
-    *object = static_cast<IClassFactory *>(this);
-  } else {
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
-  AddRef();
-  return S_OK;
-}
-
-ULONG STDMETHODCALLTYPE TipClassFactory::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-ULONG STDMETHODCALLTYPE TipClassFactory::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
-}
 
 HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
                                                           REFIID interface_id,
@@ -99,9 +69,9 @@ HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
 
 HRESULT STDMETHODCALLTYPE TipClassFactory::LockServer(BOOL lock) {
   if (lock) {
-    TipDllModule::AddRef();
+    AddRef();
   } else {
-    TipDllModule::Release();
+    Release();
   }
   return S_OK;
 }

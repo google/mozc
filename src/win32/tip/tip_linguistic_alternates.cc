@@ -39,16 +39,22 @@
 #include <vector>
 
 #include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "win32/tip/tip_candidate_list.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_edit_session.h"
 #include "win32/tip/tip_query_provider.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
-namespace tsf {
 
+template <>
+bool IsIIDOf<ITfFnGetLinguisticAlternates>(REFIID riid) {
+  return IsIIDOf<ITfFnGetLinguisticAlternates, ITfFunction>(riid);
+}
+
+namespace tsf {
 namespace {
 
 using Microsoft::WRL::ComPtr;
@@ -59,49 +65,13 @@ constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
+class GetLinguisticAlternatesImpl final
+    : public TipComImplements<ITfFnGetLinguisticAlternates> {
  public:
   GetLinguisticAlternatesImpl(ComPtr<TipTextService> text_service,
                               std::unique_ptr<TipQueryProvider> provider)
       : text_service_(std::move(text_service)),
         provider_(std::move(provider)) {}
-  GetLinguisticAlternatesImpl(const GetLinguisticAlternatesImpl &) = delete;
-  GetLinguisticAlternatesImpl &operator=(const GetLinguisticAlternatesImpl &) =
-      delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFunction *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFnGetLinguisticAlternates)) {
-      *object = static_cast<ITfFnGetLinguisticAlternates *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfFunction interface method.
   virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
@@ -135,7 +105,6 @@ class GetLinguisticAlternatesImpl final : public ITfFnGetLinguisticAlternates {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   ComPtr<TipTextService> text_service_;
   std::unique_ptr<TipQueryProvider> provider_;
 };

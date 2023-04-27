@@ -30,30 +30,20 @@
 #ifndef MOZC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
 #define MOZC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
 
-#include <windows.h>
 #include <msctf.h>
+#include <windows.h>
 
 #include <string>
 
-#include "base/port.h"
-#include "win32/tip/tip_ref_count.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 // Defines the base class of the display attributes used in this module.
-class TipDisplayAttribute : public ITfDisplayAttributeInfo {
+class TipDisplayAttribute : public TipComImplements<ITfDisplayAttributeInfo> {
  public:
-  TipDisplayAttribute(const TipDisplayAttribute &) = delete;
-  TipDisplayAttribute &operator=(const TipDisplayAttribute &) = delete;
-  virtual ~TipDisplayAttribute();
-
-  // IUnknown interface methods
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID guid, void **object);
-  virtual ULONG STDMETHODCALLTYPE AddRef();
-  virtual ULONG STDMETHODCALLTYPE Release();
-
   // ITfDisplayAttributeInfo interface methods
   virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid);
   virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *descriptoin);
@@ -68,7 +58,6 @@ class TipDisplayAttribute : public ITfDisplayAttributeInfo {
                       const std::wstring &description);
 
  private:
-  TipRefCount ref_count_;
   GUID guid_;
   TF_DISPLAYATTRIBUTE original_attribute_;
   std::wstring description_;

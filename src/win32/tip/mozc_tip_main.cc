@@ -37,6 +37,7 @@
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
 #include "base/singleton.h"
+#include "base/win32/com_implements.h"
 #include "config/stats_config_util.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/tsf_registrar.h"
@@ -135,7 +136,7 @@ STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
 }
 
 // Returns whether or not Windows can unload this module.
-STDAPI DllCanUnloadNow() { return TipDllModule::CanUnload() ? S_OK : S_FALSE; }
+STDAPI DllCanUnloadNow() { return mozc::win32::CanComModuleUnloadNow(); }
 
 // Unregisters this module from Windows.
 // This function is called when executing a command
