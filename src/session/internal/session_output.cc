@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -48,6 +47,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_split.h"
 
 namespace mozc {
@@ -291,8 +291,8 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
 
-  typedef std::pair<int32_t, commands::Information *> IndexInfoPair;
-  std::map<int32_t, IndexInfoPair> usageid_information_map;
+  using IndexInfoPair = std::pair<int32_t, commands::Information *>;
+  absl::flat_hash_map<int32_t, IndexInfoPair> usageid_information_map;
   // Store usages.
   for (size_t i = c_begin; i <= c_end; ++i) {
     if (cand_list.candidate(i).IsSubcandidateList()) {
@@ -306,21 +306,20 @@ void SessionOutput::FillUsages(const Segment &segment,
 
     int index;
     commands::Information *info;
-    std::map<int32_t, IndexInfoPair>::iterator info_itr =
-        usageid_information_map.find(candidate.usage_id);
+    const auto info_iter = usageid_information_map.find(candidate.usage_id);
 
-    if (info_itr == usageid_information_map.end()) {
+    if (info_iter == usageid_information_map.end()) {
       index = usages->information_size();
       info = usages->add_information();
       info->set_id(candidate.usage_id);
       info->set_title(candidate.usage_title);
       info->set_description(candidate.usage_description);
       info->add_candidate_id(cand_list.candidate(i).id());
-      usageid_information_map.insert(
-          std::make_pair(candidate.usage_id, std::make_pair(index, info)));
+      usageid_information_map.emplace(candidate.usage_id,
+                                      std::make_pair(index, info));
     } else {
-      index = info_itr->second.first;
-      info = info_itr->second.second;
+      index = info_iter->second.first;
+      info = info_iter->second.second;
       info->add_candidate_id(cand_list.candidate(i).id());
     }
     if (cand_list.candidate(i).id() == cand_list.focused_id()) {

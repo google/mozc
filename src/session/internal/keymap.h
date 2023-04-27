@@ -33,8 +33,6 @@
 #define MOZC_SESSION_INTERNAL_KEYMAP_H_
 
 #include <istream>
-#include <map>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -43,7 +41,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"
-#include "absl/container/btree_set.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 namespace keymap {
@@ -210,7 +209,7 @@ class KeyMap {
   void Clear();
 
  private:
-  using KeyToCommandMap = std::map<KeyInformation, CommandsType>;
+  using KeyToCommandMap = absl::flat_hash_map<KeyInformation, CommandsType>;
   KeyToCommandMap keymap_;
 };
 
@@ -258,21 +257,21 @@ class KeyMapManager {
   bool GetNameFromCommandConversion(ConversionState::Commands command,
                                     std::string *name) const;
 
-  // Get command names
-  void GetAvailableCommandNameDirect(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNamePrecomposition(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNameComposition(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNameConversion(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNameZeroQuerySuggestion(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNameSuggestion(
-      absl::btree_set<std::string> *command_names) const;
-  void GetAvailableCommandNamePrediction(
-      absl::btree_set<std::string> *command_names) const;
+  // Append command names to command_names.
+  void AppendAvailableCommandNameDirect(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNamePrecomposition(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNameComposition(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNameConversion(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNameZeroQuerySuggestion(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNameSuggestion(
+      absl::flat_hash_set<std::string> &command_names) const;
+  void AppendAvailableCommandNamePrediction(
+      absl::flat_hash_set<std::string> &command_names) const;
 
   // Return the file name bound with the keymap enum.
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);
@@ -334,18 +333,22 @@ class KeyMapManager {
   static constexpr bool kInputModeXCommandSupported = true;
 #endif  // __APPLE__
 
-  std::map<std::string, DirectInputState::Commands> command_direct_map_;
-  std::map<std::string, PrecompositionState::Commands>
+  absl::flat_hash_map<std::string, DirectInputState::Commands>
+      command_direct_map_;
+  absl::flat_hash_map<std::string, PrecompositionState::Commands>
       command_precomposition_map_;
-  std::map<std::string, CompositionState::Commands> command_composition_map_;
-  std::map<std::string, ConversionState::Commands> command_conversion_map_;
+  absl::flat_hash_map<std::string, CompositionState::Commands>
+      command_composition_map_;
+  absl::flat_hash_map<std::string, ConversionState::Commands>
+      command_conversion_map_;
 
-  std::map<DirectInputState::Commands, std::string> reverse_command_direct_map_;
-  std::map<PrecompositionState::Commands, std::string>
+  absl::flat_hash_map<DirectInputState::Commands, std::string>
+      reverse_command_direct_map_;
+  absl::flat_hash_map<PrecompositionState::Commands, std::string>
       reverse_command_precomposition_map_;
-  std::map<CompositionState::Commands, std::string>
+  absl::flat_hash_map<CompositionState::Commands, std::string>
       reverse_command_composition_map_;
-  std::map<ConversionState::Commands, std::string>
+  absl::flat_hash_map<ConversionState::Commands, std::string>
       reverse_command_conversion_map_;
 
   // Status should be out of keymap.

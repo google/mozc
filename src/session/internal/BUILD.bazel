@@ -57,17 +57,12 @@ mozc_cc_library(
 
 mozc_cc_library(
     name = "keymap",
-    srcs = [
-        "keymap.cc",
-    ],
-    hdrs = [
-        "keymap.h",
-    ],
+    srcs = ["keymap.cc"],
+    hdrs = ["keymap.h"],
     deps = [
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//base/protobuf",
         "//composer:key_event_util",
@@ -76,7 +71,9 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -106,6 +103,7 @@ mozc_cc_library(
         "//base:hash",
         "//base:logging",
         "//base/container:freelist",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 
@@ -123,6 +121,7 @@ mozc_cc_library(
         "//converter:segments",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -162,7 +161,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
     ],
 )

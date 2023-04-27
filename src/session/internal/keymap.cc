@@ -33,10 +33,9 @@
 
 #include <algorithm>
 #include <istream>
-#include <map>
+#include <iterator>
 #include <memory>
 #include <ostream>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -44,7 +43,6 @@
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/util.h"
 #include "composer/key_event_util.h"
@@ -52,7 +50,9 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "absl/container/btree_set.h"
+#include "absl/algorithm/container.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_split.h"
 
 namespace mozc {
@@ -339,11 +339,11 @@ bool KeyMapManager::AddCommand(const std::string &state_name,
 
 namespace {
 template <typename T>
-bool GetNameInternal(const std::map<T, std::string> &reverse_command_map,
-                     T command, std::string *name) {
+bool GetNameInternal(
+    const absl::flat_hash_map<T, std::string> &reverse_command_map, T command,
+    std::string *name) {
   DCHECK(name);
-  typename std::map<T, std::string>::const_iterator iter =
-      reverse_command_map.find(command);
+  const auto iter = reverse_command_map.find(command);
   if (iter == reverse_command_map.end()) {
     return false;
   } else {
@@ -726,10 +726,11 @@ bool KeyMapManager::GetCommandPrediction(
 bool KeyMapManager::ParseCommandDirect(
     const std::string &command_string,
     DirectInputState::Commands *command) const {
-  if (command_direct_map_.count(command_string) == 0) {
+  const auto it = command_direct_map_.find(command_string);
+  if (it == command_direct_map_.end()) {
     return false;
   }
-  *command = command_direct_map_.find(command_string)->second;
+  *command = it->second;
   return true;
 }
 
@@ -737,86 +738,77 @@ bool KeyMapManager::ParseCommandDirect(
 bool KeyMapManager::ParseCommandPrecomposition(
     const std::string &command_string,
     PrecompositionState::Commands *command) const {
-  if (command_precomposition_map_.count(command_string) == 0) {
+  const auto it = command_precomposition_map_.find(command_string);
+  if (it == command_precomposition_map_.end()) {
     return false;
   }
-  *command = command_precomposition_map_.find(command_string)->second;
+  *command = it->second;
   return true;
 }
 
 bool KeyMapManager::ParseCommandComposition(
     const std::string &command_string,
     CompositionState::Commands *command) const {
-  if (command_composition_map_.count(command_string) == 0) {
+  const auto it = command_composition_map_.find(command_string);
+  if (it == command_composition_map_.end()) {
     return false;
   }
-  *command = command_composition_map_.find(command_string)->second;
+  *command = it->second;
   return true;
 }
 
 bool KeyMapManager::ParseCommandConversion(
     const std::string &command_string,
     ConversionState::Commands *command) const {
-  if (command_conversion_map_.count(command_string) == 0) {
+  const auto it = command_conversion_map_.find(command_string);
+  if (it == command_conversion_map_.end()) {
     return false;
   }
-  *command = command_conversion_map_.find(command_string)->second;
+  *command = it->second;
   return true;
 }
 
-void KeyMapManager::GetAvailableCommandNameDirect(
-    absl::btree_set<std::string> *command_names) const {
-  DCHECK(command_names);
-  for (std::map<std::string, DirectInputState::Commands>::const_iterator iter =
-           command_direct_map_.begin();
-       iter != command_direct_map_.end(); ++iter) {
-    command_names->insert(iter->first);
+void KeyMapManager::AppendAvailableCommandNameDirect(
+    absl::flat_hash_set<std::string> &command_names) const {
+  for (const auto &[key, value] : command_direct_map_) {
+    command_names.insert(key);
   }
 }
 
-void KeyMapManager::GetAvailableCommandNamePrecomposition(
-    absl::btree_set<std::string> *command_names) const {
-  DCHECK(command_names);
-  for (std::map<std::string, PrecompositionState::Commands>::const_iterator
-           iter = command_precomposition_map_.begin();
-       iter != command_precomposition_map_.end(); ++iter) {
-    command_names->insert(iter->first);
+void KeyMapManager::AppendAvailableCommandNamePrecomposition(
+    absl::flat_hash_set<std::string> &command_names) const {
+  for (const auto &[key, value] : command_precomposition_map_) {
+    command_names.insert(key);
   }
 }
 
-void KeyMapManager::GetAvailableCommandNameComposition(
-    absl::btree_set<std::string> *command_names) const {
-  DCHECK(command_names);
-  for (std::map<std::string, CompositionState::Commands>::const_iterator iter =
-           command_composition_map_.begin();
-       iter != command_composition_map_.end(); ++iter) {
-    command_names->insert(iter->first);
+void KeyMapManager::AppendAvailableCommandNameComposition(
+    absl::flat_hash_set<std::string> &command_names) const {
+  for (const auto &[key, value] : command_composition_map_) {
+    command_names.insert(key);
   }
 }
 
-void KeyMapManager::GetAvailableCommandNameConversion(
-    absl::btree_set<std::string> *command_names) const {
-  DCHECK(command_names);
-  for (std::map<std::string, ConversionState::Commands>::const_iterator iter =
-           command_conversion_map_.begin();
-       iter != command_conversion_map_.end(); ++iter) {
-    command_names->insert(iter->first);
+void KeyMapManager::AppendAvailableCommandNameConversion(
+    absl::flat_hash_set<std::string> &command_names) const {
+  for (const auto &[key, value] : command_conversion_map_) {
+    command_names.insert(key);
   }
 }
 
-void KeyMapManager::GetAvailableCommandNameZeroQuerySuggestion(
-    absl::btree_set<std::string> *command_names) const {
-  GetAvailableCommandNamePrecomposition(command_names);
+void KeyMapManager::AppendAvailableCommandNameZeroQuerySuggestion(
+    absl::flat_hash_set<std::string> &command_names) const {
+  AppendAvailableCommandNamePrecomposition(command_names);
 }
 
-void KeyMapManager::GetAvailableCommandNameSuggestion(
-    absl::btree_set<std::string> *command_names) const {
-  GetAvailableCommandNameComposition(command_names);
+void KeyMapManager::AppendAvailableCommandNameSuggestion(
+    absl::flat_hash_set<std::string> &command_names) const {
+  AppendAvailableCommandNameComposition(command_names);
 }
 
-void KeyMapManager::GetAvailableCommandNamePrediction(
-    absl::btree_set<std::string> *command_names) const {
-  GetAvailableCommandNameConversion(command_names);
+void KeyMapManager::AppendAvailableCommandNamePrediction(
+    absl::flat_hash_set<std::string> &command_names) const {
+  AppendAvailableCommandNameConversion(command_names);
 }
 
 }  // namespace keymap

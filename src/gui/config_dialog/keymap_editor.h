@@ -30,30 +30,26 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
+#include <QAbstractButton>
 #include <QWidget>
 #include <istream>
-#include <map>
 #include <memory>
-#include <set>
 #include <string>
 
-#include "base/port.h"
+#include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/generic_table_editor.h"
-
-class QAbstractButton;
+#include "gui/config_dialog/keybinding_editor_delegate.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 namespace gui {
-
-class ComboBoxDelegate;
-class KeyBindingEditorDelegate;
 
 class KeyMapEditorDialog : public GenericTableEditorDialog {
   Q_OBJECT;
 
  public:
   explicit KeyMapEditorDialog(QWidget *parent);
-  ~KeyMapEditorDialog() override;
 
   // show a modal dialog
   static bool Show(QWidget *parent, const std::string &current_keymap,
@@ -72,15 +68,15 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   std::string invisible_keymap_table_;
   // This is used for deciding whether the user has changed the settings that
   // are valid only for new applications.
-  std::set<std::string> direct_mode_commands_;
+  absl::flat_hash_set<std::string> direct_mode_commands_;
   std::unique_ptr<QAction *[]> actions_;
   std::unique_ptr<QAction *[]> import_actions_;
   std::unique_ptr<ComboBoxDelegate> status_delegate_;
   std::unique_ptr<ComboBoxDelegate> commands_delegate_;
   std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
 
-  std::map<std::string, std::string> normalized_command_map_;
-  std::map<std::string, std::string> normalized_status_map_;
+  absl::flat_hash_map<std::string, std::string> normalized_command_map_;
+  absl::flat_hash_map<std::string, std::string> normalized_status_map_;
 };
 
 }  // namespace gui
