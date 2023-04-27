@@ -90,7 +90,7 @@ Install paths are configurable by modifying
 ### Unittests
 
 ```
-bazel test ... --config oss_linux -c dbg -- -third_party/...
+bazel test ... --config oss_linux --build_tests_only -c dbg -- -third_party/...
 ```
 
 * `...` means all targets under the current and subdirectories.

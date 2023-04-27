@@ -80,7 +80,7 @@ You can use `MOZC_QT_PATH` to specificy the Qt5 directory.
 ### Unittests
 
 ```
-bazel test ... --config oss_macos -c dbg -- -net/... -third_party/...
+bazel test ... --config oss_macos --build_tests_only -c dbg -- -third_party/...
 ```
 
 See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.
