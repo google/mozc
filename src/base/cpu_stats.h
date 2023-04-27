@@ -30,16 +30,15 @@
 #ifndef MOZC_BASE_CPU_STATS_H_
 #define MOZC_BASE_CPU_STATS_H_
 
+#include <cstddef>
 #include <cstdint>
-
-#include "base/port.h"
 
 namespace mozc {
 
 class CPUStatsInterface {
  public:
-  CPUStatsInterface() {}
-  virtual ~CPUStatsInterface() {}
+  CPUStatsInterface() = default;
+  virtual ~CPUStatsInterface() = default;
 
   // Returns the percentage of total CPU load since the last time
   // this method was called.
@@ -61,8 +60,12 @@ class CPUStatsInterface {
 // default implementation
 class CPUStats : public CPUStatsInterface {
  public:
-  CPUStats();
-  ~CPUStats() override;
+  CPUStats()
+      : prev_system_total_times_(0),
+        prev_system_cpu_times_(0),
+        prev_current_process_total_times_(0),
+        prev_current_process_cpu_times_(0) {}
+  ~CPUStats() override = default;
 
   // return 0.0 if CPU load is unknown
   float GetSystemCPULoad() override;

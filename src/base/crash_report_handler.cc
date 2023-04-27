@@ -51,11 +51,11 @@ namespace {
 
 // The prefix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
-const wchar_t kGoogleCrashHandlerPipePrefix[] =
+constexpr wchar_t kGoogleCrashHandlerPipePrefix[] =
     L"\\\\.\\pipe\\GoogleCrashServices\\";
 
 // This is the well known SID for the system principal.
-const wchar_t kSystemPrincipalSid[] = L"S-1-5-18";
+constexpr wchar_t kSystemPrincipalSid[] = L"S-1-5-18";
 
 // The postfix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
@@ -64,16 +64,16 @@ const wchar_t kSystemPrincipalSid[] = L"S-1-5-18";
 #if defined(_M_X64)
 // x64 crash handler expects the postfix "-64".
 // See b/5166654 or http://crbug.com/89730 for the background info.
-const wchar_t kGoogleCrashHandlerPipePostfix[] = L"-x64";
+constexpr wchar_t kGoogleCrashHandlerPipePostfix[] = L"-x64";
 #elif defined(_M_IX86)
 // No postfix for the x86 crash handler.
-const wchar_t kGoogleCrashHandlerPipePostfix[] = L"";
+constexpr wchar_t kGoogleCrashHandlerPipePostfix[] = L"";
 #else  // other than _M_X64 or _M_IX86.
 #error "unsupported platform"
 #endif  // _M_X64 or _M_IX86
 
 // The product name registered in the crash server.
-const wchar_t kProductNameInCrash[] = L"Google_Japanese_IME";
+constexpr wchar_t kProductNameInCrash[] = L"Google_Japanese_IME";
 
 // The reference count for ExceptionHandler.
 int g_reference_count = 0;

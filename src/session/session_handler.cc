@@ -33,6 +33,7 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -41,33 +42,32 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/stopwatch.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
+#include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "protocol/engine_builder.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "session/common.h"
 #include "session/internal/keymap.h"
 #include "session/session.h"
+#include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
-#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
-
-using mozc::usage_stats::UsageStats;
 
 // TODO(b/275437228): Convert this to use `absl::Duration`. Note that existing
 // clients assume a negative value means we do not timeout at all.
@@ -102,8 +102,10 @@ ABSL_FLAG(int32_t, last_create_session_timeout, 300,
 ABSL_FLAG(bool, restricted, false, "Launch server with restricted setting");
 
 namespace mozc {
-
 namespace {
+
+using mozc::usage_stats::UsageStats;
+
 bool IsApplicationAlive(const session::SessionInterface *session) {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   const commands::ApplicationInfo &info = session->application_info();
@@ -510,7 +512,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
       return false;
     }
     delete oldest_element->value;
-    oldest_element->value = NULL;
+    oldest_element->value = nullptr;
     session_map_->Erase(oldest_element->key);
     VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
             << " is removed";

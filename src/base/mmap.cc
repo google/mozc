@@ -29,16 +29,16 @@
 
 #include "base/mmap.h"
 
-#include <cstdint>
+#include <climits>
+#include <cstddef>
 #include <optional>
-#include <string>
 #include <utility>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "absl/cleanup/cleanup.h"
+#include "base/strings/zstring_view.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "absl/types/span.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE
@@ -110,19 +110,19 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
   return params;
 }
 
-absl::StatusOr<FileDescriptor> OpenFile(absl::string_view filename,
+absl::StatusOr<FileDescriptor> OpenFile(zstring_view filename,
                                         const SyscallParams &params) {
   const std::wstring filename_w = win32::Utf8ToWide(filename);
   if (filename_w.empty()) {
     return absl::InvalidArgumentError(
-        absl::StrFormat("Invalid file name: %s", filename));
+        absl::StrFormat("Invalid file name: %v", filename));
   }
   FileDescriptor fd = ::CreateFileW(filename_w.c_str(), params.desired_access,
                                     params.share_mode, 0, OPEN_EXISTING,
                                     FILE_ATTRIBUTE_NORMAL, nullptr);
   if (fd == nullptr) {
     return absl::UnknownError(absl::StrFormat(
-        "Error %d: CreateFileW failed for %s", GetLastError(), filename));
+        "Error %d: CreateFileW failed for %v", GetLastError(), filename));
   }
   return fd;
 }
@@ -228,14 +228,13 @@ absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
   return params;
 }
 
-absl::StatusOr<FileDescriptor> OpenFile(absl::string_view filename,
+absl::StatusOr<FileDescriptor> OpenFile(zstring_view filename,
                                         const SyscallParams &params) {
-  const std::string filename_s(filename);
-  const FileDescriptor fd = ::open(filename_s.data(), params.flags);
+  const FileDescriptor fd = ::open(filename.c_str(), params.flags);
   if (fd == -1) {
     const int err = errno;
     return absl::ErrnoToStatus(
-        err, absl::StrFormat("Failed to open %s with flags %d", filename,
+        err, absl::StrFormat("Failed to open %v with flags %d", filename,
                              params.flags));
   }
   return fd;
@@ -276,7 +275,7 @@ void Unmap(void *ptr, size_t size) {
 
 }  // namespace
 
-absl::StatusOr<Mmap> Mmap::Map(absl::string_view filename, size_t offset,
+absl::StatusOr<Mmap> Mmap::Map(zstring_view filename, size_t offset,
                                std::optional<size_t> size, Mode mode) {
   absl::StatusOr<SyscallParams> params = GetSyscallParams(mode);
   if (!params.ok()) {

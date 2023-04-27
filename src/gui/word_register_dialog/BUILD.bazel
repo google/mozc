@@ -86,7 +86,7 @@ mozc_cc_qt_library(
         "//base:util",
         "//client",
         "//data_manager:pos_list_provider",
-        "//dictionary:pos_matcher_lib",
+        "//dictionary:pos_matcher",
         "//dictionary:user_dictionary",
         "//dictionary:user_dictionary_session",
         "//dictionary:user_dictionary_storage",

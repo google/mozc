@@ -30,11 +30,10 @@
 #ifndef MOZC_BASE_ENCRYPTOR_H_
 #define MOZC_BASE_ENCRYPTOR_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
-
-#include "base/port.h"
 
 namespace mozc {
 
@@ -43,6 +42,9 @@ class Encryptor {
   // Internal class for representing a key
   class Key {
    public:
+    Key();
+    ~Key();
+
     // Make a session key from password and salt.
     // You can also set an initialization vector whose
     // size must be iv_size().
@@ -79,9 +81,6 @@ class Encryptor {
 
     // return the size required to encrypt the buffer of size |size|.
     size_t GetEncryptedSize(size_t size) const;
-
-    Key();
-    ~Key();
 
     struct InternalData;
     std::unique_ptr<InternalData> data_;

@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
 #include "base/protobuf/descriptor.h"
@@ -46,8 +45,8 @@
 #include "composer/key_parser.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
 #include "engine/engine_factory.h"
+#include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/candidates.pb.h"
@@ -68,22 +67,22 @@
 namespace mozc {
 namespace session {
 
-using commands::CandidateList;
-using commands::CandidateWord;
-using commands::Command;
-using commands::CompositionMode;
-using commands::Input;
-using commands::KeyEvent;
-using commands::Output;
-using commands::Request;
-using commands::RequestForUnitTest;
-using config::CharacterFormManager;
-using config::Config;
-using config::ConfigHandler;
-using protobuf::FieldDescriptor;
-using protobuf::Message;
-using protobuf::TextFormat;
-using session::SessionHandlerTool;
+using ::mozc::commands::CandidateList;
+using ::mozc::commands::CandidateWord;
+using ::mozc::commands::Command;
+using ::mozc::commands::CompositionMode;
+using ::mozc::commands::Input;
+using ::mozc::commands::KeyEvent;
+using ::mozc::commands::Output;
+using ::mozc::commands::Request;
+using ::mozc::commands::RequestForUnitTest;
+using ::mozc::config::CharacterFormManager;
+using ::mozc::config::Config;
+using ::mozc::config::ConfigHandler;
+using ::mozc::protobuf::FieldDescriptor;
+using ::mozc::protobuf::Message;
+using ::mozc::protobuf::TextFormat;
+using ::mozc::session::SessionHandlerTool;
 
 bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   Command command;
@@ -128,8 +127,6 @@ SessionHandlerTool::SessionHandlerTool(std::unique_ptr<EngineInterface> engine)
       handler_(new SessionHandler(std::move(engine))) {
   handler_->AddObserver(usage_observer_.get());
 }
-
-SessionHandlerTool::~SessionHandlerTool() {}
 
 bool SessionHandlerTool::CreateSession() {
   Command command;

@@ -54,7 +54,7 @@ namespace mozc {
 namespace {
 
 #ifdef _WIN32
-const wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
+constexpr wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
 
 // returns true if the token was created by Secondary Logon
 // (typically via RunAs command) or UAC (w/ alternative credential provided)

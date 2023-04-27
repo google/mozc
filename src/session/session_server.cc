@@ -43,7 +43,6 @@
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
-#include "usage_stats/usage_stats_uploader.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -81,8 +80,6 @@ SessionServer::SessionServer()
     LOG(WARNING) << "NamedEvent " << kEventName << " is not found";
   }
 }
-
-SessionServer::~SessionServer() = default;
 
 bool SessionServer::Connected() const {
   return (session_handler_ && session_handler_->IsAvailable() &&

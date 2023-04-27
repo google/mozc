@@ -34,23 +34,18 @@
 
 #include <vector>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
+#include "session/session_observer_interface.h"
 
 namespace mozc {
-namespace commands {
-class Command;
-}
-
 namespace session {
-
-class SessionObserverInterface;
 
 class SessionObserverHandler {
  public:
-  SessionObserverHandler();
+  SessionObserverHandler() = default;
   SessionObserverHandler(const SessionObserverHandler &) = delete;
   SessionObserverHandler &operator=(const SessionObserverHandler &) = delete;
-  virtual ~SessionObserverHandler();
+  virtual ~SessionObserverHandler() = default;
 
   void AddObserver(SessionObserverInterface *observer);
   void EvalCommandHandler(const commands::Command &command);

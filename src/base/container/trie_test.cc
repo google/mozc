@@ -29,6 +29,7 @@
 
 #include "base/container/trie.h"
 
+#include <cstddef>
 #include <iterator>
 #include <string>
 #include <vector>

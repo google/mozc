@@ -32,14 +32,13 @@
 #ifndef MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
 #define MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/container/freelist.h"
-#include "base/port.h"
 
 namespace mozc {
 namespace session {

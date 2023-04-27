@@ -32,6 +32,7 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <ios>
 #include <iterator>

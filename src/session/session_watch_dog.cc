@@ -40,11 +40,10 @@
 #include "base/clock.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
+#include "client/client.h"
 #include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
-#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -56,14 +55,14 @@ constexpr absl::Duration kCleanupTimeout =
 constexpr absl::Duration kPingTimeout = absl::Seconds(5);  // 5 sec for Ping
 
 // number of trials for ping
-const int32_t kPingTrial = 3;
+constexpr int32_t kPingTrial = 3;
 constexpr absl::Duration kPingInterval = absl::Seconds(1);
 
-// Average CPU load for last 1min.
+// Average CPU load for last 1 min.
 // If the load > kMinimumAllCPULoad, don't send Cleanup
 constexpr float kMinimumAllCPULoad = 0.33f;
 
-// Average CPU load for last 10secs.
+// Average CPU load for last 10 secs.
 // If the load > kMinimumLatestCPULoad, don't send Cleanup
 constexpr float kMinimumLatestCPULoad = 0.66f;
 }  // namespace

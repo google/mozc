@@ -37,7 +37,6 @@
         'existence_filter_test.cc',
         'lru_cache_test.cc',
         'lru_storage_test.cc',
-        'memory_storage_test.cc',
         'registry_test.cc',
         'tiny_storage_test.cc',
       ],

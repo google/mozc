@@ -55,7 +55,7 @@ struct TestData {
   size_t encrypted_size;
 };
 
-const TestData kTestData[] = {
+constexpr TestData kTestData[] = {
     {"foohoge", 7, "salt", 4, "1111111111111111", "foo", 3,
      "\x27\x32\x66\x88\x82\x33\x78\x80\x58\x29\xBF\xDD\x46\x9A\xCC\x87", 16},
     {"password", 8, "salt", 4, "1111111111111111", "a", 1,

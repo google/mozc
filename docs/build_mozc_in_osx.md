@@ -18,6 +18,8 @@ MOZC_QT_PATH={Your_Qt_path} bazel build package --config oss_macos -c opt
 open bazel-bin/mac/Mozc.pkg
 ```
 
+Hint: You can also download `Mozc.pkg` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
+
 ## Get the Code
 
 You can download Mozc source code as follows:
@@ -99,6 +101,28 @@ This command reverts the above change.
 ```
 git update-index --no-assume-unchanged src/config.bzl
 ```
+
+-----
+
+## Build with GitHub Actions
+
+GitHub Actions steps are already set up in [macos.yaml](../.github/workflows/macos.yaml). With that, you can build and install Mozc with your own commit as follows.
+
+1. Fork https://github.com/google/mozc to your GitHub repository.
+2. Push a new commit to your own fork.
+3. Click "Actions" tab on your fork.
+4. Wait until the action triggered with your commit succeeds.
+5. Download `Mozc.pkg` from the action result page.
+6. Install `Mozc.pkg`.
+
+Files in the GitHub Actions page remain available up to 90 days.
+
+You can also find Mozc Installers for macOS in google/mozc repository. Please keep in mind that Mozc is not an officially supported Google product, even if downloaded from https://github.com/google/mozc/.
+
+1. Sign in GitHub.
+2. Check [recent successfull macOS runs](https://github.com/google/mozc/actions/workflows/macos.yaml?query=is%3Asuccess) in google/mozc repository.
+3. Find action in last 90 days and click it.
+4. Download `Mozc.pkg` from the action result page.
 
 -----
 

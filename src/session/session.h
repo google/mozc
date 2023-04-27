@@ -33,12 +33,10 @@
 #define MOZC_SESSION_SESSION_H_
 
 #include <cstddef>
-#include <cstdint>
 #include <deque>
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "engine/engine_interface.h"
@@ -60,7 +58,6 @@ class Session : public SessionInterface {
   explicit Session(EngineInterface *engine);
   Session(const Session &) = delete;
   Session &operator=(const Session &) = delete;
-  ~Session() override;
 
   bool SendKey(mozc::commands::Command *command) override;
 
@@ -78,7 +75,7 @@ class Session : public SessionInterface {
   // turned off.
   bool IMEOff(mozc::commands::Command *command);
 
-  // Unlike IMEOn/IMEOff, these commands 1) can update compositioin mode, and
+  // Unlike IMEOn/IMEOff, these commands 1) can update composition mode, and
   // 2) are functional even when IME is already turned on/off.
   // TODO(team): Merge these into IMEOn/Off once b/10250883 is fixed.
   bool MakeSureIMEOn(mozc::commands::Command *command);
@@ -224,7 +221,7 @@ class Session : public SessionInterface {
   // Let client launch word register dialog
   bool LaunchWordRegisterDialog(mozc::commands::Command *command);
 
-  // Undo if pre-composition is empty. Rewind KANA cycle othrewise.
+  // Undo if pre-composition is empty. Rewind KANA cycle otherwise.
   bool UndoOrRewind(mozc::commands::Command *command);
 
   // Stops key toggling in the composer.

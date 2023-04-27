@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "testing/gunit.h"
-#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {

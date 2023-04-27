@@ -40,11 +40,12 @@ namespace louds {
 
 class BitVectorBasedArrayBuilder {
  public:
-  BitVectorBasedArrayBuilder();
+  // Initial values of base_length_ and step_length_ is (4, 1) bytes.
+  BitVectorBasedArrayBuilder()
+      : built_(false), base_length_(4), step_length_(1) {}
   BitVectorBasedArrayBuilder(const BitVectorBasedArrayBuilder&) = delete;
   BitVectorBasedArrayBuilder& operator=(const BitVectorBasedArrayBuilder&) =
       delete;
-  ~BitVectorBasedArrayBuilder() = default;
 
   // Adds the element to the builder.
   // The length of the element would be ceiling by padding '\x00' bytes to the

@@ -90,7 +90,7 @@ mozc_cc_library(
         "//converter:connector",
         "//converter:node",
         "//converter:segmenter",
-        "//dictionary:pos_matcher_lib",
+        "//dictionary:pos_matcher",
         "//prediction:suggestion_filter",
         "//testing:gunit",
         "@com_google_absl//absl/container:flat_hash_set",

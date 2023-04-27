@@ -77,7 +77,6 @@ mozc_cc_qt_library(
         "//gui/dictionary_tool",
         "//gui/error_message_dialog",
         "//gui/post_install_dialog",
-        "//gui/set_default_dialog",
         "//gui/word_register_dialog",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(macos = [":prelauncher_lib"]),

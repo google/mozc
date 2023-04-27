@@ -79,6 +79,13 @@ EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 #   https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
 USE_DEPRECATED_GTK_RENDERER = False
 
+# Ibus build is no longer supported by GYP build.
+# The build rules and code will be removed in future.
+#   https://github.com/google/mozc/issues/567
+# Bazel build is the alternative.
+#   https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+USE_UNSUPPORTED_IBUS_BUILD = False
+
 sys.path.append(SRC_DIR)
 
 
@@ -163,11 +170,9 @@ def GetGypFileNames(options):
   if options.target_platform == 'Windows':
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
   elif options.target_platform == 'Linux':
-    gyp_file_names.extend(glob.glob('%s/unix/*/*.gyp' % SRC_DIR))
-    # Add ibus.gyp if ibus version is >=1.4.1.
-    if not PkgExists('ibus-1.0 >= 1.4.1'):
-      logging.info('removing ibus.gyp.')
-      gyp_file_names.remove('%s/unix/ibus/ibus.gyp' % SRC_DIR)
+    gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % SRC_DIR))
+    if USE_UNSUPPORTED_IBUS_BUILD:
+      gyp_file_names.extend('%s/unix/ibus/*.gyp' % SRC_DIR)
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -293,6 +298,7 @@ def ExpandMetaTarget(options, meta_target_name):
 
   if target_platform == 'Linux':
     CheckGtkBuild(options)
+    CheckIbusBuild(options)
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
     if USE_DEPRECATED_GTK_RENDERER:
@@ -300,7 +306,9 @@ def ExpandMetaTarget(options, meta_target_name):
       # included in the package alias.
       # USE_DEPRECATED_GTK_RENDERER should be False unless the code is modified.
       targets.append(SRC_DIR + '/renderer/renderer.gyp:mozc_renderer')
-    if PkgExists('ibus-1.0 >= 1.4.1'):
+    if USE_UNSUPPORTED_IBUS_BUILD:
+      # GYP no longer support Ibus builds.
+      # USE_UNSUPPORTED_IBUS_BUILD should be False unless the code is modified.
       targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
@@ -315,28 +323,19 @@ def ExpandMetaTarget(options, meta_target_name):
   return dependencies + targets
 
 
-def CheckIbusBuild(options, targets):
+def CheckIbusBuild(options):
   """Check if targets contains ibus builds without the command flag."""
-  if options.use_gyp_for_ibus_build:
-    return
-
-  has_ibus_build = False
-  for target in targets:
-    if 'ibus' in target:
-      has_ibus_build = True
-      break
-  if not has_ibus_build:
+  if options.no_ibus_build:
     return
 
   message = [
-      'The GYP build will stop supporting IBus client and renderer.',
+      'The GYP build no longer support IBus client and renderer.',
       'https://github.com/google/mozc/issues/567',
       '',
       'The Bazel build is the alternative.',
       'https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md',
       '',
-      'To keep using the GYP build at this moment,',
-      'please add the --use_gyp_for_ibus_build flag to build_mozc.py.',
+      'Please add the --no_ibus_build flag to confirm it.',
   ]
   PrintErrorAndExit('\n'.join(message))
 
@@ -365,7 +364,7 @@ def ParseBuildOptions(args):
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
   parser.add_option('--no_gtk_build', action='store_true')
-  parser.add_option('--use_gyp_for_ibus_build', action='store_true')
+  parser.add_option('--no_ibus_build', action='store_true')
 
   (options, args) = parser.parse_args(args)
 
@@ -373,7 +372,6 @@ def ParseBuildOptions(args):
   for arg in args:
     targets.extend(ExpandMetaTarget(options, arg))
 
-  CheckIbusBuild(options, targets)
   return (options, targets)
 
 

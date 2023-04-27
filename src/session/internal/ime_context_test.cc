@@ -29,7 +29,6 @@
 
 #include "session/internal/ime_context.h"
 
-#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -37,6 +36,7 @@
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
+#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_converter.h"

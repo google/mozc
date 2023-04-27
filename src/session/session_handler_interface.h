@@ -32,17 +32,11 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 
+#include "protocol/commands.pb.h"
+#include "session/session_observer_interface.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-namespace commands {
-class Command;
-}  // namespace commands
-
-namespace session {
-class SessionObserverInterface;
-}  // namespace session
 
 class SessionHandlerInterface {
  public:

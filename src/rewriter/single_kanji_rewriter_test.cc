@@ -34,13 +34,12 @@
 #include <string>
 
 #include "base/system_util.h"
-#include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
@@ -250,6 +249,69 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   EXPECT_TRUE(rewriter.Rewrite(default_request_, &segments));
   EXPECT_LT(1, segment->candidates_size());  // Some candidates were inserted.
   EXPECT_EQ(segment->candidate(0).description, "亜の旧字体");
+}
+
+TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
+  SingleKanjiRewriter rewriter(*data_manager_);
+
+  {
+    Segments segments;
+    InitSegments("あ", "あ", &segments);
+
+    commands::Request request;
+    commands::RequestForUnitTest::FillMobileRequest(&request);
+    ConversionRequest convreq;
+    convreq.set_request_type(ConversionRequest::PREDICTION);
+    convreq.set_request(&request);
+    ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
+  }
+
+  {
+    Segments segments;
+    InitSegments("あ", "あ", &segments);
+
+    commands::Request request;
+    commands::RequestForUnitTest::FillMobileRequest(&request);
+    request.mutable_decoder_experiment_params()
+        ->set_enable_single_kanji_prediction(true);
+    ConversionRequest convreq;
+    convreq.set_request_type(ConversionRequest::PREDICTION);
+    convreq.set_request(&request);
+    ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
+    EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
+  }
+
+  {
+    Segments segments;
+    InitSegments("あ", "あ", &segments);
+
+    commands::Request request;
+    commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+        &request);
+    request.mutable_decoder_experiment_params()
+        ->set_enable_single_kanji_prediction(true);
+    ConversionRequest convreq;
+    convreq.set_request_type(ConversionRequest::PREDICTION);
+    convreq.set_request(&request);
+    ASSERT_FALSE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
+  }
+
+  {
+    Segments segments;
+    InitSegments("あ", "あ", &segments);
+
+    commands::Request request;
+    commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+        &request);
+    request.mutable_decoder_experiment_params()
+        ->set_enable_single_kanji_prediction(true);
+    ConversionRequest convreq;
+    convreq.set_request_type(ConversionRequest::CONVERSION);
+    convreq.set_request(&request);
+    ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::CONVERSION);
+    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
+  }
 }
 
 TEST_F(SingleKanjiRewriterTest, NoVariationTest) {

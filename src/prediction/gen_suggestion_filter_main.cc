@@ -31,7 +31,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <ios>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -43,7 +42,9 @@
 #include "base/multifile.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
+#include "absl/base/optimization.h"
 #include "absl/flags/flag.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "per-line suggestion filter list");
@@ -90,14 +91,14 @@ void ReadSafeWords(const absl::string_view safe_list_files,
 
 constexpr size_t kMinimumFilterBytes = 100 * 1000;
 
-std::unique_ptr<ExistenceFilter> GetFilter(
-    const size_t num_bytes, const std::vector<uint64_t> &hash_list) {
+ExistenceFilter GetFilter(const size_t num_bytes,
+                          const std::vector<uint64_t> &hash_list) {
   LOG(INFO) << "num_bytes: " << num_bytes;
 
-  std::unique_ptr<ExistenceFilter> filter(
+  ExistenceFilter filter(
       ExistenceFilter::CreateOptimal(num_bytes, hash_list.size()));
   for (size_t i = 0; i < hash_list.size(); ++i) {
-    filter->Insert(hash_list[i]);
+    filter.Insert(hash_list[i]);
   }
   return filter;
 }
@@ -113,6 +114,23 @@ bool TestFilter(const ExistenceFilter &filter,
   }
   return true;
 }
+
+ExistenceFilter SetupFilter(const size_t num_bytes,
+                            const std::vector<uint64_t> &hash_list,
+                            const std::vector<std::string> &safe_word_list) {
+  constexpr int kNumRetryMax = 10;
+  constexpr int kSizeOffset = 8;
+  // Prevent filtering of common words by false positive.
+  for (int i = 0; i < kNumRetryMax; ++i) {
+    ExistenceFilter filter = GetFilter(num_bytes + i * kSizeOffset, hash_list);
+    if (TestFilter(filter, safe_word_list)) {
+      return filter;
+    }
+  }
+  LOG(FATAL) << "Gave up retrying suggestion filter generation.";
+  ABSL_UNREACHABLE();
+}
+
 }  // namespace
 
 // read per-line word list and generate
@@ -141,40 +159,24 @@ int main(int argc, char **argv) {
   std::vector<std::string> safe_word_list;
   ReadSafeWords(absl::GetFlag(FLAGS_safe_list_files), &safe_word_list);
 
-  std::unique_ptr<ExistenceFilter> filter;
-  constexpr int kNumRetryMax = 10;
-  constexpr int kSizeOffset = 8;
-  // Prevent filtering of common words by false positive.
-  for (int i = 0; i < kNumRetryMax; ++i) {
-    filter = GetFilter(num_bytes + i * kSizeOffset, hash_list);
-    if (TestFilter(*filter, safe_word_list)) {
-      break;
-    }
-    if (i == kNumRetryMax - 1) {
-      LOG(FATAL) << "Gave up retrying suggestion filter generation.";
-    }
-  }
+  ExistenceFilter filter = SetupFilter(num_bytes, hash_list, safe_word_list);
 
   LOG(INFO) << "writing bloomfilter: " << absl::GetFlag(FLAGS_output);
-  char *buf = nullptr;
-  size_t size = 0;
-  filter->Write(&buf, &size);
+  const std::string buf = filter.Write();
 
   if (absl::GetFlag(FLAGS_header)) {
     mozc::OutputFileStream ofs(absl::GetFlag(FLAGS_output));
     mozc::CodeGenByteArrayOutputStream codegen_stream(
         &ofs, mozc::codegenstream::NOT_OWN_STREAM);
     codegen_stream.OpenVarDef(absl::GetFlag(FLAGS_name));
-    codegen_stream.write(buf, size);
+    codegen_stream.write(buf.data(), buf.size());
     codegen_stream.CloseVarDef();
   } else {
     mozc::OutputFileStream ofs(
         absl::GetFlag(FLAGS_output),
         std::ios::out | std::ios::trunc | std::ios::binary);
-    ofs.write(buf, size);
+    ofs.write(buf.data(), buf.size());
   }
-
-  delete[] buf;
 
   return 0;
 }

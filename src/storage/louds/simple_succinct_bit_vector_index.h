@@ -30,10 +30,9 @@
 #ifndef MOZC_STORAGE_LOUDS_SIMPLE_SUCCINCT_BIT_VECTOR_INDEX_H_
 #define MOZC_STORAGE_LOUDS_SIMPLE_SUCCINCT_BIT_VECTOR_INDEX_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace storage {

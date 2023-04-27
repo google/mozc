@@ -30,9 +30,9 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_IMPORTER_H_
 
+#include <cstddef>
 #include <string>
 
-#include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
 
@@ -66,10 +66,10 @@ class UserDictionaryImporter {
   // It runs over only valid lines which show entries in input.
   class InputIteratorInterface {
    public:
-    InputIteratorInterface() {}
+    InputIteratorInterface() = default;
     InputIteratorInterface(const InputIteratorInterface &) = delete;
     InputIteratorInterface &operator=(const InputIteratorInterface &) = delete;
-    virtual ~InputIteratorInterface() {}
+    virtual ~InputIteratorInterface() = default;
 
     // Return true if the input iterator is available.
     virtual bool IsAvailable() const = 0;
@@ -85,11 +85,11 @@ class UserDictionaryImporter {
   // interface class for reading text per line.
   class TextLineIteratorInterface {
    public:
-    TextLineIteratorInterface() {}
+    TextLineIteratorInterface() = default;
     TextLineIteratorInterface(const TextLineIteratorInterface &) = delete;
     TextLineIteratorInterface &operator=(const TextLineIteratorInterface &) =
         delete;
-    virtual ~TextLineIteratorInterface() {}
+    virtual ~TextLineIteratorInterface() = default;
 
     // Return true text line iterator is available.
     virtual bool IsAvailable() const = 0;

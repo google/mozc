@@ -32,8 +32,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
-
 namespace mozc {
 namespace dictionary {
 
@@ -43,7 +41,7 @@ class PosGroup {
   explicit PosGroup(const uint8_t *lid_group) : lid_group_(lid_group) {}
   PosGroup(const PosGroup &) = delete;
   PosGroup &operator=(const PosGroup &) = delete;
-  ~PosGroup() {}
+  ~PosGroup() = default;
 
   // Returns grouped pos id based on an array pre-generated from
   // data/rules/user_segment_history_pos_group.def.

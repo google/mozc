@@ -32,26 +32,18 @@
 #ifndef MOZC_SESSION_INTERNAL_SESSION_OUTPUT_H_
 #define MOZC_SESSION_INTERNAL_SESSION_OUTPUT_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
-#include "base/port.h"
+#include "composer/composer.h"
+#include "converter/segments.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "session/internal/candidate_list.h"
 
 namespace mozc {
-
-class Segment;
-class Segments;
-
-namespace composer {
-class Composer;
-}
-
 namespace session {
-
-class CandidateList;
-class Candidate;
 
 class SessionOutput {
  public:
@@ -73,7 +65,7 @@ class SessionOutput {
   // even if the candidate_list contains sub-candidate lists.
   static void FillAllCandidateWords(
       const Segment &segment, const CandidateList &candidate_list,
-      const commands::Category category,
+      commands::Category category,
       commands::CandidateList *candidate_list_proto);
 
   // For debug. Fill the CandidateList protobuf with the

@@ -31,10 +31,6 @@
 -->
 
 
-<?ifdef var.MozcVersionFile ?>
-  <?include $(var.MozcVersionFile) ?>
-<?endif?>
-
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->
@@ -163,8 +159,8 @@
                 Wait='yes' />
           </Component>
           <Component Id='MozcTIP32' Guid='*' Permanent='no'>
-            <File Id='MozcTIP32.dll'
-                Name='MozcTIP32.dll'
+            <File Id='mozc_ja_tip32.dll'
+                Name='mozc_ja_tip32.dll'
                 DiskId='1' Checksum='yes'
                 Source='$(var.MozcTIP32Path)' Vital='yes' />
           </Component>
@@ -313,13 +309,17 @@
       </Component>
     </Directory>
 
+    <!--
+       TODO: Consider migrating to 'MajorUpgrade' rule.
+       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
+    -->
     <Upgrade Id='$(var.UpgradeCode)'>
       <UpgradeVersion
           Minimum='0.0.0.0' IncludeMinimum='yes'
-          Maximum='$(var.MozcVersion)' IncludeMaximum='no'
+          Maximum='$(var.MozcVersion)' IncludeMaximum='yes'
           OnlyDetect='no' Property='UPGRADING'/>
       <UpgradeVersion
-          Minimum='$(var.MozcVersion)' IncludeMinimum='yes'
+          Minimum='$(var.MozcVersion)' IncludeMinimum='no'
           OnlyDetect='yes' Property='NEWERVERSIONDETECTED' />
     </Upgrade>
 

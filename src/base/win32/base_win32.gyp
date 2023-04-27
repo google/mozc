@@ -52,6 +52,13 @@
     ['OS=="win"', {
       'targets': [
         {
+          'target_name': 'com_implements',
+          'type': 'static_library',
+          'sources': [
+            'com_implements.cc',
+          ],
+        },
+        {
           'target_name': 'win_font_test_helper',
           'type': 'static_library',
           'sources': [
@@ -90,9 +97,11 @@
           'target_name': 'com_test',
           'type': 'executable',
           'sources': [
+            'com_implements_test.cc',
             'com_test.cc',
           ],
           'dependencies': [
+            ':com_implements',
             '../base.gyp:base',
             '../../testing/testing.gyp:gtest_main',
           ],

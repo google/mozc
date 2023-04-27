@@ -33,12 +33,11 @@
 #ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 #define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 
-#include "base/port.h"
 #include "composer/composer.h"
+#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/key_event_transformer.h"
@@ -51,12 +50,13 @@ namespace session {
 
 class ImeContext final {
  public:
-  ImeContext();
+  ImeContext()
+      : request_(&commands::Request::default_instance()),
+        config_(&config::ConfigHandler::DefaultConfig()),
+        key_map_manager_(nullptr) {}
 
   ImeContext(const ImeContext &) = delete;
   ImeContext &operator=(const ImeContext &) = delete;
-
-  ~ImeContext();
 
   absl::Time create_time() const { return create_time_; }
   void set_create_time(absl::Time create_time) { create_time_ = create_time; }

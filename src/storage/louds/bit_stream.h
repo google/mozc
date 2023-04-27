@@ -42,7 +42,7 @@ namespace louds {
 // Stream taking 'bits', especially designed for building a LOUDS trie.
 class BitStream {
  public:
-  BitStream();
+  BitStream() = default;
   BitStream(const BitStream &) = delete;
   BitStream &operator=(const BitStream &) = delete;
 
@@ -52,12 +52,12 @@ class BitStream {
 
   void PushBit(int bit);
 
-  // Fills the padding (0-bit) until the size is aligned to 32bit boundary.
+  // Fills the padding (0-bit) until the size is aligned to 32-bit boundary.
   void FillPadding32();
 
  private:
   std::string image_;
-  size_t num_bits_;
+  size_t num_bits_ = 0;
 };
 
 namespace internal {

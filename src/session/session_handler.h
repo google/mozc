@@ -34,45 +34,29 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
 
-#include "base/port.h"
 #include "composer/table.h"
+#include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/common.h"
+#include "session/internal/keymap.h"
 #include "session/session_handler_interface.h"
+#include "session/session_interface.h"
+#include "session/session_observer_handler.h"
 #include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
+#ifndef MOZC_DISABLE_SESSION_WATCHDOG
+#include "session/session_watch_dog.h"
+#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
 namespace mozc {
-
-#ifndef MOZC_DISABLE_SESSION_WATCHDOG
-class SessionWatchDog;
-#endif  // MOZC_DISABLE_SESSION_WATCHDOG
-class Stopwatch;
-
-namespace commands {
-class Command;
-class Request;
-}  // namespace commands
-
-namespace keymap {
-class KeyMapManager;
-}  // namespace keymap
-
-namespace session {
-class SessionInterface;
-class SessionObserverHandler;
-class SessionObserverInterface;
-}  // namespace session
-
-namespace user_dictionary {
-class UserDictionarySessionHandler;
-}  // namespace user_dictionary
 
 class SessionHandler : public SessionHandlerInterface {
  public:

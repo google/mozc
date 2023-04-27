@@ -624,79 +624,6 @@
       ],
     },
     {
-      'target_name': 'gen_set_default_dialog_files',
-      'type': 'none',
-      'variables': {
-        'subdir': 'set_default_dialog',
-      },
-      'sources': [
-        '<(subdir)/set_default_dialog.h',
-        '<(subdir)/set_default_dialog.ui',
-      ],
-      'includes': [
-        'qt_moc.gypi',
-        'qt_uic.gypi',
-      ],
-    },
-    {
-      'target_name': 'qrc_set_default_dialog',
-      'type': 'none',
-      'variables': {
-        'subdir': 'set_default_dialog',
-        'qrc_base_name': 'set_default_dialog',
-        'qrc_inputs': [
-          '<(subdir)/<(qrc_base_name).qrc',
-          '<(subdir)/<(qrc_base_name)_en.qm',
-          '<(subdir)/<(qrc_base_name)_ja.qm',
-        ],
-      },
-      'includes': [
-        'qt_rcc.gypi',
-      ],
-    },
-    {
-      'target_name': 'set_default_dialog_lib',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/set_default_dialog/moc_set_default_dialog.cc',
-        '<(gen_out_dir)/set_default_dialog/qrc_set_default_dialog.cc',
-        'set_default_dialog/set_default_dialog.cc',
-        'set_default_dialog/set_default_dialog_libmain.cc',
-      ],
-      'dependencies': [
-        '../client/client.gyp:client',
-        '../ipc/ipc.gyp:ipc',
-        '../protocol/protocol.gyp:commands_proto',
-        '../protocol/protocol.gyp:config_proto',
-        'gen_set_default_dialog_files',
-        'qrc_set_default_dialog',
-      ],
-      'conditions': [
-        ['OS=="win"', {
-          'dependencies': [
-            '../win32/base/win32_base.gyp:ime_base',
-          ],
-        }],
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
-      'target_name': 'set_default_dialog_main',
-      'type': 'executable',
-      'sources': [
-        'set_default_dialog/set_default_dialog_main.cc',
-      ],
-      'dependencies': [
-        'gui_base',
-        'set_default_dialog_lib',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
       'target_name': 'prelauncher_lib',
       'type': 'static_library',
       'sources': [
@@ -724,7 +651,6 @@
         'error_message_dialog_lib',
         'gui_base',
         'post_install_dialog_lib',
-        'set_default_dialog_lib',
         'word_register_dialog_lib',
       ],
       'includes': [

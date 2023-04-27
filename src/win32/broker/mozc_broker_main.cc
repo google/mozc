@@ -37,7 +37,6 @@
 #include <windows.h>
 
 #include "base/win32/winmain.h"
-#include "win32/broker/ime_switcher.h"
 #include "win32/broker/prelauncher.h"
 #endif  // _WIN32
 
@@ -56,9 +55,7 @@ int main(int argc, char *argv[]) {
 
   int result = 0;
 #ifdef _WIN32
-  if (absl::GetFlag(FLAGS_mode) == "set_default") {
-    result = mozc::win32::RunSetDefault(argc, argv);
-  } else if (absl::GetFlag(FLAGS_mode) == "prelaunch_processes") {
+  if (absl::GetFlag(FLAGS_mode) == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
 #endif  // _WIN32

@@ -80,7 +80,6 @@ mozc_cc_test(
     deps = [
         ":mock_data_manager",
         "//data_manager:data_manager_test_base",
-        "//dictionary:pos_matcher_lib",
         "//testing:gunit_main",
         "//testing:mozctest",
     ],

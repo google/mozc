@@ -77,7 +77,6 @@
             ['OS=="win"', {
               'sources': [
                 '<(gen_out_dir)/mozc_broker_autogen.rc',
-                'ime_switcher.cc',
                 'prelauncher.cc',
               ],
               'dependencies': [

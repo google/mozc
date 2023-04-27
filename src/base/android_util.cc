@@ -43,9 +43,11 @@ ABSL_CONST_INIT absl::Mutex sys_prop_mutex(absl::kConstInit);
 namespace mozc {
 std::map<std::string, std::string> AndroidUtil::property_cache;
 std::set<std::string> AndroidUtil::undefined_keys;
-const char AndroidUtil::kSystemPropertyOsVersion[] = "ro.build.version.release";
-const char AndroidUtil::kSystemPropertyModel[] = "ro.product.model";
-const char AndroidUtil::kSystemPropertySdkVersion[] = "ro.build.version.sdk";
+constexpr char AndroidUtil::kSystemPropertyOsVersion[] =
+    "ro.build.version.release";
+constexpr char AndroidUtil::kSystemPropertyModel[] = "ro.product.model";
+constexpr char AndroidUtil::kSystemPropertySdkVersion[] =
+    "ro.build.version.sdk";
 
 // static
 std::string AndroidUtil::GetSystemProperty(const std::string &key,

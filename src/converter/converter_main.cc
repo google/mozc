@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -41,9 +42,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/port.h"
 #include "base/singleton.h"
-#include "base/status.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -54,14 +53,19 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
+#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
@@ -97,19 +101,17 @@ class PosIdPrintUtil {
 
  private:
   PosIdPrintUtil()
-      : pos_id_(new InputFileStream(absl::GetFlag(FLAGS_id_def))),
-        pos_id_printer_(new internal::PosIdPrinter(pos_id_.get())) {}
+      : pos_id_printer_(InputFileStream(absl::GetFlag(FLAGS_id_def))) {}
 
   std::string IdToStringInternal(int id) const {
-    const std::string &pos_string = pos_id_printer_->IdToString(id);
+    const absl::string_view pos_string = pos_id_printer_.IdToString(id);
     if (pos_string.empty()) {
-      return std::to_string(id);
+      return absl::StrCat(id);
     }
-    return absl::StrFormat("%s (%d)", pos_string.c_str(), id);
+    return absl::StrFormat("%s (%d)", pos_string, id);
   }
 
-  std::unique_ptr<InputFileStream> pos_id_;
-  std::unique_ptr<internal::PosIdPrinter> pos_id_printer_;
+  internal::PosIdPrinter pos_id_printer_;
 
   friend class Singleton<PosIdPrintUtil>;
 };

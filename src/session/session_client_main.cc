@@ -37,7 +37,6 @@
 #include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -53,6 +52,7 @@ ABSL_FLAG(std::string, output, "", "Output file");
 ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
 
 namespace mozc {
+namespace {
 
 void Loop(std::istream *input, std::ostream *output) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
@@ -87,6 +87,7 @@ void Loop(std::istream *input, std::ostream *output) {
   }
 }
 
+}  // namespace
 }  // namespace mozc
 
 int main(int argc, char **argv) {

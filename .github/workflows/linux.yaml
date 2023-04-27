@@ -16,12 +16,12 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           submodules: 'recursive'
 
-      - name: setup
+      - name: Setup
         run: |
           sudo apt-get update
           sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
@@ -29,12 +29,36 @@ jobs:
           # Unset the Android NDK setting to skip the unnecessary configuration.
           echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
 
-      - name: build
+      - name: bazel build
         working-directory: ./src
         run: |
           bazel build --config oss_linux package
 
-      - name: tests
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mozc.zip
+          path: src/bazel-bin/unix/mozc.zip
+          if-no-files-found: warn
+
+  test:
+    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
+          #
+          # Unset the Android NDK setting to skip the unnecessary configuration.
+          echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
+
+      - name: bazel test
         working-directory: ./src
         run: |
           bazel test --config oss_linux ... -- -third_party/...

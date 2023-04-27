@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -38,7 +39,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
@@ -46,14 +46,20 @@
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "dictionary/user_pos.h"
+#include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
+#include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -168,15 +174,9 @@ class UserDictionary::TokensIndex {
         // http://b/2480844
         japanese_util::NormalizeVoicedSoundMark(tmp, &reading);
 
-        DCHECK_LE(0, entry.pos());
-        MOZC_CLANG_PUSH_WARNING();
-        // clang-format off
-#if MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-        MOZC_CLANG_DISABLE_WARNING(tautological-constant-out-of-range-compare);
-#endif  // MOZC_CLANG_HAS_WARNING(tautological-constant-out-of-range-compare)
-        // clang-format on
-        DCHECK_LE(entry.pos(), 255);
-        MOZC_CLANG_POP_WARNING();
+        DCHECK(user_dictionary::UserDictionary_PosType_IsValid(entry.pos()));
+        static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
+                      std::numeric_limits<char>::max());
         const uint64_t fp =
             Hash::Fingerprint(reading + "\t" + entry.value() + "\t" +
                               static_cast<char>(entry.pos()));
@@ -299,8 +299,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
 UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
                                PosMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
-    : ALLOW_THIS_IN_INITIALIZER_LIST(
-          reloader_(new UserDictionaryReloader(this))),
+    : reloader_(std::make_unique<UserDictionaryReloader>(this)),
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),

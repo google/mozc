@@ -72,15 +72,13 @@ mozc_cc_test(
         ":dictionary_impl",
         ":dictionary_interface",
         ":dictionary_token",
-        ":pos_matcher_lib",
-        ":suffix_dictionary",
+        ":pos_matcher",
         ":suppression_dictionary",
         ":user_dictionary_stub",
         "//base:port",
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
-        "//converter:node",
         "//converter:node_allocator",
         "//data_manager/testing:mock_data_manager",
         "//dictionary/system:system_dictionary",
@@ -104,13 +102,11 @@ mozc_cc_library(
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         ":suppression_dictionary",
         "//base:logging",
         "//base:util",
-        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//usage_stats",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -143,24 +139,25 @@ mozc_cc_library(
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         ":suppression_dictionary",
         ":user_dictionary_storage",
         ":user_dictionary_util",
         ":user_pos",
         ":user_pos_interface",
-        "//base:compiler_specific",
         "//base:file_util",
         "//base:hash",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:singleton",
         "//base:thread",
         "//base:util",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
+        "//request:conversion_request",
         "//usage_stats",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
@@ -176,7 +173,7 @@ mozc_cc_test(
     deps = [
         ":dictionary_test_util",
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         ":suppression_dictionary",
         ":user_dictionary",
         ":user_dictionary_storage",
@@ -223,10 +220,7 @@ mozc_cc_library(
         # For //rewriter:date_rewriter
         "//rewriter:__pkg__",
     ],
-    deps = [
-        "//base:port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_py_binary(
@@ -245,7 +239,6 @@ mozc_cc_library(
     name = "pos_group",
     hdrs = ["pos_group.h"],
     visibility = ["//:__subpackages__"],
-    deps = ["//base:port"],
 )
 
 mozc_py_library(
@@ -442,18 +435,15 @@ mozc_cc_library(
     hdrs = ["user_dictionary_importer.h"],
     visibility = ["//gui:__subpackages__"],
     deps = [
-        ":user_dictionary",
         ":user_dictionary_util",
-        "//base:compiler_specific",
         "//base:hash",
         "//base:japanese_util",
         "//base:logging",
         "//base:mmap",
         "//base:number_util",
-        "//base:port",
-        "//base:system_util",
         "//base:util",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -486,14 +476,13 @@ mozc_cc_library(
     ],
     deps = [
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         "//base:japanese_util",
         "//base:logging",
         "//base:multifile",
         "//base:port",
         "//base:util",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
@@ -508,7 +497,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         ":text_dictionary_loader",
         "//base:file_util",
         "//base:util",
@@ -590,16 +579,13 @@ mozc_py_binary(
     name = "gen_pos_matcher_code",
     srcs = ["gen_pos_matcher_code.py"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":gen_pos_matcher_code_lib",
-        ":pos_util",
-    ],
+    deps = [":pos_util"],
 )
 
 genrule(
-    name = "pos_matcher",
+    name = "pos_matcher_impl",
     srcs = ["//data/rules:pos_matcher_rule.def"],
-    outs = ["pos_matcher.h"],
+    outs = ["pos_matcher_impl.inc"],
     cmd = ("$(location :gen_pos_matcher_code) " + "--pos_matcher_rule_file=$< " +
            "--output_pos_matcher_h=$@"),
     tools = [":gen_pos_matcher_code"],
@@ -609,12 +595,12 @@ genrule(
 )
 
 mozc_cc_library(
-    name = "pos_matcher_lib",
+    name = "pos_matcher",
     hdrs = ["pos_matcher.h"],
+    textual_hdrs = [":pos_matcher_impl"],
     visibility = [
         "//:__subpackages__",
     ],
-    deps = ["//base:port"],
 )
 
 mozc_py_library(
@@ -635,7 +621,7 @@ mozc_cc_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_token",
-        ":pos_matcher_lib",
+        ":pos_matcher",
         ":text_dictionary_loader",
         "//base:file_stream",
         "//base:init_mozc_buildtool",

@@ -31,15 +31,12 @@
 #define MOZC_PREDICTION_SUGGESTION_FILTER_H_
 
 #include <cstddef>
-#include <memory>
 
 #include "storage/existence_filter.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace storage {
-class ExistenceFilter;
-}  // namespace storage
 
 // Simple bloomfilter
 class SuggestionFilter {
@@ -52,7 +49,7 @@ class SuggestionFilter {
   bool IsBadSuggestion(absl::string_view text) const;
 
  private:
-  std::unique_ptr<mozc::storage::ExistenceFilter> filter_;
+  absl::StatusOr<storage::ExistenceFilter> filter_;
 };
 
 }  // namespace mozc

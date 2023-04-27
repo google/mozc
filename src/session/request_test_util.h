@@ -32,8 +32,6 @@
 #ifndef MOZC_SESSION_REQUEST_TEST_UTIL_H_
 #define MOZC_SESSION_REQUEST_TEST_UTIL_H_
 
-#include "base/port.h"
-
 namespace mozc {
 namespace commands {
 
@@ -42,9 +40,12 @@ class Request;
 class RequestForUnitTest {
  public:
   RequestForUnitTest() = delete;
-  RequestForUnitTest(const RequestForUnitTest&) = delete;
-  RequestForUnitTest& operator=(const RequestForUnitTest&) = delete;
+  RequestForUnitTest(const RequestForUnitTest &) = delete;
+  RequestForUnitTest &operator=(const RequestForUnitTest &) = delete;
+  // Fills mobile request with software keyboard
   static void FillMobileRequest(Request *request);
+  // Fills mobile request with hardware keyboard
+  static void FillMobileRequestWithHardwareKeyboard(Request *request);
 };
 }  // namespace commands
 }  // namespace mozc

@@ -30,9 +30,8 @@
 #ifndef MOZC_BASE_UNVERIFIED_AES256_H_
 #define MOZC_BASE_UNVERIFIED_AES256_H_
 
+#include <cstddef>
 #include <cstdint>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace internal {

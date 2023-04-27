@@ -31,25 +31,22 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
-#include <set>
 #include <string>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
@@ -58,14 +55,14 @@
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
-using mozc::config::CharacterFormManager;
-using mozc::config::Config;
-using mozc::dictionary::PosGroup;
-using mozc::dictionary::PosMatcher;
-using mozc::storage::LruStorage;
-
 namespace mozc {
 namespace {
+
+using ::mozc::config::CharacterFormManager;
+using ::mozc::config::Config;
+using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::storage::LruStorage;
 
 constexpr uint32_t kValueSize = 4;
 constexpr uint32_t kLruSize = 20000;
@@ -78,42 +75,21 @@ constexpr size_t kMaxRerankSize = 5;
 
 constexpr char kFileName[] = "user://segment.db";
 
-// Temporarily disable unused private field warning against
-// FeatureValue::reserved_ from Clang.
-// We use MOZC_CLANG_HAS_WARNING to check whether "-Wunused-private-field" is
-// available, because XCode 4.4 clang (based on LLVM 3.1svn) doesn't have it.
-MOZC_CLANG_PUSH_WARNING();
-// clang-format off
-#if MOZC_CLANG_HAS_WARNING(unused-private-field)
-MOZC_CLANG_DISABLE_WARNING(unused-private-field);
-#endif  // MOZC_CLANG_HAS_WARNING(unused-private-field)
-// clang-format on
 class FeatureValue {
  public:
   FeatureValue() : feature_type_(1), reserved_(0) {}
   bool IsValid() const { return (feature_type_ == 1); }
 
  private:
-  uint32_t feature_type_ : 1;  // always 1
-  uint32_t reserved_ : 31;     // this area is reserved for future
+  uint32_t feature_type_ : 1;                // always 1
+  [[maybe_unused]] uint32_t reserved_ : 31;  // this area is reserved for future
 };
-MOZC_CLANG_POP_WARNING();
 
 bool IsPunctuationInternal(absl::string_view str) {
   return (str == "。" || str == "｡" || str == "、" || str == "､" ||
           str == "，" || str == "," || str == "．" || str == ".");
 }
 
-// Temporarily disable unused private field warning against
-// KeyTriggerValue::reserved_ from Clang.
-// We use MOZC_CLANG_HAS_WARNING to check whether "-Wunused-private-field" is
-// available, because XCode 4.4 clang (based on LLVM 3.1svn) doesn't have it.
-MOZC_CLANG_PUSH_WARNING();
-// clang-format off
-#if MOZC_CLANG_HAS_WARNING(unused-private-field)
-MOZC_CLANG_DISABLE_WARNING(unused-private-field);
-#endif  // MOZC_CLANG_HAS_WARNING(unused-private-field)
-// clang-format on
 class KeyTriggerValue {
  public:
   KeyTriggerValue() : feature_type_(0), reserved_(0), candidates_size_(0) {}
@@ -127,12 +103,11 @@ class KeyTriggerValue {
   }
 
  private:
-  uint32_t feature_type_ : 1;  // always 0
-  uint32_t reserved_ : 23;     // this area is reserved for future
+  uint32_t feature_type_ : 1;                // always 0
+  [[maybe_unused]] uint32_t reserved_ : 23;  // this area is reserved for future
   // want to encode POS, freq etc.
   uint32_t candidates_size_ : 8;  // candidate size
 };
-MOZC_CLANG_POP_WARNING();
 
 class ScoreTypeCompare {
  public:
@@ -251,10 +226,9 @@ inline bool GetFeatureLL(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 2));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  JoinStringsWithTab5("LL", base_key,
-                      segments.segment(i - 2).candidate(j1).value,
-                      segments.segment(i - 1).candidate(j2).value,
-                      base_value, value);
+  JoinStringsWithTab5(
+      "LL", base_key, segments.segment(i - 2).candidate(j1).value,
+      segments.segment(i - 1).candidate(j2).value, base_value, value);
   return true;
 }
 

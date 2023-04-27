@@ -32,6 +32,7 @@
 #include "session/internal/candidate_list.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -40,7 +41,6 @@
 #include "base/container/freelist.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/port.h"
 
 namespace mozc {
 namespace session {

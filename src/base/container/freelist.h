@@ -30,9 +30,8 @@
 #ifndef MOZC_BASE_CONTAINER_FREELIST_H_
 #define MOZC_BASE_CONTAINER_FREELIST_H_
 
+#include <cstddef>
 #include <vector>
-
-#include "base/port.h"
 
 namespace mozc {
 

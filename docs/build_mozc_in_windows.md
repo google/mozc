@@ -25,6 +25,8 @@ python build_mozc.py build -c Release package
 out_win\Release\Mozc64.msi
 ```
 
+Hint: You can also download `Mozc64.msi` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
+
 ## Setup
 
 ### System Requirements
@@ -184,3 +186,27 @@ python build_mozc.py runtests -c Release
 ```
 
 Note that you can specify `--qtdir=` option instead of `--noqt` in GYP phase since currently there is no unit test that depends on Qt.
+
+---
+
+## Build with GitHub Actions
+
+GitHub Actions are already set up in [windows.yaml](../.github/workflows/windows.yaml). With that, you can build and install Mozc with your own commit as follows.
+
+1. Fork https://github.com/google/mozc to your GitHub repository.
+2. Push a new commit to your own fork.
+3. Click "Actions" tab on your fork.
+4. Wait until the action triggered with your commit succeeds.
+5. Download `Mozc64.msi` from the action result page if you are using 64-bit Windows.
+6. Install `Mozc64.msi`.
+7. Go to "Language & region" settings, find "Japanese" to click "Language options", and click "Add a keyboard" to add "Mozc".
+
+Files in the GitHub Actions page remain available up to 90 days.
+
+You can also find Mozc Installers for Windows in google/mozc repository. Please keep in mind that Mozc is not an officially supported Google product, even if downloaded from https://github.com/google/mozc/.
+
+1. Sign in GitHub.
+2. Check [recent successfull Windows runs](https://github.com/google/mozc/actions/workflows/windows.yaml?query=is%3Asuccess) in google/mozc repository.
+3. Find action in last 90 days and click it.
+4. Download `Mozc64.msi` from the action result page if you are using 64-bit Windows.
+

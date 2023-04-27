@@ -33,15 +33,13 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-
 namespace mozc {
 namespace storage {
 namespace louds {
 
 class LoudsTrieBuilder {
  public:
-  LoudsTrieBuilder();
+  LoudsTrieBuilder() = default;
 
   LoudsTrieBuilder(const LoudsTrieBuilder &) = delete;
   LoudsTrieBuilder &operator=(const LoudsTrieBuilder &) = delete;
@@ -67,7 +65,7 @@ class LoudsTrieBuilder {
   int GetId(const std::string &word) const;
 
  private:
-  bool built_;
+  bool built_ = false;
 
   std::vector<std::string> word_list_;
   std::vector<int> id_list_;

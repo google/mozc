@@ -30,6 +30,7 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -46,9 +47,11 @@
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 ABSL_FLAG(bool, use_collocation, true, "use collocation rewrite");
 
@@ -511,7 +514,7 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
 class CollocationRewriter::CollocationFilter {
  public:
   CollocationFilter(const char *existence_data, size_t size)
-      : filter_(ExistenceFilter::Read(existence_data, size)) {}
+      : filter_(ExistenceFilter::Read(absl::MakeSpan(existence_data, size))) {}
   CollocationFilter(const CollocationFilter &) = delete;
   CollocationFilter &operator=(const CollocationFilter &) = delete;
   ~CollocationFilter() = default;
@@ -526,13 +529,14 @@ class CollocationRewriter::CollocationFilter {
   }
 
  private:
-  std::unique_ptr<ExistenceFilter> filter_;
+  absl::StatusOr<ExistenceFilter> filter_;
 };
 
 class CollocationRewriter::SuppressionFilter {
  public:
   SuppressionFilter(const char *suppression_data, size_t size)
-      : filter_(ExistenceFilter::Read(suppression_data, size)) {}
+      : filter_(ExistenceFilter::Read(absl::MakeSpan(suppression_data, size))) {
+  }
   SuppressionFilter(const SuppressionFilter &) = delete;
   SuppressionFilter &operator=(const SuppressionFilter &) = delete;
   ~SuppressionFilter() = default;
@@ -546,7 +550,7 @@ class CollocationRewriter::SuppressionFilter {
   }
 
  private:
-  std::unique_ptr<ExistenceFilter> filter_;
+  absl::StatusOr<ExistenceFilter> filter_;
 };
 
 CollocationRewriter::CollocationRewriter(

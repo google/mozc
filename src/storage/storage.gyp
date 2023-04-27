@@ -37,7 +37,6 @@
         'encrypted_string_storage.cc',
         'existence_filter.cc',
         'lru_storage.cc',
-        'memory_storage.cc',
         'registry.cc',
         'tiny_storage.cc',
       ],

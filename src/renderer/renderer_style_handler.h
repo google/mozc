@@ -30,15 +30,16 @@
 #ifndef MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
 #define MOZC_RENDERER_RENDERER_STYLE_HANDLER_H_
 
-#include <string>
+#include "protocol/renderer_style.pb.h"
 
 namespace mozc {
 namespace renderer {
-class RendererStyle;
 
 // this is pure static class
 class RendererStyleHandler {
  public:
+  RendererStyleHandler() = delete;
+
   // return current Style
   static bool GetRendererStyle(RendererStyle *style);
   // set Style
@@ -49,11 +50,6 @@ class RendererStyleHandler {
   // Returns DPI scaling factor on Windows.
   // On other platforms, always returns 1.0.
   static void GetDPIScalingFactor(double *factor_x, double *factor_y);
-
-  // Do not allow instantiation
- private:
-  RendererStyleHandler() {}
-  virtual ~RendererStyleHandler() {}
 };
 
 }  // namespace renderer

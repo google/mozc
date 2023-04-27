@@ -29,6 +29,7 @@
 
 """Qt build rules."""
 
+load("//bazel:stubs.bzl", "register_extension_info")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -53,10 +54,10 @@ def mozc_cc_qt_library(name, deps = [], **kwargs):
         **kwargs
     )
 
-def cc_qt_library_mozc(**kwargs):
-    """Deprecated, use mozc_cc_qt_library.
-    """
-    mozc_cc_qt_library(**kwargs)
+register_extension_info(
+    extension = "mozc_cc_qt_library",
+    label_regex_for_dep = "{extension_name}",
+)
 
 def mozc_cc_qt_binary(name, deps = [], **kwargs):
     mozc_cc_binary(
@@ -69,10 +70,10 @@ def mozc_cc_qt_binary(name, deps = [], **kwargs):
         **kwargs
     )
 
-def cc_qt_binary_mozc(**kwargs):
-    """Deprecated, use mozc_cc_qt_binary.
-    """
-    mozc_cc_qt_binary(**kwargs)
+register_extension_info(
+    extension = "mozc_cc_qt_binary",
+    label_regex_for_dep = "{extension_name}",
+)
 
 def mozc_qt_moc(name, srcs, outs):
     native.genrule(
@@ -91,11 +92,6 @@ def mozc_qt_moc(name, srcs, outs):
         ),
     )
 
-def qt_moc_mozc(**kwargs):
-    """Deprecated, use mozc_qt_moc.
-    """
-    mozc_qt_moc(**kwargs)
-
 def mozc_qt_uic(name, srcs, outs):
     native.genrule(
         name = name,
@@ -113,11 +109,6 @@ def mozc_qt_uic(name, srcs, outs):
         ),
     )
 
-def qt_uic_mozc(**kwargs):
-    """Deprecated. Use mozc_qt_uic.
-    """
-    mozc_qt_uic(**kwargs)
-
 def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
     native.genrule(
         name = name,
@@ -134,11 +125,6 @@ def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
             oss_macos = ["@qt_mac//:bin/rcc"],
         ),
     )
-
-def qt_rcc_mozc(**kwargs):
-    """Deprecated, use mozc_qt_rcc.
-    """
-    mozc_qt_rcc(**kwargs)
 
 def mozc_macos_qt_application(name, bundle_name, deps):
     macos_application(
@@ -169,7 +155,7 @@ def mozc_macos_qt_application(name, bundle_name, deps):
         ),
     )
 
-def macos_qt_application_mozc(**kwargs):
-    """Deprecated, use mozc_macos_qt_application.
-    """
-    mozc_macos_qt_application(**kwargs)
+register_extension_info(
+    extension = "mozc_macos_qt_application",
+    label_regex_for_dep = "{extension_name}",
+)

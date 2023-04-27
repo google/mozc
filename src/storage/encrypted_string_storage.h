@@ -48,10 +48,10 @@ class StringStorageInterface {
 
 class EncryptedStringStorage : public StringStorageInterface {
  public:
-  explicit EncryptedStringStorage(absl::string_view filename);
+  explicit EncryptedStringStorage(const absl::string_view filename)
+      : filename_(filename) {}
   EncryptedStringStorage(const EncryptedStringStorage &) = delete;
   EncryptedStringStorage &operator=(const EncryptedStringStorage &) = delete;
-  ~EncryptedStringStorage() override;
 
   bool Load(std::string *output) const override;
   bool Save(const std::string &input) const override;

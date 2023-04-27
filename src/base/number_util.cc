@@ -52,30 +52,30 @@ namespace mozc {
 namespace {
 
 // Table of number character of Kansuji
-const char *const kNumKanjiDigits[] = {"〇", "一", "二", "三", "四",   "五",
-                                       "六", "七", "八", "九", nullptr};
-const char *const kNumKanjiOldDigits[] = {nullptr, "壱", "弐", "参", "四",
-                                          "五",    "六", "七", "八", "九"};
-const char *const kNumFullWidthDigits[] = {"０", "１", "２", "３", "４",   "５",
-                                           "６", "７", "８", "９", nullptr};
-const char *const kNumHalfWidthDigits[] = {"0", "1", "2", "3", "4",    "5",
-                                           "6", "7", "8", "9", nullptr};
+constexpr const char *kNumKanjiDigits[] = {"〇", "一", "二", "三", "四",   "五",
+                                           "六", "七", "八", "九", nullptr};
+constexpr const char *kNumKanjiOldDigits[] = {nullptr, "壱", "弐", "参", "四",
+                                              "五",    "六", "七", "八", "九"};
+constexpr const char *kNumFullWidthDigits[] = {
+    "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", nullptr};
+constexpr const char *kNumHalfWidthDigits[] = {"0", "1", "2", "3", "4",    "5",
+                                               "6", "7", "8", "9", nullptr};
 
 // Table of Kanji number ranks
-const char *const kNumKanjiRanks[] = {nullptr, "", "十", "百", "千"};
-const char *const kNumKanjiBiggerRanks[] = {"", "万", "億", "兆", "京"};
-const char *const kNumKanjiOldRanks[] = {nullptr, "", "拾", "百", "阡"};
-const char *const kNumKanjiBiggerOldRanks[] = {"", "萬", "億", "兆", "京"};
+constexpr const char *kNumKanjiRanks[] = {nullptr, "", "十", "百", "千"};
+constexpr const char *kNumKanjiBiggerRanks[] = {"", "万", "億", "兆", "京"};
+constexpr const char *kNumKanjiOldRanks[] = {nullptr, "", "拾", "百", "阡"};
+constexpr const char *kNumKanjiBiggerOldRanks[] = {"", "萬", "億", "兆", "京"};
 
-const char *const kRomanNumbersCapital[] = {nullptr, "Ⅰ", "Ⅱ", "Ⅲ",    "Ⅳ",
-                                            "Ⅴ",     "Ⅵ", "Ⅶ", "Ⅷ",    "Ⅸ",
-                                            "Ⅹ",     "Ⅺ", "Ⅻ", nullptr};
+constexpr const char *kRomanNumbersCapital[] = {nullptr, "Ⅰ", "Ⅱ", "Ⅲ",    "Ⅳ",
+                                                "Ⅴ",     "Ⅵ", "Ⅶ", "Ⅷ",    "Ⅸ",
+                                                "Ⅹ",     "Ⅺ", "Ⅻ", nullptr};
 
-const char *const kRomanNumbersSmall[] = {nullptr, "ⅰ", "ⅱ", "ⅲ",    "ⅳ",
-                                          "ⅴ",     "ⅵ", "ⅶ", "ⅷ",    "ⅸ",
-                                          "ⅹ",     "ⅺ", "ⅻ", nullptr};
+constexpr const char *kRomanNumbersSmall[] = {nullptr, "ⅰ", "ⅱ", "ⅲ",    "ⅳ",
+                                              "ⅴ",     "ⅵ", "ⅶ", "ⅷ",    "ⅸ",
+                                              "ⅹ",     "ⅺ", "ⅻ", nullptr};
 
-const char *const kCircledNumbers[] = {
+constexpr const char *kCircledNumbers[] = {
     nullptr, "①",  "②",  "③",  "④",  "⑤",  "⑥",  "⑦",    "⑧",  "⑨",  "⑩",
     "⑪",     "⑫",  "⑬",  "⑭",  "⑮",  "⑯",  "⑰",  "⑱",    "⑲",  "⑳",  "㉑",
     "㉒",    "㉓", "㉔", "㉕", "㉖", "㉗", "㉘", "㉙",   "㉚", "㉛", "㉜",
@@ -175,7 +175,7 @@ namespace {
 
 // To know what "大字" means, please refer
 // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
-const NumberStringVariation kKanjiVariations[] = {
+constexpr NumberStringVariation kKanjiVariations[] = {
     {kNumHalfWidthDigits, "数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH},
     {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
@@ -323,7 +323,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
 
 namespace {
 
-const NumberStringVariation kNumDigitsVariations[] = {
+constexpr NumberStringVariation kNumDigitsVariations[] = {
     {kNumHalfWidthDigits, "数字", ",", ".", 10,
      NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH},
     {kNumFullWidthDigits, "数字", "，", "．", 10,
@@ -392,7 +392,7 @@ namespace {
 
 // use default for wide Arabic, because half/full width for
 // normal number is learned by character form manager.
-const NumberStringVariation kSingleDigitsVariations[] = {
+constexpr NumberStringVariation kSingleDigitsVariations[] = {
     {kNumKanjiDigits, "漢数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_KANJI_ARABIC},
     {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
@@ -427,7 +427,7 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
 
 namespace {
 
-const NumberStringVariation kSpecialNumericVariations[] = {
+constexpr NumberStringVariation kSpecialNumericVariations[] = {
     {kRomanNumbersCapital, "ローマ数字(大文字)", nullptr, nullptr,
      std::size(kRomanNumbersCapital),
      NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},

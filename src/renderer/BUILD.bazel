@@ -107,7 +107,6 @@ mozc_cc_library(
     tags = ["nowin"],
     deps = [
         ":renderer_interface",
-        "//base:compiler_specific",
         "//base:const",
         "//base:logging",
         "//base:port",
@@ -117,6 +116,7 @@ mozc_cc_library(
         "//ipc",
         "//ipc:named_event",
         "//ipc:process_watch_dog",
+        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/flags:flag",

@@ -32,7 +32,9 @@ load(
     "mozc_cc_library",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 # Dummy rule for header files.
 mozc_cc_library(
@@ -43,7 +45,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "descriptor",
     hdrs = ["descriptor.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",
@@ -53,7 +54,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "message",
     hdrs = ["message.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",
@@ -63,7 +63,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "zero_copy_stream_impl",
     hdrs = ["zero_copy_stream_impl.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",
@@ -73,7 +72,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "repeated_field",
     hdrs = ["repeated_field.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",
@@ -83,7 +81,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "text_format",
     hdrs = ["text_format.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":protobuf",
         "@com_google_protobuf//:protobuf",

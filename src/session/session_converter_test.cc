@@ -35,6 +35,7 @@
 
 #include "session/session_converter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -54,8 +55,10 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "session/internal/candidate_list.h"
 #include "session/request_test_util.h"
+#include "session/session_converter_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
@@ -68,6 +71,7 @@
 
 namespace mozc {
 namespace session {
+namespace {
 
 using ::mozc::commands::Context;
 using ::mozc::commands::Request;
@@ -82,11 +86,12 @@ using ::testing::Return;
 using ::testing::SaveArgPointee;
 using ::testing::SetArgPointee;
 
-static constexpr char kChars_Aiueo[] = "あいうえお";
-static constexpr char kChars_Mo[] = "も";
-static constexpr char kChars_Mozuku[] = "もずく";
-static constexpr char kChars_Mozukusu[] = "もずくす";
-static constexpr char kChars_Momonga[] = "ももんが";
+constexpr char kChars_Aiueo[] = "あいうえお";
+constexpr char kChars_Mo[] = "も";
+constexpr char kChars_Mozuku[] = "もずく";
+constexpr char kChars_Mozukusu[] = "もずくす";
+constexpr char kChars_Momonga[] = "ももんが";
+}  // namespace
 
 void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
                                    absl::string_view value) {

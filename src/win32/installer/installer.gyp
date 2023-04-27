@@ -43,7 +43,6 @@
         'outdir32': '<(build_base)/<(CONFIGURATION_NAME)',
         'outdir32_dynamic': '<(build_base)/<(CONFIGURATION_NAME)Dynamic',
         'outdir64': '<(build_base)/<(CONFIGURATION_NAME)_x64',
-        'mozc_version_file': '<(gen_out_dir)/mozc_version.wxi',
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {
             'upgrade_code': 'C1A818AF-6EC9-49EF-ADCF-35A40475D156',
@@ -168,31 +167,6 @@
         ],
       },
       'targets': [
-        {
-          'target_name': 'mozc_installer_version_file',
-          'type': 'none',
-          'actions': [
-            {
-              'action_name': 'gen_installer_version_file',
-              'inputs': [
-                '../../mozc_version.txt',
-                '../../build_tools/replace_version.py',
-                'mozc_version_template.wxi',
-              ],
-              'outputs': [
-                '<(mozc_version_file)',
-              ],
-              'action': [
-                '<(python)', '../../build_tools/replace_version.py',
-                '--version_file', '../../mozc_version.txt',
-                '--input', 'mozc_version_template.wxi',
-                '--output', '<(mozc_version_file)',
-                '--branding', '<(branding)',
-              ],
-              'message': '<(mozc_version_file)',
-            },
-          ],
-        },
         {
           'target_name': 'mozc_tip32_postbuild',
           'variables': { 'target_file': '<(mozc_tip32_path)' },

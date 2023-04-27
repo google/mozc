@@ -79,14 +79,6 @@ test_suite(
 )
 
 mozc_cc_library(
-    name = "compiler_specific",
-    hdrs = ["compiler_specific.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-)
-
-mozc_cc_library(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
@@ -540,6 +532,7 @@ mozc_cc_library(
         ":logging",
         ":port",
         ":util",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",
@@ -841,9 +834,9 @@ mozc_cc_library(
         ":file_stream",
         ":file_util",
         ":logging",
-        ":port",
         ":singleton",
         ":system_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1038,10 +1031,7 @@ mozc_cc_library(
     srcs = ["cpu_stats.cc"],
     hdrs = ["cpu_stats.h"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-        ":port",
-    ],
+    deps = [":logging"],
 )
 
 mozc_cc_test(
@@ -1181,10 +1171,7 @@ mozc_cc_library(
     name = "embedded_file",
     hdrs = ["embedded_file.h"],
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 genrule(

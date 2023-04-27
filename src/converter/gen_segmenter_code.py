@@ -37,8 +37,8 @@ import sys
 
 HEADER = """
 namespace  {
-const int kLSize = %d;
-const int kRSize = %d;
+constexpr int kLSize = %d;
+constexpr int kRSize = %d;
 
 bool IsBoundaryInternal(uint16_t rid, uint16_t lid) {
   // BOS * or * EOS true

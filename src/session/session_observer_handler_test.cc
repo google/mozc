@@ -40,7 +40,6 @@ class SessionObserverMock : public SessionObserverInterface {
   SessionObserverMock() : eval_count_(0) {}
   SessionObserverMock(const SessionObserverMock &) = delete;
   SessionObserverMock &operator=(const SessionObserverMock &) = delete;
-  ~SessionObserverMock() override {}
 
   void EvalCommandHandler(const commands::Command &command) override {
     command_ = command;

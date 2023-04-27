@@ -27,47 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifdef _WIN32
+#include "base/win32/com_implements.h"
+
 #include <windows.h>
-#endif  // _WIN32
 
-#include <QGuiApplication>
-#include <QtGui>
-#include <string>
+#include <atomic>
 
-#include "base/logging.h"
-#include "base/process_mutex.h"
-#include "base/system_util.h"
-#include "gui/base/util.h"
-#include "gui/set_default_dialog/set_default_dialog.h"
+namespace mozc::win32 {
+namespace com_implements_internal {
 
-#ifdef _WIN32
-#include "base/win32/scoped_com.h"
-#endif  // _WIN32
+std::atomic<int> com_module_ref_count = 0;
 
-int RunSetDefaultDialog(int argc, char *argv[]) {
-  Q_INIT_RESOURCE(qrc_set_default_dialog);
+}  // namespace com_implements_internal
 
-  mozc::SystemUtil::DisableIME();
-
-  std::string name = "set_default_dialog.";
-  name += mozc::SystemUtil::GetDesktopNameAsString();
-
-  mozc::ProcessMutex mutex(name.c_str());
-  if (!mutex.Lock()) {
-    LOG(INFO) << "set_default_dialog is already running";
-    return -1;
+HRESULT CanComModuleUnloadNow() {
+  if (com_implements_internal::com_module_ref_count > 0) {
+    return S_FALSE;
   }
-
-#ifdef _WIN32
-  // For ImeUtil::SetDefault.
-  mozc::ScopedCOMInitializer com_initializer;
-#endif  // _WIN32
-
-  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
-
-  mozc::gui::GuiUtil::InstallTranslator("set_default_dialog");
-
-  mozc::gui::SetDefaultDialog dialog;
-  return dialog.exec();
+  return S_OK;
 }
+
+}  // namespace mozc::win32

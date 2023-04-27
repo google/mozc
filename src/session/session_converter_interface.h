@@ -32,28 +32,18 @@
 #ifndef MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_CONVERTER_INTERFACE_H_
 
+#include <cstddef>
 #include <string>
 
-#include "base/port.h"
+#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
-
-namespace commands {
-class Context;
-class Output;
-class Request;
-}  // namespace commands
-
-namespace composer {
-class Composer;
-}
-
 namespace session {
-class CandidateList;
 
 struct ConversionPreferences {
   int max_history_size;
@@ -76,11 +66,11 @@ struct ConversionPreferences {
 // support stateful operations related with the converter.
 class SessionConverterInterface {
  public:
-  SessionConverterInterface() {}
+  SessionConverterInterface() = default;
   SessionConverterInterface(const SessionConverterInterface &) = delete;
   SessionConverterInterface &operator=(const SessionConverterInterface &) =
       delete;
-  virtual ~SessionConverterInterface() {}
+  virtual ~SessionConverterInterface() = default;
 
   typedef int States;
   enum State {

@@ -47,7 +47,6 @@ mozc_cc_binary(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":ime_switcher",
         ":prelauncher",
         "//base:crash_report_handler",
         "//base:init_mozc",
@@ -74,23 +73,6 @@ lexan.resource_files(
 )
 
 mozc_cc_library(
-    name = "ime_switcher",
-    srcs = ["ime_switcher.cc"],
-    hdrs = ["ime_switcher.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "//base:logging",
-        "//base:system_util",
-        "//client",
-        "//config:config_handler",
-        "//protocol:config_cc_proto",
-        "//win32/base:imm_util",
-        "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-mozc_cc_library(
     name = "prelauncher",
     srcs = ["prelauncher.cc"],
     hdrs = ["prelauncher.h"],
@@ -99,6 +81,7 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:run_level",
+        "//client",
         "//client:client_interface",
         "//renderer:renderer_client",
     ],

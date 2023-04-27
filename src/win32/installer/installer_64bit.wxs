@@ -31,10 +31,6 @@
 -->
 
 
-<?ifdef var.MozcVersionFile ?>
-  <?include $(var.MozcVersionFile) ?>
-<?endif?>
-
 <!-- Define variables with default values if not exist. WiX compiler does not
      allow to use any undefined variable even when the variable is referenced
      between ifdef conditional block. -->
@@ -377,13 +373,17 @@
       </Component>
     </Directory>
 
+    <!--
+       TODO: Consider migrating to 'MajorUpgrade' rule.
+       See https://github.com/google/mozc/issues/734#issuecomment-1524294119
+    -->
     <Upgrade Id='$(var.UpgradeCode)'>
       <UpgradeVersion
           Minimum='0.0.0.0' IncludeMinimum='yes'
-          Maximum='$(var.MozcVersion)' IncludeMaximum='no'
+          Maximum='$(var.MozcVersion)' IncludeMaximum='yes'
           OnlyDetect='no' Property='UPGRADING'/>
       <UpgradeVersion
-          Minimum='$(var.MozcVersion)' IncludeMinimum='yes'
+          Minimum='$(var.MozcVersion)' IncludeMinimum='no'
           OnlyDetect='yes' Property='NEWERVERSIONDETECTED' />
     </Upgrade>
 

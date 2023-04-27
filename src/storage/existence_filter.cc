@@ -33,9 +33,14 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
-#include "base/port.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace storage {
@@ -104,9 +109,8 @@ void BlockBitmap::Clear() {
   memset(block_[num_blocks_ - 1], 0, bytes_in_last_);
 }
 
-bool BlockBitmap::GetMutableFragment(uint32_t *iter,
-                                                      char ***ptr,
-                                                      size_t *size) {
+bool BlockBitmap::GetMutableFragment(uint32_t *iter, char ***ptr,
+                                     size_t *size) {
   const uint32_t b = *iter;
   if (b >= num_blocks_) {
     // |iter| reached to the end of the block.
@@ -121,8 +125,8 @@ bool BlockBitmap::GetMutableFragment(uint32_t *iter,
 
 }  // namespace internal
 
-using internal::BlockBitmap;
 using internal::BitsToWords;
+using internal::BlockBitmap;
 
 ExistenceFilter::ExistenceFilter(uint32_t m, uint32_t n, int k)
     : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
@@ -139,8 +143,8 @@ ExistenceFilter::ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable)
   rep_->Clear();
 }
 
-ExistenceFilter *ExistenceFilter::CreateOptimal(size_t size_in_bytes,
-                                                uint32_t estimated_insertions) {
+ExistenceFilter ExistenceFilter::CreateOptimal(size_t size_in_bytes,
+                                               uint32_t estimated_insertions) {
   CHECK_LT(size_in_bytes, (1 << 29)) << "Requested size is too big";
   CHECK_GT(estimated_insertions, 0);
   const uint32_t m = size_in_bytes * 8;
@@ -157,9 +161,7 @@ ExistenceFilter *ExistenceFilter::CreateOptimal(size_t size_in_bytes,
 
   VLOG(1) << "optimal_k: " << optimal_k;
 
-  ExistenceFilter *filter = new ExistenceFilter(m, n, optimal_k);
-  CHECK(filter);
-  return filter;
+  return ExistenceFilter(m, n, optimal_k);
 }
 
 void ExistenceFilter::Clear() { rep_->Clear(); }
@@ -197,24 +199,20 @@ size_t ExistenceFilter::MinFilterSizeInBytesForErrorRate(float error_rate,
   return static_cast<size_t>(ceil(min_bits / 8));
 }
 
-// allocate 'buf' and write filter to the buf.
-// 'size' will hold the size of buf
-void ExistenceFilter::Write(char **buf, size_t *size) {
+std::string ExistenceFilter::Write() {
   const int require_bytes = sizeof(Header) + Size();
+  std::string buf;
+  buf.resize(require_bytes);
 
-  *buf = new char[require_bytes];
-  CHECK(*buf);
-  *size = require_bytes;
-
-  char *buf_ptr = *buf;
+  absl::Span<char> span(buf);
 
   // write header
-  memcpy(buf_ptr, &vec_size_, sizeof(vec_size_));
-  buf_ptr += sizeof(vec_size_);
-  memcpy(buf_ptr, &expected_nelts_, sizeof(expected_nelts_));
-  buf_ptr += sizeof(expected_nelts_);
-  memcpy(buf_ptr, &num_hashes_, sizeof(num_hashes_));
-  buf_ptr += sizeof(num_hashes_);
+  memcpy(span.data(), &vec_size_, sizeof(vec_size_));
+  span = span.subspan(sizeof(vec_size_));
+  memcpy(span.data(), &expected_nelts_, sizeof(expected_nelts_));
+  span = span.subspan(sizeof(expected_nelts_));
+  memcpy(span.data(), &num_hashes_, sizeof(num_hashes_));
+  span = span.subspan(sizeof(num_hashes_));
   // This method is called on data generation and we can call LOG(INFO) here.
   LOG(INFO) << "Write header : vec_size " << vec_size_ << ", expected_nelts "
             << expected_nelts_ << ", num_hashes " << num_hashes_;
@@ -225,70 +223,78 @@ void ExistenceFilter::Write(char **buf, size_t *size) {
   size_t write = 0;
   for (uint32_t iter = 0;
        rep_->GetMutableFragment(&iter, &fragment_ptr, &bytes);) {
-    memcpy(buf_ptr, *fragment_ptr, bytes);
-    buf_ptr += bytes;
+    memcpy(span.data(), *fragment_ptr, bytes);
+    span = span.subspan(bytes);
     write += bytes;
   }
   if (write != Size()) {
     LOG(ERROR) << "Write " << write << " bytes instead of " << Size();
   }
+  return buf;
 }
 
-bool ExistenceFilter::ReadHeader(const char *buf, Header *header) {
-  memcpy(&(header->m), buf, sizeof(header->m));
-  buf += sizeof(header->m);
-  memcpy(&(header->n), buf, sizeof(header->n));
-  buf += sizeof(header->n);
-  memcpy(&(header->k), buf, sizeof(header->k));
-  buf += sizeof(header->k);
-  if (header->k >= 8 || header->k <= 0) {
-    LOG(ERROR) << "Bad number of hashes (header->k)";
-    return false;
+absl::StatusOr<ExistenceFilter::Header> ExistenceFilter::ReadHeader(
+    absl::Span<const char> buf) {
+  ExistenceFilter::Header header;
+  memcpy(&(header.m), buf.data(), sizeof(header.m));
+  buf = buf.subspan(sizeof(header.m));
+  memcpy(&(header.n), buf.data(), sizeof(header.n));
+  buf = buf.subspan(sizeof(header.n));
+  memcpy(&(header.k), buf.data(), sizeof(header.k));
+  buf = buf.subspan(sizeof(header.k));
+  if (header.k >= 8 || header.k <= 0) {
+    LOG(ERROR) << "Bad number of hashes (header.k)";
+    return absl::InvalidArgumentError("Bad number of hashes (header.k)");
   }
-  return true;
+  return header;
 }
 
-ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
+absl::StatusOr<ExistenceFilter> ExistenceFilter::Read(
+    absl::Span<const char> buf) {
   Header header;
   const uint32_t header_bytes =
       sizeof(header.m) + sizeof(header.n) + sizeof(header.k);
-  if (size < header_bytes) {
+  if (buf.size() < header_bytes) {
     LOG(ERROR) << "Not enough bufsize: could not read header";
-    return nullptr;
+    return absl::InvalidArgumentError(
+        "Not enough bufsize: could not read header");
   }
 
-  if (!ReadHeader(buf, &header)) {
+  if (absl::StatusOr<Header> result = ReadHeader(buf); result.ok()) {
+    header = *std::move(result);
+  } else {
     LOG(ERROR) << "Invalid format: could not read header";
-    return nullptr;
+    return absl::InvalidArgumentError("Invalid format: could not read header");
   }
-  buf += header_bytes;
+  buf = buf.subspan(header_bytes);
 
   const uint32_t filter_size = BitsToWords(header.m);
   const uint32_t filter_bytes = filter_size * sizeof(uint32_t);
   VLOG(1) << "Reading bloom filter with size: " << filter_bytes << " bytes, "
           << "estimated insertions: " << header.n << " (k: " << header.k << ")";
 
-  if (size < header_bytes + filter_bytes) {
+  if (buf.size() < filter_bytes) {
     LOG(ERROR) << "Not enough bufsize: could not read filter";
-    return nullptr;
+    return absl::InvalidArgumentError("Not enough bufsize: could not read");
   }
 
   // Create a mutable existence filter.
-  std::unique_ptr<ExistenceFilter> filter(
-      new ExistenceFilter(header.m, header.n, header.k, false));
+  ExistenceFilter filter(header.m, header.n, header.k, false);
   char **ptr = nullptr;
   size_t n = 0;
   size_t read = 0;
-  for (uint32_t iter = 0; filter->rep_->GetMutableFragment(&iter, &ptr, &n);) {
-    *ptr = const_cast<char *>(buf);  // TODO(taku): don't want to remove const
-    buf += n;
+  for (uint32_t iter = 0; filter.rep_->GetMutableFragment(&iter, &ptr, &n);) {
+    *ptr = const_cast<char *>(
+        buf.data());  // TODO(taku): don't want to remove const
+    buf = buf.subspan(n);
     read += n;
   }
   if (read != filter_bytes) {
     LOG(ERROR) << "Read " << read << " bytes instead of " << filter_bytes;
-    return nullptr;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Read ", read, " bytes instead"));
   }
-  return filter.release();
+  return filter;
 }
 
 }  // namespace storage

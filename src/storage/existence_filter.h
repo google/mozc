@@ -30,10 +30,13 @@
 #ifndef MOZC_STORAGE_EXISTENCE_FILTER_H_
 #define MOZC_STORAGE_EXISTENCE_FILTER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 
-#include "base/port.h"
+#include "absl/status/statusor.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace storage {
@@ -58,12 +61,12 @@ class ExistenceFilter {
   // 'k' is the number of hash values to use per insert/lookup
   // k must be less than 8
   ExistenceFilter(uint32_t m, uint32_t n, int k);
-  ExistenceFilter(const ExistenceFilter &) = delete;
-  ExistenceFilter &operator=(const ExistenceFilter &) = delete;
+  ExistenceFilter(ExistenceFilter &&) = default;
+  ExistenceFilter &operator=(ExistenceFilter &&) = default;
   ~ExistenceFilter() = default;
 
-  static ExistenceFilter *CreateOptimal(size_t size_in_bytes,
-                                        uint32_t estimated_insertions);
+  static ExistenceFilter CreateOptimal(size_t size_in_bytes,
+                                       uint32_t estimated_insertions);
 
   void Clear();
 
@@ -85,23 +88,24 @@ class ExistenceFilter {
   static size_t MinFilterSizeInBytesForErrorRate(float error_rate,
                                                  size_t num_elements);
 
-  void Write(char **buf, size_t *size);
+  // Writes the existence filter to a buffer and returns it.
+  std::string Write();
 
-  static bool ReadHeader(const char *buf, Header *header);
+  static absl::StatusOr<Header> ReadHeader(absl::Span<const char> buf);
 
   // Read Existence filter from buf[]
   // Note that the returned ExsitenceFilter is immutable filter.
   // Any mutable operations will destroy buf[].
-  static ExistenceFilter *Read(const char *buf, size_t size);
+  static absl::StatusOr<ExistenceFilter> Read(absl::Span<const char> buf);
 
  private:
-  // private constructor for ExistenceFilter::Read();
+  // Private constructor for ExistenceFilter::Read().
   ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable);
 
   std::unique_ptr<internal::BlockBitmap> rep_;  // points to bitmap
-  const uint32_t vec_size_;                     // size of bitmap (in bits)
-  const uint32_t expected_nelts_;               // expected number of inserts
-  const int32_t num_hashes_;                    // number of hashes per lookup
+  uint32_t vec_size_;                           // size of bitmap (in bits)
+  uint32_t expected_nelts_;                     // expected number of inserts
+  int32_t num_hashes_;                          // number of hashes per lookup
 };
 
 namespace internal {

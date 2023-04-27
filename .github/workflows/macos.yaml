@@ -31,12 +31,40 @@ jobs:
           # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
           echo "MOZC_QT_PATH=${PWD}/5.15.2/clang_64" >> $GITHUB_ENV
 
-      - name: build
+      - name: blaze build
         working-directory: ./src
         run: |
           bazel build --config oss_macos package
 
-      - name: tests
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mozc.pkg
+          path: src/bazel-bin/mac/Mozc.pkg
+          if-no-files-found: warn
+
+  test:
+    # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
+    runs-on: macos-11
+    timeout-minutes: 60
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: setup
+        working-directory: ./src/third_party
+        run: |
+          # Install Qt
+          wget https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5152/qt.qt5.5152.clang_64/5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
+          tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
+          #
+          # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
+          echo "MOZC_QT_PATH=${PWD}/5.15.2/clang_64" >> $GITHUB_ENV
+
+      - name: blaze test
         working-directory: ./src
         run: |
-          bazel test --config oss_macos base/... mac/...
+          bazel test --config oss_macos ... -- -gui/... -protocol/... -renderer/qt/... -session:session_watch_dog_test -third_party/... -unix/...

@@ -34,21 +34,12 @@
 
 #include "base/logging.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {
-
-using ::mozc::commands::Request;
-
-ImeContext::ImeContext()
-    : request_(&Request::default_instance()),
-      config_(&config::ConfigHandler::DefaultConfig()),
-      key_map_manager_(nullptr) {}
-
-ImeContext::~ImeContext() = default;
 
 const composer::Composer &ImeContext::composer() const {
   DCHECK(composer_.get());

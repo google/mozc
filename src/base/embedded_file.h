@@ -52,9 +52,9 @@
 //    // In this translation unit, the file content can be retrieved by:
 //    absl::string_view data = LoadEmbeddedFile(kVarName);
 
+#include <cstddef>
 #include <cstdint>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
