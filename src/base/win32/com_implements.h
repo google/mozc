@@ -55,6 +55,13 @@ ABSL_CONST_INIT extern std::atomic<int> com_module_ref_count;
 // Note that the return value is HRESULT, so S_FALSE is 1.
 HRESULT CanComModuleUnloadNow();
 
+// Default traits for ComImplements.
+struct ComImplementsTraits {
+  // OnObjectRelease is called when each COM instance is released.
+  // The remaining object count is passed as ref.
+  static inline void OnObjectRelease(ULONG ref) {}
+};
+
 // This is the default implementation of IsIIDOf. If the COM interface derives
 // another COM interface (not IUnknown), explicitly define an overload of
 // IsIIDOf.
@@ -77,13 +84,13 @@ bool IsIIDOf(REFIID riid) {
 // ComImplements is the base class for COM implementation classes and implements
 // the IUnknown methods.
 //
-// class FooBar : public ComImplements<IFoo, IBar> {
+// class FooBar : public ComImplements<ComImplementsTraits, IFoo, IBar> {
 //  ...
 // }
 //
 // Note that you need to define a specialization of IsIIDOf<IFoo>() if IFoo
 // is not an immediate derived interface of IUnknown.
-template <typename... Interfaces>
+template <typename Traits, typename... Interfaces>
 class ComImplements : public Interfaces... {
  public:
   static_assert(
@@ -94,29 +101,34 @@ class ComImplements : public Interfaces... {
   // Disallow copies and movies.
   ComImplements(const ComImplements &) = delete;
   ComImplements &operator=(const ComImplements &) = delete;
-  virtual ~ComImplements() { --com_implements_internal::com_module_ref_count; }
+  virtual ~ComImplements() {
+    Traits::OnObjectRelease(--com_implements_internal::com_module_ref_count);
+  }
 
   // IUnknown methods.
-  STDMETHODIMP_(ULONG) AddRef() final;
-  STDMETHODIMP_(ULONG) Release() final;
-  STDMETHODIMP QueryInterface(REFIID riid, void **out) final;
+  // ComImplements provides standard implementations.
+  // TODO(yuryu): Make these final by reorganizing implementation classes.
+  STDMETHODIMP_(ULONG) AddRef() override;
+  STDMETHODIMP_(ULONG) Release() override;
+  STDMETHODIMP QueryInterface(REFIID riid, void **out) override;
 
- private:
+ protected:
   template <typename T, typename... Rest>
   void *QueryInterfaceImpl(REFIID riid);
 
+ private:
   std::atomic<ULONG> ref_count_;
 };
 
-template <typename... Interfaces>
+template <typename Traits, typename... Interfaces>
 STDMETHODIMP_(ULONG)
-ComImplements<Interfaces...>::AddRef() {
+ComImplements<Traits, Interfaces...>::AddRef() {
   return ++ref_count_;
 }
 
-template <typename... Interfaces>
+template <typename Traits, typename... Interfaces>
 STDMETHODIMP_(ULONG)
-ComImplements<Interfaces...>::Release() {
+ComImplements<Traits, Interfaces...>::Release() {
   const ULONG new_value = --ref_count_;
   if (new_value == 0) {
     delete this;
@@ -124,9 +136,9 @@ ComImplements<Interfaces...>::Release() {
   return new_value;
 }
 
-template <typename... Interfaces>
-STDMETHODIMP ComImplements<Interfaces...>::QueryInterface(REFIID riid,
-                                                          void **out) {
+template <typename Traits, typename... Interfaces>
+STDMETHODIMP ComImplements<Traits, Interfaces...>::QueryInterface(REFIID riid,
+                                                                  void **out) {
   if (out == nullptr) {
     return E_POINTER;
   }
@@ -138,9 +150,9 @@ STDMETHODIMP ComImplements<Interfaces...>::QueryInterface(REFIID riid,
   return S_OK;
 }
 
-template <typename... Interfaces>
+template <typename Traits, typename... Interfaces>
 template <typename T, typename... Rest>
-void *ComImplements<Interfaces...>::QueryInterfaceImpl(REFIID riid) {
+void *ComImplements<Traits, Interfaces...>::QueryInterfaceImpl(REFIID riid) {
   if (IsIIDOf<T>(riid)) {
     return absl::implicit_cast<T *>(this);
   }
