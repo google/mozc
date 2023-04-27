@@ -29,11 +29,14 @@
 
 #include "rewriter/environmental_filter_rewriter.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/system_util.h"
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "data_manager/emoji_data.h"
@@ -93,13 +96,13 @@ constexpr EmojiData kTestEmojiList[] = {
     {"🧑‍🦽", EmojiVersion::E12_1},  // 1F9D1 200D 1F9BD
 
     // Emoji 13.0 Example
-    {"🛻", EmojiVersion::E13_0},            // 1F6FB
-    {"🛼", EmojiVersion::E13_0},            // 1F6FC
+    {"🛻", EmojiVersion::E13_0},           // 1F6FB
+    {"🛼", EmojiVersion::E13_0},           // 1F6FC
     {"🤵‍♀", EmojiVersion::E13_0},   // 1F935 200D 2640
     {"🤵‍♂", EmojiVersion::E13_0},   // 1F935 200D 2642
-    {"🥲", EmojiVersion::E13_0},            // 1F972
-    {"🥷", EmojiVersion::E13_0},            // 1F977
-    {"🥸", EmojiVersion::E13_0},            // 1F978
+    {"🥲", EmojiVersion::E13_0},           // 1F972
+    {"🥷", EmojiVersion::E13_0},           // 1F977
+    {"🥸", EmojiVersion::E13_0},           // 1F978
     {"🧑‍🎄", EmojiVersion::E13_0},  // 1F9D1 200D 1F384
 
     // Emoji 14.0 Example
@@ -186,36 +189,37 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
   {
     CharacterGroupFinder finder;
     finder.Initialize({
-        {0x1B001},
-        {0x1B002},
-        {0x1B122},
-        {0x1B223},
-        {0x1B224},
-        {0x1B225},
-        {0x1B229},
-        {0x1F000},
-        {0x1F001},
-        {0x1B111, 0x200D, 0x1B183},
-        {0x1B111, 0x200D, 0x1B142, 0x200D, 0x1B924},
-        {0x1B111, 0x3009},
-        {0x1B142, 0x200D, 0x3009, 0x1B924},
-        {0x1B924, 0x200D, 0x1B183},
+        U"\U0001B001",
+        U"\U0001B002",
+        U"\U0001B122",
+        U"\U0001B223",
+        U"\U0001B224",
+        U"\U0001B225",
+        U"\U0001B229",
+        U"\U0001F000",
+        U"\U0001F001",
+        U"\U0001B111\u200D\U0001B183",
+        U"\U0001B111\u200D\U0001B142\u200D\U0001B924",
+        U"\U0001B111\u3009",
+        U"\U0001B142\u200D\u3009\U0001B924",
+        U"\U0001B924\u200D\U0001B183",
     });
-    EXPECT_TRUE(finder.FindMatch({0x1B001}));
-    EXPECT_TRUE(finder.FindMatch({0x1B002}));
-    EXPECT_TRUE(finder.FindMatch({0x1B223}));
-    EXPECT_TRUE(finder.FindMatch({0x1B111, 0x200D, 0x1B142, 0x200D, 0x1B924}));
-    EXPECT_TRUE(finder.FindMatch({0x1B111, 0x3009}));
-    EXPECT_FALSE(finder.FindMatch({0x1B111, 0x200D, 0x1B182}));
+    EXPECT_TRUE(finder.FindMatch(U"\U0001B001"));
+    EXPECT_TRUE(finder.FindMatch(U"\U0001B002"));
+    EXPECT_TRUE(finder.FindMatch(U"\U0001B223"));
+    EXPECT_TRUE(
+        finder.FindMatch(U"\U0001B111\u200D\U0001B142\u200D\U0001B924"));
+    EXPECT_TRUE(finder.FindMatch(U"\U0001B111\u3009"));
+    EXPECT_FALSE(finder.FindMatch(U"\U0001B111\u200D\U0001B182"));
   }
   // Test CharacterGroupFinder with Emoji data. This is also necessary to
   // express how this finder should work.
   {
     CharacterGroupFinder finder;
     finder.Initialize({
-        {U'❤'},
-        {U'😊'},
-        {U'😋'},
+        U"❤",
+        U"😊",
+        U"😋",
         Util::Utf8ToCodepoints("🇺🇸"),
         Util::Utf8ToCodepoints("🫱🏻"),
         Util::Utf8ToCodepoints("❤️‍🔥"),
@@ -255,7 +259,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
 // filter Emoji.
 TEST_F(EnvironmentalFilterRewriterTest, EmojiFilterTest) {
   // Emoji after Unicode 12.1 should be all filtered if no additional renderable
-  // charcter group is specified.
+  // character group is specified.
   {
     Segments segments;
     const ConversionRequest request;
@@ -446,7 +450,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   // U+FF5E
   EXPECT_EQ(segments.segment(0).candidate(0).value, "～");
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
-#else  // _WIN32
+#else   // _WIN32
   EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ(segments.segment(0).candidate(0).value, "〜");

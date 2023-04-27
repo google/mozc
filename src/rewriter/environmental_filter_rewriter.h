@@ -44,26 +44,26 @@
 // 3. Unavailable glyph removal
 // There are some glyphs that can be in candidates but not always available
 // among environments. For example, newer emojis tend to be unavailable in old
-// OSes. In order to prevend such glyphs appearing as candidates, this rewriter
+// OSes. In order to reject such glyphs appearing as candidates, this rewriter
 // removes candidates containing unavailable glyphs. Information about font
 // availability in environments are sent by clients.
 #ifndef MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
 #define MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
 
+#include <cstddef>
 #include <cstdint>
-#include <memory>
-#include <set>
-#include <utility>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "base/text_normalizer.h"
+#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
 
 class CharacterGroupFinder {
  public:
@@ -71,27 +71,27 @@ class CharacterGroupFinder {
   ~CharacterGroupFinder() = default;
 
   // Sets target_codepoints, which represents target group.
-  void Initialize(const std::vector<std::vector<char32_t>> &target_codepoints);
+  void Initialize(const std::vector<std::u32string> &target_codepoints);
   // Finds targeted character in given target codepoints. If found, returns
   // true. If not found, returns false.
-  bool FindMatch(const std::vector<char32_t> &target) const;
+  bool FindMatch(std::u32string_view target) const;
 
  private:
   // Closed range of single codepoints, like {{U+1F000, U+1F100}, {U+1F202,
   // U+1F202}}. For implementation reason, they are split into two.
-  std::vector<char32_t> sorted_single_codepoint_lefts_;
-  std::vector<char32_t> sorted_single_codepoint_rights_;
+  std::u32string sorted_single_codepoint_lefts_;
+  std::u32string sorted_single_codepoint_rights_;
   char32_t min_single_codepoint_ = 0;
   // First: Vector of Emoji which requires multiple codepoints, like {{U+1Fxxx,
   // U+200D, U+1Fyyy}, {U+1Fzzz, U+200D, U+1Fwww}}.
   // Second: rolling hash of the given codepoints.
-  std::vector<std::vector<char32_t>> multiple_codepoints_;
+  std::vector<std::u32string> multiple_codepoints_;
   std::vector<int64_t> multiple_codepoints_hashes_;
   // This is max length of multiple codepoints.
   size_t max_length_ = 0;
-  // Intersction of multiple_codepoints_. For example, for emoji, it is very
+  // Intersection of multiple_codepoints_. For example, for emoji, it is very
   // likely to have ZWJ (U+200D) in common.
-  std::set<char32_t> multiple_codepoints_intersection_;
+  absl::flat_hash_set<char32_t> multiple_codepoints_intersection_;
 };
 
 class EnvironmentalFilterRewriter : public RewriterInterface {
@@ -101,7 +101,6 @@ class EnvironmentalFilterRewriter : public RewriterInterface {
   // terminates with an error.
   explicit EnvironmentalFilterRewriter(
       const DataManagerInterface &data_manager);
-  ~EnvironmentalFilterRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 

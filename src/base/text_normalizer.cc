@@ -30,11 +30,12 @@
 #include "base/text_normalizer.h"
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -200,8 +201,8 @@ std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
 
 bool TextNormalizer::NormalizeTextToSvs(absl::string_view input,
                                         std::string *output) {
-  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(input);
-  std::vector<char32_t> normalized;
+  std::u32string codepoints = Util::Utf8ToCodepoints(input);
+  std::u32string normalized;
   bool modified = false;
   for (const char32_t cp : codepoints) {
     const std::pair<int, int> svs = ConvertJaCjkCompatToSvs(cp);
