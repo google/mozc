@@ -86,10 +86,14 @@ bool IsIIDOf(REFIID riid) {
 template <typename... Interfaces>
 class ComImplements : public Interfaces... {
  public:
-  static_assert(std::conjunction_v<std::is_base_of<IUnknown, Interfaces>...>,
-                "COM interfaces must derive from IUnknown.");
+  static_assert(
+      std::conjunction_v<std::is_convertible<Interfaces *, IUnknown *>...>,
+      "COM interfaces must derive from IUnknown.");
 
   ComImplements() { ++com_implements_internal::com_module_ref_count; }
+  // Disallow copies and movies.
+  ComImplements(const ComImplements &) = delete;
+  ComImplements &operator=(const ComImplements &) = delete;
   virtual ~ComImplements() { --com_implements_internal::com_module_ref_count; }
 
   // IUnknown methods.
