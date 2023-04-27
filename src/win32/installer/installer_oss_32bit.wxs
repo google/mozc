@@ -163,8 +163,8 @@
                 Wait='yes' />
           </Component>
           <Component Id='MozcTIP32' Guid='*' Permanent='no'>
-            <File Id='MozcTIP32.dll'
-                Name='MozcTIP32.dll'
+            <File Id='mozc_ja_tip32.dll'
+                Name='mozc_ja_tip32.dll'
                 DiskId='1' Checksum='yes'
                 Source='$(var.MozcTIP32Path)' Vital='yes' />
           </Component>
