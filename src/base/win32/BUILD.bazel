@@ -261,6 +261,7 @@ mozc_cc_library(
     deps = [
         ":hresultor",
         "@com_google_absl//absl/base",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

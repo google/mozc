@@ -32,8 +32,8 @@
 
 #include <objbase.h>
 #include <unknwn.h>
+#include <wil/com.h>
 #include <wrl/client.h>
-#include <wrl/implements.h>
 
 #include <new>
 #include <type_traits>
@@ -43,19 +43,6 @@
 #include "absl/base/casts.h"
 
 namespace mozc::win32 {
-
-// ComRawPtr returns a raw pointer of the COM object. It returns the parameter
-// as it is if it's already a raw pointer. If it's a ComPtr<T>, it calls
-// ComPtr<T>::Get().
-template <typename T>
-T *ComRawPtr(T *p) {
-  return p;
-}
-
-template <typename T>
-T *ComRawPtr(const Microsoft::WRL::ComPtr<T> &p) {
-  return p.Get();
-}
 
 // MakeComPtr is like std::make_unique but for ComPtr. Returns nullptr if new
 // fails.
@@ -90,7 +77,7 @@ template <typename T, typename U>
 HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U &&source) {
   using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
 
-  auto ptr = ComRawPtr(std::forward<U>(source));
+  auto ptr = wil::com_raw_ptr(std::forward<U>(source));
   // If source is convertible to T, casting is faster than calling
   // QueryInterface.
   if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
@@ -114,7 +101,7 @@ Microsoft::WRL::ComPtr<T> ComQuery(U &&source) {
 // Similar to ComQuery but returns nullptr if source is nullptr.
 template <typename T, typename U>
 Microsoft::WRL::ComPtr<T> ComCopy(U &&source) {
-  auto ptr = ComRawPtr(std::forward<U>(source));
+  auto ptr = wil::com_raw_ptr(std::forward<U>(source));
   if (ptr) {
     return ComQuery<T>(ptr);
   }
