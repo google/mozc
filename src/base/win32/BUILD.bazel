@@ -274,6 +274,7 @@ mozc_cc_test(
         ":com",
         ":scoped_com",
         "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

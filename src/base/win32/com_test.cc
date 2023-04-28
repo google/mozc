@@ -34,20 +34,24 @@
 #include <rpc.h>
 #include <shobjidl.h>
 #include <unknwn.h>
+#include <wil/resource.h>
 #include <wrl.h>
 
+#include <string_view>
 #include <utility>
 
 #include "base/win32/scoped_com.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc::win32 {
 namespace {
 
-using Microsoft::WRL::ClassicCom;
-using Microsoft::WRL::ComPtr;
-using Microsoft::WRL::RuntimeClass;
-using Microsoft::WRL::RuntimeClassFlags;
+using ::Microsoft::WRL::ClassicCom;
+using ::Microsoft::WRL::ComPtr;
+using ::Microsoft::WRL::RuntimeClass;
+using ::Microsoft::WRL::RuntimeClassFlags;
+using ::testing::StrEq;
 
 // Mock interfaces for testing.
 MIDL_INTERFACE("A03A80F4-9254-4C8B-AF25-0674FCED18E5")
@@ -185,6 +189,15 @@ TEST_F(ComTest, MakeComPtr) {
     EXPECT_EQ(ref, 1);
   }
   EXPECT_EQ(ref, 0);
+}
+
+TEST_F(ComTest, MakeUniqueBSTR) {
+  EXPECT_FALSE(MakeUniqueBSTR(nullptr).is_valid());
+  wil::unique_bstr empty_string = MakeUniqueBSTR(L"");
+  EXPECT_THAT(empty_string.get(), StrEq(L""));
+  constexpr std::wstring_view kSource = L"こんにちは, Mozc.";
+  wil::unique_bstr result = MakeUniqueBSTR(kSource);
+  EXPECT_EQ(result.get(), kSource);
 }
 
 }  // namespace

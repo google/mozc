@@ -31,11 +31,14 @@
 #define MOZC_BASE_WIN32_COM_H_
 
 #include <objbase.h>
+#include <oleauto.h>
 #include <unknwn.h>
 #include <wil/com.h>
+#include <wil/resource.h>
 #include <wrl/client.h>
 
 #include <new>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -106,6 +109,17 @@ Microsoft::WRL::ComPtr<T> ComCopy(U &&source) {
     return ComQuery<T>(ptr);
   }
   return nullptr;
+}
+
+// MakeUniqueBSTR allocates a new BSTR and returns as wil::unique_bstr.
+// Use this function instead of wil::make_bstr() as it doesn't use
+// SysAllocStringLen() for strings with sizes.
+inline wil::unique_bstr MakeUniqueBSTR(const std::wstring_view source) {
+  return wil::unique_bstr(SysAllocStringLen(source.data(), source.size()));
+}
+
+inline wil::unique_bstr MakeUniqueBSTR(const wchar_t *source) {
+  return wil::unique_bstr(SysAllocString(source));
 }
 
 }  // namespace mozc::win32
