@@ -31,8 +31,8 @@
 
 #include <guiddef.h>
 #include <unknwn.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
 #include "win32/tip/tip_text_service.h"
 
@@ -40,23 +40,20 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using Microsoft::WRL::ComPtr;
-
 HRESULT STDMETHODCALLTYPE TipClassFactory::CreateInstance(IUnknown *unknown,
                                                           REFIID interface_id,
                                                           void **object) {
-  HRESULT result = S_OK;
-
   if (object == nullptr) {
     return E_INVALIDARG;
   }
-  *object = nullptr;
   if (unknown != nullptr) {
+    *object = nullptr;
     return CLASS_E_NOAGGREGATION;
   }
 
   // Create a TipTextService object and initialize it.
-  ComPtr<TipTextService> text_service(TipTextServiceFactory::Create());
+  wil::com_ptr_nothrow<TipTextService> text_service(
+      TipTextServiceFactory::Create());
 
   // Retrieve the requested interface from the TipTextService object.
   // If this TipTextService object implements the given interface, the

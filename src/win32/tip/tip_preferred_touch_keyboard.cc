@@ -31,9 +31,10 @@
 
 #include <ctffunc.h>
 #include <guiddef.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
+#include "base/win32/com.h"
 #include "base/win32/com_implements.h"
 #include "win32/tip/tip_dll_module.h"
 
@@ -47,8 +48,6 @@ bool IsIIDOf<ITfFnGetPreferredTouchKeyboardLayout>(REFIID riid) {
 
 namespace tsf {
 namespace {
-
-using Microsoft::WRL::ComPtr;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 constexpr wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
@@ -87,8 +86,9 @@ class GetPreferredTouchKeyboardLayoutImpl final
 }  // namespace
 
 // static
-ComPtr<ITfFnGetPreferredTouchKeyboardLayout> TipPreferredTouchKeyboard::New() {
-  return new GetPreferredTouchKeyboardLayoutImpl();
+wil::com_ptr_nothrow<ITfFnGetPreferredTouchKeyboardLayout>
+TipPreferredTouchKeyboard::New() {
+  return MakeComPtr<GetPreferredTouchKeyboardLayoutImpl>();
 }
 
 // static

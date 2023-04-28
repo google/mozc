@@ -137,7 +137,8 @@ CComPtr<ITfComposition> CreateComposition(TipTextService *text_service,
   CComPtr<ITfComposition> composition;
   if (FAILED(composition_context->StartComposition(
           write_cookie, insertion_pos,
-          text_service->CreateCompositionSink(context), &composition))) {
+          text_service->CreateCompositionSink(context).get(),
+          &composition))) {
     return nullptr;
   }
   return composition;

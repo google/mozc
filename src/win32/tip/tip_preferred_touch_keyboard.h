@@ -33,7 +33,7 @@
 #include <ctffunc.h>
 #include <guiddef.h>
 #include <unknwn.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 namespace mozc {
 namespace win32 {
@@ -47,7 +47,7 @@ class TipPreferredTouchKeyboard {
       delete;
 
   // Returns a COM object that implements ITfFnGetPreferredTouchKeyboardLayout.
-  static Microsoft::WRL::ComPtr<ITfFnGetPreferredTouchKeyboardLayout> New();
+  static wil::com_ptr_nothrow<ITfFnGetPreferredTouchKeyboardLayout> New();
   static const IID& GetIID();
 };
 

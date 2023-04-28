@@ -109,6 +109,7 @@ mozc_cc_library(
     deps = [
         ":tip_dll_module",
         ":tip_text_service",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -117,7 +118,7 @@ mozc_cc_library(
     hdrs = ["tip_text_service.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base/win32:com_implements"],
+    deps = ["@com_microsoft_wil//:wil"],
 )
 
 mozc_cc_library(
@@ -126,7 +127,6 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":tip_composition_util",
         ":tip_display_attributes",
         ":tip_dll_module",
         ":tip_edit_session",
@@ -150,10 +150,12 @@ mozc_cc_library(
         "//base:update_util",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "//base/win32:hresultor",
         "//protocol:commands_cc_proto",
         "//win32/base:win32_window_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -279,7 +281,9 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_dll_module",
+        "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -431,6 +435,7 @@ mozc_cc_library(
         ":tip_text_service",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
