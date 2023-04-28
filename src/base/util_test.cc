@@ -528,32 +528,31 @@ TEST(UtilTest, IsCapitalizedAscii) {
   EXPECT_FALSE(Util::IsCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-TEST(UtilTest, Utf8ToCodepoints) {
-  EXPECT_EQ(Util::Utf8ToCodepoints(""), U"");
+TEST(UtilTest, Utf8ToUtf32) {
+  EXPECT_EQ(Util::Utf8ToUtf32(""), U"");
   // Single codepoint characters.
-  EXPECT_EQ(Util::Utf8ToCodepoints("aあ亜\na"), U"aあ亜\na");
+  EXPECT_EQ(Util::Utf8ToUtf32("aあ亜\na"), U"aあ亜\na");
   // Multiple codepoint characters
   constexpr absl::string_view kStr =
       ("神"  // U+795E
        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
       );
-  EXPECT_EQ(Util::Utf8ToCodepoints(kStr),
-            U"\u795E\u795E\U000E0100\u3042\u3099");
+  EXPECT_EQ(Util::Utf8ToUtf32(kStr), U"\u795E\u795E\U000E0100\u3042\u3099");
 }
 
-TEST(UtilTest, CodepointsToUtf8) {
-  EXPECT_EQ(Util::CodepointsToUtf8(U""), "");
+TEST(UtilTest, Utf32ToUtf8) {
+  EXPECT_EQ(Util::Utf32ToUtf8(U""), "");
   // Single codepoint characters.
-  EXPECT_EQ(Util::CodepointsToUtf8(U"aあ亜\na"), "aあ亜\na");
+  EXPECT_EQ(Util::Utf32ToUtf8(U"aあ亜\na"), "aあ亜\na");
   // Multiple codepoint characters
   constexpr absl::string_view kExpected =
       ("神"  // U+795E
        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
       );
-  constexpr std::u32string_view kCps = U"\u795E\u795E\U000E0100\u3042\u3099";
-  EXPECT_EQ(Util::CodepointsToUtf8(kCps), kExpected);
+  constexpr std::u32string_view kU32Str = U"\u795E\u795E\U000E0100\u3042\u3099";
+  EXPECT_EQ(Util::Utf32ToUtf8(kU32Str), kExpected);
 }
 
 void VerifyUtf8ToUcs4(absl::string_view text, char32_t expected_ucs4,

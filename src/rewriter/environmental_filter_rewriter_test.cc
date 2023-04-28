@@ -220,38 +220,37 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
         U"❤",
         U"😊",
         U"😋",
-        Util::Utf8ToCodepoints("🇺🇸"),
-        Util::Utf8ToCodepoints("🫱🏻"),
-        Util::Utf8ToCodepoints("❤️‍🔥"),
-        Util::Utf8ToCodepoints("👬🏿"),
+        Util::Utf8ToUtf32("🇺🇸"),
+        Util::Utf8ToUtf32("🫱🏻"),
+        Util::Utf8ToUtf32("❤️‍🔥"),
+        Util::Utf8ToUtf32("👬🏿"),
     });
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは❤です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは🫱🏻です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは😊です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは😋です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは❤です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは🫱🏻です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは😊です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは😋です")));
     EXPECT_FALSE(
-        finder.FindMatch(Util::Utf8ToCodepoints("これは😌（U+1F60C）です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("😋これは最初です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは最後です😋")));
-    EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは🫱です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬🏿です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬🏿最初です")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("❤️‍🔥")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("最後です👬🏿")));
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬👬🏿")));
-    EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬です")));
+        finder.FindMatch(Util::Utf8ToUtf32("これは😌（U+1F60C）です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("😋これは最初です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは最後です😋")));
+    EXPECT_FALSE(finder.FindMatch(Util::Utf8ToUtf32("これは🫱です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("これは👬🏿です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("👬🏿最初です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("❤️‍🔥")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("最後です👬🏿")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("👬👬🏿")));
+    EXPECT_FALSE(finder.FindMatch(Util::Utf8ToUtf32("これは👬です")));
     // This is expecting to find 🇺🇸 (US). Because flag Emojis use regional
     // indicators, and they lack ZWJ between, ambiguity is inevitable. The input
     // is AUSE in regional indicators, and therefore US is found between the two
     // flags.
-    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("🇦🇺🇸🇪")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToUtf32("🇦🇺🇸🇪")));
   }
   {
     // Test with more than 16 chars.
     CharacterGroupFinder finder;
-    finder.Initialize({Util::Utf8ToCodepoints("01234567890abcdefghij")});
-    EXPECT_FALSE(
-        finder.FindMatch(Util::Utf8ToCodepoints("01234567890abcdefghXYZ")));
+    finder.Initialize({Util::Utf8ToUtf32("01234567890abcdefghij")});
+    EXPECT_FALSE(finder.FindMatch(Util::Utf8ToUtf32("01234567890abcdefghXYZ")));
   }
 }
 

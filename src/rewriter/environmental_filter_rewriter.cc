@@ -35,7 +35,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iterator>
-#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -223,7 +222,7 @@ ExtractTargetEmojis(
       continue;
     }
     const absl::string_view utf8_emoji = string_array[iter.emoji_index()];
-    results[version].push_back(Util::Utf8ToCodepoints(utf8_emoji));
+    results[version].push_back(Util::Utf8ToUtf32(utf8_emoji));
   }
   return results;
 }
@@ -423,8 +422,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
       // Character Normalization
       modified |= NormalizeCandidate(candidate, flag_);
 
-      const std::u32string codepoints =
-          Util::Utf8ToCodepoints(candidate->value);
+      const std::u32string codepoints = Util::Utf8ToUtf32(candidate->value);
 
       // Check acceptability of code points as a candidate.
       if (!CheckCodepointsAcceptable(codepoints)) {

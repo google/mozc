@@ -132,7 +132,6 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:file_util",
         "//base:util",
-        "//data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/status",

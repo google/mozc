@@ -177,14 +177,14 @@ std::string DeleteSpecialKeys(absl::string_view input) {
   }
 
   // Delete Unicode PUA characters converted from special keys.
-  std::u32string codepoints = Util::Utf8ToCodepoints(output);
+  std::u32string codepoints = Util::Utf8ToUtf32(output);
   auto last =
       std::remove_if(codepoints.begin(), codepoints.end(), IsSpecialKey);
   if (last == codepoints.end()) {
     return output;
   }
   codepoints.erase(last, codepoints.end());
-  return Util::CodepointsToUtf8(codepoints);
+  return Util::Utf32ToUtf8(codepoints);
 }
 
 }  // namespace mozc::composer::internal
