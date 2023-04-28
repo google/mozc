@@ -39,6 +39,7 @@ load(
     "mozc_py_library",
     "mozc_select",
 )
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 mozc_cc_library(
     name = "dictionary_interface",
@@ -241,38 +242,27 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
 )
 
-mozc_py_library(
-    name = "gen_pos_map_lib",
-    srcs = ["gen_pos_map.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_pos_map",
     srcs = ["gen_pos_map.py"],
     deps = [
-        ":gen_pos_map_lib",
         "//build_tools:code_generator_util",
     ],
 )
 
-genrule(
+run_binary(
     name = "pos_map",
     srcs = [
-        "//data/rules:user_pos.def",
         "//data/rules:third_party_pos_map.def",
+        "//data/rules:user_pos.def",
     ],
     outs = ["pos_map.inc"],
-    cmd = (
-        "$(location :gen_pos_map) " + "--user_pos_file=" +
-        "$(location //data/rules:user_pos.def) " +
-        "--third_party_pos_map_file=" +
-        "$(location //data/rules:third_party_pos_map.def) " +
-        "--output=$@"
-    ),
-    tools = [":gen_pos_map"],
+    args = [
+        "--user_pos_file=$(location //data/rules:user_pos.def)",
+        "--third_party_pos_map_file=$(location //data/rules:third_party_pos_map.def)",
+        "--output=$(location pos_map.inc)",
+    ],
+    tool = ":gen_pos_map",
 )
 
 mozc_cc_library(
@@ -547,31 +537,13 @@ mozc_py_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_user_pos_data_lib",
-    srcs = ["gen_user_pos_data.py"],
-    deps = [
-        ":pos_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_user_pos_data",
     srcs = ["gen_user_pos_data.py"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":gen_user_pos_data_lib",
         ":pos_util",
         "//build_tools:serialized_string_array_builder",
-    ],
-)
-
-mozc_py_library(
-    name = "gen_pos_matcher_code_lib",
-    srcs = ["gen_pos_matcher_code.py"],
-    deps = [
-        ":pos_util",
     ],
 )
 
@@ -582,13 +554,15 @@ mozc_py_binary(
     deps = [":pos_util"],
 )
 
-genrule(
+run_binary(
     name = "pos_matcher_impl",
     srcs = ["//data/rules:pos_matcher_rule.def"],
     outs = ["pos_matcher_impl.inc"],
-    cmd = ("$(location :gen_pos_matcher_code) " + "--pos_matcher_rule_file=$< " +
-           "--output_pos_matcher_h=$@"),
-    tools = [":gen_pos_matcher_code"],
+    args = [
+        "--pos_matcher_rule_file=$(location //data/rules:pos_matcher_rule.def)",
+        "--output_pos_matcher_h=$(location pos_matcher_impl.inc)",
+    ],
+    tool = ":gen_pos_matcher_code",
     visibility = [
         "//visibility:private",
     ],
@@ -603,16 +577,10 @@ mozc_cc_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_pos_rewrite_rule_lib",
-    srcs = ["gen_pos_rewrite_rule.py"],
-)
-
 mozc_py_binary(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
     visibility = ["//:__subpackages__"],
-    deps = [":gen_pos_rewrite_rule_lib"],
 )
 
 mozc_cc_binary(
@@ -672,20 +640,11 @@ mozc_cc_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_suffix_data_lib",
-    srcs = ["gen_suffix_data.py"],
-    deps = [
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_suffix_data",
     srcs = ["gen_suffix_data.py"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":gen_suffix_data_lib",
         "//build_tools:serialized_string_array_builder",
     ],
 )
@@ -778,7 +737,7 @@ mozc_py_binary(
     visibility = ["//train/zip_code:__subpackages__"],
 )
 
-genrule(
+run_binary(
     name = "zip_code_data",
     srcs = mozc_select(
         default = [],
@@ -788,13 +747,17 @@ genrule(
         ],
     ),
     outs = ["zip_code.tsv"],
-    cmd = (
-        "$(location :gen_zip_code_seed)" + " --output $@ " + mozc_select(
-            default = "",
-            oss = (" --zip_code $(location @zip_code_ken_all//:KEN_ALL.CSV)" +
-                   " --jigyosyo $(location @zip_code_jigyosyo//:JIGYOSYO.CSV)"),
-        )
+    args = [
+        "--output",
+        "$(location zip_code.tsv)",
+    ] + mozc_select(
+        oss = [
+            "--zip_code",
+            "$(location @zip_code_ken_all//:KEN_ALL.CSV)",
+            "--jigyosyo",
+            "$(location @zip_code_jigyosyo//:JIGYOSYO.CSV)",
+        ],
     ),
-    tools = [":gen_zip_code_seed"],
+    tool = ":gen_zip_code_seed",
     visibility = ["//:__subpackages__"],
 )
