@@ -37,10 +37,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
-#include "base/protobuf/descriptor.h"
-#include "base/protobuf/message.h"
-#include "base/protobuf/text_format.h"
-#include "base/util.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/candidates.pb.h"
@@ -102,6 +98,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "change_request.txt",
     DATA_DIR "clear_user_prediction.txt",
     DATA_DIR "commit.txt",
+    DATA_DIR "commit_by_space.txt",
     DATA_DIR "composing_alphanumeric.txt",
     DATA_DIR "composition_display_as.txt",
     DATA_DIR "conversion.txt",
