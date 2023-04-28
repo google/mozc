@@ -34,12 +34,13 @@
 #include <rpc.h>
 #include <shobjidl.h>
 #include <unknwn.h>
+#include <wil/com.h>
 #include <wil/resource.h>
-#include <wrl.h>
 
 #include <string_view>
 #include <utility>
 
+#include "base/win32/com_implements.h"
 #include "base/win32/scoped_com.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -47,10 +48,6 @@
 namespace mozc::win32 {
 namespace {
 
-using ::Microsoft::WRL::ClassicCom;
-using ::Microsoft::WRL::ComPtr;
-using ::Microsoft::WRL::RuntimeClass;
-using ::Microsoft::WRL::RuntimeClassFlags;
 using ::testing::StrEq;
 
 // Mock interfaces for testing.
@@ -63,15 +60,24 @@ IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
 IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
 
-class Mock
-    : public RuntimeClass<RuntimeClassFlags<ClassicCom>, IMock2, IDerived> {
+}  // namespace
+
+// Define outside the anonymous namespace.
+template <>
+bool IsIIDOf<IDerived>(REFIID riid) {
+  return IsIIDOf<IDerived, IMock1>(riid);
+}
+
+namespace {
+
+class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
  public:
   Mock() { ++instance_count_; }
   ~Mock() override { --instance_count_; }
 
   STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
     qi_count_++;
-    return RuntimeClass::QueryInterface(iid, out);
+    return ComImplements::QueryInterface(iid, out);
   }
   STDMETHODIMP Test1() override { return S_OK; }
   STDMETHODIMP Test2() override { return S_FALSE; }
@@ -102,18 +108,19 @@ class ComTest : public ::testing::Test {
 };
 
 TEST_F(ComTest, ComCreateInstance) {
-  ComPtr<IShellLink> shellink = ComCreateInstance<IShellLink, ShellLink>();
+  wil::com_ptr_nothrow<IShellLink> shellink =
+      ComCreateInstance<IShellLink, ShellLink>();
   EXPECT_TRUE(shellink);
   EXPECT_TRUE(ComCreateInstance<IShellLink>(CLSID_ShellLink));
   EXPECT_FALSE(ComCreateInstance<IShellFolder>(CLSID_ShellLink));
 }
 
 TEST_F(ComTest, ComQuery) {
-  ComPtr<IMock1> mock1(Microsoft::WRL::Make<Mock>());
+  wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
   EXPECT_TRUE(mock1);
   EXPECT_EQ(mock1->Test1(), S_OK);
 
-  ComPtr<IDerived> derived = ComQuery<IDerived>(mock1);
+  wil::com_ptr_nothrow<IDerived> derived = ComQuery<IDerived>(mock1);
   EXPECT_TRUE(derived);
   EXPECT_EQ(derived->Derived(), 2);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
@@ -121,12 +128,12 @@ TEST_F(ComTest, ComQuery) {
   EXPECT_TRUE(ComQuery<IMock1>(derived));
   EXPECT_EQ(Mock::GetQICountAndReset(), 0);
 
-  ComPtr<IMock2> mock2 = ComQuery<IMock2>(mock1);
+  wil::com_ptr_nothrow<IMock2> mock2 = ComQuery<IMock2>(mock1);
   EXPECT_TRUE(mock2);
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
 
-  mock2 = ComQuery<IMock2>(mock1.Get());
+  mock2 = ComQuery<IMock2>(mock1);
   EXPECT_TRUE(mock2);
   EXPECT_EQ(mock2->Test2(), S_FALSE);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
@@ -136,11 +143,11 @@ TEST_F(ComTest, ComQuery) {
 }
 
 TEST_F(ComTest, ComCopy) {
-  ComPtr<IMock1> mock1(Microsoft::WRL::Make<Mock>());
+  wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
   EXPECT_TRUE(mock1);
   EXPECT_EQ(mock1->Test1(), S_OK);
 
-  ComPtr<IUnknown> unknown = ComCopy<IUnknown>(mock1);
+  wil::com_ptr_nothrow<IUnknown> unknown = ComCopy<IUnknown>(mock1);
   EXPECT_TRUE(unknown);
   EXPECT_EQ(Mock::GetQICountAndReset(), 0);
 
@@ -149,46 +156,6 @@ TEST_F(ComTest, ComCopy) {
 
   IUnknown *null = nullptr;
   EXPECT_FALSE(ComCopy<IUnknown>(null));
-}
-
-// TODO(yuryu): This is a temporary test until we migrate to WRL to implement
-// COM interfaces.
-class MockNoWRL : public IUnknown {
- public:
-  explicit MockNoWRL(ULONG &ref) : ref_(ref) {}
-  virtual ~MockNoWRL() = default;
-
-  STDMETHODIMP_(ULONG) AddRef() override { return ++ref_; }
-  STDMETHODIMP_(ULONG) Release() override {
-    if (--ref_ > 0) {
-      return ref_;
-    }
-    delete this;
-    return 0;
-  }
-  STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
-    if (!out) {
-      return E_INVALIDARG;
-    }
-    if (IsEqualIID(iid, IID_IUnknown)) {
-      *out = this;
-    }
-    *out = nullptr;
-    return E_NOINTERFACE;
-  }
-
- private:
-  ULONG &ref_;
-};
-
-TEST_F(ComTest, MakeComPtr) {
-  ULONG ref = 0;
-  {
-    auto mock = MakeComPtr<MockNoWRL>(ref);
-    EXPECT_TRUE(mock);
-    EXPECT_EQ(ref, 1);
-  }
-  EXPECT_EQ(ref, 0);
 }
 
 TEST_F(ComTest, MakeUniqueBSTR) {

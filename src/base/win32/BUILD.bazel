@@ -272,6 +272,7 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":com",
+        ":com_implements",
         ":scoped_com",
         "//testing:gunit_main",
         "@com_microsoft_wil//:wil",
