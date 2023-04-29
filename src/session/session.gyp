@@ -168,6 +168,7 @@
         '../engine/engine.gyp:engine_factory',
         '../usage_stats/usage_stats_base.gyp:usage_stats_uploader',
         '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:state_proto',
         'session_handler',
         'session_usage_observer',
       ],
