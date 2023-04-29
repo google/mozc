@@ -42,6 +42,7 @@
     '../../renderer/renderer.gyp:renderer_client',
     '../base/win32_base.gyp:ime_base',
     '../base/win32_base.gyp:imframework_util',
+    '../base/win32_base.gyp:input_dll_import_lib',
     '../cache_service/cache_service.gyp:cache_service_manager',
     'gen_custom_action_resource_header',
   ],

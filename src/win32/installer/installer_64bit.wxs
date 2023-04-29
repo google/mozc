@@ -484,6 +484,9 @@
     <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions32'
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
+    <CustomAction Id='EnableTipProfile' BinaryKey='CustomActions64'
+        DllEntry='EnableTipProfile' Execute='commit'
+        Impersonate='yes' />
     <CustomAction Id='HideCancelButton' BinaryKey='CustomActions32'
         DllEntry='HideCancelButton' Return='ignore' />
     <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions32'
@@ -604,6 +607,10 @@
       </Custom>
       <Custom Action='InitialInstallationCommit'
           After='EnsureIMEIsDisabledForServiceAccountAfterInstall'>
+        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
+      </Custom>
+      <Custom Action='EnableTipProfile'
+          After='InitialInstallationCommit'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <!-- show reboot dialog to execute pending file opartions -->

@@ -14,5 +14,6 @@ EXPORTS
     StopCacheService
     InitialInstallation
     InitialInstallationCommit
+    EnableTipProfile
     WriteApValue
     WriteApValueRollback

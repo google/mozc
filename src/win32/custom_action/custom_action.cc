@@ -49,6 +49,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "base/win32/scoped_com.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
 #include "client/client_interface.h"
@@ -56,8 +57,10 @@
 #include "protocol/commands.pb.h"
 #include "renderer/renderer_client.h"
 #include "win32/base/imm_util.h"
+#include "win32/base/input_dll.h"
 #include "win32/base/keyboard_layout_id.h"
 #include "win32/base/omaha_util.h"
+#include "win32/base/tsf_profile.h"
 #include "win32/base/tsf_registrar.h"
 #include "win32/base/uninstall_helper.h"
 #include "win32/cache_service/cache_service_manager.h"
@@ -331,6 +334,34 @@ UINT __stdcall InitialInstallationCommit(MSIHANDLE msi_handle) {
 
   // Set error code 0, which means success.
   OmahaUtil::ClearOmahaError();
+  return ERROR_SUCCESS;
+}
+
+UINT __stdcall EnableTipProfile(MSIHANDLE msi_handle) {
+  bool is_service = false;
+  if (::mozc::WinUtil::IsServiceAccount(&is_service) && is_service) {
+    // Do nothing if this is a service account.
+    return ERROR_SUCCESS;
+  }
+
+  wchar_t clsid[64] = {};
+  if (!::StringFromGUID2(::mozc::win32::TsfProfile::GetTextServiceGuid(), clsid,
+                         std::size(clsid))) {
+    // Do not care about errors.
+    return ERROR_SUCCESS;
+  }
+  wchar_t profile_id[64] = {};
+  if (!::StringFromGUID2(::mozc::win32::TsfProfile::GetProfileGuid(),
+                         profile_id, std::size(profile_id))) {
+    // Do not care about errors.
+    return ERROR_SUCCESS;
+  }
+
+  // 0x0411 == MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN)
+  const auto desc = ::mozc::win32::StrCatW(L"0x0411:", clsid, profile_id);
+
+  // Do not care about errors.
+  ::InstallLayoutOrTip(desc.c_str(), 0);
   return ERROR_SUCCESS;
 }
 

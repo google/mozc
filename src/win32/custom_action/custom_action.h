@@ -77,6 +77,9 @@ UINT __stdcall InitialInstallation(MSIHANDLE msi_handle);
 // Write the success code to the registry for Omaha.
 UINT __stdcall InitialInstallationCommit(MSIHANDLE msi_handle);
 
+// Enable TIP profile for the calling user unless it's a service account.
+UINT __stdcall EnableTipProfile(MSIHANDLE msi_handle);
+
 // Saves omaha's ap value for WriteApValue, WriteApValueRollback, and
 // RestoreServiceState.
 // Since they are executed as deferred customs actions and most properties
