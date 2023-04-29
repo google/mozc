@@ -163,7 +163,7 @@
                 Name='mozc_ja_tip32.dll'
                 DiskId='1' Checksum='yes'
                 Source='$(var.MozcTIP32Path)' Vital='yes'>
-              <Class Context="InprocServer32" ThreadingModel="Apartment"
+              <Class Context="InprocServer32" ThreadingModel="apartment"
                     Description="Mozc"
                     Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
             </File>

@@ -189,7 +189,7 @@
                   Name='GoogleIMEJaTIP32.dll'
                   DiskId='1' Checksum='yes'
                   Source='$(var.MozcTIP32Path)' Vital='yes'>
-                <Class Context="InprocServer32" ThreadingModel="Apartment"
+                <Class Context="InprocServer32" ThreadingModel="apartment"
                     Description="Google Japanese Input"
                     Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
               </File>
