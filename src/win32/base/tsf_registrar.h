@@ -59,15 +59,6 @@ class TsfRegistrar {
   // this keyboard module.
   // The caller is responsible for initializing COM before call this function.
   static void UnregisterCategories();
-
-  // Retrieves if the text input processor profile is enabled or not.
-  // This function sets FALSE to |enable| if the profile is not installed.
-  // The caller is responsible for initializing COM before call this function.
-  static HRESULT GetProfileEnabled(BOOL *enabled);
-
-  // Enables or disables the text input processor profile.
-  // The caller is responsible for initializing COM before call this function.
-  static HRESULT SetProfileEnabled(BOOL enable);
 };
 }  // namespace win32
 }  // namespace mozc

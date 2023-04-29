@@ -37,15 +37,12 @@
 #include <windows.h>
 #include <wrl/client.h>
 
-#include <cstddef>
-#include <memory>
 #include <string>
 
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/display_name_resource.h"
-#include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
@@ -195,84 +192,6 @@ void TsfRegistrar::UnregisterCategories() {
           TsfProfile::GetTextServiceGuid());
     }
   }
-}
-
-HRESULT TsfRegistrar::GetProfileEnabled(BOOL *enabled) {
-  BOOL dummy_bool = FALSE;
-  if (enabled == nullptr) {
-    enabled = &dummy_bool;
-  }
-  *enabled = FALSE;
-
-  const int num_profiles =
-      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-  std::unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
-      new LAYOUTORTIPPROFILE[num_profiles]);
-  const int num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
-                                                  profiles.get(), num_profiles);
-
-  for (size_t i = 0; i < num_copied; ++i) {
-    if ((profiles[i].dwProfileType == LOTP_INPUTPROCESSOR) &&
-        ::IsEqualGUID(profiles[i].clsid, TsfProfile::GetTextServiceGuid()) &&
-        (profiles[i].langid == TsfProfile::GetLangId()) &&
-        ::IsEqualGUID(profiles[i].guidProfile, TsfProfile::GetProfileGuid())) {
-      // Found.
-      *enabled = TRUE;
-      return S_OK;
-    }
-  }
-
-  // Not Found.
-  *enabled = FALSE;
-  return S_OK;
-}
-
-HRESULT TsfRegistrar::SetProfileEnabled(BOOL enable) {
-  BOOL is_enabled = FALSE;
-  HRESULT result = GetProfileEnabled(&is_enabled);
-  if (FAILED(result)) {
-    return result;
-  }
-
-  if ((is_enabled == FALSE) && (enable == FALSE)) {
-    // Already disabled.  Nothing to do here.
-    return S_OK;
-  }
-
-  // On Windows Vista or Windows 7 x64 editions,
-  // ITfInputProcessorProfileMgr::DeactivateProfile seems to be more reliable
-  // as opposed to ITfInputProcessorProfiles::EnableLanguageProfile, which
-  // sometimes fails on those environment for some reason.  See b/3002349.
-  if (enable == FALSE) {
-    ComPtr<ITfInputProcessorProfileMgr> profile_mgr;
-    result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
-                              CLSCTX_ALL, IID_PPV_ARGS(&profile_mgr));
-    if (SUCCEEDED(result)) {
-      result = profile_mgr->DeactivateProfile(
-          TF_PROFILETYPE_INPUTPROCESSOR, TsfProfile::GetLangId(),
-          TsfProfile::GetTextServiceGuid(), TsfProfile::GetProfileGuid(),
-          nullptr, TF_IPPMF_FORSESSION | TF_IPPMF_DISABLEPROFILE);
-      if (SUCCEEDED(result)) {
-        return result;
-      }
-    }
-  }
-
-  // Retrieve the profile store for input processors.
-  // If you might want to create the manager object w/o calling the pair of
-  // CoInitialize/CoUninitialize, there is a helper function to retrieve the
-  // object.
-  // http://msdn.microsoft.com/en-us/library/ms629059.aspx
-  ComPtr<ITfInputProcessorProfiles> profiles;
-  result = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
-                            CLSCTX_ALL, IID_PPV_ARGS(&profiles));
-  if (FAILED(result)) {
-    return result;
-  }
-
-  return profiles->EnableLanguageProfile(TsfProfile::GetTextServiceGuid(),
-                                         TsfProfile::GetLangId(),
-                                         TsfProfile::GetProfileGuid(), enable);
 }
 
 }  // namespace win32
