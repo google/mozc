@@ -473,14 +473,6 @@ UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
 #error "Unsupported CPU architecture"
 #endif  // _M_X64, _M_IX86, and others
   HRESULT result =
-      mozc::win32::TsfRegistrar::RegisterCOMServer(path.c_str(), path.length());
-  if (FAILED(result)) {
-    LOG_ERROR_FOR_OMAHA();
-    UnregisterTIP(msi_handle);
-    return ERROR_INSTALL_FAILURE;
-  }
-
-  result =
       mozc::win32::TsfRegistrar::RegisterProfiles(path.c_str(), path.length());
   if (FAILED(result)) {
     LOG_ERROR_FOR_OMAHA();
@@ -510,7 +502,6 @@ UINT __stdcall UnregisterTIP(MSIHANDLE msi_handle) {
 
   mozc::win32::TsfRegistrar::UnregisterCategories();
   mozc::win32::TsfRegistrar::UnregisterProfiles();
-  mozc::win32::TsfRegistrar::UnregisterCOMServer();
 
   return ERROR_SUCCESS;
 }

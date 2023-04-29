@@ -180,17 +180,25 @@
                   Name='GoogleIMEJaCacheService' Stop='both' Remove='uninstall'
                   Wait='yes' />
             </Component>
-            <Component Id='GIMEJaTIP32' Guid='*' Permanent='no'>
+            <Component Id='GIMEJaTIP32' Guid='*' Permanent='no' Win64="no">
               <File Id='GoogleIMEJaTIP32.dll'
                   Name='GoogleIMEJaTIP32.dll'
                   DiskId='1' Checksum='yes'
-                  Source='$(var.MozcTIP32Path)' Vital='yes' />
+                  Source='$(var.MozcTIP32Path)' Vital='yes'>
+                <Class Context="InprocServer32" ThreadingModel="Apartment"
+                    Description="Google Japanese Input"
+                    Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              </File>
             </Component>
-            <Component Id='GIMEJaTIP64' Guid='*' Permanent='no'>
+            <Component Id='GIMEJaTIP64' Guid='*' Permanent='no' Win64="yes">
               <File Id='GoogleIMEJaTIP64.dll'
                   Name='GoogleIMEJaTIP64.dll'
                   DiskId='1' Checksum='yes'
-                  Source='$(var.MozcTIP64Path)' Vital='yes' />
+                  Source='$(var.MozcTIP64Path)' Vital='yes'>
+                <Class Context="InprocServer32" ThreadingModel="Apartment"
+                    Description="Google Japanese Input"
+                    Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              </File>
             </Component>
             <Component Id='GIMEJaBroker' Guid='*' Permanent='no'>
               <File Id='GoogleIMEJaBroker.exe'
