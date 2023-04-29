@@ -29,7 +29,6 @@
 
 {
   'variables': {
-    'absl_srcdir': '<(DEPTH)/third_party/abseil-cpp/absl',
     'gen_absl_dir': '<(SHARED_INTERMEDIATE_DIR)/third_party/abseil-cpp/absl',
     'glob_absl': '<(glob) --notest --base <(absl_srcdir) --subdir',
   },
@@ -42,8 +41,6 @@
         '<!@(<(glob_absl) base "**/*.cc"' +
         ' --exclude "**/*_benchmark.cc" "**/*_test*.cc")',
         '<(absl_srcdir)/profiling/internal/exponential_biased.cc',
-      ],
-      'sources!': [
       ],
       'dependencies': [
         'absl_hash_internal',

@@ -35,20 +35,8 @@
 #endif  // __APPLE__
 
 
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-
-#include "absl/base/attributes.h"
-#include "absl/base/integral_types.h"
-#include "absl/base/macros.h"
-
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
-
-#include <cstdint>
-
 #include "absl/base/attributes.h"
 #include "absl/base/macros.h"
-
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 
 namespace mozc {

@@ -425,6 +425,7 @@ def UpdateEnvironmentFilesForWindows(out_dir):
       x64_file.write(x64_content)
 
 
+
 def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.

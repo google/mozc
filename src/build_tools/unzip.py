@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -27,44 +28,25 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    # Top directory of third party libraries.
-    'third_party_dir': '<(DEPTH)/third_party',
-    'absl_dir': '<(third_party_dir)/abseil-cpp',
-    'absl_srcdir': '<(absl_dir)/absl',
-    'absl_include_dirs': ['<(absl_dir)'],
+"""Tool to unzip a file.
 
-    # TODO(komatsu): This can be replaced with 'android_ndk_dir'.
-    'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
+This is a similar tool with unzip on Linux and macOS, and it works on Windows.
 
-    'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
+% python3 unzip.py data.zip -d /tmp/output
+"""
 
-    # server_dir represents the directory where mozc_server is
-    # installed. This option is only for Linux.
-    'server_dir%': '/usr/lib/mozc',
+import argparse
 
-    # Represents the directory where the source code of protobuf is
-    # extracted. This value is ignored when 'use_libprotobuf' is 1.
-    'protobuf_root': '<(third_party_dir)/protobuf',
+from build_tools import util
 
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
 
-    # Ninja requires <(abs_depth) instead of <(DEPTH).
-    'mac_breakpad_dir': '<(PRODUCT_DIR)/Breakpad',
-    # This points to the same dir with mac_breakpad_dir, but this should use
-    # '${BUILT_PRODUCTS_DIR}' instead of '<(PRODUCT_DIR)'.
-    # See post_build_mac.gypi
-    'mac_breakpad_tools_dir': '${BUILT_PRODUCTS_DIR}/Breakpad',
-    'mac_breakpad_framework': '<(mac_breakpad_dir)/Breakpad.framework',
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('file', metavar='FILE')
+  parser.add_argument('-d', dest='outdir', default='.')
+  args = parser.parse_args()
+  util.ExtractZip(args.file, args.outdir)
 
-    'conditions': [
-      ['target_platform=="Windows"', {
-        'wtl_dir': '<(third_party_dir)/wtl',
-      }],
-    ],
 
-    # glob command to get files.
-    'glob': '<(python) <(abs_depth)/gyp/glob_files.py',
-  },
-}
+if __name__ == '__main__':
+  main()
