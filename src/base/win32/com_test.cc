@@ -158,7 +158,7 @@ TEST_F(ComTest, ComCopy) {
   EXPECT_FALSE(ComCopy<IUnknown>(null));
 }
 
-TEST_F(ComTest, MakeUniqueBSTR) {
+TEST(ComBSTRTest, MakeUniqueBSTR) {
   EXPECT_FALSE(MakeUniqueBSTR(nullptr).is_valid());
   wil::unique_bstr empty_string = MakeUniqueBSTR(L"");
   EXPECT_THAT(empty_string.get(), StrEq(L""));
