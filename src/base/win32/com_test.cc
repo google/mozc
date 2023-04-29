@@ -37,6 +37,7 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 
+#include <atomic>
 #include <string_view>
 #include <utility>
 
@@ -44,6 +45,7 @@
 #include "base/win32/scoped_com.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "absl/base/attributes.h"
 
 namespace mozc::win32 {
 namespace {
@@ -87,16 +89,16 @@ class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
     instance_count_ = 0;
     qi_count_ = 0;
   }
-  static int GetInstanceCount() { return instance_count_; }
-  static int GetQICountAndReset() { return std::exchange(qi_count_, 0); }
+  static int GetInstanceCount() { return instance_count_.load(); }
+  static int GetQICountAndReset() { return qi_count_.exchange(0); }
 
  private:
-  static int instance_count_;
-  static int qi_count_;
+  static std::atomic<int> instance_count_;
+  static std::atomic<int> qi_count_;
 };
 
-int Mock::instance_count_;
-int Mock::qi_count_;
+ABSL_CONST_INIT std::atomic<int> Mock::instance_count_ = 0;
+ABSL_CONST_INIT std::atomic<int> Mock::qi_count_ = 0;
 
 class ComTest : public ::testing::Test {
  protected:
@@ -140,22 +142,6 @@ TEST_F(ComTest, ComQuery) {
 
   EXPECT_EQ(ComQueryHR<IShellView>(mock2).hr(), E_NOINTERFACE);
   EXPECT_EQ(Mock::GetQICountAndReset(), 1);
-}
-
-TEST_F(ComTest, ComCopy) {
-  wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
-  EXPECT_TRUE(mock1);
-  EXPECT_EQ(mock1->Test1(), S_OK);
-
-  wil::com_ptr_nothrow<IUnknown> unknown = ComCopy<IUnknown>(mock1);
-  EXPECT_TRUE(unknown);
-  EXPECT_EQ(Mock::GetQICountAndReset(), 0);
-
-  EXPECT_FALSE(ComCopy<IShellLink>(unknown));
-  EXPECT_EQ(Mock::GetQICountAndReset(), 1);
-
-  IUnknown *null = nullptr;
-  EXPECT_FALSE(ComCopy<IUnknown>(null));
 }
 
 TEST(ComBSTRTest, MakeUniqueBSTR) {

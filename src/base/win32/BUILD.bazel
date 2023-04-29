@@ -67,6 +67,7 @@ mozc_cc_test(
     deps = [
         ":scoped_com",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
