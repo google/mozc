@@ -305,7 +305,7 @@
       <Component Id='PrelaunchProcesses' Guid='*'>
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
-            Name='Google Japanese Input Prelauncher' Action='write' Type='string'
+            Name='Mozc Prelauncher' Action='write' Type='string'
             Value='&quot;[MozcDir]mozc_broker.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
