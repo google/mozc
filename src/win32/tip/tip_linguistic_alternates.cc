@@ -31,10 +31,11 @@
 
 #include <ctffunc.h>
 #include <guiddef.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -57,8 +58,6 @@ bool IsIIDOf<ITfFnGetLinguisticAlternates>(REFIID riid) {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
@@ -68,7 +67,7 @@ constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 class GetLinguisticAlternatesImpl final
     : public TipComImplements<ITfFnGetLinguisticAlternates> {
  public:
-  GetLinguisticAlternatesImpl(ComPtr<TipTextService> text_service,
+  GetLinguisticAlternatesImpl(wil::com_ptr_nothrow<TipTextService> text_service,
                               std::unique_ptr<TipQueryProvider> provider)
       : text_service_(std::move(text_service)),
         provider_(std::move(provider)) {}
@@ -93,7 +92,7 @@ class GetLinguisticAlternatesImpl final
     }
     *candidate_list = nullptr;
     std::wstring query;
-    if (!TipEditSession::GetTextSync(text_service_.Get(), range, &query)) {
+    if (!TipEditSession::GetTextSync(text_service_.get(), range, &query)) {
       return E_FAIL;
     }
     std::vector<std::wstring> candidates;
@@ -105,15 +104,15 @@ class GetLinguisticAlternatesImpl final
     return S_OK;
   }
 
-  ComPtr<TipTextService> text_service_;
+  wil::com_ptr_nothrow<TipTextService> text_service_;
   std::unique_ptr<TipQueryProvider> provider_;
 };
 
 }  // namespace
 
 // static
-ComPtr<ITfFnGetLinguisticAlternates> TipLinguisticAlternates::New(
-    ComPtr<TipTextService> text_service) {
+wil::com_ptr_nothrow<ITfFnGetLinguisticAlternates> TipLinguisticAlternates::New(
+    wil::com_ptr_nothrow<TipTextService> text_service) {
   std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
   if (!provider) {
     return nullptr;

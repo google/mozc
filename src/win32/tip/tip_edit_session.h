@@ -34,19 +34,14 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
-
-namespace commands {
-class Output;
-}  // namespace commands
-
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 // Utility functions to begin edit session for various purposes.
 class TipEditSession {
@@ -61,12 +56,12 @@ class TipEditSession {
   // OnOutputReceivedAsync instead.
   static bool OnOutputReceivedSync(TipTextService *text_service,
                                    ITfContext *context,
-                                   const commands::Output &new_output);
+                                   commands::Output new_output);
 
   // Begins an async edit session with |new_output| to update the context.
   static bool OnOutputReceivedAsync(TipTextService *text_service,
                                     ITfContext *context,
-                                    const commands::Output &new_output);
+                                    commands::Output new_output);
 
   // Begins a sync edit session to invoke reconversion that is initialized by
   // the application.
@@ -114,8 +109,8 @@ class TipEditSession {
                           std::wstring *text);
 
   // Begins an async edit session to set |text| to |range|.
-  static bool SetTextAsync(TipTextService *text_service,
-                           const std::wstring &text, ITfRange *range);
+  static bool SetTextAsync(TipTextService *text_service, std::wstring_view text,
+                           ITfRange *range);
 };
 
 }  // namespace tsf
