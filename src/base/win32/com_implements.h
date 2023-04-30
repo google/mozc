@@ -117,7 +117,7 @@ class ComImplements : public Interfaces... {
   void *QueryInterfaceImpl(REFIID riid);
 
  private:
-  std::atomic<ULONG> ref_count_;
+  std::atomic<ULONG> ref_count_{0};
 };
 
 template <typename Traits, typename... Interfaces>
