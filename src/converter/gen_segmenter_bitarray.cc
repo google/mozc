@@ -34,9 +34,9 @@
 
 #include "converter/gen_segmenter_bitarray.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <ios>
-#include <map>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -45,11 +45,9 @@
 #include "base/container/bitarray.h"
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "protocol/segmenter_data.pb.h"
 #include "absl/base/config.h"
-#include "absl/container/btree_map.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 
@@ -64,27 +62,22 @@ class StateTable {
   StateTable &operator=(const StateTable &) = delete;
 
   // |str| is an 1-dimensional row (or column) represented in byte array.
-  void Add(uint16_t id, absl::string_view str) {
+  void Add(uint16_t id, std::string str) {
     CHECK_LT(id, idarray_.size());
-#ifdef ABSL_USES_STD_STRING_VIEW
-    idarray_[id] = str;
-#else   // ABSL_USES_STD_STRING_VIEW
-    idarray_[id] = std::string(str);
-#endif  // ABSL_USES_STD_STRING_VIEW
+    idarray_[id] = std::move(str);
   }
 
   void Build() {
     compressed_table_.resize(idarray_.size());
     uint16_t id = 0;
-    absl::btree_map<std::string, uint16_t> dup;
+    absl::flat_hash_map<std::string, uint16_t> dup;
     for (size_t i = 0; i < idarray_.size(); ++i) {
-      absl::btree_map<std::string, uint16_t>::const_iterator it =
-          dup.find(idarray_[i]);
+      const auto it = dup.find(idarray_[i]);
       if (it != dup.end()) {
         compressed_table_[i] = it->second;
       } else {
         compressed_table_[i] = id;
-        dup.insert(std::make_pair(idarray_[i], id));
+        dup.emplace(idarray_[i], id);
         ++id;
       }
     }
@@ -121,7 +114,7 @@ class StateTable {
 }  // namespace
 
 void SegmenterBitarrayGenerator::GenerateBitarray(
-    int lsize, int rsize, IsBoundaryFunc func,
+    int lsize, int rsize, const IsBoundaryFunc is_boundary,
     const std::string &output_size_info, const std::string &output_ltable,
     const std::string &output_rtable, const std::string &output_bitarray) {
   // Load the original matrix into an array
@@ -135,7 +128,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
         array[index] = 1;
         continue;
       }
-      if ((*func)(rid, lid)) {
+      if (is_boundary(rid, lid)) {
         array[index] = 1;
       } else {
         array[index] = 0;
@@ -143,7 +136,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
     }
   }
 
-  // Reduce left states (remove dupliacate rows)
+  // Reduce left states (remove duplicate rows)
   StateTable ltable(lsize + 1);
   for (size_t rid = 0; rid <= lsize; ++rid) {
     std::string buf;
@@ -151,10 +144,10 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
       const uint32_t index = rid + lsize * lid;
       buf += array[index];
     }
-    ltable.Add(rid, buf);
+    ltable.Add(rid, std::move(buf));
   }
 
-  // Reduce right states (remove dupliacate columns)
+  // Reduce right states (remove duplicate columns)
   StateTable rtable(rsize + 1);
   for (size_t lid = 0; lid <= rsize; ++lid) {
     std::string buf;
@@ -162,7 +155,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
       const uint32_t index = rid + lsize * lid;
       buf += array[index];
     }
-    rtable.Add(lid, buf);
+    rtable.Add(lid, std::move(buf));
   }
 
   // make lookup table
@@ -176,7 +169,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   CHECK_GT(kCompressedRSize, 0);
 
   // make bitarray
-  mozc::BitArray barray(kCompressedLSize * kCompressedRSize);
+  BitArray barray(kCompressedLSize * kCompressedRSize);
   for (size_t rid = 0; rid <= lsize; ++rid) {
     for (size_t lid = 0; lid <= rsize; ++lid) {
       const int index = rid + lsize * lid;
@@ -205,32 +198,32 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
 
   static_assert(ABSL_IS_LITTLE_ENDIAN, "Architecture must be little endian");
   {
-    mozc::converter::SegmenterDataSizeInfo pb;
+    converter::SegmenterDataSizeInfo pb;
     pb.set_compressed_lsize(kCompressedLSize);
     pb.set_compressed_rsize(kCompressedRSize);
-    mozc::OutputFileStream ofs(output_size_info,
-                               std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ofs(output_size_info,
+                         std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     CHECK(pb.SerializeToOstream(&ofs));
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_ltable,
-                               std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ofs(output_ltable,
+                         std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ltable.Output(&ofs);
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_rtable,
-                               std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ofs(output_rtable,
+                         std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     rtable.Output(&ofs);
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_bitarray,
-                               std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ofs(output_bitarray,
+                         std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ofs.write(barray.array(), barray.array_size());
     ofs.close();
