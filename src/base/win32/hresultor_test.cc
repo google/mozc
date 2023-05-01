@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,39 @@
 
 namespace mozc::win32 {
 namespace {
+
+template <typename T>
+void TestHResultOrTypeAttributes() {
+  using U = HResultOr<T>;
+  static_assert(std::is_trivially_destructible_v<T> ==
+                std::is_trivially_destructible_v<U>);
+
+  static_assert(std::is_copy_constructible_v<T> ==
+                std::is_copy_constructible_v<U>);
+  static_assert(std::is_trivially_copy_constructible_v<T> ==
+                std::is_trivially_copy_constructible_v<U>);
+  static_assert(std::is_copy_assignable_v<T> == std::is_copy_assignable_v<U>);
+  static_assert((std::is_trivially_copy_assignable_v<T> &&
+                 std::is_trivially_destructible_v<T>) ==
+                std::is_trivially_copy_assignable_v<U>);
+
+  static_assert(std::is_move_constructible_v<T> ==
+                std::is_move_constructible_v<U>);
+  static_assert(std::is_trivially_move_constructible_v<T> ==
+                std::is_trivially_move_constructible_v<U>);
+  static_assert(std::is_nothrow_move_constructible_v<T> ==
+                std::is_nothrow_move_constructible_v<U>);
+  static_assert(std::is_move_assignable_v<T> == std::is_move_assignable_v<U>);
+  static_assert((std::is_trivially_move_assignable_v<T> &&
+                 std::is_trivially_destructible_v<T>) ==
+                std::is_trivially_move_assignable_v<U>);
+  static_assert(std::is_nothrow_move_assignable_v<T> ==
+                std::is_nothrow_move_assignable_v<U>);
+
+  static_assert((std::is_nothrow_swappable_v<T> &&
+                 std::is_nothrow_move_constructible_v<T>) ==
+                std::is_nothrow_swappable_v<U>);
+}
 
 TEST(HResultOr, HResult) {
   constexpr HResult hr(E_FAIL);
@@ -61,6 +95,8 @@ TEST(HResultOr, HResult) {
 }
 
 TEST(HResultOr, Int) {
+  TestHResultOrTypeAttributes<int>();
+
   HResultOr<int> v(std::in_place, 42);
   EXPECT_TRUE(v.ok());
   EXPECT_EQ(v.value(), 42);
@@ -80,6 +116,11 @@ TEST(HResultOr, Int) {
 }
 
 TEST(HResultOr, String) {
+  TestHResultOrTypeAttributes<std::string>();
+  TestHResultOrTypeAttributes<std::string *>();
+  TestHResultOrTypeAttributes<const std::string *>();
+  TestHResultOrTypeAttributes<absl::string_view>();
+
   constexpr absl::string_view kTestStr = "hello";
   HResultOr<std::string> v(kTestStr);
   EXPECT_TRUE(v.ok());
@@ -109,6 +150,9 @@ TEST(HResultOr, String) {
 
 TEST(HResultOr, Vector) {
   using vector_t = std::vector<int>;
+  TestHResultOrTypeAttributes<vector_t>();
+  TestHResultOrTypeAttributes<vector_t *>();
+  TestHResultOrTypeAttributes<const vector_t *>();
 
   const HResultOr<vector_t> v(std::in_place, {1, 2, 3});
   EXPECT_TRUE(v.ok());
@@ -191,6 +235,10 @@ TEST(HResultOr, HResultOk) {
 }
 
 TEST(HResultOr, LValueRValue) {
+  TestHResultOrTypeAttributes<NonCopyableMock>();
+  TestHResultOrTypeAttributes<NonCopyableMock *>();
+  TestHResultOrTypeAttributes<const NonCopyableMock *>();
+
   // Copy-free operators
   HResultOr<NonCopyableMock> implicit_direct_ctor = NonCopyableMock(1);
   EXPECT_TRUE(implicit_direct_ctor.ok());
@@ -199,6 +247,11 @@ TEST(HResultOr, LValueRValue) {
       std::move(implicit_direct_ctor));
   EXPECT_TRUE(explicit_direct_ctor.ok());
   EXPECT_EQ(**explicit_direct_ctor, 1);
+
+  HResultOr<NonCopyableMock> value_or(NonCopyableMock(100));
+  EXPECT_EQ(*std::move(value_or).value_or(NonCopyableMock(42)), 100);
+  value_or = HResult(E_FAIL);
+  EXPECT_EQ(*std::move(value_or).value_or(NonCopyableMock(42)), 42);
 
   // assignment
   HResultOr<NonCopyableMock> assignments = HResult(E_FAIL);
@@ -255,6 +308,7 @@ TEST(HResultOr, AssignOrReturnHResult) {
   };
   EXPECT_EQ(f(), E_FAIL);
 
+  TestHResultOrTypeAttributes<std::unique_ptr<int>>();
   auto g = []() -> HResultOr<std::unique_ptr<int>> {
     ASSIGN_OR_RETURN_HRESULT(auto p, HResultOk(std::make_unique<int>(42)));
     EXPECT_EQ(*p, 42);
@@ -278,6 +332,71 @@ TEST(HResultOr, ReturnIfErrorHResult) {
     return HResultOk(42);
   };
   EXPECT_EQ(g(), HResult(E_FAIL));
+}
+
+struct TriviallyCopyableNotTriviallyMovable {
+  TriviallyCopyableNotTriviallyMovable(
+      const TriviallyCopyableNotTriviallyMovable &) = default;
+  TriviallyCopyableNotTriviallyMovable &operator=(
+      const TriviallyCopyableNotTriviallyMovable &) = default;
+
+  TriviallyCopyableNotTriviallyMovable(
+      TriviallyCopyableNotTriviallyMovable &&) noexcept {}
+  TriviallyCopyableNotTriviallyMovable &operator=(
+      TriviallyCopyableNotTriviallyMovable &&) {
+    return *this;
+  }
+};
+
+struct NotTriviallyDestructible {
+  NotTriviallyDestructible() = default;
+  ~NotTriviallyDestructible() { ++destructor_count; }
+  NotTriviallyDestructible(const NotTriviallyDestructible &) = default;
+  NotTriviallyDestructible &operator=(const NotTriviallyDestructible &) =
+      default;
+  NotTriviallyDestructible(NotTriviallyDestructible &&) = default;
+  NotTriviallyDestructible &operator=(NotTriviallyDestructible &&) = default;
+
+  static int destructor_count;
+};
+
+int NotTriviallyDestructible::destructor_count = 0;
+
+struct ConstructibleNotAssignable {
+  ConstructibleNotAssignable(const ConstructibleNotAssignable &) = default;
+  ConstructibleNotAssignable &operator=(const ConstructibleNotAssignable &) =
+      delete;
+  ConstructibleNotAssignable(ConstructibleNotAssignable &&) = default;
+  ConstructibleNotAssignable &operator=(ConstructibleNotAssignable &&) = delete;
+};
+
+struct NotCopyableOrMovable {
+  NotCopyableOrMovable(const NotCopyableOrMovable &) = delete;
+  NotCopyableOrMovable &operator=(const NotCopyableOrMovable &) = delete;
+};
+
+TEST(HResultOr, TypeAttributeTest) {
+  TestHResultOrTypeAttributes<TriviallyCopyableNotTriviallyMovable>();
+  TestHResultOrTypeAttributes<NotTriviallyDestructible>();
+  TestHResultOrTypeAttributes<ConstructibleNotAssignable>();
+  TestHResultOrTypeAttributes<NotCopyableOrMovable>();
+}
+
+TEST(HResultOr, DestructorCallTest) {
+  {
+    NotTriviallyDestructible::destructor_count = 0;
+    HResultOr<NotTriviallyDestructible> not_trivially_destructible(
+        std::in_place);
+    not_trivially_destructible = HResult(E_FAIL);
+    EXPECT_EQ(NotTriviallyDestructible::destructor_count, 1);
+  }
+  EXPECT_EQ(NotTriviallyDestructible::destructor_count, 1);
+
+  {
+    HResultOr<NotTriviallyDestructible> not_trivially_destructible(
+        std::in_place);
+  }
+  EXPECT_EQ(NotTriviallyDestructible::destructor_count, 2);
 }
 
 }  // namespace

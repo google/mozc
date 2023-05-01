@@ -33,7 +33,6 @@
 #include <windows.h>
 
 #include <initializer_list>
-#include <optional>
 #include <type_traits>
 #include <utility>
 
@@ -65,7 +64,9 @@ class HResult {
     return hr_;
   }
 
-  constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
+  ABSL_MUST_USE_RESULT constexpr bool ok() const noexcept {
+    return SUCCEEDED(hr_);
+  }
   constexpr HRESULT hr() const noexcept { return hr_; }
 
   friend void swap(HResult& a, HResult& b) noexcept {
@@ -102,10 +103,17 @@ constexpr HResultOr<T> HResultOk(U&& value) {
 //  // many lines
 //  return = E_FAIL;  // Error. E_FAIL is convertible to int.
 template <class T>
-class HResultOr {
+class HResultOr : private hresultor_internal::HResultOrMoveAssignBase<T>,
+                  private hresultor_internal::CopyCtorBase<T>,
+                  private hresultor_internal::CopyAssignBase<T>,
+                  private hresultor_internal::MoveCtorBase<T>,
+                  private hresultor_internal::MoveAssignBase<T> {
+  using Base = hresultor_internal::HResultOrMoveAssignBase<T>;
+
  public:
   static_assert(!std::is_void_v<absl::remove_cvref_t<T>>,
                 "void is not allowed as the type of the value.");
+  static_assert(!std::is_reference_v<T>, "reference type is not supported.");
 
   using value_type = T;
   using error_type = HRESULT;
@@ -113,11 +121,14 @@ class HResultOr {
   // Delete the default constructor. Use HResultOk<T>() instead.
   HResultOr() = delete;
 
-  // Copyable if T is copyable.
+  // Copyable if T is copyable. HResultOr<T> is trivially copyable if T is
+  // trivially copyable.
   constexpr HResultOr(const HResultOr&) = default;
   constexpr HResultOr& operator=(const HResultOr&) = default;
 
-  // Movable if T is movable. noexcept if T has a noexcept move constructor.
+  // Movable if T is movable. HResultOr<T> is
+  //  - noexcept movable if T has a noexcept move constructor.
+  //  - trivially movable if T is trivially movable.
   constexpr HResultOr(HResultOr&&) = default;
   constexpr HResultOr& operator=(HResultOr&&) = default;
 
@@ -134,8 +145,7 @@ class HResultOr {
                     !hresultor_internal::
                         IsConstructibleOrConvertibleFromHResultOrV<T, U>,
                 int> = 0>
-  constexpr explicit HResultOr(const HResultOr<U>& other)
-      : hr_(other.hr_), value_(other.value_) {}
+  constexpr explicit HResultOr(const HResultOr<U>& other) : Base(other) {}
 
   template <typename U,
             typename std::enable_if_t<
@@ -144,8 +154,7 @@ class HResultOr {
                     !hresultor_internal::
                         IsConstructibleOrConvertibleFromHResultOrV<T, U>,
                 int> = 0>
-  constexpr explicit HResultOr(HResultOr<U>&& other)
-      : hr_(other.hr_), value_(std::move(other.value_)) {}
+  constexpr explicit HResultOr(HResultOr<U>&& other) : Base(std::move(other)) {}
 
   template <typename U,
             typename std::enable_if_t<
@@ -155,7 +164,7 @@ class HResultOr {
                         IsConstructibleOrConvertibleFromHResultOrV<T, U>,
                 int> = 0>
   constexpr HResultOr(const HResultOr<U>& other)  // NOLINT(runtime/explicit)
-      : hr_(other.hr_), value_(other.value_) {}
+      : Base(std::move(other)) {}
 
   template <typename U,
             typename std::enable_if_t<
@@ -165,7 +174,7 @@ class HResultOr {
                         IsConstructibleOrConvertibleFromHResultOrV<T, U>,
                 int> = 0>
   constexpr HResultOr(HResultOr<U>&& other)  // NOLINT(runtime/explicit)
-      : hr_(other.hr_), value_(std::move(other.value_)) {}
+      : Base(std::move(other)) {}
 
   // Converting assignment operators from HResultOr<U>.
   //
@@ -188,7 +197,7 @@ class HResultOr {
                       hresultor_internal::IsAssignableFromHResultOrV<T, U>),
                 int> = 0>
   constexpr HResultOr& operator=(const HResultOr<U>& other) {
-    AssignValue(other.value_);
+    this->Assign(other);
     return *this;
   }
 
@@ -201,7 +210,7 @@ class HResultOr {
                       hresultor_internal::IsAssignableFromHResultOrV<T, U>),
                 int> = 0>
   constexpr HResultOr& operator=(HResultOr<U>&& other) {
-    AssignValue(std::move(other.value_));
+    this->Assign(std::move(other));
     return *this;
   }
 
@@ -264,25 +273,28 @@ class HResultOr {
   //  1. remove_cvref<U> is not HResultOr<T>,
   //  2. T is constructible and assignable from U, and
   //  3. U is not convertible to HResult or HRESULT.
-  template <
-      typename U = T,
-      typename = std::enable_if_t<
-          !std::is_same_v<absl::remove_cvref_t<U>, HResultOr> &&
-          std::is_constructible_v<T, U> && std::is_assignable_v<T&, U> &&
-          !hresultor_internal::IsConvertibleToHResultLikeV<T>>>
+  template <typename U = T,
+            typename = std::enable_if_t<
+                !std::is_same_v<absl::remove_cvref_t<U>, HResultOr> &&
+                std::is_constructible_v<T, U> && std::is_assignable_v<T&, U> &&
+                !hresultor_internal::IsConvertibleToHResultLikeV<T>>>
   constexpr HResultOr& operator=(U&& value) {
-    AssignValue(std::forward<U>(value));
+    if (ok()) {
+      **this = std::forward<U>(value);
+    } else {
+      this->ConstructValue(std::forward<U>(value));
+    }
     return *this;
   }
 
   // In-place construction of T.
   template <typename... Args>
   constexpr explicit HResultOr(std::in_place_t, Args&&... args)
-      : hr_(S_OK), value_(std::in_place, std::forward<Args>(args)...) {}
+      : Base(std::in_place, std::forward<Args>(args)...) {}
   template <typename U, typename... Args>
   constexpr explicit HResultOr(std::in_place_t, std::initializer_list<U> ilist,
                                Args&&... args)
-      : hr_(S_OK), value_(std::in_place, ilist, std::forward<Args>(args)...) {}
+      : Base(std::in_place, ilist, std::forward<Args>(args)...) {}
 
   // Constructions and assignments from a non-ok HResult.
   //
@@ -292,60 +304,63 @@ class HResultOr {
   // The assignment operator destroys the current value.
   constexpr HResultOr(const HResult hr)  // NOLINT(runtime/explicit)
       noexcept
-      : hr_(hr.hr()) {
+      : Base(hresultor_internal::hresult_tag, hr.hr()) {
     DCHECK(!ok());
   }
 
   HResultOr& operator=(const HResult hr) noexcept {
-    hr_ = hr.hr();
+    this->AssignHResult(hr);
     DCHECK(!ok());
-    value_.reset();  // std::optional<T>::reset() is noexcept.
     return *this;
   }
 
   // ok() checks SUCCEEDED(hr).
-  constexpr ABSL_MUST_USE_RESULT bool ok() const noexcept {
+  ABSL_MUST_USE_RESULT constexpr bool ok() const noexcept {
     return SUCCEEDED(hr_);
   }
+
   // Returns HRESULT.
   constexpr HRESULT hr() const noexcept { return hr_; }
 
   // value() tests ok() with `CHECK()` and returns the value.
   constexpr T& value() & ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(ok());
-    return value_.value();
+    return value_;
   }
   constexpr const T& value() const& ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(ok());
-    return value_.value();
+    return value_;
   }
   constexpr T&& value() && ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(ok());
-    return std::move(value_).value();
+    return std::move(value_);
   }
   constexpr const T&& value() const&& ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(ok());
-    return std::move(value_).value();
+    return std::move(value_);
   }
 
   // operator*() returns the value. Requires ok().
-  constexpr T& operator*() & ABSL_ATTRIBUTE_LIFETIME_BOUND { return *value_; }
-  constexpr const T& operator*() const& ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return *value_;
+  constexpr T& operator*() & noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return value_;
   }
-  constexpr T&& operator*() && ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return *std::move(value_);
+  constexpr const T& operator*() const& noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return value_;
   }
-  constexpr const T&& operator*() const&& ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return *std::move(value_);
+  constexpr T&& operator*() && noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return std::move(value_);
+  }
+  constexpr const T&& operator*() const&& noexcept
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return std::move(value_);
   }
 
   // operator->() returns a pointer to the value. Requires ok().
-  constexpr T* operator->() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_.operator->();
+  constexpr T* operator->() noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return &this->value_;
   }
-  constexpr const T* operator->() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_.operator->();
+  constexpr const T* operator->() const noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return &this->value_;
   }
 
   // value_or() returns a value if ok(), otherwise returns default_value.
@@ -358,38 +373,35 @@ class HResultOr {
   template <typename U>
   constexpr T value_or(U&& default_value) const& {
     if (ok()) {
-      return *value_;
+      return value_;
     }
     return std::forward<U>(default_value);
   }
   template <typename U>
   constexpr T value_or(U&& default_value) && {
     if (ok()) {
-      return *std::move(value_);
+      return std::move(value_);
     }
     return std::forward<U>(default_value);
   }
 
-  template <typename U>
-  friend void swap(HResultOr& a,
-                   HResultOr<U>& b) noexcept(noexcept(std::swap(a.value_,
-                                                                b.value_))) {
-    std::swap(a.hr_, b.hr_);
-    std::swap(a.value_, b.value_);
+  friend void swap(HResultOr& a, HResultOr& b) noexcept(
+      std::is_nothrow_swappable_v<T> &&
+      std::is_nothrow_move_constructible_v<T>) {
+    if (a.ok() && b.ok()) {
+      std::swap(*a, *b);
+    } else {
+      if (a.ok()) {
+        const HRESULT b_hr = b.hr();
+        b.ConstructValue(*std::move(a));
+        a.AssignHResult(b_hr);
+      } else {
+        const HRESULT a_hr = a.hr();
+        a.ConstructValue(*std::move(b));
+        b.AssignHResult(a_hr);
+      }
+    }
   }
-
- private:
-  template <typename>
-  friend class HResultOr;
-
-  template <typename U>
-  constexpr void AssignValue(U&& value) {
-    hr_ = S_OK;
-    value_ = std::forward<U>(value);
-  }
-
-  HRESULT hr_;
-  std::optional<T> value_;
 };
 
 // Comparison operators between HResult.
