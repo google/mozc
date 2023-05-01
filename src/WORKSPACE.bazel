@@ -10,14 +10,14 @@ load("//:config.bzl", "MACOS_QT_PATH")
 load("//:pkg_config_repository.bzl", "pkg_config_repository")
 
 
-# Bazel Skylib (1.0.2)
+# Bazel Skylib (1.4.1)
 # https://github.com/bazelbuild/bazel-skylib
 http_archive(
     name = "bazel_skylib",
-    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
+    sha256 = "b8a1527901774180afc798aeb28c4634bdccf19c4d98e7bdd1ce79d1fe9aaad7",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
     ],
 )
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
