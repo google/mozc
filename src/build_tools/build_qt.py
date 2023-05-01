@@ -79,6 +79,7 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
   """
 
   qt_configure_options = ['-opensource',
+                          '-silent',
                           '-no-cups',
                           '-no-dbus',
                           '-no-icu',
@@ -302,8 +303,7 @@ def RunOrDie(
 
   print('Running: ' + ' '.join([str(arg) for arg in argv]))
   try:
-    subprocess.run(argv, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
-                   check=True, env=env)
+    subprocess.run(argv, check=True, env=env)
   except subprocess.CalledProcessError as e:
     print(e.output.decode('utf-8'))
     sys.exit(e.returncode)
