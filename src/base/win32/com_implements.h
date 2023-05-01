@@ -48,6 +48,9 @@ namespace com_implements_internal {
 // determine if the COM module can unload safely.
 ABSL_CONST_INIT extern std::atomic<int> com_module_ref_count;
 
+// Placeholder to prevent classes from deriving another ComImplement.
+struct ComImplementsBaseTag {};
+
 }  // namespace com_implements_internal
 
 // Returns true if the COM module doesn't have any active objects.
@@ -91,11 +94,16 @@ bool IsIIDOf(REFIID riid) {
 // Note that you need to define a specialization of IsIIDOf<IFoo>() if IFoo
 // is not an immediate derived interface of IUnknown.
 template <typename Traits, typename... Interfaces>
-class ComImplements : public Interfaces... {
+class ComImplements : public com_implements_internal::ComImplementsBaseTag,
+                      public Interfaces... {
  public:
   static_assert(
       std::conjunction_v<std::is_convertible<Interfaces *, IUnknown *>...>,
       "COM interfaces must derive from IUnknown.");
+  static_assert(
+      !std::disjunction_v<std::is_base_of<
+          Interfaces, com_implements_internal::ComImplementsBaseTag>...>,
+      "Do not derive from ComImplements multiple times.");
 
   ComImplements() { ++com_implements_internal::com_module_ref_count; }
   // Disallow copies and movies.
@@ -123,13 +131,18 @@ class ComImplements : public Interfaces... {
 template <typename Traits, typename... Interfaces>
 STDMETHODIMP_(ULONG)
 ComImplements<Traits, Interfaces...>::AddRef() {
-  return ++ref_count_;
+  // AddRef() can occur in any order.
+  return ref_count_.fetch_add(1, std::memory_order_relaxed) + 1;
 }
 
 template <typename Traits, typename... Interfaces>
 STDMETHODIMP_(ULONG)
 ComImplements<Traits, Interfaces...>::Release() {
-  const ULONG new_value = --ref_count_;
+  // All other AddRef() calls must be visible to Release().
+  // std::memory_order_release guarantees that this fetch_sub comes after all
+  // other operations.
+  const ULONG new_value =
+      ref_count_.fetch_sub(1, std::memory_order_release) - 1;
   if (new_value == 0) {
     delete this;
   }

@@ -151,6 +151,7 @@ mozc_cc_test(
 
 mozc_cc_test(
     name = "win_util_test",
+    size = "small",
     srcs = ["win_util_test.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
@@ -221,6 +222,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "wide_char_test",
+    size = "small",
     srcs = ["wide_char_test.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
@@ -275,6 +277,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "com_test",
+    size = "small",
     srcs = ["com_test.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
@@ -283,6 +286,7 @@ mozc_cc_test(
         ":com_implements",
         ":scoped_com",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -301,6 +305,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "com_implements_test",
+    size = "small",
     srcs = ["com_implements_test.cc"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],

@@ -37,7 +37,6 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 
-#include <atomic>
 #include <string_view>
 #include <utility>
 
@@ -45,7 +44,6 @@
 #include "base/win32/scoped_com.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "absl/base/attributes.h"
 
 namespace mozc::win32 {
 namespace {
@@ -54,7 +52,10 @@ using ::testing::StrEq;
 
 // Mock interfaces for testing.
 MIDL_INTERFACE("A03A80F4-9254-4C8B-AF25-0674FCED18E5")
-IMock1 : public IUnknown { STDMETHOD(Test1)() = 0; };
+IMock1 : public IUnknown {
+  STDMETHOD(Test1)() = 0;
+  STDMETHOD_(LONG, GetQICountAndReset)() = 0;
+};
 
 MIDL_INTERFACE("863EF391-8485-4257-8423-8D919D1AE8DC")
 IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
@@ -72,10 +73,12 @@ bool IsIIDOf<IDerived>(REFIID riid) {
 
 namespace {
 
+int object_count;  // Number of Mock instances.
+
 class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
  public:
-  Mock() { ++instance_count_; }
-  ~Mock() override { --instance_count_; }
+  Mock() { ++object_count; }
+  ~Mock() override { --object_count; }
 
   STDMETHODIMP QueryInterface(REFIID iid, void **out) override {
     qi_count_++;
@@ -84,26 +87,18 @@ class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
   STDMETHODIMP Test1() override { return S_OK; }
   STDMETHODIMP Test2() override { return S_FALSE; }
   STDMETHODIMP Derived() override { return 2; }
-
-  static void Reset() {
-    instance_count_ = 0;
-    qi_count_ = 0;
+  STDMETHODIMP_(LONG) GetQICountAndReset() override {
+    return std::exchange(qi_count_, 0);
   }
-  static int GetInstanceCount() { return instance_count_.load(); }
-  static int GetQICountAndReset() { return qi_count_.exchange(0); }
 
  private:
-  static std::atomic<int> instance_count_;
-  static std::atomic<int> qi_count_;
+  int qi_count_ = 0;
 };
-
-ABSL_CONST_INIT std::atomic<int> Mock::instance_count_ = 0;
-ABSL_CONST_INIT std::atomic<int> Mock::qi_count_ = 0;
 
 class ComTest : public ::testing::Test {
  protected:
-  ComTest() { Mock::Reset(); }
-  ~ComTest() override { EXPECT_EQ(Mock::GetInstanceCount(), 0); }
+  ComTest() { object_count = 0; }
+  ~ComTest() override { EXPECT_EQ(object_count, 0); }
 
  private:
   ScopedCOMInitializer initializer_;
@@ -117,6 +112,13 @@ TEST_F(ComTest, ComCreateInstance) {
   EXPECT_FALSE(ComCreateInstance<IShellFolder>(CLSID_ShellLink));
 }
 
+TEST_F(ComTest, MakeComPtr) {
+  auto ptr = MakeComPtr<Mock>();
+  EXPECT_TRUE(ptr);
+  EXPECT_EQ(object_count, 1);
+  EXPECT_EQ(ptr->GetQICountAndReset(), 0);
+}
+
 TEST_F(ComTest, ComQuery) {
   wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
   EXPECT_TRUE(mock1);
@@ -125,23 +127,23 @@ TEST_F(ComTest, ComQuery) {
   wil::com_ptr_nothrow<IDerived> derived = ComQuery<IDerived>(mock1);
   EXPECT_TRUE(derived);
   EXPECT_EQ(derived->Derived(), 2);
-  EXPECT_EQ(Mock::GetQICountAndReset(), 1);
+  EXPECT_EQ(derived->GetQICountAndReset(), 1);
 
   EXPECT_TRUE(ComQuery<IMock1>(derived));
-  EXPECT_EQ(Mock::GetQICountAndReset(), 0);
+  EXPECT_EQ(derived->GetQICountAndReset(), 0);
 
   wil::com_ptr_nothrow<IMock2> mock2 = ComQuery<IMock2>(mock1);
   EXPECT_TRUE(mock2);
   EXPECT_EQ(mock2->Test2(), S_FALSE);
-  EXPECT_EQ(Mock::GetQICountAndReset(), 1);
+  EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
   mock2 = ComQuery<IMock2>(mock1);
   EXPECT_TRUE(mock2);
   EXPECT_EQ(mock2->Test2(), S_FALSE);
-  EXPECT_EQ(Mock::GetQICountAndReset(), 1);
+  EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 
   EXPECT_EQ(ComQueryHR<IShellView>(mock2).hr(), E_NOINTERFACE);
-  EXPECT_EQ(Mock::GetQICountAndReset(), 1);
+  EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 }
 
 TEST(ComBSTRTest, MakeUniqueBSTR) {
