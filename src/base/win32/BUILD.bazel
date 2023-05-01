@@ -248,6 +248,8 @@ mozc_cc_library(
 mozc_cc_library(
     name = "hresultor_internal",
     hdrs = ["hresultor_internal.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
 )
 
 mozc_cc_test(
