@@ -467,11 +467,11 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
 #define HRESULTOR_MACRO_IMPL_CONCAT_(x, y) \
   HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y)
 
-#define ASSIGN_OR_RETURN_HRESULT_IMPL_(tmp, lhs, expr) \
-  auto tmp = expr;                                     \
-  if (ABSL_PREDICT_FALSE(!tmp.ok())) {                 \
-    return HResult(tmp.hr());                          \
-  }                                                    \
+#define HRESULTOR_MACRO_IMPL_ASSIGN_OR_RETURN_HRESULT_(tmp, lhs, expr) \
+  auto tmp = expr;                                                     \
+  if (ABSL_PREDICT_FALSE(!tmp.ok())) {                                 \
+    return HResult(tmp.hr());                                          \
+  }                                                                    \
   lhs = *std::move(tmp)
 
 // Helper macros for HResultOr.
@@ -483,7 +483,7 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
 //
 // Limitation: This macro doesn't work if lhs has a "," inside.
 #define ASSIGN_OR_RETURN_HRESULT(lhs, ...)                                    \
-  ASSIGN_OR_RETURN_HRESULT_IMPL_(                                             \
+  HRESULTOR_MACRO_IMPL_ASSIGN_OR_RETURN_HRESULT_(                             \
       HRESULTOR_MACRO_IMPL_CONCAT_(hresultor_assign_or_return_tmp, __LINE__), \
       lhs, (__VA_ARGS__))
 
