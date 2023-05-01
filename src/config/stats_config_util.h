@@ -30,8 +30,6 @@
 #ifndef MOZC_CONFIG_STATS_CONFIG_UTIL_H_
 #define MOZC_CONFIG_STATS_CONFIG_UTIL_H_
 
-#include "base/port.h"
-
 namespace mozc {
 namespace config {
 
@@ -42,8 +40,8 @@ class StatsConfigUtilInterface {
   virtual bool SetEnabled(bool val) = 0;
 
  protected:
-  StatsConfigUtilInterface() {}
-  virtual ~StatsConfigUtilInterface() {}
+  StatsConfigUtilInterface() = default;
+  virtual ~StatsConfigUtilInterface() = default;
 };
 
 class StatsConfigUtil {

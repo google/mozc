@@ -114,6 +114,8 @@ mozc_cc_test(
         "//base:system_util",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
         windows = ["//base/win32:win_api_test_helper"],
@@ -141,6 +143,7 @@ mozc_cc_library(
         "//base:util",
         "//protocol:config_cc_proto",
         "//storage:lru_storage",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

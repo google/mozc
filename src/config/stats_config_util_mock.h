@@ -38,7 +38,6 @@ namespace config {
 class StatsConfigUtilMock : public StatsConfigUtilInterface {
  public:
   StatsConfigUtilMock() : is_enabled_(true) {}
-  ~StatsConfigUtilMock() override {}
 
   bool IsEnabled() override { return is_enabled_; }
 
