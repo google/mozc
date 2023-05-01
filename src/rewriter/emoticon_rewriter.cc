@@ -227,8 +227,6 @@ EmoticonRewriter::EmoticonRewriter(absl::string_view token_array_data,
                                    absl::string_view string_array_data)
     : dic_(token_array_data, string_array_data) {}
 
-EmoticonRewriter::~EmoticonRewriter() = default;
-
 int EmoticonRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
     return RewriterInterface::ALL;

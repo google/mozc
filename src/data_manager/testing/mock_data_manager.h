@@ -41,7 +41,6 @@ class MockDataManager : public DataManager {
   MockDataManager();
   MockDataManager(const MockDataManager&) = delete;
   MockDataManager& operator=(const MockDataManager&) = delete;
-  ~MockDataManager() override;
 };
 
 }  // namespace testing

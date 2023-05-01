@@ -139,9 +139,6 @@ absl::StatusOr<std::unique_ptr<DataManager>> DataManager::CreateFromFile(
   return data_manager;
 }
 
-DataManager::DataManager() = default;
-DataManager::~DataManager() = default;
-
 DataManager::Status DataManager::InitFromArray(absl::string_view array) {
   return InitFromArray(array, kDataSetMagicNumber);
 }

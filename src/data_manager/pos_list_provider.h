@@ -39,9 +39,6 @@ namespace mozc {
 
 class PosListProvider : public PosListProviderInterface {
  public:
-  PosListProvider();
-  ~PosListProvider() override;
-
   void GetPosList(std::vector<std::string> *pos_list) const override;
 };
 

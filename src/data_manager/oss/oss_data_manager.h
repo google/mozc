@@ -43,7 +43,6 @@ class OssDataManager : public DataManager {
   OssDataManager();
   OssDataManager(const OssDataManager&) = delete;
   OssDataManager& operator=(const OssDataManager&) = delete;
-  ~OssDataManager() override;
 };
 
 }  // namespace oss

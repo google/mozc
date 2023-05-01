@@ -62,7 +62,6 @@ class DataManagerTestBase : public ::testing::Test {
                           &typing_model_files);
   DataManagerTestBase(const DataManagerTestBase &) = delete;
   DataManagerTestBase &operator=(const DataManagerTestBase &) = delete;
-  ~DataManagerTestBase() override;
 
   void RunAllTests();
 

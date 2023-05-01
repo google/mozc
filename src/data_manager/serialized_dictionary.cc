@@ -95,8 +95,6 @@ SerializedDictionary::SerializedDictionary(absl::string_view token_array,
   string_array_.Set(string_array_data);
 }
 
-SerializedDictionary::~SerializedDictionary() = default;
-
 SerializedDictionary::IterRange SerializedDictionary::equal_range(
     absl::string_view key) const {
   // TODO(noriyukit): Instead of comparing key as string, we can do binary

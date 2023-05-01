@@ -56,7 +56,5 @@ OssDataManager::OssDataManager() {
       << "Embedded mozc_imy.h for OSS is broken";
 }
 
-OssDataManager::~OssDataManager() = default;
-
 }  // namespace oss
 }  // namespace mozc

@@ -32,7 +32,6 @@
 #include <cstring>
 #include <memory>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -76,8 +75,6 @@ DataManagerTestBase::DataManagerTestBase(
       dictionary_files_(dictionary_files),
       suggestion_filter_files_(suggestion_filter_files),
       typing_model_files_(typing_model_files) {}
-
-DataManagerTestBase::~DataManagerTestBase() = default;
 
 void DataManagerTestBase::SegmenterTest_SameAsInternal() {
   // This test verifies that a segmenter created by MockDataManager provides

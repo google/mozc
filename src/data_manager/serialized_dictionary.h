@@ -40,7 +40,6 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -326,7 +325,7 @@ class SerializedDictionary {
   // boundary.
   SerializedDictionary(absl::string_view token_array,
                        absl::string_view string_array_data);
-  ~SerializedDictionary();
+  ~SerializedDictionary() = default;
 
   std::size_t size() const { return token_array_.size() / kTokenByteLength; }
 

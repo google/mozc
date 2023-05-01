@@ -49,9 +49,6 @@ namespace {
 
 }  // namespace
 
-PosListProvider::PosListProvider() = default;
-PosListProvider::~PosListProvider() = default;
-
 void PosListProvider::GetPosList(std::vector<std::string> *pos_list) const {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));

@@ -32,16 +32,15 @@
 
 #include <memory>
 
+#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
 
 class EmoticonRewriter : public RewriterInterface {
  public:
@@ -50,7 +49,6 @@ class EmoticonRewriter : public RewriterInterface {
 
   EmoticonRewriter(absl::string_view token_array_data,
                    absl::string_view string_array_data);
-  ~EmoticonRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
 
