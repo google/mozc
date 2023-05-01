@@ -31,10 +31,11 @@
 #define MOZC_WIN32_TIP_TIP_TEXT_SERVICE_H_
 
 #include <msctf.h>
+#include <unknwn.h>
+#include <wil/com.h>
+#include <windows.h>
 
 #include <cstdint>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {
@@ -68,9 +69,9 @@ class TipTextService : public IUnknown {
   // Returns nullptr if it is not available.
   virtual HWND renderer_callback_window_handle() const = 0;
 
-  // Returns an instance of ITfCompositionSink object. The caller must maintain
-  // the reference count of the returned object.
-  virtual ITfCompositionSink *CreateCompositionSink(ITfContext *context) = 0;
+  // Returns an instance of ITfCompositionSink object.
+  virtual wil::com_ptr_nothrow<ITfCompositionSink> CreateCompositionSink(
+      ITfContext *context) = 0;
 
   // Updates the language bar as needed.  Does nothing if the language bar is
   // not available.
@@ -82,10 +83,12 @@ class TipTextService : public IUnknown {
 
 class TipTextServiceFactory {
  public:
-  static TipTextService *Create();
   TipTextServiceFactory() = delete;
   TipTextServiceFactory(const TipTextServiceFactory &) = delete;
   TipTextServiceFactory &operator=(const TipTextServiceFactory &) = delete;
+
+  static wil::com_ptr_nothrow<TipTextService> Create();
+
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);

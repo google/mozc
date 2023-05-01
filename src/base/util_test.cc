@@ -29,9 +29,7 @@
 
 #include "base/util.h"
 
-#include <algorithm>
 #include <array>
-#include <climits>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -39,19 +37,19 @@
 #include <iterator>
 #include <limits>
 #include <map>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
 using ::testing::ElementsAreArray;
 
@@ -358,7 +356,7 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
         "🇯🇵",       // U+1F1EF,U+1F1F5 - emoji flag sequence
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // U+1F3F4,U+E0067,U+E0062,U+E0065,U+E006E,U+E0067
                                          // - emoji tag sequence
-        "#️⃣",  // U+0023,U+FE0F,U+20E3 - emoji keycap sequennce
+        "#️⃣",  // U+0023,U+FE0F,U+20E3 - emoji keycap sequence
         "👨‍👩‍👧‍👦",  // U+1F468,U+200D,U+1F469,U+200D,U+1F467,U+200D,U+1F466
                                       // - emoji zwj sequence
     };
@@ -530,54 +528,31 @@ TEST(UtilTest, IsCapitalizedAscii) {
   EXPECT_FALSE(Util::IsCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-TEST(UtilTest, Utf8ToCodepoints) {
-  {
-    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints("");
-    EXPECT_TRUE(codepoints.empty());
-  }
-
-  {  // Single codepoint characters.
-    std::string str = "aあ亜\na";
-    std::vector<int> expected = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
-
-    std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
-    EXPECT_THAT(codepoints, ElementsAreArray(expected));
-  }
-
-  {  // Multiple codepoint characters
-    std::string str =
-        ("神"  // U+795E
-         "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
-         "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
-        );
-    std::vector<int> expected = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099};
-
-    std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
-    EXPECT_THAT(codepoints, ElementsAreArray(expected));
-  }
+TEST(UtilTest, Utf8ToUtf32) {
+  EXPECT_EQ(Util::Utf8ToUtf32(""), U"");
+  // Single codepoint characters.
+  EXPECT_EQ(Util::Utf8ToUtf32("aあ亜\na"), U"aあ亜\na");
+  // Multiple codepoint characters
+  constexpr absl::string_view kStr =
+      ("神"  // U+795E
+       "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+       "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+      );
+  EXPECT_EQ(Util::Utf8ToUtf32(kStr), U"\u795E\u795E\U000E0100\u3042\u3099");
 }
 
-TEST(UtilTest, CodepointsToUtf8) {
-  {
-    const std::string output = Util::CodepointsToUtf8({});
-    EXPECT_TRUE(output.empty());
-  }
-
-  {  // Single codepoint characters.
-    std::string expected = "aあ亜\na";
-    std::vector<char32_t> cps = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
-    EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
-  }
-
-  {  // Multiple codepoint characters
-    std::string expected =
-        ("神"  // U+795E
-         "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
-         "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
-        );
-    std::vector<char32_t> cps = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099};
-    EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
-  }
+TEST(UtilTest, Utf32ToUtf8) {
+  EXPECT_EQ(Util::Utf32ToUtf8(U""), "");
+  // Single codepoint characters.
+  EXPECT_EQ(Util::Utf32ToUtf8(U"aあ亜\na"), "aあ亜\na");
+  // Multiple codepoint characters
+  constexpr absl::string_view kExpected =
+      ("神"  // U+795E
+       "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+       "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+      );
+  constexpr std::u32string_view kU32Str = U"\u795E\u795E\U000E0100\u3042\u3099";
+  EXPECT_EQ(Util::Utf32ToUtf8(kU32Str), kExpected);
 }
 
 void VerifyUtf8ToUcs4(absl::string_view text, char32_t expected_ucs4,
@@ -1621,4 +1596,5 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

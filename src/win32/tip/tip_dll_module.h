@@ -32,13 +32,16 @@
 
 #include <windows.h>
 
-#include <atomic>
-
+#include "base/win32/com_implements.h"
 #include "absl/base/call_once.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+
+struct TipComTraits : public ComImplementsTraits {
+  static void OnObjectRelease(ULONG ref);
+};
 
 class TipDllModule {
  public:
@@ -46,14 +49,9 @@ class TipDllModule {
   TipDllModule(const TipDllModule&) = delete;
   TipDllModule& operator=(const TipDllModule&) = delete;
 
-  // Increases and decreases the reference count to this module.
-  // This reference count is used for preventing Windows from unloading
-  // this module.
-  static LONG AddRef() noexcept { return ::InterlockedIncrement(&ref_count_); }
-  static LONG Release() noexcept;
+  static void PrepareForShutdown();
 
   static bool IsUnloaded() { return unloaded_; }
-  static bool CanUnload() { return ref_count_ <= 0; }
   static void Unload() { unloaded_ = true; }
 
   static void set_module_handle(HMODULE handle) { module_handle_ = handle; }
@@ -62,11 +60,13 @@ class TipDllModule {
   static void InitForUnitTest();
 
  private:
-  static volatile LONG ref_count_;
   static HMODULE module_handle_;
   static bool unloaded_;
   static absl::once_flag uninitialize_once_;
 };
+
+template <typename... Interfaces>
+using TipComImplements = ComImplements<TipComTraits, Interfaces...>;
 
 }  // namespace tsf
 }  // namespace win32

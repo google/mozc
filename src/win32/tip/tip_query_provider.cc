@@ -40,7 +40,6 @@
 #include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
 namespace win32 {
@@ -124,7 +123,6 @@ class TipQueryProviderImpl : public TipQueryProvider {
     return true;
   }
 
-  TipRefCount ref_count_;
   std::unique_ptr<client::ClientInterface> client_;
 };
 

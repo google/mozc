@@ -40,12 +40,19 @@
 #include <vector>
 
 #include "base/win32/com.h"
+#include "base/win32/com_implements.h"
 #include "win32/tip/tip_candidate_list.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_query_provider.h"
-#include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
 namespace win32 {
+
+template <>
+bool IsIIDOf<ITfFnSearchCandidateProvider>(REFIID riid) {
+  return IsIIDOf<ITfFnSearchCandidateProvider, ITfFunction>(riid);
+}
+
 namespace tsf {
 namespace {
 
@@ -57,48 +64,12 @@ constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 constexpr wchar_t kSearchCandidateProviderName[] = L"Mozc";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
+class SearchCandidateProviderImpl final
+    : public TipComImplements<ITfFnSearchCandidateProvider> {
  public:
   explicit SearchCandidateProviderImpl(
       std::unique_ptr<TipQueryProvider> provider)
       : provider_(std::move(provider)) {}
-  SearchCandidateProviderImpl(const SearchCandidateProviderImpl &) = delete;
-  SearchCandidateProviderImpl &operator=(const SearchCandidateProviderImpl &) =
-      delete;
-
-  // The IUnknown interface methods.
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(const IID &interface_id,
-                                                   void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFunction)) {
-      *object = static_cast<ITfFunction *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfFnSearchCandidateProvider)) {
-      *object = static_cast<ITfFnSearchCandidateProvider *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   // The ITfFunction interface method.
   virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
@@ -130,7 +101,6 @@ class SearchCandidateProviderImpl final : public ITfFnSearchCandidateProvider {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   std::unique_ptr<TipQueryProvider> provider_;
 };
 

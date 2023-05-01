@@ -30,6 +30,7 @@
 #include "base/random.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <string>
 #include <vector>
@@ -82,7 +83,7 @@ TEST(TestRandom, Utf8String) {
   EXPECT_TRUE(Util::IsValidUtf8(s));
   EXPECT_EQ(Util::CharsLen(s), len);
 
-  const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(s);
+  const std::u32string codepoints = Util::Utf8ToUtf32(s);
   EXPECT_FALSE(ContainsSameValues(codepoints));
   EXPECT_TRUE(absl::c_all_of(
       codepoints, [](char32_t c) -> bool { return lo <= c && c <= hi; }));

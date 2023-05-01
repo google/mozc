@@ -31,51 +31,30 @@
 
 #include <algorithm>
 #include <array>
-#include <cerrno>
-#include <cstdarg>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
-#include <ios>
 #include <iterator>
-#include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/strings/unicode.h"
 #include "absl/algorithm/container.h"
 #include "absl/numeric/bits.h"
-#include "absl/random/random.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
-#ifdef __APPLE__
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#endif  // __APPLE__
-
 #ifdef _WIN32
-// clang-format off
-#include <windows.h>
-#include <wincrypt.h>  // wincrypt.h must be included after windows.h
-// clang-format on
-#include <time.h>
-
 #include "base/win32/wide_char.h"
-#else  // _WIN32
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <unistd.h>
 #endif  // _WIN32
 
 namespace mozc {
@@ -473,8 +452,8 @@ size_t Util::CharsLen(const char *src, size_t size) {
   return length;
 }
 
-std::vector<char32_t> Util::Utf8ToCodepoints(absl::string_view str) {
-  std::vector<char32_t> codepoints;
+std::u32string Util::Utf8ToUtf32(absl::string_view str) {
+  std::u32string codepoints;
   char32_t codepoint;
   while (Util::SplitFirstChar32(str, &codepoint, &str)) {
     codepoints.push_back(codepoint);
@@ -482,9 +461,9 @@ std::vector<char32_t> Util::Utf8ToCodepoints(absl::string_view str) {
   return codepoints;
 }
 
-std::string Util::CodepointsToUtf8(const std::vector<char32_t> &codepoints) {
+std::string Util::Utf32ToUtf8(const std::u32string_view str) {
   std::string output;
-  for (const char32_t codepoint : codepoints) {
+  for (const char32_t codepoint : str) {
     Ucs4ToUtf8Append(codepoint, &output);
   }
   return output;

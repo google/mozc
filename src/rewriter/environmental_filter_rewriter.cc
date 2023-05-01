@@ -35,10 +35,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iterator>
-#include <map>
-#include <memory>
-#include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -48,16 +46,20 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "data_manager/emoji_data.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 using AdditionalRenderableCharacterGroup =
     commands::Request::AdditionalRenderableCharacterGroup;
 
-namespace {
 // Returns (base ** multiplier) % modulo.
 constexpr int64_t Power(int64_t base, int multiplier, int64_t modulo) {
   if (multiplier <= 0) {
@@ -78,22 +80,14 @@ class RollingHasher {
   static constexpr int64_t kModulo = 2147483647;
   static constexpr int kMaxLength = 15;
   static constexpr int64_t kPowers[kMaxLength + 1]{
-      Power(kBase, 0, kModulo),
-      Power(kBase, 1, kModulo),
-      Power(kBase, 2, kModulo),
-      Power(kBase, 3, kModulo),
-      Power(kBase, 4, kModulo),
-      Power(kBase, 5, kModulo),
-      Power(kBase, 6, kModulo),
-      Power(kBase, 7, kModulo),
-      Power(kBase, 8, kModulo),
-      Power(kBase, 9, kModulo),
-      Power(kBase, 10, kModulo),
-      Power(kBase, 11, kModulo),
-      Power(kBase, 12, kModulo),
-      Power(kBase, 13, kModulo),
-      Power(kBase, 14, kModulo),
-      Power(kBase, 15, kModulo),
+      Power(kBase, 0, kModulo),  Power(kBase, 1, kModulo),
+      Power(kBase, 2, kModulo),  Power(kBase, 3, kModulo),
+      Power(kBase, 4, kModulo),  Power(kBase, 5, kModulo),
+      Power(kBase, 6, kModulo),  Power(kBase, 7, kModulo),
+      Power(kBase, 8, kModulo),  Power(kBase, 9, kModulo),
+      Power(kBase, 10, kModulo), Power(kBase, 11, kModulo),
+      Power(kBase, 12, kModulo), Power(kBase, 13, kModulo),
+      Power(kBase, 14, kModulo), Power(kBase, 15, kModulo),
   };
   void append(const char32_t value) {
     hashes_.push_back((hashes_.back() * kBase + value) % kModulo);
@@ -124,7 +118,7 @@ inline int64_t RollingHasher::hash_between(int l, int r) {
   }
 }
 
-bool CheckCodepointsAcceptable(const std::vector<char32_t> &codepoints) {
+bool CheckCodepointsAcceptable(const std::u32string_view codepoints) {
   for (const char32_t c : codepoints) {
     if (!Util::IsAcceptableCharacterAsCandidate(c)) {
       return false;
@@ -133,7 +127,7 @@ bool CheckCodepointsAcceptable(const std::vector<char32_t> &codepoints) {
   return true;
 }
 
-bool FindCodepointsInClosedRange(const std::vector<char32_t> &codepoints,
+bool FindCodepointsInClosedRange(const std::u32string_view codepoints,
                                  const char32_t left, const char32_t right) {
   for (const char32_t c : codepoints) {
     if (left <= c && c <= right) {
@@ -207,11 +201,12 @@ EmojiDataIterator end(const absl::string_view token_array_data) {
   return EmojiDataIterator(token_array_data.data() + token_array_data.size());
 }
 
-std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
+absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
+ExtractTargetEmojis(
     const std::vector<EmojiVersion> &target_versions,
     const std::pair<EmojiDataIterator, EmojiDataIterator> &range,
     const SerializedStringArray &string_array) {
-  std::map<EmojiVersion, std::vector<std::vector<char32_t>>> results;
+  absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>> results;
   for (const EmojiVersion target_version : target_versions) {
     results[target_version] = {};
   }
@@ -227,8 +222,7 @@ std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
       continue;
     }
     const absl::string_view utf8_emoji = string_array[iter.emoji_index()];
-    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(utf8_emoji);
-    results[version].push_back(std::move(codepoints));
+    results[version].push_back(Util::Utf8ToUtf32(utf8_emoji));
   }
   return results;
 }
@@ -236,8 +230,8 @@ std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
 }  // namespace
 
 void CharacterGroupFinder::Initialize(
-    const std::vector<std::vector<char32_t>> &target_codepoints) {
-  std::vector<char32_t> single_codepoints;
+    const std::vector<std::u32string> &target_codepoints) {
+  std::u32string single_codepoints;
   for (const auto &codepoints : target_codepoints) {
     const size_t size = codepoints.size();
     if (size == 1) {
@@ -260,11 +254,12 @@ void CharacterGroupFinder::Initialize(
   // Create intersection of multiple_codepoints_ to use early return key in
   // search algorithm.
   if (!multiple_codepoints_.empty()) {
-    std::set<char32_t> intersection(multiple_codepoints_[0].begin(),
-                                    multiple_codepoints_[0].end());
-    for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
-      std::set<char32_t> new_intersection;
-      std::set<char32_t> cp_set(codepoints.begin(), codepoints.end());
+    absl::flat_hash_set<char32_t> intersection(multiple_codepoints_[0].begin(),
+                                               multiple_codepoints_[0].end());
+    for (const std::u32string &codepoints : multiple_codepoints_) {
+      absl::flat_hash_set<char32_t> new_intersection;
+      absl::flat_hash_set<char32_t> cp_set(codepoints.begin(),
+                                           codepoints.end());
       std::set_intersection(
           cp_set.begin(), cp_set.end(), intersection.begin(),
           intersection.end(),
@@ -302,8 +297,7 @@ void CharacterGroupFinder::Initialize(
   }
 }
 
-bool CharacterGroupFinder::FindMatch(
-    const std::vector<char32_t> &target) const {
+bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
   for (const char32_t codepoint : target) {
     // Single codepoint check
     // If codepoint is smaller than min value, continue before executing binary
@@ -346,10 +340,10 @@ bool CharacterGroupFinder::FindMatch(
       if (std::binary_search(multiple_codepoints_hashes_.begin(),
                              multiple_codepoints_hashes_.end(), hash)) {
         // As hash can collide in some unfortunate case, double-check here.
-        const auto begin = target.begin() + left;
-        const auto end = target.begin() + right + 1;
-        for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
-          if (std::equal(begin, end, codepoints.begin(), codepoints.end())) {
+        const std::u32string_view hashed_target =
+            target.substr(left, right - left + 1);
+        for (const std::u32string &codepoints : multiple_codepoints_) {
+          if (hashed_target == codepoints) {
             return true;
           }
         }
@@ -379,7 +373,7 @@ EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
   string_array.Set(string_array_data);
   std::pair<EmojiDataIterator, EmojiDataIterator> range =
       std::make_pair(begin(token_array_data), end(token_array_data));
-  const std::map<EmojiVersion, std::vector<std::vector<char32_t>>>
+  const absl::flat_hash_map<EmojiVersion, std::vector<std::u32string>>
       version_to_targets = ExtractTargetEmojis(
           {EmojiVersion::E12_1, EmojiVersion::E13_0, EmojiVersion::E13_1,
            EmojiVersion::E14_0, EmojiVersion::E15_0},
@@ -428,8 +422,7 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
       // Character Normalization
       modified |= NormalizeCandidate(candidate, flag_);
 
-      const std::vector<char32_t> codepoints =
-          Util::Utf8ToCodepoints(candidate->value);
+      const std::u32string codepoints = Util::Utf8ToUtf32(candidate->value);
 
       // Check acceptability of code points as a candidate.
       if (!CheckCodepointsAcceptable(codepoints)) {

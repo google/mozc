@@ -31,20 +31,14 @@
 #define MOZC_WIN32_TIP_TIP_EDIT_SESSION_IMPL_H_
 
 #include <msctf.h>
+#include <windows.h>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
-
-namespace commands {
-class Output;
-class SessionCommand;
-}  // namespace commands
-
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 // A helper function to update the context based on the response from
 // mozc_server.

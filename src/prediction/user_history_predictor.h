@@ -185,6 +185,22 @@ class UserHistoryPredictor : public PredictorInterface {
       conversion_segments_.push_back(val);
     }
 
+    void set_conversion_segments_key(std::string val) {
+      conversion_segments_key_ = std::move(val);
+    }
+
+    void set_conversion_segments_value(std::string val) {
+      conversion_segments_value_ = std::move(val);
+    }
+
+    const std::string &conversion_segments_key() const {
+      return conversion_segments_key_;
+    }
+
+    const std::string &conversion_segments_value() const {
+      return conversion_segments_value_;
+    }
+
     size_t history_segments_size() const { return history_segments_.size(); }
 
     size_t conversion_segments_size() const {
@@ -212,6 +228,9 @@ class UserHistoryPredictor : public PredictorInterface {
     }
 
    private:
+    std::string conversion_segments_key_;
+    std::string conversion_segments_value_;
+
     std::vector<SegmentForLearning> history_segments_;
     std::vector<SegmentForLearning> conversion_segments_;
   };
@@ -452,6 +471,11 @@ class UserHistoryPredictor : public PredictorInterface {
 
   void InsertHistory(RequestType request_type, bool is_suggestion_selected,
                      uint64_t last_access_time, Segments *segments);
+
+  void InsertHistoryForConversionSegments(
+      RequestType request_type, bool is_suggestion_selected,
+      uint64_t last_access_time, const SegmentsForLearning &learning_segments,
+      Segments *segments);
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.

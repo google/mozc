@@ -39,42 +39,6 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-// Implements the IUnknown::QueryInterface() function.
-HRESULT STDMETHODCALLTYPE
-TipEnumDisplayAttributes::QueryInterface(REFIID interface_id, void **object) {
-  if (*object == nullptr) {
-    return E_INVALIDARG;
-  }
-
-  // Find a matching interface from the ones implemented by this object.
-  if (::IsEqualIID(interface_id, IID_IUnknown)) {
-    *object = static_cast<IUnknown *>(this);
-    AddRef();
-    return S_OK;
-  } else if (::IsEqualIID(interface_id, IID_IEnumTfDisplayAttributeInfo)) {
-    *object = static_cast<IEnumTfDisplayAttributeInfo *>(this);
-    AddRef();
-    return S_OK;
-  }
-
-  *object = nullptr;
-  return E_NOINTERFACE;
-}
-
-// Implements the IUnknown::AddRef() function.
-ULONG STDMETHODCALLTYPE TipEnumDisplayAttributes::AddRef() {
-  return ref_count_.AddRefImpl();
-}
-
-// Implements the IUnknown::Release() function.
-ULONG STDMETHODCALLTYPE TipEnumDisplayAttributes::Release() {
-  const ULONG count = ref_count_.ReleaseImpl();
-  if (count == 0) {
-    delete this;
-  }
-  return count;
-}
-
 // Implements the IEnumTfDisplayAttributeInfo::Clone() function.
 HRESULT STDMETHODCALLTYPE
 TipEnumDisplayAttributes::Clone(IEnumTfDisplayAttributeInfo **enum_attributes) {

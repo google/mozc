@@ -137,11 +137,20 @@ mozc_cc_library(
     hdrs = ["port.h"],
     deps = mozc_select(
         default = [
-            "//base:base",
+            "//base",
             "//base:port",
         ],
         oss = ["@com_google_absl//absl/base:core_headers"],
     ),
+)
+
+mozc_cc_test(
+    name = "port_test",
+    srcs = ["port_test.cc"],
+    deps = [
+        ":port",
+        "//testing:gunit_main",
+    ],
 )
 
 mozc_cc_library(
@@ -414,7 +423,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":logging",
-        ":port",
         ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",

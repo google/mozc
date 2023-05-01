@@ -153,17 +153,25 @@
                 Name='MozcCacheService' Stop='both' Remove='uninstall'
                 Wait='yes' />
           </Component>
-          <Component Id='MozcTIP32' Guid='*' Permanent='no'>
+          <Component Id='MozcTIP32' Guid='*' Permanent='no' Win64="no">
             <File Id='mozc_ja_tip32.dll'
                 Name='mozc_ja_tip32.dll'
                 DiskId='1' Checksum='yes'
-                Source='$(var.MozcTIP32Path)' Vital='yes' />
+                Source='$(var.MozcTIP32Path)' Vital='yes'>
+              <Class Context="InprocServer32" ThreadingModel="apartment"
+                    Description="Mozc"
+                    Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
+            </File>
           </Component>
-          <Component Id='MozcTIP64' Guid='*' Permanent='no'>
+          <Component Id='MozcTIP64' Guid='*' Permanent='no' Win64="yes">
             <File Id='mozc_ja_tip64.dll'
                 Name='mozc_ja_tip64.dll'
                 DiskId='1' Checksum='yes'
-                Source='$(var.MozcTIP64Path)' Vital='yes' />
+                Source='$(var.MozcTIP64Path)' Vital='yes'>
+              <Class Context="InprocServer32" ThreadingModel="apartment"
+                    Description="Mozc"
+                    Id="10A67BC8-22FA-4A59-90DC-2546652C56BF" />
+            </File>
           </Component>
           <Component Id='MozcBroker' Guid='*' Permanent='no'>
             <File Id='mozc_broker.exe'
@@ -305,7 +313,7 @@
       <Component Id='PrelaunchProcesses' Guid='*'>
         <RegistryValue Id='RunBroker' Root='HKLM'
             Key='Software\Microsoft\Windows\CurrentVersion\Run'
-            Name='Google Japanese Input Prelauncher' Action='write' Type='string'
+            Name='Mozc Prelauncher' Action='write' Type='string'
             Value='&quot;[MozcDir]mozc_broker.exe&quot; --mode=prelaunch_processes' />
       </Component>
     </Directory>
@@ -417,6 +425,9 @@
     <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions32'
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
+    <CustomAction Id='EnableTipProfile' BinaryKey='CustomActions64'
+        DllEntry='EnableTipProfile' Execute='commit'
+        Impersonate='yes' />
     <CustomAction Id='HideCancelButton' BinaryKey='CustomActions32'
         DllEntry='HideCancelButton' Return='ignore' />
     <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions32'
@@ -524,6 +535,10 @@
       </Custom>
       <Custom Action='InitialInstallationCommit'
           After='EnsureIMEIsDisabledForServiceAccountAfterInstall'>
+        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
+      </Custom>
+      <Custom Action='EnableTipProfile'
+          After='InitialInstallationCommit'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <!-- show reboot dialog to execute pending file opartions -->

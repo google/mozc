@@ -188,7 +188,7 @@ void A11yDescriptionRewriter::AddA11yDescription(
   std::vector<std::string> graphemes;
   Util::SplitStringToUtf8Graphemes(content_value, &graphemes);
   for (const std::string &grapheme : graphemes) {
-    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(grapheme);
+    const std::u32string codepoints = Util::Utf8ToUtf32(grapheme);
     for (const char32_t codepoint : codepoints) {
       previous_type = current_type;
       current_type = GetCharacterType(codepoint);

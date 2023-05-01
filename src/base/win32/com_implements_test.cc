@@ -52,6 +52,9 @@ IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
 IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
 
+MIDL_INTERFACE("F2B8DCC5-226C-4123-8F78-2BC36B574629")
+IDerivedDerived : public IDerived{};
+
 MIDL_INTERFACE("9C1A7121-BF54-4826-856E-55A90864EE64")
 IRefCount : public IUnknown { STDMETHOD_(ULONG, RefCount)() = 0; };
 
@@ -59,12 +62,26 @@ IRefCount : public IUnknown { STDMETHOD_(ULONG, RefCount)() = 0; };
 
 // This specialization needs to be in the mozc::win32 namespace.
 template <>
-bool IsIIDOf<IDerived>(REFIID riid) {
-  return IsIIDOf<IMock1, IDerived>(riid);
+bool IsIIDOf<IDerivedDerived>(REFIID riid) {
+  return IsIIDOf<IDerivedDerived, IDerived, IMock1>(riid);
 }
 
 namespace {
-class Mock : public ComImplements<IMock2, IDerived, IRefCount> {
+struct MockTraits : public ComImplementsTraits {
+  static void OnObjectRelease(ULONG ref) {
+    called = true;
+    MockTraits::ref = ref;
+  }
+
+  static bool called;
+  static ULONG ref;
+};
+
+bool MockTraits::called = false;
+ULONG MockTraits::ref = 0;
+
+class Mock
+    : public ComImplements<MockTraits, IMock2, IDerivedDerived, IRefCount> {
  public:
   STDMETHODIMP Test1() override { return 1; }
   STDMETHODIMP Test2() override { return 2; }
@@ -77,7 +94,13 @@ class Mock : public ComImplements<IMock2, IDerived, IRefCount> {
 
 class ComImplementsTest : public testing::Test {
  public:
-  ~ComImplementsTest() override { EXPECT_EQ(CanComModuleUnloadNow(), S_OK); }
+  ComImplementsTest() { MockTraits::called = false; }
+
+  ~ComImplementsTest() override {
+    EXPECT_EQ(CanComModuleUnloadNow(), S_OK);
+    EXPECT_EQ(MockTraits::ref, 0);
+    EXPECT_TRUE(MockTraits::called);
+  }
 };
 
 TEST_F(ComImplementsTest, ReferenceCount) {
@@ -103,6 +126,11 @@ TEST_F(ComImplementsTest, QueryInterface) {
   wil::com_ptr_nothrow<IUnknown> unknown;
   EXPECT_HRESULT_SUCCEEDED(mock->QueryInterface(IID_PPV_ARGS(unknown.put())));
   EXPECT_TRUE(unknown);
+  wil::com_ptr_nothrow<IDerivedDerived> derived_derived;
+  EXPECT_HRESULT_SUCCEEDED(
+      unknown->QueryInterface(IID_PPV_ARGS(derived_derived.put())));
+  EXPECT_TRUE(derived_derived);
+
   void *p = mock.Get();
   EXPECT_EQ(mock->QueryInterface(IID_IShellItem, &p), E_NOINTERFACE);
   EXPECT_EQ(mock->QueryInterface(IID_IUnknown, nullptr), E_POINTER);
@@ -114,7 +142,7 @@ TEST_F(ComImplementsTest, QueryInterface) {
   EXPECT_EQ(CanComModuleUnloadNow(), S_FALSE);
 }
 
-class SingleMock : public ComImplements<IMock1> {
+class SingleMock : public ComImplements<MockTraits, IMock1> {
  public:
   STDMETHODIMP Test1() override { return 1; }
 };

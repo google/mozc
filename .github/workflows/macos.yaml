@@ -13,7 +13,7 @@ jobs:
   build:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
     runs-on: macos-11
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: checkout
@@ -21,17 +21,29 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: setup
-        working-directory: ./src/third_party
-        run: |
-          # Install Qt
-          wget https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5152/qt.qt5.5152.clang_64/5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
-          tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
-          #
-          # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
-          echo "MOZC_QT_PATH=${PWD}/5.15.2/clang_64" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: '3.9'
 
-      - name: blaze build
+      - name: Install pip dependencies
+        working-directory: ./src
+        run: |
+          python3 -m pip install six requests
+
+      - name: Install dependencies
+        working-directory: ./src
+        run: |
+          python3 build_tools/update_deps.py
+
+      - name: Build Qt
+        working-directory: ./src
+        run: |
+          python3 build_tools/build_qt.py --release --confirm_license
+          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
+
+      - name: bazel build
         working-directory: ./src
         run: |
           bazel build --config oss_macos package
@@ -46,7 +58,7 @@ jobs:
   test:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
     runs-on: macos-11
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: checkout
@@ -54,17 +66,29 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: setup
-        working-directory: ./src/third_party
-        run: |
-          # Install Qt
-          wget https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5152/qt.qt5.5152.clang_64/5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
-          tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
-          #
-          # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
-          echo "MOZC_QT_PATH=${PWD}/5.15.2/clang_64" >> $GITHUB_ENV
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: '3.9'
 
-      - name: blaze test
+      - name: Install pip dependencies
         working-directory: ./src
         run: |
-          bazel test --config oss_macos ... -- -gui/... -protocol/... -renderer/qt/... -session:session_watch_dog_test -third_party/... -unix/...
+          python3 -m pip install six requests
+
+      - name: Install dependencies
+        working-directory: ./src
+        run: |
+          python3 build_tools/update_deps.py
+
+      - name: Build Qt
+        working-directory: ./src
+        run: |
+          python3 build_tools/build_qt.py --release --confirm_license
+          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
+
+      - name: bazel test
+        working-directory: ./src
+        run: |
+          bazel test ... --config oss_macos --build_tests_only -- -session:session_watch_dog_test -third_party/...

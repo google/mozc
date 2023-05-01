@@ -81,7 +81,6 @@
             'tip_search_candidate_provider.cc',
             'tip_range_util.cc',
             'tip_reconvert_function.cc',
-            'tip_ref_count.cc',
             'tip_status.cc',
             'tip_surrounding_text.cc',
             'tip_text_service.cc',
@@ -98,6 +97,7 @@
             '../../base/base.gyp:base',
             '../../base/base.gyp:crash_report_handler',
             '../../base/base.gyp:update_util',
+            '../../base/win32/base_win32.gyp:com_implements',
             '../../client/client.gyp:client',
             '../../config/config.gyp:config_handler',
             '../../config/config.gyp:stats_config_util',
@@ -119,7 +119,6 @@
             'tip_display_attributes_test.cc',
             'tip_enum_display_attributes_test.cc',
             'tip_input_mode_manager_test.cc',
-            'tip_ref_count_test.cc',
             'tip_surrounding_text_test.cc',
           ],
           'dependencies': [

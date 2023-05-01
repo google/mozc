@@ -461,7 +461,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":display_name_resource_h",
-        ":input_dll",
         ":tsf_profile",
         "//base:const",
         "//base:logging",

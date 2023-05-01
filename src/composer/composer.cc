@@ -236,6 +236,13 @@ const ModifierRemovalMap *GetModifierRemovalMap() {
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
                                     std::set<std::string> *expanded) {
+  // The following check is needed for mitigating crashes like the one which
+  // occurred in b/277163340 in production.
+  if (asis.size() < base.size()) {
+    LOG(DFATAL) << "asis.size() is smaller than base.size().";
+    return;
+  }
+
   const absl::string_view trailing(asis.substr(base.size()));
   for (auto [iter, end] = GetModifierRemovalMap()->equal_range(trailing);
        iter != end; ++iter) {

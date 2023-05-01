@@ -40,70 +40,58 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "win32/tip/tip_ref_count.h"
+#include "base/win32/com_implements.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
 
 namespace mozc {
 namespace win32 {
-namespace tsf {
 
+template <>
+bool IsIIDOf<ITfCandidateListUIElementBehavior>(REFIID riid) {
+  return IsIIDOf<ITfCandidateListUIElementBehavior, ITfCandidateListUIElement,
+                 ITfUIElement>(riid);
+}
+
+template <>
+bool IsIIDOf<ITfToolTipUIElement>(REFIID riid) {
+  return IsIIDOf<ITfToolTipUIElement, ITfUIElement>(riid);
+}
+
+namespace tsf {
 namespace {
 
 using Microsoft::WRL::ComPtr;
 
-class TipCandidateListImpl final : public ITfCandidateListUIElementBehavior {
+class TipCandidateListImpl final
+    : public TipComImplements<ITfCandidateListUIElementBehavior> {
  public:
   TipCandidateListImpl(TipUiElementConventional::UIType type,
                        const ComPtr<TipTextService> &text_service,
                        const ComPtr<ITfContext> &context)
       : delegate_(TipUiElementDelegateFactory::Create(text_service, context,
                                                       ToDelegateType(type))) {}
-  TipCandidateListImpl(const TipCandidateListImpl &) = delete;
-  TipCandidateListImpl &operator=(const TipCandidateListImpl &) = delete;
 
  private:
-  ~TipCandidateListImpl() = default;
-
   // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
+  STDMETHODIMP QueryInterface(REFIID interface_id, void **object) override {
     if (!object) {
-      return E_INVALIDARG;
+      return E_POINTER;
     }
-    *object = nullptr;
-
-    // Finds a matching interface from the ones implemented by this object.
-    // This object implements IUnknown.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfUIElement)) {
-      *object = static_cast<ITfUIElement *>(this);
-    } else if (delegate_->IsObservable()) {
-      // Following interfaces are available iff the |type_| is observable.
-      if (IsEqualIID(interface_id, IID_ITfCandidateListUIElement)) {
-        *object = static_cast<ITfCandidateListUIElement *>(this);
-      } else if (IsEqualIID(interface_id,
-                            IID_ITfCandidateListUIElementBehavior)) {
-        *object = static_cast<ITfCandidateListUIElementBehavior *>(this);
-      }
+    if (delegate_->IsObservable()) {
+      // ITfCandidateListUIElementBehavior and ITfCandidateListUIElement
+      // interfaces are available iff the |type_| is observable.
+      *object =
+          QueryInterfaceImpl<ITfCandidateListUIElementBehavior>(interface_id);
+    } else {
+      *object = QueryInterfaceImpl<ITfUIElement>(interface_id);
     }
-
     if (*object == nullptr) {
       return E_NOINTERFACE;
     }
-
     AddRef();
     return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
   }
 
   // The ITfUIElement interface methods
@@ -172,58 +160,18 @@ class TipCandidateListImpl final : public ITfCandidateListUIElementBehavior {
     }
   }
 
-  TipRefCount ref_count_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
 };
 
-class TipIndicatorImpl final : public ITfToolTipUIElement {
+class TipIndicatorImpl final : public TipComImplements<ITfToolTipUIElement> {
  public:
   TipIndicatorImpl(const ComPtr<TipTextService> &text_service,
                    const ComPtr<ITfContext> &context)
       : delegate_(TipUiElementDelegateFactory::Create(
             text_service, context,
             TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
-  TipIndicatorImpl(const TipIndicatorImpl &) = delete;
-  TipIndicatorImpl &operator=(const TipIndicatorImpl &) = delete;
 
  private:
-  ~TipIndicatorImpl() = default;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-    *object = nullptr;
-
-    // Finds a matching interface from the ones implemented by this object.
-    // This object implements IUnknown.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfUIElement)) {
-      *object = static_cast<ITfUIElement *>(this);
-    } else if (::IsEqualIID(interface_id, IID_ITfToolTipUIElement)) {
-      *object = static_cast<ITfToolTipUIElement *>(this);
-    }
-
-    if (*object == nullptr) {
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual ULONG STDMETHODCALLTYPE Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
-
   // The ITfUIElement interface methods
   virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description) {
     return delegate_->GetDescription(description);
@@ -243,7 +191,6 @@ class TipIndicatorImpl final : public ITfToolTipUIElement {
     return delegate_->GetString(str);
   }
 
-  TipRefCount ref_count_;
   std::unique_ptr<TipUiElementDelegate> delegate_;
 };
 

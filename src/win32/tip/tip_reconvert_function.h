@@ -31,7 +31,7 @@
 #define MOZC_WIN32_TIP_TIP_RECONVERT_FUNCTION_H_
 
 #include <ctffunc.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include "win32/tip/tip_text_service.h"
 
@@ -47,8 +47,8 @@ class TipReconvertFunction {
 
   // Returns a TSF function object that can be use to invoke reconversion from
   // an application.
-  static Microsoft::WRL::ComPtr<ITfFnReconversion> New(
-      Microsoft::WRL::ComPtr<TipTextService> text_service);
+  static wil::com_ptr_nothrow<ITfFnReconversion> New(
+      wil::com_ptr_nothrow<TipTextService> text_service);
 };
 
 }  // namespace tsf

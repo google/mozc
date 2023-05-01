@@ -32,7 +32,7 @@
 
 #include <ctffunc.h>
 #include <guiddef.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include "win32/tip/tip_text_service.h"
 
@@ -47,8 +47,8 @@ class TipLinguisticAlternates {
   TipLinguisticAlternates &operator=(const TipLinguisticAlternates &) = delete;
 
   // Returns a COM object that implements ITfFnGetLinguisticAlternates.
-  static Microsoft::WRL::ComPtr<ITfFnGetLinguisticAlternates> New(
-      Microsoft::WRL::ComPtr<TipTextService> text_service);
+  static wil::com_ptr_nothrow<ITfFnGetLinguisticAlternates> New(
+      wil::com_ptr_nothrow<TipTextService> text_service);
   static const IID &GetIID();
 };
 

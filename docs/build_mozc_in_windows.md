@@ -158,12 +158,6 @@ out_win\Release\Mozc64.msi
 
 For 32-bit environment, use `Mozc32.msi` instead.
 
-Then go to the Language settings then add Mozc under the Japanese settings.
-
-```
-start ms-settings:regionlanguage-languageoptions
-```
-
 ## Uninstall Mozc
 
 Press Win+R to open the dialog and type `ms-settings:appsfeatures-app`, or on terminal run the following command.
@@ -199,7 +193,6 @@ GitHub Actions are already set up in [windows.yaml](../.github/workflows/windows
 4. Wait until the action triggered with your commit succeeds.
 5. Download `Mozc64.msi` from the action result page if you are using 64-bit Windows.
 6. Install `Mozc64.msi`.
-7. Go to "Language & region" settings, find "Japanese" to click "Language options", and click "Add a keyboard" to add "Mozc".
 
 Files in the GitHub Actions page remain available up to 90 days.
 

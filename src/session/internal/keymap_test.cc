@@ -44,7 +44,7 @@
 #include "protocol/config.pb.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/container/btree_set.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
@@ -419,14 +419,14 @@ TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
   // are not supported in direct mode.
   KeyMapManager manager;
-  absl::btree_set<std::string> names;
-  manager.GetAvailableCommandNameDirect(&names);
+  absl::flat_hash_set<std::string> names;
+  manager.AppendAvailableCommandNameDirect(names);
 
   // We cannot use EXPECT_EQ because of overload resolution here.
-  EXPECT_TRUE(names.end() == names.find("InsertSpace"));
-  EXPECT_TRUE(names.end() == names.find("InsertAlternateSpace"));
-  EXPECT_TRUE(names.end() == names.find("InsertHalfSpace"));
-  EXPECT_TRUE(names.end() == names.find("InsertFullSpace"));
+  EXPECT_FALSE(names.contains("InsertSpace"));
+  EXPECT_FALSE(names.contains("InsertAlternateSpace"));
+  EXPECT_FALSE(names.contains("InsertHalfSpace"));
+  EXPECT_FALSE(names.contains("InsertFullSpace"));
 }
 
 TEST_F(KeyMapTest, ShiftTabToConvertPrev) {

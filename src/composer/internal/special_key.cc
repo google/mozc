@@ -30,14 +30,15 @@
 #include "composer/internal/special_key.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::composer::internal {
@@ -176,14 +177,14 @@ std::string DeleteSpecialKeys(absl::string_view input) {
   }
 
   // Delete Unicode PUA characters converted from special keys.
-  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(output);
+  std::u32string codepoints = Util::Utf8ToUtf32(output);
   auto last =
       std::remove_if(codepoints.begin(), codepoints.end(), IsSpecialKey);
   if (last == codepoints.end()) {
     return output;
   }
   codepoints.erase(last, codepoints.end());
-  return Util::CodepointsToUtf8(codepoints);
+  return Util::Utf32ToUtf8(codepoints);
 }
 
 }  // namespace mozc::composer::internal

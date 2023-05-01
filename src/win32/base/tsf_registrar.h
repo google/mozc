@@ -42,12 +42,6 @@ class TsfRegistrar {
   TsfRegistrar(const TsfRegistrar &) = delete;
   TsfRegistrar &operator=(const TsfRegistrar &) = delete;
 
-  // Registers the DLL specified with |path| as a COM server.
-  static HRESULT RegisterCOMServer(const wchar_t *path, DWORD path_length);
-
-  // Unregisters the DLL from registry.
-  static void UnregisterCOMServer();
-
   // Registers this COM server to the profile store for input processors.
   // The caller is responsible for initializing COM before call this function.
   static HRESULT RegisterProfiles(const wchar_t *path, DWORD path_length);
@@ -65,15 +59,6 @@ class TsfRegistrar {
   // this keyboard module.
   // The caller is responsible for initializing COM before call this function.
   static void UnregisterCategories();
-
-  // Retrieves if the text input processor profile is enabled or not.
-  // This function sets FALSE to |enable| if the profile is not installed.
-  // The caller is responsible for initializing COM before call this function.
-  static HRESULT GetProfileEnabled(BOOL *enabled);
-
-  // Enables or disables the text input processor profile.
-  // The caller is responsible for initializing COM before call this function.
-  static HRESULT SetProfileEnabled(BOOL enable);
 };
 }  // namespace win32
 }  // namespace mozc

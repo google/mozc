@@ -36,10 +36,9 @@
 #include "base/crash_report_handler.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
-#include "base/singleton.h"
+#include "base/win32/com_implements.h"
 #include "config/stats_config_util.h"
 #include "win32/base/tsf_profile.h"
-#include "win32/base/tsf_registrar.h"
 #include "win32/tip/tip_class_factory.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_text_service.h"
@@ -51,7 +50,6 @@ namespace {
 using mozc::CrashReportHandler;
 using mozc::config::StatsConfigUtil;
 using mozc::win32::TsfProfile;
-using mozc::win32::TsfRegistrar;
 using mozc::win32::tsf::TipDllModule;
 using mozc::win32::tsf::TipTextServiceFactory;
 using mozc::win32::tsf::TipUiHandler;
@@ -135,48 +133,7 @@ STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
 }
 
 // Returns whether or not Windows can unload this module.
-STDAPI DllCanUnloadNow() { return TipDllModule::CanUnload() ? S_OK : S_FALSE; }
-
-// Unregisters this module from Windows.
-// This function is called when executing a command
-// "regsvr32.exe /u $(MODULE_NAME)".
-STDAPI DllUnregisterServer() {
-  TsfRegistrar::UnregisterCategories();
-  TsfRegistrar::UnregisterProfiles();
-  TsfRegistrar::UnregisterCOMServer();
-
-  return S_OK;
-}
-
-// Registers this module as a text-input processor.
-// This function is called when executing a command
-// "regsvr32.exe $(MODULE_NAME)".
-STDAPI DllRegisterServer() {
-  // To register this DLL as a TSF test service, we need the following three
-  // registrations:
-  // 1. Register this DLL as a COM server;
-  // 2. Register this COM server as a TSF text service, and;
-  // 3. Register this text service as a TSF text-input processor.
-  wchar_t path[MAX_PATH] = {};
-  const DWORD path_length = ::GetModuleFileName(TipDllModule::module_handle(),
-                                                &path[0], std::size(path));
-  HRESULT result = TsfRegistrar::RegisterCOMServer(path, path_length);
-  if (FAILED(result)) {
-    DllUnregisterServer();
-    return result;
-  }
-  result = TsfRegistrar::RegisterProfiles(path, path_length);
-  if (FAILED(result)) {
-    DllUnregisterServer();
-    return result;
-  }
-  result = TsfRegistrar::RegisterCategories();
-  if (FAILED(result)) {
-    DllUnregisterServer();
-    return result;
-  }
-  return result;
-}
+STDAPI DllCanUnloadNow() { return mozc::win32::CanComModuleUnloadNow(); }
 
 // Represents the entry point of this module.
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {

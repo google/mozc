@@ -90,7 +90,7 @@ Install paths are configurable by modifying
 ### Unittests
 
 ```
-bazel test ... --config oss_linux -c dbg -- -third_party/...
+bazel test ... --config oss_linux --build_tests_only -c dbg -- -third_party/...
 ```
 
 * `...` means all targets under the current and subdirectories.
@@ -168,25 +168,21 @@ bazel build package --config oss_android
 
 ## Build Mozc for Linux Desktop with GYP (maintenance mode):
 
-⚠️ The GYP build will stop supporting the IBus build.
+⚠️ The GYP build no longer support the Ibus client and the GTK candidate window.
 * https://github.com/google/mozc/issues/567
 
-⚠️ The GYP build no longer support the GTK candidate window build.
-* https://github.com/google/mozc/issues/567
-
-To keep using the GYP build without GTK candidate window at this moment,
-please add the `--use_gyp_for_ibus_build` and `--no_gtk_build` flags
+To keep using the GYP build without the Ibus client and the GTK candidate window
+at this moment, please add the `--no_ibus_build` and `--no_gtk_build` flags
 to build_mozc.py.
 
 ```
 python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build --no_gtk_build
+python3 build_mozc.py build -c Release package --no_ibus_build --no_gtk_build
 ```
 
 `package` is an alias to build:
 * //server:mozc_server
 * //gui/tool:mozc_tool
-* //unix/ibus:ibus_mozc
 
 
 You can also run unittests as follows.
@@ -201,6 +197,7 @@ GYP build is under maintenance mode. New features might be supported by
 Bazel only, and some features might be dropped as a trade-off to accept PRs.
 
 Targets only for Bazel:
+* Ibus client (//unix/ibus)
 * AUX dictionary (//data/dictionary_oss:aux_dictionary)
 * Filtered dictionary (//data/dictionary_oss:filtered_dictionary)
 * SVS character input instead of CJK compatibility ideographs (//rewriter:single_kanji_rewriter)

@@ -102,6 +102,7 @@
       'dependencies': [
         '../base/base.gyp:crash_report_handler',
         '../session/session.gyp:session_server',
+        '../protocol/protocol.gyp:state_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
       ],
     },

@@ -31,11 +31,14 @@
 #define MOZC_BASE_WIN32_COM_H_
 
 #include <objbase.h>
+#include <oleauto.h>
 #include <unknwn.h>
+#include <wil/com.h>
+#include <wil/resource.h>
 #include <wrl/client.h>
-#include <wrl/implements.h>
 
 #include <new>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -43,19 +46,6 @@
 #include "absl/base/casts.h"
 
 namespace mozc::win32 {
-
-// ComRawPtr returns a raw pointer of the COM object. It returns the parameter
-// as it is if it's already a raw pointer. If it's a ComPtr<T>, it calls
-// ComPtr<T>::Get().
-template <typename T>
-T *ComRawPtr(T *p) {
-  return p;
-}
-
-template <typename T>
-T *ComRawPtr(const Microsoft::WRL::ComPtr<T> &p) {
-  return p.Get();
-}
 
 // MakeComPtr is like std::make_unique but for ComPtr. Returns nullptr if new
 // fails.
@@ -87,38 +77,64 @@ Microsoft::WRL::ComPtr<Interface> ComCreateInstance() {
 
 // Returns the result of QueryInterface as HResultOr<ComPtr<T>>.
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U &&source) {
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U *ptr) {
   using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
 
-  auto ptr = ComRawPtr(std::forward<U>(source));
   // If source is convertible to T, casting is faster than calling
   // QueryInterface.
   if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
     // ComPtr will call AddRef here.
-    return ReturnType(absl::implicit_cast<T *>(ptr));
+    return absl::implicit_cast<T *>(ptr);
   }
   Microsoft::WRL::ComPtr<T> result;
   const HRESULT hr = ptr->QueryInterface(IID_PPV_ARGS(&result));
   if (SUCCEEDED(hr)) {
-    return ReturnType(std::move(result));
+    return result;
   }
-  return ReturnType(hr);
+  return HResult(hr);
 }
 
 // Returns the result of QueryInterface as ComPtr<T>.
 template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(U &&source) {
-  return std::move(ComQueryHR<T>(std::forward<U>(source))).value_or(nullptr);
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
+    const wil::com_ptr_nothrow<U> &source) {
+  return ComQueryHR<T>(wil::com_raw_ptr(source));
 }
 
-// Similar to ComQuery but returns nullptr if source is nullptr.
+// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
 template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComCopy(U &&source) {
-  auto ptr = ComRawPtr(std::forward<U>(source));
-  if (ptr) {
-    return ComQuery<T>(ptr);
-  }
-  return nullptr;
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
+    const Microsoft::WRL::ComPtr<U> &source) {
+  return ComQueryHR<T>(wil::com_raw_ptr(source));
+}
+
+// Returns the result of QueryInterface as ComPtr<T>.
+template <typename T, typename U>
+Microsoft::WRL::ComPtr<T> ComQuery(U *source) {
+  return std::move(ComQueryHR<T>(source)).value_or(nullptr);
+}
+
+// Returns the result of QueryInterface as ComPtr<T>.
+template <typename T, typename U>
+Microsoft::WRL::ComPtr<T> ComQuery(const wil::com_ptr_nothrow<U> &source) {
+  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
+}
+
+// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
+template <typename T, typename U>
+Microsoft::WRL::ComPtr<T> ComQuery(const Microsoft::WRL::ComPtr<U> &source) {
+  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
+}
+
+// MakeUniqueBSTR allocates a new BSTR and returns as wil::unique_bstr.
+// Use this function instead of wil::make_bstr() as it doesn't use
+// SysAllocStringLen() for strings with sizes.
+inline wil::unique_bstr MakeUniqueBSTR(const std::wstring_view source) {
+  return wil::unique_bstr(SysAllocStringLen(source.data(), source.size()));
+}
+
+inline wil::unique_bstr MakeUniqueBSTR(const wchar_t *source) {
+  return wil::unique_bstr(SysAllocString(source));
 }
 
 }  // namespace mozc::win32

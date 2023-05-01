@@ -36,6 +36,7 @@ load(
     "mozc_qt_rcc",
     "mozc_qt_uic",
 )
+load("//:build_defs.bzl", "mozc_select")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
@@ -209,9 +210,12 @@ mozc_cc_qt_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session/internal:keymap",
-        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
-    ],
+    ] + mozc_select(macos = [
+        "//base/mac:mac_util",
+    ]),
 )
 
 mozc_cc_qt_library(

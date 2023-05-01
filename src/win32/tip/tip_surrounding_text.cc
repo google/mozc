@@ -44,64 +44,26 @@
 
 #include "win32/base/imm_reconvert_string.h"
 #include "win32/tip/tip_composition_util.h"
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_range_util.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_transitory_extension.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
+namespace {
 
 using ATL::CComPtr;
 using Microsoft::WRL::ComPtr;
 
-namespace {
-
 constexpr int kMaxSurroundingLength = 20;
 constexpr int kMaxCharacterLength = 1024 * 1024;
 
-class SurroudingTextUpdater final : public ITfEditSession {
+class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
  public:
   SurroudingTextUpdater(ITfContext *context, bool move_anchor)
       : context_(context), move_anchor_(move_anchor) {}
-  SurroudingTextUpdater(const SurroudingTextUpdater &) = delete;
-  SurroudingTextUpdater &operator=(const SurroudingTextUpdater &) = delete;
-
-  // Destructor is kept as non-virtual because this class is designed to be
-  // destroyed only by "delete this" in Release() method.
-  ~SurroudingTextUpdater() = default;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfEditSession)) {
-      *object = static_cast<ITfEditSession *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
   const TipSurroundingTextInfo &result() const { return result_; }
 
@@ -179,53 +141,15 @@ class SurroudingTextUpdater final : public ITfEditSession {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   ComPtr<ITfContext> context_;
   TipSurroundingTextInfo result_;
   bool move_anchor_;
 };
 
-class PrecedingTextDeleter final : public ITfEditSession {
+class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
  public:
   PrecedingTextDeleter(ITfContext *context, size_t num_characters_in_ucs4)
       : context_(context), num_characters_in_ucs4_(num_characters_in_ucs4) {}
-  PrecedingTextDeleter(const PrecedingTextDeleter &) = delete;
-  PrecedingTextDeleter &operator=(const PrecedingTextDeleter &) = delete;
-
-  // Destructor is kept as non-virtual because this class is designed to be
-  // destroyed only by "delete this" in Release() method.
-  ~PrecedingTextDeleter() = default;
-
-  // The IUnknown interface methods.
-  virtual STDMETHODIMP QueryInterface(REFIID interface_id, void **object) {
-    if (!object) {
-      return E_INVALIDARG;
-    }
-
-    // Find a matching interface from the ones implemented by this object.
-    // This object implements IUnknown and ITfEditSession.
-    if (::IsEqualIID(interface_id, IID_IUnknown)) {
-      *object = static_cast<IUnknown *>(this);
-    } else if (IsEqualIID(interface_id, IID_ITfEditSession)) {
-      *object = static_cast<ITfEditSession *>(this);
-    } else {
-      *object = nullptr;
-      return E_NOINTERFACE;
-    }
-
-    AddRef();
-    return S_OK;
-  }
-
-  virtual STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
-
-  virtual STDMETHODIMP_(ULONG) Release() {
-    const ULONG count = ref_count_.ReleaseImpl();
-    if (count == 0) {
-      delete this;
-    }
-    return count;
-  }
 
  private:
   virtual STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) {
@@ -291,7 +215,6 @@ class PrecedingTextDeleter final : public ITfEditSession {
     return S_OK;
   }
 
-  TipRefCount ref_count_;
   ComPtr<ITfContext> context_;
   size_t num_characters_in_ucs4_;
 };

@@ -29,25 +29,16 @@
 
 #include "gui/config_dialog/keymap_editor.h"
 
-#include <cstdint>
-
-#if defined(__ANDROID__) || defined(__wasm__)
-#error "This platform is not supported."
-#endif  // __ANDROID__ || __wasm__
-
 #include <QFile>
 #include <QFileDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <QtGui>
-#include <algorithm>  // for unique
-#include <cctype>
+#include <cstddef>
+#include <cstdint>
 #include <istream>
 #include <iterator>
-#include <map>
 #include <memory>
-#include <set>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -62,10 +53,17 @@
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
-#include "absl/container/btree_set.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 // TODO(komatsu): internal files should not be used from external modules.
+
+#if defined(__ANDROID__) || defined(__wasm__)
+#error "This platform is not supported."
+#endif  // __ANDROID__ || __wasm__
 
 namespace mozc {
 namespace gui {
@@ -77,7 +75,7 @@ config::Config::SessionKeymap kKeyMaps[] = {
     config::Config::KOTOERI,
 };
 
-const char *kKeyMapStatus[] = {
+constexpr absl::string_view kKeyMapStatus[] = {
     "DirectInput", "Precomposition", "Composition",
     "Conversion",  "Suggestion",     "Prediction",
 };
@@ -126,7 +124,7 @@ class KeyMapValidator {
     invisible_key_events_.insert(mozc::commands::KeyEvent::TEXT_INPUT);
   }
 
-  bool IsVisibleKey(const std::string &key) {
+  bool IsVisibleKey(const absl::string_view key) {
     mozc::commands::KeyEvent key_event;
     const bool parse_success = mozc::KeyParser::ParseKey(key, &key_event);
     if (!parse_success) {
@@ -149,17 +147,17 @@ class KeyMapValidator {
     return true;
   }
 
-  bool IsVisibleStatus(const std::string &status) {
+  bool IsVisibleStatus(const absl::string_view status) {
     // no validation for now.
     return true;
   }
 
-  bool IsVisibleCommand(const std::string &command) {
-    if (invisible_commands_.find(command) == invisible_commands_.end()) {
-      return true;
+  bool IsVisibleCommand(const absl::string_view command) {
+    if (invisible_commands_.contains(command)) {
+      VLOG(3) << "invisible command: " << command;
+      return false;
     }
-    VLOG(3) << "invisible command: " << command;
-    return false;
+    return true;
   }
 
   // Returns true if the key map entry is valid
@@ -196,45 +194,39 @@ class KeyMapValidator {
   }
 
  private:
-  std::set<uint32_t> invisible_modifiers_;
-  std::set<uint32_t> invisible_key_events_;
-  std::set<std::string> invisible_commands_;
+  absl::flat_hash_set<uint32_t> invisible_modifiers_;
+  absl::flat_hash_set<uint32_t> invisible_key_events_;
+  absl::flat_hash_set<std::string> invisible_commands_;
 };
 
 class KeyMapTableLoader {
  public:
   KeyMapTableLoader() {
-    std::string line;
-    std::vector<std::string> fields;
-    std::set<std::string> status;
-    std::set<std::string> commands;
+    absl::flat_hash_set<std::string> commands;
     KeyMapValidator *validator = mozc::Singleton<KeyMapValidator>::get();
 
     // get all command names
-    absl::btree_set<std::string> command_names;
+    absl::flat_hash_set<std::string> command_names;
     mozc::keymap::KeyMapManager manager;
-    manager.GetAvailableCommandNameDirect(&command_names);
-    manager.GetAvailableCommandNamePrecomposition(&command_names);
-    manager.GetAvailableCommandNameComposition(&command_names);
-    manager.GetAvailableCommandNameConversion(&command_names);
-    manager.GetAvailableCommandNameZeroQuerySuggestion(&command_names);
-    manager.GetAvailableCommandNameSuggestion(&command_names);
-    manager.GetAvailableCommandNamePrediction(&command_names);
-    for (absl::btree_set<std::string>::const_iterator itr =
-             command_names.begin();
-         itr != command_names.end(); ++itr) {
-      if (validator->IsVisibleCommand(*itr)) {
-        commands.insert(*itr);
+    manager.AppendAvailableCommandNameDirect(command_names);
+    manager.AppendAvailableCommandNamePrecomposition(command_names);
+    manager.AppendAvailableCommandNameComposition(command_names);
+    manager.AppendAvailableCommandNameConversion(command_names);
+    manager.AppendAvailableCommandNameZeroQuerySuggestion(command_names);
+    manager.AppendAvailableCommandNameSuggestion(command_names);
+    manager.AppendAvailableCommandNamePrediction(command_names);
+    for (auto it = std::make_move_iterator(command_names.begin());
+         it != std::make_move_iterator(command_names.end()); ++it) {
+      if (validator->IsVisibleCommand(*it)) {
+        commands.insert(*it);  // implied move
       }
     }
-
-    for (size_t i = 0; i < std::size(kKeyMapStatus); ++i) {
-      status_ << QString::fromUtf8(kKeyMapStatus[i]);
+    for (const std::string &command : commands) {
+      commands_ << QString::fromUtf8(command.data(), command.size());
     }
 
-    for (std::set<std::string>::const_iterator it = commands.begin();
-         it != commands.end(); ++it) {
-      commands_ << QString::fromUtf8(it->c_str());
+    for (const absl::string_view status : kKeyMapStatus) {
+      status_ << QString::fromUtf8(status.data(), status.size());
     }
   }
 
@@ -249,12 +241,11 @@ class KeyMapTableLoader {
 
 KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
     : GenericTableEditorDialog(parent, 3),
-      status_delegate_(new ComboBoxDelegate),
-      commands_delegate_(new ComboBoxDelegate),
-      keybinding_delegate_(new KeyBindingEditorDelegate) {
-  actions_.reset(new QAction *[MENU_SIZE]);
-  import_actions_.reset(new QAction *[std::size(kKeyMaps)]);
-
+      actions_(std::make_unique<QAction *[]>(MENU_SIZE)),
+      import_actions_(std::make_unique<QAction *[]>(std::size(kKeyMaps))),
+      status_delegate_(std::make_unique<ComboBoxDelegate>()),
+      commands_delegate_(std::make_unique<ComboBoxDelegate>()),
+      keybinding_delegate_(std::make_unique<KeyBindingEditorDelegate>()) {
   actions_[NEW_INDEX] = mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
       mutable_edit_menu()->addAction(tr("Remove selected entries"));
@@ -326,8 +317,6 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
   UpdateMenuStatus();
 }
 
-KeyMapEditorDialog::~KeyMapEditorDialog() {}
-
 bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
   if (is == nullptr) {
     return false;
@@ -385,7 +374,7 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
 
     QTableWidgetItem *status_item = new QTableWidgetItem(tr(status.c_str()));
     QTableWidgetItem *key_item =
-        new QTableWidgetItem(QString::fromUtf8(key.c_str()));
+        new QTableWidgetItem(QString::fromUtf8(key.data(), key.size()));
     QTableWidgetItem *command_item = new QTableWidgetItem(tr(command.c_str()));
 
     mutable_table_widget()->insertRow(row);
@@ -409,7 +398,7 @@ bool KeyMapEditorDialog::Update() {
     return false;
   }
 
-  std::set<std::string> new_direct_mode_commands;
+  absl::flat_hash_set<std::string> new_direct_mode_commands;
 
   KeyMapValidator *validator = Singleton<KeyMapValidator>::get();
   std::string *keymap_table = mutable_table();
@@ -424,16 +413,14 @@ bool KeyMapEditorDialog::Update() {
     const std::string &i18n_command =
         TableUtil::SafeGetItemText(mutable_table_widget(), i, 2).toStdString();
 
-    const std::map<std::string, std::string>::const_iterator status_it =
-        normalized_status_map_.find(i18n_status);
+    const auto status_it = normalized_status_map_.find(i18n_status);
     if (status_it == normalized_status_map_.end()) {
       LOG(ERROR) << "Unsupported i18n status name: " << i18n_status;
       continue;
     }
     const std::string &status = status_it->second;
 
-    const std::map<std::string, std::string>::const_iterator command_it =
-        normalized_command_map_.find(i18n_command);
+    const auto command_it = normalized_command_map_.find(i18n_command);
     if (command_it == normalized_command_map_.end()) {
       LOG(ERROR) << "Unsupported i18n command name:" << i18n_command;
       continue;
@@ -443,18 +430,17 @@ bool KeyMapEditorDialog::Update() {
     if (!validator->IsVisibleKey(key)) {
       QMessageBox::warning(
           this, windowTitle(),
-          (tr("Invalid key:\n%1").arg(QString::fromUtf8(key.c_str()))));
+          (tr("Invalid key:\n%1")
+               .arg(QString::fromUtf8(key.data(), key.size()))));
       return false;
     }
-    const std::string keymap_line = status + "\t" + key + "\t" + command;
-    *keymap_table += keymap_line;
-    *keymap_table += '\n';
+    absl::StrAppend(keymap_table, status, "\t", key, "\t", command, "\n");
 
     if (status == kDirectMode) {
       new_direct_mode_commands.insert(key);
     }
   }
-  *keymap_table += invisible_keymap_table_;
+  absl::StrAppend(keymap_table, invisible_keymap_table_);
 
   if (new_direct_mode_commands != direct_mode_commands_) {
 #if defined(_WIN32) || defined(__linux__)
@@ -464,7 +450,7 @@ bool KeyMapEditorDialog::Update() {
            "applications that are launched after making your "
            "modifications."));
 #endif  // _WIN32 || __linux__
-    direct_mode_commands_ = new_direct_mode_commands;
+    direct_mode_commands_ = std::move(new_direct_mode_commands);
   }
 
   return true;

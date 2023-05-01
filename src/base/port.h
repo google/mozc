@@ -30,50 +30,129 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
-// Check duplicate OS_XXX definition.
-
-#ifdef _WIN32
-#define MOZC_OS_DEFINED
-#endif  // _WIN32
-
 #ifdef __APPLE__
-#define MOZC_OS_DEFINED
+#include <TargetConditionals.h>
 #endif  // __APPLE__
 
-#ifdef OS_NACL
-#error "We no longer support NaCl. Still need? Report to b/158959918 ASAP."
-#endif  // OS_NACL
-
-#ifdef __linux__
-#define MOZC_OS_DEFINED
-#endif  // __linux__
-
-#ifdef __wasm__
-#define MOZC_OS_DEFINED
-#endif  // __wasm__
-
-#ifndef MOZC_OS_DEFINED
-#error "Unsupported OS."
-#endif  // !MOZC_OS_DEFINED
-
-#undef MOZC_OS_DEFINED
-
-
-
-#ifdef GOOGLE_JAPANESE_INPUT_BUILD
-
-#include "absl/base/attributes.h"
-#include "absl/base/integral_types.h"
-#include "absl/base/macros.h"
-
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
-
-#include <cstdint>
 
 #include "absl/base/attributes.h"
 #include "absl/base/macros.h"
 
-#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
+namespace mozc {
+namespace port_internal {
+// PlatformType represents a mutually exclusive list of target platforms.
+enum class PlatformType {
+  kWindows,  // Windows
+  kLinux,    // Linux, excluding Android (different from target_is_linux)
+  kOSX,      // OSX
+  kAndroid,  // Android
+  kIPhone,   // Darwin-based firmware, devices, or simulator
+  kWASM,     // WASM
+};
+
+// kTargetPlatform is the current build target platform.
+#if defined(__linux__)
+#if defined(__ANDROID__)
+inline constexpr PlatformType kTargetPlatform = PlatformType::kAndroid;
+#else   // __ANDROID__
+inline constexpr PlatformType kTargetPlatform = PlatformType::kLinux;
+#endif  // !__ANDROID__
+#elif defined(_WIN32)
+inline constexpr PlatformType kTargetPlatform = PlatformType::kWindows;
+#elif defined(__APPLE__)
+#if TARGET_OS_OSX
+inline constexpr PlatformType kTargetPlatform = PlatformType::kOSX;
+#elif TARGET_OS_IPHONE
+inline constexpr PlatformType kTargetPlatform = PlatformType::kIPhone;
+#else  // TARGET_OS_IPHONE
+#error "Unsupported Apple platform target."
+#endif  // !TARGET_OS_IPHONE
+#elif defined(__wasm__)
+inline constexpr PlatformType kTargetPlatform = PlatformType::kWASM;
+#else  // __wasm__
+#error "Unsupported target platform."
+#endif  // !__wasm__
+}  // namespace port_internal
+
+// The following TargetIs functions are a modern alternative for ifdef macros.
+// You can use standard C++ semantics like 'if constexpr' and 'std::conditional'
+// to switch compiling code for different platforms. Unlike ifdef preprocessor
+// directives, all codes are always evaluated and required to be well-formed,
+// which works better with development tools, like clangd and clang-tidy.
+//
+// Limitations:
+// The C++ compile-time expressions don't completely replace macros.
+// Particularly:
+//  - Preprocessor macros like #include directives
+//  - All statements must be well-formed. For example,   you can't call
+//  (undefined) Windows functions without ifdefs (or SFINAE).
+//  - All statements are still evaluated and compiled (and discarded). Depending
+//  on the size of the block, it may slow compiling.
+//
+// Examples:
+// - Switching code with if constexpr. The non-taken branch will be discarded.
+//
+// int Func() {
+//   if constexpr (TargetIsWindows()) {
+//     // Windows implementation.
+//   } else {
+//     // Other platforms.
+//   }
+// }
+//
+// - Defining a type alias based on platforms.
+//
+// using Type = std::conditional_t<TargetIsWindows(), WindowsType, OtherType>;
+//
+// - Defining a constant with different values.
+//
+// constexpr absl::Duration kTimeout = TargetIsIPhone() ?
+//              absl::Milliseconds(100) : absl::Milliseconds(10);
+//
+
+// The build target is Windows.
+constexpr bool TargetIsWindows() {
+  return port_internal::kTargetPlatform ==
+         port_internal::PlatformType::kWindows;
+}
+
+// The build target is Linux, including Android.
+constexpr bool TargetIsLinux() {
+  return port_internal::kTargetPlatform ==
+             port_internal::PlatformType::kLinux ||
+         port_internal::kTargetPlatform ==
+             port_internal::PlatformType::kAndroid;
+}
+
+// The build target is Android.
+constexpr bool TargetIsAndroid() {
+  return port_internal::kTargetPlatform ==
+         port_internal::PlatformType::kAndroid;
+}
+
+// The build target is Darwin, like OSX and iPhone.
+constexpr bool TargetIsDarwin() {
+  return port_internal::kTargetPlatform == port_internal::PlatformType::kOSX ||
+         port_internal::kTargetPlatform == port_internal::PlatformType::kIPhone;
+}
+
+// The build target is OSX.
+constexpr bool TargetIsOSX() {
+  return port_internal::kTargetPlatform == port_internal::PlatformType::kOSX;
+}
+
+// The build target is firmware, devices, or simulator. Note "iPhone" here means
+// the same as TARGET_OS_IPHONE, not the iPhone device.
+constexpr bool TargetIsIPhone() {
+  return port_internal::kTargetPlatform == port_internal::PlatformType::kIPhone;
+}
+
+// The build target is WASM.
+constexpr bool TargetIsWASM() {
+  return port_internal::kTargetPlatform == port_internal::PlatformType::kWASM;
+}
+
+}  // namespace mozc
 
 #endif  // MOZC_BASE_PORT_H_

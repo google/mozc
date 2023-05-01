@@ -34,14 +34,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
-#include <random>
 #include <string>
-#include <utility>
+#include <string_view>
 #include <vector>
 
-#include "base/port.h"
 #include "absl/base/attributes.h"
-#include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -163,10 +160,10 @@ class Util {
     return CharsLen(str.data(), str.size());
   }
 
-  // Splits `str` to codepoints.
-  static std::vector<char32_t> Utf8ToCodepoints(absl::string_view str);
-  // Converts `codepoints` to UTF8 string.
-  static std::string CodepointsToUtf8(const std::vector<char32_t> &codepoints);
+  // Converts a UTF-8 string to UTF-32.
+  static std::u32string Utf8ToUtf32(absl::string_view str);
+  // Converts a UTF-32 string to UTF-8.
+  static std::string Utf32ToUtf8(std::u32string_view str);
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.

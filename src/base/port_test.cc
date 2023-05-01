@@ -27,33 +27,65 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_REF_COUNT_H_
-#define MOZC_WIN32_TIP_TIP_REF_COUNT_H_
-
-#include <windows.h>
-
 #include "base/port.h"
 
+#include "testing/gunit.h"
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif  // __APPLE__
+
 namespace mozc {
-namespace win32 {
-namespace tsf {
+namespace {
 
-// Implements base functionaries of reference counting for COM object.
-class TipRefCount {
- public:
-  TipRefCount();
-  TipRefCount(const TipRefCount&) = delete;
-  TipRefCount& operator=(const TipRefCount&) = delete;
-  ~TipRefCount();
-  ULONG AddRefImpl();
-  ULONG ReleaseImpl();
+#if defined(_WIN32)
+static_assert(TargetIsWindows());
+static_assert(!TargetIsLinux());
+static_assert(!TargetIsAndroid());
+static_assert(!TargetIsDarwin());
+static_assert(!TargetIsOSX());
+static_assert(!TargetIsIPhone());
+static_assert(!TargetIsWASM());
+#endif  // _WIN32
 
- private:
-  volatile LONG reference_count_;
-};
+#if defined(__APPLE__)
+static_assert(!TargetIsWindows());
+static_assert(!TargetIsLinux());
+static_assert(!TargetIsAndroid());
+static_assert(TargetIsDarwin());
+static_assert(!TargetIsWASM());
+#if TARGET_OS_OSX
+static_assert(TargetIsOSX());
+static_assert(!TargetIsIPhone());
+#elif TARGET_OS_IPHONE
+static_assert(!TargetIsOSX());
+static_assert(TargetIsIPhone());
+#endif  // TARGET_OS_IPHONE
+#endif  // __APPLE__
 
-}  // namespace tsf
-}  // namespace win32
+#if defined(__linux__)
+static_assert(!TargetIsWindows());
+static_assert(TargetIsLinux());
+static_assert(!TargetIsDarwin());
+static_assert(!TargetIsOSX());
+static_assert(!TargetIsIPhone());
+static_assert(!TargetIsWASM());
+#if defined(__ANDROID__)
+static_assert(TargetIsAndroid());
+#else   // __ANDROID__
+static_assert(!TargetIsAndroid());
+#endif  // !__ANDROID__
+#endif  // !__linux__
+
+#if defined(__wasm__)
+static_assert(!TargetIsWindows());
+static_assert(!TargetIsLinux());
+static_assert(!TargetIsAndroid());
+static_assert(!TargetIsDarwin());
+static_assert(!TargetIsOSX());
+static_assert(!TargetIsIPhone());
+static_assert(TargetIsWASM());
+#endif  // __wasm__
+
+}  // namespace
 }  // namespace mozc
-
-#endif  // MOZC_WIN32_TIP_TIP_REF_COUNT_H_

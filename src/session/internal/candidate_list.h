@@ -34,19 +34,19 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <map>
 #include <string>
 #include <vector>
 
 #include "base/container/freelist.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace session {
 
 class CandidateList;  // This is fully declared at the bottom.
 
-// Attribute is added to candidates for annotationg additional
-// information to the candidates.  This is used for toggleing ASCII
+// Attribute is added to candidates for annotating additional
+// information to the candidates.  This is used for toggling ASCII
 // transliterations at this moment.  Multiple attributes can be used
 // to one candidates.
 enum Attribute {
@@ -167,13 +167,13 @@ class CandidateList final {
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.
-  std::map<uint64_t, int> added_candidates_;
+  absl::flat_hash_map<uint64_t, int> added_candidates_;
 
   // Id-to-id map.  The key and value ids have the same candidate
   // value.  (ex. {id:0, value:"kanji"} and {id:-5, value:"kanji"}).
   // The key ids are not directly stored in candidates, so accessing
   // these ids, they should be converted with this map.
-  std::map<int, int> alternative_ids_;
+  absl::flat_hash_map<int, int> alternative_ids_;
 
   int next_available_id_;
   bool rotate_;

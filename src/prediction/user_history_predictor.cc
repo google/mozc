@@ -65,6 +65,7 @@
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -485,7 +486,7 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
   dic_->Clear();
   for (const Entry &entry : history.GetProto().entries()) {
     // Workaround for b/116826494: Some garbled characters are suggested
-    // from user history. This fiters such entries.
+    // from user history. This filters such entries.
     if (!Util::IsValidUtf8(entry.value())) {
       LOG(ERROR) << "Invalid UTF8 found in user history: "
                  << entry.Utf8DebugString();
@@ -1166,8 +1167,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
 
   const size_t input_key_len =
       Util::CharsLen(segments->conversion_segment(0).key());
-  const Entry *prev_entry =
-      LookupPrevEntry(*segments);
+  const Entry *prev_entry = LookupPrevEntry(*segments);
   if (input_key_len == 0 && prev_entry == nullptr) {
     VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
@@ -1286,8 +1286,8 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
       // entry->value() is a SUFFIX of prev_value.
       // length of entry->value() must be >= 2, as single-length
       // match would be noisy.
-      if (IsValidEntry(*entry) &&
-          entry != prev_entry && entry->next_entries_size() > 0 &&
+      if (IsValidEntry(*entry) && entry != prev_entry &&
+          entry->next_entries_size() > 0 &&
           Util::CharsLen(entry->value()) >= 2 &&
           (entry->value() == prev_value ||
            absl::EndsWith(prev_value, entry->value()))) {
@@ -1406,12 +1406,16 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
 
   size_t inserted_num = 0;
   while (inserted_num < max_prediction_size) {
-    // |results| is a priority queue where the elemtnt
+    // |results| is a priority queue where the element
     // in the queue is sorted by the score defined in GetScore().
     const Entry *result_entry = results->Pop();
     if (result_entry == nullptr) {
       // Pop() returns nullptr when no more valid entry exists.
       break;
+    }
+    if (absl::EndsWith(result_entry->key(), " ")) {
+      // Invalid user history entry from alphanumeric input.
+      continue;
     }
     bool is_valid_candidate = false;
     if (request.request_type() == ConversionRequest::PREDICTION) {
@@ -1528,8 +1532,7 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
 }
 
 bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
-  if (entry.removed() ||
-      !IsValidEntryIgnoringRemovedField(entry)) {
+  if (entry.removed() || !IsValidEntryIgnoringRemovedField(entry)) {
     return false;
   }
   return true;
@@ -1572,10 +1575,14 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
 }
 
 void UserHistoryPredictor::TryInsert(
-    RequestType request_type, const absl::string_view key,
-    const absl::string_view value, const absl::string_view description,
-    bool is_suggestion_selected, uint32_t next_fp, uint64_t last_access_time,
-    Segments *segments) {
+    RequestType request_type, absl::string_view key, absl::string_view value,
+    const absl::string_view description, bool is_suggestion_selected,
+    uint32_t next_fp, uint64_t last_access_time, Segments *segments) {
+  // Strip trailing spaces from key and value.
+  // Space can be appended on commit for alphanumeric input.
+  key = absl::StripTrailingAsciiWhitespace(key);
+  value = absl::StripTrailingAsciiWhitespace(value);
+
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
       description.size() > kMaxStringLength) {
@@ -1792,41 +1799,38 @@ void UserHistoryPredictor::MakeLearningSegments(
 
   for (size_t i = 0; i < segments.history_segments_size(); ++i) {
     const Segment &segment = segments.history_segment(i);
-    SegmentForLearning learning_segment;
     DCHECK_LE(1, segment.candidates_size());
-    learning_segment.key = segment.candidate(0).key;
-    learning_segment.value = segment.candidate(0).value;
-    learning_segment.content_key = segment.candidate(0).content_key;
-    learning_segment.content_value = segment.candidate(0).content_value;
-    learning_segment.description = GetDescription(segment.candidate(0));
-    learning_segments->push_back_history_segment(learning_segment);
+    auto &candidate = segment.candidate(0);
+    learning_segments->push_back_history_segment(
+        {candidate.key, candidate.value, candidate.content_key,
+         candidate.content_value, GetDescription(candidate)});
   }
+
+  std::string all_key, all_value;
   for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
     const Segment &segment = segments.conversion_segment(i);
     const Segment::Candidate &candidate = segment.candidate(0);
+    absl::StrAppend(&all_key, candidate.key);
+    absl::StrAppend(&all_value, candidate.value);
     if (candidate.inner_segment_boundary.empty()) {
-      SegmentForLearning learning_segment;
-      learning_segment.key = candidate.key;
-      learning_segment.value = candidate.value;
-      learning_segment.content_key = candidate.content_key;
-      learning_segment.content_value = candidate.content_value;
-      learning_segment.description = GetDescription(candidate);
-      learning_segments->push_back_conversion_segment(learning_segment);
+      learning_segments->push_back_conversion_segment(
+          {candidate.key, candidate.value, candidate.content_key,
+           candidate.content_value, GetDescription(candidate)});
     } else {
-      SegmentForLearning learning_segment;
       for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
            !iter.Done(); iter.Next()) {
-        learning_segment.key.assign(iter.GetKey().data(), iter.GetKey().size());
-        learning_segment.value.assign(iter.GetValue().data(),
-                                      iter.GetValue().size());
-        learning_segment.content_key.assign(iter.GetContentKey().data(),
-                                            iter.GetContentKey().size());
-        learning_segment.content_value.assign(iter.GetContentValue().data(),
-                                              iter.GetContentValue().size());
-        learning_segments->push_back_conversion_segment(learning_segment);
+        learning_segments->push_back_conversion_segment({
+            std::string(iter.GetKey()),
+            std::string(iter.GetValue()),
+            std::string(iter.GetContentKey()),
+            std::string(iter.GetContentValue()),
+            "",
+        });
       }
     }
   }
+  learning_segments->set_conversion_segments_key(std::move(all_key));
+  learning_segments->set_conversion_segments_value(std::move(all_value));
 }
 
 void UserHistoryPredictor::InsertHistory(RequestType request_type,
@@ -1835,51 +1839,12 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
                                          Segments *segments) {
   SegmentsForLearning learning_segments;
   MakeLearningSegments(*segments, &learning_segments);
+  InsertHistoryForConversionSegments(request_type, is_suggestion_selected,
+                                     last_access_time, learning_segments,
+                                     segments);
 
-  std::string all_key, all_value;
-  absl::flat_hash_set<uint32_t> seen;
-  bool this_was_seen = false;
-  const size_t history_segments_size =
-      learning_segments.history_segments_size();
-
-  for (size_t i = history_segments_size;
-       i < learning_segments.all_segments_size(); ++i) {
-    const SegmentForLearning &segment = learning_segments.all_segment(i);
-    all_key += segment.key;
-    all_value += segment.value;
-    uint32_t next_fp =
-        (i == learning_segments.all_segments_size() - 1)
-            ? 0
-            : LearningSegmentFingerprint(learning_segments.all_segment(i + 1));
-    // remember the first segment
-    if (i == history_segments_size) {
-      seen.insert(LearningSegmentFingerprint(segment));
-    }
-    uint32_t next_fp_to_set = next_fp;
-    // If two duplicate segments exist, kills the link
-    // TO/FROM the second one to prevent loops.
-    // Only killing "TO" link caused bug #2982886:
-    // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
-    // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
-    if (this_was_seen) {
-      next_fp_to_set = 0;
-    }
-    if (!seen.insert(next_fp).second) {
-      next_fp_to_set = 0;
-      this_was_seen = true;
-    } else {
-      this_was_seen = false;
-    }
-    TryInsert(request_type, segment.key, segment.value, segment.description,
-              is_suggestion_selected, next_fp_to_set, last_access_time,
-              segments);
-    if (content_word_learning_enabled_ && segment.content_key != segment.key &&
-        segment.content_value != segment.value) {
-      TryInsert(request_type, segment.content_key, segment.content_value,
-                segment.description, is_suggestion_selected, 0,
-                last_access_time, segments);
-    }
-  }
+  const std::string &all_key = learning_segments.conversion_segments_key();
+  const std::string &all_value = learning_segments.conversion_segments_value();
 
   // Inserts all_key/all_value.
   // We don't insert it for mobile.
@@ -1936,6 +1901,51 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
         next_entry.set_entry_fp(Fingerprint(all_key, all_value));
         InsertNextEntry(next_entry, history_entry);
       }
+    }
+  }
+}
+
+void UserHistoryPredictor::InsertHistoryForConversionSegments(
+    RequestType request_type, bool is_suggestion_selected,
+    uint64_t last_access_time, const SegmentsForLearning &learning_segments,
+    Segments *segments) {
+  absl::flat_hash_set<uint32_t> seen;
+  bool this_was_seen = false;
+
+  for (size_t i = 0; i < learning_segments.conversion_segments_size(); ++i) {
+    const SegmentForLearning &segment = learning_segments.conversion_segment(i);
+    uint32_t next_fp = (i == learning_segments.conversion_segments_size() - 1)
+                           ? 0
+                           : LearningSegmentFingerprint(
+                                 learning_segments.conversion_segment(i + 1));
+
+    // remember the first segment
+    if (i == 0) {
+      seen.insert(LearningSegmentFingerprint(segment));
+    }
+    uint32_t next_fp_to_set = next_fp;
+    // If two duplicate segments exist, kills the link
+    // TO/FROM the second one to prevent loops.
+    // Only killing "TO" link caused bug #2982886:
+    // after converting "らいおん（もうじゅう）とぞうりむし（びせいぶつ）"
+    // and typing "ぞうりむし", "ゾウリムシ（猛獣" was suggested.
+    if (this_was_seen) {
+      next_fp_to_set = 0;
+    }
+    if (!seen.insert(next_fp).second) {
+      next_fp_to_set = 0;
+      this_was_seen = true;
+    } else {
+      this_was_seen = false;
+    }
+    TryInsert(request_type, segment.key, segment.value, segment.description,
+              is_suggestion_selected, next_fp_to_set, last_access_time,
+              segments);
+    if (content_word_learning_enabled_ && segment.content_key != segment.key &&
+        segment.content_value != segment.value) {
+      TryInsert(request_type, segment.content_key, segment.content_value,
+                segment.description, is_suggestion_selected, 0,
+                last_access_time, segments);
     }
   }
 }

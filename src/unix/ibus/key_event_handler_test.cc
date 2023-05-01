@@ -38,6 +38,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
+#include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {

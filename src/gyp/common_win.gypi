@@ -329,9 +329,9 @@
       '_WTL_NO_WTYPES',  # TODO(yuryu): Remove after upgrading to WTL 10.
     ],
     'include_dirs': [
+      '<@(absl_include_dirs)',
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
-      '<(absl_dir)',
       '<@(msvs_includes)',
       '<(third_party_dir)/wil/include',
       '<(wtl_dir)/include',

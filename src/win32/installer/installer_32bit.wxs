@@ -184,11 +184,15 @@
                   Name='GoogleIMEJaCacheService' Stop='both' Remove='uninstall'
                   Wait='yes' />
             </Component>
-            <Component Id='GIMEJaTIP32' Guid='*' Permanent='no'>
+            <Component Id='GIMEJaTIP32' Guid='*' Permanent='no' Win64="no">
               <File Id='GoogleIMEJaTIP32.dll'
                   Name='GoogleIMEJaTIP32.dll'
                   DiskId='1' Checksum='yes'
-                  Source='$(var.MozcTIP32Path)' Vital='yes' />
+                  Source='$(var.MozcTIP32Path)' Vital='yes'>
+                <Class Context="InprocServer32" ThreadingModel="apartment"
+                    Description="Google Japanese Input"
+                    Id="D5A86FD5-5308-47EA-AD16-9C4EB160EC3C" />
+              </File>
             </Component>
             <Component Id='GIMEJaBroker' Guid='*' Permanent='no'>
               <File Id='GoogleIMEJaBroker.exe'
@@ -470,6 +474,9 @@
     <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions32'
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
+    <CustomAction Id='EnableTipProfile' BinaryKey='CustomActions32'
+        DllEntry='EnableTipProfile' Execute='commit'
+        Impersonate='yes' />
     <CustomAction Id='HideCancelButton' BinaryKey='CustomActions32'
         DllEntry='HideCancelButton' Return='ignore' />
     <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions32'
@@ -576,6 +583,10 @@
       </Custom>
       <Custom Action='InitialInstallationCommit'
           After='EnsureIMEIsDisabledForServiceAccountAfterInstall'>
+        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
+      </Custom>
+      <Custom Action='EnableTipProfile'
+          After='InitialInstallationCommit'>
         (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
       </Custom>
       <!-- show reboot dialog to execute pending file opartions -->

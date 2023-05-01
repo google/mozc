@@ -30,11 +30,12 @@
 #include "base/text_normalizer.h"
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -49,7 +50,7 @@ namespace {
 // Since the font of WAVE-DASH is ugly on Windows, here we convert WAVE-DHASH to
 // FULL_WIDTH_TILDA as CP932 does.
 //
-// As Unicode has became the defact default encoding.  We have reduced
+// As Unicode has became the defacto default encoding, we have reduced
 // the number of characters to be normalized.
 inline char32_t NormalizeCharForWindows(char32_t c) {
   switch (c) {
@@ -89,7 +90,7 @@ std::pair<int, int> ConvertJaCjkCompatToSvs(char32_t cjk_compat_char) {
     0xFA67,  // 逸 → 8279 FE01 艹
   };
 
-  // index: codepoint of CJK compatibility chararacter - 0xFA10.
+  // index: codepoint of CJK compatibility character - 0xFA10.
   // value: codepoint of SVS base character.
   constexpr std::array<uint16_t, 94> conv_table = {
     // FA10
@@ -200,8 +201,8 @@ std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
 
 bool TextNormalizer::NormalizeTextToSvs(absl::string_view input,
                                         std::string *output) {
-  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(input);
-  std::vector<char32_t> normalized;
+  std::u32string codepoints = Util::Utf8ToUtf32(input);
+  std::u32string normalized;
   bool modified = false;
   for (const char32_t cp : codepoints) {
     const std::pair<int, int> svs = ConvertJaCjkCompatToSvs(cp);
@@ -217,7 +218,7 @@ bool TextNormalizer::NormalizeTextToSvs(absl::string_view input,
     return false;
   }
 
-  *output = Util::CodepointsToUtf8(normalized);
+  *output = Util::Utf32ToUtf8(normalized);
   return true;
 }
 

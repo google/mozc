@@ -34,26 +34,17 @@
 #include <rpcsal.h>
 #include <windows.h>
 
-#include "win32/tip/tip_ref_count.h"
+#include "win32/tip/tip_dll_module.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
 // Represents the list of the display attributes used in this module.
-class TipEnumDisplayAttributes : public IEnumTfDisplayAttributeInfo {
+class TipEnumDisplayAttributes
+    : public TipComImplements<IEnumTfDisplayAttributeInfo> {
  public:
   TipEnumDisplayAttributes() : index_(0) {}
-  TipEnumDisplayAttributes(const TipEnumDisplayAttributes &) = delete;
-  TipEnumDisplayAttributes &operator=(const TipEnumDisplayAttributes &) =
-      delete;
-  virtual ~TipEnumDisplayAttributes() = default;
-
-  // IUnknown
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
-                                                   void **object);
-  virtual ULONG STDMETHODCALLTYPE AddRef();
-  virtual ULONG STDMETHODCALLTYPE Release();
 
   // IEnumTfDisplayAttributeInfo
   virtual HRESULT STDMETHODCALLTYPE
@@ -64,7 +55,6 @@ class TipEnumDisplayAttributes : public IEnumTfDisplayAttributeInfo {
   virtual HRESULT STDMETHODCALLTYPE Skip(ULONG count);
 
  private:
-  TipRefCount ref_count_;
   LONG index_;
 };
 

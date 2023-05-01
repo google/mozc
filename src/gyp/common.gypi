@@ -192,9 +192,9 @@
     },
     'default_configuration': 'Debug',
     'include_dirs': [
+      '<@(absl_include_dirs)',
       '<(abs_depth)',
       '<(SHARED_INTERMEDIATE_DIR)',
-      '<(absl_dir)',
     ],
     'mac_framework_headers': [],
     'target_conditions': [

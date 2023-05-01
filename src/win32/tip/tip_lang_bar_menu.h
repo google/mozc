@@ -30,18 +30,27 @@
 #ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_MENU_H_
 #define MOZC_WIN32_TIP_TIP_LANG_BAR_MENU_H_
 
+#include <ctfutb.h>
 #include <msctf.h>
 #include <rpcsal.h>
+#include <unknwn.h>
 #include <windows.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
+#include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_lang_bar.h"
-#include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
 namespace win32 {
+
+// This declaration is necessary because this header file is included multiple
+// times.
+template <>
+bool IsIIDOf<ITfLangBarItemButton>(REFIID riid);
+
 namespace tsf {
 
 // MIDL_INTERFACE expects a string literal rather than a constant array of
@@ -110,21 +119,12 @@ IMozcLangBarToggleItem : public IUnknown {
 };
 
 // Represents the common operations for a button-menu item in the language bar.
-class TipLangBarButton : public ITfLangBarItemButton,
-                         public ITfSource,
-                         public IMozcLangBarItem {
+class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
+                                                 ITfSource, IMozcLangBarItem> {
  public:
   TipLangBarButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                    bool is_menu, bool show_in_tray);
-  // It is OK to declare the destructor as non-virtual because all the
-  // insbtances will be deleted from and only from the Release() method by
-  // |delete this| where |this| has the true (derived) type of the instance.
-  ~TipLangBarButton();
-
-  // The IUnknown interface methods
-  virtual STDMETHODIMP QueryInterface(REFIID guid, void **object) = 0;
-  virtual STDMETHODIMP_(ULONG) AddRef() = 0;
-  virtual STDMETHODIMP_(ULONG) Release() = 0;
+  ~TipLangBarButton() override;
 
   // The ITfLangBarItem interface methods
   virtual STDMETHODIMP GetInfo(TF_LANGBARITEMINFO *item_info) = 0;
@@ -161,8 +161,6 @@ class TipLangBarButton : public ITfLangBarItemButton,
   static bool CanContextMenuDisplay32bppIcon();
 
  protected:
-  STDMETHODIMP QueryInterfaceBase(REFIID guid, void **object);
-
   // Update the item description. The caller is also responsible for calling
   // OnUpdate method to notify the change to the system.
   void SetDescription(const std::wstring &description);
@@ -212,11 +210,6 @@ class TipLangBarMenuButton final : public TipLangBarButton {
   TipLangBarMenuButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                        bool show_in_tray);
 
-  // The IUnknown interface methods
-  virtual STDMETHODIMP QueryInterface(REFIID guid, void **object);
-  virtual STDMETHODIMP_(ULONG) AddRef();
-  virtual STDMETHODIMP_(ULONG) Release();
-
   virtual STDMETHODIMP GetInfo(TF_LANGBARITEMINFO *item_info);
 
   // A part of the ITfLangBarItemButton interface methods
@@ -231,8 +224,6 @@ class TipLangBarMenuButton final : public TipLangBarButton {
                UINT menu_icon_id_for_non_theme, UINT menu_icon_id_for_theme);
 
  private:
-  TipRefCount ref_count_;
-
   // Represents the icon of the language bar menu.
   UINT menu_icon_id_for_theme_;
   UINT menu_icon_id_for_non_theme_;
@@ -245,12 +236,15 @@ class TipLangBarToggleButton : public TipLangBarButton,
  public:
   TipLangBarToggleButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                          bool is_menu, bool show_in_tray);
-  virtual ~TipLangBarToggleButton();
 
   // The IUnknown interface methods
-  virtual STDMETHODIMP QueryInterface(REFIID guid, void **object);
-  virtual STDMETHODIMP_(ULONG) AddRef();
-  virtual STDMETHODIMP_(ULONG) Release();
+  // TODO(yuryu): Directly derive from TipLangBarButton and remove these
+  // overrides.
+  STDMETHODIMP_(ULONG) AddRef() override { return TipLangBarButton::AddRef(); }
+  STDMETHODIMP_(ULONG) Release() override {
+    return TipLangBarButton::Release();
+  }
+  STDMETHODIMP QueryInterface(REFIID guid, void **object) override;
 
   // The IMozcLangBarToggleItem interface methods
   virtual STDMETHODIMP SelectMenuItem(UINT menu_id);
@@ -272,8 +266,6 @@ class TipLangBarToggleButton : public TipLangBarButton,
                const TipLangBarMenuItem &menu_for_disabled);
 
  private:
-  TipRefCount ref_count_;
-
   // Represents the index of the selected menu item.
   UINT menu_selected_;
   bool disabled_;
@@ -283,15 +275,10 @@ class TipLangBarToggleButton : public TipLangBarButton,
 
 // Represents the common operations for a button-menu item in the system
 // language bar.
-class TipSystemLangBarMenu : public ITfSystemLangBarItemSink {
+class TipSystemLangBarMenu : public TipComImplements<ITfSystemLangBarItemSink> {
  public:
   TipSystemLangBarMenu(TipLangBarCallback *langbar_callback, const GUID &guid);
-  virtual ~TipSystemLangBarMenu();
-
-  // The IUnknown interface methods
-  virtual STDMETHODIMP QueryInterface(REFIID guid, void **object);
-  virtual STDMETHODIMP_(ULONG) AddRef();
-  virtual STDMETHODIMP_(ULONG) Release();
+  ~TipSystemLangBarMenu() override;
 
   // The ITfLangBarSystemItem interface methods
   virtual STDMETHODIMP InitMenu(ITfMenu *menu);
@@ -302,7 +289,6 @@ class TipSystemLangBarMenu : public ITfSystemLangBarItemSink {
   HRESULT Init(HINSTANCE instance, const TipLangBarMenuItem *menu, int count);
 
  private:
-  TipRefCount ref_count_;
   TipLangBarCallback *langbar_callback_;
 
   // Represents the data possessed by the language bar menu.
