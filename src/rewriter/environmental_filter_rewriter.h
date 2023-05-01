@@ -61,7 +61,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/container/flat_hash_set.h"
+#include "absl/container/btree_set.h"
 
 namespace mozc {
 
@@ -91,7 +91,7 @@ class CharacterGroupFinder {
   size_t max_length_ = 0;
   // Intersection of multiple_codepoints_. For example, for emoji, it is very
   // likely to have ZWJ (U+200D) in common.
-  absl::flat_hash_set<char32_t> multiple_codepoints_intersection_;
+  absl::btree_set<char32_t> multiple_codepoints_intersection_;
 };
 
 class EnvironmentalFilterRewriter : public RewriterInterface {
