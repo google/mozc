@@ -31,14 +31,12 @@
 #define MOZC_IPC_PROCESS_WATCH_DOG_H_
 
 #include <cstdint>
-#include <memory>
 
-#include "base/port.h"
 #include "base/thread.h"
 #include "absl/synchronization/mutex.h"
 
 #ifdef _WIN32
-#include "base/win32/scoped_handle.h"
+#include <wil/resource.h>
 #else  // _WIN32
 #include <sys/types.h>
 #endif  // _WIN32
@@ -95,7 +93,7 @@ class ProcessWatchDog : public Thread {
   // You can set UnknownProcessID/UnknownProcessID if
   // they are unknown or not needed to be checked.
   // This function returns immediately.
-  // You can set the timout for the signal.
+  // You can set the timeout for the signal.
   // If timeout is negative, it waits forever.
   bool SetID(ProcessID process_id, ThreadID thread_id, int timeout);
 
@@ -109,7 +107,7 @@ class ProcessWatchDog : public Thread {
 
  private:
 #ifdef _WIN32
-  ScopedHandle event_;
+  wil::unique_event_nothrow event_;
 #endif  // _WIN32
   ProcessID process_id_;
   ThreadID thread_id_;

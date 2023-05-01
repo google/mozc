@@ -30,15 +30,15 @@
 #include "ipc/process_watch_dog.h"
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 #ifdef _WIN32
-#include <windows.h>
-
-#include "base/win32/scoped_handle.h"
+// clang-format off
+#include <windows.h>  // wil/resource.h requires windows.h for events
+// clang-format on
+#include <wil/resource.h>
 #else  // _WIN32
 #include <errno.h>
 #include <signal.h>
@@ -48,8 +48,7 @@ namespace mozc {
 
 #ifdef _WIN32
 ProcessWatchDog::ProcessWatchDog()
-    : event_(::CreateEventW(nullptr, TRUE, FALSE, nullptr)),
-      process_id_(UnknownProcessID),
+    : process_id_(UnknownProcessID),
       thread_id_(UnknownThreadID),
       timeout_(-1),
       is_finished_(false) {
@@ -57,6 +56,7 @@ ProcessWatchDog::ProcessWatchDog()
     LOG(ERROR) << "::CreateEvent() failed.";
     return;
   }
+  event_.try_create(wil::EventOptions::ManualReset, nullptr);
 }
 
 ProcessWatchDog::~ProcessWatchDog() { StopWatchDog(); }
@@ -69,8 +69,8 @@ void ProcessWatchDog::StopWatchDog() {
     is_finished_ = true;  // set the flag to terminate the thread
   }
 
-  if (event_.get() != nullptr) {
-    ::SetEvent(event_.get());  // wake up WaitForMultipleObjects
+  if (event_) {
+    event_.SetEvent();  // wake up WaitForMultipleObjects
   }
 
   Join();
@@ -78,7 +78,7 @@ void ProcessWatchDog::StopWatchDog() {
 
 bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
                             int timeout) {
-  if (event_.get() == nullptr) {
+  if (!event_) {
     LOG(ERROR) << "event is nullptr";
     return false;
   }
@@ -98,7 +98,7 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
   }
 
   // wake up WaitForMultipleObjects
-  ::SetEvent(event_.get());
+  event_.SetEvent();
 
   return true;
 }
@@ -112,8 +112,7 @@ void ProcessWatchDog::Run() {
       }
     }
 
-    ScopedHandle process_handle;
-    ScopedHandle thread_handle;
+    wil::unique_process_handle process_handle, thread_handle;
     int timeout = -1;
 
     // read the current ids/timeout
@@ -121,10 +120,9 @@ void ProcessWatchDog::Run() {
       absl::MutexLock l(&mutex_);
 
       if (process_id_ != UnknownProcessID) {
-        const HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, process_id_);
+        process_handle.reset(::OpenProcess(SYNCHRONIZE, FALSE, process_id_));
         const DWORD error = ::GetLastError();
-        process_handle.reset(handle);
-        if (process_handle.get() == nullptr) {
+        if (!process_handle) {
           LOG(ERROR) << "OpenProcess failed: " << process_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -141,10 +139,9 @@ void ProcessWatchDog::Run() {
       }
 
       if (thread_id_ != UnknownThreadID) {
-        const HANDLE handle = ::OpenThread(SYNCHRONIZE, FALSE, thread_id_);
+        thread_handle.reset(::OpenThread(SYNCHRONIZE, FALSE, thread_id_));
         const DWORD error = ::GetLastError();
-        thread_handle.reset(handle);
-        if (thread_handle.get() == nullptr) {
+        if (!thread_handle) {
           LOG(ERROR) << "OpenThread failed: " << thread_id_ << " " << error;
           switch (error) {
             case ERROR_ACCESS_DENIED:
@@ -199,7 +196,7 @@ void ProcessWatchDog::Run() {
       case WAIT_OBJECT_0:
       case WAIT_ABANDONED_0:
         VLOG(2) << "event is signaled";
-        ::ResetEvent(event_.get());  // reset event to wait for the new request
+        event_.ResetEvent();  // reset event to wait for the new request
         break;
       case WAIT_OBJECT_0 + 1:
       case WAIT_ABANDONED_0 + 1:

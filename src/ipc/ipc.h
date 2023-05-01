@@ -42,7 +42,7 @@
 #endif                  // __APPLE__
 
 #ifdef _WIN32
-#include "base/win32/scoped_handle.h"
+#include <wil/resource.h>
 #endif  // _WIN32
 
 namespace mozc {
@@ -91,7 +91,7 @@ class IPCClientInterface {
 #ifdef __APPLE__
 class MachPortManagerInterface {
  public:
-  virtual ~MachPortManagerInterface() {}
+  virtual ~MachPortManagerInterface() = default;
 
   // If the mach port can be obtained successfully, set the specified
   // "port" and returns true.  Otherwise port doesn't change and
@@ -165,8 +165,8 @@ class IPCClient : public IPCClientInterface {
 
 #ifdef _WIN32
   // Windows
-  ScopedHandle pipe_handle_;
-  ScopedHandle pipe_event_;
+  wil::unique_hfile pipe_handle_;
+  wil::unique_event_nothrow pipe_event_;
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;
@@ -268,9 +268,9 @@ class IPCServer {
   std::unique_ptr<Thread> server_thread_;
 
 #ifdef _WIN32
-  ScopedHandle pipe_handle_;
-  ScopedHandle pipe_event_;
-  ScopedHandle quit_event_;
+  wil::unique_hfile pipe_handle_;
+  wil::unique_event_nothrow pipe_event_;
+  wil::unique_event_nothrow quit_event_;
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;

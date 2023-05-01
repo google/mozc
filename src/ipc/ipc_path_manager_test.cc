@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/file_util.h"
+#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
 #include "base/thread2.h"
@@ -81,11 +82,11 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   EXPECT_FALSE(manager->GetServerProductVersion().empty());
   EXPECT_GT(manager->GetServerProcessId(), 0);
   EXPECT_EQ(path, path_created);
-#ifdef __linux__
-  // On Linux, |path| should be abstract (see man unix(7) for details.)
-  ASSERT_FALSE(path.empty());
-  EXPECT_EQ(path[0], '\0');
-#endif  // __linux__
+  if constexpr (TargetIsLinux()) {
+    // On Linux, |path| should be abstract (see man unix(7) for details.)
+    ASSERT_FALSE(path.empty());
+    EXPECT_EQ(path[0], '\0');
+  }
 }
 
 // Test the thread-safeness of GetPathName() and
@@ -133,7 +134,7 @@ TEST_F(IPCPathManagerTest, PathNameTest) {
 
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());
-  const ipc::IPCPathInfo original_path = *(manager->ipc_path_info_);
+  const ipc::IPCPathInfo original_path = manager->ipc_path_info_;
   EXPECT_EQ(original_path.protocol_version(), IPC_PROTOCOL_VERSION);
   // Checks that versions are same.
   EXPECT_EQ(original_path.product_version(), Version::GetMozcVersion());
@@ -141,10 +142,10 @@ TEST_F(IPCPathManagerTest, PathNameTest) {
   EXPECT_TRUE(original_path.has_process_id());
   EXPECT_TRUE(original_path.has_thread_id());
 
-  manager->ipc_path_info_->Clear();
+  manager->ipc_path_info_.Clear();
   EXPECT_TRUE(manager->LoadPathName());
 
-  const ipc::IPCPathInfo loaded_path = *(manager->ipc_path_info_);
+  const ipc::IPCPathInfo loaded_path = manager->ipc_path_info_;
   EXPECT_EQ(loaded_path.protocol_version(), original_path.protocol_version());
   EXPECT_EQ(loaded_path.product_version(), original_path.product_version());
   EXPECT_EQ(loaded_path.key(), original_path.key());

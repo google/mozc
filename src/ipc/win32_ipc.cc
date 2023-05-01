@@ -34,6 +34,7 @@
 #include <windows.h>
 #include <sddl.h>  // needs to be after windows.h
 // clang-format on
+#include <wil/resource.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -47,7 +48,7 @@
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
 #include "ipc/ipc.h"
@@ -58,6 +59,8 @@
 
 namespace mozc {
 namespace {
+
+using win32::Utf8ToWide;
 
 constexpr bool kReadTypeACK = true;
 constexpr bool kReadTypeData = false;
@@ -98,7 +101,7 @@ bool InitOverlapped(OVERLAPPED *overlapped, HANDLE wait_handle) {
 
 class IPCClientMutexBase {
  public:
-  explicit IPCClientMutexBase(const std::string &ipc_channel_name) {
+  explicit IPCClientMutexBase(const absl::string_view ipc_channel_name) {
     // Make a kernel mutex object so that multiple ipc connections are
     // serialized here. In Windows, there is no useful way to serialize
     // the multiple connections to the single-thread named pipe server.
@@ -108,13 +111,10 @@ class IPCClientMutexBase {
     // thread. The "available" notification is sent to all waiting ipc
     // clients at the same time and only one client gets the connection.
     // This causes redundant and wasteful CreateFile calles.
-    std::string mutex_name = kMutexPathPrefix;
-    mutex_name += SystemUtil::GetUserSidAsString();
-    mutex_name += ".";
-    mutex_name += ipc_channel_name;
-    mutex_name += ".ipc";
-    std::wstring wmutex_name;
-    Util::Utf8ToWide(mutex_name, &wmutex_name);
+    std::string mutex_name =
+        absl::StrCat(kMutexPathPrefix, SystemUtil::GetUserSidAsString(), ".",
+                     ipc_channel_name, ".ipc");
+    std::wstring wmutex_name = Utf8ToWide(mutex_name);
 
     LPSECURITY_ATTRIBUTES security_attributes_ptr = nullptr;
     SECURITY_ATTRIBUTES security_attributes;
@@ -148,12 +148,12 @@ class IPCClientMutexBase {
     }
   }
 
-  virtual ~IPCClientMutexBase() {}
+  virtual ~IPCClientMutexBase() = default;
 
-  HANDLE get() const { return ipc_mutex_.get(); }
+  const wil::unique_mutex_nothrow &mutex() const { return ipc_mutex_; }
 
  private:
-  ScopedHandle ipc_mutex_;
+  wil::unique_mutex_nothrow ipc_mutex_;
 };
 
 class ConverterClientMutex : public IPCClientMutexBase {
@@ -181,37 +181,17 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // and client-renderer) so we need to have different global mutexes to
 // serialize each client. Currently |ipc_name| starts with "session" and
 // "renderer" are expected.
-HANDLE GetClientMutex(const absl::string_view ipc_name) {
+const wil::unique_mutex_nothrow &GetClientMutex(
+    const absl::string_view ipc_name) {
   if (absl::StartsWith(ipc_name, "session")) {
-    return Singleton<ConverterClientMutex>::get()->get();
+    return Singleton<ConverterClientMutex>::get()->mutex();
   }
   if (absl::StartsWith(ipc_name, "renderer")) {
-    return Singleton<RendererClientMutex>::get()->get();
+    return Singleton<RendererClientMutex>::get()->mutex();
   }
   LOG(WARNING) << "unexpected IPC name: " << ipc_name;
-  return Singleton<FallbackClientMutex>::get()->get();
+  return Singleton<FallbackClientMutex>::get()->mutex();
 }
-
-// RAII class for calling ReleaseMutex in destructor.
-class ScopedReleaseMutex {
- public:
-  ScopedReleaseMutex() = delete;
-  ScopedReleaseMutex(const ScopedReleaseMutex &) = delete;
-  ScopedReleaseMutex &operator=(const ScopedReleaseMutex &) = delete;
-  explicit ScopedReleaseMutex(HANDLE handle) : pipe_handle_(handle) {}
-
-  virtual ~ScopedReleaseMutex() {
-    if (nullptr != pipe_handle_) {
-      ::ReleaseMutex(pipe_handle_);
-    }
-    pipe_handle_ = nullptr;
-  }
-
-  HANDLE get() const { return pipe_handle_; }
-
- private:
-  HANDLE pipe_handle_;
-};
 
 uint32_t GetServerProcessIdImpl(HANDLE handle) {
   ULONG pid = 0;
@@ -381,7 +361,7 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
 
   OVERLAPPED overlapped;
   if (!InitOverlapped(&overlapped, read_wait_handle)) {
-      msg->clear();
+    msg->clear();
     return IPC_READ_ERROR;
   }
 
@@ -422,8 +402,10 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
   return IPC_NO_ERROR;
 }
 
-HANDLE CreateManualResetEvent() {
-  return ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
+wil::unique_event_nothrow CreateManualResetEvent() {
+  wil::unique_event_nothrow event;
+  event.create(wil::EventOptions::ManualReset, nullptr);
+  return event;
 }
 
 // We do not care about the signaled state of the device handle itself.
@@ -465,13 +447,12 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   }
 
   // Create a named pipe.
-  std::wstring wserver_address;
-  Util::Utf8ToWide(server_address, &wserver_address);
+  std::wstring wserver_address = Utf8ToWide(server_address);
   HANDLE handle = ::CreateNamedPipe(
       wserver_address.c_str(),
       PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
       PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT |
-      PIPE_REJECT_REMOTE_CLIENTS,
+          PIPE_REJECT_REMOTE_CLIENTS,
       (num_connections <= 0 ? PIPE_UNLIMITED_INSTANCES : num_connections),
       sizeof(request_), sizeof(response_), 0, &security_attributes);
   const DWORD create_named_pipe_error = ::GetLastError();
@@ -641,13 +622,16 @@ void IPCClient::Init(const absl::string_view name,
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // We should change the mutex based on which IPC server we will talk with.
-  ScopedReleaseMutex ipc_mutex(GetClientMutex(name));
+  const wil::unique_mutex_nothrow &ipc_mutex = GetClientMutex(name);
+  wil::mutex_release_scope_exit mutex_releaser;
 
   if (ipc_mutex.get() == nullptr) {
     LOG(ERROR) << "IPC mutex is not available";
   } else {
     constexpr int kMutexTimeout = 10 * 1000;  // wait at most 10sec.
-    switch (::WaitForSingleObject(ipc_mutex.get(), kMutexTimeout)) {
+    DWORD status;
+    mutex_releaser = ipc_mutex.acquire(&status, kMutexTimeout);
+    switch (status) {
       case WAIT_TIMEOUT:
         // TODO(taku): with suspend/resume, WaitForSingleObject may
         // return WAIT_TIMEOUT. We have to consider the case
@@ -685,8 +669,7 @@ void IPCClient::Init(const absl::string_view name,
     if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
-    std::wstring wserver_address;
-    Util::Utf8ToWide(server_address, &wserver_address);
+    std::wstring wserver_address = Utf8ToWide(server_address);
 
     if (GetNumberOfProcessors() == 1) {
       // When the code is running in single processor environment, sometimes
@@ -699,15 +682,14 @@ void IPCClient::Init(const absl::string_view name,
       ::WaitNamedPipe(wserver_address.c_str(), kMinWaitTimeForWaitNamedPipe);
     }
 
-    ScopedHandle new_handle(
+    wil::unique_hfile new_handle(
         ::CreateFile(wserver_address.c_str(), GENERIC_READ | GENERIC_WRITE, 0,
                      nullptr, OPEN_EXISTING,
                      FILE_FLAG_OVERLAPPED | SECURITY_SQOS_PRESENT |
                          SECURITY_IDENTIFICATION | SECURITY_EFFECTIVE_ONLY,
                      nullptr));
     const DWORD create_file_error = ::GetLastError();
-    // ScopedHandle returns nullptr even when it received INVALID_HANDLE_VALUE.
-    if (new_handle.get() != nullptr) {
+    if (new_handle) {
       pipe_handle_ = std::move(new_handle);
       MaybeDisableFileCompletionNotification(pipe_handle_.get());
       if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),
@@ -762,16 +744,15 @@ bool IPCClient::Call(const std::string &request, std::string *response,
     return false;
   }
 
-  last_ipc_error_ = SendIpcMessage(pipe_handle_.get(), pipe_event_.get(),
-                                   request, timeout);
+  last_ipc_error_ =
+      SendIpcMessage(pipe_handle_.get(), pipe_event_.get(), request, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendIpcMessage() failed";
     return false;
   }
 
-  last_ipc_error_ =
-      RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), response,
-                     timeout, kReadTypeData);
+  last_ipc_error_ = RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(),
+                                   response, timeout, kReadTypeData);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "RecvIpcMessage() failed";
     return false;

@@ -36,6 +36,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -44,7 +45,7 @@
 #include <sddl.h>
 #include <windows.h>
 
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #else  // _WIN32
 #include <errno.h>
@@ -76,14 +77,12 @@ bool IsProcessAlive(pid_t pid) {
 
 std::string NamedEventUtil::GetEventPath(const char *name) {
   name = (name == nullptr) ? "nullptr" : name;
-  std::string event_name = kEventPathPrefix;
-  event_name += SystemUtil::GetUserSidAsString();
-  event_name += ".";
-  event_name += name;
+  std::string event_name = absl::StrCat(
+      kEventPathPrefix, SystemUtil::GetUserSidAsString(), ".", name);
 #ifdef _WIN32
   return event_name;
 #else   // _WIN32
-  // To maximze mozc portability, (especially on BSD including OSX),
+  // To maximize mozc portability, (especially on BSD including OSX),
   // makes the length of path name shorter than 14byte.
   // Please see the following man page for detail:
   // http://www.freebsd.org/cgi/man.cgi?query=sem_open&manpath=FreeBSD+7.0-RELEASE
@@ -102,8 +101,8 @@ std::string NamedEventUtil::GetEventPath(const char *name) {
 #ifdef _WIN32
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(nullptr) {
-  std::wstring event_path;
-  Util::Utf8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
+  std::wstring event_path =
+      win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
 
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
 
@@ -207,8 +206,8 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
 }
 
 NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(nullptr) {
-  std::wstring event_path;
-  Util::Utf8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
+  std::wstring event_path =
+      win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
   if (handle_ == nullptr) {
     LOG(ERROR) << "Cannot open Event name: " << name;
