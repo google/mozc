@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -38,13 +39,12 @@
 #include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "storage/lru_storage.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace storage {
-class LruStorage;
-}  // namespace storage
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
@@ -56,7 +56,6 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
 
   UserSegmentHistoryRewriter(const dictionary::PosMatcher *pos_matcher,
                              const dictionary::PosGroup *pos_group);
-  ~UserSegmentHistoryRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
