@@ -236,9 +236,16 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":hresultor_internal",
         "//base:logging",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/meta:type_traits",
     ],
+)
+
+mozc_cc_library(
+    name = "hresultor_internal",
+    hdrs = ["hresultor_internal.h"],
 )
 
 mozc_cc_test(

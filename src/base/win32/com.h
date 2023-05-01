@@ -84,14 +84,14 @@ HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U *ptr) {
   // QueryInterface.
   if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
     // ComPtr will call AddRef here.
-    return ReturnType(absl::implicit_cast<T *>(ptr));
+    return absl::implicit_cast<T *>(ptr);
   }
   Microsoft::WRL::ComPtr<T> result;
   const HRESULT hr = ptr->QueryInterface(IID_PPV_ARGS(&result));
   if (SUCCEEDED(hr)) {
-    return ReturnType(std::move(result));
+    return result;
   }
-  return ReturnType(hr);
+  return HResult(hr);
 }
 
 // Returns the result of QueryInterface as ComPtr<T>.
