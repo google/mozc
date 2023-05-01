@@ -31,6 +31,8 @@
 #ifndef MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 #define MOZC_UNIX_FCITX_MOZC_RESPONSE_PARSER_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
