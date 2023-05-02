@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -46,15 +45,15 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace config {
-
-using mozc::storage::LruStorage;
-
 namespace {
+
+using ::mozc::storage::LruStorage;
 
 constexpr uint32_t kLruSize = 128;           // enough?
 constexpr uint32_t kSeedValue = 0x7fe1fed1;  // random seed value for storage
@@ -62,11 +61,12 @@ constexpr char kFileName[] = "user://cform.db";
 
 class CharacterFormManagerImpl {
  public:
-  CharacterFormManagerImpl();
+  CharacterFormManagerImpl()
+      : storage_(nullptr), require_consistent_conversion_(false) {}
   CharacterFormManagerImpl(const CharacterFormManagerImpl &) = delete;
   CharacterFormManagerImpl &operator=(const CharacterFormManagerImpl &) =
       delete;
-  virtual ~CharacterFormManagerImpl();
+  virtual ~CharacterFormManagerImpl() = default;
 
   Config::CharacterForm GetCharacterForm(absl::string_view str) const;
 
@@ -119,9 +119,9 @@ class CharacterFormManagerImpl {
   LruStorage *storage_;
 
   // store the setting of a character
-  std::map<uint16_t, Config::CharacterForm> conversion_table_;
+  absl::flat_hash_map<uint16_t, Config::CharacterForm> conversion_table_;
 
-  std::map<uint16_t, std::vector<uint16_t>> group_table_;
+  absl::flat_hash_map<uint16_t, std::vector<uint16_t>> group_table_;
 
   // When this flag is true,
   // character form conversion requires that output has consistent forms.
@@ -250,11 +250,6 @@ std::string ConvertToAlternative(const absl::string_view input,
   return output;
 }
 
-CharacterFormManagerImpl::CharacterFormManagerImpl()
-    : storage_(nullptr), require_consistent_conversion_(false) {}
-
-CharacterFormManagerImpl::~CharacterFormManagerImpl() = default;
-
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
     const absl::string_view str) const {
   const uint16_t ucs2 = GetNormalizedCharacter(str);
@@ -262,8 +257,7 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
     return Config::NO_CONVERSION;
   }
 
-  std::map<uint16_t, Config::CharacterForm>::const_iterator it =
-      conversion_table_.find(ucs2);
+  const auto it = conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return Config::NO_CONVERSION;
   }
@@ -303,8 +297,7 @@ void CharacterFormManagerImpl::SetCharacterForm(const absl::string_view str,
     return;
   }
 
-  std::map<uint16_t, Config::CharacterForm>::const_iterator it =
-      conversion_table_.find(ucs2);
+  const auto it = conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return;
   }
@@ -348,8 +341,7 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
   // Do cast since CharacterForm may not be 32 bit
   const uint32_t iform = static_cast<uint32_t>(form);
 
-  std::map<uint16_t, std::vector<uint16_t>>::iterator iter =
-      group_table_.find(ucs2);
+  const auto iter = group_table_.find(ucs2);
   if (iter == group_table_.end()) {
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {
@@ -572,8 +564,8 @@ class CharacterFormManager::Data {
 CharacterFormManager::Data::Data() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
   const uint32_t key_type = 0;
-  storage_.reset(LruStorage::Create(filename.c_str(), sizeof(key_type),
-                                    kLruSize, kSeedValue));
+  storage_ = LruStorage::Create(filename.c_str(), sizeof(key_type), kLruSize,
+                                kSeedValue);
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
   preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();
@@ -585,13 +577,11 @@ CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
   return Singleton<CharacterFormManager>::get();
 }
 
-CharacterFormManager::CharacterFormManager() : data_(new Data) {
+CharacterFormManager::CharacterFormManager() : data_(std::make_unique<Data>()) {
   Config config;
   ConfigHandler::GetConfig(&config);
   ReloadConfig(config);
 }
-
-CharacterFormManager::~CharacterFormManager() = default;
 
 void CharacterFormManager::ReloadConfig(const Config &config) {
   Clear();

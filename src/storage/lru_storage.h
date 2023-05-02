@@ -62,12 +62,12 @@ class LruStorage {
                     size_t new_size, uint32_t new_seed);
 
   // Looks up elements by key.
-  const char *Lookup(const std::string &key, uint32_t *last_access_time) const;
-  const char *Lookup(const std::string &key) const;
+  const char *Lookup(absl::string_view key, uint32_t *last_access_time) const;
+  const char *Lookup(absl::string_view key) const;
 
   // A safer lookup for string values (the pointers returned by above Lookup()'s
   // are not null terminated.)
-  absl::string_view LookupAsString(const std::string &key) const {
+  absl::string_view LookupAsString(const absl::string_view key) const {
     const char *ptr = Lookup(key);
     return (ptr == nullptr) ? absl::string_view()
                             : absl::string_view(ptr, value_size_);
@@ -85,18 +85,18 @@ class LruStorage {
   bool Merge(const LruStorage &storage);
 
   // Updates timestamp.
-  bool Touch(const std::string &key);
+  bool Touch(absl::string_view key);
 
   // Inserts a key value pair.
-  bool Insert(const std::string &key, const char *value);
+  bool Insert(absl::string_view key, const char *value);
 
   // Inserts a key value pair only if |key| already exists.
   // CAUTION: despite the name, it does nothing if there's no value of |key|.
-  bool TryInsert(const std::string &key, const char *value);
+  bool TryInsert(absl::string_view key, const char *value);
 
   // Deletes the element if exists.  Returns false on failure (it's not failure
   // if the element for |key| doesn't exist.)
-  bool Delete(const std::string &key);
+  bool Delete(absl::string_view key);
 
   // Deletes all the elements that have timestamp less than |timestamp|, i.e.,
   // the last access is before |timestamp|.  Returns the number of deleted
@@ -138,11 +138,12 @@ class LruStorage {
             uint32_t *last_access_time) const;
 
   // Creates Instance from file. Call Open internally
-  static LruStorage *Create(const char *filename);
+  static std::unique_ptr<LruStorage> Create(const char *filename);
 
   // Creates Instance from file. Call OpenOrCreate internally
-  static LruStorage *Create(const char *filename, size_t value_size,
-                            size_t size, uint32_t seed);
+  static std::unique_ptr<LruStorage> Create(const char *filename,
+                                            size_t value_size, size_t size,
+                                            uint32_t seed);
 
   // Creates an empty LRU db file
   static bool CreateStorageFile(const char *filename, size_t value_size,

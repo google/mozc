@@ -56,7 +56,5 @@ MockDataManager::MockDataManager() {
       << "Embedded mock_mozc_data.h is broken";
 }
 
-MockDataManager::~MockDataManager() = default;
-
 }  // namespace testing
 }  // namespace mozc

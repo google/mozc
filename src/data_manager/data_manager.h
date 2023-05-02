@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "base/mmap.h"
-#include "base/port.h"
 #include "data_manager/data_manager_interface.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -74,12 +73,9 @@ class DataManager : public DataManagerInterface {
   static absl::StatusOr<std::unique_ptr<DataManager>> CreateFromFile(
       const std::string &path, absl::string_view magic);
 
-  DataManager();
-
+  DataManager() = default;
   DataManager(const DataManager &) = delete;
   DataManager &operator=(const DataManager &) = delete;
-
-  ~DataManager() override;
 
   // Parses |array| and extracts byte blocks of data set.  The |array| must
   // outlive this instance.  The second version specifies a custom magic number

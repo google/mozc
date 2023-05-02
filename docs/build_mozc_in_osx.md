@@ -22,6 +22,11 @@ MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt
 open bazel-bin/mac/Mozc.pkg
 ```
 
+Hint: With the above build steps, the target CPU architecture of the binaries in
+`Mozc.pkg` is the same as the CPU architecture of the build environment.
+That is, if you build Mozc on arm64 environment, `Mozc.pkg` contains arm64
+binaries.
+
 Hint: You can also download `Mozc.pkg` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
 
 ## Setup

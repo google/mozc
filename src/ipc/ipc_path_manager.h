@@ -34,6 +34,7 @@
 #include <ctime>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/process_mutex.h"
 #include "ipc/ipc.pb.h"
@@ -42,14 +43,24 @@
 #include "absl/synchronization/mutex.h"
 
 #ifdef _WIN32
-#include <functional>
-#include <map>
+#include "absl/container/flat_hash_map.h"
 #endif  // _WIN32
 
 namespace mozc {
 
 class IPCPathManager {
  public:
+  // do not call the constructor directly.
+  explicit IPCPathManager(std::string name)
+      : ipc_path_info_(),
+        name_(std::move(name)),
+        server_pid_(0),
+        last_modified_(-1) {}
+  virtual ~IPCPathManager() = default;
+
+  // return singleton instance corresponding to "name"
+  static IPCPathManager *GetIPCPathManager(absl::string_view name);
+
   // Brief summary of CreateNew / Save / Load / Get PathName().
   // CreateNewPathName: Generates a pathname and save it into the heap.
   // SavePathName:      Saves a pathname into a file from the heap.
@@ -69,7 +80,7 @@ class IPCPathManager {
   // empty or ipc key file is updated. Returns false if it cannot load.
   bool LoadPathName();
 
-  // Get a pathanem from the heap. If pathanme is empty, returns false.
+  // Get a pathname from the heap. If pathname is empty, returns false.
   bool GetPathName(std::string *ipc_name) const;
 
   // return protocol version.
@@ -101,13 +112,6 @@ class IPCPathManager {
   // clear ipc_key;
   void Clear();
 
-  // return singleton instance corresponding to "name"
-  static IPCPathManager *GetIPCPathManager(absl::string_view name);
-
-  // do not call constructor directly.
-  explicit IPCPathManager(absl::string_view name);
-  virtual ~IPCPathManager();
-
  private:
   FRIEND_TEST(IPCPathManagerTest, ReloadTest);
   FRIEND_TEST(IPCPathManagerTest, PathNameTest);
@@ -124,7 +128,7 @@ class IPCPathManager {
 
   std::unique_ptr<ProcessMutex> path_mutex_;  // lock ipc path file
   mutable absl::Mutex mutex_;                 // mutex for methods
-  std::unique_ptr<ipc::IPCPathInfo> ipc_path_info_;
+  ipc::IPCPathInfo ipc_path_info_;
   std::string name_;
   std::string server_path_;  // cache for server_path
   uint32_t server_pid_;      // cache for pid of server_path
@@ -132,8 +136,7 @@ class IPCPathManager {
 #ifdef _WIN32
   // std::less<> is a transparent comparator that's necessary to pass
   // absl::string_view to map::find(), etc.
-  std::map<std::string, std::wstring, std::less<>>
-      expected_server_ntpath_cache_;
+  absl::flat_hash_map<std::string, std::wstring> expected_server_ntpath_cache_;
 #endif  // _WIN32
 };
 

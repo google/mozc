@@ -29,7 +29,6 @@
 
 #include "config/stats_config_util.h"
 
-#include <map>
 #include <string>
 
 #include "base/file_util.h"
@@ -37,6 +36,8 @@
 #include "base/system_util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/base/casts.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 
 #ifdef __ANDROID__
@@ -55,20 +56,19 @@ namespace config {
 #ifdef _WIN32
 
 namespace {
-const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-const wchar_t kOmahaUsageKey[] =
+constexpr wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
+constexpr wchar_t kOmahaUsageKey[] =
     L"Software\\Google\\Update\\ClientState\\"
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-const wchar_t kOmahaUsageKeyForEveryone[] =
+constexpr wchar_t kOmahaUsageKeyForEveryone[] =
     L"Software\\Google\\Update\\ClientStateMedium\\"
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-const wchar_t kSendStatsName[] = L"usagestats";
+constexpr wchar_t kSendStatsName[] = L"usagestats";
 
-#define INT2HKEY(value) ((HKEY)(ULONG_PTR)((LONG)(value)))
-const HKEY kHKCU_ClientState = INT2HKEY(1);
-const HKEY kHKLM_ClientState = INT2HKEY(2);
-const HKEY kHKLM_ClientStateMedium = INT2HKEY(3);
-#undef INT2HKEY
+// TODO(yuryu): absl::bit_cast is not constexpr with VC++2017.
+const HKEY kHKCU_ClientState = absl::bit_cast<HKEY>(1);
+const HKEY kHKLM_ClientState = absl::bit_cast<HKEY>(2);
+const HKEY kHKLM_ClientStateMedium = absl::bit_cast<HKEY>(3);
 
 constexpr int kRunLevelLow = 0;
 constexpr int kRunLevelMedium = 1;
@@ -116,18 +116,21 @@ class RegistryEmulator {
       usagestats_map_[key] = value;
     }
     DWORD get_entry_from_usagestats_map(HKEY key) const {
-      std::map<HKEY, DWORD>::const_iterator i = usagestats_map_.find(key);
+      absl::flat_hash_map<HKEY, DWORD>::const_iterator i =
+          usagestats_map_.find(key);
       if (i == usagestats_map_.end()) {
         return 0;
       }
       return i->second;
     }
-    std::map<HKEY, DWORD> &usagestats_map() const { return usagestats_map_; }
+    absl::flat_hash_map<HKEY, DWORD> &usagestats_map() const {
+      return usagestats_map_;
+    }
     int run_level() const { return run_level_; }
     void set_run_level(int run_level) { run_level_ = run_level; }
 
    private:
-    std::map<HKEY, DWORD> usagestats_map_;
+    absl::flat_hash_map<HKEY, DWORD> usagestats_map_;
     int run_level_;
   };
   typedef PropertySelector<Id> Property;

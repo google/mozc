@@ -34,9 +34,7 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
-#include <functional>
 #include <ios>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -45,14 +43,15 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/random.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -73,8 +72,10 @@
 #include <windows.h>
 #include <psapi.h>  // GetModuleFileNameExW
 // clang-format on
+#include <wil/resource.h>
+
 #include "base/unverified_sha1.h"
-#include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
 // For stat system call
@@ -92,12 +93,9 @@ constexpr size_t kKeySize = 32;
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files
 std::string GetIPCKeyFileName(const std::string &name) {
-#ifdef _WIN32
-  std::string basename;
-#else   // _WIN32
-  std::string basename = ".";  // hidden file
-#endif  // _WIN32
-  basename += name + ".ipc";
+  std::string basename =
+      absl::StrCat(TargetIsWindows() ? "" : ".",  // hidden file on POSIX
+                   name, ".ipc");
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 
@@ -146,18 +144,6 @@ std::string CreateIPCKey() {
 
 class IPCPathManagerMap {
  public:
-  IPCPathManager *GetIPCPathManager(const absl::string_view name) {
-    absl::MutexLock l(&mutex_);
-    const auto it = manager_map_.find(name);
-    if (it != manager_map_.end()) {
-      return it->second.get();
-    }
-    auto manager = std::make_unique<IPCPathManager>(name);
-    IPCPathManager *ptr = manager.get();
-    manager_map_.emplace(name, std::move(manager));
-    return ptr;
-  }
-
   IPCPathManagerMap() = default;
 
   ~IPCPathManagerMap() {
@@ -165,21 +151,25 @@ class IPCPathManagerMap {
     manager_map_.clear();
   }
 
+  IPCPathManager *GetIPCPathManager(const absl::string_view name) {
+    absl::MutexLock l(&mutex_);
+    const auto it = manager_map_.find(name);
+    if (it != manager_map_.end()) {
+      return it->second.get();
+    }
+    auto manager = std::make_unique<IPCPathManager>(std::string(name));
+    IPCPathManager *ptr = manager.get();
+    manager_map_.emplace(name, std::move(manager));
+    return ptr;
+  }
+
  private:
-  std::map<std::string, std::unique_ptr<IPCPathManager>, std::less<>>
+  absl::flat_hash_map<std::string, std::unique_ptr<IPCPathManager>>
       manager_map_;
   absl::Mutex mutex_;
 };
 
 }  // namespace
-
-IPCPathManager::IPCPathManager(const absl::string_view name)
-    : ipc_path_info_(new ipc::IPCPathInfo),
-      name_(name),
-      server_pid_(0),
-      last_modified_(-1) {}
-
-IPCPathManager::~IPCPathManager() = default;
 
 IPCPathManager *IPCPathManager::GetIPCPathManager(
     const absl::string_view name) {
@@ -194,15 +184,15 @@ bool IPCPathManager::CreateNewPathName() {
 }
 
 bool IPCPathManager::CreateNewPathNameUnlocked() {
-  if (ipc_path_info_->key().empty()) {
-    ipc_path_info_->set_key(CreateIPCKey());
+  if (ipc_path_info_.key().empty()) {
+    ipc_path_info_.set_key(CreateIPCKey());
   }
   return true;
 }
 
 bool IPCPathManager::SavePathName() {
   absl::MutexLock l(&mutex_);
-  if (path_mutex_ != nullptr) {
+  if (path_mutex_) {
     return true;
   }
 
@@ -212,20 +202,19 @@ bool IPCPathManager::SavePathName() {
   CreateNewPathNameUnlocked();
 
   // set the server version
-  ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
-  ipc_path_info_->set_product_version(Version::GetMozcVersion());
+  ipc_path_info_.set_protocol_version(IPC_PROTOCOL_VERSION);
+  ipc_path_info_.set_product_version(Version::GetMozcVersion());
 
 #ifdef _WIN32
-  ipc_path_info_->set_process_id(
-      static_cast<uint32_t>(::GetCurrentProcessId()));
-  ipc_path_info_->set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
+  ipc_path_info_.set_process_id(static_cast<uint32_t>(::GetCurrentProcessId()));
+  ipc_path_info_.set_thread_id(static_cast<uint32_t>(::GetCurrentThreadId()));
 #else   // _WIN32
-  ipc_path_info_->set_process_id(static_cast<uint32_t>(getpid()));
-  ipc_path_info_->set_thread_id(0);
+  ipc_path_info_.set_process_id(static_cast<uint32_t>(getpid()));
+  ipc_path_info_.set_thread_id(0);
 #endif  // _WIN32
 
   std::string buf;
-  if (!ipc_path_info_->SerializeToString(&buf)) {
+  if (!ipc_path_info_.SerializeToString(&buf)) {
     LOG(ERROR) << "SerializeToString failed";
     return false;
   }
@@ -235,7 +224,7 @@ bool IPCPathManager::SavePathName() {
     return false;
   }
 
-  VLOG(1) << "ServerIPCKey: " << ipc_path_info_->key();
+  VLOG(1) << "ServerIPCKey: " << ipc_path_info_.key();
 
   last_modified_ = GetIPCFileTimeStamp();
   return true;
@@ -245,7 +234,7 @@ bool IPCPathManager::LoadPathName() {
   // On Windows, ShouldReload() always returns false.
   // On other platform, it returns true when timestamp of the file is different
   // from that of previous one.
-  const bool should_load = (ShouldReload() || ipc_path_info_->key().empty());
+  const bool should_load = (ShouldReload() || ipc_path_info_.key().empty());
   if (!should_load) {
     return true;
   }
@@ -254,21 +243,21 @@ bool IPCPathManager::LoadPathName() {
     return true;
   }
 
-#if defined(_WIN32)
-  // Fill the default values as fallback.
-  // Applications conerted by Desktop App Converter (DAC) does not read
-  // a file of ipc session name in the LocalLow directory.
-  // For a workaround, let applications to connect the named pipe directly.
-  // See: b/71338191.
-  CreateNewPathName();
-  DCHECK(!ipc_path_info_->key().empty());
-  ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
-  ipc_path_info_->set_product_version(Version::GetMozcVersion());
-  return true;
-#else   // defined(_WIN32)
-  LOG(ERROR) << "LoadPathName failed";
-  return false;
-#endif  // defined(_WIN32)
+  if constexpr (TargetIsWindows()) {
+    // Fill the default values as fallback.
+    // Applications conerted by Desktop App Converter (DAC) does not read
+    // a file of ipc session name in the LocalLow directory.
+    // For a workaround, let applications to connect the named pipe directly.
+    // See: b/71338191.
+    CreateNewPathName();
+    DCHECK(!ipc_path_info_.key().empty());
+    ipc_path_info_.set_protocol_version(IPC_PROTOCOL_VERSION);
+    ipc_path_info_.set_product_version(Version::GetMozcVersion());
+    return true;
+  } else {
+    LOG(ERROR) << "LoadPathName failed";
+    return false;
+  }
 }
 
 bool IPCPathManager::GetPathName(std::string *ipc_name) const {
@@ -277,7 +266,7 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
     return false;
   }
 
-  if (ipc_path_info_->key().empty()) {
+  if (ipc_path_info_.key().empty()) {
     LOG(ERROR) << "ipc_path_info_ is empty";
     return false;
   }
@@ -297,7 +286,7 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
   (*ipc_name)[0] = '\0';
 #endif  // __linux__
 
-  ipc_name->append(ipc_path_info_->key());
+  ipc_name->append(ipc_path_info_.key());
   ipc_name->append(".");
   ipc_name->append(name_);
 
@@ -305,20 +294,20 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
 }
 
 uint32_t IPCPathManager::GetServerProtocolVersion() const {
-  return ipc_path_info_->protocol_version();
+  return ipc_path_info_.protocol_version();
 }
 
 const std::string &IPCPathManager::GetServerProductVersion() const {
-  return ipc_path_info_->product_version();
+  return ipc_path_info_.product_version();
 }
 
 uint32_t IPCPathManager::GetServerProcessId() const {
-  return ipc_path_info_->process_id();
+  return ipc_path_info_.process_id();
 }
 
 void IPCPathManager::Clear() {
   absl::MutexLock l(&mutex_);
-  ipc_path_info_->Clear();
+  ipc_path_info_.Clear();
 }
 
 bool IPCPathManager::IsValidServer(uint32_t pid,
@@ -349,13 +338,11 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 #ifdef _WIN32
   {
     std::wstring expected_server_ntpath;
-    const std::map<std::string, std::wstring>::const_iterator it =
-        expected_server_ntpath_cache_.find(server_path);
+    const auto it = expected_server_ntpath_cache_.find(server_path);
     if (it != expected_server_ntpath_cache_.end()) {
       expected_server_ntpath = it->second;
     } else {
-      std::wstring wide_server_path;
-      Util::Utf8ToWide(server_path, &wide_server_path);
+      std::wstring wide_server_path = win32::Utf8ToWide(server_path);
       if (WinUtil::GetNtPath(wide_server_path, &expected_server_ntpath)) {
         // Caches the relationship from |server_path| to
         // |expected_server_ntpath| in case |server_path| is renamed later.
@@ -438,20 +425,18 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 }
 
 bool IPCPathManager::ShouldReload() const {
-#ifdef _WIN32
-  // In windows, no reloading mechanism is necessary because IPC files
-  // are automatically removed.
-  return false;
-#else   // _WIN32
-  absl::MutexLock l(&mutex_);
-
-  time_t last_modified = GetIPCFileTimeStamp();
-  if (last_modified == last_modified_) {
+  if constexpr (TargetIsWindows()) {
+    // In windows, no reloading mechanism is necessary because IPC files
+    // are automatically removed.
     return false;
+  } else {
+    absl::MutexLock l(&mutex_);
+    time_t last_modified = GetIPCFileTimeStamp();
+    if (last_modified == last_modified_) {
+      return false;
+    }
+    return true;
   }
-
-  return true;
-#endif  // _WIN32
 }
 
 time_t IPCPathManager::GetIPCFileTimeStamp() const {
@@ -479,24 +464,21 @@ bool IPCPathManager::LoadPathNameInternal() {
   // Special code for Windows,
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
 #ifdef _WIN32
-  std::wstring wfilename;
-  Util::Utf8ToWide(filename, &wfilename);
+  std::wstring wfilename = win32::Utf8ToWide(filename);
 
   {
-    ScopedHandle handle(
+    wil::unique_hfile handle(
         ::CreateFileW(wfilename.c_str(), GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                       nullptr, OPEN_EXISTING, 0, nullptr));
 
-    // ScopedHandle does not receive INVALID_HANDLE_VALUE and
-    // nullptr check is appropriate here.
-    if (nullptr == handle.get()) {
+    if (!handle) {
       LOG(ERROR) << "cannot open: " << filename << " " << ::GetLastError();
       return false;
     }
 
     const DWORD size = ::GetFileSize(handle.get(), nullptr);
-    if (-1 == static_cast<int>(size)) {
+    if (static_cast<int>(size) == -1) {
       LOG(ERROR) << "GetFileSize failed: " << ::GetLastError();
       return false;
     }
@@ -507,10 +489,10 @@ bool IPCPathManager::LoadPathNameInternal() {
       return false;
     }
 
-    std::unique_ptr<char[]> buf(new char[size]);
-
+    std::string buf;
+    buf.resize(size);
     DWORD read_size = 0;
-    if (!::ReadFile(handle.get(), buf.get(), size, &read_size, nullptr)) {
+    if (!::ReadFile(handle.get(), buf.data(), size, &read_size, nullptr)) {
       LOG(ERROR) << "ReadFile failed: " << ::GetLastError();
       return false;
     }
@@ -520,8 +502,8 @@ bool IPCPathManager::LoadPathNameInternal() {
       return false;
     }
 
-    if (!ipc_path_info_->ParseFromArray(buf.get(), static_cast<int>(size))) {
-      LOG(ERROR) << "ParseFromStream failed";
+    if (!ipc_path_info_.ParseFromArray(buf.data(), static_cast<int>(size))) {
+      LOG(ERROR) << "ParseFromArray failed";
       return false;
     }
   }
@@ -534,19 +516,19 @@ bool IPCPathManager::LoadPathNameInternal() {
     return false;
   }
 
-  if (!ipc_path_info_->ParseFromIstream(&is)) {
+  if (!ipc_path_info_.ParseFromIstream(&is)) {
     LOG(ERROR) << "ParseFromStream failed";
     return false;
   }
 #endif  // _WIN32
 
-  if (!IsValidKey(ipc_path_info_->key())) {
+  if (!IsValidKey(ipc_path_info_.key())) {
     LOG(ERROR) << "IPCServer::key is invalid";
     return false;
   }
 
-  VLOG(1) << "ClientIPCKey: " << ipc_path_info_->key();
-  VLOG(1) << "ProtocolVersion: " << ipc_path_info_->protocol_version();
+  VLOG(1) << "ClientIPCKey: " << ipc_path_info_.key();
+  VLOG(1) << "ProtocolVersion: " << ipc_path_info_.protocol_version();
 
   last_modified_ = GetIPCFileTimeStamp();
   return true;

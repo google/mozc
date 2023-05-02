@@ -147,7 +147,7 @@ class CharacterFormManager {
   friend class Singleton<CharacterFormManager>;
 
   CharacterFormManager();
-  ~CharacterFormManager();
+  ~CharacterFormManager() = default;
 
   std::unique_ptr<Data> data_;
 };

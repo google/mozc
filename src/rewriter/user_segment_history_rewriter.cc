@@ -33,6 +33,7 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,8 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -136,68 +139,10 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
   return 0;
 }
 
-// JoinStringWithTabN joins N strings with TAB delimiters ('\t') in a way
-// similar to absl::StrJoin() and/or Util::AppendStringWithDelimiter() but
-// in a more efficient way. Since this module is called every key stroke and
-// performs many string concatenation, we use these functions instead of ones
-// from Util.
-inline void JoinStringsWithTab2(const absl::string_view s1,
-                                const absl::string_view s2,
-                                std::string *output) {
-  // Pre-allocate the buffer, including 1 TAB delimiter.
-  output->reserve(s1.size() + s2.size() + 1);
-  output->assign(s1.data(), s1.size())
-      .append("\t")
-      .append(s2.data(), s2.size());
-}
-
-inline void JoinStringsWithTab3(const absl::string_view s1,
-                                const absl::string_view s2,
-                                const absl::string_view s3,
-                                std::string *output) {
-  // Pre-allocate the buffer, including 2 TAB delimiters.
-  output->reserve(s1.size() + s2.size() + s3.size() + 2);
-  output->assign(s1.data(), s1.size())
-      .append("\t")
-      .append(s2.data(), s2.size())
-      .append("\t")
-      .append(s3.data(), s3.size());
-}
-
-inline void JoinStringsWithTab4(const absl::string_view s1,
-                                const absl::string_view s2,
-                                const absl::string_view s3,
-                                const absl::string_view s4,
-                                std::string *output) {
-  // Pre-allocate the buffer, including 3 TAB delimiters.
-  output->reserve(s1.size() + s2.size() + s3.size() + s4.size() + 3);
-  output->assign(s1.data(), s1.size())
-      .append("\t")
-      .append(s2.data(), s2.size())
-      .append("\t")
-      .append(s3.data(), s3.size())
-      .append("\t")
-      .append(s4.data(), s4.size());
-}
-
-inline void JoinStringsWithTab5(const absl::string_view s1,
-                                const absl::string_view s2,
-                                const absl::string_view s3,
-                                const absl::string_view s4,
-                                const absl::string_view s5,
-                                std::string *output) {
-  // Pre-allocate the buffer, including 4 TAB delimiters.
-  output->reserve(s1.size() + s2.size() + s3.size() + s4.size() + s5.size() +
-                  4);
-  output->assign(s1.data(), s1.size())
-      .append("\t")
-      .append(s2.data(), s2.size())
-      .append("\t")
-      .append(s3.data(), s3.size())
-      .append("\t")
-      .append(s4.data(), s4.size())
-      .append("\t")
-      .append(s5.data(), s5.size());
+template <typename... Strings>
+std::string StrJoinWithTabs(const Strings &...strings) {
+  // Make sure we use the string_view overload so the buffer is preallocated.
+  return absl::StrJoin({static_cast<absl::string_view>(strings)...}, "\t");
 }
 
 // Feature "Left Right"
@@ -210,9 +155,9 @@ inline bool GetFeatureLR(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 1));
-  JoinStringsWithTab5("LR", base_key,
-                      segments.segment(i - 1).candidate(j1).value, base_value,
-                      segments.segment(i + 1).candidate(j2).value, value);
+  *value = StrJoinWithTabs(
+      "LR", base_key, segments.segment(i - 1).candidate(j1).value, base_value,
+      segments.segment(i + 1).candidate(j2).value);
   return true;
 }
 
@@ -226,9 +171,9 @@ inline bool GetFeatureLL(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i - 2));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  JoinStringsWithTab5(
+  *value = StrJoinWithTabs(
       "LL", base_key, segments.segment(i - 2).candidate(j1).value,
-      segments.segment(i - 1).candidate(j2).value, base_value, value);
+      segments.segment(i - 1).candidate(j2).value, base_value);
   return true;
 }
 
@@ -242,9 +187,9 @@ inline bool GetFeatureRR(const Segments &segments, size_t i,
   }
   const int j1 = GetDefaultCandidateIndex(segments.segment(i + 1));
   const int j2 = GetDefaultCandidateIndex(segments.segment(i + 2));
-  JoinStringsWithTab5("RR", base_key, base_value,
-                      segments.segment(i + 1).candidate(j1).value,
-                      segments.segment(i + 2).candidate(j2).value, value);
+  *value = StrJoinWithTabs("RR", base_key, base_value,
+                           segments.segment(i + 1).candidate(j1).value,
+                           segments.segment(i + 2).candidate(j2).value);
   return true;
 }
 
@@ -257,8 +202,8 @@ inline bool GetFeatureL(const Segments &segments, size_t i,
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  JoinStringsWithTab4("L", base_key, segments.segment(i - 1).candidate(j).value,
-                      base_value, value);
+  *value = StrJoinWithTabs(
+      "L", base_key, segments.segment(i - 1).candidate(j).value, base_value);
   return true;
 }
 
@@ -271,8 +216,8 @@ inline bool GetFeatureR(const Segments &segments, size_t i,
     return false;
   }
   const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  JoinStringsWithTab4("R", base_key, base_value,
-                      segments.segment(i + 1).candidate(j).value, value);
+  *value = StrJoinWithTabs("R", base_key, base_value,
+                           segments.segment(i + 1).candidate(j).value);
   return true;
 }
 
@@ -281,7 +226,7 @@ inline bool GetFeatureC(const Segments &segments, size_t i,
                         absl::string_view base_key,
                         absl::string_view base_value, std::string *value) {
   DCHECK(value);
-  JoinStringsWithTab3("C", base_key, base_value, value);
+  *value = StrJoinWithTabs("C", base_key, base_value);
   return true;
 }
 
@@ -293,7 +238,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
   if (segments.segments_size() - segments.history_segments_size() != 1) {
     return false;
   }
-  JoinStringsWithTab3("S", base_key, base_value, value);
+  *value = StrJoinWithTabs("S", base_key, base_value);
   return true;
 }
 
@@ -301,7 +246,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
 // used for number rewrite
 inline bool GetFeatureN(uint16_t type, std::string *value) {
   DCHECK(value);
-  JoinStringsWithTab2("N", std::to_string(type), value);
+  *value = StrJoinWithTabs("N", absl::StrCat(type));
   return true;
 }
 
@@ -487,7 +432,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
     const PosMatcher *pos_matcher, const PosGroup *pos_group)
-    : storage_(new LruStorage),
+    : storage_(std::make_unique<LruStorage>()),
       pos_matcher_(pos_matcher),
       pos_group_(pos_group) {
   Reload();
@@ -495,8 +440,6 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
   CHECK_EQ(sizeof(uint32_t), sizeof(FeatureValue));
   CHECK_EQ(sizeof(uint32_t), sizeof(KeyTriggerValue));
 }
-
-UserSegmentHistoryRewriter::~UserSegmentHistoryRewriter() = default;
 
 #define INSERT_FEATURE(func, base_key, base_value, force_insert)               \
   do {                                                                         \
@@ -1023,8 +966,7 @@ bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
   if (pos_matcher_->IsNumber(candidate.rid) ||
       pos_matcher_->IsKanjiNumber(candidate.rid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    JoinStringsWithTab3(absl::string_view("LN", 2), base_key, base_value,
-                        value);
+    *value = StrJoinWithTabs("LN", base_key, base_value);
     return true;
   }
   return false;
@@ -1045,8 +987,7 @@ bool UserSegmentHistoryRewriter::GetFeatureRN(const Segments &segments,
   if (pos_matcher_->IsNumber(candidate.lid) ||
       pos_matcher_->IsKanjiNumber(candidate.lid) ||
       Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    JoinStringsWithTab3(absl::string_view("RN", 2), base_key, base_value,
-                        value);
+    *value = StrJoinWithTabs("RN", base_key, base_value);
     return true;
   }
   return false;

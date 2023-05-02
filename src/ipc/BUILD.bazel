@@ -68,7 +68,11 @@ mozc_cc_library(
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:win_sandbox",
+            "//base/win32:wide_char",
+            "//third_party/wil",
+        ],
     ),
 )
 
@@ -103,13 +107,17 @@ mozc_cc_library(
         "//base:util",
         "//base:version",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
         macos = ["//base/mac:mac_util"],
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:wide_char",
+            "//third_party/wil",
+        ],
     ),
 )
 
@@ -136,6 +144,7 @@ mozc_cc_test(
         ":ipc_cc_proto",
         ":ipc_path_manager",
         "//base:file_util",
+        "//base:port",
         "//base:process_mutex",
         "//base:system_util",
         "//base:thread2",
@@ -212,12 +221,13 @@ mozc_cc_library(
         "//base:hash",
         "//base:logging",
         "//base:system_util",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         windows = [
             "//base/win32:win_sandbox",
-            "//base:util",
+            "//base/win32:wide_char",
         ],
     ),
 )
@@ -262,7 +272,7 @@ mozc_cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
-        windows = ["//base/win32:scoped_handle"],
+        windows = ["//third_party/wil"],
     ),
 )
 
@@ -279,7 +289,10 @@ mozc_cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
-        windows = ["//base/win32:scoped_handle"],
+        windows = [
+            "//base/win32:wide_char",
+            "//third_party/wil",
+        ],
     ),
 )
 

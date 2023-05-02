@@ -61,7 +61,6 @@ mozc_cc_library(
         ":serialized_dictionary",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
         "//base:version",
         "//base/container:serialized_string_array",
         "//protocol:segmenter_data_cc_proto",
@@ -151,6 +150,7 @@ mozc_cc_library(
         "//base:port",
         "//base:status",
         "//base:util",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -197,8 +197,8 @@ mozc_cc_library(
         ":dataset_cc_proto",
         "//base:logging",
         "//base:obfuscator_support",
-        "//base:port",
         "//base:util",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

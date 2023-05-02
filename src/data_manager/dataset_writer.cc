@@ -47,11 +47,6 @@ bool IsValidAlignment(int a) { return a == 8 || a == 16 || a == 32 || a == 64; }
 
 }  // namespace
 
-DataSetWriter::DataSetWriter(absl::string_view magic)
-    : image_(magic.data(), magic.size()) {}
-
-DataSetWriter::~DataSetWriter() = default;
-
 void DataSetWriter::Add(const std::string &name, int alignment,
                         absl::string_view data) {
   CHECK(seen_names_.insert(name).second) << name << " was already added";

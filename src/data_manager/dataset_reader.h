@@ -30,18 +30,15 @@
 #ifndef MOZC_DATA_MANAGER_DATASET_READER_H_
 #define MOZC_DATA_MANAGER_DATASET_READER_H_
 
-#include <map>
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class DataSetReader {
  public:
-  DataSetReader();
-  ~DataSetReader();
-
   // Initializes the reader from the binary image of dataset file and expected
   // magic number.  The caller is responsible to load the content of a dataset
   // file into memory, and |memblock| must outlive this instance.  Note: this
@@ -56,13 +53,14 @@ class DataSetReader {
   // Verifies the checksum of binary image.
   static bool VerifyChecksum(absl::string_view memblock);
 
-  const std::map<std::string, absl::string_view> &name_to_data_map() const {
+  const absl::flat_hash_map<std::string, absl::string_view> &name_to_data_map()
+      const {
     return name_to_data_map_;
   }
 
  private:
   // The value points to a block of the specified |memblock|.
-  std::map<std::string, absl::string_view> name_to_data_map_;
+  absl::flat_hash_map<std::string, absl::string_view> name_to_data_map_;
 };
 
 }  // namespace mozc

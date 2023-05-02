@@ -77,13 +77,13 @@ class ConfigHandler {
   // This method does nothing on imposed config.
   static void Reload();
 
-  // Sets config file. (for unittesting)
+  // Sets config file. (for unit testing)
   static void SetConfigFileName(absl::string_view filename);
 
   // Get config file name.
   static std::string GetConfigFileName();
 
-  // Utilitiy function to put config meta data
+  // Utility function to put config meta data
   static void SetMetaData(Config *config);
 
   // Get default keymap for each platform.

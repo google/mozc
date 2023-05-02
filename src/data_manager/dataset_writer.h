@@ -31,10 +31,10 @@
 #define MOZC_DATA_MANAGER_DATASET_WRITER_H_
 
 #include <ostream>
-#include <set>
 #include <string>
 
 #include "data_manager/dataset.pb.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -44,8 +44,7 @@ namespace mozc {
 class DataSetWriter {
  public:
   // Creates a writer with specified magic number.
-  explicit DataSetWriter(absl::string_view magic);
-  ~DataSetWriter();
+  explicit DataSetWriter(absl::string_view magic) : image_(magic) {}
 
   // Adds a binary image to the packed file so that data is aligned at the
   // specified bit boundary (8, 16, 32, or 64).
@@ -66,7 +65,7 @@ class DataSetWriter {
 
   std::string image_;
   DataSetMetadata metadata_;
-  std::set<std::string> seen_names_;
+  absl::flat_hash_set<std::string> seen_names_;
 };
 
 }  // namespace mozc

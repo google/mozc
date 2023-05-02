@@ -64,6 +64,12 @@ class ZeroBitIndexIterator {
     return *this;
   }
 
+  // Visual C++ 2017 debug CRT needs this.
+  [[maybe_unused]] friend bool operator==(const ZeroBitIndexIterator &x,
+                                          const ZeroBitIndexIterator &y) {
+    return x.ptr_ == y.ptr_;
+  }
+
   friend bool operator!=(const ZeroBitIndexIterator &x,
                          const ZeroBitIndexIterator &y) {
     return x.ptr_ != y.ptr_;

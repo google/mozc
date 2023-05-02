@@ -33,7 +33,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
@@ -47,9 +46,6 @@ namespace {
 constexpr size_t kFooterSize = 36;
 
 }  // namespace
-
-DataSetReader::DataSetReader() = default;
-DataSetReader::~DataSetReader() = default;
 
 bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   name_to_data_map_.clear();
