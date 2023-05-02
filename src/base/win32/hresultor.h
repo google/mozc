@@ -489,12 +489,12 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
 
 // RETURN_IF_FAILED_HRESULT Runs the statement and returns from the current
 // function if FAILED(statement) is true.
-#define RETURN_IF_FAILED_HRESULT(...)   \
-  do {                                  \
-    const HResult hr(__VA_ARGS__);      \
-    if (ABSL_PREDICT_FALSE(!hr.ok())) { \
-      return hr;                        \
-    }                                   \
+#define RETURN_IF_FAILED_HRESULT(...)                            \
+  do {                                                           \
+    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);      \
+    if (ABSL_PREDICT_FALSE(!hresultor_macro_impl_tmp_hr.ok())) { \
+      return hresultor_macro_impl_tmp_hr;                        \
+    }                                                            \
   } while (0)
 
 }  // namespace mozc::win32
