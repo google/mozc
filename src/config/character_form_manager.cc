@@ -564,8 +564,8 @@ class CharacterFormManager::Data {
 CharacterFormManager::Data::Data() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
   const uint32_t key_type = 0;
-  storage_.reset(LruStorage::Create(filename.c_str(), sizeof(key_type),
-                                    kLruSize, kSeedValue));
+  storage_ = LruStorage::Create(filename.c_str(), sizeof(key_type), kLruSize,
+                                kSeedValue);
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
   preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();

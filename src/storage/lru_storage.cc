@@ -113,23 +113,24 @@ class CompareByTimeStamp {
 
 }  // namespace
 
-LruStorage *LruStorage::Create(const char *filename) {
-  std::unique_ptr<LruStorage> n(new LruStorage);
-  if (!n->Open(filename)) {
+std::unique_ptr<LruStorage> LruStorage::Create(const char *filename) {
+  auto result = std::make_unique<LruStorage>();
+  if (!result->Open(filename)) {
     LOG(ERROR) << "could not open LruStorage";
     return nullptr;
   }
-  return n.release();
+  return result;
 }
 
-LruStorage *LruStorage::Create(const char *filename, size_t value_size,
-                               size_t size, uint32_t seed) {
-  std::unique_ptr<LruStorage> n(new LruStorage);
-  if (!n->OpenOrCreate(filename, value_size, size, seed)) {
+std::unique_ptr<LruStorage> LruStorage::Create(const char *filename,
+                                               size_t value_size, size_t size,
+                                               uint32_t seed) {
+  auto result = std::make_unique<LruStorage>();
+  if (!result->OpenOrCreate(filename, value_size, size, seed)) {
     LOG(ERROR) << "could not open LruStorage";
     return nullptr;
   }
-  return n.release();
+  return result;
 }
 
 bool LruStorage::CreateStorageFile(const char *filename, size_t value_size,
@@ -415,12 +416,12 @@ void LruStorage::Close() {
   lru_map_.clear();
 }
 
-const char *LruStorage::Lookup(const std::string &key) const {
+const char *LruStorage::Lookup(const absl::string_view key) const {
   uint32_t last_access_time = 0;
   return Lookup(key, &last_access_time);
 }
 
-const char *LruStorage::Lookup(const std::string &key,
+const char *LruStorage::Lookup(const absl::string_view key,
                                uint32_t *last_access_time) const {
   const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   const auto it = lru_map_.find(fp);
@@ -452,7 +453,7 @@ void LruStorage::GetAllValues(std::vector<std::string> *values) const {
   }
 }
 
-bool LruStorage::Touch(const std::string &key) {
+bool LruStorage::Touch(const absl::string_view key) {
   const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
@@ -468,7 +469,7 @@ bool LruStorage::Touch(const std::string &key) {
   return true;
 }
 
-bool LruStorage::Insert(const std::string &key, const char *value) {
+bool LruStorage::Insert(const absl::string_view key, const char *value) {
   if (value == nullptr) {
     return false;
   }
@@ -513,7 +514,7 @@ bool LruStorage::Insert(const std::string &key, const char *value) {
   return false;
 }
 
-bool LruStorage::TryInsert(const std::string &key, const char *value) {
+bool LruStorage::TryInsert(const absl::string_view key, const char *value) {
   const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it != lru_map_.end()) {
@@ -523,7 +524,7 @@ bool LruStorage::TryInsert(const std::string &key, const char *value) {
   return true;
 }
 
-bool LruStorage::Delete(const std::string &key) {
+bool LruStorage::Delete(const absl::string_view key) {
   const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   return Delete(fp);
 }
