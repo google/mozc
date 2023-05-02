@@ -51,7 +51,6 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
@@ -227,6 +226,13 @@ ExtractTargetEmojis(
   return results;
 }
 
+std::u32string SortAndUnique(std::u32string_view codepoints) {
+  std::u32string result(codepoints);
+  std::sort(result.begin(), result.end());
+  result.erase(std::unique(result.begin(), result.end()), result.end());
+  return result;
+}
+
 }  // namespace
 
 void CharacterGroupFinder::Initialize(
@@ -254,18 +260,17 @@ void CharacterGroupFinder::Initialize(
   // Create intersection of multiple_codepoints_ to use early return key in
   // search algorithm.
   if (!multiple_codepoints_.empty()) {
-    absl::btree_set<char32_t> intersection(multiple_codepoints_[0].begin(),
-                                           multiple_codepoints_[0].end());
+    std::u32string intersection = SortAndUnique(multiple_codepoints_[0]);
     for (const std::u32string &codepoints : multiple_codepoints_) {
-      absl::btree_set<char32_t> new_intersection;
-      absl::btree_set<char32_t> cp_set(codepoints.begin(), codepoints.end());
+      std::u32string new_intersection;
+      const std::u32string cp_set = SortAndUnique(codepoints);
       std::set_intersection(
           cp_set.begin(), cp_set.end(), intersection.begin(),
           intersection.end(),
           std::inserter(new_intersection, new_intersection.end()));
       intersection = std::move(new_intersection);
     }
-    multiple_codepoints_intersection_ = std::move(intersection);
+    sorted_multiple_codepoints_intersection_ = std::move(intersection);
   }
 
   // sort and summarize them into range;
@@ -317,7 +322,7 @@ bool CharacterGroupFinder::FindMatch(const std::u32string_view target) const {
 
   // If target does not contain any intersection of multiple_codepoints_, return
   // false here.
-  for (const char32_t codepoint : multiple_codepoints_intersection_) {
+  for (const char32_t codepoint : sorted_multiple_codepoints_intersection_) {
     if (std::find(target.begin(), target.end(), codepoint) == target.end()) {
       return false;
     }
