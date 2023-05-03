@@ -76,10 +76,10 @@ Microsoft::WRL::ComPtr<Interface> ComCreateInstance() {
 }
 
 // Returns the result of QueryInterface as HResultOr<ComPtr<T>>.
+// TODO(yuryu): Change ComPtr to com_ptr_nothrow.
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U *ptr) {
-  using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
-
+HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U &&source) {
+  auto ptr = wil::com_raw_ptr(std::forward<U>(source));
   // If source is convertible to T, casting is faster than calling
   // QueryInterface.
   if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
@@ -95,35 +95,20 @@ HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U *ptr) {
 }
 
 // Returns the result of QueryInterface as ComPtr<T>.
+// TODO(yuryu): Change ComPtr to com_ptr_nothrow.
+
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
-    const wil::com_ptr_nothrow<U> &source) {
-  return ComQueryHR<T>(wil::com_raw_ptr(source));
+Microsoft::WRL::ComPtr<T> ComQuery(U &&source) {
+  return std::move(ComQueryHR<T>(std::forward<U>(source))).value_or(nullptr);
 }
 
-// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
+// Similar to ComQuery but returns nullptr if source is nullptr.
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
-    const Microsoft::WRL::ComPtr<U> &source) {
-  return ComQueryHR<T>(wil::com_raw_ptr(source));
-}
-
-// Returns the result of QueryInterface as ComPtr<T>.
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(U *source) {
-  return std::move(ComQueryHR<T>(source)).value_or(nullptr);
-}
-
-// Returns the result of QueryInterface as ComPtr<T>.
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(const wil::com_ptr_nothrow<U> &source) {
-  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
-}
-
-// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(const Microsoft::WRL::ComPtr<U> &source) {
-  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
+wil::com_ptr_nothrow<T> ComCopy(U &&source) {
+  if (!source) {
+    return nullptr;
+  }
+  return ComQuery<T>(std::forward<U>(source));
 }
 
 // MakeUniqueBSTR allocates a new BSTR and returns as wil::unique_bstr.
