@@ -46,7 +46,7 @@
     'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
-    'mac_sdk%': '12.1',
+    'mac_sdk%': '13.0',
     'mac_deployment_target%': '10.9',
 
     # Flag to specify if the build target is for simulator or not.
