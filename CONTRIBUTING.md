@@ -18,16 +18,19 @@ Files and directories we may accept pull requests:
 * [src/unix/ibus/](https://github.com/google/mozc/tree/master/src/unix/ibus/)
 * [src/WORKSPACE.bazel](https://github.com/google/mozc/tree/master/src/WORKSPAE.bazel)
 
-Although Google company policy certainly allows Mozc team to accept pull
-requests, to do so Mozc team needs to move all Mozc source files into
-`third_party` directory in the Google internal source repository [1].
-Doing that without breaking any Google internal project that depends on
-Mozc source code requires non-trivial amount of time and engineering
-resources that Mozc team cannot afford right now.
+### Why is there such a limitation?
 
-Mozc team continues to seek opportunities to address this limitation,
-but we are still not ready to accept any pull request due to the above
-reason.
+The limitation is due to the Google corporate policy that requires OSS code to
+be place under the `third_party` directory in the Google internal source
+repository [1]. For Mozc's case, files and directories that accept pull requests
+need to be placed under `third_party/mozc` in the internal repository, which is
+different from where the internal version of Mozc has been developed.
+
+Unfortunately just moving files and directories becomes a quite complicated
+project if it involves multiple build dependencies. The above files and
+directories are where the migrations have been completed so far, and the Mozc
+team is still working on other files and directories. This is why the above list
+exists and keeps growing in an incremental manner.
 
 [1]: [Open Source at Google - Linuxcon 2016](http://events.linuxfoundation.org/sites/events/files/slides/OSS_at_Google.pdf#page=30)
 > ### License Compliance
