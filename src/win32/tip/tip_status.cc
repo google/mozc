@@ -29,13 +29,12 @@
 
 #include "win32/tip/tip_status.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
+#include <wil/com.h>
+#include <wil/resource.h>
 #include <windows.h>
-#include <wrl/client.h>
+
+#include <utility>
 
 #include "win32/tip/tip_compartment_util.h"
 
@@ -43,48 +42,44 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using ATL::CComVariant;
-using Microsoft::WRL::ComPtr;
-
-bool TipStatus::IsOpen(const ComPtr<ITfThreadMgr> &thread_mgr) {
-  CComVariant var;
-
+bool TipStatus::IsOpen(ITfThreadMgr *thread_mgr) {
   // Retrieve the compartment manager from the thread manager, which contains
   // the configuration of the owner thread.
-  if (!TipCompartmentUtil::Get(thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-                               &var)) {
+  HResultOr<wil::unique_variant> var =
+      TipCompartmentUtil::Get(thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE);
+
+  if (!var.ok()) {
     return false;
   }
   // Open/Close compartment should be Int32 (I4).
-  return var.vt == VT_I4 && var.lVal != FALSE;
+  return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::IsDisabledContext(const ComPtr<ITfContext> &context) {
-  CComVariant var;
-
+bool TipStatus::IsDisabledContext(ITfContext *context) {
   // Retrieve the compartment manager from the |context|, which contains the
   // configuration of this context.
-  if (!TipCompartmentUtil::Get(context, GUID_COMPARTMENT_KEYBOARD_DISABLED,
-                               &var)) {
+  HResultOr<wil::unique_variant> var =
+      TipCompartmentUtil::Get(context, GUID_COMPARTMENT_KEYBOARD_DISABLED);
+  if (!var.ok()) {
     return false;
   }
   // Disabled compartment should be Int32 (I4).
-  return var.vt == VT_I4 && var.lVal != FALSE;
+  return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::IsEmptyContext(const ComPtr<ITfContext> &context) {
-  CComVariant var;
-
+bool TipStatus::IsEmptyContext(ITfContext *context) {
   // Retrieve the compartment manager from the |context|, which contains the
   // configuration of this context.
-  if (!TipCompartmentUtil::Get(context, GUID_COMPARTMENT_EMPTYCONTEXT, &var)) {
+  HResultOr<wil::unique_variant> var =
+      TipCompartmentUtil::Get(context, GUID_COMPARTMENT_EMPTYCONTEXT);
+  if (!var.ok()) {
     return false;
   }
   // Empty context compartment should be Int32 (I4).
-  return var.vt == VT_I4 && var.lVal != FALSE;
+  return var->vt == VT_I4 && var->lVal != FALSE;
 }
 
-bool TipStatus::GetInputModeConversion(const ComPtr<ITfThreadMgr> &thread_mgr,
+bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
                                        TfClientId client_id, DWORD *mode) {
   if (mode == nullptr) {
     return false;
@@ -92,43 +87,45 @@ bool TipStatus::GetInputModeConversion(const ComPtr<ITfThreadMgr> &thread_mgr,
 
   constexpr DWORD kDefaultMode =
       TF_CONVERSIONMODE_NATIVE | TF_CONVERSIONMODE_FULLSHAPE;  // Hiragana
-  CComVariant default_var;
+  wil::unique_variant default_var;
   default_var.vt = VT_I4;
   default_var.lVal = kDefaultMode;
 
-  CComVariant var;
-  if (!TipCompartmentUtil::GetAndEnsureDataExists(
+  HResultOr<wil::unique_variant> var =
+      TipCompartmentUtil::GetAndEnsureDataExists(
           thread_mgr, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION, client_id,
-          default_var, &var)) {
+          std::move(default_var));
+  if (!var.ok()) {
     return false;
   }
 
   // Conversion mode compartment should be Int32 (I4).
-  if (var.vt != VT_I4) {
+  if (var->vt != VT_I4) {
     return false;
   }
 
-  *mode = var.lVal;
+  *mode = var->lVal;
   return true;
 }
 
-bool TipStatus::SetIMEOpen(const ComPtr<ITfThreadMgr> &thread_mgr,
-                           TfClientId client_id, bool open) {
-  CComVariant var;
+bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
+                           bool open) {
+  wil::unique_variant var;
   var.vt = VT_I4;
   var.lVal = open ? TRUE : FALSE;
-  return TipCompartmentUtil::Set(
-      thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, client_id, var);
+  return SUCCEEDED(TipCompartmentUtil::Set(thread_mgr,
+                                           GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+                                           client_id, std::move(var)));
 }
 
-bool TipStatus::SetInputModeConversion(const ComPtr<ITfThreadMgr> &thread_mgr,
+bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
                                        DWORD client_id, DWORD native_mode) {
-  CComVariant var;
+  wil::unique_variant var;
   var.vt = VT_I4;
   var.lVal = native_mode;
-  return TipCompartmentUtil::Set(thread_mgr,
-                                 GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
-                                 client_id, var);
+  return SUCCEEDED(TipCompartmentUtil::Set(
+      thread_mgr, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION, client_id,
+      std::move(var)));
 }
 
 }  // namespace tsf

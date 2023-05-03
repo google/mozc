@@ -30,35 +30,27 @@
 #ifndef MOZC_WIN32_TIP_TIP_SURROUNDING_TEXT_H_
 #define MOZC_WIN32_TIP_TIP_SURROUNDING_TEXT_H_
 
+#include <msctf.h>
+
+#include <cstddef>
 #include <string>
+#include <string_view>
 
-#include "base/port.h"
-
-struct ITfContext;
-struct ITfEditSession;
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
-
-namespace commands {
-class Output;
-}  // namespace commands
-
 namespace win32 {
 namespace tsf {
 
-class TipTextService;
-
 struct TipSurroundingTextInfo {
-  TipSurroundingTextInfo();
-
   std::wstring preceding_text;
   std::wstring selected_text;
   std::wstring following_text;
-  bool has_preceding_text;
-  bool has_selected_text;
-  bool has_following_text;
-  bool is_transitory;   // context is a transitory context
-  bool in_composition;  // context has a composition owned by Mozc.
+  bool has_preceding_text = false;
+  bool has_selected_text = false;
+  bool has_following_text = false;
+  bool is_transitory = false;   // context is a transitory context
+  bool in_composition = false;  // context has a composition owned by Mozc.
 };
 
 class TipSurroundingText {
@@ -109,7 +101,7 @@ class TipSurroundingTextUtil {
   // Returns true if |text| has more than |characters_in_ucs4| characters.
   // When succeeds, the last |*characters_in_utf16| characters in |text|
   // can be measured as |characters_in_ucs4| in the unit of UCS4.
-  static bool MeasureCharactersBackward(const std::wstring &text,
+  static bool MeasureCharactersBackward(std::wstring_view text,
                                         size_t characters_in_ucs4,
                                         size_t *characters_in_utf16);
 };

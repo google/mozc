@@ -36,6 +36,7 @@
 #include <wrl/client.h>
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -91,7 +92,7 @@ class SearchCandidateProviderImpl final
       return E_FAIL;
     }
     *candidate_list =
-        TipCandidateList::New(std::move(candidates), nullptr).Detach();
+        TipCandidateList::New(std::move(candidates), nullptr).detach();
     return S_OK;
   }
 

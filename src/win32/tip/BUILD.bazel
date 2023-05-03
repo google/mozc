@@ -366,6 +366,11 @@ mozc_cc_library(
     hdrs = ["tip_compartment_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base/win32:com",
+        "//base/win32:hresultor",
+        "@com_microsoft_wil//:wil",
+    ],
 )
 
 mozc_cc_library(
@@ -443,7 +448,10 @@ mozc_cc_library(
     hdrs = ["tip_status.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [":tip_compartment_util"],
+    deps = [
+        ":tip_compartment_util",
+        "@com_microsoft_wil//:wil",
+    ],
 )
 
 mozc_cc_library(
@@ -569,7 +577,7 @@ mozc_cc_library(
         ":tip_range_util",
         ":tip_text_service",
         ":tip_transitory_extension",
-        "//base:port",
+        "//base/win32:com",
         "//win32/base:imm_reconvert_string",
     ],
 )
@@ -618,6 +626,7 @@ mozc_cc_test(
         ":tip_candidate_list",
         ":tip_dll_module",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

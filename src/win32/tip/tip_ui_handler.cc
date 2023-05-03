@@ -81,7 +81,7 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
       ComPtr<ITfContext> context;
       result = document_manager->GetTop(&context);
       if (SUCCEEDED(result)) {
-        disabled = TipStatus::IsDisabledContext(context);
+        disabled = TipStatus::IsDisabledContext(context.Get());
       }
     }
   }
