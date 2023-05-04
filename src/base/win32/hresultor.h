@@ -33,6 +33,7 @@
 #include <windows.h>
 
 #include <initializer_list>
+#include <ostream>
 #include <type_traits>
 #include <utility>
 
@@ -53,6 +54,8 @@ namespace mozc::win32 {
 // If you also need to return different HRESULT codes, use std::pair<HRESULT, T>
 // instead.
 //
+// HResultOr<T> return values must not be discarded.
+//
 // Note: If T is convertible to HRESULT (e.g. DWORD), HResult<T>(value) deletes
 // the in-place constructors and value assignment operators. Use HResultOk() or
 // HResult<T>(std::in_place, value) instead. This limitation is to disallow
@@ -62,11 +65,12 @@ namespace mozc::win32 {
 //  // many lines
 //  return = E_FAIL;  // Error. E_FAIL is convertible to int.
 template <class T>
-class HResultOr : private hresultor_internal::HResultOrMoveAssignBase<T>,
-                  private hresultor_internal::CopyCtorBase<T>,
-                  private hresultor_internal::CopyAssignBase<T>,
-                  private hresultor_internal::MoveCtorBase<T>,
-                  private hresultor_internal::MoveAssignBase<T> {
+class [[nodiscard]] HResultOr
+    : private hresultor_internal::HResultOrMoveAssignBase<T>,
+      private hresultor_internal::CopyCtorBase<T>,
+      private hresultor_internal::CopyAssignBase<T>,
+      private hresultor_internal::MoveCtorBase<T>,
+      private hresultor_internal::MoveAssignBase<T> {
   using Base = hresultor_internal::HResultOrMoveAssignBase<T>;
 
  public:
@@ -274,12 +278,13 @@ class HResultOr : private hresultor_internal::HResultOrMoveAssignBase<T>,
   }
 
   // ok() checks SUCCEEDED(hr).
-  ABSL_MUST_USE_RESULT constexpr bool ok() const noexcept {
-    return SUCCEEDED(hr_);
-  }
+  [[nodiscard]] constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
 
   // Returns HRESULT.
+  ABSL_DEPRECATED("Use error() instead.")
   constexpr HRESULT hr() const noexcept { return hr_; }
+  // Returns error code as HResult.
+  constexpr HResult error() const noexcept { return HResult(hr_); }
 
   // value() tests ok() with `CHECK()` and returns the value.
   constexpr T& value() & ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -428,6 +433,12 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
 template <typename U, typename T = std::decay_t<U>>
 constexpr HResultOr<T> HResultOk(U&& value) {
   return HResultOr<T>(std::in_place, std::forward<U>(value));
+}
+
+// operator<<() outputs the underlying HRESULT code.
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const HResultOr<T>& v) {
+  return operator<<(os, v.error());
 }
 
 #define HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y) x##y
