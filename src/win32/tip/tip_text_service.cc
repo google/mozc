@@ -1056,7 +1056,7 @@ class TipTextServiceImpl
       // Do not care about nullptr context.
       return;
     }
-    if (!private_context_map_.contains(context)) {
+    if (private_context_map_.contains(context)) {
       return;
     }
 
