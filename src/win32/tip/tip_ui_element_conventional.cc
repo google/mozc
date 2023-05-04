@@ -29,18 +29,16 @@
 
 #include "win32/tip/tip_ui_element_conventional.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
-#include <atlstr.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <objbase.h>
+#include <wil/com.h>
+#include <windows.h>
 
 #include <memory>
+#include <utility>
 
 #include "base/logging.h"
-#include "base/win32/com_implements.h"
+#include "base/win32/com.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_element_delegate.h"
@@ -62,15 +60,14 @@ bool IsIIDOf<ITfToolTipUIElement>(REFIID riid) {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-
 class TipCandidateListImpl final
     : public TipComImplements<ITfCandidateListUIElementBehavior> {
  public:
   TipCandidateListImpl(TipUiElementConventional::UIType type,
-                       const ComPtr<TipTextService> &text_service,
-                       const ComPtr<ITfContext> &context)
-      : delegate_(TipUiElementDelegateFactory::Create(text_service, context,
+                       wil::com_ptr_nothrow<TipTextService> text_service,
+                       wil::com_ptr_nothrow<ITfContext> context)
+      : delegate_(TipUiElementDelegateFactory::Create(std::move(text_service),
+                                                      std::move(context),
                                                       ToDelegateType(type))) {}
 
  private:
@@ -95,54 +92,47 @@ class TipCandidateListImpl final
   }
 
   // The ITfUIElement interface methods
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description) {
+  STDMETHODIMP GetDescription(BSTR *description) override {
     return delegate_->GetDescription(description);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid) {
-    return delegate_->GetGUID(guid);
-  }
-  virtual HRESULT STDMETHODCALLTYPE Show(BOOL show) {
-    return delegate_->Show(show);
-  }
-  virtual HRESULT STDMETHODCALLTYPE IsShown(BOOL *show) {
-    return delegate_->IsShown(show);
-  }
+  STDMETHODIMP GetGUID(GUID *guid) override { return delegate_->GetGUID(guid); }
+  STDMETHODIMP Show(BOOL show) override { return delegate_->Show(show); }
+  STDMETHODIMP IsShown(BOOL *show) override { return delegate_->IsShown(show); }
 
   // The ITfCandidateListUIElement interface methods
-  virtual HRESULT STDMETHODCALLTYPE GetUpdatedFlags(DWORD *flags) {
+  STDMETHODIMP GetUpdatedFlags(DWORD *flags) override {
     return delegate_->GetUpdatedFlags(flags);
   }
-  virtual HRESULT STDMETHODCALLTYPE
-  GetDocumentMgr(ITfDocumentMgr **document_manager) {
+  STDMETHODIMP GetDocumentMgr(ITfDocumentMgr **document_manager) override {
     return delegate_->GetDocumentMgr(document_manager);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetCount(UINT *count) {
+  STDMETHODIMP GetCount(UINT *count) override {
     return delegate_->GetCount(count);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetSelection(UINT *index) {
+  STDMETHODIMP GetSelection(UINT *index) override {
     return delegate_->GetSelection(index);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetString(UINT index, BSTR *text) {
+  STDMETHODIMP GetString(UINT index, BSTR *text) override {
     return delegate_->GetString(index, text);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetPageIndex(UINT *index, UINT size,
-                                                 UINT *page_count) {
+  STDMETHODIMP GetPageIndex(UINT *index, UINT size, UINT *page_count) override {
     return delegate_->GetPageIndex(index, size, page_count);
   }
-  virtual HRESULT STDMETHODCALLTYPE SetPageIndex(UINT *index, UINT page_count) {
+  STDMETHODIMP SetPageIndex(UINT *index, UINT page_count) override {
     return delegate_->SetPageIndex(index, page_count);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetCurrentPage(UINT *current_page) {
+  STDMETHODIMP GetCurrentPage(UINT *current_page) override {
     return delegate_->GetCurrentPage(current_page);
   }
 
   // The ITfCandidateListUIElementBehavior interface methods
-  virtual HRESULT STDMETHODCALLTYPE SetSelection(UINT index) {
+  STDMETHODIMP SetSelection(UINT index) override {
     return delegate_->SetSelection(index);
   }
-  virtual HRESULT STDMETHODCALLTYPE Finalize() { return delegate_->Finalize(); }
-  virtual HRESULT STDMETHODCALLTYPE Abort() { return delegate_->Abort(); }
+  STDMETHODIMP Finalize() override { return delegate_->Finalize(); }
+  STDMETHODIMP Abort() override { return delegate_->Abort(); }
 
+ private:
   static TipUiElementDelegateFactory::ElementType ToDelegateType(
       TipUiElementConventional::UIType type) {
     switch (type) {
@@ -165,51 +155,47 @@ class TipCandidateListImpl final
 
 class TipIndicatorImpl final : public TipComImplements<ITfToolTipUIElement> {
  public:
-  TipIndicatorImpl(const ComPtr<TipTextService> &text_service,
-                   const ComPtr<ITfContext> &context)
+  TipIndicatorImpl(wil::com_ptr_nothrow<TipTextService> text_service,
+                   wil::com_ptr_nothrow<ITfContext> context)
       : delegate_(TipUiElementDelegateFactory::Create(
-            text_service, context,
+            std::move(text_service), std::move(context),
             TipUiElementDelegateFactory::kConventionalIndicatorWindow)) {}
 
- private:
   // The ITfUIElement interface methods
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description) {
+  STDMETHODIMP GetDescription(BSTR *description) override {
     return delegate_->GetDescription(description);
   }
-  virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid) {
-    return delegate_->GetGUID(guid);
-  }
-  virtual HRESULT STDMETHODCALLTYPE Show(BOOL show) {
-    return delegate_->Show(show);
-  }
-  virtual HRESULT STDMETHODCALLTYPE IsShown(BOOL *show) {
-    return delegate_->IsShown(show);
-  }
+  STDMETHODIMP GetGUID(GUID *guid) override { return delegate_->GetGUID(guid); }
+  STDMETHODIMP Show(BOOL show) override { return delegate_->Show(show); }
+  STDMETHODIMP IsShown(BOOL *show) override { return delegate_->IsShown(show); }
 
   // The ITfToolTipUIElement interface methods
-  virtual HRESULT STDMETHODCALLTYPE GetString(BSTR *str) {
+  STDMETHODIMP GetString(BSTR *str) override {
     return delegate_->GetString(str);
   }
 
+ private:
   std::unique_ptr<TipUiElementDelegate> delegate_;
 };
 
 }  // namespace
 
-ComPtr<ITfUIElement> TipUiElementConventional::New(
+wil::com_ptr_nothrow<ITfUIElement> TipUiElementConventional::New(
     TipUiElementConventional::UIType type,
-    const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context) {
+    wil::com_ptr_nothrow<TipTextService> text_service,
+    wil::com_ptr_nothrow<ITfContext> context) {
   if (!text_service || !context) return nullptr;
   switch (type) {
     case TipUiElementConventional::kUnobservableSuggestWindow:
-      return new TipCandidateListImpl(type, text_service, context);
+      [[fallthrough]];
     case TipUiElementConventional::kObservableSuggestWindow:
-      return new TipCandidateListImpl(type, text_service, context);
+      [[fallthrough]];
     case TipUiElementConventional::kCandidateWindow:
-      return new TipCandidateListImpl(type, text_service, context);
+      return MakeComPtr<TipCandidateListImpl>(type, std::move(text_service),
+                                              std::move(context));
     case TipUiElementConventional::KIndicatorWindow:
-      return new TipIndicatorImpl(text_service, context);
+      return MakeComPtr<TipIndicatorImpl>(std::move(text_service),
+                                          std::move(context));
     default:
       return nullptr;
   }

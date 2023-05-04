@@ -29,32 +29,30 @@
 
 #include "win32/tip/tip_candidate_list.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <ctffunc.h>
-#include <wrl/client.h>
+#include <oleauto.h>
+#include <wil/com.h>
+#include <wil/resource.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/tip/tip_dll_module.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
 
-using ATL::CComBSTR;
-using Microsoft::WRL::ComPtr;
-using testing::AssertionFailure;
-using testing::AssertionResult;
-using testing::AssertionSuccess;
+using ::testing::AssertionFailure;
+using ::testing::AssertionResult;
+using ::testing::AssertionSuccess;
 
 class TipCandidateListTest : public testing::Test {
  protected:
@@ -100,20 +98,17 @@ class MockCallback : public TipCandidateListCallback {
 
  private:
   // TipCandidateListCallback overrides:
-  virtual void OnFinalize(size_t index, const std::wstring &candidate) {
+
+  void OnFinalize(size_t index, const std::wstring &candidate) override {
     result_->OnFinalize(index, candidate);
   }
 
   MockCallbackResult *result_;
 };
 
-std::wstring ToWStr(const CComBSTR &bstr) {
-  return std::wstring(static_cast<const wchar_t *>(bstr), bstr.Length());
-}
-
-AssertionResult ExpectCandidateString(
-    ULONG expected_index, const std::wstring &expected_text,
-    const ComPtr<ITfCandidateString> &candidate) {
+AssertionResult ExpectCandidateString(ULONG expected_index,
+                                      const std::wstring &expected_text,
+                                      ITfCandidateString *candidate) {
   if (candidate == nullptr) {
     return AssertionFailure() << "|actual| should be non-null";
   }
@@ -131,13 +126,13 @@ AssertionResult ExpectCandidateString(
     }
   }
   {
-    CComBSTR str;
-    hr = candidate->GetString(&str);
+    wil::unique_bstr str;
+    hr = candidate->GetString(str.put());
     if (FAILED(hr)) {
       return AssertionFailure() << "ITfCandidateString::GetString failed."
                                 << " hr = " << hr;
     }
-    const std::wstring wstr(ToWStr(str));
+    const std::wstring wstr(str.get());
     if (expected_text != wstr) {
       return AssertionFailure()
              << "expected: " << expected_text << ", actual: " << wstr;
@@ -153,7 +148,7 @@ TEST(TipCandidateListTest, EmptyCandidate) {
   MockCallbackResult result;
 
   std::vector<std::wstring> empty;
-  ComPtr<ITfCandidateList> candidate_list(
+  wil::com_ptr_nothrow<ITfCandidateList> candidate_list(
       TipCandidateList::New(empty, std::make_unique<MockCallback>(&result)));
   ASSERT_NE(candidate_list, nullptr);
 
@@ -161,11 +156,11 @@ TEST(TipCandidateListTest, EmptyCandidate) {
   EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidateNum(&num));
   EXPECT_EQ(num, 0);
 
-  ComPtr<ITfCandidateString> str;
+  wil::com_ptr_nothrow<ITfCandidateString> str;
   EXPECT_HRESULT_FAILED(candidate_list->GetCandidate(0, &str));
   EXPECT_EQ(str, nullptr);
 
-  ComPtr<IEnumTfCandidates> enum_candidates;
+  wil::com_ptr_nothrow<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
   ASSERT_NE(enum_candidates, nullptr);
 
@@ -189,7 +184,7 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
   for (wchar_t c = L'A'; c < L'Z'; ++c) {
     source.push_back(std::wstring(c, 1));
   }
-  ComPtr<ITfCandidateList> candidate_list(
+  wil::com_ptr_nothrow<ITfCandidateList> candidate_list(
       TipCandidateList::New(source, std::make_unique<MockCallback>(&result)));
   ASSERT_NE(candidate_list, nullptr);
 
@@ -198,23 +193,23 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
   ASSERT_EQ(num, source.size());
 
   for (size_t i = 0; i < source.size(); ++i) {
-    ComPtr<ITfCandidateString> candidate_str;
+    wil::com_ptr_nothrow<ITfCandidateString> candidate_str;
     EXPECT_HRESULT_SUCCEEDED(candidate_list->GetCandidate(i, &candidate_str));
-    EXPECT_CANDIDATE_STR(i, source[i], candidate_str);
+    EXPECT_CANDIDATE_STR(i, source[i], candidate_str.get());
   }
 
-  ComPtr<IEnumTfCandidates> enum_candidates;
+  wil::com_ptr_nothrow<IEnumTfCandidates> enum_candidates;
   EXPECT_HRESULT_SUCCEEDED(candidate_list->EnumCandidates(&enum_candidates));
   EXPECT_NE(enum_candidates, nullptr);
 
   for (size_t offset = 0; offset < source.size();) {
     constexpr size_t kBufferSize = 10;
     ITfCandidateString *buffer[kBufferSize] = {};
-    ComPtr<ITfCandidateString> strings[kBufferSize];
+    wil::com_ptr_nothrow<ITfCandidateString> strings[kBufferSize];
     ULONG num_fetched = 0;
     HRESULT hr = enum_candidates->Next(kBufferSize, buffer, &num_fetched);
     for (size_t i = 0; i < kBufferSize; ++i) {
-      strings[i].Attach(buffer[i]);
+      strings[i].attach(buffer[i]);
     }
     const size_t rest = source.size() - offset;
     if (rest > kBufferSize) {
@@ -226,7 +221,7 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
     }
     for (size_t buffer_index = 0; buffer_index < num_fetched; ++buffer_index) {
       const size_t index = offset + buffer_index;
-      EXPECT_CANDIDATE_STR(index, source[index], strings[buffer_index]);
+      EXPECT_CANDIDATE_STR(index, source[index], strings[buffer_index].get());
     }
     offset += num_fetched;
   }

@@ -29,19 +29,17 @@
 
 #include "win32/tip/tip_surrounding_text.h"
 
-#include <windows.h>
-
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <wil/com.h>
+#include <windows.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 
+#include "base/win32/com.h"
 #include "win32/base/imm_reconvert_string.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
@@ -54,21 +52,19 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using ATL::CComPtr;
-using Microsoft::WRL::ComPtr;
-
 constexpr int kMaxSurroundingLength = 20;
 constexpr int kMaxCharacterLength = 1024 * 1024;
 
 class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
  public:
-  SurroudingTextUpdater(ITfContext *context, bool move_anchor)
-      : context_(context), move_anchor_(move_anchor) {}
+  SurroudingTextUpdater(wil::com_ptr_nothrow<ITfContext> context,
+                        bool move_anchor)
+      : context_(std::move(context)), move_anchor_(move_anchor) {}
 
   const TipSurroundingTextInfo &result() const { return result_; }
 
  private:
-  virtual STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
     HRESULT result = S_OK;
     {
       TF_STATUS status = {};
@@ -80,28 +76,28 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
           ((status.dwStaticFlags & TF_SS_TRANSITORY) == TF_SS_TRANSITORY);
     }
     {
-      ComPtr<ITfCompositionView> composition_view =
-          TipCompositionUtil::GetCompositionView(context_, edit_cookie);
+      wil::com_ptr_nothrow<ITfCompositionView> composition_view =
+          TipCompositionUtil::GetCompositionView(context_.get(), edit_cookie);
       result_.in_composition = !!composition_view;
     }
 
-    ComPtr<ITfRange> selected_range;
+    wil::com_ptr_nothrow<ITfRange> selected_range;
     {
-      result = TipRangeUtil::GetDefaultSelection(context_.Get(), edit_cookie,
+      result = TipRangeUtil::GetDefaultSelection(context_.get(), edit_cookie,
                                                  &selected_range, nullptr);
       if (FAILED(result)) {
         return result;
       }
 
-      result = TipRangeUtil::GetText(selected_range.Get(), edit_cookie,
+      result = TipRangeUtil::GetText(selected_range.get(), edit_cookie,
                                      &result_.selected_text);
       result_.has_selected_text = SUCCEEDED(result);
 
       // For reconversion, the active selection end should be moved to the
       // front character.
       if (move_anchor_) {
-        result = TipRangeUtil::SetSelection(context_.Get(), edit_cookie,
-                                            selected_range.Get(), TF_AE_START);
+        result = TipRangeUtil::SetSelection(context_.get(), edit_cookie,
+                                            selected_range.get(), TF_AE_START);
         if (FAILED(result)) {
           return result;
         }
@@ -111,29 +107,29 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
     const TF_HALTCOND halt_cond = {nullptr, TF_ANCHOR_START, TF_HF_OBJECT};
 
     {
-      ComPtr<ITfRange> preceding_range;
+      wil::com_ptr_nothrow<ITfRange> preceding_range;
       LONG preceding_range_shifted = 0;
       if (SUCCEEDED(selected_range->Clone(&preceding_range)) &&
           SUCCEEDED(preceding_range->Collapse(edit_cookie, TF_ANCHOR_START)) &&
           SUCCEEDED(preceding_range->ShiftStart(
               edit_cookie, -kMaxSurroundingLength, &preceding_range_shifted,
               &halt_cond))) {
-        result = TipRangeUtil::GetText(preceding_range.Get(), edit_cookie,
-                                       &result_.preceding_text);
+        HRESULT result = TipRangeUtil::GetText(
+            preceding_range.get(), edit_cookie, &result_.preceding_text);
         result_.has_preceding_text = SUCCEEDED(result);
       }
     }
 
     {
-      ComPtr<ITfRange> following_range;
+      wil::com_ptr_nothrow<ITfRange> following_range;
       LONG following_range_shifted = 0;
       if (SUCCEEDED(selected_range->Clone(&following_range)) &&
           SUCCEEDED(following_range->Collapse(edit_cookie, TF_ANCHOR_END)) &&
           SUCCEEDED(following_range->ShiftEnd(
               edit_cookie, kMaxSurroundingLength, &following_range_shifted,
               &halt_cond))) {
-        result = TipRangeUtil::GetText(following_range.Get(), edit_cookie,
-                                       &result_.following_text);
+        HRESULT result = TipRangeUtil::GetText(
+            following_range.get(), edit_cookie, &result_.following_text);
         result_.has_following_text = SUCCEEDED(result);
       }
     }
@@ -141,22 +137,24 @@ class SurroudingTextUpdater final : public TipComImplements<ITfEditSession> {
     return S_OK;
   }
 
-  ComPtr<ITfContext> context_;
+  wil::com_ptr_nothrow<ITfContext> context_;
   TipSurroundingTextInfo result_;
   bool move_anchor_;
 };
 
 class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
  public:
-  PrecedingTextDeleter(ITfContext *context, size_t num_characters_in_ucs4)
-      : context_(context), num_characters_in_ucs4_(num_characters_in_ucs4) {}
+  PrecedingTextDeleter(wil::com_ptr_nothrow<ITfContext> context,
+                       size_t num_characters_in_ucs4)
+      : context_(std::move(context)),
+        num_characters_in_ucs4_(num_characters_in_ucs4) {}
 
  private:
-  virtual STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
     HRESULT result = S_OK;
 
-    ComPtr<ITfRange> selected_range;
-    result = TipRangeUtil::GetDefaultSelection(context_.Get(), edit_cookie,
+    wil::com_ptr_nothrow<ITfRange> selected_range;
+    result = TipRangeUtil::GetDefaultSelection(context_.get(), edit_cookie,
                                                &selected_range, nullptr);
     if (FAILED(result)) {
       return result;
@@ -164,7 +162,7 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
 
     const TF_HALTCOND halt_cond = {nullptr, TF_ANCHOR_START, 0};
 
-    ComPtr<ITfRange> preceding_range;
+    wil::com_ptr_nothrow<ITfRange> preceding_range;
     if (FAILED(selected_range->Clone(&preceding_range))) {
       return E_FAIL;
     }
@@ -186,7 +184,7 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
       return E_FAIL;
     }
     std::wstring total_string;
-    if (FAILED(TipRangeUtil::GetText(preceding_range.Get(), edit_cookie,
+    if (FAILED(TipRangeUtil::GetText(preceding_range.get(), edit_cookie,
                                      &total_string))) {
       return E_FAIL;
     }
@@ -215,13 +213,13 @@ class PrecedingTextDeleter final : public TipComImplements<ITfEditSession> {
     return S_OK;
   }
 
-  ComPtr<ITfContext> context_;
+  wil::com_ptr_nothrow<ITfContext> context_;
   size_t num_characters_in_ucs4_;
 };
 
 bool PrepareForReconversionIMM32(ITfContext *context,
                                  TipSurroundingTextInfo *info) {
-  ComPtr<ITfContextView> context_view;
+  wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return false;
   }
@@ -278,13 +276,6 @@ bool PrepareForReconversionIMM32(ITfContext *context,
 
 }  // namespace
 
-TipSurroundingTextInfo::TipSurroundingTextInfo()
-    : has_preceding_text(false),
-      has_selected_text(false),
-      has_following_text(false),
-      is_transitory(false),
-      in_composition(false) {}
-
 bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
                              TipSurroundingTextInfo *info) {
   if (info == nullptr) {
@@ -294,19 +285,17 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
 
   // Use Transitory Extensions when supported. Common controls provides
   // surrounding text via Transitory Extensions.
-  // TODO(yuryu): Change to ComPtr when updating TipTransitoryExtension.
-  CComPtr<ITfContext> target_context(
+  wil::com_ptr_nothrow<ITfContext> target_context(
       TipTransitoryExtension::ToParentContextIfExists(context));
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  ComPtr<SurroudingTextUpdater> updater(
-      new SurroudingTextUpdater(target_context, false));
+  auto updater = MakeComPtr<SurroudingTextUpdater>(target_context, false);
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), updater.Get(), TF_ES_SYNC | TF_ES_READ,
+      text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READ,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -325,19 +314,17 @@ bool PrepareForReconversionTSF(TipTextService *text_service,
                                TipSurroundingTextInfo *info) {
   // Use Transitory Extensions when supported. Common controls provides
   // surrounding text via Transitory Extensions.
-  // TODO(yuryu): Change to ComPtr when updating TipTransitoryExtension.
-  CComPtr<ITfContext> target_context(
+  wil::com_ptr_nothrow<ITfContext> target_context(
       TipTransitoryExtension::ToParentContextIfExists(context));
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  ComPtr<SurroudingTextUpdater> updater(
-      new SurroudingTextUpdater(target_context, true));
+  auto updater = MakeComPtr<SurroudingTextUpdater>(target_context, true);
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), updater.Get(), TF_ES_SYNC | TF_ES_READWRITE,
+      text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READWRITE,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -382,19 +369,18 @@ bool TipSurroundingText::DeletePrecedingText(
     size_t num_characters_to_be_deleted_in_ucs4) {
   // Use Transitory Extensions when supported. Common controls provides
   // surrounding text via Transitory Extensions.
-  // TODO(yuryu): Change to ComPtr when updating TipTransitoryExtension.
-  CComPtr<ITfContext> target_context(
+  wil::com_ptr_nothrow<ITfContext> target_context(
       TipTransitoryExtension::ToParentContextIfExists(context));
 
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
-  // per oject.
-  ComPtr<ITfEditSession> edit_session(new PrecedingTextDeleter(
-      target_context, num_characters_to_be_deleted_in_ucs4));
+  // per object.
+  auto edit_session = MakeComPtr<PrecedingTextDeleter>(
+      target_context, num_characters_to_be_deleted_in_ucs4);
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_SYNC | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -406,7 +392,7 @@ bool TipSurroundingText::DeletePrecedingText(
 }
 
 bool TipSurroundingTextUtil::MeasureCharactersBackward(
-    const std::wstring &text, size_t characters_in_ucs4,
+    const std::wstring_view text, const size_t characters_in_ucs4,
     size_t *characters_in_utf16) {
   if (characters_in_utf16 == nullptr) {
     return false;

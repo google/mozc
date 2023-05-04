@@ -27,41 +27,46 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
-#define MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
+#ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_CALLBACK_H_
+#define MOZC_WIN32_TIP_TIP_LANG_BAR_CALLBACK_H_
 
-#include <msctf.h>
-#include <wil/com.h>
-#include <windef.h>
+#include <unknwn.h>
 
-namespace mozc {
-namespace win32 {
-namespace tsf {
+namespace mozc::win32::tsf {
 
-class TipCompositionUtil {
+class TipLangBarCallback : public IUnknown {
  public:
-  TipCompositionUtil() = delete;
-  TipCompositionUtil(const TipCompositionUtil &) = delete;
-  TipCompositionUtil &operator=(const TipCompositionUtil &) = delete;
+  enum ItemId {
+    // Cancel something for general purpose
+    kCancel = 1,
 
-  // Returns composition object if there is a composition which belongs
-  // to Mozc in |context|. Otherwise returns nullptr.
-  static wil::com_ptr_nothrow<ITfComposition> GetComposition(
-      ITfContext *context, TfEditCookie edit_cookie);
+    // For input mode selection
+    kDirect = 10,
+    kHiragana = 11,
+    kFullKatakana = 12,
+    kHalfAlphanumeric = 13,
+    kFullAlphanumeric = 14,
+    kHalfKatakana = 15,
 
-  // Returns composition view object if there is a composition which belongs
-  // to Mozc in |context|. Otherwise returns nullptr.
-  static wil::com_ptr_nothrow<ITfCompositionView> GetCompositionView(
-      ITfContext *context, TfEditCookie edit_cookie);
+    // Tool menu
+    kProperty = 20,
+    kDictionary = 21,
+    kWordRegister = 22,
 
-  // Removes display attributes from |composition|. Returns the result.
-  static HRESULT ClearDisplayAttributes(ITfContext *context,
-                                        ITfComposition *composition,
-                                        TfEditCookie write_cookie);
+    // Help Menu
+    kHelp = 30,
+    kAbout = 31,
+
+    // Shortcut commands
+    kReconversion = 41,
+  };
+
+  virtual ~TipLangBarCallback() = default;
+
+  virtual STDMETHODIMP OnMenuSelect(ItemId menu_id) = 0;
+  virtual STDMETHODIMP OnItemClick(const wchar_t *description) = 0;
 };
 
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+}  // namespace mozc::win32::tsf
 
-#endif  // MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
+#endif  // MOZC_WIN32_TIP_TIP_LANG_BAR_CALLBACK_H_

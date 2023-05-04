@@ -29,10 +29,9 @@
 
 #include "win32/tip/tip_display_attributes.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
+#include <guiddef.h>
+#include <msctf.h>
+#include <wil/resource.h>
 
 #include <string>
 
@@ -45,8 +44,6 @@ namespace win32 {
 namespace tsf {
 
 namespace {
-
-using ATL::CComBSTR;
 
 class TestableTipDisplayAttribute : public TipDisplayAttribute {
  public:
@@ -98,9 +95,9 @@ TEST(TipDisplayAttributesTest, BasicTest) {
   TestableTipDisplayAttribute attribute(kTestGuid, kTestAttribute,
                                         kTestDescription);
 
-  CComBSTR desc;
-  EXPECT_EQ(attribute.GetDescription(&desc), S_OK);
-  EXPECT_STREQ(kTestDescription, desc);
+  wil::unique_bstr desc;
+  EXPECT_EQ(attribute.GetDescription(desc.put()), S_OK);
+  EXPECT_STREQ(kTestDescription, desc.get());
 
   GUID guid;
   EXPECT_EQ(attribute.GetGUID(&guid), S_OK);

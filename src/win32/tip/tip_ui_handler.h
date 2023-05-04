@@ -52,7 +52,7 @@ class TipUiHandler {
   static void OnFocusChange(TipTextService *text_service,
                             ITfDocumentMgr *focused_document_manager);
   static bool Update(TipTextService *text_service, ITfContext *context,
-                     TfEditCookie readable_cookie);
+                     TfEditCookie read_cookie);
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);

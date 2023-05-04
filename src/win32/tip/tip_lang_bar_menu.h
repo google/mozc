@@ -41,7 +41,7 @@
 #include <vector>
 
 #include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_lang_bar.h"
+#include "win32/tip/tip_lang_bar_callback.h"
 
 namespace mozc {
 namespace win32 {

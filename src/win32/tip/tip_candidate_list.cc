@@ -32,12 +32,11 @@
 #include <ctffunc.h>
 #include <objbase.h>
 #include <oleauto.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -47,19 +46,16 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
 namespace {
-
-using Microsoft::WRL::ComPtr;
 
 class CandidateStringImpl final : public TipComImplements<ITfCandidateString> {
  public:
-  CandidateStringImpl(ULONG index, const std::wstring_view value)
-      : index_(index), value_(value) {}
+  CandidateStringImpl(ULONG index, std::wstring value)
+      : index_(index), value_(std::move(value)) {}
 
  private:
   // The ITfCandidateString interface methods.
-  virtual HRESULT STDMETHODCALLTYPE GetString(BSTR *str) {
+  STDMETHODIMP GetString(BSTR *str) override {
     if (str == nullptr) {
       return E_INVALIDARG;
     }
@@ -67,7 +63,7 @@ class CandidateStringImpl final : public TipComImplements<ITfCandidateString> {
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE GetIndex(ULONG *index) {
+  STDMETHODIMP GetIndex(ULONG *index) override {
     if (index == nullptr) {
       return E_INVALIDARG;
     }
@@ -81,11 +77,11 @@ class CandidateStringImpl final : public TipComImplements<ITfCandidateString> {
 
 class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
  public:
-  explicit EnumTfCandidatesImpl(const std::vector<std::wstring> &candidates)
-      : candidates_(candidates), current_(0) {}
+  explicit EnumTfCandidatesImpl(std::vector<std::wstring> candidates)
+      : candidates_(std::move(candidates)), current_(0) {}
 
  private:
-  virtual HRESULT STDMETHODCALLTYPE Clone(IEnumTfCandidates **enum_candidates) {
+  STDMETHODIMP Clone(IEnumTfCandidates **enum_candidates) override {
     if (enum_candidates == nullptr) {
       return E_INVALIDARG;
     }
@@ -93,13 +89,12 @@ class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
     if (!impl) {
       return E_OUTOFMEMORY;
     }
-    *enum_candidates = impl.Detach();
+    *enum_candidates = impl.detach();
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE Next(ULONG count,
-                                         ITfCandidateString **candidate_string,
-                                         ULONG *fetched_count) {
+  STDMETHODIMP Next(ULONG count, ITfCandidateString **candidate_string,
+                    ULONG *fetched_count) override {
     if (candidate_string == nullptr) {
       return E_INVALIDARG;
     }
@@ -116,19 +111,19 @@ class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
       }
       candidate_string[i] =
           MakeComPtr<CandidateStringImpl>(current_, candidates_[current_])
-              .Detach();
+              .detach();
       ++current_;
     }
     *fetched_count = count;
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE Reset() {
+  STDMETHODIMP Reset() override {
     current_ = 0;
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE Skip(ULONG count) {
+  STDMETHODIMP Skip(ULONG count) override {
     if ((candidates_.size() - current_) < count) {
       current_ = candidates_.size();
       return S_FALSE;
@@ -143,16 +138,13 @@ class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
 
 class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
  public:
-  template <typename Candidates>
-  CandidateListImpl(Candidates &&candidates,
+  CandidateListImpl(std::vector<std::wstring> candidates,
                     std::unique_ptr<TipCandidateListCallback> callback)
-      : candidates_(std::forward<Candidates>(candidates)),
-        callback_(std::move(callback)) {}
+      : candidates_(std::move(candidates)), callback_(std::move(callback)) {}
 
  private:
   // The ITfCandidateList interface methods.
-  virtual HRESULT STDMETHODCALLTYPE
-  EnumCandidates(IEnumTfCandidates **enum_candidate) {
+  STDMETHODIMP EnumCandidates(IEnumTfCandidates **enum_candidate) override {
     if (enum_candidate == nullptr) {
       return E_INVALIDARG;
     }
@@ -160,12 +152,12 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
     if (!impl) {
       return E_OUTOFMEMORY;
     }
-    *enum_candidate = impl.Detach();
+    *enum_candidate = impl.detach();
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE
-  GetCandidate(ULONG index, ITfCandidateString **candidate_string) {
+  STDMETHODIMP GetCandidate(ULONG index,
+                            ITfCandidateString **candidate_string) override {
     if (candidate_string == nullptr) {
       return E_INVALIDARG;
     }
@@ -173,11 +165,11 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
       return E_FAIL;
     }
     *candidate_string =
-        MakeComPtr<CandidateStringImpl>(index, candidates_[index]).Detach();
+        MakeComPtr<CandidateStringImpl>(index, candidates_[index]).detach();
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE GetCandidateNum(ULONG *count) {
+  STDMETHODIMP GetCandidateNum(ULONG *count) override {
     if (count == nullptr) {
       return E_INVALIDARG;
     }
@@ -185,12 +177,12 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE
-  SetResult(ULONG index, TfCandidateResult candidate_result) {
+  STDMETHODIMP SetResult(ULONG index,
+                         TfCandidateResult candidate_result) override {
     if (candidates_.size() <= index) {
       return E_INVALIDARG;
     }
-    if ((candidate_result == CAND_FINALIZED) && (callback_.get() != nullptr)) {
+    if (candidate_result == CAND_FINALIZED && callback_) {
       callback_->OnFinalize(index, candidates_[index]);
       callback_.reset();
     }
@@ -204,14 +196,8 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
 }  // namespace
 
 // static
-ComPtr<ITfCandidateList> TipCandidateList::New(
-    const std::vector<std::wstring> &candidates,
-    std::unique_ptr<TipCandidateListCallback> callback) {
-  return MakeComPtr<CandidateListImpl>(candidates, std::move(callback));
-}
-
-ComPtr<ITfCandidateList> TipCandidateList::New(
-    std::vector<std::wstring> &&candidates,
+wil::com_ptr_nothrow<ITfCandidateList> TipCandidateList::New(
+    std::vector<std::wstring> candidates,
     std::unique_ptr<TipCandidateListCallback> callback) {
   return MakeComPtr<CandidateListImpl>(std::move(candidates),
                                        std::move(callback));

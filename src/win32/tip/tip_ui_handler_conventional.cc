@@ -30,7 +30,8 @@
 #include "win32/tip/tip_ui_handler_conventional.h"
 
 #include <msctf.h>
-#include <wrl/client.h>
+#include <wil/com.h>
+#include <windows.h>
 
 #include <cstddef>
 #include <utility>
@@ -56,18 +57,16 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
 namespace {
 
-using Microsoft::WRL::ComPtr;
 using ::mozc::commands::CompositionMode;
 using ::mozc::commands::Preedit;
 using ::mozc::renderer::win32::Win32RendererClient;
-typedef ::mozc::commands::Preedit_Segment Segment;
-typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
-typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
-typedef ::mozc::commands::RendererCommand RendererCommand;
-typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
+using Segment = ::mozc::commands::Preedit_Segment;
+using Annotation = ::mozc::commands::Preedit_Segment::Annotation;
+using IndicatorInfo = ::mozc::commands::RendererCommand_IndicatorInfo;
+using RendererCommand = ::mozc::commands::RendererCommand;
+using ApplicationInfo = ::mozc::commands::RendererCommand::ApplicationInfo;
 
 size_t GetTargetPos(const commands::Output &output) {
   if (!output.has_candidates() || !output.candidates().has_category()) {
@@ -95,7 +94,7 @@ size_t GetTargetPos(const commands::Output &output) {
   }
 }
 
-bool FillVisibility(const ComPtr<ITfUIElementMgr> &ui_element_manager,
+bool FillVisibility(ITfUIElementMgr *ui_element_manager,
                     TipPrivateContext *private_context,
                     RendererCommand *command) {
   command->set_visible(false);
@@ -156,9 +155,8 @@ bool FillVisibility(const ComPtr<ITfUIElementMgr> &ui_element_manager,
   return true;
 }
 
-bool FillWindowHandle(const ComPtr<ITfContext> &context,
-                      ApplicationInfo *app_info) {
-  ComPtr<ITfContextView> context_view;
+bool FillWindowHandle(ITfContext *context, ApplicationInfo *app_info) {
+  wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
     return false;
   }
@@ -172,26 +170,26 @@ bool FillWindowHandle(const ComPtr<ITfContext> &context,
   return true;
 }
 
-ComPtr<ITfRange> GetCompositionRange(const ComPtr<ITfContext> &context,
-                                     TfEditCookie read_cookie) {
-  ComPtr<ITfCompositionView> composition_view =
+wil::com_ptr_nothrow<ITfRange> GetCompositionRange(ITfContext *context,
+                                                   TfEditCookie read_cookie) {
+  wil::com_ptr_nothrow<ITfCompositionView> composition_view =
       TipCompositionUtil::GetCompositionView(context, read_cookie);
   if (!composition_view) {
     return nullptr;
   }
 
-  ComPtr<ITfRange> composition_range;
+  wil::com_ptr_nothrow<ITfRange> composition_range;
   if (FAILED(composition_view->GetRange(&composition_range))) {
     return nullptr;
   }
   return composition_range;
 }
 
-ComPtr<ITfRange> GetSelectionRange(const ComPtr<ITfContext> &context,
-                                   TfEditCookie read_cookie) {
-  ComPtr<ITfRange> selection_range;
+wil::com_ptr_nothrow<ITfRange> GetSelectionRange(ITfContext *context,
+                                                 TfEditCookie read_cookie) {
+  wil::com_ptr_nothrow<ITfRange> selection_range;
   TfActiveSelEnd sel_end = TF_AE_NONE;
-  if (FAILED(TipRangeUtil::GetDefaultSelection(context.Get(), read_cookie,
+  if (FAILED(TipRangeUtil::GetDefaultSelection(context, read_cookie,
                                                &selection_range, &sel_end))) {
     return nullptr;
   }
@@ -202,8 +200,7 @@ ComPtr<ITfRange> GetSelectionRange(const ComPtr<ITfContext> &context,
 // IMM32-based client. Ideally we'd better to define new field for TSF Mozc
 // into which the result of ITfContextView::GetTextExt is stored.
 // TODO(yukawa): Replace FillCharPosition with new one designed for TSF.
-bool FillCharPosition(TipPrivateContext *private_context,
-                      const ComPtr<ITfContext> &context,
+bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
                       TfEditCookie read_cookie, bool has_composition,
                       ApplicationInfo *app_info, bool *no_layout) {
   if (private_context == nullptr) {
@@ -222,13 +219,13 @@ bool FillCharPosition(TipPrivateContext *private_context,
   const HWND window_handle =
       WinUtil::DecodeWindowHandle(app_info->target_window_handle());
 
-  ComPtr<ITfRange> range = has_composition
-                               ? GetCompositionRange(context, read_cookie)
-                               : GetSelectionRange(context, read_cookie);
+  wil::com_ptr_nothrow<ITfRange> range =
+      has_composition ? GetCompositionRange(context, read_cookie)
+                      : GetSelectionRange(context, read_cookie);
   if (!range) {
     return false;
   }
-  ComPtr<ITfRange> target_range;
+  wil::com_ptr_nothrow<ITfRange> target_range;
   if (FAILED(range->Clone(&target_range))) {
     return false;
   }
@@ -251,7 +248,7 @@ bool FillCharPosition(TipPrivateContext *private_context,
     return false;
   }
 
-  ComPtr<ITfContextView> context_view;
+  wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view)) || !context_view) {
     return false;
   }
@@ -264,8 +261,8 @@ bool FillCharPosition(TipPrivateContext *private_context,
   RECT text_rect = {};
   bool clipped = false;
   const HRESULT hr =
-      TipRangeUtil::GetTextExt(context_view.Get(), read_cookie,
-                               target_range.Get(), &text_rect, &clipped);
+      TipRangeUtil::GetTextExt(context_view.get(), read_cookie,
+                               target_range.get(), &text_rect, &clipped);
   if (hr == TF_E_NOLAYOUT) {
     // This is not a critical error but the layout information is not available.
     *no_layout = true;
@@ -294,14 +291,13 @@ bool FillCharPosition(TipPrivateContext *private_context,
   return true;
 }
 
-void UpdateCommand(const ComPtr<TipTextService> &text_service,
-                   const ComPtr<ITfContext> &context, TfEditCookie read_cookie,
-                   RendererCommand *command, bool *no_layout) {
+void UpdateCommand(TipTextService *text_service, ITfContext *context,
+                   TfEditCookie read_cookie, RendererCommand *command,
+                   bool *no_layout) {
   command->Clear();
   command->set_type(RendererCommand::UPDATE);
 
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context.Get());
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context != nullptr) {
     *command->mutable_output() = private_context->last_output();
     private_context->GetUiElementManager()->OnUpdate(text_service, context);
@@ -317,7 +313,7 @@ void UpdateCommand(const ComPtr<TipTextService> &text_service,
   auto ui_element_manager =
       ComQuery<ITfUIElementMgr>(text_service->GetThreadManager());
   DCHECK(ui_element_manager);
-  FillVisibility(ui_element_manager, private_context, command);
+  FillVisibility(ui_element_manager.get(), private_context, command);
   FillWindowHandle(context, app_info);
   FillCharPosition(private_context, context, read_cookie,
                    command->output().has_preedit(), app_info, no_layout);
@@ -353,49 +349,49 @@ class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie edit_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
     RendererCommand command;
     bool no_layout = false;
-    UpdateCommand(text_service_, context_, edit_cookie, &command, &no_layout);
+    UpdateCommand(text_service_.get(), context_.get(), edit_cookie, &command,
+                  &no_layout);
     if (!no_layout || !command.visible()) {
       Win32RendererClient::OnUpdated(command);
     }
     return S_OK;
   }
 
-  static bool BeginRequest(const ComPtr<TipTextService> &text_service,
-                           const ComPtr<ITfContext> &context) {
+  static bool BeginRequest(TipTextService *text_service, ITfContext *context) {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
-    ComPtr<ITfEditSession> edit_session(
+    wil::com_ptr_nothrow<ITfEditSession> edit_session(
         new UpdateUiEditSessionImpl(text_service, context));
 
     HRESULT edit_session_result = S_OK;
     const HRESULT result = context->RequestEditSession(
-        text_service->GetClientID(), edit_session.Get(),
+        text_service->GetClientID(), edit_session.get(),
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
     return SUCCEEDED(result);
   }
 
  private:
-  UpdateUiEditSessionImpl(ComPtr<TipTextService> text_service,
-                          ComPtr<ITfContext> context)
+  UpdateUiEditSessionImpl(wil::com_ptr_nothrow<TipTextService> text_service,
+                          wil::com_ptr_nothrow<ITfContext> context)
       : text_service_(std::move(text_service)), context_(std::move(context)) {}
 
-  ComPtr<TipTextService> text_service_;
-  ComPtr<ITfContext> context_;
+  wil::com_ptr_nothrow<TipTextService> text_service_;
+  wil::com_ptr_nothrow<ITfContext> context_;
 };
 
 }  // namespace
 
 void TipUiHandlerConventional::OnActivate(TipTextService *text_service) {
   ITfThreadMgr *thread_mgr = text_service->GetThreadManager();
-  ComPtr<ITfDocumentMgr> document;
+  wil::com_ptr_nothrow<ITfDocumentMgr> document;
   if (FAILED(thread_mgr->GetFocus(&document))) {
     return;
   }
-  OnFocusChange(text_service, document.Get());
+  OnFocusChange(text_service, document.get());
 }
 
 void TipUiHandlerConventional::OnDeactivate() {
@@ -413,14 +409,14 @@ void TipUiHandlerConventional::OnFocusChange(
     return;
   }
 
-  ComPtr<ITfContext> context;
+  wil::com_ptr_nothrow<ITfContext> context;
   if (FAILED(focused_document_manager->GetBase(&context))) {
     return;
   }
   if (!context) {
     return;
   }
-  UpdateUiEditSessionImpl::BeginRequest(text_service, context);
+  UpdateUiEditSessionImpl::BeginRequest(text_service, context.get());
 }
 
 bool TipUiHandlerConventional::Update(TipTextService *text_service,

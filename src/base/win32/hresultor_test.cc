@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/win32/hresult.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
@@ -75,23 +76,6 @@ void TestHResultOrTypeAttributes() {
   static_assert((std::is_nothrow_swappable_v<T> &&
                  std::is_nothrow_move_constructible_v<T>) ==
                 std::is_nothrow_swappable_v<U>);
-}
-
-TEST(HResultOr, HResult) {
-  constexpr HResult hr(E_FAIL);
-  EXPECT_EQ(hr, E_FAIL);
-  EXPECT_EQ(hr.hr(), E_FAIL);
-  EXPECT_FALSE(hr.ok());
-
-  HResult hr1(S_OK), hr2(E_UNEXPECTED);
-  EXPECT_EQ(hr1.hr(), S_OK);
-  EXPECT_TRUE(hr1.ok());
-  EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
-  EXPECT_FALSE(hr2.ok());
-
-  std::swap(hr1, hr2);
-  EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
-  EXPECT_EQ(hr2.hr(), S_OK);
 }
 
 TEST(HResultOr, Int) {
@@ -320,13 +304,6 @@ TEST(HResultOr, AssignOrReturnHResult) {
 }
 
 TEST(HResultOr, ReturnIfErrorHResult) {
-  auto f = []() -> HRESULT {
-    RETURN_IF_FAILED_HRESULT(S_OK);
-    RETURN_IF_FAILED_HRESULT(E_FAIL);
-    return S_FALSE;
-  };
-  EXPECT_EQ(f(), E_FAIL);
-
   auto g = []() -> HResultOr<int> {
     RETURN_IF_FAILED_HRESULT(E_FAIL);
     return HResultOk(42);

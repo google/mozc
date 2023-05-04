@@ -233,11 +233,39 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "hresult",
+    srcs = ["hresult.cc"],
+    hdrs = ["hresult.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":wide_char",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_microsoft_wil//:wil",
+    ],
+)
+
+mozc_cc_test(
+    name = "hresult_test",
+    size = "small",
+    srcs = ["hresult_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":hresult",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
     name = "hresultor",
     hdrs = ["hresultor.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":hresult",
         ":hresultor_internal",
         "//base:logging",
         "@com_google_absl//absl/base:core_headers",
@@ -250,6 +278,7 @@ mozc_cc_library(
     hdrs = ["hresultor_internal.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
+    deps = [":hresult"],
 )
 
 mozc_cc_test(
@@ -259,6 +288,7 @@ mozc_cc_test(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
+        ":hresult",
         ":hresultor",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
@@ -272,7 +302,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":hresultor",
-        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/meta:type_traits",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -288,7 +318,6 @@ mozc_cc_test(
         ":com_implements",
         ":scoped_com",
         "//testing:gunit_main",
-        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )

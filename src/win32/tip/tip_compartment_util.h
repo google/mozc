@@ -30,13 +30,11 @@
 #ifndef MOZC_WIN32_TIP_TIP_COMPARTMENT_UTIL_H_
 #define MOZC_WIN32_TIP_TIP_COMPARTMENT_UTIL_H_
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <wil/resource.h>
+#include <windows.h>
+
+#include "base/win32/hresultor.h"
 
 namespace mozc {
 namespace win32 {
@@ -48,61 +46,49 @@ class TipCompartmentUtil {
   TipCompartmentUtil(const TipCompartmentUtil &) = delete;
   TipCompartmentUtil &operator=(const TipCompartmentUtil &) = delete;
 
-  // Returns true when |data| is stored into the compartment specified by
-  // |compartment_guid| and owned by |compartment_manager| successfully.
-  // Returns false otherwise.
-  static bool Set(
-      const Microsoft::WRL::ComPtr<ITfCompartmentMgr> &compartment_manager,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &data);
-  static bool Set(const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_manager,
-                  const GUID &compartment_guid, TfClientId client_id,
-                  const ATL::CComVariant &data);
-  static bool Set(
-      const Microsoft::WRL::ComPtr<ITfDocumentMgr> &document_manager,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &data);
-  static bool Set(const Microsoft::WRL::ComPtr<ITfContext> &context,
-                  const GUID &compartment_guid, TfClientId client_id,
-                  const ATL::CComVariant &data);
+  // Stores |data| into the compartment specified by |compartment_guid| and
+  // owned by |compartment_manager|.
+  static HRESULT Set(ITfCompartmentMgr *compartment_manager,
+                     const GUID &compartment_guid, TfClientId client_id,
+                     wil::unique_variant data);
+  static HRESULT Set(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+                     TfClientId client_id, wil::unique_variant data);
+  static HRESULT Set(ITfDocumentMgr *document_manager,
+                     const GUID &compartment_guid, TfClientId client_id,
+                     wil::unique_variant data);
+  static HRESULT Set(ITfContext *context, const GUID &compartment_guid,
+                     TfClientId client_id, wil::unique_variant data);
 
-  // Returns true when |data| is retrieved from the compartment specified by
+  // Returns the associated data from the compartment specified by
   // |compartment_guid| and owned by |compartment_manager| successfully.
-  // Returns false otherwise.
-  // Caveats: Returns true and |data| will be VT_EMPTY when the compartment
-  //     has not store any data yet.
-  static bool Get(
-      const Microsoft::WRL::ComPtr<ITfCompartmentMgr> &compartment_manager,
-      const GUID &compartment_guid, ATL::CComVariant *data);
-  static bool Get(const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_manager,
-                  const GUID &compartment_guid, ATL::CComVariant *data);
-  static bool Get(
-      const Microsoft::WRL::ComPtr<ITfDocumentMgr> &document_manager,
-      const GUID &compartment_guid, ATL::CComVariant *data);
-  static bool Get(const Microsoft::WRL::ComPtr<ITfContext> &context,
-                  const GUID &compartment_guid, ATL::CComVariant *data);
+  // Caveats: Returned variant is VT_EMPTY when the compartment has not store
+  // any data yet.
+  static HResultOr<wil::unique_variant> Get(
+      ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfThreadMgr *thread_manager,
+                                            const GUID &compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfDocumentMgr *document_manager,
+                                            const GUID &compartment_guid);
+  static HResultOr<wil::unique_variant> Get(ITfContext *context,
+                                            const GUID &compartment_guid);
 
   // Returns true when |data| is retrieved from the compartment specified by
   // |compartment_guid| and owned by |compartment_manager| successfully.
   // Returns false otherwise.
   // When the compartment has not store any data yet, this function sets
   // |default_data| as default data and copies it into |data|.
-  static bool GetAndEnsureDataExists(
-      const Microsoft::WRL::ComPtr<ITfCompartmentMgr> &compartment_manager,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &default_data, ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      const Microsoft::WRL::ComPtr<ITfThreadMgr> &thread_manager,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &default_data, ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      const Microsoft::WRL::ComPtr<ITfDocumentMgr> &document_manager,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &default_data, ATL::CComVariant *data);
-  static bool GetAndEnsureDataExists(
-      const Microsoft::WRL::ComPtr<ITfContext> &context,
-      const GUID &compartment_guid, TfClientId client_id,
-      const ATL::CComVariant &default_data, ATL::CComVariant *data);
+  static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
+      ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid,
+      TfClientId client_id, wil::unique_variant default_data);
+  static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
+      ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+      TfClientId client_id, wil::unique_variant default_data);
+  static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
+      ITfDocumentMgr *document_manager, const GUID &compartment_guid,
+      TfClientId client_id, wil::unique_variant default_data);
+  static HResultOr<wil::unique_variant> GetAndEnsureDataExists(
+      ITfContext *context, const GUID &compartment_guid, TfClientId client_id,
+      wil::unique_variant default_data);
 };
 
 }  // namespace tsf

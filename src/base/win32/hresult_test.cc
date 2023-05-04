@@ -27,41 +27,68 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
-#define MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
+#include "base/win32/hresult.h"
 
-#include <msctf.h>
-#include <wil/com.h>
-#include <windef.h>
+#include <windows.h>
 
-namespace mozc {
-namespace win32 {
-namespace tsf {
+#include <sstream>
+#include <utility>
 
-class TipCompositionUtil {
- public:
-  TipCompositionUtil() = delete;
-  TipCompositionUtil(const TipCompositionUtil &) = delete;
-  TipCompositionUtil &operator=(const TipCompositionUtil &) = delete;
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
-  // Returns composition object if there is a composition which belongs
-  // to Mozc in |context|. Otherwise returns nullptr.
-  static wil::com_ptr_nothrow<ITfComposition> GetComposition(
-      ITfContext *context, TfEditCookie edit_cookie);
+namespace mozc::win32 {
+namespace {
 
-  // Returns composition view object if there is a composition which belongs
-  // to Mozc in |context|. Otherwise returns nullptr.
-  static wil::com_ptr_nothrow<ITfCompositionView> GetCompositionView(
-      ITfContext *context, TfEditCookie edit_cookie);
+TEST(HResultTest, ErrorCodes) {
+  constexpr HResult hr = HResultFail();
+  EXPECT_EQ(hr, E_FAIL);
+  EXPECT_EQ(hr.hr(), E_FAIL);
+  EXPECT_FALSE(hr.ok());
 
-  // Removes display attributes from |composition|. Returns the result.
-  static HRESULT ClearDisplayAttributes(ITfContext *context,
-                                        ITfComposition *composition,
-                                        TfEditCookie write_cookie);
-};
+  HResult hr1 = HResultOk(), hr2 = HResultUnexpected();
+  EXPECT_EQ(hr1.hr(), S_OK);
+  EXPECT_TRUE(hr1.ok());
+  EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
+  EXPECT_FALSE(hr2.ok());
 
-}  // namespace tsf
-}  // namespace win32
-}  // namespace mozc
+  std::swap(hr1, hr2);
+  EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
+  EXPECT_EQ(hr2.hr(), S_OK);
 
-#endif  // MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
+  HResult hr3 = HResultWin32(ERROR_SUCCESS);
+  EXPECT_TRUE(hr3.ok());
+  EXPECT_EQ(hr3.hr(), S_OK);
+}
+
+TEST(HResultTest, ReturnIfErrorHResult) {
+  auto f = []() -> HRESULT {
+    RETURN_IF_FAILED_HRESULT(S_OK);
+    RETURN_IF_FAILED_HRESULT(E_FAIL);
+    return HResultFalse();
+  };
+  EXPECT_EQ(f(), E_FAIL);
+}
+
+TEST(HResultTest, ToString) {
+  HResult hr = HResultOk();
+  EXPECT_EQ(hr.ToString(), "Success: S_OK");
+  hr = HResultFalse();
+  EXPECT_EQ(hr.ToString(), "Success: S_FALSE");
+
+  hr = HResult(2);
+  EXPECT_EQ(hr.ToString(), "Success: 0x00000002");
+
+  hr = HResultFail();
+  EXPECT_EQ(hr.ToString(), "Failure: E_FAIL");
+
+  hr = HResultWin32(ERROR_ALREADY_EXISTS);
+  std::stringstream ss;
+  ss << hr;
+  EXPECT_EQ(ss.str(),
+            "Failure: Cannot create a file when that file already "
+            "exists. (0x800700b7)");
+}
+
+}  // namespace
+}  // namespace mozc::win32

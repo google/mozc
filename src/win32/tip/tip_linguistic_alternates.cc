@@ -100,7 +100,7 @@ class GetLinguisticAlternatesImpl final
       return E_FAIL;
     }
     *candidate_list =
-        TipCandidateList::New(std::move(candidates), nullptr).Detach();
+        TipCandidateList::New(std::move(candidates), nullptr).detach();
     return S_OK;
   }
 

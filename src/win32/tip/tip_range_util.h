@@ -31,13 +31,11 @@
 #define MOZC_WIN32_TIP_TIP_RANGE_UTIL_H_
 
 #include <inputscope.h>
-#include <windows.h>
 #include <msctf.h>
+#include <windows.h>
 
 #include <string>
 #include <vector>
-
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {

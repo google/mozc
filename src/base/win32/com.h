@@ -43,87 +43,84 @@
 #include <utility>
 
 #include "base/win32/hresultor.h"
-#include "absl/base/casts.h"
+#include "absl/meta/type_traits.h"
 
 namespace mozc::win32 {
 
-// MakeComPtr is like std::make_unique but for ComPtr. Returns nullptr if new
-// fails.
+// MakeComPtr is like std::make_unique but for COM pointers. Returns nullptr if
+// new fails.
 template <typename T, typename... Args>
-Microsoft::WRL::ComPtr<T> MakeComPtr(Args &&...args) {
+wil::com_ptr_nothrow<T> MakeComPtr(Args &&...args) {
   static_assert(std::is_base_of_v<IUnknown, T>, "T must implement IUnknown.");
 
-  return Microsoft::WRL::ComPtr<T>(new (std::nothrow)
-                                       T(std::forward<Args>(args)...));
+  return wil::com_ptr_nothrow<T>(new (std::nothrow)
+                                     T(std::forward<Args>(args)...));
 }
 
-// Calls CoCreateInstance and returns the result as ComPtr<Interface>.
+// Calls CoCreateInstance and returns the result as
+// wil::com_ptr_nothrow<Interface>.
 template <typename Interface>
-Microsoft::WRL::ComPtr<Interface> ComCreateInstance(REFCLSID clsid) {
-  Microsoft::WRL::ComPtr<Interface> result;
-  if (SUCCEEDED(CoCreateInstance(clsid, nullptr, CLSCTX_ALL,
-                                 IID_PPV_ARGS(&result)))) {
-    return result;
-  }
-  return nullptr;
+wil::com_ptr_nothrow<Interface> ComCreateInstance(REFCLSID clsid) {
+  // TODO(yuryu): Restrict CLSCTX.
+  return wil::CoCreateInstanceNoThrow<Interface>(clsid, CLSCTX_ALL);
 }
 
-// Calls CoCreateInstance and returns the result as ComPtr<Interface> with the
-// CLSID from T.
+// Calls CoCreateInstance and returns the result as
+// wil::com_ptr_nothrow<Interface> with the CLSID from T.
 template <typename Interface, typename T>
-Microsoft::WRL::ComPtr<Interface> ComCreateInstance() {
+wil::com_ptr_nothrow<Interface> ComCreateInstance() {
   return ComCreateInstance<Interface>(__uuidof(T));
 }
 
-// Returns the result of QueryInterface as HResultOr<ComPtr<T>>.
-template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(U *ptr) {
-  using ReturnType = HResultOr<Microsoft::WRL::ComPtr<T>>;
+namespace com_internal {
 
-  // If source is convertible to T, casting is faster than calling
-  // QueryInterface.
-  if constexpr (std::is_convertible_v<decltype(ptr), T *>) {
-    // ComPtr will call AddRef here.
-    return absl::implicit_cast<T *>(ptr);
+template <typename Ptr, typename Interface,
+          typename = std::enable_if_t<std::is_pointer_v<Ptr> &&
+                                      std::is_base_of_v<IUnknown, Interface>>>
+using is_convertible =
+    std::is_convertible<absl::remove_cvref_t<Ptr>, Interface *>;
+
+}  // namespace com_internal
+
+// Returns the result of QueryInterface as HResultOr<wil::com_ptr_nothrow<T>>.
+template <typename T, typename U>
+HResultOr<wil::com_ptr_nothrow<T>> ComQueryHR(U &&source) {
+  wil::com_ptr_nothrow<T> result;
+  // Workaround as WIL doen't detect convertible queries with VC++2017.
+  auto ptr = wil::com_raw_ptr(std::forward<U>(source));
+  if constexpr (com_internal::is_convertible<decltype(ptr), T>::value) {
+    return ptr;
+  } else {
+    const HRESULT hr = wil::com_query_to_nothrow<T>(std::move(ptr), &result);
+    if (SUCCEEDED(hr)) {
+      return result;
+    }
+    return HResult(hr);
   }
-  Microsoft::WRL::ComPtr<T> result;
-  const HRESULT hr = ptr->QueryInterface(IID_PPV_ARGS(&result));
-  if (SUCCEEDED(hr)) {
-    return result;
+}
+
+// Returns the result of QueryInterface as wil::com_ptr_nothrow<T>.
+// Prefer this function to wil::try_com_query_nothrow for brevity.
+template <typename T, typename U>
+wil::com_ptr_nothrow<T> ComQuery(U &&source) {
+  // Workaround as WIL doen't detect convertible queries with VC++2017.
+  auto ptr = wil::com_raw_ptr(std::forward<U>(source));
+  if constexpr (com_internal::is_convertible<decltype(ptr), T>::value) {
+    return ptr;
+  } else {
+    return wil::try_com_query_nothrow<T>(std::move(ptr));
   }
-  return HResult(hr);
 }
 
-// Returns the result of QueryInterface as ComPtr<T>.
+// Similar to ComQuery but returns nullptr if source is nullptr.
+// Prefer this function to wil::try_com_copy_nothrow for brevity.
 template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
-    const wil::com_ptr_nothrow<U> &source) {
-  return ComQueryHR<T>(wil::com_raw_ptr(source));
-}
-
-// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
-template <typename T, typename U>
-HResultOr<Microsoft::WRL::ComPtr<T>> ComQueryHR(
-    const Microsoft::WRL::ComPtr<U> &source) {
-  return ComQueryHR<T>(wil::com_raw_ptr(source));
-}
-
-// Returns the result of QueryInterface as ComPtr<T>.
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(U *source) {
-  return std::move(ComQueryHR<T>(source)).value_or(nullptr);
-}
-
-// Returns the result of QueryInterface as ComPtr<T>.
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(const wil::com_ptr_nothrow<U> &source) {
-  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
-}
-
-// TODO(b/278561383): Remove this once we migrated from WRL::ComPtr
-template <typename T, typename U>
-Microsoft::WRL::ComPtr<T> ComQuery(const Microsoft::WRL::ComPtr<U> &source) {
-  return std::move(ComQueryHR<T>(wil::com_raw_ptr(source))).value_or(nullptr);
+wil::com_ptr_nothrow<T> ComCopy(U &&source) {
+  if (source) {
+    return ComQuery<T>(std::forward<U>(source));
+  } else {
+    return nullptr;
+  }
 }
 
 // MakeUniqueBSTR allocates a new BSTR and returns as wil::unique_bstr.

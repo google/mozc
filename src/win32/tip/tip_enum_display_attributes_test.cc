@@ -30,7 +30,7 @@
 #include "win32/tip/tip_enum_display_attributes.h"
 
 #include <objbase.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <iterator>
 
@@ -43,8 +43,6 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-
 class TipEnumDisplayAttributesTest : public testing::Test {
  protected:
   TipEnumDisplayAttributesTest() { TipDllModule::InitForUnitTest(); }
@@ -55,7 +53,7 @@ TEST_F(TipEnumDisplayAttributesTest, BasicTest) {
   ASSERT_TRUE(SUCCEEDED(enum_display_attribute.Reset()));
 
   while (true) {
-    ComPtr<ITfDisplayAttributeInfo> info;
+    wil::com_ptr_nothrow<ITfDisplayAttributeInfo> info;
     ULONG fetched = 0;
     const HRESULT result = enum_display_attribute.Next(1, &info, &fetched);
     EXPECT_TRUE(SUCCEEDED(result));

@@ -32,10 +32,9 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
-#include <atlcom.h>
 #include <atlstr.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <cstddef>
 #include <memory>
@@ -43,8 +42,8 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/win32/com.h"
+#include "base/win32/wide_char.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -57,17 +56,13 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
 namespace {
 
-using ATL::CComBSTR;
-using ATL::CComVariant;
-using ATL::CStringW;
-using Microsoft::WRL::ComPtr;
-using mozc::commands::CandidateList;
-using mozc::commands::Output;
-using mozc::commands::Status;
-using IndicatorInfo = mozc::commands::RendererCommand_IndicatorInfo;
+using ::ATL::CStringW;
+using ::mozc::commands::CandidateList;
+using ::mozc::commands::Output;
+using ::mozc::commands::Status;
+using IndicatorInfo = ::mozc::commands::RendererCommand_IndicatorInfo;
 
 constexpr size_t kPageSize = 9;
 
@@ -137,10 +132,10 @@ constexpr GUID KGuidIndicatorWindow = {
 
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
-CComBSTR GetResourceString(UINT resource_id) {
+wil::unique_bstr GetResourceString(UINT resource_id) {
   CStringW str;
   str.LoadStringW(TipDllModule::module_handle(), resource_id);
-  return CComBSTR(str.GetLength(), str.GetBuffer());
+  return MakeUniqueBSTR(std::wstring_view(str.GetBuffer(), str.GetLength()));
 }
 
 constexpr bool kIsIndicator = true;
@@ -151,16 +146,15 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   TipUiElementDelegateImpl(const TipUiElementDelegateImpl &) = delete;
   TipUiElementDelegateImpl &operator=(const TipUiElementDelegateImpl &) =
       delete;
-  TipUiElementDelegateImpl(ComPtr<TipTextService> text_service,
-                           ComPtr<ITfContext> context,
+  TipUiElementDelegateImpl(wil::com_ptr_nothrow<TipTextService> text_service,
+                           wil::com_ptr_nothrow<ITfContext> context,
                            TipUiElementDelegateFactory::ElementType type)
       : text_service_(std::move(text_service)),
         context_(std::move(context)),
         type_(type) {}
-  ~TipUiElementDelegateImpl() override = default;
 
  private:
-  virtual bool IsObservable() const {
+  bool IsObservable() const override {
     switch (type_) {
       case TipUiElementDelegateFactory::kConventionalObservableSuggestWindow:
       case TipUiElementDelegateFactory::kConventionalCandidateWindow:
@@ -171,7 +165,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   }
 
   // The ITfUIElement interface methods
-  virtual HRESULT GetDescription(BSTR *description) {
+  HRESULT GetDescription(BSTR *description) override {
     if (description == nullptr) {
       return E_INVALIDARG;
     }
@@ -179,24 +173,24 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     switch (type_) {
       case TipUiElementDelegateFactory::kConventionalUnobservableSuggestWindow:
         *description =
-            GetResourceString(IDS_UNOBSERVABLE_SUGGEST_WINDOW).Detach();
+            GetResourceString(IDS_UNOBSERVABLE_SUGGEST_WINDOW).release();
         return S_OK;
       case TipUiElementDelegateFactory::kConventionalObservableSuggestWindow:
         *description =
-            GetResourceString(IDS_OBSERVABLE_SUGGEST_WINDOW).Detach();
+            GetResourceString(IDS_OBSERVABLE_SUGGEST_WINDOW).release();
         return S_OK;
       case TipUiElementDelegateFactory::kConventionalCandidateWindow:
-        *description = GetResourceString(IDS_CANDIDATE_WINDOW).Detach();
+        *description = GetResourceString(IDS_CANDIDATE_WINDOW).release();
         return S_OK;
       case TipUiElementDelegateFactory::kConventionalIndicatorWindow:
-        *description = GetResourceString(IDS_INDICATOR_WINDOW).Detach();
+        *description = GetResourceString(IDS_INDICATOR_WINDOW).release();
         return S_OK;
       default:
         return E_UNEXPECTED;
     }
   }
 
-  virtual HRESULT GetGUID(GUID *guid) {
+  HRESULT GetGUID(GUID *guid) override {
     if (guid == nullptr) {
       return E_INVALIDARG;
     }
@@ -219,7 +213,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
   }
 
-  virtual HRESULT Show(BOOL show) {
+  HRESULT Show(BOOL show) override {
     const bool old_shown = shown_;
     shown_ = !!show;
     if (old_shown != shown_ && IsObservable()) {
@@ -228,13 +222,13 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         // Update a hidden compartment to generate
         // IMN_OPENCANDIDATE/IMN_CLOSECANDIDATE notifications for the
         // application compatibility.
-        ComPtr<ITfCompartment> compartment;
+        wil::com_ptr_nothrow<ITfCompartment> compartment;
         if (SUCCEEDED(compartment_mgr->GetCompartment(
                 kGuidCUASCandidateMessageCompartment, &compartment))) {
-          CComVariant var;
+          wil::unique_variant var;
           var.vt = VT_I4;
           var.lVal = shown_ ? TRUE : FALSE;
-          compartment->SetValue(text_service_->GetClientID(), &var);
+          compartment->SetValue(text_service_->GetClientID(), var.addressof());
         }
       }
       // TODO(yukawa): Update UI.
@@ -242,7 +236,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  virtual HRESULT IsShown(BOOL *show) {
+  HRESULT IsShown(BOOL *show) override {
     if (show == nullptr) {
       return E_INVALIDARG;
     }
@@ -251,7 +245,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   }
 
   // The ITfCandidateListUIElement interface methods
-  virtual HRESULT GetUpdatedFlags(DWORD *flags) {
+  HRESULT GetUpdatedFlags(DWORD *flags) override {
     DCHECK(IsCandidateWindowLike());
 
     if (flags == nullptr) {
@@ -269,7 +263,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  virtual HRESULT GetDocumentMgr(ITfDocumentMgr **document_manager) {
+  HRESULT GetDocumentMgr(ITfDocumentMgr **document_manager) override {
     DCHECK(IsCandidateWindowLike());
 
     if (document_manager == nullptr) {
@@ -278,7 +272,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return context_->GetDocumentMgr(document_manager);
   }
 
-  virtual HRESULT GetCount(UINT *count) {
+  HRESULT GetCount(UINT *count) override {
     DCHECK(IsCandidateWindowLike());
 
     if (count == nullptr) {
@@ -286,7 +280,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
     *count = 0;
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -298,7 +292,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  virtual HRESULT GetSelection(UINT *index) {
+  HRESULT GetSelection(UINT *index) override {
     DCHECK(IsCandidateWindowLike());
 
     if (index == nullptr) {
@@ -306,7 +300,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
     *index = 0;
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -318,7 +312,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  virtual HRESULT GetString(UINT index, BSTR *text) {
+  HRESULT GetString(UINT index, BSTR *text) override {
     DCHECK(IsCandidateWindowLike());
 
     if (text == nullptr) {
@@ -326,7 +320,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
     *text = nullptr;
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -340,20 +334,19 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     if (visible_index >= list.candidates_size()) {
       return E_FAIL;
     }
-    std::wstring wide_text;
-    Util::Utf8ToWide(list.candidates(visible_index).value(), &wide_text);
-    *text = CComBSTR(wide_text.size(), wide_text.data()).Detach();
+    std::wstring wide_text = Utf8ToWide(list.candidates(visible_index).value());
+    *text = MakeUniqueBSTR(wide_text).release();
     return S_OK;
   }
 
-  virtual HRESULT GetPageIndex(UINT *index, UINT size, UINT *page_count) {
+  HRESULT GetPageIndex(UINT *index, UINT size, UINT *page_count) override {
     DCHECK(IsCandidateWindowLike());
 
     if (page_count == nullptr) {
       return E_INVALIDARG;
     }
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -379,13 +372,13 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     return S_OK;
   }
 
-  virtual HRESULT SetPageIndex(UINT *index, UINT page_count) {
+  HRESULT SetPageIndex(UINT *index, UINT page_count) override {
     DCHECK(IsCandidateWindowLike());
 
     return E_NOTIMPL;
   }
 
-  virtual HRESULT GetCurrentPage(UINT *current_page) {
+  HRESULT GetCurrentPage(UINT *current_page) override {
     DCHECK(IsCandidateWindowLike());
 
     if (current_page == nullptr) {
@@ -393,7 +386,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
     *current_page = 0;
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -406,11 +399,11 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   }
 
   // The ITfCandidateListUIElementBehavior interface methods
-  virtual HRESULT SetSelection(UINT index) {
+  HRESULT SetSelection(UINT index) override {
     DCHECK(IsCandidateWindowLike());
 
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return E_FAIL;
     }
@@ -423,62 +416,60 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
       return E_INVALIDARG;
     }
     const int id = list.candidates(index).id();
-    if (!TipEditSession::SelectCandidateAsync(text_service_.Get(),
-                                              context_.Get(), id)) {
+    if (!TipEditSession::SelectCandidateAsync(text_service_.get(),
+                                              context_.get(), id)) {
       return E_FAIL;
     }
     return S_OK;
   }
 
-  virtual HRESULT Finalize() {
+  HRESULT Finalize() override {
     DCHECK(IsCandidateWindowLike());
 
-    if (!TipEditSession::SubmitAsync(text_service_.Get(), context_.Get())) {
+    if (!TipEditSession::SubmitAsync(text_service_.get(), context_.get())) {
       return E_FAIL;
     }
     return S_OK;
   }
 
-  virtual HRESULT Abort() {
+  HRESULT Abort() override {
     DCHECK(IsCandidateWindowLike());
 
     // Currently equals to Finalize().
-    if (!TipEditSession::SubmitAsync(text_service_.Get(), context_.Get())) {
+    if (!TipEditSession::SubmitAsync(text_service_.get(), context_.get())) {
       return E_FAIL;
     }
     return S_OK;
   }
 
-  virtual HRESULT GetString(BSTR *text) {
+  HRESULT GetString(BSTR *text) override {
     DCHECK(IsIndicator());
 
     if (text == nullptr) {
       return E_INVALIDARG;
     }
 
-    CStringW msg = L"";
-
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
     if (!private_context->last_output().has_status()) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
     const Status &status = private_context->last_output().status();
     if (status.has_activated() && !status.activated()) {
-      msg = L"A";
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"A").release();
       return S_OK;
     }
     if (!status.has_mode()) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
 
+    std::wstring msg;
     switch (status.mode()) {
       case commands::DIRECT:
         DLOG(FATAL) << "Must not reach here.";
@@ -502,7 +493,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         break;
     }
 
-    *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+    *text = MakeUniqueBSTR(msg).release();
     return S_OK;
   }
 
@@ -511,7 +502,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
   // Note that this function updates |last_candidate_list_| internally.
   bool TestModifiedAndUpdateLastCandidate() {
     TipPrivateContext *private_context =
-        text_service_->GetPrivateContext(context_.Get());
+        text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
       return true;
     }
@@ -564,8 +555,8 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     }
   }
 
-  ComPtr<TipTextService> text_service_;
-  ComPtr<ITfContext> context_;
+  wil::com_ptr_nothrow<TipTextService> text_service_;
+  wil::com_ptr_nothrow<ITfContext> context_;
   const TipUiElementDelegateFactory::ElementType type_;
   CandidateList last_candidate_list_;
   bool shown_;
@@ -574,10 +565,10 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
 }  // namespace
 
 std::unique_ptr<TipUiElementDelegate> TipUiElementDelegateFactory::Create(
-    const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context, ElementType type) {
-  return std::make_unique<TipUiElementDelegateImpl>(text_service, context,
-                                                    type);
+    wil::com_ptr_nothrow<TipTextService> text_service,
+    wil::com_ptr_nothrow<ITfContext> context, ElementType type) {
+  return std::make_unique<TipUiElementDelegateImpl>(std::move(text_service),
+                                                    std::move(context), type);
 }
 
 }  // namespace tsf

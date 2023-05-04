@@ -178,7 +178,7 @@ class ReconvertFunctionImpl final : public TipComImplements<ITfFnReconversion> {
         std::make_unique<CandidateListCallbackImpl>(text_service_, range);
     *candidate_list =
         TipCandidateList::New(std::move(candidates), std::move(callback))
-            .Detach();
+            .detach();
     return S_OK;
   }
 

@@ -146,6 +146,22 @@ TEST_F(ComTest, ComQuery) {
   EXPECT_EQ(mock1->GetQICountAndReset(), 1);
 }
 
+TEST_F(ComTest, ComCopy) {
+  wil::com_ptr_nothrow<IMock1> mock1(MakeComPtr<Mock>());
+  EXPECT_TRUE(mock1);
+  EXPECT_EQ(mock1->Test1(), S_OK);
+
+  wil::com_ptr_nothrow<IUnknown> unknown = ComCopy<IUnknown>(mock1);
+  EXPECT_TRUE(unknown);
+  EXPECT_EQ(mock1->GetQICountAndReset(), 0);
+
+  EXPECT_FALSE(ComCopy<IShellLink>(unknown));
+  EXPECT_EQ(mock1->GetQICountAndReset(), 1);
+
+  IUnknown *null = nullptr;
+  EXPECT_FALSE(ComCopy<IUnknown>(null));
+}
+
 TEST(ComBSTRTest, MakeUniqueBSTR) {
   EXPECT_FALSE(MakeUniqueBSTR(nullptr).is_valid());
   wil::unique_bstr empty_string = MakeUniqueBSTR(L"");

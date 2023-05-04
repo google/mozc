@@ -29,15 +29,12 @@
 
 #include "win32/tip/tip_ui_element_manager.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
-#include <atlstr.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <objbase.h>
+#include <wil/com.h>
 
 #include <cstdint>
+#include <utility>
 
 #include "base/win32/com.h"
 #include "protocol/candidates.pb.h"
@@ -54,19 +51,18 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
 namespace {
 
-using Microsoft::WRL::ComPtr;
-using mozc::commands::Output;
-using IndicatorInfo = mozc::commands::RendererCommand_IndicatorInfo;
+using ::mozc::commands::Output;
+using IndicatorInfo = ::mozc::commands::RendererCommand_IndicatorInfo;
 
-HRESULT BeginUI(const ComPtr<ITfUIElementMgr> &ui_element_manager,
-                const ComPtr<ITfUIElement> &ui_element, DWORD *new_element_id) {
+HRESULT BeginUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
+                const wil::com_ptr_nothrow<ITfUIElement> &ui_element,
+                DWORD *new_element_id) {
   BOOL show = FALSE;
   *new_element_id = TF_INVALID_UIELEMENTID;
   const HRESULT result = ui_element_manager->BeginUIElement(
-      ui_element.Get(), &show, new_element_id);
+      ui_element.get(), &show, new_element_id);
   if (FAILED(result)) {
     return result;
   }
@@ -74,9 +70,9 @@ HRESULT BeginUI(const ComPtr<ITfUIElementMgr> &ui_element_manager,
   return S_OK;
 }
 
-HRESULT EndUI(const ComPtr<ITfUIElementMgr> &ui_element_manager,
+HRESULT EndUI(const wil::com_ptr_nothrow<ITfUIElementMgr> &ui_element_manager,
               DWORD element_id) {
-  ComPtr<ITfUIElement> element;
+  wil::com_ptr_nothrow<ITfUIElement> element;
   ui_element_manager->GetUIElement(element_id, &element);
   if (element) {
     element->Show(FALSE);
@@ -92,7 +88,7 @@ ITfUIElement *TipUiElementManager::GetElement(UIElementFlags element) const {
   if (it == ui_element_map_.end()) {
     return nullptr;
   }
-  return it->second.element.Get();
+  return it->second.element.get();
 }
 
 DWORD TipUiElementManager::GetElementId(UIElementFlags element) const {
@@ -103,16 +99,14 @@ DWORD TipUiElementManager::GetElementId(UIElementFlags element) const {
   return it->second.id;
 }
 
-HRESULT TipUiElementManager::OnUpdate(
-    const ComPtr<TipTextService> &text_service,
-    const ComPtr<ITfContext> &context) {
+HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
+                                      ITfContext *context) {
   auto ui_element_manager =
       ComQuery<ITfUIElementMgr>(text_service->GetThreadManager());
   if (!ui_element_manager) {
     return E_FAIL;
   }
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context.Get());
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     return E_FAIL;
   }
@@ -141,7 +135,7 @@ HRESULT TipUiElementManager::OnUpdate(
   }
 
   DWORD suggest_ui_id = TF_INVALID_UIELEMENTID;
-  ComPtr<ITfUIElement> suggest_ui;
+  wil::com_ptr_nothrow<ITfUIElement> suggest_ui;
   {
     const UiElementMap::const_iterator it =
         ui_element_map_.find(kSuggestWindow);
@@ -151,7 +145,7 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
   DWORD candidate_ui_id = TF_INVALID_UIELEMENTID;
-  ComPtr<ITfUIElement> candidate_ui;
+  wil::com_ptr_nothrow<ITfUIElement> candidate_ui;
   {
     const UiElementMap::const_iterator it =
         ui_element_map_.find(kCandidateWindow);
@@ -161,7 +155,7 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
   DWORD indicator_ui_id = TF_INVALID_UIELEMENTID;
-  ComPtr<ITfUIElement> indicator_ui;
+  wil::com_ptr_nothrow<ITfUIElement> indicator_ui;
   {
     const UiElementMap::const_iterator it =
         ui_element_map_.find(kIndicatorWindow);
@@ -234,40 +228,43 @@ HRESULT TipUiElementManager::OnUpdate(
   }
 
   if (suggest_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> suggest_ui = TipUiElementConventional::New(
-          TipUiElementConventional::kUnobservableSuggestWindow, text_service,
-          context);
+    wil::com_ptr_nothrow<ITfUIElement> suggest_ui =
+        TipUiElementConventional::New(
+            TipUiElementConventional::kUnobservableSuggestWindow, text_service,
+            context);
     if (suggest_ui) {
       DWORD new_suggest_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(
               BeginUI(ui_element_manager, suggest_ui, &new_suggest_ui_id))) {
-        ui_element_map_[kSuggestWindow].element = suggest_ui;
+        ui_element_map_[kSuggestWindow].element = std::move(suggest_ui);
         ui_element_map_[kSuggestWindow].id = new_suggest_ui_id;
         suggest_ui_id = new_suggest_ui_id;
       }
     }
   }
   if (candidate_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> candidate_ui = TipUiElementConventional::New(
-          TipUiElementConventional::kCandidateWindow, text_service, context);
+    wil::com_ptr_nothrow<ITfUIElement> candidate_ui =
+        TipUiElementConventional::New(
+            TipUiElementConventional::kCandidateWindow, text_service, context);
     if (candidate_ui) {
       DWORD new_candidate_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(BeginUI(ui_element_manager, candidate_ui,
                             &new_candidate_ui_id))) {
-        ui_element_map_[kCandidateWindow].element = candidate_ui;
+        ui_element_map_[kCandidateWindow].element = std::move(candidate_ui);
         ui_element_map_[kCandidateWindow].id = new_candidate_ui_id;
         candidate_ui_id = new_candidate_ui_id;
       }
     }
   }
   if (indicator_mode == kUIBeginAndUpdate) {
-    ComPtr<ITfUIElement> indicator_ui = TipUiElementConventional::New(
-          TipUiElementConventional::KIndicatorWindow, text_service, context);
+    wil::com_ptr_nothrow<ITfUIElement> indicator_ui =
+        TipUiElementConventional::New(
+            TipUiElementConventional::KIndicatorWindow, text_service, context);
     if (indicator_ui) {
       DWORD new_indicator_ui_id = TF_INVALID_UIELEMENTID;
       if (SUCCEEDED(BeginUI(ui_element_manager, indicator_ui,
                             &new_indicator_ui_id))) {
-        ui_element_map_[kIndicatorWindow].element = indicator_ui;
+        ui_element_map_[kIndicatorWindow].element = std::move(indicator_ui);
         ui_element_map_[kIndicatorWindow].id = new_indicator_ui_id;
         candidate_ui_id = new_indicator_ui_id;
       }
@@ -286,9 +283,8 @@ HRESULT TipUiElementManager::OnUpdate(
   return S_OK;
 }
 
-bool TipUiElementManager::IsVisible(
-    const ComPtr<ITfUIElementMgr> &ui_element_manager,
-    UIElementFlags element) const {
+bool TipUiElementManager::IsVisible(ITfUIElementMgr *ui_element_manager,
+                                    UIElementFlags element) const {
   if (ui_element_manager == nullptr) {
     return false;
   }

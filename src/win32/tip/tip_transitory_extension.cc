@@ -29,28 +29,25 @@
 
 #include "win32/tip/tip_transitory_extension.h"
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
+#include <wil/com.h>
+#include <wil/resource.h>
+#include <windows.h>
+
+#include "base/win32/com.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using ATL::CComPtr;
-using ATL::CComQIPtr;
-using ATL::CComVariant;
-
-CComPtr<ITfDocumentMgr> TipTransitoryExtension::ToParentDocumentIfExists(
+wil::com_ptr_nothrow<ITfDocumentMgr>
+TipTransitoryExtension::ToParentDocumentIfExists(
     ITfDocumentMgr *document_manager) {
   if (document_manager == nullptr) {
     return nullptr;
   }
 
-  CComPtr<ITfContext> context;
+  wil::com_ptr_nothrow<ITfContext> context;
   if (FAILED(document_manager->GetTop(&context))) {
     return document_manager;
   }
@@ -68,19 +65,19 @@ CComPtr<ITfDocumentMgr> TipTransitoryExtension::ToParentDocumentIfExists(
     return document_manager;
   }
 
-  CComQIPtr<ITfCompartmentMgr> compartment_mgr(document_manager);
+  auto compartment_mgr = ComQuery<ITfCompartmentMgr>(document_manager);
   if (!compartment_mgr) {
     return document_manager;
   }
 
-  CComPtr<ITfCompartment> compartment;
+  wil::com_ptr_nothrow<ITfCompartment> compartment;
   if (FAILED(compartment_mgr->GetCompartment(
           GUID_COMPARTMENT_TRANSITORYEXTENSION_PARENT, &compartment))) {
     return document_manager;
   }
 
-  CComVariant var;
-  if (FAILED(compartment->GetValue(&var))) {
+  wil::unique_variant var;
+  if (FAILED(compartment->GetValue(var.reset_and_addressof()))) {
     return document_manager;
   }
 
@@ -88,7 +85,7 @@ CComPtr<ITfDocumentMgr> TipTransitoryExtension::ToParentDocumentIfExists(
     return document_manager;
   }
 
-  CComQIPtr<ITfDocumentMgr> parent_document_mgr = var.punkVal;
+  auto parent_document_mgr = ComQuery<ITfDocumentMgr>(var.punkVal);
   if (!parent_document_mgr) {
     return document_manager;
   }
@@ -96,19 +93,20 @@ CComPtr<ITfDocumentMgr> TipTransitoryExtension::ToParentDocumentIfExists(
   return parent_document_mgr;
 }
 
-CComPtr<ITfContext> TipTransitoryExtension::ToParentContextIfExists(
-    ITfContext *context) {
+wil::com_ptr_nothrow<ITfContext>
+TipTransitoryExtension::ToParentContextIfExists(ITfContext *context) {
   if (context == nullptr) {
     return nullptr;
   }
 
-  CComPtr<ITfDocumentMgr> document_mgr;
+  wil::com_ptr_nothrow<ITfDocumentMgr> document_mgr;
   if (FAILED(context->GetDocumentMgr(&document_mgr))) {
     return context;
   }
 
-  CComPtr<ITfContext> parent_context;
-  if (FAILED(ToParentDocumentIfExists(document_mgr)->GetTop(&parent_context))) {
+  wil::com_ptr_nothrow<ITfContext> parent_context;
+  if (FAILED(ToParentDocumentIfExists(document_mgr.get())
+                 ->GetTop(&parent_context))) {
     return context;
   }
   if (!parent_context) {

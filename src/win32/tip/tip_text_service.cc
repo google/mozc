@@ -689,7 +689,7 @@ class TipTextServiceImpl
       return E_INVALIDARG;
     }
 
-    *attributes = MakeComPtr<TipEnumDisplayAttributes>().Detach();
+    *attributes = MakeComPtr<TipEnumDisplayAttributes>().detach();
     return S_OK;
   }
   virtual HRESULT STDMETHODCALLTYPE
@@ -701,9 +701,9 @@ class TipTextServiceImpl
     // Compare the given GUID with known ones and creates a new instance of the
     // specified display attribute.
     if (::IsEqualGUID(guid, TipDisplayAttributeInput::guid())) {
-      *attribute = MakeComPtr<TipDisplayAttributeInput>().Detach();
+      *attribute = MakeComPtr<TipDisplayAttributeInput>().detach();
     } else if (::IsEqualGUID(guid, TipDisplayAttributeConverted::guid())) {
-      *attribute = MakeComPtr<TipDisplayAttributeConverted>().Detach();
+      *attribute = MakeComPtr<TipDisplayAttributeConverted>().detach();
     } else {
       *attribute = nullptr;
       return E_INVALIDARG;
@@ -1056,7 +1056,7 @@ class TipTextServiceImpl
       // Do not care about nullptr context.
       return;
     }
-    if (!private_context_map_.contains(context)) {
+    if (private_context_map_.contains(context)) {
       return;
     }
 
@@ -1185,11 +1185,11 @@ class TipTextServiceImpl
                              ComQueryHR<ITfCompartmentMgr>(thread_mgr_));
 
     RETURN_IF_FAILED_HRESULT(AdviseCompartmentEventSink(
-        manager.Get(), GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
+        manager.get(), GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
         &keyboard_openclose_cookie_));
 
     return AdviseCompartmentEventSink(
-        manager.Get(), GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+        manager.get(), GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
         &keyboard_inputmode_conversion_cookie_);
   }
 
@@ -1201,10 +1201,10 @@ class TipTextServiceImpl
     ASSIGN_OR_RETURN_HRESULT(auto manager,
                              ComQueryHR<ITfCompartmentMgr>(thread_mgr_));
 
-    UnadviseCompartmentEventSink(manager.Get(),
+    UnadviseCompartmentEventSink(manager.get(),
                                  GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
                                  &keyboard_openclose_cookie_);
-    UnadviseCompartmentEventSink(manager.Get(),
+    UnadviseCompartmentEventSink(manager.get(),
                                  GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
                                  &keyboard_inputmode_conversion_cookie_);
 

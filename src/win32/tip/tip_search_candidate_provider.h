@@ -32,7 +32,7 @@
 
 #include <guiddef.h>
 #include <unknwn.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 namespace mozc {
 namespace win32 {
@@ -46,7 +46,7 @@ class TipSearchCandidateProvider {
       delete;
 
   // Returns a COM object that implements ITfFnSearchCandidateProvider.
-  static Microsoft::WRL::ComPtr<IUnknown> New();
+  static wil::com_ptr_nothrow<IUnknown> New();
   static const IID& GetIID();
 };
 

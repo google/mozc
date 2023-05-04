@@ -31,46 +31,38 @@
 
 #include <msctf.h>
 #include <objbase.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
+#include "base/win32/com.h"
 #include "win32/base/tsf_profile.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-using Microsoft::WRL::ComPtr;
-
-ComPtr<ITfComposition> TipCompositionUtil::GetComposition(
-    const ComPtr<ITfContext> &context, TfEditCookie edit_cookie){
-  ComPtr<ITfCompositionView> composition_view =
+wil::com_ptr_nothrow<ITfComposition> TipCompositionUtil::GetComposition(
+    ITfContext *context, TfEditCookie edit_cookie) {
+  wil::com_ptr_nothrow<ITfCompositionView> composition_view =
       GetCompositionView(context, edit_cookie);
-  if (!composition_view) {
-    return nullptr;
-  }
-  ComPtr<ITfComposition> composition;
-  if (FAILED(composition_view.As(&composition))) {
-    return nullptr;
-  }
-  return composition;
+  return ComCopy<ITfComposition>(composition_view);
 }
 
-ComPtr<ITfCompositionView> TipCompositionUtil::GetCompositionView(
-    const ComPtr<ITfContext> &context, TfEditCookie edit_cookie) {
-  ComPtr<ITfContextComposition> context_composition;
-  if (FAILED(context.As(&context_composition))) {
+wil::com_ptr_nothrow<ITfCompositionView> TipCompositionUtil::GetCompositionView(
+    ITfContext *context, TfEditCookie edit_cookie) {
+  auto context_composition = ComQuery<ITfContextComposition>(context);
+  if (!context_composition) {
     return nullptr;
   }
 
-  ComPtr<IEnumITfCompositionView> enum_composition;
+  wil::com_ptr_nothrow<IEnumITfCompositionView> enum_composition;
   if (FAILED(context_composition->FindComposition(edit_cookie, nullptr,
                                                   &enum_composition))) {
     return nullptr;
   }
 
   while (true) {
-    ComPtr<ITfCompositionView> composition_view;
+    wil::com_ptr_nothrow<ITfCompositionView> composition_view;
     ULONG num_fetched = 0;
     if (enum_composition->Next(1, &composition_view, &num_fetched) != S_OK) {
       return nullptr;
@@ -97,20 +89,20 @@ HRESULT TipCompositionUtil::ClearDisplayAttributes(ITfContext *context,
   HRESULT result = S_OK;
 
   // Retrieve the current composition range.
-  ComPtr<ITfRange> composition_range;
+  wil::com_ptr_nothrow<ITfRange> composition_range;
   result = composition->GetRange(&composition_range);
   if (FAILED(result)) {
     return result;
   }
 
   // Get out the display attribute property
-  ComPtr<ITfProperty> display_attribute;
+  wil::com_ptr_nothrow<ITfProperty> display_attribute;
   result = context->GetProperty(GUID_PROP_ATTRIBUTE, &display_attribute);
   if (FAILED(result)) {
     return result;
   }
   // Clear existing attributes.
-  result = display_attribute->Clear(write_cookie, composition_range.Get());
+  result = display_attribute->Clear(write_cookie, composition_range.get());
   if (FAILED(result)) {
     return result;
   }

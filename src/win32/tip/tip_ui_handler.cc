@@ -29,12 +29,8 @@
 
 #include "win32/tip/tip_ui_handler.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <cstdint>
 
@@ -50,8 +46,7 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-using mozc::commands::CompositionMode;
+using ::mozc::commands::CompositionMode;
 
 void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
                                     ITfDocumentMgr *document_manager) {
@@ -78,10 +73,10 @@ void UpdateLanguageBarOnFocusChange(TipTextService *text_service,
       // as if |ImmAssociateContext(window_handle, nullptr)| was called.
       disabled = true;
     } else {
-      ComPtr<ITfContext> context;
+      wil::com_ptr_nothrow<ITfContext> context;
       result = document_manager->GetTop(&context);
       if (SUCCEEDED(result)) {
-        disabled = TipStatus::IsDisabledContext(context);
+        disabled = TipStatus::IsDisabledContext(context.get());
       }
     }
   }

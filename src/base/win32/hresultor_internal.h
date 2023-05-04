@@ -36,9 +36,10 @@
 #include <type_traits>
 #include <utility>
 
+#include "base/win32/hresult.h"
+
 namespace mozc::win32 {
 
-class HResult;
 template <typename T>
 class HResultOr;
 

@@ -30,8 +30,8 @@
 #include "win32/tip/tip_keyevent_handler.h"
 
 #include <msctf.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
 #include <cstdint>
 #include <memory>
@@ -60,10 +60,9 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-using mozc::commands::CompositionMode;
-using mozc::commands::Context;
-using mozc::commands::SessionCommand;
+using ::mozc::commands::CompositionMode;
+using ::mozc::commands::Context;
+using ::mozc::commands::SessionCommand;
 
 // Defined in the following white paper.
 // http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx
@@ -141,7 +140,7 @@ void FillMozcContextCommon(TipTextService *text_service, ITfContext *context,
   }
   mozc_context->set_revision(
       text_service->GetThreadContext()->GetFocusRevision());
-  ComPtr<ITfContextView> context_view;
+  wil::com_ptr_nothrow<ITfContextView> context_view;
   if (FAILED(context->GetActiveView(&context_view))) {
     return;
   }
@@ -391,7 +390,7 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   if (use_pending_output) {
     // In this case, we have a pending output. So no need to call
     // KeyEventHandler::ImeToAsciiEx.
-    temporal_output.CopyFrom(private_context->GetDeleter()->pending_output());
+    temporal_output = private_context->GetDeleter()->pending_output();
   } else if (open && is_key_down &&
              (vk.wide_char() == kTouchKeyboardPreviousPage)) {
     // Handle PrevPage button on the on-screen keyboard.

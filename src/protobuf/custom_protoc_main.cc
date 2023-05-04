@@ -39,7 +39,6 @@
 int main(int argc, char* argv[]) {
   google::protobuf::compiler::CommandLineInterface cli;
   google::protobuf::compiler::cpp::CppGenerator cpp_generator;
-
   cli.RegisterGenerator("--cpp_out", "--cpp_opt", &cpp_generator,
                         "Generate C++ header and source.");
 

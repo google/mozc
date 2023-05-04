@@ -29,28 +29,31 @@
 
 #include "win32/tip/tip_range_util.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
+#include <inputscope.h>
+#include <msctf.h>
+#include <wil/com.h>
+#include <wil/resource.h>
+#include <windows.h>
 
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <string>
+#include <vector>
+
+#include "base/win32/com.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 namespace {
 
-using ATL::CComPtr;
-using ATL::CComQIPtr;
-using ATL::CComVariant;
-
 // GUID_PROP_INPUTSCOPE
-GUID kGuidPropInputscope = {0x1713dd5a,
-                            0x68e7,
-                            0x4a5b,
-                            {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
+constexpr GUID kGuidPropInputscope = {
+    0x1713dd5a,
+    0x68e7,
+    0x4a5b,
+    {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
 
 }  // namespace
 
@@ -108,7 +111,7 @@ HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
 
   // Create a clone of |range| so that we can move the start position while
   // reading the text via ITfRange::GetText with TF_TF_MOVESTART flag.
-  CComPtr<ITfRange> range_view;
+  wil::com_ptr_nothrow<ITfRange> range_view;
   if (FAILED(range->Clone(&range_view))) {
     return E_FAIL;
   }
@@ -162,13 +165,13 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   input_scopes->clear();
 
   HRESULT result = S_OK;
-  CComPtr<ITfContext> context;
+  wil::com_ptr_nothrow<ITfContext> context;
   result = range->GetContext(&context);
   if (FAILED(result)) {
     return result;
   }
 
-  CComPtr<ITfReadOnlyProperty> readonly_property;
+  wil::com_ptr_nothrow<ITfReadOnlyProperty> readonly_property;
   result = context->GetAppProperty(kGuidPropInputscope, &readonly_property);
   if (FAILED(result)) {
     return result;
@@ -176,8 +179,9 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   if (!readonly_property) {
     return E_FAIL;
   }
-  CComVariant variant;
-  result = readonly_property->GetValue(read_cookie, range, &variant);
+  wil::unique_variant variant;
+  result = readonly_property->GetValue(read_cookie, range,
+                                       variant.reset_and_addressof());
   if (FAILED(result)) {
     return result;
   }
@@ -185,7 +189,7 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
     return S_OK;
   }
 
-  CComQIPtr<ITfInputScope> input_scope = variant.punkVal;
+  auto input_scope = ComQuery<ITfInputScope>(variant.punkVal);
   InputScope *input_scopes_buffer = nullptr;
   UINT num_input_scopes = 0;
   result = input_scope->GetInputScopes(&input_scopes_buffer, &num_input_scopes);
@@ -246,7 +250,7 @@ HRESULT TipRangeUtil::GetTextExt(ITfContextView *context_view,
     // ITfContextView::GetRangeFromPoint here.
     const POINT dummy_point = {std::numeric_limits<LONG>::min(),
                                std::numeric_limits<LONG>::min()};
-    CComPtr<ITfRange> dummy_range;
+    wil::com_ptr_nothrow<ITfRange> dummy_range;
     const HRESULT next_hr = context_view->GetRangeFromPoint(
         read_cookie, &dummy_point, 0, &dummy_range);
     if (next_hr == TF_E_NOLAYOUT) {
