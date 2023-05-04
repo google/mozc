@@ -297,6 +297,7 @@ mozc_cc_library(
         ":tip_query_provider",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -316,8 +317,9 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        "//base:port",
+        "//base/win32:com",
         "//win32/base:tsf_profile",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

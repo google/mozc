@@ -30,22 +30,13 @@
 #ifndef MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
 #define MOZC_WIN32_TIP_TIP_COMPOSITION_UTIL_H_
 
-#include <windows.h>
-
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
-#include <wrl/client.h>
-
-#include "base/port.h"
+#include <wil/com.h>
+#include <windef.h>
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipCompositionUtil {
  public:
@@ -55,15 +46,13 @@ class TipCompositionUtil {
 
   // Returns composition object if there is a composition which belongs
   // to Mozc in |context|. Otherwise returns nullptr.
-  static Microsoft::WRL::ComPtr<ITfComposition> GetComposition(
-      const Microsoft::WRL::ComPtr<ITfContext> &context,
-      TfEditCookie edit_cookie);
+  static wil::com_ptr_nothrow<ITfComposition> GetComposition(
+      ITfContext *context, TfEditCookie edit_cookie);
 
   // Returns composition view object if there is a composition which belongs
   // to Mozc in |context|. Otherwise returns nullptr.
-  static Microsoft::WRL::ComPtr<ITfCompositionView> GetCompositionView(
-      const Microsoft::WRL::ComPtr<ITfContext> &context,
-      TfEditCookie edit_cookie);
+  static wil::com_ptr_nothrow<ITfCompositionView> GetCompositionView(
+      ITfContext *context, TfEditCookie edit_cookie);
 
   // Removes display attributes from |composition|. Returns the result.
   static HRESULT ClearDisplayAttributes(ITfContext *context,

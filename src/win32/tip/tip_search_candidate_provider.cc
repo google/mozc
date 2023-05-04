@@ -33,7 +33,7 @@
 #include <objbase.h>
 #include <oleauto.h>
 #include <unknwn.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <memory>
 #include <string>
@@ -57,8 +57,6 @@ bool IsIIDOf<ITfFnSearchCandidateProvider>(REFIID riid) {
 namespace tsf {
 namespace {
 
-using Microsoft::WRL::ComPtr;
-
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 constexpr wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
@@ -73,7 +71,7 @@ class SearchCandidateProviderImpl final
       : provider_(std::move(provider)) {}
 
   // The ITfFunction interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
+  STDMETHODIMP GetDisplayName(BSTR *name) override {
     if (name == nullptr) {
       return E_INVALIDARG;
     }
@@ -82,8 +80,8 @@ class SearchCandidateProviderImpl final
   }
 
   // The ITfFnSearchCandidateProvider interface method.
-  virtual HRESULT STDMETHODCALLTYPE GetSearchCandidates(
-      BSTR query, BSTR application_id, ITfCandidateList **candidate_list) {
+  STDMETHODIMP GetSearchCandidates(BSTR query, BSTR application_id,
+                                   ITfCandidateList **candidate_list) override {
     if (candidate_list == nullptr) {
       return E_INVALIDARG;
     }
@@ -96,8 +94,8 @@ class SearchCandidateProviderImpl final
     return S_OK;
   }
 
-  virtual HRESULT STDMETHODCALLTYPE SetResult(BSTR query, BSTR application_id,
-                                              BSTR result) {
+  STDMETHODIMP SetResult(BSTR query, BSTR application_id,
+                         BSTR result) override {
     // Not implemented.
     return S_OK;
   }
@@ -108,7 +106,7 @@ class SearchCandidateProviderImpl final
 }  // namespace
 
 // static
-ComPtr<IUnknown> TipSearchCandidateProvider::New() {
+wil::com_ptr_nothrow<IUnknown> TipSearchCandidateProvider::New() {
   std::unique_ptr<TipQueryProvider> provider = TipQueryProvider::Create();
   if (!provider) {
     return nullptr;
