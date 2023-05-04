@@ -169,6 +169,7 @@ mozc_cc_library(
         ":tip_ui_element_delegate",
         "//base:logging",
         "//base/win32:com",
+        "//base/win32:com_implements",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -179,7 +180,10 @@ mozc_cc_library(
     hdrs = ["tip_transitory_extension.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
+    deps = [
+        "//base/win32:com",
+        "@com_microsoft_wil//:wil",
+    ],
 )
 
 mozc_cc_library(
@@ -219,35 +223,51 @@ mozc_cc_library(
         "//win32/base:keyboard",
         "//win32/base:keyevent_handler",
         "//win32/base:surrogate_pair_observer",
+        "@com_microsoft_wil//:wil",
+    ],
+)
+
+mozc_cc_library(
+    name = "tip_lang_bar_callback",
+    hdrs = ["tip_lang_bar_callback.h"],
+)
+
+mozc_cc_library(
+    name = "tip_lang_bar_menu",
+    srcs = ["tip_lang_bar_menu.cc"],
+    hdrs = ["tip_lang_bar_menu.h"],
+    copts = copts_wtl(),
+    features = features_gdi(),
+    deps = [
+        ":tip_dll_module",
+        ":tip_lang_bar_callback",
+        ":tip_resource",
+        "//base:system_util",
+        "//base/win32:com_implements",
+        "//third_party/wtl",
+        "//win32/base:text_icon",
+        "//win32/base:tsf_profile",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
 mozc_cc_library(
     name = "tip_lang_bar",
-    srcs = [
-        "tip_lang_bar.cc",
-        "tip_lang_bar_menu.cc",
-    ],
-    hdrs = [
-        "tip_lang_bar.h",
-        "tip_lang_bar_menu.h",
-    ],
-    copts = copts_wtl(),
-    features = features_gdi(),
+    srcs = ["tip_lang_bar.cc"],
+    hdrs = ["tip_lang_bar.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_dll_module",
+        ":tip_lang_bar_callback",
+        ":tip_lang_bar_menu",
         ":tip_resource",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
-        "//base/win32:com_implements",
+        "//base/win32:com",
+        "//base/win32:hresultor",
         "//protocol:commands_cc_proto",
-        "//third_party/wtl",
-        "//win32/base:text_icon",
-        "//win32/base:tsf_profile",
-        "@com_google_absl//absl/base:core_headers",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -309,7 +329,10 @@ mozc_cc_library(
     hdrs = ["tip_range_util.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
+    deps = [
+        "//base/win32:com",
+        "@com_microsoft_wil//:wil",
+    ],
 )
 
 mozc_cc_library(
@@ -390,8 +413,8 @@ mozc_cc_library(
         ":tip_resource",
         ":tip_text_service",
         "//base:logging",
-        "//base:util",
         "//base/win32:com",
+        "//base/win32:wide_char",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
@@ -650,6 +673,7 @@ mozc_cc_test(
         ":tip_display_attributes",
         ":tip_dll_module",
         "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -663,6 +687,7 @@ mozc_cc_test(
         ":tip_dll_module",
         ":tip_enum_display_attributes",
         "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

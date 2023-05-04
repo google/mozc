@@ -30,14 +30,9 @@
 #ifndef MOZC_WIN32_TIP_TIP_TRANSITORY_EXTENSION_H_
 #define MOZC_WIN32_TIP_TIP_TRANSITORY_EXTENSION_H_
 
-#include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <msctf.h>
-
-#include "base/port.h"
+#include <wil/com.h>
+#include <windows.h>
 
 namespace mozc {
 namespace win32 {
@@ -60,12 +55,13 @@ class TipTransitoryExtension {
 
   // Returns the parent (full-text-store) document manager if exists.
   // Returns |document_manager| otherwise.
-  static ATL::CComPtr<ITfDocumentMgr> ToParentDocumentIfExists(
+  static wil::com_ptr_nothrow<ITfDocumentMgr> ToParentDocumentIfExists(
       ITfDocumentMgr *document_manager);
 
   // Returns the parent (full-text-store) context if exists.
   // Returns |context| otherwise.
-  static ATL::CComPtr<ITfContext> ToParentContextIfExists(ITfContext *context);
+  static wil::com_ptr_nothrow<ITfContext> ToParentContextIfExists(
+      ITfContext *context);
 };
 
 }  // namespace tsf

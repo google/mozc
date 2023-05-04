@@ -30,20 +30,16 @@
 #ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 #define MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 
-#include <unknwn.h>
-#include <windows.h>
-#include <wrl/client.h>
-
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlcom.h>
 #include <ctffunc.h>
 #include <msctf.h>
+#include <unknwn.h>
+#include <wil/com.h>
+#include <windows.h>
 
 #include <cstdint>
 
-#include "base/port.h"
+#include "win32/tip/tip_lang_bar_callback.h"
+#include "win32/tip/tip_lang_bar_menu.h"
 
 namespace mozc {
 namespace win32 {
@@ -51,45 +47,15 @@ namespace tsf {
 
 class TipSystemLangBarMenu;
 
-class TipLangBarCallback : public IUnknown {
- public:
-  enum ItemId {
-    // Cancel something for general purpose
-    kCancel = 1,
-
-    // For input mode selection
-    kDirect = 10,
-    kHiragana = 11,
-    kFullKatakana = 12,
-    kHalfAlphanumeric = 13,
-    kFullAlphanumeric = 14,
-    kHalfKatakana = 15,
-
-    // Tool menu
-    kProperty = 20,
-    kDictionary = 21,
-    kWordRegister = 22,
-
-    // Help Menu
-    kHelp = 30,
-    kAbout = 31,
-
-    // Shortcut commands
-    kReconversion = 41,
-  };
-
-  virtual ~TipLangBarCallback();
-
-  virtual STDMETHODIMP OnMenuSelect(ItemId menu_id) = 0;
-  virtual STDMETHODIMP OnItemClick(const wchar_t *description) = 0;
-};
-
 class TipLangBar {
  public:
-  TipLangBar();
+  TipLangBar()
+      : tool_button_menu_(nullptr),
+        help_menu_(nullptr),
+        help_menu_cookie_(TF_INVALID_COOKIE) {}
   TipLangBar(const TipLangBar &) = delete;
   TipLangBar &operator=(const TipLangBar &) = delete;
-  ~TipLangBar();
+  ~TipLangBar() = default;
 
   // initialize and uninitialize ImeLangBarItemButton object.
   HRESULT InitLangBar(TipLangBarCallback *text_service);
@@ -108,21 +74,21 @@ class TipLangBar {
   //     around refcount on Windows 8 release preview. b/6106437
   // NOTE: Currently we cannot use the same logic for Windows 7 due to another
   //     crash issue as filed as b/6641460.
-  Microsoft::WRL::ComPtr<ITfLangBarItemMgr> lang_bar_item_mgr_for_win8_;
+  wil::com_ptr_nothrow<ITfLangBarItemMgr> lang_bar_item_mgr_for_win8_;
 
   // Represents the button menu in the language bar.
   // NOTE: ImeToggleButtonMenu inherits ITfLangBarItemButton and ITfSource,
   // which inherit IUnknown. Because of this, using CComPtr<ImeIconButtonMenu>
   // causes a compile error due to the ambiguous overload resolution.
   // To avoid the compile error we use CComPtr<ITfLangBarItemButton> instead.
-  Microsoft::WRL::ComPtr<ITfLangBarItemButton> input_button_menu_;
-  Microsoft::WRL::ComPtr<ITfLangBarItemButton> input_mode_button_for_win8_;
+  wil::com_ptr_nothrow<TipLangBarToggleButton> input_button_menu_;
+  wil::com_ptr_nothrow<TipLangBarToggleButton> input_mode_button_for_win8_;
 
   // Represents the tool button menu in the language bar.
-  Microsoft::WRL::ComPtr<ITfLangBarItemButton> tool_button_menu_;
+  wil::com_ptr_nothrow<TipLangBarMenuButton> tool_button_menu_;
 
   // Represents the help menu in the system language bar.
-  Microsoft::WRL::ComPtr<TipSystemLangBarMenu> help_menu_;
+  wil::com_ptr_nothrow<TipSystemLangBarMenu> help_menu_;
 
   // The cookie issued for installing ITfSystemLangBarItemSink of help_menu_.
   DWORD help_menu_cookie_;

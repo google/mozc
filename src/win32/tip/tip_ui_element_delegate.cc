@@ -32,7 +32,6 @@
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
-#include <atlcom.h>
 #include <atlstr.h>
 #include <msctf.h>
 #include <wil/com.h>
@@ -43,8 +42,8 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/win32/com.h"
+#include "base/win32/wide_char.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -57,16 +56,13 @@
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
 namespace {
 
-using ATL::CComBSTR;
-using ATL::CComVariant;
-using ATL::CStringW;
-using mozc::commands::CandidateList;
-using mozc::commands::Output;
-using mozc::commands::Status;
-using IndicatorInfo = mozc::commands::RendererCommand_IndicatorInfo;
+using ::ATL::CStringW;
+using ::mozc::commands::CandidateList;
+using ::mozc::commands::Output;
+using ::mozc::commands::Status;
+using IndicatorInfo = ::mozc::commands::RendererCommand_IndicatorInfo;
 
 constexpr size_t kPageSize = 9;
 
@@ -229,10 +225,10 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         wil::com_ptr_nothrow<ITfCompartment> compartment;
         if (SUCCEEDED(compartment_mgr->GetCompartment(
                 kGuidCUASCandidateMessageCompartment, &compartment))) {
-          CComVariant var;
+          wil::unique_variant var;
           var.vt = VT_I4;
           var.lVal = shown_ ? TRUE : FALSE;
-          compartment->SetValue(text_service_->GetClientID(), &var);
+          compartment->SetValue(text_service_->GetClientID(), var.addressof());
         }
       }
       // TODO(yukawa): Update UI.
@@ -338,9 +334,8 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
     if (visible_index >= list.candidates_size()) {
       return E_FAIL;
     }
-    std::wstring wide_text;
-    Util::Utf8ToWide(list.candidates(visible_index).value(), &wide_text);
-    *text = CComBSTR(wide_text.size(), wide_text.data()).Detach();
+    std::wstring wide_text = Utf8ToWide(list.candidates(visible_index).value());
+    *text = MakeUniqueBSTR(wide_text).release();
     return S_OK;
   }
 
@@ -454,29 +449,27 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
       return E_INVALIDARG;
     }
 
-    CStringW msg = L"";
-
     TipPrivateContext *private_context =
         text_service_->GetPrivateContext(context_.get());
     if (private_context == nullptr) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
     if (!private_context->last_output().has_status()) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
     const Status &status = private_context->last_output().status();
     if (status.has_activated() && !status.activated()) {
-      msg = L"A";
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"A").release();
       return S_OK;
     }
     if (!status.has_mode()) {
-      *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+      *text = MakeUniqueBSTR(L"").release();
       return S_OK;
     }
 
+    std::wstring msg;
     switch (status.mode()) {
       case commands::DIRECT:
         DLOG(FATAL) << "Must not reach here.";
@@ -500,7 +493,7 @@ class TipUiElementDelegateImpl final : public TipUiElementDelegate {
         break;
     }
 
-    *text = CComBSTR(msg.GetLength(), msg.GetBuffer()).Detach();
+    *text = MakeUniqueBSTR(msg).release();
     return S_OK;
   }
 
