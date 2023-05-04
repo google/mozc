@@ -42,7 +42,7 @@
         ['OS=="win"', {
           'dependencies': [
               'com_test',
-              'hresultor_test',
+              'hresult_test',
           ],
         }],
       ],
@@ -79,9 +79,10 @@
           ],
         },
         {
-          'target_name': 'hresultor_test',
+          'target_name': 'hresult_test',
           'type': 'executable',
           'sources': [
+            'hresult_test.cc',
             'hresultor_test.cc',
           ],
           'dependencies': [

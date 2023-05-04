@@ -37,54 +37,13 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/win32/hresult.h"
 #include "base/win32/hresultor_internal.h"
 #include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 #include "absl/meta/type_traits.h"
 
 namespace mozc::win32 {
-
-template <class T>
-class HResultOr;
-
-// HResult is a conversion class from HRESULT to HResultOr<T>.
-// Constructing HResultOr<T> for error codes directly requires the type name for
-// T every time, so you can instead write HResult(E_FAIL) and it gets implicitly
-// converted to HResultOr<T>.
-class HResult {
- public:
-  HResult() = delete;
-  constexpr explicit HResult(const HRESULT hr) noexcept : hr_(hr) {}
-
-  // Implicitly converts to HRESULT. This implicit conversion is necessary for
-  // the RETURN_IF_FAILED_HRESULT macro to work both HRESULT and HResultOr<T>
-  // return types.
-  constexpr operator HRESULT() const noexcept  // NOLINT(runtime/explicit)
-  {
-    return hr_;
-  }
-
-  ABSL_MUST_USE_RESULT constexpr bool ok() const noexcept {
-    return SUCCEEDED(hr_);
-  }
-  constexpr HRESULT hr() const noexcept { return hr_; }
-
-  friend void swap(HResult& a, HResult& b) noexcept {
-    // std::swap will support the constexpr version from C++20.
-    std::swap(a.hr_, b.hr_);
-  }
-
- private:
-  HRESULT hr_;
-};
-
-// Helper function to construct HResultOr when T is convertible to HRESULT.
-// e.g.
-// HResultOr<int> result = HResultOk(42);
-template <typename U, typename T = std::decay_t<U>>
-constexpr HResultOr<T> HResultOk(U&& value) {
-  return HResultOr<T>(std::in_place, std::forward<U>(value));
-}
 
 // HResultOr<T> is a HRESULT version of absl::StatusOr<T>.
 // The templates used for constructor and assignment operators largely follow
@@ -385,7 +344,7 @@ class HResultOr : private hresultor_internal::HResultOrMoveAssignBase<T>,
     return std::forward<U>(default_value);
   }
 
-  friend void swap(HResultOr& a, HResultOr& b) noexcept(
+  friend void swap(HResultOr<T>& a, HResultOr<T>& b) noexcept(
       std::is_nothrow_swappable_v<T> &&
       std::is_nothrow_move_constructible_v<T>) {
     if (a.ok() && b.ok()) {
@@ -463,6 +422,14 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
   return b != a;
 }
 
+// Helper function to construct HResultOr when T is convertible to HRESULT.
+// e.g.
+// HResultOr<int> result = HResultOk(42);
+template <typename U, typename T = std::decay_t<U>>
+constexpr HResultOr<T> HResultOk(U&& value) {
+  return HResultOr<T>(std::in_place, std::forward<U>(value));
+}
+
 #define HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y) x##y
 #define HRESULTOR_MACRO_IMPL_CONCAT_(x, y) \
   HRESULTOR_MACRO_IMPL_CONCAT_INTERNAL_(x, y)
@@ -486,16 +453,6 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
   HRESULTOR_MACRO_IMPL_ASSIGN_OR_RETURN_HRESULT_(                             \
       HRESULTOR_MACRO_IMPL_CONCAT_(hresultor_assign_or_return_tmp, __LINE__), \
       lhs, (__VA_ARGS__))
-
-// RETURN_IF_FAILED_HRESULT Runs the statement and returns from the current
-// function if FAILED(statement) is true.
-#define RETURN_IF_FAILED_HRESULT(...)                            \
-  do {                                                           \
-    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);      \
-    if (ABSL_PREDICT_FALSE(!hresultor_macro_impl_tmp_hr.ok())) { \
-      return hresultor_macro_impl_tmp_hr;                        \
-    }                                                            \
-  } while (0)
 
 }  // namespace mozc::win32
 
