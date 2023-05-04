@@ -32,7 +32,7 @@
 
 #include <cstdint>
 
-const uint16_t kSJISToUCS2Table[] = {
+inline constexpr uint16_t kSJISToUCS2Table[] = {
     0x3000,  // { 0x81, 0x40 } "　"
     0x3001,  // { 0x81, 0x41 } "、"
     0x3002,  // { 0x81, 0x42 } "。"

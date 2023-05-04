@@ -33,15 +33,15 @@
 namespace mozc {
 namespace version {
 
-// Let a linker deduplicate the multiple definitions of kMozcVersion if any.
-constexpr const char kMozcVersion[] = "@MAJOR@.@MINOR@.@BUILD@.@REVISION@";
+inline constexpr const char kMozcVersion[] =
+    "@MAJOR@.@MINOR@.@BUILD@.@REVISION@";
 
-constexpr int kMozcVersionMajor = @MAJOR@;
-constexpr int kMozcVersionMinor = @MINOR@;
-constexpr int kMozcVersionBuildNumber = @BUILD@;
-constexpr int kMozcVersionRevision = @REVISION@;
+inline constexpr int kMozcVersionMajor = @MAJOR@;
+inline constexpr int kMozcVersionMinor = @MINOR@;
+inline constexpr int kMozcVersionBuildNumber = @BUILD@;
+inline constexpr int kMozcVersionRevision = @REVISION@;
 
-constexpr const char kMozcEngineVersion[] = "@ENGINE_VERSION@";
+inline constexpr const char kMozcEngineVersion[] = "@ENGINE_VERSION@";
 
 }  // namespace version
 }  // namespace mozc
