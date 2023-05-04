@@ -44,15 +44,14 @@
 #include <strsafe.h>
 // clang-format on
 
-#include <limits>
 #include <string>
 
 #include "base/win32/com_implements.h"
-#include "base/win32/win_util.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_dll_module.h"
 #include "win32/tip/tip_resource.h"
+#include "absl/base/casts.h"
 #include "absl/base/macros.h"
 
 namespace mozc {
@@ -598,7 +597,7 @@ STDMETHODIMP TipLangBarToggleButton::QueryInterface(REFIID interface_id,
 
   // Respond to IMozcLangBarToggleItem in addition to base.
   if (IsIIDOf<IMozcLangBarToggleItem>(interface_id)) {
-    *object = this;
+    *object = absl::implicit_cast<IMozcLangBarToggleItem *>(this);
     AddRef();
     return S_OK;
   }

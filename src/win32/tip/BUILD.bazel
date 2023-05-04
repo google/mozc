@@ -242,11 +242,11 @@ mozc_cc_library(
         ":tip_dll_module",
         ":tip_lang_bar_callback",
         ":tip_resource",
-        "//base:system_util",
         "//base/win32:com_implements",
         "//third_party/wtl",
         "//win32/base:text_icon",
         "//win32/base:tsf_profile",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
     ],
 )
