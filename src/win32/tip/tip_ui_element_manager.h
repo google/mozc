@@ -31,19 +31,15 @@
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
 
 #include <msctf.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
-#include <memory>
-
-#include "base/port.h"
+#include "win32/tip/tip_text_service.h"
 #include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
-
-class TipTextService;
 
 class TipUiElementManager {
  public:
@@ -60,17 +56,15 @@ class TipUiElementManager {
 
   ITfUIElement *GetElement(UIElementFlags element) const;
   DWORD GetElementId(UIElementFlags element) const;
-  HRESULT OnUpdate(const Microsoft::WRL::ComPtr<TipTextService> &text_service,
-                   const Microsoft::WRL::ComPtr<ITfContext> &context);
-  bool IsVisible(
-      const Microsoft::WRL::ComPtr<ITfUIElementMgr> &ui_element_manager,
-      UIElementFlags element) const;
+  HRESULT OnUpdate(TipTextService *text_service, ITfContext *context);
+  bool IsVisible(ITfUIElementMgr *ui_element_manager,
+                 UIElementFlags element) const;
 
  private:
   struct UIElementInfo {
     UIElementInfo() : id(TF_INVALID_UIELEMENTID) {}
     DWORD id;
-    Microsoft::WRL::ComPtr<ITfUIElement> element;
+    wil::com_ptr_nothrow<ITfUIElement> element;
   };
 
   using UiElementMap =

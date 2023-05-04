@@ -168,7 +168,8 @@ mozc_cc_library(
         ":tip_text_service",
         ":tip_ui_element_delegate",
         "//base:logging",
-        "//base/win32:com_implements",
+        "//base/win32:com",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -190,6 +191,7 @@ mozc_cc_library(
     deps = [
         ":tip_dll_module",
         "//base/win32:com",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -261,13 +263,13 @@ mozc_cc_library(
         ":tip_text_service",
         ":tip_thread_context",
         ":tip_ui_element_conventional",
-        "//base:port",
         "//base/win32:com",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//win32/base:input_state",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -393,6 +395,7 @@ mozc_cc_library(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -498,6 +501,7 @@ mozc_cc_library(
         "//protocol:renderer_cc_proto",
         "//renderer/win32:win32_renderer_client",
         "//win32/base:input_state",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -515,6 +519,7 @@ mozc_cc_library(
         ":tip_text_service",
         "//base/win32:com",
         "//base/win32:com_implements",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -553,6 +558,7 @@ mozc_cc_library(
         "//win32/base:deleter",
         "//win32/base:input_state",
         "//win32/base:string_util",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -581,6 +587,7 @@ mozc_cc_library(
         ":tip_transitory_extension",
         "//base/win32:com",
         "//win32/base:imm_reconvert_string",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -629,6 +636,7 @@ mozc_cc_test(
         ":tip_dll_module",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

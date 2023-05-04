@@ -31,8 +31,8 @@
 #define MOZC_WIN32_TIP_TIP_UI_ELEMENT_DELEGATE_H_
 
 #include <msctf.h>
+#include <wil/com.h>
 #include <windows.h>
-#include <wrl/client.h>
 
 #include <memory>
 
@@ -86,8 +86,8 @@ class TipUiElementDelegateFactory {
   };
 
   static std::unique_ptr<TipUiElementDelegate> Create(
-      const Microsoft::WRL::ComPtr<TipTextService> &text_service,
-      const Microsoft::WRL::ComPtr<ITfContext> &context, ElementType type);
+      wil::com_ptr_nothrow<TipTextService> text_service,
+      wil::com_ptr_nothrow<ITfContext> context, ElementType type);
 
   TipUiElementDelegateFactory() = delete;
   TipUiElementDelegateFactory(const TipUiElementDelegateFactory &) = delete;
