@@ -117,7 +117,7 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
@@ -256,7 +256,7 @@ bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
@@ -305,7 +305,7 @@ bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
@@ -524,7 +524,7 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(), edit_session_flag,
+      text_service->GetClientID(), edit_session.get(), edit_session_flag,
       &edit_session_result);
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
@@ -623,7 +623,7 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
@@ -891,7 +891,7 @@ bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(), get_text.Get(),
+  hr = context->RequestEditSession(text_service->GetClientID(), get_text.get(),
                                    TF_ES_SYNC | TF_ES_READ, &hr_session);
   if (FAILED(hr)) {
     return false;
@@ -913,7 +913,7 @@ bool TipEditSession::SetTextAsync(TipTextService *text_service,
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(), set_text.Get(),
+  hr = context->RequestEditSession(text_service->GetClientID(), set_text.get(),
                                    TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
                                    &hr_session);
   return SUCCEEDED(hr);

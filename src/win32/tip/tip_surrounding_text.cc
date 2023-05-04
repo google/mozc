@@ -295,7 +295,7 @@ bool TipSurroundingText::Get(TipTextService *text_service, ITfContext *context,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), updater.Get(), TF_ES_SYNC | TF_ES_READ,
+      text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READ,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -324,7 +324,7 @@ bool PrepareForReconversionTSF(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), updater.Get(), TF_ES_SYNC | TF_ES_READWRITE,
+      text_service->GetClientID(), updater.get(), TF_ES_SYNC | TF_ES_READWRITE,
       &edit_session_result);
   if (FAILED(hr)) {
     return false;
@@ -380,7 +380,7 @@ bool TipSurroundingText::DeletePrecedingText(
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = target_context->RequestEditSession(
-      text_service->GetClientID(), edit_session.Get(),
+      text_service->GetClientID(), edit_session.get(),
       TF_ES_SYNC | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;

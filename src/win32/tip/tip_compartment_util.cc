@@ -75,7 +75,7 @@ HRESULT TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
-  return Set(ComQuery<ITfCompartmentMgr>(thread_manager).Get(),
+  return Set(ComQuery<ITfCompartmentMgr>(thread_manager).get(),
              compartment_guid, client_id, std::move(data));
 }
 
@@ -83,7 +83,7 @@ HRESULT TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
-  return Set(ComQuery<ITfCompartmentMgr>(document_manager).Get(),
+  return Set(ComQuery<ITfCompartmentMgr>(document_manager).get(),
              compartment_guid, client_id, std::move(data));
 }
 
@@ -91,7 +91,7 @@ HRESULT TipCompartmentUtil::Set(ITfContext *context,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
-  return Set(ComQuery<ITfCompartmentMgr>(context).Get(), compartment_guid,
+  return Set(ComQuery<ITfCompartmentMgr>(context).get(), compartment_guid,
              client_id, std::move(data));
 }
 
@@ -114,19 +114,19 @@ HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
     ITfThreadMgr *thread_manager, const GUID &compartment_guid) {
-  return Get(ComQuery<ITfCompartmentMgr>(thread_manager).Get(),
+  return Get(ComQuery<ITfCompartmentMgr>(thread_manager).get(),
              compartment_guid);
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
     ITfDocumentMgr *document_manager, const GUID &compartment_guid) {
-  return Get(ComQuery<ITfCompartmentMgr>(document_manager).Get(),
+  return Get(ComQuery<ITfCompartmentMgr>(document_manager).get(),
              compartment_guid);
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
     ITfContext *context, const GUID &compartment_guid) {
-  return Get(ComQuery<ITfCompartmentMgr>(context).Get(), compartment_guid);
+  return Get(ComQuery<ITfCompartmentMgr>(context).get(), compartment_guid);
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::GetAndEnsureDataExists(
@@ -160,7 +160,7 @@ HResultOr<wil::unique_variant> TipCompartmentUtil::GetAndEnsureDataExists(
     ITfThreadMgr *thread_manager, const GUID &compartment_guid,
     TfClientId client_id, wil::unique_variant default_data) {
   return GetAndEnsureDataExists(
-      ComQuery<ITfCompartmentMgr>(thread_manager).Get(), compartment_guid,
+      ComQuery<ITfCompartmentMgr>(thread_manager).get(), compartment_guid,
       client_id, std::move(default_data));
 }
 
@@ -168,14 +168,14 @@ HResultOr<wil::unique_variant> TipCompartmentUtil::GetAndEnsureDataExists(
     ITfDocumentMgr *document_manager, const GUID &compartment_guid,
     TfClientId client_id, wil::unique_variant default_data) {
   return GetAndEnsureDataExists(
-      ComQuery<ITfCompartmentMgr>(document_manager).Get(), compartment_guid,
+      ComQuery<ITfCompartmentMgr>(document_manager).get(), compartment_guid,
       client_id, std::move(default_data));
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::GetAndEnsureDataExists(
     ITfContext *context, const GUID &compartment_guid, TfClientId client_id,
     wil::unique_variant default_data) {
-  return GetAndEnsureDataExists(ComQuery<ITfCompartmentMgr>(context).Get(),
+  return GetAndEnsureDataExists(ComQuery<ITfCompartmentMgr>(context).get(),
                                 compartment_guid, client_id,
                                 std::move(default_data));
 }

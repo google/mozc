@@ -272,7 +272,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":hresultor",
-        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/meta:type_traits",
         "@com_microsoft_wil//:wil",
     ],
 )
@@ -288,7 +288,6 @@ mozc_cc_test(
         ":com_implements",
         ":scoped_com",
         "//testing:gunit_main",
-        "@com_google_absl//absl/base:core_headers",
         "@com_microsoft_wil//:wil",
     ],
 )

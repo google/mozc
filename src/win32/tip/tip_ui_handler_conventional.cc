@@ -313,7 +313,7 @@ void UpdateCommand(TipTextService *text_service, ITfContext *context,
   auto ui_element_manager =
       ComQuery<ITfUIElementMgr>(text_service->GetThreadManager());
   DCHECK(ui_element_manager);
-  FillVisibility(ui_element_manager.Get(), private_context, command);
+  FillVisibility(ui_element_manager.get(), private_context, command);
   FillWindowHandle(context, app_info);
   FillCharPosition(private_context, context, read_cookie,
                    command->output().has_preedit(), app_info, no_layout);

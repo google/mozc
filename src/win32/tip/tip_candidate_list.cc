@@ -89,7 +89,7 @@ class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
     if (!impl) {
       return E_OUTOFMEMORY;
     }
-    *enum_candidates = impl.Detach();
+    *enum_candidates = impl.detach();
     return S_OK;
   }
 
@@ -111,7 +111,7 @@ class EnumTfCandidatesImpl final : public TipComImplements<IEnumTfCandidates> {
       }
       candidate_string[i] =
           MakeComPtr<CandidateStringImpl>(current_, candidates_[current_])
-              .Detach();
+              .detach();
       ++current_;
     }
     *fetched_count = count;
@@ -152,7 +152,7 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
     if (!impl) {
       return E_OUTOFMEMORY;
     }
-    *enum_candidate = impl.Detach();
+    *enum_candidate = impl.detach();
     return S_OK;
   }
 
@@ -165,7 +165,7 @@ class CandidateListImpl final : public TipComImplements<ITfCandidateList> {
       return E_FAIL;
     }
     *candidate_string =
-        MakeComPtr<CandidateStringImpl>(index, candidates_[index]).Detach();
+        MakeComPtr<CandidateStringImpl>(index, candidates_[index]).detach();
     return S_OK;
   }
 
