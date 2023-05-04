@@ -126,6 +126,7 @@
       'conditions': [
         ['OS=="win"', {
           'sources': [
+            'win32/hresult.cc',
             'win32/wide_char.cc',
             'win32/win_util.cc',
           ],

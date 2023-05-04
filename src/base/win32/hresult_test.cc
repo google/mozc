@@ -29,6 +29,9 @@
 
 #include "base/win32/hresult.h"
 
+#include <windows.h>
+
+#include <sstream>
 #include <utility>
 
 #include "testing/gmock.h"
@@ -37,13 +40,13 @@
 namespace mozc::win32 {
 namespace {
 
-TEST(HResultTest, HResult) {
-  constexpr HResult hr(E_FAIL);
+TEST(HResultTest, ErrorCodes) {
+  constexpr HResult hr = HResultFail();
   EXPECT_EQ(hr, E_FAIL);
   EXPECT_EQ(hr.hr(), E_FAIL);
   EXPECT_FALSE(hr.ok());
 
-  HResult hr1(S_OK), hr2(E_UNEXPECTED);
+  HResult hr1 = HResultOk(), hr2 = HResultUnexpected();
   EXPECT_EQ(hr1.hr(), S_OK);
   EXPECT_TRUE(hr1.ok());
   EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
@@ -52,15 +55,39 @@ TEST(HResultTest, HResult) {
   std::swap(hr1, hr2);
   EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
   EXPECT_EQ(hr2.hr(), S_OK);
+
+  HResult hr3 = HResultWin32(ERROR_SUCCESS);
+  EXPECT_TRUE(hr3.ok());
+  EXPECT_EQ(hr3.hr(), S_OK);
 }
 
 TEST(HResultTest, ReturnIfErrorHResult) {
   auto f = []() -> HRESULT {
     RETURN_IF_FAILED_HRESULT(S_OK);
     RETURN_IF_FAILED_HRESULT(E_FAIL);
-    return S_FALSE;
+    return HResultFalse();
   };
   EXPECT_EQ(f(), E_FAIL);
+}
+
+TEST(HResultTest, ToString) {
+  HResult hr = HResultOk();
+  EXPECT_EQ(hr.ToString(), "Success: S_OK");
+  hr = HResultFalse();
+  EXPECT_EQ(hr.ToString(), "Success: S_FALSE");
+
+  hr = HResult(2);
+  EXPECT_EQ(hr.ToString(), "Success: 0x00000002");
+
+  hr = HResultFail();
+  EXPECT_EQ(hr.ToString(), "Failure: E_FAIL");
+
+  hr = HResultWin32(ERROR_ALREADY_EXISTS);
+  std::stringstream ss;
+  ss << hr;
+  EXPECT_EQ(ss.str(),
+            "Failure: Cannot create a file when that file already "
+            "exists. (0x800700b7)");
 }
 
 }  // namespace
