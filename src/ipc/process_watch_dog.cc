@@ -39,6 +39,8 @@
 #include <windows.h>  // wil/resource.h requires windows.h for events
 // clang-format on
 #include <wil/resource.h>
+
+#include "base/win32/hresult.h"
 #else  // _WIN32
 #include <errno.h>
 #include <signal.h>
@@ -52,11 +54,11 @@ ProcessWatchDog::ProcessWatchDog()
       thread_id_(UnknownThreadID),
       timeout_(-1),
       is_finished_(false) {
-  if (event_.get() == nullptr) {
-    LOG(ERROR) << "::CreateEvent() failed.";
+  if (win32::HResult hr(event_.create(wil::EventOptions::ManualReset));
+      !hr.ok()) {
+    LOG(ERROR) << "::CreateEvent() failed." << hr;
     return;
   }
-  event_.try_create(wil::EventOptions::ManualReset, nullptr);
 }
 
 ProcessWatchDog::~ProcessWatchDog() { StopWatchDog(); }
