@@ -36,14 +36,11 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class UserDictionaryStorage;
-
 namespace user_dictionary {
 
 // Session instance to edit UserDictionaryStorage.
@@ -51,12 +48,19 @@ namespace user_dictionary {
 class UserDictionarySession {
  public:
   // An interface to implement the undo operation.
-  class UndoCommand;
+  class UndoCommand {
+   public:
+    UndoCommand() = default;
+    UndoCommand(const UndoCommand &) = delete;
+    UndoCommand &operator=(const UndoCommand &) = delete;
+    virtual ~UndoCommand() = default;
+
+    virtual bool RunUndo(mozc::UserDictionaryStorage *storage) = 0;
+  };
 
   explicit UserDictionarySession(const std::string &filepath);
   UserDictionarySession(const UserDictionarySession &) = delete;
   UserDictionarySession &operator=(const UserDictionarySession &) = delete;
-  ~UserDictionarySession();
 
   const UserDictionaryStorage &storage() const;
 
@@ -141,11 +145,11 @@ class UserDictionarySession {
       UserDictionary *dictionary, absl::string_view data);
 
   void ClearUndoHistory();
-  void AddUndoCommand(UndoCommand *undo_command);
+  void AddUndoCommand(std::unique_ptr<UndoCommand> undo_command);
 
   std::unique_ptr<mozc::UserDictionaryStorage> storage_;
   std::string default_dictionary_name_;
-  std::deque<UndoCommand *> undo_history_;
+  std::deque<std::unique_ptr<UndoCommand>> undo_history_;
 };
 
 }  // namespace user_dictionary
