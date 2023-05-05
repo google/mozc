@@ -44,20 +44,20 @@ TEST(HResultTest, ErrorCodes) {
   constexpr HResult hr = HResultFail();
   EXPECT_EQ(hr, E_FAIL);
   EXPECT_EQ(hr.hr(), E_FAIL);
-  EXPECT_FALSE(hr.ok());
+  EXPECT_FALSE(hr.Succeeded());
 
   HResult hr1 = HResultOk(), hr2 = HResultUnexpected();
   EXPECT_EQ(hr1.hr(), S_OK);
-  EXPECT_TRUE(hr1.ok());
+  EXPECT_TRUE(hr1.Succeeded());
   EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
-  EXPECT_FALSE(hr2.ok());
+  EXPECT_FALSE(hr2.Succeeded());
 
   std::swap(hr1, hr2);
   EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
   EXPECT_EQ(hr2.hr(), S_OK);
 
   HResult hr3 = HResultWin32(ERROR_SUCCESS);
-  EXPECT_TRUE(hr3.ok());
+  EXPECT_TRUE(hr3.Succeeded());
   EXPECT_EQ(hr3.hr(), S_OK);
 }
 
@@ -67,7 +67,7 @@ TEST(HResultTest, ReturnIfErrorHResult) {
     RETURN_IF_FAILED_HRESULT(E_FAIL);
     return HResultFalse();
   };
-  EXPECT_EQ(f(), E_FAIL);
+  EXPECT_EQ(f(), HResultFail());
 }
 
 TEST(HResultTest, ToString) {

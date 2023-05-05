@@ -109,7 +109,7 @@ class HResultOrStorageBase<T, true /* trivially destructible */> {
   constexpr HResultOrStorageBase(hresult_tag_t, HRESULT hr)
       : dummy_(), hr_(hr) {}
 
-  constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
+  constexpr bool has_value() const noexcept { return SUCCEEDED(hr_); }
   constexpr void AssignHResult(HRESULT hr) noexcept { hr_ = hr; }
 
  protected:
@@ -133,14 +133,14 @@ class HResultOrStorageBase<T, false /* not trivially destructible */> {
       : dummy_(), hr_(hr) {}
 
   ~HResultOrStorageBase() {
-    if (ok()) {
+    if (has_value()) {
       value_.~T();
     }
   }
 
-  constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
+  constexpr bool has_value() const noexcept { return SUCCEEDED(hr_); }
   constexpr void AssignHResult(HRESULT hr) noexcept {
-    if (ok()) {
+    if (has_value()) {
       value_.~T();
     }
     hr_ = hr;
@@ -163,10 +163,11 @@ class HResultOrImpl : public HResultOrStorageBase<T> {
 
  public:
   using value_type = T;
-  using error_type = HRESULT;
+  using error_type = HResult;
   using Base::Base;
 
-  constexpr HRESULT hr() const noexcept { return hr_; }
+  // error() returns the error code as HRESULT.
+  constexpr HResult error() const noexcept { return HResult(hr_); }
   // Internal operators to add const, and lvalue/rvalue reference.
   // Redefined in HResultOr<T> as public functions.
   constexpr T& operator*() & noexcept { return value_; }
@@ -183,17 +184,17 @@ class HResultOrImpl : public HResultOrStorageBase<T> {
 
   template <typename U>
   constexpr void Assign(U&& other) {
-    if (this->ok() == other.ok()) {
-      if (this->ok()) {
+    if (this->has_value() == other.has_value()) {
+      if (this->has_value()) {
         this->value_ = *std::forward<U>(other);
       } else {
-        this->AssignHResult(other.hr());
+        this->AssignHResult(other.error());
       }
     } else {
-      if (other.ok()) {
+      if (other.has_value()) {
         this->ConstructValue(*std::forward<U>(other));
       } else {
-        this->AssignHResult(other.hr());
+        this->AssignHResult(other.error());
       }
     }
   }

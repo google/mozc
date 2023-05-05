@@ -36,6 +36,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 
 namespace mozc::win32 {
@@ -55,7 +56,7 @@ namespace mozc::win32 {
 // can also use operator<<() to stream the error string.
 //
 // Example:
-//  if(HResult hr = SomeFunc(); !hr.ok()) {
+//  if(HResult hr = SomeFunc(); !hr.Succeeded()) {
 //    LOG(ERROR) << hr;
 //  }
 // Returned HResult values must not be discarded.
@@ -79,13 +80,20 @@ class [[nodiscard]] HResult {
   //    HResult hr = HResultFail();
   //    // ...
   //    // return hr;  // compile error
-  //    return hr.ok();
+  //    return hr.Succeeded();
   // }
   template <typename T, typename = std::enable_if_t<
                             !std::is_same_v<T, HRESULT> && std::is_scalar_v<T>>>
   operator T() = delete;
 
-  [[nodiscard]] constexpr bool ok() const noexcept { return SUCCEEDED(hr_); }
+  [[nodiscard]] constexpr bool Succeeded() const noexcept {
+    return SUCCEEDED(hr_);
+  }
+
+  [[nodiscard]] ABSL_DEPRECATED(
+      "Use Succeeded() instead.") constexpr bool ok() const noexcept {
+    return Succeeded();
+  }
   constexpr HRESULT hr() const noexcept { return hr_; }
 
   friend void swap(HResult& a, HResult& b) noexcept {
@@ -152,12 +160,12 @@ constexpr HResult HResultWin32(const DWORD code) {
 
 // RETURN_IF_FAILED_HRESULT Runs the statement and returns from the current
 // function if FAILED(statement) is true.
-#define RETURN_IF_FAILED_HRESULT(...)                            \
-  do {                                                           \
-    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);      \
-    if (ABSL_PREDICT_FALSE(!hresultor_macro_impl_tmp_hr.ok())) { \
-      return hresultor_macro_impl_tmp_hr;                        \
-    }                                                            \
+#define RETURN_IF_FAILED_HRESULT(...)                                   \
+  do {                                                                  \
+    const HResult hresultor_macro_impl_tmp_hr(__VA_ARGS__);             \
+    if (ABSL_PREDICT_FALSE(!hresultor_macro_impl_tmp_hr.Succeeded())) { \
+      return hresultor_macro_impl_tmp_hr;                               \
+    }                                                                   \
   } while (0)
 
 }  // namespace mozc::win32
