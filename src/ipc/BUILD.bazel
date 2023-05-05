@@ -272,7 +272,10 @@ mozc_cc_library(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
-        windows = ["//third_party/wil"],
+        windows = [
+            "//base/win32:hresult",
+            "//third_party/wil",
+        ],
     ),
 )
 

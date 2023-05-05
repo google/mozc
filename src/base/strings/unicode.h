@@ -41,7 +41,7 @@ namespace mozc::strings {
 namespace internal {
 
 // Table of UTF-8 character lengths, based on first byte
-constexpr uint_fast8_t kUtf8LenTbl[] = {
+inline constexpr uint_fast8_t kUtf8LenTbl[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

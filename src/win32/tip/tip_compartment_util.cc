@@ -36,42 +36,43 @@
 #include <utility>
 
 #include "base/win32/com.h"
+#include "base/win32/hresult.h"
 #include "base/win32/hresultor.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-HRESULT TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
+HResult TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
   if (!compartment_manager) {
-    return E_POINTER;
+    return HResultPointer();
   }
 
   wil::com_ptr_nothrow<ITfCompartment> compartment;
   RETURN_IF_FAILED_HRESULT(
       compartment_manager->GetCompartment(compartment_guid, &compartment));
   if (!compartment) {
-    return E_FAIL;
+    return HResultFail();
   }
 
   wil::unique_variant existing_data;
-  HRESULT hr = compartment->GetValue(&existing_data);
+  HRESULT hr = compartment->GetValue(existing_data.reset_and_addressof());
   RETURN_IF_FAILED_HRESULT(hr);
   if (hr == S_OK && VarCmp(data.addressof(), existing_data.addressof(),
                            LOCALE_USER_DEFAULT) == VARCMP_EQ) {
     // |existing_data| is equal to |data|. To avoid unnecessary event
     // from being notified, do nothing in this case.
-    return S_OK;
+    return HResultOk();
   }
 
   // Remove const from |data|.
-  return compartment->SetValue(client_id, data.addressof());
+  return HResult(compartment->SetValue(client_id, data.addressof()));
 }
 
-HRESULT TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
+HResult TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
@@ -79,7 +80,7 @@ HRESULT TipCompartmentUtil::Set(ITfThreadMgr *thread_manager,
              compartment_guid, client_id, std::move(data));
 }
 
-HRESULT TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
+HResult TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
@@ -87,7 +88,7 @@ HRESULT TipCompartmentUtil::Set(ITfDocumentMgr *document_manager,
              compartment_guid, client_id, std::move(data));
 }
 
-HRESULT TipCompartmentUtil::Set(ITfContext *context,
+HResult TipCompartmentUtil::Set(ITfContext *context,
                                 const GUID &compartment_guid,
                                 TfClientId client_id,
                                 wil::unique_variant data) {
@@ -98,18 +99,19 @@ HRESULT TipCompartmentUtil::Set(ITfContext *context,
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
     ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid) {
   if (!compartment_manager) {
-    return HResult(E_POINTER);
+    return HResultPointer();
   }
 
   wil::com_ptr_nothrow<ITfCompartment> compartment;
   RETURN_IF_FAILED_HRESULT(
       compartment_manager->GetCompartment(compartment_guid, &compartment));
   if (!compartment) {
-    return HResult(E_FAIL);
+    return HResultFail();
   }
 
   wil::unique_variant result;
-  return HResult(compartment->GetValue(result.reset_and_addressof()));
+  RETURN_IF_FAILED_HRESULT(compartment->GetValue(result.reset_and_addressof()));
+  return result;
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
@@ -133,14 +135,14 @@ HResultOr<wil::unique_variant> TipCompartmentUtil::GetAndEnsureDataExists(
     ITfCompartmentMgr *compartment_manager, const GUID &compartment_guid,
     TfClientId client_id, wil::unique_variant default_data) {
   if (compartment_manager == nullptr) {
-    return HResult(E_POINTER);
+    return HResultPointer();
   }
 
   wil::com_ptr_nothrow<ITfCompartment> compartment;
   RETURN_IF_FAILED_HRESULT(
       compartment_manager->GetCompartment(compartment_guid, &compartment));
   if (!compartment) {
-    return HResult(E_FAIL);
+    return HResultFail();
   }
 
   wil::unique_variant result;

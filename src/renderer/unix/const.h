@@ -44,38 +44,38 @@ struct RGBA {
 };
 
 // Following colors are used for window rendereing.
-const RGBA kFrameColor = {0x96, 0x96, 0x96, 0xFF};
-const RGBA kShortcutBackgroundColor = {0xF3, 0xF4, 0xFF, 0xFF};
-const RGBA kSelectedRowBackgroundColor = {0xD1, 0xEA, 0xFF, 0xFF};
-const RGBA kDefaultBackgroundColor = {0xFF, 0xFF, 0xFF, 0xFF};
-const RGBA kSelectedRowFrameColor = {0x7F, 0xAC, 0xDD, 0xFF};
-const RGBA kIndicatorBackgroundColor = {0xE0, 0xE0, 0xE0, 0xFF};
-const RGBA kIndicatorColor = {0x75, 0x90, 0xB8, 0xFF};
-const RGBA kFooterTopColor = {0xFF, 0xFF, 0xFF, 0xFF};
-const RGBA kFooterBottomColor = {0xEE, 0xEE, 0xEE, 0xFF};
+inline constexpr RGBA kFrameColor = {0x96, 0x96, 0x96, 0xFF};
+inline constexpr RGBA kShortcutBackgroundColor = {0xF3, 0xF4, 0xFF, 0xFF};
+inline constexpr RGBA kSelectedRowBackgroundColor = {0xD1, 0xEA, 0xFF, 0xFF};
+inline constexpr RGBA kDefaultBackgroundColor = {0xFF, 0xFF, 0xFF, 0xFF};
+inline constexpr RGBA kSelectedRowFrameColor = {0x7F, 0xAC, 0xDD, 0xFF};
+inline constexpr RGBA kIndicatorBackgroundColor = {0xE0, 0xE0, 0xE0, 0xFF};
+inline constexpr RGBA kIndicatorColor = {0x75, 0x90, 0xB8, 0xFF};
+inline constexpr RGBA kFooterTopColor = {0xFF, 0xFF, 0xFF, 0xFF};
+inline constexpr RGBA kFooterBottomColor = {0xEE, 0xEE, 0xEE, 0xFF};
 
 // Following colors are used for font renderering.
-const RGBA kShortcutColor = {0x61, 0x61, 0x61, 0xFF};
-const RGBA kDefaultColor = {0x00, 0x00, 0x00, 0xFF};
-const RGBA kDescriptionColor = {0x88, 0x88, 0x88, 0xFF};
-const RGBA kFooterIndexColor = {0x4C, 0x4C, 0x4C, 0xFF};
-const RGBA kFooterLabelColor = {0x4C, 0x4C, 0x4C, 0xFF};
-const RGBA kFooterSubLabelColor = {0xA7, 0xA7, 0xA7, 0xFF};
+inline constexpr RGBA kShortcutColor = {0x61, 0x61, 0x61, 0xFF};
+inline constexpr RGBA kDefaultColor = {0x00, 0x00, 0x00, 0xFF};
+inline constexpr RGBA kDescriptionColor = {0x88, 0x88, 0x88, 0xFF};
+inline constexpr RGBA kFooterIndexColor = {0x4C, 0x4C, 0x4C, 0xFF};
+inline constexpr RGBA kFooterLabelColor = {0x4C, 0x4C, 0x4C, 0xFF};
+inline constexpr RGBA kFooterSubLabelColor = {0xA7, 0xA7, 0xA7, 0xFF};
 
-const RGBA kWhite = {0xFF, 0xFF, 0xFF, 0xFF};
+inline constexpr RGBA kWhite = {0xFF, 0xFF, 0xFF, 0xFF};
 
-const int kWindowBorder = 1;
-const int kFooterSeparatorHeight = 1;
-const int kRowRectPadding = 1;
-const int kIndicatorWidthInDefaultDPI = 4;
+inline constexpr int kWindowBorder = 1;
+inline constexpr int kFooterSeparatorHeight = 1;
+inline constexpr int kRowRectPadding = 1;
+inline constexpr int kIndicatorWidthInDefaultDPI = 4;
 
-constexpr char kMinimumCandidateAndDescriptionWidthAsString[] =
+inline constexpr char kMinimumCandidateAndDescriptionWidthAsString[] =
     "そのほかの文字種";
 
 // The pango font description allows us to set multiple font names.
 // See the detail in
 // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
-constexpr char kDefaultFontDescription[] = "IPAゴシック,SansSerif 11";
+inline constexpr char kDefaultFontDescription[] = "IPAゴシック,SansSerif 11";
 
 }  // namespace gtk
 }  // namespace renderer

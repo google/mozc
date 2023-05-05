@@ -35,7 +35,7 @@
 #include "base/port.h"
 
 namespace mozc {
-constexpr size_t kMaxConversionCandidatesSize = 200;
+inline constexpr size_t kMaxConversionCandidatesSize = 200;
 
 // Protocol buffers, commands::Request and config::Config should be forward
 // declaration instead of include header files.  Otherwise, we need to specify
