@@ -30,75 +30,31 @@
 #include "gui/base/msime_user_dictionary_importer.h"
 
 #ifdef _WIN32
-#include <windows.h>
-
-// In general, mixing different NTDDI_VERSION/_WIN32_WINNT values in a single
-// executable file is not safe, but <msime.h> requires NTDDI_WIN8 to use COM
-// interfaces and constants defined there, even though those APIs are available
-// on older platforms such as Windows 7.
-// To work around this limitation, here we intentionally re-define those macros.
-// TODO(yukawa): Remove the following hack when we stop supporting Windows 7.
-
-// Redefine NTDDI_VERSION with NTDDI_WIN8
-#ifdef NTDDI_VERSION
-#define MOZC_ORIGINAL_NTDDI_VERSION NTDDI_VERSION
-#undef NTDDI_VERSION
-#endif                            // NTDDI_VERSION
-#define NTDDI_VERSION 0x06020000  // == NTDDI_WIN8
-
-// Redefine _WIN32_WINNT with WIN32_WINNT_WIN8
-#ifdef _WIN32_WINNT
-#define MOZC_ORIGINAL_WIN32_WINNT _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif                       // MOZC_ORIGINAL_WIN32_WINNT
-#define _WIN32_WINNT 0x0602  // == WIN32_WINNT_WIN8
-
+// clang-format off
+#include <windows.h>  // needs to be included first
+// clang-format on
 #include <msime.h>
 
-// Restore NTDDI_VERSION
-#ifdef MOZC_ORIGINAL_NTDDI_VERSION
-#undef NTDDI_VERSION
-#define NTDDI_VERSION MOZC_ORIGINAL_NTDDI_VERSION
-#endif  // MOZC_ORIGINAL_NTDDI_VERSION
-
-// Restore _WIN32_WINNT
-#ifdef MOZC_ORIGINAL_WIN32_WINNT
-#undef _WIN32_WINNT
-#define _WIN32_WINNT MOZC_ORIGINAL_WIN32_WINNT
-#endif  // MOZC_ORIGINAL_WIN32_WINNT
-
-#include <algorithm>
 #include <map>
-#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "base/hash.h"
 #include "base/logging.h"
-#include "base/mmap.h"
-#include "base/number_util.h"
-#include "base/port.h"
-#include "base/system_util.h"
 #include "base/util.h"
-#include "base/win32/win_util.h"
-#include "dictionary/user_dictionary_util.h"
 #include "gui/base/encoding_util.h"
 
 namespace mozc {
-
-using user_dictionary::UserDictionary;
-using user_dictionary::UserDictionaryCommandStatus;
-
 namespace {
 
 constexpr size_t kBufferSize = 256;
 
 // ProgID of MS-IME Japanese.
-const wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
+constexpr wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";
 
 // Interface identifier of user dictionary in MS-IME.
 // {019F7153-E6DB-11d0-83C3-00C04FDDB82E}
-const GUID kIidIFEDictionary = {
+constexpr GUID kIidIFEDictionary = {
     0x19f7153, 0xe6db, 0x11d0, {0x83, 0xc3, 0x0, 0xc0, 0x4f, 0xdd, 0xb8, 0x2e}};
 
 IFEDictionary *CreateIFEDictionary() {
@@ -148,8 +104,8 @@ class MSIMEImportIterator
     : public UserDictionaryImporter::InputIteratorInterface {
  public:
   MSIMEImportIterator()
-      : dic_(CreateIFEDictionary()),
-        buf_(kBufferSize),
+      : buf_(kBufferSize),
+        dic_(CreateIFEDictionary()),
         result_(E_FAIL),
         size_(0),
         index_(0) {
