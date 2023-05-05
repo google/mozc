@@ -32,6 +32,7 @@
 #include <string>
 
 #include "base/util.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -39,11 +40,8 @@ void CollocationUtil::GetNormalizedScript(const absl::string_view str,
                                           bool remove_number,
                                           std::string *output) {
   output->clear();
-  std::string temp;
-  RemoveExtraCharacters(str, remove_number, &temp);
-  std::string temp2;
-  Util::StringReplace(temp, "％", "%", true, &temp2);
-  Util::StringReplace(temp2, "～", "〜", true, output);
+  RemoveExtraCharacters(str, remove_number, output);
+  absl::StrReplaceAll({{"％", "%"}, {"～", "〜"}}, output);
 }
 
 bool CollocationUtil::IsNumber(char32_t c) {

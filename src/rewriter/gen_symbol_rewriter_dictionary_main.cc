@@ -57,6 +57,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -189,9 +190,8 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
     } else {
       seen.insert(value);
     }
-    std::string keys_str;
-    Util::StringReplace(fields[2], "　",  // Full-width space
-                        " ", true, &keys_str);
+    std::string keys_str =
+        absl::StrReplaceAll(fields[2], {{"　", " "}});  // Full-width space
     const std::vector<std::string> keys =
         absl::StrSplit(keys_str, ' ', absl::SkipEmpty());
     const std::string &description = (fields.size()) > 3 ? fields[3] : "";

@@ -320,28 +320,6 @@ void Util::AppendStringWithDelimiter(absl::string_view delimiter,
   output->append(append_string.data(), append_string.size());
 }
 
-void Util::StringReplace(absl::string_view s, absl::string_view oldsub,
-                         absl::string_view newsub, bool replace_all,
-                         std::string *res) {
-  if (oldsub.empty()) {
-    res->append(s.data(), s.size());  // if empty, append the given string.
-    return;
-  }
-
-  std::string::size_type start_pos = 0;
-  std::string::size_type pos;
-  do {
-    pos = s.find(oldsub, start_pos);
-    if (pos == std::string::npos) {
-      break;
-    }
-    res->append(s.data() + start_pos, pos - start_pos);
-    res->append(newsub.data(), newsub.size());
-    start_pos = pos + oldsub.size();  // start searching again after the "old"
-  } while (replace_all);
-  res->append(s.data() + start_pos, s.length() - start_pos);
-}
-
 // The offset value to transform the upper case character to the lower
 // case.  The value comes from both of (0x0061 "a" - 0x0041 "A") and
 // (0xFF41 "ａ" - 0xFF21 "Ａ").

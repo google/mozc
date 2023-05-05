@@ -106,10 +106,10 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "absl/base/config.h"
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -202,8 +202,8 @@ void LoadUsage(const std::string &filename,
     item.key = ((fields[0] == "*") ? "" : fields[0]);
     item.value = ((fields[1] == "*") ? "" : fields[1]);
     item.conjugation = ((fields[2] == "*") ? "" : fields[2]);
-    std::string tmp = ((fields[3] == "*") ? "" : fields[3]);
-    Util::StringReplace(tmp, "\\n", "\n", true, &item.meaning);
+    item.meaning = absl::StrReplaceAll((fields[3] == "*") ? "" : fields[3],
+                                       {{"\\n", "\n"}});
 
     absl::btree_map<std::string, int>::iterator it =
         conjugation_id_map.find(item.conjugation);

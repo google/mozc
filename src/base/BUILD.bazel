@@ -598,6 +598,7 @@ mozc_cc_library(
         ":file_stream",
         ":logging",
         ":mmap",
+        ":port",
         ":singleton",
         "//bazel/win32:ktmw32",
         "@com_google_absl//absl/status",
