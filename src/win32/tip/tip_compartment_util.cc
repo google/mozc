@@ -59,7 +59,7 @@ HResult TipCompartmentUtil::Set(ITfCompartmentMgr *compartment_manager,
   }
 
   wil::unique_variant existing_data;
-  HRESULT hr = compartment->GetValue(&existing_data);
+  HRESULT hr = compartment->GetValue(existing_data.reset_and_addressof());
   RETURN_IF_FAILED_HRESULT(hr);
   if (hr == S_OK && VarCmp(data.addressof(), existing_data.addressof(),
                            LOCALE_USER_DEFAULT) == VARCMP_EQ) {
