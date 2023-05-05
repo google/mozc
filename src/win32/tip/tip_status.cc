@@ -113,9 +113,10 @@ bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
   wil::unique_variant var;
   var.vt = VT_I4;
   var.lVal = open ? TRUE : FALSE;
-  return SUCCEEDED(TipCompartmentUtil::Set(thread_mgr,
-                                           GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-                                           client_id, std::move(var)));
+  return TipCompartmentUtil::Set(thread_mgr,
+                                 GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, client_id,
+                                 std::move(var))
+      .ok();
 }
 
 bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
@@ -123,9 +124,10 @@ bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
   wil::unique_variant var;
   var.vt = VT_I4;
   var.lVal = native_mode;
-  return SUCCEEDED(TipCompartmentUtil::Set(
-      thread_mgr, GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION, client_id,
-      std::move(var)));
+  return TipCompartmentUtil::Set(thread_mgr,
+                                 GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
+                                 client_id, std::move(var))
+      .ok();
 }
 
 }  // namespace tsf

@@ -395,6 +395,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base/win32:com",
+        "//base/win32:hresult",
         "//base/win32:hresultor",
         "@com_microsoft_wil//:wil",
     ],

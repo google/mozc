@@ -34,6 +34,7 @@
 #include <wil/resource.h>
 #include <windows.h>
 
+#include "base/win32/hresult.h"
 #include "base/win32/hresultor.h"
 
 namespace mozc {
@@ -48,15 +49,15 @@ class TipCompartmentUtil {
 
   // Stores |data| into the compartment specified by |compartment_guid| and
   // owned by |compartment_manager|.
-  static HRESULT Set(ITfCompartmentMgr *compartment_manager,
+  static HResult Set(ITfCompartmentMgr *compartment_manager,
                      const GUID &compartment_guid, TfClientId client_id,
                      wil::unique_variant data);
-  static HRESULT Set(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
+  static HResult Set(ITfThreadMgr *thread_manager, const GUID &compartment_guid,
                      TfClientId client_id, wil::unique_variant data);
-  static HRESULT Set(ITfDocumentMgr *document_manager,
+  static HResult Set(ITfDocumentMgr *document_manager,
                      const GUID &compartment_guid, TfClientId client_id,
                      wil::unique_variant data);
-  static HRESULT Set(ITfContext *context, const GUID &compartment_guid,
+  static HResult Set(ITfContext *context, const GUID &compartment_guid,
                      TfClientId client_id, wil::unique_variant data);
 
   // Returns the associated data from the compartment specified by
