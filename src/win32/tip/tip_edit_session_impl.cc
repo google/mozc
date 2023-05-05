@@ -458,9 +458,9 @@ HRESULT UpdatePreeditAndComposition(TipTextService *text_service,
   if (output.has_result()) {
     composition = CommitText(text_service, context, write_cookie,
                              std::move(composition), output);
-  }
-  if (!composition) {
-    return E_FAIL;
+    if (!composition) {
+      return E_FAIL;
+    }
   }
 
   return UpdateComposition(text_service, context, std::move(composition),
