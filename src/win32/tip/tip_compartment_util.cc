@@ -109,7 +109,8 @@ HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
   }
 
   wil::unique_variant result;
-  return HResult(compartment->GetValue(result.reset_and_addressof()));
+  RETURN_IF_FAILED_HRESULT(compartment->GetValue(result.reset_and_addressof()));
+  return result;
 }
 
 HResultOr<wil::unique_variant> TipCompartmentUtil::Get(
