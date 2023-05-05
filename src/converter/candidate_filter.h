@@ -34,17 +34,14 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "converter/node.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
-
-struct Node;
-class SuggestionFilter;
-
 namespace converter {
 
 class CandidateFilter {
@@ -56,7 +53,6 @@ class CandidateFilter {
       bool apply_suggestion_filter_for_exact_match);
   CandidateFilter(const CandidateFilter &) = delete;
   CandidateFilter &operator=(const CandidateFilter &) = delete;
-  ~CandidateFilter();
 
   enum ResultType {
     GOOD_CANDIDATE,    // Can insert the candidate into the list

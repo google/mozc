@@ -56,6 +56,8 @@ class ServerLauncherInterface {
     SERVER_FATAL,
   };
 
+  virtual ~ServerLauncherInterface() = default;
+
   virtual bool StartServer(ClientInterface *client) = 0;
 
   // terminate the server.
@@ -80,9 +82,6 @@ class ServerLauncherInterface {
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
-
-  ServerLauncherInterface() = default;
-  virtual ~ServerLauncherInterface() = default;
 };
 
 class ClientInterface {
@@ -220,9 +219,6 @@ class ClientInterface {
 
   // Launches browser and pass |url|
   virtual bool OpenBrowser(const std::string &url) = 0;
-
- protected:
-  ClientInterface() = default;
 };
 
 class ClientFactoryInterface {
