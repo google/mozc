@@ -42,26 +42,24 @@ namespace win32 {
 
 struct InputState {
   // Represents the IME is turned on or not.
-  bool open;
+  bool open = false;
   // Represents the expected conversion mode visible from the input method
   // framework (IMM32/TSF).
-  DWORD logical_conversion_mode;
+  DWORD logical_conversion_mode = 0;
   // Represents the expected conversion mode visible from the user. So the
   // language bar should show this mode.
-  DWORD visible_conversion_mode;
-  // Tracks the last down key mainly for handling modifer key-up event.
+  DWORD visible_conversion_mode = 0;
+  // Tracks the last down key mainly for handling modifier key-up event.
   VirtualKey last_down_key;
-  InputState();
 };
 
 struct InputBehavior {
-  bool initialized;
-  bool disabled;
-  bool prefer_kana_input;
-  bool use_mode_indicator;
-  bool use_romaji_key_to_toggle_input_style;
+  bool initialized = false;
+  bool disabled = false;
+  bool prefer_kana_input = false;
+  bool use_mode_indicator = false;
+  bool use_romaji_key_to_toggle_input_style = false;
   std::vector<KeyInformation> direct_mode_keys;
-  InputBehavior();
 };
 
 }  // namespace win32

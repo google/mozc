@@ -32,6 +32,7 @@
 
 #include <windows.h>
 
+#include <memory>
 #include <vector>
 
 #include "base/port.h"
@@ -114,7 +115,7 @@ class VirtualKey {
 // a mock which emulates the API predictably for unit tests.
 class Win32KeyboardInterface {
  public:
-  virtual ~Win32KeyboardInterface() {}
+  virtual ~Win32KeyboardInterface() = default;
 
   // Injection point for keyboard_state.IsPressed(VK_KANA).
   virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) = 0;
@@ -137,7 +138,7 @@ class Win32KeyboardInterface {
   // Injection point for SendInput API.
   virtual UINT SendInput(const std::vector<INPUT> &inputs) = 0;
 
-  static Win32KeyboardInterface *CreateDefault();
+  static std::unique_ptr<Win32KeyboardInterface> CreateDefault();
 };
 
 class JapaneseKeyboardLayoutEmulator {

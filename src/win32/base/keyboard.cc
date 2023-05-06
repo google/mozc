@@ -189,8 +189,9 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
   }
 };
 
-Win32KeyboardInterface *Win32KeyboardInterface::CreateDefault() {
-  return new DefaultKeyboardInterface();
+std::unique_ptr<Win32KeyboardInterface>
+Win32KeyboardInterface::CreateDefault() {
+  return std::make_unique<DefaultKeyboardInterface>();
 }
 
 KeyboardStatus::KeyboardStatus() { memset(&status_[0], 0, std::size(status_)); }

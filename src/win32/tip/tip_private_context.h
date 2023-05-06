@@ -34,25 +34,15 @@
 
 #include <memory>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
+#include "win32/base/config_snapshot.h"
+#include "win32/base/deleter.h"
+#include "win32/base/input_state.h"
+#include "win32/base/keyboard.h"
+#include "win32/base/surrogate_pair_observer.h"
 
 namespace mozc {
-
-namespace client {
-class ClientInterface;
-}  // namespace client
-
-namespace commands {
-class Output;
-}  // namespace commands
-
 namespace win32 {
-
-struct InputBehavior;
-class SurrogatePairObserver;
-class VKBackBasedDeleter;
-class VirtualKey;
-
 namespace tsf {
 
 class TipUiElementManager;
@@ -62,6 +52,7 @@ class TipPrivateContext {
   TipPrivateContext();
   TipPrivateContext(const TipPrivateContext &) = delete;
   TipPrivateContext &operator=(const TipPrivateContext &) = delete;
+  // TODO(yuryu): InternalState is incomplete. Embed it into TipPrivateContext.
   ~TipPrivateContext();
 
   void EnsureInitialized();
