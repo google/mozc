@@ -31,7 +31,6 @@
 
 #include <cstdint>
 #include <limits>
-#include <memory>
 
 #include "base/win32/win_util.h"
 #include "win32/tip/tip_input_mode_manager.h"
@@ -50,30 +49,13 @@ TipInputModeManager::Config GetConfig() {
 
 }  // namespace
 
-class TipThreadContext::InternalState {
- public:
-  InternalState() : input_mode_manager(GetConfig()), focus_revision(0) {}
-  TipInputModeManager input_mode_manager;
-  int32_t focus_revision;
-};
-
-TipThreadContext::TipThreadContext() : state_(new InternalState) {}
-
-TipThreadContext::~TipThreadContext() {}
-
-TipInputModeManager *TipThreadContext::GetInputModeManager() {
-  return &state_->input_mode_manager;
-}
-
-int32_t TipThreadContext::GetFocusRevision() const {
-  return state_->focus_revision;
-}
+TipThreadContext::TipThreadContext() : input_mode_manager_(GetConfig()) {}
 
 void TipThreadContext::IncrementFocusRevision() {
-  if (state_->focus_revision < std::numeric_limits<int32_t>::max()) {
-    state_->focus_revision++;
+  if (focus_revision_ < std::numeric_limits<int32_t>::max()) {
+    focus_revision_++;
   } else {
-    state_->focus_revision = 0;
+    focus_revision_ = 0;
   }
 }
 

@@ -356,7 +356,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_input_mode_manager",
-        "//base:port",
         "//base:system_util",
     ],
 )
