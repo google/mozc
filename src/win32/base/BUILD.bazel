@@ -97,7 +97,6 @@ mozc_cc_library(
         ":input_state",
         ":keyboard",
         "//base:logging",
-        "//base:port",
         "//protocol:commands_cc_proto",
     ],
 )

@@ -42,12 +42,12 @@ namespace win32 {
 
 namespace {
 
-const BYTE kPressed = 0x80;
-const uint64_t kOutputId = 0x12345678;
+constexpr BYTE kPressed = 0x80;
+constexpr uint64_t kOutputId = 0x12345678;
 
 class KeyboardMock : public Win32KeyboardInterface {
  public:
-  KeyboardMock() {}
+  KeyboardMock() = default;
   KeyboardMock(const KeyboardMock &) = delete;
   KeyboardMock &operator=(const KeyboardMock &) = delete;
 
@@ -124,7 +124,7 @@ TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
   EXPECT_EQ(keyboard_mock->last_send_input_data().size(), 0);
 
   // OnKeyEvent never crashes even when there is no ongoing session.
-  EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
+  EXPECT_EQ(ClientAction::DO_DEFAULT_ACTION,
             deleter.OnKeyEvent(VK_BACK, true, true));
 }
 
@@ -197,48 +197,48 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
   EXPECT_EQ(inputs[7].ki.dwFlags, KEYEVENTF_KEYUP);
 
   // Initially, the deleter is waiting for the first VK_BACK test-key-down.
-  EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-            deleter.OnKeyEvent(VK_TAB, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-            deleter.OnKeyEvent(VK_TAB, false, true));
-  EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-            deleter.OnKeyEvent('X', true, true));
-  EXPECT_EQ(VKBackBasedDeleter::DO_DEFAULT_ACTION,
-            deleter.OnKeyEvent('X', false, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_TAB, true, true),
+            ClientAction::DO_DEFAULT_ACTION);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_TAB, false, true),
+            ClientAction::DO_DEFAULT_ACTION);
+  EXPECT_EQ(deleter.OnKeyEvent('X', true, true),
+            ClientAction::DO_DEFAULT_ACTION);
+  EXPECT_EQ(deleter.OnKeyEvent('X', false, true),
+            ClientAction::DO_DEFAULT_ACTION);
 
   // The first pair of test-key-down/up.
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, false, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
 
   // The second pair of test-key-down/up.
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, false, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
 
   // The third pair of test-key-down/up.
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, false, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
 
   // The last key-down will not be sent to the application.
-  EXPECT_EQ(VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-            deleter.OnKeyEvent(VK_BACK, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::APPLY_PENDING_STATUS,
-            deleter.OnKeyEvent(VK_BACK, true, false));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, true),
+            ClientAction::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, false),
+            ClientAction::APPLY_PENDING_STATUS);
 
   // Check the pending output and state.
   EXPECT_EQ(deleter.pending_output().id(), kOutputId);
   EXPECT_EQ(deleter.pending_ime_state().last_down_key.virtual_key(), kLastKey);
 
   // The last key-up will not be sent to the application.
-  EXPECT_EQ(VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-            deleter.OnKeyEvent(VK_BACK, false, true));
-  EXPECT_EQ(VKBackBasedDeleter::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER,
-            deleter.OnKeyEvent(VK_BACK, false, false));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, true),
+            ClientAction::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, false),
+            ClientAction::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER);
 
   // Make sure the status of modifier keys have not changed.
   EXPECT_FALSE(keyboard_mock->key_state().IsPressed(VK_CONTROL));
@@ -292,14 +292,14 @@ TEST(VKBackBasedDeleterTest, BeginDeletion_InsuccessfulCase) {
   EXPECT_TRUE(deleter.IsDeletionOngoing());
 
   // The first pair of test-key-down/up.
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, true, true));
-  EXPECT_EQ(VKBackBasedDeleter::SEND_KEY_TO_APPLICATION,
-            deleter.OnKeyEvent(VK_BACK, false, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, true, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
+  EXPECT_EQ(deleter.OnKeyEvent(VK_BACK, false, true),
+            ClientAction::SEND_KEY_TO_APPLICATION);
 
   // If an unexpected key is passed, the deletion sequence must be terminated.
-  EXPECT_EQ(VKBackBasedDeleter::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION,
-            deleter.OnKeyEvent(VK_TAB, true, true));
+  EXPECT_EQ(deleter.OnKeyEvent(VK_TAB, true, true),
+            ClientAction::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION);
 
   // Make sure the status of modifier keys have not changed.
   EXPECT_FALSE(keyboard_mock->key_state().IsPressed(VK_CONTROL));
