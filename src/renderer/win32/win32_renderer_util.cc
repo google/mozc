@@ -126,7 +126,7 @@ bool ExtractParams(LayoutManager *layout,
   const HWND target_window =
       WinUtil::DecodeWindowHandle(app_info.target_window_handle());
 
-  params->window_handle.value() = target_window;
+  params->window_handle = target_window;
 
   if (app_info.has_composition_target()) {
     const commands::RendererCommand::CharacterPosition &char_pos =
@@ -137,11 +137,12 @@ bool ExtractParams(LayoutManager *layout,
         char_pos.line_height() > 0 && char_pos.has_document_area() &&
         IsValidRect(char_pos.document_area())) {
       // Positional fields are (logical) screen coordinate.
-      IMECHARPOSITION &dest = params->char_pos.value();
+      IMECHARPOSITION dest;
       dest.dwCharPos = char_pos.position();
       dest.pt = ToPoint(char_pos.top_left());
       dest.cLineHeight = char_pos.line_height();
       dest.rcDocument = ToRect(char_pos.document_area());
+      params->char_pos = std::move(dest);
     }
   }
 
@@ -151,7 +152,7 @@ bool ExtractParams(LayoutManager *layout,
     if (layout->GetClientRect(target_window, &client_rect_in_local_coord) &&
         layout->ClientRectToScreen(target_window, client_rect_in_local_coord,
                                    &client_rect_in_logical_screen_coord)) {
-      params->client_rect.value() = client_rect_in_logical_screen_coord;
+      params->client_rect = std::move(client_rect_in_logical_screen_coord);
     }
   }
 
@@ -159,9 +160,9 @@ bool ExtractParams(LayoutManager *layout,
     const LayoutManager::WritingDirection direction =
         layout->GetWritingDirection(app_info);
     if (direction == LayoutManager::VERTICAL_WRITING) {
-      params->vertical_writing.value() = true;
+      params->vertical_writing = true;
     } else if (direction == LayoutManager::HORIZONTAL_WRITING) {
-      params->vertical_writing.value() = false;
+      params->vertical_writing = false;
     }
   }
   return true;
