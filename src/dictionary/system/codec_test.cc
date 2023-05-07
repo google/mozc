@@ -317,10 +317,10 @@ class SystemDictionaryCodecTest : public ::testing::Test {
 
 class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
  public:
-  const std::string GetSectionNameForKey() const override { return "Mock"; }
-  const std::string GetSectionNameForValue() const override { return "Mock"; }
-  const std::string GetSectionNameForTokens() const override { return "Mock"; }
-  const std::string GetSectionNameForPos() const override { return "Mock"; }
+  std::string GetSectionNameForKey() const override { return "Mock"; }
+  std::string GetSectionNameForValue() const override { return "Mock"; }
+  std::string GetSectionNameForTokens() const override { return "Mock"; }
+  std::string GetSectionNameForPos() const override { return "Mock"; }
   void EncodeKey(const absl::string_view src, std::string *dst) const override {
   }
   void DecodeKey(const absl::string_view src, std::string *dst) const override {
