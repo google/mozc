@@ -36,12 +36,13 @@ namespace config {
 // Interface class
 class StatsConfigUtilInterface {
  public:
+  StatsConfigUtilInterface() = default;
+  StatsConfigUtilInterface(const StatsConfigUtilInterface&) = delete;
+  StatsConfigUtilInterface& operator=(const StatsConfigUtilInterface&) = delete;
+  virtual ~StatsConfigUtilInterface() = default;
+
   virtual bool IsEnabled() = 0;
   virtual bool SetEnabled(bool val) = 0;
-
- protected:
-  StatsConfigUtilInterface() = default;
-  virtual ~StatsConfigUtilInterface() = default;
 };
 
 class StatsConfigUtil {

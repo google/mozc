@@ -94,6 +94,7 @@ mozc_cc_library(
         "//base:singleton",
         "//base:system_util",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
