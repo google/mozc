@@ -127,7 +127,7 @@ class [[nodiscard]] HResultOr
                         IsConstructibleOrConvertibleFromHResultOrV<T, U>,
                 int> = 0>
   constexpr HResultOr(const HResultOr<U>& other)  // NOLINT(runtime/explicit)
-      : Base(std::move(other)) {}
+      : Base(other) {}
 
   template <typename U,
             typename std::enable_if_t<
@@ -181,13 +181,11 @@ class [[nodiscard]] HResultOr
   // Like absl::StatusOr<T>, these constructors participate in overload
   // resolution if
   //  1. T is constructible from U,
-  //  2. T is convertible from U,
-  //  3. remove_cvref_t<U> is not HResultOr<T>, HResult, or std::in_place,
-  //  4. U is not convertible to HResultOr<T>, and
-  //  5. U is not convertible to HRESULT or HResult.
+  //  2. remove_cvref_t<U> is not HResultOr<T>, HResult, or std::in_place,
+  //  3. U is not convertible to HResultOr<T>, and
+  //  4. U is not convertible to HRESULT or HResult.
   //
-  // This constructor is explicit if the underlying constructor of T is
-  // explicit.
+  // This constructor is explicit if U is not convertible to T.
   //
   // The implicit constructor is necessary to write
   //
@@ -197,8 +195,8 @@ class [[nodiscard]] HResultOr
   //   return value;
   // }
   //
-  // Otherwise, you'd need to return the value by writing
-  //   return HResultOk(std::move(value));
+  // Elsewhere in the code, the recommended way of constructing a valid
+  // HResultOr<T> is to use the HResultOk<T>() function.
   //
   // Direct-initialization is disallowed if U is convertible to HRESULT.
   // Use HResult() and HResultOk() explicitly to remove ambiguity.
@@ -207,7 +205,7 @@ class [[nodiscard]] HResultOr
   //   HResultOr<int> i(HResultOk(42));
   // instead of
   //   HResultOr<int> i(42);
-  template <typename U = T,
+  template <typename U,
             typename std::enable_if_t<
                 std::is_constructible_v<T, U> && std::is_convertible_v<U, T> &&
                     !std::is_same_v<absl::remove_cvref_t<U>, HResultOr> &&
@@ -217,9 +215,9 @@ class [[nodiscard]] HResultOr
                     !hresultor_internal::IsConvertibleToHResultLikeV<U>,
                 int> = 0>
   constexpr HResultOr(U&& value)  // NOLINT(runtime/explicit)
-      : HResultOr(std::in_place, std::forward<U>(value)) {}
+      : Base(std::in_place, std::forward<U>(value)) {}
 
-  template <typename U = T,
+  template <typename U,
             typename std::enable_if_t<
                 std::is_constructible_v<T, U> && !std::is_convertible_v<U, T> &&
                     !std::is_same_v<absl::remove_cvref_t<U>, std::in_place_t> &&
@@ -229,14 +227,14 @@ class [[nodiscard]] HResultOr
                     !hresultor_internal::IsConvertibleToHResultLikeV<U>,
                 int> = 0>
   constexpr explicit HResultOr(U&& value)
-      : HResultOr(std::in_place, std::forward<U>(value)) {}
+      : Base(std::in_place, std::forward<U>(value)) {}
 
   // Perfect-forwarding assignment operator for value.
   // This operator participates in overload resolution if
   //  1. remove_cvref<U> is not HResultOr<T>,
   //  2. T is constructible and assignable from U, and
   //  3. U is not convertible to HResult or HRESULT.
-  template <typename U = T,
+  template <typename U,
             typename = std::enable_if_t<
                 !std::is_same_v<absl::remove_cvref_t<U>, HResultOr> &&
                 std::is_constructible_v<T, U> && std::is_assignable_v<T&, U> &&
@@ -259,7 +257,7 @@ class [[nodiscard]] HResultOr
                                Args&&... args)
       : Base(std::in_place, ilist, std::forward<Args>(args)...) {}
 
-  // Constructions and assignments from a non-ok HResult.
+  // Constructions and assignments from a non-successful HResult.
   //
   // These functions perform DCHECK(FAILED(hr). Use HResultOk() to construct a
   // successful value.
@@ -310,19 +308,7 @@ class [[nodiscard]] HResultOr
   }
 
   // operator*() returns the value. Requires has_value() == true.
-  constexpr T& operator*() & noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_;
-  }
-  constexpr const T& operator*() const& noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_;
-  }
-  constexpr T&& operator*() && noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return std::move(value_);
-  }
-  constexpr const T&& operator*() const&& noexcept
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return std::move(value_);
-  }
+  using Base::operator*;
 
   // operator->() returns a pointer to the value. Requires has_value() == true.
   constexpr T* operator->() noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -432,12 +418,28 @@ constexpr bool operator!=(const HResult a, const HResultOr<T>& b) {
   return b != a;
 }
 
-// Helper function to construct HResultOr when T is convertible to HRESULT.
-// e.g.
-// HResultOr<int> result = HResultOk(42);
+// HResultOk() overloads defined here return a HResultOr<T> with a valid value.
+// Similar to std::make_optional().
+// Examples:
+//
+//  Type value;
+//  HResultOr<Type> result = HResultOk(value);
+//  auto result2 = HResultOk<Type>(constructor, argments);
+//  auto result3 = HResultOk<std::vector<std::string>>({"initializer", "list"});
 template <typename U, typename T = std::decay_t<U>>
 constexpr HResultOr<T> HResultOk(U&& value) {
   return HResultOr<T>(std::in_place, std::forward<U>(value));
+}
+
+template <typename T, typename... Args>
+constexpr HResultOr<T> HResultOk(Args&&... args) {
+  return HResultOr<T>(std::in_place, std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+constexpr HResultOr<T> HResultOk(std::initializer_list<T> ilist,
+                                 Args&&... args) {
+  return HResultOk<T>(std::in_place, ilist, std::forward<Args>(args)...);
 }
 
 // operator<<() outputs the underlying HRESULT code.

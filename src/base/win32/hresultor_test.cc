@@ -216,6 +216,12 @@ TEST(HResultOr, HResultOk) {
   HResultOr<NonCopyableMock> non_copy = HResultOk(NonCopyableMock(-1));
   EXPECT_TRUE(non_copy.has_value());
   EXPECT_EQ(**non_copy, -1);
+
+  non_copy = HResultOk<NonCopyableMock>(5);
+  EXPECT_EQ(**non_copy, 5);
+
+  auto ilist = HResultOk<std::string>({'a', 'b', 'c'});
+  EXPECT_EQ(ilist, "abc");
 }
 
 TEST(HResultOr, LValueRValue) {

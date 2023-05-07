@@ -168,12 +168,21 @@ class HResultOrImpl : public HResultOrStorageBase<T> {
 
   // error() returns the error code as HRESULT.
   constexpr HResult error() const noexcept { return HResult(hr_); }
-  // Internal operators to add const, and lvalue/rvalue reference.
-  // Redefined in HResultOr<T> as public functions.
-  constexpr T& operator*() & noexcept { return value_; }
-  constexpr const T& operator*() const& noexcept { return value_; }
-  constexpr T&& operator*() && noexcept { return std::move(value_); }
-  constexpr const T&& operator*() const&& noexcept { return std::move(value_); }
+
+  // Same as HResultOr<T>::operator *() but defined here to use internally too.
+  constexpr T& operator*() & noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return value_;
+  }
+  constexpr const T& operator*() const& noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return value_;
+  }
+  constexpr T&& operator*() && noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return std::move(value_);
+  }
+  constexpr const T&& operator*() const&& noexcept
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return std::move(value_);
+  }
 
   template <typename... Args>
   constexpr void ConstructValue(Args&&... args) {
