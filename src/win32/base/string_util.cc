@@ -30,10 +30,12 @@
 #include "win32/base/string_util.h"
 
 #include <memory>
+#include <string>
 
 #include "base/japanese_util.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -85,11 +87,10 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
 
   // Convert "\x81\x65" (backquote in SJIFT-JIS) to ` by myself since
   // LCMapStringA converts it to ' for some reason.
-  std::string sjis2;
-  mozc::Util::StringReplace(sjis, "\x81\x65", "`", true, &sjis2);
+  absl::StrReplaceAll({{"\x81\x65", "`"}}, &sjis);
 
   const size_t halfwidth_len_without_null = ::LCMapStringA(
-      lcid, LCMAP_HALFWIDTH, sjis2.c_str(), sjis2.size(), nullptr, 0);
+      lcid, LCMAP_HALFWIDTH, sjis.c_str(), sjis.size(), nullptr, 0);
   if (halfwidth_len_without_null == 0) {
     return L"";
   }
@@ -100,7 +101,7 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
 
   std::unique_ptr<char[]> halfwidth_chars(new char[halfwidth_len_without_null]);
   const size_t actual_halfwidth_len_without_null =
-      ::LCMapStringA(lcid, LCMAP_HALFWIDTH, sjis2.c_str(), sjis2.size(),
+      ::LCMapStringA(lcid, LCMAP_HALFWIDTH, sjis.c_str(), sjis.size(),
                      halfwidth_chars.get(), halfwidth_len_without_null);
   if (halfwidth_len_without_null != actual_halfwidth_len_without_null) {
     return L"";

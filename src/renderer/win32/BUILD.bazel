@@ -272,9 +272,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:system_util",
         "//protocol:renderer_cc_proto",
-        "//testing:gunit_prod",
         "//third_party/wtl",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )
 

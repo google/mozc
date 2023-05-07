@@ -36,16 +36,14 @@ namespace mozc {
 
 class ImmutableConverterFactory {
  public:
+  ImmutableConverterFactory() = delete;
+
   // return singleton object
   static ImmutableConverterInterface *GetImmutableConverter();
 
   // dependency injection for unittesting
   static void SetImmutableConverter(
       ImmutableConverterInterface *immutable_converter);
-
- private:
-  ImmutableConverterFactory() {}
-  ~ImmutableConverterFactory() {}
 };
 
 }  // namespace mozc

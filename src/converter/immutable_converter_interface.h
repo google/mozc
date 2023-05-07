@@ -30,18 +30,17 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
 
 // Perform one-shot conversion with constraints.
 // constraits are encoded in |segments|
 class ImmutableConverterInterface {
  public:
-  virtual ~ImmutableConverterInterface() {}
+  virtual ~ImmutableConverterInterface() = default;
 
   // This method is equivalent to:
   //   const ConversionRequest request;
@@ -57,7 +56,7 @@ class ImmutableConverterInterface {
       const ConversionRequest &request, Segments *segments) const;
 
  protected:
-  ImmutableConverterInterface() {}
+  ImmutableConverterInterface() = default;
 };
 
 }  // namespace mozc

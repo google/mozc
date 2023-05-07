@@ -56,13 +56,6 @@ void Dedup(std::vector<T> *container) {
 
 }  // namespace
 
-TipInputModeManagerImpl::StatePair::StatePair()
-    : open_close(false), conversion_mode(kHiragana) {}
-
-TipInputModeManagerImpl::StatePair::StatePair(bool open_close,
-                                              ConversionMode conversion_mode)
-    : open_close(open_close), conversion_mode(conversion_mode) {}
-
 TipInputModeManagerImpl::StatePair TipInputModeManagerImpl::GetOverriddenState(
     const StatePair &base_state, const std::vector<InputScope> &input_scopes) {
   if (input_scopes.empty()) {

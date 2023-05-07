@@ -106,7 +106,6 @@
             'conversion_mode_util.cc',
             'deleter.cc',
             'indicator_visibility_tracker.cc',
-            'input_state.cc',
             'keyboard.cc',
             'keyevent_handler.cc',
             'string_util.cc',

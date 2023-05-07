@@ -457,17 +457,6 @@ TEST(UtilTest, SplitCSV) {
   CHECK_EQ(answer_vector.size(), 0);
 }
 
-TEST(UtilTest, ReplaceString) {
-  const std::string input = "foobarfoobar";
-  std::string output;
-  Util::StringReplace(input, "bar", "buz", true, &output);
-  EXPECT_EQ(output, "foobuzfoobuz");
-
-  output.clear();
-  Util::StringReplace(input, "bar", "buz", false, &output);
-  EXPECT_EQ(output, "foobuzfoobar");
-}
-
 TEST(UtilTest, LowerString) {
   std::string s = "TeSTtest";
   Util::LowerString(&s);

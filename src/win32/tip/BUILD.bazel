@@ -356,7 +356,6 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_input_mode_manager",
-        "//base:port",
         "//base:system_util",
     ],
 )
@@ -428,7 +427,14 @@ mozc_cc_library(
     hdrs = ["tip_private_context.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = ["//base:port"],
+    deps = [
+        "//protocol:commands_cc_proto",
+        "//win32/base:config_snapshot",
+        "//win32/base:deleter",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+        "//win32/base:surrogate_pair_observer",
+    ],
 )
 
 mozc_cc_library(
@@ -440,10 +446,8 @@ mozc_cc_library(
         ":tip_private_context_h",
         ":tip_text_service",
         ":tip_ui_element_manager",
-        "//base:system_util",
         "//client:client_interface",
         "//protocol:commands_cc_proto",
-        "//session:key_info_util",
         "//win32/base:config_snapshot",
         "//win32/base:deleter",
         "//win32/base:input_state",

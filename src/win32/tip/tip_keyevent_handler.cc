@@ -185,24 +185,24 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   if (open) {
     // Check if this key event is handled by VKBackBasedDeleter to support
     // *deletion_range* rule.
-    const VKBackBasedDeleter::ClientAction vk_back_action =
+    const ClientAction vk_back_action =
         private_context->GetDeleter()->OnKeyEvent(
             vk.virtual_key(), key_info.IsKeyDownInImeProcessKey(), true);
     switch (vk_back_action) {
-      case VKBackBasedDeleter::DO_DEFAULT_ACTION:
+      case ClientAction::DO_DEFAULT_ACTION:
         // do nothing.
         break;
-      case VKBackBasedDeleter::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
+      case ClientAction::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
         private_context->GetDeleter()->EndDeletion();
         break;
-      case VKBackBasedDeleter::SEND_KEY_TO_APPLICATION:
+      case ClientAction::SEND_KEY_TO_APPLICATION:
         *eaten = FALSE;  // Do not consume this key.
         return S_OK;
-      case VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
+      case ClientAction::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
         *eaten = TRUE;  // Consume this key but do not send this key to server.
         return S_OK;
-      case VKBackBasedDeleter::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
-      case VKBackBasedDeleter::APPLY_PENDING_STATUS:
+      case ClientAction::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
+      case ClientAction::APPLY_PENDING_STATUS:
       default:
         DLOG(FATAL) << "this action is not applicable to OnTestKey.";
         *eaten = FALSE;
@@ -326,9 +326,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   const KeyboardStatus keyboard_status(key_state);
   VirtualKey vk = GetVK(wparam, keyboard_status);
 
-  const VKBackBasedDeleter::ClientAction vk_back_action =
-      private_context->GetDeleter()->OnKeyEvent(vk.virtual_key(), is_key_down,
-                                                false);
+  const ClientAction vk_back_action = private_context->GetDeleter()->OnKeyEvent(
+      vk.virtual_key(), is_key_down, false);
 
   // Check if this key event is handled by VKBackBasedDeleter to support
   // *deletion_range* rule.
@@ -336,23 +335,23 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   bool ignore_this_keyevent = false;
   if (open) {
     switch (vk_back_action) {
-      case VKBackBasedDeleter::DO_DEFAULT_ACTION:
+      case ClientAction::DO_DEFAULT_ACTION:
         // do nothing.
         break;
-      case VKBackBasedDeleter::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
+      case ClientAction::CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
         private_context->GetDeleter()->EndDeletion();
         break;
-      case VKBackBasedDeleter::APPLY_PENDING_STATUS:
+      case ClientAction::APPLY_PENDING_STATUS:
         use_pending_output = true;
         break;
-      case VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
+      case ClientAction::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
         ignore_this_keyevent = true;
         break;
-      case VKBackBasedDeleter::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
+      case ClientAction::CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
         ignore_this_keyevent = true;
         private_context->GetDeleter()->EndDeletion();
         break;
-      case VKBackBasedDeleter::SEND_KEY_TO_APPLICATION:
+      case ClientAction::SEND_KEY_TO_APPLICATION:
       default:
         DLOG(FATAL) << "this action is not applicable to OnKey.";
         break;

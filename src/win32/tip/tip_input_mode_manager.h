@@ -55,10 +55,12 @@ class TipInputModeManagerImpl {
     kHalfKatakana,
   };
   struct StatePair {
-    StatePair();
-    StatePair(bool open_close, ConversionMode conversion_mode);
-    bool open_close;
-    ConversionMode conversion_mode;
+    StatePair() = default;
+    StatePair(bool open_close, ConversionMode conversion_mode)
+        : open_close(open_close), conversion_mode(conversion_mode) {}
+
+    bool open_close = false;
+    ConversionMode conversion_mode = kHiragana;
   };
 
  protected:
@@ -96,9 +98,9 @@ class TipInputModeManager : public TipInputModeManagerImpl {
 
   explicit TipInputModeManager(const Config &config)
       : use_global_mode_(config.use_global_mode) {}
-  TipInputModeManager(const TipInputModeManager &) = delete;
-  TipInputModeManager &operator=(const TipInputModeManager &) = delete;
-  ~TipInputModeManager() = default;
+  // Movable
+  TipInputModeManager(TipInputModeManager &&) = default;
+  TipInputModeManager &operator=(TipInputModeManager &&) = default;
 
   // Functions to access embedded IndicatorVisibilityTracker.
   Action OnDissociateContext();

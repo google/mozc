@@ -35,7 +35,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -43,6 +42,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -133,12 +133,10 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
   const Segment::Candidate &base_candidate = segment->candidate(0);
 
   // Normalize the expression, used in description.
-  std::string temp, temp2, expression;
+  std::string expression;
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key,
-                                                &temp);
-  Util::StringReplace(temp, "・", "/", true, &temp2);
-  // "ー", onbiki
-  Util::StringReplace(temp2, "ー", "-", true, &expression);
+                                                &expression);
+  absl::StrReplaceAll({{"・", "/"}, {"ー", "-"}}, &expression);  // "ー", onbiki
 
   size_t offset = std::min(insert_pos, segment->candidates_size());
 

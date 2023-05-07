@@ -39,14 +39,15 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_replace.h"
 
 namespace mozc {
 namespace emacs {
@@ -211,10 +212,8 @@ std::string NormalizeSymbol(const std::string &symbol) {
 //
 // Control characters, including newline('\n'), in a given string remain as is.
 std::string QuoteString(const std::string &str) {
-  std::string tmp, escaped_body;
-  mozc::Util::StringReplace(str, "\\", "\\\\", true, &tmp);
-  mozc::Util::StringReplace(tmp, "\"", "\\\"", true, &escaped_body);
-  return "\"" + escaped_body + "\"";
+  return absl::StrCat(
+      "\"", absl::StrReplaceAll(str, {{"\\", "\\\\"}, {"\"", "\\\""}}), "\"");
 }
 
 // Unquotes and unescapes a double-quoted string.

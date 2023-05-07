@@ -32,7 +32,6 @@
 
 #include "base/container/freelist.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "converter/node.h"
 
 namespace mozc {
@@ -43,7 +42,6 @@ class NodeAllocator {
       : node_freelist_(1024), max_nodes_size_(8192), node_count_(0) {}
   NodeAllocator(const NodeAllocator &) = delete;
   NodeAllocator &operator=(const NodeAllocator &) = delete;
-  ~NodeAllocator() {}
 
   Node *NewNode() {
     Node *node = node_freelist_.Alloc();

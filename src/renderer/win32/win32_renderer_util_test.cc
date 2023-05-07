@@ -110,11 +110,11 @@ static CRect ToCRect(const RECT &rect) {
   return CRect(rect.left, rect.top, rect.right, rect.bottom);
 }
 
-WindowPositionEmulator *CreateWindowEmulator(const RECT &window_rect,
-                                             const POINT &client_area_offset,
-                                             const SIZE &client_area_size,
-                                             double scale_factor, HWND *hwnd) {
-  WindowPositionEmulator *emulator = WindowPositionEmulator::Create();
+std::unique_ptr<WindowPositionEmulator> CreateWindowEmulator(
+    const RECT &window_rect, const POINT &client_area_offset,
+    const SIZE &client_area_size, double scale_factor, HWND *hwnd) {
+  std::unique_ptr<WindowPositionEmulator> emulator =
+      WindowPositionEmulator::Create();
   *hwnd = emulator->RegisterWindow(window_rect, client_area_offset,
                                    client_area_size, scale_factor);
   return emulator;
@@ -164,9 +164,8 @@ TEST(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   // Check DPI scale: 100%
   {
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, 1.0, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(kWindowRect, kClientOffset,
+                                                  kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
     CPoint dest;
@@ -185,9 +184,8 @@ TEST(Win32RendererUtilTest, GetPointInPhysicalCoordsTest) {
   // Check DPI scale: 200%
   {
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, 2.0, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(kWindowRect, kClientOffset,
+                                                  kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer point should be calculated by emulation.
     CPoint dest;
@@ -215,9 +213,8 @@ TEST(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   // Check DPI scale: 100%
   {
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, 1.0, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(kWindowRect, kClientOffset,
+                                                  kClientSize, 1.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
     CRect dest;
@@ -236,9 +233,8 @@ TEST(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
   // Check DPI scale: 200%
   {
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, 2.0, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(kWindowRect, kClientOffset,
+                                                  kClientSize, 2.0, &hwnd));
 
     // Conversion from an outer rectangle should be calculated by emulation.
     CRect dest;
@@ -263,9 +259,8 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CSize kClientSize(100, 200);
     const CRect kWindowRect(1000, 500, 1100, 700);
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, kScalingFactor, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(
+        kWindowRect, kClientOffset, kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
   }
@@ -277,9 +272,8 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CRect kWindowRect(1000, 500, 1000, 700);
 
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, kScalingFactor, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(
+        kWindowRect, kClientOffset, kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
   }
@@ -290,9 +284,8 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CSize kClientSize(100, 0);
     const CRect kWindowRect(1000, 500, 1100, 500);
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, kScalingFactor, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(
+        kWindowRect, kClientOffset, kClientSize, kScalingFactor, &hwnd));
 
     ASSERT_DOUBLE_EQ(kScalingFactor, layout_mgr.GetScalingFactor(hwnd));
   }
@@ -303,9 +296,8 @@ TEST(Win32RendererUtilTest, GetScalingFactorTest) {
     const CSize kClientSize(0, 0);
     const CRect kWindowRect(1000, 500, 1000, 500);
     HWND hwnd = nullptr;
-    LayoutManager layout_mgr(
-        CreateWindowEmulator(kWindowRect, kClientOffset,
-                             kClientSize, kScalingFactor, &hwnd));
+    LayoutManager layout_mgr(CreateWindowEmulator(
+        kWindowRect, kClientOffset, kClientSize, kScalingFactor, &hwnd));
 
     // If the window size is zero, the result should be fallen back 1.0.
     ASSERT_DOUBLE_EQ(1.0, layout_mgr.GetScalingFactor(hwnd));
@@ -326,8 +318,8 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
   {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
-    const HWND hwnd = emulator->RegisterWindow(kWindowRect,
-                                               kClientOffset, kClientSize, 1.0);
+    const HWND hwnd =
+        emulator->RegisterWindow(kWindowRect, kClientOffset, kClientSize, 1.0);
 
     CRect rect;
     CPoint point;
@@ -353,8 +345,8 @@ TEST(Win32RendererUtilTest, WindowPositionEmulatorTest) {
   {
     std::unique_ptr<WindowPositionEmulator> emulator(
         WindowPositionEmulator::Create());
-    const HWND hwnd = emulator->RegisterWindow(
-        kWindowRect, kClientOffset, kClientSize, 10.0);
+    const HWND hwnd =
+        emulator->RegisterWindow(kWindowRect, kClientOffset, kClientSize, 10.0);
 
     CRect rect;
     CPoint point;
@@ -389,16 +381,15 @@ TEST(Win32RendererUtilTest, TSF_NormalDPI) {
   constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
-  LayoutManager layout_mgr(
-      CreateWindowEmulator(kWindowRect, kClientOffset,
-                           kClientSize, kScaleFactor, &hwnd));
+  LayoutManager layout_mgr(CreateWindowEmulator(
+      kWindowRect, kClientOffset, kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;
 
-  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
-                                       ApplicationInfo::ShowCandidateWindow |
-                                           ApplicationInfo::ShowSuggestWindow,
-                                       ApplicationInfo::TSF);
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowCandidateWindow | ApplicationInfo::ShowSuggestWindow,
+      ApplicationInfo::TSF);
   AppInfoUtil::SetCompositionTarget(&app_info, 0, 86, 122, 20, 83, 119, 109,
                                     525);
 
@@ -408,8 +399,8 @@ TEST(Win32RendererUtilTest, TSF_NormalDPI) {
   EXPECT_FALSE(indicator_layout.is_vertical);
 
   CandidateWindowLayout candidate_window_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
-                                               &candidate_window_layout));
+  EXPECT_TRUE(
+      layout_mgr.LayoutCandidateWindow(app_info, &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(86, 142, 86, 122, 87, 142,
                                          candidate_window_layout);
 }
@@ -426,16 +417,15 @@ TEST(Win32RendererUtilTest, TSF_HighDPI) {
   constexpr double kScaleFactor = 2.0;
 
   HWND hwnd = nullptr;
-  LayoutManager layout_mgr(
-      CreateWindowEmulator(kWindowRect, kClientOffset,
-                           kClientSize, kScaleFactor, &hwnd));
+  LayoutManager layout_mgr(CreateWindowEmulator(
+      kWindowRect, kClientOffset, kClientSize, kScaleFactor, &hwnd));
 
   ApplicationInfo app_info;
 
-  AppInfoUtil::SetBasicApplicationInfo(&app_info, hwnd,
-                                       ApplicationInfo::ShowCandidateWindow |
-                                           ApplicationInfo::ShowSuggestWindow,
-                                       ApplicationInfo::TSF);
+  AppInfoUtil::SetBasicApplicationInfo(
+      &app_info, hwnd,
+      ApplicationInfo::ShowCandidateWindow | ApplicationInfo::ShowSuggestWindow,
+      ApplicationInfo::TSF);
   AppInfoUtil::SetCompositionTarget(&app_info, 0, 86, 122, 20, 83, 119, 109,
                                     525);
 
@@ -445,8 +435,8 @@ TEST(Win32RendererUtilTest, TSF_HighDPI) {
   EXPECT_FALSE(indicator_layout.is_vertical);
 
   CandidateWindowLayout candidate_window_layout;
-  EXPECT_TRUE(layout_mgr.LayoutCandidateWindow(app_info,
-                                               &candidate_window_layout));
+  EXPECT_TRUE(
+      layout_mgr.LayoutCandidateWindow(app_info, &candidate_window_layout));
   EXPECT_EXCLUDE_CANDIDATE_WINDOW_LAYOUT(172, 284, 172, 244, 174, 284,
                                          candidate_window_layout);
 }

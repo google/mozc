@@ -128,10 +128,6 @@ class Util {
                                         absl::string_view append_string,
                                         std::string *output);
 
-  static void StringReplace(absl::string_view s, absl::string_view oldsub,
-                            absl::string_view newsub, bool replace_all,
-                            std::string *res);
-
   static void LowerString(std::string *str);
   static void UpperString(std::string *str);
 

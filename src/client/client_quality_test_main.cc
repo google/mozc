@@ -49,6 +49,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -78,10 +79,8 @@ bool IsValidSourceSentence(const absl::string_view str) {
   }
 
   // Source should not contain katakana
-  std::string tmp, tmp2;
-  Util::StringReplace(str, "ー", "", true, &tmp);
-  Util::StringReplace(tmp, "・", "", true, &tmp2);
-  if (Util::ContainsScriptType(tmp2, Util::KATAKANA)) {
+  std::string tmp = absl::StrReplaceAll(str, {{"ー", ""}, {"・", ""}});
+  if (Util::ContainsScriptType(tmp, Util::KATAKANA)) {
     LOG(WARNING) << "contain KATAKANA: " << str;
     return false;
   }

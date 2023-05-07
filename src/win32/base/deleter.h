@@ -32,20 +32,62 @@
 
 #include <windows.h>
 
+#include <deque>
 #include <memory>
+#include <utility>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
+#include "win32/base/input_state.h"
+#include "win32/base/keyboard.h"
 
 namespace mozc {
-namespace commands {
-class Output;
-}  // namespace commands
-
 namespace win32 {
 
-struct InputState;
-class VKBackBasedDeleterQueue;
-class Win32KeyboardInterface;
+enum class DeletionWaitState : uint32_t {
+  // The deleter is waiting for the first test-key-down of VK_BACK.
+  WAIT_INITIAL_VK_BACK_TESTDOWN = 0,
+  // The deleter is waiting for the test-key-down of VK_BACK.
+  WAIT_VK_BACK_TESTDOWN,
+  // The deleter is waiting for the test-key-up of VK_BACK.
+  WAIT_VK_BACK_TESTUP,
+  // The deleter is waiting for the key-down of VK_BACK.
+  WAIT_VK_BACK_DOWN,
+  // The deleter is waiting for the key-up of VK_BACK.
+  WAIT_VK_BACK_UP,
+  DELETTION_WAIT_STATE_LAST = 0xffffffff,
+};
+
+// Return code to represent the expected action of the IME DLL.
+enum class ClientAction : uint32_t{
+  // IME DLL must behave as if there is no VKBackBasedDeleter.
+  // This action can be used for both ImeProcessKey (test-key-[down/up]) and
+  // ImeToAsciiEx (key-[down/up]).
+  DO_DEFAULT_ACTION = 0,
+  // IME DLL must call VKBackBasedDeleter::EndDeletion then behave as if
+  // there is no VKBackBasedDeleter.
+  // This action can be used for both ImeProcessKey (test-key-[down/up]) and
+  // ImeToAsciiEx (key-[down/up]).
+  CALL_END_DELETION_THEN_DO_DEFAULT_ACTION,
+  // IME DLL must pass this key event to the application.
+  // This action can be used for ImeProcessKey (test-key-[down/up]) only.
+  SEND_KEY_TO_APPLICATION,
+  // IME DLL must not pass this key event to the application nor the server.
+  // This action can be used for ImeProcessKey (test-key-[down/up]) only.
+  CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
+  // IME DLL must not pass this key event to the application nor the server.
+  // IME DLL must call VKBackBasedDeleter::RestoreModifiers method.
+  // This action can be used for both ImeProcessKey (test-key-[down/up]) and
+  // ImeToAsciiEx (key-[down/up]).
+  CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER,
+  // IME DLL must use the pending output and |ime_state| as if the server
+  // responded these data against the current key event.
+  // This action can be used for ImeToAsciiEx (key-down) only.
+  APPLY_PENDING_STATUS,
+  DELETION_ACTION_LAST = 0xffffffff,
+};
+
+using VKBackBasedDeleterQueue =
+    std::deque<std::pair<DeletionWaitState, ClientAction>>;
 
 // This class implements the *deletion_range* mechanism of the Mozc protocol.
 // When the client receives an output which contains *deletion_range*,
@@ -73,53 +115,9 @@ class Win32KeyboardInterface;
 // - VK_BACK up    | Consumed by the IME to call EndDeletion.
 class VKBackBasedDeleter {
  public:
-  enum DeletionWaitState {
-    // The deleter is waiting for the first test-key-down of VK_BACK.
-    WAIT_INITIAL_VK_BACK_TESTDOWN = 0,
-    // The deleter is waiting for the test-key-down of VK_BACK.
-    WAIT_VK_BACK_TESTDOWN,
-    // The deleter is waiting for the test-key-up of VK_BACK.
-    WAIT_VK_BACK_TESTUP,
-    // The deleter is waiting for the key-down of VK_BACK.
-    WAIT_VK_BACK_DOWN,
-    // The deleter is waiting for the key-up of VK_BACK.
-    WAIT_VK_BACK_UP,
-    DELETTION_WAIT_STATE_LAST = 0xffffffff,
-  };
-
-  // Return code to represent the expected action of the IME DLL.
-  enum ClientAction {
-    // IME DLL must behave as if there is no VKBackBasedDeleter.
-    // This action can be used for both ImeProcessKey (test-key-[down/up]) and
-    // ImeToAsciiEx (key-[down/up]).
-    DO_DEFAULT_ACTION = 0,
-    // IME DLL must call VKBackBasedDeleter::EndDeletion then behave as if
-    // there is no VKBackBasedDeleter.
-    // This action can be used for both ImeProcessKey (test-key-[down/up]) and
-    // ImeToAsciiEx (key-[down/up]).
-    CALL_END_DELETION_THEN_DO_DEFAULT_ACTION,
-    // IME DLL must pass this key event to the application.
-    // This action can be used for ImeProcessKey (test-key-[down/up]) only.
-    SEND_KEY_TO_APPLICATION,
-    // IME DLL must not pass this key event to the application nor the server.
-    // This action can be used for ImeProcessKey (test-key-[down/up]) only.
-    CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER,
-    // IME DLL must not pass this key event to the application nor the server.
-    // IME DLL must call VKBackBasedDeleter::RestoreModifiers method.
-    // This action can be used for both ImeProcessKey (test-key-[down/up]) and
-    // ImeToAsciiEx (key-[down/up]).
-    CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER,
-    // IME DLL must use the pending output and |ime_state| as if the server
-    // responded these data against the current key event.
-    // This action can be used for ImeToAsciiEx (key-down) only.
-    APPLY_PENDING_STATUS,
-    DELETION_ACTION_LAST = 0xffffffff,
-  };
-
   VKBackBasedDeleter();
   VKBackBasedDeleter(const VKBackBasedDeleter &) = delete;
   VKBackBasedDeleter &operator=(const VKBackBasedDeleter &) = delete;
-  ~VKBackBasedDeleter();
 
   // For unit test only.
   // You can hook relevant Win32 API calls in this class for unit tests.
@@ -137,7 +135,7 @@ class VKBackBasedDeleter {
   void EndDeletion();
 
   // Returns the expected action of the IME DLL against the given key event.
-  ClientAction OnKeyEvent(UINT vk, bool is_keydown, bool is_testkey);
+  ClientAction OnKeyEvent(UINT vk, bool is_keydown, bool is_test_key);
 
   // Returns true is the deleter is waiting for any specific key event.
   bool IsDeletionOngoing() const;
@@ -148,10 +146,10 @@ class VKBackBasedDeleter {
  private:
   void UnsetModifiers();
 
-  std::unique_ptr<VKBackBasedDeleterQueue> wait_queue_;
+  VKBackBasedDeleterQueue wait_queue_;
   std::unique_ptr<Win32KeyboardInterface> keyboard_;
-  std::unique_ptr<InputState> pending_ime_state_;
-  std::unique_ptr<mozc::commands::Output> pending_output_;
+  InputState pending_ime_state_;
+  mozc::commands::Output pending_output_;
 };
 
 }  // namespace win32

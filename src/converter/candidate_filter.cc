@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -50,12 +49,12 @@
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::PosMatcher;
-using mozc::dictionary::SuppressionDictionary;
-
 namespace mozc {
 namespace converter {
 namespace {
+
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
 
 constexpr size_t kSizeThresholdForWeakCompound = 10;
 
@@ -236,8 +235,6 @@ CandidateFilter::CandidateFilter(
   CHECK(pos_matcher_);
   CHECK(suggestion_filter_);
 }
-
-CandidateFilter::~CandidateFilter() {}
 
 void CandidateFilter::Reset() {
   seen_.clear();

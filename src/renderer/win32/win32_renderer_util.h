@@ -50,10 +50,7 @@ namespace win32 {
 class CandidateWindowLayout {
  public:
   // Initializes fields with default values keeping |initialized_| false.
-  CandidateWindowLayout();
-
-  // Destructor Stub.  Actually do nothing.
-  ~CandidateWindowLayout();
+  CandidateWindowLayout() = default;
 
   // Returns true if this object is initialized with valid parameter.
   bool initialized() const;
@@ -76,7 +73,7 @@ class CandidateWindowLayout {
  private:
   POINT position_;
   RECT exclude_region_;
-  bool initialized_;
+  bool initialized_ = false;
 };
 
 struct IndicatorWindowLayout {
@@ -94,7 +91,7 @@ bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area);
 // This interface is designed to hook API calls for unit test.
 class WindowPositionInterface {
  public:
-  virtual ~WindowPositionInterface() {}
+  virtual ~WindowPositionInterface() = default;
 
   // This method wraps API call of LogicalToPhysicalPoint.
   // Returns true if this method can convert the given coordinate into
@@ -125,7 +122,7 @@ class WindowPositionInterface {
 class WindowPositionEmulator : public WindowPositionInterface {
  public:
   // Returns an instance of WindowPositionEmulator.
-  static WindowPositionEmulator *Create();
+  static std::unique_ptr<WindowPositionEmulator> Create();
 
   // Returns a dummy window handle for this emulator.  You can call methods of
   // WindowPositionInterface with this dummy handle.  You need not to release
@@ -143,12 +140,12 @@ class LayoutManager {
   LayoutManager();
   LayoutManager(const LayoutManager &) = delete;
   LayoutManager &operator=(const LayoutManager &) = delete;
-  ~LayoutManager();
 
   // A special constructor for unit tests.  You can set a mock object which
   // emulates native APIs for unit test.  This class is responsible for
   // deleting the mock objects passed.
-  explicit LayoutManager(WindowPositionInterface *mock_window_position);
+  explicit LayoutManager(
+      std::unique_ptr<WindowPositionInterface> mock_window_position);
 
   // Determines the position where the candidate/predict/suggestion window
   // should be placed.  This function does not take DPI virtualization into

@@ -124,7 +124,6 @@ mozc_cc_library(
     deps = [
         ":node",
         "//base:logging",
-        "//base:port",
         "//base/container:freelist",
     ],
 )
@@ -244,7 +243,6 @@ mozc_cc_library(
         ":node",
         ":segments",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",
@@ -306,7 +304,6 @@ mozc_cc_library(
         "//base:port",
         "//base:singleton",
         "//base:util",
-        "//base/container:freelist",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -333,6 +330,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
+        ":segments",
         "//base:logging",
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",

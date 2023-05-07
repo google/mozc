@@ -85,9 +85,9 @@ std::string HResult::ToStringSlow() const {
   absl::string_view code_str = CommonCodeToString(hr_);
   if (!code_str.empty()) {
     // Return well-known codes as it is.
-    return absl::StrCat(ok() ? "Success: " : "Failure: ", code_str);
+    return absl::StrCat(Succeeded() ? "Success: " : "Failure: ", code_str);
   }
-  if (ok()) {
+  if (Succeeded()) {
     return absl::StrCat("Success: ", CodeToHex(hr_));
   }
 

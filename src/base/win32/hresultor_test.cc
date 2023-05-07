@@ -82,7 +82,7 @@ TEST(HResultOr, Int) {
   TestHResultOrTypeAttributes<int>();
 
   HResultOr<int> v(std::in_place, 42);
-  EXPECT_TRUE(v.ok());
+  EXPECT_TRUE(v.has_value());
   EXPECT_EQ(v.value(), 42);
   EXPECT_EQ(*v, 42);
   EXPECT_EQ(*std::move(v), 42);
@@ -90,13 +90,13 @@ TEST(HResultOr, Int) {
   EXPECT_EQ(std::move(v).value(), 12);
 
   constexpr HResultOr<int> error(HResult(E_FAIL));
-  EXPECT_FALSE(error.ok());
-  EXPECT_EQ(error.hr(), E_FAIL);
+  EXPECT_FALSE(error.has_value());
+  EXPECT_EQ(error.error(), E_FAIL);
 
   EXPECT_EQ(v = HResult(E_FAIL), HResult(E_FAIL));
-  EXPECT_EQ(v.hr(), E_FAIL);
+  EXPECT_EQ(v.error(), E_FAIL);
   EXPECT_EQ(v = HResult(E_UNEXPECTED), HResult(E_UNEXPECTED));
-  EXPECT_EQ(v.hr(), E_UNEXPECTED);
+  EXPECT_EQ(v.error(), E_UNEXPECTED);
 }
 
 TEST(HResultOr, String) {
@@ -107,7 +107,7 @@ TEST(HResultOr, String) {
 
   constexpr absl::string_view kTestStr = "hello";
   HResultOr<std::string> v(kTestStr);
-  EXPECT_TRUE(v.ok());
+  EXPECT_TRUE(v.has_value());
   EXPECT_EQ(v.value(), kTestStr);
   EXPECT_EQ(*v, kTestStr);
   EXPECT_EQ(*std::move(v), kTestStr);
@@ -129,7 +129,7 @@ TEST(HResultOr, String) {
 
   const HResultOr<std::string> in_place(std::in_place, 7, 'a');
   EXPECT_EQ(in_place, std::string(7, 'a'));
-  EXPECT_TRUE(in_place.ok());
+  EXPECT_TRUE(in_place.has_value());
 }
 
 TEST(HResultOr, Vector) {
@@ -139,7 +139,7 @@ TEST(HResultOr, Vector) {
   TestHResultOrTypeAttributes<const vector_t *>();
 
   const HResultOr<vector_t> v(std::in_place, {1, 2, 3});
-  EXPECT_TRUE(v.ok());
+  EXPECT_TRUE(v.has_value());
   HResultOr<vector_t> v2(v);
   EXPECT_EQ(v, v2);
   vector_t expected = {1, 2, 3};
@@ -152,9 +152,9 @@ TEST(HResultOr, Vector) {
   EXPECT_NE(expected, error);
 
   std::swap(error, v2);
-  EXPECT_TRUE(error.ok());
+  EXPECT_TRUE(error.has_value());
   EXPECT_EQ(error, expected);
-  EXPECT_FALSE(v2.ok());
+  EXPECT_FALSE(v2.has_value());
 }
 
 TEST(HResultOr, Conversions) {
@@ -170,7 +170,7 @@ TEST(HResultOr, Conversions) {
   s = HResultOk("Mozc");
   EXPECT_EQ(s, "Mozc");
   s = HResult(E_FAIL);
-  EXPECT_EQ(s.hr(), E_FAIL);
+  EXPECT_EQ(s.error(), E_FAIL);
 
   // Conversion constructors
   const HResultOr<std::string> implicit_conversion_ctor = "abc";
@@ -206,16 +206,22 @@ class NonCopyableMock {
 TEST(HResultOr, HResultOk) {
   HResultOr<int> vint = HResultOk(42);
   EXPECT_EQ(vint, 42);
-  EXPECT_TRUE(vint.ok());
+  EXPECT_TRUE(vint.has_value());
 
   const std::string str("hello");
   HResultOr<std::string> vstr = HResultOk(str);
   EXPECT_EQ(vstr, "hello");
-  EXPECT_TRUE(vstr.ok());
+  EXPECT_TRUE(vstr.has_value());
 
   HResultOr<NonCopyableMock> non_copy = HResultOk(NonCopyableMock(-1));
-  EXPECT_TRUE(non_copy.ok());
+  EXPECT_TRUE(non_copy.has_value());
   EXPECT_EQ(**non_copy, -1);
+
+  non_copy = HResultOk<NonCopyableMock>(5);
+  EXPECT_EQ(**non_copy, 5);
+
+  auto ilist = HResultOk<std::string>({'a', 'b', 'c'});
+  EXPECT_EQ(ilist, "abc");
 }
 
 TEST(HResultOr, LValueRValue) {
@@ -225,11 +231,11 @@ TEST(HResultOr, LValueRValue) {
 
   // Copy-free operators
   HResultOr<NonCopyableMock> implicit_direct_ctor = NonCopyableMock(1);
-  EXPECT_TRUE(implicit_direct_ctor.ok());
+  EXPECT_TRUE(implicit_direct_ctor.has_value());
   EXPECT_EQ(**implicit_direct_ctor, 1);
   HResultOr<NonCopyableMock> explicit_direct_ctor(
       std::move(implicit_direct_ctor));
-  EXPECT_TRUE(explicit_direct_ctor.ok());
+  EXPECT_TRUE(explicit_direct_ctor.has_value());
   EXPECT_EQ(**explicit_direct_ctor, 1);
 
   HResultOr<NonCopyableMock> value_or(NonCopyableMock(100));
@@ -240,11 +246,11 @@ TEST(HResultOr, LValueRValue) {
   // assignment
   HResultOr<NonCopyableMock> assignments = HResult(E_FAIL);
   assignments = NonCopyableMock(100);
-  EXPECT_TRUE(assignments.ok());
+  EXPECT_TRUE(assignments.has_value());
   EXPECT_EQ(**assignments, 100);
   assignments = HResult(E_FAIL);
   assignments = HResultOk(NonCopyableMock(123));
-  EXPECT_TRUE(assignments.ok());
+  EXPECT_TRUE(assignments.has_value());
   EXPECT_EQ(**assignments, 123);
 
   // Pointer operators.
@@ -300,7 +306,7 @@ TEST(HResultOr, AssignOrReturnHResult) {
                              HResultOr<std::unique_ptr<int>>(HResult(E_FAIL)));
     return HResult(S_FALSE);
   };
-  EXPECT_EQ(g().hr(), E_FAIL);
+  EXPECT_EQ(g().error(), E_FAIL);
 }
 
 TEST(HResultOr, ReturnIfErrorHResult) {

@@ -44,11 +44,6 @@ class IndicatorVisibilityTracker {
     kNothing,   // The caller has nothing to do.
     kUpdateUI,  // The caller must update UI for the indicator.
   };
-  IndicatorVisibilityTracker() = default;
-  IndicatorVisibilityTracker(const IndicatorVisibilityTracker &) = delete;
-  IndicatorVisibilityTracker &operator=(const IndicatorVisibilityTracker &) =
-      delete;
-  ~IndicatorVisibilityTracker() = default;
 
   // Event call back endpoints.
   Action OnDissociateContext();

@@ -44,11 +44,13 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/mmap.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 #ifdef _WIN32
@@ -652,17 +654,14 @@ std::string FileUtil::Basename(const std::string &filename) {
 }
 
 std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
-#ifdef _WIN32
-  constexpr char kFileDelimiterForUnix = '/';
-  constexpr char kFileDelimiterForWindows = '\\';
-  std::string normalized;
-  Util::StringReplace(path, std::string(1, kFileDelimiterForUnix),
-                      std::string(1, kFileDelimiterForWindows), true,
-                      &normalized);
-  return normalized;
-#else   // _WIN32
-  return path;
-#endif  // _WIN32
+  if constexpr (TargetIsWindows()) {
+    constexpr absl::string_view kFileDelimiterForUnix = "/";
+    constexpr absl::string_view kFileDelimiterForWindows = "\\";
+    return absl::StrReplaceAll(
+        path, {{kFileDelimiterForUnix, kFileDelimiterForWindows}});
+  } else {
+    return path;
+  }
 }
 
 absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(

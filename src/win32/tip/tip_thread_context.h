@@ -30,34 +30,26 @@
 #ifndef MOZC_WIN32_TIP_TIP_THREAD_CONTEXT_H_
 #define MOZC_WIN32_TIP_TIP_THREAD_CONTEXT_H_
 
-#include <windows.h>
-
 #include <cstdint>
-#include <memory>
 
-#include "base/port.h"
+#include "win32/tip/tip_input_mode_manager.h"
 
 namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipInputModeManager;
-
 class TipThreadContext {
  public:
   TipThreadContext();
-  TipThreadContext(const TipThreadContext &) = delete;
-  TipThreadContext &operator=(const TipThreadContext &) = delete;
-  ~TipThreadContext();
 
-  TipInputModeManager *GetInputModeManager();
+  TipInputModeManager *GetInputModeManager() { return &input_mode_manager_; }
 
-  int32_t GetFocusRevision() const;
+  int32_t GetFocusRevision() const { return focus_revision_; }
   void IncrementFocusRevision();
 
  private:
-  class InternalState;
-  std::unique_ptr<InternalState> state_;
+  TipInputModeManager input_mode_manager_;
+  int32_t focus_revision_ = 0;
 };
 
 }  // namespace tsf

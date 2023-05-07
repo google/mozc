@@ -41,55 +41,27 @@
 // clang-format on
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/win32/win_util.h"
 #include "protocol/renderer_command.pb.h"
-#include "absl/base/macros.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
 
 namespace {
-// This template class is used to represent rendering information which may
-// or may not be available depends on the application and operations.
-// TODO(yuryu): Replace with std::optional<T>.
-template <typename T>
-class Optional {
- public:
-  Optional() : value_(T()), has_value_(false) {}
-
-  explicit Optional(const T &src) : value_(src), has_value_(true) {}
-
-  const T &value() const {
-    DCHECK(has_value_);
-    return value_;
-  }
-
-  T *mutable_value() {
-    has_value_ = true;
-    return &value_;
-  }
-
-  bool has_value() const { return has_value_; }
-
-  void Clear() { has_value_ = false; }
-
- private:
-  T value_;
-  bool has_value_;
-};
-
 // A set of rendering information relevant to the target application.  Note
 // that all of the positional fields are (logical) screen coordinates.
 struct CandidateWindowLayoutParams {
-  Optional<HWND> window_handle;
-  Optional<IMECHARPOSITION> char_pos;
-  Optional<CRect> client_rect;
-  Optional<bool> vertical_writing;
+  std::optional<HWND> window_handle;
+  std::optional<IMECHARPOSITION> char_pos;
+  std::optional<CRect> client_rect;
+  std::optional<bool> vertical_writing;
 };
 
 bool IsValidRect(const commands::RendererCommand::Rectangle &rect) {
@@ -143,10 +115,10 @@ bool ExtractParams(LayoutManager *layout,
   DCHECK_NE(nullptr, layout);
   DCHECK_NE(nullptr, params);
 
-  params->window_handle.Clear();
-  params->char_pos.Clear();
-  params->client_rect.Clear();
-  params->vertical_writing.Clear();
+  params->window_handle.reset();
+  params->char_pos.reset();
+  params->client_rect.reset();
+  params->vertical_writing.reset();
 
   if (!app_info.has_target_window_handle()) {
     return false;
@@ -154,7 +126,7 @@ bool ExtractParams(LayoutManager *layout,
   const HWND target_window =
       WinUtil::DecodeWindowHandle(app_info.target_window_handle());
 
-  *params->window_handle.mutable_value() = target_window;
+  params->window_handle = target_window;
 
   if (app_info.has_composition_target()) {
     const commands::RendererCommand::CharacterPosition &char_pos =
@@ -165,11 +137,12 @@ bool ExtractParams(LayoutManager *layout,
         char_pos.line_height() > 0 && char_pos.has_document_area() &&
         IsValidRect(char_pos.document_area())) {
       // Positional fields are (logical) screen coordinate.
-      IMECHARPOSITION *dest = params->char_pos.mutable_value();
-      dest->dwCharPos = char_pos.position();
-      dest->pt = ToPoint(char_pos.top_left());
-      dest->cLineHeight = char_pos.line_height();
-      dest->rcDocument = ToRect(char_pos.document_area());
+      IMECHARPOSITION dest;
+      dest.dwCharPos = char_pos.position();
+      dest.pt = ToPoint(char_pos.top_left());
+      dest.cLineHeight = char_pos.line_height();
+      dest.rcDocument = ToRect(char_pos.document_area());
+      params->char_pos = std::move(dest);
     }
   }
 
@@ -179,8 +152,7 @@ bool ExtractParams(LayoutManager *layout,
     if (layout->GetClientRect(target_window, &client_rect_in_local_coord) &&
         layout->ClientRectToScreen(target_window, client_rect_in_local_coord,
                                    &client_rect_in_logical_screen_coord)) {
-      *params->client_rect.mutable_value() =
-          client_rect_in_logical_screen_coord;
+      params->client_rect = std::move(client_rect_in_logical_screen_coord);
     }
   }
 
@@ -188,9 +160,9 @@ bool ExtractParams(LayoutManager *layout,
     const LayoutManager::WritingDirection direction =
         layout->GetWritingDirection(app_info);
     if (direction == LayoutManager::VERTICAL_WRITING) {
-      *params->vertical_writing.mutable_value() = true;
+      params->vertical_writing = true;
     } else if (direction == LayoutManager::HORIZONTAL_WRITING) {
-      *params->vertical_writing.mutable_value() = false;
+      params->vertical_writing = false;
     }
   }
   return true;
@@ -228,8 +200,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
 
   NativeWindowPositionAPI(const NativeWindowPositionAPI &) = delete;
   NativeWindowPositionAPI &operator=(const NativeWindowPositionAPI &) = delete;
-
-  virtual ~NativeWindowPositionAPI() {}
 
   virtual bool LogicalToPhysicalPoint(HWND window_handle,
                                       const POINT &logical_coordinate,
@@ -330,17 +300,15 @@ struct WindowInfo {
   CRect window_rect;
   CPoint client_area_offset;
   CSize client_area_size;
-  double scale_factor;
-  WindowInfo() : scale_factor(1.0) {}
+  double scale_factor = 1.0;
 };
 
 class WindowPositionEmulatorImpl : public WindowPositionEmulator {
  public:
-  WindowPositionEmulatorImpl() {}
+  WindowPositionEmulatorImpl() = default;
   WindowPositionEmulatorImpl(const WindowPositionEmulatorImpl &) = delete;
   WindowPositionEmulatorImpl &operator=(const WindowPositionEmulatorImpl &) =
       delete;
-  virtual ~WindowPositionEmulatorImpl() {}
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowRect(HWND window_handle, RECT *rect) {
@@ -638,16 +606,9 @@ bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
   return GetWorkingAreaFromPointImpl(point, working_area);
 }
 
-WindowPositionEmulator *WindowPositionEmulator::Create() {
-  return new WindowPositionEmulatorImpl();
+std::unique_ptr<WindowPositionEmulator> WindowPositionEmulator::Create() {
+  return std::make_unique<WindowPositionEmulatorImpl>();
 }
-
-CandidateWindowLayout::CandidateWindowLayout()
-    : position_(CPoint()),
-      exclude_region_(CRect()),
-      initialized_(false) {}
-
-CandidateWindowLayout::~CandidateWindowLayout() {}
 
 void CandidateWindowLayout::Clear() {
   position_ = CPoint();
@@ -699,7 +660,6 @@ void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
   const double scale_factor = GetScalingFactor(root_window_handle);
   result->x = point.x * scale_factor;
   result->y = point.y * scale_factor;
-  return;
 }
 
 void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
@@ -718,16 +678,14 @@ void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
   GetPointInPhysicalCoords(window_handle, CPoint(rect.right, rect.bottom),
                            &bottom_right);
   *result = CRect(top_left, bottom_right);
-  return;
 }
 
 LayoutManager::LayoutManager()
-    : window_position_(new NativeWindowPositionAPI) {}
+    : window_position_(std::make_unique<NativeWindowPositionAPI>()) {}
 
-LayoutManager::LayoutManager(WindowPositionInterface *mock_window_position)
-    : window_position_(mock_window_position) {}
-
-LayoutManager::~LayoutManager() {}
+LayoutManager::LayoutManager(
+    std::unique_ptr<WindowPositionInterface> mock_window_position)
+    : window_position_(std::move(mock_window_position)) {}
 
 bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
                                         const POINT &src_point,
@@ -850,21 +808,19 @@ LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
 bool LayoutManager::LayoutCandidateWindow(
     const commands::RendererCommand::ApplicationInfo &app_info,
     CandidateWindowLayout *candidate_layout) {
-
   CandidateWindowLayoutParams params;
   if (!ExtractParams(this, app_info, &params)) {
     return false;
   }
 
-  if (LayoutCandidateWindowByCompositionTarget(
-          params, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCompositionTarget(params, this,
+                                               candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
   return false;
 }
-
 
 bool LayoutManager::LayoutIndicatorWindow(
     const commands::RendererCommand_ApplicationInfo &app_info,

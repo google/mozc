@@ -147,8 +147,6 @@ struct LatticeDisplayNodeInfo {
 
 Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
-Lattice::~Lattice() {}
-
 NodeAllocator *Lattice::node_allocator() const { return node_allocator_.get(); }
 
 Node *Lattice::NewNode() { return node_allocator_->NewNode(); }

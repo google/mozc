@@ -97,7 +97,6 @@ mozc_cc_library(
         ":input_state",
         ":keyboard",
         "//base:logging",
-        "//base:port",
         "//protocol:commands_cc_proto",
     ],
 )
@@ -202,7 +201,6 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "input_state",
-    srcs = ["input_state.cc"],
     hdrs = ["input_state.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
