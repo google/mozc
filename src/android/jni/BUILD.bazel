@@ -39,9 +39,7 @@ load("//:build_defs.bzl", "mozc_cc_library")
 mozc_cc_library(
     name = "mozcjni",
     srcs = ["mozcjni.cc"],
-    visibility = [
-        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
-    ],
+    visibility = ["//:__subpackages__"],  # Scheuklappen: keep
     deps = [
         "//base:logging",
         "//base:singleton",
