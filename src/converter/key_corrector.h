@@ -33,22 +33,24 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-
 namespace mozc {
 
-class KeyCorrector {
+class KeyCorrector final {
  public:
   enum InputMode {
     ROMAN,
     KANA,
   };
 
-  KeyCorrector();
-  KeyCorrector(const std::string &key, InputMode mode, size_t history_size);
-  KeyCorrector(const KeyCorrector &) = delete;
-  KeyCorrector &operator=(const KeyCorrector &) = delete;
-  virtual ~KeyCorrector();
+  KeyCorrector() : available_(false), mode_(ROMAN) {}
+  KeyCorrector(const std::string &key, InputMode mode, size_t history_size)
+      : available_(false), mode_(mode) {
+    CorrectKey(key, mode, history_size);
+  }
+
+  // Movable
+  KeyCorrector(KeyCorrector &&other) = default;
+  KeyCorrector &operator=(KeyCorrector &&other) = default;
 
   InputMode mode() const;
 
@@ -142,8 +144,8 @@ class KeyCorrector {
   //
   // By combining GetCorrectedPrefix() and GetOriginalOffset(),
   // Converter is able to know the position of the lattice
-  size_t GetOriginalOffset(const size_t original_key_pos,
-                           const size_t new_key_offset) const;
+  size_t GetOriginalOffset(size_t original_key_pos,
+                           size_t new_key_offset) const;
 
   // return the cost penalty for the corrected key.
   // The return value is added to the original cost as a penalty.
