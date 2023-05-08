@@ -161,6 +161,18 @@
       ],
     },
     {
+      'target_name': 'absl_status',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        '<!@(<(glob_absl) status "*.cc")',
+      ],
+      'dependencies': [
+        'absl_base',
+        'absl_strings',
+      ],
+    },
+    {
       'target_name': 'absl_strings_internal',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
@@ -227,15 +239,14 @@
       ],
     },
     {
-      'target_name': 'absl_status',
+      'target_name': 'absl_types',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        '<!@(<(glob_absl) status "*.cc")',
+        '<!@(<(glob_absl) types "**/*.cc")',
       ],
-      'dependencies': [
-        'absl_base',
-        'absl_strings',
+      'cflags': [
+        '-Wno-error',
       ],
     },
   ],
