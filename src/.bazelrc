@@ -17,12 +17,10 @@ build:oss_linux --define TARGET=oss_linux --copt "-fPIC"
 build:macos --define TARGET=oss_macos
 build:oss_macos --define TARGET=oss_macos
 
-# Android
-build:android --define TARGET=oss_android \
-    --copt "-DOS_ANDROID" \
-    --crosstool_top=//external:android/crosstool --cpu=armeabi-v7a \
-    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
-build:oss_android --define TARGET=oss_android \
-    --copt "-DOS_ANDROID" \
-    --crosstool_top=//external:android/crosstool --cpu=armeabi-v7a \
-    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+# Android / OSS Android (same configurations)
+build:android --define TARGET=oss_android --copt "-DOS_ANDROID"
+build:android --crosstool_top=@androidndk//:toolchain --cpu=armeabi-v7a
+build:android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+build:oss_android --define TARGET=oss_android --copt "-DOS_ANDROID"
+build:oss_android --crosstool_top=@androidndk//:toolchain --cpu=armeabi-v7a
+build:oss_android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
