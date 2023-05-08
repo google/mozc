@@ -545,6 +545,9 @@ mozc_cc_library(
     name = "mmap",
     srcs = ["mmap.cc"],
     hdrs = ["mmap.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":logging",
         ":port",

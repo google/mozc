@@ -36,6 +36,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -65,6 +66,10 @@ class SessionInterface {
 
   // Set composition Table. Currently, this is especial for session::Session.
   virtual void SetTable(const composer::Table *table) {}
+
+  // Set spellchecker.
+  virtual void SetSpellCheckerService(
+      const spelling::SpellCheckerServiceInterface *spellchecker_service) {}
 
   // Set client capability for this session.  Used by unittest.
   virtual void set_client_capability(

@@ -30,4 +30,47 @@
 #ifndef MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
 #define MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
 
+#include <memory>
+#include <optional>
+#include <utility>
+
+#include "composer/type_corrected_query.h"
+#include "protocol/commands.pb.h"
+#include "protocol/engine_builder.pb.h"
+
+namespace mozc {
+namespace spelling {
+
+using commands::CheckSpellingRequest;
+using commands::CheckSpellingResponse;
+
+class SpellCheckerServiceInterface {
+ public:
+  virtual ~SpellCheckerServiceInterface() {}
+
+  // Performs spelling correction.
+  // `request.text` may contains multiple sentences.
+  virtual CheckSpellingResponse CheckSpelling(
+      const CheckSpellingRequest &request) const = 0;
+
+  // Performs spelling correction for composition (pre-edit) Hiragana sequence.
+  // Both `query` and `context` must be Hiragana input sequence.
+  // `request` is passed to determine the keyboard layout.
+  virtual std::optional<composer::TypeCorrectedQuery> CheckCompositionSpelling(
+      absl::string_view query, absl::string_view context,
+      const commands::Request &request) const = 0;
+
+  // Loads spellchecker model asynchronously defined in the `request`.
+  // Returns false if the LoadAsync is already running.
+  virtual bool LoadAsync(const EngineReloadRequest &request) { return false; }
+
+  // Loads spellchecker model defined in the `request`.
+  virtual EngineReloadResponse Load(const EngineReloadRequest &request) {
+    return EngineReloadResponse();
+  }
+};
+
+}  // namespace spelling
+}  // namespace mozc
+
 #endif  // MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_

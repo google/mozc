@@ -243,6 +243,9 @@ class Session : public SessionInterface {
 
   void SetTable(const mozc::composer::Table *table) override;
 
+  void SetSpellCheckerService(const spelling::SpellCheckerServiceInterface
+                                  *spellchecker_service) override;
+
   // Set client capability for this session.  Used by unittest.
   void set_client_capability(
       const mozc::commands::Capability &capability) override;

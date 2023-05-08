@@ -34,9 +34,11 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
 
 mozc_cc_library(
     name = "composer",
@@ -60,6 +62,7 @@ mozc_cc_library(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//spelling:spellchecker_service_interface",
         "//testing:gunit_prod",
         "//transliteration",
         "@com_google_absl//absl/flags:flag",
@@ -121,6 +124,7 @@ mozc_cc_library(
         # For //composer/internal:typing_corrector_test.
         "//composer/internal:__pkg__",
         "//prediction:__pkg__",
+        "//spelling:__pkg__",
     ],
 )
 

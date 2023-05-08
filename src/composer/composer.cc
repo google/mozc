@@ -33,6 +33,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -316,6 +317,11 @@ void Composer::SetTable(const Table *table) {
 void Composer::SetRequest(const commands::Request *request) {
   typing_corrector_.SetRequest(request);
   request_ = request;
+}
+
+void Composer::SetSpellCheckerService(
+    const spelling::SpellCheckerServiceInterface *spellchecker_service) {
+  spellchecker_service_ = spellchecker_service;
 }
 
 void Composer::SetConfig(const config::Config *config) {
@@ -886,6 +892,12 @@ void Composer::GetQueriesForPrediction(std::string *base,
   RemoveExpandedCharsForModifier(asis, base_query, expanded);
 
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
+}
+
+std::optional<TypeCorrectedQuery> Composer::GetTypeCorrectedQueries(
+    absl::string_view context) const {
+
+  return std::nullopt;
 }
 
 void Composer::GetTypeCorrectedQueriesForPrediction(
