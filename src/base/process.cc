@@ -29,30 +29,6 @@
 
 #include "base/process.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else  // _WIN32
-#include <string.h>
-#include <sys/stat.h>
-
-#include <cerrno>
-#endif  // _WIN32
-
-#ifdef __APPLE__
-#include <fcntl.h>
-#include <signal.h>
-#include <spawn.h>  // for posix_spawn().
-
-#include "base/mac/mac_process.h"
-#endif  // __APPLE__
-
-#ifdef __linux
-#include <fcntl.h>
-#include <signal.h>
-#include <spawn.h>  // for posix_spawn().
-#include <sys/types.h>
-#endif  // __linux__
-
 #include <cstddef>
 #include <cstdlib>
 #include <memory>
@@ -70,25 +46,43 @@
 #include "absl/time/time.h"
 
 #ifdef _WIN32
+#include <windows.h>
+
 #include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
-#endif  // _WIN32
+#else  // _WIN32
+#include <fcntl.h>
+#include <signal.h>
+#include <spawn.h>  // for posix_spawn().
+#include <string.h>
+#include <sys/stat.h>
+
+#include <cerrno>
+#endif  // !_WIN32
+
+#ifdef __linux
+#include <sys/types.h>
+#endif  // __linux__
+
+#ifdef __APPLE__
+#include <crt_externs.h>
+
+#include "base/mac/mac_process.h"
+#endif  // __APPLE__
 
 #ifdef __APPLE__
 // We do not use the global environ variable because it is unavailable
 // in Mac Framework/dynamic libraries.  Instead call _NSGetEnviron().
 // See the "PROGRAMMING" section of http://goo.gl/4Hq0D for the
 // detailed information.
-#include <crt_externs.h>
-
 static char **environ = *_NSGetEnviron();
 #elif !defined(_WIN32)
 // Defined somewhere in libc. We can't pass nullptr as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
 extern char **environ;
-#endif  // __APPLE__
+#endif  // !__APPLE__ && !_WIN32
 
 namespace mozc {
 
@@ -164,10 +158,10 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   }
 
   return create_process_succeeded;
-#elif defined(__wasm__)
-  // Spawning processes is not supported in WASM.
+#elif defined(__wasm__) || defined(__ANDROID__)
+  // Spawning processes is not supported in WASM or Android.
   return false;
-#else  // __wasm__
+#else  // __wasm__ || __ANDROID__
 
   const std::vector<std::string> arg_tmp =
       absl::StrSplit(arg, ' ', absl::SkipEmpty());
@@ -237,7 +231,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
     *pid = tmp_pid;
   }
   return result == 0;
-#endif  // _WIN32
+#endif  // !_WIN32
 }
 
 bool Process::SpawnMozcProcess(const std::string &filename,
@@ -392,7 +386,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
   }
 #endif  // _WIN32
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
   constexpr char kMozcTool[] = "mozc_tool";
   const std::string arg =
       "--mode=error_message_dialog --error_type=" + error_type;
@@ -401,7 +395,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
     return false;
   }
-#endif  // __linux__
+#endif  // __linux__ && !__ANDROID__
 
   return true;
 }
