@@ -46,4 +46,5 @@ bzl_library(
     srcs = ["stubs.bzl"],
     test_size = "small",
     visibility = ["//visibility:private"],
+    deps = ["@rules_python//python:defs.bzl"],
 )

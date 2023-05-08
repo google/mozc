@@ -29,6 +29,10 @@
 
 """Stub build rules."""
 
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_python//python:defs.bzl", "py_library")
+
 def android_cc_test(name, cc_test_name, **kwargs):
     # 'foo_test' and 'foo_test_android' are identical for OSS yet.
     # TODO(b/110808149): Support Android test.
@@ -54,16 +58,16 @@ def jspb_proto_library(**kwargs):
     pass
 
 def py2and3_test(**kwargs):
-    native.py_test(**kwargs)
+    py_test(**kwargs)
     pass
 
 def pytype_strict_library(**kwargs):
-    native.py_library(**kwargs)
+    py_library(**kwargs)
     pass
 
 def pytype_strict_binary(test_lib = True, **kwargs):
     _ignore = test_lib  # @unused
-    native.py_binary(**kwargs)
+    py_binary(**kwargs)
     pass
 
 def register_extension_info(**kwargs):
