@@ -144,9 +144,9 @@ bzl_library(
 filegroup(
     name = "package",
     srcs = mozc_select(
+        android = ["//android/jni:mozcjni"],
         default = [],
         linux = ["//unix:package"],
         macos = ["//mac:package"],
-        oss_android = ["//android/jni:mozc_lib"],
     ),
 )
