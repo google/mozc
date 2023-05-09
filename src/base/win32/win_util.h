@@ -35,6 +35,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "base/port.h"
 #include "testing/gunit_prod.h"
@@ -90,10 +91,8 @@ class WinUtil {
   // result.  If |ignore_case| is true, this function uses system upper-case
   // table for case-insensitive equality like Win32 path names or registry
   // names.
-  // Although this function ignores the rest part of given string when NUL
-  // character is found, you should not pass such a string in principle.
-  static bool SystemEqualString(const std::wstring &lhs,
-                                const std::wstring &rhs, bool ignore_case);
+  static bool SystemEqualString(std::wstring_view lhs,
+                                std::wstring_view rhs, bool ignore_case);
 
   // Returns true if succeeds to determine whether the current process has
   // a process token which seems to be one for service process.  Otherwise,

@@ -160,6 +160,7 @@ mozc_cc_test(
         "//base:system_util",
         "//base:util",
         "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

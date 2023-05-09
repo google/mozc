@@ -45,6 +45,8 @@
 #include <clocale>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <string_view>
 
 #include "base/logging.h"
 #include "base/system_util.h"
@@ -180,24 +182,11 @@ HWND WinUtil::DecodeWindowHandle(uint32_t window_handle_value) {
   return reinterpret_cast<HWND>(static_cast<uintptr_t>(window_handle_value));
 }
 
-bool WinUtil::SystemEqualString(const std::wstring &lhs,
-                                const std::wstring &rhs, bool ignore_case) {
-  // We assume a string instance never contains NUL character in principle.
-  // So we will raise an error to notify the unexpected situation in debug
-  // builds.  In production, however, we will admit such an instance and
-  // silently trim it at the first NUL character.
-  const std::wstring::size_type lhs_null_pos = lhs.find_first_of(L'\0');
-  const std::wstring::size_type rhs_null_pos = rhs.find_first_of(L'\0');
-  DCHECK_EQ(lhs.npos, lhs_null_pos)
-      << "|lhs| should not contain NUL character.";
-  DCHECK_EQ(rhs.npos, rhs_null_pos)
-      << "|rhs| should not contain NUL character.";
-  const std::wstring &lhs_null_trimmed = lhs.substr(0, lhs_null_pos);
-  const std::wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
-
-  const int compare_result = ::CompareStringOrdinal(
-      lhs_null_trimmed.data(), lhs_null_trimmed.size(), rhs_null_trimmed.data(),
-      rhs_null_trimmed.size(), (ignore_case ? TRUE : FALSE));
+bool WinUtil::SystemEqualString(const std::wstring_view lhs,
+                                const std::wstring_view rhs, bool ignore_case) {
+  const int compare_result =
+      ::CompareStringOrdinal(lhs.data(), lhs.size(), rhs.data(), rhs.size(),
+                             (ignore_case ? TRUE : FALSE));
 
   return compare_result == CSTR_EQUAL;
 }
