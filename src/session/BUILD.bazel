@@ -39,9 +39,11 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
 
 test_suite(
     name = "android_test",
@@ -71,6 +73,7 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session/internal:keymap",
+        "//spelling:spellchecker_service_interface",
         "@com_google_absl//absl/time",
     ],
 )
@@ -183,6 +186,7 @@ mozc_cc_library(
         "//session/internal:key_event_transformer",
         "//session/internal:keymap",
         "//session/internal:session_output",
+        "//spelling:spellchecker_service_interface",
         "//testing:gunit_prod",
         "//transliteration",
         "//usage_stats",

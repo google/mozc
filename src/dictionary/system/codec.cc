@@ -45,8 +45,8 @@
 namespace mozc {
 namespace dictionary {
 namespace {
-void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst);
-size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src);
+void EncodeDecodeKeyImpl(absl::string_view src, std::string *dst);
+size_t GetEncodedDecodedKeyLengthImpl(absl::string_view src);
 
 uint8_t GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
 
@@ -197,23 +197,19 @@ constexpr uint8_t kUpperCrammedIDMask = 0x3f;
 constexpr uint8_t kLastTokenFlag = 0x80;
 }  // namespace
 
-SystemDictionaryCodec::SystemDictionaryCodec() {}
-
-SystemDictionaryCodec::~SystemDictionaryCodec() {}
-
-const std::string SystemDictionaryCodec::GetSectionNameForKey() const {
+std::string SystemDictionaryCodec::GetSectionNameForKey() const {
   return kKeySectionName;
 }
 
-const std::string SystemDictionaryCodec::GetSectionNameForValue() const {
+std::string SystemDictionaryCodec::GetSectionNameForValue() const {
   return kValueSectionName;
 }
 
-const std::string SystemDictionaryCodec::GetSectionNameForTokens() const {
+std::string SystemDictionaryCodec::GetSectionNameForTokens() const {
   return kTokensSectionName;
 }
 
-const std::string SystemDictionaryCodec::GetSectionNameForPos() const {
+std::string SystemDictionaryCodec::GetSectionNameForPos() const {
   return kPosSectionName;
 }
 

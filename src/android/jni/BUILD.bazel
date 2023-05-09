@@ -37,9 +37,9 @@
 load("//:build_defs.bzl", "mozc_cc_library")
 
 mozc_cc_library(
-    name = "mozc_lib_without_spellchecker",
+    name = "mozcjni",
     srcs = ["mozcjni.cc"],
-    visibility = ["//:__pkg__"],
+    visibility = ["//:__subpackages__"],  # Scheuklappen: keep
     deps = [
         "//base:logging",
         "//base:singleton",
@@ -55,16 +55,6 @@ mozc_cc_library(
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-    ],
-    alwayslink = 1,
-)
-
-mozc_cc_library(
-    name = "mozc_lib",
-    visibility = ["//:__pkg__"],
-    deps = [
-        ":mozc_lib_without_spellchecker",
-        "//spelling:spellchecker_service_registration",
     ],
     alwayslink = 1,
 )

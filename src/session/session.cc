@@ -1155,6 +1155,11 @@ void Session::SetKeyMapManager(
   context_->SetKeyMapManager(key_map_manager);
 }
 
+void Session::SetSpellCheckerService(
+    const spelling::SpellCheckerServiceInterface *spellchecker_service) {
+  context_->mutable_composer()->SetSpellCheckerService(spellchecker_service);
+}
+
 bool Session::GetStatus(commands::Command *command) {
   OutputMode(command);
   return true;

@@ -31,6 +31,7 @@
 
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -48,6 +49,8 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
@@ -55,13 +58,17 @@ namespace mozc {
 namespace composer {
 namespace {
 
-using CharacterFormManager = ::mozc::config::CharacterFormManager;
-using Config = ::mozc::config::Config;
-using ConfigHandler = ::mozc::config::ConfigHandler;
-using KeyEvent = ::mozc::commands::KeyEvent;
+using ::mozc::commands::CheckSpellingResponse;
+using ::mozc::commands::KeyEvent;
+using ::mozc::commands::Request;
+using ::mozc::config::CharacterFormManager;
+using ::mozc::config::Config;
+using ::mozc::config::ConfigHandler;
+using ::testing::_;
+using ::testing::Return;
+
+// ProbableKeyEvent is the innter-class member so needs to define as alias.
 using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
-using ProbableKeyEvents = ::mozc::protobuf::RepeatedPtrField<ProbableKeyEvent>;
-using Request = ::mozc::commands::Request;
 
 bool InsertKey(const absl::string_view key_string, Composer *composer) {
   commands::KeyEvent key;
@@ -3459,6 +3466,18 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
   clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おととお");
+}
+
+TEST_F(ComposerTest, SpellCheckerServiceTest) {
+  table_->AddRule("a", "あ", "");
+  table_->AddRule("i", "い", "");
+  table_->AddRule("u", "う", "");
+  composer_->InsertCharacter("aiu");
+
+  const auto preedit = GetPreedit(composer_.get());
+  composer_->SetSpellCheckerService(nullptr);
+  EXPECT_EQ(composer_->GetTypeCorrectedQueries("context"), std::nullopt);
+
 }
 }  // namespace composer
 }  // namespace mozc

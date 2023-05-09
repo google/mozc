@@ -30,8 +30,8 @@
 #include "config/stats_config_util.h"
 
 #ifdef _WIN32
-#include <lmcons.h>
 #include <atlbase.h>
+#include <lmcons.h>
 #include <sddl.h>
 #include <shlobj.h>
 #include <time.h>
@@ -60,6 +60,7 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -69,24 +70,20 @@ namespace {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 #ifdef _WIN32
 
-const wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-const wchar_t kOmahaUsageKey[] =
+constexpr wchar_t kOmahaGUID[] = L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
+constexpr wchar_t kOmahaUsageKey[] =
     L"Software\\Google\\Update\\ClientState\\"
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
-const wchar_t kOmahaUsageKeyForEveryone[] =
+constexpr wchar_t kOmahaUsageKeyForEveryone[] =
     L"Software\\Google\\Update\\ClientStateMedium\\"
     L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 
-const wchar_t kSendStatsName[] = L"usagestats";
+constexpr wchar_t kSendStatsName[] = L"usagestats";
 
 class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  WinStatsConfigUtilImpl() {}
-  WinStatsConfigUtilImpl(const WinStatsConfigUtilImpl &) = delete;
-  WinStatsConfigUtilImpl &operator=(const WinStatsConfigUtilImpl &) = delete;
-  virtual ~WinStatsConfigUtilImpl() {}
-  virtual bool IsEnabled();
-  virtual bool SetEnabled(bool val);
+  bool IsEnabled() override;
+  bool SetEnabled(bool val) override;
 };
 
 bool WinStatsConfigUtilImpl::IsEnabled() {
@@ -158,10 +155,6 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   MacStatsConfigUtilImpl();
 
-  MacStatsConfigUtilImpl(const MacStatsConfigUtilImpl &) = delete;
-  MacStatsConfigUtilImpl &operator=(const MacStatsConfigUtilImpl &) = delete;
-
-  ~MacStatsConfigUtilImpl() override = default;
   bool IsEnabled() override;
   bool SetEnabled(bool val) override;
 
@@ -170,10 +163,10 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
   absl::Mutex mutex_;
 };
 
-MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
-  config_file_ =
-      SystemUtil::GetUserProfileDirectory() + "/.usagestats.db";  // hidden file
-}
+MacStatsConfigUtilImpl::MacStatsConfigUtilImpl()
+    : config_file_(absl::StrCat(SystemUtil::GetUserProfileDirectory(),
+                                "/.usagestats.db"))  //  // hidden file
+{}
 
 bool MacStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
@@ -229,17 +222,12 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef __ANDROID__
 class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  AndroidStatsConfigUtilImpl() {}
-  AndroidStatsConfigUtilImpl(const AndroidStatsConfigUtilImpl &) = delete;
-  AndroidStatsConfigUtilImpl &operator=(const AndroidStatsConfigUtilImpl &) =
-      delete;
-  virtual ~AndroidStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() {
+  bool IsEnabled() override {
     Config config;
     ConfigHandler::GetConfig(&config);
     return config.general_config().upload_usage_stats();
   }
-  virtual bool SetEnabled(bool val) {
+  bool SetEnabled(bool val) override {
     // TODO(horo): Implement this.
     return false;
   }
@@ -250,10 +238,6 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  NullStatsConfigUtilImpl() = default;
-  NullStatsConfigUtilImpl(const NullStatsConfigUtilImpl &) = delete;
-  NullStatsConfigUtilImpl &operator=(const NullStatsConfigUtilImpl &) = delete;
-  ~NullStatsConfigUtilImpl() override = default;
   bool IsEnabled() override { return false; }
   bool SetEnabled(bool val) override { return true; }
 };

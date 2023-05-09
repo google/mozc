@@ -671,9 +671,7 @@ mozc_cc_library(
     hdrs = ["key_corrector.h"],
     deps = [
         "//base:logging",
-        "//base:port",
         "//base:util",
-        "//protocol:config_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )

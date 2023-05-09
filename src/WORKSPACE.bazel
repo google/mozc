@@ -75,8 +75,8 @@ apple_rules_dependencies()
 
 
 # Android NDK setup
-RULES_ANDROID_NDK_COMMIT= "81ec8b79dc50ee97e336a25724fdbb28e33b8d41"
-RULES_ANDROID_NDK_SHA = "b29409496439cdcdb50a8e161c4953ca78a548e16d3ee729a1b5cd719ffdacbf"
+RULES_ANDROID_NDK_COMMIT= "44dcd014f4b126f8941c29ff1b25e1584bd3eb26"
+RULES_ANDROID_NDK_SHA = "79b1857e8e05e3007ad090a3269d2932e988b3ed176d7abd042719d45eb51500"
 http_archive(
     name = "rules_android_ndk",
     url = "https://github.com/bazelbuild/rules_android_ndk/archive/%s.zip" % RULES_ANDROID_NDK_COMMIT,

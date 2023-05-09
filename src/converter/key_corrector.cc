@@ -35,7 +35,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "absl/strings/match.h"
 
@@ -361,16 +360,6 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
   return true;
 }
 }  // namespace
-
-KeyCorrector::KeyCorrector(const std::string &key, InputMode mode,
-                           size_t history_size)
-    : available_(false), mode_(mode) {
-  CorrectKey(key, mode, history_size);
-}
-
-KeyCorrector::KeyCorrector() : available_(false), mode_(ROMAN) {}
-
-KeyCorrector::~KeyCorrector() {}
 
 KeyCorrector::InputMode KeyCorrector::mode() const { return mode_; }
 

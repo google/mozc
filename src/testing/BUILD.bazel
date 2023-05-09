@@ -86,24 +86,6 @@ mozc_cc_library(
     ),
 )
 
-mozc_objc_library(
-    name = "gunit_main_objc",
-    testonly = True,
-    hdrs = [
-        "gmock.h",
-        "googletest.h",
-        "gunit.h",
-    ],
-    sdk_frameworks = [
-        "XCTest",  # fixdeps: keep
-    ],
-    deps = [
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_googletest//:gtest",
-        "@google_toolbox_for_mac//:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
-    ],
-)
-
 mozc_cc_library(
     name = "gunit_main",
     testonly = True,
@@ -163,6 +145,25 @@ mozc_cc_library(
     deps = [
         ":googletest",
         "@com_google_googletest//:gtest",
+    ],
+)
+
+mozc_objc_library(
+    name = "gunit_main_objc",
+    testonly = True,
+    hdrs = [
+        "gmock.h",
+        "googletest.h",
+        "gunit.h",
+    ],
+    sdk_frameworks = [
+        "XCTest",  # fixdeps: keep
+    ],
+    tags = ["avoid_dep"],  # The overwhelming majority of the build targets in mozc are C++.
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_googletest//:gtest",
+        "@google_toolbox_for_mac//:GTM_GoogleTestRunner_GTM_USING_XCTEST",  # fixdeps: keep
     ],
 )
 

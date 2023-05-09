@@ -42,44 +42,35 @@ namespace dictionary {
 
 class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
  public:
-  SystemDictionaryCodec();
-
-  SystemDictionaryCodec(const SystemDictionaryCodec &) = delete;
-  SystemDictionaryCodec &operator=(const SystemDictionaryCodec &) = delete;
-
-  ~SystemDictionaryCodec() override;
-
   // Return section name for key trie
-  const std::string GetSectionNameForKey() const override;
+  std::string GetSectionNameForKey() const override;
 
   // Return section name for value trie
-  const std::string GetSectionNameForValue() const override;
+  std::string GetSectionNameForValue() const override;
 
   // Return section name for tokens array
-  const std::string GetSectionNameForTokens() const override;
+  std::string GetSectionNameForTokens() const override;
 
   // Return section name for frequent pos map
-  const std::string GetSectionNameForPos() const override;
+  std::string GetSectionNameForPos() const override;
 
   // Compresses key string into small bytes.
-  void EncodeKey(const absl::string_view src, std::string *dst) const override;
+  void EncodeKey(absl::string_view src, std::string *dst) const override;
 
   // Decompress key string
-  void DecodeKey(const absl::string_view src, std::string *dst) const override;
+  void DecodeKey(absl::string_view src, std::string *dst) const override;
 
   // Returns the length of encoded key string.
-  size_t GetEncodedKeyLength(const absl::string_view src) const override;
+  size_t GetEncodedKeyLength(absl::string_view src) const override;
 
   // Returns the length of decoded key string.
-  size_t GetDecodedKeyLength(const absl::string_view src) const override;
+  size_t GetDecodedKeyLength(absl::string_view src) const override;
 
   // Compresses value string into small bytes.
-  void EncodeValue(const absl::string_view src,
-                   std::string *dst) const override;
+  void EncodeValue(absl::string_view src, std::string *dst) const override;
 
   // Decompress value string
-  void DecodeValue(const absl::string_view src,
-                   std::string *dst) const override;
+  void DecodeValue(absl::string_view src, std::string *dst) const override;
 
   // Compress tokens
   void EncodeTokens(const std::vector<TokenInfo> &tokens,

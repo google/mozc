@@ -44,47 +44,44 @@ struct TokenInfo;
 
 class SystemDictionaryCodecInterface {
  public:
+  SystemDictionaryCodecInterface() = default;
   SystemDictionaryCodecInterface(const SystemDictionaryCodecInterface &) =
       delete;
   SystemDictionaryCodecInterface &operator=(
       const SystemDictionaryCodecInterface &) = delete;
-  virtual ~SystemDictionaryCodecInterface() {}
+  virtual ~SystemDictionaryCodecInterface() = default;
 
   // Get section name functions are expected not to be called so often
 
   // Return section name for key trie
-  virtual const std::string GetSectionNameForKey() const = 0;
+  virtual std::string GetSectionNameForKey() const = 0;
 
   // Return section name for value trie
-  virtual const std::string GetSectionNameForValue() const = 0;
+  virtual std::string GetSectionNameForValue() const = 0;
 
   // Return section name for tokens array
-  virtual const std::string GetSectionNameForTokens() const = 0;
+  virtual std::string GetSectionNameForTokens() const = 0;
 
   // Return section name for frequent pos map
-  virtual const std::string GetSectionNameForPos() const = 0;
+  virtual std::string GetSectionNameForPos() const = 0;
 
   // Encode value(word) string
-  virtual void EncodeValue(const absl::string_view src,
-                           std::string *dst) const = 0;
+  virtual void EncodeValue(absl::string_view src, std::string *dst) const = 0;
 
   // Decode value(word) string
-  virtual void DecodeValue(const absl::string_view src,
-                           std::string *dst) const = 0;
+  virtual void DecodeValue(absl::string_view src, std::string *dst) const = 0;
 
   // Encode key(reading) string
-  virtual void EncodeKey(const absl::string_view src,
-                         std::string *dst) const = 0;
+  virtual void EncodeKey(absl::string_view src, std::string *dst) const = 0;
 
   // Decode key(reading) string
-  virtual void DecodeKey(const absl::string_view src,
-                         std::string *dst) const = 0;
+  virtual void DecodeKey(absl::string_view src, std::string *dst) const = 0;
 
   // Returns the length of encoded key string.
-  virtual size_t GetEncodedKeyLength(const absl::string_view src) const = 0;
+  virtual size_t GetEncodedKeyLength(absl::string_view src) const = 0;
 
   // Returns the length of decoded key string.
-  virtual size_t GetDecodedKeyLength(const absl::string_view src) const = 0;
+  virtual size_t GetDecodedKeyLength(absl::string_view src) const = 0;
 
   // Encode tokens(word info) for a certain key
   virtual void EncodeTokens(const std::vector<TokenInfo> &tokens,
@@ -108,9 +105,6 @@ class SystemDictionaryCodecInterface {
 
   // Return termination flag for tokens
   virtual uint8_t GetTokensTerminationFlag() const = 0;
-
- protected:
-  SystemDictionaryCodecInterface() {}
 };
 
 class SystemDictionaryCodecFactory {

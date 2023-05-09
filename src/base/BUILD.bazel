@@ -209,6 +209,11 @@ mozc_cc_library(
     name = "codegen_bytearray_stream",
     srcs = ["codegen_bytearray_stream.cc"],
     hdrs = ["codegen_bytearray_stream.h"],
+    tags = ["noandroid"],
+    target_compatible_with = mozc_select(
+        android = ["@platforms//:incompatible"],
+        default = [],
+    ),
     visibility = ["//:__subpackages__"],
     deps = [
         ":port",
@@ -221,6 +226,10 @@ mozc_cc_test(
     srcs = ["codegen_bytearray_stream_test.cc"],
     requires_full_emulation = False,
     tags = ["noandroid"],
+    target_compatible_with = mozc_select(
+        android = ["@platforms//:incompatible"],
+        default = [],
+    ),
     visibility = ["//visibility:private"],
     deps = [
         ":codegen_bytearray_stream",
@@ -536,6 +545,9 @@ mozc_cc_library(
     name = "mmap",
     srcs = ["mmap.cc"],
     hdrs = ["mmap.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":logging",
         ":port",

@@ -34,6 +34,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -46,6 +47,7 @@
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
@@ -89,6 +91,8 @@ class Composer final {
 
   void SetRequest(const commands::Request *request);
   void SetConfig(const config::Config *config);
+  void SetSpellCheckerService(
+      const spelling::SpellCheckerServiceInterface *spellchecker_service);
 
   void SetInputMode(transliteration::TransliterationType mode);
   void SetTemporaryInputMode(transliteration::TransliterationType mode);
@@ -128,6 +132,13 @@ class Composer final {
   // Returns a expanded prediction query.
   void GetQueriesForPrediction(std::string *base,
                                std::set<std::string> *expanded) const;
+
+  // Returns a type-corrected composition string with SpellCheckerService.
+  // `context` is the hiragana sequence typed just before the current
+  // composition.
+  // Returns std::nullopt when no result is available.
+  std::optional<TypeCorrectedQuery> GetTypeCorrectedQueries(
+      absl::string_view context = "") const;
 
   // Returns a type-corrected prediction queries.
   void GetTypeCorrectedQueriesForPrediction(
@@ -301,6 +312,11 @@ class Composer final {
   // "abc<left-cursor>d", when "a" or "d" is typed, this value should
   // be true.  When "b" or "c" is typed, the value should be false.
   bool is_new_input_;
+
+  // Spellchecker service. used for composition spellchecking.
+  // Composer doesn't have the ownership of spellchecker_service_,
+  // SessionHandler owns this this instance. (usually a singleton object).
+  const spelling::SpellCheckerServiceInterface *spellchecker_service_ = nullptr;
 };
 
 }  // namespace composer

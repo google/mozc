@@ -71,14 +71,16 @@
       '<!@(<(glob_protobuf) io "*.cc")',
       '<!@(<(glob_protobuf) stubs "*.cc")',
       '<(protobuf_cpp_root)/descriptor.pb.cc',
+      '<!@(<(glob) --notest --base <(protobuf_root)/third_party/utf8_range "*.cc")',
     ],
     # Sources for protoc (common part and C++ generator only).
     'protoc_sources': [
       '<!@(<(glob_protobuf) . "*.cc" --exclude "*.pb.cc" reflection_tester.cc)',
       '<!@(<(glob_protobuf) compiler "*.cc" --exclude main.cc)',
-      '<!@(<(glob_protobuf) compiler/cpp "*.cc")',
+      '<!@(<(glob_protobuf) compiler/cpp "**/*.cc")',
       '<!@(<(glob_protobuf) io "*.cc")',
       'custom_protoc_main.cc',
+      '<!@(<(glob) --notest --base <(protobuf_root)/third_party/utf8_range "*.cc")',
     ],
   },
   'targets': [
@@ -101,8 +103,14 @@
         },
         {  # else
           'sources': ['<@(protobuf_sources)'],
+          'dependencies': [
+              '../base/absl.gyp:absl_log',
+              '../base/absl.gyp:absl_strings',
+              '../base/absl.gyp:absl_synchronization',
+          ],
           'include_dirs': [
             '<(protobuf_root)/src',
+            '<(protobuf_root)/third_party/utf8_range',
           ],
           'all_dependent_settings': {
             'include_dirs': [
@@ -152,8 +160,15 @@
       'conditions': [
         ['use_libprotobuf==0', {
           'sources': ['<@(protoc_sources)'],
+          'dependencies': [
+              '../base/absl.gyp:absl_log',
+              '../base/absl.gyp:absl_strings',
+              '../base/absl.gyp:absl_synchronization',
+              '../base/absl.gyp:absl_types',
+          ],
           'include_dirs': [
             '<(protobuf_root)/src',
+            '<(protobuf_root)/third_party/utf8_range',
           ],
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
