@@ -27,24 +27,40 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//bazel:stubs.bzl", "bzl_library")
+"""Repository rule for Android build system.
 
-bzl_library(
-    name = "qt_bzl",
-    srcs = ["qt.bzl"],
-    visibility = ["//visibility:private"],
-    deps = [
-        "//:build_defs_bzl",
-        "//:config_bzl",
-        "//devtools/build_cleaner/skylark:build_defs_lib",
-        "@build_bazel_rules_apple//apple:macos",
-    ],
-)
+If ANDROID_NDK_HOME env variable is set, android_ndk_repository is called.
+Otherwise do nothing.
 
-bzl_library(
-    name = "stubs_bzl",
-    srcs = ["stubs.bzl"],
-    test_size = "small",
-    visibility = ["//visibility:private"],
-    deps = ["@rules_python//python:defs.bzl"],
+## Usage example in WORKSPACE.bazel
+```
+load("//:android_repository.bzl", "android_repository")
+android_repository(name = "android_repository")
+load("@android_repository//:setup.bzl", "android_ndk_setup")
+android_ndk_setup()
+```
+
+## Reference
+* https://github.com/google/mozc/issues/544
+* https://github.com/bazelbuild/bazel/issues/14260
+"""
+
+NDK_SETUP_TEMPLATE = """
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+
+def android_ndk_setup():
+    {rule}
+"""
+
+def _android_repository_impl(repository_ctx):
+    if repository_ctx.os.environ.get("ANDROID_NDK_HOME"):
+        rule = "android_ndk_repository(name=\"androidndk\")"
+    else:
+        rule = "pass"
+    repository_ctx.file("BUILD.bazel", "")
+    repository_ctx.file("setup.bzl", NDK_SETUP_TEMPLATE.format(rule = rule))
+
+android_repository = repository_rule(
+    implementation = _android_repository_impl,
+    environ = ["ANDROID_NDK_HOME"],
 )

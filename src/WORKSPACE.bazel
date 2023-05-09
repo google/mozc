@@ -83,8 +83,15 @@ http_archive(
     sha256 = RULES_ANDROID_NDK_SHA,
     strip_prefix = "rules_android_ndk-%s" % RULES_ANDROID_NDK_COMMIT,
 )
-load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
-android_ndk_repository(name="androidndk")
+
+# Check the ANDROID_NDK_HOME envvar, if it is specified set up NDK as follows
+#   load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
+#   android_ndk_repository(name="androidndk")
+# If it is empty, do nothing.
+load("//:android_repository.bzl", "android_repository")
+android_repository(name = "android_repository")
+load("@android_repository//:setup.bzl", "android_ndk_setup")
+android_ndk_setup()
 
 
 # Windows Implementation Library (WIL)
