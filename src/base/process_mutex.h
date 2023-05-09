@@ -32,11 +32,11 @@
 
 #include <string>
 
-#ifdef _WIN32
-#include "base/win32/scoped_handle.h"
-#endif  // _WIN32
+#include "absl/strings/string_view.h"
 
-#include "base/port.h"
+#ifdef _WIN32
+#include <wil/resource.h>
+#endif  // _WIN32
 
 // Process-wide named mutex class:
 // Make a simple process-wide named mutex using file locking.
@@ -57,7 +57,7 @@ namespace mozc {
 
 class ProcessMutex {
  public:
-  explicit ProcessMutex(const char *name);
+  explicit ProcessMutex(absl::string_view name);
   ProcessMutex(const ProcessMutex &) = delete;
   ProcessMutex &operator=(const ProcessMutex &) = delete;
   ~ProcessMutex();
@@ -66,7 +66,7 @@ class ProcessMutex {
   bool Lock();
 
   // Lock the mutex file and write some message to this file
-  bool LockAndWrite(const std::string &message);
+  bool LockAndWrite(absl::string_view message);
 
   // always return true at this moment.
   bool UnLock();
@@ -81,12 +81,12 @@ class ProcessMutex {
 
  private:
 #ifdef _WIN32
-  ScopedHandle handle_;
+  wil::unique_hfile handle_;
 #endif  // _WIN32
 
   // TODO(yukawa): Remove this flag as it can always be determined by other
   //     internal state.
-  bool locked_;
+  bool locked_ = false;
   std::string filename_;
 };
 
