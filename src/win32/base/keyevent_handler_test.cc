@@ -248,10 +248,6 @@ class MockState {
 
 class KeyEventHandlerTest : public testing::Test {
  protected:
-  KeyEventHandlerTest() {}
-  KeyEventHandlerTest(const KeyEventHandlerTest &) = delete;
-  KeyEventHandlerTest &operator=(const KeyEventHandlerTest &) = delete;
-  virtual ~KeyEventHandlerTest() {}
   virtual void SetUp() {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);

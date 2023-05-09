@@ -106,9 +106,6 @@ class TestIPCClient : public IPCClientInterface {
 
 class TestIPCClientFactory : public IPCClientFactoryInterface {
  public:
-  TestIPCClientFactory() {}
-  ~TestIPCClientFactory() override {}
-
   IPCClientInterface *NewClient(const std::string &name,
                                 const std::string &path_name) override {
     return new TestIPCClient;

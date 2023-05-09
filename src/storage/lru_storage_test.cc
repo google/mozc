@@ -119,13 +119,7 @@ std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
 }  // namespace
 
 class LruStorageTest : public ::testing::Test {
- public:
-  LruStorageTest(const LruStorageTest &) = delete;
-  LruStorageTest &operator=(const LruStorageTest &) = delete;
-
  protected:
-  LruStorageTest() {}
-
   void SetUp() override { UnlinkDBFileIfExists(); }
 
   void TearDown() override { UnlinkDBFileIfExists(); }

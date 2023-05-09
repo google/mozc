@@ -597,8 +597,6 @@ class FontUpdateTestableWindowManager : public WindowManager {
                                   GtkWindowInterface *infolist_window,
                                   GtkWrapperInterface *gtk)
       : WindowManager(main_window, infolist_window, gtk) {}
-  virtual ~FontUpdateTestableWindowManager() {}
-
   MOCK_METHOD(bool, ShouldShowCandidateWindow,
               (const commands::RendererCommand &command));
   MOCK_METHOD(bool, ShouldShowInfolistWindow,

@@ -65,10 +65,6 @@ std::string AppendString(absl::string_view lhs, absl::string_view rhs) {
 
 class VariantsRewriterTest : public ::testing::Test {
  protected:
-  // Explicitly define constructor to prevent Visual C++ from
-  // considering this class as POD.
-  VariantsRewriterTest() {}
-
   void SetUp() override {
     Reset();
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());

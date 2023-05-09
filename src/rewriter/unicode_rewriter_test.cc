@@ -87,10 +87,6 @@ bool ContainCandidate(const Segments &segments,
 
 class UnicodeRewriterTest : public ::testing::Test {
  protected:
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  UnicodeRewriterTest() {}
-  ~UnicodeRewriterTest() override {}
-
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     engine_ = MockDataEngineFactory::Create().value();
