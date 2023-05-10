@@ -49,6 +49,8 @@ class RunLevel {
     REQUEST_TYPE_SIZE
   };
 
+  RunLevel() = delete;
+
   // return the runlevel of current process
   // NOTE:
   // DO NOT USE logging library inside this method,
@@ -81,10 +83,6 @@ class RunLevel {
   // return true if mozc is not enabled on elevated process.
   // return false always on Linux/Mac.
   static bool GetElevatedProcessDisabled();
-
- private:
-  RunLevel() {}
-  virtual ~RunLevel() {}
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_RUN_LEVEL_H_

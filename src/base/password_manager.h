@@ -75,12 +75,11 @@ class PasswordManager {
 // Implements PasswordManager implementation.
 class PasswordManagerInterface {
  public:
+  virtual ~PasswordManagerInterface() = default;
+
   virtual bool SetPassword(const std::string &password) const = 0;
   virtual bool GetPassword(std::string *password) const = 0;
   virtual bool RemovePassword() const = 0;
-
-  PasswordManagerInterface() {}
-  virtual ~PasswordManagerInterface() {}
 };
 }  // namespace mozc
 
