@@ -658,26 +658,72 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
 // note that this crash could only occur in a debug build.)
 // Once another issue in b/277163340 that an input "[][]" is not converted
 // properly is fixed, uncomment the following test.
-// TEST_F(ComposerTest, Issue277163340) {
-//   // Test against http://b/277163340.
-//   // Before the fix, unexpected input was passed to
-//   // RemoveExpandedCharsForModifier() in the following test due to another
-//   // bug in composer/internal/char_chunk.cc and it
-//   // caused the process to crash.
-//   table_->AddRuleWithAttributes("[", "", "", NO_TRANSLITERATION);
-//   std::string base, asis, preedit;
-//   std::set<std::string> expanded;
-//   commands::KeyEvent key;
-//   key.set_key_string("[]");
-//   key.set_input_style(commands::KeyEvent::AS_IS);
-//   composer_->InsertCharacterKeyEvent(key);
-//   composer_->InsertCharacterKeyEvent(key);
-//   composer_->InsertCommandCharacter(composer::Composer::STOP_KEY_TOGGLING);
-//   composer_->GetQueriesForPrediction(&base, &expanded);
-//
-//   // Never reached here due to the crash before the fix for b/277163340.
-//   EXPECT_EQ(base, "[][]");
-// }
+TEST_F(ComposerTest, Issue277163340) {
+  // Test against http://b/277163340.
+  // Before the fix, unexpected input was passed to
+  // RemoveExpandedCharsForModifier() in the following test due to another
+  // bug in composer/internal/char_chunk.cc and it
+  // caused the process to crash.
+  table_->AddRuleWithAttributes("[", "", "", NO_TRANSLITERATION);
+  std::string base, asis, preedit;
+  std::set<std::string> expanded;
+  commands::KeyEvent key;
+  key.set_key_string("[]");
+  key.set_input_style(commands::KeyEvent::AS_IS);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->InsertCommandCharacter(composer::Composer::STOP_KEY_TOGGLING);
+  composer_->GetQueriesForPrediction(&base, &expanded);
+
+  // Never reached here due to the crash before the fix for b/277163340.
+  EXPECT_EQ(base, "[][]");
+}
+
+// Emulates tapping "[]" key twice without enough internval.
+TEST_F(ComposerTest, DoubleTapSquareBracketPairKey) {
+  commands::KeyEvent key;
+  table_->AddRuleWithAttributes("[", "", "",
+                                TableAttribute::NO_TRANSLITERATION);
+
+  std::string preedit;
+  key.set_key_string("[]");
+  key.set_input_style(commands::KeyEvent::AS_IS);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(preedit, "[][]");
+}
+
+// Emulates tapping "[" key twice without enough internval.
+TEST_F(ComposerTest, DoubleTapOpenSquareBracketKey) {
+  commands::KeyEvent key;
+  table_->AddRuleWithAttributes("[", "", "",
+                                TableAttribute::NO_TRANSLITERATION);
+
+  std::string preedit;
+  key.set_key_string("[");
+  key.set_input_style(commands::KeyEvent::AS_IS);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(preedit, "[[");
+}
+
+// Emulates tapping "[]" key twice with enough internval.
+TEST_F(ComposerTest, DoubleTapSquareBracketPairKeyWithInterval) {
+  commands::KeyEvent key;
+  table_->AddRuleWithAttributes("[", "", "",
+                                TableAttribute::NO_TRANSLITERATION);
+
+  std::string preedit;
+  key.set_key_string("[]");
+  key.set_input_style(commands::KeyEvent::AS_IS);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
+  composer_->InsertCharacterKeyEvent(key);
+  composer_->GetStringForPreedit(&preedit);
+  EXPECT_EQ(preedit, "[][]");
+}
 
 TEST_F(ComposerTest, GetTypeCorrectedQueriesForPredictionMobile) {
   config_->set_use_typing_correction(true);

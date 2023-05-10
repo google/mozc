@@ -237,8 +237,6 @@ const ModifierRemovalMap *GetModifierRemovalMap() {
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
                                     std::set<std::string> *expanded) {
-  // The following check is needed for mitigating crashes like the one which
-  // occurred in b/277163340 in production.
   if (asis.size() < base.size()) {
     LOG(DFATAL) << "asis.size() is smaller than base.size().";
     return;
@@ -588,21 +586,20 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     return false;
   }
 
-  if (key.has_key_string()) {
-    if (key.input_style() == commands::KeyEvent::AS_IS ||
-        key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
+  if (!input.conversion().empty()) {
+    if (input.is_asis()) {
       composition_.SetInputMode(Transliterators::CONVERSION_STRING);
       // Disable typing correction mainly for Android. b/258369101
       typing_corrector_.Invalidate();
       ProcessCompositionInput(input);
       SetInputMode(comeback_input_mode_);
     } else {
-      // Kana input usually has key_string.  Note that, the existence of
+      // Kana input usually has conversion. Note that, the existence of
       // key_string never determine if the input mode is Kana or Romaji.
       ProcessCompositionInput(input);
     }
   } else {
-    // Romaji input usually does not has key_string.  Note that, the
+    // Romaji input usually does not has conversion. Note that, the
     // existence of key_string never determines if the input mode is
     // Kana or Romaji.
     const uint32_t modifiers = KeyEventUtil::GetModifiers(key);

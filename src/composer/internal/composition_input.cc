@@ -62,6 +62,8 @@ bool CompositionInput::Init(const Table &table,
     set_probable_key_events(key_event.probable_key_event());
   }
   set_is_new_input(is_new_input);
+  is_asis_ = (key_event.input_style() == commands::KeyEvent::AS_IS ||
+              key_event.input_style() == commands::KeyEvent::DIRECT_INPUT);
   return true;
 }
 
@@ -84,6 +86,7 @@ void CompositionInput::Clear() {
   conversion_.clear();
   probable_key_events_.Clear();
   is_new_input_ = false;
+  is_asis_ = false;
 }
 
 bool CompositionInput::Empty() const {
