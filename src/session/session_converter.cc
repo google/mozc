@@ -370,8 +370,8 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
       const ConversionRequest conversion_request(&composer, request_, config_);
       if (!converter_->ResizeSegment(segments_.get(), conversion_request, 0,
                                      Util::CharsLen(composition))) {
-        LOG(WARNING) << "ResizeSegment failed for segments: "
-                     << segments_->DebugString();
+        LOG(WARNING) << "ResizeSegment failed for segments.";
+        DLOG(WARNING) << segments_->DebugString();
       }
       UpdateCandidateList();
     }
@@ -1683,9 +1683,9 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
   // Here we reconstruct history segments from |preceding_text| regardless
   // of revision mismatch. If it fails the history segments is cleared anyway.
   if (!converter_->ReconstructHistory(segments_.get(), preceding_text)) {
-    LOG(WARNING) << "ReconstructHistory failed. preceding_text: "
-                 << preceding_text
-                 << ", segments: " << segments_->DebugString();
+    LOG(WARNING) << "ReconstructHistory failed.";
+    DLOG(WARNING) << "preceding_text: " << preceding_text
+                  << ", segments: " << segments_->DebugString();
   }
 }
 
