@@ -35,16 +35,18 @@
 #include <imm.h>
 #include <msctf.h>
 #include <objbase.h>
-#include <wrl/client.h>
+#include <wil/com.h>
+#include <wil/resource.h>
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/win32/com.h"
 #include "base/win32/scoped_com.h"
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
@@ -56,8 +58,6 @@
 namespace mozc {
 namespace win32 {
 namespace {
-
-using Microsoft::WRL::ComPtr;
 
 // Timeout value used by a work around against b/5765783. As b/6165722
 // this value is determined to be:
@@ -79,7 +79,7 @@ bool ImeUtil::SetDefault() {
     return E_OUTOFMEMORY;
   }
 
-  const std::wstring &profile = std::wstring(L"0x0411:") + clsid + profile_id;
+  const std::wstring profile = StrCatW(L"0x0411:", clsid, profile_id);
   if (!::InstallLayoutOrTip(profile.c_str(), 0)) {
     DLOG(ERROR) << "InstallLayoutOrTip failed";
     return false;
@@ -91,9 +91,9 @@ bool ImeUtil::SetDefault() {
 
   // Activate the TSF Mozc.
   ScopedCOMInitializer com_initializer;
-  ComPtr<ITfInputProcessorProfileMgr> profile_mgr;
-  if (FAILED(CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr,
-                              CLSCTX_ALL, IID_PPV_ARGS(&profile_mgr)))) {
+  auto profile_mgr = ComCreateInstance<ITfInputProcessorProfileMgr>(
+      CLSID_TF_InputProcessorProfiles);
+  if (!profile_mgr) {
     DLOG(ERROR) << "CoCreateInstance CLSID_TF_InputProcessorProfiles failed";
     return false;
   }
@@ -118,13 +118,13 @@ bool ImeUtil::WaitForAsmCacheReady(uint32_t timeout_msec) {
     LOG(ERROR) << "Failed to compose event name.";
     return false;
   }
-  ScopedHandle handle(::OpenEventW(SYNCHRONIZE, FALSE, event_name.c_str()));
-  if (handle.get() == nullptr) {
+  wil::unique_event_nothrow event;
+  if (!event.try_open(event_name.c_str(), SYNCHRONIZE, false)) {
     // Event not found.
     // Returns true assuming that we need not to wait anything.
     return true;
   }
-  const DWORD result = ::WaitForSingleObject(handle.get(), timeout_msec);
+  const DWORD result = ::WaitForSingleObject(event.get(), timeout_msec);
   switch (result) {
     case WAIT_OBJECT_0:
       return true;
