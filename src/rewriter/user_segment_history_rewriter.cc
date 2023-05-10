@@ -33,7 +33,9 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <new>
 #include <string>
 #include <vector>
 
@@ -112,17 +114,6 @@ class KeyTriggerValue {
   uint32_t candidates_size_ : 8;  // candidate size
 };
 
-class ScoreTypeCompare {
- public:
-  bool operator()(const UserSegmentHistoryRewriter::ScoreType &a,
-                  const UserSegmentHistoryRewriter::ScoreType &b) const {
-    if (a.score != b.score) {
-      return (a.score > b.score);
-    }
-    return (a.last_access_time > b.last_access_time);
-  }
-};
-
 // return the first candidate which has "BEST_CANDIDATE" attribute
 inline int GetDefaultCandidateIndex(const Segment &segment) {
   // Check up to kMaxRerankSize + 1 candidates because candidate with
@@ -145,109 +136,154 @@ std::string StrJoinWithTabs(const Strings &...strings) {
   return absl::StrJoin({static_cast<absl::string_view>(strings)...}, "\t");
 }
 
+class FeatureKey {
+ public:
+  FeatureKey(const Segments &segments, const PosMatcher &pos_matcher,
+             size_t index)
+      : segments_(segments), pos_matcher_(pos_matcher), index_(index) {}
+
+  std::string LeftRight(absl::string_view base_key,
+                        absl::string_view base_value) const;
+  std::string LeftLeft(absl::string_view base_key,
+                       absl::string_view base_value) const;
+  std::string RightRight(absl::string_view base_key,
+                         absl::string_view base_value) const;
+  std::string Left(absl::string_view base_key,
+                   absl::string_view base_value) const;
+  std::string Right(absl::string_view base_key,
+                    absl::string_view base_value) const;
+  std::string Current(absl::string_view base_key,
+                      absl::string_view base_value) const;
+  std::string Single(absl::string_view base_key,
+                     absl::string_view base_value) const;
+  std::string LeftNumber(absl::string_view base_key,
+                         absl::string_view base_value) const;
+  std::string RightNumber(absl::string_view base_key,
+                          absl::string_view base_value) const;
+
+  static std::string Number(uint16_t type);
+
+ private:
+  const Segments &segments_;
+  const PosMatcher &pos_matcher_;
+  const size_t index_;
+};
+
 // Feature "Left Right"
-inline bool GetFeatureLR(const Segments &segments, size_t i,
-                         absl::string_view base_key,
-                         absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (i + 1 >= segments.segments_size() || i <= 0) {
-    return false;
+std::string FeatureKey::LeftRight(absl::string_view base_key,
+                                  absl::string_view base_value) const {
+  if (index_ + 1 >= segments_.segments_size() || index_ <= 0) {
+    return "";
   }
-  const int j1 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  const int j2 = GetDefaultCandidateIndex(segments.segment(i + 1));
-  *value = StrJoinWithTabs(
-      "LR", base_key, segments.segment(i - 1).candidate(j1).value, base_value,
-      segments.segment(i + 1).candidate(j2).value);
-  return true;
+  const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
+  const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
+  return StrJoinWithTabs(
+      "LR", base_key, segments_.segment(index_ - 1).candidate(j1).value,
+      base_value, segments_.segment(index_ + 1).candidate(j2).value);
 }
 
 // Feature "Left Left"
-inline bool GetFeatureLL(const Segments &segments, size_t i,
-                         absl::string_view base_key,
-                         absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (i < 2) {
-    return false;
+std::string FeatureKey::LeftLeft(absl::string_view base_key,
+                                 absl::string_view base_value) const {
+  if (index_ < 2) {
+    return "";
   }
-  const int j1 = GetDefaultCandidateIndex(segments.segment(i - 2));
-  const int j2 = GetDefaultCandidateIndex(segments.segment(i - 1));
-  *value = StrJoinWithTabs(
-      "LL", base_key, segments.segment(i - 2).candidate(j1).value,
-      segments.segment(i - 1).candidate(j2).value, base_value);
-  return true;
+  const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ - 2));
+  const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
+  return StrJoinWithTabs(
+      "LL", base_key, segments_.segment(index_ - 2).candidate(j1).value,
+      segments_.segment(index_ - 1).candidate(j2).value, base_value);
 }
 
 // Feature "Right Right"
-inline bool GetFeatureRR(const Segments &segments, size_t i,
-                         absl::string_view base_key,
-                         absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (i + 2 >= segments.segments_size()) {
-    return false;
+std::string FeatureKey::RightRight(absl::string_view base_key,
+                                   absl::string_view base_value) const {
+  if (index_ + 2 >= segments_.segments_size()) {
+    return "";
   }
-  const int j1 = GetDefaultCandidateIndex(segments.segment(i + 1));
-  const int j2 = GetDefaultCandidateIndex(segments.segment(i + 2));
-  *value = StrJoinWithTabs("RR", base_key, base_value,
-                           segments.segment(i + 1).candidate(j1).value,
-                           segments.segment(i + 2).candidate(j2).value);
-  return true;
+  const int j1 = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
+  const int j2 = GetDefaultCandidateIndex(segments_.segment(index_ + 2));
+  return StrJoinWithTabs("RR", base_key, base_value,
+                         segments_.segment(index_ + 1).candidate(j1).value,
+                         segments_.segment(index_ + 2).candidate(j2).value);
 }
 
 // Feature "Left"
-inline bool GetFeatureL(const Segments &segments, size_t i,
-                        absl::string_view base_key,
-                        absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (i < 1) {
-    return false;
+std::string FeatureKey::Left(absl::string_view base_key,
+                             absl::string_view base_value) const {
+  if (index_ < 1) {
+    return "";
   }
-  const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  *value = StrJoinWithTabs(
-      "L", base_key, segments.segment(i - 1).candidate(j).value, base_value);
-  return true;
+  const int j = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
+  return StrJoinWithTabs("L", base_key,
+                         segments_.segment(index_ - 1).candidate(j).value,
+                         base_value);
 }
 
 // Feature "Right"
-inline bool GetFeatureR(const Segments &segments, size_t i,
-                        absl::string_view base_key,
-                        absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (i + 1 >= segments.segments_size()) {
-    return false;
+std::string FeatureKey::Right(absl::string_view base_key,
+                              absl::string_view base_value) const {
+  if (index_ + 1 >= segments_.segments_size()) {
+    return "";
   }
-  const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  *value = StrJoinWithTabs("R", base_key, base_value,
-                           segments.segment(i + 1).candidate(j).value);
-  return true;
+  const int j = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
+  return StrJoinWithTabs("R", base_key, base_value,
+                         segments_.segment(index_ + 1).candidate(j).value);
 }
 
 // Feature "Current"
-inline bool GetFeatureC(const Segments &segments, size_t i,
-                        absl::string_view base_key,
-                        absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  *value = StrJoinWithTabs("C", base_key, base_value);
-  return true;
+std::string FeatureKey::Current(absl::string_view base_key,
+                                absl::string_view base_value) const {
+  return StrJoinWithTabs("C", base_key, base_value);
 }
 
 // Feature "Single"
-inline bool GetFeatureS(const Segments &segments, size_t i,
-                        absl::string_view base_key,
-                        absl::string_view base_value, std::string *value) {
-  DCHECK(value);
-  if (segments.segments_size() - segments.history_segments_size() != 1) {
-    return false;
+std::string FeatureKey::Single(absl::string_view base_key,
+                               absl::string_view base_value) const {
+  if (segments_.segments_size() - segments_.history_segments_size() != 1) {
+    return "";
   }
-  *value = StrJoinWithTabs("S", base_key, base_value);
-  return true;
+  return StrJoinWithTabs("S", base_key, base_value);
+}
+
+// Feature "Left Number"
+std::string FeatureKey::LeftNumber(absl::string_view base_key,
+                                   absl::string_view base_value) const {
+  if (index_ < 1) {
+    return "";
+  }
+  const int j = GetDefaultCandidateIndex(segments_.segment(index_ - 1));
+  const Segment::Candidate &candidate =
+      segments_.segment(index_ - 1).candidate(j);
+  if (pos_matcher_.IsNumber(candidate.rid) ||
+      pos_matcher_.IsKanjiNumber(candidate.rid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    return StrJoinWithTabs("LN", base_key, base_value);
+  }
+  return "";
+}
+
+// Feature "Right Number"
+std::string FeatureKey::RightNumber(absl::string_view base_key,
+                                    absl::string_view base_value) const {
+  if (index_ + 1 >= segments_.segments_size()) {
+    return "";
+  }
+  const int j = GetDefaultCandidateIndex(segments_.segment(index_ + 1));
+  const Segment::Candidate &candidate =
+      segments_.segment(index_ + 1).candidate(j);
+  if (pos_matcher_.IsNumber(candidate.lid) ||
+      pos_matcher_.IsKanjiNumber(candidate.lid) ||
+      Util::GetScriptType(candidate.value) == Util::NUMBER) {
+    return StrJoinWithTabs("RN", base_key, base_value);
+  }
+  return "";
 }
 
 // Feature "Number"
 // used for number rewrite
-inline bool GetFeatureN(uint16_t type, std::string *value) {
-  DCHECK(value);
-  *value = StrJoinWithTabs("N", absl::StrCat(type));
-  return true;
+std::string FeatureKey::Number(uint16_t type) {
+  return StrJoinWithTabs("N", absl::StrCat(type));
 }
 
 bool IsNumberSegment(const Segment &seg) {
@@ -353,7 +389,7 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
-    const std::vector<ScoreType> &sorted_scores, Segment *segment) const {
+    const std::vector<ScoreCandidate> &sorted_scores, Segment *segment) const {
   const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
@@ -441,36 +477,8 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
   CHECK_EQ(sizeof(uint32_t), sizeof(KeyTriggerValue));
 }
 
-#define INSERT_FEATURE(func, base_key, base_value, force_insert)               \
-  do {                                                                         \
-    if (func((segments), segment_index, base_key, base_value, &feature_key)) { \
-      FeatureValue v;                                                          \
-      DCHECK(v.IsValid());                                                     \
-      if (force_insert) {                                                      \
-        storage_->Insert(feature_key, reinterpret_cast<const char *>(&v));     \
-      } else {                                                                 \
-        storage_->TryInsert(feature_key, reinterpret_cast<const char *>(&v));  \
-      }                                                                        \
-    }                                                                          \
-  } while (0)
-
-#define FETCH_FEATURE(func, base_key, base_value, weight)                    \
-  do {                                                                       \
-    if (func(segments, segment_index, base_key, base_value, &feature_key)) { \
-      const FeatureValue *v = reinterpret_cast<const FeatureValue *>(        \
-          storage_->Lookup(feature_key, &last_access_time_result));          \
-      if (v != NULL && v->IsValid()) {                                       \
-        *score = std::max(*score, weight);                                   \
-        *last_access_time =                                                  \
-            std::max(*last_access_time, last_access_time_result);            \
-      }                                                                      \
-    }                                                                        \
-  } while (0)
-
-bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
-                                          size_t segment_index,
-                                          int candidate_index, uint32_t *score,
-                                          uint32_t *last_access_time) const {
+UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::GetScore(
+    const Segments &segments, size_t segment_index, int candidate_index) const {
   const size_t segments_size = segments.conversion_segments_size();
   const Segment::Candidate &top_candidate =
       segments.segment(segment_index).candidate(0);
@@ -488,57 +496,57 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
       (candidate.attributes & Segment::Candidate::CONTEXT_SENSITIVE) ||
       (segments.segment(segment_index).candidate(0).attributes &
        Segment::Candidate::CONTEXT_SENSITIVE);
-  DCHECK(score);
-  DCHECK(last_access_time);
 
-  *score = 0;
-  *last_access_time = 0;
+  const uint32_t trigram_weight = (segments_size == 3) ? 180 : 30;
+  const uint32_t bigram_weight = (segments_size == 2) ? 60 : 10;
+  const uint32_t bigram_number_weight = (segments_size == 2) ? 50 : 8;
+  const uint32_t unigram_weight = (segments_size == 1) ? 36 : 6;
+  const uint32_t single_weight = (segments_size == 1) ? 90 : 15;
 
-  // They are used inside FETCH_FEATURE
-  uint32_t last_access_time_result = 0;
-  std::string feature_key;
-
-  const uint32_t trigram_score = (segments_size == 3) ? 180 : 30;
-  const uint32_t bigram_score = (segments_size == 2) ? 60 : 10;
-  const uint32_t bigram_number_score = (segments_size == 2) ? 50 : 8;
-  const uint32_t unigram_score = (segments_size == 1) ? 36 : 6;
-  const uint32_t single_score = (segments_size == 1) ? 90 : 15;
-
-  FETCH_FEATURE(GetFeatureLR, all_key, all_value, trigram_score);
-  FETCH_FEATURE(GetFeatureLL, all_key, all_value, trigram_score);
-  FETCH_FEATURE(GetFeatureRR, all_key, all_value, trigram_score);
-  FETCH_FEATURE(GetFeatureL, all_key, all_value, bigram_score);
-  FETCH_FEATURE(GetFeatureR, all_key, all_value, bigram_score);
-  FETCH_FEATURE(GetFeatureS, all_key, all_value, single_score);
-  FETCH_FEATURE(GetFeatureLN, content_key, content_value, bigram_number_score);
-  FETCH_FEATURE(GetFeatureRN, content_key, content_value, bigram_number_score);
+  Score score = {0, 0};
+  FeatureKey fkey(segments, *pos_matcher_, segment_index);
+  score.Update(Fetch(fkey.LeftRight(all_key, all_value), trigram_weight));
+  score.Update(Fetch(fkey.LeftLeft(all_key, all_value), trigram_weight));
+  score.Update(Fetch(fkey.RightRight(all_key, all_value), trigram_weight));
+  score.Update(Fetch(fkey.Left(all_key, all_value), bigram_weight));
+  score.Update(Fetch(fkey.Right(all_key, all_value), bigram_weight));
+  score.Update(Fetch(fkey.Single(all_key, all_value), single_weight));
+  score.Update(
+      Fetch(fkey.LeftNumber(content_key, content_value), bigram_number_weight));
+  score.Update(Fetch(fkey.RightNumber(content_key, content_value),
+                     bigram_number_weight));
 
   const bool is_replaceable = Replaceable(top_candidate, candidate);
-
   if (!context_sensitive && is_replaceable) {
-    FETCH_FEATURE(GetFeatureC, all_key, all_value, unigram_score);
+    score.Update(Fetch(fkey.Current(all_key, all_value), unigram_weight));
   }
 
   if (!is_replaceable) {
-    return (*score > 0);
+    return score;
   }
 
-  FETCH_FEATURE(GetFeatureLR, content_key, content_value, trigram_score / 2);
-  FETCH_FEATURE(GetFeatureLL, content_key, content_value, trigram_score / 2);
-  FETCH_FEATURE(GetFeatureRR, content_key, content_value, trigram_score / 2);
-  FETCH_FEATURE(GetFeatureL, content_key, content_value, bigram_score / 2);
-  FETCH_FEATURE(GetFeatureR, content_key, content_value, bigram_score / 2);
-  FETCH_FEATURE(GetFeatureS, content_key, content_value, single_score / 2);
-  FETCH_FEATURE(GetFeatureLN, content_key, content_value,
-                bigram_number_score / 2);
-  FETCH_FEATURE(GetFeatureRN, content_key, content_value,
-                bigram_number_score / 2);
+  score.Update(
+      Fetch(fkey.LeftRight(content_key, content_value), trigram_weight / 2));
+  score.Update(
+      Fetch(fkey.LeftLeft(content_key, content_value), trigram_weight / 2));
+  score.Update(
+      Fetch(fkey.RightRight(content_key, content_value), trigram_weight / 2));
+  score.Update(Fetch(fkey.Left(content_key, content_value), bigram_weight / 2));
+  score.Update(
+      Fetch(fkey.Right(content_key, content_value), bigram_weight / 2));
+  score.Update(
+      Fetch(fkey.Single(content_key, content_value), single_weight / 2));
+  score.Update(Fetch(fkey.LeftNumber(content_key, content_value),
+                     bigram_number_weight / 2));
+  score.Update(Fetch(fkey.RightNumber(content_key, content_value),
+                     bigram_number_weight / 2));
 
   if (!context_sensitive) {
-    FETCH_FEATURE(GetFeatureC, content_key, content_value, unigram_score / 2);
+    score.Update(
+        Fetch(fkey.Current(content_key, content_value), unigram_weight / 2));
   }
 
-  return (*score > 0);
+  return score;
 }
 
 // Returns true if |lhs| candidate can be replaceable with |rhs|.
@@ -570,19 +578,11 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
     // However, access time is count by second, so
     // separated and default is learned at same time
     // This problem is solved by workaround on lookup.
-    std::string default_feature_key;
-    GetFeatureN(NumberUtil::NumberString::DEFAULT_STYLE, &default_feature_key);
-    FeatureValue v;
-    DCHECK(v.IsValid());
-    storage_->Insert(default_feature_key, reinterpret_cast<const char *>(&v));
+    Insert(FeatureKey::Number(NumberUtil::NumberString::DEFAULT_STYLE), true);
   }
 
-  std::string feature_key;
-  GetFeatureN(candidate.style, &feature_key);
-  FeatureValue v;
-  DCHECK(v.IsValid());
   // Always insert for numbers
-  storage_->Insert(feature_key, reinterpret_cast<const char *>(&v));
+  Insert(FeatureKey::Number(candidate.style), true);
 }
 
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
@@ -620,34 +620,33 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   const bool is_replaceable_with_top =
       ((top_index == 0) || Replaceable(seg.candidate(top_index), candidate));
 
-  // |feature_key| is used inside INSERT_FEATURE
-  std::string feature_key;
-  INSERT_FEATURE(GetFeatureLR, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureLL, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureRR, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureL, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureR, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureLN, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureRN, all_key, all_value, force_insert);
-  INSERT_FEATURE(GetFeatureS, all_key, all_value, force_insert);
+  FeatureKey fkey(segments, *pos_matcher_, segment_index);
+  Insert(fkey.LeftRight(all_key, all_value), force_insert);
+  Insert(fkey.LeftLeft(all_key, all_value), force_insert);
+  Insert(fkey.RightRight(all_key, all_value), force_insert);
+  Insert(fkey.Left(all_key, all_value), force_insert);
+  Insert(fkey.Right(all_key, all_value), force_insert);
+  Insert(fkey.LeftNumber(all_key, all_value), force_insert);
+  Insert(fkey.RightNumber(all_key, all_value), force_insert);
+  Insert(fkey.Single(all_key, all_value), force_insert);
 
   if (!context_sensitive && is_replaceable_with_top) {
-    INSERT_FEATURE(GetFeatureC, all_key, all_value, force_insert);
+    Insert(fkey.Current(all_key, all_value), force_insert);
   }
 
   // save content value
   if (all_value != content_value && all_key != content_key &&
       is_replaceable_with_top) {
-    INSERT_FEATURE(GetFeatureLR, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureLL, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureRR, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureL, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureR, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureLN, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureRN, content_key, content_value, force_insert);
-    INSERT_FEATURE(GetFeatureS, content_key, content_value, force_insert);
+    Insert(fkey.LeftRight(content_key, content_value), force_insert);
+    Insert(fkey.LeftLeft(content_key, content_value), force_insert);
+    Insert(fkey.RightRight(content_key, content_value), force_insert);
+    Insert(fkey.Left(content_key, content_value), force_insert);
+    Insert(fkey.Right(content_key, content_value), force_insert);
+    Insert(fkey.LeftNumber(content_key, content_value), force_insert);
+    Insert(fkey.RightNumber(content_key, content_value), force_insert);
+    Insert(fkey.Single(content_key, content_value), force_insert);
     if (!context_sensitive) {
-      INSERT_FEATURE(GetFeatureC, content_key, content_value, force_insert);
+      Insert(fkey.Current(content_key, content_value), force_insert);
     }
   }
 
@@ -656,11 +655,10 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   absl::string_view close_bracket_value;
   if (Util::IsOpenBracket(content_key, &close_bracket_key) &&
       Util::IsOpenBracket(content_value, &close_bracket_value)) {
-    INSERT_FEATURE(GetFeatureS, close_bracket_key, close_bracket_value,
-                   force_insert);
+    Insert(fkey.Single(close_bracket_key, close_bracket_value), force_insert);
     if (!context_sensitive) {
-      INSERT_FEATURE(GetFeatureC, close_bracket_key, close_bracket_value,
-                     force_insert);
+      Insert(fkey.Current(close_bracket_key, close_bracket_value),
+             force_insert);
     }
   }
 }
@@ -816,7 +814,7 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
 }
 
 bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
-  std::vector<ScoreType> scores;
+  std::vector<ScoreCandidate> scores;
   for (size_t l = 0;
        l < segment->candidates_size() + segment->meta_candidates_size(); ++l) {
     int j = static_cast<int>(l);
@@ -824,29 +822,21 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
       j -= static_cast<int>(segment->candidates_size() +
                             segment->meta_candidates_size());
     }
-    uint32_t score = 0;
-    uint32_t last_access_time = 0;
-    std::string feature_key;
-    GetFeatureN(segment->candidate(j).style, &feature_key);
-    const FeatureValue *v = reinterpret_cast<const FeatureValue *>(
-        storage_->Lookup(feature_key, &last_access_time));
-    if (v != nullptr && v->IsValid()) {
-      score = 10;
+    Score score = Fetch(FeatureKey::Number(segment->candidate(j).style), 10);
+
+    if (score.score) {
       // Workaround for separated arabic.
       // Because separated arabic and normal number is learned at the
       // same time, make the time gap here so that separated arabic
       // has higher rank by sorting of scores.
-      if (last_access_time > 0 &&
+      if (score.last_access_time > 0 &&
           (segment->candidate(j).style !=
            NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH) &&
           (segment->candidate(j).style !=
            NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH)) {
-        last_access_time--;
+        score.last_access_time--;
       }
-      scores.resize(scores.size() + 1);
-      scores.back().score = score;
-      scores.back().last_access_time = last_access_time;
-      scores.back().candidate = segment->mutable_candidate(j);
+      scores.emplace_back(score, &segment->candidate(j));
     }
   }
 
@@ -854,7 +844,8 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
     return false;
   }
 
-  std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+  std::stable_sort(scores.begin(), scores.end(),
+                   std::greater<ScoreCandidate>());
   return SortCandidates(scores, segment);
 }
 
@@ -907,7 +898,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
         << "Cannot expand candidates. ignored. Rewrite may be failed";
 
     // for each all candidates expanded
-    std::vector<ScoreType> scores;
+    std::vector<ScoreCandidate> scores;
     for (size_t l = 0;
          l < segment->candidates_size() + segment->meta_candidates_size();
          ++l) {
@@ -917,13 +908,9 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                               transliteration::NUM_T13N_TYPES);
       }
 
-      uint32_t score = 0;
-      uint32_t last_access_time = 0;
-      if (GetScore(*segments, i, j, &score, &last_access_time)) {
-        scores.push_back(ScoreType());
-        scores.back().score = score;
-        scores.back().last_access_time = last_access_time;
-        scores.back().candidate = segment->mutable_candidate(j);
+      const Score score = GetScore(*segments, i, j);
+      if (score.score > 0) {
+        scores.emplace_back(score, &segment->candidate(j));
       }
     }
 
@@ -931,7 +918,8 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    std::stable_sort(scores.begin(), scores.end(), ScoreTypeCompare());
+    std::stable_sort(scores.begin(), scores.end(),
+                     std::greater<ScoreCandidate>());
     modified |= SortCandidates(scores, segment);
   }
   return modified;
@@ -951,46 +939,29 @@ bool UserSegmentHistoryRewriter::IsPunctuation(
           IsPunctuationInternal(candidate.value));
 }
 
-// Feature "Left Number"
-bool UserSegmentHistoryRewriter::GetFeatureLN(const Segments &segments,
-                                              size_t i,
-                                              absl::string_view base_key,
-                                              absl::string_view base_value,
-                                              std::string *value) const {
-  DCHECK(value);
-  if (i < 1) {
-    return false;
+UserSegmentHistoryRewriter::Score UserSegmentHistoryRewriter::Fetch(
+    const absl::string_view key, const uint32_t weight) const {
+  if (!key.empty()) {
+    uint32_t atime;
+    const FeatureValue *v = std::launder(
+        reinterpret_cast<const FeatureValue *>(storage_->Lookup(key, &atime)));
+    if (v && v->IsValid()) {
+      return {weight, atime};
+    }
   }
-  const int j = GetDefaultCandidateIndex(segments.segment(i - 1));
-  const Segment::Candidate &candidate = segments.segment(i - 1).candidate(j);
-  if (pos_matcher_->IsNumber(candidate.rid) ||
-      pos_matcher_->IsKanjiNumber(candidate.rid) ||
-      Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = StrJoinWithTabs("LN", base_key, base_value);
-    return true;
-  }
-  return false;
+  return {0, 0};
 }
 
-// Feature "Right Number"
-bool UserSegmentHistoryRewriter::GetFeatureRN(const Segments &segments,
-                                              size_t i,
-                                              absl::string_view base_key,
-                                              absl::string_view base_value,
-                                              std::string *value) const {
-  DCHECK(value);
-  if (i + 1 >= segments.segments_size()) {
-    return false;
+void UserSegmentHistoryRewriter::Insert(absl::string_view key, bool force) {
+  if (!key.empty()) {
+    FeatureValue v;
+    DCHECK(v.IsValid());
+    if (force) {
+      storage_->Insert(key, reinterpret_cast<const char *>(&v));
+    } else {
+      storage_->TryInsert(key, reinterpret_cast<const char *>(&v));
+    }
   }
-  const int j = GetDefaultCandidateIndex(segments.segment(i + 1));
-  const Segment::Candidate &candidate = segments.segment(i + 1).candidate(j);
-  if (pos_matcher_->IsNumber(candidate.lid) ||
-      pos_matcher_->IsKanjiNumber(candidate.lid) ||
-      Util::GetScriptType(candidate.value) == Util::NUMBER) {
-    *value = StrJoinWithTabs("RN", base_key, base_value);
-    return true;
-  }
-  return false;
 }
 
 }  // namespace mozc
