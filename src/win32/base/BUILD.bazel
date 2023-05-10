@@ -137,7 +137,6 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":imm_reconvert_string",
-        "//base:util",
         "//testing:gunit_main",
     ],
 )
