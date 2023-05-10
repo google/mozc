@@ -112,7 +112,7 @@ TEST(CompositionInputTest, SpecialKeys) {
     key.set_special_key(commands::KeyEvent::HENKAN);
     input.Init(table, key, new_input);
 
-    EXPECT_EQ(input.raw(), "\uF000");  // U+F000 represents "{henkan}".
+    EXPECT_EQ(input.raw(), "\uF004");  // U+F004 represents "{henkan}".
   }
   {
     // key event with a key code and a special key.

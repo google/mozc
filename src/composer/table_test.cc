@@ -946,10 +946,10 @@ TEST_F(TableTest, SpecialKeys) {
 
   {
     // "{{}" is replaced with "{".
-    // "{}" is replaced with U+F000.
-    // {b} = U+F001, {d} = U+F002, {e} = U+F003, {{-} = U+F004.
+    // "{}" is replaced with U+F004.
+    // {b} = U+F005, {d} = U+F006, {e} = U+F007, {{-} = U+F008.
     Table table;
-    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\uF000");
+    EXPECT_EQ(table.AddRule("{}", "", "")->input(), "\uF004");
     EXPECT_EQ(table.AddRule("{", "", "")->input(), "{");
     EXPECT_EQ(table.AddRule("}", "", "")->input(), "}");
     EXPECT_EQ(table.AddRule("{{}", "", "")->input(), "{");
@@ -960,15 +960,15 @@ TEST_F(TableTest, SpecialKeys) {
     EXPECT_EQ(table.AddRule("a}", "", "")->input(), "a}");
     EXPECT_EQ(table.AddRule("}a", "", "")->input(), "}a");
     EXPECT_EQ(table.AddRule("a}a", "", "")->input(), "a}a");
-    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\uF001c");
+    EXPECT_EQ(table.AddRule("a{b}c", "", "")->input(), "a\uF005c");
     EXPECT_EQ(table.AddRule("a{b}c{d}{e}", "", "")->input(),
-              "a\uF001c\uF002\uF003");
+              "a\uF005c\uF006\uF007");
     EXPECT_EQ(table.AddRule("}-{", "", "")->input(), "}-{");
     EXPECT_EQ(table.AddRule("a{bc", "", "")->input(), "a{bc");
 
     // This is not a fixed specification, but a current behavior.
     // "{{-}" is treated as a special key.
-    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\uF004}");
+    EXPECT_EQ(table.AddRule("{{-}}", "", "")->input(), "\uF008}");
   }
 }
 

@@ -120,6 +120,14 @@ Entry::Entry(const absl::string_view input, const absl::string_view result,
 // ========================================
 // Table
 // ========================================
+Table::Table() {
+  // Add predefined special keys.
+  special_key_map_.Register("{?}");  // toggle
+  special_key_map_.Register("{*}");  // internal state
+  special_key_map_.Register("{<}");  // rewind
+  special_key_map_.Register("{!}");  // timeout
+}
+
 Table::~Table() {
   for (const auto entry : entry_set_) {
     delete entry;
@@ -385,7 +393,7 @@ const Entry *Table::AddRuleWithAttributes(
   entries_.AddEntry(input, entry);
   entry_set_.insert(entry);
 
-  // Check if the input has a large captal character.
+  // Check if the input has a large capital character.
   // Invisible character is exception.
   if (!case_sensitive_) {
     const std::string trimed_input = DeleteSpecialKeys(input);

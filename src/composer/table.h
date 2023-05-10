@@ -91,7 +91,7 @@ class Entry final {
 
 class Table final {
  public:
-  Table() = default;
+  Table();
   Table(const Table &) = delete;
   Table &operator=(const Table &) = delete;
   ~Table();
