@@ -47,7 +47,7 @@ EMACS_MOZC_CLIENT_DIR = "/usr/share/emacs/site-lisp/emacs-mozc"
 EMACS_MOZC_HELPER_DIR = "/usr/bin"
 
 MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
-MACOS_MIN_OS_VER = "10.12"
+MACOS_MIN_OS_VER = "10.13"
 
 ## Qt path for macOS
 # The paths are the default paths of Qt 5.15.2 installed by "make install".

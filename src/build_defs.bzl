@@ -268,7 +268,7 @@ def mozc_objc_test(
     )
     macos_unit_test(
         name = name,
-        minimum_os_version = "10.13",
+        minimum_os_version = MACOS_MIN_OS_VER,
         bundle_id = bundle_id or default_bundle_id,
         deps = [lib_name],
         size = size,
