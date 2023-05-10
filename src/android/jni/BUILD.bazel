@@ -34,11 +34,12 @@
 # Usage:
 # % blaze --blazerc android/blazerc build --config=android_arm android/jni:libmozc.so
 
-load("//:build_defs.bzl", "mozc_cc_library")
+load("//:build_defs.bzl", "MOZC_TAGS", "mozc_cc_library")
 
 mozc_cc_library(
     name = "mozcjni",
     srcs = ["mozcjni.cc"],
+    tags = MOZC_TAGS.ANDROID_ONLY,
     visibility = ["//:__subpackages__"],  # Scheuklappen: keep
     deps = [
         "//base:logging",
