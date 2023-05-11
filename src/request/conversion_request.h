@@ -143,6 +143,8 @@ class ConversionRequest {
   bool should_call_set_key_in_prediction() const;
   void set_should_call_set_key_in_prediction(bool value);
 
+  void set_kana_modifier_insensitive_conversion(bool value);
+
  private:
   RequestType request_type_ = CONVERSION;
 
@@ -187,6 +189,9 @@ class ConversionRequest {
 
   // If true, set conversion key to output segments in prediction.
   bool should_call_set_key_in_prediction_ = false;
+
+  // If true, enable kana modifier insensitive conversion.
+  bool kana_modifier_insensitive_conversion_ = true;
 
   // TODO(noriyukit): Moves all the members of Segments that are irrelevant to
   // this structure, e.g., Segments::request_type_.

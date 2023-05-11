@@ -27,14 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/japanese_util.h"
+#include "base/strings/japanese.h"
 
 #include <iterator>
 #include <string>
 
 #include "testing/gunit.h"
 
-namespace mozc {
+namespace mozc::japanese {
+namespace {
 
 TEST(JapaneseUtilTest, HiraganaToKatakana) {
   {
@@ -43,7 +44,7 @@ TEST(JapaneseUtilTest, HiraganaToKatakana) {
         "だぢづでどっなにぬねのはひふへほばびぶべぼぱぴぷぺぽまみむめもやゆよゃ"
         "ゅょらりるれろわゎをんゔ";
     std::string output;
-    japanese_util::HiraganaToKatakana(input, &output);
+    HiraganaToKatakana(input, &output);
     EXPECT_EQ(
         output,
         "アイウエオァィゥェォカキクケコガギグゲゴサシスセソザジズゼゾタチツテト"
@@ -53,13 +54,13 @@ TEST(JapaneseUtilTest, HiraganaToKatakana) {
   {
     const std::string input = "わたしのなまえはなかのですうまーよろしゅう";
     std::string output;
-    japanese_util::HiraganaToKatakana(input, &output);
+    HiraganaToKatakana(input, &output);
     EXPECT_EQ(output, "ワタシノナマエハナカノデスウマーヨロシュウ");
   }
   {
     const std::string input = "グーグル工藤よろしくabc";
     std::string output;
-    japanese_util::HiraganaToKatakana(input, &output);
+    HiraganaToKatakana(input, &output);
     EXPECT_EQ(output, "グーグル工藤ヨロシクabc");
   }
 }
@@ -71,7 +72,7 @@ TEST(JapaneseUtilTest, KatakanaToHiragana) {
         "ダヂヅデドッナニヌネノハヒフヘホバビブベボパピプペポマミムメモヤユヨャ"
         "ュョラリルレロワヮヲンヰヱヴ";
     std::string output;
-    japanese_util::KatakanaToHiragana(input, &output);
+    KatakanaToHiragana(input, &output);
     EXPECT_EQ(
         output,
         "あいうえおぁぃぅぇぉかきくけこがぎぐげごさしすせそざじずぜぞたちつてと"
@@ -81,13 +82,13 @@ TEST(JapaneseUtilTest, KatakanaToHiragana) {
   {
     const std::string input = "ワタシノナマエハナカノデスウマーヨロシュウ";
     std::string output;
-    japanese_util::KatakanaToHiragana(input, &output);
+    KatakanaToHiragana(input, &output);
     EXPECT_EQ(output, "わたしのなまえはなかのですうまーよろしゅう");
   }
   {
     const std::string input = "グーグル工藤ヨロシクabc";
     std::string output;
-    japanese_util::KatakanaToHiragana(input, &output);
+    KatakanaToHiragana(input, &output);
     EXPECT_EQ(output, "ぐーぐる工藤よろしくabc");
   }
 }
@@ -105,7 +106,7 @@ TEST(JapaneseUtilTest, RomanjiToHiragana) {
   };
   for (const auto &test_case : kTestCases) {
     std::string actual;
-    japanese_util::RomanjiToHiragana(test_case.input, &actual);
+    RomanjiToHiragana(test_case.input, &actual);
     EXPECT_EQ(actual, test_case.expected);
   }
 }
@@ -129,7 +130,7 @@ TEST(JapaneseUtilTest, HiraganaToRomaji) {
   };
   for (const auto &test_case : kTestCases) {
     std::string actual;
-    japanese_util::HiraganaToRomanji(test_case.input, &actual);
+    HiraganaToRomanji(test_case.input, &actual);
     EXPECT_EQ(actual, test_case.expected);
   }
 }
@@ -137,61 +138,60 @@ TEST(JapaneseUtilTest, HiraganaToRomaji) {
 TEST(JapaneseUtilTest, NormalizeVoicedSoundMark) {
   const std::string input = "僕のう゛ぁいおりん";
   std::string output;
-  japanese_util::NormalizeVoicedSoundMark(input, &output);
+  NormalizeVoicedSoundMark(input, &output);
   EXPECT_EQ(output, "僕のゔぁいおりん");
 }
 
 TEST(JapaneseUtilTest, FullWidthAndHalfWidth) {
   std::string output;
 
-  japanese_util::FullWidthToHalfWidth("", &output);
+  FullWidthToHalfWidth("", &output);
   EXPECT_EQ(output, "");
 
-  japanese_util::HalfWidthToFullWidth("", &output);
+  HalfWidthToFullWidth("", &output);
   EXPECT_EQ(output, "");
 
-  japanese_util::HalfWidthToFullWidth("abc[]?.", &output);
+  HalfWidthToFullWidth("abc[]?.", &output);
   EXPECT_EQ(output, "ａｂｃ［］？．");
 
-  japanese_util::HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄ｢」", &output);
+  HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄ｢」", &output);
   EXPECT_EQ(output, "インターネット「」");
 
-  japanese_util::HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  HalfWidthToFullWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
   EXPECT_EQ(output, "インターネットグーグル");
 
-  japanese_util::FullWidthToHalfWidth("ａｂｃ［］？．", &output);
+  FullWidthToHalfWidth("ａｂｃ［］？．", &output);
   EXPECT_EQ(output, "abc[]?.");
 
-  japanese_util::FullWidthToHalfWidth("インターネット", &output);
+  FullWidthToHalfWidth("インターネット", &output);
   EXPECT_EQ(output, "ｲﾝﾀｰﾈｯﾄ");
 
-  japanese_util::FullWidthToHalfWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
+  FullWidthToHalfWidth("ｲﾝﾀｰﾈｯﾄグーグル", &output);
   EXPECT_EQ(output, "ｲﾝﾀｰﾈｯﾄｸﾞｰｸﾞﾙ");
 
   // spaces
-  japanese_util::FullWidthToHalfWidth(" 　",
-                                      &output);  // Half- and full-width spaces
-  EXPECT_EQ(output, "  ");                       // 2 half-width spaces
+  FullWidthToHalfWidth(" 　", &output);  // Half- and full-width spaces
+  EXPECT_EQ(output, "  ");               // 2 half-width spaces
 
-  japanese_util::HalfWidthToFullWidth(" 　",
-                                      &output);  // Half- and full-width spaces
-  EXPECT_EQ(output, "　　");                     // 2 full-width spaces
+  HalfWidthToFullWidth(" 　", &output);  // Half- and full-width spaces
+  EXPECT_EQ(output, "　　");             // 2 full-width spaces
 
   // Spaces are treated as Ascii here
   // Half- and full-width spaces
-  japanese_util::FullWidthAsciiToHalfWidthAscii(" 　", &output);
+  FullWidthAsciiToHalfWidthAscii(" 　", &output);
   EXPECT_EQ(output, "  ");  // 2 half-width spaces
 
-  japanese_util::HalfWidthAsciiToFullWidthAscii("  ", &output);
+  HalfWidthAsciiToFullWidthAscii("  ", &output);
   EXPECT_EQ(output, "　　");  // 2 full-width spaces
 
   // Half- and full-width spaces
-  japanese_util::FullWidthKatakanaToHalfWidthKatakana(" 　", &output);
+  FullWidthKatakanaToHalfWidthKatakana(" 　", &output);
   EXPECT_EQ(output, " 　");  // Not changed
 
   // Half- and full-width spaces
-  japanese_util::HalfWidthKatakanaToFullWidthKatakana(" 　", &output);
+  HalfWidthKatakanaToFullWidthKatakana(" 　", &output);
   EXPECT_EQ(output, " 　");  // Not changed
 }
 
-}  // namespace mozc
+}  // namespace
+}  // namespace mozc::japanese

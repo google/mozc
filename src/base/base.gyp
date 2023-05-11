@@ -170,8 +170,9 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
-        'japanese_util.cc',
-        'japanese_util_rule.cc',
+        'strings/japanese.cc',
+        'strings/internal/double_array.cc',
+        'strings/internal/japanese_rules.cc',
       ],
     },
     {

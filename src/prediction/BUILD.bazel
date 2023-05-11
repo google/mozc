@@ -102,6 +102,7 @@ mozc_cc_test(
     timeout = "moderate",
     srcs = ["user_history_predictor_test.cc"],
     requires_full_emulation = False,
+    tags = ["nowin"],  # TODO(yuryu): depends on //base:encryptor
     deps = [
         ":user_history_predictor",
         ":user_history_predictor_cc_proto",

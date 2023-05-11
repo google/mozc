@@ -83,6 +83,7 @@ mozc_cc_library(
     hdrs = ["existence_filter.h"],
     deps = [
         "//base:logging",
+        "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -209,6 +210,7 @@ mozc_cc_test(
     name = "encrypted_string_storage_test",
     size = "small",
     srcs = ["encrypted_string_storage_test.cc"],
+    tags = ["nowin"],  # TODO(yuryu): depends on //base:encryptor
     deps = [
         ":encrypted_string_storage",
         "//base:file_stream",

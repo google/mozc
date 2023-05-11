@@ -27,13 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_JAPANESE_UTIL_RULE_H_
-#define MOZC_BASE_JAPANESE_UTIL_RULE_H_
+#ifndef MOZC_BASE_STRINGS_INTERNAL_JAPANESE_RULES_H_
+#define MOZC_BASE_STRINGS_INTERNAL_JAPANESE_RULES_H_
 
-#include "base/double_array.h"
+#include "base/strings/internal/double_array.h"
 
-namespace mozc {
-namespace japanese_util_rule {
+namespace mozc::japanese::internal {
 
 #define DECLARE_RULE(name)          \
   extern const char name##_table[]; \
@@ -52,7 +51,6 @@ DECLARE_RULE(kanjinumber_to_arabicnumber);
 
 #undef DECLARE_RULE
 
-}  // namespace japanese_util_rule
-}  // namespace mozc
+}  // namespace mozc::japanese::internal
 
-#endif  // MOZC_BASE_JAPANESE_UTIL_RULE_H_
+#endif  // MOZC_BASE_STRINGS_INTERNAL_JAPANESE_RULES_H_

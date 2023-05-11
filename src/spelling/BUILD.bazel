@@ -59,6 +59,15 @@ mozc_cc_library(
     name = "spellchecker_service_registration",
     srcs = ["spellchecker_service_registration.cc"],
     hdrs = ["spellchecker_service_interface.h"],
+    tags = [
+        "nomac",
+        "nowin",
+    ],
+    target_compatible_with = mozc_select(
+        default = [],
+        macos = ["@platforms//:incompatible"],
+        windows = ["@platforms//:incompatible"],
+    ),
     visibility = [
         "//:__subpackages__",
     ],
@@ -76,15 +85,20 @@ mozc_cc_library(
     name = "spellchecker_service",
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
-    tags = ["nowin"],
+    tags = [
+        "nomac",
+        "nowin",
+    ],
     target_compatible_with = mozc_select(
         default = [],
+        macos = ["@platforms//:incompatible"],
         windows = ["@platforms//:incompatible"],
     ),
     deps = [
         ":rulebased_filter",
         ":spellchecker_service_interface",
         "//base:file_util",
+        "//base:japanese_util",
         "//base:mmap",
         "//base:port",
         "//base:thread",
@@ -107,9 +121,13 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "spellchecker_service_main",
     srcs = ["spellchecker_service_main.cc"],
-    tags = ["nowin"],
+    tags = [
+        "nomac",
+        "nowin",
+    ],
     target_compatible_with = mozc_select(
         default = [],
+        macos = ["@platforms//:incompatible"],
         windows = ["@platforms//:incompatible"],
     ),
     deps = [
@@ -129,9 +147,13 @@ mozc_cc_test(
     name = "spellchecker_service_test",
     size = "small",
     srcs = ["spellchecker_service_test.cc"],
-    tags = ["nowin"],
+    tags = [
+        "nomac",
+        "nowin",
+    ],
     target_compatible_with = mozc_select(
         default = [],
+        macos = ["@platforms//:incompatible"],
         windows = ["@platforms//:incompatible"],
     ),
     deps = [

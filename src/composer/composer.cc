@@ -891,8 +891,8 @@ void Composer::GetQueriesForPrediction(std::string *base,
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 
-std::optional<TypeCorrectedQuery> Composer::GetTypeCorrectedQueries(
-    absl::string_view context) const {
+std::optional<std::vector<TypeCorrectedQuery>>
+Composer::GetTypeCorrectedQueries(absl::string_view context) const {
 
   return std::nullopt;
 }

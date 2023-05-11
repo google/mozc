@@ -33,28 +33,25 @@
 
 namespace mozc {
 struct Point {
+  explicit Point(int newx = 0, int newy = 0) : x(newx), y(newy) {}
+
   int x;
   int y;
-  explicit Point(int newx = 0, int newy = 0) : x(newx), y(newy) {}
-  Point(const Point &point) : x(point.x), y(point.y) {}
 };
 
 struct Size {
-  int width;
-  int height;
   explicit Size(int newwidth = 0, int newheight = 0)
       : width(newwidth), height(newheight) {}
-  Size(const Size &size) : width(size.width), height(size.height) {}
+
+  int width;
+  int height;
 };
 
 struct Rect {
-  Point origin;
-  Size size;
+  Rect() = default;
   Rect(int newx, int newy, int newwidth, int newheight)
       : origin(newx, newy), size(newwidth, newheight) {}
   Rect(const Point &o, const Size &s) : origin(o), size(s) {}
-  Rect(const Rect &rect) : origin(rect.origin), size(rect.size) {}
-  Rect() {}
 
   // Accessors
   inline int Width() const { return size.width; }
@@ -85,6 +82,9 @@ struct Rect {
     return p.x >= origin.x && p.x <= origin.x + size.width && p.y >= origin.y &&
            p.y <= origin.y + size.height;
   }
+
+  Point origin;
+  Size size;
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_COORDINATES_H_

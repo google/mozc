@@ -44,7 +44,6 @@ See also: https://bazel.build/rules/bzl-style#rules
 
 load("//bazel:stubs.bzl", "register_extension_info")
 load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
-load("//bazel:stubs.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle", "macos_unit_test")
 
@@ -108,25 +107,6 @@ def mozc_cc_test(name, tags = [], deps = [], copts = [], **kwargs):
         copts = copts + ["-funsigned-char"],
         **kwargs
     )
-
-    if "noandroid" not in tags:
-        android_cc_test(
-            name = name + "_android",
-            cc_test_name = name,
-            copts = copts + ["-funsigned-char"],
-            requires_full_emulation = requires_full_emulation,
-            # "manual" prevents this target triggered by a wild card.
-            # So that "blaze test ..." does not contain this target.
-            # Otherwise it is too slow.
-            tags = ["manual", "notap"],
-            # Only build/test when building for linux or android.
-            target_compatible_with = select({
-                "@platforms//os:android": [],
-                "@platforms//os:linux": [],
-                "//conditions:default": ["@platforms//:incompatible"],
-            }),
-            visibility = ["//visibility:private"],
-        )
 
 register_extension_info(
     extension = "mozc_cc_test",
@@ -211,11 +191,12 @@ def mozc_objc_library(
             "//:macro",
         ],
         copts = copts + ["-funsigned-char", "-std=c++17"],
-        # The 'manual' tag excludes this from the targets of 'all' and '...'.
-        # This is a workaround to exclude objc_library rules from Linux build
-        # because target_compatible_with doesn't work as expected.
-        # https://github.com/bazelbuild/bazel/issues/12897
-        tags = tags + ["manual"],
+        target_compatible_with = select({
+            "@platforms//os:macos": [],
+            "@platforms//os:ios": [],
+            "//conditions:default": ["@platforms//:incompatible"],
+        }),
+        tags = tags + ["noandroid", "nolinux", "nowin"],
         **kwargs
     )
 
@@ -273,7 +254,8 @@ def mozc_objc_test(
         deps = [lib_name],
         size = size,
         visibility = visibility,
-        tags = ["manual"] + tags,
+        target_compatible_with = ["@platforms//os:macos"],
+        tags = MOZC_TAGS.MAC_ONLY + tags,
     )
 
 register_extension_info(
@@ -325,11 +307,8 @@ def mozc_macos_application(name, bundle_name, infoplists, strings = [], bundle_i
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
         version = "//data/version:version_macos",
-        # The 'manual' tag excludes this from the targets of 'all' and '...'.
-        # This is a workaround to exclude objc_library rules from Linux build
-        # because target_compatible_with doesn't work as expected.
-        # https://github.com/bazelbuild/bazel/issues/12897
-        tags = tags + ["manual", "notap"],
+        target_compatible_with = ["@platforms//os:macos"],
+        tags = tags + MOZC_TAGS.MAC_ONLY,
         **kwargs
     )
 
@@ -353,11 +332,8 @@ def mozc_macos_bundle(name, bundle_name, infoplists, strings = [], bundle_id = N
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
         version = "//data/version:version_macos",
-        # The 'manual' tag excludes this from the targets of 'all' and '...'.
-        # This is a workaround to exclude objc_library rules from Linux build
-        # because target_compatible_with doesn't work as expected.
-        # https://github.com/bazelbuild/bazel/issues/12897
-        tags = tags + ["manual", "notap"],
+        target_compatible_with = ["@platforms//os:macos"],
+        tags = tags + MOZC_TAGS.MAC_ONLY,
         **kwargs
     )
 

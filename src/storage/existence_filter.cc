@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "absl/numeric/bits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -44,17 +45,6 @@
 
 namespace mozc {
 namespace storage {
-namespace {
-
-// Rotate the value in 'original' by 'num_bits'
-inline uint64_t RotateLeft64(uint64_t original, int num_bits) {
-  // TODO(team): we may want to use rotl64 depending on the platform.
-  DCHECK(0 < num_bits && num_bits < 64) << num_bits;
-  return (original << (64 - num_bits)) | (original >> num_bits);
-}
-
-}  // namespace
-
 namespace internal {
 
 BlockBitmap::BlockBitmap(uint32_t length, bool is_mutable)
@@ -168,7 +158,7 @@ void ExistenceFilter::Clear() { rep_->Clear(); }
 
 bool ExistenceFilter::Exists(uint64_t hash) const {
   for (size_t i = 0; i < num_hashes_; ++i) {
-    hash = RotateLeft64(hash, 8);
+    hash = absl::rotl(hash, 8);
     uint32_t index = hash % vec_size_;
     if (!rep_->Get(index)) {
       return false;
@@ -179,7 +169,7 @@ bool ExistenceFilter::Exists(uint64_t hash) const {
 
 void ExistenceFilter::Insert(uint64_t hash) {
   for (size_t i = 0; i < num_hashes_; ++i) {
-    hash = RotateLeft64(hash, 8);
+    hash = absl::rotl(hash, 8);
     uint32_t index = hash % vec_size_;
     rep_->Set(index);
   }

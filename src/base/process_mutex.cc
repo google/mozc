@@ -207,7 +207,7 @@ class FileLockManager {
     fdmap_.erase(it);
   }
 
-  FileLockManager() {}
+  FileLockManager() = default;
 
   ~FileLockManager() {
     for (std::map<std::string, int>::const_iterator it = fdmap_.begin();

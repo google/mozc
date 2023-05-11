@@ -41,7 +41,6 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

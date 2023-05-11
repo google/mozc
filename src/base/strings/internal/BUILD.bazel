@@ -27,96 +27,56 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Custom containers for Mozc.
+# Internal libraries and tools for strings.
 
 load(
     "//:build_defs.bzl",
+    "mozc_cc_binary",
     "mozc_cc_library",
-    "mozc_cc_test",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//base/strings:__subpackages__"])
 
 mozc_cc_library(
-    name = "bitarray",
-    hdrs = ["bitarray.h"],
-)
-
-mozc_cc_test(
-    name = "bitarray_test",
-    size = "small",
-    srcs = ["bitarray_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":bitarray",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/random",
+    name = "double_array",
+    srcs = ["double_array.cc"],
+    hdrs = ["double_array.h"],
+    visibility = [
+        # TODO(yuryu): remove when number_util moves to strings.
+        "//base:__pkg__",
+        "//base/strings:__subpackages__",
     ],
-)
-
-mozc_cc_library(
-    name = "freelist",
-    hdrs = ["freelist.h"],
-    visibility = ["//:__subpackages__"],
-)
-
-mozc_cc_test(
-    name = "freelist_test",
-    srcs = ["freelist_test.cc"],
     deps = [
-        ":freelist",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "serialized_string_array",
-    srcs = ["serialized_string_array.cc"],
-    hdrs = ["serialized_string_array.h"],
-    deps = [
-        "//base:file_util",
-        "//base:logging",
-        "//base:status",
-        "@com_google_absl//absl/base:config",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "serialized_string_array_test",
-    srcs = ["serialized_string_array_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        "//base:port",
-        "//base/container:serialized_string_array",
-        "//testing:gunit_main",
+        "//base/strings:unicode",
         "@com_google_absl//absl/strings",
     ],
 )
 
 mozc_cc_library(
-    name = "trie",
-    hdrs = ["trie.h"],
-    visibility = ["//:__subpackages__"],
+    name = "japanese_rules",
+    srcs = ["japanese_rules.cc"],
+    hdrs = ["japanese_rules.h"],
+    visibility = [
+        "//base:__pkg__",  # TODO(yuryu): for number_util
+        "//base/strings:__subpackages__",
+    ],
+    deps = [":double_array"],
+)
+
+mozc_cc_binary(
+    name = "japanese_rules_compiler",
+    srcs = ["japanese_rules_compiler.cc"],
+    tags = ["manual"],
+    visibility = ["//visibility:private"],
     deps = [
+        ":double_array",
+        "//base:file_stream",
+        "//base:init_mozc_buildtool",
         "//base:logging",
         "//base:util",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "trie_test",
-    size = "small",
-    srcs = ["trie_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":trie",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/flags:flag",
+        # For OSS, darts is also required.
+        # http://chasen.org/~taku/software/darts/
         "@com_google_absl//absl/strings",
     ],
 )

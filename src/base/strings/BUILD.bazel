@@ -89,6 +89,36 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
+    name = "japanese",
+    srcs = [
+        "japanese.cc",
+    ],
+    hdrs = ["japanese.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        ":unicode",
+        "//base/strings/internal:double_array",
+        "//base/strings/internal:japanese_rules",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "japanese_test",
+    size = "small",
+    srcs = [
+        "japanese_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":japanese",
+        "//testing:gunit_main",
+    ],
+)
+
+mozc_cc_library(
     name = "unicode",
     hdrs = ["unicode.h"],
     deps = ["@com_google_absl//absl/strings"],

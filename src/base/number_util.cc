@@ -40,9 +40,10 @@
 #include <type_traits>
 #include <vector>
 
-#include "base/japanese_util.h"
-#include "base/japanese_util_rule.h"
 #include "base/logging.h"
+// TODO(yuryu): This file will also move into strings/.
+#include "base/strings/internal/double_array.h"
+#include "base/strings/internal/japanese_rules.h"
 #include "base/util.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
@@ -930,9 +931,10 @@ bool NumberUtil::NormalizeNumbersWithSuffix(absl::string_view input,
 
 void NumberUtil::KanjiNumberToArabicNumber(absl::string_view input,
                                            std::string *output) {
-  japanese_util::ConvertUsingDoubleArray(
-      japanese_util_rule::kanjinumber_to_arabicnumber_da,
-      japanese_util_rule::kanjinumber_to_arabicnumber_table, input, output);
+  // TODO(yuryu): This file will also move into strings/.
+  japanese::internal::ConvertUsingDoubleArray(
+      japanese::internal::kanjinumber_to_arabicnumber_da,
+      japanese::internal::kanjinumber_to_arabicnumber_table, input, output);
 }
 
 }  // namespace mozc

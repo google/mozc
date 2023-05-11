@@ -47,37 +47,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-# Test suite needs to have exact test names,
-# because android tests are tagged "manual".
-test_suite(
-    name = "android_test",
-    tests = [
-        ":clock_mock_test_android",
-        ":clock_test_android",
-        ":config_file_stream_test_android",
-        ":cpu_stats_test_android",
-        ":encryptor_test_android",
-        ":hash_test_android",
-        ":logging_test_android",
-        ":mmap_test_android",
-        ":number_util_test_android",
-        ":obfuscator_support_test_android",
-        ":process_mutex_test_android",
-        ":singleton_test_android",
-        ":stopwatch_test_android",
-        ":system_util_test_android",
-        ":text_normalizer_test_android",
-        ":thread_test_android",
-        ":url_test_android",
-        ":version_test_android",
-        # Disabled tests due to errors.
-        # ":embedded_file_test_android",
-        # ":file_util_test_android",
-        # ":multifile_test_android",
-        # ":util_test_android",
-    ],
-)
-
 mozc_cc_library(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
@@ -307,22 +276,6 @@ genrule(
 )
 
 mozc_cc_library(
-    name = "double_array_def",
-    hdrs = ["double_array.h"],
-    deps = [
-        ":port",
-    ],
-)
-
-mozc_cc_library(
-    name = "japanese_util_rule",
-    srcs = ["japanese_util_rule.cc"],
-    hdrs = ["japanese_util_rule.h"],
-    visibility = ["//visibility:private"],
-    deps = [":double_array_def"],
-)
-
-mozc_cc_library(
     name = "hash",
     srcs = ["hash.cc"],
     hdrs = ["hash.h"],
@@ -368,31 +321,13 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "japanese_util",
-    srcs = [
-        "japanese_util.cc",
-    ],
     hdrs = ["japanese_util.h"],
     visibility = [
         "//:__subpackages__",
     ],
     deps = [
-        ":double_array_def",
-        ":japanese_util_rule",
-        "//base/strings:unicode",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "japanese_util_test",
-    size = "small",
-    srcs = [
-        "japanese_util_test.cc",
-    ],
-    requires_full_emulation = False,
-    deps = [
-        ":japanese_util",
-        "//testing:gunit_main",
+        "//base/strings:japanese",
+        "//base/strings/internal:double_array",
     ],
 )
 
@@ -448,33 +383,17 @@ mozc_cc_library(
     ],
 )
 
-mozc_cc_binary(
-    name = "text_converter_compiler",
-    srcs = ["text_converter_compiler.cc"],
-    tags = ["manual"],
-    deps = [
-        ":double_array_def",
-        ":file_stream",
-        ":init_mozc_buildtool",
-        ":logging",
-        ":util",
-        "@com_google_absl//absl/flags:flag",
-        # For OSS, darts is also required.
-        # http://chasen.org/~taku/software/darts/
-        "@com_google_absl//absl/strings",
-    ],
-)
-
 mozc_cc_library(
+    # TODO(yuryu): move number_util into strings/
     name = "number_util",
     srcs = ["number_util.cc"],
     hdrs = ["number_util.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":japanese_util",
-        ":japanese_util_rule",
         ":logging",
         ":util",
+        "//base/strings/internal:double_array",
+        "//base/strings/internal:japanese_rules",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -652,6 +571,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["file_util_test.cc"],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":file_util",
         ":logging",
@@ -1018,6 +938,7 @@ mozc_cc_library(
         ":util",
         "//bazel/win32:crypt32",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
@@ -1158,6 +1079,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["multifile_test.cc"],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":file_stream",
         ":file_util",
@@ -1212,6 +1134,7 @@ mozc_cc_test(
     ],
     data = ["embedded_file.h"],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":embedded_file",
         ":file_util",

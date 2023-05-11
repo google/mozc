@@ -28,8 +28,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // # Usage
-// base/text_converter_compiler
-// --output=base/japanese_util_rule.cc
+// base/strings/internal/japanese_rule_compiler
+// --output=base/strings/internal/japanese_rules.cc
 // --input=
 //   "data/preedit/hiragana-katakana.tsv:hiragana_to_katakana,
 //    data/preedit/hiragana-romanji.tsv:hiragana_to_romanji,
@@ -49,10 +49,10 @@
 #include <utility>
 #include <vector>
 
-#include "base/double_array.h"
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/strings/internal/double_array.h"
 #include "base/util.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_split.h"
@@ -61,7 +61,8 @@
 ABSL_FLAG(std::string, input, "", "input");
 ABSL_FLAG(std::string, output, "", "output");
 
-namespace mozc {
+namespace mozc::japanese::internal {
+namespace {
 
 // files = "file_name1:name1,file_name2,name2 ... "
 // Load Suikyo Format
@@ -70,11 +71,12 @@ static void Compile(const std::string &files,
   OutputFileStream ofs(header_filename);
   CHECK(ofs.good());
 
-  ofs << "#include \"base/japanese_util_rule.h\"\n"
-      << "\n"
-      << "namespace mozc {\n"
-      << "namespace japanese_util_rule {\n"
-      << std::endl;
+  ofs << R"EOS(#include "base/strings/internal/japanese_rules.h"
+
+#include "base/strings/internal/double_array.h"
+
+namespace mozc::japanese::internal {
+)EOS";
 
   std::vector<std::pair<std::string, std::string>> rules;
   {
@@ -131,8 +133,8 @@ static void Compile(const std::string &files,
     ofs << "const char " << name << "_table[] = \"" << escaped << "\";"
         << std::endl;
 
-    const japanese_util_rule::DoubleArray *array =
-        reinterpret_cast<const japanese_util_rule::DoubleArray *>(da.array());
+    const DoubleArray *array =
+        reinterpret_cast<const DoubleArray *>(da.array());
     ofs << "const DoubleArray " << name << "_da[] = {";
     for (size_t k = 0; k < da.size(); ++k) {
       if (k != 0) ofs << ",";
@@ -142,14 +144,15 @@ static void Compile(const std::string &files,
   }
 
   ofs << "\n"
-      << "}  // namespace japanese_util_rule\n"
-      << "}  // namespace mozc" << std::endl;
+      << "}  // namespace mozc::japanese::internal" << std::endl;
 }
 
-}  // namespace mozc
+}  // namespace
+}  // namespace mozc::japanese::internal
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  mozc::Compile(absl::GetFlag(FLAGS_input), absl::GetFlag(FLAGS_output));
+  mozc::japanese::internal::Compile(absl::GetFlag(FLAGS_input),
+                                    absl::GetFlag(FLAGS_output));
   return 0;
 }

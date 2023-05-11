@@ -166,10 +166,10 @@
       ],
     },
     {
-      'target_name': 'japanese_util_test',
+      'target_name': 'strings_japanese_test',
       'type': 'executable',
       'sources': [
-        'japanese_util_test.cc',
+        'strings/japanese_test.cc',
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
@@ -435,11 +435,11 @@
         'encryptor_test',
         'file_util_test',
         'hash_test',
-        'japanese_util_test',
         'multifile_test',
         'number_util_test',
         'obfuscator_support_test',
         'serialized_string_array_test',
+        'strings_japanese_test',
         'system_util_test',
         'trie_test',
         'update_util_test',

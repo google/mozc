@@ -88,7 +88,6 @@ mozc_cc_test(
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
     ],
 )
 
