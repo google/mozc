@@ -29,6 +29,7 @@
 
 #include "unix/ibus/ibus_wrapper.h"
 
+#include <cstdint>
 #include <string>
 #include <type_traits>
 
