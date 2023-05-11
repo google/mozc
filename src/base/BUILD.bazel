@@ -938,6 +938,7 @@ mozc_cc_library(
         ":util",
         "//bazel/win32:crypt32",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(

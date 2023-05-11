@@ -29,6 +29,20 @@
 
 #include "base/encryptor.h"
 
+#include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "base/logging.h"
+#include "base/password_manager.h"
+#include "base/random.h"
+#include "base/unverified_aes256.h"
+#include "base/unverified_sha1.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+
 #if defined(_WIN32)
 // clang-format off
 #include <windows.h>
@@ -37,31 +51,17 @@
 #elif defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "base/mac/mac_util.h"
+#include "absl/strings/str_format.h"
 #else  // Other platforms
 #include <string.h>
 #endif  // platforms (_WIN32, __APPLE__, ...)
 
-#include <cstdint>
-#include <iterator>
-#include <memory>
-#include <string>
-
-#include "base/logging.h"
-#include "base/password_manager.h"
-#include "base/random.h"
-#include "base/unverified_aes256.h"
-#include "base/unverified_sha1.h"
-#include "base/util.h"
-#include "absl/strings/str_format.h"
-
-#ifdef __APPLE__
-#include "base/mac/mac_util.h"
-#endif  // __APPLE__
-
-using ::mozc::internal::UnverifiedSHA1;
-
 namespace mozc {
 namespace {
+
+using ::mozc::internal::UnverifiedSHA1;
 
 // By using SHA1, emulate Microsoft's CryptDerivePassword API
 // http://msdn.microsoft.com/en-us/library/aa379916.aspx
@@ -90,61 +90,28 @@ namespace {
 //    hBaseData parameter.
 // 5. Concatenate the result of step 3 with the result of step 4.
 // 6. Use the first n bytes of the result of step 5 as the derived key.
-std::string GetMSCryptDeriveKeyWithSHA1(const std::string &password,
-                                        const std::string &salt) {
-  uint8_t buf1[64];
-  uint8_t buf2[64];
-
+std::string GetMSCryptDeriveKeyWithSHA1(const absl::string_view password,
+                                        const absl::string_view salt) {
   // Step1.
-  memset(buf1, 0x36, sizeof(buf1));
+  std::string buf1(64, 0x36);
 
   // Step2.
-  memset(buf2, 0x5c, sizeof(buf2));
+  std::string buf2(64, 0x5c);
 
   // Step 3 & 4
-  const std::string hash = UnverifiedSHA1::MakeDigest(password + salt);
+  const std::string hash =
+      UnverifiedSHA1::MakeDigest(absl::StrCat(password, salt));
   for (size_t i = 0; i < hash.size(); ++i) {
-    buf1[i] ^= static_cast<uint8_t>(hash[i]);
-    buf2[i] ^= static_cast<uint8_t>(hash[i]);
+    buf1[i] ^= hash[i];
+    buf2[i] ^= hash[i];
   }
 
   // Step 5 & 6
-  const std::string result1(reinterpret_cast<const char *>(buf1), sizeof(buf1));
-  const std::string result2(reinterpret_cast<const char *>(buf2), sizeof(buf2));
-
-  return (UnverifiedSHA1::MakeDigest(result1) +
-          UnverifiedSHA1::MakeDigest(result2));
+  return absl::StrCat(UnverifiedSHA1::MakeDigest(buf1),
+                      UnverifiedSHA1::MakeDigest(buf2));
 }
-
-constexpr size_t kBlockSize = 16;  // 128 bit
-constexpr size_t kKeySize = 32;    // 256 bit key length
 
 }  // namespace
-
-// TODO(yukawa): Consider to maintain these data directly in Encryptor::Key or
-// completely rewrite Encryptor::Key once encryptor_legacy.cc is deprecated.
-struct Encryptor::Key::InternalData {
-  uint8_t key[kKeySize];
-  uint8_t iv[kBlockSize];
-  bool is_available;
-
-  InternalData() : is_available(false) {
-    memset(key, '\0', std::size(key));
-    memset(iv, '\0', std::size(iv));
-  }
-};
-
-size_t Encryptor::Key::block_size() const { return kBlockSize; }
-
-const uint8_t *Encryptor::Key::iv() const { return data_->iv; }
-
-size_t Encryptor::Key::iv_size() const {
-  return kBlockSize;  // the same as block size
-}
-
-size_t Encryptor::Key::key_size() const { return kKeySize * 8; }
-
-bool Encryptor::Key::IsAvailable() const { return data_->is_available; }
 
 size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
   // Even when given size is already multples of 16, we add
@@ -154,8 +121,8 @@ size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
   return (size / block_size() + 1) * block_size();
 }
 
-bool Encryptor::Key::DeriveFromPassword(const std::string &password,
-                                        const std::string &salt,
+bool Encryptor::Key::DeriveFromPassword(const absl::string_view password,
+                                        const absl::string_view salt,
                                         const uint8_t *iv) {
   if (IsAvailable()) {
     LOG(WARNING) << "key is already set";
@@ -168,9 +135,9 @@ bool Encryptor::Key::DeriveFromPassword(const std::string &password,
   }
 
   if (iv != nullptr) {
-    memcpy(data_->iv, iv, iv_size());
+    std::copy_n(iv, iv_size(), iv_);
   } else {
-    memset(data_->iv, '\0', iv_size());
+    std::fill_n(iv_, iv_size(), 0);
   }
 
   const std::string key = GetMSCryptDeriveKeyWithSHA1(password, salt);
@@ -178,16 +145,12 @@ bool Encryptor::Key::DeriveFromPassword(const std::string &password,
 
   // Store the session key.
   // NOTE: key_size() returns size in bit for historical reasons.
-  memcpy(data_->key, key.data(), key_size() / 8);
+  std::copy_n(key.begin(), key_size() / 8, key_);
 
-  data_->is_available = true;
+  is_available_ = true;
 
   return true;
 }
-
-Encryptor::Key::Key() : data_(new Encryptor::Key::InternalData) {}
-
-Encryptor::Key::~Key() {}
 
 bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
   if (data == nullptr || data->empty()) {
@@ -243,7 +206,7 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key, char *buf,
   }
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
-  internal::UnverifiedAES256::TransformCBC(key.data_->key, key.data_->iv,
+  internal::UnverifiedAES256::TransformCBC(key.key_, key.iv_,
                                            reinterpret_cast<uint8_t *>(buf),
                                            enc_size / kBlockSize);
   *buf_size = enc_size;
@@ -271,8 +234,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
   internal::UnverifiedAES256::InverseTransformCBC(
-      key.data_->key, key.data_->iv, reinterpret_cast<uint8_t *>(buf),
-      size / kBlockSize);
+      key.key_, key.iv_, reinterpret_cast<uint8_t *>(buf), size / kBlockSize);
 
   // perform PKCS#5 un-padding
   // see. http://www.chilkatsoft.com/faq/PKCS5_Padding.html
@@ -301,7 +263,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 // Protect|Unprotect Data
 #ifdef _WIN32
 // See. http://msdn.microsoft.com/en-us/library/aa380261.aspx
-bool Encryptor::ProtectData(const std::string &plain_text,
+bool Encryptor::ProtectData(const absl::string_view plain_text,
                             std::string *cipher_text) {
   DCHECK(cipher_text);
   DATA_BLOB input;
@@ -325,7 +287,7 @@ bool Encryptor::ProtectData(const std::string &plain_text,
 }
 
 // See. http://msdn.microsoft.com/en-us/library/aa380882(VS.85).aspx
-bool Encryptor::UnprotectData(const std::string &cipher_text,
+bool Encryptor::UnprotectData(const absl::string_view cipher_text,
                               std::string *plain_text) {
   DCHECK(plain_text);
   DATA_BLOB input;
@@ -352,7 +314,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
 #elif defined(__APPLE__)
 
 // ProtectData for Mac uses the serial number and the current pid as the key.
-bool Encryptor::ProtectData(const std::string &plain_text,
+bool Encryptor::ProtectData(const absl::string_view plain_text,
                             std::string *cipher_text) {
   DCHECK(cipher_text);
   Encryptor::Key key;
@@ -367,7 +329,7 @@ bool Encryptor::ProtectData(const std::string &plain_text,
     return false;
   }
 
-  cipher_text->assign(plain_text);
+  cipher_text->assign(plain_text.begin(), plain_text.end());
   if (!EncryptString(key, cipher_text)) {
     cipher_text->clear();
     LOG(ERROR) << "Cannot encrypt the text";
@@ -377,7 +339,7 @@ bool Encryptor::ProtectData(const std::string &plain_text,
 }
 
 // Same as ProtectData.
-bool Encryptor::UnprotectData(const std::string &cipher_text,
+bool Encryptor::UnprotectData(const absl::string_view cipher_text,
                               std::string *plain_text) {
   DCHECK(plain_text);
   Encryptor::Key key;
@@ -392,7 +354,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
     return false;
   }
 
-  plain_text->assign(cipher_text);
+  plain_text->assign(cipher_text.begin(), cipher_text.end());
   if (!DecryptString(key, plain_text)) {
     plain_text->clear();
     LOG(ERROR) << "Cannot encrypt the text";
@@ -410,7 +372,7 @@ constexpr size_t kSaltSize = 32;
 }  // namespace
 
 // Use AES to emulate ProtectData
-bool Encryptor::ProtectData(const std::string &plain_text,
+bool Encryptor::ProtectData(const absl::string_view plain_text,
                             std::string *cipher_text) {
   std::string password;
   if (!PasswordManager::GetPassword(&password)) {
@@ -427,21 +389,19 @@ bool Encryptor::ProtectData(const std::string &plain_text,
     return false;
   }
 
-  std::string buf = plain_text;
+  std::string buf(plain_text.begin(), plain_text.end());
   if (!Encryptor::EncryptString(key, &buf)) {
     LOG(ERROR) << "Encryptor::EncryptString failed";
     return false;
   }
 
-  cipher_text->clear();
-  *cipher_text += salt;
-  *cipher_text += buf;
+  *cipher_text = absl::StrCat(salt, buf);
 
   return true;
 }
 
 // Use AES to emulate UnprotectData
-bool Encryptor::UnprotectData(const std::string &cipher_text,
+bool Encryptor::UnprotectData(const absl::string_view cipher_text,
                               std::string *plain_text) {
   if (cipher_text.size() < kSaltSize) {
     LOG(ERROR) << "encrypted message is too short";
@@ -470,8 +430,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
     return false;
   }
 
-  plain_text->clear();
-  *plain_text += buf;
+  *plain_text = std::move(buf);
 
   return true;
 }

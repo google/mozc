@@ -30,60 +30,73 @@
 #ifndef MOZC_BASE_ENCRYPTOR_H_
 #define MOZC_BASE_ENCRYPTOR_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <string>
+
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class Encryptor {
  public:
+  static constexpr size_t kBlockSize = 16;  // 128 bit
+  static constexpr size_t kKeySize = 32;    // 256 bit key length
+
   // Internal class for representing a key
   class Key {
    public:
-    Key();
-    ~Key();
+    Key() {
+      std::fill_n(key_, std::size(key_), 0u);
+      std::fill_n(iv_, std::size(iv_), 0u);
+    }
 
     // Make a session key from password and salt.
     // You can also set an initialization vector whose
     // size must be iv_size().
     // if iv is nullptr, default iv is used.
-    bool DeriveFromPassword(const std::string &password,
-                            const std::string &salt, const uint8_t *iv);
+    bool DeriveFromPassword(absl::string_view password, absl::string_view salt,
+                            const uint8_t *iv);
 
     // use default iv.
-    bool DeriveFromPassword(const std::string &password,
-                            const std::string &salt) {
+    bool DeriveFromPassword(const absl::string_view password,
+                            const absl::string_view salt) {
       return DeriveFromPassword(password, salt, nullptr);
     }
 
     // use empty salt and default iv
-    bool DeriveFromPassword(const std::string &password) {
+    bool DeriveFromPassword(const absl::string_view password) {
       return DeriveFromPassword(password, "", nullptr);
     }
 
     // return block size. the result should be 16byte with AES
-    size_t block_size() const;
+    size_t block_size() const { return kBlockSize; }
 
     // return initialization vector
-    const uint8_t *iv() const;
+    const uint8_t *iv() const { return iv_; }
 
     // return the size of initialization vector
     // the result should be the same as block_size() with AES
-    size_t iv_size() const;
+    size_t iv_size() const {
+      return kBlockSize;  // the same as block size
+    }
 
     // key length (bit)
-    size_t key_size() const;
+    size_t key_size() const { return kKeySize * 8; }
 
     // return true if the key is ready
-    bool IsAvailable() const;
+    bool IsAvailable() const { return is_available_; }
 
     // return the size required to encrypt the buffer of size |size|.
     size_t GetEncryptedSize(size_t size) const;
 
-    struct InternalData;
-    std::unique_ptr<InternalData> data_;
+   private:
+    friend class Encryptor;  // TODO(yuryu): access via accessors
+
+    uint8_t key_[kKeySize];
+    uint8_t iv_[kBlockSize];
+    bool is_available_ = false;
   };
 
   Encryptor() = delete;
@@ -113,12 +126,12 @@ class Encryptor {
   // http://msdn.microsoft.com/en-us/library/aa380261.aspx
   // Basically, it uses a OS-specific encrpytor object to
   // encrypt/decrypt data
-  static bool ProtectData(const std::string &plain_text,
+  static bool ProtectData(absl::string_view plain_text,
                           std::string *cipher_text);
 
   // Decrpyt string to unprotect cipher_text.
   // It uses CryptUnprotectData API to decrypt data on Windows.
-  static bool UnprotectData(const std::string &cipher_text,
+  static bool UnprotectData(absl::string_view cipher_text,
                             std::string *plain_text);
 };
 }  // namespace mozc
