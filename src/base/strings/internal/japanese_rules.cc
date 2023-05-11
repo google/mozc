@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/japanese_util_rule.h"
+#include "base/strings/internal/japanese_rules.h"
 
-namespace mozc {
-namespace japanese_util_rule {
+#include "base/strings/internal/double_array.h"
+
+namespace mozc::japanese::internal {
 
 const char hiragana_to_katakana_table[] =
     "\xE3\x83\xB4\x00\x00\xE3\x83\xB4\x00\x00\xE3\x82\xA2\x00\x00\xE3\x82\xA4"
@@ -1950,5 +1951,4 @@ const DoubleArray kanjinumber_to_arabicnumber_da[] = {
     {0, 0},      {0, 0},      {0, 0},      {0, 0},      {0, 0},
     {0, 0},      {0, 0},      {0, 0},      {0, 0},      {0, 0}};
 
-}  // namespace japanese_util_rule
-}  // namespace mozc
+}  // namespace mozc::japanese::internal

@@ -27,22 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_DOUBLE_ARRAY_H_
-#define MOZC_BASE_DOUBLE_ARRAY_H_
+#ifndef MOZC_BASE_STRINGS_JAPANESE_H_
+#define MOZC_BASE_STRINGS_JAPANESE_H_
 
-#include <cstdint>
+#include <string>
 
-#include "base/port.h"
+#include "absl/strings/string_view.h"
 
-namespace mozc {
-namespace japanese_util_rule {
+namespace mozc::japanese {
 
-struct DoubleArray {
-  int32_t base;
-  uint32_t check;
-};
+// Japanese utilities for character form transliteration.
+void HiraganaToKatakana(absl::string_view input, std::string *output);
+void HiraganaToHalfwidthKatakana(absl::string_view input, std::string *output);
+void HiraganaToRomanji(absl::string_view input, std::string *output);
+void HalfWidthAsciiToFullWidthAscii(absl::string_view input,
+                                    std::string *output);
+void FullWidthAsciiToHalfWidthAscii(absl::string_view input,
+                                    std::string *output);
+void HiraganaToFullwidthRomanji(absl::string_view input, std::string *output);
+void RomanjiToHiragana(absl::string_view input, std::string *output);
+void KatakanaToHiragana(absl::string_view input, std::string *output);
+void HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
+                                          std::string *output);
+void FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
+                                          std::string *output);
+void FullWidthToHalfWidth(absl::string_view input, std::string *output);
+void HalfWidthToFullWidth(absl::string_view input, std::string *output);
+void NormalizeVoicedSoundMark(absl::string_view input, std::string *output);
 
-}  // namespace japanese_util_rule
-}  // namespace mozc
+}  // namespace mozc::japanese
 
-#endif  // MOZC_BASE_DOUBLE_ARRAY_H_
+#endif  // MOZC_BASE_STRINGS_JAPANESE_H_

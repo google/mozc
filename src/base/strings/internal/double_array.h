@@ -27,32 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_JAPANESE_UTIL_H_
-#define MOZC_BASE_JAPANESE_UTIL_H_
+#ifndef MOZC_BASE_STRINGS_INTERNAL_DOUBLE_ARRAY_H_
+#define MOZC_BASE_STRINGS_INTERNAL_DOUBLE_ARRAY_H_
 
-#include "base/strings/internal/double_array.h"
-#include "base/strings/japanese.h"
+#include <cstdint>
+#include <string>
 
-namespace mozc {
-namespace japanese_util {
+#include "absl/strings/string_view.h"
 
-// Aliases until we finish updating all references to mozc::japanese.
-using japanese::FullWidthAsciiToHalfWidthAscii;
-using japanese::FullWidthKatakanaToHalfWidthKatakana;
-using japanese::FullWidthToHalfWidth;
-using japanese::HalfWidthAsciiToFullWidthAscii;
-using japanese::HalfWidthKatakanaToFullWidthKatakana;
-using japanese::HalfWidthToFullWidth;
-using japanese::HiraganaToFullwidthRomanji;
-using japanese::HiraganaToHalfwidthKatakana;
-using japanese::HiraganaToKatakana;
-using japanese::HiraganaToRomanji;
-using japanese::KatakanaToHiragana;
-using japanese::NormalizeVoicedSoundMark;
-using japanese::RomanjiToHiragana;
-using japanese::internal::ConvertUsingDoubleArray;
+namespace mozc::japanese::internal {
 
-}  // namespace japanese_util
-}  // namespace mozc
+struct DoubleArray {
+  int32_t base;
+  uint32_t check;
+};
 
-#endif  // MOZC_BASE_JAPANESE_UTIL_H_
+void ConvertUsingDoubleArray(const DoubleArray *da, const char *table,
+                             absl::string_view input, std::string *output);
+
+}  // namespace mozc::japanese::internal
+
+#endif  // MOZC_BASE_STRINGS_INTERNAL_DOUBLE_ARRAY_H_

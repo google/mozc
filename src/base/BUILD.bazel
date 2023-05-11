@@ -307,22 +307,6 @@ genrule(
 )
 
 mozc_cc_library(
-    name = "double_array_def",
-    hdrs = ["double_array.h"],
-    deps = [
-        ":port",
-    ],
-)
-
-mozc_cc_library(
-    name = "japanese_util_rule",
-    srcs = ["japanese_util_rule.cc"],
-    hdrs = ["japanese_util_rule.h"],
-    visibility = ["//visibility:private"],
-    deps = [":double_array_def"],
-)
-
-mozc_cc_library(
     name = "hash",
     srcs = ["hash.cc"],
     hdrs = ["hash.h"],
@@ -368,31 +352,13 @@ mozc_cc_test(
 
 mozc_cc_library(
     name = "japanese_util",
-    srcs = [
-        "japanese_util.cc",
-    ],
     hdrs = ["japanese_util.h"],
     visibility = [
         "//:__subpackages__",
     ],
     deps = [
-        ":double_array_def",
-        ":japanese_util_rule",
-        "//base/strings:unicode",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "japanese_util_test",
-    size = "small",
-    srcs = [
-        "japanese_util_test.cc",
-    ],
-    requires_full_emulation = False,
-    deps = [
-        ":japanese_util",
-        "//testing:gunit_main",
+        "//base/strings:japanese",
+        "//base/strings/internal:double_array",
     ],
 )
 
@@ -448,33 +414,17 @@ mozc_cc_library(
     ],
 )
 
-mozc_cc_binary(
-    name = "text_converter_compiler",
-    srcs = ["text_converter_compiler.cc"],
-    tags = ["manual"],
-    deps = [
-        ":double_array_def",
-        ":file_stream",
-        ":init_mozc_buildtool",
-        ":logging",
-        ":util",
-        "@com_google_absl//absl/flags:flag",
-        # For OSS, darts is also required.
-        # http://chasen.org/~taku/software/darts/
-        "@com_google_absl//absl/strings",
-    ],
-)
-
 mozc_cc_library(
+    # TODO(yuryu): move number_util into strings/
     name = "number_util",
     srcs = ["number_util.cc"],
     hdrs = ["number_util.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":japanese_util",
-        ":japanese_util_rule",
         ":logging",
         ":util",
+        "//base/strings/internal:double_array",
+        "//base/strings/internal:japanese_rules",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
