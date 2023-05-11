@@ -33,6 +33,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
@@ -56,9 +57,12 @@ class SpellCheckerServiceInterface {
   // Performs spelling correction for composition (pre-edit) Hiragana sequence.
   // Both `query` and `context` must be Hiragana input sequence.
   // `request` is passed to determine the keyboard layout.
-  virtual std::optional<composer::TypeCorrectedQuery> CheckCompositionSpelling(
-      absl::string_view query, absl::string_view context,
-      const commands::Request &request) const = 0;
+  // Returns empty result when no correction is required.
+  // Returns std::nullopt when the composition spellchecker is not
+  // enabled/available.
+  virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
+  CheckCompositionSpelling(absl::string_view query, absl::string_view context,
+                           const commands::Request &request) const = 0;
 
   // Loads spellchecker model asynchronously defined in the `request`.
   // Returns false if the LoadAsync is already running.

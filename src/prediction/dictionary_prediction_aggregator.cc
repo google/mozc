@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -44,7 +45,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -632,7 +632,8 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (IsTypingCorrectionEnabled(request) &&
       key_len >= kMinTypingCorrectionKeyLen) {
-    AggregateTypeCorrectingPrediction(request, segments, results);
+    AggregateTypeCorrectingPrediction(request, segments, selected_types,
+                                      results);
     selected_types |= TYPING_CORRECTION;
   }
 
@@ -1298,23 +1299,77 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
   }
 }
 
-void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
-    const DictionaryInterface &dictionary, const absl::string_view history_key,
-    const ConversionRequest &request, const Segments &segments,
-    PredictionTypes types, size_t lookup_limit,
-    std::vector<Result> *results) const {
-  if (!request.has_composer()) {
+void DictionaryPredictionAggregator::
+    GetPredictiveResultsUsingExtendedTypingCorrection(
+        absl::Span<const composer::TypeCorrectedQuery> queries,
+        const ConversionRequest &request, const Segments &segments,
+        PredictionTypes base_selected_types,
+        std::vector<Result> *results) const {
+  if (queries.empty()) {
     return;
   }
 
-  std::vector<composer::TypeCorrectedQuery> queries;
-  request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
+  // Only use the 1-best correction now.
+  // We here intentionally use 'asis' string since the composition
+  // spellchecker is designed to predict the word from incomplete composition
+  // string, e.g. おk. -> おか
+  // TODO(taku): Revisits this design once QWERTY model gets ready.
+  absl::string_view key = queries.front().asis;
+  const size_t key_len = Util::CharsLen(key);
+
+  // Makes dummy segments with corrected query.
+  Segments corrected_segments = segments;
+  corrected_segments.mutable_conversion_segment(0)->set_key(key);
+
+  // Make ConversionRequest that has no composer to avoid the original key from
+  // being used during the candidate aggregation.
+  // Kana modifier insensitive dictionary lookup is also disabled as
+  // composition spellchecker has already fixed them.
+  ConversionRequest corrected_request = request;
+  corrected_request.set_composer(nullptr);
+  corrected_request.set_kana_modifier_insensitive_conversion(false);
+
+  std::vector<Result> corrected_results;
+
+  const UnigramConfig &unigram_config = GetUnigramConfig(request);
+  if (key_len >= unigram_config.min_key_len) {
+    const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
+    (this->*unigram_fn)(corrected_request, corrected_segments,
+                        &corrected_results);
+  }
+
+  if (base_selected_types & REALTIME) {
+    constexpr int kRealtimeSize = 2;
+    AggregateRealtimeConversion(corrected_request, kRealtimeSize,
+                                corrected_segments, &corrected_results);
+  }
+
+  if (base_selected_types & BIGRAM) {
+    AggregateBigramPrediction(corrected_request, corrected_segments,
+                              Segment::Candidate::SOURCE_INFO_NONE,
+                              &corrected_results);
+  }
+
+  // Appends the result with TYPING_CORRECTION attribute.
+  // TODO(taku): TYPING_CORRECTION type is not necessary when
+  // the correction is a pure kana-modifier-aware correction.
+  for (Result &result : corrected_results) {
+    result.types |= TYPING_CORRECTION;
+    results->emplace_back(std::move(result));
+  }
+}
+
+void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
+    absl::Span<const composer::TypeCorrectedQuery> queries,
+    const DictionaryInterface &dictionary, const ConversionRequest &request,
+    const Segments &segments, int lookup_limit,
+    std::vector<Result> *results) const {
   for (size_t query_index = 0; query_index < queries.size(); ++query_index) {
     const composer::TypeCorrectedQuery &query = queries[query_index];
-    const std::string input_key(absl::StrCat(history_key, query.base));
+    const std::string &input_key = query.base;
     const size_t previous_results_size = results->size();
     PredictiveLookupCallback callback(
-        types, lookup_limit, input_key.size(),
+        TYPING_CORRECTION, lookup_limit, input_key.size(),
         query.expanded.empty() ? nullptr : &query.expanded,
         Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
         query.asis, GetSpatialCostParams(request), results);
@@ -1532,24 +1587,40 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
 
 void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
     const ConversionRequest &request, const Segments &segments,
-    std::vector<Result> *results) const {
+    PredictionTypes base_selected_types, std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(dictionary_);
+
+  if (!request.has_composer()) {
+    return;
+  }
 
   const size_t prev_results_size = results->size();
   if (prev_results_size > 10000) {
     return;
   }
 
-  const size_t cutoff_threshold =
-      GetCandidateCutoffThreshold(request.request_type());
+  const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
 
-  // Currently, history key is never utilized.
-  const std::string kEmptyHistoryKey = "";
-  GetPredictiveResultsUsingTypingCorrection(
-      *dictionary_, kEmptyHistoryKey, request, segments, TYPING_CORRECTION,
-      cutoff_threshold, results);
-  if (results->size() - prev_results_size >= cutoff_threshold) {
+  std::string history_key, history_value;
+  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+
+  const std::optional<std::vector<composer::TypeCorrectedQuery>> corrected =
+      request.composer().GetTypeCorrectedQueries(history_key);
+
+  if (corrected) {
+    // Use Extended composition spell checker.
+    GetPredictiveResultsUsingExtendedTypingCorrection(
+        corrected.value(), request, segments, base_selected_types, results);
+  } else {
+    // Runs the default fallback spell checker.
+    std::vector<composer::TypeCorrectedQuery> queries;
+    request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
+    GetPredictiveResultsUsingTypingCorrection(queries, *dictionary_, request,
+                                              segments, lookup_limit, results);
+  }
+
+  if (results->size() - prev_results_size >= lookup_limit) {
     results->resize(prev_results_size);
     return;
   }

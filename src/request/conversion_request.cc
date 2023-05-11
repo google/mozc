@@ -136,7 +136,8 @@ void ConversionRequest::set_enable_user_history_for_conversion(bool value) {
 
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
-         config_->use_kana_modifier_insensitive_conversion();
+         config_->use_kana_modifier_insensitive_conversion() &&
+         kana_modifier_insensitive_conversion_;
 }
 
 size_t ConversionRequest::max_conversion_candidates_size() const {
@@ -183,6 +184,10 @@ bool ConversionRequest::should_call_set_key_in_prediction() const {
 
 void ConversionRequest::set_should_call_set_key_in_prediction(bool value) {
   should_call_set_key_in_prediction_ = value;
+}
+
+void ConversionRequest::set_kana_modifier_insensitive_conversion(bool value) {
+  kana_modifier_insensitive_conversion_ = value;
 }
 
 }  // namespace mozc

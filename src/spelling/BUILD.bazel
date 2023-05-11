@@ -85,6 +85,7 @@ mozc_cc_library(
         ":rulebased_filter",
         ":spellchecker_service_interface",
         "//base:file_util",
+        "//base:japanese_util",
         "//base:mmap",
         "//base:port",
         "//base:thread",

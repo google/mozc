@@ -157,7 +157,8 @@ class DictionaryPredictionAggregatorTestPeer {
   void AggregateTypeCorrectingPrediction(const ConversionRequest &request,
                                          const Segments &segments,
                                          std::vector<Result> *results) const {
-    aggregator_.AggregateTypeCorrectingPrediction(request, segments, results);
+    aggregator_.AggregateTypeCorrectingPrediction(
+        request, segments, BIGRAM | UNIGRAM | REALTIME, results);
   }
 
   size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request,

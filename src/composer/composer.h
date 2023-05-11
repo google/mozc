@@ -133,11 +133,12 @@ class Composer final {
   void GetQueriesForPrediction(std::string *base,
                                std::set<std::string> *expanded) const;
 
-  // Returns a type-corrected composition string with SpellCheckerService.
+  // Returns type-corrected composition strings with SpellCheckerService.
   // `context` is the hiragana sequence typed just before the current
-  // composition.
-  // Returns std::nullopt when no result is available.
-  std::optional<TypeCorrectedQuery> GetTypeCorrectedQueries(
+  // composition. Returns an empty vector when correction is not required.
+  // Returns std::nullopt when the underlying composition spellchecker is not
+  // available/enabled.
+  std::optional<std::vector<TypeCorrectedQuery>> GetTypeCorrectedQueries(
       absl::string_view context = "") const;
 
   // Returns a type-corrected prediction queries.
