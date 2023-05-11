@@ -41,15 +41,9 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-mozc_py_library(
-    name = "replace_macros_lib",
-    srcs = ["replace_macros.py"],
-)
-
 mozc_py_binary(
     name = "replace_macros",
     srcs = ["replace_macros.py"],
-    deps = [":replace_macros_lib"],
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
@@ -59,8 +53,8 @@ py_test(
     srcs = ["replace_macros_test.py"],
     tags = ["manual"],
     deps = [
-        ":replace_macros_lib",
-        "//testing/pybase",
+        ":replace_macros.testonly_lib",
+        "//testing/pybase",  # NOLINT(mozc/testing): TODO
     ],
 )
 
@@ -77,7 +71,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":code_generator_util",
-        "//testing/pybase",
+        "//testing/pybase",  # NOLINT(mozc/testing): TODO
     ],
 )
 
@@ -89,7 +83,6 @@ mozc_py_library(
 mozc_py_binary(
     name = "mozc_version",
     srcs = ["mozc_version.py"],
-    deps = [":mozc_version_lib"],
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
@@ -100,7 +93,7 @@ py_test(
     tags = ["manual"],
     deps = [
         ":mozc_version_lib",
-        "//testing/pybase",
+        "//testing/pybase",  # NOLINT(mozc/testing): TODO
     ],
 )
 
@@ -123,29 +116,16 @@ mozc_py_library(
 mozc_py_binary(
     name = "zlib_util",
     srcs = ["zlib_util.py"],
-    deps = [":zlib_util_lib"],
-)
-
-mozc_py_library(
-    name = "embed_pathname_lib",
-    srcs = ["embed_pathname.py"],
 )
 
 mozc_py_binary(
     name = "embed_pathname",
     srcs = ["embed_pathname.py"],
-    deps = [":embed_pathname_lib"],
-)
-
-mozc_py_library(
-    name = "embed_file_lib",
-    srcs = ["embed_file.py"],
 )
 
 mozc_py_binary(
     name = "embed_file",
     srcs = ["embed_file.py"],
-    deps = [":embed_file_lib"],
 )
 
 mozc_py_library(
