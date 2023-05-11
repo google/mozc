@@ -29,17 +29,20 @@
 
 #include "base/win32/win_util.h"
 
+#include <wil/resource.h>
+#include <windows.h>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
 
 #include "base/system_util.h"
-#include "base/util.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {
+namespace {
 
 constexpr std::wstring_view kNtPathPrefix = L"\\Device\\";
 
@@ -51,23 +54,17 @@ class WinUtilLoaderLockTest : public testing::Test {
  protected:
   WinUtilLoaderLockTest() : module_(nullptr) {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     // Dynamically load the DLL to test the loader lock detection.
     // This dll checks the loader lock in the DllMain and
     // returns the result via IsLockHeld exported function.
-    if (module_ == nullptr) {
-      module_ = ::LoadLibraryW(L"win_util_test_dll.dll");
+    if (!module_) {
+      module_.reset(::LoadLibraryExW(L"win_util_test_dll.dll", nullptr,
+                                     LOAD_LIBRARY_SEARCH_APPLICATION_DIR));
     }
   }
 
-  virtual void TearDown() {
-    if (module_ != nullptr) {
-      ::FreeLibrary(module_);
-    }
-    module_ = nullptr;
-  }
-
-  HMODULE module_;
+  wil::unique_hmodule module_;
 };
 
 TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
@@ -76,12 +73,12 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   using CheckProc = int(__stdcall *)();
 
   CheckProc is_lock_check_succeeded = reinterpret_cast<CheckProc>(
-      ::GetProcAddress(module_, "IsLockCheckSucceeded"));
+      ::GetProcAddress(module_.get(), "IsLockCheckSucceeded"));
   EXPECT_NE(nullptr, is_lock_check_succeeded);
   EXPECT_NE(FALSE, is_lock_check_succeeded());
 
-  CheckProc is_lock_held =
-      reinterpret_cast<CheckProc>(::GetProcAddress(module_, "IsLockHeld"));
+  CheckProc is_lock_held = reinterpret_cast<CheckProc>(
+      ::GetProcAddress(module_.get(), "IsLockHeld"));
   EXPECT_NE(nullptr, is_lock_held);
   // The loader lock should be held in the DllMain.
   EXPECT_NE(FALSE, is_lock_held());
@@ -89,7 +86,7 @@ TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
   // Clear flags and check again from the caller which does not
   // own the loader lock. The loader lock should not be detected.
   CheckProc clear_flags_and_check_again = reinterpret_cast<CheckProc>(
-      ::GetProcAddress(module_, "ClearFlagsAndCheckAgain"));
+      ::GetProcAddress(module_.get(), "ClearFlagsAndCheckAgain"));
   EXPECT_NE(nullptr, clear_flags_and_check_again);
   clear_flags_and_check_again();
   EXPECT_NE(FALSE, is_lock_check_succeeded());
@@ -149,32 +146,24 @@ TEST(WinUtilTest, SystemEqualStringTest) {
       true));
 }
 
-// Actually WinUtil::SystemEqualString raises DCHECK error when argument
-// strings contain any NUL character in debug build.
-#if !defined(DEBUG)
 TEST(WinUtilTest, SystemEqualStringTestForNUL) {
   {
-    const wchar_t kTestBuffer[] = L"abc";
-    const std::wstring test_string1(kTestBuffer);
-    const std::wstring test_string2(kTestBuffer,
-                                    kTestBuffer + std::size(kTestBuffer));
+    constexpr std::wstring_view kTest1 = L"abc";
+    constexpr std::wstring_view kTest2 = std::wstring_view(L"abc\0", 4);
 
-    EXPECT_EQ(test_string1.size(), 3);
-    EXPECT_EQ(test_string2.size(), 4);
-    EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
+    EXPECT_EQ(kTest1.size(), 3);
+    EXPECT_EQ(kTest2.size(), 4);
+    EXPECT_FALSE(WinUtil::SystemEqualString(kTest1, kTest2, true));
   }
   {
-    const wchar_t kTestBuffer[] = L"abc\0def";
-    const std::wstring test_string1(kTestBuffer);
-    const std::wstring test_string2(kTestBuffer,
-                                    kTestBuffer + std::size(kTestBuffer));
+    constexpr std::wstring_view kTest1 = L"abc";
+    constexpr std::wstring_view kTest2 = std::wstring_view(L"abc\0def", 7);
 
-    EXPECT_EQ(test_string1.size(), 3);
-    EXPECT_EQ(test_string2.size(), 8);
-    EXPECT_TRUE(WinUtil::SystemEqualString(test_string1, test_string2, true));
+    EXPECT_EQ(kTest1.size(), 3);
+    EXPECT_EQ(kTest2.size(), 7);
+    EXPECT_FALSE(WinUtil::SystemEqualString(kTest1, kTest2, true));
   }
 }
-#endif  // DEBUG
 
 TEST(WinUtilTest, AreEqualFileSystemObjectTest) {
   const std::wstring system_dir = SystemUtil::GetSystemDir();
@@ -228,4 +217,5 @@ TEST(WinUtilTest, GetProcessInitialNtPath) {
   EXPECT_THAT(nt_path, LooksLikeNtPath());
 }
 
+}  // namespace
 }  // namespace mozc

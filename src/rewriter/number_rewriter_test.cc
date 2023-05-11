@@ -117,10 +117,6 @@ bool FindCandidateId(const Segment &segment, const absl::string_view value,
 
 class NumberRewriterTest : public ::testing::Test {
  protected:
-  // Explicitly define constructor to prevent Visual C++ from
-  // considering this class as POD.
-  NumberRewriterTest() {}
-
   void SetUp() override {
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }

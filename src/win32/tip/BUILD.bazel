@@ -230,6 +230,8 @@ mozc_cc_library(
 mozc_cc_library(
     name = "tip_lang_bar_callback",
     hdrs = ["tip_lang_bar_callback.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
 )
 
 mozc_cc_library(
@@ -238,6 +240,8 @@ mozc_cc_library(
     hdrs = ["tip_lang_bar_menu.h"],
     copts = copts_wtl(),
     features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":tip_dll_module",
         ":tip_lang_bar_callback",
@@ -614,6 +618,7 @@ mozc_cc_library(
         ":tip_text_service",
         ":tip_transitory_extension",
         "//base/win32:com",
+        "//base/win32:wide_char",
         "//win32/base:imm_reconvert_string",
         "@com_microsoft_wil//:wil",
     ],

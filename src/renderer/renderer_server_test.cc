@@ -79,10 +79,6 @@ class TestRenderer : public RendererInterface {
 
 class TestRendererServer : public RendererServer {
  public:
-  TestRendererServer() {}
-
-  ~TestRendererServer() override {}
-
   int StartMessageLoop() override { return 0; }
 
   // Not async for testing

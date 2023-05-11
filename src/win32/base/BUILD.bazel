@@ -137,7 +137,6 @@ mozc_cc_test(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":imm_reconvert_string",
-        "//base:util",
         "//testing:gunit_main",
     ],
 )
@@ -150,8 +149,10 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         "//base:logging",
-        "//base:port",
         "//base:util",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -166,9 +167,10 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:logging",
         "//base:system_util",
+        "//base/win32:com",
         "//base/win32:scoped_com",
-        "//base/win32:scoped_handle",
         "//base/win32:wide_char",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

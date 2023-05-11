@@ -77,10 +77,6 @@ void SetAkann(composer::Composer *composer) {
 
 class TransliterationRewriterTest : public ::testing::Test {
  protected:
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  TransliterationRewriterTest() {}
-  ~TransliterationRewriterTest() override {}
-
   void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&default_config_);

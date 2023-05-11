@@ -30,10 +30,10 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "converter/segments.h"
@@ -48,12 +48,6 @@ namespace mozc {
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
-  struct ScoreType {
-    uint32_t last_access_time;
-    uint32_t score;
-    const Segment::Candidate *candidate;
-  };
-
   UserSegmentHistoryRewriter(const dictionary::PosMatcher *pos_matcher,
                              const dictionary::PosGroup *pos_group);
 
@@ -66,11 +60,33 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   void Clear() override;
 
  private:
+  struct Score {
+    constexpr void Update(const Score other) {
+      score = std::max(score, other.score);
+      last_access_time = std::max(last_access_time, other.last_access_time);
+    }
+
+    friend constexpr bool operator>(const Score a, const Score b) {
+      if (a.score == b.score) {
+        return a.last_access_time > b.last_access_time;
+      }
+      return a.score > b.score;
+    }
+
+    uint32_t score, last_access_time;
+  };
+
+  struct ScoreCandidate : public Score {
+    ScoreCandidate(const Score s, const Segment::Candidate *candidate)
+        : Score(s), candidate(candidate) {}
+
+    const Segment::Candidate *candidate;
+  };
+
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;
-  bool GetScore(const Segments &segments, size_t segment_index,
-                int candidate_index, uint32_t *score,
-                uint32_t *last_access_time) const;
+  Score GetScore(const Segments &segments, size_t segment_index,
+                 int candidate_index) const;
   bool Replaceable(const Segment::Candidate &lhs,
                    const Segment::Candidate &rhs) const;
   void RememberFirstCandidate(const Segments &segments, size_t segment_index);
@@ -80,14 +96,10 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   void InsertTriggerKey(const Segment &segment);
   bool IsPunctuation(const Segment &seg,
                      const Segment::Candidate &candidate) const;
-  bool GetFeatureLN(const Segments &segments, size_t i,
-                    absl::string_view base_key, absl::string_view base_value,
-                    std::string *value) const;
-  bool GetFeatureRN(const Segments &segments, size_t i,
-                    absl::string_view base_key, absl::string_view base_value,
-                    std::string *value) const;
-  bool SortCandidates(const std::vector<ScoreType> &sorted_scores,
+  bool SortCandidates(const std::vector<ScoreCandidate> &sorted_scores,
                       Segment *segment) const;
+  Score Fetch(absl::string_view key, uint32_t weight) const;
+  void Insert(absl::string_view key, bool force);
 
   std::unique_ptr<storage::LruStorage> storage_;
   const dictionary::PosMatcher *pos_matcher_;

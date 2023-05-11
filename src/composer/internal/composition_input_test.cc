@@ -51,6 +51,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_TRUE(input.probable_key_events().empty());
     EXPECT_FALSE(input.is_new_input());
+    EXPECT_FALSE(input.is_asis());
   }
 
   {  // Value setting
@@ -111,7 +112,7 @@ TEST(CompositionInputTest, SpecialKeys) {
     key.set_special_key(commands::KeyEvent::HENKAN);
     input.Init(table, key, new_input);
 
-    EXPECT_EQ(input.raw(), "\uF000");  // U+F000 represents "{henkan}".
+    EXPECT_EQ(input.raw(), "\uF004");  // U+F004 represents "{henkan}".
   }
   {
     // key event with a key code and a special key.
@@ -130,6 +131,36 @@ TEST(CompositionInputTest, SpecialKeys) {
     key.set_special_key(commands::KeyEvent::HENKAN);
     input.Init(table, key, new_input);
     EXPECT_EQ(input.raw(), "あ");
+  }
+}
+
+TEST(CompositionInputTest, AsIsValue) {
+  CompositionInput input;
+  constexpr bool new_input = true;
+
+  Table table;
+  table.AddRule("{henkan}", "", "!");
+
+  {
+    // key event with a special key
+    // special key is escaped as a command key wrapped with {}.
+    commands::KeyEvent key;
+    key.set_key_string("[]");
+    key.set_input_style(commands::KeyEvent::AS_IS);
+    input.Init(table, key, new_input);
+
+    EXPECT_EQ(input.raw(), "[]");
+    EXPECT_EQ(input.conversion(), "[]");
+    EXPECT_TRUE(input.is_asis());
+  }
+  {
+    CompositionInput input2 = input;
+    EXPECT_EQ(input.raw(), "[]");
+    EXPECT_EQ(input.conversion(), "[]");
+    EXPECT_TRUE(input.is_asis());
+    EXPECT_EQ(input2.raw(), "[]");
+    EXPECT_EQ(input2.conversion(), "[]");
+    EXPECT_TRUE(input2.is_asis());
   }
 }
 }  // namespace composer

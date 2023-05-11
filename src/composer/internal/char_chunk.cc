@@ -412,6 +412,16 @@ void CharChunk::AddInput(std::string *input) {
 
 void CharChunk::AddInputAndConvertedChar(CompositionInput *input) {
   local_length_cache_ = std::string::npos;
+
+  if (input->is_asis()) {
+    if (raw_.empty() && pending_.empty() && conversion_.empty()) {
+      raw_ = input->raw();
+      conversion_ = input->conversion();
+      input->Clear();
+    }
+    return;
+  }
+
   // If this chunk is empty, the raw and conversion are simply copied.
   if (raw_.empty() && pending_.empty() && conversion_.empty()) {
     raw_ = input->raw();

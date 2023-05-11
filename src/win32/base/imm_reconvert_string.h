@@ -35,12 +35,28 @@
 #include <ime.h>
 // clang-format on
 
-#include <string>
+#include <memory>
+#include <new>
+#include <optional>
+#include <string_view>
+#include <type_traits>
 
-#include "base/port.h"
+#include "absl/base/attributes.h"
 
 namespace mozc {
 namespace win32 {
+
+class ReconvertString;
+
+namespace reconvert_string_internal {
+void Deleter(ReconvertString *ptr);
+}  // namespace reconvert_string_internal
+
+// std::unique_ptr of ReconvertString with a custom deleter.
+using UniqueReconvertString =
+    std::unique_ptr<ReconvertString,
+                    decltype(&reconvert_string_internal::Deleter)>;
+
 // This class is designed to compose/decompose RECONVERTSTRING structure in
 // safe way.
 // According to MSDN http://msdn.microsoft.com/en-us/library/dd319107.aspx,
@@ -59,40 +75,61 @@ namespace win32 {
 //   - [CE]: CompositionEnd
 //   - [TB]: TargetBegin
 //   - [TE]: TargetEnd
-class ReconvertString {
+class ReconvertString : public RECONVERTSTRING {
  public:
-  ReconvertString(const ReconvertString &) = delete;
-  ReconvertString &operator=(const ReconvertString &) = delete;
+  struct Strings {
+    std::wstring_view preceding_text;
+    std::wstring_view preceding_composition;
+    std::wstring_view target;
+    std::wstring_view following_composition;
+    std::wstring_view following_text;
+  };
 
-  // Returns true if given substrings are copied into |reconvert_string|.
-  // The caller is responsible for allocating enough memory for
-  // |reconvert_string|.
-  static bool Compose(const std::wstring &preceding_text,
-                      const std::wstring &preceding_composition,
-                      const std::wstring &target,
-                      const std::wstring &following_composition,
-                      const std::wstring &following_text,
-                      RECONVERTSTRING *reconvert_string);
+  // Sends WM_IME_REQUEST for IMR_RECONVERTSTRING to the windows specified by
+  // hwnd and returns the result. The result is nullptr if it fails.
+  static UniqueReconvertString Request(HWND hwnd);
+  // Constructs and returns a UniqueReconvertString with the substrings copied
+  // into the buffer.
+  static UniqueReconvertString Compose(Strings ss);
 
   // Returns true if substrings are copied from |reconvert_string|.
-  static bool Decompose(const RECONVERTSTRING *reconvert_string,
-                        std::wstring *preceding_text,
-                        std::wstring *preceding_composition,
-                        std::wstring *target,
-                        std::wstring *following_composition,
-                        std::wstring *following_text);
-
-  // Returns true if the given |reconvert_string| is valid.
-  static bool Validate(const RECONVERTSTRING *reconvert_string);
+  std::optional<Strings> Decompose() const ABSL_ATTRIBUTE_LIFETIME_BOUND;
+  // Returns true if the ReconvertString is valid.
+  bool Validate() const;
 
   // If the composition range is empty, this function tries to update
-  // |reconvert_string| so that characters in the compositoin consist of the
+  // the ReconvertString so that characters in the composition consist of the
   // same script type.
   // If the composition range is not empty, this function does nothing.
-  // Returns true if |reconvert_string| is valid and has a non-empty
+  // Returns true if the ReconvertString is valid and has a non-empty
   // composition range finally.
-  static bool EnsureCompositionIsNotEmpty(RECONVERTSTRING *reconvert_string);
+  bool EnsureCompositionIsNotEmpty();
+
+ private:
+  bool ValidateOffsetSize(DWORD buf_size, DWORD offset, DWORD size) const;
+  wchar_t *StringBuffer() {
+    return std::launder(reinterpret_cast<wchar_t *>(this)) +
+           dwStrOffset / sizeof(wchar_t);
+  }
+  const wchar_t *StringBuffer() const {
+    return std::launder(reinterpret_cast<const wchar_t *>(this)) +
+           dwStrOffset / sizeof(wchar_t);
+  }
 };
+
+static_assert(std::is_standard_layout_v<ReconvertString>);
+static_assert(std::alignment_of_v<wchar_t> <=
+              std::alignment_of_v<ReconvertString>);
+
+namespace reconvert_string_internal {
+inline constexpr std::align_val_t kAlignment =
+    std::align_val_t(std::alignment_of_v<ReconvertString>);
+
+inline void Deleter(ReconvertString *ptr) {
+  ptr->~ReconvertString();
+  ::operator delete(ptr, kAlignment);
+}
+}  // namespace reconvert_string_internal
 
 }  // namespace win32
 }  // namespace mozc

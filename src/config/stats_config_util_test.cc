@@ -66,9 +66,13 @@ constexpr wchar_t kOmahaUsageKeyForEveryone[] =
 constexpr wchar_t kSendStatsName[] = L"usagestats";
 
 // TODO(yuryu): absl::bit_cast is not constexpr with VC++2017.
-const HKEY kHKCU_ClientState = absl::bit_cast<HKEY>(1);
-const HKEY kHKLM_ClientState = absl::bit_cast<HKEY>(2);
-const HKEY kHKLM_ClientStateMedium = absl::bit_cast<HKEY>(3);
+HKEY DefineHKey(const uintptr_t value) {
+  return absl::bit_cast<HKEY>(value);
+}
+
+const HKEY kHKCU_ClientState = DefineHKey(1);
+const HKEY kHKLM_ClientState = DefineHKey(2);
+const HKEY kHKLM_ClientStateMedium = DefineHKey(3);
 
 constexpr int kRunLevelLow = 0;
 constexpr int kRunLevelMedium = 1;

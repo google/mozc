@@ -38,17 +38,13 @@
 namespace mozc {
 namespace win32 {
 namespace {
-const BYTE kPressed = 0x80;
-const BYTE kToggled = 0x01;
+constexpr BYTE kPressed = 0x80;
+constexpr BYTE kToggled = 0x01;
 }  // namespace
 
 class ImeKeyboardTest : public testing::Test {
  protected:
   ImeKeyboardTest() : japanese_keyboard_layout_(nullptr) {}
-  ImeKeyboardTest(const ImeKeyboardTest&) = delete;
-  ImeKeyboardTest& operator=(const ImeKeyboardTest&) = delete;
-
-  virtual ~ImeKeyboardTest() {}
 
   virtual void SetUp() {
     const HKL hkl = ::LoadKeyboardLayoutW(L"00000411", KLF_ACTIVATE);

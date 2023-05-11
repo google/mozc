@@ -768,12 +768,13 @@ mozc_cc_library(
         ":singleton",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         windows = [
-            "//base/win32:scoped_handle",
             "//base/win32:wide_char",
             "//base/win32:win_sandbox",
+            "//third_party/wil",
         ],
     ),
 )

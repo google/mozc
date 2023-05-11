@@ -75,10 +75,6 @@ bool ContainCandidate(const Segments &segments,
 
 class SmallLetterRewriterTest : public ::testing::Test {
  protected:
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  SmallLetterRewriterTest() {}
-  ~SmallLetterRewriterTest() override {}
-
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     engine_ = MockDataEngineFactory::Create().value();

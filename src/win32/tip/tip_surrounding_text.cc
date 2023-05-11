@@ -35,11 +35,13 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include "base/win32/com.h"
+#include "base/win32/wide_char.h"
 #include "win32/base/imm_reconvert_string.h"
 #include "win32/tip/tip_composition_util.h"
 #include "win32/tip/tip_dll_module.h"
@@ -231,45 +233,27 @@ bool PrepareForReconversionIMM32(ITfContext *context,
     return false;
   }
 
-  LRESULT result =
-      ::SendMessage(attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING, 0);
-  if (result == 0) {
-    // IMR_RECONVERTSTRING is not supported.
+  UniqueReconvertString reconvert_string =
+      ReconvertString::Request(attached_window);
+  if (!reconvert_string) {
     return false;
   }
 
-  const size_t buffer_size = static_cast<size_t>(result);
-  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
-
-  RECONVERTSTRING *reconvert_string =
-      reinterpret_cast<RECONVERTSTRING *>(buffer.get());
-  reconvert_string->dwSize = buffer_size;
-  reconvert_string->dwVersion = 0;
-
-  result = ::SendMessage(attached_window, WM_IME_REQUEST, IMR_RECONVERTSTRING,
-                         reinterpret_cast<LPARAM>(reconvert_string));
-  if (result == 0) {
-    return false;
-  }
-
-  std::wstring preceding_text;
-  std::wstring preceding_composition;
-  std::wstring target;
-  std::wstring following_composition;
-  std::wstring following_text;
-  if (!ReconvertString::Decompose(reconvert_string, &preceding_text,
-                                  &preceding_composition, &target,
-                                  &following_composition, &following_text)) {
+  std::optional<ReconvertString::Strings> ss = reconvert_string->Decompose();
+  if (!ss.has_value()) {
     return false;
   }
   info->in_composition = false;
   info->is_transitory = false;
   info->has_preceding_text = true;
-  info->preceding_text = preceding_text;
+  info->preceding_text.assign(ss->preceding_text.begin(),
+                              ss->preceding_text.end());
   info->has_selected_text = true;
-  info->selected_text = preceding_composition + target + following_composition;
+  info->selected_text =
+      StrCatW(ss->preceding_composition, ss->target, ss->following_composition);
   info->has_following_text = true;
-  info->following_text = following_text;
+  info->following_text.assign(ss->following_text.begin(),
+                              ss->following_text.end());
 
   return true;
 }

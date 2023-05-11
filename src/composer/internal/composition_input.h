@@ -83,12 +83,14 @@ class CompositionInput final {
 
   bool is_new_input() const { return is_new_input_; }
   void set_is_new_input(bool is_new_input) { is_new_input_ = is_new_input; }
+  bool is_asis() const { return is_asis_; }
 
  private:
   std::string raw_;
   std::string conversion_;
   ProbableKeyEvents probable_key_events_;
   bool is_new_input_ = false;
+  bool is_asis_ = false;
 };
 
 }  // namespace composer

@@ -60,10 +60,6 @@ constexpr char kReadingCorrectionLines[] =
 
 class TextDictionaryLoaderTest : public ::testing::Test {
  protected:
-  // Explicitly define constructor to prevent Visual C++ from
-  // considering this class as POD.
-  TextDictionaryLoaderTest() {}
-
   void SetUp() override {
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }

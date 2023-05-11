@@ -39,7 +39,7 @@ namespace mozc {
 
 class RewriterInterface {
  public:
-  virtual ~RewriterInterface() {}
+  virtual ~RewriterInterface() = default;
 
   enum CapabilityType {
     NOT_AVAILABLE = 0,
@@ -89,7 +89,7 @@ class RewriterInterface {
   virtual void Clear() {}
 
  protected:
-  RewriterInterface() {}
+  RewriterInterface() = default;
 };
 
 }  // namespace mozc

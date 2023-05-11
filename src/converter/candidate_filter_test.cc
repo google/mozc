@@ -88,10 +88,6 @@ std::string RequestParamToString(
 
 class CandidateFilterTest : public ::testing::Test {
  protected:
-  // Explicitly define constructor to prevent Visual C++ from
-  // considering this class as POD.
-  CandidateFilterTest() {}
-
   void SetUp() override {
     candidate_freelist_ = std::make_unique<FreeList<Segment::Candidate>>(1024);
     node_freelist_ = std::make_unique<FreeList<Node>>(1024);

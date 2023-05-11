@@ -29,17 +29,6 @@
 
 #include "base/process_mutex.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else  // _WIN32
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#endif  // _WIN32
-
-#include <map>
 #include <string>
 #include <utility>
 
@@ -47,43 +36,46 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
+
 #ifdef _WIN32
+#include <wil/resource.h>
+#include <windows.h>
+
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
-#endif  // _WIN32
-#include "absl/synchronization/mutex.h"
+#else  // _WIN32
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <map>
+#endif  // !_WIN32
 
 namespace mozc {
 namespace {
 
-std::string CreateProcessMutexFileName(const char *name) {
-  name = (name == nullptr) ? "nullptr" : name;
-
-#ifdef _WIN32
-  std::string basename;
-#else   // _WIN32
-  std::string basename = ".";
-#endif  // _WIN32
-
-  basename += name;
-  basename += ".lock";
-
+std::string CreateProcessMutexFileName(const absl::string_view name) {
+  absl::string_view hidden_prefix = TargetIsWindows() ? "" : ".";
+  std::string basename = absl::StrCat(hidden_prefix, name, ".lock");
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
 }  // namespace
+
+ProcessMutex::ProcessMutex(absl::string_view name)
+    : filename_(CreateProcessMutexFileName(name)) {}
+
+ProcessMutex::~ProcessMutex() { UnLock(); }
 
 bool ProcessMutex::Lock() { return LockAndWrite(""); }
 
 #ifdef _WIN32
 
-ProcessMutex::ProcessMutex(const char *name)
-    : handle_(INVALID_HANDLE_VALUE), locked_(false) {
-  filename_ = CreateProcessMutexFileName(name);
-}
-
-ProcessMutex::~ProcessMutex() { UnLock(); }
-
-bool ProcessMutex::LockAndWrite(const std::string &message) {
+bool ProcessMutex::LockAndWrite(const absl::string_view message) {
   if (locked_) {
     VLOG(1) << filename_ << " is already locked";
     return false;
@@ -104,7 +96,7 @@ bool ProcessMutex::LockAndWrite(const std::string &message) {
                               nullptr));
   ::LocalFree(serucity_attributes.lpSecurityDescriptor);
 
-  locked_ = (handle_.get() != nullptr);
+  locked_ = handle_.is_valid();
 
   if (!locked_) {
     VLOG(1) << "already locked";
@@ -127,7 +119,7 @@ bool ProcessMutex::LockAndWrite(const std::string &message) {
 }
 
 bool ProcessMutex::UnLock() {
-  handle_.reset(nullptr);
+  handle_.reset();
   FileUtil::UnlinkOrLogError(filename_);
   locked_ = false;
   return true;
@@ -232,17 +224,7 @@ class FileLockManager {
 
 }  // namespace
 
-ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
-  filename_ = CreateProcessMutexFileName(name);
-}
-
-ProcessMutex::~ProcessMutex() {
-  if (locked_) {
-    UnLock();
-  }
-}
-
-bool ProcessMutex::LockAndWrite(const std::string &message) {
+bool ProcessMutex::LockAndWrite(const absl::string_view message) {
   int fd = -1;
   if (!Singleton<FileLockManager>::get()->Lock(filename_, &fd)) {
     VLOG(1) << filename_ << " is already locked";

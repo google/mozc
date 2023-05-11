@@ -411,6 +411,10 @@ CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
 
 void Composition::CombinePendingChunks(CharChunkList::iterator it,
                                        const CompositionInput &input) {
+  // If the input is asis, pending chunks are not related with this input.
+  if (input.is_asis()) {
+    return;
+  }
   // Combine |**it| and |**(--it)| into |**it| as long as possible.
   const absl::string_view next_input =
       input.conversion().empty() ? input.raw() : input.conversion();
