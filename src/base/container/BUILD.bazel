@@ -39,17 +39,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-# Test suite needs to have exact test names,
-# because android tests are tagged "manual".
-test_suite(
-    name = "android_test",
-    tests = [
-        ":bitarray_test_android",
-        ":serialized_string_array_test_android",
-        ":trie_test_android",
-    ],
-)
-
 mozc_cc_library(
     name = "bitarray",
     hdrs = ["bitarray.h"],

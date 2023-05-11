@@ -42,14 +42,6 @@ package_group(
     packages = ["//..."],
 )
 
-test_suite(
-    name = "android_test",
-    tests = [
-        "//base:android_test",
-        "//session:android_test",
-    ],
-)
-
 config_setting(
     name = "opt",
     values = {
@@ -129,7 +121,6 @@ bzl_library(
         ":config_bzl",
         "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
-        "//tools/build_rules/android_cc_test:def",
         "@build_bazel_rules_apple//apple:macos",
     ],
 )

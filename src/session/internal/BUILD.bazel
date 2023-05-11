@@ -131,6 +131,7 @@ mozc_cc_test(
     size = "small",
     timeout = "moderate",
     srcs = ["ime_context_test.cc"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":ime_context",
         "//composer",
@@ -170,6 +171,7 @@ mozc_cc_test(
     name = "key_event_transformer_test",
     size = "small",
     srcs = ["key_event_transformer_test.cc"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":key_event_transformer",
         "//base:port",

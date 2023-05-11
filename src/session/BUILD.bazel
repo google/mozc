@@ -45,26 +45,6 @@ package(
     ],
 )
 
-test_suite(
-    name = "android_test",
-    tests = [
-        ":key_info_util_test_android",
-        ":random_keyevents_generator_test_android",
-        ":request_test_util_test_android",
-        ":session_converter_stress_test_android",
-        ":session_handler_test_android",
-        ":session_observer_handler_test_android",
-        ":session_regression_test_android",
-        ":session_test_android",
-        ":session_usage_stats_util_test_android",
-        # Disabled tests due to errors.
-        # ":session_converter_test_android",
-        # ":session_handler_scenario_test_android",
-        # ":session_handler_stress_test_android",
-        # ":session_usage_observer_test_android",
-    ],
-)
-
 mozc_cc_library(
     name = "session_interface",
     hdrs = ["session_interface.h"],
@@ -111,6 +91,7 @@ mozc_cc_test(
     timeout = "moderate",
     srcs = ["session_converter_test.cc"],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":request_test_util",
         ":session_converter",
@@ -373,11 +354,11 @@ mozc_cc_library(
         ],
         default = [
             ":session_watch_dog",
+        ],
+        linux = [
+            ":session_watch_dog",
             "//spelling:spellchecker_service_interface",
             "//spelling:spellchecker_service_registration",
-        ],
-        windows = [
-            ":session_watch_dog",
         ],
     ) + [
         ":session_handler",
@@ -415,7 +396,8 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "session_handler_test",
-    size = "large",
+    size = "small",
+    timeout = "long",
     srcs = [
         "common.h",
         "session_handler_test.cc",
@@ -451,6 +433,7 @@ mozc_cc_library(
         "session_server.cc",
     ],
     hdrs = ["session_server.h"],
+    tags = ["noandroid"],
     deps = [
         ":session_handler",
         ":session_handler_interface",
@@ -520,6 +503,7 @@ mozc_cc_binary(
     name = "session_server_main",
     srcs = ["session_server_main.cc"],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_server_main.cc
+    tags = ["noandroid"],
     deps = [
         ":session_server",
         "//base:init_mozc",
@@ -533,6 +517,7 @@ mozc_cc_library(
     name = "session_watch_dog",
     srcs = ["session_watch_dog.cc"],
     hdrs = ["session_watch_dog.h"],
+    tags = ["noandroid"],
     deps = [
         "//base:clock",
         "//base:cpu_stats",
@@ -551,7 +536,10 @@ mozc_cc_test(
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
     requires_full_emulation = False,
-    tags = ["noandroid"],
+    tags = [
+        "noandroid",
+        "nomac",  # TODO(b/281742982) flaky for mac on forge
+    ],
     deps = [
         ":session_watch_dog",
         "//base:cpu_stats",
@@ -588,6 +576,7 @@ mozc_cc_test(
     size = "small",
     srcs = ["session_usage_observer_test.cc"],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":session_usage_observer",
         "//base:clock",
@@ -729,6 +718,7 @@ mozc_cc_test(
         "session_handler_stress_test.cc",
     ],
     requires_full_emulation = False,
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":random_keyevents_generator",
         ":request_test_util",
@@ -746,6 +736,7 @@ mozc_cc_library(
     name = "session_handler_tool",
     srcs = ["session_handler_tool.cc"],
     hdrs = ["session_handler_tool.h"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":request_test_util",
         ":session_handler",
@@ -781,6 +772,7 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "session_handler_main",
     srcs = ["session_handler_main.cc"],
+    tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":session_handler_tool",
         "//base:file_stream",
@@ -811,6 +803,11 @@ mozc_cc_test(
         "//data/test/session/scenario/usage_stats:usage_stats_scenario_files",
     ],
     requires_full_emulation = False,
+    tags = [
+        "manual",
+        "noandroid",  # TODO(b/73698251): disabled due to errors
+        "nofastbuild",
+    ],
     deps = [
         ":request_test_util",
         ":session_handler_test_util",
