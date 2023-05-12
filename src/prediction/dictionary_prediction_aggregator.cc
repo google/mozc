@@ -1315,6 +1315,8 @@ void DictionaryPredictionAggregator::
   // string, e.g. おk. -> おか
   // TODO(taku): Revisits this design once QWERTY model gets ready.
   absl::string_view key = queries.front().asis;
+  const bool is_kana_modifier_insensitive_only =
+      queries.front().is_kana_modifier_insensitive_only;
   const size_t key_len = Util::CharsLen(key);
 
   // Makes dummy segments with corrected query.
@@ -1351,10 +1353,12 @@ void DictionaryPredictionAggregator::
   }
 
   // Appends the result with TYPING_CORRECTION attribute.
-  // TODO(taku): TYPING_CORRECTION type is not necessary when
-  // the correction is a pure kana-modifier-aware correction.
   for (Result &result : corrected_results) {
-    result.types |= TYPING_CORRECTION;
+    // If the correction is a pure kana modifier insensitive correction,
+    // typing correction annotation is not necessary.
+    if (!is_kana_modifier_insensitive_only) {
+      result.types |= TYPING_CORRECTION;
+    }
     results->emplace_back(std::move(result));
   }
 }
