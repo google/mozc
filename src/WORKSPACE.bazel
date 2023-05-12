@@ -147,6 +147,8 @@ http_archive(
     ],
     strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
     build_file = "@//:BUILD.google_toolbox_for_mac.bazel",
+    patches = ["@//:google_toolbox_for_mac.patch"],
+    patch_args = ["-p2"],
 )
 
 # Material icons
