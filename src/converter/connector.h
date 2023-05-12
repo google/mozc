@@ -57,7 +57,7 @@ class Connector final {
   Connector &operator=(const Connector &) = delete;
 
   int GetTransitionCost(uint16_t rid, uint16_t lid) const;
-  int GetResolution() const;
+  int GetResolution() const { return resolution_; }
 
   void ClearCache();
 

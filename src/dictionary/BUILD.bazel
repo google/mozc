@@ -121,8 +121,6 @@ mozc_cc_library(
         ":dictionary_interface",
         ":dictionary_token",
         "//base:logging",
-        "//base:port",
-        "//base:util",
         "//base/container:serialized_string_array",
         "@com_google_absl//absl/strings",
     ],

@@ -35,7 +35,6 @@
 
 #include "base/container/bitarray.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "converter/node.h"
 #include "data_manager/data_manager_interface.h"
 
@@ -75,8 +74,6 @@ Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
   DCHECK(boundary_data_);
   CHECK_LE(l_num_elements_ * r_num_elements_, bitarray_num_bytes_ * 8);
 }
-
-Segmenter::~Segmenter() = default;
 
 bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
                            bool is_single_segment) const {

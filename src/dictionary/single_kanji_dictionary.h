@@ -64,7 +64,9 @@ class SingleKanjiDictionary {
   // mozc/rewriter/gen_single_kanji_noun_prefix_data.cc
   std::pair<SerializedDictionary::const_iterator,
             SerializedDictionary::const_iterator>
-  LookupNounPrefixEntries(absl::string_view key) const;
+  LookupNounPrefixEntries(absl::string_view key) const {
+    return noun_prefix_dictionary_->equal_range(key);
+  }
 
   // Generates kanji variant description.
   // Returns false if the description was not found.

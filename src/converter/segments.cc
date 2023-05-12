@@ -52,20 +52,6 @@ namespace {
 constexpr size_t kMaxHistorySize = 32;
 }  // namespace
 
-absl::string_view Segment::Candidate::functional_key() const {
-  return key.size() <= content_key.size()
-             ? absl::string_view()
-             : absl::string_view(key.data() + content_key.size(),
-                                 key.size() - content_key.size());
-}
-
-absl::string_view Segment::Candidate::functional_value() const {
-  return value.size() <= content_value.size()
-             ? absl::string_view()
-             : absl::string_view(value.data() + content_value.size(),
-                                 value.size() - content_value.size());
-}
-
 void Segment::Candidate::Init() {
   key.clear();
   value.clear();
@@ -208,10 +194,6 @@ absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 
-constexpr int kCandidatesPoolSize = 16;
-
-Segment::Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
-
 Segment::Segment(const Segment &x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
       segment_type_(x.segment_type_),
@@ -231,46 +213,6 @@ Segment &Segment::operator=(const Segment &x) {
 
   return *this;
 }
-
-Segment::SegmentType Segment::segment_type() const { return segment_type_; }
-
-void Segment::set_segment_type(const Segment::SegmentType &segment_type) {
-  segment_type_ = segment_type;
-}
-
-const std::string &Segment::key() const { return key_; }
-
-void Segment::set_key(absl::string_view key) {
-  key_.assign(key.data(), key.size());
-}
-
-bool Segment::is_valid_index(int i) const {
-  if (i < 0) {
-    return (-i - 1 < meta_candidates_.size());
-  } else {
-    return (i < candidates_.size());
-  }
-}
-
-const Segment::Candidate &Segment::candidate(int i) const {
-  if (i < 0) {
-    return meta_candidate(-i - 1);
-  }
-  DCHECK(i < candidates_.size());
-  return *candidates_[i];
-}
-
-Segment::Candidate *Segment::mutable_candidate(int i) {
-  if (i < 0) {
-    const size_t meta_index = -i - 1;
-    DCHECK_LT(meta_index, meta_candidates_.size());
-    return &meta_candidates_[meta_index];
-  }
-  DCHECK_LT(i, candidates_.size());
-  return candidates_[i];
-}
-
-size_t Segment::candidates_size() const { return candidates_.size(); }
 
 void Segment::clear_candidates() {
   pool_.clear();
@@ -292,8 +234,6 @@ Segment::Candidate *Segment::push_front_candidate() {
   candidates_.push_front(candidate);
   return candidate;
 }
-
-Segment::Candidate *Segment::add_candidate() { return push_back_candidate(); }
 
 Segment::Candidate *Segment::insert_candidate(int i) {
   if (i < 0) {
@@ -325,7 +265,7 @@ void Segment::insert_candidate(int i, std::unique_ptr<Candidate> candidate) {
 }
 
 void Segment::insert_candidates(
-    int i, std::vector<std::unique_ptr<Candidate>> &&candidates) {
+    int i, std::vector<std::unique_ptr<Candidate>> candidates) {
   if (i < 0) {
     i = 0;
   } else if (i > static_cast<int>(candidates_.size())) {
@@ -374,18 +314,6 @@ void Segment::erase_candidates(int i, size_t size) {
     return;
   }
   candidates_.erase(candidates_.begin() + i, candidates_.begin() + end);
-}
-
-size_t Segment::meta_candidates_size() const { return meta_candidates_.size(); }
-
-void Segment::clear_meta_candidates() { meta_candidates_.clear(); }
-
-const std::vector<Segment::Candidate> &Segment::meta_candidates() const {
-  return meta_candidates_;
-}
-
-std::vector<Segment::Candidate> *Segment::mutable_meta_candidates() {
-  return &meta_candidates_;
 }
 
 const Segment::Candidate &Segment::meta_candidate(size_t i) const {
@@ -474,18 +402,12 @@ std::string Segment::DebugString() const {
   return os.str();
 }
 
-Segments::Segments()
-    : max_history_segments_size_(0),
-      resized_(false),
-      pool_(32),
-      cached_lattice_(new Lattice()) {}
-
 Segments::Segments(const Segments &x)
     : max_history_segments_size_(x.max_history_segments_size_),
       resized_(x.resized_),
       pool_(32),
       revert_entries_(x.revert_entries_),
-      cached_lattice_(new Lattice()) {
+      cached_lattice_() {
   // Deep-copy segments.
   for (const Segment *segment : x.segments_) {
     *add_segment() = *segment;
@@ -510,26 +432,6 @@ Segments &Segments::operator=(const Segments &x) {
   return *this;
 }
 
-const Segment &Segments::segment(size_t i) const { return *segments_[i]; }
-
-Segment *Segments::mutable_segment(size_t i) { return segments_[i]; }
-
-const Segment &Segments::history_segment(size_t i) const {
-  return *segments_[i];
-}
-
-Segment *Segments::mutable_history_segment(size_t i) { return segments_[i]; }
-
-const Segment &Segments::conversion_segment(size_t i) const {
-  return *segments_[i + history_segments_size()];
-}
-
-Segment *Segments::mutable_conversion_segment(size_t i) {
-  return segments_[i + history_segments_size()];
-}
-
-Segment *Segments::add_segment() { return push_back_segment(); }
-
 Segment *Segments::insert_segment(size_t i) {
   Segment *segment = pool_.Alloc();
   segment->Clear();
@@ -551,8 +453,6 @@ Segment *Segments::push_front_segment() {
   return segment;
 }
 
-size_t Segments::segments_size() const { return segments_.size(); }
-
 size_t Segments::history_segments_size() const {
   size_t result = 0;
   for (size_t i = 0; i < segments_size(); ++i) {
@@ -563,10 +463,6 @@ size_t Segments::history_segments_size() const {
     ++result;
   }
   return result;
-}
-
-size_t Segments::conversion_segments_size() const {
-  return (segments_size() - history_segments_size());
 }
 
 void Segments::erase_segment(size_t i) {
@@ -635,23 +531,11 @@ void Segments::clear_conversion_segments() {
   segments_.resize(size);
 }
 
-size_t Segments::max_history_segments_size() const {
-  return max_history_segments_size_;
-}
-
 void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
   max_history_segments_size_ =
       std::max(static_cast<size_t>(0),
                std::min(max_history_segments_size, kMaxHistorySize));
 }
-
-void Segments::set_resized(bool resized) { resized_ = resized; }
-
-bool Segments::resized() const { return resized_; }
-
-void Segments::clear_revert_entries() { revert_entries_.clear(); }
-
-size_t Segments::revert_entries_size() const { return revert_entries_.size(); }
 
 Segments::RevertEntry *Segments::push_back_revert_entry() {
   revert_entries_.resize(revert_entries_.size() + 1);
@@ -662,16 +546,6 @@ Segments::RevertEntry *Segments::push_back_revert_entry() {
   entry->key.clear();
   return entry;
 }
-
-const Segments::RevertEntry &Segments::revert_entry(size_t i) const {
-  return revert_entries_[i];
-}
-
-Segments::RevertEntry *Segments::mutable_revert_entry(size_t i) {
-  return &revert_entries_[i];
-}
-
-Lattice *Segments::mutable_cached_lattice() { return cached_lattice_.get(); }
 
 std::string Segments::DebugString() const {
   std::stringstream os;

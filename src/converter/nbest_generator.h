@@ -31,7 +31,6 @@
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -187,7 +186,7 @@ class NBestGenerator {
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
   std::vector<const Node *> top_nodes_;
-  std::unique_ptr<converter::CandidateFilter> filter_;
+  converter::CandidateFilter filter_;
   bool viterbi_result_checked_ = false;
   BoundaryCheckMode check_mode_ = STRICT;
 

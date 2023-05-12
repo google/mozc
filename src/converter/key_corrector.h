@@ -52,41 +52,41 @@ class KeyCorrector final {
   KeyCorrector(KeyCorrector &&other) = default;
   KeyCorrector &operator=(KeyCorrector &&other) = default;
 
-  InputMode mode() const;
+  InputMode mode() const { return mode_; }
 
   bool CorrectKey(const std::string &key, InputMode mode, size_t history_size);
 
   // return corrected key;
-  const std::string &corrected_key() const;
+  const std::string &corrected_key() const { return corrected_key_; }
 
   // return original key;
-  const std::string &original_key() const;
+  const std::string &original_key() const { return original_key_; }
 
   // return true key correction was done successfully
-  bool IsAvailable() const;
+  bool IsAvailable() const { return available_; }
 
-  // return the poistion of corrected_key correspoinding
+  // return the position of corrected_key corresponding
   // to the original_key_pos
   // return InvalidPosition() if invalid pos is passed.
   // Note that the position is not by Unicode Character but by bytes.
   size_t GetCorrectedPosition(size_t original_key_pos) const;
 
-  // return the poistion of original_key correspoinding
+  // return the position of original_key corresponding
   // to the corrected_key_pos
   // return InvalidPosition() if invalid pos is passed.
   // Note that the position is not by Unicode Character but by bytes.
   size_t GetOriginalPosition(size_t corrected_key_pos) const;
 
   // return true if pos is NOT kInvalidPos
-  static bool IsValidPosition(size_t pos);
+  static bool IsValidPosition(size_t pos) { return (pos != kInvalidPos); }
 
   // return true if pos is kInvalidPos
-  static bool IsInvalidPosition(size_t pos);
+  static bool IsInvalidPosition(size_t pos) { return (pos == kInvalidPos); }
 
   // return kInvalidPos
-  static size_t InvalidPosition();
+  static size_t InvalidPosition() { return kInvalidPos; }
 
-  // return new prefix of string correspoindng to
+  // return new prefix of string corresponding to
   // the prefix of the original key at "original_key_pos"
   // if new prefix and original prefix are the same, return nullptr.
   // Note that return value won't be nullptr terminated.
@@ -117,8 +117,7 @@ class KeyCorrector final {
   //  GetPrefix(3) = "んなのほん"
   //  GetPrefix(9) = "なのほん"
   //  GetPrefix(12) = nullptr
-  const char *GetCorrectedPrefix(const size_t original_key_pos,
-                                 size_t *length) const;
+  const char *GetCorrectedPrefix(size_t original_key_pos, size_t *length) const;
 
   // This is a helper function for CommonPrefixSearch in Converter.
   // Basically it is equivalent to
@@ -155,6 +154,13 @@ class KeyCorrector final {
   void Clear();
 
  private:
+  // maximum key length KeyCorrector can handle
+  // if key is too long, we don't do key correction
+  static constexpr size_t kMaxSize = 128;
+
+  // invalid alignment marker
+  static constexpr size_t kInvalidPos = static_cast<size_t>(-1);
+
   bool available_;
   InputMode mode_;
   std::string corrected_key_;

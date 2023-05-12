@@ -33,7 +33,6 @@
 #include <cstdint>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "absl/strings/string_view.h"
 
@@ -71,15 +70,15 @@ class SuffixDictionary : public DictionaryInterface {
   // SuffixDictionary doesn't support Prefix/Revese/Exact Lookup.
   void LookupPrefix(absl::string_view key,
                     const ConversionRequest &conversion_request,
-                    Callback *callback) const override;
+                    Callback *callback) const override {}
 
   void LookupExact(absl::string_view key,
                    const ConversionRequest &conversion_request,
-                   Callback *callback) const override;
+                   Callback *callback) const override {}
 
   void LookupReverse(absl::string_view key,
                      const ConversionRequest &conversion_request,
-                     Callback *callback) const override;
+                     Callback *callback) const override {}
 
  private:
   SerializedStringArray key_array_;

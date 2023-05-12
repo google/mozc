@@ -316,8 +316,6 @@ int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
   return value;
 }
 
-int Connector::GetResolution() const { return resolution_; }
-
 void Connector::ClearCache() {
   std::fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
 }
