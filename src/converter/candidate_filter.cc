@@ -36,7 +36,7 @@
 #include <climits>
 #include <cstdint>
 #include <string>
-#include <vector>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -48,11 +48,13 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace converter {
 namespace {
 
+using ::mozc::converter::candidate_filter_internal::CandidateId;
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 
@@ -87,7 +89,7 @@ constexpr int32_t kStopEnmerationCacheSize = 30;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsNoisyWeakCompound(const std::vector<const Node *> &nodes,
+inline bool IsNoisyWeakCompound(const absl::Span<const Node *const> nodes,
                                 const dictionary::PosMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
@@ -119,7 +121,7 @@ inline bool IsNoisyWeakCompound(const std::vector<const Node *> &nodes,
 
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
-inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
+inline bool IsConnectedWeakCompound(const absl::Span<const Node *const> nodes,
                                     const dictionary::PosMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
@@ -149,7 +151,7 @@ bool IsIsolatedWordOrGeneralSymbol(const dictionary::PosMatcher &pos_matcher,
 
 bool ContainsIsolatedWordOrGeneralSymbol(
     const dictionary::PosMatcher &pos_matcher,
-    const std::vector<const Node *> &nodes) {
+    const absl::Span<const Node *const> nodes) {
   for (const Node *node : nodes) {
     if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
       return true;
@@ -163,7 +165,7 @@ bool IsNormalOrConstrainedNode(const Node *node) {
                              node->node_type == Node::CON_NODE);
 }
 
-bool IsCompoundCandidate(const std::vector<const Node *> &nodes) {
+bool IsCompoundCandidate(const absl::Span<const Node *const> nodes) {
   return nodes.size() == 1 && nodes[0]->lid != nodes[0]->rid;
 }
 
@@ -182,7 +184,7 @@ bool IsFunctionalNode(const dictionary::PosMatcher &pos_matcher,
 // content_word + suffix_word*N + (suffix_word|functional_word).
 // Example: "行き+ます", "山+が", etc.
 bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
-                            const std::vector<const Node *> &nodes) {
+                            const absl::Span<const Node *const> nodes) {
   DCHECK_GT(nodes.size(), 1);
   if (IsSuffixNode(pos_matcher, *nodes[0])) {
     return false;
@@ -197,8 +199,8 @@ bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
 }
 
 // Returns true if |lnodes| and |rnodes| have the same Pos structure.
-bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
-                         const std::vector<const Node *> &rnodes) {
+bool IsSameNodeStructure(const absl::Span<const Node *const> lnodes,
+                         const absl::Span<const Node *const> rnodes) {
   if (lnodes.size() != rnodes.size()) {
     return false;
   }
@@ -212,11 +214,6 @@ bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
 
 bool IsStrictModeEnabled(const ConversionRequest &request) {
   return request.request().mixed_conversion();
-}
-
-std::string CandidateId(const Segment::Candidate &candidate) {
-  return absl::StrCat(candidate.value, "\t", candidate.lid, "\t",
-                      candidate.rid);
 }
 
 }  // namespace
@@ -241,18 +238,13 @@ void CandidateFilter::Reset() {
   top_candidate_ = nullptr;
 }
 
-CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-    const ConversionRequest &request, const std::string &original_key,
-    const Segment::Candidate *candidate,
-    const std::vector<const Node *> &top_nodes,
-    const std::vector<const Node *> &nodes) {
-  DCHECK(candidate);
-  const ConversionRequest::RequestType request_type = request.request_type();
-  const bool is_strict_mode = IsStrictModeEnabled(request);
-
+CandidateFilter::ResultType CandidateFilter::CheckRequestType(
+    const ConversionRequest &request, const absl::string_view original_key,
+    const Segment::Candidate &candidate,
+    const absl::Span<const Node *const> nodes) const {
   // Filtering by the suggestion filter, which is applied only for the
   // PREDICTION and SUGGESTION modes.
-  switch (request_type) {
+  switch (request.request_type()) {
     case ConversionRequest::PREDICTION:
       // In the PREDICTION mode, the suggestion filter is not applied and the
       // same filtering rule as the CONVERSION mode is used because the
@@ -262,17 +254,17 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // words might be what the user wants to type.  Therefore, filtering rule
       // is relaxed for the PREDICTION mode: we don't apply the suggestion
       // filter if the user input key is exactly the same as candidate's.
-      if (original_key == candidate->key) {
+      if (original_key == candidate.key) {
         break;
       }
-      ABSL_FALLTHROUGH_INTENDED;
+      [[fallthrough]];
     case ConversionRequest::SUGGESTION:
       // For mobile, most users will use suggestion/prediction only and do not
       // trigger conversion explicitly.
       // So we don't apply the suggestion filter if the user input key
       // is exactly the same as candidate's.
       if (!apply_suggestion_filter_for_exact_match_ &&
-          original_key == candidate->key) {
+          original_key == candidate.key) {
         break;
       }
 
@@ -281,8 +273,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // displayed to users.  Therefore, it's better to filter unfavorable words
       // in this mode.
       CHECK(suggestion_filter_);
-      if (suggestion_filter_->IsBadSuggestion(candidate->value)) {
-        MOZC_CANDIDATE_LOG(candidate, "IsBadsuggestion(candidate)");
+      if (suggestion_filter_->IsBadSuggestion(candidate.value)) {
+        MOZC_CANDIDATE_LOG(&candidate, "IsBadsuggestion(candidate)");
         return BAD_CANDIDATE;
       }
       // TODO(noriyukit): In the implementation below, the possibility remains
@@ -290,7 +282,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
       // we may want to check all the possibilities.
       for (size_t i = 0; i < nodes.size(); ++i) {
         if (suggestion_filter_->IsBadSuggestion(nodes[i]->value)) {
-          MOZC_CANDIDATE_LOG(candidate, "IsBadsuggestion(node)");
+          MOZC_CANDIDATE_LOG(&candidate, "IsBadsuggestion(node)");
           return BAD_CANDIDATE;
         }
       }
@@ -298,6 +290,23 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     default:
       break;
   }
+  return GOOD_CANDIDATE;
+}
+
+CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
+    const ConversionRequest &request, const absl::string_view original_key,
+    const Segment::Candidate *candidate,
+    const absl::Span<const Node *const> top_nodes,
+    const absl::Span<const Node *const> nodes) {
+  DCHECK(candidate);
+
+  if (ResultType result =
+          CheckRequestType(request, original_key, *candidate, nodes);
+      result != GOOD_CANDIDATE) {
+    return result;
+  }
+
+  const bool is_strict_mode = IsStrictModeEnabled(request);
 
   // In general, the cost of constrained node tends to be overestimated.
   // If the top candidate has constrained node, we skip the main body
@@ -352,7 +361,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   }
 
   // The candidate is already seen.
-  if (seen_.find(CandidateId(*candidate)) != seen_.end()) {
+  if (seen_.contains(*candidate)) {
     MOZC_CANDIDATE_LOG(candidate, "already seen");
     return CandidateFilter::BAD_CANDIDATE;
   }
@@ -512,7 +521,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
-  // Don't drop personal names aggressivly.
+  // Don't drop personal names aggressively.
   // We have to show personal names even if they are too minor.
   // We basically ignores the cost threadshould. Filter candidate
   // only by structure cost.
@@ -616,10 +625,10 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
-    const ConversionRequest &request, const std::string &original_key,
+    const ConversionRequest &request, const absl::string_view original_key,
     const Segment::Candidate *candidate,
-    const std::vector<const Node *> &top_nodes,
-    const std::vector<const Node *> &nodes) {
+    const absl::Span<const Node *const> top_nodes,
+    const absl::Span<const Node *const> nodes) {
   if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // In reverse conversion, only remove duplicates because the filtering
     // criteria of FilterCandidateInternal() are completely designed for

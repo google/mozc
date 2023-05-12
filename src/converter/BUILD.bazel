@@ -249,7 +249,9 @@ mozc_cc_library(
         "//prediction:suggestion_filter",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -262,8 +264,6 @@ mozc_cc_test(
         ":candidate_filter",
         ":node",
         ":segments",
-        "//base:port",
-        "//base:util",
         "//base/container:freelist",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",

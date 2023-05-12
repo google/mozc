@@ -36,8 +36,6 @@
 #include <vector>
 
 #include "base/container/freelist.h"
-#include "base/port.h"
-#include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
