@@ -69,7 +69,7 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 UserDictionaryStorage::UserDictionaryStorage(const std::string &file_name)
     : file_name_(file_name),
-      process_mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
+      process_mutex_(new ProcessMutex(FileUtil::Basename(file_name))) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() { UnLock(); }
 
