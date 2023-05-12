@@ -47,7 +47,7 @@ int RunErrorMessageDialog(int argc, char *argv[]) {
   std::string name = "error_message_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
-  mozc::ProcessMutex mutex(name.c_str());
+  mozc::ProcessMutex mutex(name);
   if (!mutex.Lock()) {
     LOG(INFO) << "error_message_dialog is already running";
     return -1;
