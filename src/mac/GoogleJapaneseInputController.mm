@@ -859,6 +859,9 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
+  if (event == nullptr) {
+    return NO;
+  }
   if ([event type] == NSEventTypeCursorUpdate) {
     [[self client] setMarkedText:composedString_
                   selectionRange:[self selectionRange]
