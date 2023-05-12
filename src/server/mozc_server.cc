@@ -97,7 +97,7 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
 
 int MozcServer::Run() {
   std::string mutex_name = "server";
-  mozc::ProcessMutex mutex(mutex_name.c_str());
+  mozc::ProcessMutex mutex(mutex_name);
   if (!mutex.Lock()) {
     LOG(INFO) << "Mozc Server is already running";
     return -1;
