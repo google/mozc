@@ -31,13 +31,13 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "converter/node.h"
@@ -140,20 +140,10 @@ std::string GetCommonPrefix(const std::string &str1, const std::string &str2) {
 }  // namespace
 
 struct LatticeDisplayNodeInfo {
-  size_t display_node_begin_pos_;
-  size_t display_node_end_pos_;
-  std::string display_node_str_;
+  size_t display_node_begin_pos;
+  size_t display_node_end_pos;
+  std::string display_node_str;
 };
-
-Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
-
-NodeAllocator *Lattice::node_allocator() const { return node_allocator_.get(); }
-
-Node *Lattice::NewNode() { return node_allocator_->NewNode(); }
-
-Node *Lattice::begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
-
-Node *Lattice::end_nodes(size_t pos) const { return end_nodes_[pos]; }
 
 void Lattice::SetKey(absl::string_view key) {
   Clear();
@@ -172,10 +162,6 @@ void Lattice::SetKey(absl::string_view key) {
   begin_nodes_[key_.size()] =
       InitEOSNode(this, static_cast<uint16_t>(key_.size()));
 }
-
-Node *Lattice::bos_nodes() const { return end_nodes_[0]; }
-
-Node *Lattice::eos_nodes() const { return begin_nodes_[key_.size()]; }
 
 void Lattice::Insert(size_t pos, Node *node) {
   for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
@@ -202,10 +188,6 @@ void Lattice::Insert(size_t pos, Node *node) {
   }
 }
 
-const std::string &Lattice::key() const { return key_; }
-
-bool Lattice::has_lattice() const { return !begin_nodes_.empty(); }
-
 void Lattice::Clear() {
   key_.clear();
   begin_nodes_.clear();
@@ -218,19 +200,15 @@ void Lattice::Clear() {
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
                                   const std::string &str) {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
-  info->display_node_begin_pos_ = begin_pos;
-  info->display_node_end_pos_ = end_pos;
-  info->display_node_str_ = str;
+  info->display_node_begin_pos = begin_pos;
+  info->display_node_end_pos = end_pos;
+  info->display_node_str = str;
 }
 
 void Lattice::ResetDebugDisplayNode() {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
-  info->display_node_str_.clear();
+  info->display_node_str.clear();
 }
-
-void Lattice::set_history_end_pos(size_t pos) { history_end_pos_ = pos; }
-
-size_t Lattice::history_end_pos() const { return history_end_pos_; }
 
 void Lattice::UpdateKey(const std::string &new_key) {
   const std::string old_key = key_;
@@ -329,16 +307,6 @@ void Lattice::ShrinkKey(const size_t new_len) {
   key_.erase(new_len);
 }
 
-size_t Lattice::cache_info(const size_t pos) const {
-  CHECK_LE(pos, key_.size());
-  return cache_info_[pos];
-}
-
-void Lattice::SetCacheInfo(const size_t pos, const size_t len) {
-  CHECK_LE(pos, key_.size());
-  cache_info_[pos] = len;
-}
-
 void Lattice::ResetNodeCost() {
   for (size_t i = 0; i <= key_.size(); ++i) {
     if (begin_nodes_[i] != nullptr) {
@@ -415,7 +383,7 @@ std::string Lattice::DebugString() const {
 
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
 
-  if (info->display_node_str_.empty()) {
+  if (info->display_node_str.empty()) {
     return os.str();
   }
 
@@ -423,18 +391,18 @@ std::string Lattice::DebugString() const {
     best_path_nodes.push_back(node);
   }
 
-  // Print tha path that contains the designated node
+  // Print the path that contains the designated node
   for (std::vector<const Node *>::const_iterator it = best_path_nodes.begin();
        it != best_path_nodes.end(); ++it) {
     const Node *best_path_node = *it;
-    if (best_path_node->begin_pos < info->display_node_end_pos_) {
+    if (best_path_node->begin_pos < info->display_node_end_pos) {
       break;
     }
     for (const Node *prev_node = end_nodes(best_path_node->begin_pos);
          prev_node; prev_node = prev_node->enext) {
-      if (!PathContainsString(prev_node, info->display_node_begin_pos_,
-                              info->display_node_end_pos_,
-                              info->display_node_str_)) {
+      if (!PathContainsString(prev_node, info->display_node_begin_pos,
+                              info->display_node_end_pos,
+                              info->display_node_str)) {
         continue;
       }
       os << "The path " << GetDebugStringForPath(prev_node)

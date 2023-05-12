@@ -51,7 +51,6 @@ class Segmenter {
             const uint16_t *boundary_data);
   Segmenter(const Segmenter &) = delete;
   Segmenter &operator=(const Segmenter &) = delete;
-  ~Segmenter();
 
   bool IsBoundary(const Node &lnode, const Node &rnode,
                   bool is_single_segment) const;

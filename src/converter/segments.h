@@ -38,8 +38,8 @@
 #include <vector>
 
 #include "base/container/freelist.h"
+#include "base/logging.h"
 #include "base/number_util.h"
-#include "base/port.h"
 #include "converter/lattice.h"
 #include "absl/strings/string_view.h"
 
@@ -208,8 +208,8 @@ class Segment final {
     // The style is defined in enum |Command|.
     Command command = DEFAULT_COMMAND;
 
-    // Boundary information for realtime conversion.  This will be set only for
-    // realtime conversion result candidates.  Each element is the encoded
+    // Boundary information for real time conversion.  This will be set only for
+    // real time conversion result candidates.  Each element is the encoded
     // lengths of key, value, content key and content value.
     std::vector<uint32_t> inner_segment_boundary;
     // LINT.ThenChange(//converter/segments_matchers.h)
@@ -302,18 +302,18 @@ class Segment final {
     }
   };
 
-  Segment();
+  Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
 
   Segment(const Segment &x);
   Segment &operator=(const Segment &x);
 
-  ~Segment() = default;
+  SegmentType segment_type() const { return segment_type_; }
+  void set_segment_type(const SegmentType segment_type) {
+    segment_type_ = segment_type;
+  }
 
-  SegmentType segment_type() const;
-  void set_segment_type(const SegmentType &segment_type);
-
-  const std::string &key() const;
-  void set_key(absl::string_view key);
+  const std::string &key() const { return key_; }
+  void set_key(absl::string_view key) { key_.assign(key.data(), key.size()); }
 
   // check if the specified index is valid or not.
   bool is_valid_index(int i) const;
@@ -328,14 +328,15 @@ class Segment final {
   // push and insert candidates
   Candidate *push_front_candidate();
   Candidate *push_back_candidate();
-  Candidate *add_candidate();  // alias of push_back_candidate()
+  // alias of push_back_candidate()
+  Candidate *add_candidate() { return push_back_candidate(); }
   Candidate *insert_candidate(int i);
   void insert_candidate(int i, std::unique_ptr<Candidate> candidate);
   void insert_candidates(int i,
-                         std::vector<std::unique_ptr<Candidate>> &&candidates);
+                         std::vector<std::unique_ptr<Candidate>> candidates);
 
   // get size of candidates
-  size_t candidates_size() const;
+  size_t candidates_size() const { return candidates_.size(); }
 
   // erase candidate
   void pop_front_candidate();
@@ -349,10 +350,14 @@ class Segment final {
 
   // meta candidates
   // TODO(toshiyuki): Integrate meta candidates to candidate and delete these
-  size_t meta_candidates_size() const;
-  void clear_meta_candidates();
-  const std::vector<Candidate> &meta_candidates() const;
-  std::vector<Candidate> *mutable_meta_candidates();
+  size_t meta_candidates_size() const { return meta_candidates_.size(); }
+  void clear_meta_candidates() { meta_candidates_.clear(); }
+  const std::vector<Candidate> &meta_candidates() const {
+    return meta_candidates_;
+  }
+  std::vector<Candidate> *mutable_meta_candidates() {
+    return &meta_candidates_;
+  }
   const Candidate &meta_candidate(size_t i) const;
   Candidate *mutable_meta_candidate(size_t i);
   Candidate *add_meta_candidate();
@@ -378,6 +383,8 @@ class Segment final {
 
  private:
   void DeepCopyCandidates(const std::deque<Candidate *> &candidates);
+
+  static constexpr int kCandidatesPoolSize = 16;
 
   // LINT.IfChange
   SegmentType segment_type_;
@@ -432,33 +439,42 @@ class Segments final {
     std::string key;
   };
 
-  Segments();
+  Segments()
+      : max_history_segments_size_(0),
+        resized_(false),
+        pool_(32),
+        cached_lattice_() {}
 
   Segments(const Segments &x);
   Segments &operator=(const Segments &x);
 
-  ~Segments() = default;
-
   // getter
-  const Segment &segment(size_t i) const;
-  const Segment &conversion_segment(size_t i) const;
-  const Segment &history_segment(size_t i) const;
+  const Segment &segment(size_t i) const { return *segments_[i]; }
+  const Segment &conversion_segment(size_t i) const {
+    return *segments_[i + history_segments_size()];
+  }
+  const Segment &history_segment(size_t i) const { return *segments_[i]; }
 
   // setter
-  Segment *mutable_segment(size_t i);
-  Segment *mutable_conversion_segment(size_t i);
-  Segment *mutable_history_segment(size_t i);
+  Segment *mutable_segment(size_t i) { return segments_[i]; }
+  Segment *mutable_conversion_segment(size_t i) {
+    return segments_[i + history_segments_size()];
+  }
+  Segment *mutable_history_segment(size_t i) { return segments_[i]; }
 
   // push and insert segments
   Segment *push_front_segment();
   Segment *push_back_segment();
-  Segment *add_segment();  // alias of push_back_segment()
+  // alias of push_back_segment()
+  Segment *add_segment() { return push_back_segment(); }
   Segment *insert_segment(size_t i);
 
   // get size of segments
-  size_t segments_size() const;
+  size_t segments_size() const { return segments_.size(); }
   size_t history_segments_size() const;
-  size_t conversion_segments_size() const;
+  size_t conversion_segments_size() const {
+    return (segments_size() - history_segments_size());
+  }
 
   // erase segment
   void pop_front_segment();
@@ -472,10 +488,12 @@ class Segments final {
   void clear_segments();
 
   void set_max_history_segments_size(size_t max_history_segments_size);
-  size_t max_history_segments_size() const;
+  size_t max_history_segments_size() const {
+    return max_history_segments_size_;
+  }
 
-  bool resized() const;
-  void set_resized(bool resized);
+  bool resized() const { return resized_; }
+  void set_resized(bool resized) { resized_ = resized; }
 
   // clear segments
   void Clear();
@@ -488,14 +506,14 @@ class Segments final {
   }
 
   // Revert entries
-  void clear_revert_entries();
-  size_t revert_entries_size() const;
+  void clear_revert_entries() { revert_entries_.clear(); }
+  size_t revert_entries_size() const { return revert_entries_.size(); }
   RevertEntry *push_back_revert_entry();
-  const RevertEntry &revert_entry(size_t i) const;
-  RevertEntry *mutable_revert_entry(size_t i);
+  const RevertEntry &revert_entry(size_t i) const { return revert_entries_[i]; }
+  RevertEntry *mutable_revert_entry(size_t i) { return &revert_entries_[i]; }
 
   // setter
-  Lattice *mutable_cached_lattice();
+  Lattice *mutable_cached_lattice() { return &cached_lattice_; }
 
  private:
   // LINT.IfChange
@@ -505,9 +523,50 @@ class Segments final {
   ObjectPool<Segment> pool_;
   std::deque<Segment *> segments_;
   std::vector<RevertEntry> revert_entries_;
-  std::unique_ptr<Lattice> cached_lattice_;
+  Lattice cached_lattice_;
   // LINT.ThenChange(//converter/segments_matchers.h)
 };
+
+// Inlining basic accessors here.
+inline absl::string_view Segment::Candidate::functional_key() const {
+  return key.size() <= content_key.size()
+             ? absl::string_view()
+             : absl::string_view(key.data() + content_key.size(),
+                                 key.size() - content_key.size());
+}
+
+inline absl::string_view Segment::Candidate::functional_value() const {
+  return value.size() <= content_value.size()
+             ? absl::string_view()
+             : absl::string_view(value.data() + content_value.size(),
+                                 value.size() - content_value.size());
+}
+
+inline bool Segment::is_valid_index(int i) const {
+  if (i < 0) {
+    return (-i - 1 < meta_candidates_.size());
+  } else {
+    return (i < candidates_.size());
+  }
+}
+
+inline const Segment::Candidate &Segment::candidate(int i) const {
+  if (i < 0) {
+    return meta_candidate(-i - 1);
+  }
+  DCHECK(i < candidates_.size());
+  return *candidates_[i];
+}
+
+inline Segment::Candidate *Segment::mutable_candidate(int i) {
+  if (i < 0) {
+    const size_t meta_index = -i - 1;
+    DCHECK_LT(meta_index, meta_candidates_.size());
+    return &meta_candidates_[meta_index];
+  }
+  DCHECK_LT(i, candidates_.size());
+  return candidates_[i];
+}
 
 }  // namespace mozc
 

@@ -40,10 +40,14 @@ namespace composer {
 struct TypeCorrectedQuery {
   // |base| and |expanded| are the same as Composer::GetQueryForPrediction().
   // |cost| is a penalty for this query.
+  // Sets |is_kana_modifier_insensitive_only| true if
+  // the correction only contains Kana modifier insensitive correction.
+  // We do not need to show the description.
   std::string base;
   std::set<std::string> expanded;
   std::string asis;
-  int cost;
+  int cost = 0;
+  bool is_kana_modifier_insensitive_only = false;
 };
 
 }  // namespace composer

@@ -30,9 +30,8 @@
 #ifndef MOZC_CONVERTER_CANDIDATE_FILTER_H_
 #define MOZC_CONVERTER_CANDIDATE_FILTER_H_
 
-#include <set>
+#include <functional>
 #include <string>
-#include <vector>
 
 #include "converter/node.h"
 #include "converter/segments.h"
@@ -40,9 +39,48 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace converter {
+
+namespace candidate_filter_internal {
+// ID of the candidate for filtering.
+struct CandidateId {
+  explicit CandidateId(const Segment::Candidate &candidate)
+      : value(candidate.value), lid(candidate.lid), rid(candidate.rid) {}
+
+  template <typename H>
+  friend H AbslHashValue(H h, const CandidateId &c) {
+    return H::combine(std::move(h), c.value, c.lid, c.rid);
+  }
+
+  friend bool operator==(const CandidateId &lhs, const CandidateId &rhs) {
+    // Comparing the int values first for performance.
+    return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
+  }
+  friend bool operator==(const CandidateId &lhs,
+                         const Segment::Candidate &rhs) {
+    return lhs.lid == rhs.lid && lhs.rid == rhs.rid && lhs.value == rhs.value;
+  }
+
+  std::string value;
+  uint16_t lid;
+  uint16_t rid;
+};
+
+struct CandidateHasher {
+  using is_transparent = void;
+
+  size_t operator()(const CandidateId &c) const { return absl::HashOf(c); }
+  size_t operator()(const Segment::Candidate &c) const {
+    return absl::HashOf(c.value, c.lid, c.rid);
+  }
+};
+
+}  // namespace candidate_filter_internal
 
 class CandidateFilter {
  public:
@@ -65,26 +103,33 @@ class CandidateFilter {
   // top_nodes: Node vector for the top candidate for the segment.
   // nodes: Node vector for the target candidate
   ResultType FilterCandidate(const ConversionRequest &request,
-                             const std::string &original_key,
+                             absl::string_view original_key,
                              const Segment::Candidate *candidate,
-                             const std::vector<const Node *> &top_nodes,
-                             const std::vector<const Node *> &nodes);
+                             absl::Span<const Node *const> top_nodes,
+                             absl::Span<const Node *const> nodes);
 
   // Resets the internal state.
   void Reset();
 
  private:
+  ResultType CheckRequestType(const ConversionRequest &request,
+                              absl::string_view original_key,
+                              const Segment::Candidate &candidate,
+                              absl::Span<const Node *const> nodes) const;
   ResultType FilterCandidateInternal(const ConversionRequest &request,
-                                     const std::string &original_key,
+                                     absl::string_view original_key,
                                      const Segment::Candidate *candidate,
-                                     const std::vector<const Node *> &top_nodes,
-                                     const std::vector<const Node *> &nodes);
+                                     absl::Span<const Node *const> top_nodes,
+                                     absl::Span<const Node *const> nodes);
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const dictionary::PosMatcher *pos_matcher_;
   const SuggestionFilter *suggestion_filter_;
 
-  std::set<std::string> seen_;
+  absl::flat_hash_set<candidate_filter_internal::CandidateId,
+                      candidate_filter_internal::CandidateHasher,
+                      std::equal_to<>>
+      seen_;
   const Segment::Candidate *top_candidate_;
   bool apply_suggestion_filter_for_exact_match_;
 };

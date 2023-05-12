@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "base/logging.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "absl/strings/string_view.h"
@@ -42,40 +43,42 @@ namespace mozc {
 
 class Lattice {
  public:
-  Lattice();
+  Lattice()
+      : history_end_pos_(0),
+        node_allocator_(std::make_unique<NodeAllocator>()) {}
 
-  NodeAllocator *node_allocator() const;
+  NodeAllocator *node_allocator() const { return node_allocator_.get(); }
 
   // set key and initializes lattice with key.
   void SetKey(absl::string_view key);
 
   // return key.
-  const std::string &key() const;
+  const std::string &key() const { return key_; }
 
   // Set history end position.
   // For cache, we have to reset lattice when the history size is changed.
-  void set_history_end_pos(size_t pos);
+  void set_history_end_pos(size_t pos) { history_end_pos_ = pos; }
 
-  size_t history_end_pos() const;
+  size_t history_end_pos() const { return history_end_pos_; }
 
   // allocate new node.
-  Node *NewNode();
+  Node *NewNode() { return node_allocator_->NewNode(); }
 
   // return nodes (linked list) starting with |pos|.
   // To traverse all nodes, use Node::bnext member.
-  Node *begin_nodes(size_t pos) const;
+  Node *begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
 
   // return nodes (linked list) ending at |pos|.
   // To traverse all nodes, use Node::enext member.
-  Node *end_nodes(size_t pos) const;
+  Node *end_nodes(size_t pos) const { return end_nodes_[pos]; }
 
   // return bos nodes.
   // alias of end_nodes(0).
-  Node *bos_nodes() const;
+  Node *bos_nodes() const { return end_nodes_[0]; }
 
   // return eos nodes.
   // alias of begin_nodes(key.size()).
-  Node *eos_nodes() const;
+  Node *eos_nodes() const { return begin_nodes_[key_.size()]; }
 
   // inset nodes (linked list) to the position |pos|.
   void Insert(size_t pos, Node *node);
@@ -84,7 +87,7 @@ class Lattice {
   void Clear();
 
   // return true if this instance has a valid lattice.
-  bool has_lattice() const;
+  bool has_lattice() const { return !begin_nodes_.empty(); }
 
   // set key with cache information kept
   void UpdateKey(const std::string &new_key);
@@ -93,13 +96,19 @@ class Lattice {
   void AddSuffix(const std::string &suffix_key);
 
   // erase the suffix of a key so that the length of the key becomes new_len
-  void ShrinkKey(const size_t new_len);
+  void ShrinkKey(size_t new_len);
 
   // getter
-  size_t cache_info(const size_t pos) const;
+  size_t cache_info(const size_t pos) const {
+    CHECK_LE(pos, key_.size());
+    return cache_info_[pos];
+  }
 
   // setter
-  void SetCacheInfo(const size_t pos, const size_t len);
+  void SetCacheInfo(const size_t pos, const size_t len) {
+    CHECK_LE(pos, key_.size());
+    cache_info_[pos] = len;
+  }
 
   // revert the wcost of nodes if it has ENABLE_CACHE attribute.
   // This function is needed for wcost may be changed during conversion

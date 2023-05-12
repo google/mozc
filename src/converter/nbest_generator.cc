@@ -104,9 +104,8 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
       pos_matcher_(pos_matcher),
       lattice_(lattice),
       freelist_(kFreeListSize),
-      filter_(new CandidateFilter(suppression_dic, pos_matcher,
-                                  suggestion_filter,
-                                  apply_suggestion_filter_for_exact_match)) {
+      filter_(suppression_dic, pos_matcher, suggestion_filter,
+              apply_suggestion_filter_for_exact_match) {
   DCHECK(suppression_dictionary_);
   DCHECK(segmenter);
   DCHECK(connector);
@@ -123,7 +122,7 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
   agenda_.Clear();
   freelist_.Free();
   top_nodes_.clear();
-  filter_->Reset();
+  filter_.Reset();
   viterbi_result_checked_ = false;
   check_mode_ = mode;
 
@@ -255,8 +254,7 @@ void NBestGenerator::MakeCandidate(
 // Set candidates.
 void NBestGenerator::SetCandidates(const ConversionRequest &request,
                                    const std::string &original_key,
-                                   const size_t expand_size,
-                                   Segment *segment) {
+                                   const size_t expand_size, Segment *segment) {
   DCHECK(begin_node_);
   DCHECK(end_node_);
 
@@ -363,7 +361,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
       CHECK(!top_nodes_.empty());
 
       MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes);
-      const int filter_result = filter_->FilterCandidate(
+      const int filter_result = filter_.FilterCandidate(
           request, original_key, candidate, top_nodes_, nodes);
 
       switch (filter_result) {
@@ -598,8 +596,8 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
   }
 
-  const int result = filter_->FilterCandidate(request, original_key, candidate,
-                                              top_nodes_, top_nodes_);
+  const int result = filter_.FilterCandidate(request, original_key, candidate,
+                                             top_nodes_, top_nodes_);
   return result;
 }
 

@@ -36,7 +36,6 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "absl/strings/string_view.h"
 
@@ -124,18 +123,6 @@ void SuffixDictionary::LookupPredictive(
     }
   }
 }
-
-void SuffixDictionary::LookupPrefix(absl::string_view key,
-                                    const ConversionRequest &conversion_request,
-                                    Callback *callback) const {}
-
-void SuffixDictionary::LookupExact(absl::string_view key,
-                                   const ConversionRequest &conversion_request,
-                                   Callback *callback) const {}
-
-void SuffixDictionary::LookupReverse(
-    absl::string_view key, const ConversionRequest &conversion_request,
-    Callback *callback) const {}
 
 }  // namespace dictionary
 }  // namespace mozc

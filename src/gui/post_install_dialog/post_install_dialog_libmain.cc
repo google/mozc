@@ -53,7 +53,7 @@ int RunPostInstallDialog(int argc, char *argv[]) {
   std::string name = "post_install_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
-  mozc::ProcessMutex mutex(name.c_str());
+  mozc::ProcessMutex mutex(name);
   if (!mutex.Lock()) {
     LOG(INFO) << "post_install_dialog is already running";
     return -1;

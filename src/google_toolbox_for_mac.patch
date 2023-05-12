@@ -1,0 +1,13 @@
+diff --git a/UnitTesting/GTMGoogleTestRunner.mm b/UnitTesting/GTMGoogleTestRunner.mm
+index 86e57be..9448133 100644
+--- a/UnitTesting/GTMGoogleTestRunner.mm
++++ b/UnitTesting/GTMGoogleTestRunner.mm
+@@ -62,7 +62,7 @@
+ #import <XCTest/XCTest.h>
+ #import <objc/runtime.h>
+
+-#include "third_party/gtest/include/gtest/gtest.h"
++#include <gtest/gtest.h>
+
+ // This is a SPI for dealing with skipped tests.
+ @interface XCTSkippedTestContext : NSObject

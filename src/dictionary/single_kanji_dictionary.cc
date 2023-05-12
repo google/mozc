@@ -37,11 +37,11 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -233,12 +233,6 @@ bool SingleKanjiDictionary::LookupKanjiEntries(
   return true;
 }
 
-std::pair<SerializedDictionary::const_iterator,
-          SerializedDictionary::const_iterator>
-SingleKanjiDictionary::LookupNounPrefixEntries(absl::string_view key) const {
-  return noun_prefix_dictionary_->equal_range(key);
-}
-
 // The underlying token array, |variant_token_array_|, has the following
 // format:
 //
@@ -281,10 +275,7 @@ bool SingleKanjiDictionary::GenerateDescription(absl::string_view kanji_surface,
   const uint32_t type_id = iter[2];
   DCHECK_LT(type_id, variant_type_array_.size());
   // Format like "XXXのYYY"
-  desc->assign(original.data(), original.size());
-  desc->append("の");
-  desc->append(variant_type_array_[type_id].data(),
-               variant_type_array_[type_id].size());
+  *desc = absl::StrCat(original, "の", variant_type_array_[type_id]);
   return true;
 }
 

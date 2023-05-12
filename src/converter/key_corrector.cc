@@ -41,14 +41,7 @@
 namespace mozc {
 namespace {
 
-// maximum key length KeyCorrector can handle
-// if key is too long, we don't do key correction
-constexpr size_t kMaxSize = 128;
-
-// invalid alignment marker
-constexpr size_t kInvalidPos = static_cast<size_t>(-1);
-
-// "ん" (few "n" pettern)
+// "ん" (few "n" pattern)
 // "んあ" -> "んな"
 // "んい" -> "んに"
 // "んう" -> "んぬ"
@@ -161,7 +154,7 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
              ucs4 == 0x3044 || ucs4 == 0x3046 || ucs4 == 0x3048 ||
              ucs4 == 0x304A) {
     // drop first "ん" and leave "ん[あいうえお]"
-    // remained part will be handled by RewriteNN(), e.g, "んあ" -> "んな"
+    // remained part will be handled by RewriteNN(), e.g., "んあ" -> "んな"
     Util::Ucs4ToUtf8Append(first_char, output);
     // Skip one Hiragana character in UTF-8, which is 3 bytes.
     *mblen = first_mblen + 3;
@@ -264,7 +257,7 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
 // "きっって" ->" きって"
 // replace "([^っ])っっ([^っ])" => "$1っ$2"
 // Don't consider more that three "っっっ"
-// e.g, "かっっった" -> "かっっった"
+// e.g., "かっっった" -> "かっっった"
 bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
                      size_t *mblen, std::string *output) {
   // 0x0000 is a place holder for "[^っ]"
@@ -360,17 +353,6 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
   return true;
 }
 }  // namespace
-
-KeyCorrector::InputMode KeyCorrector::mode() const { return mode_; }
-
-bool KeyCorrector::IsAvailable() const { return available_; }
-
-// return corrected key;
-const std::string &KeyCorrector::corrected_key() const {
-  return corrected_key_;
-}
-
-const std::string &KeyCorrector::original_key() const { return original_key_; }
 
 size_t KeyCorrector::GetCorrectedPosition(const size_t original_key_pos) const {
   if (original_key_pos < alignment_.size()) {
@@ -534,17 +516,6 @@ size_t KeyCorrector::GetOriginalOffset(const size_t original_key_pos,
 
   return kInvalidPos;
 }
-
-// static
-bool KeyCorrector::IsValidPosition(size_t pos) { return (pos != kInvalidPos); }
-
-// static
-bool KeyCorrector::IsInvalidPosition(size_t pos) {
-  return (pos == kInvalidPos);
-}
-
-// static
-size_t KeyCorrector::InvalidPosition() { return kInvalidPos; }
 
 // static
 int KeyCorrector::GetCorrectedCostPenalty(const std::string &key) {
