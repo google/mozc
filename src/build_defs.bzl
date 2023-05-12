@@ -255,7 +255,7 @@ def mozc_objc_test(
         size = size,
         visibility = visibility,
         target_compatible_with = ["@platforms//os:macos"],
-        tags = ["manual"] + MOZC_TAGS.MAC_ONLY + tags,
+        tags = MOZC_TAGS.MAC_ONLY + tags,
     )
 
 register_extension_info(
