@@ -133,6 +133,19 @@
       },
     },
     {
+      'target_name': 'bits_test',
+      'type': 'executable',
+      'sources': [
+        'bits_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'clock_mock',
       'toolsets': ['host', 'target'],
       'type': 'static_library',
@@ -428,6 +441,7 @@
       'dependencies': [
         'base_core_test',
         'base_test',
+        'bits_test',
         'clock_mock_test',
         'clock_test',
         'config_file_stream_test',
@@ -445,6 +459,7 @@
         'update_util_test',
         'url_test',
         'util_test',
+        'zstring_view_test',
       ],
       'conditions': [
         # To work around a link error on Ninja build, we put this target in

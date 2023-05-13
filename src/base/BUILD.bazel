@@ -1216,3 +1216,20 @@ mozc_cc_test(
         windows = ["//base/win32:win_api_test_helper"],
     ),
 )
+
+mozc_cc_library(
+    name = "bits",
+    hdrs = ["bits.h"],
+    deps = ["@com_google_absl//absl/base:config"],
+)
+
+mozc_cc_test(
+    name = "bits_test",
+    size = "small",
+    srcs = ["bits_test.cc"],
+    deps = [
+        ":bits",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/algorithm:container",
+    ],
+)
