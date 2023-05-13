@@ -53,9 +53,8 @@ protobuf_deps()
 
 
 # GoogleTest
-new_local_repository(
+local_repository(
     name = "com_google_googletest",
-    build_file = "third_party/gtest/BUILD.bazel",
     path = "third_party/gtest",
 )
 

@@ -63,4 +63,4 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazel test ... --config oss_linux --build_tests_only -- -third_party/...
+          bazel test ... --config oss_linux --build_tests_only

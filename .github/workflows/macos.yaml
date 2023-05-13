@@ -91,4 +91,4 @@ jobs:
       - name: bazel test
         working-directory: ./src
         run: |
-          bazel test ... --config oss_macos --build_tests_only -- -session:session_watch_dog_test -third_party/...
+          bazel test ... --config oss_macos --build_tests_only -- -session:session_watch_dog_test

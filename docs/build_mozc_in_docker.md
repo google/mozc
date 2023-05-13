@@ -87,18 +87,37 @@ Install paths are configurable by modifying
 [src/config.bzl](https://github.com/google/mozc/blob/master/src/config.bzl).
 
 
-### Unittests
+### Unit tests
+
+#### Run all tests
 
 ```
-bazel test ... --config oss_linux --build_tests_only -c dbg -- -third_party/...
+bazel test ... --config oss_linux --build_tests_only -c dbg
 ```
 
 * `...` means all targets under the current and subdirectories.
+
+
+### Run tests under the specific directories
+
+```
+bazel test base/... composer/... --config oss_linux --build_tests_only -c dbg
+```
+
+* `<dir>/...` means all targets under the `<dir>/` directory.
+
+
+### Run tests without the specific directories
+
+```
+bazel test ... --config oss_linux --build_tests_only -c dbg -- -base/...
+```
+
 * `--` means the end of the flags which start from `-`.
 * `-<dir>/...` means exclusion of all targets under the `dir`.
-  + `third_party` are not supported yet.
 
-Here is a sample command to run a specific test.
+
+### Run the specific test
 
 ```
 bazel test base:util_test --config oss_linux -c dbg
@@ -106,12 +125,15 @@ bazel test base:util_test --config oss_linux -c dbg
 
 * `util_test` is defined in `base/BUILD.bazel`.
 
-The `--test_arg=--logtostderr --test_output=all` flags shows the output of
-unitests to stderr.
+### Output logs to stderr
 
 ```
 bazel test base:util_test --config oss_linux --test_arg=--logtostderr --test_output=all
 ```
+
+* The `--test_arg=--logtostderr --test_output=all` flags shows the output of
+unitests to stderr.
+
 
 ## Build Mozc on other Linux environment
 

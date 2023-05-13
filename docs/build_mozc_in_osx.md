@@ -96,10 +96,10 @@ MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt
 open bazel-bin/mac/Mozc.pkg
 ```
 
-### Unittests
+### Unit tests
 
 ```
-MOZC_QT_PATH=${PWD}/third_party/qt bazel test ... --config oss_macos --build_tests_only -c dbg -- -third_party/...
+MOZC_QT_PATH=${PWD}/third_party/qt bazel test ... --config oss_macos --build_tests_only -c dbg
 ```
 
 See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.
