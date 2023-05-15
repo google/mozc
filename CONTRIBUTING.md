@@ -10,7 +10,7 @@ Files and directories we may accept pull requests:
 * [docker/](https://github.com/google/mozc/tree/master/docker/)
 * [docs/](https://github.com/google/mozc/tree/master/docs/)
 * [src/.bazelrc](https://github.com/google/mozc/tree/master/src/.bazelrc)
-* [src/BUILD.(library).bazel](https://github.com/google/mozc/tree/master/src/)
+* [src/bazel/](https://github.com/google/mozc/tree/master/src/bazel/)
 * [src/data/oss/](https://github.com/google/mozc/tree/master/src/data/oss/)
 * [src/data/test/quality_regression_test/](https://github.com/google/mozc/tree/master/src/data/test/quality_regression_test/)
 * [src/renderer/qt/](https://github.com/google/mozc/tree/master/src/renderer/qt/)
