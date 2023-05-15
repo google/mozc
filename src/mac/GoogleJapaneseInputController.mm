@@ -859,7 +859,12 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
-  if (event == nullptr) {
+  // NSNull might get passed to this method (as `event`) in certain cases. 
+  // We guard-let this parameter to make sure it is neither NSNull nor nullptr.
+  // Abort processing if it really is.
+  // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/NumbersandValues/Articles/Null.html
+  // https://github.com/google/mozc/issues/735
+  if (event == nullptr || event == [NSNull null]) {
     return NO;
   }
   if ([event type] == NSEventTypeCursorUpdate) {
