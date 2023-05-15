@@ -39,7 +39,7 @@ def _qt_mac_repository_impl(repo_ctx):
     repo_ctx.symlink(qt_path.get_child("bin"), "bin")
     repo_ctx.symlink(qt_path.get_child("lib"), "lib")
     repo_ctx.symlink(qt_path.get_child("plugins"), "plugins")
-    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("@//:BUILD.qt.bazel")))
+    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("@//bazel:BUILD.qt.bazel")))
 
 qt_mac_repository = repository_rule(
     implementation = _qt_mac_repository_impl,
