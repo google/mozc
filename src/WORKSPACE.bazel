@@ -6,8 +6,8 @@ load(
     "http_archive",
     "http_file",
 )
-load("//:config.bzl", "MACOS_QT_PATH")
-load("//:pkg_config_repository.bzl", "pkg_config_repository")
+load("@//:config.bzl", "MACOS_QT_PATH")
+load("@//bazel:pkg_config_repository.bzl", "pkg_config_repository")
 
 
 # Bazel Skylib (1.4.1)
@@ -87,7 +87,7 @@ http_archive(
 #   load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
 #   android_ndk_repository(name="androidndk")
 # If it is empty, do nothing.
-load("//:android_repository.bzl", "android_repository")
+load("@//bazel:android_repository.bzl", "android_repository")
 android_repository(name = "android_repository")
 load("@android_repository//:setup.bzl", "android_ndk_setup")
 android_ndk_setup()
@@ -97,7 +97,7 @@ android_ndk_setup()
 # https://github.com/microsoft/wil/
 new_local_repository(
   name = "com_microsoft_wil",
-  build_file = "@//:BUILD.wil.bazel",
+  build_file = "@//bazel:BUILD.wil.bazel",
   path = "third_party/wil",
 )
 
@@ -117,7 +117,7 @@ pkg_config_repository(
 # Japanese Usage Dictionary
 new_local_repository(
     name = "ja_usage_dict",
-    build_file = "BUILD.ja_usage_dict.bazel",
+    build_file = "@//bazel:BUILD.ja_usage_dict.bazel",
     path = "third_party/japanese_usage_dictionary",
 )
 
@@ -128,7 +128,7 @@ pkg_config_repository(
 )
 
 # Qt for macOS
-load("//:qt_mac_repository.bzl", "qt_mac_repository")
+load("@//bazel:qt_mac_repository.bzl", "qt_mac_repository")
 qt_mac_repository(
   name = "qt_mac",
   default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
@@ -145,7 +145,7 @@ http_archive(
         "https://github.com/google/google-toolbox-for-mac/archive/%s.zip" % GTM_GIT_SHA
     ],
     strip_prefix = "google-toolbox-for-mac-%s/UnitTesting" % GTM_GIT_SHA,
-    build_file = "@//:BUILD.google_toolbox_for_mac.bazel",
+    build_file = "@//bazel:BUILD.google_toolbox_for_mac.bazel",
     patches = ["@//:google_toolbox_for_mac.patch"],
     patch_args = ["-p2"],
 )
