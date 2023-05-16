@@ -661,7 +661,7 @@ This hack could be moved to mozc-posn-at-x-y in a future version."
   "Return the width of WINDOW in pixel.
 WINDOW defaults to the selected window."
   (let ((rect (window-inside-pixel-edges window)))
-    (- (third rect) (first rect))))
+    (- (nth 2 rect) (nth 0 rect))))
 
 (defun mozc-header-line-height ()
   "Return the height of the header line.
