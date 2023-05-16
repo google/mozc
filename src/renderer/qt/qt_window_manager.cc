@@ -416,7 +416,8 @@ bool QtWindowManager::ShouldShowInfolistWindow(
 }
 
 Rect QtWindowManager::GetMonitorRect(int x, int y) {
-  return GetRect(QGuiApplication::primaryScreen()->geometry());
+  QPoint point{x, y};
+  return GetRect(QGuiApplication::screenAt(point)->geometry());
 }
 
 void QtWindowManager::UpdateInfolistWindow(
