@@ -257,26 +257,27 @@ OK:	はいせつ	排泄	Conversion Expected 9	排雪	2.28.4960
 OK:	りねーむ	リネーム	Conversion Expected	リネーム	2.28.4960
 OK:	はいたしょり	排他処理	Conversion Expected	排他処理	2.28.4960
 OK:	じきしょうそう	時期尚早	Conversion Expected	時期尚早	2.28.5000
+OK:	りまいんど	リマインド	Conversion Expected	リマインド	2.28.5085
 OK:	ひとり	一人	Conversion Expected 9	1人	2.28.5029
 OK:	ふたり	二人	Conversion Expected 9	2人	2.28.5029
 OK:	いっこ	一個	Conversion Expected 9	1個	2.28.5029
 OK:	いっぽん	一本	Conversion Expected 9	1本	2.28.5029
 OK:	そっかん	速乾	Conversion Expected 2	速乾	2.28.5017
 OK:	かんりめいがら	監理銘柄	Conversion Expected	監理銘柄	2.28.5017
-FAILED:	うとろ	ウトロ	Conversion Expected 9	宇登呂	2.28.5085
-FAILED:	ひかりの	光の	Conversion Expected 9	ひかり野	2.28.5085
-FAILED:	ちえんべつ	遅延別	Conversion Expected 9	知円別	2.28.5085
-FAILED:	とっぷし	トップ氏	Conversion Expected 9	富武士	2.28.5085
-OK:	おんねない	温根内	Conversion Expected 9	音根内	2.28.5085
+OK:	うとろ	ウトロ	Conversion Expected 9	宇登呂	2.28.5085
+OK:	ひかりの	光の	Conversion Expected 9	ひかり野	2.28.5085
+OK:	ちえんべつ	知円別	Conversion Expected 9	知円別	2.28.5085
+OK:	とっぷし	富武士	Conversion Expected 9	富武士	2.28.5085
+OK:	おんねない	音根内	Conversion Expected 9	音根内	2.28.5085
 OK:	ほじょう	ほ場	Conversion Expected 9	圃場	2.28.5050
-FAILED:	くわたけいすけ	桑田圭介	Conversion Expected	桑田佳祐	2.28.5085
+OK:	くわたけいすけ	桑田佳祐	Conversion Expected	桑田佳祐	2.28.5085
 OK:	きかいがとまる	機械が止まる	Conversion Expected	機械が止まる	2.28.5085
 OK:	せいどがひくい	精度が低い	Conversion Expected	精度が低い	2.28.5085
 FAILED:	きほんかのように	基本家のように	Conversion Expected	基本かのように	2.28.5085
 OK:	おもしろいねえ	面白いねえ	Conversion Expected	面白いねえ	2.28.5085
 FAILED:	てきかみかたか	的か味方か	Conversion Expected	敵か味方か	2.28.5085
 FAILED:	かれはみかたなのか	彼は味方７日	Conversion Expected	彼は味方なのか	2.28.5085
-FAILED:	しっちゃく	知っちゃく	Conversion Expected 2	失着	2.28.5085
+OK:	しっちゃく	失着	Conversion Expected 2	失着	2.28.5085
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695

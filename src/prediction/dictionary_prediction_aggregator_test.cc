@@ -2646,7 +2646,14 @@ TEST_F(DictionaryPredictionAggregatorTest, NumberDecoderCandidates) {
   std::vector<Result> results;
   EXPECT_NE(NO_PREDICTION, aggregator.AggregatePredictionForRequest(
                                *prediction_convreq_, segments, &results));
-  EXPECT_TRUE(FindResultByValue(results, "45"));
+  const auto &result =
+      std::find_if(results.begin(), results.end(),
+                   [](Result r) { return r.value == "45" && !r.removed; });
+  ASSERT_NE(result, results.end());
+  EXPECT_TRUE(result->candidate_attributes &
+              Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+  EXPECT_TRUE(result->candidate_attributes &
+              Segment::Candidate::NO_SUGGEST_LEARNING);
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, DoNotPredictNoisyNumberEntries) {

@@ -30,7 +30,7 @@
 #include "session/internal/candidate_list.h"
 
 #include <memory>
-#include <string>
+#include <tuple>
 
 #include "testing/gunit.h"
 
@@ -294,8 +294,7 @@ TEST_F(CandidateListTest, SetPageSize) {
   // Make sure the default values.
   EXPECT_EQ(main_list_->focused_id(), 7);
   EXPECT_EQ(main_list_->focused_index(), 9);
-  size_t begin, end;
-  main_list_->GetPageRange(main_list_->focused_index(), &begin, &end);
+  auto [begin, end] = main_list_->GetPageRange(main_list_->focused_index());
   EXPECT_EQ(begin, 9);
   EXPECT_EQ(end, 12);  // The last index.
 
@@ -306,7 +305,7 @@ TEST_F(CandidateListTest, SetPageSize) {
   EXPECT_EQ(main_list_->focused_index(), 9);
 
   // The begin and end should be changed.
-  main_list_->GetPageRange(main_list_->focused_index(), &begin, &end);
+  std::tie(begin, end) = main_list_->GetPageRange(main_list_->focused_index());
   EXPECT_EQ(begin, 0);
   EXPECT_EQ(end, 10);
 }
@@ -449,11 +448,11 @@ TEST_F(CandidateListTest, AttributesWithSubList) {
 TEST_F(CandidateListTest, GetDeepestFocusedCandidate) {
   EXPECT_TRUE(main_list_->MoveToPageIndex(2));
   EXPECT_EQ(main_list_->focused_candidate().id(), 0);
-  EXPECT_TRUE(main_list_->focused_candidate().IsSubcandidateList());
+  EXPECT_TRUE(main_list_->focused_candidate().HasSubcandidateList());
 
   const Candidate &deepest_candidate = main_list_->GetDeepestFocusedCandidate();
   EXPECT_EQ(deepest_candidate.id(), -1);
-  EXPECT_FALSE(deepest_candidate.IsSubcandidateList());
+  EXPECT_FALSE(deepest_candidate.HasSubcandidateList());
 }
 
 TEST_F(CandidateListTest, NextAvailableId) {

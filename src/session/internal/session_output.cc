@@ -49,6 +49,7 @@
 #include "session/internal/candidate_list.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {
@@ -83,7 +84,7 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
 
 void FillCandidateWord(const Segment::Candidate &segment_candidate,
                        const int id, const int index,
-                       const std::string &base_key,
+                       const absl::string_view base_key,
                        commands::CandidateWord *candidate_word_proto) {
   candidate_word_proto->set_id(id);
   candidate_word_proto->set_index(index);
@@ -129,7 +130,7 @@ void FillAllCandidateWordsInternal(
     const int focused_id, commands::CandidateList *candidate_list_proto) {
   for (size_t i = 0; i < candidate_list.size(); ++i) {
     const Candidate &candidate = candidate_list.candidate(i);
-    if (candidate.IsSubcandidateList()) {
+    if (candidate.HasSubcandidateList()) {
       FillAllCandidateWordsInternal(segment, candidate.subcandidate_list(),
                                     focused_id, candidate_list_proto);
       continue;
@@ -166,7 +167,7 @@ void SessionOutput::FillCandidate(
     commands::Candidates_Candidate *candidate_proto) {
   DCHECK(segment.is_valid_index(candidate.id()));
 
-  if (candidate.IsSubcandidateList()) {
+  if (candidate.HasSubcandidateList()) {
     candidate_proto->set_value(candidate.subcandidate_list().name());
     candidate_proto->set_id(candidate.subcandidate_list().focused_id());
     return;
@@ -199,9 +200,8 @@ void SessionOutput::FillCandidates(const Segment &segment,
   candidates_proto->set_page_size(candidate_list.page_size());
   candidates_proto->set_position(position);
 
-  size_t c_begin = 0;
-  size_t c_end = 0;
-  candidate_list.GetPageRange(candidate_list.focused_index(), &c_begin, &c_end);
+  auto [c_begin, c_end] =
+      candidate_list.GetPageRange(candidate_list.focused_index());
 
   // Store candidates.
   for (size_t i = c_begin; i <= c_end; ++i) {
@@ -220,7 +220,7 @@ void SessionOutput::FillCandidates(const Segment &segment,
   }
 
   // Store subcandidates.
-  if (candidate_list.focused_candidate().IsSubcandidateList()) {
+  if (candidate_list.focused_candidate().HasSubcandidateList()) {
     FillCandidates(segment,
                    candidate_list.focused_candidate().subcandidate_list(),
                    candidate_list.focused_index(),
@@ -260,19 +260,13 @@ void SessionOutput::FillRemovedCandidates(
 bool SessionOutput::ShouldShowUsages(const Segment &segment,
                                      const CandidateList &cand_list) {
   // Check if the shown candidate have the usage data.
-  size_t c_begin = 0;
-  size_t c_end = 0;
-  cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
-  for (size_t i = c_begin; i <= c_end; ++i) {
-    if (cand_list.candidate(i).IsSubcandidateList()) {
+  for (const Candidate &candidate_ptr : cand_list.focused_page()) {
+    if (candidate_ptr.HasSubcandidateList()) {
       continue;
     }
-    const Segment::Candidate &candidate =
-        segment.candidate(cand_list.candidate(i).id());
-    if (candidate.usage_title.empty()) {
-      continue;
+    if (!segment.candidate(candidate_ptr.id()).usage_title.empty()) {
+      return true;
     }
-    return true;
   }
   return false;
 }
@@ -287,19 +281,14 @@ void SessionOutput::FillUsages(const Segment &segment,
 
   commands::InformationList *usages = candidates_proto->mutable_usages();
 
-  size_t c_begin = 0;
-  size_t c_end = 0;
-  cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
-
   using IndexInfoPair = std::pair<int32_t, commands::Information *>;
   absl::flat_hash_map<int32_t, IndexInfoPair> usageid_information_map;
   // Store usages.
-  for (size_t i = c_begin; i <= c_end; ++i) {
-    if (cand_list.candidate(i).IsSubcandidateList()) {
+  for (const Candidate &candidate_ptr : cand_list.focused_page()) {
+    if (candidate_ptr.HasSubcandidateList()) {
       continue;
     }
-    const Segment::Candidate &candidate =
-        segment.candidate(cand_list.candidate(i).id());
+    const Segment::Candidate &candidate = segment.candidate(candidate_ptr.id());
     if (candidate.usage_title.empty()) {
       continue;
     }
@@ -314,15 +303,15 @@ void SessionOutput::FillUsages(const Segment &segment,
       info->set_id(candidate.usage_id);
       info->set_title(candidate.usage_title);
       info->set_description(candidate.usage_description);
-      info->add_candidate_id(cand_list.candidate(i).id());
+      info->add_candidate_id(candidate_ptr.id());
       usageid_information_map.emplace(candidate.usage_id,
                                       std::make_pair(index, info));
     } else {
       index = info_iter->second.first;
       info = info_iter->second.second;
-      info->add_candidate_id(cand_list.candidate(i).id());
+      info->add_candidate_id(candidate_ptr.id());
     }
-    if (cand_list.candidate(i).id() == cand_list.focused_id()) {
+    if (candidate_ptr.id() == cand_list.focused_id()) {
       usages->set_focused_index(index);
     }
   }
@@ -418,20 +407,21 @@ bool SessionOutput::FillFooter(const commands::Category category,
 }
 
 // static
-bool SessionOutput::AddSegment(const std::string &key, const std::string &value,
+bool SessionOutput::AddSegment(const absl::string_view key,
+                               const absl::string_view value,
                                const uint32_t segment_type_mask,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
-  const std::string normalized_key = TextNormalizer::NormalizeText(key);
+  std::string normalized_key = TextNormalizer::NormalizeText(key);
 
   std::string normalized_value;
   if (segment_type_mask & PREEDIT) {
     normalized_value = TextNormalizer::NormalizeText(value);
   } else if (segment_type_mask & CONVERSION) {
-    normalized_value = value;
+    normalized_value = std::string(value);
   } else {
     LOG(WARNING) << "Unknown segment type" << segment_type_mask;
-    normalized_value = value;
+    normalized_value = std::string(value);
   }
 
   if (normalized_value.empty()) {
@@ -439,9 +429,9 @@ bool SessionOutput::AddSegment(const std::string &key, const std::string &value,
   }
 
   commands::Preedit::Segment *segment = preedit->add_segment();
-  segment->set_key(normalized_key);
-  segment->set_value(normalized_value);
+  segment->set_key(std::move(normalized_key));
   segment->set_value_length(Util::CharsLen(normalized_value));
+  segment->set_value(std::move(normalized_value));
   segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
   if ((segment_type_mask & CONVERSION) && (segment_type_mask & FOCUSED)) {
     segment->set_annotation(commands::Preedit::Segment::HIGHLIGHT);
@@ -491,32 +481,34 @@ void SessionOutput::FillConversion(const Segments &segments,
 
 // static
 void SessionOutput::FillConversionResultWithoutNormalization(
-    const std::string &key, const std::string &result,
-    commands::Result *result_proto) {
+    std::string key, std::string result, commands::Result *result_proto) {
   result_proto->set_type(commands::Result::STRING);
-  result_proto->set_key(key);
-  result_proto->set_value(result);
+  result_proto->set_key(std::move(key));
+  result_proto->set_value(std::move(result));
 }
 
 // static
-void SessionOutput::FillConversionResult(const std::string &key,
-                                         const std::string &result,
+void SessionOutput::FillConversionResult(const absl::string_view key,
+                                         std::string result,
                                          commands::Result *result_proto) {
   // Key should be normalized as a preedit text.
-  const std::string normalized_key = TextNormalizer::NormalizeText(key);
+  std::string normalized_key = TextNormalizer::NormalizeText(key);
 
   // value is already normalized by converter.
-  FillConversionResultWithoutNormalization(normalized_key, result,
-                                           result_proto);
+  FillConversionResultWithoutNormalization(std::move(normalized_key),
+                                           std::move(result), result_proto);
 }
 
 // static
-void SessionOutput::FillPreeditResult(const std::string &preedit,
+void SessionOutput::FillPreeditResult(const absl::string_view preedit,
                                       commands::Result *result_proto) {
-  const std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
-
-  FillConversionResultWithoutNormalization(normalized_preedit,
-                                           normalized_preedit, result_proto);
+  std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
+  // Copy before passing the value to FillConversionResultWithoutNormalization.
+  // std::move() is evaluated out of order when used directly in the function
+  // parameters.
+  std::string key = normalized_preedit;
+  FillConversionResultWithoutNormalization(
+      std::move(key), std::move(normalized_preedit), result_proto);
 }
 
 // static

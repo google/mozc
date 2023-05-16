@@ -41,6 +41,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {
@@ -109,25 +110,23 @@ class SessionOutput {
   };
   // Add a Preedit::Segment protobuf to the Preedit protobuf with key
   // and value.  Return true iff. new segment is added to preedit.
-  static bool AddSegment(const std::string &key, const std::string &value,
+  static bool AddSegment(absl::string_view, absl::string_view value,
                          uint32_t segment_type_mask,
                          commands::Preedit *preedit);
 
   // Fill the Result protobuf with the key and result strings
   // for a conversion result without any text normalization.
   static void FillConversionResultWithoutNormalization(
-      const std::string &key, const std::string &result,
-      commands::Result *result_proto);
+      std::string key, std::string result, commands::Result *result_proto);
 
   // Fill the Result protobuf with the key and result strings
   // nomalizing the string for a conversion result.
-  static void FillConversionResult(const std::string &key,
-                                   const std::string &result,
+  static void FillConversionResult(absl::string_view key, std::string result,
                                    commands::Result *result_proto);
 
   // Fill the Result protobuf with the preedit string nomalizing the
   // string for a preedit result.
-  static void FillPreeditResult(const std::string &preedit,
+  static void FillPreeditResult(absl::string_view preedit,
                                 commands::Result *result_proto);
 
   // Fill the Result protobuf with cursor offset.

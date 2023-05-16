@@ -102,8 +102,9 @@ mozc_cc_library(
     deps = [
         "//base:hash",
         "//base:logging",
-        "//base/container:freelist",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

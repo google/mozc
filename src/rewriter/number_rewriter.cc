@@ -270,7 +270,8 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
     cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
   cand->attributes |=
-      base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      base_cand.attributes & (Segment::Candidate::PARTIALLY_KEY_CONSUMED |
+                              Segment::Candidate::NO_LEARNING);
 }
 
 void InsertCandidate(Segment *segment, int32_t insert_position,

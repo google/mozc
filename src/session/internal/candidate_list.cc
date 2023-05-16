@@ -31,15 +31,13 @@
 
 #include "session/internal/candidate_list.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <string>
+#include <memory>
 #include <vector>
 
-#include "base/container/freelist.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {
@@ -47,47 +45,18 @@ namespace session {
 void Candidate::Clear() {
   id_ = 0;
   attributes_ = NO_ATTRIBUTES;
-  if (subcandidate_list_owner_ && subcandidate_list_ != nullptr) {
-    delete subcandidate_list_;
-  }
   subcandidate_list_ = nullptr;
-  subcandidate_list_owner_ = false;
-}
-
-const CandidateList &Candidate::subcandidate_list() const {
-  DCHECK(subcandidate_list_);
-  return *subcandidate_list_;
+  owned_subcandidate_list_.reset();
 }
 
 CandidateList *Candidate::allocate_subcandidate_list(bool rotate) {
-  DCHECK(!subcandidate_list_owner_);
-  subcandidate_list_ = new CandidateList(rotate);
-  subcandidate_list_owner_ = true;
+  DCHECK(!owned_subcandidate_list_);
+  owned_subcandidate_list_ = std::make_unique<CandidateList>(rotate);
+  subcandidate_list_ = owned_subcandidate_list_.get();
   return subcandidate_list_;
 }
 
-void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
-  DCHECK(!subcandidate_list_owner_);
-  subcandidate_list_ = subcandidate_list;
-}
-
-static constexpr size_t kDefaultPageSize = 9;
-
-CandidateList::CandidateList(const bool rotate)
-    : page_size_(kDefaultPageSize),
-      focused_index_(0),
-      candidate_pool_(kDefaultPageSize),
-      next_available_id_(0),
-      rotate_(rotate),
-      focused_(false) {}
-
-CandidateList::~CandidateList() { Clear(); }
-
 void CandidateList::Clear() {
-  for (Candidate *candidate : candidates_) {
-    candidate->Clear();
-    candidate_pool_.Release(candidate);
-  }
   candidates_.clear();
   focused_index_ = 0;
   focused_ = false;
@@ -97,18 +66,14 @@ void CandidateList::Clear() {
 }
 
 const Candidate &CandidateList::GetDeepestFocusedCandidate() const {
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     return focused_candidate().subcandidate_list().GetDeepestFocusedCandidate();
   }
   return focused_candidate();
 }
 
-void CandidateList::AddCandidate(const int id, const std::string &value) {
-  AddCandidateWithAttributes(id, value, NO_ATTRIBUTES);
-}
-
 void CandidateList::AddCandidateWithAttributes(const int id,
-                                               const std::string &value,
+                                               const absl::string_view value,
                                                const Attributes attributes) {
   if (id >= 0) {
     DCHECK(id >= next_available_id_);
@@ -128,31 +93,24 @@ void CandidateList::AddCandidateWithAttributes(const int id,
     // Add attributes to the existing candidate.
     for (size_t i = 0; i < size(); ++i) {
       if (candidate(i).id() == alt_id) {
-        candidates_[i]->add_attributes(attributes);
+        candidates_[i].add_attributes(attributes);
       }
     }
     return;
   }
 
-  Candidate *new_candidate = candidate_pool_.Alloc();
-  candidates_.push_back(new_candidate);
+  Candidate &new_candidate = candidates_.emplace_back();
 
-  new_candidate->set_id(id);
-  new_candidate->set_attributes(attributes);
+  new_candidate.set_id(id);
+  new_candidate.set_attributes(attributes);
 }
 
 void CandidateList::AddSubCandidateList(CandidateList *subcandidate_list) {
-  Candidate *new_candidate = candidate_pool_.Alloc();
-  candidates_.push_back(new_candidate);
-
-  new_candidate->set_subcandidate_list(subcandidate_list);
+  candidates_.emplace_back().set_subcandidate_list(subcandidate_list);
 }
 
 CandidateList *CandidateList::AllocateSubCandidateList(const bool rotate) {
-  Candidate *new_candidate = candidate_pool_.Alloc();
-  candidates_.push_back(new_candidate);
-
-  return new_candidate->allocate_subcandidate_list(rotate);
+  return candidates_.emplace_back().allocate_subcandidate_list(rotate);
 }
 
 int CandidateList::focused_id() const {
@@ -160,7 +118,7 @@ int CandidateList::focused_id() const {
   if (size() == 0) {
     return 0;
   }
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     return focused_candidate().subcandidate_list().focused_id();
   }
   return focused_candidate().id();
@@ -169,7 +127,7 @@ int CandidateList::focused_id() const {
 int CandidateList::next_available_id() const {
   int result = next_available_id_;
   for (size_t i = 0; i < candidates_.size(); ++i) {
-    if (candidate(i).IsSubcandidateList()) {
+    if (candidate(i).HasSubcandidateList()) {
       const int sub_available_id =
           candidate(i).subcandidate_list().next_available_id();
       if (result < sub_available_id) {
@@ -180,16 +138,10 @@ int CandidateList::next_available_id() const {
   return result;
 }
 
-void CandidateList::GetPageRange(const size_t index, size_t *page_begin,
-                                 size_t *page_end) const {
-  *page_begin = index - (index % page_size_);
-  *page_end = std::min(last_index(), *page_begin + page_size_ - 1);
-}
-
 bool CandidateList::MoveNext() {
   // If the current candidate points to subcandidate list, the focused
   // candidate in the subcandidate list will be operated.
-  if (focused_candidate().IsSubcandidateList() &&
+  if (focused_candidate().HasSubcandidateList() &&
       mutable_focused_subcandidate_list()->MoveNext()) {
     return true;
   }
@@ -208,7 +160,7 @@ bool CandidateList::MoveNext() {
   // If the new current candidate points to subcandidate list, the
   // focused candidate in the subcandidate list should be the first
   // candidate.
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     mutable_focused_subcandidate_list()->MoveFirst();
   }
   return true;
@@ -217,7 +169,7 @@ bool CandidateList::MoveNext() {
 bool CandidateList::MovePrev() {
   // If the current candidate points to subcandidate list, the focused
   // candidate in the subcandidate list will be operated.
-  if (focused_candidate().IsSubcandidateList() &&
+  if (focused_candidate().HasSubcandidateList() &&
       mutable_focused_subcandidate_list()->MovePrev()) {
     return true;
   }
@@ -236,14 +188,14 @@ bool CandidateList::MovePrev() {
   // If the new current candidate points to subcandidate list, the
   // focused candidate in the subcandidate list should be the first
   // candidate.
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     mutable_focused_subcandidate_list()->MoveLast();
   }
   return true;
 }
 
 bool CandidateList::MoveNextPage() {
-  if (focused_candidate().IsSubcandidateList() &&
+  if (focused_candidate().HasSubcandidateList() &&
       mutable_focused_subcandidate_list()->MoveNextPage()) {
     return true;
   }
@@ -265,14 +217,14 @@ bool CandidateList::MoveNextPage() {
   // If the new current candidate points to subcandidate list, the
   // focused candidate in the subcandidate list should be the first
   // candidate.
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     mutable_focused_subcandidate_list()->MoveFirst();
   }
   return true;
 }
 
 bool CandidateList::MovePrevPage() {
-  if (focused_candidate().IsSubcandidateList() &&
+  if (focused_candidate().HasSubcandidateList() &&
       mutable_focused_subcandidate_list()->MovePrevPage()) {
     return true;
   }
@@ -297,7 +249,7 @@ bool CandidateList::MovePrevPage() {
   // focused candidate in the subcandidate list should be the first
   // candidate.  Note the forcused index will be moved to the
   // beginning of the page on page moves.
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     mutable_focused_subcandidate_list()->MoveFirst();
   }
   return true;
@@ -315,15 +267,15 @@ bool CandidateList::MoveToAttributes(const Attributes attributes) {
     // Shift the index to make the first index focused_index_.
     const size_t index = (focused_index_ + i) % cand_size;
 
-    Candidate *cand = candidates_[index];
+    Candidate &cand = candidates_[index];
 
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
-    if (cand->IsSubcandidateList() &&
-        cand->mutable_subcandidate_list()->MoveToAttributes(attributes)) {
+    if (cand.HasSubcandidateList() &&
+        cand.mutable_subcandidate_list()->MoveToAttributes(attributes)) {
       focused_index_ = index;
       return true;
-    } else if (cand->has_attributes(attributes)) {
+    } else if (cand.has_attributes(attributes)) {
       focused_index_ = index;
       return true;
     }
@@ -346,14 +298,14 @@ bool CandidateList::MoveToId(const int base_id) {
   // of N is less than kMaxCandidateSize (= 200).  So it would not be
   // a problem.
   for (size_t i = 0; i < size(); ++i) {
-    Candidate *cand = candidates_[i];
+    Candidate &cand = candidates_[i];
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
-    if (cand->IsSubcandidateList() &&
-        cand->mutable_subcandidate_list()->MoveToId(id)) {
+    if (cand.HasSubcandidateList() &&
+        cand.mutable_subcandidate_list()->MoveToId(id)) {
       focused_index_ = i;
       return true;
-    } else if (cand->id() == id) {
+    } else if (cand.id() == id) {
       focused_index_ = i;
       return true;
     }
@@ -362,29 +314,20 @@ bool CandidateList::MoveToId(const int base_id) {
 }
 
 bool CandidateList::MoveToPageIndex(const size_t page_index) {
-  size_t begin = 0;
-  size_t end = 0;
-  GetPageRange(focused_index_, &begin, &end);
+  const auto [begin, end] = GetPageRange(focused_index_);
   if (begin + page_index > end) {
     return false;
   }
   focused_index_ = begin + page_index;
-  if (focused_candidate().IsSubcandidateList()) {
+  if (focused_candidate().HasSubcandidateList()) {
     mutable_focused_subcandidate_list()->MoveFirst();
   }
   return true;
 }
 
 CandidateList *CandidateList::mutable_focused_subcandidate_list() {
-  CHECK(focused_candidate().IsSubcandidateList());
-  return candidates_[focused_index_]->mutable_subcandidate_list();
-}
-
-bool CandidateList::IsLastPage(const size_t index) const {
-  size_t begin = 0;
-  size_t end = 0;
-  GetPageRange(index, &begin, &end);
-  return end == last_index();
+  CHECK(focused_candidate().HasSubcandidateList());
+  return candidates_[focused_index_].mutable_subcandidate_list();
 }
 
 }  // namespace session
