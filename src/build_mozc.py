@@ -171,6 +171,8 @@ def GetGypFileNames(options):
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/unix/fcitx/*.gyp' % SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/unix/fcitx5/*.gyp' % SRC_DIR))
     if USE_UNSUPPORTED_IBUS_BUILD:
       gyp_file_names.extend('%s/unix/ibus/*.gyp' % SRC_DIR)
   gyp_file_names.sort()
