@@ -972,7 +972,8 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     candidate->value = "090";
     candidate->content_key = "090";
     candidate->content_value = "090";
-    candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    candidate->attributes = (Segment::Candidate::PARTIALLY_KEY_CONSUMED |
+                             Segment::Candidate::NO_SUGGEST_LEARNING);
     candidate->consumed_key_size = 3;
   }
   {
@@ -993,6 +994,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     const Segment::Candidate &candidate = seg.candidate(i);
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+    EXPECT_TRUE(candidate.attributes & Segment::Candidate::NO_SUGGEST_LEARNING);
   }
 }
 

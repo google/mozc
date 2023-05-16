@@ -1665,6 +1665,7 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     result.types = PredictionType::NUMBER;
     result.key = input_key.substr(0, r.consumed_key_byte_len);
     result.value = r.candidate;
+    result.candidate_attributes |= Segment::Candidate::NO_SUGGEST_LEARNING;
     // Heuristic small cost: 1000 ~= 500 * log(10)
     result.wcost = 1000;
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
