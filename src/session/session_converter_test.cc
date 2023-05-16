@@ -106,10 +106,6 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
 
 class SessionConverterTest : public ::testing::Test {
  protected:
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  SessionConverterTest() = default;
-  ~SessionConverterTest() override = default;
-
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -358,9 +354,9 @@ class SessionConverterTest : public ::testing::Test {
       const Candidate &candidate_rhs = candidate_list_rhs.candidate(i);
       EXPECT_EQ(candidate_lhs.id(), candidate_rhs.id());
       EXPECT_EQ(candidate_lhs.attributes(), candidate_rhs.attributes());
-      EXPECT_EQ(candidate_lhs.IsSubcandidateList(),
-                candidate_rhs.IsSubcandidateList());
-      if (candidate_lhs.IsSubcandidateList()) {
+      EXPECT_EQ(candidate_lhs.HasSubcandidateList(),
+                candidate_rhs.HasSubcandidateList());
+      if (candidate_lhs.HasSubcandidateList()) {
         EXPECT_EQ(candidate_lhs.subcandidate_list().size(),
                   candidate_rhs.subcandidate_list().size());
       }
@@ -2335,7 +2331,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     EXPECT_TRUE(candidate_list.focused());
     size_t sub_cand_list_count = 0;
     for (size_t i = 0; i < candidate_list.size(); ++i) {
-      if (candidate_list.candidate(i).IsSubcandidateList()) {
+      if (candidate_list.candidate(i).HasSubcandidateList()) {
         ++sub_cand_list_count;
       }
     }
@@ -2367,7 +2363,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     size_t sub_cand_list_count = 0;
     std::set<int> id_set;
     for (size_t i = 0; i < candidate_list.size(); ++i) {
-      if (candidate_list.candidate(i).IsSubcandidateList()) {
+      if (candidate_list.candidate(i).HasSubcandidateList()) {
         ++sub_cand_list_count;
       } else {
         // No duplicate ids are expected.

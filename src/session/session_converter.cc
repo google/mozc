@@ -1692,7 +1692,7 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
 void SessionConverter::UpdateSelectedCandidateIndex() {
   int index;
   const Candidate &focused_candidate = candidate_list_->focused_candidate();
-  if (focused_candidate.IsSubcandidateList()) {
+  if (focused_candidate.HasSubcandidateList()) {
     const int t13n_index =
         focused_candidate.subcandidate_list().focused_index();
     index = -1 - t13n_index;
