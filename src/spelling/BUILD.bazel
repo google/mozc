@@ -160,6 +160,7 @@ mozc_cc_test(
         ":spellchecker_service",
         "//base:file_stream",
         "//base:file_util",
+        "//base:file_util_mock",
         "//base:util",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
