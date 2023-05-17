@@ -42,6 +42,7 @@ package(default_visibility = [
 mozc_cc_library(
     name = "bitarray",
     hdrs = ["bitarray.h"],
+    deps = ["@com_google_absl//absl/algorithm:container"],
 )
 
 mozc_cc_test(
