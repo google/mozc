@@ -45,23 +45,24 @@ using ::testing::ElementsAre;
 TEST(BitsTest, LoadUnaligned) {
   constexpr char kArray[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
   EXPECT_EQ(LoadUnaligned<char>(&kArray[2]), 2);
-  EXPECT_EQ(LoadUnaligned<uint16_t>(&kArray[1]), 0x0201);
-  EXPECT_EQ(LoadUnaligned<uint32_t>(&kArray[5]), 0x08070605);
-  EXPECT_EQ(LoadUnaligned<uint64_t>(&kArray[3]), 0xa09080706050403);
+  EXPECT_EQ(HostToLittle(LoadUnaligned<uint16_t>(&kArray[1])), 0x0201);
+  EXPECT_EQ(HostToLittle(LoadUnaligned<uint32_t>(&kArray[5])), 0x08070605);
+  EXPECT_EQ(HostToLittle(LoadUnaligned<uint64_t>(&kArray[3])),
+            0xa09080706050403);
 
   {
     absl::string_view sv(kArray, sizeof(kArray));
     auto iter = sv.begin() + 1;
-    EXPECT_EQ(LoadUnalignedAdvance<uint32_t>(iter), 0x04030201);
-    EXPECT_EQ(LoadUnalignedAdvance<uint32_t>(iter), 0x08070605);
+    EXPECT_EQ(HostToLittle(LoadUnalignedAdvance<uint32_t>(iter)), 0x04030201);
+    EXPECT_EQ(HostToLittle(LoadUnalignedAdvance<uint32_t>(iter)), 0x08070605);
     EXPECT_EQ(std::distance(sv.begin(), iter), 1 + 2 * sizeof(uint32_t));
   }
 
   {
     std::vector<uint16_t> vec = {0x1234, 0x5678, 0x9abc, 0xdef0};
     auto iter = vec.begin();
-    EXPECT_EQ(LoadUnalignedAdvance<uint32_t>(iter), 0x56781234);
-    EXPECT_EQ(LoadUnalignedAdvance<uint32_t>(iter), 0xdef09abc);
+    EXPECT_EQ(HostToNet(LoadUnalignedAdvance<uint32_t>(iter)), 0x34127856);
+    EXPECT_EQ(HostToNet(LoadUnalignedAdvance<uint32_t>(iter)), 0xbc9af0de);
     EXPECT_EQ(std::distance(vec.begin(), iter), 4);
   }
 }
@@ -75,16 +76,18 @@ TEST(BitsTest, StoreAndLoadUnaligned) {
   EXPECT_THAT(buf.substr(2), Each(0xff));
 
   absl::c_fill(buf, 0xff);
-  auto iter = StoreUnaligned<uint32_t>(0x31415926, buf.begin() + 5);
+  auto iter =
+      StoreUnaligned<uint32_t>(HostToLittle(0x31415926), buf.begin() + 5);
   EXPECT_EQ(LoadUnaligned<uint32_t>(buf.begin() + 5), 0x31415926);
   EXPECT_THAT(buf, ElementsAre(0xff, 0xff, 0xff, 0xff, 0xff, 0x26, 0x59, 0x41,
                                0x31, 0xff, 0xff, 0xff));
   EXPECT_EQ(std::distance(buf.begin(), iter), 5 + sizeof(uint32_t));
 
   absl::c_fill(buf, 0xff);
-  iter = StoreUnaligned<uint64_t>(0x0123456789abcdef, buf.begin() + 3);
-  EXPECT_THAT(buf, ElementsAre(0xff, 0xff, 0xff, 0xef, 0xcd, 0xab, 0x89, 0x67,
-                               0x45, 0x23, 0x01, 0xff));
+  iter =
+      StoreUnaligned<uint64_t>(HostToNet(0x0123456789abcdef), buf.begin() + 3);
+  EXPECT_THAT(buf, ElementsAre(0xff, 0xff, 0xff, 0x01, 0x23, 0x45, 0x67, 0x89,
+                               0xab, 0xcd, 0xef, 0xff));
   EXPECT_EQ(std::distance(buf.begin(), iter), 3 + sizeof(uint64_t));
 
   uint32_t array32[] = {0, 0};
