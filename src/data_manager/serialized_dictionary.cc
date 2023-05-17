@@ -39,12 +39,12 @@
 #include <utility>
 #include <vector>
 
+#include "base/bits.h"
 #include "base/container/serialized_string_array.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/port.h"
 #include "base/status.h"
 #include "absl/base/config.h"
 #include "absl/strings/str_split.h"
@@ -144,19 +144,22 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
     std::string buf;
     for (const auto &kv : dic) {
       const uint32_t key_index = string_index[kv.first];
+      const size_t prev_size = buf.size();
+      buf.resize(buf.size() + kv.second.size() * kTokenByteLength);
+      auto iter = buf.begin() + prev_size;
       for (const auto &token_ptr : kv.second) {
         const uint32_t value_index = string_index[token_ptr->value];
         const uint32_t desc_index = string_index[token_ptr->description];
         const uint32_t adddesc_index =
             string_index[token_ptr->additional_description];
-        buf.append(reinterpret_cast<const char *>(&key_index), 4);
-        buf.append(reinterpret_cast<const char *>(&value_index), 4);
-        buf.append(reinterpret_cast<const char *>(&desc_index), 4);
-        buf.append(reinterpret_cast<const char *>(&adddesc_index), 4);
-        buf.append(reinterpret_cast<const char *>(&token_ptr->lid), 2);
-        buf.append(reinterpret_cast<const char *>(&token_ptr->rid), 2);
-        buf.append(reinterpret_cast<const char *>(&token_ptr->cost), 2);
-        buf.append("\x00\x00", 2);
+        iter = StoreUnaligned<uint32_t>(key_index, iter);
+        iter = StoreUnaligned<uint32_t>(value_index, iter);
+        iter = StoreUnaligned<uint32_t>(desc_index, iter);
+        iter = StoreUnaligned<uint32_t>(adddesc_index, iter);
+        iter = StoreUnaligned<uint16_t>(token_ptr->lid, iter);
+        iter = StoreUnaligned<uint16_t>(token_ptr->rid, iter);
+        iter = StoreUnaligned<uint16_t>(token_ptr->cost, iter);
+        iter = StoreUnaligned<uint16_t>(static_cast<uint16_t>(0), iter);
       }
     }
     output_token_array_buf->reset(new uint32_t[(buf.size() + 3) / 4]);

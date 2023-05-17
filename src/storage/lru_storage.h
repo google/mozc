@@ -129,7 +129,7 @@ class LruStorage {
   // Writes one entry at |i| th index.
   // i must be 0 <= i < size.
   // This data will not update the index of the storage.
-  void Write(size_t i, uint64_t fp, const std::string &value,
+  void Write(size_t i, uint64_t fp, absl::string_view value,
              uint32_t last_access_time);
 
   // Reads one entry from |i| th index.

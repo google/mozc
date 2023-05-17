@@ -889,8 +889,10 @@ mozc_cc_library(
         "//ipc:__pkg__",
     ],
     deps = [
+        ":bits",
         ":logging",
         ":port",
+        "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/strings",
     ],
 )

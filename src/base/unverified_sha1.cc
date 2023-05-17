@@ -29,13 +29,14 @@
 
 #include "base/unverified_sha1.h"
 
-#include <algorithm>
 #include <climits>  // for CHAR_BIT
 #include <cstdint>
+#include <limits>
 #include <string>
-#include <type_traits>
 
+#include "base/bits.h"
 #include "base/logging.h"
+#include "absl/numeric/bits.h"
 
 namespace mozc {
 namespace internal {
@@ -67,9 +68,9 @@ uint32_t f(uint32_t t, uint32_t x, uint32_t y, uint32_t z) {
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
 template <size_t N>
 uint32_t ROTL(uint32_t x) {
-  constexpr size_t kUint32Bits = sizeof(uint32_t) * CHAR_BIT;
-  static_assert(N < kUint32Bits, "Too large rotation sise.");
-  return (x << N) | (x >> (kUint32Bits - N));
+  static_assert(N < std::numeric_limits<uint32_t>::digits,
+                "Too large rotation sise.");
+  return absl::rotl(x, N);
 }
 
 // See 4.2.1 SHA-1 Constants
@@ -93,13 +94,8 @@ std::string AsByteStream(const uint32_t (&H)[kNumDWordsOfDigest]) {
     const size_t base_index = i * sizeof(uint32_t);
     const uint32_t value = H[i];
     // Note that the following conversion is required simply because SHA1
-    // algorithm is defined on big-endian. The following conversion is
-    // purely arithmetic thus should be applicable regardless of the
-    // endianness of the target processor.
-    str[base_index + 0] = static_cast<uint8_t>((value & 0xff000000) >> 24);
-    str[base_index + 1] = static_cast<uint8_t>((value & 0x00ff0000) >> 16);
-    str[base_index + 2] = static_cast<uint8_t>((value & 0x0000ff00) >> 8);
-    str[base_index + 3] = static_cast<uint8_t>((value & 0x000000ff) >> 0);
+    // algorithm is defined on big-endian.
+    StoreUnaligned<uint32_t>(HostToNet(value), &str[base_index]);
   }
   return str;
 }
@@ -164,13 +160,9 @@ class PaddedMessageIterator {
 
     // Store the original data bit-length into the last 8-byte of this message.
     const uint64_t bit_length = source_.size() * 8;
-    for (size_t i = 0; i < 8; ++i) {
-      // Big-endian is required.
-      const size_t shift = (7 - i) * 8;
-      const size_t pos = kMessageBlockZeroFillLimit + i;
-      DCHECK_LT(pos, kMessageBlockBytes);
-      dest[pos] = static_cast<uint8_t>((bit_length >> shift) & 0xff);
-    }
+    // Big-endian is required.
+    StoreUnaligned<uint64_t>(HostToNet(bit_length),
+                             dest + kMessageBlockZeroFillLimit);
   }
 
   void MoveNext() { ++message_index_; }
@@ -196,22 +188,6 @@ class PaddedMessageIterator {
   size_t message_index_;
 };
 
-// Converts a character to uint32_t bit pattern by prepending 0's while keeping
-// the original bit pattern in lowest 8 bits.
-uint32_t CharToUint32(char c) {
-  // In case char is signed, we need to first convert c to uint8_t; see the
-  // following example:
-  //
-  // signed char c = -1;
-  // uint32_t a = static_cast<uint32_t>(c);
-  // uint32_t b = static_cast<uint32_t>(static_cast<uint8_t>(c));
-  //
-  // Result:
-  //   a == 4294967295  (converted through -1 of 32-bit integer)
-  //   b == 255
-  return static_cast<uint32_t>(static_cast<uint8_t>(c));
-}
-
 std::string MakeDigestImpl(absl::string_view source) {
   // 5.3 Setting the Initial Hash Value / 5.3.1 SHA-1
 
@@ -228,10 +204,7 @@ std::string MakeDigestImpl(absl::string_view source) {
     uint32_t W[80];  // Message schedule.
     for (size_t i = 0; i < 16; ++i) {
       const size_t base_index = i * 4;
-      W[i] = (CharToUint32(message[base_index + 0]) << 24) |
-             (CharToUint32(message[base_index + 1]) << 16) |
-             (CharToUint32(message[base_index + 2]) << 8) |
-             (CharToUint32(message[base_index + 3]) << 0);
+      W[i] = HostToNet(LoadUnaligned<uint32_t>(message + base_index));
     }
     for (size_t t = 16; t < 80; ++t) {
       W[t] = ROTL<1>(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]);
