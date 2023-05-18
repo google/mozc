@@ -595,8 +595,7 @@ message DecoderExperimentParams {
 
   reserved 11;  // Deprecated enable_environmental_filter_rewriter
 
-  // Enable multiple undo for partial commit.
-  optional bool undo_partial_commit = 12 [default = false];
+  reserved 12;  // Deprecated undo_partial_commit
 
   // Use actual converter for realtime conversion.
   optional bool use_actual_converter_for_realtime_conversion = 13

@@ -79,7 +79,16 @@ inline MOZC_BITS_BYTESWAP_CONSTEXPR uint64_t ByteSwap64(uint64_t n);
 #endif  // !__cpp_lib_byteswap
 }  // namespace bits_internal
 
-static_assert(ABSL_IS_LITTLE_ENDIAN);
+// Endian is a replicate of C++23 std::endian.
+enum class Endian : int8_t {
+  kLittle = 0,
+  kBig = 1,
+#ifdef ABSL_IS_LITTLE_ENDIAN
+  kNative = kLittle,
+#else   // ABSL_IS_LITTLE_ENDIAN
+  kNative = kBig,
+#endif  // !ABSL_IS_LITTLE_ENDIAN
+};
 
 // byteswap is a limited implementation of std::byteswap in C++23.
 // Reverses the byte order of the given integer value.
@@ -106,7 +115,7 @@ inline MOZC_BITS_BYTESWAP_CONSTEXPR T byteswap(T n) {
 using std::byteswap;
 #endif  // __cpp_lib_byteswap
 
-// Loads a value of type T from std::addressof(*iter) with the little endian
+// Loads a value of type T from std::addressof(*iter) with the native byte
 // order. Use this function instead of reinterpret_cast to read a multi-byte
 // type from a byte array. Returns the result.
 //
@@ -150,10 +159,10 @@ inline T LoadUnalignedAdvance(Iterator &iter) {
   return result;
 }
 
-// Stores a value of sizeof(T) to std::addressof(*it) with the little
-// endian order. Use this function instead of reinterpret_cast to store a
-// multi-byte type to a byte array. Returns a iterator pointing the element
-// immediately after the stored value.
+// Stores a value of sizeof(T) to std::addressof(*it) with the native byte
+// order. Use this function instead of reinterpret_cast to store a multi-byte
+// type to a byte array. Returns a iterator pointing the element immediately
+// after the stored value.
 //
 // REQUIRES: Iterator points to a contiguous memory region. Specifically,
 // std::deque<T> doesn't satisfy this constraint.
@@ -185,6 +194,38 @@ inline Iterator StoreUnaligned(const U value, Iterator iter) {
   memcpy(std::addressof(*iter), std::addressof(value), sizeof(T));
   bits_internal::Advance<T>(iter);
   return iter;
+}
+
+// HostToNet changes the host byte order value to the network byte order.
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+inline T HostToNet(const T n) {
+  if constexpr (Endian::kNative == Endian::kLittle) {
+    return byteswap(n);
+  } else {
+    return n;
+  }
+}
+
+// NetToHost changes the network byte order value to the host byte order.
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+inline T NetToHost(const T n) {
+  return HostToNet(n);
+}
+
+// HostToLittle changes the host byte order value to the little endian order.
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+inline T HostToLittle(const T n) {
+  if constexpr (Endian::kNative == Endian::kLittle) {
+    return n;
+  } else {
+    return byteswap(n);
+  }
+}
+
+// LittleToHost changes the little endian byte order to the host byte order.
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+inline T LittleToHost(const T n) {
+  return HostToLittle(n);
 }
 
 namespace bits_internal {

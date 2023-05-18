@@ -244,11 +244,11 @@ mozc_cc_library(
     srcs = ["serialized_dictionary.cc"],
     hdrs = ["serialized_dictionary.h"],
     deps = [
+        "//base:bits",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:number_util",
-        "//base:port",
         "//base:status",
         "//base/container:serialized_string_array",
         "@com_google_absl//absl/base:config",

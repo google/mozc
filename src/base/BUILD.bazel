@@ -394,8 +394,10 @@ mozc_cc_library(
         ":util",
         "//base/strings/internal:double_array",
         "//base/strings/internal:japanese_rules",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -889,8 +891,10 @@ mozc_cc_library(
         "//ipc:__pkg__",
     ],
     deps = [
+        ":bits",
         ":logging",
         ":port",
+        "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/strings",
     ],
 )

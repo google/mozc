@@ -380,12 +380,12 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
 
 }  // namespace
 
-class SessionTest : public ::testing::TestWithParam<commands::Request> {
+class SessionTest : public ::testing::Test {
  protected:
   void SetUp() override {
     UsageStats::ClearAllStatsForTest();
 
-    mobile_request_ = std::make_unique<Request>(GetParam());
+    mobile_request_ = std::make_unique<Request>();
     commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_ = MockDataEngineFactory::Create().value();
@@ -503,7 +503,7 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
     commands::Command command;
     session->IMEOn(&command);
 #endif  // _WIN32
-    InitSessionWithRequest(session, GetParam());
+    InitSessionWithRequest(session, commands::Request::default_instance());
   }
 
   void InitSessionToPrecomposition(Session *session,
@@ -703,22 +703,13 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
-INSTANTIATE_TEST_SUITE_P(
-    SessionTestForRequest, SessionTest,
-    ::testing::Values(commands::Request::default_instance(), []() {
-      auto request = commands::Request::default_instance();
-      request.mutable_decoder_experiment_params()->set_undo_partial_commit(
-          true);
-      return request;
-    }()));
-
 // This test is intentionally defined at this location so that this
 // test can ensure that the first SetUp() initialized table object to
 // the default state.  Please do not define another test before this.
 // FYI, each TEST_F will be eventually expanded into a global variable
 // and global variables in a single translation unit (source file) are
 // always initialized in the order in which they are defined.
-TEST_P(SessionTest, TestOfTestForSetup) {
+TEST_F(SessionTest, TestOfTestForSetup) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   keymap::KeyMapManager key_map_manager(config);
@@ -742,7 +733,7 @@ TEST_P(SessionTest, TestOfTestForSetup) {
   }
 }
 
-TEST_P(SessionTest, TestSendKey) {
+TEST_F(SessionTest, TestSendKey) {
   MockEngine engine;
   MockConverter converter;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -781,7 +772,7 @@ TEST_P(SessionTest, TestSendKey) {
   EXPECT_TRUE(command.output().consumed());
 }
 
-TEST_P(SessionTest, SendCommand) {
+TEST_F(SessionTest, SendCommand) {
   MockEngine engine;
   MockConverter converter;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -851,7 +842,7 @@ TEST_P(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, SwitchInputMode) {
+TEST_F(SessionTest, SwitchInputMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -907,7 +898,7 @@ TEST_P(SessionTest, SwitchInputMode) {
   }
 }
 
-TEST_P(SessionTest, RevertComposition) {
+TEST_F(SessionTest, RevertComposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -940,7 +931,7 @@ TEST_P(SessionTest, RevertComposition) {
   EXPECT_SINGLE_SEGMENT("あ", command);
 }
 
-TEST_P(SessionTest, InputMode) {
+TEST_F(SessionTest, InputMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -964,7 +955,7 @@ TEST_P(SessionTest, InputMode) {
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 }
 
-TEST_P(SessionTest, SelectCandidate) {
+TEST_F(SessionTest, SelectCandidate) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -998,7 +989,7 @@ TEST_P(SessionTest, SelectCandidate) {
   EXPECT_FALSE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, HighlightCandidate) {
+TEST_F(SessionTest, HighlightCandidate) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1034,7 +1025,7 @@ TEST_P(SessionTest, HighlightCandidate) {
   EXPECT_TRUE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, Conversion) {
+TEST_F(SessionTest, Conversion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1069,7 +1060,7 @@ TEST_P(SessionTest, Conversion) {
   EXPECT_EQ(key, "あいうえお");
 }
 
-TEST_P(SessionTest, SegmentWidthShrink) {
+TEST_F(SessionTest, SegmentWidthShrink) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1097,7 +1088,7 @@ TEST_P(SessionTest, SegmentWidthShrink) {
   session.SegmentWidthShrink(&command);
 }
 
-TEST_P(SessionTest, ConvertPrev) {
+TEST_F(SessionTest, ConvertPrev) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1128,7 +1119,7 @@ TEST_P(SessionTest, ConvertPrev) {
   session.ConvertPrev(&command);
 }
 
-TEST_P(SessionTest, ResetFocusedSegmentAfterCommit) {
+TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   ConversionRequest request;
 
   MockConverter converter;
@@ -1234,7 +1225,7 @@ TEST_P(SessionTest, ResetFocusedSegmentAfterCommit) {
   // "[亜]"
 }
 
-TEST_P(SessionTest, ResetFocusedSegmentAfterCancel) {
+TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1323,7 +1314,7 @@ TEST_P(SessionTest, ResetFocusedSegmentAfterCancel) {
   // "[相]"
 }
 
-TEST_P(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
+TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1405,7 +1396,7 @@ TEST_P(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   EXPECT_EQ(command.output().preedit().segment(0).value(), first_segment);
 }
 
-TEST_P(SessionTest, CommitSegment) {
+TEST_F(SessionTest, CommitSegment) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1467,7 +1458,7 @@ TEST_P(SessionTest, CommitSegment) {
   EXPECT_EQ(command.output().candidates().focused_index(), 0);
 }
 
-TEST_P(SessionTest, CommitSegmentAt2ndSegment) {
+TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1528,7 +1519,7 @@ TEST_P(SessionTest, CommitSegmentAt2ndSegment) {
   EXPECT_EQ(command.output().preedit().segment_size(), 2);
 }
 
-TEST_P(SessionTest, Transliterations) {
+TEST_F(SessionTest, Transliterations) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1575,7 +1566,7 @@ TEST_P(SessionTest, Transliterations) {
   EXPECT_SINGLE_SEGMENT("jishin", command);
 }
 
-TEST_P(SessionTest, ConvertToTransliteration) {
+TEST_F(SessionTest, ConvertToTransliteration) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1616,7 +1607,7 @@ TEST_P(SessionTest, ConvertToTransliteration) {
   EXPECT_SINGLE_SEGMENT("jishin", command);
 }
 
-TEST_P(SessionTest, ConvertToTransliterationWithMultipleSegments) {
+TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1665,7 +1656,7 @@ TEST_P(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   }
 }
 
-TEST_P(SessionTest, ConvertToHalfWidth) {
+TEST_F(SessionTest, ConvertToHalfWidth) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1700,7 +1691,7 @@ TEST_P(SessionTest, ConvertToHalfWidth) {
   EXPECT_SINGLE_SEGMENT("abc", command);
 }
 
-TEST_P(SessionTest, ConvertConsonantsToFullAlphanumeric) {
+TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1741,7 +1732,7 @@ TEST_P(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   EXPECT_SINGLE_SEGMENT("ｄｖｄ", command);
 }
 
-TEST_P(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
+TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1788,7 +1779,7 @@ TEST_P(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 }
 
 // Convert input string to Hiragana, Katakana, and Half Katakana
-TEST_P(SessionTest, SwitchKanaType) {
+TEST_F(SessionTest, SwitchKanaType) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1875,7 +1866,7 @@ TEST_P(SessionTest, SwitchKanaType) {
 }
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
-TEST_P(SessionTest, InputModeSwitchKanaType) {
+TEST_F(SessionTest, InputModeSwitchKanaType) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1961,7 +1952,7 @@ TEST_P(SessionTest, InputModeSwitchKanaType) {
   EXPECT_EQ(command.output().mode(), commands::FULL_ASCII);
 }
 
-TEST_P(SessionTest, TranslateHalfWidth) {
+TEST_F(SessionTest, TranslateHalfWidth) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -1984,7 +1975,7 @@ TEST_P(SessionTest, TranslateHalfWidth) {
   EXPECT_SINGLE_SEGMENT("abc", command);
 }
 
-TEST_P(SessionTest, UpdatePreferences) {
+TEST_F(SessionTest, UpdatePreferences) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2049,7 +2040,7 @@ TEST_P(SessionTest, UpdatePreferences) {
   EXPECT_EQ(command.output().status().comeback_mode(), commands::HIRAGANA);
 }
 
-TEST_P(SessionTest, RomajiInput) {
+TEST_F(SessionTest, RomajiInput) {
   composer::Table table;
   table.AddRule("pa", "ぱ", "");
   table.AddRule("n", "ん", "");
@@ -2091,7 +2082,7 @@ TEST_P(SessionTest, RomajiInput) {
   EXPECT_SINGLE_SEGMENT("pan", command);
 }
 
-TEST_P(SessionTest, KanaInput) {
+TEST_F(SessionTest, KanaInput) {
   composer::Table table;
   table.AddRule("す゛", "ず", "");
 
@@ -2143,7 +2134,7 @@ TEST_P(SessionTest, KanaInput) {
   EXPECT_SINGLE_SEGMENT("mr@h!", command);
 }
 
-TEST_P(SessionTest, ExceededComposition) {
+TEST_F(SessionTest, ExceededComposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2185,7 +2176,7 @@ TEST_P(SessionTest, ExceededComposition) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, OutputAllCandidateWords) {
+TEST_F(SessionTest, OutputAllCandidateWords) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2260,7 +2251,7 @@ TEST_P(SessionTest, OutputAllCandidateWords) {
   }
 }
 
-TEST_P(SessionTest, UndoForComposition) {
+TEST_F(SessionTest, UndoForComposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2310,7 +2301,7 @@ TEST_P(SessionTest, UndoForComposition) {
   }
 }
 
-TEST_P(SessionTest, RequestUndo) {
+TEST_F(SessionTest, RequestUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2342,7 +2333,7 @@ TEST_P(SessionTest, RequestUndo) {
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 }
 
-TEST_P(SessionTest, UndoForSingleSegment) {
+TEST_F(SessionTest, UndoForSingleSegment) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2477,7 +2468,7 @@ TEST_P(SessionTest, UndoForSingleSegment) {
   }
 }
 
-TEST_P(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
+TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2516,7 +2507,7 @@ TEST_P(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, UndoForMultipleSegments) {
+TEST_F(SessionTest, UndoForMultipleSegments) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2688,7 +2679,7 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
   }
 }
 
-TEST_P(SessionTest, MultipleUndo) {
+TEST_F(SessionTest, MultipleUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2778,18 +2769,11 @@ TEST_P(SessionTest, MultipleUndo) {
   // Try undoing against the 1st commit.
   command.Clear();
   session.Undo(&command);
-  if (GetParam().decoder_experiment_params().undo_partial_commit()) {
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(command.output().deletion_range().offset(), -7);
-    EXPECT_EQ(command.output().deletion_range().length(), 7);
-    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
-  } else {
-    // Multiple undo is unsupported.
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_FALSE(command.output().has_deletion_range());
-    EXPECT_PREEDIT("cand2-1cand3-1", command);
-  }
+  EXPECT_FALSE(command.output().has_result());
+  EXPECT_TRUE(command.output().has_deletion_range());
+  EXPECT_EQ(command.output().deletion_range().offset(), -7);
+  EXPECT_EQ(command.output().deletion_range().length(), 7);
+  EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
   EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
 
   // No further undo available.
@@ -2799,7 +2783,7 @@ TEST_P(SessionTest, MultipleUndo) {
   EXPECT_FALSE(command.output().has_deletion_range());
 }
 
-TEST_P(SessionTest, UndoOrRewindUndo) {
+TEST_F(SessionTest, UndoOrRewindUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2859,7 +2843,7 @@ TEST_P(SessionTest, UndoOrRewindUndo) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, UndoOrRewindRewind) {
+TEST_F(SessionTest, UndoOrRewindRewind) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2920,7 +2904,7 @@ TEST_P(SessionTest, UndoOrRewindRewind) {
   EXPECT_TRUE(command.output().has_all_candidate_words());
 }
 
-TEST_P(SessionTest, StopKeyToggling) {
+TEST_F(SessionTest, StopKeyToggling) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -2949,7 +2933,7 @@ TEST_P(SessionTest, StopKeyToggling) {
   EXPECT_PREEDIT("ああ", command);
 }
 
-TEST_P(SessionTest, CommitRawText) {
+TEST_F(SessionTest, CommitRawText) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3008,7 +2992,7 @@ TEST_P(SessionTest, CommitRawText) {
   }
 }
 
-TEST_P(SessionTest, CommitRawTextKanaInput) {
+TEST_F(SessionTest, CommitRawTextKanaInput) {
   composer::Table table;
   table.AddRule("す゛", "ず", "");
 
@@ -3050,7 +3034,7 @@ TEST_P(SessionTest, CommitRawTextKanaInput) {
   EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
 }
 
-TEST_P(SessionTest, ConvertNextPagePrevPage) {
+TEST_F(SessionTest, ConvertNextPagePrevPage) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3158,7 +3142,7 @@ TEST_P(SessionTest, ConvertNextPagePrevPage) {
   EXPECT_PREEDIT("page2-cand0", command);
 }
 
-TEST_P(SessionTest, NeedlessClearUndoContext) {
+TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
   MockConverter converter;
   MockEngine engine;
@@ -3232,23 +3216,15 @@ TEST_P(SessionTest, NeedlessClearUndoContext) {
     command.Clear();
     session.Undo(&command);
 
-    if (GetParam().decoder_experiment_params().undo_partial_commit()) {
-      // Undo did nothing because the undo stack emptied by Escape event,
-      // which modified the composition.
-      EXPECT_FALSE(command.output().has_result());
-      EXPECT_FALSE(command.output().has_deletion_range());
-      EXPECT_FALSE(command.output().has_result());
-    } else {
-      EXPECT_FALSE(command.output().has_result());
-      EXPECT_TRUE(command.output().has_deletion_range());
-      EXPECT_EQ(command.output().deletion_range().offset(), -5);
-      EXPECT_EQ(command.output().deletion_range().length(), 5);
-      EXPECT_PREEDIT("あいうえお", command);
-    }
+    // Undo did nothing because the undo stack emptied by Escape event,
+    // which modified the composition.
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_FALSE(command.output().has_deletion_range());
+    EXPECT_FALSE(command.output().has_result());
   }
 }
 
-TEST_P(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
+TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3296,7 +3272,7 @@ TEST_P(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, TemporaryInputModeAfterUndo) {
+TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3367,7 +3343,7 @@ TEST_P(SessionTest, TemporaryInputModeAfterUndo) {
   EXPECT_PREEDIT("AAあAa", command);
 }
 
-TEST_P(SessionTest, DCHECKFailureAfterUndo) {
+TEST_F(SessionTest, DCHECKFailureAfterUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3402,7 +3378,7 @@ TEST_P(SessionTest, DCHECKFailureAfterUndo) {
   EXPECT_PREEDIT("あべし", command);
 }
 
-TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
+TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3465,7 +3441,7 @@ TEST_P(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   }
 }
 
-TEST_P(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
+TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   // This is a unittest against http://b/5369632.
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
@@ -3502,7 +3478,7 @@ TEST_P(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   EXPECT_EQ(GetComposition(command), "ぢ");
 }
 
-TEST_P(SessionTest, SpaceOnAlphanumeric) {
+TEST_F(SessionTest, SpaceOnAlphanumeric) {
   commands::Request request;
   commands::Command command;
 
@@ -3566,7 +3542,7 @@ TEST_P(SessionTest, SpaceOnAlphanumeric) {
   }
 }
 
-TEST_P(SessionTest, Issue1805239) {
+TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
   MockConverter converter;
   MockEngine engine;
@@ -3622,7 +3598,7 @@ TEST_P(SessionTest, Issue1805239) {
   EXPECT_TRUE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, Issue1816861) {
+TEST_F(SessionTest, Issue1816861) {
   // This is a unittest against http://b/1816861
   MockConverter converter;
   MockEngine engine;
@@ -3683,7 +3659,7 @@ TEST_P(SessionTest, Issue1816861) {
   SendSpecialKey(commands::KeyEvent::TAB, &session, &command);
 }
 
-TEST_P(SessionTest, T13NWithResegmentation) {
+TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
   MockConverter converter;
   MockEngine engine;
@@ -3759,7 +3735,7 @@ TEST_P(SessionTest, T13NWithResegmentation) {
   EXPECT_EQ(command.output().preedit().segment(1).value(), "ｲﾝﾎﾞ");
 }
 
-TEST_P(SessionTest, Shortcut) {
+TEST_F(SessionTest, Shortcut) {
   const config::Config::SelectionShortcut kDataShortcut[] = {
       config::Config::NO_SHORTCUT,
       config::Config::SHORTCUT_123456789,
@@ -3810,7 +3786,7 @@ TEST_P(SessionTest, Shortcut) {
   }
 }
 
-TEST_P(SessionTest, ShortcutWithCapsLockIssue5655743) {
+TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
 
@@ -3853,7 +3829,7 @@ TEST_P(SessionTest, ShortcutWithCapsLockIssue5655743) {
   EXPECT_EQ(GetComposition(command), "アイウエオ");
 }
 
-TEST_P(SessionTest, NumpadKey) {
+TEST_F(SessionTest, NumpadKey) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -3960,7 +3936,7 @@ TEST_P(SessionTest, NumpadKey) {
   EXPECT_SINGLE_SEGMENT_AND_KEY("０//--..", "０//--..", command);
 }
 
-TEST_P(SessionTest, KanaSymbols) {
+TEST_F(SessionTest, KanaSymbols) {
   config::Config config;
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
@@ -3997,7 +3973,7 @@ TEST_P(SessionTest, KanaSymbols) {
   }
 }
 
-TEST_P(SessionTest, InsertCharacterWithShiftKey) {
+TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4037,7 +4013,7 @@ TEST_P(SessionTest, InsertCharacterWithShiftKey) {
   }
 }
 
-TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   // This is a unittest against http://b/2977131.
   MockConverter converter;
   MockEngine engine;
@@ -4153,7 +4129,7 @@ TEST_P(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   }
 }
 
-TEST_P(SessionTest, StatusOutput) {
+TEST_F(SessionTest, StatusOutput) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4256,7 +4232,7 @@ TEST_P(SessionTest, StatusOutput) {
   }
 }
 
-TEST_P(SessionTest, Suggest) {
+TEST_F(SessionTest, Suggest) {
   Segments segments_m;
   {
     Segment *segment;
@@ -4385,7 +4361,7 @@ TEST_P(SessionTest, Suggest) {
   EXPECT_EQ(command.output().candidates().candidate(0).value(), "MOCHA");
 }
 
-TEST_P(SessionTest, CommitCandidateTypingCorrection) {
+TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
@@ -4435,7 +4411,7 @@ TEST_P(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, MobilePartialPrediction) {
+TEST_F(SessionTest, MobilePartialPrediction) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -4533,7 +4509,7 @@ TEST_P(SessionTest, MobilePartialPrediction) {
   EXPECT_EQ(command.output().candidates().candidate(0).value(), "四ノ宮");
 }
 
-TEST_P(SessionTest, ToggleAlphanumericMode) {
+TEST_F(SessionTest, ToggleAlphanumericMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4639,7 +4615,7 @@ TEST_P(SessionTest, ToggleAlphanumericMode) {
   }
 }
 
-TEST_P(SessionTest, InsertSpace) {
+TEST_F(SessionTest, InsertSpace) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4679,7 +4655,7 @@ TEST_P(SessionTest, InsertSpace) {
   EXPECT_RESULT("　", command);  // Full-width space
 }
 
-TEST_P(SessionTest, InsertSpaceToggled) {
+TEST_F(SessionTest, InsertSpaceToggled) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4720,7 +4696,7 @@ TEST_P(SessionTest, InsertSpaceToggled) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, InsertSpaceHalfWidth) {
+TEST_F(SessionTest, InsertSpaceHalfWidth) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4764,7 +4740,7 @@ TEST_P(SessionTest, InsertSpaceHalfWidth) {
   EXPECT_EQ(GetComposition(command), "");
 }
 
-TEST_P(SessionTest, InsertSpaceFullWidth) {
+TEST_F(SessionTest, InsertSpaceFullWidth) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -4810,7 +4786,7 @@ TEST_P(SessionTest, InsertSpaceFullWidth) {
   EXPECT_EQ(GetComposition(command), "");
 }
 
-TEST_P(SessionTest, InsertSpaceWithInputMode) {
+TEST_F(SessionTest, InsertSpaceWithInputMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -5027,7 +5003,7 @@ TEST_P(SessionTest, InsertSpaceWithInputMode) {
   }
 }
 
-TEST_P(SessionTest, InsertSpaceWithCustomKeyBinding) {
+TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5075,7 +5051,7 @@ TEST_P(SessionTest, InsertSpaceWithCustomKeyBinding) {
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 }
 
-TEST_P(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
+TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5123,7 +5099,7 @@ TEST_P(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 }
 
-TEST_P(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
+TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5171,7 +5147,7 @@ TEST_P(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 }
 
-TEST_P(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
+TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5221,7 +5197,7 @@ TEST_P(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 }
 
-TEST_P(SessionTest, InsertSpaceInDirectMode) {
+TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config::Config config;
   const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
@@ -5285,7 +5261,7 @@ TEST_P(SessionTest, InsertSpaceInDirectMode) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, InsertSpaceInCompositionMode) {
+TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5338,7 +5314,7 @@ TEST_P(SessionTest, InsertSpaceInCompositionMode) {
   EXPECT_EQ(GetComposition(command), "あ　  　");
 }
 
-TEST_P(SessionTest, InsertSpaceInConversionMode) {
+TEST_F(SessionTest, InsertSpaceInConversionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
   const std::string custom_keymap_table =
@@ -5421,7 +5397,7 @@ TEST_P(SessionTest, InsertSpaceInConversionMode) {
   }
 }
 
-TEST_P(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
+TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -5443,7 +5419,7 @@ TEST_P(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   EXPECT_EQ(GetComposition(command), "ｱ　");  // "ｱ　" (full-width space)
 }
 
-TEST_P(SessionTest, IsFullWidthInsertSpace) {
+TEST_F(SessionTest, IsFullWidthInsertSpace) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -5623,7 +5599,7 @@ TEST_P(SessionTest, IsFullWidthInsertSpace) {
   }
 }
 
-TEST_P(SessionTest, Issue1951385) {
+TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
   MockConverter converter;
   MockEngine engine;
@@ -5657,7 +5633,7 @@ TEST_P(SessionTest, Issue1951385) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, Issue1978201) {
+TEST_F(SessionTest, Issue1978201) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -5690,7 +5666,7 @@ TEST_P(SessionTest, Issue1978201) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, Issue1975771) {
+TEST_F(SessionTest, Issue1975771) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -5725,7 +5701,7 @@ TEST_P(SessionTest, Issue1975771) {
   EXPECT_EQ(command.output().candidates().focused_index(), 1);
 }
 
-TEST_P(SessionTest, Issue2029466) {
+TEST_F(SessionTest, Issue2029466) {
   // This is a unittest against http://b/2029466
   //
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
@@ -5762,7 +5738,7 @@ TEST_P(SessionTest, Issue2029466) {
   EXPECT_FALSE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, Issue2034943) {
+TEST_F(SessionTest, Issue2034943) {
   // This is a unittest against http://b/2029466
   //
   // The composition should have been reset if CommitSegment submitted
@@ -5802,7 +5778,7 @@ TEST_P(SessionTest, Issue2034943) {
   EXPECT_EQ(command.output().preedit().segment(0).value(), "く");
 }
 
-TEST_P(SessionTest, Issue2026354) {
+TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
   MockConverter converter;
   MockEngine engine;
@@ -5833,7 +5809,7 @@ TEST_P(SessionTest, Issue2026354) {
   EXPECT_FALSE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, Issue2066906) {
+TEST_F(SessionTest, Issue2066906) {
   // This is a unittest against http://b/2066906
   MockConverter converter;
   MockEngine engine;
@@ -5868,7 +5844,7 @@ TEST_P(SessionTest, Issue2066906) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, Issue2187132) {
+TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
   MockConverter converter;
   MockEngine engine;
@@ -5898,7 +5874,7 @@ TEST_P(SessionTest, Issue2187132) {
   EXPECT_EQ(GetComposition(command), "a");
 }
 
-TEST_P(SessionTest, Issue2190364) {
+TEST_F(SessionTest, Issue2190364) {
   // This is a unittest against http://b/2190364
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
@@ -5925,7 +5901,7 @@ TEST_P(SessionTest, Issue2190364) {
   EXPECT_EQ(GetComposition(command), "aに");
 }
 
-TEST_P(SessionTest, Issue1556649) {
+TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
   MockConverter converter;
   MockEngine engine;
@@ -5950,7 +5926,7 @@ TEST_P(SessionTest, Issue1556649) {
   }
 }
 
-TEST_P(SessionTest, Issue1518994) {
+TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
   MockConverter converter;
   MockEngine engine;
@@ -5984,7 +5960,7 @@ TEST_P(SessionTest, Issue1518994) {
   }
 }
 
-TEST_P(SessionTest, Issue1571043) {
+TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
   MockConverter converter;
@@ -6005,7 +5981,7 @@ TEST_P(SessionTest, Issue1571043) {
   }
 }
 
-TEST_P(SessionTest, Issue2217250) {
+TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
@@ -6025,7 +6001,7 @@ TEST_P(SessionTest, Issue2217250) {
   EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
-TEST_P(SessionTest, Issue2223823) {
+TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
@@ -6045,7 +6021,7 @@ TEST_P(SessionTest, Issue2223823) {
   EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
-TEST_P(SessionTest, Issue2223762) {
+TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
   MockConverter converter;
@@ -6065,7 +6041,7 @@ TEST_P(SessionTest, Issue2223762) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, Issue2223755) {
+TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
   // - F6 and F7 convert space to half-width.
   MockConverter converter;
@@ -6126,7 +6102,7 @@ TEST_P(SessionTest, Issue2223755) {
   }
 }
 
-TEST_P(SessionTest, Issue2269058) {
+TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
@@ -6149,7 +6125,7 @@ TEST_P(SessionTest, Issue2269058) {
   EXPECT_EQ(command.output().mode(), commands::HIRAGANA);
 }
 
-TEST_P(SessionTest, Issue2272745) {
+TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
   MockConverter converter;
@@ -6180,7 +6156,7 @@ TEST_P(SessionTest, Issue2272745) {
   }
 }
 
-TEST_P(SessionTest, Issue2282319) {
+TEST_F(SessionTest, Issue2282319) {
   // This is a unittest against http://b/2282319.
   // InsertFullSpace is not working in half-width input mode.
   config::Config config;
@@ -6216,7 +6192,7 @@ TEST_P(SessionTest, Issue2282319) {
   EXPECT_PREEDIT("a　", command);  // Full-width space
 }
 
-TEST_P(SessionTest, Issue2297060) {
+TEST_F(SessionTest, Issue2297060) {
   // This is a unittest against http://b/2297060.
   // Ctrl-Space is not working
   config::Config config;
@@ -6237,7 +6213,7 @@ TEST_P(SessionTest, Issue2297060) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, Issue2379374) {
+TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
   MockConverter converter;
@@ -6285,7 +6261,7 @@ TEST_P(SessionTest, Issue2379374) {
   EXPECT_EQ(GetComposition(command), "あ");
 }
 
-TEST_P(SessionTest, Issue2569789) {
+TEST_F(SessionTest, Issue2569789) {
   // This is a unittest against http://b/2379374.
   // After typing "google", the input mode does not come back to the
   // previous input mode.
@@ -6353,7 +6329,7 @@ TEST_P(SessionTest, Issue2569789) {
   }
 }
 
-TEST_P(SessionTest, Issue2555503) {
+TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
   MockConverter converter;
@@ -6376,7 +6352,7 @@ TEST_P(SessionTest, Issue2555503) {
   EXPECT_EQ(command.output().mode(), commands::FULL_KATAKANA);
 }
 
-TEST_P(SessionTest, Issue2791640) {
+TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
   MockConverter converter;
@@ -6399,7 +6375,7 @@ TEST_P(SessionTest, Issue2791640) {
   ASSERT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
+TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
   MockConverter converter;
   MockEngine engine;
@@ -6442,7 +6418,7 @@ TEST_P(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   }
 }
 
-TEST_P(SessionTest, SendKeyDirectInputStateTest) {
+TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // InputModeChange commands from direct mode are supported only for Windows
   // for now.
 #ifdef _WIN32
@@ -6470,7 +6446,7 @@ TEST_P(SessionTest, SendKeyDirectInputStateTest) {
 #endif  // _WIN32
 }
 
-TEST_P(SessionTest, HandlingDirectInputTableAttribute) {
+TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   composer::Table table;
   table.AddRuleWithAttributes("ka", "か", "", composer::DIRECT_INPUT);
   table.AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
@@ -6501,7 +6477,7 @@ TEST_P(SessionTest, HandlingDirectInputTableAttribute) {
   EXPECT_RESULT("った", command);
 }
 
-TEST_P(SessionTest, IMEOnWithModeTest) {
+TEST_F(SessionTest, IMEOnWithModeTest) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6570,7 +6546,7 @@ TEST_P(SessionTest, IMEOnWithModeTest) {
   }
 }
 
-TEST_P(SessionTest, InputModeConsumed) {
+TEST_F(SessionTest, InputModeConsumed) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6599,7 +6575,7 @@ TEST_P(SessionTest, InputModeConsumed) {
   EXPECT_EQ(command.output().mode(), mozc::commands::HALF_ASCII);
 }
 
-TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
+TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   // This test is only for Windows, because InputModeHiragana bound
   // with Hiragana key is only supported on Windows yet.
 #ifdef _WIN32
@@ -6624,7 +6600,7 @@ TEST_P(SessionTest, InputModeConsumedForTestSendKey) {
 #endif  // _WIN32
 }
 
-TEST_P(SessionTest, InputModeOutputHasComposition) {
+TEST_F(SessionTest, InputModeOutputHasComposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6666,7 +6642,7 @@ TEST_P(SessionTest, InputModeOutputHasComposition) {
   EXPECT_SINGLE_SEGMENT("あ", command);
 }
 
-TEST_P(SessionTest, InputModeOutputHasCandidates) {
+TEST_F(SessionTest, InputModeOutputHasCandidates) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6727,7 +6703,7 @@ TEST_P(SessionTest, InputModeOutputHasCandidates) {
   EXPECT_TRUE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, PerformedCommand) {
+TEST_F(SessionTest, PerformedCommand) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6780,7 +6756,7 @@ TEST_P(SessionTest, PerformedCommand) {
   }
 }
 
-TEST_P(SessionTest, ResetContext) {
+TEST_F(SessionTest, ResetContext) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6805,7 +6781,7 @@ TEST_P(SessionTest, ResetContext) {
   EXPECT_TRUE(command.output().consumed());
 }
 
-TEST_P(SessionTest, ClearUndoOnResetContext) {
+TEST_F(SessionTest, ClearUndoOnResetContext) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6860,7 +6836,7 @@ TEST_P(SessionTest, ClearUndoOnResetContext) {
   }
 }
 
-TEST_P(SessionTest, IssueResetConversion) {
+TEST_F(SessionTest, IssueResetConversion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6877,7 +6853,7 @@ TEST_P(SessionTest, IssueResetConversion) {
   EXPECT_TRUE(SendKey("space", &session, &command));
 }
 
-TEST_P(SessionTest, IssueRevert) {
+TEST_F(SessionTest, IssueRevert) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6896,7 +6872,7 @@ TEST_P(SessionTest, IssueRevert) {
 }
 
 // Undo command must call RervertConversion
-TEST_P(SessionTest, Issue3428520) {
+TEST_F(SessionTest, Issue3428520) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -6941,7 +6917,7 @@ TEST_P(SessionTest, Issue3428520) {
 }
 
 // Revert command must clear the undo context.
-TEST_P(SessionTest, Issue5742293) {
+TEST_F(SessionTest, Issue5742293) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
@@ -6974,7 +6950,7 @@ TEST_P(SessionTest, Issue5742293) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, AutoConversion) {
+TEST_F(SessionTest, AutoConversion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7180,7 +7156,7 @@ TEST_P(SessionTest, AutoConversion) {
   }
 }
 
-TEST_P(SessionTest, InputSpaceWithKatakanaMode) {
+TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
   MockConverter converter;
@@ -7203,7 +7179,7 @@ TEST_P(SessionTest, InputSpaceWithKatakanaMode) {
   EXPECT_EQ(command.output().mode(), mozc::commands::FULL_KATAKANA);
 }
 
-TEST_P(SessionTest, AlphanumericOfSSH) {
+TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
   MockConverter converter;
@@ -7237,7 +7213,7 @@ TEST_P(SessionTest, AlphanumericOfSSH) {
   EXPECT_SINGLE_SEGMENT("ssh", command);
 }
 
-TEST_P(SessionTest, KeitaiInputToggle) {
+TEST_F(SessionTest, KeitaiInputToggle) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   MockConverter converter;
@@ -7374,7 +7350,7 @@ TEST_P(SessionTest, KeitaiInputToggle) {
   EXPECT_EQ(command.output().preedit().cursor(), 13);
 }
 
-TEST_P(SessionTest, KeitaiInputFlick) {
+TEST_F(SessionTest, KeitaiInputFlick) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   commands::Command command;
@@ -7481,7 +7457,7 @@ TEST_P(SessionTest, KeitaiInputFlick) {
   }
 }
 
-TEST_P(SessionTest, CommitCandidateAt2ndOf3Segments) {
+TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7549,7 +7525,7 @@ TEST_P(SessionTest, CommitCandidateAt2ndOf3Segments) {
   EXPECT_RESULT("猫のしっぽを", command);
 }
 
-TEST_P(SessionTest, CommitCandidateAt3rdOf3Segments) {
+TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7603,7 +7579,7 @@ TEST_P(SessionTest, CommitCandidateAt3rdOf3Segments) {
   EXPECT_RESULT("猫のしっぽを抜いた", command);
 }
 
-TEST_P(SessionTest, CommitCandidateSuggestion) {
+TEST_F(SessionTest, CommitCandidateSuggestion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7671,7 +7647,7 @@ void FindCandidateIDs(const commands::Candidates &candidates,
   }
 }
 
-TEST_P(SessionTest, CommitCandidateT13N) {
+TEST_F(SessionTest, CommitCandidateT13N) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7716,7 +7692,7 @@ TEST_P(SessionTest, CommitCandidateT13N) {
 #endif  // _WIN32, __APPLE__
 }
 
-TEST_P(SessionTest, RequestConvertReverse) {
+TEST_F(SessionTest, RequestConvertReverse) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7734,7 +7710,7 @@ TEST_P(SessionTest, RequestConvertReverse) {
             commands::SessionCommand::CONVERT_REVERSE);
 }
 
-TEST_P(SessionTest, ConvertReverseFails) {
+TEST_F(SessionTest, ConvertReverseFails) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7751,7 +7727,7 @@ TEST_P(SessionTest, ConvertReverseFails) {
   EXPECT_FALSE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, ConvertReverse) {
+TEST_F(SessionTest, ConvertReverse) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7772,7 +7748,7 @@ TEST_P(SessionTest, ConvertReverse) {
   EXPECT_GT(command.output().candidates().candidate_size(), 0);
 }
 
-TEST_P(SessionTest, EscapeFromConvertReverse) {
+TEST_F(SessionTest, EscapeFromConvertReverse) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7801,7 +7777,7 @@ TEST_P(SessionTest, EscapeFromConvertReverse) {
   EXPECT_RESULT(kKanjiAiueo, command);
 }
 
-TEST_P(SessionTest, SecondEscapeFromConvertReverse) {
+TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7833,7 +7809,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverse) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
+TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   // This is a unittest against http://b/5687022
   MockConverter converter;
   MockEngine engine;
@@ -7861,7 +7837,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   EXPECT_RESULT_AND_KEY(kInput, kInput, command);
 }
 
-TEST_P(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
+TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   // Second escape from ConvertReverse should restore the original text
   // without any text normalization even if the input text contains any
   // special characters which Mozc usually do normalization.
@@ -7891,7 +7867,7 @@ TEST_P(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   EXPECT_RESULT_AND_KEY(kInput, kInput, command);
 }
 
-TEST_P(SessionTest, EscapeFromCompositionAfterConvertReverse) {
+TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7922,7 +7898,7 @@ TEST_P(SessionTest, EscapeFromCompositionAfterConvertReverse) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, ConvertReverseFromOffState) {
+TEST_F(SessionTest, ConvertReverseFromOffState) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7941,7 +7917,7 @@ TEST_P(SessionTest, ConvertReverseFromOffState) {
   EXPECT_TRUE(command.output().consumed());
 }
 
-TEST_P(SessionTest, DCHECKFailureAfterConvertReverse) {
+TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   // This is a unittest against http://b/5145295.
   MockConverter converter;
   MockEngine engine;
@@ -7967,7 +7943,7 @@ TEST_P(SessionTest, DCHECKFailureAfterConvertReverse) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_P(SessionTest, LaunchTool) {
+TEST_F(SessionTest, LaunchTool) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -7999,7 +7975,7 @@ TEST_P(SessionTest, LaunchTool) {
   }
 }
 
-TEST_P(SessionTest, NotZeroQuerySuggest) {
+TEST_F(SessionTest, NotZeroQuerySuggest) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8037,7 +8013,7 @@ TEST_P(SessionTest, NotZeroQuerySuggest) {
   EXPECT_EQ(context.state(), ImeContext::PRECOMPOSITION);
 }
 
-TEST_P(SessionTest, ZeroQuerySuggest) {
+TEST_F(SessionTest, ZeroQuerySuggest) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8146,7 +8122,7 @@ TEST_P(SessionTest, ZeroQuerySuggest) {
   }
 }
 
-TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
+TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8277,7 +8253,7 @@ TEST_P(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 }
 
-TEST_P(SessionTest, Issue4437420) {
+TEST_F(SessionTest, Issue4437420) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8329,7 +8305,7 @@ TEST_P(SessionTest, Issue4437420) {
 }
 
 // If undo context is empty, key event for UNDO should be echoed back. b/5553298
-TEST_P(SessionTest, Issue5553298) {
+TEST_F(SessionTest, Issue5553298) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8358,7 +8334,7 @@ TEST_P(SessionTest, Issue5553298) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, UndoKeyAction) {
+TEST_F(SessionTest, UndoKeyAction) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8630,7 +8606,7 @@ TEST_P(SessionTest, UndoKeyAction) {
   }
 }
 
-TEST_P(SessionTest, DedupAfterUndo) {
+TEST_F(SessionTest, DedupAfterUndo) {
   commands::Command command;
   {
     Session session(mock_data_engine_.get());
@@ -8693,7 +8669,7 @@ TEST_P(SessionTest, DedupAfterUndo) {
   }
 }
 
-TEST_P(SessionTest, MoveCursor) {
+TEST_F(SessionTest, MoveCursor) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8713,7 +8689,7 @@ TEST_P(SessionTest, MoveCursor) {
   EXPECT_EQ(command.output().preedit().cursor(), 4);
 }
 
-TEST_P(SessionTest, MoveCursorPrecomposition) {
+TEST_F(SessionTest, MoveCursorPrecomposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8728,7 +8704,7 @@ TEST_P(SessionTest, MoveCursorPrecomposition) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, MoveCursorRightWithCommit) {
+TEST_F(SessionTest, MoveCursorRightWithCommit) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8760,7 +8736,7 @@ TEST_P(SessionTest, MoveCursorRightWithCommit) {
   EXPECT_EQ(command.output().result().cursor_offset(), 0);
 }
 
-TEST_P(SessionTest, MoveCursorLeftWithCommit) {
+TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8799,7 +8775,7 @@ TEST_P(SessionTest, MoveCursorLeftWithCommit) {
   EXPECT_EQ(command.output().result().cursor_offset(), -4);
 }
 
-TEST_P(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
+TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8827,7 +8803,7 @@ TEST_P(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   EXPECT_EQ(command.output().candidates().candidate_size(), 2);
 }
 
-TEST_P(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
+TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8859,7 +8835,7 @@ TEST_P(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   EXPECT_FALSE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, CommitHead) {
+TEST_F(SessionTest, CommitHead) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8885,7 +8861,7 @@ TEST_P(SessionTest, CommitHead) {
   EXPECT_EQ(GetComposition(command), "ず");
 }
 
-TEST_P(SessionTest, PasswordWithToggleAlphabetInput) {
+TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8941,7 +8917,7 @@ TEST_P(SessionTest, PasswordWithToggleAlphabetInput) {
   EXPECT_EQ(command.output().preedit().cursor(), 0);
 }
 
-TEST_P(SessionTest, SwitchInputFieldType) {
+TEST_F(SessionTest, SwitchInputFieldType) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -8963,7 +8939,7 @@ TEST_P(SessionTest, SwitchInputFieldType) {
   }
 }
 
-TEST_P(SessionTest, CursorKeysInPasswordMode) {
+TEST_F(SessionTest, CursorKeysInPasswordMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9014,7 +8990,7 @@ TEST_P(SessionTest, CursorKeysInPasswordMode) {
   EXPECT_TRUE(command.output().consumed());
 }
 
-TEST_P(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
+TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9068,7 +9044,7 @@ TEST_P(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_P(SessionTest, EditCancel) {
+TEST_F(SessionTest, EditCancel) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9129,7 +9105,7 @@ TEST_P(SessionTest, EditCancel) {
   }
 }
 
-TEST_P(SessionTest, ImeOff) {
+TEST_F(SessionTest, ImeOff) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9142,7 +9118,7 @@ TEST_P(SessionTest, ImeOff) {
   session.IMEOff(&command);
 }
 
-TEST_P(SessionTest, EditCancelAndIMEOff) {
+TEST_F(SessionTest, EditCancelAndIMEOff) {
   config::Config config;
   {
     const std::string custom_keymap_table =
@@ -9295,7 +9271,7 @@ TEST_P(SessionTest, EditCancelAndIMEOff) {
 }
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
-TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
+TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   config::Config config;
   {
     const std::string custom_keymap_table =
@@ -9418,7 +9394,7 @@ TEST_P(SessionTest, CancelInPasswordModeIssue5955618) {
 }
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
-TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
+TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   config::Config config;
   {
     const std::string custom_keymap_table =
@@ -9560,7 +9536,7 @@ TEST_P(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 }
 
-TEST_P(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
+TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9587,7 +9563,7 @@ TEST_P(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
   EXPECT_TRUE(command.output().has_candidates());
 }
 
-TEST_P(SessionTest, ModeChangeOfConvertAtPunctuations) {
+TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   config::Config config;
   config.set_use_auto_conversion(true);
 
@@ -9626,7 +9602,7 @@ TEST_P(SessionTest, ModeChangeOfConvertAtPunctuations) {
   EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
 }
 
-TEST_P(SessionTest, SuppressSuggestion) {
+TEST_F(SessionTest, SuppressSuggestion) {
   Session session(mock_data_engine_.get());
   InitSessionToPrecomposition(&session);
 
@@ -9652,7 +9628,7 @@ TEST_P(SessionTest, SuppressSuggestion) {
 
 }
 
-TEST_P(SessionTest, DeleteHistory) {
+TEST_F(SessionTest, DeleteHistory) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9697,7 +9673,7 @@ TEST_P(SessionTest, DeleteHistory) {
   EXPECT_PREEDIT("でｌ", command);
 }
 
-TEST_P(SessionTest, SendKeyWithKeyStringDirect) {
+TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9715,7 +9691,7 @@ TEST_P(SessionTest, SendKeyWithKeyStringDirect) {
   EXPECT_FALSE(command.output().consumed());
 }
 
-TEST_P(SessionTest, SendKeyWithKeyString) {
+TEST_F(SessionTest, SendKeyWithKeyString) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9750,7 +9726,7 @@ TEST_P(SessionTest, SendKeyWithKeyString) {
   EXPECT_PREEDIT(std::string(kZa) + kOnsenManju, command);
 }
 
-TEST_P(SessionTest, IndirectImeOnOff) {
+TEST_F(SessionTest, IndirectImeOnOff) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9801,7 +9777,7 @@ TEST_P(SessionTest, IndirectImeOnOff) {
   }
 }
 
-TEST_P(SessionTest, MakeSureIMEOn) {
+TEST_F(SessionTest, MakeSureIMEOn) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9857,7 +9833,7 @@ TEST_P(SessionTest, MakeSureIMEOn) {
   }
 }
 
-TEST_P(SessionTest, MakeSureIMEOff) {
+TEST_F(SessionTest, MakeSureIMEOff) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9913,7 +9889,7 @@ TEST_P(SessionTest, MakeSureIMEOff) {
   }
 }
 
-TEST_P(SessionTest, MakeSureIMEOffWithCommitComposition) {
+TEST_F(SessionTest, MakeSureIMEOffWithCommitComposition) {
   MockConverter converter;
   MockEngine engine;
   EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
@@ -9947,7 +9923,7 @@ TEST_P(SessionTest, MakeSureIMEOffWithCommitComposition) {
   }
 }
 
-TEST_P(SessionTest, DeleteCandidateFromHistory) {
+TEST_F(SessionTest, DeleteCandidateFromHistory) {
   MockConverter converter;
   MockUserDataManager user_data_manager;
   MockEngine engine;
@@ -9992,7 +9968,7 @@ TEST_P(SessionTest, DeleteCandidateFromHistory) {
   }
 }
 
-TEST_P(SessionTest, SetConfig) {
+TEST_F(SessionTest, SetConfig) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(config::Config::CUSTOM);

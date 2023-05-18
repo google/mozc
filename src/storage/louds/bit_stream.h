@@ -31,7 +31,6 @@
 #define MOZC_STORAGE_LOUDS_BIT_STREAM_H_
 
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <string>
 
@@ -63,12 +62,6 @@ class BitStream {
 namespace internal {
 
 void PushInt32(size_t value, std::string &image);
-
-inline int32_t ReadInt32(const uint8_t *data) {
-  int32_t tmp;
-  memcpy(&tmp, data, sizeof(tmp));
-  return tmp;
-}
 
 }  // namespace internal
 

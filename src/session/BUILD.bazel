@@ -499,20 +499,6 @@ mozc_cc_binary(
     ],
 )
 
-mozc_cc_binary(
-    name = "session_server_main",
-    srcs = ["session_server_main.cc"],
-    copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_server_main.cc
-    tags = ["noandroid"],
-    deps = [
-        ":session_server",
-        "//base:init_mozc",
-        "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings:str_format",
-    ],
-)
-
 mozc_cc_library(
     name = "session_watch_dog",
     srcs = ["session_watch_dog.cc"],

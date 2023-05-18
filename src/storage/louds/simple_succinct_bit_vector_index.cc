@@ -35,8 +35,8 @@
 #include <iterator>
 #include <vector>
 
+#include "base/bits.h"
 #include "base/logging.h"
-#include "absl/base/internal/endian.h"
 #include "absl/numeric/bits.h"
 
 namespace mozc {
@@ -96,8 +96,8 @@ inline int BitCount0(uint32_t x) {
 // Returns 1-bits in the data to length words.
 int Count1Bits(const uint8_t *data, int length) {
   int num_bits = 0;
-  for (; length > 0; data += 4, --length) {
-    num_bits += absl::popcount(absl::little_endian::Load32(data));
+  for (; length > 0; --length) {
+    num_bits += absl::popcount(LoadUnalignedAdvance<uint32_t>(data));
   }
   return num_bits;
 }
@@ -215,8 +215,7 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   if (n % 32 > 0) {
     const int offset = 4 * (n / 32);
     const int shift = 32 - n % 32;
-    result +=
-        absl::popcount((absl::little_endian::Load32(data_ + offset) << shift));
+    result += absl::popcount(LoadUnaligned<uint32_t>(data_ + offset) << shift);
   }
 
   return result;
@@ -248,7 +247,7 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   const int offset = (chunk_index * chunk_size_) & ~int{3};
   const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = BitCount0(absl::little_endian::Load32(ptr));
+    const int bit_count = BitCount0(LoadUnaligned<uint32_t>(ptr));
     if (bit_count >= n) {
       break;
     }
@@ -257,7 +256,7 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   }
 
   int index = (ptr - data_) * 8;
-  for (uint32_t word = ~absl::little_endian::Load32(ptr); n > 0;
+  for (uint32_t word = ~LoadUnaligned<uint32_t>(ptr); n > 0;
        word >>= 1, ++index) {
     n -= (word & 1);
   }
@@ -288,7 +287,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   const int offset = (chunk_index * chunk_size_) & ~int{3};
   const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = absl::popcount(absl::little_endian::Load32(ptr));
+    const int bit_count = absl::popcount(LoadUnaligned<uint32_t>(ptr));
     if (bit_count >= n) {
       break;
     }
@@ -297,7 +296,7 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   }
 
   int index = (ptr - data_) * 8;
-  for (uint32_t word = absl::little_endian::Load32(ptr); n > 0;
+  for (uint32_t word = LoadUnaligned<uint32_t>(ptr); n > 0;
        word >>= 1, ++index) {
     n -= (word & 1);
   }

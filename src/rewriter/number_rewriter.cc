@@ -41,7 +41,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -52,10 +51,10 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::PosMatcher;
-
 namespace mozc {
 namespace {
+
+using ::mozc::dictionary::PosMatcher;
 
 // Rewrite type
 enum RewriteType {
@@ -348,8 +347,8 @@ int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
 
 void InsertHalfArabic(const absl::string_view half_arabic,
                       std::vector<NumberUtil::NumberString> *output) {
-  output->push_back(NumberUtil::NumberString(
-      half_arabic, "", NumberUtil::NumberString::DEFAULT_STYLE));
+  output->emplace_back(std::string(half_arabic), "",
+                       NumberUtil::NumberString::DEFAULT_STYLE);
 }
 
 void GetNumbers(RewriteType type, bool exec_radix_conversion,

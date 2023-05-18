@@ -30,7 +30,6 @@
 #include "base/number_util.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -38,6 +37,7 @@
 #include <limits>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -45,52 +45,58 @@
 #include "base/strings/internal/double_array.h"
 #include "base/strings/internal/japanese_rules.h"
 #include "base/util.h"
+#include "absl/algorithm/container.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
 
 // Table of number character of Kansuji
-constexpr const char *kNumKanjiDigits[] = {"〇", "一", "二", "三", "四",   "五",
-                                           "六", "七", "八", "九", nullptr};
-constexpr const char *kNumKanjiOldDigits[] = {nullptr, "壱", "弐", "参", "四",
-                                              "五",    "六", "七", "八", "九"};
-constexpr const char *kNumFullWidthDigits[] = {
-    "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", nullptr};
-constexpr const char *kNumHalfWidthDigits[] = {"0", "1", "2", "3", "4",    "5",
-                                               "6", "7", "8", "9", nullptr};
+constexpr absl::string_view kNumKanjiDigits[] = {
+    "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", ""};
+constexpr absl::string_view kNumKanjiOldDigits[] = {
+    "", "壱", "弐", "参", "四", "五", "六", "七", "八", "九"};
+constexpr absl::string_view kNumFullWidthDigits[] = {
+    "０", "１", "２", "３", "４", "５", "６", "７", "８", "９", ""};
+constexpr absl::string_view kNumHalfWidthDigits[] = {
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ""};
 
 // Table of Kanji number ranks
-constexpr const char *kNumKanjiRanks[] = {nullptr, "", "十", "百", "千"};
-constexpr const char *kNumKanjiBiggerRanks[] = {"", "万", "億", "兆", "京"};
-constexpr const char *kNumKanjiOldRanks[] = {nullptr, "", "拾", "百", "阡"};
-constexpr const char *kNumKanjiBiggerOldRanks[] = {"", "萬", "億", "兆", "京"};
+constexpr absl::string_view kNumKanjiRanks[] = {"", "", "十", "百", "千"};
+constexpr absl::string_view kNumKanjiBiggerRanks[] = {"", "万", "億", "兆",
+                                                      "京"};
+constexpr absl::string_view kNumKanjiOldRanks[] = {"", "", "拾", "百", "阡"};
+constexpr absl::string_view kNumKanjiBiggerOldRanks[] = {"", "萬", "億", "兆",
+                                                         "京"};
 
-constexpr const char *kRomanNumbersCapital[] = {nullptr, "Ⅰ", "Ⅱ", "Ⅲ",    "Ⅳ",
-                                                "Ⅴ",     "Ⅵ", "Ⅶ", "Ⅷ",    "Ⅸ",
-                                                "Ⅹ",     "Ⅺ", "Ⅻ", nullptr};
+constexpr absl::string_view kRomanNumbersCapital[] = {
+    "", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", ""};
 
-constexpr const char *kRomanNumbersSmall[] = {nullptr, "ⅰ", "ⅱ", "ⅲ",    "ⅳ",
-                                              "ⅴ",     "ⅵ", "ⅶ", "ⅷ",    "ⅸ",
-                                              "ⅹ",     "ⅺ", "ⅻ", nullptr};
+constexpr absl::string_view kRomanNumbersSmall[] = {
+    "", "ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ", "ⅺ", "ⅻ", ""};
 
-constexpr const char *kCircledNumbers[] = {
-    nullptr, "①",  "②",  "③",  "④",  "⑤",  "⑥",  "⑦",    "⑧",  "⑨",  "⑩",
-    "⑪",     "⑫",  "⑬",  "⑭",  "⑮",  "⑯",  "⑰",  "⑱",    "⑲",  "⑳",  "㉑",
-    "㉒",    "㉓", "㉔", "㉕", "㉖", "㉗", "㉘", "㉙",   "㉚", "㉛", "㉜",
-    "㉝",    "㉞", "㉟", "㊱", "㊲", "㊳", "㊴", "㊵",   "㊶", "㊷", "㊸",
-    "㊹",    "㊺", "㊻", "㊼", "㊽", "㊾", "㊿", nullptr};
+constexpr absl::string_view kCircledNumbers[] = {
+    "",   "①",  "②",  "③",  "④",  "⑤",  "⑥",  "⑦",  "⑧",  "⑨",  "⑩",
+    "⑪",  "⑫",  "⑬",  "⑭",  "⑮",  "⑯",  "⑰",  "⑱",  "⑲",  "⑳",  "㉑",
+    "㉒", "㉓", "㉔", "㉕", "㉖", "㉗", "㉘", "㉙", "㉚", "㉛", "㉜",
+    "㉝", "㉞", "㉟", "㊱", "㊲", "㊳", "㊴", "㊵", "㊶", "㊷", "㊸",
+    "㊹", "㊺", "㊻", "㊼", "㊽", "㊾", "㊿", ""};
 
 // Structure to store character set variations.
 struct NumberStringVariation {
-  const char *const *const digits;
-  const char *description;
-  const char *separator;
-  const char *point;
-  const int numbers_size;
-  const NumberUtil::NumberString::Style style;
+  absl::Span<const absl::string_view> digits;
+  absl::string_view description;
+  absl::string_view separator;
+  absl::string_view point;
+  int numbers_size;
+  NumberUtil::NumberString::Style style;
 };
 
 // Judges given string is a decimal number (including integer) or not.
@@ -104,7 +110,7 @@ bool IsDecimalNumber(absl::string_view str) {
       if (num_point >= 2) {
         return false;
       }
-    } else if (!isdigit(str[i])) {
+    } else if (!absl::ascii_isdigit(str[i])) {
       return false;
     }
   }
@@ -164,12 +170,7 @@ bool NumberUtil::IsDecimalInteger(absl::string_view str) {
   if (str.empty()) {
     return false;
   }
-  for (size_t i = 0; i < str.size(); ++i) {
-    if (!isdigit(str[i])) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(str, [](char c) { return absl::ascii_isdigit(c); });
 }
 
 namespace {
@@ -177,26 +178,25 @@ namespace {
 // To know what "大字" means, please refer
 // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
 constexpr NumberStringVariation kKanjiVariations[] = {
-    {kNumHalfWidthDigits, "数字", nullptr, nullptr, 10,
+    {kNumHalfWidthDigits, "数字", "", "", 10,
      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH},
-    {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
+    {kNumFullWidthDigits, "数字", "", "", 10,
      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH},
-    {kNumKanjiDigits, "漢数字", nullptr, nullptr, 10,
+    {kNumKanjiDigits, "漢数字", "", "", 10,
      NumberUtil::NumberString::NUMBER_KANJI},
-    {kNumKanjiOldDigits, "大字", nullptr, nullptr, 10,
+    {kNumKanjiOldDigits, "大字", "", "", 10,
      NumberUtil::NumberString::NUMBER_OLD_KANJI},
 };
 
-constexpr char kOldTwoTen[] = "弐拾";
-constexpr size_t kOldTwoTenLength = std::size(kOldTwoTen) - 1;
-constexpr char kOldTwenty[] = "廿";
+constexpr absl::string_view kOldTwoTen = "弐拾";
+constexpr absl::string_view kOldTwenty = "廿";
 
 }  // namespace
 
 bool NumberUtil::ArabicToKanji(absl::string_view input_num,
                                std::vector<NumberString> *output) {
   DCHECK(output);
-  const char *const kNumZero = "零";
+  constexpr absl::string_view kNumZero = "零";
   constexpr int kDigitsInBigRank = 4;
 
   if (!IsDecimalInteger(input_num)) {
@@ -209,8 +209,8 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
     for (i = 0; i < input_num.size() && input_num[i] == kAsciiZero; ++i) {
     }
     if (i == input_num.size()) {
-      output->push_back(
-          NumberString(kNumZero, "大字", NumberString::NUMBER_OLD_KANJI));
+      output->emplace_back(std::string(kNumZero), "大字",
+                           NumberString::NUMBER_OLD_KANJI);
       return true;
     }
   }
@@ -226,21 +226,21 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
   const int filled_zero_num =
       (kDigitsInBigRank - (input_num.size() % kDigitsInBigRank)) %
       kDigitsInBigRank;
-  std::string input(filled_zero_num, kAsciiZero);
-  input.append(input_num.data(), input_num.size());
+  std::string input =
+      absl::StrCat(std::string(filled_zero_num, kAsciiZero), input_num);
 
   // Segment into kDigitsInBigRank-digits pieces
-  std::vector<std::string> ranked_numbers;
+  std::vector<absl::string_view> ranked_numbers;
   for (int i = static_cast<int>(input.size()) - kDigitsInBigRank; i >= 0;
        i -= kDigitsInBigRank) {
-    ranked_numbers.push_back(input.substr(i, kDigitsInBigRank));
+    ranked_numbers.emplace_back(input.data() + i, kDigitsInBigRank);
   }
   const size_t rank_size = ranked_numbers.size();
 
   for (size_t variation_index = 0;
        variation_index < std::size(kKanjiVariations); ++variation_index) {
     const NumberStringVariation &variation = kKanjiVariations[variation_index];
-    const char *const *const digits = variation.digits;
+    const absl::Span<const absl::string_view> digits = variation.digits;
     const NumberString::Style style = variation.style;
 
     if (rank_size == 1 &&
@@ -249,8 +249,8 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
       continue;
     }
 
-    const char *const *ranks;
-    const char *const *bigger_ranks;
+    absl::Span<const absl::string_view> ranks;
+    absl::Span<const absl::string_view> bigger_ranks;
     if (style == NumberString::NUMBER_OLD_KANJI) {
       ranks = kNumKanjiOldRanks;
       bigger_ranks = kNumKanjiBiggerOldRanks;
@@ -259,12 +259,11 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
       bigger_ranks = kNumKanjiBiggerRanks;
     }
 
-    // TODO(peria): Bring |result| out if it improves the performance.
     std::string result;
 
     // Converts each segment, and merges them with rank Kanjis.
     for (int rank = rank_size - 1; rank >= 0; --rank) {
-      const std::string &segment = ranked_numbers[rank];
+      const absl::string_view segment = ranked_numbers[rank];
       std::string segment_result;
       bool leading = true;
       for (size_t i = 0; i < segment.size(); ++i) {
@@ -275,7 +274,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
         leading = false;
         if (style == NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH ||
             style == NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH) {
-          segment_result += digits[segment[i] - kAsciiZero];
+          absl::StrAppend(&segment_result, digits[segment[i] - kAsciiZero]);
         } else {
           if (segment[i] == kAsciiZero) {
             continue;
@@ -283,38 +282,34 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
           // In "大字" style, "壱" is also required on every rank.
           if (style == NumberString::NUMBER_OLD_KANJI ||
               i == kDigitsInBigRank - 1 || segment[i] != kAsciiOne) {
-            segment_result += digits[segment[i] - kAsciiZero];
+            absl::StrAppend(&segment_result, digits[segment[i] - kAsciiZero]);
           }
-          segment_result += ranks[kDigitsInBigRank - i];
+          absl::StrAppend(&segment_result, ranks[kDigitsInBigRank - i]);
         }
       }
       if (!segment_result.empty()) {
-        result += segment_result + bigger_ranks[rank];
+        absl::StrAppend(&result, segment_result, bigger_ranks[rank]);
       }
     }
 
-    const char *description = variation.description;
+    const absl::string_view description = variation.description;
     // Add simply converted numbers.
-    output->push_back(NumberString(result, description, style));
+    output->emplace_back(std::move(result), description, style);
 
     // Add specialized style numbers.
     if (style == NumberString::NUMBER_OLD_KANJI) {
-      size_t index = result.find(kOldTwoTen);
-      if (index != std::string::npos) {
-        std::string result2(result);
-        do {
-          result2.replace(index, kOldTwoTenLength, kOldTwenty);
-          index = result2.find(kOldTwoTen, index);
-        } while (index != std::string::npos);
-        output->push_back(NumberString(result2, description, style));
+      if (absl::StrContains(output->back().value, kOldTwoTen)) {
+        std::string tmp = absl::StrReplaceAll(output->back().value,
+                                              {{kOldTwoTen, kOldTwenty}});
+        output->emplace_back(std::move(tmp), description, style);
       }
 
       // for single kanji
       if (input == "0010") {
-        output->push_back(NumberString("拾", description, style));
+        output->emplace_back("拾", description, style);
       }
       if (input == "1000") {
-        output->push_back(NumberString("阡", description, style));
+        output->emplace_back("阡", description, style);
       }
     }
   }
@@ -358,33 +353,33 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
 
   for (size_t i = 0; i < std::size(kNumDigitsVariations); ++i) {
     const NumberStringVariation &variation = kNumDigitsVariations[i];
-    const char *const *const digits = variation.digits;
-    // TODO(peria): Bring |result| out if it improves the performance.
+    const absl::Span<const absl::string_view> digits = variation.digits;
     std::string result;
 
     // integral part
     for (absl::string_view::size_type j = 0; j < integer.size(); ++j) {
       // We don't add separater first
       if (j != 0 && (integer.size() - j) % 3 == 0) {
-        result.append(variation.separator);
+        absl::StrAppend(&result, variation.separator);
       }
       const uint32_t d = static_cast<uint32_t>(integer[j] - kAsciiZero);
-      if (d <= 9 && digits[d]) {
-        result.append(digits[d]);
+      if (d <= 9 && !digits[d].empty()) {
+        absl::StrAppend(&result, digits[d]);
       }
     }
 
     // fractional part
     if (!fraction.empty()) {
       DCHECK_EQ(fraction[0], '.');
-      result.append(variation.point);
+      absl::StrAppend(&result, variation.point);
       for (absl::string_view::size_type j = 1; j < fraction.size(); ++j) {
-        result.append(digits[static_cast<int>(fraction[j] - kAsciiZero)]);
+        absl::StrAppend(&result,
+                        digits[static_cast<int>(fraction[j] - kAsciiZero)]);
       }
     }
 
-    output->push_back(
-        NumberString(result, variation.description, variation.style));
+    output->emplace_back(std::move(result), variation.description,
+                         variation.style);
   }
   return true;
 }
@@ -394,9 +389,9 @@ namespace {
 // use default for wide Arabic, because half/full width for
 // normal number is learned by character form manager.
 constexpr NumberStringVariation kSingleDigitsVariations[] = {
-    {kNumKanjiDigits, "漢数字", nullptr, nullptr, 10,
+    {kNumKanjiDigits, "漢数字", "", "", 10,
      NumberUtil::NumberString::NUMBER_KANJI_ARABIC},
-    {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
+    {kNumFullWidthDigits, "数字", "", "", 10,
      NumberUtil::NumberString::DEFAULT_STYLE},
 };
 
@@ -412,15 +407,15 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
 
   for (size_t i = 0; i < std::size(kSingleDigitsVariations); ++i) {
     const NumberStringVariation &variation = kSingleDigitsVariations[i];
-    // TODO(peria): Bring |result| out if it improves the performance.
     std::string result;
     for (absl::string_view::size_type j = 0; j < input_num.size(); ++j) {
-      result.append(
+      absl::StrAppend(
+          &result,
           variation.digits[static_cast<int>(input_num[j] - kAsciiZero)]);
     }
     if (!result.empty()) {
-      output->push_back(
-          NumberString(result, variation.description, variation.style));
+      output->emplace_back(std::move(result), variation.description,
+                           variation.style);
     }
   }
   return true;
@@ -429,13 +424,13 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
 namespace {
 
 constexpr NumberStringVariation kSpecialNumericVariations[] = {
-    {kRomanNumbersCapital, "ローマ数字(大文字)", nullptr, nullptr,
+    {kRomanNumbersCapital, "ローマ数字(大文字)", "", "",
      std::size(kRomanNumbersCapital),
      NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},
-    {kRomanNumbersSmall, "ローマ数字(小文字)", nullptr, nullptr,
+    {kRomanNumbersSmall, "ローマ数字(小文字)", "", "",
      std::size(kRomanNumbersSmall),
      NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
-    {kCircledNumbers, "丸数字", nullptr, nullptr, std::size(kCircledNumbers),
+    {kCircledNumbers, "丸数字", "", "", std::size(kCircledNumbers),
      NumberUtil::NumberString::NUMBER_CIRCLED},
 };
 
@@ -454,13 +449,12 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
   // Googol
   {
     // 10^100
-    const char *const kNumGoogol =
+    constexpr absl::string_view kNumGoogol =
         "100000000000000000000000000000000000000000000000000"
         "00000000000000000000000000000000000000000000000000";
 
     if (input_num == kNumGoogol) {
-      output->push_back(
-          NumberString("Googol", "", NumberString::DEFAULT_STYLE));
+      output->emplace_back("Googol", "", NumberString::DEFAULT_STYLE);
       converted = true;
     }
   }
@@ -474,9 +468,9 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
   // Special forms
   for (size_t i = 0; i < std::size(kSpecialNumericVariations); ++i) {
     const NumberStringVariation &variation = kSpecialNumericVariations[i];
-    if (n < variation.numbers_size && variation.digits[n]) {
-      output->push_back(NumberString(variation.digits[n], variation.description,
-                                     variation.style));
+    if (n < variation.numbers_size && !variation.digits[n].empty()) {
+      output->emplace_back(std::string(variation.digits[n]),
+                           variation.description, variation.style);
       converted = true;
     }
   }
@@ -499,14 +493,14 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
 
   // Hexadecimal
   if (n > 9) {
-    const std::string hex = absl::StrFormat("0x%x", static_cast<uint64_t>(n));
-    output->push_back(NumberString(hex, "16進数", NumberString::NUMBER_HEX));
+    output->emplace_back(absl::StrFormat("0x%x", static_cast<uint64_t>(n)),
+                         "16進数", NumberString::NUMBER_HEX);
   }
 
   // Octal
   if (n > 7) {
-    const std::string oct = absl::StrFormat("0%o", static_cast<uint64_t>(n));
-    output->push_back(NumberString(oct, "8進数", NumberString::NUMBER_OCT));
+    output->emplace_back(absl::StrFormat("0%o", static_cast<uint64_t>(n)),
+                         "8進数", NumberString::NUMBER_OCT);
   }
 
   // Binary
@@ -515,10 +509,9 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
     for (uint64_t num = n; num; num >>= 1) {
       binary.push_back(kAsciiZero + static_cast<char>(num & 0x1));
     }
-    // "b0" will be "0b" in head of |binary|
-    binary.append("b0");
     std::reverse(binary.begin(), binary.end());
-    output->push_back(NumberString(binary, "2進数", NumberString::NUMBER_BIN));
+    output->emplace_back(absl::StrCat("0b", binary), "2進数",
+                         NumberString::NUMBER_BIN);
   }
 
   return (n > 1);
@@ -533,8 +526,8 @@ namespace {
 // *output = arg1 + arg2
 // return false when an integer overflow happens.
 constexpr bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2,
-                                   uint64_t *output) {
-  *output = arg1 + arg2;
+                                   uint64_t &output) {
+  output = arg1 + arg2;
   if (arg2 > (std::numeric_limits<uint64_t>::max() - arg1)) {
     // overflow happens
     return false;
@@ -545,8 +538,8 @@ constexpr bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2,
 // *output = arg1 * arg2
 // return false when an integer overflow happens.
 constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
-                                        uint64_t *output) {
-  *output = arg1 * arg2;
+                                        uint64_t &output) {
+  output = arg1 * arg2;
   if (arg1 != 0 && arg2 > (std::numeric_limits<uint64_t>::max() / arg1)) {
     // overflow happens
     return false;
@@ -556,13 +549,13 @@ constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
 
 // Avoid implicit casts.
 template <typename SrcType, typename DestType,
-          std::enable_if_t<!std::is_integral_v<SrcType>, bool> = true>
+          std::enable_if_t<!std::is_integral_v<SrcType>, int> = 0>
 bool SafeCast(SrcType src, DestType *dest) = delete;
 
-template <typename SrcType, typename DestType,
-          std::enable_if_t<std::is_integral_v<SrcType> &&
-                               std::is_integral_v<DestType>,
-                           bool> = true>
+template <
+    typename SrcType, typename DestType,
+    std::enable_if_t<
+        std::is_integral_v<SrcType> && std::is_integral_v<DestType>, int> = 0>
 constexpr bool SafeCast(SrcType src, DestType *dest) {
   if (std::numeric_limits<SrcType>::is_signed &&
       !std::numeric_limits<DestType>::is_signed && src < 0) {
@@ -611,20 +604,22 @@ bool NumberUtil::SafeStrToDouble(absl::string_view str, double *value) {
 
 namespace {
 
+using UInt64Span = absl::Span<const uint64_t>;
+
 // Reduces leading digits less than 10 as their base10 interpretation, e.g.,
 //   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
 // Returns false when overflow happened.
-bool ReduceLeadingNumbersAsBase10System(
-    std::vector<uint64_t>::const_iterator *begin,
-    const std::vector<uint64_t>::const_iterator &end, uint64_t *output) {
-  *output = 0;
-  for (; *begin < end; ++*begin) {
-    if (**begin >= 10) {
-      return true;
+bool ReduceLeadingNumbersAsBase10System(UInt64Span::const_iterator &begin,
+                                        const UInt64Span::const_iterator end,
+                                        uint64_t &output) {
+  output = 0;
+  for (; begin < end; ++begin) {
+    if (*begin >= 10) {
+      break;
     }
-    // *output = *output * 10 + *it
-    if (!MultiplyAndCheckOverflow(*output, 10, output) ||
-        !AddAndCheckOverflow(*output, **begin, output)) {
+    // output = output * 10 + *begin
+    if (!MultiplyAndCheckOverflow(output, 10, output) ||
+        !AddAndCheckOverflow(output, *begin, output)) {
       return false;
     }
   }
@@ -635,25 +630,24 @@ bool ReduceLeadingNumbersAsBase10System(
 //   [1, 2, 3] => 123
 //   [1, 2, 3, 10] => false
 // Returns false if a number greater than 10 was found or overflow happened.
-bool InterpretNumbersAsBase10System(const std::vector<uint64_t> &numbers,
-                                    uint64_t *output) {
+bool InterpretNumbersAsBase10System(const UInt64Span numbers,
+                                    uint64_t &output) {
   auto begin = numbers.begin();
   const bool success =
-      ReduceLeadingNumbersAsBase10System(&begin, numbers.end(), output);
+      ReduceLeadingNumbersAsBase10System(begin, numbers.end(), output);
   // Check if the whole numbers were reduced.
   return (success && begin == numbers.end());
 }
 
 // Reads a leading number in a sequence and advances the iterator. Returns false
 // if the range is empty or the leading number is not less than 10.
-bool ReduceOnesDigit(std::vector<uint64_t>::const_iterator *begin,
-                     const std::vector<uint64_t>::const_iterator &end,
-                     uint64_t *num) {
-  if (*begin == end || **begin >= 10) {
+bool ReduceOnesDigit(UInt64Span::const_iterator &begin,
+                     const UInt64Span::const_iterator end, uint64_t &num) {
+  if (begin == end || *begin >= 10) {
     return false;
   }
-  *num = **begin;
-  ++*begin;
+  num = *begin;
+  ++begin;
   return true;
 }
 
@@ -675,33 +669,33 @@ bool ReduceOnesDigit(std::vector<uint64_t>::const_iterator *begin,
 //     [2, 1000, ...] => 2000
 //     [1, 1000, ...] => 1000
 //     [1, 2, 3, 4, ...] => 1234
-bool ReduceDigitsHelper(std::vector<uint64_t>::const_iterator *begin,
-                        const std::vector<uint64_t>::const_iterator &end,
-                        uint64_t *num, const uint64_t expected_base) {
+bool ReduceDigitsHelper(UInt64Span::const_iterator &begin,
+                        const UInt64Span::const_iterator end,
+                        const uint64_t expected_base, uint64_t &num) {
   // Skip leading zero(s).
-  while (*begin != end && **begin == 0) {
-    ++*begin;
+  while (begin != end && *begin == 0) {
+    ++begin;
   }
-  if (*begin == end) {
+  if (begin == end) {
     return false;
   }
-  const uint64_t leading_number = **begin;
+  const uint64_t leading_number = *begin;
 
   // If the leading number is less than 10, e.g., patterns like [2, 10], we need
   // to check the next number.
   if (leading_number < 10) {
-    if (end - *begin < 2) {
+    if (std::distance(begin, end) < 2) {
       return false;
     }
-    const uint64_t next_number = *(*begin + 1);
+    const uint64_t next_number = *std::next(begin);
 
     // If the next number is also less than 10, this pattern is like
     // [1, 2, ...] => 12. In this case, the result must be less than
     // 10 * expected_base.
     if (next_number < 10) {
       if (!ReduceLeadingNumbersAsBase10System(begin, end, num) ||
-          *num >= expected_base * 10 || (*begin != end && **begin < 10000)) {
-        *begin = end;  // Force to ignore the rest of the sequence.
+          num >= expected_base * 10 || (begin != end && *begin < 10000)) {
+        begin = end;  // Force to ignore the rest of the sequence.
         return false;
       }
       return true;
@@ -712,8 +706,8 @@ bool ReduceDigitsHelper(std::vector<uint64_t>::const_iterator *begin,
         (leading_number == 1 && expected_base != 1000)) {
       return false;
     }
-    *num = leading_number * expected_base;
-    *begin += 2;
+    num = leading_number * expected_base;
+    std::advance(begin, 2);
     return true;
   }
 
@@ -721,29 +715,28 @@ bool ReduceDigitsHelper(std::vector<uint64_t>::const_iterator *begin,
   // is a special case for Kanji "廿".
   if (leading_number == expected_base ||
       (expected_base == 10 && leading_number == 20)) {
-    *num = leading_number;
-    ++*begin;
+    num = leading_number;
+    ++begin;
     return true;
   }
   return false;
 }
 
-inline bool ReduceTensDigit(std::vector<uint64_t>::const_iterator *begin,
-                            const std::vector<uint64_t>::const_iterator &end,
-                            uint64_t *num) {
-  return ReduceDigitsHelper(begin, end, num, 10);
+inline bool ReduceTensDigit(UInt64Span::const_iterator &begin,
+                            const UInt64Span::const_iterator end,
+                            uint64_t &num) {
+  return ReduceDigitsHelper(begin, end, 10, num);
 }
 
-inline bool ReduceHundredsDigit(
-    std::vector<uint64_t>::const_iterator *begin,
-    const std::vector<uint64_t>::const_iterator &end, uint64_t *num) {
-  return ReduceDigitsHelper(begin, end, num, 100);
+inline bool ReduceHundredsDigit(UInt64Span::const_iterator &begin,
+                                const UInt64Span::const_iterator end,
+                                uint64_t &num) {
+  return ReduceDigitsHelper(begin, end, 100, num);
 }
-
-inline bool ReduceThousandsDigit(
-    std::vector<uint64_t>::const_iterator *begin,
-    const std::vector<uint64_t>::const_iterator &end, uint64_t *num) {
-  return ReduceDigitsHelper(begin, end, num, 1000);
+inline bool ReduceThousandsDigit(UInt64Span::const_iterator &begin,
+                                 const UInt64Span::const_iterator end,
+                                 uint64_t &num) {
+  return ReduceDigitsHelper(begin, end, 1000, num);
 }
 
 // Reduces leading digits as a number less than 10000 and advances the
@@ -752,59 +745,58 @@ inline bool ReduceThousandsDigit(
 //        => begin points to [10000, ...], num = 1234
 //   [3, 100, 4, 100]
 //        => error because same base number appears twice
-bool ReduceNumberLessThan10000(std::vector<uint64_t>::const_iterator *begin,
-                               const std::vector<uint64_t>::const_iterator &end,
-                               uint64_t *num) {
-  *num = 0;
+bool ReduceNumberLessThan10000(UInt64Span::const_iterator &begin,
+                               const UInt64Span::const_iterator end,
+                               uint64_t &num) {
+  num = 0;
   bool success = false;
   uint64_t n = 0;
   // Note: the following additions never overflow.
-  if (ReduceThousandsDigit(begin, end, &n)) {
-    *num += n;
+  if (ReduceThousandsDigit(begin, end, n)) {
+    num += n;
     success = true;
   }
-  if (ReduceHundredsDigit(begin, end, &n)) {
-    *num += n;
+  if (ReduceHundredsDigit(begin, end, n)) {
+    num += n;
     success = true;
   }
-  if (ReduceTensDigit(begin, end, &n)) {
-    *num += n;
+  if (ReduceTensDigit(begin, end, n)) {
+    num += n;
     success = true;
   }
-  if (ReduceOnesDigit(begin, end, &n)) {
-    *num += n;
+  if (ReduceOnesDigit(begin, end, n)) {
+    num += n;
     success = true;
   }
   // If at least one reduce was successful, no number remains in the sequence or
   // the next number should be a base number greater than 1000 (e.g., 10000,
   // 100000, etc.). Strictly speaking, better to check **begin % 10 == 0.
-  return success && (*begin == end || **begin >= 10000);
+  return success && (begin == end || *begin >= 10000);
 }
 
 // Interprets a sequence of numbers in a Japanese reading way. For example:
 //   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
 // Base-10 numbers must be decreasing, i.e.,
 //   "一十二百" = [1, 10, 2, 100] => error
-bool InterpretNumbersInJapaneseWay(const std::vector<uint64_t> &numbers,
-                                   uint64_t *output) {
+bool InterpretNumbersInJapaneseWay(const UInt64Span numbers, uint64_t &output) {
   uint64_t last_base = std::numeric_limits<uint64_t>::max();
   auto begin = numbers.begin();
-  *output = 0;
+  output = 0;
   do {
     uint64_t coef = 0;
-    if (!ReduceNumberLessThan10000(&begin, numbers.end(), &coef)) {
+    if (!ReduceNumberLessThan10000(begin, numbers.end(), coef)) {
       return false;
     }
     if (begin == numbers.end()) {
-      return AddAndCheckOverflow(*output, coef, output);
+      return AddAndCheckOverflow(output, coef, output);
     }
     if (*begin >= last_base) {
       return false;  // Increasing order of base-10 numbers.
     }
     // Safely performs *output += coef * *begin.
     uint64_t delta = 0;
-    if (!MultiplyAndCheckOverflow(coef, *begin, &delta) ||
-        !AddAndCheckOverflow(*output, delta, output)) {
+    if (!MultiplyAndCheckOverflow(coef, *begin, delta) ||
+        !AddAndCheckOverflow(output, delta, output)) {
       return false;
     }
     last_base = *begin++;
@@ -815,8 +807,7 @@ bool InterpretNumbersInJapaneseWay(const std::vector<uint64_t> &numbers,
 
 // Interprets a sequence of numbers directly or in a Japanese reading way
 // depending on the maximum number in the sequence.
-bool NormalizeNumbersHelper(const std::vector<uint64_t> &numbers,
-                            uint64_t *number_output) {
+bool NormalizeNumbersHelper(const UInt64Span numbers, uint64_t &number_output) {
   const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
@@ -845,12 +836,11 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
   // Simultaneously, constructs a Kanji number string.
   kanji_output->clear();
   arabic_output->clear();
-  std::string kanji_char;
 
   while (begin < end) {
     size_t mblen = 0;
     const char32_t wchar = Util::Utf8ToUcs4(begin, end, &mblen);
-    kanji_char.assign(begin, mblen);
+    absl::string_view kanji_char(begin, mblen);
 
     std::string tmp;
     NumberUtil::KanjiNumberToArabicNumber(kanji_char, &tmp);
@@ -861,11 +851,11 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     }
 
     if (wchar >= 0x0030 && wchar <= 0x0039) {  // '0' <= wchar <= '9'
-      kanji_char.assign(kNumKanjiDigits[wchar - 0x0030], 3);
+      kanji_char = kNumKanjiDigits[wchar - 0x0030];
     } else if (wchar >= 0xFF10 && wchar <= 0xFF19) {  // '０' <= wchar <= '９'
-      kanji_char.assign(kNumKanjiDigits[wchar - 0xFF10], 3);
+      kanji_char = kNumKanjiDigits[wchar - 0xFF10];
     }
-    kanji_output->append(kanji_char);
+    absl::StrAppend(kanji_output, kanji_char);
     numbers.push_back(n);
     begin += mblen;
   }
@@ -883,7 +873,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
 
   // Try interpreting the sequence of digits.
   uint64_t n = 0;
-  if (!NormalizeNumbersHelper(numbers, &n)) {
+  if (!NormalizeNumbersHelper(numbers, n)) {
     return false;
   }
 
@@ -902,7 +892,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     arabic_output->append(num_zeros, kAsciiZero);
   }
 
-  arabic_output->append(absl::StrFormat("%u", static_cast<uint64_t>(n)));
+  absl::StrAppendFormat(arabic_output, "%u", static_cast<uint64_t>(n));
   return true;
 }
 

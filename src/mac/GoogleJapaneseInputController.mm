@@ -859,7 +859,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 }
 
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
-  if (event == nullptr) {
+  if (event == nullptr || [event isEqual:[NSNull null]]) {
     return NO;
   }
   if ([event type] == NSEventTypeCursorUpdate) {

@@ -32,16 +32,14 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "base/bits.h"
 #include "base/logging.h"
-#include "storage/louds/bit_stream.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {
 namespace storage {
 namespace louds {
 namespace {
-
-using internal::ReadInt32;
 
 // Select1 is not used, so cache is unnecessary.
 constexpr size_t kLb0CacheSize = 1024;
@@ -50,16 +48,16 @@ constexpr size_t kLb1CacheSize = 0;
 }  // namespace
 
 void BitVectorBasedArray::Open(const uint8_t *image) {
-  const int index_length = ReadInt32(image);
-  const int base_length = ReadInt32(image + 4);
-  const int step_length = ReadInt32(image + 8);
+  const int index_length = LoadUnalignedAdvance<uint32_t>(image);
+  const int base_length = LoadUnalignedAdvance<uint32_t>(image);
+  const int step_length = LoadUnalignedAdvance<uint32_t>(image);
   // Check 0 padding.
-  CHECK_EQ(ReadInt32(image + 12), 0);
+  CHECK_EQ(LoadUnalignedAdvance<uint32_t>(image), 0);
 
-  index_.Init(image + 16, index_length, kLb0CacheSize, kLb1CacheSize);
+  index_.Init(image, index_length, kLb0CacheSize, kLb1CacheSize);
   base_length_ = base_length;
   step_length_ = step_length;
-  data_ = reinterpret_cast<const char *>(image + 16 + index_length);
+  data_ = reinterpret_cast<const char *>(image + index_length);
 }
 
 void BitVectorBasedArray::Close() {

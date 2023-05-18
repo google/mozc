@@ -31,6 +31,7 @@
 #define MOZC_BASE_CONTAINER_FREELIST_H_
 
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace mozc {
@@ -44,21 +45,12 @@ class FreeList {
   explicit FreeList(size_t size)
       : current_index_(0), chunk_index_(0), size_(size) {}
 
-  FreeList(const FreeList&) = delete;
-  FreeList& operator=(const FreeList&) = delete;
-
-  ~FreeList() {
-    for (size_t i = 0; i < pool_.size(); ++i) {
-      delete[] pool_[i];
-    }
-  }
+  FreeList(FreeList&&) = default;
+  FreeList& operator=(FreeList&&) = default;
 
   void Reset() { chunk_index_ = current_index_ = 0; }
 
   void Free() {
-    for (size_t i = 1; i < pool_.size(); ++i) {
-      delete[] pool_[i];
-    }
     if (pool_.size() > 1) {
       pool_.resize(1);
     }
@@ -73,18 +65,18 @@ class FreeList {
     }
 
     if (chunk_index_ == pool_.size()) {
-      pool_.push_back(new T[size_]);
+      pool_.push_back(std::make_unique<T[]>(size_));
     }
 
-    T* r = pool_[chunk_index_] + current_index_;
+    T* r = pool_[chunk_index_].get() + current_index_;
     current_index_++;
     return r;
   }
 
-  size_t size() const { return size_; }
+  constexpr size_t size() const { return size_; }
 
  private:
-  std::vector<T*> pool_;
+  std::vector<std::unique_ptr<T[]>> pool_;
   size_t current_index_;
   size_t chunk_index_;
   size_t size_;
@@ -93,11 +85,9 @@ class FreeList {
 template <class T>
 class ObjectPool {
  public:
-  ObjectPool(const ObjectPool&) = delete;
-  ObjectPool& operator=(const ObjectPool&) = delete;
   explicit ObjectPool(int size) : freelist_(size) {}
-
-  ~ObjectPool() = default;
+  ObjectPool(ObjectPool&&) = default;
+  ObjectPool& operator=(ObjectPool&&) = default;
 
   void Free() {
     released_.clear();
@@ -115,7 +105,7 @@ class ObjectPool {
 
   void Release(T* ptr) { released_.push_back(ptr); }
 
-  size_t size() const { return freelist_.size(); }
+  constexpr size_t size() const { return freelist_.size(); }
 
  private:
   std::vector<T*> released_;

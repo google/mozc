@@ -35,11 +35,10 @@
 #include <string>
 #include <vector>
 
+#include "base/bits.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
-#include "dictionary/file/codec_interface.h"
 #include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
@@ -130,13 +129,13 @@ absl::Status DictionaryFileCodec::ReadSections(
   const char *ptr = image;  // The current position at which data is read.
   const char *const image_end = image + length;
 
-  const int32_t filemagic = filecodec_util::ReadInt32ThenAdvance(&ptr);
+  const int32_t filemagic = LoadUnalignedAdvance<int32_t>(ptr);
   if (filemagic != filemagic_) {
     return absl::FailedPreconditionError(absl::StrCat(
         "codec.cc: Invalid dictionary file magic. Expected: ", filemagic_,
         " Actual: ", filemagic));
   }
-  seed_ = filecodec_util::ReadInt32ThenAdvance(&ptr);
+  seed_ = LoadUnalignedAdvance<int32_t>(ptr);
   for (int section_index = 0;; ++section_index) {
     // Each section has the following format:
     // +-----------+-------------+-----------------+---------------+
@@ -151,7 +150,7 @@ absl::Status DictionaryFileCodec::ReadSections(
           ": Insufficient image to read data_size(4 bytes), available size = ",
           std::distance(ptr, image_end)));
     }
-    const int32_t data_size = filecodec_util::ReadInt32ThenAdvance(&ptr);
+    const int32_t data_size = LoadUnalignedAdvance<int32_t>(ptr);
     if (data_size == 0) {  // The end marker written in WriteSections().
       break;
     }
@@ -166,7 +165,7 @@ absl::Status DictionaryFileCodec::ReadSections(
           ": Read pointer will pass the end: offset=", section_end - image,
           ", image_size=", length));
     }
-    const std::string fingerprint(ptr, kFingerprintByteLength);
+    const absl::string_view fingerprint(ptr, kFingerprintByteLength);
     ptr += kFingerprintByteLength;
     if (VLOG_IS_ON(1)) {
       std::string escaped;

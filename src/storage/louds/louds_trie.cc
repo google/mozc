@@ -32,8 +32,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "base/bits.h"
 #include "base/logging.h"
-#include "storage/louds/bit_stream.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/strings/string_view.h"
@@ -41,8 +41,6 @@
 namespace mozc {
 namespace storage {
 namespace louds {
-
-using internal::ReadInt32;
 
 bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
                      size_t louds_lb1_cache_size,
@@ -71,14 +69,14 @@ bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
   //   [3]
   // In this case, [0] and [1] are not terminal (as the original words contains
   // neither "" nor "a"), and [2] and [3] are terminal.
-  const int louds_size = ReadInt32(image);
-  const int terminal_size = ReadInt32(image + 4);
-  const int num_character_bits = ReadInt32(image + 8);
-  const int edge_character_size = ReadInt32(image + 12);
+  const int louds_size = LoadUnalignedAdvance<uint32_t>(image);
+  const int terminal_size = LoadUnalignedAdvance<uint32_t>(image);
+  const int num_character_bits = LoadUnalignedAdvance<uint32_t>(image);
+  const int edge_character_size = LoadUnalignedAdvance<uint32_t>(image);
   CHECK_EQ(num_character_bits, 8);
   CHECK_GT(edge_character_size, 0);
 
-  const uint8_t *louds_image = image + 16;
+  const uint8_t *louds_image = image;
   const uint8_t *terminal_image = louds_image + louds_size;
   const uint8_t *edge_character = terminal_image + terminal_size;
 

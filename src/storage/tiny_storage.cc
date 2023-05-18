@@ -32,10 +32,12 @@
 #include <cstdint>
 #include <cstring>
 #include <ios>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "base/bits.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -59,17 +61,6 @@ constexpr size_t kMaxValueSize = 4096;            // 4k for key/value
 // 1024 * (4096 + 4096) =~ 8MByte
 // so 10Mbyte data is reasonable upper bound for file size
 constexpr size_t kMaxFileSize = 1024 * 1024 * 10;  // 10Mbyte
-
-template <typename T>
-bool ReadData(char **begin, const char *end, T *value) {
-  if (*begin + sizeof(*value) > end) {
-    LOG(WARNING) << "accessing invalid pointer";
-    return false;
-  }
-  memcpy(value, *begin, sizeof(*value));
-  *begin += sizeof(*value);
-  return true;
-}
 
 bool IsInvalid(const absl::string_view key, const absl::string_view value,
                const size_t size) {
@@ -135,52 +126,39 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     return true;
   }
 
+  if (mmap->size() < 20) {
+    LOG(ERROR) << "the file is missing the header.";
+    return false;
+  }
   if (mmap->size() > kMaxFileSize) {
     LOG(ERROR) << "tring to open too big file";
     return false;
   }
 
-  char *begin = mmap->begin();
-  const char *end = mmap->end();
+  const char *begin = mmap->begin();
+  const char *const end = mmap->end();
 
-  uint32_t version = 0;
-  uint32_t magic = 0;
-  uint32_t size = 0;
   // magic is used for checking whether given file is correct or not.
   // magic = (file_size ^ kStorageMagicId)
-  if (!ReadData<uint32_t>(&begin, end, &magic)) {
-    LOG(ERROR) << "cannot read magic";
-    return false;
-  }
-
+  const uint32_t magic = LoadUnalignedAdvance<uint32_t>(begin);
   if ((magic ^ kStorageMagicId) != mmap->size()) {
     LOG(ERROR) << "file magic is broken";
     return false;
   }
-
-  if (!ReadData<uint32_t>(&begin, end, &version)) {
-    LOG(ERROR) << "cannot read version";
-    return false;
-  }
+  const uint32_t version = LoadUnalignedAdvance<uint32_t>(begin);
 
   if (version != kStorageVersion) {
     LOG(ERROR) << "Incompatible version";
     return false;
   }
-
-  if (!ReadData<uint32_t>(&begin, end, &size)) {
-    LOG(ERROR) << "cannot read size";
-    return false;
-  }
+  const uint32_t size = LoadUnalignedAdvance<uint32_t>(begin);
 
   for (size_t i = 0; i < size; ++i) {
-    uint32_t key_size = 0;
-    uint32_t value_size = 0;
-    if (!ReadData<uint32_t>(&begin, end, &key_size)) {
+    if (std::distance(begin, end) < sizeof(uint32_t)) {
       LOG(ERROR) << "key_size is invalid";
       return false;
     }
-
+    const uint32_t key_size = LoadUnalignedAdvance<uint32_t>(begin);
     if (begin + key_size > end) {
       LOG(ERROR) << "Too long key is passed";
       return false;
@@ -189,11 +167,11 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     const absl::string_view key(begin, key_size);
     begin += key_size;
 
-    if (!ReadData<uint32_t>(&begin, end, &value_size)) {
+    if (std::distance(begin, end) < sizeof(uint32_t)) {
       LOG(ERROR) << "value_size is invalid";
       return false;
     }
-
+    const uint32_t value_size = LoadUnalignedAdvance<uint32_t>(begin);
     if (begin + value_size > end) {
       LOG(ERROR) << "Too long value is passed";
       return false;

@@ -42,16 +42,16 @@
 #include <utility>
 #include <vector>
 
+#include "base/bits.h"
 #include "base/clock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/port.h"
-#include "base/util.h"
-#include "absl/base/internal/endian.h"
+#include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace storage {
@@ -73,30 +73,25 @@ constexpr size_t kFileHeaderSize = 12;
 
 constexpr uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 
-template <class T>
-inline void ReadValue(char **ptr, T *value) {
-  memcpy(value, *ptr, sizeof(*value));
-  *ptr += sizeof(*value);
-}
-
-uint64_t GetFP(const char *ptr) { return absl::little_endian::Load64(ptr); }
+uint64_t GetFP(const char *ptr) { return LoadUnaligned<uint64_t>(ptr); }
 
 uint32_t GetTimeStamp(const char *ptr) {
-  return absl::little_endian::Load32(ptr + 8);
+  return LoadUnaligned<uint32_t>(ptr + 8);
 }
 
 const char *GetValue(const char *ptr) { return ptr + kItemHeaderSize; }
 
 void Update(char *ptr) {
-  const uint32_t last_access_time = static_cast<uint32_t>(Clock::GetTime());
-  memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
+  StoreUnaligned<uint32_t>(
+      static_cast<uint32_t>(absl::ToUnixSeconds(Clock::GetAbslTime())),
+      ptr + 8);
 }
 
 void Update(char *ptr, uint64_t fp, const char *value, size_t value_size) {
-  const uint32_t last_access_time = static_cast<uint32_t>(Clock::GetTime());
-  memcpy(ptr, reinterpret_cast<const char *>(&fp), 8);
-  memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
-  memcpy(ptr + 12, value, value_size);
+  ptr = StoreUnaligned<uint64_t>(fp, ptr);
+  ptr = StoreUnaligned<uint32_t>(
+      static_cast<uint32_t>(absl::ToUnixSeconds(Clock::GetAbslTime())), ptr);
+  std::copy_n(value, value_size, ptr);
 }
 
 bool IsOlderThan62Days(uint64_t timestamp) {
@@ -188,7 +183,7 @@ bool LruStorage::Clear() {
   if (offset >= mmap_.size()) {  // should not happen
     return false;
   }
-  memset(mmap_.begin() + offset, '\0', mmap_.size() - offset);
+  std::fill(mmap_.begin() + offset, mmap_.end(), 0);
   lru_list_.clear();
   lru_map_.clear();
   Open(mmap_.begin(), mmap_.size());
@@ -251,9 +246,9 @@ bool LruStorage::Merge(const LruStorage &storage) {
   // TODO(taku): this part is not atomic.
   // If the converter process is killed while memcpy or memset is running,
   // the storage data will be broken.
-  memcpy(begin_, buf.data(), new_size);
+  char *new_end = absl::c_copy_n(buf, new_size, begin_);
   if (new_size < old_size) {
-    memset(begin_ + new_size, '\0', old_size - new_size);
+    std::fill(new_end, end_, 0);
   }
 
   return Open(mmap_.begin(), mmap_.size());
@@ -350,15 +345,9 @@ bool LruStorage::Open(char *ptr, size_t ptr_size) {
   begin_ = ptr;
   end_ = ptr + ptr_size;
 
-  uint32_t value_size_uint32 = 0;
-  uint32_t size_uint32 = 0;
-
-  ReadValue<uint32_t>(&begin_, &value_size_uint32);
-  ReadValue<uint32_t>(&begin_, &size_uint32);
-  ReadValue<uint32_t>(&begin_, &seed_);
-
-  value_size_ = static_cast<size_t>(value_size_uint32);
-  size_ = static_cast<size_t>(size_uint32);
+  value_size_ = LoadUnalignedAdvance<uint32_t>(begin_);
+  size_ = LoadUnalignedAdvance<uint32_t>(begin_);
+  seed_ = LoadUnalignedAdvance<uint32_t>(begin_);
 
   if (value_size_ % 4 != 0) {
     LOG(ERROR) << "value_size_ must be 4 byte alignment";
@@ -557,13 +546,13 @@ bool LruStorage::Delete(uint64_t fp, std::list<char *>::iterator it) {
     // Move the region for the last element to the deleted location.  Then,
     // update the LRU structure for the moved element (the pointer to mmap
     // region in the list node is updated.)
-    std::memcpy(deleted_item_pos, next_item_, item_size());
+    std::copy_n(next_item_, item_size(), deleted_item_pos);
     const uint64_t fp = GetFP(next_item_);
     *lru_map_[fp] = deleted_item_pos;
   }
 
   // Clear the region for the next_item_.
-  std::memset(next_item_, 0, item_size());
+  std::fill_n(next_item_, item_size(), 0);
 
   return true;
 }
@@ -608,14 +597,14 @@ uint32_t LruStorage::seed() const { return seed_; }
 
 const std::string &LruStorage::filename() const { return filename_; }
 
-void LruStorage::Write(size_t i, uint64_t fp, const std::string &value,
+void LruStorage::Write(size_t i, uint64_t fp, const absl::string_view value,
                        uint32_t last_access_time) {
   DCHECK_LT(i, size_);
   char *ptr = begin_ + (i * item_size());
-  memcpy(ptr, reinterpret_cast<const char *>(&fp), 8);
-  memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
+  ptr = StoreUnaligned<uint64_t>(fp, ptr);
+  ptr = StoreUnaligned<uint32_t>(last_access_time, ptr);
   if (value.size() == value_size_) {
-    memcpy(ptr + kItemHeaderSize, value.data(), value_size_);
+    absl::c_copy(value, ptr);
   } else {
     LOG(ERROR) << "value size is not " << value_size_ << " byte.";
   }
