@@ -5,8 +5,6 @@ SEND_KEY	ON
 
 # Set to Qwerty kana mode.
 SET_MOBILE_REQUEST
-# TODO: Clean up this request after full launch.
-SET_REQUEST	decoder_experiment_params	undo_partial_commit	true
 SET_CONFIG	session_keymap	MOBILE
 UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
 SWITCH_INPUT_MODE	HIRAGANA

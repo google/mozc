@@ -291,7 +291,6 @@ class Session : public SessionInterface {
   void PushUndoContext();
   void PopUndoContext();
   // Clear the undo context.
-  // (The below description is effective when undo_partial_commit() is enabled)
   // This should be called when the composer's preedit or cursor position
   // is updated by non-undo related operations. This achieves intuitive
   // behavior, which clears the undo context on the user's edit operation.
