@@ -282,7 +282,6 @@ mozc_cc_library(
         "//base:port",
         "//base:util",
         "//base/container:serialized_string_array",
-        "//config:config_handler",
         "//converter:segments",
         "//data_manager:data_manager_interface",
         "//dictionary:pos_matcher",

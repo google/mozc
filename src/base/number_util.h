@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/string_view.h"
@@ -89,9 +90,9 @@ class NumberUtil {
       NUMBER_BIN,
     };
 
-    NumberString(absl::string_view value, absl::string_view description,
-                 Style style)
-        : value(value), description(description), style(style) {}
+    // description is string_view because it's mostly a static string.
+    NumberString(std::string value, absl::string_view description, Style style)
+        : value(std::move(value)), description(description), style(style) {}
 
     // Converted string
     std::string value;
