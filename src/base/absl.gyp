@@ -107,6 +107,16 @@
       ],
     },
     {
+      'target_name': 'absl_hash_testing',
+      'toolsets': ['host', 'target'],
+      'type': 'static_library',
+      'sources': [],
+      'dependencies': [
+          'absl_strings',
+          'absl_types',
+      ],
+    },
+    {
       'target_name': 'absl_log',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
