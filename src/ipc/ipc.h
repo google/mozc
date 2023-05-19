@@ -50,15 +50,11 @@ namespace mozc {
 class IPCPathManager;
 class Thread;
 
-enum {
-  IPC_REQUESTSIZE = 16 * 8192,
-  IPC_RESPONSESIZE = 16 * 16384,
-};
+inline constexpr size_t IPC_REQUESTSIZE = 16 * 8192;
+inline constexpr size_t IPC_RESPONSESIZE = 16 * 16384;
 
 // increment this value if protocol has changed.
-enum {
-  IPC_PROTOCOL_VERSION = 3,
-};
+inline constexpr int IPC_PROTOCOL_VERSION = 3;
 
 enum IPCErrorType {
   IPC_NO_ERROR,
@@ -74,7 +70,7 @@ enum IPCErrorType {
 
 class IPCClientInterface {
  public:
-  virtual ~IPCClientInterface();
+  virtual ~IPCClientInterface() = default;
 
   virtual bool Connected() const = 0;
   virtual bool Call(const std::string &request, std::string *response,
@@ -180,27 +176,27 @@ class IPCClient : public IPCClientInterface {
 
 class IPCClientFactoryInterface {
  public:
-  virtual ~IPCClientFactoryInterface();
-  virtual IPCClientInterface *NewClient(const std::string &name,
-                                        const std::string &path_name) = 0;
+  virtual ~IPCClientFactoryInterface() = default;
+  virtual std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &name, const std::string &path_name) = 0;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  virtual IPCClientInterface *NewClient(const std::string &name) = 0;
+  virtual std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &name) = 0;
 };
 
 // Creates IPCClient object.
 class IPCClientFactory : public IPCClientFactoryInterface {
  public:
-  ~IPCClientFactory() override;
-
   // new interface
-  IPCClientInterface *NewClient(const std::string &name,
-                                const std::string &path_name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &name, const std::string &path_name) override;
 
   // old interface for backward compatibility.
   // same as NewClient(name, "");
-  IPCClientInterface *NewClient(const std::string &name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &name) override;
 
   // Return a singleton instance.
   static IPCClientFactory *GetIPCClientFactory();

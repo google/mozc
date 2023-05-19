@@ -44,7 +44,6 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process.h"
-#include "base/run_level.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -134,18 +133,6 @@ void Client::InitRequestForSvsJapanese(bool use_svs) {
   }
   request_->mutable_decoder_experiment_params()->set_variation_character_types(
       variation_types);
-}
-
-void Client::SetIPCClientFactory(IPCClientFactoryInterface *client_factory) {
-  client_factory_ = client_factory;
-}
-
-void Client::SetServerLauncher(ServerLauncherInterface *server_launcher) {
-  server_launcher_.reset(server_launcher);
-}
-
-bool Client::IsValidRunLevel() const {
-  return RunLevel::IsValidClientRunLevel();
 }
 
 bool Client::EnsureConnection() {

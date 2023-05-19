@@ -305,7 +305,7 @@ class RendererLauncher : public RendererLauncherInterface {
     error_times_ = 0;
   }
 
-  IPCClientInterface *CreateIPCClient() const {
+  std::unique_ptr<IPCClientInterface> CreateIPCClient() const {
     if (ipc_client_factory_interface_ == nullptr) {
       return nullptr;
     }
@@ -518,7 +518,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
   return true;
 }
 
-IPCClientInterface *RendererClient::CreateIPCClient() const {
+std::unique_ptr<IPCClientInterface> RendererClient::CreateIPCClient() const {
   if (ipc_client_factory_interface_ == nullptr) {
     return nullptr;
   }

@@ -30,9 +30,9 @@
 #include "client/client.h"
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -46,7 +46,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
-#include "absl/strings/str_format.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -63,10 +64,7 @@ std::string UpdateVersion(int diff) {
   std::vector<std::string> tokens =
       absl::StrSplit(Version::GetMozcVersion(), '.', absl::SkipEmpty());
   EXPECT_EQ(tokens.size(), 4);
-  char buf[64];
-  absl::SNPrintF(buf, sizeof(buf), "%d",
-                 NumberUtil::SimpleAtoi(tokens[3]) + diff);
-  tokens[3] = buf;
+  tokens[3] = absl::StrCat(NumberUtil::SimpleAtoi(tokens[3]) + diff);
   return absl::StrJoin(tokens, ".");
 }
 
@@ -168,7 +166,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   uint32_t server_protocol_version_;
   std::string response_;
   std::string product_version_after_start_server_;
-  std::map<int, int> error_map_;
+  absl::flat_hash_map<int, int> error_map_;
 };
 
 class ClientTest : public testing::Test {
@@ -182,8 +180,10 @@ class ClientTest : public testing::Test {
     client_ = std::make_unique<Client>();
     client_->SetIPCClientFactory(client_factory_.get());
 
-    server_launcher_ = new TestServerLauncher(client_factory_.get());
-    client_->SetServerLauncher(server_launcher_);
+    auto server_launcher =
+        std::make_unique<TestServerLauncher>(client_factory_.get());
+    server_launcher_ = server_launcher.get();
+    client_->SetServerLauncher(std::move(server_launcher));
   }
 
   void TearDown() override {
@@ -948,25 +948,20 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   uint32_t server_protocol_version_;
   std::string response_;
   std::string product_version_after_start_server_;
-  std::map<int, int> error_map_;
+  absl::flat_hash_map<int, int> error_map_;
 };
 
 class SessionPlaybackTest : public testing::Test {
  protected:
-  SessionPlaybackTest() = default;
-  SessionPlaybackTest(const SessionPlaybackTest &) = delete;
-  SessionPlaybackTest &operator=(const SessionPlaybackTest &) = delete;
-  ~SessionPlaybackTest() override = default;
-
   void SetUp() override {
     ipc_client_factory_ = std::make_unique<IPCClientFactoryMock>();
-    ipc_client_.reset(
-        reinterpret_cast<IPCClientMock *>(ipc_client_factory_->NewClient("")));
+    ipc_client_ = ipc_client_factory_->NewClient("");
     client_ = std::make_unique<Client>();
     client_->SetIPCClientFactory(ipc_client_factory_.get());
-    server_launcher_ =
-        new SessionPlaybackTestServerLauncher(ipc_client_factory_.get());
-    client_->SetServerLauncher(server_launcher_);
+    auto server_launcher = std::make_unique<SessionPlaybackTestServerLauncher>(
+        ipc_client_factory_.get());
+    server_launcher_ = server_launcher.get();
+    client_->SetServerLauncher(std::move(server_launcher));
   }
 
   void TearDown() override {
@@ -996,7 +991,7 @@ class SessionPlaybackTest : public testing::Test {
   }
 
   std::unique_ptr<IPCClientFactoryMock> ipc_client_factory_;
-  std::unique_ptr<IPCClientMock> ipc_client_;
+  std::unique_ptr<IPCClientInterface> ipc_client_;
   std::unique_ptr<Client> client_;
   SessionPlaybackTestServerLauncher *server_launcher_;
 };

@@ -38,6 +38,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/system_util.h"
@@ -222,9 +223,9 @@ class MockState {
     client_factory_.SetMockResponse(mock_response.SerializeAsString());
     client_->SetIPCClientFactory(&client_factory_);
 
-    // |launcher| will be deleted by the |client|
-    launcher_ = new TestServerLauncher(&client_factory_);
-    client_->SetServerLauncher(launcher_);
+    auto launcher = std::make_unique<TestServerLauncher>(&client_factory_);
+    launcher_ = launcher.get();
+    client_->SetServerLauncher(std::move(launcher));
     launcher_->set_start_server_result(true);
   }
   MockState(const MockState &) = delete;

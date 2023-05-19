@@ -31,6 +31,7 @@
 #define MOZC_IPC_IPC_MOCK_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "ipc/ipc.h"
@@ -83,37 +84,38 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
   IPCClientFactoryMock(const IPCClientFactoryMock &) = delete;
   IPCClientFactoryMock &operator=(const IPCClientFactoryMock &) = delete;
 
-  IPCClientInterface *NewClient(const std::string &unused_name,
-                                const std::string &path_name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &unused_name, const std::string &path_name) override;
 
-  IPCClientInterface *NewClient(const std::string &unused_name) override;
+  std::unique_ptr<IPCClientInterface> NewClient(
+      const std::string &unused_name) override;
 
-  // This function is supporsed to be used by unittests.
+  // This function is for unit tests.
   const std::string &GetGeneratedRequest() const;
 
-  // This function is supporsed to be used by IPCClientMock
+  // This function is for IPCClientMock.
   void SetGeneratedRequest(const std::string &request);
 
-  // This function is supporsed to be used by unittests.
+  // This function is for unit tests.
   void SetMockResponse(const std::string &response);
 
-  // This function is supporsed to be used by unittests.
-  void SetConnection(const bool connection);
+  // This function is for unit tests.
+  void SetConnection(bool connection);
 
-  // This function is supporsed to be used by unittests.
-  void SetResult(const bool result);
+  // This function is for unit tests.
+  void SetResult(bool result);
 
-  // This function is supporsed to be used by unittests.
-  void SetServerProtocolVersion(const uint32_t server_protocol_version);
+  // This function is for unit tests.
+  void SetServerProtocolVersion(uint32_t server_protocol_version);
 
-  // This function is supporsed to be used by unittests.
+  // This function is for unit tests.
   void SetServerProductVersion(const std::string &server_product_version);
 
-  // This function is supporsed to be used by unittests.
-  void SetServerProcessId(const uint32_t server_process_id);
+  // This function is for unit tests.
+  void SetServerProcessId(uint32_t server_process_id);
 
  private:
-  IPCClientMock *NewClientMock();
+  std::unique_ptr<IPCClientMock> NewClientMock();
 
   bool connection_;
   bool result_;

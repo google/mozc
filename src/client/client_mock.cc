@@ -30,6 +30,7 @@
 #include "client/client_mock.h"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -76,8 +77,9 @@ namespace client {
 
 MockVoidImplementation(SetIPCClientFactory,
                        IPCClientFactoryInterface *client_factory);
-MockVoidImplementation(SetServerLauncher,
-                       ServerLauncherInterface *server_launcher);
+MockVoidImplementation(
+    SetServerLauncher,
+    std::unique_ptr<ServerLauncherInterface> server_launcher);
 MockConstBoolImplementation(IsValidRunLevel, void);
 MockBoolImplementation(EnsureConnection, void);
 MockBoolImplementation(EnsureSession, void);

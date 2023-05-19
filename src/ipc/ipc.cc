@@ -40,6 +40,7 @@
 #include "absl/strings/string_view.h"
 
 #ifdef _WIN32
+#include <wil/resource.h>
 #include <windows.h>
 #else  // _WIN32
 #include <errno.h>
@@ -86,19 +87,14 @@ void IPCServer::Wait() {
   }
 }
 
-IPCClientInterface::~IPCClientInterface() = default;
-
-IPCClientFactoryInterface::~IPCClientFactoryInterface() = default;
-
-IPCClientFactory::~IPCClientFactory() = default;
-
-IPCClientInterface *IPCClientFactory::NewClient(const std::string &name,
-                                                const std::string &path_name) {
-  return new IPCClient(name, path_name);
+std::unique_ptr<IPCClientInterface> IPCClientFactory::NewClient(
+    const std::string &name, const std::string &path_name) {
+  return std::make_unique<IPCClient>(name, path_name);
 }
 
-IPCClientInterface *IPCClientFactory::NewClient(const std::string &name) {
-  return new IPCClient(name);
+std::unique_ptr<IPCClientInterface> IPCClientFactory::NewClient(
+    const std::string &name) {
+  return std::make_unique<IPCClient>(name);
 }
 
 // static
@@ -137,22 +133,19 @@ bool IPCClient::TerminateServer(const absl::string_view name) {
   }
 
 #ifdef _WIN32
-  HANDLE handle =
-      ::OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(pid));
-  if (nullptr == handle) {
+  wil::unique_process_handle handle(
+      ::OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(pid)));
+  if (!handle) {
     LOG(ERROR) << "OpenProcess failed: " << ::GetLastError();
     return false;
   }
 
-  if (!::TerminateProcess(handle, 0)) {
+  if (!::TerminateProcess(handle.get(), 0)) {
     LOG(ERROR) << "TerminateProcess failed: " << ::GetLastError();
-    ::CloseHandle(handle);
     return false;
   }
 
   VLOG(1) << "Success to terminate the server: " << name << " " << pid;
-
-  ::CloseHandle(handle);
 
   return true;
 #else   // _WIN32

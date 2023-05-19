@@ -32,7 +32,7 @@
 #include "ipc/ipc_mock.h"
 
 #include <cstdint>
-#include <cstring>  // memcpy
+#include <memory>
 #include <string>
 
 #include "base/version.h"
@@ -78,12 +78,12 @@ IPCClientFactoryMock::IPCClientFactoryMock()
       result_(false),
       server_protocol_version_(IPC_PROTOCOL_VERSION) {}
 
-IPCClientInterface *IPCClientFactoryMock::NewClient(
+std::unique_ptr<IPCClientInterface> IPCClientFactoryMock::NewClient(
     const std::string &unused_name, const std::string &path_name) {
   return NewClientMock();
 }
 
-IPCClientInterface *IPCClientFactoryMock::NewClient(
+std::unique_ptr<IPCClientInterface> IPCClientFactoryMock::NewClient(
     const std::string &unused_name) {
   return NewClientMock();
 }
@@ -121,8 +121,8 @@ void IPCClientFactoryMock::SetServerProcessId(
   server_process_id_ = server_process_id;
 }
 
-IPCClientMock *IPCClientFactoryMock::NewClientMock() {
-  IPCClientMock *client = new IPCClientMock(this);
+std::unique_ptr<IPCClientMock> IPCClientFactoryMock::NewClientMock() {
+  auto client = std::make_unique<IPCClientMock>(this);
   client->set_connection(connection_);
   client->set_result(result_);
   client->set_response(response_);
