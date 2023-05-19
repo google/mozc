@@ -1305,61 +1305,63 @@ void DictionaryPredictionAggregator::
         const ConversionRequest &request, const Segments &segments,
         PredictionTypes base_selected_types,
         std::vector<Result> *results) const {
-  if (queries.empty()) {
+  if (queries.empty() || segments.conversion_segments_size() == 0) {
     return;
   }
 
-  // Only use the 1-best correction now.
-  // We here intentionally use 'asis' string since the composition
-  // spellchecker is designed to predict the word from incomplete composition
-  // string, e.g. おk. -> おか
-  // TODO(taku): Revisits this design once QWERTY model gets ready.
-  absl::string_view key = queries.front().asis;
-  const bool is_kana_modifier_insensitive_only =
-      queries.front().is_kana_modifier_insensitive_only;
-  const size_t key_len = Util::CharsLen(key);
-
-  // Makes dummy segments with corrected query.
-  Segments corrected_segments = segments;
-  corrected_segments.mutable_conversion_segment(0)->set_key(key);
-
-  // Make ConversionRequest that has no composer to avoid the original key from
-  // being used during the candidate aggregation.
-  // Kana modifier insensitive dictionary lookup is also disabled as
-  // composition spellchecker has already fixed them.
+  // Make ConversionRequest that has no composer to avoid the original key
+  // from being used during the candidate aggregation. Kana modifier
+  // insensitive dictionary lookup is also disabled as composition
+  // spellchecker has already fixed them.
   ConversionRequest corrected_request = request;
   corrected_request.set_composer(nullptr);
   corrected_request.set_kana_modifier_insensitive_conversion(false);
 
-  std::vector<Result> corrected_results;
+  for (const auto &query : queries) {
+    // We here intentionally use 'asis' string since the composition
+    // spellchecker is designed to predict the word from incomplete composition
+    // string, e.g. おk. -> おか
+    // TODO(taku): Revisits this design once QWERTY model gets ready.
+    absl::string_view key = query.asis;
+    const size_t key_len = Util::CharsLen(key);
 
-  const UnigramConfig &unigram_config = GetUnigramConfig(request);
-  if (key_len >= unigram_config.min_key_len) {
-    const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
-    (this->*unigram_fn)(corrected_request, corrected_segments,
-                        &corrected_results);
-  }
+    // Makes dummy segments with corrected query.
+    Segments corrected_segments = segments;
+    corrected_segments.mutable_conversion_segment(0)->set_key(key);
 
-  if (base_selected_types & REALTIME) {
-    constexpr int kRealtimeSize = 2;
-    AggregateRealtimeConversion(corrected_request, kRealtimeSize,
-                                corrected_segments, &corrected_results);
-  }
+    std::vector<Result> corrected_results;
 
-  if (base_selected_types & BIGRAM) {
-    AggregateBigramPrediction(corrected_request, corrected_segments,
-                              Segment::Candidate::SOURCE_INFO_NONE,
-                              &corrected_results);
-  }
-
-  // Appends the result with TYPING_CORRECTION attribute.
-  for (Result &result : corrected_results) {
-    // If the correction is a pure kana modifier insensitive correction,
-    // typing correction annotation is not necessary.
-    if (!is_kana_modifier_insensitive_only) {
-      result.types |= TYPING_CORRECTION;
+    const UnigramConfig &unigram_config = GetUnigramConfig(request);
+    if (key_len >= unigram_config.min_key_len) {
+      const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
+      (this->*unigram_fn)(corrected_request, corrected_segments,
+                          &corrected_results);
     }
-    results->emplace_back(std::move(result));
+
+    if (base_selected_types & REALTIME) {
+      constexpr int kRealtimeSize = 2;
+      AggregateRealtimeConversion(corrected_request, kRealtimeSize,
+                                  corrected_segments, &corrected_results);
+    }
+
+    if (base_selected_types & BIGRAM) {
+      AggregateBigramPrediction(corrected_request, corrected_segments,
+                                Segment::Candidate::SOURCE_INFO_NONE,
+                                &corrected_results);
+    }
+
+    // Appends the result with TYPING_CORRECTION attribute.
+    for (Result &result : corrected_results) {
+      // If the correction is a pure kana modifier insensitive correction,
+      // typing correction annotation is not necessary.
+      if (!query.is_kana_modifier_insensitive_only) {
+        result.types |= TYPING_CORRECTION;
+        result.types |= EXTENDED_TYPING_CORRECTION;
+      }
+      result.wcost += query.cost;
+      result.cost += query.cost;
+      results->emplace_back(std::move(result));
+    }
   }
 }
 

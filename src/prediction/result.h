@@ -68,6 +68,11 @@ enum PredictionType {
   // TODO(noriyukit): This label should be integrated with REALTIME. This is
   // why 65536 is used to indicate that it is a temporary assignment.
   REALTIME_TOP = 65536,
+
+  // Results from new typing correction algorithm.
+  // TODO(taku): This label should be integrated with TYPING_CORRECTION. This is
+  // why 65536 * 2 is used to indicate that it is a temporary assignment.
+  EXTENDED_TYPING_CORRECTION = 65536 * 2,
 };
 // Bitfield to store a set of PredictionType.
 using PredictionTypes = int32_t;

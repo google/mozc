@@ -534,6 +534,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   }
 
   if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION) &&
+      !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION) &&
       seen_tc_keys_.count(result.non_expanded_original_key) >=
           kTcMaxCountPerKey) {
     *log_message =
@@ -919,7 +920,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
     }
 
-    if (result.types & PredictionType::TYPING_CORRECTION) {
+    if ((result.types & PredictionType::TYPING_CORRECTION) &&
+        !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
       const int typing_correction_cost_offset =
           GetTypingCorrectionCostOffset(request);
       if (typing_correction_cost_offset != 0) {
