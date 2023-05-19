@@ -31,23 +31,18 @@
 #define MOZC_BASE_CONTAINER_BITARRAY_H_
 
 #include <cstdint>
-#include <cstring>  // memset
-#include <memory>
+#include <vector>
+
+#include "absl/algorithm/container.h"
 
 namespace mozc {
 
 class BitArray {
  public:
   // Specify the size of bit vector
-  explicit BitArray(uint32_t size)
-      : array_(new uint32_t[1 + (size >> 5)]), size_(size) {
-    memset(array_.get(), 0, sizeof(uint32_t) * (1 + (size >> 5)));
+  explicit BitArray(uint32_t size) : array_(1 + (size >> 5)), size_(size) {
+    absl::c_fill(array_, 0);
   }
-
-  BitArray(const BitArray &) = delete;
-  BitArray &operator=(const BitArray &) = delete;
-
-  ~BitArray() = default;
 
   // Gets true/false of |index|
   bool get(uint32_t index) const {
@@ -67,7 +62,7 @@ class BitArray {
 
   // Returns the body of bit vector.
   const char *array() const {
-    return reinterpret_cast<const char *>(array_.get());
+    return reinterpret_cast<const char *>(array_.data());
   }
 
   // Returns the required buffer size for saving the bit vector.
@@ -85,7 +80,7 @@ class BitArray {
   }
 
  private:
-  std::unique_ptr<uint32_t[]> array_;
+  std::vector<uint32_t> array_;
   const size_t size_;
 };
 
