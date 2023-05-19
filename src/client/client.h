@@ -241,7 +241,7 @@ class Client : public ClientInterface {
 
   // Execute |input| and check the version by seeing the
   // initial response. If a new version is available, automatically
-  // restart the server and exectute the same input command again.
+  // restart the server and execute the same input command again.
   // If any errors happen inside the version up, shows an error dialog
   // and returns false.
   bool CheckVersionOrRestartServerInternal(const commands::Input &input,
@@ -268,6 +268,18 @@ class Client : public ClientInterface {
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;
   commands::Capability client_capability_;
+};
+
+class ClientFactory {
+ public:
+  ClientFactory() = delete;
+  ~ClientFactory() = delete;
+
+  // Return a new client.
+  static ClientInterface *NewClient();
+
+  // Set a ClientFactoryInterface for unit testing.
+  static void SetClientFactory(ClientFactoryInterface *client_factory);
 };
 
 }  // namespace client

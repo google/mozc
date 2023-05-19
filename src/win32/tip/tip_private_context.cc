@@ -33,6 +33,7 @@
 
 #include <memory>
 
+#include "client/client.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "win32/base/config_snapshot.h"

@@ -229,18 +229,6 @@ class ClientFactoryInterface {
   virtual ClientInterface *NewClient() = 0;
 };
 
-class ClientFactory {
- public:
-  ClientFactory() = delete;
-  ~ClientFactory() = delete;
-
-  // Return a new client.
-  static ClientInterface *NewClient();
-
-  // Set a ClientFactoryInterface for unittesting.
-  static void SetClientFactory(ClientFactoryInterface *client_factory);
-};
-
 class SendCommandInterface {
  public:
   virtual ~SendCommandInterface() = default;

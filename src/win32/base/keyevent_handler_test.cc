@@ -43,6 +43,7 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/version.h"
+#include "client/client.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
