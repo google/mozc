@@ -52,6 +52,7 @@
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
+#include "client/client.h"
 #include "client/client_interface.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"
