@@ -48,13 +48,6 @@ namespace mozc {
 template <typename T>
 class Trie final {
  public:
-  Trie() = default;
-
-  Trie(const Trie &) = delete;
-  Trie &operator=(const Trie &) = delete;
-
-  ~Trie() = default;
-
   template <typename U>
   void AddEntry(absl::string_view key, U &&data) {
     if (key.empty()) {

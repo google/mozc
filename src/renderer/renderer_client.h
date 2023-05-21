@@ -78,6 +78,8 @@ class RendererLauncherInterface {
 class RendererClient : public RendererInterface {
  public:
   RendererClient();
+  RendererClient(RendererClient &&) = default;
+  RendererClient &operator=(RendererClient &&) = default;
   ~RendererClient() override;
 
   // set IPC factory
@@ -117,7 +119,7 @@ class RendererClient : public RendererInterface {
   void set_suppress_error_dialog(bool suppress);
 
  private:
-  IPCClientInterface *CreateIPCClient() const;
+  std::unique_ptr<IPCClientInterface> CreateIPCClient() const;
 
   bool is_window_visible_;
   bool disable_renderer_path_check_;

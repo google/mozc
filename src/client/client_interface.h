@@ -33,6 +33,7 @@
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "ipc/ipc.h"
@@ -93,9 +94,10 @@ class ClientInterface {
       IPCClientFactoryInterface *client_factory) = 0;
 
   // set ServerLauncher.
-  // ServerLauncher is used as default
-  // NOTE: Client class takes the owership of start_server_handler.
-  virtual void SetServerLauncher(ServerLauncherInterface *server_launcher) = 0;
+  // ServerLauncher is used as default.
+  // NOTE: Client class takes the ownership of start_server_handler.
+  virtual void SetServerLauncher(
+      std::unique_ptr<ServerLauncherInterface> server_launcher) = 0;
 
   // return true if the current thread is running
   // inside valid run level.
@@ -225,18 +227,6 @@ class ClientFactoryInterface {
  public:
   virtual ~ClientFactoryInterface() = default;
   virtual ClientInterface *NewClient() = 0;
-};
-
-class ClientFactory {
- public:
-  ClientFactory() = delete;
-  ~ClientFactory() = delete;
-
-  // Return a new client.
-  static ClientInterface *NewClient();
-
-  // Set a ClientFactoryInterface for unittesting.
-  static void SetClientFactory(ClientFactoryInterface *client_factory);
 };
 
 class SendCommandInterface {

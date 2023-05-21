@@ -31,6 +31,7 @@
 
 #include "ipc/ipc_test_util.h"
 
+#include <memory>
 #include <string>
 
 #include "base/logging.h"
@@ -64,18 +65,18 @@ bool TestMachPortManager::IsServerRunning(const std::string &name) const {
 }
 #endif  // __APPLE__
 
-IPCClientInterface *IPCClientFactoryOnMemory::NewClient(
+std::unique_ptr<IPCClientInterface> IPCClientFactoryOnMemory::NewClient(
     const std::string &name, const std::string &path_name) {
-  IPCClient *new_client = new IPCClient(name, path_name);
+  auto new_client = std::make_unique<IPCClient>(name, path_name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);
 #endif  // __APPLE__
   return new_client;
 }
 
-IPCClientInterface *IPCClientFactoryOnMemory::NewClient(
+std::unique_ptr<IPCClientInterface> IPCClientFactoryOnMemory::NewClient(
     const std::string &name) {
-  IPCClient *new_client = new IPCClient(name);
+  auto new_client = std::make_unique<IPCClient>(name);
 #ifdef __APPLE__
   new_client->SetMachPortManager(&mach_manager_);
 #endif  // __APPLE__

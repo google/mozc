@@ -31,6 +31,7 @@
 #define MOZC_CLIENT_CLIENT_MOCK_H_
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "client/client_interface.h"
@@ -46,7 +47,8 @@ namespace client {
 class ClientMock : public client::ClientInterface {
  public:
   void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
-  void SetServerLauncher(ServerLauncherInterface *server_launcher) override;
+  void SetServerLauncher(
+      std::unique_ptr<ServerLauncherInterface> server_launcher) override;
   bool IsValidRunLevel() const override;
   bool EnsureConnection() override;
   bool EnsureSession() override;

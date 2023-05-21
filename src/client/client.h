@@ -35,8 +35,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "base/run_level.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
@@ -55,6 +57,9 @@ namespace client {
 // to launch server process
 class ServerLauncher : public ServerLauncherInterface {
  public:
+  ServerLauncher();
+  ~ServerLauncher() override;
+
   bool StartServer(ClientInterface *client) override;
 
   bool ForceTerminateServer(absl::string_view name) override;
@@ -79,9 +84,6 @@ class ServerLauncher : public ServerLauncherInterface {
     suppress_error_dialog_ = suppress;
   }
 
-  ServerLauncher();
-  ~ServerLauncher() override;
-
  private:
   std::string server_program_;
   bool restricted_;
@@ -97,14 +99,21 @@ class Client : public ClientInterface {
   // This function should be called before EnsureSession.
   void InitRequestForSvsJapanese(bool use_svs);
 
-  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
+  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override {
+    client_factory_ = client_factory;
+  }
 
   // set ServerLauncher.
   // ServerLauncher is used as default
   // NOTE: Client class takes the owership of start_server_handler.
-  void SetServerLauncher(ServerLauncherInterface *server_launcher) override;
+  void SetServerLauncher(
+      std::unique_ptr<ServerLauncherInterface> server_launcher) override {
+    server_launcher_ = std::move(server_launcher);
+  }
 
-  bool IsValidRunLevel() const override;
+  bool IsValidRunLevel() const override {
+    return RunLevel::IsValidClientRunLevel();
+  }
 
   bool EnsureConnection() override;
 
@@ -232,7 +241,7 @@ class Client : public ClientInterface {
 
   // Execute |input| and check the version by seeing the
   // initial response. If a new version is available, automatically
-  // restart the server and exectute the same input command again.
+  // restart the server and execute the same input command again.
   // If any errors happen inside the version up, shows an error dialog
   // and returns false.
   bool CheckVersionOrRestartServerInternal(const commands::Input &input,
@@ -259,6 +268,18 @@ class Client : public ClientInterface {
   // Remember the composition mode of input session for playback.
   commands::CompositionMode last_mode_;
   commands::Capability client_capability_;
+};
+
+class ClientFactory {
+ public:
+  ClientFactory() = delete;
+  ~ClientFactory() = delete;
+
+  // Return a new client.
+  static ClientInterface *NewClient();
+
+  // Set a ClientFactoryInterface for unit testing.
+  static void SetClientFactory(ClientFactoryInterface *client_factory);
 };
 
 }  // namespace client

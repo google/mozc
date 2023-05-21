@@ -100,6 +100,7 @@ mozc_cc_library(
         ],
         windows = [
             "//base/win32:wide_char",
+            "//base/win32:win_sandbox",
         ],
     ),
 )
@@ -122,8 +123,8 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
