@@ -56,14 +56,12 @@ mozc::client::ClientInterface* CreateAndConfigureClient() {
 }
 
 MozcConnection::MozcConnection(
-    mozc::client::ServerLauncherInterface *server_launcher,
     mozc::IPCClientFactoryInterface *client_factory)
     : handler_(new KeyEventHandler),
       preedit_method_(mozc::config::Config::ROMAN),
       client_factory_(client_factory) {
   VLOG(1) << "MozcConnection is created";
   mozc::client::ClientInterface *client = CreateAndConfigureClient();
-  client->SetServerLauncher(server_launcher);
   client->SetIPCClientFactory(client_factory_.get());
   client_.reset(client);
 
@@ -202,10 +200,7 @@ mozc::client::ClientInterface* MozcConnection::GetClient()
 }
 
 MozcConnection *MozcConnection::CreateMozcConnection() {
-  mozc::client::ServerLauncher *server_launcher
-      = new mozc::client::ServerLauncher;
-
-  return new MozcConnection(server_launcher, new mozc::IPCClientFactory);
+  return new MozcConnection(new mozc::IPCClientFactory);
 }
 
 }  // namespace fcitx

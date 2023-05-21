@@ -45,7 +45,6 @@ class IPCClientFactoryInterface;
 
 namespace client {
 class ClientInterface;
-class ServerLauncherInterface;
 }  // namespace client
 
 }  // namespace mozc

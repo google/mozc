@@ -60,7 +60,6 @@ MozcConnection::~MozcConnection() { VLOG(1) << "MozcConnection is destroyed"; }
 
 mozc::client::ClientInterface *MozcConnection::CreateClient() {
   mozc::client::ClientInterface *client = CreateAndConfigureClient();
-  client->SetServerLauncher(new mozc::client::ServerLauncher);
   client->SetIPCClientFactory(client_factory_);
   return client;
 }
