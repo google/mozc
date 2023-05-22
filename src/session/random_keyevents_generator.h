@@ -31,10 +31,9 @@
 #define MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_
 
 #include <cstdint>
-#include <random>
+#include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
@@ -46,9 +45,11 @@ class RandomKeyEventsGenerator {
  public:
   RandomKeyEventsGenerator() = default;
   // Initialize with seed.
-  explicit RandomKeyEventsGenerator(std::seed_seq &&);
+  template <typename Rng>
+  explicit RandomKeyEventsGenerator(Rng &&rng)
+      : bitgen_(std::forward<Rng>(rng)) {}
 
-  // Load all data to avoid a increse of memory usage
+  // Load all data to avoid a increase of memory usage
   // during memory leak tests.
   void PrepareForMemoryLeakTest();
 
