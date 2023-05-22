@@ -234,6 +234,7 @@ message KeyEvent {
   // LINT.ThenChange(
   //     //composer/key_parser.cc,
   //     //gui/config_dialog/keybinding_editor.cc,
+  //     unix/ibus/key_translator.cc,
   // )
 
   // Probable key event, mainly for touch screen.
