@@ -296,10 +296,6 @@ class NullLogFinalizer {
 
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
 
-#ifndef MOZC_LOG_PROTOBUF
-#define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
-#endif  // MOZC_LOG_PROTOBUF
-
 
 #ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
@@ -307,7 +303,11 @@ class NullLogFinalizer {
 #endif  // DVLOG_IF
 
 #ifndef MOZC_LOG_PROTOBUF
+#ifdef _WIN32
+#define MOZC_LOG_PROTOBUF(message) ((message).DebugString())
+#else  // _WIN32
 #define MOZC_LOG_PROTOBUF(message) (message)
+#endif  // _WIN32
 #endif  // MOZC_LOG_PROTOBUF
 
 #endif  // MOZC_BASE_LOGGING_H_
