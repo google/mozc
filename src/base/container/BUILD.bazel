@@ -82,6 +82,7 @@ mozc_cc_library(
         "//base:status",
         "@com_google_absl//absl/base:config",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -90,8 +91,7 @@ mozc_cc_test(
     srcs = ["serialized_string_array_test.cc"],
     requires_full_emulation = False,
     deps = [
-        "//base:port",
-        "//base/container:serialized_string_array",
+        ":serialized_string_array",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],

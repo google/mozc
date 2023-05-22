@@ -29,32 +29,21 @@
 
 #include "base/container/serialized_string_array.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/status.h"
 #include "absl/base/config.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
-namespace {
 
-constexpr uint32_t kEmptyArrayData = 0x00000000;
-
-}  // namespace
-
-SerializedStringArray::SerializedStringArray() {
-  static_assert(ABSL_IS_LITTLE_ENDIAN, "Little endian is assumed");
-  clear();
-}
-
-SerializedStringArray::~SerializedStringArray() = default;
+static_assert(ABSL_IS_LITTLE_ENDIAN, "Little endian is assumed");
 
 bool SerializedStringArray::Init(
     absl::string_view data_aligned_at_4byte_boundary) {
@@ -72,30 +61,25 @@ void SerializedStringArray::Set(
   data_ = data_aligned_at_4byte_boundary;
 }
 
-void SerializedStringArray::clear() {
-  data_ =
-      absl::string_view(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
-}
-
 bool SerializedStringArray::VerifyData(absl::string_view data) {
   if (data.size() < 4) {
     LOG(ERROR) << "Array size is missing";
     return false;
   }
   const uint32_t *u32_array = reinterpret_cast<const uint32_t *>(data.data());
-  const uint32_t size = u32_array[0];
+  const size_type size = u32_array[0];
 
-  const size_t min_required_data_size = 4 + (4 + 4) * size;
+  const size_type min_required_data_size = 4 + (4 + 4) * size;
   if (data.size() < min_required_data_size) {
     LOG(ERROR) << "Lack of data.  At least " << min_required_data_size
                << " bytes are required";
     return false;
   }
 
-  uint32_t prev_str_end = min_required_data_size;
-  for (uint32_t i = 0; i < size; ++i) {
-    const uint32_t offset = u32_array[2 * i + 1];
-    const uint32_t len = u32_array[2 * i + 2];
+  difference_type prev_str_end = min_required_data_size;
+  for (difference_type i = 0; i < size; ++i) {
+    const difference_type offset = u32_array[2 * i + 1];
+    const difference_type len = u32_array[2 * i + 2];
     if (offset < prev_str_end) {
       LOG(ERROR) << "Invalid offset for string " << i << ": len = " << len
                  << ", offset = " << offset;
@@ -117,14 +101,15 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
 }
 
 absl::string_view SerializedStringArray::SerializeToBuffer(
-    const std::vector<absl::string_view> &strs,
+    const absl::Span<const absl::string_view> strs,
     std::unique_ptr<uint32_t[]> *buffer) {
-  const size_t header_byte_size = 4 * (1 + 2 * strs.size());
+  const size_type header_byte_size = 4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
   std::unique_ptr<uint32_t[]> offsets(new uint32_t[strs.size()]);
-  size_t current_offset = header_byte_size;  // The offset for first string.
-  for (size_t i = 0; i < strs.size(); ++i) {
+  difference_type current_offset =
+      header_byte_size;  // The offset for first string.
+  for (difference_type i = 0; i < strs.size(); ++i) {
     offsets[i] = static_cast<uint32_t>(current_offset);
     // The next string is written after terminating '\0', so increment one byte
     // in addition to the string byte length.
@@ -136,7 +121,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
   buffer->reset(new uint32_t[(current_offset + 3) / 4]);
 
   (*buffer)[0] = static_cast<uint32_t>(strs.size());
-  for (size_t i = 0; i < strs.size(); ++i) {
+  for (difference_type i = 0; i < strs.size(); ++i) {
     // Fill offset and length.
     (*buffer)[2 * i + 1] = offsets[i];
     (*buffer)[2 * i + 2] = static_cast<uint32_t>(strs[i].size());
@@ -153,7 +138,8 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
 }
 
 void SerializedStringArray::SerializeToFile(
-    const std::vector<absl::string_view> &strs, const std::string &filepath) {
+    const absl::Span<const absl::string_view> strs,
+    const std::string &filepath) {
   std::unique_ptr<uint32_t[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
   CHECK_OK(FileUtil::SetContents(filepath, data));
