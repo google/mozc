@@ -89,7 +89,7 @@ class T13nPromotionRewriterTest : public ::testing::Test {
   commands::Request mobile_request_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
 };
 

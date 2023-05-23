@@ -79,7 +79,7 @@ class EmoticonRewriterTest : public ::testing::Test {
   testing::MockDataManager mock_data_manager_;
 
  private:
-  testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(EmoticonRewriterTest, BasicTest) {

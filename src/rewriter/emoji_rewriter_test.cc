@@ -225,7 +225,7 @@ class EmojiRewriterTest : public ::testing::Test {
   std::unique_ptr<EmojiRewriter> full_data_rewriter_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_tmp_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_tmp_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   const TestDataManager test_data_manager_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;

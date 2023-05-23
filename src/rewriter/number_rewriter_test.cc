@@ -130,7 +130,7 @@ class NumberRewriterTest : public ::testing::Test {
   const ConversionRequest default_request_;
 
  private:
-  testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
 };
 
 namespace {

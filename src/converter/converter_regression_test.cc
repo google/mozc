@@ -52,7 +52,7 @@ using composer::Table;
 
 class ConverterRegressionTest : public ::testing::Test {
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {

@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "base/file/temp_dir.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -77,14 +77,21 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
     const std::vector<absl::string_view> &dir_components,
     const std::vector<absl::string_view> &filenames);
 
-// Temporarily sets the user profile directory to FLAGS_test_tmpdir during the
-// scope.  The original directory is restored at the end of the scope.
-class ScopedTmpUserProfileDirectory {
+// Creates a new unique TempDirectory and returns it.
+TempDirectory MakeTempDirectoryOrDie();
+
+// Temporarily sets the user profile directory to a unique temp directory during
+// the scope.  The original directory is restored at the end of the scope.
+// Exits if it fails to create a temporary directory.
+class ScopedTempUserProfileDirectory {
  public:
-  ScopedTmpUserProfileDirectory();
-  ~ScopedTmpUserProfileDirectory();
+  ScopedTempUserProfileDirectory();
+  ~ScopedTempUserProfileDirectory();
+
+  TempDirectory &temp_directory() { return temp_dir_; }
 
  private:
+  TempDirectory temp_dir_;
   const std::string original_dir_;
 };
 

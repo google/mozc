@@ -125,7 +125,7 @@ ACTION_P(InvokeCallbackWithUserDictionaryToken, value) {
 
 class DateRewriterTest : public ::testing::Test {
  private:
-  const mozc::testing::ScopedTmpUserProfileDirectory scoped_tmp_profile_dir_;
+  const mozc::testing::ScopedTempUserProfileDirectory scoped_tmp_profile_dir_;
 };
 
 TEST_F(DateRewriterTest, DateRewriteTest) {

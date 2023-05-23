@@ -98,7 +98,7 @@ class VariantsRewriterTest : public ::testing::Test {
   PosMatcher pos_matcher_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
 };
 

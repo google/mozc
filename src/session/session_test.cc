@@ -700,7 +700,7 @@ class SessionTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 // This test is intentionally defined at this location so that this

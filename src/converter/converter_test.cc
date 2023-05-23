@@ -429,7 +429,7 @@ class ConverterTest : public ::testing::Test {
   }
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   const commands::Request default_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;

@@ -354,7 +354,7 @@ class UserDictionaryTest : public ::testing::Test {
   config::Config config_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };

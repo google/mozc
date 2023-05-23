@@ -117,7 +117,7 @@ class SystemDictionaryTest : public ::testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   dictionary::PosMatcher pos_matcher_;
   TextDictionaryLoader text_dict_;

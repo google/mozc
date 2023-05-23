@@ -98,7 +98,7 @@ class TransliterationRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
   const commands::Request default_request_;
   config::Config default_config_;
 };
