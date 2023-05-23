@@ -191,7 +191,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	⊃	すうがく しゅうごう けいさん きごう	真上位集合		SYMBOL
 記号	∪	すうがく きゃっぷ かっぷ おあ しゅうごう けいさん U きごう わしゅうごう	和集合		SYMBOL
 記号	∩	すうがく きゃっぷ かっぷ あんど しゅうごう けいさん きごう せきしゅうごう	積集合		SYMBOL
-記号	∧	すうがく かつ および あんど しゅうごう けいさん きごう	および		SYMBOL
+記号	∧	すうがく かつ および あんど しゅうごう けいさん ^ きごう	および		SYMBOL
 記号	∨	すうがく または おあ しゅうごう けいさん V きごう	または		SYMBOL
 記号	¬	すうがく のっと ひてい しゅうごう けいさん きごう	否定		SYMBOL
 記号	⇒	すうがく やじるし みぎや -> ならば けいさん => きごう →	ならば		SYMBOL
