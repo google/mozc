@@ -83,7 +83,7 @@ class NBestGenerator {
   // Try to enumerate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const Segmenter *segmenter, const Connector *connector,
+      const Segmenter *segmenter, const Connector &connector,
       const dictionary::PosMatcher *pos_matcher, const Lattice *lattice,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
@@ -176,7 +176,7 @@ class NBestGenerator {
   // References to relevant modules.
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const Segmenter *segmenter_;
-  const Connector *connector_;
+  const Connector &connector_;
   const dictionary::PosMatcher *pos_matcher_;
   const Lattice *lattice_;
 

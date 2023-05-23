@@ -62,7 +62,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const dictionary::DictionaryInterface *dictionary,
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const Connector *connector, const Segmenter *segmenter,
+      const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
       const dictionary::PosGroup *pos_group,
       const SuggestionFilter *suggestion_filter);
@@ -103,9 +103,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
                         const std::string &original_key, NBestGenerator *nbest,
                         Segment *segment, size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
-  Node *Lookup(const int begin_pos, const int end_pos,
-               const ConversionRequest &request, bool is_reverse,
-               bool is_prediction, Lattice *lattice) const;
+  Node *Lookup(int begin_pos, int end_pos, const ConversionRequest &request,
+               bool is_reverse, bool is_prediction, Lattice *lattice) const;
   Node *AddCharacterTypeBasedNodes(const char *begin, const char *end,
                                    Lattice *lattice, Node *nodes) const;
 
@@ -187,13 +186,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
         lnode != rnode->constrained_prev) {
       return kInvalidPenaltyCost;
     }
-    return connector_->GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
+    return connector_.GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
 
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::DictionaryInterface *suffix_dictionary_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const Connector *connector_;
+  const Connector &connector_;
   const Segmenter *segmenter_;
   const dictionary::PosMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;

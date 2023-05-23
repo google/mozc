@@ -32,7 +32,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <optional>
+#include <vector>
 
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
@@ -45,16 +46,12 @@ class Connector final {
  public:
   static constexpr int16_t kInvalidCost = 30000;
 
-  static absl::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
+  static absl::StatusOr<Connector> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  static absl::StatusOr<std::unique_ptr<Connector>> Create(
-      const char *connection_data, size_t connection_size, int cache_size);
-
-  Connector() = default;
-
-  Connector(const Connector &) = delete;
-  Connector &operator=(const Connector &) = delete;
+  static absl::StatusOr<Connector> Create(const char *connection_data,
+                                          size_t connection_size,
+                                          int cache_size);
 
   int GetTransitionCost(uint16_t rid, uint16_t lid) const;
   int GetResolution() const { return resolution_; }
@@ -69,13 +66,12 @@ class Connector final {
 
   int LookupCost(uint16_t rid, uint16_t lid) const;
 
-  std::unique_ptr<Row[]> rows_;
+  std::vector<Row> rows_;
   const uint16_t *default_cost_ = nullptr;
   int resolution_ = 0;
-  int cache_size_ = 0;
   uint32_t cache_hash_mask_ = 0;
-  mutable std::unique_ptr<uint32_t[]> cache_key_;
-  mutable std::unique_ptr<int[]> cache_value_;
+  mutable std::vector<uint32_t> cache_key_;
+  mutable std::vector<int> cache_value_;
 };
 
 class Connector::Row final {
@@ -84,15 +80,11 @@ class Connector::Row final {
       : chunk_bits_index_(sizeof(uint32_t)),
         compact_bits_index_(sizeof(uint32_t)) {}
 
-  Row(const Row &) = delete;
-  Row &operator=(const Row &) = delete;
-
   void Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
             const uint8_t *compact_bits, size_t compact_bits_size,
             const uint8_t *values, bool use_1byte_value);
-  // Returns true if the value is found in the row and then store the found
-  // value into |value|. Otherwise returns false.
-  bool GetValue(uint16_t index, uint16_t *value) const;
+  // Returns the value in the row if found.
+  std::optional<uint16_t> GetValue(uint16_t index) const;
 
  private:
   storage::louds::SimpleSuccinctBitVectorIndex chunk_bits_index_;

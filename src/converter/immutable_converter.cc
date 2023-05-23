@@ -30,7 +30,6 @@
 #include "converter/immutable_converter.h"
 
 #include <algorithm>
-#include <cctype>
 #include <climits>
 #include <cstdint>
 #include <limits>
@@ -41,9 +40,7 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/key_corrector.h"
 #include "converter/lattice.h"
@@ -282,7 +279,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary,
     const SuppressionDictionary *suppression_dictionary,
-    const Connector *connector, const Segmenter *segmenter,
+    const Connector &connector, const Segmenter *segmenter,
     const PosMatcher *pos_matcher, const PosGroup *pos_group,
     const SuggestionFilter *suggestion_filter)
     : dictionary_(dictionary),
@@ -298,11 +295,10 @@ ImmutableConverterImpl::ImmutableConverterImpl(
       number_id_(pos_matcher_->GetNumberId()),
       unknown_id_(pos_matcher_->GetUnknownId()),
       last_to_first_name_transition_cost_(
-          connector_->GetTransitionCost(last_name_id_, first_name_id_)) {
+          connector_.GetTransitionCost(last_name_id_, first_name_id_)) {
   DCHECK(dictionary_);
   DCHECK(suffix_dictionary_);
   DCHECK(suppression_dictionary_);
-  DCHECK(connector_);
   DCHECK(segmenter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
@@ -995,7 +991,7 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
 
       rnode->prev = bos_node;
       rnode->cost = bos_node->cost +
-                    connector_->GetTransitionCost(bos_node->rid, rnode->lid) +
+                    connector_.GetTransitionCost(bos_node->rid, rnode->lid) +
                     rnode->wcost;
     }
   }
@@ -1010,7 +1006,7 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
     const size_t right_boundary =
         left_boundary + segments.segment(0).key().size();
     for (size_t pos = left_boundary + 1; pos < right_boundary; ++pos) {
-      ViterbiInternal(*connector_, pos, right_boundary, lattice);
+      ViterbiInternal(connector_, pos, right_boundary, lattice);
     }
     left_boundary = right_boundary;
   }
@@ -1021,7 +1017,7 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
     const size_t right_boundary =
         left_boundary + segments.segment(i).key().size();
     for (size_t pos = left_boundary; pos < right_boundary; ++pos) {
-      ViterbiInternal(*connector_, pos, right_boundary, lattice);
+      ViterbiInternal(connector_, pos, right_boundary, lattice);
     }
     left_boundary = right_boundary;
   }
@@ -1049,8 +1045,8 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
         continue;
       }
 
-      int cost = lnode->cost +
-                 connector_->GetTransitionCost(lnode->rid, eos_node->lid);
+      int cost =
+          lnode->cost + connector_.GetTransitionCost(lnode->rid, eos_node->lid);
       if (cost < best_cost) {
         best_cost = cost;
         best_node = lnode;
@@ -1199,7 +1195,7 @@ void ImmutableConverterImpl::PredictionViterbiInternal(int calc_begin_pos,
          ++liter) {
       for (BestMap::iterator riter = rbest.begin(); riter != rbest.end();
            ++riter) {
-        const int cost = liter->second.first + connector_->GetTransitionCost(
+        const int cost = liter->second.first + connector_.GetTransitionCost(
                                                    liter->first, riter->first);
         if (cost < riter->second.first) {
           riter->second.first = cost;
@@ -1600,7 +1596,7 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
         new_node->wcost =
             compound_node->wcost * candidate.value.size() /
                 compound_node->value.size() -
-            connector_->GetTransitionCost(candidate.rid, new_node->lid);
+            connector_.GetTransitionCost(candidate.rid, new_node->lid);
 
         VLOG(2) << " compound_node->lid=" << compound_node->lid
                 << " compound_node->rid=" << compound_node->rid

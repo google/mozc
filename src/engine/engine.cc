@@ -32,18 +32,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 
 #include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
-#include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_impl.h"
-#include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
@@ -81,7 +78,6 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   UserDataManagerImpl(PredictorInterface *predictor,
                       RewriterInterface *rewriter)
       : predictor_(predictor), rewriter_(rewriter) {}
-  ~UserDataManagerImpl() override;
 
   UserDataManagerImpl(const UserDataManagerImpl &) = delete;
   UserDataManagerImpl &operator=(const UserDataManagerImpl &) = delete;
@@ -99,8 +95,6 @@ class UserDataManagerImpl final : public UserDataManagerInterface {
   PredictorInterface *predictor_;
   RewriterInterface *rewriter_;
 };
-
-UserDataManagerImpl::~UserDataManagerImpl() = default;
 
 bool UserDataManagerImpl::Sync() {
   // TODO(noriyukit): In the current implementation, if rewriter_->Sync() fails,
@@ -159,9 +153,6 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
   }
   return engine;
 }
-
-Engine::Engine() = default;
-Engine::~Engine() = default;
 
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
@@ -237,7 +228,7 @@ absl::Status Engine::Init(
 
   immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
       dictionary_.get(), suffix_dictionary_.get(),
-      suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
+      suppression_dictionary_.get(), connector_, segmenter_.get(),
       pos_matcher_.get(), pos_group_.get(), suggestion_filter_.get());
   RETURN_IF_NULL(immutable_converter_);
 
@@ -256,7 +247,7 @@ absl::Status Engine::Init(
     // history predictor, and extra predictor.
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *data_manager, converter_.get(), immutable_converter_.get(),
-        dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
+        dictionary_.get(), suffix_dictionary_.get(), connector_,
         segmenter_.get(), pos_matcher_.get(), suggestion_filter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 

@@ -59,10 +59,6 @@ class SimpleSuccinctBitVectorIndex {
         lb0_cache_increment_(1),
         lb1_cache_increment_(1) {}
 
-  SimpleSuccinctBitVectorIndex(const SimpleSuccinctBitVectorIndex &) = delete;
-  SimpleSuccinctBitVectorIndex &operator=(
-      const SimpleSuccinctBitVectorIndex &) = delete;
-
   // Initializes the index. This class doesn't have the ownership of the memory
   // pointed by data, so it is caller's responsibility to manage its life time.
   // The 'data' needs to be aligned to 32-bits.

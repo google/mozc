@@ -82,7 +82,7 @@ class DictionaryPredictorTestPeer {
           aggregator,
       const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
-      const Connector *connector, const Segmenter *segmenter,
+      const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter)
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
@@ -336,8 +336,8 @@ class MockDataAndPredictor {
     mock_aggregator_ = new MockAggregator;
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         absl::WrapUnique(mock_aggregator_), data_manager_,
-        &mock_immutable_converter_, connector_.get(), segmenter_.get(),
-        &pos_matcher_, suggestion_filter_.get());
+        &mock_immutable_converter_, connector_, segmenter_.get(), &pos_matcher_,
+        suggestion_filter_.get());
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
@@ -345,7 +345,7 @@ class MockDataAndPredictor {
   }
 
   MockAggregator *mutable_aggregator() { return mock_aggregator_; }
-  const Connector &connector() { return *connector_; }
+  const Connector &connector() { return connector_; }
   const PosMatcher &pos_matcher() { return pos_matcher_; }
 
   const DictionaryPredictorTestPeer &predictor() { return *predictor_; }
@@ -356,7 +356,7 @@ class MockDataAndPredictor {
   MockImmutableConverter mock_immutable_converter_;
   MockAggregator *mock_aggregator_;
   PosMatcher pos_matcher_;
-  std::unique_ptr<const Connector> connector_;
+  Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   MockConverter converter_;

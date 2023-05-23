@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter_interface.h"
@@ -45,7 +44,6 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_dictionary.h"
-#include "dictionary/user_pos_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
@@ -89,9 +87,7 @@ class Engine : public EngineInterface {
     return CreateMobileEngine(std::make_unique<const DataManagerType>());
   }
 
-  Engine();
-  ~Engine() override;
-
+  Engine() = default;
   Engine(const Engine &) = delete;
   Engine &operator=(const Engine &) = delete;
 
@@ -128,7 +124,7 @@ class Engine : public EngineInterface {
   std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
-  std::unique_ptr<const Connector> connector_;
+  Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<dictionary::UserDictionary> user_dictionary_;
   std::unique_ptr<dictionary::DictionaryInterface> suffix_dictionary_;

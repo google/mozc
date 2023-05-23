@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <memory>
 #include <random>
 #include <string>
 #include <utility>
@@ -62,7 +61,7 @@ TEST(ConnectorTest, CompareWithRawData) {
       Connector::Create(cmmap->begin(), cmmap->size(), 256);
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
   auto connector = std::move(status_or_connector).value();
-  ASSERT_EQ(1, connector->GetResolution());
+  ASSERT_EQ(1, connector.GetResolution());
 
   const std::string connection_text_path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection_single_column.txt"});
@@ -82,11 +81,11 @@ TEST(ConnectorTest, CompareWithRawData) {
     std::mt19937 urbg(rd());
     std::shuffle(data.begin(), data.end(), urbg);
     for (size_t i = 0; i < data.size(); ++i) {
-      int actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
+      int actual = connector.GetTransitionCost(data[i].rid, data[i].lid);
       EXPECT_EQ(actual, data[i].cost);
 
       // Cache hit case.
-      actual = connector->GetTransitionCost(data[i].rid, data[i].lid);
+      actual = connector.GetTransitionCost(data[i].rid, data[i].lid);
       EXPECT_EQ(actual, data[i].cost);
     }
   }
@@ -130,7 +129,7 @@ TEST(ConnectorTest, BrokenData) {
       EXPECT_FALSE(status.ok());
     }
   }
-  // Not aligned at 32-bit bounary.
+  // Not aligned at 32-bit boundary.
   {
     data.resize(cmmap->size() + 2);
     data.insert(2, cmmap->begin(), cmmap->size());  // Align at 16-bit boundary.
