@@ -10,7 +10,7 @@ and make sure the operations before running them.
 
 ```
 curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu20.04/Dockerfile
-docker build --rm -tag mozc_ubuntu20.04 .
+docker build --rm --tag mozc_ubuntu20.04 .
 docker create --interactive --tty --name mozc_build mozc_ubuntu20.04
 
 docker start mozc_build
