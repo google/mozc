@@ -32,7 +32,7 @@ Currently, only Ubuntu 20.04 is tested to host the Docker container to build Moz
 
 ```
 curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu20.04/Dockerfile
-docker build --rm -tag mozc_ubuntu20.04 .
+docker build --rm --tag mozc_ubuntu20.04 .
 docker create --interactive --tty --name mozc_build mozc_ubuntu20.04
 ```
 
