@@ -27,77 +27,74 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-@class NSURL;
+#import <Foundation/Foundation.h>
+#import <InputMethodKit/IMKInputController.h>
 
+#import "mac/KeyCodeMap.h"
+
+#include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "renderer/renderer_interface.h"
 
 @interface GoogleJapaneseInputController ()
-// Updates |composedString_| from the result of a key event and put
-// the updated composed string to the client application.
+/** Updates |composedString_| from the result of a key event and put  the updated composed string to
+ * the client application. */
 - (void)updateComposedString:(const mozc::commands::Preedit *)preedit;
 
-// Updates |candidates_| from the result of a key event.
+/** Updates |candidates_| from the result of a key event. */
 - (void)updateCandidates:(const mozc::commands::Output *)output;
 
-// Clear all candidate data in |candidates_|.
+/** Clears all candidate data in |candidates_|. */
 - (void)clearCandidates;
 
-// Open link specified by the URL.
+/** Opens a link specified by the URL. */
 - (void)openLink:(NSURL *)url;
 
-// Auxiliary methods for switchMode: below.
+/** Auxiliary methods for switchMode: below. */
 - (void)switchModeToDirect:(id)sender;
 - (void)switchModeInternal:(mozc::commands::CompositionMode)new_mode;
 
-// Switches to a new mode and sync the current mode with the converter.
-- (void)switchMode:(mozc::commands::CompositionMode)new_mode
-            client:(id)sender;
+/** Switches to a new mode and sync the current mode with the converter. */
+- (void)switchMode:(mozc::commands::CompositionMode)new_mode client:(id)sender;
 
-// Switch the mode icon in the task bar according to |mode_|.
+/** Switches the mode icon in the task bar according to |mode_|. */
 - (void)switchDisplayMode;
 
-// Commit the specified text to the current client.
+/** Commits the specified text to the current client. */
 - (void)commitText:(const char *)text client:(id)sender;
 
-// Conduct the reconvert event.  It could have several tricks such
-// like invoking UNDO instead if nothing is selected.  |sender| has to
-// be the proxy object to the client application, which might not be
-// same as the sender of the click event itself when the user clicks
-// the menu item.
-- (void)invokeReconvert:(const mozc::commands::SessionCommand *)command
-                 client:(id)sender;
+/** Conducts the reconvert event.  It could have several tricks such like invoking UNDO instead if
+ * nothing is selected.  |sender| has to be the proxy object to the client application, which might
+ * not be same as the sender of the click event itself when the user clicks the menu item. */
+- (void)invokeReconvert:(const mozc::commands::SessionCommand *)command client:(id)sender;
 
-// Conduct the undo command.
+/** Conducts the undo command. */
 - (void)invokeUndo:(id)sender;
 
-// Process output fields such as preedit, output text, candidates, and
-// modes and calls methods above.
+/** Processes output fields such as preedit, output text, candidates, and modes and calls methods
+ * above. */
 - (void)processOutput:(const mozc::commands::Output *)output client:(id)sender;
 
-// Obtain the current configuration from the server and update
-// client-specific configurations.
+/** Obtains the current configuration from the server and update client-specific configurations. */
 - (void)handleConfig;
 
-// Set up the client capability
+/** Sets up the client capability */
 - (void)setupCapability;
-// Set up the client bundle for the sender.
+/** Sets up the client bundle for the sender. */
 - (void)setupClientBundle:(id)sender;
 
-// Launch the word register tool with the current selection range.
+/** Launches the word register tool with the current selection range. */
 - (void)launchWordRegisterTool:(id)client;
 
-// Fills the surrounding context (preceding_text and following_text).
-// Returns false if fails to get the surrounding context from the client.
-- (BOOL)fillSurroundingContext:(mozc::commands::Context *)context
-                        client:(id<IMKTextInput>)client;
+/** Fills the surrounding context (preceding_text and following_text). Returns false if fails to get
+ * the surrounding context from the client. */
+- (BOOL)fillSurroundingContext:(mozc::commands::Context *)context client:(id<IMKTextInput>)client;
 
-// They are externally accessible to achieve tests.
-@property(readwrite, assign, nonatomic)
-    mozc::client::ClientInterface *mozcClient;
+/** These are externally accessible to achieve tests. */
+@property(readonly) mozc::client::ClientInterface *mozcClient;
 @property(readwrite, retain, nonatomic) KeyCodeMap *keyCodeMap;
-@property(readwrite, assign, nonatomic)
-    mozc::renderer::RendererInterface *renderer;
-@property(readonly) mozc::config::Config::YenSignCharacter  yenSignCharacter;
+@property(readwrite, assign, nonatomic) mozc::renderer::RendererInterface *renderer;
+@property(readonly) mozc::config::Config::YenSignCharacter yenSignCharacter;
 @property(readwrite, assign) mozc::commands::CompositionMode mode;
 @property(readonly) mozc::commands::RendererCommand *rendererCommand;
 @property(readwrite, assign) NSRange replacementRange;

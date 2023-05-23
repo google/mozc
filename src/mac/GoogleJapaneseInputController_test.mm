@@ -36,7 +36,9 @@
 
 #include <objc/objc-class.h>
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
@@ -240,8 +242,9 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
                                                                  client:mock_client_];
     controller_.imkClientForTest = mock_client_;
     mock_server_.expectedController = controller_;
-    mock_mozc_client_ = new mozc::client::ClientMock;
-    controller_.mozcClient = mock_mozc_client_;
+    auto mock_mozc_client = std::make_unique<mozc::client::ClientMock>();
+    mock_mozc_client_ = mock_mozc_client.get();
+    [controller_ setMozcClient:std::move(mock_mozc_client)];
     mock_renderer_ = new MockRenderer;
     controller_.renderer = mock_renderer_;
   }

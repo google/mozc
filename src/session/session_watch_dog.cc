@@ -97,7 +97,7 @@ void SessionWatchDog::Run() {
   std::unique_ptr<client::ClientInterface> client_impl;
   if (client_ == nullptr) {
     VLOG(2) << "default client is used";
-    client_impl.reset(client::ClientFactory::NewClient());
+    client_impl = client::ClientFactory::NewClient();
     client_ = client_impl.get();
   }
 

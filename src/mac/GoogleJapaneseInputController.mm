@@ -40,9 +40,11 @@
 #include <cstdlib>
 #include <functional>
 #include <map>
+#include <memory>
 #include <new>
 #include <set>
 #include <string>
+#include <utility>
 
 #import "mac/GoogleJapaneseInputControllerInterface.h"
 #import "mac/GoogleJapaneseInputServer.h"
@@ -159,11 +161,10 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
 @synthesize replacementRange = replacementRange_;
 @synthesize imkClientForTest = imkClientForTest_;
 - (mozc::client::ClientInterface *)mozcClient {
-  return mozcClient_;
+  return mozcClient_.get();
 }
-- (void)setMozcClient:(mozc::client::ClientInterface *)newMozcClient {
-  delete mozcClient_;
-  mozcClient_ = newMozcClient;
+- (void)setMozcClient:(std::unique_ptr<mozc::client::ClientInterface>)newMozcClient {
+  mozcClient_ = std::move(newMozcClient);
 }
 - (mozc::renderer::RendererInterface *)renderer {
   return candidateController_;
@@ -234,7 +235,6 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   imkClientForTest_ = nil;
   delete clientBundle_;
   delete candidateController_;
-  delete mozcClient_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
 }
@@ -520,7 +520,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   DLOG(INFO) << selectedRange.location << ", " << selectedRange.length;
   SessionCommand sending_command;
   Output output;
-  sending_command.CopyFrom(*command);
+  sending_command = *command;
 
   if (selectedRange.length == 0) {
     // Currently no range is selected for reconversion.  Tries to
@@ -815,7 +815,7 @@ bool IsBannedApplication(const std::set<std::string, std::less<>> *bundleIdSet,
   }
 
   rendererCommand_->set_type(RendererCommand::UPDATE);
-  rendererCommand_->mutable_output()->CopyFrom(*output);
+  *rendererCommand_->mutable_output() = *output;
 
   // Runs delayedUpdateCandidates in the next event loop.
   // This is because some applications like Google Docs with Chrome returns

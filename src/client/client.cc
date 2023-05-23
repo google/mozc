@@ -81,10 +81,10 @@ constexpr size_t kMaxPlayBackSize = 512;      // size of maximum history
 
 #ifdef DEBUG
 constexpr absl::Duration kDefaultTimeout =
-    absl::Seconds(100);                  // 100 sec for dbg
-#else                                    // DEBUG
+    absl::Seconds(100);  // 100 sec for dbg
+#else                    // DEBUG
 constexpr absl::Duration kDefaultTimeout = absl::Seconds(30);  // 30 sec for opt
-#endif                                   // DEBUG
+#endif                   // DEBUG
 
 // Delete Session is called inside the Destructor of Client class.
 // To prevent from an application being stalled at the close time,
@@ -937,13 +937,15 @@ bool Client::OpenBrowser(const std::string &url) {
 namespace {
 class DefaultClientFactory : public ClientFactoryInterface {
  public:
-  ClientInterface *NewClient() override { return new Client; }
+  std::unique_ptr<ClientInterface> NewClient() override {
+    return std::make_unique<Client>();
+  }
 };
 
 ClientFactoryInterface *g_client_factory = nullptr;
 }  // namespace
 
-ClientInterface *ClientFactory::NewClient() {
+std::unique_ptr<ClientInterface> ClientFactory::NewClient() {
   if (g_client_factory == nullptr) {
     return Singleton<DefaultClientFactory>::get()->NewClient();
   } else {

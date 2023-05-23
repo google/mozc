@@ -226,7 +226,7 @@ class ClientInterface {
 class ClientFactoryInterface {
  public:
   virtual ~ClientFactoryInterface() = default;
-  virtual ClientInterface *NewClient() = 0;
+  virtual std::unique_ptr<ClientInterface> NewClient() = 0;
 };
 
 class SendCommandInterface {

@@ -276,7 +276,7 @@ class ClientFactory {
   ~ClientFactory() = delete;
 
   // Return a new client.
-  static ClientInterface *NewClient();
+  static std::unique_ptr<ClientInterface> NewClient();
 
   // Set a ClientFactoryInterface for unit testing.
   static void SetClientFactory(ClientFactoryInterface *client_factory);
