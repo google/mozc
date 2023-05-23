@@ -53,17 +53,5 @@
         '../protocol/protocol.gyp:commands_proto',
       ],
     },
-    {
-      'target_name': 'client_mock',
-      'type': 'static_library',
-      'sources': [
-        'client_mock.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-        '../protocol/protocol.gyp:config_proto',
-      ],
-    },
   ],
 }

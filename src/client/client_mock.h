@@ -30,15 +30,14 @@
 #ifndef MOZC_CLIENT_CLIENT_MOCK_H_
 #define MOZC_CLIENT_CLIENT_MOCK_H_
 
-#include <map>
 #include <memory>
 #include <string>
 
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "testing/gmock.h"
 #include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -46,81 +45,56 @@ namespace client {
 
 class ClientMock : public client::ClientInterface {
  public:
-  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
-  void SetServerLauncher(
-      std::unique_ptr<ServerLauncherInterface> server_launcher) override;
-  bool IsValidRunLevel() const override;
-  bool EnsureConnection() override;
-  bool EnsureSession() override;
-  bool CheckVersionOrRestartServer() override;
-  bool SendKeyWithContext(const commands::KeyEvent &argument,
-                          const commands::Context &context,
-                          commands::Output *output) override;
-  bool TestSendKeyWithContext(const commands::KeyEvent &argument,
-                              const commands::Context &context,
-                              commands::Output *output) override;
-  bool SendCommandWithContext(const commands::SessionCommand &argument,
-                              const commands::Context &context,
-                              commands::Output *output) override;
+  MOCK_METHOD(void, SetIPCClientFactory,
+              (IPCClientFactoryInterface * client_factory), (override));
+  MOCK_METHOD(void, SetServerLauncher,
+              (std::unique_ptr<ServerLauncherInterface> server_launcher),
+              (override));
+  MOCK_METHOD(bool, IsValidRunLevel, (), (const override));
+  MOCK_METHOD(bool, EnsureConnection, (), (override));
+  MOCK_METHOD(bool, EnsureSession, (), (override));
+  MOCK_METHOD(bool, CheckVersionOrRestartServer, (), (override));
+  MOCK_METHOD(bool, SendKeyWithContext,
+              (const commands::KeyEvent &argument,
+               const commands::Context &context, commands::Output *output),
+              (override));
+  MOCK_METHOD(bool, TestSendKeyWithContext,
+              (const commands::KeyEvent &argument,
+               const commands::Context &context, commands::Output *output),
+              (override));
+  MOCK_METHOD(bool, SendCommandWithContext,
+              (const commands::SessionCommand &argument,
+               const commands::Context &context, commands::Output *output),
+              (override));
 
-  bool IsDirectModeCommand(const commands::KeyEvent &key) const override;
-  bool GetConfig(config::Config *config) override;
-  bool SetConfig(const config::Config &config) override;
-  bool ClearUserHistory() override;
-  bool ClearUserPrediction() override;
-  bool ClearUnusedUserPrediction() override;
-  bool Shutdown() override;
-  bool SyncData() override;
-  bool Reload() override;
-  bool Cleanup() override;
-  void Reset() override;
-  bool PingServer() const override;
-  bool NoOperation() override;
-  void EnableCascadingWindow(bool enable) override;
-  void set_timeout(absl::Duration timeout) override;
-  void set_restricted(bool restricted) override;
-  void set_server_program(absl::string_view program_path) override;
-  void set_suppress_error_dialog(bool suppress) override;
-  void set_client_capability(const commands::Capability &capability) override;
-  bool LaunchTool(const std::string &mode,
-                  absl::string_view extra_arg) override;
-  bool LaunchToolWithProtoBuf(const commands::Output &output) override;
-  bool OpenBrowser(const std::string &url) override;
-
-  void ClearFunctionCounter();
-  void SetBoolFunctionReturn(std::string func_name, bool value);
-  int GetFunctionCallCount(std::string key);
-
-#define TEST_METHODS(method_name, arg_type)                                 \
- private:                                                                   \
-  arg_type called_##method_name##_;                                         \
-                                                                            \
- public:                                                                    \
-  arg_type called_##method_name() const { return called_##method_name##_; } \
-  void set_output_##method_name(const commands::Output &output) {           \
-    outputs_[#method_name] = output;                                        \
-  }
-  TEST_METHODS(SendKeyWithContext, commands::KeyEvent);
-  TEST_METHODS(TestSendKeyWithContext, commands::KeyEvent);
-  TEST_METHODS(SendCommandWithContext, commands::SessionCommand);
-#undef TEST_METHODS
-
- private:
-  // Counter increments each time the function called.  This method is
-  // marked as 'mutable' because it has to accumulate the counter even
-  // with const methods.
-  mutable std::map<std::string, int> function_counter_;
-
-  // Stores return values when corresponding function is called.
-  std::map<std::string, bool> return_bool_values_;
-
-  std::map<std::string, commands::Output> outputs_;
-
-  config::Config called_config_;
-
-  // ClientMock is called from a thread in SessionWatchDog, and
-  // SessionWatchDogTest. So a mutex lock is required.
-  mutable absl::Mutex mutex_;
+  MOCK_METHOD(bool, IsDirectModeCommand, (const commands::KeyEvent &key),
+              (const override));
+  MOCK_METHOD(bool, GetConfig, (config::Config * config), (override));
+  MOCK_METHOD(bool, SetConfig, (const config::Config &config), (override));
+  MOCK_METHOD(bool, ClearUserHistory, (), (override));
+  MOCK_METHOD(bool, ClearUserPrediction, (), (override));
+  MOCK_METHOD(bool, ClearUnusedUserPrediction, (), (override));
+  MOCK_METHOD(bool, Shutdown, (), (override));
+  MOCK_METHOD(bool, SyncData, (), (override));
+  MOCK_METHOD(bool, Reload, (), (override));
+  MOCK_METHOD(bool, Cleanup, (), (override));
+  MOCK_METHOD(void, Reset, (), (override));
+  MOCK_METHOD(bool, PingServer, (), (const override));
+  MOCK_METHOD(bool, NoOperation, (), (override));
+  MOCK_METHOD(void, EnableCascadingWindow, (bool enable), (override));
+  MOCK_METHOD(void, set_timeout, (absl::Duration timeout), (override));
+  MOCK_METHOD(void, set_restricted, (bool restricted), (override));
+  MOCK_METHOD(void, set_server_program, (absl::string_view program_path),
+              (override));
+  MOCK_METHOD(void, set_suppress_error_dialog, (bool suppress), (override));
+  MOCK_METHOD(void, set_client_capability,
+              (const commands::Capability &capability), (override));
+  MOCK_METHOD(bool, LaunchTool,
+              (const std::string &mode, absl::string_view extra_arg),
+              (override));
+  MOCK_METHOD(bool, LaunchToolWithProtoBuf, (const commands::Output &output),
+              (override));
+  MOCK_METHOD(bool, OpenBrowser, (const std::string &url), (override));
 };
 }  // namespace client
 }  // namespace mozc

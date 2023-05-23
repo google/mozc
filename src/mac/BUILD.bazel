@@ -169,6 +169,7 @@ mozc_objc_test(
         "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
         "//testing:gunit_main_objc",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/time",
     ],
 )
