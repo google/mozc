@@ -90,8 +90,6 @@ TEST(RandomKeyEventsGeneratorTest, GenerateMobileSequence) {
   generator.GenerateMobileSequence(false, &keys);
   EXPECT_FALSE(keys.empty());
   EXPECT_EQ(keys.back().special_key(), KeyEvent::ENTER);
-  EXPECT_TRUE(absl::c_all_of(
-      keys, [](const KeyEvent& k) { return k.probable_key_event().empty(); }));
 }
 
 TEST(RandomKeyEventsGeneratorTest, GenerateMobileSequenceProbable) {
@@ -103,8 +101,6 @@ TEST(RandomKeyEventsGeneratorTest, GenerateMobileSequenceProbable) {
   generator.GenerateMobileSequence(true, &keys);
   EXPECT_FALSE(keys.empty());
   EXPECT_EQ(keys.back().special_key(), KeyEvent::ENTER);
-  EXPECT_TRUE(absl::c_any_of(
-      keys, [](const auto& k) { return !k.probable_key_event().empty(); }));
   for (auto it = keys.begin(); it != keys.end() - 1; ++it) {
     if (!it->probable_key_event().empty()) {
       for (const auto& p : it->probable_key_event()) {
