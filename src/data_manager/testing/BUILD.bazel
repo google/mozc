@@ -111,7 +111,7 @@ mozc_dataset(
     pos_matcher_rule_def = "//data/rules:pos_matcher_rule.def",
     reading_correction_src = "//data/test/dictionary:reading_correction.tsv",
     segmenter_def = "//data/rules:segmenter.def",
-    segmenter_generator_src = "gen_mock_segmenter_bitarray_main.cc",
+    segmenter_generator_srcs = ["gen_mock_segmenter_bitarray_main.cc"],
     single_kanji_src = "//data/single_kanji:single_kanji.tsv",
     sorting_map = "//data/rules:sorting_map.tsv",
     special_pos = "//data/rules:special_pos.def",
