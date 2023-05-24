@@ -98,7 +98,6 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
-        ":unicode",
         "//base/strings/internal:double_array",
         "//base/strings/internal:japanese_rules",
         "@com_google_absl//absl/strings",

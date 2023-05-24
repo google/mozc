@@ -32,6 +32,7 @@
 #include <string>
 
 #include "base/strings/unicode.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::japanese::internal {
@@ -39,63 +40,71 @@ namespace {
 
 using ::mozc::strings::OneCharLen;
 
-int LookupDoubleArray(const DoubleArray *array, const char *key, int len,
-                      int *result) {
-  int seekto = 0;
+struct LookupResult {
+  int seekto;
+  int index;
+};
+
+LookupResult LookupDoubleArray(const DoubleArray *array,
+                               const absl::string_view key) {
   int n = 0;
   int b = array[0].base;
   uint32_t p = 0;
-  *result = -1;
   uint32_t num = 0;
+  LookupResult result = {0};
 
-  for (int i = 0; i < len; ++i) {
+  for (size_t i = 0; i < key.size(); ++i) {
     p = b;
     n = array[p].base;
     if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
-      seekto = i;
-      *result = -n - 1;
+      result.seekto = i;
+      result.index = -n - 1;
       ++num;
     }
     p = b + static_cast<uint8_t>(key[i]) + 1;
     if (static_cast<uint32_t>(b) == array[p].check) {
       b = array[p].base;
     } else {
-      return seekto;
+      return result;
     }
   }
   p = b;
   n = array[p].base;
   if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
-    seekto = len;
-    *result = -n - 1;
+    result.seekto = key.size();
+    result.index = -n - 1;
   }
 
-  return seekto;
+  return result;
+}
+
+inline int AdvanceInputBy(const char *ctable, const LookupResult result,
+                          const int len) {
+  return result.seekto - ctable[result.index + len + 1];
 }
 
 }  // namespace
 
-void ConvertUsingDoubleArray(const DoubleArray *da, const char *ctable,
-                             absl::string_view input, std::string *output) {
-  output->clear();
-  const char *begin = input.data();
-  const char *const end = input.data() + input.size();
-  while (begin < end) {
-    int result = 0;
-    int mblen =
-        LookupDoubleArray(da, begin, static_cast<int>(end - begin), &result);
-    if (mblen > 0) {
-      const char *p = &ctable[result];
-      const size_t len = strlen(p);
-      output->append(p, len);
-      mblen -= static_cast<int32_t>(p[len + 1]);
-      begin += mblen;
+std::string ConvertUsingDoubleArray(const DoubleArray *da, const char *ctable,
+                                    const absl::string_view input) {
+  int mblen = 0;
+  std::string output;
+  for (size_t i = 0; i < input.size(); i += mblen) {
+    const LookupResult result = LookupDoubleArray(da, input.substr(i));
+    if (result.seekto > 0) {
+      // Each entry in ctable consists of:
+      // - null-terminated string
+      // - one byte offset to rewind the input
+      const absl::string_view s(ctable + result.index);
+      absl::StrAppend(&output, s);
+      mblen = AdvanceInputBy(ctable, result, s.size());
     } else {
-      mblen = OneCharLen(*begin);
-      output->append(begin, mblen);
-      begin += mblen;
+      // Not found in the table. Copy from input.
+      mblen = OneCharLen(input[i]);
+      absl::StrAppend(&output, input.substr(i, mblen));
     }
   }
+  return output;
 }
 
 }  // namespace mozc::japanese::internal

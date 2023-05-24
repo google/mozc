@@ -922,9 +922,9 @@ bool NumberUtil::NormalizeNumbersWithSuffix(absl::string_view input,
 void NumberUtil::KanjiNumberToArabicNumber(absl::string_view input,
                                            std::string *output) {
   // TODO(yuryu): This file will also move into strings/.
-  japanese::internal::ConvertUsingDoubleArray(
+  *output = japanese::internal::ConvertUsingDoubleArray(
       japanese::internal::kanjinumber_to_arabicnumber_da,
-      japanese::internal::kanjinumber_to_arabicnumber_table, input, output);
+      japanese::internal::kanjinumber_to_arabicnumber_table, input);
 }
 
 }  // namespace mozc

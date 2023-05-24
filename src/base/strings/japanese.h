@@ -38,22 +38,47 @@ namespace mozc::japanese {
 
 // Japanese utilities for character form transliteration.
 void HiraganaToKatakana(absl::string_view input, std::string *output);
+std::string HiraganaToKatakana(absl::string_view input);
+
 void HiraganaToHalfwidthKatakana(absl::string_view input, std::string *output);
+std::string HiraganaToHalfwidthKatakana(absl::string_view input);
+
 void HiraganaToRomanji(absl::string_view input, std::string *output);
+std::string HiraganaToRomanji(absl::string_view input);
+
 void HalfWidthAsciiToFullWidthAscii(absl::string_view input,
                                     std::string *output);
+std::string HalfWidthAsciiToFullWidthAscii(absl::string_view input);
+
 void FullWidthAsciiToHalfWidthAscii(absl::string_view input,
                                     std::string *output);
+std::string FullWidthAsciiToHalfWidthAscii(absl::string_view input);
+
 void HiraganaToFullwidthRomanji(absl::string_view input, std::string *output);
+std::string HiraganaToFullwidthRomanji(absl::string_view input);
+
 void RomanjiToHiragana(absl::string_view input, std::string *output);
+std::string RomanjiToHiragana(absl::string_view input);
+
 void KatakanaToHiragana(absl::string_view input, std::string *output);
+std::string KatakanaToHiragana(absl::string_view input);
+
 void HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
                                           std::string *output);
+std::string HalfWidthKatakanaToFullWidthKatakana(absl::string_view input);
+
 void FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
                                           std::string *output);
+std::string FullWidthKatakanaToHalfWidthKatakana(absl::string_view input);
+
 void FullWidthToHalfWidth(absl::string_view input, std::string *output);
+std::string FullWidthToHalfWidth(absl::string_view input);
+
 void HalfWidthToFullWidth(absl::string_view input, std::string *output);
+std::string HalfWidthToFullWidth(absl::string_view input);
+
 void NormalizeVoicedSoundMark(absl::string_view input, std::string *output);
+std::string NormalizeVoicedSoundMark(absl::string_view input);
 
 }  // namespace mozc::japanese
 
