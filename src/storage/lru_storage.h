@@ -45,12 +45,10 @@ namespace storage {
 
 class LruStorage {
  public:
-  LruStorage();
-
-  LruStorage(const LruStorage &) = delete;
-  LruStorage &operator=(const LruStorage &) = delete;
-
-  ~LruStorage();
+  LruStorage() = default;
+  LruStorage(LruStorage &&) = default;
+  LruStorage &operator=(LruStorage &&) = default;
+  ~LruStorage() { Close(); }
 
   bool Open(const char *filename);
   void Close();
@@ -63,7 +61,10 @@ class LruStorage {
 
   // Looks up elements by key.
   const char *Lookup(absl::string_view key, uint32_t *last_access_time) const;
-  const char *Lookup(absl::string_view key) const;
+  const char *Lookup(absl::string_view key) const {
+      uint32_t last_access_time;
+      return Lookup(key, &last_access_time);
+  }
 
   // A safer lookup for string values (the pointers returned by above Lookup()'s
   // are not null terminated.)
@@ -110,21 +111,21 @@ class LruStorage {
   // Returns the byte length of each item, which is the user specified value
   // size + 12 bytes.  Here, 12 bytes is used for fingerprint (8 bytes) and
   // timestamp (4 bytes).
-  size_t item_size() const;
+  size_t item_size() const { return value_size_ + kItemHeaderSize; }
 
   // Returns the user specified value size.
-  size_t value_size() const;
+  size_t value_size() const { return value_size_; }
 
   // Returns the maximum number of item (capacity).
-  size_t size() const;
+  size_t size() const { return size_; }
 
   // Returns the number of items in LRU.
-  size_t used_size() const;
+  size_t used_size() const { return lru_list_.size(); }
 
   // Returns the seed used for fingerprinting.
-  uint32_t seed() const;
+  uint32_t seed() const { return seed_; }
 
-  const std::string &filename() const;
+  const std::string &filename() const { return filename_; }
 
   // Writes one entry at |i| th index.
   // i must be 0 <= i < size.
@@ -149,6 +150,11 @@ class LruStorage {
   static bool CreateStorageFile(const char *filename, size_t value_size,
                                 size_t size, uint32_t seed);
 
+  // The byte length used to store fingerprint and timestamp for each item.
+  // * 8 bytes for fingerprint
+  // * 4 bytes for timestamp.
+  static constexpr size_t kItemHeaderSize = 12;
+
  private:
   // Initializes this LRU from memory buffer.
   bool Open(char *ptr, size_t ptr_size);
@@ -160,12 +166,12 @@ class LruStorage {
   // Actual implementation of Delete() methods.
   bool Delete(uint64_t fp, std::list<char *>::iterator it);
 
-  size_t value_size_;
-  size_t size_;
-  uint32_t seed_;
-  char *next_item_;
-  char *begin_;
-  char *end_;
+  size_t value_size_ = 0;
+  size_t size_ = 0;
+  uint32_t seed_ = 0;
+  char *next_item_ = nullptr;
+  char *begin_ = nullptr;
+  char *end_ = nullptr;
   std::string filename_;
   std::list<char *> lru_list_;  // Front is the most recently used data.
   absl::flat_hash_map<uint64_t, std::list<char *>::iterator> lru_map_;

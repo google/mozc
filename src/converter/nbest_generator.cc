@@ -44,18 +44,17 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
-using mozc::dictionary::PosMatcher;
-using mozc::dictionary::SuppressionDictionary;
-
 namespace mozc {
 namespace {
+
+using ::mozc::converter::CandidateFilter;
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
 
 constexpr int kFreeListSize = 512;
 constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
 }  // namespace
-
-using converter::CandidateFilter;
 
 const NBestGenerator::QueueElement *NBestGenerator::CreateNewElement(
     const Node *node, const QueueElement *next, int32_t fx, int32_t gx,
@@ -93,7 +92,7 @@ inline void NBestGenerator::Agenda::Pop() {
 
 NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Segmenter *segmenter,
-                               const Connector *connector,
+                               const Connector &connector,
                                const PosMatcher *pos_matcher,
                                const Lattice *lattice,
                                const SuggestionFilter *suggestion_filter,
@@ -108,7 +107,6 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
               apply_suggestion_filter_for_exact_match) {
   DCHECK(suppression_dictionary_);
   DCHECK(segmenter);
-  DCHECK(connector);
   if (lattice_ == nullptr || !lattice_->has_lattice()) {
     LOG(ERROR) << "lattice is not available";
     return;
@@ -607,7 +605,7 @@ int NBestGenerator::GetTransitionCost(const Node *lnode,
   if (rnode->constrained_prev != nullptr && lnode != rnode->constrained_prev) {
     return kInvalidPenaltyCost;
   }
-  return connector_->GetTransitionCost(lnode->rid, rnode->lid);
+  return connector_.GetTransitionCost(lnode->rid, rnode->lid);
 }
 
 }  // namespace mozc

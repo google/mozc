@@ -32,14 +32,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "session/session_stress_test_data.h"
@@ -84,9 +82,6 @@ const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
 };
 
 }  // namespace
-
-RandomKeyEventsGenerator::RandomKeyEventsGenerator(std::seed_seq &&seed)
-    : bitgen_(std::forward<std::seed_seq>(seed)) {}
 
 void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
   // Read all kTestSentences and load these to memory.

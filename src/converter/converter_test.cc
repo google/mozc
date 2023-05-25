@@ -38,8 +38,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -48,7 +46,6 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
-#include "converter/node.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -212,7 +209,7 @@ class ConverterTest : public ::testing::Test {
     std::unique_ptr<DictionaryInterface> user_dictionary;
     std::unique_ptr<SuppressionDictionary> suppression_dictionary;
     std::unique_ptr<DictionaryInterface> suffix_dictionary;
-    std::unique_ptr<const Connector> connector;
+    Connector connector;
     std::unique_ptr<const Segmenter> segmenter;
     std::unique_ptr<DictionaryInterface> dictionary;
     std::unique_ptr<const PosGroup> pos_group;
@@ -265,7 +262,7 @@ class ConverterTest : public ::testing::Test {
         converter_and_data.immutable_converter.get(),
         converter_and_data.dictionary.get(),
         converter_and_data.suffix_dictionary.get(),
-        converter_and_data.connector.get(), converter_and_data.segmenter.get(),
+        converter_and_data.connector, converter_and_data.segmenter.get(),
         pos_matcher, converter_and_data.suggestion_filter.get());
     CHECK(dictionary_predictor);
 
@@ -327,8 +324,7 @@ class ConverterTest : public ::testing::Test {
             converter_and_data->dictionary.get(),
             converter_and_data->suffix_dictionary.get(),
             converter_and_data->suppression_dictionary.get(),
-            converter_and_data->connector.get(),
-            converter_and_data->segmenter.get(),
+            converter_and_data->connector, converter_and_data->segmenter.get(),
             &converter_and_data->pos_matcher,
             converter_and_data->pos_group.get(),
             converter_and_data->suggestion_filter.get());
@@ -429,7 +425,7 @@ class ConverterTest : public ::testing::Test {
   }
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   const commands::Request default_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
@@ -1269,15 +1265,14 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   PosGroup pos_group(data_manager.GetPosGroupData());
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  std::unique_ptr<const Connector> connector =
-      Connector::CreateFromDataManager(data_manager).value();
+  Connector connector = Connector::CreateFromDataManager(data_manager).value();
   std::unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
   std::unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   auto immutable_converter = std::make_unique<ImmutableConverterImpl>(
       dictionary.get(), suffix_dictionary.get(), suppression_dictionary.get(),
-      connector.get(), segmenter.get(), &pos_matcher, &pos_group,
+      connector, segmenter.get(), &pos_matcher, &pos_group,
       suggestion_filter.get());
   std::unique_ptr<const SuggestionFilter> suggegstion_filter(
       CreateSuggestionFilter(data_manager));
@@ -1288,7 +1283,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       DefaultPredictor::CreateDefaultPredictor(
           std::make_unique<DictionaryPredictor>(
               data_manager, &converter, immutable_converter.get(),
-              dictionary.get(), suffix_dictionary.get(), connector.get(),
+              dictionary.get(), suffix_dictionary.get(), connector,
               segmenter.get(), &pos_matcher, suggegstion_filter.get()),
           std::make_unique<UserHistoryPredictor>(dictionary.get(), &pos_matcher,
                                                  suppression_dictionary.get(),

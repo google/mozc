@@ -20,5 +20,8 @@ This file is passed to the `--single_kanji_file` flag of
 
 Data for single kanji variants. (e.g. variant:髙 and base:高).
 
+Update this file to add descriptions for single kanji characters
+(e.g. 〜の旧字体).
+
 This file is passed to the `--variant_file` flag of
 [rewriter/gen_single_kanji_rewriter_data.py](https://github.com/google/mozc/blob/master/src/rewriter/gen_single_kanji_rewriter_data.py)

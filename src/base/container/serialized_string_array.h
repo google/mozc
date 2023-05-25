@@ -30,18 +30,127 @@
 #ifndef MOZC_BASE_CONTAINER_SERIALIZED_STRING_ARRAY_H_
 #define MOZC_BASE_CONTAINER_SERIALIZED_STRING_ARRAY_H_
 
-#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <new>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "base/logging.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
+namespace serialized_string_array_internal {
+
+inline const uint32_t *GetOffsetArray(const char *data) {
+  return std::launder(reinterpret_cast<const uint32_t *>(data)) + 1;
+}
+
+inline uint32_t OffsetAt(const char *data, uint32_t index) {
+  return GetOffsetArray(data)[index * 2];
+}
+
+inline uint32_t LengthAt(const char *data, uint32_t index) {
+  return GetOffsetArray(data)[index * 2 + 1];
+}
+
+inline absl::string_view DataAt(const char *data, uint32_t index) {
+  return absl::string_view(data + OffsetAt(data, index), LengthAt(data, index));
+}
+
+class const_iterator {
+ public:
+  using value_type = absl::string_view;
+  using difference_type = uint32_t;
+  using pointer = const value_type *;
+  using reference = const value_type &;
+  using iterator_category = std::random_access_iterator_tag;
+
+  constexpr const_iterator() : array_(nullptr), index_(0) {}
+  constexpr const_iterator(const char *array, difference_type index)
+      : array_(array), index_(index) {}
+
+  constexpr difference_type index() const { return index_; }
+  value_type operator*() const { return DataAt(array_, index_); }
+  value_type operator[](difference_type n) const {
+    return DataAt(array_, index_ + n);
+  }
+
+  const_iterator &operator++() {
+    ++index_;
+    return *this;
+  }
+  const_iterator operator++(int) {
+    const_iterator tmp = *this;
+    ++index_;
+    return tmp;
+  }
+  const_iterator &operator--() {
+    --index_;
+    return *this;
+  }
+  const_iterator operator--(int) {
+    const_iterator tmp = *this;
+    --index_;
+    return tmp;
+  }
+  const_iterator &operator+=(difference_type n) {
+    index_ += n;
+    return *this;
+  }
+  const_iterator &operator-=(difference_type n) {
+    index_ -= n;
+    return *this;
+  }
+  friend const_iterator operator+(const_iterator x, difference_type n) {
+    x.index_ += n;
+    return x;
+  }
+  friend const_iterator operator+(difference_type n, const_iterator x) {
+    x += n;
+    return x;
+  }
+  friend const_iterator operator-(const_iterator x, difference_type n) {
+    x.index_ -= n;
+    return x;
+  }
+  friend difference_type operator-(const_iterator x, const_iterator y) {
+    return x.index_ - y.index_;
+  }
+
+  constexpr int compare(const const_iterator &other) const {
+    DCHECK_EQ(array_, other.array_);
+    return index_ - other.index_;
+  }
+
+ private:
+  const char *array_;
+  difference_type index_;
+};
+
+// The following comparison operators make sense only for iterators obtained
+// from the same array.
+constexpr bool operator==(const_iterator x, const_iterator y) {
+  return x.compare(y) == 0;
+}
+constexpr bool operator!=(const_iterator x, const_iterator y) {
+  return x.compare(y) != 0;
+}
+constexpr bool operator<(const_iterator x, const_iterator y) {
+  return x.compare(y) < 0;
+}
+constexpr bool operator<=(const_iterator x, const_iterator y) {
+  return x.compare(y) <= 0;
+}
+constexpr bool operator>(const_iterator x, const_iterator y) {
+  return x.compare(y) > 0;
+}
+constexpr bool operator>=(const_iterator x, const_iterator y) {
+  return x.compare(y) >= 0;
+}
+
+}  // namespace serialized_string_array_internal
 
 // Immutable array of strings serialized in binary image.  This class is used to
 // serialize arrays of strings to byte sequence, and access the serialized
@@ -105,125 +214,18 @@ namespace mozc {
 // +=====================================================================+
 class SerializedStringArray {
  public:
-  class iterator {
-   public:
-    using value_type = absl::string_view;
-    using difference_type = ptrdiff_t;
-    using pointer = const absl::string_view *;
-    using reference = const absl::string_view &;
-    using iterator_category = std::random_access_iterator_tag;
+  using value_type = absl::string_view;
+  using pointer = value_type *;
+  using const_pointer = const pointer;
+  using reference = value_type &;
+  using const_reference = const value_type &;
+  using size_type = uint32_t;
+  using difference_type = uint32_t;
 
-    iterator() : array_(nullptr), index_(0) {}
-    iterator(const SerializedStringArray *array, size_t index)
-        : array_(array), index_(index) {}
-    iterator(const iterator &x) = default;
-
-    size_t index() const { return index_; }
-    absl::string_view operator*() { return (*array_)[index_]; }
-    absl::string_view operator*() const { return (*array_)[index_]; }
-    absl::string_view operator[](difference_type n) const {
-      return (*array_)[index_ + n];
-    }
-
-    void swap(iterator &x) {
-      using std::swap;
-      swap(array_, x.array_);
-      swap(index_, x.index_);
-    }
-
-    friend void swap(iterator &x, iterator &y) { x.swap(y); }
-
-    iterator &operator++() {
-      ++index_;
-      return *this;
-    }
-
-    iterator operator++(int) {
-      const size_t tmp = index_;
-      ++index_;
-      return iterator(array_, tmp);
-    }
-
-    iterator &operator--() {
-      --index_;
-      return *this;
-    }
-
-    iterator operator--(int) {
-      const size_t tmp = index_;
-      --index_;
-      return iterator(array_, tmp);
-    }
-
-    iterator &operator+=(difference_type n) {
-      index_ += n;
-      return *this;
-    }
-
-    iterator &operator-=(difference_type n) {
-      index_ -= n;
-      return *this;
-    }
-
-    friend iterator operator+(iterator x, difference_type n) {
-      return iterator(x.array_, x.index_ + n);
-    }
-
-    friend iterator operator+(difference_type n, iterator x) {
-      return iterator(x.array_, x.index_ + n);
-    }
-
-    friend iterator operator-(iterator x, difference_type n) {
-      return iterator(x.array_, x.index_ - n);
-    }
-
-    friend difference_type operator-(iterator x, iterator y) {
-      return x.index_ - y.index_;
-    }
-
-    // The following comparison operators make sense only for iterators obtained
-    // from the same array.
-    friend bool operator==(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ == y.index_;
-    }
-
-    friend bool operator!=(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ != y.index_;
-    }
-
-    friend bool operator<(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ < y.index_;
-    }
-
-    friend bool operator<=(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ <= y.index_;
-    }
-
-    friend bool operator>(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ > y.index_;
-    }
-
-    friend bool operator>=(iterator x, iterator y) {
-      DCHECK_EQ(x.array_, y.array_);
-      return x.index_ >= y.index_;
-    }
-
-   private:
-    const SerializedStringArray *array_;
-    size_t index_;
-  };
-
+  using iterator = serialized_string_array_internal::const_iterator;
   using const_iterator = iterator;
-
-  SerializedStringArray();  // Default is an empty array.
-  SerializedStringArray(const SerializedStringArray &) = delete;
-  SerializedStringArray &operator=(const SerializedStringArray &) = delete;
-  ~SerializedStringArray();
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   // Initializes the array from given memory block.  The block must be aligned
   // at 4 byte boundary.  Returns false when the data is invalid.
@@ -232,27 +234,23 @@ class SerializedStringArray {
   // Initializes the array from given memory block without verifying data.
   void Set(absl::string_view data_aligned_at_4byte_boundary);
 
-  uint32_t size() const {
+  size_type size() const {
     // The first 4 bytes of data stores the number of elements in this array in
     // little endian order.
-    return *reinterpret_cast<const uint32_t *>(data_.data());
+    if (data_.empty()) return 0;
+    return *std::launder(reinterpret_cast<const uint32_t *>(data_.data()));
   }
 
-  absl::string_view operator[](size_t i) const {
-    const uint32_t *ptr = reinterpret_cast<const uint32_t *>(data_.data()) + 1;
-    const uint32_t offset = ptr[2 * i];
-    const uint32_t len = ptr[2 * i + 1];
-    return data_.substr(offset, len);
+  value_type operator[](difference_type i) const {
+    return serialized_string_array_internal::DataAt(data_.data(), i);
   }
 
   bool empty() const { return size() == 0; }
   absl::string_view data() const { return data_; }
-  void clear();
+  void clear() { data_ = absl::string_view(); }
 
-  iterator begin() { return iterator(this, 0); }
-  iterator end() { return iterator(this, size()); }
-  const_iterator begin() const { return const_iterator(this, 0); }
-  const_iterator end() const { return const_iterator(this, size()); }
+  const_iterator begin() const { return const_iterator(data_.data(), 0); }
+  const_iterator end() const { return const_iterator(data_.data(), size()); }
 
   // Checks if the data is a valid array image.
   static bool VerifyData(absl::string_view data);
@@ -261,10 +259,10 @@ class SerializedStringArray {
   // |buffer| pointing to the image.  Note that uint32_t array is used for
   // buffer to align data at 4 byte boundary.
   static absl::string_view SerializeToBuffer(
-      const std::vector<absl::string_view> &strs,
+      absl::Span<const absl::string_view> strs,
       std::unique_ptr<uint32_t[]> *buffer);
 
-  static void SerializeToFile(const std::vector<absl::string_view> &strs,
+  static void SerializeToFile(absl::Span<const absl::string_view> strs,
                               const std::string &filepath);
 
  private:

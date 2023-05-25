@@ -59,7 +59,7 @@ class QualityRegressionTest : public ::testing::Test {
           *results);
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 }  // namespace mozc

@@ -27,31 +27,56 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    'relative_dir': 'client',
-    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-  },
-  'targets': [
-    {
-      'target_name': 'client',
-      'type': 'static_library',
-      'sources': [
-        'client.cc',
-        'server_launcher.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:version',
-        '../config/config.gyp:config_handler',
-        '../ipc/ipc.gyp:ipc',
-        '../protocol/protocol.gyp:commands_proto',
-        '../protocol/protocol.gyp:config_proto',
-        '../session/session_base.gyp:key_info_util',
-      ],
-      'export_dependent_settings': [
-        '../protocol/protocol.gyp:commands_proto',
-      ],
-    },
-  ],
-}
+load(
+    "//:build_defs.bzl",
+    "MOZC_TAGS",
+    "mozc_cc_binary",
+)
+load("//bazel:stubs.bzl", "lexan")
+
+mozc_cc_binary(
+    name = "custom_action",
+    srcs = [
+        "custom_action.cc",
+        "custom_action.h",
+        "resource.h",
+    ],
+    linkshared = True,
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "custom_action.def",
+    deps = [
+        ":custom_action_resource",
+        "//base:const",
+        "//base:process",
+        "//base:system_util",
+        "//base:url",
+        "//base:util",
+        "//base:version",
+        "//base/win32:scoped_com",
+        "//base/win32:wide_char",
+        "//base/win32:win_sandbox",
+        "//bazel/win32:msi",
+        "//client",
+        "//client:client_interface",
+        "//config:stats_config_util",
+        "//protocol:commands_cc_proto",
+        "//renderer:renderer_client",
+        "//win32/base:imm_util",
+        "//win32/base:input_dll",
+        "//win32/base:keyboard_layout_id",
+        "//win32/base:omaha_util",
+        "//win32/base:tsf_profile",
+        "//win32/base:tsf_registrar",
+        "//win32/base:uninstall_helper",
+        "//win32/cache_service:cache_service_manager",
+    ],
+)
+
+lexan.resource_files(
+    name = "custom_action_resource",
+    rc_files = ["custom_action.rc"],
+    resources = ["resource.h"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+)

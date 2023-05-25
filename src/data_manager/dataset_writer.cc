@@ -38,12 +38,16 @@
 #include "base/status.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
+#include "absl/numeric/bits.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-bool IsValidAlignment(int a) { return a == 8 || a == 16 || a == 32 || a == 64; }
+// Checks if `a` is a power of 2 greater than or equal to 8.
+bool IsValidAlignment(int a) {
+  return a >= 8 && absl::has_single_bit<unsigned int>(a);
+}
 
 }  // namespace
 

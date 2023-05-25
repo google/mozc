@@ -127,6 +127,7 @@ mozc_objc_library(
     sdk_frameworks = [
         "Carbon",
         "Cocoa",
+        "Foundation",
         "InputMethodKit",
     ],
     tags = ["manual"],
@@ -144,11 +145,13 @@ mozc_objc_library(
         "//base/mac:mac_process",
         "//base/mac:mac_util",
         "//client",
+        "//client:client_interface",
         "//ipc",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
+        "//renderer:renderer_interface",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -166,6 +169,7 @@ mozc_objc_test(
         "//protocol:candidates_cc_proto",
         "//renderer:renderer_interface",
         "//testing:gunit_main_objc",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/time",
     ],
 )

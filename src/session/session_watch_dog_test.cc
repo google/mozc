@@ -29,14 +29,13 @@
 
 #include "session/session_watch_dog.h"
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "base/cpu_stats.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "client/client_mock.h"
+#include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/synchronization/mutex.h"
@@ -45,6 +44,9 @@
 
 namespace mozc {
 namespace {
+
+using ::testing::Mock;
+using ::testing::Return;
 
 class TestCPUStats : public CPUStatsInterface {
  public:
@@ -78,20 +80,20 @@ class TestCPUStats : public CPUStatsInterface {
 
 class SessionWatchDogTest : public testing::Test {
  protected:
-  void InitializeClient(mozc::client::ClientMock *client) {
-    client->SetBoolFunctionReturn("PingServer", true);
-    client->SetBoolFunctionReturn("Cleanup", true);
+  void InitializeClient(mozc::client::ClientMock &client) {
+    EXPECT_CALL(client, PingServer()).WillRepeatedly(Return(true));
+    ON_CALL(client, Cleanup()).WillByDefault(Return(true));
   }
 };
 
 TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
-  static const absl::Duration kInterval = absl::Seconds(1);  // for every 1sec
+  constexpr absl::Duration kInterval = absl::Seconds(1);  // for every 1 sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(watchdog.interval(), kInterval);
 
   mozc::client::ClientMock client;
-  InitializeClient(&client);
+  InitializeClient(client);
   mozc::TestCPUStats stats;
 
   std::vector<float> cpu_loads;
@@ -103,9 +105,8 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
 
   watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
-
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
-
+  Mock::VerifyAndClearExpectations(&client);
+  EXPECT_CALL(client, Cleanup()).Times(5);
   watchdog.Start("SessionWatchDogTest");  // start
 
   absl::SleepFor(absl::Milliseconds(100));
@@ -113,24 +114,22 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
   EXPECT_EQ(watchdog.interval(), kInterval);
 
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
+  Mock::VerifyAndClearExpectations(&client);
 
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 5);
-
+  EXPECT_CALL(client, Cleanup()).Times(5);
   absl::SleepFor(absl::Milliseconds(5000));  // 10.5 sec
-
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 10);
 
   watchdog.Terminate();
 }
 
 TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
-  static const absl::Duration kInterval = absl::Seconds(1);  // for every 1sec
+  constexpr absl::Duration kInterval = absl::Seconds(1);  // for every 1 sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(watchdog.interval(), kInterval);
 
   mozc::client::ClientMock client;
-  InitializeClient(&client);
+  InitializeClient(client);
   mozc::TestCPUStats stats;
 
   std::vector<float> cpu_loads;
@@ -143,7 +142,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   watchdog.SetClientInterface(&client);
   watchdog.SetCPUStatsInterface(&stats);
 
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
+  Mock::VerifyAndClearExpectations(&client);
 
   watchdog.Start("SessionWatchDogCPUStatsTest");  // start
 
@@ -153,9 +152,10 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
   // not called
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 0);
+  Mock::VerifyAndClearExpectations(&client);
 
-  // cup loads become low
+  // CPU loads become low
+  EXPECT_CALL(client, Cleanup()).Times(5);
   cpu_loads.clear();
   for (int i = 0; i < 20; ++i) {
     cpu_loads.push_back(0.0);
@@ -163,8 +163,6 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   stats.SetCPULoads(cpu_loads);
 
   absl::SleepFor(absl::Milliseconds(5000));  // 5 sec
-  // called
-  EXPECT_EQ(client.GetFunctionCallCount("Cleanup"), 5);
 
   watchdog.Terminate();
 }

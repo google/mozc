@@ -68,11 +68,15 @@ TEST(DatasetWriterTest, Write) {
     w.Add("data16", 16, "data16 \xAB\xCD\xEF");
     w.Add("data32", 32, std::string("data32 \x00\xAB\n\r\n", 12));
     w.Add("data64", 64, std::string("data64 \t\t\x00\x00", 11));
+    w.Add("data128", 128, std::string("data128 abcdefg"));
+    w.Add("data256", 256, std::string("data256 xyz"));
 
     w.AddFile("file8", 8, in);
     w.AddFile("file16", 16, in);
     w.AddFile("file32", 32, in);
     w.AddFile("file64", 64, in);
+    w.AddFile("file128", 128, in);
+    w.AddFile("file256", 256, in);
 
     std::stringstream out;
     w.Finish(&out);
@@ -81,28 +85,40 @@ TEST(DatasetWriterTest, Write) {
 
   // Define the expected binary image.
   const char data_chunk[] =
-      "magic"                  // offset 0, size 5
-      "data8 \x00\x01"         // offset 5, size 8
-      "\0"                     // offset 13, size 1 (padding)
-      "data16 \xAB\xCD\xEF"    // offset 14, size 10
-      "data32 \x00\xAB\n\r\n"  // offset 24, size 12
-      "\0\0\0\0"               // offset 36, size 4 (padding)
-      "data64 \t\t\x00\x00"    // offset 40, size 11
-      "m\0zc\xEF"              // offset 51, size 5
-      "m\0zc\xEF"              // offset 56, size 5
-      "\0\0\0"                 // offset 61, size 3 (padding)
-      "m\0zc\xEF"              // offset 64, size 5
-      "\0\0\0"                 // offset 69, size 3 (padding)
-      "m\0zc\xEF";             // offset 72, size 5
+      "magic"                               // offset 0, size 5
+      "data8 \x00\x01"                      // offset 5, size 8
+      "\0"                                  // offset 13, size 1 (padding)
+      "data16 \xAB\xCD\xEF"                 // offset 14, size 10
+      "data32 \x00\xAB\n\r\n"               // offset 24, size 12
+      "\0\0\0\0"                            // offset 36, size 4 (padding)
+      "data64 \t\t\x00\x00"                 // offset 40, size 11
+      "\0\0\0\0\0\0\0\0\0\0\0\0\0"          // offset 51, size 13 (padding)
+      "data128 abcdefg"                     // offset 64, size 15
+      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"  // offset 79, size 17 (padding)
+      "data256 xyz"                         // offset 96, size 11
+      "m\0zc\xEF"                           // offset 107, size 5 (file8)
+      "m\0zc\xEF"                           // offset 112, size 5 (file16)
+      "\0\0\0"                              // offset 117, size 3 (padding)
+      "m\0zc\xEF"                           // offset 120, size 5 (file32)
+      "\0\0\0"                              // offset 125, size 3 (padding)
+      "m\0zc\xEF"                           // offset 128, size 5 (file64)
+      "\0\0\0\0\0\0\0\0\0\0\0"              // offset 133, size 11 (padding)
+      "m\0zc\xEF"                           // offset 144 size 5 (file128)
+      "\0\0\0\0\0\0\0\0\0\0\0"              // offset 149, size 11 (padding)
+      "m\0zc\xEF";                          // offset 160, size 5 (file256)
   DataSetMetadata metadata;
   SetEntry("data8", 5, 8, metadata.add_entries());
   SetEntry("data16", 14, 10, metadata.add_entries());
   SetEntry("data32", 24, 12, metadata.add_entries());
   SetEntry("data64", 40, 11, metadata.add_entries());
-  SetEntry("file8", 51, 5, metadata.add_entries());
-  SetEntry("file16", 56, 5, metadata.add_entries());
-  SetEntry("file32", 64, 5, metadata.add_entries());
-  SetEntry("file64", 72, 5, metadata.add_entries());
+  SetEntry("data128", 64, 15, metadata.add_entries());
+  SetEntry("data256", 96, 11, metadata.add_entries());
+  SetEntry("file8", 107, 5, metadata.add_entries());
+  SetEntry("file16", 112, 5, metadata.add_entries());
+  SetEntry("file32", 120, 5, metadata.add_entries());
+  SetEntry("file64", 128, 5, metadata.add_entries());
+  SetEntry("file128", 144, 5, metadata.add_entries());
+  SetEntry("file256", 160, 5, metadata.add_entries());
   const std::string &metadata_chunk = metadata.SerializeAsString();
   const std::string &metadata_size =
       Util::SerializeUint64(metadata_chunk.size());

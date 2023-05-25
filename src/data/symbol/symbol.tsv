@@ -1,15 +1,15 @@
 POS	CHAR	Reading (space separated)	description	additional description	category	memo	unicode
-句読点	、	とうてん ,  、 ， てん	読点		OTHER
-句読点	。	くてん  .  ． 。 まる	句点		OTHER
+句読点	、	とうてん , 、 ， てん	読点		OTHER
+句読点	。	くてん . ． 。 まる	句点		OTHER
 句読点	，	かんま こんま , ， 、 てん	カンマ		GENERAL
 句読点	．	ぴりおど どっと . ． 。 てん	ピリオド		GENERAL
 句読点	・	てん なかてん なかぐろ 、 ・ /	中点		OTHER
 句読点	：	ころん : ： てん	コロン		GENERAL
 句読点	；	せみころん ; ； てん	セミコロン		GENERAL
-句読点	？	ぎもんふ .  ?  ？ くえすちょん はてな ・	疑問符		GENERAL
-句読点	？？	ぎもんふ .  ?  ？ くえすちょん はてな ・	疑問符		GENERAL
-句読点	？！	ぎもんふ .  ?  ？ くえすちょん はてな ・	疑問符		GENERAL
-句読点	！？	ぎもんふ .  ?  ？ くえすちょん はてな ・	疑問符		GENERAL
+句読点	？	ぎもんふ . ? ？ くえすちょん はてな ・	疑問符		GENERAL
+句読点	？？	ぎもんふ . ? ？ くえすちょん はてな ・	疑問符		GENERAL
+句読点	？！	ぎもんふ . ? ？ くえすちょん はてな ・	疑問符		GENERAL
+句読点	！？	ぎもんふ . ? ？ くえすちょん はてな ・	疑問符		GENERAL
 句読点	！	かんたんふ . ! ！ えくすくらめーしょん びっくり	感嘆符		GENERAL
 句読点	！！	かんたんふ . ! ！ えくすくらめーしょん びっくり	感嘆符		GENERAL
 句読点	！？	かんたんふ . ! ！ えくすくらめーしょん びっくり	感嘆符		GENERAL
@@ -31,7 +31,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	ヽ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
 記号	ヾ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
 記号	ゝ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
-記号	ゞ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ  じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
+記号	ゞ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
 記号	〃	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
 記号	仝	おなじ どう きごう			OTHER	「同」の異体字
 記号	々	おなじ くりかえし どう のま きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
@@ -48,8 +48,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	∥	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	‖	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	｜	| たてぼう たてせん きごう	縦線		GENERAL
-句読点	…	。。。 .  ... ・・・  ・ 。 てん きごう あまり さんてん さんてんりーだ さんてんりーだー	三点リーダ		SYMBOL OTHER
-句読点	‥	。。 .. ・・  ・ 。 てん など きごう にてんりーだ にてんりーだー	二点リーダ		SYMBOL OTHER
+句読点	…	。。。 . ... ・・・ ・ 。 てん きごう あまり さんてん さんてんりーだ さんてんりーだー	三点リーダ		SYMBOL OTHER
+句読点	‥	。。 .. ・・ ・ 。 てん など きごう にてんりーだ にてんりーだー	二点リーダ		SYMBOL OTHER
 句読点	︙	。。。 . ... ・・・ ・ … : てん きごう さんてん さんてんりーだ さんてんりーだー たてさんてんりーだ たてさんてんりーだー たてりーだ たてりーだー	三点リーダ (縦)		SYMBOL OTHER
 句読点	︰	。。 .. ・・ ・ ‥ : てん など きごう にてんりーだ にてんりーだー たてにてんりーだ たてにてんりーだー たてりーだ たてりーだー	二点リーダ (縦)		SYMBOL OTHER
 括弧開	‘	ばっくくおーと ばっくくぉーと ' " きごう	左シングル引用符		GENERAL PARENTHESIS
@@ -57,31 +57,31 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 括弧開	“	" ' だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう	左ダブル引用符		PARENTHESIS
 括弧閉	”	" ' だぶるくおーと だぶるくおーてーしょん くぉーと だぶるくぉーてしょん きごう	右ダブル引用符		PARENTHESIS
 括弧開	（	 [ 「 ( ｢	始め丸括弧		GENERAL PARENTHESIS
-括弧閉	）	  ]  」 ) ｣	終わり丸括弧		GENERAL PARENTHESIS
-括弧開	〔	  [ 「 ( ｢	始め甲括弧		PARENTHESIS
-括弧閉	〕	 ]  」 ) ｣	終わり甲括弧		PARENTHESIS
-括弧開	［	  [ 「 ( ｢	始め角括弧		PARENTHESIS
-括弧閉	］	 ]  」 ) ｣	終わり角括弧		PARENTHESIS
+括弧閉	）	 ] 」 ) ｣	終わり丸括弧		GENERAL PARENTHESIS
+括弧開	〔	 [ 「 ( ｢	始め甲括弧		PARENTHESIS
+括弧閉	〕	 ] 」 ) ｣	終わり甲括弧		PARENTHESIS
+括弧開	［	 [ 「 ( ｢	始め角括弧		PARENTHESIS
+括弧閉	］	 ] 」 ) ｣	終わり角括弧		PARENTHESIS
 括弧開	〘	[ 「 ( ｢	始め二重甲括弧		PARENTHESIS
-括弧閉	〙	 ]  」 ) ｣	終わり二重甲括弧		PARENTHESIS
-括弧開	〚	  [ 「 ( ｢	始め二重角括弧		PARENTHESIS
-括弧閉	〛	 ]  」 ) ｣	終わり二重角括弧		PARENTHESIS
-括弧開	｛	 {  [ ( 「 ｢	始め波括弧		PARENTHESIS
-括弧閉	｝	 }  ] )  」 ｣	終わり波括弧		PARENTHESIS
-括弧開	〈	< (  [ 「 ｢	始め山括弧		PARENTHESIS
-括弧閉	〉	> ) ]  」 ｣	終わり山括弧		PARENTHESIS
-括弧開	‹	< (  [ 「 ｢	始め山括弧		PARENTHESIS
-括弧閉	›	> ) ]  」 ｣	終わり山括弧		PARENTHESIS
-括弧開	《	 <<  (  [ 「 ｢	始め二重山括弧		PARENTHESIS
-括弧閉	》	>>  ) ]  」 ｣	終わり二重山括弧		PARENTHESIS
+括弧閉	〙	 ] 」 ) ｣	終わり二重甲括弧		PARENTHESIS
+括弧開	〚	 [ 「 ( ｢	始め二重角括弧		PARENTHESIS
+括弧閉	〛	 ] 」 ) ｣	終わり二重角括弧		PARENTHESIS
+括弧開	｛	 { [ ( 「 ｢	始め波括弧		PARENTHESIS
+括弧閉	｝	 } ] ) 」 ｣	終わり波括弧		PARENTHESIS
+括弧開	〈	< ( [ 「 ｢	始め山括弧		PARENTHESIS
+括弧閉	〉	> ) ] 」 ｣	終わり山括弧		PARENTHESIS
+括弧開	‹	< ( [ 「 ｢	始め山括弧		PARENTHESIS
+括弧閉	›	> ) ] 」 ｣	終わり山括弧		PARENTHESIS
+括弧開	《	 << ( [ 「 ｢	始め二重山括弧		PARENTHESIS
+括弧閉	》	>> ) ] 」 ｣	終わり二重山括弧		PARENTHESIS
 括弧開	«	ぎゅめ << ( [ 「 ｢	始め二重山括弧・ギュメ		PARENTHESIS
-括弧閉	»	ぎゅめ >> ) ]  」 ｣	終わり二重山括弧・ギュメ		PARENTHESIS
+括弧閉	»	ぎゅめ >> ) ] 」 ｣	終わり二重山括弧・ギュメ		PARENTHESIS
 括弧開	「	[ 「 ( ｢	始めかぎ括弧		PARENTHESIS
-括弧閉	」	 ]  」 ) ｣	終わりかぎ括弧		PARENTHESIS
+括弧閉	」	 ] 」 ) ｣	終わりかぎ括弧		PARENTHESIS
 括弧開	『	 [ 「 ( ｢	始め二重かぎ括弧		PARENTHESIS
-括弧閉	』	 ]  」 ) ｣	終わり二重かぎ括弧		PARENTHESIS
+括弧閉	』	 ] 」 ) ｣	終わり二重かぎ括弧		PARENTHESIS
 括弧開	【	 [ 「 ( ｢	始めすみつき括弧		PARENTHESIS
-括弧閉	】	 ]  」 ) ｣	終わりすみつき括弧		PARENTHESIS
+括弧閉	】	 ] 」 ) ｣	終わりすみつき括弧		PARENTHESIS
 括弧開	〝	[ 「 ( ｢ " ' きごう	始め爪括弧		PARENTHESIS
 括弧閉	〟	] 」 ) ｣ " ' きごう	終わり爪括弧		PARENTHESIS
 記号	（）	() 「」 かっこ まるかっこ	丸括弧
@@ -101,18 +101,18 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	“”	() 「」 かっこ	ダブル引用符
 記号	〝〟	() 「」 かっこ つめかっこ だぶるみにゅーと ののかぎ	爪括弧
 記号	＋	ぷらす たす すうがく + ＋	加算記号		SYMBOL GENERAL		U+FF0B FULLWIDTH PLUS SIGN
-記号	−	まいなす ひく はいふん  すうがく - ー	減算記号 ハイフン		SYMBOL GENERAL		U+2212 MINUS SIGN
-記号	±	ぷらすまいなす  すうがく きごう	正または負記号		SYMBOL
-記号	×	かける  すうがく * ばつ ぺけ きごう	乗算記号		SYMBOL
+記号	−	まいなす ひく はいふん すうがく - ー	減算記号 ハイフン		SYMBOL GENERAL		U+2212 MINUS SIGN
+記号	±	ぷらすまいなす すうがく きごう	正または負記号		SYMBOL
+記号	×	かける すうがく * ばつ ぺけ きごう	乗算記号		SYMBOL
 記号	÷	わる すうがく / ・ きごう	除算記号		SYMBOL
-記号	＝	いこーる とうごう  すうがく =	等号		SYMBOL GENERAL
-記号	≠	ふとうごう のっといこーる  すうがく = きごう とうごう	等号否定		SYMBOL
-記号	＜	ふとうごう しょうなり  すうがく <	不等号		SYMBOL GENERAL
+記号	＝	いこーる とうごう すうがく =	等号		SYMBOL GENERAL
+記号	≠	ふとうごう のっといこーる すうがく = きごう とうごう	等号否定		SYMBOL
+記号	＜	ふとうごう しょうなり すうがく <	不等号		SYMBOL GENERAL
 記号	＞	ふとうごう だいなり すうがく >	不等号		SYMBOL GENERAL
-記号	≦	ふとうごう しょうなりいこーる  すうがく < きごう	不等号		SYMBOL
-記号	≧	ふとうごう だいなりいこーる  すうがく > きごう	不等号		SYMBOL
-記号	∞	むげんだい むげん  すうがく きごう	無限大		SYMBOL
-記号	∴	ゆえに  すうがく きごう さんかく てん	ゆえに		SYMBOL
+記号	≦	ふとうごう しょうなりいこーる すうがく < きごう	不等号		SYMBOL
+記号	≧	ふとうごう だいなりいこーる すうがく > きごう	不等号		SYMBOL
+記号	∞	むげんだい むげん すうがく きごう	無限大		SYMBOL
+記号	∴	ゆえに すうがく きごう さんかく てん	ゆえに		SYMBOL
 記号	♀	めす きごう きんせい せんせいじゅつ	雌記号, 金星		SYMBOL		U+2640
 記号	♂	おす きごう かせい せんせいじゅつ	雄記号, 火星		SYMBOL		U+2642
 記号	°	ど たんい きごう	度		SYMBOL
@@ -122,8 +122,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	￥	えん つうか \ ¥ ＼ たんい	通貨記号	円	GENERAL OTHER
 記号	¥	えん つうか \ ￥ ＼ たんい	通貨記号	円	GENERAL OTHER		U+00A5
 記号	＄	どる だらー だら つうか $ たんい	通貨記号	ドル	GENERAL OTHER
-記号	¢	せんと  つうか たんい	通貨記号	セント	OTHER
-記号	£	ぽんど  つうか たんい	通貨記号	ポンド	OTHER
+記号	¢	せんと つうか たんい	通貨記号	セント	OTHER
+記号	£	ぽんど つうか たんい	通貨記号	ポンド	OTHER
 記号	€	ゆーろ つうか たんい	通貨記号	ユーロ	OTHER
 記号	％	ぱーせんと たんい %	パーセント		GENERAL
 記号	＃	しゃーぷ なんばー いげた はっしゅ #	井げた／ハッシュ		GENERAL
@@ -170,7 +170,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	▨	しかく ななめぬり	斜め塗り正方形／		SYMBOL		U+25A8
 記号	▩	しかく ななめじゅうじぬり	斜め十字塗り正方形		SYMBOL		U+25A9
 記号	〒	ゆうびん ゆうびんばんごう きごう	郵便番号		SYMBOL
-記号	→	やじるし  みぎや -> ー> みぎ	矢印	右	SYMBOL
+記号	→	やじるし みぎや -> ー> みぎ	矢印	右	SYMBOL
 記号	←	やじるし ひだりや <- <ー ひだり	矢印	左	SYMBOL
 記号	↑	やじるし うえや うえ	矢印	上	SYMBOL
 記号	↓	やじるし したや した	矢印	下	SYMBOL
@@ -181,32 +181,32 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	☝	うえへ ↑	上向き指差し		SYMBOL
 記号	☟	したへ ↓	下向き指差し		SYMBOL
 記号	〓	げた きごう	げた記号		OTHER
-記号	∈	すうがく しゅうごう  けいさん きごう ぞくする ふくむ	属する		SYMBOL
-記号	∉	すうがく しゅうごう  けいさん きごう ぞくさない ふくまない	属さない		SYMBOL
-記号	∋	すうがく しゅうごう  けいさん きごう ぞくする ふくむ	元として含む		SYMBOL
-記号	∌	すうがく しゅうごう  けいさん きごう ぞくさない ふくまない	元として含まない		SYMBOL
-記号	⊆	すうがく  しゅうごう  けいさん きごう	部分集合		SYMBOL
-記号	⊇	すうがく しゅうごう  けいさん きごう	上位集合		SYMBOL
-記号	⊂	すうがく  しゅうごう  けいさん きごう	真部分集合		SYMBOL
-記号	⊃	すうがく  しゅうごう  けいさん きごう	真上位集合		SYMBOL
-記号	∪	すうがく きゃっぷ かっぷ おあ しゅうごう  けいさん U きごう わしゅうごう	和集合		SYMBOL
-記号	∩	すうがく きゃっぷ かっぷ あんど しゅうごう  けいさん きごう せきしゅうごう	積集合		SYMBOL
-記号	∧	すうがく かつ および あんど しゅうごう  けいさん きごう	および		SYMBOL
-記号	∨	すうがく または おあ しゅうごう  けいさん V きごう	または		SYMBOL
-記号	¬	すうがく のっと ひてい しゅうごう  けいさん きごう	否定		SYMBOL
-記号	⇒	すうがく やじるし みぎや -> ならば  けいさん => きごう →	ならば		SYMBOL
-記号	⇔	すうがく やじるし <-> どうち  けいさん <=> きごう	同値		SYMBOL
-記号	∀	すうがく すべて  すべての たーんえー けいさん A きごう たーんA	すべての		SYMBOL
-記号	∃	すうがく そんざい  けいさん E きごう	存在記号		SYMBOL
-記号	∠	すうがく かく  けいさん きごう	角		SYMBOL
-記号	⊥	すうがく すいちょく  けいさん きごう かく	垂直		SYMBOL
+記号	∈	すうがく しゅうごう けいさん きごう ぞくする ふくむ	属する		SYMBOL
+記号	∉	すうがく しゅうごう けいさん きごう ぞくさない ふくまない	属さない		SYMBOL
+記号	∋	すうがく しゅうごう けいさん きごう ぞくする ふくむ	元として含む		SYMBOL
+記号	∌	すうがく しゅうごう けいさん きごう ぞくさない ふくまない	元として含まない		SYMBOL
+記号	⊆	すうがく しゅうごう けいさん きごう	部分集合		SYMBOL
+記号	⊇	すうがく しゅうごう けいさん きごう	上位集合		SYMBOL
+記号	⊂	すうがく しゅうごう けいさん きごう	真部分集合		SYMBOL
+記号	⊃	すうがく しゅうごう けいさん きごう	真上位集合		SYMBOL
+記号	∪	すうがく きゃっぷ かっぷ おあ しゅうごう けいさん U きごう わしゅうごう	和集合		SYMBOL
+記号	∩	すうがく きゃっぷ かっぷ あんど しゅうごう けいさん きごう せきしゅうごう	積集合		SYMBOL
+記号	∧	すうがく かつ および あんど しゅうごう けいさん ^ きごう	および		SYMBOL
+記号	∨	すうがく または おあ しゅうごう けいさん V きごう	または		SYMBOL
+記号	¬	すうがく のっと ひてい しゅうごう けいさん きごう	否定		SYMBOL
+記号	⇒	すうがく やじるし みぎや -> ならば けいさん => きごう →	ならば		SYMBOL
+記号	⇔	すうがく やじるし <-> どうち けいさん <=> きごう	同値		SYMBOL
+記号	∀	すうがく すべて すべての たーんえー けいさん A きごう たーんA	すべての		SYMBOL
+記号	∃	すうがく そんざい けいさん E きごう	存在記号		SYMBOL
+記号	∠	すうがく かく けいさん きごう	角		SYMBOL
+記号	⊥	すうがく すいちょく けいさん きごう かく	垂直		SYMBOL
 記号	⊿	すうがく さんかく さんかくけい とらいあんぐる けいさん でるた ちょっかくさんかく ちょっかくさんかくけい きごう	三角形		SYMBOL
-記号	⌒	すうがく こ  けいさん きごう	弧		SYMBOL
-記号	∂	すうがく  けいさん きごう へんびぶん らうんど でる	偏微分		SYMBOL
+記号	⌒	すうがく こ けいさん きごう	弧		SYMBOL
+記号	∂	すうがく けいさん きごう へんびぶん らうんど でる	偏微分		SYMBOL
 記号	∇	すうがく なぶら けいさん きごう	ナブラ		SYMBOL
-記号	≡	すうがく ごうどう  けいさん = きごう	合同		SYMBOL
+記号	≡	すうがく ごうどう けいさん = きごう	合同		SYMBOL
 記号	≒	すうがく やく きんじ いこーる = けいさん きごう とうごう	ほとんど等しい		SYMBOL
-記号	≪	ふとうごう しょうなり すうがく  けいさん << きごう	非常に小さい		SYMBOL
+記号	≪	ふとうごう しょうなり すうがく けいさん << きごう	非常に小さい		SYMBOL
 記号	≫	ふとうごう だいなり すうがく けいさん >> きごう	非常に大きい		SYMBOL
 記号	√	るーと へいほうこん すうがく けいさん きごう こんごう	根号		SYMBOL
 記号	∽	すうがく そうじ けいさん きごう	相似		SYMBOL
@@ -217,9 +217,9 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	⊕	すうがく ちょくわ えっくすおあ けいさん + きごう	直和		SYMBOL
 記号	∅	すうがく くうしゅうごう	空集合		SYMBOL		U+2205
 記号	Å	おんぐすとろーむ たんい A きごう	オングストローム		SYMBOL
-記号	‰	ぱーみる  たんい きごう	単位		SYMBOL
-記号	♯	しゃーぷ  おんがく # きごう	シャープ(音楽記号)		SYMBOL
-記号	♭	ふらっと  おんがく きごう	フラット		SYMBOL
+記号	‰	ぱーみる たんい きごう	単位		SYMBOL
+記号	♯	しゃーぷ おんがく # きごう	シャープ(音楽記号)		SYMBOL
+記号	♭	ふらっと おんがく きごう	フラット		SYMBOL
 記号	♪	おんぷ おんがく きごう	音符		SYMBOL
 記号	♫	おんぷ おんがく きごう	音符		SYMBOL
 記号	♬	おんぷ おんがく きごう	音符		SYMBOL
@@ -548,16 +548,16 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	㊨	みぎ	丸右
 記号	㋿	れいわ ねんごう	年号		OTHER
 記号	㍻	へいせい ねんごう	年号		OTHER
-記号	㍼	しょうわ  ねんごう	年号		OTHER
-記号	㍽	たいしょう  ねんごう	年号		OTHER
-記号	㍾	めいじ  ねんごう	年号		OTHER
-記号	㎎	みりぐらむ  たんい mg MG	単位		OTHER
-記号	㎏	きろぐらむ  たんい kg KG	単位		OTHER
-記号	㎜	みりめーとる  たんい mm MM	単位		OTHER
-記号	㎝	せんちめーとる  たんい cm CM	単位		OTHER
-記号	㎞	きろめーとる  たんい km KM	単位		OTHER
-記号	㎡	へいほうめーとる  たんい へいべい mm MM	単位		OTHER
-記号	㎥	りっぽうめーとる  たんい りゅうべい りゅーべー りゅーべ	単位		OTHER
+記号	㍼	しょうわ ねんごう	年号		OTHER
+記号	㍽	たいしょう ねんごう	年号		OTHER
+記号	㍾	めいじ ねんごう	年号		OTHER
+記号	㎎	みりぐらむ たんい mg MG	単位		OTHER
+記号	㎏	きろぐらむ たんい kg KG	単位		OTHER
+記号	㎜	みりめーとる たんい mm MM	単位		OTHER
+記号	㎝	せんちめーとる たんい cm CM	単位		OTHER
+記号	㎞	きろめーとる たんい km KM	単位		OTHER
+記号	㎡	へいほうめーとる たんい へいべい mm MM	単位		OTHER
+記号	㎥	りっぽうめーとる たんい りゅうべい りゅーべー りゅーべ	単位		OTHER
 記号	㏄	しーしー たんい cc	単位		OTHER
 記号	㏍	かぶしきがいしゃ kk			OTHER
 記号	＂	さん せん
@@ -1469,7 +1469,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	隶	ぶしゅ れいづくり	れいづくり
 記号	隹	ぶしゅ ふるとり	ふるとり
 記号	雨	ぶしゅ あめかんむり	あめかんむり
-記号	靑	ぶしゅ あお	あお
+記号	靑	ぶしゅ	あお
 記号	青	ぶしゅ	あお
 記号	非	ぶしゅ あらず	あらず
 記号	面	ぶしゅ	めん

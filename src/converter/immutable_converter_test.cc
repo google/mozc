@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -154,7 +153,7 @@ class MockDataAndImmutableConverter {
 
     immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary, suppression_dictionary_.get(),
-        connector_.get(), segmenter_.get(), &pos_matcher_, pos_group_.get(),
+        connector_, segmenter_.get(), &pos_matcher_, pos_group_.get(),
         suggestion_filter_.get());
     CHECK(immutable_converter_.get());
   }
@@ -164,7 +163,7 @@ class MockDataAndImmutableConverter {
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const SuppressionDictionary> suppression_dictionary_;
-  std::unique_ptr<const Connector> connector_;
+  Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<const DictionaryInterface> dictionary_;

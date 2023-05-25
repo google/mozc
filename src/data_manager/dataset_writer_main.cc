@@ -39,8 +39,9 @@
 //
 // name:alignment:/path/to/infile
 //
-// where alignment must be one of {8, 16, 32, 64}.  Each packed file can be
-// retrieved by DataSetReader through its name.
+// where alignment must be a power of 2 greater than or equal to 8 (i.e., 8, 16,
+// 32, 64, ...). Each packed file can be retrieved by DataSetReader through its
+// name.
 
 #include <ios>
 #include <string>

@@ -65,7 +65,7 @@ class EngineBuilderTest : public ::testing::Test {
   EngineReloadResponse response_;
 
  private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(EngineBuilderTest, PrepareAsync) {

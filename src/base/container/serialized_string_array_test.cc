@@ -31,52 +31,34 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <cstring>
 #include <iterator>
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-class SerializedStringArrayTest : public ::testing::Test {
- protected:
-  absl::string_view AlignString(const char *s, size_t len) {
-    return AlignString(std::string(s, len));
-  }
-
-  absl::string_view AlignString(const std::string &s) {
-    buf_.reset(new uint32_t[(s.size() + 3) / 4]);
-    return absl::string_view(
-        static_cast<const char *>(memcpy(buf_.get(), s.data(), s.size())),
-        s.size());
-  }
-
- private:
-  std::unique_ptr<uint32_t[]> buf_;
-};
-
-TEST_F(SerializedStringArrayTest, DefaultConstructor) {
+TEST(SerializedStringArrayTest, DefaultConstructor) {
   SerializedStringArray a;
   EXPECT_TRUE(a.empty());
   EXPECT_EQ(a.size(), 0);
 }
 
-TEST_F(SerializedStringArrayTest, EmptyArray) {
-  const absl::string_view data = AlignString("\x00\x00\x00\x00", 4);
-  ASSERT_TRUE(SerializedStringArray::VerifyData(data));
+TEST(SerializedStringArrayTest, EmptyArray) {
+  alignas(uint32_t) constexpr char kDataArray[] = "\x00\x00\x00\x00";
+  const absl::string_view kData(kDataArray, 4);
+  ASSERT_TRUE(SerializedStringArray::VerifyData(kData));
 
   SerializedStringArray a;
-  ASSERT_TRUE(a.Init(data));
+  ASSERT_TRUE(a.Init(kData));
   EXPECT_TRUE(a.empty());
   EXPECT_EQ(a.size(), 0);
 }
 
-constexpr char kTestData[] =
+alignas(uint32_t) constexpr char kTestDataArray[] =
     "\x03\x00\x00\x00"                  // Array size = 3
     "\x1c\x00\x00\x00\x05\x00\x00\x00"  // (28, 5)
     "\x22\x00\x00\x00\x04\x00\x00\x00"  // (34, 4)
@@ -85,22 +67,21 @@ constexpr char kTestData[] =
     "Mozc\0"                            // offset = 34, len = 4
     "google\0";                         // offset = 39, len = 6
 
-TEST_F(SerializedStringArrayTest, SerializeToBuffer) {
+constexpr absl::string_view kTestData(kTestDataArray,
+                                      std::size(kTestDataArray) - 1);
+
+TEST(SerializedStringArrayTest, SerializeToBuffer) {
   std::unique_ptr<uint32_t[]> buf;
   const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
       {"Hello", "Mozc", "google"}, &buf);
-  const absl::string_view expected(kTestData, std::size(kTestData) - 1);
-  EXPECT_EQ(actual, expected);
+  EXPECT_EQ(actual, kTestData);
 }
 
-TEST_F(SerializedStringArrayTest, Basic) {
-  const absl::string_view data =
-      AlignString(std::string(kTestData, std::size(kTestData) - 1));
-
-  ASSERT_TRUE(SerializedStringArray::VerifyData(data));
+TEST(SerializedStringArrayTest, Basic) {
+  ASSERT_TRUE(SerializedStringArray::VerifyData(kTestData));
 
   SerializedStringArray a;
-  ASSERT_TRUE(a.Init(data));
+  ASSERT_TRUE(a.Init(kTestData));
   ASSERT_EQ(3, a.size());
   EXPECT_EQ(a[0], "Hello");
   EXPECT_EQ(a[1], "Mozc");
@@ -118,14 +99,11 @@ TEST_F(SerializedStringArrayTest, Basic) {
   EXPECT_EQ(a.size(), 0);
 }
 
-TEST_F(SerializedStringArrayTest, Iterator) {
-  const absl::string_view data =
-      AlignString(std::string(kTestData, std::size(kTestData) - 1));
-
-  ASSERT_TRUE(SerializedStringArray::VerifyData(data));
+TEST(SerializedStringArrayTest, Iterator) {
+  ASSERT_TRUE(SerializedStringArray::VerifyData(kTestData));
 
   SerializedStringArray a;
-  ASSERT_TRUE(a.Init(data));
+  ASSERT_TRUE(a.Init(kTestData));
   {
     auto iter = a.begin();
     ASSERT_NE(a.end(), iter);

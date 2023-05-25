@@ -44,7 +44,6 @@
         '../base/absl.gyp:absl_base',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
-        '../client/client.gyp:client_mock',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:renderer_proto',

@@ -168,7 +168,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
   ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
   auto connector = std::move(status_or_connector).value();
 
-  EXPECT_EQ(connector->GetResolution(), expected_resolution_);
+  EXPECT_EQ(connector.GetResolution(), expected_resolution_);
   absl::BitGen gen;
   for (ConnectionFileReader reader(connection_txt_file_); !reader.done();
        reader.Next()) {
@@ -179,7 +179,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
     }
     const int cost = reader.cost();
     EXPECT_GE(cost, 0);
-    const int actual_cost = connector->GetTransitionCost(
+    const int actual_cost = connector.GetTransitionCost(
         reader.rid_of_left_node(), reader.lid_of_right_node());
     if (cost == Connector::kInvalidCost) {
       EXPECT_EQ(actual_cost, cost);

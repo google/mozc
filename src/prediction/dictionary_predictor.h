@@ -32,7 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -66,8 +65,6 @@ using ::mozc::prediction::Result;
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
-  DictionaryPredictor(const DictionaryPredictor &) = delete;
-  DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const DataManagerInterface &data_manager,
@@ -75,10 +72,12 @@ class DictionaryPredictor : public PredictorInterface {
                       const ImmutableConverterInterface *immutable_converter,
                       const dictionary::DictionaryInterface *dictionary,
                       const dictionary::DictionaryInterface *suffix_dictionary,
-                      const Connector *connector, const Segmenter *segmenter,
+                      const Connector &connector, const Segmenter *segmenter,
                       const dictionary::PosMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
-  ~DictionaryPredictor() override;
+
+  DictionaryPredictor(const DictionaryPredictor &) = delete;
+  DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override;
@@ -138,7 +137,7 @@ class DictionaryPredictor : public PredictorInterface {
           aggregator,
       const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
-      const Connector *connector, const Segmenter *segmenter,
+      const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter);
 
@@ -274,7 +273,7 @@ class DictionaryPredictor : public PredictorInterface {
   std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator_;
 
   const ImmutableConverterInterface *immutable_converter_;
-  const Connector *connector_;
+  const Connector &connector_;
   const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>

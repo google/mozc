@@ -60,11 +60,6 @@ namespace {
 constexpr size_t kMaxLruSize = 1000000;  // 1M
 constexpr size_t kMaxValueSize = 1024;   // 1024 byte
 
-// The byte length used to store fingerprint and timestamp for each item.
-// * 8 bytes for fingerprint
-// * 4 bytes for timestamp.
-constexpr size_t kItemHeaderSize = 12;
-
 // The byte length used to store LRU properties.
 // * 4 bytes for user specified value size
 // * 4 bytes for LRU capacity
@@ -79,7 +74,9 @@ uint32_t GetTimeStamp(const char *ptr) {
   return LoadUnaligned<uint32_t>(ptr + 8);
 }
 
-const char *GetValue(const char *ptr) { return ptr + kItemHeaderSize; }
+const char *GetValue(const char *ptr) {
+  return ptr + LruStorage::kItemHeaderSize;
+}
 
 void Update(char *ptr) {
   StoreUnaligned<uint32_t>(
@@ -254,16 +251,6 @@ bool LruStorage::Merge(const LruStorage &storage) {
   return Open(mmap_.begin(), mmap_.size());
 }
 
-LruStorage::LruStorage()
-    : value_size_(0),
-      size_(0),
-      seed_(0),
-      next_item_(nullptr),
-      begin_(nullptr),
-      end_(nullptr) {}
-
-LruStorage::~LruStorage() { Close(); }
-
 bool LruStorage::OpenOrCreate(const char *filename, size_t new_value_size,
                               size_t new_size, uint32_t new_seed) {
   if (absl::Status s = FileUtil::FileExists(filename); !s.ok()) {
@@ -403,11 +390,6 @@ void LruStorage::Close() {
   mmap_.Close();
   lru_list_.clear();
   lru_map_.clear();
-}
-
-const char *LruStorage::Lookup(const absl::string_view key) const {
-  uint32_t last_access_time = 0;
-  return Lookup(key, &last_access_time);
 }
 
 const char *LruStorage::Lookup(const absl::string_view key,
@@ -584,18 +566,6 @@ int LruStorage::DeleteElementsUntouchedFor62Days() {
       static_cast<uint32_t>((now > k62DaysInSec) ? now - k62DaysInSec : 0);
   return DeleteElementsBefore(timestamp);
 }
-
-size_t LruStorage::item_size() const { return value_size_ + kItemHeaderSize; }
-
-size_t LruStorage::value_size() const { return value_size_; }
-
-size_t LruStorage::size() const { return size_; }
-
-size_t LruStorage::used_size() const { return lru_list_.size(); }
-
-uint32_t LruStorage::seed() const { return seed_; }
-
-const std::string &LruStorage::filename() const { return filename_; }
 
 void LruStorage::Write(size_t i, uint64_t fp, const absl::string_view value,
                        uint32_t last_access_time) {

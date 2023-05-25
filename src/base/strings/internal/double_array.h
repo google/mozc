@@ -42,8 +42,8 @@ struct DoubleArray {
   uint32_t check;
 };
 
-void ConvertUsingDoubleArray(const DoubleArray *da, const char *table,
-                             absl::string_view input, std::string *output);
+std::string ConvertUsingDoubleArray(const DoubleArray *da, const char *table,
+                                    absl::string_view input);
 
 }  // namespace mozc::japanese::internal
 

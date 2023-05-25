@@ -27,134 +27,116 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#import <Cocoa/Cocoa.h>
 #import <InputMethodKit/InputMethodKit.h>
+
+#import "mac/KeyCodeMap.h"
 #import "mac/common.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 // For mozc::commands::CompositionMode
+#include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 
-@class NSMenu;
-@class KeyCodeMap;
-
-namespace mozc {
-namespace client {
-class ClientInterface;
-}  // namespace mozc::client
-
-namespace renderer {
-class RendererInterface;
-}  // namespace mozc::renderer
-}  // namespace mozc
-
-// GoogleJapaneseInputController is a subclass of
-// |IMKInputController|, which holds a connection from a client
-// application to the mozc server (Japanese IME server) on the
-// machine.
-//
-// For the detail of IMKInputController itself, see the ADC document
-// http://developer.apple.com/documentation/Cocoa/Reference/IMKInputController_Class/
-@interface GoogleJapaneseInputController :
-    IMKInputController<ControllerCallback> {
+/** GoogleJapaneseInputController is a subclass of |IMKInputController|, which holds a connection
+ * from a client application to the mozc server (Japanese IME server) on the machine.
+ *
+ * For the detail of IMKInputController itself, see the ADC document
+ * http://developer.apple.com/documentation/Cocoa/Reference/IMKInputController_Class/
+ */
+@interface GoogleJapaneseInputController : IMKInputController <ControllerCallback> {
  @private
-  // Instance variables are all strong references.
+  /** Instance variables are all strong references. */
 
-  // |composedString_| stores the current preedit text
+  /** |composedString_| stores the current preedit text */
   NSMutableAttributedString *composedString_;
 
-  // |originalString_| stores original key strokes.
+  /** |originalString_| stores original key strokes. */
   NSMutableString *originalString_;
 
-  // |cursorPosition_| is the position of cursor in the preedit.  If
-  // no cursor is found, its value should be -1.
+  /** |cursorPosition_| is the position of cursor in the preedit.  If no cursor is found, its value
+   * should be -1. */
   int cursorPosition_;
 
-  // |mode_| stores the current input mode (Direct or conversion).
+  /** |mode_| stores the current input mode (Direct or conversion). */
   mozc::commands::CompositionMode mode_;
 
-  // |yenSignCharacter_| holds the character for the YEN_SIGN key in
-  // JIS keyboard.  This config is separated from |keyCodeMap_|
-  // because it is for DIRECT mode.
+  /** |yenSignCharacter_| holds the character for the YEN_SIGN key in JIS keyboard.  This config is
+   * separated from |keyCodeMap_| because it is for DIRECT mode. */
   mozc::config::Config::YenSignCharacter yenSignCharacter_;
 
-  // Check the kana/ascii input mode at the key event if true.
-  // Because it requires GetConfig which asks Converter server, we
-  // want to delay the checking to the key event timing but we don't
-  // want to call this every key events.
+  /** Check the kana/ascii input mode at the key event if true. Because it requires GetConfig which
+   * asks Converter server, we want to delay the checking to the key event timing but we don't want
+   * to call this every key events. */
   BOOL checkInputMode_;
 
-  // |suppressSuggestion_| indicates whether to suppress the suggestion.
+  /** |suppressSuggestion_| indicates whether to suppress the suggestion. */
   BOOL suppressSuggestion_;
 
-  // |keyCodeMap_| manages the mapping between Mac key code and mozc
-  // key events.
+  /** |keyCodeMap_| manages the mapping between Mac key code and mozc key events. */
   KeyCodeMap *keyCodeMap_;
 
-  // |clientBundle_| is the Bundle ID of the client application which
-  // the controller communicates with.
+  /** |clientBundle_| is the Bundle ID of the client application which the controller communicates
+   * with. */
   std::string *clientBundle_;
 
   NSRange replacementRange_;
 
-  // |lastKeyDownTime_| and |lastKeyCode_| are used to handle double tapping.
+  /** |lastKeyDownTime_| and |lastKeyCode_| are used to handle double tapping. */
   NSTimeInterval lastKeyDownTime_;
   uint16_t lastKeyCode_;
 
-  // |candidateController_| controls the candidate windows.
+  /** |candidateController_| controls the candidate windows. */
   mozc::renderer::RendererInterface *candidateController_;
 
-  // |rendererCommand_| stores the command sent to |candidateController_|
+  /** |rendererCommand_| stores the command sent to |candidateController_| */
   mozc::commands::RendererCommand *rendererCommand_;
 
-  // |mozcClient_| manages connection to the mozc server.
-  mozc::client::ClientInterface *mozcClient_;
+  /** |mozcClient_| manages connection to the mozc server. */
+  std::unique_ptr<mozc::client::ClientInterface> mozcClient_;
 
-  // |imkServer_| holds the reference to GoogleJapaneseInputServer.
+  /** |imkServer_| holds the reference to GoogleJapaneseInputServer. */
   id<ServerCallback> imkServer_;
 
-  // |imkClientForTest_| holds the reference to the client object for unit test.
+  /** |imkClientForTest_| holds the reference to the client object for unit test. */
   id imkClientForTest_;
 
-  // |menu_| is the NSMenu to be shown in the pulldown menu-list of
-  // the IME.
+  /** |menu_| is the NSMenu to be shown in the pulldown menu-list of the IME. */
   IBOutlet NSMenu *menu_;
 }
 
-// sendCommand: is called to send SessionCommand to the server
-// from the renderer, when the user clicks a candidate item
-// in candidate windows or when the renderer sends the usage stats
-// event information.
-- (void)sendCommand:(const mozc::commands::SessionCommand&)command;
+/** sendCommand: is called to send SessionCommand to the server from the renderer, when the user
+ * clicks a candidate item in candidate windows or when the renderer sends the usage stats event
+ * information. */
+- (void)sendCommand:(const mozc::commands::SessionCommand &)command;
 
-// reconversionClicked: is called when the user clicks "Reconversion"
-// menu item.
+/** reconversionClicked: is called when the user clicks "Reconversion" menu item. */
 - (IBAction)reconversionClicked:(id)sender;
 
-// configClicked: is called when the user clicks "Configure Mozc..."
-// menu item.
+/** configClicked: is called when the user clicks "Configure Mozc..." menu item. */
 - (IBAction)configClicked:(id)sender;
 
-// dictionaryToolClicked: is called when the user clicks "Dictionary
-// Tool..."  menu item.
+/** dictionaryToolClicked: is called when the user clicks "Dictionary Tool..."  menu item. */
 - (IBAction)dictionaryToolClicked:(id)sender;
 
-// registerWordClicked: is called when the user clicks "Add a word..."
-// menu item.
+/** registerWordClicked: is called when the user clicks "Add a word..." menu item. */
 - (IBAction)registerWordClicked:(id)sender;
 
-// aboutDialogClicked: is called when the user clicks "About Mozc..."
-// menu item.
+/** aboutDialogClicked: is called when the user clicks "About Mozc..." menu item. */
 - (IBAction)aboutDialogClicked:(id)sender;
 
-// outputResult: put result text in the specified |output| into the
-// client application.
+/** outputResult: put result text in the specified |output| into the client application. */
 - (void)outputResult:(mozc::commands::Output *)output;
 
-// create instances for global objects which will be referred from the
-// controller instances.
+/** Sets the ClientInterface to use in the controller. */
+- (void)setMozcClient:(std::unique_ptr<mozc::client::ClientInterface>)newMozcClient;
+
+/** create instances for global objects which will be referred from the controller instances. */
 + (void)initializeConstants;
 @end

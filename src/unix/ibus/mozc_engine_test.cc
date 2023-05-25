@@ -34,10 +34,14 @@
 #include "base/port.h"
 #include "client/client_mock.h"
 #include "protocol/commands.pb.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace ibus {
+
+using ::testing::_;
+using ::testing::Return;
 
 class LaunchToolTest : public testing::Test {
  public:
@@ -50,7 +54,6 @@ class LaunchToolTest : public testing::Test {
     mozc_engine_.reset(new MozcEngine());
 
     mock_ = new client::ClientMock();
-    mock_->ClearFunctionCounter();
     mozc_engine_->client_.reset(mock_);
   }
 
@@ -64,33 +67,28 @@ TEST_F(LaunchToolTest, LaunchToolTest) {
   commands::Output output;
 
   // Launch config dialog
-  mock_->ClearFunctionCounter();
-  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
+  EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
 
   // Launch dictionary tool
-  mock_->ClearFunctionCounter();
-  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::DICTIONARY_TOOL);
+  EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
 
   // Launch word register dialog
-  mock_->ClearFunctionCounter();
-  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", true);
   output.set_launch_tool_mode(commands::Output::WORD_REGISTER_DIALOG);
+  EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(true));
   EXPECT_TRUE(mozc_engine_->LaunchTool(output));
 
   // Launch no tool(means do nothing)
-  mock_->ClearFunctionCounter();
-  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", false);
   output.set_launch_tool_mode(commands::Output::NO_TOOL);
+  EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(false));
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
 
   // Something occurring in client::Client::LaunchTool
-  mock_->ClearFunctionCounter();
-  mock_->SetBoolFunctionReturn("LaunchToolWithProtoBuf", false);
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
+  EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(false));
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
 }
 

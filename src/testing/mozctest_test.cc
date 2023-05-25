@@ -32,15 +32,25 @@
 #include <fstream>
 #include <string>
 
+#include "base/file/temp_dir.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc::testing {
 namespace {
 
+using ::testing::IsEmpty;
+using ::testing::Not;
+
 TEST(MozcTestTest, GetSourcePath) {
   std::string path = GetSourcePath({"testing", "mozctest_test.cc"});
   std::ifstream ifs(path);
   EXPECT_TRUE(ifs.good());
+}
+
+TEST(MozcTestTest, MakeTempDirectoryOrDie) {
+  TempDirectory temp_dir = MakeTempDirectoryOrDie();
+  EXPECT_THAT(temp_dir.path(), Not(IsEmpty()));
 }
 
 }  // namespace

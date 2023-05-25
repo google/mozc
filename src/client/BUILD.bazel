@@ -131,15 +131,14 @@ mozc_cc_test(
 mozc_cc_library(
     name = "client_mock",
     testonly = True,
-    srcs = ["client_mock.cc"],
     hdrs = ["client_mock.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":client_interface",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//testing:gunit",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
 )

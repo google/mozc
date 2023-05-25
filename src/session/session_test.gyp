@@ -136,7 +136,6 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base_test.gyp:clock_mock',
-        '../client/client.gyp:client_mock',
         '../config/config.gyp:config_handler',
         '../config/config.gyp:stats_config_util',
         '../protocol/protocol.gyp:commands_proto',
@@ -162,7 +161,6 @@
       'dependencies': [
         '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
-        '../client/client.gyp:client_mock',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session_watch_dog',
       ],

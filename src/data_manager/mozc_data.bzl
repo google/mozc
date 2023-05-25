@@ -27,41 +27,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Macro for Mozc data set.
-
-# This macro defines a set of genrules each of which has name "name + @xxx",
-# where xxx is listed below:
-#   - No suffix (i.e., "name" is target name): Main binary file of the data
-#   - header: Embedded file (to be included in C++) of the data set file
-#   - a11y_description: [Optional] Accessibility description data. Available only if
-#           a11y_description_src is provided.
-#   - collocation: Collocation data
-#   - collocation_suppression: Collocation suppression data
-#   - connection: Connection matrix data
-#   - connection_single_column: Connection data in text format
-#   - dictionary: System dictionary data
-#   - suggestion_filter: Suggestion filter data
-#   - pos_group: POS group data
-#   - boundary: Boundary data
-#   - segmenter_inl_header: C++ header to be included in segmenter_generator.
-#   - segmenter_generator: C++ binary generating segmenter data files.
-#   - segmenter: Data files for segmenter.
-#   - counter_suffix: Counter suffix sorted array.
-#   - suffix: Suffix dictionary data.
-#   - reading_correction: Reading correction arrays.
-#   - symbol: Symbol dictionary data.
-#   - usage: [Optional] Usage dictionary data.  Available only if usage_dict is
-#            provided.
-#   - user_pos: User POS data.
-#   - user_pos_manager_data: User POS manager data.
-#   - pos_matcher: POS matcher data.
-#   - emoticon_src: Emoticon data
-#   - emoticon_categorized_src: Categorized emoticon data
-#   - single_kanji: Single Kanji dictionary and variant data
-#   - single_kanji_noun_prefix: Single Kanji noun prefix data
-#   - zero_query_def: Zero query definition file
-#   - zero_query_number_def: Zero query number definition file
-# For usage, see //data_manager/google/BUILD.
 def mozc_dataset(
         name,
         outs,
@@ -81,7 +46,7 @@ def mozc_dataset(
         pos_matcher_rule_def,
         reading_correction_src,
         segmenter_def,
-        segmenter_generator_src,
+        segmenter_generator_srcs,
         single_kanji_src,
         sorting_map,
         special_pos,
@@ -98,7 +63,83 @@ def mozc_dataset(
         zero_query_number_def,
         typing_models = [],
         suggestion_filter_safe_def_srcs = [],
-        usage_dict = None):
+        usage_dict = None,
+        extra_data = []):
+    """Macro for Mozc data set.
+
+    This macro defines a set of genrules each of which has name "name + @xxx",
+    where xxx is listed below:
+      - No suffix (i.e., "name" is target name): Main binary file of the data
+      - header: Embedded file (to be included in C++) of the data set file
+      - a11y_description: [Optional] Accessibility description data. Available only if
+              a11y_description_src is provided.
+      - collocation: Collocation data
+      - collocation_suppression: Collocation suppression data
+      - connection: Connection matrix data
+      - connection_single_column: Connection data in text format
+      - dictionary: System dictionary data
+      - suggestion_filter: Suggestion filter data
+      - pos_group: POS group data
+      - boundary: Boundary data
+      - segmenter_inl_header: C++ header to be included in segmenter_generator.
+      - segmenter_generator: C++ binary generating segmenter data files.
+      - segmenter: Data files for segmenter.
+      - counter_suffix: Counter suffix sorted array.
+      - suffix: Suffix dictionary data.
+      - reading_correction: Reading correction arrays.
+      - symbol: Symbol dictionary data.
+      - usage: [Optional] Usage dictionary data.  Available only if usage_dict is
+               provided.
+      - user_pos: User POS data.
+      - user_pos_manager_data: User POS manager data.
+      - pos_matcher: POS matcher data.
+      - emoticon_src: Emoticon data
+      - emoticon_categorized_src: Categorized emoticon data
+      - single_kanji: Single Kanji dictionary and variant data
+      - single_kanji_noun_prefix: Single Kanji noun prefix data
+      - zero_query_def: Zero query definition file
+      - zero_query_number_def: Zero query number definition file
+    For usage, see //data_manager/google/BUILD.
+
+    Args:
+      name: data set target name to be generated.
+      outs: list of output files (mozc.data, mozc_data.inc, and pos_list.h).
+      a11y_description_src: the source of a11y descriptions.
+      boundary_def: boundary definition file.
+      cforms: cform definition file.
+      collocation_src: collocation data file.
+      collocation_suppression_src: collocation suppression data file.
+      connection_deflate: deflated connection matrix file.
+      dictionary_srcs: a list of dictionary files.
+      emoji_src: emoji data file.
+      emoticon_categorized_src: categorized emoji data file.
+      emoticon_src: emoticon data file.
+      id_def: POS ID definition file.
+      magic: the magic number to be embedded in the output data file.
+      pos_group_def: POS group definition file.
+      pos_matcher_rule_def: POS matcher rule definition file.
+      reading_correction_src: reading correction source file.
+      segmenter_def: segmenter definition file.
+      segmenter_generator_srcs: C++ sources for segmenter code generator.
+      single_kanji_src: single Kanji definition file.
+      sorting_map: sorting amp file.
+      special_pos: special POS definition file.
+      suffix: suffix dictionary file.
+      suggestion_filter_src: suggestion filter data file.
+      symbol_ordering_rule: symbol order definition file.
+      symbol_src: symbol data file.
+      tag: the tag to be embedded in data version.
+      use_1byte_cost: if true, compress connection matrix by using 1 byte costs.
+      user_pos_def: user POS file.
+      variant_rule: single Kanji variant rule file.
+      varname: C++ variable name for the embedded data.
+      zero_query_def: rule-based zero query suggestion data file.
+      zero_query_number_def: rule-based zero query number suggestion data file.
+      typing_models: typing model files.
+      suggestion_filter_safe_def_srcs: safe list for suggestion filter.
+      usage_dict: usage dictionary data.
+      extra_data: a list of any data files to include.
+    """
     sources = [
         ":" + name + "@user_pos",
         ":" + name + "@pos_matcher",
@@ -181,6 +222,12 @@ def mozc_dataset(
             "usage_item_array:32:$(@D)/usage_item_array.data " +
             "usage_string_array:32:$(@D)/usage_string_array.data "
         )
+
+    for value in extra_data:
+        key, alignment, target = value.split(":", 2)
+        sources.append(target)
+        arguments += "%s:%s:$(location %s) " % (key, alignment, target)
+
     native.genrule(
         name = name,
         srcs = sources,
@@ -407,10 +454,11 @@ def mozc_dataset(
 
     native.cc_binary(
         name = name + "@segmenter_generator",
-        srcs = [
-            segmenter_generator_src,
-            ":" + name + "@segmenter_inl_header",
-        ],
+        srcs =
+            segmenter_generator_srcs +
+            [
+                ":" + name + "@segmenter_inl_header",
+            ],
         copts = ["-Wno-parentheses"],
         visibility = ["//tools:__subpackages__"],
         deps = [

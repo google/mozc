@@ -119,7 +119,7 @@ class MockDataAndImmutableConverter {
 
     immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary_.get(),
-        suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
+        suppression_dictionary_.get(), connector_, segmenter_.get(),
         &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
     CHECK(immutable_converter_);
   }
@@ -128,14 +128,14 @@ class MockDataAndImmutableConverter {
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
     return std::make_unique<NBestGenerator>(
-        suppression_dictionary_.get(), segmenter_.get(), connector_.get(),
+        suppression_dictionary_.get(), segmenter_.get(), connector_,
         &pos_matcher_, lattice, suggestion_filter_.get(), true);
   }
 
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const SuppressionDictionary> suppression_dictionary_;
-  std::unique_ptr<const Connector> connector_;
+  Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<const DictionaryInterface> dictionary_;

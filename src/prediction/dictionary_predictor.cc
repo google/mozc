@@ -182,7 +182,7 @@ DictionaryPredictor::DictionaryPredictor(
     const ConverterInterface *converter,
     const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
-    const DictionaryInterface *suffix_dictionary, const Connector *connector,
+    const DictionaryInterface *suffix_dictionary, const Connector &connector,
     const Segmenter *segmenter, const PosMatcher *pos_matcher,
     const SuggestionFilter *suggestion_filter)
     : aggregator_(std::make_unique<prediction::DictionaryPredictionAggregator>(
@@ -202,7 +202,7 @@ DictionaryPredictor::DictionaryPredictor(
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
     const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
-    const Connector *connector, const Segmenter *segmenter,
+    const Connector &connector, const Segmenter *segmenter,
     const PosMatcher *pos_matcher, const SuggestionFilter *suggestion_filter)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
@@ -214,8 +214,6 @@ DictionaryPredictor::DictionaryPredictor(
       pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       predictor_name_("DictionaryPredictorForTest") {}
-
-DictionaryPredictor::~DictionaryPredictor() = default;
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
@@ -459,8 +457,8 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
   single_kanji_max_cost = std::max(single_kanji_max_cost, fallback_cost);
 
   const int single_kanji_transition_cost =
-      std::min(connector_->GetTransitionCost(rid, general_symbol_id_),
-               connector_->GetTransitionCost(0, general_symbol_id_));
+      std::min(connector_.GetTransitionCost(rid, general_symbol_id_),
+               connector_.GetTransitionCost(0, general_symbol_id_));
   const int wcost_diff =
       std::max(0, single_kanji_max_cost - single_kanji_transition_cost);
   const int single_kanji_offset = request.request()
@@ -721,7 +719,7 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
 // Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
 // is also added for non-realtime results.
 int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
-  const int cost_with_context = connector_->GetTransitionCost(rid, result.lid);
+  const int cost_with_context = connector_.GetTransitionCost(rid, result.lid);
 
   int lm_cost = 0;
 
@@ -737,7 +735,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
     // ImmutableConverterImpl::MakeLatticeNodesForHistorySegments().
     // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
     const int cost_without_context =
-        connector_->GetTransitionCost(0, result.lid);
+        connector_.GetTransitionCost(0, result.lid);
     lm_cost = std::min(cost_with_context, cost_without_context) + result.wcost;
   }
 
@@ -1207,7 +1205,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
       segment->candidates_size() > 0) {
     const Segment::Candidate &top_candidate = segment->candidate(0);
-    penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
+    penalty = (connector_.GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);
   }
   // ConvertForRequest() can return placeholder candidate with cost 0 when it

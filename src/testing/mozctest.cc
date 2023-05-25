@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/status.h"
@@ -99,12 +100,21 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
   return paths;
 }
 
-ScopedTmpUserProfileDirectory::ScopedTmpUserProfileDirectory()
-    : original_dir_(SystemUtil::GetUserProfileDirectory()) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+// Creates a new unique TempDirectory and returns it.
+TempDirectory MakeTempDirectoryOrDie() {
+  absl::StatusOr<TempDirectory> result =
+      TempDirectory::Default().CreateTempDirectory();
+  CHECK_OK(result);
+  return *std::move(result);
 }
 
-ScopedTmpUserProfileDirectory::~ScopedTmpUserProfileDirectory() {
+ScopedTempUserProfileDirectory::ScopedTempUserProfileDirectory()
+    : temp_dir_(MakeTempDirectoryOrDie()),
+      original_dir_(SystemUtil::GetUserProfileDirectory()) {
+  SystemUtil::SetUserProfileDirectory(temp_dir_.path());
+}
+
+ScopedTempUserProfileDirectory::~ScopedTempUserProfileDirectory() {
   SystemUtil::SetUserProfileDirectory(original_dir_);
 }
 

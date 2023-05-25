@@ -29,17 +29,19 @@
 
 #include "converter/connector.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <limits>
-#include <memory>
+#include <new>
+#include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
+#include "absl/algorithm/container.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -59,7 +61,7 @@ inline uint32_t GetHashValue(uint16_t rid, uint16_t lid, uint32_t hash_mask) {
   //   return (3 * rid + lid) % cache_size_
   // because cache_size_ is the power of 2.
   // Multiplying '3' makes the conversion speed faster.
-  // The result hash value becomes reasonalbly random.
+  // The result hash value becomes reasonably random.
 }
 
 inline uint32_t EncodeKey(uint16_t rid, uint16_t lid) {
@@ -144,30 +146,31 @@ void Connector::Row::Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
   use_1byte_value_ = use_1byte_value;
 }
 
-bool Connector::Row::GetValue(uint16_t index, uint16_t *value) const {
+std::optional<uint16_t> Connector::Row::GetValue(uint16_t index) const {
   int chunk_bit_position = index / 8;
   if (!chunk_bits_index_.Get(chunk_bit_position)) {
-    return false;
+    return std::nullopt;
   }
   int compact_bit_position =
       chunk_bits_index_.Rank1(chunk_bit_position) * 8 + index % 8;
   if (!compact_bits_index_.Get(compact_bit_position)) {
-    return false;
+    return std::nullopt;
   }
   int value_position = compact_bits_index_.Rank1(compact_bit_position);
+  uint16_t value;
   if (use_1byte_value_) {
-    *value = values_[value_position];
-    if (*value == kInvalid1ByteCostValue) {
-      *value = kInvalidCost;
+    value = values_[value_position];
+    if (value == kInvalid1ByteCostValue) {
+      value = kInvalidCost;
     }
   } else {
-    *value = reinterpret_cast<const uint16_t *>(values_)[value_position];
+    value = std::launder(
+        reinterpret_cast<const uint16_t *>(values_))[value_position];
   }
-
-  return true;
+  return value;
 }
 
-absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
+absl::StatusOr<Connector> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
 #ifdef __ANDROID__
   constexpr int kCacheSize = 256;
@@ -180,10 +183,12 @@ absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
   return Create(connection_data, connection_data_size, kCacheSize);
 }
 
-absl::StatusOr<std::unique_ptr<Connector>> Connector::Create(
-    const char *connection_data, size_t connection_size, int cache_size) {
-  auto connector = std::make_unique<Connector>();
-  auto status = connector->Init(connection_data, connection_size, cache_size);
+absl::StatusOr<Connector> Connector::Create(const char *connection_data,
+                                            size_t connection_size,
+                                            int cache_size) {
+  Connector connector;
+  absl::Status status =
+      connector.Init(connection_data, connection_size, cache_size);
   if (!status.ok()) {
     return status;
   }
@@ -197,10 +202,9 @@ absl::Status Connector::Init(const char *connection_data,
     return absl::InvalidArgumentError(absl::StrCat(
         "connector.cc: Cache size must be 2^n: size=", cache_size));
   }
-  cache_size_ = cache_size;
   cache_hash_mask_ = cache_size - 1;
-  cache_key_ = std::make_unique<uint32_t[]>(cache_size);
-  cache_value_ = std::make_unique<int[]>(cache_size);
+  cache_key_.resize(cache_size);
+  cache_value_.resize(cache_size);
 
   absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data, connection_size);
@@ -258,7 +262,7 @@ absl::Status Connector::Init(const char *connection_data,
 
   const size_t chunk_bits_size = metadata->ChunkBitsSize();
   const uint16_t rsize = metadata->rsize;
-  rows_ = std::make_unique<Row[]>(rsize);
+  rows_.resize(rsize);
   for (size_t i = 0; i < rsize; ++i) {
     // Each row is formatted as follows:
     // +-------------------+-------------+------------+------------+-----------+
@@ -316,16 +320,14 @@ int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
   return value;
 }
 
-void Connector::ClearCache() {
-  std::fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
-}
+void Connector::ClearCache() { absl::c_fill(cache_key_, kInvalidCacheKey); }
 
 int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
-  uint16_t value;
-  if (!rows_[rid].GetValue(lid, &value)) {
+  std::optional<uint16_t> value = rows_[rid].GetValue(lid);
+  if (!value.has_value()) {
     return default_cost_[rid];
   }
-  return value * resolution_;
+  return *value * resolution_;
 }
 
 }  // namespace mozc

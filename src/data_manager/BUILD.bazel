@@ -151,6 +151,7 @@ mozc_cc_library(
         "//base:status",
         "//base:util",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -291,7 +292,7 @@ bzl_library(
     name = "mozc_data_bzl",
     srcs = ["mozc_data.bzl"],
     test_size = "small",
-    visibility = ["//visibility:private"],
+    visibility = ["//data_manager:__subpackages__"],
 )
 
 mozc_cc_library(
