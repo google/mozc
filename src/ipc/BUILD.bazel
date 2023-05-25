@@ -186,12 +186,12 @@ mozc_cc_test(
     deps = [
         ":ipc",
         ":ipc_test_util",
+        "//base:port",
         "//base:random",
         "//base:system_util",
         "//base:thread2",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/random:distributions",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
