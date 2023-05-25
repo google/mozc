@@ -36,7 +36,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_py_library",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -924,20 +923,10 @@ mozc_cc_binary(
     ],
 )
 
-mozc_py_library(
-    name = "gen_emoji_rewriter_data_lib",
-    srcs = ["gen_emoji_rewriter_data.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
     deps = [
-        ":gen_emoji_rewriter_data_lib",
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
     ],
@@ -1017,20 +1006,10 @@ mozc_cc_library(
     alwayslink = 1,
 )
 
-mozc_py_library(
-    name = "gen_single_kanji_rewriter_data_lib",
-    srcs = ["gen_single_kanji_rewriter_data.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
     deps = [
-        ":gen_single_kanji_rewriter_data_lib",
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
     ],
@@ -1068,20 +1047,10 @@ mozc_cc_test(
     ],
 )
 
-mozc_py_library(
-    name = "gen_counter_suffix_array_lib",
-    srcs = ["gen_counter_suffix_array.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
     deps = [
-        ":gen_counter_suffix_array_lib",
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
     ],
@@ -1379,20 +1348,10 @@ mozc_cc_test(
     ],
 )
 
-mozc_py_library(
-    name = "gen_reading_correction_data_lib",
-    srcs = ["gen_reading_correction_data.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
     deps = [
-        ":gen_reading_correction_data_lib",
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
     ],
@@ -1449,20 +1408,10 @@ mozc_cc_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_a11y_description_rewriter_data_lib",
-    srcs = ["gen_a11y_description_rewriter_data.py"],
-    deps = [
-        "//build_tools:code_generator_util",
-        "//build_tools:serialized_string_array_builder",
-    ],
-)
-
 mozc_py_binary(
     name = "gen_a11y_description_rewriter_data",
     srcs = ["gen_a11y_description_rewriter_data.py"],
     deps = [
-        ":gen_a11y_description_rewriter_data_lib",
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
     ],

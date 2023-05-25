@@ -477,25 +477,10 @@ mozc_py_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_zero_query_number_data_lib",
-    srcs = ["gen_zero_query_number_data.py"],
-    deps = [":gen_zero_query_util"],
-)
-
 mozc_py_binary(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
     deps = [":gen_zero_query_util"],
-)
-
-mozc_py_library(
-    name = "gen_zero_query_data_lib",
-    srcs = ["gen_zero_query_data.py"],
-    deps = [
-        ":gen_zero_query_util",
-        "//build_tools:code_generator_util",
-    ],
 )
 
 mozc_py_binary(

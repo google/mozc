@@ -33,7 +33,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_py_library",
 )
 
 package(default_visibility = [
@@ -251,15 +250,9 @@ mozc_cc_binary(
     ],
 )
 
-mozc_py_library(
-    name = "gen_typing_model_lib",
-    srcs = ["gen_typing_model.py"],
-)
-
 mozc_py_binary(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
-    deps = [":gen_typing_model_lib"],
 )
 
 mozc_cc_library(
