@@ -370,7 +370,7 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
       return IPC_READ_ERROR;
     }
     if (num_bytes_read_total == 0) {
-      msg->resize(IPC_RESPONSESIZE);
+      msg->resize(IPC_INITIAL_READ_BUFFER_SIZE);
     } else {
       msg->resize(msg->size() * 2);
     }
@@ -477,7 +477,8 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
       PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT |
           PIPE_REJECT_REMOTE_CLIENTS,
       (num_connections <= 0 ? PIPE_UNLIMITED_INSTANCES : num_connections),
-      IPC_RESPONSESIZE, IPC_RESPONSESIZE, 0, &security_attributes);
+      IPC_INITIAL_READ_BUFFER_SIZE, IPC_INITIAL_READ_BUFFER_SIZE, 0,
+      &security_attributes);
   const DWORD create_named_pipe_error = ::GetLastError();
   ::LocalFree(security_attributes.lpSecurityDescriptor);
 
