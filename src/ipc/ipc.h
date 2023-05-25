@@ -258,8 +258,6 @@ class IPCServer {
 #endif  // __APPLE__
 
  private:
-  char request_[IPC_REQUESTSIZE];
-  char response_[IPC_RESPONSESIZE];
   bool connected_;
   std::unique_ptr<Thread> server_thread_;
 
