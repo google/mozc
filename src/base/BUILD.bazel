@@ -33,7 +33,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_py_library",
     "mozc_select",
 )
 load(
@@ -743,15 +742,9 @@ mozc_cc_library(
     ),
 )
 
-mozc_py_library(
-    name = "gen_config_file_stream_data_lib",
-    srcs = ["gen_config_file_stream_data.py"],
-)
-
 mozc_py_binary(
     name = "gen_config_file_stream_data",
     srcs = ["gen_config_file_stream_data.py"],
-    deps = [":gen_config_file_stream_data_lib"],
 )
 
 genrule(

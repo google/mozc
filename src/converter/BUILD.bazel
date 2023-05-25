@@ -34,7 +34,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_py_library",
     "mozc_select",
 )
 
@@ -629,30 +628,16 @@ mozc_cc_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_segmenter_code_lib",
-    srcs = ["gen_segmenter_code.py"],
-    visibility = ["//visibility:private"],
-)
-
 mozc_py_binary(
     name = "gen_segmenter_code",
     srcs = ["gen_segmenter_code.py"],
     visibility = ["//data_manager:__subpackages__"],
-    deps = [":gen_segmenter_code_lib"],
-)
-
-mozc_py_library(
-    name = "gen_boundary_data_lib",
-    srcs = ["gen_boundary_data.py"],
-    visibility = ["//visibility:private"],
 )
 
 mozc_py_binary(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
     visibility = ["//data_manager:__subpackages__"],
-    deps = [":gen_boundary_data_lib"],
 )
 
 mozc_cc_library(
@@ -688,15 +673,9 @@ mozc_cc_library(
     ],
 )
 
-mozc_py_library(
-    name = "gen_quality_regression_test_data_lib",
-    srcs = ["gen_quality_regression_test_data.py"],
-)
-
 mozc_py_binary(
     name = "gen_quality_regression_test_data",
     srcs = ["gen_quality_regression_test_data.py"],
-    deps = [":gen_quality_regression_test_data_lib"],
 )
 
 mozc_cc_library(
