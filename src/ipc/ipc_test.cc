@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "base/random.h"
 #include "base/system_util.h"
 #include "base/thread2.h"
@@ -102,11 +101,6 @@ std::string GenerateInputData(int i) {
     }
   } else {
     size += loop;
-  }
-  if constexpr (TargetIsWindows()) {
-    // Currently win32_ipc cannot deal with large IPC payload.
-    // TODO(https://github.com/google/mozc/issues/741): Fix this limitation.
-    size = std::min(size, IPC_RESPONSESIZE);
   }
   // Subtract "test" prefix size.
   const size_t suffix_size = std::max(size, size_t(4)) - size_t(4);
