@@ -135,7 +135,6 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_time',
-        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base_core',
         '../base/base.gyp:version',

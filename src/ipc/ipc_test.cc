@@ -29,18 +29,15 @@
 
 #include "ipc/ipc.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "base/random.h"
 #include "base/system_util.h"
 #include "base/thread2.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -91,21 +88,36 @@ constexpr size_t kBaseBufferSizes[] = {
   1024 * 1024,
 };
 
+constexpr int kBufferDiffs[] = {
+  0,
+  -1,
+  1,
+  -31,
+  31,
+  -63,
+  63,
+};
+
 std::string GenerateInputData(int i) {
   size_t size = kBaseBufferSizes[i % std::size(kBaseBufferSizes)];
-  const size_t loop = i / std::size(kBaseBufferSizes);
-  // Add/Subtract some value to increase the test coverage.
-  if (loop % 2 == 0) {
-    if (size >= loop) {
-      size -= loop;
-    }
-  } else {
-    size += loop;
+  const size_t d = i / std::size(kBaseBufferSizes);
+  const int diff = kBufferDiffs[d % std::size(kBufferDiffs)];
+  if (diff >= 0 || size >= -diff) {
+    size += diff;
   }
-  // Subtract "test" prefix size.
-  const size_t suffix_size = std::max(size, size_t(4)) - size_t(4);
-  Random random;
-  return absl::StrCat("test", random.ByteString(suffix_size));
+
+  // Fill the result with 'x' then add some entropy to it.
+  std::string result(size, 'x');
+  for (size_t j = 0; true ; ++j) {
+    const size_t index = j * 13;
+    if (index >= size) {
+      break;
+    }
+    const size_t char_offset = (i * 11 + j * 17) % 89;
+    result[index] = ' ' + char_offset;
+  }
+
+  return result;
 }
 
 }  // namespace
@@ -129,8 +141,7 @@ TEST(IPCTest, IPCTest) {
                                      &manager
 #endif  // __APPLE__
     ] {
-      absl::SleepFor(absl::Seconds(2));
-      Random random;
+      absl::SleepFor(absl::Milliseconds(100));
       for (int i = 0; i < kNumRequests; ++i) {
         const std::string input = GenerateInputData(i);
         IPCClient con(kServerAddress, "");
