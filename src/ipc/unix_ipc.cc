@@ -121,11 +121,6 @@ bool IsWriteTimeout(int socket, absl::Duration timeout) {
 bool IsPeerValid(int socket, pid_t *pid) {
   *pid = 0;
 
-  // On ARM Linux, we do nothing and just return true since the platform
-  // sometimes doesn't support the getsockopt(sock, SOL_SOCKET, SO_PEERCRED)
-  // system call.
-  // TODO(yusukes): Add implementation for ARM Linux.
-#ifndef __arm__
   struct ucred peer_cred;
   int peer_cred_len = sizeof(peer_cred);
   if (getsockopt(socket, SOL_SOCKET, SO_PEERCRED,
@@ -141,7 +136,6 @@ bool IsPeerValid(int socket, pid_t *pid) {
   }
 
   *pid = peer_cred.pid;
-#endif  // __arm__
 
   return true;
 }
