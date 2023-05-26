@@ -132,12 +132,12 @@ TEST(IPCTest, IPCTest) {
       absl::SleepFor(absl::Seconds(2));
       Random random;
       for (int i = 0; i < kNumRequests; ++i) {
+        const std::string input = GenerateInputData(i);
         IPCClient con(kServerAddress, "");
 #ifdef __APPLE__
         con.SetMachPortManager(&manager);
 #endif  // __APPLE__
         ASSERT_TRUE(con.Connected());
-        const std::string input = GenerateInputData(i);
         std::string output;
         ASSERT_TRUE(con.Call(input, &output, absl::Milliseconds(1000)))
             << "size=" << input.size();
