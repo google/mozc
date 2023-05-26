@@ -173,7 +173,7 @@ IPCErrorType RecvMessage(int socket, std::string *msg, absl::Duration timeout) {
     LOG(WARNING) << "msg is nullptr";
     return IPC_UNKNOWN_ERROR;
   }
-  msg->resize(IPC_RESPONSESIZE);
+  msg->resize(IPC_INITIAL_READ_BUFFER_SIZE);
   ssize_t read_length = 0;
   int offset = 0;
   do {

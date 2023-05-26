@@ -186,7 +186,6 @@ mozc_cc_test(
     deps = [
         ":ipc",
         ":ipc_test_util",
-        "//base:port",
         "//base:random",
         "//base:system_util",
         "//base:thread2",

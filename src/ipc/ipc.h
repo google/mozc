@@ -50,8 +50,7 @@ namespace mozc {
 class IPCPathManager;
 class Thread;
 
-inline constexpr size_t IPC_REQUESTSIZE = 16 * 8192;
-inline constexpr size_t IPC_RESPONSESIZE = 16 * 16384;
+inline constexpr size_t IPC_INITIAL_READ_BUFFER_SIZE = 16 * 16384;
 
 // increment this value if protocol has changed.
 inline constexpr int IPC_PROTOCOL_VERSION = 3;
@@ -65,6 +64,7 @@ enum IPCErrorType {
   IPC_INVALID_SERVER,
   IPC_UNKNOWN_ERROR,
   IPC_QUIT_EVENT_SIGNALED,
+  IPC_MORE_DATA,
   IPC_ERROR_TYPE_SIZE
 };
 

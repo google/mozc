@@ -301,6 +301,8 @@ IPCErrorType SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
         return IPC_NO_ERROR;
       }
       LOG(ERROR) << "GetOverlappedResult() failed: ERROR_BROKEN_PIPE";
+    } else if (get_overlapped_error == ERROR_MORE_DATA) {
+      return IPC_MORE_DATA;
     } else {
       LOG(ERROR) << "GetOverlappedResult() failed: " << get_overlapped_error;
     }
@@ -359,21 +361,35 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
     return IPC_UNKNOWN_ERROR;
   }
 
-  OVERLAPPED overlapped;
-  if (!InitOverlapped(&overlapped, read_wait_handle)) {
-    msg->clear();
-    return IPC_READ_ERROR;
-  }
-
-  msg->resize(IPC_RESPONSESIZE);
-  DWORD num_bytes_read = 0;
-  const bool read_file_result =
-      (::ReadFile(device_handle, msg->data(), static_cast<DWORD>(msg->size()),
-                  &num_bytes_read, &overlapped) != FALSE);
-  const DWORD read_file_error = ::GetLastError();
-  if (read_file_result) {
-    // ::ReadFile is done as sync operation.
-  } else {
+  msg->clear();
+  DWORD num_bytes_read_total = 0;
+  while (true) {
+    OVERLAPPED overlapped;
+    if (!InitOverlapped(&overlapped, read_wait_handle)) {
+      msg->clear();
+      return IPC_READ_ERROR;
+    }
+    if (num_bytes_read_total == 0) {
+      msg->resize(IPC_INITIAL_READ_BUFFER_SIZE);
+    } else {
+      msg->resize(msg->size() * 2);
+    }
+    const DWORD num_bytes_writable = msg->size() - num_bytes_read_total;
+    DWORD num_bytes_read = 0;
+    const bool read_file_result =
+        (::ReadFile(device_handle, msg->data() + num_bytes_read_total,
+                    num_bytes_writable, &num_bytes_read, &overlapped) != FALSE);
+    const DWORD read_file_error = ::GetLastError();
+    if (read_file_result) {
+      // ::ReadFile is done as sync operation.
+      num_bytes_read_total += num_bytes_read;
+      break;
+    }
+    if (read_file_error == ERROR_MORE_DATA) {
+      // ::ReadFile is done as sync operation with pending data.
+      num_bytes_read_total += num_bytes_writable;
+      continue;
+    }
     if (read_type_ack && (read_file_error == ERROR_BROKEN_PIPE)) {
       // The client has already disconnected this pipe. This is an expected
       // behavior and do not treat as an error.
@@ -386,19 +402,26 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
       return IPC_READ_ERROR;
     }
     // Actually this is an async operation. Let's wait for its completion.
+    bool has_more_data = false;
     const IPCErrorType result = SafeWaitOverlappedResult(
-        device_handle, nullptr, absl::ToInt64Milliseconds(timeout), &overlapped,
-        &num_bytes_read, read_type_ack);
+        device_handle, nullptr, absl::ToInt64Milliseconds(timeout),
+        &overlapped, &num_bytes_read, read_type_ack);
+    if (result == IPC_MORE_DATA) {
+      num_bytes_read_total += num_bytes_read;
+      continue;
+    }
     if (result != IPC_NO_ERROR) {
       msg->clear();
       return result;
     }
+    num_bytes_read_total += num_bytes_read;
+    break;
   }
 
-  if (!read_type_ack && (num_bytes_read == 0)) {
+  if (!read_type_ack && (num_bytes_read_total == 0)) {
     LOG(WARNING) << "Received 0 result.";
   }
-  msg->resize(num_bytes_read);
+  msg->resize(num_bytes_read_total);
   return IPC_NO_ERROR;
 }
 
@@ -454,7 +477,8 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
       PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT |
           PIPE_REJECT_REMOTE_CLIENTS,
       (num_connections <= 0 ? PIPE_UNLIMITED_INSTANCES : num_connections),
-      IPC_REQUESTSIZE, IPC_RESPONSESIZE, 0, &security_attributes);
+      IPC_INITIAL_READ_BUFFER_SIZE, IPC_INITIAL_READ_BUFFER_SIZE, 0,
+      &security_attributes);
   const DWORD create_named_pipe_error = ::GetLastError();
   ::LocalFree(security_attributes.lpSecurityDescriptor);
 
@@ -692,6 +716,10 @@ void IPCClient::Init(const absl::string_view name,
     if (new_handle) {
       pipe_handle_ = std::move(new_handle);
       MaybeDisableFileCompletionNotification(pipe_handle_.get());
+      // Set PIPE_READMODE_MESSAGE so that we can rely on ERROR_MORE_DATA.
+      // https://learn.microsoft.com/en-us/windows/win32/ipc/named-pipe-client
+      DWORD mode = PIPE_READMODE_MESSAGE;
+      ::SetNamedPipeHandleState(pipe_handle_.get(), &mode, nullptr, nullptr);
       if (!manager->IsValidServer(GetServerProcessIdImpl(pipe_handle_.get()),
                                   server_path)) {
         LOG(ERROR) << "Connecting to invalid server";

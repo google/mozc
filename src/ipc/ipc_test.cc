@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "base/random.h"
 #include "base/system_util.h"
 #include "base/thread2.h"
@@ -103,11 +102,6 @@ std::string GenerateInputData(int i) {
   } else {
     size += loop;
   }
-  if constexpr (TargetIsWindows()) {
-    // Currently win32_ipc cannot deal with large IPC payload.
-    // TODO(https://github.com/google/mozc/issues/741): Fix this limitation.
-    size = std::min(size, IPC_RESPONSESIZE);
-  }
   // Subtract "test" prefix size.
   const size_t suffix_size = std::max(size, size_t(4)) - size_t(4);
   Random random;
@@ -138,12 +132,12 @@ TEST(IPCTest, IPCTest) {
       absl::SleepFor(absl::Seconds(2));
       Random random;
       for (int i = 0; i < kNumRequests; ++i) {
+        const std::string input = GenerateInputData(i);
         IPCClient con(kServerAddress, "");
 #ifdef __APPLE__
         con.SetMachPortManager(&manager);
 #endif  // __APPLE__
         ASSERT_TRUE(con.Connected());
-        const std::string input = GenerateInputData(i);
         std::string output;
         ASSERT_TRUE(con.Call(input, &output, absl::Milliseconds(1000)))
             << "size=" << input.size();

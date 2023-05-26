@@ -224,6 +224,7 @@ OK:	おくぶたえ	奥二重	Conversion Expected	奥二重	2.28.4880
 OK:	にほんじゅう	日本中	Conversion Expected	日本中	2.28.4880
 OK:	にっぽんじゅう	日本中	Conversion Expected	日本中	2.28.4880
 FAILED:	かにかまれる	カニカマれる	Conversion Match	蚊に	2.28.4830
+OK:	こういんしょう	好印象	Conversion Expected	好印象	2.29.5111
 OK:	じってんぽ	実店舗	Conversion Match	実店舗	2.28.4880
 OK:	うらめん	裏面	Conversion Match	裏面	2.28.4880
 OK:	にだんかいうせつ	二段階右折	Conversion Expected	二段階右折	2.28.4830
