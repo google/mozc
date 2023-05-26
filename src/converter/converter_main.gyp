@@ -47,6 +47,7 @@
         '../engine/engine.gyp:engine_factory',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../engine/engine.gyp:oss_engine_factory',
+        '../protobuf/protobuf.gyp:protobuf',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'converter.gyp:converter',

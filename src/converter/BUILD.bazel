@@ -594,6 +594,7 @@ mozc_cc_binary(
         "//base:number_util",
         "//base:singleton",
         "//base:system_util",
+        "//base/protobuf:text_format",
         "//composer",
         "//composer:table",
         "//config:config_handler",
