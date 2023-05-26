@@ -42,6 +42,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/protobuf/text_format.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "composer/composer.h"
@@ -86,6 +87,9 @@ ABSL_FLAG(std::string, magic, "", "Expected magic number of data file");
 ABSL_FLAG(std::string, id_def, "",
           "id.def file for POS IDs. If provided, show human readable "
           "POS instead of ID number");
+ABSL_FLAG(std::string, decoder_experiment_params, "",
+          "If nonempty, a DecoderExperimentParams is parsed from this text "
+          "format and it is merged to the default value.");
 
 namespace mozc {
 namespace {
@@ -474,6 +478,16 @@ int main(int argc, char **argv) {
     LOG(FATAL) << "Invalid type: --engine_type="
                << absl::GetFlag(FLAGS_engine_type);
     return 0;
+  }
+  if (const std::string &textproto =
+          absl::GetFlag(FLAGS_decoder_experiment_params);
+      !textproto.empty()) {
+    mozc::commands::DecoderExperimentParams params;
+    CHECK(mozc::protobuf::TextFormat::ParseFromString(textproto, &params))
+        << "Invalid DecoderExperimentParams: " << textproto;
+    request.mutable_decoder_experiment_params()->MergeFrom(params);
+    LOG(INFO) << "DecoderExperimentParams was set:\n"
+              << request.decoder_experiment_params();
   }
 
   mozc::ConverterInterface *converter = engine->GetConverter();
