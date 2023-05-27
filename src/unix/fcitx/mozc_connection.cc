@@ -46,8 +46,8 @@ namespace fcitx {
 MozcConnectionInterface::~MozcConnectionInterface() {
 }
 
-mozc::client::ClientInterface* CreateAndConfigureClient() {
-  mozc::client::ClientInterface *client = client::ClientFactory::NewClient();
+std::unique_ptr<mozc::client::ClientInterface> CreateAndConfigureClient() {
+  auto client = client::ClientFactory::NewClient();
   // Currently client capability is fixed.
   commands::Capability capability;
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
@@ -61,9 +61,9 @@ MozcConnection::MozcConnection(
       preedit_method_(mozc::config::Config::ROMAN),
       client_factory_(client_factory) {
   VLOG(1) << "MozcConnection is created";
-  mozc::client::ClientInterface *client = CreateAndConfigureClient();
+  auto client = CreateAndConfigureClient();
   client->SetIPCClientFactory(client_factory_.get());
-  client_.reset(client);
+  client_ = std::move(client);
 
   if (client_->EnsureConnection()) {
     UpdatePreeditMethod();

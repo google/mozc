@@ -51,10 +51,11 @@
 
 namespace fcitx {
 
-MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
+MozcState::MozcState(InputContext* ic,
+                     std::unique_ptr<mozc::client::ClientInterface> client,
                      MozcEngine* engine)
     : ic_(ic),
-      client_(client),
+      client_(std::move(client)),
       engine_(engine),
       handler_(std::make_unique<KeyEventHandler>()),
       parser_(std::make_unique<MozcResponseParser>(engine_)) {

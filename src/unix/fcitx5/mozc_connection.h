@@ -59,7 +59,7 @@ class MozcConnection {
   MozcConnection(const MozcConnection &) = delete;
   virtual ~MozcConnection();
 
-  mozc::client::ClientInterface *CreateClient();
+  std::unique_ptr<mozc::client::ClientInterface> CreateClient();
 
  private:
   mozc::IPCClientFactoryInterface *client_factory_;

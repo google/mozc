@@ -53,7 +53,8 @@ class MozcEngine;
 class MozcState : public InputContextProperty {
  public:
   // This constructor is used by unittests.
-  MozcState(InputContext *ic, mozc::client::ClientInterface *client,
+  MozcState(InputContext *ic,
+            std::unique_ptr<mozc::client::ClientInterface> client,
             MozcEngine *engine);
   MozcState(const MozcState &) = delete;
   virtual ~MozcState();

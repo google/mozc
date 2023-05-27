@@ -40,9 +40,8 @@
 
 namespace fcitx {
 
-mozc::client::ClientInterface *CreateAndConfigureClient() {
-  mozc::client::ClientInterface *client =
-      mozc::client::ClientFactory::NewClient();
+std::unique_ptr<mozc::client::ClientInterface> CreateAndConfigureClient() {
+  auto client = mozc::client::ClientFactory::NewClient();
   // Currently client capability is fixed.
   mozc::commands::Capability capability;
   capability.set_text_deletion(
@@ -58,8 +57,8 @@ MozcConnection::MozcConnection()
 
 MozcConnection::~MozcConnection() { VLOG(1) << "MozcConnection is destroyed"; }
 
-mozc::client::ClientInterface *MozcConnection::CreateClient() {
-  mozc::client::ClientInterface *client = CreateAndConfigureClient();
+std::unique_ptr<mozc::client::ClientInterface> MozcConnection::CreateClient() {
+  auto client = CreateAndConfigureClient();
   client->SetIPCClientFactory(client_factory_);
   return client;
 }
