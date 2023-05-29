@@ -340,22 +340,28 @@ class [[nodiscard]] HResultOr
     return std::forward<U>(default_value);
   }
 
-  friend void swap(HResultOr<T>& a, HResultOr<T>& b) noexcept(
+  void swap(HResultOr& other) noexcept(
       std::is_nothrow_swappable_v<T> &&
       std::is_nothrow_move_constructible_v<T>) {
-    if (a.has_value() && b.has_value()) {
-      std::swap(*a, *b);
+    if (has_value() && other.has_value()) {
+      using std::swap;
+      swap(**this, *other);
     } else {
-      if (a.has_value()) {
-        const HRESULT b_hr = b.hr();
-        b.ConstructValue(*std::move(a));
-        a.AssignHResult(b_hr);
+      if (has_value()) {
+        const HRESULT other_hr = other.hr();
+        other.ConstructValue(*std::move(*this));
+        AssignHResult(other_hr);
       } else {
-        const HRESULT a_hr = a.hr();
-        a.ConstructValue(*std::move(b));
-        b.AssignHResult(a_hr);
+        const HRESULT this_hr = hr();
+        ConstructValue(*std::move(other));
+        other.AssignHResult(this_hr);
       }
     }
+  }
+
+  friend void swap(HResultOr& lhs,
+                   HResultOr& rhs) noexcept(noexcept(lhs.swap(rhs))) {
+    lhs.swap(rhs);
   }
 };
 

@@ -92,6 +92,13 @@ TEST(BitArray, BitArrayTest) {
       EXPECT_EQ(BitArray::GetValue(data, j), (target[j] != 0));
       EXPECT_EQ(array.get(j), (target[j] != 0));
     }
+
+    using std::swap;
+    BitArray array2(0);
+    swap(array, array2);
+    EXPECT_EQ(array2.array(), data);
+    EXPECT_EQ(array.size(), 0);
+    EXPECT_EQ(array2.size(), size);
   }
 }
 

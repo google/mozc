@@ -94,6 +94,11 @@ TEST(SerializedStringArrayTest, Basic) {
   EXPECT_EQ(b[1], "Mozc");
   EXPECT_EQ(b[2], "google");
 
+  SerializedStringArray empty;
+  b.swap(empty);
+  EXPECT_TRUE(b.empty());
+  EXPECT_EQ(empty[0], "Hello");
+
   a.clear();
   EXPECT_TRUE(a.empty());
   EXPECT_EQ(a.size(), 0);

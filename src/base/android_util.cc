@@ -30,6 +30,7 @@
 #include "base/android_util.h"
 
 #include <fstream>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -98,7 +99,7 @@ bool AndroidUtil::GetPropertyFromFile(const std::string &key,
     }
     if (key == lhs) {
       found = true;
-      output->swap(rhs);
+      *output = std::move(rhs);
       break;
     }
   }

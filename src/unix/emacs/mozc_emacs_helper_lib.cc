@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -282,7 +283,7 @@ bool UnquoteString(const std::string &input, std::string *output) {
   if (escape) {  // wrong format
     return false;
   }
-  output->swap(result);
+  *output = std::move(result);
   return true;
 }
 
@@ -368,7 +369,7 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
     }
   }
 
-  output->swap(results);
+  *output = std::move(results);
   return true;
 }
 

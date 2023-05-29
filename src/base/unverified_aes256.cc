@@ -246,8 +246,9 @@ void UnverifiedAES256::ShiftRows(uint8_t block[kBlockBytes]) {
 
   // Row 2
   {
-    std::swap(block[2], block[10]);
-    std::swap(block[6], block[14]);
+    using std::swap;
+    swap(block[2], block[10]);
+    swap(block[6], block[14]);
   }
 
   // Row 3
@@ -274,8 +275,9 @@ void UnverifiedAES256::InvShiftRows(uint8_t block[kBlockBytes]) {
 
   // Row 2
   {
-    std::swap(block[2], block[10]);
-    std::swap(block[6], block[14]);
+    using std::swap;
+    swap(block[2], block[10]);
+    swap(block[6], block[14]);
   }
 
   // Row 3

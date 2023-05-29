@@ -65,6 +65,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "freelist_test",
+    size = "small",
     srcs = ["freelist_test.cc"],
     deps = [
         ":freelist",
@@ -88,6 +89,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "serialized_string_array_test",
+    size = "small",
     srcs = ["serialized_string_array_test.cc"],
     requires_full_emulation = False,
     deps = [

@@ -259,7 +259,7 @@ void Session::PopUndoContext() {
   if (!HasUndoContext()) {
     return;
   }
-  context_.swap(undo_contexts_.back());
+  context_ = std::move(undo_contexts_.back());
   undo_contexts_.pop_back();
 }
 

@@ -34,6 +34,7 @@
 #include <cstring>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -139,7 +140,7 @@ void TypingCorrector::InsertCharacter(const CompositionInput &input) {
   std::partial_sort(tmp.begin(), tmp.begin() + cutoff_size, tmp.end(),
                     KeyAndPenaltyLess());
   tmp.resize(cutoff_size);
-  top_n_.swap(tmp);
+  top_n_ = std::move(tmp);
 }
 
 void TypingCorrector::Reset() {

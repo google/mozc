@@ -30,6 +30,7 @@
 #include "base/container/freelist.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "testing/gunit.h"
@@ -166,6 +167,13 @@ TEST_F(FreeListTest, ObjectPoolAllocReleaseFree) {
   }
   EXPECT_EQ(Stub::constructed(), 21);
   EXPECT_EQ(Stub::destructed(), 0);
+
+  ObjectPool<Stub> other(1);
+  using std::swap;
+  swap(pool, other);
+  EXPECT_EQ(pool.size(), 1);
+  EXPECT_EQ(other.size(), 3);
+  pool = std::move(other);
 
   pool.Free();
   EXPECT_EQ(Stub::constructed(), 21);

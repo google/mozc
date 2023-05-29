@@ -167,7 +167,6 @@ mozc_cc_library(
         "//session/internal:key_event_transformer",
         "//session/internal:keymap",
         "//session/internal:session_output",
-        "//spelling:spellchecker_service_interface",
         "//testing:gunit_prod",
         "//transliteration",
         "//usage_stats",
