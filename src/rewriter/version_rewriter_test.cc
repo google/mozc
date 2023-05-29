@@ -31,10 +31,9 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "base/system_util.h"
-#include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
@@ -47,9 +46,7 @@
 namespace mozc {
 namespace {
 
-const char *kDummyDataVersion = "dataversion";
-
-}  // namespace
+constexpr absl::string_view kDummyDataVersion = "dataversion";
 
 class VersionRewriterTest : public ::testing::Test {
  protected:
@@ -57,20 +54,20 @@ class VersionRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
-  static void AddSegment(const absl::string_view key,
-                         const absl::string_view value, Segments *segments) {
+  static void AddSegment(std::string key, std::string value,
+                         Segments *segments) {
     Segment *segment = segments->push_back_segment();
     segment->set_key(key);
-    AddCandidate(key, value, segment);
+    AddCandidate(std::move(key), std::move(value), segment);
   }
 
-  static void AddCandidate(const absl::string_view key,
-                           const absl::string_view value, Segment *segment) {
+  static void AddCandidate(std::string key, std::string value,
+                           Segment *segment) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->value = std::string(value);
-    candidate->content_value = std::string(value);
-    candidate->content_key = std::string(key);
+    candidate->value = value;
+    candidate->content_value = std::move(value);
+    candidate->content_key = std::move(key);
   }
 
   static bool FindCandidateWithPrefix(const absl::string_view prefix,
@@ -113,11 +110,11 @@ TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
 
 TEST_F(VersionRewriterTest, RewriteTestVersion) {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  static constexpr char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
-  static constexpr char kVersionPrefixUnexpected[] = "Mozc-";
+  constexpr absl::string_view kVersionPrefixExpected = "GoogleJapaneseInput-";
+  constexpr absl::string_view kVersionPrefixUnexpected = "Mozc-";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
-  static constexpr char kVersionPrefixExpected[] = "Mozc-";
-  static constexpr char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
+  constexpr absl::string_view kVersionPrefixExpected = "Mozc-";
+  constexpr absl::string_view kVersionPrefixUnexpected = "GoogleJapaneseInput-";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   VersionRewriter version_rewriter(kDummyDataVersion);
@@ -145,4 +142,5 @@ TEST_F(VersionRewriterTest, RewriteTestVersion) {
   }
 }
 
+}  // namespace
 }  // namespace mozc
