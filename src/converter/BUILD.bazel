@@ -300,7 +300,7 @@ mozc_cc_library(
         ":node_allocator",
         "//base:logging",
         "//base:singleton",
-        "//base:util",
+        "//base/strings:unicode",
         "@com_google_absl//absl/strings",
     ],
 )

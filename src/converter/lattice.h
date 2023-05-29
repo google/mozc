@@ -50,7 +50,7 @@ class Lattice {
   NodeAllocator *node_allocator() const { return node_allocator_.get(); }
 
   // set key and initializes lattice with key.
-  void SetKey(absl::string_view key);
+  void SetKey(std::string key);
 
   // return key.
   const std::string &key() const { return key_; }
@@ -90,10 +90,10 @@ class Lattice {
   bool has_lattice() const { return !begin_nodes_.empty(); }
 
   // set key with cache information kept
-  void UpdateKey(const std::string &new_key);
+  void UpdateKey(absl::string_view new_key);
 
   // add suffix_key to the end of a current key
-  void AddSuffix(const std::string &suffix_key);
+  void AddSuffix(absl::string_view suffix_key);
 
   // erase the suffix of a key so that the length of the key becomes new_len
   void ShrinkKey(size_t new_len);
@@ -120,7 +120,7 @@ class Lattice {
 
   // Set the node info that should be used in DebugString() (For debug use).
   static void SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  const std::string &str);
+                                  std::string str);
 
   // Reset the debug info.
   static void ResetDebugDisplayNode();

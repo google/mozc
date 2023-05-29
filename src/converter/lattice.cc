@@ -35,13 +35,16 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "base/strings/unicode.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -80,7 +83,7 @@ Node *InitEOSNode(Lattice *lattice, uint16_t length) {
 }
 
 bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
-                        const std::string &str) {
+                        const absl::string_view str) {
   CHECK(node);
   for (; node->prev != nullptr; node = node->prev) {
     if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
@@ -122,19 +125,20 @@ std::string GetDebugStringForPath(const Node *end_node) {
   return os.str();
 }
 
-std::string GetCommonPrefix(const std::string &str1, const std::string &str2) {
-  std::vector<std::string> split1, split2;
-  Util::SplitStringToUtf8Chars(str1, &split1);
-  Util::SplitStringToUtf8Chars(str2, &split2);
-  std::string common_prefix = "";
-  for (int i = 0; i < std::min(split1.size(), split2.size()); ++i) {
-    if (split1[i] == split2[i]) {
-      common_prefix += split1[i];
-    } else {
+absl::string_view GetCommonPrefix(absl::string_view str1,
+                                  absl::string_view str2) {
+  const absl::string_view orig_str = str1;
+  size_t common_size = 0;
+  while (!str1.empty() && !str2.empty()) {
+    absl::string_view c1, c2;
+    std::tie(c1, str1) = strings::FrontChar(str1);
+    std::tie(c2, str2) = strings::FrontChar(str2);
+    if (c1 != c2) {
       break;
     }
+    common_size += c1.size();
   }
-  return common_prefix;
+  return orig_str.substr(0, common_size);
 }
 
 }  // namespace
@@ -145,18 +149,13 @@ struct LatticeDisplayNodeInfo {
   std::string display_node_str;
 };
 
-void Lattice::SetKey(absl::string_view key) {
+void Lattice::SetKey(std::string key) {
   Clear();
-  key_.assign(key.data(), key.size());
   const size_t size = key.size();
-  begin_nodes_.resize(size + 4);
-  end_nodes_.resize(size + 4);
-  cache_info_.resize(size + 4);
-
-  std::fill(begin_nodes_.begin(), begin_nodes_.end(),
-            static_cast<Node *>(nullptr));
-  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(nullptr));
-  std::fill(cache_info_.begin(), cache_info_.end(), 0);
+  key_ = std::move(key);
+  begin_nodes_.resize(size + 4, nullptr);
+  end_nodes_.resize(size + 4, nullptr);
+  cache_info_.resize(size + 4, 0);
 
   end_nodes_[0] = InitBOSNode(this, static_cast<uint16_t>(0));
   begin_nodes_[key_.size()] =
@@ -198,11 +197,11 @@ void Lattice::Clear() {
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  const std::string &str) {
+                                  std::string str) {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_begin_pos = begin_pos;
   info->display_node_end_pos = end_pos;
-  info->display_node_str = str;
+  info->display_node_str = std::move(str);
 }
 
 void Lattice::ResetDebugDisplayNode() {
@@ -210,20 +209,19 @@ void Lattice::ResetDebugDisplayNode() {
   info->display_node_str.clear();
 }
 
-void Lattice::UpdateKey(const std::string &new_key) {
-  const std::string old_key = key_;
-  const std::string common_prefix = GetCommonPrefix(new_key, old_key);
+void Lattice::UpdateKey(const absl::string_view new_key) {
+  const absl::string_view common_prefix = GetCommonPrefix(new_key, key_);
 
   // if the length of common prefix is too short, call SetKey
-  if (common_prefix.size() <= old_key.size() / 2) {
-    SetKey(new_key);
+  if (common_prefix.size() <= key_.size() / 2) {
+    SetKey(std::string(new_key));
     return;
   }
 
   // if node_allocator has many nodes, then clean up
   const size_t size_threshold = node_allocator_->max_nodes_size();
   if (node_allocator_->node_count() > size_threshold) {
-    SetKey(new_key);
+    SetKey(std::string(new_key));
     return;
   }
 
@@ -233,7 +231,7 @@ void Lattice::UpdateKey(const std::string &new_key) {
   AddSuffix(new_key.substr(common_prefix.size()));
 }
 
-void Lattice::AddSuffix(const std::string &suffix_key) {
+void Lattice::AddSuffix(const absl::string_view suffix_key) {
   if (suffix_key.empty()) {
     return;
   }
@@ -256,7 +254,7 @@ void Lattice::AddSuffix(const std::string &suffix_key) {
   cache_info_.resize(new_size + 4, 0);
 
   // update key
-  key_ += suffix_key;
+  absl::StrAppend(&key_, suffix_key);
 }
 
 void Lattice::ShrinkKey(const size_t new_len) {
@@ -289,10 +287,8 @@ void Lattice::ShrinkKey(const size_t new_len) {
   }
 
   // update begin_nodes and end_nodes
-  for (size_t i = new_len; i <= old_len; ++i) {
-    begin_nodes_[i] = nullptr;
-  }
   for (size_t i = new_len + 1; i <= old_len; ++i) {
+    begin_nodes_[i] = nullptr;
     end_nodes_[i] = nullptr;
   }
   begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16_t>(new_len));
