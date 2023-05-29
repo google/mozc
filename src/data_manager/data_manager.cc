@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <new>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -629,6 +630,15 @@ absl::string_view DataManager::GetTypingModel(const std::string &name) const {
 }
 
 absl::string_view DataManager::GetDataVersion() const { return data_version_; }
+
+std::optional<std::pair<size_t, size_t>> DataManager::GetOffsetAndSize(
+    absl::string_view name) const {
+  if (const auto iter = offset_and_size_.find(name);
+      iter != offset_and_size_.end()) {
+    return iter->second;
+  }
+  return std::nullopt;
+}
 
 std::ostream &operator<<(std::ostream &os, DataManager::Status status) {
   return os << DataManager::StatusCodeToString(status);

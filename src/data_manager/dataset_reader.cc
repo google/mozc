@@ -30,7 +30,9 @@
 #include "data_manager/dataset_reader.h"
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/unverified_sha1.h"
@@ -48,6 +50,7 @@ constexpr size_t kFooterSize = 36;
 }  // namespace
 
 bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
+  memblock_ = memblock;
   name_to_data_map_.clear();
 
   // Initializes |name_to_data_map_| from |memblock|.  For binary data format,
@@ -137,14 +140,23 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   return true;
 }
 
-bool DataSetReader::Get(const std::string& name,
-                        absl::string_view* data) const {
+bool DataSetReader::Get(absl::string_view name, absl::string_view* data) const {
   auto iter = name_to_data_map_.find(name);
   if (iter == name_to_data_map_.end()) {
     return false;
   }
   *data = iter->second;
   return true;
+}
+
+std::optional<std::pair<size_t, size_t>> DataSetReader::GetOffsetAndSize(
+    absl::string_view name) const {
+  absl::string_view data;
+  if (!Get(name, &data)) {
+    return std::nullopt;
+  }
+  const size_t offset = data.data() - memblock_.data();
+  return std::make_pair(offset, data.size());
 }
 
 bool DataSetReader::VerifyChecksum(absl::string_view memblock) {

@@ -30,8 +30,11 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -145,6 +148,12 @@ class DataManagerInterface {
 
   // Gets the data version string.
   virtual absl::string_view GetDataVersion() const = 0;
+
+  // Gets the offset and size of the given data section.
+  virtual std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
+      absl::string_view name) const {
+    return std::nullopt;
+  }
 
  protected:
   DataManagerInterface() = default;

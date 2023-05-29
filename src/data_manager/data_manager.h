@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -40,6 +41,7 @@
 
 #include "base/mmap.h"
 #include "data_manager/data_manager_interface.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -157,9 +159,13 @@ class DataManager : public DataManagerInterface {
   absl::string_view GetTypingModel(const std::string &name) const override;
   absl::string_view GetDataVersion() const override;
 
+  std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
+      absl::string_view name) const override;
+
  private:
   Status InitFromReader(const DataSetReader &reader);
 
+  std::optional<std::string> filename_ = std::nullopt;
   Mmap mmap_;
   absl::string_view pos_matcher_data_;
   absl::string_view user_pos_token_array_data_;
@@ -209,6 +215,7 @@ class DataManager : public DataManagerInterface {
   absl::string_view usage_string_array_data_;
   std::vector<std::pair<std::string, absl::string_view>> typing_model_data_;
   absl::string_view data_version_;
+  absl::flat_hash_map<std::string, std::pair<size_t, size_t>> offset_and_size_;
 };
 
 // Print helper for DataManager::Status.  Logging, e.g., CHECK_EQ(), requires
