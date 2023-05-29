@@ -1180,14 +1180,13 @@ mozc_cc_library(
     hdrs = ["command_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base:config_file_stream",
         "//base:logging",
-        "//config:config_handler",
         "//converter:segments",
-        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

@@ -49,9 +49,7 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
   candidate->prefix = "→ ";
   candidate->attributes |= Segment::Candidate::SPELLING_CORRECTION;
 
-  candidate->description = "<もしかして: ";
-  candidate->description.append(item.correction.data(), item.correction.size());
-  candidate->description.append(1, '>');
+  candidate->description = absl::StrCat("<もしかして: ", item.correction, ">");
 
   DCHECK(candidate->IsValid());
 }
@@ -98,8 +96,6 @@ CorrectionRewriter::CreateCorrectionRewriter(
   return std::make_unique<CorrectionRewriter>(
       value_array_data, error_array_data, correction_array_data);
 }
-
-CorrectionRewriter::~CorrectionRewriter() = default;
 
 bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
                                  Segments *segments) const {

@@ -30,23 +30,21 @@
 #ifndef MOZC_REWRITER_CORRECTION_REWRITER_H_
 #define MOZC_REWRITER_CORRECTION_REWRITER_H_
 
-#include <map>
 #include <memory>
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
+#include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class DataManagerInterface;
-class Segments;
-
 class CorrectionRewriter : public RewriterInterface {
  public:
-  // Returnes an instance of ReadingCorrectionRewriter initialized with the
+  // Returns an instance of ReadingCorrectionRewriter initialized with the
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
   static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
@@ -55,7 +53,6 @@ class CorrectionRewriter : public RewriterInterface {
   CorrectionRewriter(absl::string_view value_array_data,
                      absl::string_view error_array_data,
                      absl::string_view correction_array_data);
-  ~CorrectionRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

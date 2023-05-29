@@ -30,14 +30,12 @@
 #ifndef MOZC_REWRITER_COMMAND_REWRITER_H_
 #define MOZC_REWRITER_COMMAND_REWRITER_H_
 
+#include "converter/segments.h"
 #include "protocol/config.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
-class Segment;
 
 // CommandRewriter is a Rewriter which inserts
 // "Command candidates" with which user can change the configurations

@@ -35,7 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -49,8 +48,8 @@ namespace date_rewriter_internal {
 // TODO(yuryu): Move Candidate and private static methods to date_rewriter.cc.
 struct DateCandidate {
   DateCandidate() = default;
-  DateCandidate(absl::string_view candidate, absl::string_view description)
-      : candidate(candidate), description(description) {}
+  DateCandidate(std::string candidate, absl::string_view description)
+      : candidate(std::move(candidate)), description(description) {}
 
   std::string candidate;
   absl::string_view description;
@@ -60,9 +59,9 @@ struct DateCandidate {
 
 class DateRewriter : public RewriterInterface {
  public:
-  explicit DateRewriter(const dictionary::DictionaryInterface *dictionary);
   DateRewriter() = default;
-  ~DateRewriter() override = default;
+  explicit DateRewriter(const dictionary::DictionaryInterface *dictionary)
+      : dictionary_(dictionary) {}
 
   int capability(const ConversionRequest &request) const override;
 
@@ -70,9 +69,9 @@ class DateRewriter : public RewriterInterface {
                Segments *segments) const override;
 
   struct DateData {
-    const char *key;
-    const char *value;
-    const char *description;
+    absl::string_view key;
+    absl::string_view value;
+    absl::string_view description;
     int diff;  // diff from the current time in day or month or year
     int type;  // type of diff (e.g. year, month, date, etc).
   };
