@@ -195,10 +195,6 @@ class ConverterTest : public ::testing::Test {
         : key(k), value(v), pos(p) {}
   };
 
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  ConverterTest() = default;
-  ~ConverterTest() override = default;
-
   void SetUp() override { UsageStats::ClearAllStatsForTest(); }
 
   void TearDown() override { UsageStats::ClearAllStatsForTest(); }
@@ -213,7 +209,7 @@ class ConverterTest : public ::testing::Test {
     std::unique_ptr<const Segmenter> segmenter;
     std::unique_ptr<DictionaryInterface> dictionary;
     std::unique_ptr<const PosGroup> pos_group;
-    std::unique_ptr<const SuggestionFilter> suggestion_filter;
+    SuggestionFilter suggestion_filter;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
     std::unique_ptr<ConverterImpl> converter;
     dictionary::PosMatcher pos_matcher;
@@ -263,7 +259,7 @@ class ConverterTest : public ::testing::Test {
         converter_and_data.dictionary.get(),
         converter_and_data.suffix_dictionary.get(),
         converter_and_data.connector, converter_and_data.segmenter.get(),
-        pos_matcher, converter_and_data.suggestion_filter.get());
+        pos_matcher, converter_and_data.suggestion_filter);
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
@@ -311,8 +307,8 @@ class ConverterTest : public ::testing::Test {
         &converter_and_data->pos_matcher);
     converter_and_data->pos_group =
         std::make_unique<PosGroup>(data_manager.GetPosGroupData());
-    converter_and_data->suggestion_filter.reset(
-        CreateSuggestionFilter(data_manager));
+    converter_and_data->suggestion_filter =
+        SuggestionFilter::CreateOrDie(data_manager.GetSuggestionFilterData());
     converter_and_data->suffix_dictionary.reset(
         CreateSuffixDictionaryFromDataManager(data_manager));
     converter_and_data->connector =
@@ -327,7 +323,7 @@ class ConverterTest : public ::testing::Test {
             converter_and_data->connector, converter_and_data->segmenter.get(),
             &converter_and_data->pos_matcher,
             converter_and_data->pos_group.get(),
-            converter_and_data->suggestion_filter.get());
+            converter_and_data->suggestion_filter);
     converter_and_data->converter = std::make_unique<ConverterImpl>();
 
     auto predictor = CreatePredictor(
@@ -415,14 +411,6 @@ class ConverterTest : public ::testing::Test {
   }
 
   const commands::Request &default_request() const { return default_request_; }
-
-  static SuggestionFilter *CreateSuggestionFilter(
-      const DataManagerInterface &data_manager) {
-    const char *data = nullptr;
-    size_t size = 0;
-    data_manager.GetSuggestionFilterData(&data, &size);
-    return new SuggestionFilter(data, size);
-  }
 
  private:
   const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
@@ -1268,29 +1256,25 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   Connector connector = Connector::CreateFromDataManager(data_manager).value();
   std::unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  std::unique_ptr<const SuggestionFilter> suggestion_filter(
-      CreateSuggestionFilter(data_manager));
+  SuggestionFilter suggestion_filter(
+      SuggestionFilter::CreateOrDie(data_manager.GetSuggestionFilterData()));
   auto immutable_converter = std::make_unique<ImmutableConverterImpl>(
       dictionary.get(), suffix_dictionary.get(), suppression_dictionary.get(),
-      connector, segmenter.get(), &pos_matcher, &pos_group,
-      suggestion_filter.get());
-  std::unique_ptr<const SuggestionFilter> suggegstion_filter(
-      CreateSuggestionFilter(data_manager));
+      connector, segmenter.get(), &pos_matcher, &pos_group, suggestion_filter);
   ConverterImpl converter;
   const DictionaryInterface *kNullDictionary = nullptr;
-  converter.Init(
-      &pos_matcher, suppression_dictionary.get(),
-      DefaultPredictor::CreateDefaultPredictor(
-          std::make_unique<DictionaryPredictor>(
-              data_manager, &converter, immutable_converter.get(),
-              dictionary.get(), suffix_dictionary.get(), connector,
-              segmenter.get(), &pos_matcher, suggegstion_filter.get()),
-          std::make_unique<UserHistoryPredictor>(dictionary.get(), &pos_matcher,
-                                                 suppression_dictionary.get(),
-                                                 false)),
-      std::make_unique<RewriterImpl>(&converter, &data_manager, &pos_group,
-                                     kNullDictionary),
-      immutable_converter.get());
+  converter.Init(&pos_matcher, suppression_dictionary.get(),
+                 DefaultPredictor::CreateDefaultPredictor(
+                     std::make_unique<DictionaryPredictor>(
+                         data_manager, &converter, immutable_converter.get(),
+                         dictionary.get(), suffix_dictionary.get(), connector,
+                         segmenter.get(), &pos_matcher, suggestion_filter),
+                     std::make_unique<UserHistoryPredictor>(
+                         dictionary.get(), &pos_matcher,
+                         suppression_dictionary.get(), false)),
+                 std::make_unique<RewriterImpl>(&converter, &data_manager,
+                                                &pos_group, kNullDictionary),
+                 immutable_converter.get());
 
   Segments segments;
   {

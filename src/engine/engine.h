@@ -131,7 +131,7 @@ class Engine : public EngineInterface {
   std::unique_ptr<dictionary::DictionaryInterface> dictionary_;
   std::unique_ptr<const dictionary::PosGroup> pos_group_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
-  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  SuggestionFilter suggestion_filter_;
 
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better

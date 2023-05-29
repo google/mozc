@@ -281,7 +281,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const SuppressionDictionary *suppression_dictionary,
     const Connector &connector, const Segmenter *segmenter,
     const PosMatcher *pos_matcher, const PosGroup *pos_group,
-    const SuggestionFilter *suggestion_filter)
+    const SuggestionFilter &suggestion_filter)
     : dictionary_(dictionary),
       suffix_dictionary_(suffix_dictionary),
       suppression_dictionary_(suppression_dictionary),
@@ -302,7 +302,6 @@ ImmutableConverterImpl::ImmutableConverterImpl(
   DCHECK(segmenter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
-  DCHECK(suggestion_filter_);
 }
 
 void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,

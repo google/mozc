@@ -300,7 +300,6 @@ mozc_cc_test(
         "//converter:converter_interface",
         "//converter:converter_mock",
         "//converter:immutable_converter_interface",
-        "//converter:immutable_converter_no_factory",
         "//converter:segmenter",
         "//converter:segments",
         "//data_manager:data_manager_interface",
@@ -316,7 +315,6 @@ mozc_cc_test(
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -416,6 +414,7 @@ mozc_cc_library(
     deps = [
         "//base:hash",
         "//base:logging",
+        "//base:status",
         "//base:util",
         "//storage:existence_filter",
         "@com_google_absl//absl/status:statusor",
@@ -463,7 +462,6 @@ mozc_cc_binary(
         "//storage:existence_filter",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

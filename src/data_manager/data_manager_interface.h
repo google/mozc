@@ -33,8 +33,8 @@
 #include <cstdint>
 #include <string>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -82,15 +82,13 @@ class DataManagerInterface {
       absl::string_view *correction_array_data) const = 0;
 
   // Gets the address of collocation data array and its size.
-  virtual void GetCollocationData(const char **array, size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetCollocationData() const = 0;
 
   // Gets the address of collocation suppression data array and its size.
-  virtual void GetCollocationSuppressionData(const char **array,
-                                             size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetCollocationSuppressionData() const = 0;
 
   // Gets an address of suggestion filter data array and its size.
-  virtual void GetSuggestionFilterData(const char **data,
-                                       size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetSuggestionFilterData() const = 0;
 
   // Gets an address of symbol rewriter data array and its size.
   virtual void GetSymbolRewriterData(

@@ -35,6 +35,7 @@
 #include <iterator>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/hash.h"
@@ -56,10 +57,52 @@
 ABSL_FLAG(bool, use_collocation, true, "use collocation rewrite");
 
 namespace mozc {
+namespace collocation_rewriter_internal {
 
-using mozc::storage::ExistenceFilter;
+using ::mozc::storage::ExistenceFilter;
+
+absl::StatusOr<CollocationFilter> CollocationFilter::Create(
+    const absl::Span<const uint32_t> data) {
+  absl::StatusOr<ExistenceFilter> filter = ExistenceFilter::Read(data);
+  if (!filter.ok()) {
+    return filter.status();
+  }
+  return CollocationFilter(*std::move(filter));
+}
+
+bool CollocationFilter::Exists(const absl::string_view left,
+                               const absl::string_view right) const {
+  if (left.empty() || right.empty()) {
+    return false;
+  }
+  const uint64_t id = Hash::Fingerprint(absl::StrCat(left, right));
+  return filter_.Exists(id);
+}
+
+absl::StatusOr<SuppressionFilter> SuppressionFilter::Create(
+    const absl::Span<const uint32_t> data) {
+  absl::StatusOr<ExistenceFilter> filter = ExistenceFilter::Read(data);
+  if (!filter.ok()) {
+    return filter.status();
+  }
+  return SuppressionFilter(*std::move(filter));
+}
+
+bool SuppressionFilter::Exists(const Segment::Candidate &cand) const {
+  // TODO(noriyukit): We should share key generation rule with
+  // gen_collocation_suppression_data_main.cc.
+  const uint64_t id = Hash::Fingerprint(
+      absl::StrCat(cand.content_value, "\t", cand.content_key));
+  return filter_.Exists(id);
+}
+
+}  // namespace collocation_rewriter_internal
 
 namespace {
+
+using ::mozc::collocation_rewriter_internal::CollocationFilter;
+using ::mozc::collocation_rewriter_internal::SuppressionFilter;
+
 constexpr size_t kCandidateSize = 12;
 constexpr int kMaxCostDiff = 3453;  // -500*log(1/1000)
 
@@ -511,64 +554,26 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
   return changed;
 }
 
-class CollocationRewriter::CollocationFilter {
- public:
-  CollocationFilter(const char *existence_data, size_t size)
-      : filter_(ExistenceFilter::Read(absl::MakeSpan(existence_data, size))) {}
-  CollocationFilter(const CollocationFilter &) = delete;
-  CollocationFilter &operator=(const CollocationFilter &) = delete;
-  ~CollocationFilter() = default;
-
-  bool Exists(const absl::string_view left,
-              const absl::string_view right) const {
-    if (left.empty() || right.empty()) {
-      return false;
-    }
-    const uint64_t id = Hash::Fingerprint(absl::StrCat(left, right));
-    return filter_->Exists(id);
+std::unique_ptr<CollocationRewriter> CollocationRewriter::Create(
+    const DataManagerInterface &data_manager) {
+  absl::StatusOr<CollocationFilter> collocation_filter =
+      CollocationFilter::Create(data_manager.GetCollocationData());
+  if (!collocation_filter.ok()) {
+    LOG(ERROR) << collocation_filter.status();
+    return nullptr;
   }
 
- private:
-  absl::StatusOr<ExistenceFilter> filter_;
-};
-
-class CollocationRewriter::SuppressionFilter {
- public:
-  SuppressionFilter(const char *suppression_data, size_t size)
-      : filter_(ExistenceFilter::Read(absl::MakeSpan(suppression_data, size))) {
-  }
-  SuppressionFilter(const SuppressionFilter &) = delete;
-  SuppressionFilter &operator=(const SuppressionFilter &) = delete;
-  ~SuppressionFilter() = default;
-
-  bool Exists(const Segment::Candidate &cand) const {
-    // TODO(noriyukit): We should share key generation rule with
-    // gen_collocation_suppression_data_main.cc.
-    const uint64_t id = Hash::Fingerprint(
-        absl::StrCat(cand.content_value, "\t", cand.content_key));
-    return filter_->Exists(id);
+  absl::StatusOr<SuppressionFilter> suppression_filter =
+      SuppressionFilter::Create(data_manager.GetCollocationSuppressionData());
+  if (!suppression_filter.ok()) {
+    LOG(ERROR) << suppression_filter.status();
+    return nullptr;
   }
 
- private:
-  absl::StatusOr<ExistenceFilter> filter_;
-};
-
-CollocationRewriter::CollocationRewriter(
-    const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPosMatcherData()),
-      first_name_id_(pos_matcher_.GetFirstNameId()),
-      last_name_id_(pos_matcher_.GetLastNameId()) {
-  const char *data = nullptr;
-  size_t size = 0;
-
-  data_manager->GetCollocationData(&data, &size);
-  collocation_filter_ = std::make_unique<CollocationFilter>(data, size);
-
-  data_manager->GetCollocationSuppressionData(&data, &size);
-  suppression_filter_ = std::make_unique<SuppressionFilter>(data, size);
+  return std::make_unique<CollocationRewriter>(
+      dictionary::PosMatcher(data_manager.GetPosMatcherData()),
+      *std::move(collocation_filter), *std::move(suppression_filter));
 }
-
-CollocationRewriter::~CollocationRewriter() = default;
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
@@ -603,7 +608,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
     if (IsName(seg->candidate(i))) {
       continue;
     }
-    if (suppression_filter_->Exists(seg->candidate(i))) {
+    if (suppression_filter_.Exists(seg->candidate(i))) {
       continue;
     }
     curs.clear();
@@ -614,7 +619,7 @@ bool CollocationRewriter::RewriteFromPrevSegment(
     for (int j = 0; j < curs.size(); ++j) {
       cur.clear();
       CollocationUtil::GetNormalizedScript(curs[j], false, &cur);
-      if (collocation_filter_->Exists(prev, cur)) {
+      if (collocation_filter_.Exists(prev, cur)) {
         if (i != 0) {
           VLOG(3) << prev << cur << " " << seg->candidate(0).value << "->"
                   << seg->candidate(i).value;
@@ -636,7 +641,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
 
   // Cache the results for the next segment
   std::vector<int> next_seg_ok(j_max);  // Avoiding std::vector<bool>
-  std::vector<std::vector<std::string> > normalized_string(j_max);
+  std::vector<std::vector<std::string>> normalized_string(j_max);
 
   // Reuse |nexts| in the loop as this method is performance critical.
   std::vector<std::string> nexts;
@@ -646,7 +651,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
     if (IsName(next_seg->candidate(j))) {
       continue;
     }
-    if (suppression_filter_->Exists(next_seg->candidate(j))) {
+    if (suppression_filter_.Exists(next_seg->candidate(j))) {
       continue;
     }
     nexts.clear();
@@ -674,7 +679,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
     if (IsName(seg->candidate(i))) {
       continue;
     }
-    if (suppression_filter_->Exists(seg->candidate(i))) {
+    if (suppression_filter_.Exists(seg->candidate(i))) {
       continue;
     }
     curs.clear();
@@ -696,7 +701,7 @@ bool CollocationRewriter::RewriteUsingNextSegment(Segment *next_seg,
 
         for (int l = 0; l < normalized_string[j].size(); ++l) {
           const std::string &next = normalized_string[j][l];
-          if (collocation_filter_->Exists(cur, next)) {
+          if (collocation_filter_.Exists(cur, next)) {
             DCHECK(VerifyNaturalContent(next_seg->candidate(j),
                                         next_seg->candidate(0), RIGHT))
                 << "IsNaturalContent() should not fail here.";

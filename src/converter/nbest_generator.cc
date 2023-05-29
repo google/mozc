@@ -95,7 +95,7 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Connector &connector,
                                const PosMatcher *pos_matcher,
                                const Lattice *lattice,
-                               const SuggestionFilter *suggestion_filter,
+                               const SuggestionFilter &suggestion_filter,
                                bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dic),
       segmenter_(segmenter),

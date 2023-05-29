@@ -34,27 +34,22 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter_interface.h"
+#include "converter/lattice.h"
+#include "converter/nbest_generator.h"
 #include "converter/node.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/suggestion_filter.h"
+#include "testing/gunit_prod.h"  //  for FRIEND_TEST()
 #include "absl/base/attributes.h"
-//  for FRIEND_TEST()
-#include "testing/gunit_prod.h"
 
 namespace mozc {
-
-struct Node;
-class ImmutableConverterInterface;
-class Lattice;
-class NBestGenerator;
-class Segmenter;
-class SuggestionFilter;
 
 class ImmutableConverterImpl : public ImmutableConverterInterface {
  public:
@@ -65,7 +60,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
       const dictionary::PosGroup *pos_group,
-      const SuggestionFilter *suggestion_filter);
+      const SuggestionFilter &suggestion_filter);
   ImmutableConverterImpl(const ImmutableConverterImpl &) = delete;
   ImmutableConverterImpl &operator=(const ImmutableConverterImpl &) = delete;
   ~ImmutableConverterImpl() override = default;
@@ -196,7 +191,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const Segmenter *segmenter_;
   const dictionary::PosMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
-  const SuggestionFilter *suggestion_filter_;
+  const SuggestionFilter &suggestion_filter_;
 
   // Cache for POS ids.
   const uint16_t first_name_id_;

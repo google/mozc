@@ -195,13 +195,8 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   constexpr double kErrorRatio = 0.0001;
 
   // Load embedded suggestion filter (bloom filter)
-  std::unique_ptr<SuggestionFilter> suggestion_filter;
-  {
-    const char *data = nullptr;
-    size_t size;
-    data_manager_->GetSuggestionFilterData(&data, &size);
-    suggestion_filter = std::make_unique<SuggestionFilter>(data, size);
-  }
+  SuggestionFilter suggestion_filter =
+      SuggestionFilter::CreateOrDie(data_manager_->GetSuggestionFilterData());
 
   // Load the original suggestion filter from file.
   absl::flat_hash_set<std::string> suggestion_filter_set;
@@ -236,8 +231,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
 
       const bool true_result =
           (suggestion_filter_set.find(value) != suggestion_filter_set.end());
-      const bool bloom_filter_result =
-          suggestion_filter->IsBadSuggestion(value);
+      const bool bloom_filter_result = suggestion_filter.IsBadSuggestion(value);
 
       // never emits false negative
       if (true_result) {

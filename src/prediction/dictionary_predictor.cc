@@ -33,7 +33,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
@@ -184,7 +183,7 @@ DictionaryPredictor::DictionaryPredictor(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary, const Connector &connector,
     const Segmenter *segmenter, const PosMatcher *pos_matcher,
-    const SuggestionFilter *suggestion_filter)
+    const SuggestionFilter &suggestion_filter)
     : aggregator_(std::make_unique<prediction::DictionaryPredictionAggregator>(
           data_manager, converter, immutable_converter, dictionary,
           suffix_dictionary, pos_matcher)),
@@ -203,7 +202,7 @@ DictionaryPredictor::DictionaryPredictor(
     const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
     const Connector &connector, const Segmenter *segmenter,
-    const PosMatcher *pos_matcher, const SuggestionFilter *suggestion_filter)
+    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(connector),
@@ -469,7 +468,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
 
 DictionaryPredictor::ResultFilter::ResultFilter(
     const ConversionRequest &request, const Segments &segments,
-    const SuggestionFilter *suggestion_filter)
+    const SuggestionFilter &suggestion_filter)
     : input_key_(segments.conversion_segment(0).key()),
       input_key_len_(Util::CharsLen(input_key_)),
       suggestion_filter_(suggestion_filter),
@@ -507,7 +506,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   // which have the exactly same key as the input even if it's a bad
   // suggestion.
   if (!(include_exact_key_ && (result.key == input_key_)) &&
-      suggestion_filter_->IsBadSuggestion(result.value)) {
+      suggestion_filter_.IsBadSuggestion(result.value)) {
     *log_message = "Bad suggestion";
     return true;
   }
@@ -910,7 +909,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words with high
     // ranking.
-    if (suggestion_filter_->IsBadSuggestion(result.value)) {
+    if (suggestion_filter_.IsBadSuggestion(result.value)) {
       // Cost penalty means for bad suggestion.
       // 3453 = 500 * log(1000)
       constexpr int kBadSuggestionPenalty = 3453;

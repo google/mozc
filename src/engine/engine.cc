@@ -29,7 +29,6 @@
 
 #include "engine/engine.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -218,18 +217,18 @@ absl::Status Engine::Init(
   RETURN_IF_NULL(pos_group_);
 
   {
-    const char *suggestion_filter_data = nullptr;
-    size_t size = 0;
-    data_manager->GetSuggestionFilterData(&suggestion_filter_data, &size);
-    RETURN_IF_NULL(suggestion_filter_data);
-    suggestion_filter_ =
-        std::make_unique<SuggestionFilter>(suggestion_filter_data, size);
+    absl::StatusOr<SuggestionFilter> status_or_suggestion_filter =
+        SuggestionFilter::Create(data_manager->GetSuggestionFilterData());
+    if (!status_or_suggestion_filter.ok()) {
+      return std::move(status_or_suggestion_filter).status();
+    }
+    suggestion_filter_ = *std::move(status_or_suggestion_filter);
   }
 
   immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
       dictionary_.get(), suffix_dictionary_.get(),
       suppression_dictionary_.get(), connector_, segmenter_.get(),
-      pos_matcher_.get(), pos_group_.get(), suggestion_filter_.get());
+      pos_matcher_.get(), pos_group_.get(), suggestion_filter_);
   RETURN_IF_NULL(immutable_converter_);
 
   // Since predictor and rewriter require a pointer to a converter instance,
@@ -248,7 +247,7 @@ absl::Status Engine::Init(
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *data_manager, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_,
-        segmenter_.get(), pos_matcher_.get(), suggestion_filter_.get());
+        segmenter_.get(), pos_matcher_.get(), suggestion_filter_);
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;

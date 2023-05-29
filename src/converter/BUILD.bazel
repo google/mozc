@@ -357,7 +357,6 @@ mozc_cc_library(
         ":segments",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:pos_group",

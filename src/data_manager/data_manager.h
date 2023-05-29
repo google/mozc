@@ -104,10 +104,9 @@ class DataManager : public DataManagerInterface {
                       absl::string_view *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
   void GetSystemDictionaryData(const char **data, int *size) const override;
-  void GetCollocationData(const char **array, size_t *size) const override;
-  void GetCollocationSuppressionData(const char **array,
-                                     size_t *size) const override;
-  void GetSuggestionFilterData(const char **data, size_t *size) const override;
+  absl::Span<const uint32_t> GetCollocationData() const override;
+  absl::Span<const uint32_t> GetCollocationSuppressionData() const override;
+  absl::Span<const uint32_t> GetSuggestionFilterData() const override;
   const uint8_t *GetPosGroupData() const override;
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
                         const uint16_t **l_table, const uint16_t **r_table,

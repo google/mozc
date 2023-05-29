@@ -220,7 +220,7 @@ bool IsStrictModeEnabled(const ConversionRequest &request) {
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
-    const PosMatcher *pos_matcher, const SuggestionFilter *suggestion_filter,
+    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter,
     bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
@@ -230,7 +230,6 @@ CandidateFilter::CandidateFilter(
           apply_suggestion_filter_for_exact_match) {
   CHECK(suppression_dictionary_);
   CHECK(pos_matcher_);
-  CHECK(suggestion_filter_);
 }
 
 void CandidateFilter::Reset() {
@@ -272,8 +271,7 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
       // any user actions, i.e., suggestion candidates are automatically
       // displayed to users.  Therefore, it's better to filter unfavorable words
       // in this mode.
-      CHECK(suggestion_filter_);
-      if (suggestion_filter_->IsBadSuggestion(candidate.value)) {
+      if (suggestion_filter_.IsBadSuggestion(candidate.value)) {
         MOZC_CANDIDATE_LOG(&candidate, "IsBadsuggestion(candidate)");
         return BAD_CANDIDATE;
       }
@@ -281,7 +279,7 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
       // that multiple nodes constitute bad candidates. For stronger filtering,
       // we may want to check all the possibilities.
       for (size_t i = 0; i < nodes.size(); ++i) {
-        if (suggestion_filter_->IsBadSuggestion(nodes[i]->value)) {
+        if (suggestion_filter_.IsBadSuggestion(nodes[i]->value)) {
           MOZC_CANDIDATE_LOG(&candidate, "IsBadsuggestion(node)");
           return BAD_CANDIDATE;
         }

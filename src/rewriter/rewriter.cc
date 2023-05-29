@@ -104,7 +104,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher_));
   AddRewriter(std::make_unique<EnglishVariantsRewriter>());
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
-  AddRewriter(std::make_unique<CollocationRewriter>(data_manager));
+  AddRewriter(CollocationRewriter::Create(*data_manager));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
   AddRewriter(std::make_unique<IvsVariantsRewriter>());
   AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));

@@ -30,26 +30,30 @@
 #ifndef MOZC_PREDICTION_SUGGESTION_FILTER_H_
 #define MOZC_PREDICTION_SUGGESTION_FILTER_H_
 
-#include <cstddef>
+#include <utility>
 
 #include "storage/existence_filter.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
 // Simple bloomfilter
 class SuggestionFilter {
  public:
-  SuggestionFilter(const SuggestionFilter &) = delete;
-  SuggestionFilter &operator=(const SuggestionFilter &) = delete;
-  SuggestionFilter(const char *data, size_t size);
-  ~SuggestionFilter() = default;
+  SuggestionFilter() = default;
+  explicit SuggestionFilter(storage::ExistenceFilter filter)
+      : filter_(std::move(filter)) {}
+
+  static absl::StatusOr<SuggestionFilter> Create(
+      absl::Span<const uint32_t> data);
+  static SuggestionFilter CreateOrDie(absl::Span<const uint32_t> data);
 
   bool IsBadSuggestion(absl::string_view text) const;
 
  private:
-  absl::StatusOr<storage::ExistenceFilter> filter_;
+  storage::ExistenceFilter filter_;
 };
 
 }  // namespace mozc

@@ -102,7 +102,6 @@ mozc_cc_test(
         ":collocation_rewriter",
         "//base:logging",
         "//base:system_util",
-        "//config:config_handler",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",
         "//request:conversion_request",
@@ -1536,6 +1535,7 @@ mozc_cc_library(
         "//base:logging",
         "//storage:existence_filter",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
