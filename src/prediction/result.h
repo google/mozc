@@ -82,17 +82,6 @@ using PredictionTypes = int32_t;
 using ZeroQueryResult = std::pair<std::string, ZeroQueryType>;
 
 struct Result {
-  Result()
-      : types(NO_PREDICTION),
-        wcost(0),
-        cost(0),
-        lid(0),
-        rid(0),
-        candidate_attributes(0),
-        source_info(0),
-        consumed_key_size(0),
-        removed(false) {}
-
   void InitializeByTokenAndTypes(const dictionary::Token &token,
                                  PredictionTypes types);
   void SetTypesAndTokenAttributes(
@@ -106,14 +95,14 @@ struct Result {
   // Indicating which PredictionType creates this instance.
   // UNIGRAM, BIGRAM, REALTIME, SUFFIX, ENGLISH or TYPING_CORRECTION
   // is set exclusively.
-  PredictionTypes types;
+  PredictionTypes types = NO_PREDICTION;
   // Context "insensitive" candidate cost.
-  int wcost;
+  int wcost = 0;
   // Context "sensitive" candidate cost.
-  int cost;
-  int lid;
-  int rid;
-  uint32_t candidate_attributes;
+  int cost = 0;
+  int lid = 0;
+  int rid = 0;
+  uint32_t candidate_attributes = 0;
   // Boundary information for realtime conversion.
   // This will be set only for realtime conversion result candidates.
   // This contains inner segment size for key and value.
@@ -123,13 +112,13 @@ struct Result {
   std::vector<uint32_t> inner_segment_boundary;
   // Segment::Candidate::SourceInfo.
   // Will be used for usage stats.
-  uint32_t source_info;
+  uint32_t source_info = 0;
   // Lookup key without expansion.
   // Please refer to Composer for query expansion.
   std::string non_expanded_original_key;
-  size_t consumed_key_size;
+  size_t consumed_key_size = 0;
   // If removed is true, this result is not used for a candidate.
-  bool removed;
+  bool removed = false;
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG
