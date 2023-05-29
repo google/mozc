@@ -101,6 +101,7 @@ class DataManager : public DataManagerInterface {
                                         absl::string_view magic);
 
   // Implementation of DataManagerInterface.
+  std::optional<std::string> GetFilename() const override { return filename_; }
   const uint16_t *GetPosMatcherData() const override;
   void GetUserPosData(absl::string_view *token_array_data,
                       absl::string_view *string_array_data) const override;

@@ -445,6 +445,7 @@ DataManager::Status DataManager::InitFromFile(const std::string &path,
     LOG(ERROR) << mmap.status();
     return Status::MMAP_FAILURE;
   }
+  filename_ = path;
   mmap_ = *std::move(mmap);
   const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitFromArray(data, magic);

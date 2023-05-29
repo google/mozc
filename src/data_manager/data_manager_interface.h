@@ -49,6 +49,12 @@ class DataManagerInterface {
   DataManagerInterface &operator=(const DataManagerInterface &) = delete;
   virtual ~DataManagerInterface() = default;
 
+  // Returns the file name from which the data manager is loaded. This may be
+  // nullopt if it is loaded from memory blob.
+  virtual std::optional<std::string> GetFilename() const {
+    return std::nullopt;
+  }
+
   // Returns data set for UserPos.
   virtual void GetUserPosData(absl::string_view *token_array_data,
                               absl::string_view *string_array_data) const = 0;
