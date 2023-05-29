@@ -186,6 +186,8 @@ mozc_cc_library(
         "//base:util",
         "//converter:segments",
         "//dictionary:dictionary_token",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

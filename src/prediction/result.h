@@ -36,6 +36,9 @@
 
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace prediction {
@@ -130,6 +133,24 @@ struct Result {
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG
+
+  template <typename S>
+  friend void AbslStringify(S &sink, const Result &r) {
+    absl::Format(&sink,
+                 "key: %s, value: %s, types: %d, wcost: %d, cost: %d, lid: %d, "
+                 "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
+                 "consumed_key_size: %d, removed: %v",
+                 r.key, r.value, r.types, r.wcost, r.cost, r.lid, r.rid,
+                 r.candidate_attributes,
+                 absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
+                 r.non_expanded_original_key, r.consumed_key_size, r.removed);
+#ifndef NDEBUG
+    sink.Append(", log:\n");
+    for (absl::string_view line : absl::StrSplit(r.log, '\n')) {
+      absl::Format(&sink, "    %s\n", line);
+    }
+#endif  // NDEBUG
+  }
 };
 
 // Comparator for sorting prediction candidates.
