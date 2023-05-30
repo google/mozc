@@ -171,6 +171,7 @@ mozc_cc_library(
     deps = [
         ":storage_interaface",
         ":tiny_storage",
+        "//base:bits",
         "//base:file_util",
         "//base:logging",
         "//base:port",

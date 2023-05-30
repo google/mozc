@@ -128,8 +128,6 @@ class RPCServer {
   RPCServer()
       : server_socket_(kInvalidSocket),
         handler_(new SessionHandler(EngineFactory::Create().value())) {
-    struct sockaddr_in sin;
-
     server_socket_ = ::socket(AF_INET, SOCK_STREAM, 0);
 
     CHECK_NE(server_socket_, kInvalidSocket) << "socket failed";
@@ -142,7 +140,7 @@ class RPCServer {
         << "fctl(F_SETFD) failed";
 #endif  // !_WIN32
 
-    ::memset(&sin, 0, sizeof(sin));
+    struct sockaddr_in sin = {};
     sin.sin_port = htons(absl::GetFlag(FLAGS_port));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -278,8 +276,7 @@ class RPCClient {
 
  private:
   bool Call(const commands::Input &input, commands::Output *output) const {
-    struct addrinfo hints, *res;
-    ::memset(&hints, 0, sizeof(hints));
+    struct addrinfo hints = {}, *res;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 

@@ -34,16 +34,12 @@
 #include <type_traits>
 #include <vector>
 
-#include "absl/algorithm/container.h"
-
 namespace mozc {
 
 class BitArray {
  public:
   // Specify the size of bit vector
-  explicit BitArray(uint32_t size) : array_(1 + (size >> 5)), size_(size) {
-    absl::c_fill(array_, 0);
-  }
+  explicit BitArray(uint32_t size) : array_(1 + (size >> 5), 0), size_(size) {}
 
   // Gets true/false of |index|
   bool get(uint32_t index) const {

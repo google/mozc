@@ -1738,28 +1738,6 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   EXPECT_EQ(segment_fp, segment_fp2);
 }
 
-TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
-  EXPECT_EQ(UserHistoryPredictor::StringToUint32(
-                UserHistoryPredictor::Uint32ToString(123)),
-            123);
-
-  EXPECT_EQ(UserHistoryPredictor::StringToUint32(
-                UserHistoryPredictor::Uint32ToString(12141)),
-            12141);
-
-  for (uint32_t i = 0; i < 10000; ++i) {
-    EXPECT_EQ(UserHistoryPredictor::StringToUint32(
-                  UserHistoryPredictor::Uint32ToString(i)),
-              i);
-  }
-
-  // invalid input
-  EXPECT_EQ(UserHistoryPredictor::StringToUint32(""), 0);
-
-  // not 4byte
-  EXPECT_EQ(UserHistoryPredictor::StringToUint32("abcdef"), 0);
-}
-
 TEST_F(UserHistoryPredictorTest, GetScore) {
   // latest value has higher score.
   {

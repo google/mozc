@@ -68,6 +68,7 @@ mozc_cc_library(
     deps = [
         ":predictor_interface",
         ":user_history_predictor_cc_proto",
+        "//base:bits",
         "//base:clock",
         "//base:config_file_stream",
         "//base:hash",

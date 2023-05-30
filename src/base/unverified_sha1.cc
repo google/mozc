@@ -29,6 +29,7 @@
 
 #include "base/unverified_sha1.h"
 
+#include <algorithm>
 #include <climits>  // for CHAR_BIT
 #include <cstdint>
 #include <limits>
@@ -151,12 +152,12 @@ class PaddedMessageIterator {
       // The current message block does not have enough room to store 8-byte
       // length data. The data length will be stored into the next message.
       // Until then, fill 0x00.
-      memset(dest + cursor, 0x00, kMessageBlockBytes - cursor);
+      std::fill_n(dest + cursor, kMessageBlockBytes - cursor, 0x00);
       return;
     }
 
     // Fill 0x00 for padding.
-    memset(dest + cursor, 0x00, kMessageBlockZeroFillLimit - cursor);
+    std::fill_n(dest + cursor, kMessageBlockZeroFillLimit - cursor, 0x00);
 
     // Store the original data bit-length into the last 8-byte of this message.
     const uint64_t bit_length = source_.size() * 8;

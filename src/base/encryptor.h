@@ -47,11 +47,6 @@ class Encryptor {
   // Internal class for representing a key
   class Key {
    public:
-    Key() {
-      std::fill_n(key_, std::size(key_), 0u);
-      std::fill_n(iv_, std::size(iv_), 0u);
-    }
-
     // Make a session key from password and salt.
     // You can also set an initialization vector whose
     // size must be iv_size().
@@ -94,8 +89,8 @@ class Encryptor {
    private:
     friend class Encryptor;  // TODO(yuryu): access via accessors
 
-    uint8_t key_[kKeySize];
-    uint8_t iv_[kBlockSize];
+    uint8_t key_[kKeySize] = {};
+    uint8_t iv_[kBlockSize] = {};
     bool is_available_ = false;
   };
 

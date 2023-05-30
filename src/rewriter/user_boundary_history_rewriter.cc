@@ -32,30 +32,25 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
-#include <iterator>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/status/status.h"
 
 namespace mozc {
-
-using storage::LruStorage;
-
 namespace {
+using ::mozc::storage::LruStorage;
+
 constexpr int kValueSize = 4;
 constexpr uint32_t kLruSize = 5000;
 constexpr uint32_t kSeedValue = 0x761fea81;
@@ -228,7 +223,6 @@ bool UserBoundaryHistoryRewriter::Reload() {
 bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     Segments *segments, const ConversionRequest &request, int type) const {
   bool result = false;
-  uint8_t length_array[8];
 
   const size_t history_segments_size = segments->history_segments_size();
 
@@ -269,7 +263,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
-    std::fill(std::begin(length_array), std::end(length_array), 0);
+    uint8_t length_array[8] = {};
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);

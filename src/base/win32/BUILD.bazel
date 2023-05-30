@@ -189,9 +189,9 @@ mozc_cc_library(
         "//win32/cache_service:__subpackages__",
     ],
     deps = [
+        ":wide_char",
         "//base:const",
-        "//base:port",
-        "//base:util",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

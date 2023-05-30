@@ -265,10 +265,8 @@ void Util::SplitStringToUtf8Graphemes(absl::string_view str,
 }
 
 void Util::SplitCSV(absl::string_view input, std::vector<std::string> *output) {
-  std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
-  char *str = tmp.get();
-  memcpy(str, input.data(), input.size());
-  str[input.size()] = '\0';
+  std::string tmp(input);
+  char *str = tmp.data();
 
   char *eos = str + input.size();
   char *start = nullptr;
@@ -300,8 +298,7 @@ void Util::SplitCSV(absl::string_view input, std::vector<std::string> *output) {
     if (*end == ',' && end == eos - 1) {
       end_is_empty = true;
     }
-    *end = '\0';
-    output->push_back(start);
+    output->emplace_back(start, end);
     if (end_is_empty) {
       output->push_back("");
     }

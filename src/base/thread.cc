@@ -181,8 +181,7 @@ void ExitThread(int sig) { pthread_exit(0); }
 // We don't have pthread_cancel for Android, so we'll use SIGUSR1 as
 // work around.
 void InitPThreadCancel() {
-  struct sigaction actions;
-  memset(&actions, 0, sizeof(actions));
+  struct sigaction actions = {};
   sigemptyset(&actions.sa_mask);
   actions.sa_flags = 0;
   actions.sa_handler = ExitThread;

@@ -29,6 +29,7 @@
 
 #include "win32/base/keyboard.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <iterator>
 #include <limits>
@@ -194,14 +195,8 @@ Win32KeyboardInterface::CreateDefault() {
   return std::make_unique<DefaultKeyboardInterface>();
 }
 
-KeyboardStatus::KeyboardStatus() { memset(&status_[0], 0, std::size(status_)); }
-
 KeyboardStatus::KeyboardStatus(const BYTE key_status[256]) {
-  const errno_t error =
-      memcpy_s(&status_[0], std::size(status_), key_status, std::size(status_));
-  if (error != NO_ERROR) {
-    memset(&status_[0], 0, std::size(status_));
-  }
+  std::copy_n(key_status, status_.size(), status_.begin());
 }
 
 BYTE KeyboardStatus::GetState(int virtual_key) const {
@@ -228,9 +223,9 @@ bool KeyboardStatus::IsPressed(int virtual_key) const {
   return (GetState(virtual_key) & 0x80) == 0x80;
 }
 
-const BYTE *KeyboardStatus::status() const { return status_; }
+const BYTE *KeyboardStatus::status() const { return status_.data(); }
 
-BYTE *KeyboardStatus::mutable_status() { return status_; }
+BYTE *KeyboardStatus::mutable_status() { return status_.data(); }
 
 size_t KeyboardStatus::status_size() const { return std::size(status_); }
 

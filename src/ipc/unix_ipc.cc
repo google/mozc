@@ -31,7 +31,6 @@
 #if defined(__linux__)
 
 #include <fcntl.h>
-#include <stddef.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -43,7 +42,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <string>
 
 #include "base/file_util.h"
@@ -52,6 +50,7 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -250,8 +249,7 @@ void IPCClient::Init(const absl::string_view name,
     if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
-    sockaddr_un address;
-    ::memset(&address, 0, sizeof(address));
+    sockaddr_un address = {};
     const size_t server_address_length =
         (server_address.size() >= UNIX_PATH_MAX) ? UNIX_PATH_MAX - 1
                                                  : server_address.size();
@@ -265,8 +263,8 @@ void IPCClient::Init(const absl::string_view name,
     }
     SetCloseOnExecFlag(socket_);
     address.sun_family = AF_UNIX;
-    ::memcpy(address.sun_path, server_address.data(), server_address_length);
-    address.sun_path[server_address_length] = '\0';
+    absl::SNPrintF(address.sun_path, sizeof(address.sun_path), "%s",
+                   server_address);
     const size_t sun_len = sizeof(address.sun_family) + server_address_length;
     pid_t pid = 0;
     if (::connect(socket_, reinterpret_cast<const sockaddr *>(&address),
@@ -362,8 +360,6 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
     }
   }
 
-  sockaddr_un addr;
-  ::memset(&addr, 0, sizeof(addr));
   socket_ = ::socket(PF_UNIX, SOCK_STREAM, 0);
   if (socket_ < 0) {
     LOG(WARNING) << "socket failed: " << strerror(errno);
@@ -371,9 +367,9 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   }
   SetCloseOnExecFlag(socket_);
 
+  sockaddr_un addr = {};
   addr.sun_family = AF_UNIX;
-  server_address_.copy(addr.sun_path, server_address_.size());
-  addr.sun_path[server_address_.size()] = '\0';
+  absl::SNPrintF(addr.sun_path, sizeof(addr.sun_path), "%s", server_address_);
 
   int on = 1;
   ::setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&on),
