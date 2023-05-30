@@ -107,7 +107,7 @@ jobs:
         run: |
           bazel test ... --config oss_macos --build_tests_only
 
-  # actions/cach works without this job, but having this would increase the likelihood of cache hit
+  # actions/cache works without this job, but having this would increase the likelihood of cache hit
   # in other jobs. Another approach would be to use "needs:".
   # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
   cache_deps:
