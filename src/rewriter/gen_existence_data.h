@@ -33,16 +33,16 @@
 #include <iostream>
 #include <ostream>
 #include <string>
-#include <vector>
 
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
-void OutputExistenceHeader(const std::vector<std::string> &entries,
+void OutputExistenceHeader(absl::Span<const std::string> entries,
                            absl::string_view data_namespace, std::ostream *ofs,
                            double error_rate);
-void OutputExistenceBinary(const std::vector<std::string> &entries,
+void OutputExistenceBinary(absl::Span<const std::string> entries,
                            std::ostream *ofs, double error_rate);
 
 }  // namespace mozc

@@ -369,33 +369,33 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
 
       new_candidate->Init();
       new_candidate->key = original_candidate->key;
-      new_candidate->value = default_value;
+      new_candidate->value = std::move(default_value);
       new_candidate->content_key = original_candidate->content_key;
-      new_candidate->content_value = default_content_value;
+      new_candidate->content_value = std::move(default_content_value);
       new_candidate->consumed_key_size = original_candidate->consumed_key_size;
       new_candidate->cost = original_candidate->cost;
       new_candidate->structure_cost = original_candidate->structure_cost;
       new_candidate->lid = original_candidate->lid;
       new_candidate->rid = original_candidate->rid;
       new_candidate->description = original_candidate->description;
-      new_candidate->inner_segment_boundary.swap(
-          default_inner_segment_boundary);
+      new_candidate->inner_segment_boundary =
+          std::move(default_inner_segment_boundary);
       new_candidate->attributes = original_candidate->attributes;
       SetDescription(pos_matcher_, default_description_type, new_candidate);
 
-      original_candidate->value = alternative_value;
-      original_candidate->content_value = alternative_content_value;
-      original_candidate->inner_segment_boundary.swap(
-          alternative_inner_segment_boundary);
+      original_candidate->value = std::move(alternative_value);
+      original_candidate->content_value = std::move(alternative_content_value);
+      original_candidate->inner_segment_boundary =
+          std::move(alternative_inner_segment_boundary);
       SetDescription(pos_matcher_, alternative_description_type,
                      original_candidate);
       ++i;  // skip inserted candidate
     } else if (type == SELECT_VARIANT) {
       // Rewrite original to default
-      original_candidate->value = default_value;
-      original_candidate->content_value = default_content_value;
-      original_candidate->inner_segment_boundary.swap(
-          default_inner_segment_boundary);
+      original_candidate->value = std::move(default_value);
+      original_candidate->content_value = std::move(default_content_value);
+      original_candidate->inner_segment_boundary =
+          std::move(default_inner_segment_boundary);
       SetDescription(pos_matcher_, default_description_type,
                      original_candidate);
     }

@@ -30,16 +30,16 @@
 #include "rewriter/command_rewriter.h"
 
 #include <algorithm>
-#include <iterator>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
@@ -48,41 +48,34 @@ constexpr char kPrefix[] = "【";
 constexpr char kSuffix[] = "】";
 constexpr char kDescription[] = "設定を変更します";
 
+constexpr char kIncoginitoModeOn[] = "シークレットモードをオン";
+constexpr char kIncoginitoModeOff[] = "シークレットモードをオフ";
+constexpr char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
+constexpr char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
+
 // Trigger CommandRewriter if and only if the Segment::key is one of
 // kTriggerKeys[]
-const char *kTriggerKeys[] = {
+constexpr absl::string_view kTriggerKeys[] = {
     "こまんど",      "しーくれっと", "しーくれっともーど", "ひみつ",
     "ぷらいばしー",  "ぷらいべーと", "さじぇすと",         "ぷれぜんてーしょん",
     "ぷれぜん",      "よそく",       "よそくにゅうりょく", "よそくへんかん",
     "すいそくこうほ"};
 
 // Trigger Values for all commands
-const char *kCommandValues[] = {"コマンド"};
+constexpr absl::string_view kCommandValues[] = {"コマンド"};
 
 // Trigger Values for Incoginito Mode.
-const char *kIncognitoModeValues[] = {"秘密", "シークレット",
-                                      "シークレットモード", "プライバシー",
-                                      "プライベート"};
+constexpr absl::string_view kIncognitoModeValues[] = {
+    "秘密", "シークレット", "シークレットモード", "プライバシー",
+    "プライベート"};
 
-const char *kDisableAllSuggestionValues[] = {"サジェスト",         "予測",
-                                             "予測入力",           "予測変換",
-                                             "プレゼンテーション", "プレゼン"};
+constexpr absl::string_view kDisableAllSuggestionValues[] = {
+    "サジェスト",         "予測",    "予測入力", "予測変換",
+    "プレゼンテーション", "プレゼン"};
 
-constexpr char kIncoginitoModeOn[] = "シークレットモードをオン";
-constexpr char kIncoginitoModeOff[] = "シークレットモードをオフ";
-constexpr char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
-constexpr char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
-
-bool FindString(const absl::string_view query, const char **values,
-                const size_t size) {
-  DCHECK(values);
-  DCHECK_GT(size, 0);
-  for (size_t i = 0; i < size; ++i) {
-    if (query == values[i]) {
-      return true;
-    }
-  }
-  return false;
+bool FindString(const absl::string_view query,
+                const absl::Span<const absl::string_view> values) {
+  return absl::c_find(values, query) != values.end();
 }
 
 Segment::Candidate *InsertCommandCandidate(Segment *segment,
@@ -152,19 +145,17 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     const std::string &value = segment->candidate(i).value;
-    if (FindString(value, kCommandValues, std::size(kCommandValues))) {
+    if (FindString(value, kCommandValues)) {
       // insert command candidate at an fixed position.
       InsertDisableAllSuggestionToggleCommand(config, segment, i, 6);
       InsertIncognitoModeToggleCommand(config, segment, i, 6);
       return true;
     }
-    if (FindString(value, kIncognitoModeValues,
-                   std::size(kIncognitoModeValues))) {
+    if (FindString(value, kIncognitoModeValues)) {
       InsertIncognitoModeToggleCommand(config, segment, i, i + 3);
       return true;
     }
-    if (FindString(value, kDisableAllSuggestionValues,
-                   std::size(kDisableAllSuggestionValues))) {
+    if (FindString(value, kDisableAllSuggestionValues)) {
       InsertDisableAllSuggestionToggleCommand(config, segment, i, i + 3);
       return true;
     }
@@ -185,7 +176,7 @@ bool CommandRewriter::Rewrite(const ConversionRequest &request,
 
   // TODO(taku): we want to replace the linear search with STL map when
   // kTriggerKeys become bigger.
-  if (!FindString(key, kTriggerKeys, std::size(kTriggerKeys))) {
+  if (!FindString(key, kTriggerKeys)) {
     return false;
   }
 

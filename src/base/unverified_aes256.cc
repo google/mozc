@@ -147,14 +147,14 @@ void UnverifiedAES256::TransformCBC(const uint8_t (&key)[kKeyBytes],
   MakeKeySchedule(key, w);
 
   uint8_t vec[kBlockBytes];
-  memcpy(vec, iv, kBlockBytes);
+  std::copy_n(iv, kBlockBytes, vec);
   for (size_t i = 0; i < block_count; ++i) {
     uint8_t *src = block + (i * kBlockBytes);
     for (size_t j = 0; j < kBlockBytes; ++j) {
       src[j] ^= vec[j];
     }
     TransformECB(w, src);
-    memcpy(vec, src, kBlockBytes);
+    std::copy_n(src, kBlockBytes, vec);
   }
 }
 
@@ -165,22 +165,22 @@ void UnverifiedAES256::InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
   MakeKeySchedule(key, w);
 
   uint8_t prev_block[kBlockBytes];
-  memcpy(prev_block, iv, kBlockBytes);
+  std::copy_n(iv, kBlockBytes, prev_block);
   for (size_t i = 0; i < block_count; ++i) {
     uint8_t original_current_block[kBlockBytes];
-    uint8_t *currnt_block = block + (i * kBlockBytes);
-    memcpy(original_current_block, currnt_block, kBlockBytes);
-    InverseTransformECB(w, currnt_block);
+    uint8_t *current_block = block + (i * kBlockBytes);
+    std::copy_n(current_block, kBlockBytes, original_current_block);
+    InverseTransformECB(w, current_block);
     for (size_t j = 0; j < kBlockBytes; ++j) {
-      currnt_block[j] ^= prev_block[j];
+      current_block[j] ^= prev_block[j];
     }
-    memcpy(prev_block, original_current_block, kBlockBytes);
+    std::copy_n(original_current_block, kBlockBytes, prev_block);
   }
 }
 
 void UnverifiedAES256::MakeKeySchedule(const uint8_t (&key)[kKeyBytes],
                                        uint8_t w[kKeyScheduleBytes]) {
-  memcpy(w, key, kKeyBytes);
+  std::copy_n(key, kKeyBytes, w);
   for (size_t base = 1;; ++base) {
     uint8_t *k = &w[base * kKeyBytes];
     uint8_t *prev = k - kKeyBytes;
@@ -246,8 +246,9 @@ void UnverifiedAES256::ShiftRows(uint8_t block[kBlockBytes]) {
 
   // Row 2
   {
-    std::swap(block[2], block[10]);
-    std::swap(block[6], block[14]);
+    using std::swap;
+    swap(block[2], block[10]);
+    swap(block[6], block[14]);
   }
 
   // Row 3
@@ -274,8 +275,9 @@ void UnverifiedAES256::InvShiftRows(uint8_t block[kBlockBytes]) {
 
   // Row 2
   {
-    std::swap(block[2], block[10]);
-    std::swap(block[6], block[14]);
+    using std::swap;
+    swap(block[2], block[10]);
+    swap(block[6], block[14]);
   }
 
   // Row 3

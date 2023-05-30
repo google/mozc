@@ -34,6 +34,7 @@
 #include <cstring>
 #include <string>
 
+#include "base/bits.h"
 #include "base/logging.h"
 #include "base/port.h"
 
@@ -74,7 +75,7 @@ class Registry {
     if (sizeof(*value) != tmp.size()) {
       return false;
     }
-    memcpy(reinterpret_cast<char *>(value), tmp.data(), tmp.size());
+    *value = LoadUnaligned<T>(tmp.data());
     return true;
   }
 

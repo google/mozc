@@ -158,13 +158,11 @@ bool Encryptor::EncryptString(const Encryptor::Key &key, std::string *data) {
     return false;
   }
   size_t size = data->size();
-  std::unique_ptr<char[]> buf(new char[key.GetEncryptedSize(data->size())]);
-  memcpy(buf.get(), data->data(), data->size());
-  if (!Encryptor::EncryptArray(key, buf.get(), &size)) {
+  data->resize(key.GetEncryptedSize(size));
+  if (!Encryptor::EncryptArray(key, data->data(), &size)) {
     LOG(ERROR) << "EncryptArray() failed";
     return false;
   }
-  data->assign(buf.get(), size);
   return true;
 }
 
@@ -174,13 +172,11 @@ bool Encryptor::DecryptString(const Encryptor::Key &key, std::string *data) {
     return false;
   }
   size_t size = data->size();
-  std::unique_ptr<char[]> buf(new char[data->size()]);
-  memcpy(buf.get(), data->data(), data->size());
-  if (!Encryptor::DecryptArray(key, buf.get(), &size)) {
+  if (!Encryptor::DecryptArray(key, data->data(), &size)) {
     LOG(ERROR) << "DecryptArray() failed";
     return false;
   }
-  data->assign(buf.get(), size);
+  data->resize(size);
   return true;
 }
 

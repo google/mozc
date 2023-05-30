@@ -30,6 +30,7 @@
 #include "converter/immutable_converter.h"
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstdint>
 #include <limits>
@@ -58,6 +59,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/algorithm/container.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -281,7 +283,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const SuppressionDictionary *suppression_dictionary,
     const Connector &connector, const Segmenter *segmenter,
     const PosMatcher *pos_matcher, const PosGroup *pos_group,
-    const SuggestionFilter *suggestion_filter)
+    const SuggestionFilter &suggestion_filter)
     : dictionary_(dictionary),
       suffix_dictionary_(suffix_dictionary),
       suppression_dictionary_(suppression_dictionary),
@@ -302,7 +304,6 @@ ImmutableConverterImpl::ImmutableConverterImpl(
   DCHECK(segmenter_);
   DCHECK(pos_matcher_);
   DCHECK(pos_group_);
-  DCHECK(suggestion_filter_);
 }
 
 void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
@@ -884,7 +885,7 @@ class CachingConnector final {
 
   void ResetCacheIfNecessary(uint16_t rnode_lid) {
     if (cache_lid_ != rnode_lid) {
-      std::fill_n(cache_, kCacheSize, -1);
+      absl::c_fill(cache_, -1);
       cache_lid_ = rnode_lid;
     }
   }
@@ -907,7 +908,7 @@ class CachingConnector final {
   constexpr static int kCacheSize = 2048;
 
   const Connector &connector_;
-  int cache_[kCacheSize];
+  std::array<int, kCacheSize> cache_;
   uint16_t cache_lid_ = std::numeric_limits<uint16_t>::max();
 };
 

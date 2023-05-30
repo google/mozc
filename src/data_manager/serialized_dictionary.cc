@@ -162,7 +162,8 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
         iter = StoreUnaligned<uint16_t>(static_cast<uint16_t>(0), iter);
       }
     }
-    output_token_array_buf->reset(new uint32_t[(buf.size() + 3) / 4]);
+    *output_token_array_buf =
+        std::make_unique<uint32_t[]>((buf.size() + 3) / 4);
     memcpy(output_token_array_buf->get(), buf.data(), buf.size());
     token_array = absl::string_view(
         reinterpret_cast<const char *>(output_token_array_buf->get()),

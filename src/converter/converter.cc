@@ -343,7 +343,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
           segments->mutable_segment(0)->push_back_candidate();
       cand->Init();
       cand->key = std::string(key);
-      cand->value.swap(value);
+      cand->value = std::move(value);
       return true;
     }
   }
@@ -1022,13 +1022,13 @@ bool ConverterImpl::GetLastConnectivePart(
   switch (last_script_type) {
     case Util::NUMBER: {
       japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
-      swap(*value, last_token);
+      *value = std::move(last_token);
       *id = pos_matcher_->GetNumberId();
       return true;
     }
     case Util::ALPHABET: {
       japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
-      swap(*value, last_token);
+      *value = std::move(last_token);
       *id = pos_matcher_->GetUniqueNounId();
       return true;
     }

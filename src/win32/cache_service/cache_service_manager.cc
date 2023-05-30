@@ -71,7 +71,8 @@ class ScopedSCHandle {
     other.handle_ = nullptr;
   }
   ScopedSCHandle &operator=(ScopedSCHandle &&other) noexcept {
-    std::swap(handle_, other.handle_);
+    using std::swap;
+    swap(handle_, other.handle_);
     return *this;
   }
 
@@ -384,7 +385,7 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
     return false;
   }
 
-  buf.swap(*result);
+  *result = std::move(buf);
   return true;
 }
 }  // namespace

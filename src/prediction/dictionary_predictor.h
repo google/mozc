@@ -74,7 +74,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const dictionary::DictionaryInterface *suffix_dictionary,
                       const Connector &connector, const Segmenter *segmenter,
                       const dictionary::PosMatcher *pos_matcher,
-                      const SuggestionFilter *suggestion_filter);
+                      const SuggestionFilter &suggestion_filter);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -92,7 +92,7 @@ class DictionaryPredictor : public PredictorInterface {
   class ResultFilter {
    public:
     ResultFilter(const ConversionRequest &request, const Segments &segments,
-                 const SuggestionFilter *suggestion_filter);
+                 const SuggestionFilter &suggestion_filter);
     bool ShouldRemove(const Result &result, int added_num,
                       std::string *log_message);
 
@@ -104,7 +104,7 @@ class DictionaryPredictor : public PredictorInterface {
 
     const std::string input_key_;
     const size_t input_key_len_;
-    const SuggestionFilter *suggestion_filter_;
+    const SuggestionFilter &suggestion_filter_;
     const bool is_mixed_conversion_;
     const bool include_exact_key_;
     const bool limit_tc_per_key_;
@@ -139,7 +139,7 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter *suggestion_filter);
+      const SuggestionFilter &suggestion_filter);
 
   static void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                           std::vector<Result> *results);
@@ -275,7 +275,7 @@ class DictionaryPredictor : public PredictorInterface {
   const ImmutableConverterInterface *immutable_converter_;
   const Connector &connector_;
   const Segmenter *segmenter_;
-  const SuggestionFilter *suggestion_filter_;
+  const SuggestionFilter &suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>
       single_kanji_dictionary_;
   const dictionary::PosMatcher *pos_matcher_;

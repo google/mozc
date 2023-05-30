@@ -30,11 +30,18 @@ jobs:
       - name: Install pip dependencies
         working-directory: ./src
         run: |
-          python3 -m pip install six requests
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install dependencies
         working-directory: ./src
         run: |
+          # This command uses src/third_party_cache as the download cache.
           python3 build_tools/update_deps.py
 
       - name: Build Qt
@@ -75,7 +82,14 @@ jobs:
       - name: Install pip dependencies
         working-directory: ./src
         run: |
-          python3 -m pip install six requests
+          # This command uses src/third_party_cache as the download cache.
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
 
       - name: Install dependencies
         working-directory: ./src
@@ -92,3 +106,37 @@ jobs:
         working-directory: ./src
         run: |
           bazel test ... --config oss_macos --build_tests_only
+
+  # actions/cache works without this job, but having this would increase the likelihood of cache hit
+  # in other jobs. Another approach would be to use "needs:".
+  # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
+  cache_deps:
+    # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
+    runs-on: macos-11
+    timeout-minutes: 15
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install pip dependencies
+        working-directory: ./src
+        run: |
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        run: |
+          # This command uses src/third_party_cache as the download cache.
+          python3 build_tools/update_deps.py --cache_only

@@ -30,6 +30,8 @@
 #include "storage/existence_filter.h"
 
 #include <cstdint>
+#include <cstring>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -39,6 +41,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -62,59 +65,72 @@ void CheckValues(const ExistenceFilter &filter, int m, int n) {
   LOG(INFO) << "false_positives: " << false_positives;
 }
 
+std::vector<uint32_t> StringToAlignedBuffer(const absl::string_view str) {
+  std::vector<uint32_t> aligned_buf(str.size() / sizeof(uint32_t));
+  memcpy(aligned_buf.data(), str.data(), str.size());
+  return aligned_buf;
+}
+
 void RunTest(int m, int n) {
   LOG(INFO) << "Test " << m << " " << n;
-  ExistenceFilter filter = ExistenceFilter::CreateOptimal(m, n);
+  ExistenceFilterBuilder builder = ExistenceFilterBuilder::CreateOptimal(m, n);
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
     uint64_t hash = Hash::Fingerprint(val);
-    filter.Insert(hash);
+    builder.Insert(hash);
   }
 
+  ExistenceFilter filter = builder.Build();
   CheckValues(filter, m, n);
 
-  const std::string buf = filter.Write();
+  const std::string buf = builder.SerializeAsString();
   LOG(INFO) << "write size: " << buf.size();
-  absl::StatusOr<ExistenceFilter> filter2 = ExistenceFilter::Read(buf);
+  const std::vector<uint32_t> aligned_buf = StringToAlignedBuffer(buf);
+  absl::StatusOr<ExistenceFilter> filter2 = ExistenceFilter::Read(aligned_buf);
   EXPECT_OK(filter2);
   CheckValues(*filter2, m, n);
 }
 
-}  // namespace
-
 TEST(ExistenceFilterTest, RunTest) {
   int n = 50000;
-  int m = ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01, 50000);
+  int m = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(0.01, 50000);
   RunTest(m, n);
 }
 
 TEST(ExistenceFilterTest, MinFilterSizeEstimateTest) {
-  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.1, 100), 61);
-  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.01, 100), 120);
-  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 100), 79);
-  EXPECT_EQ(ExistenceFilter::MinFilterSizeInBytesForErrorRate(0.05, 1000), 781);
+  EXPECT_EQ(ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(0.1, 100),
+            61);
+  EXPECT_EQ(ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(0.01, 100),
+            120);
+  EXPECT_EQ(ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(0.05, 100),
+            79);
+  EXPECT_EQ(
+      ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(0.05, 1000),
+      781);
 }
 
 TEST(ExistenceFilterTest, ReadWriteTest) {
-  const std::vector<std::string> words = {"a", "b", "c"};
+  constexpr absl::string_view kWords[] = {"a", "b", "c"};
 
   static constexpr float kErrorRate = 0.0001;
-  int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
-      kErrorRate, words.size());
+  int num_bytes = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(
+      kErrorRate, std::size(kWords));
 
-  ExistenceFilter filter(
-      ExistenceFilter::CreateOptimal(num_bytes, words.size()));
+  ExistenceFilterBuilder builder(
+      ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
 
-  for (int i = 0; i < words.size(); ++i) {
-    filter.Insert(Hash::Fingerprint(words[i]));
+  for (const absl::string_view &word : kWords) {
+    builder.Insert(Hash::Fingerprint(word));
   }
 
-  const std::string buf = filter.Write();
-  absl::StatusOr<ExistenceFilter> filter_read(ExistenceFilter::Read(buf));
+  const std::string buf = builder.SerializeAsString();
+  const std::vector<uint32_t> aligned_buf = StringToAlignedBuffer(buf);
+  absl::StatusOr<ExistenceFilter> filter_read(
+      ExistenceFilter::Read(aligned_buf));
   EXPECT_OK(filter_read);
 
-  for (const std::string &word : words) {
+  for (const absl::string_view &word : kWords) {
     EXPECT_TRUE(filter_read->Exists(Hash::Fingerprint(word)));
   }
 }
@@ -124,20 +140,23 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
                                           "f", "g", "h", "i"};
 
   static constexpr float kErrorRate = 0.0001;
-  int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
+  int num_bytes = ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(
       kErrorRate, words.size());
 
-  ExistenceFilter filter(
-      ExistenceFilter::CreateOptimal(num_bytes, words.size()));
+  ExistenceFilterBuilder builder(
+      ExistenceFilterBuilder::CreateOptimal(num_bytes, words.size()));
 
   for (const std::string &word : words) {
-    filter.Insert(Hash::Fingerprint(word));
+    builder.Insert(Hash::Fingerprint(word));
   }
+
+  ExistenceFilter filter = builder.Build();
 
   for (const std::string &word : words) {
     EXPECT_TRUE(filter.Exists(Hash::Fingerprint(word)));
   }
 }
 
+}  // namespace
 }  // namespace storage
 }  // namespace mozc

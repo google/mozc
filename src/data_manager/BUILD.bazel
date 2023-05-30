@@ -44,8 +44,8 @@ mozc_cc_library(
     name = "data_manager_interface",
     hdrs = ["data_manager_interface.h"],
     deps = [
-        "//base:port",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -64,9 +64,11 @@ mozc_cc_library(
         "//base:version",
         "//base/container:serialized_string_array",
         "//protocol:segmenter_data_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

@@ -39,6 +39,7 @@
 #include "base/random.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/random/distributions.h"
 #include "absl/strings/str_format.h"
@@ -46,6 +47,9 @@
 
 namespace mozc {
 namespace {
+
+using ::testing::Optional;
+using ::testing::Pair;
 
 constexpr absl::string_view kTestMagicNumber = {"ma\0gic", 6};
 
@@ -68,11 +72,15 @@ TEST(DataSetReaderTest, ValidData) {
   absl::string_view data;
   EXPECT_TRUE(r.Get("google", &data));
   EXPECT_EQ(data, kGoogle);
+  EXPECT_THAT(r.GetOffsetAndSize("google"), Optional(Pair(6, kGoogle.size())));
   EXPECT_TRUE(r.Get("mozc", &data));
   EXPECT_EQ(data, kMozc);
+  EXPECT_THAT(r.GetOffsetAndSize("mozc"), Optional(Pair(16, kMozc.size())));
 
   EXPECT_FALSE(r.Get("", &data));
   EXPECT_FALSE(r.Get("foo", &data));
+  EXPECT_EQ(r.GetOffsetAndSize(""), std::nullopt);
+  EXPECT_EQ(r.GetOffsetAndSize("foo"), std::nullopt);
 }
 
 TEST(DataSetReaderTest, InvalidMagicString) {

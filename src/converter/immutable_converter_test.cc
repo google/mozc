@@ -144,17 +144,13 @@ class MockDataAndImmutableConverter {
     pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
     CHECK(pos_group_.get());
 
-    {
-      const char *data = nullptr;
-      size_t size = 0;
-      data_manager_->GetSuggestionFilterData(&data, &size);
-      suggestion_filter_ = std::make_unique<SuggestionFilter>(data, size);
-    }
+    suggestion_filter_ =
+        SuggestionFilter::CreateOrDie(data_manager_->GetSuggestionFilterData());
 
     immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary, suppression_dictionary_.get(),
         connector_, segmenter_.get(), &pos_matcher_, pos_group_.get(),
-        suggestion_filter_.get());
+        suggestion_filter_);
     CHECK(immutable_converter_.get());
   }
 
@@ -168,7 +164,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<const DictionaryInterface> dictionary_;
   std::unique_ptr<const PosGroup> pos_group_;
-  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  SuggestionFilter suggestion_filter_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
   dictionary::PosMatcher pos_matcher_;

@@ -43,6 +43,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/bits.h"
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/container/trie.h"
@@ -821,8 +822,9 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(
 
       // swap.
       if (i + 1 < prefix.size()) {
+        using std::swap;
         std::string swapped_prefix(prefix);
-        std::swap(swapped_prefix[i], swapped_prefix[i + 1]);
+        swap(swapped_prefix[i], swapped_prefix[i + 1]);
         if (absl::StartsWith(str, swapped_prefix)) {
           return true;
         }
@@ -1960,8 +1962,9 @@ void UserHistoryPredictor::Revert(Segments *segments) {
     const Segments::RevertEntry &revert_entry = segments->revert_entry(i);
     if (revert_entry.id == UserHistoryPredictor::revert_id() &&
         revert_entry.revert_entry_type == Segments::RevertEntry::CREATE_ENTRY) {
-      VLOG(2) << "Erasing the key: " << StringToUint32(revert_entry.key);
-      dic_->Erase(StringToUint32(revert_entry.key));
+      const uint32_t key = LoadUnaligned<uint32_t>(revert_entry.key.data());
+      VLOG(2) << "Erasing the key: " << key;
+      dic_->Erase(key);
     }
   }
 }
@@ -2090,15 +2093,6 @@ uint32_t UserHistoryPredictor::LearningSegmentFingerprint(
 std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
   std::string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
   return buf;
-}
-
-// static
-uint32_t UserHistoryPredictor::StringToUint32(const absl::string_view input) {
-  uint32_t result = 0;
-  if (input.size() == sizeof(result)) {
-    memcpy(reinterpret_cast<char *>(&result), input.data(), input.size());
-  }
-  return result;
 }
 
 // static

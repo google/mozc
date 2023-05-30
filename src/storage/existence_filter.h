@@ -32,147 +32,152 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <ostream>
 #include <string>
+#include <utility>
+#include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 
 namespace mozc {
 namespace storage {
-namespace internal {
+namespace existence_filter_internal {
 
-class BlockBitmap;
-constexpr uint32_t BitsToWords(uint32_t bits);
+inline constexpr int kBlockShift = 21;  // 2^21 bits == 256KB block
+inline constexpr int kBlockBits = 1 << kBlockShift;
+inline constexpr int kBlockMask = kBlockBits - 1;
+inline constexpr int kBlockBytes = kBlockBits >> 3;
+inline constexpr int kBlockWords = kBlockBits >> 5;
 
-}  // namespace internal
+// BlockBitmap is an immutable view, directly referencing data given to the
+// constructors.
+class BlockBitmap {
+ public:
+  BlockBitmap() = default;
+  BlockBitmap(uint32_t size,
+              absl::Span<const uint32_t> buf ABSL_ATTRIBUTE_LIFETIME_BOUND);
+  explicit BlockBitmap(std::vector<absl::Span<const uint32_t>> blocks
+                           ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      : blocks_(std::move(blocks)) {}
+
+  inline bool Get(uint32_t index) const {
+    const uint32_t bindex = index >> kBlockShift;
+    const uint32_t windex = (index & kBlockMask) >> 5;
+    const uint32_t bitpos = index & 31;
+    return (blocks_[bindex][windex] >> bitpos) & 1;
+  }
+
+ protected:
+  // Array of blocks. Each block has kBlockBits region except for last block.
+  std::vector<absl::Span<const uint32_t>> blocks_;
+};
+
+// BlockBitmapBuilder is a utility class to create a BlockBitmap data.
+class BlockBitmapBuilder {
+ public:
+  explicit BlockBitmapBuilder(uint32_t size);
+
+  void clear();
+
+  inline void Set(uint32_t index) {
+    const uint32_t bindex = index >> kBlockShift;
+    const uint32_t windex = (index & kBlockMask) >> 5;
+    const uint32_t bitpos = index & 31;
+    blocks_[bindex][windex] |= (static_cast<uint32_t>(1) << bitpos);
+  }
+
+  // Serializes the bitmap to the area indicated by `it`.
+  std::string::iterator SerializeTo(std::string::iterator it);
+  // Builds a BlockBitmap from the underlying data. It doesn't copy the data, so
+  // any changes will be visible to the returned bitmap.
+  BlockBitmap Build() const ABSL_ATTRIBUTE_LIFETIME_BOUND;
+
+ private:
+  std::vector<std::vector<uint32_t>> blocks_;
+};
+
+}  // namespace existence_filter_internal
+
+// ExistenceFilter parameters.
+struct ExistenceFilterParams {
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const ExistenceFilterParams& params) {
+    absl::Format(&sink,
+                 "size: %d bits, estimated insertions: %d, num_hashes: %d",
+                 params.size, params.expected_nelts, params.num_hashes);
+  }
+
+  uint32_t size;            // the number of bits in the bit vector
+  uint32_t expected_nelts;  // the number of values that will be stored
+  int num_hashes;  // the number of hash values to use per insert/lookup.
+                   // num_hashes must be less than 8.
+};
+
+// For Mozc's LOG().
+std::ostream& operator<<(std::ostream& os, const ExistenceFilterParams& params);
 
 // Bloom filter
 class ExistenceFilter {
  public:
-  struct Header {
-    uint32_t m;
-    uint32_t n;
-    int k;
-  };
+  ExistenceFilter() = default;
 
-  // 'm' is the number of bits in the bit vector
-  // 'n' is the number of values that will be stored
-  // 'k' is the number of hash values to use per insert/lookup
-  // k must be less than 8
-  ExistenceFilter(uint32_t m, uint32_t n, int k);
-  ExistenceFilter(ExistenceFilter &&) = default;
-  ExistenceFilter &operator=(ExistenceFilter &&) = default;
-  ~ExistenceFilter() = default;
+  // Constructs a new ExistenceFilter view from the parameters and the
+  // BlockBitmap buffer.
+  ExistenceFilter(ExistenceFilterParams params,
+                  const absl::Span<const uint32_t> buf
+                      ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      : params_(std::move(params)), rep_(params_.size, buf) {}
+  ExistenceFilter(ExistenceFilterParams params,
+                  existence_filter_internal::BlockBitmap rep)
+      : params_(std::move(params)), rep_(std::move(rep)) {}
 
-  static ExistenceFilter CreateOptimal(size_t size_in_bytes,
-                                       uint32_t estimated_insertions);
-
-  void Clear();
-
-  // Inserts a hash value into the filter
-  // We generate 'k' separate internal hash values
-  void Insert(uint64_t hash);
+  // Read Existence filter from buf.
+  static absl::StatusOr<ExistenceFilter> Read(
+      absl::Span<const uint32_t> buf ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
   // Checks if the given 'hash' was previously inserted int the filter
   // It may return some false positives
   bool Exists(uint64_t hash) const;
 
-  // Returns the size (in bytes) of the bloom filter
-  constexpr size_t Size() const {
-    return (internal::BitsToWords(vec_size_) * sizeof(uint32_t));
-  }
+ private:
+  ExistenceFilterParams params_;
+  existence_filter_internal::BlockBitmap rep_;  // points to bitmap
+};
+
+// ExistenceFilterBuilder is a utility class to construct ExistenceFilter data.
+// Use MinFilterSizeInBytesForErrorRate to determine the size and call the
+// CreateOptimal function to create an instance.
+class ExistenceFilterBuilder {
+ public:
+  explicit ExistenceFilterBuilder(ExistenceFilterParams params)
+      : params_(std::move(params)), rep_(params_.size) {}
+
+  static ExistenceFilterBuilder CreateOptimal(size_t size_in_bytes,
+                                              uint32_t estimated_insertions);
+
+  // Inserts a hash value into the filter
+  // We generate 'k' separate internal hash values
+  void Insert(uint64_t hash);
+
+  // Writes the existence filter to a buffer and returns it.
+  std::string SerializeAsString();
+
+  // Builds an ExistenceFilter directly from the internal buffer.
+  ExistenceFilter Build() const ABSL_ATTRIBUTE_LIFETIME_BOUND;
 
   // Returns the minimum required size of the filter in bytes
   // under the given error rate and number of elements
   static size_t MinFilterSizeInBytesForErrorRate(float error_rate,
                                                  size_t num_elements);
 
-  // Writes the existence filter to a buffer and returns it.
-  std::string Write();
-
-  static absl::StatusOr<Header> ReadHeader(absl::Span<const char> buf);
-
-  // Read Existence filter from buf[]
-  // Note that the returned ExsitenceFilter is immutable filter.
-  // Any mutable operations will destroy buf[].
-  static absl::StatusOr<ExistenceFilter> Read(absl::Span<const char> buf);
-
  private:
-  // Private constructor for ExistenceFilter::Read().
-  ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable);
-
-  std::unique_ptr<internal::BlockBitmap> rep_;  // points to bitmap
-  uint32_t vec_size_;                           // size of bitmap (in bits)
-  uint32_t expected_nelts_;                     // expected number of inserts
-  int32_t num_hashes_;                          // number of hashes per lookup
+  ExistenceFilterParams params_;
+  existence_filter_internal::BlockBitmapBuilder rep_;
 };
 
-namespace internal {
-
-class BlockBitmap {
- public:
-  BlockBitmap(uint32_t length, bool is_mutable);
-  BlockBitmap(const BlockBitmap &) = delete;
-  BlockBitmap &operator=(const BlockBitmap &) = delete;
-  ~BlockBitmap();
-
-  void Clear();
-
-  constexpr bool Get(uint32_t index) const {
-    const uint32_t bindex = index >> kBlockShift;
-    const uint32_t windex = (index & kBlockMask) >> 5;
-    const uint32_t bitpos = index & 31;
-    return (block_[bindex][windex] >> bitpos) & 1;
-  }
-
-  constexpr void Set(uint32_t index) const {
-    const uint32_t bindex = index >> kBlockShift;
-    const uint32_t windex = (index & kBlockMask) >> 5;
-    const uint32_t bitpos = index & 31;
-    block_[bindex][windex] |= (static_cast<uint32_t>(1) << bitpos);
-  }
-
-  // REQUIRES: "iter" is zero, or was set by a preceding call
-  // to GetMutableFragment().
-  //
-  // This allows caller to peek into and write to the underlying bitmap
-  // as a series of non-empty fragments in whole number of 4-byte words.
-  // If the entire bitmap has been exhausted, return false.  Otherwise,
-  // return true and point caller to the next non-empty fragment.
-  //
-  // Usage:
-  //    char** ptr;
-  //    size_t bytes;
-  //    for (uint32_t iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); )
-  //    {
-  //      Process(*ptr, bytes);
-  //    }
-  bool GetMutableFragment(uint32_t *iter, char ***ptr, size_t *size);
-
- private:
-  static constexpr int kBlockShift = 21;  // 2^21 bits == 256KB block
-  static constexpr int kBlockBits = 1 << kBlockShift;
-  static constexpr int kBlockMask = kBlockBits - 1;
-  static constexpr int kBlockBytes = kBlockBits >> 3;
-  static constexpr int kBlockWords = kBlockBits >> 5;
-
-  // Array of blocks. Each block has kBlockBits region except for last block.
-  uint32_t **block_;
-  uint32_t num_blocks_;
-  uint32_t bytes_in_last_;
-  const bool is_mutable_;
-};
-
-constexpr uint32_t BitsToWords(uint32_t bits) {
-  uint32_t words = (bits + 31) >> 5;
-  if (bits > 0 && words == 0) {
-    words = 1 << (32 - 5);  // possible overflow
-  }
-  return words;
-}
-
-}  // namespace internal
 }  // namespace storage
 }  // namespace mozc
 

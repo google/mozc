@@ -224,7 +224,7 @@ TipInputModeManager::Action TipInputModeManager::OnSetFocus(
     return kDoNothing;
   }
 
-  std::swap(input_scope_, new_input_scopes);
+  input_scope_ = std::move(new_input_scopes);
   mozc_state_ = GetOverriddenState(tsf_state_, input_scopes);
   if ((mozc_state_.open_close != prev_effective.open_close) ||
       (mozc_state_.conversion_mode != prev_effective.conversion_mode)) {
@@ -280,7 +280,7 @@ TipInputModeManager::Action TipInputModeManager::OnChangeInputScope(
     return kDoNothing;
   }
 
-  std::swap(input_scope_, new_input_scopes);
+  input_scope_ = std::move(new_input_scopes);
   mozc_state_ = GetOverriddenState(tsf_state_, input_scopes);
   if ((mozc_state_.open_close != prev_effective.open_close) ||
       (mozc_state_.conversion_mode != prev_effective.conversion_mode)) {

@@ -49,10 +49,13 @@
 #include <windows.h>
 #include <shellapi.h>  // for CommandLineToArgvW
 // clang-format on
+#include <wil/resource.h>
+
+#include <string>
+#include <vector>
 
 #include "base/const.h"
-#include "base/port.h"
-#include "base/util.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 // Wrapper Class for WinMain Command Line:
@@ -61,41 +64,28 @@ namespace mozc {
 // program name into standard argc/argv parameters.
 class WinCommandLine {
  public:
-  WinCommandLine() : argc_(0), argv_(nullptr) {
-    LPWSTR *argvw = ::CommandLineToArgvW(::GetCommandLineW(), &argc_);
+  WinCommandLine() {
+    wil::unique_any<wchar_t **, decltype(&::LocalFree), ::LocalFree> argvw(
+        ::CommandLineToArgvW(::GetCommandLineW(), &argc_));
     if (argvw == nullptr) {
       return;
     }
 
-    argv_ = new char *[argc_];
+    args_.reserve(argc_);
+    argv_.resize(argc_);
     for (int i = 0; i < argc_; ++i) {
-      std::string str;
-      mozc::Util::WideToUtf8(argvw[i], &str);
-      argv_[i] = new char[str.size() + 1];
-      ::memcpy(argv_[i], str.data(), str.size());
-      argv_[i][str.size()] = '\0';
+      args_.push_back(win32::WideToUtf8(argvw.get()[i]));
+      argv_[i] = args_.back().data();
     }
-
-    ::LocalFree(argvw);
-  }
-
-  WinCommandLine(const WinCommandLine &) = delete;
-  WinCommandLine &operator=(const WinCommandLine &) = delete;
-
-  virtual ~WinCommandLine() {
-    for (int i = 0; i < argc_; ++i) {
-      delete[] argv_[i];
-    }
-    delete[] argv_;
-    argv_ = nullptr;
   }
 
   int argc() const { return argc_; }
-  char **argv() const { return argv_; }
+  char **argv() { return argv_.data(); }
 
  private:
   int argc_;
-  char **argv_;
+  std::vector<char *> argv_;
+  std::vector<std::string> args_;
 };
 }  // namespace mozc
 // force to use WinMain.
@@ -104,7 +94,7 @@ class WinCommandLine {
 int WinMainToMain(int argc, char *argv[]);
 
 // Replace the main() function with WinMainToMain
-// in order to disable the entiry point main()
+// in order to disable the entry point main()
 #define main(argc, argv) WinMainToMain(argc, argv)
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,

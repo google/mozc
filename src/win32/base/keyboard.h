@@ -32,6 +32,7 @@
 
 #include <windows.h>
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -41,7 +42,7 @@ namespace mozc {
 namespace win32 {
 class KeyboardStatus {
  public:
-  KeyboardStatus();
+  KeyboardStatus() : status_({}) {}
   explicit KeyboardStatus(const BYTE key_status[256]);
   BYTE GetState(int virtual_key) const;
   void SetState(int virtual_key, BYTE value);
@@ -52,7 +53,7 @@ class KeyboardStatus {
   size_t status_size() const;
 
  private:
-  BYTE status_[256];
+  std::array<BYTE, 256> status_;
 };
 
 class LParamKeyInfo {

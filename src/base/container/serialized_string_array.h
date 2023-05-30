@@ -252,6 +252,8 @@ class SerializedStringArray {
   const_iterator begin() const { return const_iterator(data_.data(), 0); }
   const_iterator end() const { return const_iterator(data_.data(), size()); }
 
+  void swap(SerializedStringArray &other) noexcept { data_.swap(other.data_); }
+
   // Checks if the data is a valid array image.
   static bool VerifyData(absl::string_view data);
 

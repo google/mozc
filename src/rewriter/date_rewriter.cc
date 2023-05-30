@@ -71,7 +71,7 @@
 
 namespace mozc {
 namespace {
-using date_rewriter_internal::DateCandidate;
+using ::mozc::date_rewriter_internal::DateCandidate;
 
 enum {
   YEAR,
@@ -82,7 +82,7 @@ enum {
   DATE_AND_CURRENT_TIME,
 };
 
-const struct DateRewriter::DateData kDateData[] = {
+constexpr DateRewriter::DateData kDateData[] = {
     // Date rewrites.
     {"きょう", "今日", "今日の日付", 0, DATE},
     {"あした", "明日", "明日の日付", 1, DATE},
@@ -138,18 +138,19 @@ const struct DateRewriter::DateData kDateData[] = {
     {"にちじ", "日時", "現在の日時", 0, DATE_AND_CURRENT_TIME}};
 
 // Absl::Weekday starts from Monday, while std::tm.tm_wday starts from Sunday.
-const char *kWeekDayString[] = {"月", "火", "水", "木", "金", "土", "日"};
+constexpr absl::string_view kWeekDayString[] = {"月", "火", "水", "木",
+                                                "金", "土", "日"};
 
-constexpr char kDateDescription[] = "日付";
-constexpr char kTimeDescription[] = "時刻";
+constexpr absl::string_view kDateDescription = "日付";
+constexpr absl::string_view kTimeDescription = "時刻";
 
 struct YearData {
-  int ad;           // AD year
-  const char *era;  // Japanese year a.k.a., GENGO
-  const char *key;  // reading of the `era`
+  int ad;                 // AD year
+  absl::string_view era;  // Japanese year a.k.a., GENGO
+  absl::string_view key;  // reading of the `era`
 };
 
-const YearData kEraData[] = {
+constexpr YearData kEraData[] = {
     // "元徳", "建武" and "明徳" are used for both south and north courts.
     {645, "大化", "たいか"},
     {650, "白雉", "はくち"},
@@ -384,7 +385,7 @@ const YearData kEraData[] = {
     {1989, "平成", "へいせい"},
     {2019, "令和", "れいわ"}};
 
-const YearData kNorthEraData[] = {
+constexpr YearData kNorthEraData[] = {
     // clang-format off
     // "元徳", "建武" and "明徳" are used for both south and north courts.
     {1329, "元徳", "げんとく"},
@@ -500,21 +501,19 @@ bool ExpandYear(const absl::string_view prefix, int year,
 }
 
 std::unique_ptr<Segment::Candidate> CreateCandidate(
-    const Segment::Candidate &base_candidate, const absl::string_view value,
-    const absl::string_view description) {
+    const Segment::Candidate &base_candidate, std::string value,
+    std::string description) {
   auto candidate = std::make_unique<Segment::Candidate>();
   candidate->Init();
   candidate->lid = base_candidate.lid;
   candidate->rid = base_candidate.rid;
   candidate->cost = base_candidate.cost;
-  candidate->value = std::string(value);
+  candidate->value = std::move(value);
   candidate->key = base_candidate.key;
   candidate->content_key = base_candidate.content_key;
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
-  if (!description.empty()) {
-    candidate->description = std::string(description);
-  }
+  candidate->description = std::move(description);
   return candidate;
 }
 
@@ -545,13 +544,13 @@ bool AdToEraForCourt(const YearData *data, int size, int year,
   return false;
 }
 
-constexpr char kNenKey[] = "ねん";
-constexpr char kNenValue[] = "年";
+constexpr absl::string_view kNenKey = "ねん";
+constexpr absl::string_view kNenValue = "年";
 
 bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
                         int *year, std::string *description) {
-  constexpr char kGanKey[] = "がん";
-  constexpr char kGanValue[] = "元";
+  constexpr absl::string_view kGanKey = "がん";
+  constexpr absl::string_view kGanValue = "元";
 
   // absl::EndsWith(key, kNenKey) is expected to always return true
   DCHECK(absl::EndsWith(key, kNenKey));
@@ -568,7 +567,7 @@ bool ExtractYearFromKey(const YearData &year_data, const absl::string_view key,
 
   if (era_year_str == kGanKey) {
     *year = 1;
-    description->assign(year_data.era).append(kGanValue).append(kNenValue);
+    *description = absl::StrCat(year_data.era, kGanValue, kNenValue);
     return true;
   }
 
@@ -602,7 +601,7 @@ bool EraToAdForCourt(const YearData *data, size_t size,
     // key="しょうわ59ねん" -> era_year=59, description="昭和59年"
     // key="へいせいがんねん" -> era_year=1, description="平成元年"
     int era_year = 0;
-    std::string description = "";
+    std::string description;
     if (!ExtractYearFromKey(year_data, key, &era_year, &description)) {
       continue;
     }
@@ -619,13 +618,11 @@ bool EraToAdForCourt(const YearData *data, size_t size,
 
     for (size_t j = 0; j < output.size(); ++j) {
       // "元徳", "建武" and "明徳" require dedupe
-      const std::string value(output[j].value + kNenValue);
-      std::vector<std::string>::const_iterator found =
-          std::find(results->begin(), results->end(), value);
-      if (found != results->end()) {
+      std::string value = absl::StrCat(output[j].value, kNenValue);
+      if (absl::c_find(*results, value) != results->end()) {
         continue;
       }
-      results->push_back(value);
+      results->push_back(std::move(value));
       descriptions->push_back(description);
     }
     modified = true;
@@ -934,10 +931,9 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
 
     case DATE_AND_CURRENT_TIME: {
       // Y/MM/DD H:MM
-      const std::string ymmddhmm =
-          absl::StrFormat("%d/%2.2d/%2.2d %2d:%2.2d", cm.year(), cm.month(),
-                          cm.day(), cm.hour(), cm.minute());
-      results.push_back(ymmddhmm);
+      results.push_back(absl::StrFormat("%d/%2.2d/%2.2d %2d:%2.2d", cm.year(),
+                                        cm.month(), cm.day(), cm.hour(),
+                                        cm.minute()));
       break;
     }
 
@@ -960,8 +956,7 @@ bool DateRewriter::RewriteDate(Segment *segment,
   }
 
   const DateData &data = *rit;
-  const std::vector<std::string> &conversions =
-      GetConversions(data, extra_format);
+  std::vector<std::string> conversions = GetConversions(data, extra_format);
   if (conversions.empty()) {
     return false;
   }
@@ -984,9 +979,9 @@ bool DateRewriter::RewriteDate(Segment *segment,
   const Segment::Candidate &base_cand = segment->candidate(cand_idx);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(conversions.size());
-  for (const absl::string_view conversion : conversions) {
-    candidates.emplace_back(
-        CreateCandidate(base_cand, conversion, data.description));
+  for (std::string &conversion : conversions) {
+    candidates.push_back(CreateCandidate(base_cand, std::move(conversion),
+                                         std::string(data.description)));
   }
 
   // Date candidates are too many, therefore highest candidate show at most 3rd.
@@ -1039,9 +1034,9 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   const Segment::Candidate &base_cand = current_segment->candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
-  for (const std::string &value : results) {
+  for (std::string &value : results) {
     std::unique_ptr<Segment::Candidate> candidate =
-        CreateCandidate(base_cand, value, kDescription);
+        CreateCandidate(base_cand, std::move(value), std::string(kDescription));
     candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
     candidates.push_back(std::move(candidate));
   }
@@ -1068,8 +1063,8 @@ bool DateRewriter::RewriteAd(Segment *segment) {
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
   for (size_t i = 0; i < results.size(); ++i) {
-    candidates.push_back(
-        CreateCandidate(base_cand, results[i], descriptions[i]));
+    candidates.push_back(CreateCandidate(base_cand, std::move(results[i]),
+                                         std::move(descriptions[i])));
   }
 
   // Insert position is the last of candidates
@@ -1095,7 +1090,7 @@ bool IsNDigits(const absl::string_view value, int n) {
 //      - Segment's key is "cd".
 //      - All the meta candidates are based on "cd" (e.g. "CD", "Cd").
 //      Therefore to get "2223" we should access the raw input.
-// Prerequisit: |segments| has only one conversion segment.
+// Prerequisite: |segments| has only one conversion segment.
 bool GetNDigits(const composer::Composer &composer, const Segments &segments,
                 int n, std::string *output) {
   DCHECK(output);
@@ -1180,9 +1175,9 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
                                            : segment->meta_candidate(0);
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(results.size());
-  for (const auto &result : results) {
-    candidates.emplace_back(
-        CreateCandidate(top_cand, result.candidate, result.description));
+  for (DateCandidate &result : results) {
+    candidates.push_back(CreateCandidate(top_cand, std::move(result.candidate),
+                                         std::string(result.description)));
   }
 
   if (insert_position < 0) {
@@ -1326,9 +1321,6 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
 
   return results->size() > orig_size;
 }
-
-DateRewriter::DateRewriter(const dictionary::DictionaryInterface *dictionary)
-    : dictionary_(dictionary) {}
 
 int DateRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {

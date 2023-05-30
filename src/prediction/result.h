@@ -36,6 +36,9 @@
 
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace prediction {
@@ -79,17 +82,6 @@ using PredictionTypes = int32_t;
 using ZeroQueryResult = std::pair<std::string, ZeroQueryType>;
 
 struct Result {
-  Result()
-      : types(NO_PREDICTION),
-        wcost(0),
-        cost(0),
-        lid(0),
-        rid(0),
-        candidate_attributes(0),
-        source_info(0),
-        consumed_key_size(0),
-        removed(false) {}
-
   void InitializeByTokenAndTypes(const dictionary::Token &token,
                                  PredictionTypes types);
   void SetTypesAndTokenAttributes(
@@ -103,14 +95,14 @@ struct Result {
   // Indicating which PredictionType creates this instance.
   // UNIGRAM, BIGRAM, REALTIME, SUFFIX, ENGLISH or TYPING_CORRECTION
   // is set exclusively.
-  PredictionTypes types;
+  PredictionTypes types = NO_PREDICTION;
   // Context "insensitive" candidate cost.
-  int wcost;
+  int wcost = 0;
   // Context "sensitive" candidate cost.
-  int cost;
-  int lid;
-  int rid;
-  uint32_t candidate_attributes;
+  int cost = 0;
+  int lid = 0;
+  int rid = 0;
+  uint32_t candidate_attributes = 0;
   // Boundary information for realtime conversion.
   // This will be set only for realtime conversion result candidates.
   // This contains inner segment size for key and value.
@@ -120,16 +112,34 @@ struct Result {
   std::vector<uint32_t> inner_segment_boundary;
   // Segment::Candidate::SourceInfo.
   // Will be used for usage stats.
-  uint32_t source_info;
+  uint32_t source_info = 0;
   // Lookup key without expansion.
   // Please refer to Composer for query expansion.
   std::string non_expanded_original_key;
-  size_t consumed_key_size;
+  size_t consumed_key_size = 0;
   // If removed is true, this result is not used for a candidate.
-  bool removed;
+  bool removed = false;
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG
+
+  template <typename S>
+  friend void AbslStringify(S &sink, const Result &r) {
+    absl::Format(&sink,
+                 "key: %s, value: %s, types: %d, wcost: %d, cost: %d, lid: %d, "
+                 "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
+                 "consumed_key_size: %d, removed: %v",
+                 r.key, r.value, r.types, r.wcost, r.cost, r.lid, r.rid,
+                 r.candidate_attributes,
+                 absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
+                 r.non_expanded_original_key, r.consumed_key_size, r.removed);
+#ifndef NDEBUG
+    sink.Append(", log:\n");
+    for (absl::string_view line : absl::StrSplit(r.log, '\n')) {
+      absl::Format(&sink, "    %s\n", line);
+    }
+#endif  // NDEBUG
+  }
 };
 
 // Comparator for sorting prediction candidates.

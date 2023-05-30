@@ -42,7 +42,6 @@ package(default_visibility = [
 mozc_cc_library(
     name = "bitarray",
     hdrs = ["bitarray.h"],
-    deps = ["@com_google_absl//absl/algorithm:container"],
 )
 
 mozc_cc_test(
@@ -65,6 +64,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "freelist_test",
+    size = "small",
     srcs = ["freelist_test.cc"],
     deps = [
         ":freelist",
@@ -88,6 +88,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "serialized_string_array_test",
+    size = "small",
     srcs = ["serialized_string_array_test.cc"],
     requires_full_emulation = False,
     deps = [

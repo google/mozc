@@ -13,9 +13,10 @@
 # Hidden files
 .DS_Store
 
-# third_party dirs checked out by update_deps.py
+# third_party dirs and cache dir checked out by update_deps.py
 /src/third_party/qt/
 /src/third_party/wix/
+/src/third_party_cache/
 
 # Temporary dir for Docker
 /docker/ubuntu20.04/src/

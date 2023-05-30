@@ -29,11 +29,12 @@
 
 #include "prediction/suggestion_filter.h"
 
-#include <cstddef>
 #include <string>
+#include <utility>
 
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
 #include "absl/strings/string_view.h"
@@ -41,18 +42,29 @@
 
 namespace mozc {
 
-SuggestionFilter::SuggestionFilter(const char *data, size_t size)
-    : filter_(storage::ExistenceFilter::Read(absl::MakeSpan(data, size))) {
-  LOG_IF(ERROR, !filter_.ok()) << "SuggestionFilterData is broken";
+using ::mozc::storage::ExistenceFilter;
+
+absl::StatusOr<SuggestionFilter> SuggestionFilter::Create(
+    const absl::Span<const uint32_t> data) {
+  absl::StatusOr<ExistenceFilter> filter = ExistenceFilter::Read(data);
+  if (!filter.ok()) {
+    LOG(ERROR) << "SuggestionFilterData is broken: " << filter.status();
+    return filter.status();
+  }
+  return SuggestionFilter(*std::move(filter));
+}
+
+SuggestionFilter SuggestionFilter::CreateOrDie(
+    const absl::Span<const uint32_t> data) {
+  absl::StatusOr<SuggestionFilter> filter = Create(data);
+  CHECK_OK(filter);
+  return *std::move(filter);
 }
 
 bool SuggestionFilter::IsBadSuggestion(const absl::string_view text) const {
-  if (!filter_.ok()) {
-    return false;
-  }
   std::string lower_text(text);
   Util::LowerString(&lower_text);
-  return filter_->Exists(Hash::Fingerprint(lower_text));
+  return filter_.Exists(Hash::Fingerprint(lower_text));
 }
 
 }  // namespace mozc

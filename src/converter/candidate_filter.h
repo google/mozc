@@ -87,7 +87,7 @@ class CandidateFilter {
   CandidateFilter(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter *suggestion_filter,
+      const SuggestionFilter &suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
   CandidateFilter(const CandidateFilter &) = delete;
   CandidateFilter &operator=(const CandidateFilter &) = delete;
@@ -124,7 +124,7 @@ class CandidateFilter {
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const dictionary::PosMatcher *pos_matcher_;
-  const SuggestionFilter *suggestion_filter_;
+  const SuggestionFilter &suggestion_filter_;
 
   absl::flat_hash_set<candidate_filter_internal::CandidateId,
                       candidate_filter_internal::CandidateHasher,

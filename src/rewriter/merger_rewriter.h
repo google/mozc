@@ -80,6 +80,7 @@ class MergerRewriter : public RewriterInterface {
   }
 
   void AddRewriter(std::unique_ptr<RewriterInterface> rewriter) {
+    DCHECK(rewriter);
     rewriters_.push_back(std::move(rewriter));
   }
 

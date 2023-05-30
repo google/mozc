@@ -52,7 +52,8 @@ TEST(HResultTest, ErrorCodes) {
   EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
   EXPECT_FALSE(hr2.Succeeded());
 
-  std::swap(hr1, hr2);
+  using std::swap;
+  swap(hr1, hr2);
   EXPECT_EQ(hr1.hr(), E_UNEXPECTED);
   EXPECT_EQ(hr2.hr(), S_OK);
 

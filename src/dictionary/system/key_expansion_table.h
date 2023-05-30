@@ -66,7 +66,6 @@ class KeyExpansionTable {
  public:
   KeyExpansionTable() {
     // Initialize with identity matrix.
-    memset(table_, 0, sizeof(table_));
     for (size_t i = 0; i < 256; ++i) {
       SetBit(i, i);
     }
@@ -98,7 +97,7 @@ class KeyExpansionTable {
   }
 
   // 256x256 (key -> value) bit map matrix.
-  uint32_t table_[256][256 / 32];
+  uint32_t table_[256][256 / 32] = {};
 };
 
 }  // namespace dictionary

@@ -30,11 +30,14 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <utility>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -45,6 +48,12 @@ class DataManagerInterface {
   DataManagerInterface(const DataManagerInterface &) = delete;
   DataManagerInterface &operator=(const DataManagerInterface &) = delete;
   virtual ~DataManagerInterface() = default;
+
+  // Returns the file name from which the data manager is loaded. This may be
+  // nullopt if it is loaded from memory blob.
+  virtual std::optional<std::string> GetFilename() const {
+    return std::nullopt;
+  }
 
   // Returns data set for UserPos.
   virtual void GetUserPosData(absl::string_view *token_array_data,
@@ -82,15 +91,13 @@ class DataManagerInterface {
       absl::string_view *correction_array_data) const = 0;
 
   // Gets the address of collocation data array and its size.
-  virtual void GetCollocationData(const char **array, size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetCollocationData() const = 0;
 
   // Gets the address of collocation suppression data array and its size.
-  virtual void GetCollocationSuppressionData(const char **array,
-                                             size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetCollocationSuppressionData() const = 0;
 
   // Gets an address of suggestion filter data array and its size.
-  virtual void GetSuggestionFilterData(const char **data,
-                                       size_t *size) const = 0;
+  virtual absl::Span<const uint32_t> GetSuggestionFilterData() const = 0;
 
   // Gets an address of symbol rewriter data array and its size.
   virtual void GetSymbolRewriterData(
@@ -147,6 +154,12 @@ class DataManagerInterface {
 
   // Gets the data version string.
   virtual absl::string_view GetDataVersion() const = 0;
+
+  // Gets the offset and size of the given data section.
+  virtual std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
+      absl::string_view name) const {
+    return std::nullopt;
+  }
 
  protected:
   DataManagerInterface() = default;

@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "testing/gunit.h"
@@ -90,12 +91,17 @@ TEST(TrieTest, Trie) {
         // do nothing
         break;
     }
+    Trie<std::string> other;
+    using std::swap;
+    swap(trie, other);
     std::string data;
-    const bool found = trie.LookUp(test.key, &data);
+    const bool found = other.LookUp(test.key, &data);
     EXPECT_EQ(found, test.expected_found);
     if (found) {
       EXPECT_EQ(data, test.expected_value);
     }
+    EXPECT_FALSE(trie.LookUp(test.key, &data));
+    swap(trie, other);
   }
 }
 

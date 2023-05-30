@@ -36,38 +36,38 @@
 #include <iostream>
 #include <ostream>
 #include <string>
-#include <vector>
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "storage/existence_filter.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
 
-using storage::ExistenceFilter;
+using ::mozc::storage::ExistenceFilterBuilder;
 
-std::string GenExistenceData(const std::vector<std::string> &entries,
+std::string GenExistenceData(const absl::Span<const std::string> entries,
                              double error_rate) {
   const int n = entries.size();
   const int m =
-      ExistenceFilter::MinFilterSizeInBytesForErrorRate(error_rate, n);
+      ExistenceFilterBuilder::MinFilterSizeInBytesForErrorRate(error_rate, n);
   LOG(INFO) << "entry: " << n << " err: " << error_rate << " bytes: " << m;
 
-  ExistenceFilter filter(ExistenceFilter::CreateOptimal(m, n));
+  ExistenceFilterBuilder builder(ExistenceFilterBuilder::CreateOptimal(m, n));
 
   for (const std::string &entry : entries) {
     const uint64_t id = Hash::Fingerprint(entry);
-    filter.Insert(id);
+    builder.Insert(id);
   }
-  return filter.Write();
+  return builder.SerializeAsString();
 }
 
 }  // namespace
 
-void OutputExistenceHeader(const std::vector<std::string> &entries,
+void OutputExistenceHeader(const absl::Span<const std::string> entries,
                            const absl::string_view data_namespace,
                            std::ostream *ofs, double error_rate) {
   const std::string existence_data = GenExistenceData(entries, error_rate);
@@ -85,7 +85,7 @@ void OutputExistenceHeader(const std::vector<std::string> &entries,
   *ofs << "}  // namespace " << data_namespace << std::endl;
 }
 
-void OutputExistenceBinary(const std::vector<std::string> &entries,
+void OutputExistenceBinary(const absl::Span<const std::string> entries,
                            std::ostream *ofs, double error_rate) {
   const std::string existence_data = GenExistenceData(entries, error_rate);
   ofs->write(existence_data.data(), existence_data.size());

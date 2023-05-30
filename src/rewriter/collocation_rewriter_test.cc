@@ -37,7 +37,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
@@ -48,7 +47,7 @@
 namespace mozc {
 namespace {
 
-using dictionary::PosMatcher;
+using ::mozc::dictionary::PosMatcher;
 
 class CollocationRewriterTest : public ::testing::Test {
  protected:
@@ -77,18 +76,10 @@ class CollocationRewriterTest : public ::testing::Test {
     const size_t segments_size;
   };
 
-  CollocationRewriterTest() = default;
-  CollocationRewriterTest(const CollocationRewriterTest &) = delete;
-  CollocationRewriterTest &operator=(const CollocationRewriterTest &) = delete;
-  ~CollocationRewriterTest() override = default;
-
-  void SetUp() override {
+  CollocationRewriterTest()
+      : pos_matcher_(data_manager_.GetPosMatcherData()),
+        collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
-    const mozc::testing::MockDataManager data_manager;
-    pos_matcher_.Set(data_manager.GetPosMatcherData());
-    collocation_rewriter_ =
-        std::make_unique<CollocationRewriter>(&data_manager);
   }
 
   // Makes a segment from SegmentData.
@@ -132,10 +123,11 @@ class CollocationRewriterTest : public ::testing::Test {
     return result;
   }
 
+  const mozc::testing::MockDataManager data_manager_;
   PosMatcher pos_matcher_;
 
  private:
-  std::unique_ptr<const CollocationRewriter> collocation_rewriter_;
+  std::unique_ptr<CollocationRewriter> collocation_rewriter_;
 };
 
 TEST_F(CollocationRewriterTest, NekowoKaitai) {

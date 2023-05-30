@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "base/win32/hresult.h"
+#include "absl/base/attributes.h"
 
 namespace mozc::win32 {
 
@@ -110,7 +111,10 @@ class HResultOrStorageBase<T, true /* trivially destructible */> {
       : dummy_(), hr_(hr) {}
 
   constexpr bool has_value() const noexcept { return SUCCEEDED(hr_); }
-  constexpr void AssignHResult(HRESULT hr) noexcept { hr_ = hr; }
+  ABSL_ATTRIBUTE_REINITIALIZES constexpr void AssignHResult(
+      HRESULT hr) noexcept {
+    hr_ = hr;
+  }
 
  protected:
   struct Dummy {};
@@ -139,7 +143,8 @@ class HResultOrStorageBase<T, false /* not trivially destructible */> {
   }
 
   constexpr bool has_value() const noexcept { return SUCCEEDED(hr_); }
-  constexpr void AssignHResult(HRESULT hr) noexcept {
+  ABSL_ATTRIBUTE_REINITIALIZES constexpr void AssignHResult(
+      HRESULT hr) noexcept {
     if (has_value()) {
       value_.~T();
     }

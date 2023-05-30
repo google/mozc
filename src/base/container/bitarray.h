@@ -30,19 +30,18 @@
 #ifndef MOZC_BASE_CONTAINER_BITARRAY_H_
 #define MOZC_BASE_CONTAINER_BITARRAY_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <type_traits>
+#include <utility>
 #include <vector>
-
-#include "absl/algorithm/container.h"
 
 namespace mozc {
 
 class BitArray {
  public:
   // Specify the size of bit vector
-  explicit BitArray(uint32_t size) : array_(1 + (size >> 5)), size_(size) {
-    absl::c_fill(array_, 0);
-  }
+  explicit BitArray(uint32_t size) : array_(1 + (size >> 5), 0), size_(size) {}
 
   // Gets true/false of |index|
   bool get(uint32_t index) const {
@@ -79,10 +78,22 @@ class BitArray {
                              0x00000001);
   }
 
+  void swap(BitArray &other) noexcept(
+      noexcept(std::is_nothrow_swappable_v<decltype(array_)>)) {
+    using std::swap;
+    swap(array_, other.array_);
+    swap(size_, other.size_);
+  }
+
  private:
   std::vector<uint32_t> array_;
-  const size_t size_;
+  size_t size_;
 };
+
+inline void swap(BitArray &lhs,
+                 BitArray &rhs) noexcept(noexcept(lhs.swap(rhs))) {
+  lhs.swap(rhs);
+}
 
 }  // namespace mozc
 

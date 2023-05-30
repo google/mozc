@@ -32,27 +32,68 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "storage/existence_filter.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
+namespace collocation_rewriter_internal {
 
-class DataManagerInterface;
+class CollocationFilter {
+ public:
+  explicit CollocationFilter(storage::ExistenceFilter filter)
+      : filter_(std::move(filter)) {}
+
+  static absl::StatusOr<CollocationFilter> Create(
+      absl::Span<const uint32_t> data);
+
+  bool Exists(absl::string_view left, absl::string_view right) const;
+
+ private:
+  storage::ExistenceFilter filter_;
+};
+
+class SuppressionFilter {
+ public:
+  explicit SuppressionFilter(storage::ExistenceFilter filter)
+      : filter_(std::move(filter)) {}
+
+  static absl::StatusOr<SuppressionFilter> Create(
+      absl::Span<const uint32_t> data);
+
+  bool Exists(const Segment::Candidate &cand) const;
+
+ private:
+  storage::ExistenceFilter filter_;
+};
+
+}  // namespace collocation_rewriter_internal
 
 class CollocationRewriter : public RewriterInterface {
  public:
-  explicit CollocationRewriter(const DataManagerInterface *data_manager);
-  ~CollocationRewriter() override;
+  CollocationRewriter(
+      dictionary::PosMatcher pos_matcher,
+      collocation_rewriter_internal::CollocationFilter collocation_filter,
+      collocation_rewriter_internal::SuppressionFilter suppression_filter)
+      : pos_matcher_(std::move(pos_matcher)),
+        first_name_id_(pos_matcher_.GetFirstNameId()),
+        last_name_id_(pos_matcher_.GetLastNameId()),
+        collocation_filter_(std::move(collocation_filter)),
+        suppression_filter_(std::move(suppression_filter)) {}
+
+  static std::unique_ptr<CollocationRewriter> Create(
+      const DataManagerInterface &data_manager);
+
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
  private:
-  class CollocationFilter;
-  class SuppressionFilter;
-
   bool IsName(const Segment::Candidate &cand) const;
   bool RewriteFromPrevSegment(const Segment::Candidate &prev_cand,
                               Segment *seg) const;
@@ -66,13 +107,13 @@ class CollocationRewriter : public RewriterInterface {
   // Used to test if pairs of strings are in collocation data. Since it's a
   // bloom filter, non-collocation words are sometimes mistakenly boosted,
   // although the possibility is very low (0.001% by default).
-  std::unique_ptr<CollocationFilter> collocation_filter_;
+  collocation_rewriter_internal::CollocationFilter collocation_filter_;
 
   // Used to test if pairs of content key and value are "ateji". Since it's a
   // bloom filter, non-ateji words are sometimes mistakenly classified as ateji,
   // resulting in passing on the right collocations, though the possibility is
   // very low (0.001% by default).
-  std::unique_ptr<SuppressionFilter> suppression_filter_;
+  collocation_rewriter_internal::SuppressionFilter suppression_filter_;
 };
 
 }  // namespace mozc

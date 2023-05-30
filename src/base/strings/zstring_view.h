@@ -133,7 +133,7 @@ class basic_zstring_view {
   constexpr size_type length() const noexcept { return sv_.length(); }
 
   constexpr void swap(basic_zstring_view &other) noexcept {
-    std::swap(sv_, other.sv_);
+    sv_.swap(other.sv_);
   }
 
   template <typename H>

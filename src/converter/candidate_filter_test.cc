@@ -91,12 +91,8 @@ class CandidateFilterTest : public ::testing::Test {
     node_freelist_ = std::make_unique<FreeList<Node>>(1024);
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     request_ = std::make_unique<ConversionRequest>();
-    {
-      const char *data = nullptr;
-      size_t size = 0;
-      mock_data_manager_.GetSuggestionFilterData(&data, &size);
-      suggestion_filter_ = std::make_unique<SuggestionFilter>(data, size);
-    }
+    suggestion_filter_ = SuggestionFilter::CreateOrDie(
+        mock_data_manager_.GetSuggestionFilterData());
   }
 
   void TearDown() override {
@@ -138,7 +134,7 @@ class CandidateFilterTest : public ::testing::Test {
   CandidateFilter *CreateCandidateFilter(
       bool apply_suggestion_filter_for_exact_match) const {
     return new CandidateFilter(&suppression_dictionary_, &pos_matcher_,
-                               suggestion_filter_.get(),
+                               suggestion_filter_,
                                apply_suggestion_filter_for_exact_match);
   }
 
@@ -146,7 +142,7 @@ class CandidateFilterTest : public ::testing::Test {
   std::unique_ptr<FreeList<Node>> node_freelist_;
   PosMatcher pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
-  std::unique_ptr<SuggestionFilter> suggestion_filter_;
+  SuggestionFilter suggestion_filter_;
   std::unique_ptr<ConversionRequest> request_;
 
  private:
@@ -540,9 +536,9 @@ TEST_P(CandidateFilterTestWithParam, MayHaveMoreCandidates) {
 
 TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  std::unique_ptr<CandidateFilter> filter(new CandidateFilter(
-      dic.get(), &pos_matcher_, suggestion_filter_.get(), true));
+  auto dic = std::make_unique<SuppressionDictionary>();
+  auto filter = std::make_unique<CandidateFilter>(dic.get(), &pos_matcher_,
+                                                  suggestion_filter_, true);
 
   std::vector<const Node *> n;
   GetDefaultNodes(&n);

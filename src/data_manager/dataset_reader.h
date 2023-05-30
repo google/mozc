@@ -30,7 +30,9 @@
 #ifndef MOZC_DATA_MANAGER_DATASET_READER_H_
 #define MOZC_DATA_MANAGER_DATASET_READER_H_
 
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
@@ -48,7 +50,11 @@ class DataSetReader {
 
   // Gets the byte data corresponding to |name|.  If the data for |name| doesn't
   // exist, returns false.
-  bool Get(const std::string &name, absl::string_view *data) const;
+  bool Get(absl::string_view name, absl::string_view *data) const;
+
+  // Gets the byte offset and size of the data corresponding to `name`.
+  std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
+      absl::string_view name) const;
 
   // Verifies the checksum of binary image.
   static bool VerifyChecksum(absl::string_view memblock);
@@ -59,6 +65,8 @@ class DataSetReader {
   }
 
  private:
+  absl::string_view memblock_;
+
   // The value points to a block of the specified |memblock|.
   absl::flat_hash_map<std::string, absl::string_view> name_to_data_map_;
 };

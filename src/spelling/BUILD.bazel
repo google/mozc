@@ -68,9 +68,6 @@ mozc_cc_library(
         macos = ["@platforms//:incompatible"],
         windows = ["@platforms//:incompatible"],
     ),
-    visibility = [
-        "//:__subpackages__",
-    ],
     deps = [
         ":spellchecker_service",
         ":spellchecker_service_interface",

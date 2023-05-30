@@ -82,11 +82,13 @@ mozc_cc_library(
     srcs = ["existence_filter.cc"],
     hdrs = ["existence_filter.h"],
     deps = [
+        "//base:bits",
         "//base:logging",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
     ],
 )
@@ -119,6 +121,7 @@ mozc_cc_test(
         "//base:logging",
         "//testing:gunit_main",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -168,6 +171,7 @@ mozc_cc_library(
     deps = [
         ":storage_interaface",
         ":tiny_storage",
+        "//base:bits",
         "//base:file_util",
         "//base:logging",
         "//base:port",

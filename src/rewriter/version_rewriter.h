@@ -30,30 +30,40 @@
 #ifndef MOZC_REWRITER_VERSION_REWRITER_H_
 #define MOZC_REWRITER_VERSION_REWRITER_H_
 
-#include <memory>
+#include <string>
 
+#include "converter/segments.h"
+#include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
 
 // A very simple rewriter to put version candidates for some segments.
 class VersionRewriter : public RewriterInterface {
  public:
   explicit VersionRewriter(absl::string_view data_version);
-  ~VersionRewriter() override;
 
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest &request) const override {
+    if (request.request().mixed_conversion()) {
+      return RewriterInterface::ALL;
+    }
+    return RewriterInterface::CONVERSION;
+  }
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
  private:
-  class VersionDataImpl;
-  std::unique_ptr<VersionDataImpl> impl_;
+  struct VersionEntry {
+    std::string base_candidate;
+    std::string output;
+    size_t rank;
+  };
+
+  absl::flat_hash_map<std::string, VersionEntry> entries_;
 };
 
 }  // namespace mozc

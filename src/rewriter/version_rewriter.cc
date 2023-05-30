@@ -30,18 +30,12 @@
 #include "rewriter/version_rewriter.h"
 
 #include <algorithm>
-#include <iterator>
-#include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/version.h"
 #include "converter/segments.h"
-#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
@@ -49,9 +43,9 @@
 namespace mozc {
 namespace {
 
-const struct {
-  const char *key;
-  const char *base_candidate;
+constexpr struct {
+  absl::string_view key;
+  absl::string_view base_candidate;
 } kKeyCandList[] = {
     {
         "う゛ぁーじょん",
@@ -73,57 +67,14 @@ const struct {
 
 }  // namespace
 
-class VersionRewriter::VersionDataImpl {
- public:
-  class VersionEntry {
-   public:
-    VersionEntry(const absl::string_view base_candidate,
-                 const absl::string_view output, size_t rank)
-        : base_candidate_(base_candidate), output_(output), rank_(rank) {}
-
-    const std::string &base_candidate() const { return base_candidate_; }
-    const std::string &output() const { return output_; }
-    size_t rank() const { return rank_; }
-
-   private:
-    std::string base_candidate_;
-    std::string output_;
-    size_t rank_;
-  };
-
-  const VersionEntry *Lookup(const absl::string_view key) const {
-    const auto it = entries_.find(key);
-    if (it == entries_.end()) {
-      return nullptr;
-    }
-    return it->second.get();
+VersionRewriter::VersionRewriter(absl::string_view data_version) {
+  std::string version_string =
+      absl::StrCat(kVersionRewriterVersionPrefix, Version::GetMozcVersion(),
+                   "+", data_version);
+  for (const auto &[key, base_candidate] : kKeyCandList) {
+    entries_.emplace(
+        key, VersionEntry{std::string(base_candidate), version_string, 9});
   }
-
-  explicit VersionDataImpl(absl::string_view data_version) {
-    std::string version_string = kVersionRewriterVersionPrefix;
-    version_string.append(Version::GetMozcVersion());
-    version_string.append(1, '+');
-    version_string.append(data_version.data(), data_version.size());
-    for (int i = 0; i < std::size(kKeyCandList); ++i) {
-      entries_[kKeyCandList[i].key] = std::make_unique<VersionEntry>(
-          kKeyCandList[i].base_candidate, version_string, 9);
-    }
-  }
-
- private:
-  absl::flat_hash_map<std::string, std::unique_ptr<VersionEntry>> entries_;
-};
-
-VersionRewriter::VersionRewriter(absl::string_view data_version)
-    : impl_(new VersionDataImpl(data_version)) {}
-
-VersionRewriter::~VersionRewriter() = default;
-
-int VersionRewriter::capability(const ConversionRequest &request) const {
-  if (request.request().mixed_conversion()) {
-    return RewriterInterface::ALL;
-  }
-  return RewriterInterface::CONVERSION;
 }
 
 bool VersionRewriter::Rewrite(const ConversionRequest &request,
@@ -133,19 +84,20 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
        i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
     DCHECK(seg);
-    const VersionDataImpl::VersionEntry *ent = impl_->Lookup(seg->key());
-    if (ent != nullptr) {
+    const auto it = entries_.find(seg->key());
+    if (it != entries_.end()) {
       for (size_t j = 0; j < seg->candidates_size(); ++j) {
+        const VersionEntry &ent = it->second;
         const Segment::Candidate &c = seg->candidate(static_cast<int>(j));
-        if (c.value == ent->base_candidate()) {
+        if (c.value == ent.base_candidate) {
           Segment::Candidate *new_cand = seg->insert_candidate(
-              std::min<int>(seg->candidates_size(), ent->rank()));
+              std::min<int>(seg->candidates_size(), ent.rank));
           if (new_cand != nullptr) {
             new_cand->lid = c.lid;
             new_cand->rid = c.rid;
             new_cand->cost = c.cost;
-            new_cand->value = ent->output();
-            new_cand->content_value = ent->output();
+            new_cand->value = ent.output;
+            new_cand->content_value = ent.output;
             new_cand->key = seg->key();
             new_cand->content_key = seg->key();
             // we don't learn version

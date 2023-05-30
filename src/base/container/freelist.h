@@ -32,6 +32,8 @@
 
 #include <cstddef>
 #include <memory>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace mozc {
@@ -75,6 +77,20 @@ class FreeList {
 
   constexpr size_t size() const { return size_; }
 
+  void swap(FreeList& other) noexcept(
+      std::is_nothrow_swappable_v<decltype(pool_)>) {
+    using std::swap;
+    swap(pool_, other.pool_);
+    swap(current_index_, other.current_index_);
+    swap(chunk_index_, other.chunk_index_);
+    swap(size_, other.size_);
+  }
+
+  friend void swap(FreeList& lhs,
+                   FreeList& rhs) noexcept(noexcept(lhs.swap(rhs))) {
+    lhs.swap(rhs);
+  }
+
  private:
   std::vector<std::unique_ptr<T[]>> pool_;
   size_t current_index_;
@@ -106,6 +122,19 @@ class ObjectPool {
   void Release(T* ptr) { released_.push_back(ptr); }
 
   constexpr size_t size() const { return freelist_.size(); }
+
+  void swap(ObjectPool& other) noexcept(
+      std::is_nothrow_swappable_v<decltype(released_)> &&
+      std::is_nothrow_swappable_v<decltype(freelist_)>) {
+    using std::swap;
+    swap(released_, other.released_);
+    swap(freelist_, other.freelist_);
+  }
+
+  friend void swap(ObjectPool& lhs,
+                   ObjectPool& rhs) noexcept(noexcept(lhs.swap(rhs))) {
+    lhs.swap(rhs);
+  }
 
  private:
   std::vector<T*> released_;

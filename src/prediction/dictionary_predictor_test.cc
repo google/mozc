@@ -32,10 +32,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <memory>
 #include <random>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,7 +47,6 @@
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
-#include "converter/immutable_converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
@@ -70,7 +67,6 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -84,7 +80,7 @@ class DictionaryPredictorTestPeer {
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter *suggestion_filter)
+      const SuggestionFilter &suggestion_filter)
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
                    connector, segmenter, pos_matcher, suggestion_filter) {}
   ~DictionaryPredictorTestPeer() = default;
@@ -280,14 +276,6 @@ bool FindCandidateByValue(const Segment &segment, absl::string_view value) {
   return false;
 }
 
-SuggestionFilter *CreateSuggestionFilter(
-    const DataManagerInterface &data_manager) {
-  const char *data = nullptr;
-  size_t size = 0;
-  data_manager.GetSuggestionFilterData(&data, &size);
-  return new SuggestionFilter(data, size);
-}
-
 // Simple immutable converter mock
 class MockImmutableConverter : public ImmutableConverterInterface {
  public:
@@ -326,18 +314,21 @@ class MockAggregator : public prediction::PredictionAggregatorInterface {
 // Helper class to hold predictor objects.
 class MockDataAndPredictor {
  public:
-  void Init() {
-    pos_matcher_.Set(data_manager_.GetPosMatcherData());
-    connector_ = Connector::CreateFromDataManager(data_manager_).value();
-    segmenter_ = Segmenter::CreateFromDataManager(data_manager_);
+  MockDataAndPredictor()
+      : data_manager_(),
+        mock_immutable_converter_(),
+        mock_aggregator_(new MockAggregator()),
+        pos_matcher_(data_manager_.GetPosMatcherData()),
+        connector_(Connector::CreateFromDataManager(data_manager_).value()),
+        segmenter_(Segmenter::CreateFromDataManager(data_manager_)),
+        suggestion_filter_(SuggestionFilter::CreateOrDie(
+            data_manager_.GetSuggestionFilterData())) {
     CHECK(segmenter_);
-    suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));
 
-    mock_aggregator_ = new MockAggregator;
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         absl::WrapUnique(mock_aggregator_), data_manager_,
         &mock_immutable_converter_, connector_, segmenter_.get(), &pos_matcher_,
-        suggestion_filter_.get());
+        suggestion_filter_);
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
@@ -358,7 +349,7 @@ class MockDataAndPredictor {
   PosMatcher pos_matcher_;
   Connector connector_;
   std::unique_ptr<const Segmenter> segmenter_;
-  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  SuggestionFilter suggestion_filter_;
   MockConverter converter_;
 
   std::unique_ptr<DictionaryPredictorTestPeer> predictor_;
@@ -390,9 +381,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
   static std::unique_ptr<MockDataAndPredictor>
   CreateDictionaryPredictorWithMockData() {
-    auto ret = std::make_unique<MockDataAndPredictor>();
-    ret->Init();
-    return ret;
+    return std::make_unique<MockDataAndPredictor>();
   }
 
   std::unique_ptr<composer::Composer> composer_;

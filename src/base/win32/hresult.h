@@ -96,9 +96,9 @@ class [[nodiscard]] HResult {
   }
   constexpr HRESULT hr() const noexcept { return hr_; }
 
-  friend void swap(HResult& a, HResult& b) noexcept {
-    // std::swap will support the constexpr version from C++20.
-    std::swap(a.hr_, b.hr_);
+  inline void swap(HResult& other) noexcept {
+    using std::swap;
+    swap(hr_, other.hr_);
   }
 
   // Converts the error code to a human-readable string.

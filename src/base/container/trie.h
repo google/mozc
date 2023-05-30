@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -187,6 +188,17 @@ class Trie final {
       return false;
     }
     return res.rest.empty() || res.trie->HasSubTrie(res.rest);
+  }
+
+  void swap(Trie &other) noexcept(std::is_nothrow_swappable_v<SubTrie> &&
+                                  std::is_nothrow_swappable_v<T>) {
+    using std::swap;
+    swap(trie_, other.trie_);
+    swap(data_, other.data_);
+  }
+
+  friend void swap(Trie &lhs, Trie &rhs) noexcept(noexcept(lhs.swap(rhs))) {
+    lhs.swap(rhs);
   }
 
  private:

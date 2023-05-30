@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <new>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -47,6 +49,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
@@ -83,6 +86,12 @@ DataManager::Status InitUserPosManagerDataFromReader(
     return DataManager::Status::DATA_BROKEN;
   }
   return DataManager::Status::OK;
+}
+
+template <typename T>
+absl::Span<const T> MakeSpanFromAlignedBuffer(const absl::string_view buf) {
+  return absl::MakeSpan(std::launder(reinterpret_cast<const T *>(buf.data())),
+                        buf.size() / sizeof(T));
 }
 
 }  // namespace
@@ -436,6 +445,7 @@ DataManager::Status DataManager::InitFromFile(const std::string &path,
     LOG(ERROR) << mmap.status();
     return Status::MMAP_FAILURE;
   }
+  filename_ = path;
   mmap_ = *std::move(mmap);
   const absl::string_view data(mmap_.begin(), mmap_.size());
   return InitFromArray(data, magic);
@@ -477,21 +487,16 @@ void DataManager::GetSystemDictionaryData(const char **data, int *size) const {
   *size = dictionary_data_.size();
 }
 
-void DataManager::GetCollocationData(const char **array, size_t *size) const {
-  *array = collocation_data_.data();
-  *size = collocation_data_.size();
+absl::Span<const uint32_t> DataManager::GetCollocationData() const {
+  return MakeSpanFromAlignedBuffer<uint32_t>(collocation_data_);
 }
 
-void DataManager::GetCollocationSuppressionData(const char **array,
-                                                size_t *size) const {
-  *array = collocation_suppression_data_.data();
-  *size = collocation_suppression_data_.size();
+absl::Span<const uint32_t> DataManager::GetCollocationSuppressionData() const {
+  return MakeSpanFromAlignedBuffer<uint32_t>(collocation_suppression_data_);
 }
 
-void DataManager::GetSuggestionFilterData(const char **data,
-                                          size_t *size) const {
-  *data = suggestion_filter_data_.data();
-  *size = suggestion_filter_data_.size();
+absl::Span<const uint32_t> DataManager::GetSuggestionFilterData() const {
+  return MakeSpanFromAlignedBuffer<uint32_t>(suggestion_filter_data_);
 }
 
 void DataManager::GetUserPosData(absl::string_view *token_array_data,
@@ -626,6 +631,15 @@ absl::string_view DataManager::GetTypingModel(const std::string &name) const {
 }
 
 absl::string_view DataManager::GetDataVersion() const { return data_version_; }
+
+std::optional<std::pair<size_t, size_t>> DataManager::GetOffsetAndSize(
+    absl::string_view name) const {
+  if (const auto iter = offset_and_size_.find(name);
+      iter != offset_and_size_.end()) {
+    return iter->second;
+  }
+  return std::nullopt;
+}
 
 std::ostream &operator<<(std::ostream &os, DataManager::Status status) {
   return os << DataManager::StatusCodeToString(status);

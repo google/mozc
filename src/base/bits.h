@@ -134,8 +134,8 @@ template <typename T, typename Iterator,
           typename = std::enable_if_t<
               std::is_convertible_v<IterTag, std::random_access_iterator_tag>>>
 inline T LoadUnaligned(Iterator iter) {
-  static_assert(std::is_integral_v<T>,
-                "The value type must be an itegral type");
+  static_assert(std::is_arithmetic_v<T>,
+                "The value type must be an arithmetic type");
 
   T result;
   memcpy(&result, std::addressof(*iter), sizeof(T));
@@ -186,8 +186,8 @@ template <typename T, typename U, typename Iterator,
           typename = std::enable_if_t<
               std::is_convertible_v<IterTag, std::random_access_iterator_tag>>>
 inline Iterator StoreUnaligned(const U value, Iterator iter) {
-  static_assert(std::is_integral_v<T>,
-                "The value type must be an itegral type.");
+  static_assert(std::is_arithmetic_v<T>,
+                "The value type must be an arithmetic type.");
   static_assert(sizeof(T) == sizeof(value),
                 "The sizeof(value) must equal to sizeof(T).");
 

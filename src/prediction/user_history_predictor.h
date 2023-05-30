@@ -334,7 +334,6 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Uint32 <=> string conversion
   static std::string Uint32ToString(uint32_t fp);
-  static uint32_t StringToUint32(absl::string_view input);
 
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry &entry, const Entry &prev_entry);

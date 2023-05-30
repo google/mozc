@@ -35,10 +35,17 @@ jobs:
         run: |
           choco install ninja --version 1.11.0 -y --no-progress
 
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
       - name: Install Dependencies
         shell: cmd
         working-directory: .\src
         run: |
+          # This command uses src/third_party_cache as the download cache.
           python build_tools/update_deps.py
 
       - name: Biuld Qt
@@ -101,11 +108,18 @@ jobs:
         run: |
           choco install ninja --version 1.11.0 -y --no-progress
 
-      - name: Install Dependencies (except for Qt)
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install Dependencies
         shell: cmd
         working-directory: .\src
         run: |
-          python build_tools/update_deps.py --noqt
+          # This command uses src/third_party_cache as the download cache.
+          python build_tools/update_deps.py
 
       - name: gyp
         shell: cmd
@@ -120,3 +134,34 @@ jobs:
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py runtests -c Debug
+
+  # actions/cache works without this job, but having this would increase the likelihood of cache hit
+  # in other jobs. Another approach would be to use "needs:".
+  # https://docs.github.com/en/actions/using-jobs/using-jobs-in-a-workflow
+  cache_deps:
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    runs-on: windows-2022
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up pip
+        shell: cmd
+        working-directory: .\src
+        run: |
+          python -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install Dependencies
+        shell: cmd
+        working-directory: .\src
+        run: |
+          # This command uses src/third_party_cache as the download cache.
+          python build_tools/update_deps.py --cache_only

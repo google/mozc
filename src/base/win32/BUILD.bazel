@@ -189,9 +189,9 @@ mozc_cc_library(
         "//win32/cache_service:__subpackages__",
     ],
     deps = [
+        ":wide_char",
         "//base:const",
-        "//base:port",
-        "//base:util",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -279,7 +279,10 @@ mozc_cc_library(
     hdrs = ["hresultor_internal.h"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [":hresult"],
+    deps = [
+        ":hresult",
+        "@com_google_absl//absl/base:core_headers",
+    ],
 )
 
 mozc_cc_test(

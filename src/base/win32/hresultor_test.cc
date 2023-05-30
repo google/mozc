@@ -151,7 +151,8 @@ TEST(HResultOr, Vector) {
   EXPECT_NE(error, expected);
   EXPECT_NE(expected, error);
 
-  std::swap(error, v2);
+  using std::swap;
+  swap(error, v2);
   EXPECT_TRUE(error.has_value());
   EXPECT_EQ(error, expected);
   EXPECT_FALSE(v2.has_value());
