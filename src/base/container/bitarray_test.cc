@@ -29,7 +29,7 @@
 
 #include "base/container/bitarray.h"
 
-#include <iterator>
+#include <utility>
 #include <vector>
 
 #include "testing/googletest.h"

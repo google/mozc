@@ -30,8 +30,10 @@
 #ifndef MOZC_BASE_CONTAINER_BITARRAY_H_
 #define MOZC_BASE_CONTAINER_BITARRAY_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace mozc {
