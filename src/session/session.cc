@@ -1263,6 +1263,7 @@ bool Session::Undo(commands::Command *command) {
   context_->mutable_converter()->Revert();
 
   size_t result_size = 0;
+  int32_t cursor_offset = 0;
   if (context_->output().has_result()) {
     // Check the client's capability
     if (!(context_->client_capability().text_deletion() &
@@ -1270,6 +1271,7 @@ bool Session::Undo(commands::Command *command) {
       return DoNothing(command);
     }
     result_size = Util::CharsLen(context_->output().result().value());
+    cursor_offset = context_->output().result().cursor_offset();
   }
 
   PopUndoContext();
@@ -1277,7 +1279,7 @@ bool Session::Undo(commands::Command *command) {
   if (result_size > 0) {
     commands::DeletionRange *range =
         command->mutable_output()->mutable_deletion_range();
-    range->set_offset(-static_cast<int>(result_size));
+    range->set_offset(-(static_cast<int32_t>(result_size) + cursor_offset));
     range->set_length(result_size);
   }
 

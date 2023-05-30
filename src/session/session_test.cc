@@ -2679,6 +2679,81 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   }
 }
 
+TEST_F(SessionTest, UndoForCommittedBracketPairIssue284235847) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+
+  // Undo requires capability DELETE_PRECEDING_TEXT.
+  commands::Capability capability;
+  capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
+  session.set_client_capability(capability);
+
+  commands::Command command;
+  Segments segments;
+
+  {  // Create segments
+    InsertCharacterChars("あかっこ", &session, &command);
+    ConversionRequest request;
+    SetComposer(&session, &request);
+
+    Segment::Candidate *candidate;
+    Segment *segment;
+
+    segment = segments.add_segment();
+    segment->set_key("あ");
+    candidate = segment->add_candidate();
+    candidate->value = "あ";
+
+    segment = segments.add_segment();
+    segment->set_key("かっこ");
+    candidate = segment->add_candidate();
+    candidate->value = "かっこ";
+    candidate = segment->add_candidate();
+    candidate->value = "（）";
+  }
+
+  {  // Commit 1st and 2nd segment
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+    command.Clear();
+    session.Convert(&command);
+    // -> preedit: "あかっこ", result: empty, state: CONVERSION
+
+    // CommitSegments() sets the first segment SUBMITTED.
+    segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+    EXPECT_CALL(converter, CommitSegments(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+    command.Clear();
+    command.mutable_input()->mutable_command()->set_id(1);
+    session.CommitCandidate(&command);
+    // -> preedit: "かっこ", result: "あ", state: CONVERSION
+
+    // Move to second segment and do the same thing.
+    command.Clear();
+    session.SegmentFocusRight(&command);
+    command.Clear();
+    command.mutable_input()->mutable_command()->set_id(1);
+    session.CommitCandidate(&command);
+    // -> preedit: empty, result: "（）", state: PRECOMPOSITION
+  }
+
+  {  // Undo for 2nd segment (ie. bracket pair)
+    command.Clear();
+    session.Undo(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_TRUE(command.output().has_deletion_range());
+    EXPECT_EQ(command.output().deletion_range().offset(), -1);
+    EXPECT_EQ(command.output().deletion_range().length(), 2);
+    EXPECT_PREEDIT("かっこ", command);
+    EXPECT_EQ(session.context().state(), ImeContext::CONVERSION);
+  }
+}
+
 TEST_F(SessionTest, MultipleUndo) {
   MockConverter converter;
   MockEngine engine;
