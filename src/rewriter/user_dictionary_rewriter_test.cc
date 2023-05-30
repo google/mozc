@@ -31,11 +31,11 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "testing/googletest.h"
@@ -45,9 +45,9 @@
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
 namespace {
-void AddCandidate(const absl::string_view value, const bool is_user_dictionary,
+
+void AddCandidate(std::string value, const bool is_user_dictionary,
                   Segments *segments) {
   Segment *seg = nullptr;
   if (segments->segments_size() == 0) {
@@ -58,10 +58,10 @@ void AddCandidate(const absl::string_view value, const bool is_user_dictionary,
   }
   Segment::Candidate *candidate = seg->add_candidate();
   candidate->Init();
-  candidate->key = std::string(value);
-  candidate->content_key = std::string(value);
-  candidate->value = std::string(value);
-  candidate->content_value = std::string(value);
+  candidate->key = value;
+  candidate->content_key = value;
+  candidate->value = value;
+  candidate->content_value = std::move(value);
   if (is_user_dictionary) {
     candidate->attributes |= Segment::Candidate::USER_DICTIONARY;
   }
@@ -76,7 +76,6 @@ std::string GetCandidates(const Segments &segments) {
   }
   return absl::StrJoin(results, " ");
 }
-}  // namespace
 
 class UserDictionaryRewriterTest : public testing::Test {
  protected:
@@ -178,4 +177,6 @@ TEST_F(UserDictionaryRewriterTest, RewriteTest) {
     EXPECT_EQ(GetCandidates(segments), "1 4 2 3 5");
   }
 }
+
+}  // namespace
 }  // namespace mozc

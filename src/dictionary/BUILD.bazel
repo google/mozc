@@ -573,6 +573,7 @@ mozc_cc_library(
     visibility = [
         "//:__subpackages__",
     ],
+    deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
 mozc_py_binary(

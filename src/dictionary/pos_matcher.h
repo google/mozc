@@ -32,6 +32,8 @@
 
 #include <cstdint>
 
+#include "absl/base/attributes.h"
+
 namespace mozc::dictionary {
 
 // The PosMatcher class has two methods for each POS matching rule:
@@ -42,6 +44,9 @@ namespace mozc::dictionary {
 // where XXX is replaced by rule names; see data/rules/pos_matcher_rule.def.
 // These methods are generated as pos_matcher_impl.inc by
 // running gen_pos_matcher_code.py.
+//
+// PosMatcher is a pointer to a table managed by DataManager, so pass it by
+// value like a string_view.
 //
 // Binary format
 //
@@ -89,8 +94,9 @@ namespace mozc::dictionary {
 class PosMatcher {
  public:
   PosMatcher() : data_(nullptr) {}
-  explicit PosMatcher(const uint16_t *data) : data_(data) {}
-  void Set(const uint16_t *data) { data_ = data; }
+  explicit PosMatcher(const uint16_t *data ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      : data_(data) {}
+  void Set(const uint16_t *data ABSL_ATTRIBUTE_LIFETIME_BOUND) { data_ = data; }
 
  private:
   // Used in pos_matcher_impl.inc.

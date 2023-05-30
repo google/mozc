@@ -30,20 +30,18 @@
 #ifndef MOZC_REWRITER_USER_DICTIONARY_REWRITER_H_
 #define MOZC_REWRITER_USER_DICTIONARY_REWRITER_H_
 
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class Segments;
-
 // A special rewriter that tweaks the ranking of user dictionary candidates.
 class UserDictionaryRewriter : public RewriterInterface {
  public:
-  UserDictionaryRewriter();
-  ~UserDictionaryRewriter() override;
-
-  int capability(const ConversionRequest &request) const override;
+  int capability(const ConversionRequest &request) const override {
+    return RewriterInterface::CONVERSION | RewriterInterface::PREDICTION;
+  }
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

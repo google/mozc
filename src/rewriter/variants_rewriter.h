@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
@@ -63,8 +62,9 @@ class VariantsRewriter : public RewriterInterface {
   static constexpr absl::string_view kDidYouMean = "<もしかして>";
   static constexpr absl::string_view kYenKigou = "円記号";
 
-  explicit VariantsRewriter(dictionary::PosMatcher pos_matcher);
-  ~VariantsRewriter() override;
+  explicit VariantsRewriter(dictionary::PosMatcher pos_matcher)
+      : pos_matcher_(pos_matcher) {}
+
   int capability(const ConversionRequest &request) const override;
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
@@ -73,12 +73,12 @@ class VariantsRewriter : public RewriterInterface {
 
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
-  static void SetDescriptionForCandidate(
-      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
+  static void SetDescriptionForCandidate(dictionary::PosMatcher pos_matcher,
+                                         Segment::Candidate *candidate);
   static void SetDescriptionForTransliteration(
-      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
-  static void SetDescriptionForPrediction(
-      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
+      dictionary::PosMatcher pos_matcher, Segment::Candidate *candidate);
+  static void SetDescriptionForPrediction(dictionary::PosMatcher pos_matcher,
+                                          Segment::Candidate *candidate);
 
  private:
   // 1) Full width / half width description
@@ -107,7 +107,7 @@ class VariantsRewriter : public RewriterInterface {
     SELECT_VARIANT = 1,  // Select preferred form
   };
 
-  static void SetDescription(const dictionary::PosMatcher &pos_matcher,
+  static void SetDescription(dictionary::PosMatcher pos_matcher,
                              int description_type,
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;

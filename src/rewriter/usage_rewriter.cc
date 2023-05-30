@@ -33,11 +33,11 @@
 #ifndef NO_USAGE_REWRITER
 
 #include <string>
+#include <utility>
 
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
@@ -48,9 +48,9 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
-using mozc::dictionary::DictionaryInterface;
-
 namespace mozc {
+
+using ::mozc::dictionary::DictionaryInterface;
 
 UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
                              const DictionaryInterface *dictionary)
@@ -79,7 +79,7 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
   UsageDictItemIterator end(usage_items_data.data() + usage_items_data.size());
 
   // TODO(taku): To reduce memory footprint, better to replace it with
-  // binary search over the conjugation_suffix_data diretly.
+  // binary search over the conjugation_suffix_data directly.
   for (; begin != end; ++begin) {
     for (size_t i = conjugation_suffix_data_index[begin.conjugation_id()];
          i < conjugation_suffix_data_index[begin.conjugation_id() + 1]; ++i) {
@@ -201,7 +201,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
   // usage from the user dictionary, we simply assign sequential numbers larger
   // than the maximum ID of the embedded usage dictionary.
   int32_t usage_id_for_user_comment = key_value_usageitem_map_.size();
-  std::string comment;
+  std::string comment;  // LookupComment rarely returns true.
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     DCHECK(segment);
@@ -216,7 +216,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
           Segment::Candidate *candidate = segment->mutable_candidate(j);
           candidate->usage_id = usage_id_for_user_comment;
           candidate->usage_title = segment->candidate(j).content_value;
-          candidate->usage_description = comment;
+          candidate->usage_description = std::move(comment);
           comment.clear();
           modified = true;
           continue;

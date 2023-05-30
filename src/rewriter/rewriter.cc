@@ -113,7 +113,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<SymbolRewriter>(parent_converter, data_manager));
   AddRewriter(std::make_unique<UnicodeRewriter>(parent_converter));
   AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher_));
-  AddRewriter(std::make_unique<ZipcodeRewriter>(&pos_matcher_));
+  AddRewriter(std::make_unique<ZipcodeRewriter>(pos_matcher_));
   AddRewriter(std::make_unique<DiceRewriter>());
   AddRewriter(std::make_unique<SmallLetterRewriter>(parent_converter));
 

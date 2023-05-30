@@ -44,6 +44,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
@@ -52,17 +53,6 @@ namespace {
 
 using ::mozc::config::CharacterFormManager;
 using ::mozc::dictionary::PosMatcher;
-
-// Append |src| to |dst| with a separator ' '.
-void AppendString(absl::string_view src, std::string *dst) {
-  DCHECK(dst);
-  if (!src.empty()) {
-    if (!dst->empty()) {
-      dst->append(1, ' ');
-    }
-    dst->append(src.data(), src.size());
-  }
-}
 
 // Returns true if |full| has the corresponding half width form.
 bool IsConvertibleToHalfWidthForm(const absl::string_view full) {
@@ -117,14 +107,9 @@ bool HasCharacterFormDescription(const absl::string_view value) {
 
 }  // namespace
 
-VariantsRewriter::VariantsRewriter(const PosMatcher pos_matcher)
-    : pos_matcher_(pos_matcher) {}
-
-VariantsRewriter::~VariantsRewriter() = default;
-
 // static
 void VariantsRewriter::SetDescriptionForCandidate(
-    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher pos_matcher, Segment::Candidate *candidate) {
   SetDescription(
       pos_matcher,
       (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION),
@@ -133,7 +118,7 @@ void VariantsRewriter::SetDescriptionForCandidate(
 
 // static
 void VariantsRewriter::SetDescriptionForTransliteration(
-    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
                  (FULL_HALF_WIDTH | CHARACTER_FORM | SPELLING_CORRECTION),
                  candidate);
@@ -141,15 +126,16 @@ void VariantsRewriter::SetDescriptionForTransliteration(
 
 // static
 void VariantsRewriter::SetDescriptionForPrediction(
-    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher, ZIPCODE | SPELLING_CORRECTION, candidate);
 }
 
 // static
-void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
+void VariantsRewriter::SetDescription(const PosMatcher pos_matcher,
                                       int description_type,
                                       Segment::Candidate *candidate) {
   absl::string_view character_form_message;
+  std::vector<absl::string_view> pieces;
 
   // Add Character form.
   if (description_type & CHARACTER_FORM) {
@@ -212,48 +198,49 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
     character_form_message = absl::string_view();
   }
 
-  std::string description;
   const Util::FormType form = Util::GetFormType(candidate->value);
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
     switch (form) {
       case Util::FULL_WIDTH:
         // description = "[全]";
-        description = std::string(kFullWidth);
+        pieces.push_back(kFullWidth);
         break;
       case Util::HALF_WIDTH:
         // description = "[半]";
-        description = std::string(kHalfWidth);
+        pieces.push_back(kHalfWidth);
         break;
       default:
         break;
     }
   } else if (description_type & FULL_WIDTH && form == Util::FULL_WIDTH) {
     // description = "[全]";
-    description = std::string(kFullWidth);
+    pieces.push_back(kFullWidth);
   } else if (description_type & HALF_WIDTH && form == Util::HALF_WIDTH) {
     // description = "[半]";
-    description = std::string(kHalfWidth);
+    pieces.push_back(kHalfWidth);
   }
 
   // add character_form_message
-  AppendString(character_form_message, &description);
+  if (!character_form_message.empty()) {
+    pieces.push_back(character_form_message);
+  }
 
   // add main message
   if (candidate->value == "\\" ||
       candidate->value == "＼") {  // full-width backslash
     // if "\" (half-width backslash) or "＼" ()
-    AppendString("バックスラッシュ", &description);
+    pieces.push_back("バックスラッシュ");
   } else if (candidate->value == "¥") {
     // if "¥" (half-width Yen sign), append kYenKigou.
-    AppendString(kYenKigou, &description);
+    pieces.push_back(kYenKigou);
   } else if (candidate->value == "￥") {
     // if "￥" (full-width Yen sign), append only kYenKigou
-    AppendString(kYenKigou, &description);
+    pieces.push_back(kYenKigou);
   } else if (candidate->value == "~") {
-    AppendString("チルダ", &description);
-  } else {
-    AppendString(candidate->description, &description);
+    pieces.push_back("チルダ");
+  } else if (!candidate->description.empty()) {
+    pieces.push_back(candidate->description);
   }
 
   // The following description tries to overwrite existing description.
@@ -261,9 +248,15 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
   // Zipcode description
   if ((description_type & ZIPCODE) && pos_matcher.IsZipcode(candidate->lid) &&
       candidate->lid == candidate->rid) {
-    description = candidate->content_key;
+    if (!candidate->content_key.empty()) {
+      pieces = {candidate->content_key};
+    } else {
+      pieces.clear();
+    }
     // Append default description because it may contain extra description.
-    AppendString(candidate->description, &description);
+    if (!candidate->description.empty()) {
+      pieces.push_back(candidate->description);
+    }
   }
 
   // The following description tries to overwrite existing description.
@@ -271,15 +264,18 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
       (candidate->attributes & Segment::Candidate::SPELLING_CORRECTION)) {
-    description = std::string(kDidYouMean);
     // Add prefix to distinguish this candidate.
     candidate->prefix = "→ ";
     // Append default description because it may contain extra description.
-    AppendString(candidate->description, &description);
+    if (candidate->description.empty()) {
+      pieces = {kDidYouMean};
+    } else {
+      pieces = {kDidYouMean, candidate->description};
+    }
   }
 
   // set new description
-  candidate->description = std::move(description);
+  candidate->description = absl::StrJoin(pieces, " ");
   candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
 }
 
@@ -441,8 +437,8 @@ bool VariantsRewriter::GenerateAlternatives(
           original.content_value, default_content_value,
           alternative_content_value);
     } else {
-      default_content_value->assign(*default_value);
-      alternative_content_value->assign(*alternative_value);
+      *default_content_value = *default_value;
+      *alternative_content_value = *alternative_value;
     }
     return true;
   }
@@ -451,15 +447,14 @@ bool VariantsRewriter::GenerateAlternatives(
   // least one inner segment is rewritten, the whole segment is considered
   // rewritten.
   bool at_least_one_modified = false;
-  std::string tmp, inner_default_value, inner_alternative_value;
+  std::string inner_default_value, inner_alternative_value;
   std::string inner_default_content_value, inner_alternative_content_value;
   for (Segment::Candidate::InnerSegmentIterator iter(&original); !iter.Done();
        iter.Next()) {
-    tmp.assign(iter.GetValue().data(), iter.GetValue().size());
     inner_default_value.clear();
     inner_alternative_value.clear();
     if (!manager->ConvertConversionStringWithAlternative(
-            tmp, &inner_default_value, &inner_alternative_value)) {
+            iter.GetValue(), &inner_default_value, &inner_alternative_value)) {
       inner_default_value.assign(iter.GetValue().data(),
                                  iter.GetValue().size());
       inner_alternative_value.assign(iter.GetValue().data(),
@@ -470,17 +465,17 @@ bool VariantsRewriter::GenerateAlternatives(
     if (iter.GetValue() != iter.GetContentValue()) {
       inner_default_content_value.clear();
       inner_alternative_content_value.clear();
-      tmp.assign(iter.GetContentValue().data(), iter.GetContentValue().size());
       manager->ConvertConversionStringWithAlternative(
-          tmp, &inner_default_content_value, &inner_alternative_content_value);
+          iter.GetContentValue(), &inner_default_content_value,
+          &inner_alternative_content_value);
     } else {
       inner_default_content_value = inner_default_value;
       inner_alternative_content_value = inner_alternative_value;
     }
-    default_value->append(inner_default_value);
-    alternative_value->append(inner_alternative_value);
-    default_content_value->append(inner_default_content_value);
-    alternative_content_value->append(inner_alternative_content_value);
+    absl::StrAppend(default_value, inner_default_value);
+    absl::StrAppend(alternative_value, inner_alternative_value);
+    absl::StrAppend(default_content_value, inner_default_content_value);
+    absl::StrAppend(alternative_content_value, inner_alternative_content_value);
     default_inner_segment_boundary->push_back(Segment::Candidate::EncodeLengths(
         iter.GetKey().size(), inner_default_value.size(),
         iter.GetContentKey().size(), inner_default_content_value.size()));

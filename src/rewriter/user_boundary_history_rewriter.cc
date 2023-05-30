@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -46,9 +47,12 @@
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
+
 using ::mozc::storage::LruStorage;
 
 constexpr int kValueSize = 4;
@@ -100,16 +104,16 @@ class LengthArray {
   uint8_t length6_ : 4;
   uint8_t length7_ : 4;
 };
+
 }  // namespace
 
 UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
     const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter), storage_(new LruStorage) {
+    : parent_converter_(parent_converter),
+      storage_(std::make_unique<LruStorage>()) {
   DCHECK(parent_converter_);
   Reload();
 }
-
-UserBoundaryHistoryRewriter::~UserBoundaryHistoryRewriter() {}
 
 void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
                                          Segments *segments) {
@@ -205,8 +209,8 @@ bool UserBoundaryHistoryRewriter::Reload() {
     return false;
   }
 
-  constexpr char kFileSuffix[] = ".merge_pending";
-  const std::string merge_pending_file = filename + kFileSuffix;
+  constexpr absl::string_view kFileSuffix = ".merge_pending";
+  const std::string merge_pending_file = absl::StrCat(filename, kFileSuffix);
 
   // merge pending file does not always exist.
   if (absl::Status s = FileUtil::FileExists(merge_pending_file); s.ok()) {
