@@ -44,8 +44,8 @@ jobs:
       - name: Install Dependencies
         shell: cmd
         working-directory: .\src
+        # This command uses src/third_party_cache as the download cache.
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python build_tools/update_deps.py
 
       - name: Biuld Qt
@@ -117,8 +117,8 @@ jobs:
       - name: Install Dependencies
         shell: cmd
         working-directory: .\src
+        # This command uses src/third_party_cache as the download cache.
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python build_tools/update_deps.py
 
       - name: gyp
@@ -162,6 +162,6 @@ jobs:
       - name: Install Dependencies
         shell: cmd
         working-directory: .\src
+        # This command uses src/third_party_cache as the download cache.
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python build_tools/update_deps.py --cache_only

@@ -31,28 +31,19 @@
 #define MOZC_REWRITER_USER_BOUNDARY_HISTORY_REWRITER_H_
 
 #include <memory>
-#include <string>
-#include <vector>
 
-#include "base/port.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "storage/lru_storage.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class ConverterInterface;
-class Segment;
-class Segments;
-
-namespace storage {
-class LruStorage;
-}  // namespace storage
 
 class UserBoundaryHistoryRewriter : public RewriterInterface {
  public:
   explicit UserBoundaryHistoryRewriter(
       const ConverterInterface *parent_converter);
-  ~UserBoundaryHistoryRewriter() override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

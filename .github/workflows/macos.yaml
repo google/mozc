@@ -40,8 +40,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python3 build_tools/update_deps.py
 
       - name: Build Qt
@@ -82,7 +82,6 @@ jobs:
       - name: Install pip dependencies
         working-directory: ./src
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python3 -m pip install requests
 
       - name: Try to restore update_deps cache
@@ -93,6 +92,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
         run: |
           python3 build_tools/update_deps.py
 
@@ -137,6 +137,6 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
         run: |
-          # This command uses src/third_party_cache as the download cache.
           python3 build_tools/update_deps.py --cache_only

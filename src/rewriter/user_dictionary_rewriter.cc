@@ -29,22 +29,11 @@
 
 #include "rewriter/user_dictionary_rewriter.h"
 
-#include <string>
-
 #include "base/logging.h"
-#include "base/util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 
 namespace mozc {
-
-UserDictionaryRewriter::UserDictionaryRewriter() {}
-
-UserDictionaryRewriter::~UserDictionaryRewriter() {}
-
-int UserDictionaryRewriter::capability(const ConversionRequest &request) const {
-  return RewriterInterface::CONVERSION | RewriterInterface::PREDICTION;
-}
 
 // User-dictionary candidates are not always placed at the top.
 // Since user expects that user-dictionary candidates may appear

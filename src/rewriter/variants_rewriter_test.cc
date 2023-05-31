@@ -43,6 +43,7 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -52,16 +53,6 @@ using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::dictionary::PosMatcher;
-
-std::string AppendString(absl::string_view lhs, absl::string_view rhs) {
-  auto result = std::string(lhs);
-  if (!rhs.empty()) {
-    result.append(1, ' ').append(rhs.data(), rhs.size());
-  }
-  return result;
-}
-
-}  // namespace
 
 class VariantsRewriterTest : public ::testing::Test {
  protected:
@@ -301,9 +292,9 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "fullascii";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
+                           VariantsRewriter::kAlphabet),
+              candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -323,9 +314,9 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "こぎとえるごすむ";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[半] カタカナ"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kKatakana),
-        candidate.description);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kHalfWidth, " ",
+                           VariantsRewriter::kKatakana),
+              candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -345,9 +336,9 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "123";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] 数字"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kNumber),
-        candidate.description);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
+                           VariantsRewriter::kNumber),
+              candidate.description);
   }
   // containing symbols
   {
@@ -407,9 +398,9 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "[ABC]";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     // "[全] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
+                           VariantsRewriter::kAlphabet),
+              candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -418,8 +409,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    const char *expected = "[半] バックスラッシュ";
-    EXPECT_EQ(candidate.description, expected);
+    constexpr absl::string_view kExpected = "[半] バックスラッシュ";
+    EXPECT_EQ(candidate.description, kExpected);
   }
   {
     Segment::Candidate candidate;
@@ -428,8 +419,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "ばっくすらっしゅ";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    const char *expected = "[全] バックスラッシュ";
-    EXPECT_EQ(candidate.description, expected);
+    constexpr absl::string_view kExpected = "[全] バックスラッシュ";
+    EXPECT_EQ(candidate.description, kExpected);
   }
   {
     Segment::Candidate candidate;
@@ -448,8 +439,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    const char *expected = "[全] 円記号";
-    EXPECT_EQ(candidate.description, expected);
+    constexpr absl::string_view kExpected = "[全] 円記号";
+    EXPECT_EQ(candidate.description, kExpected);
   }
   {
     Segment::Candidate candidate;
@@ -531,9 +522,9 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
     // "[全] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    EXPECT_EQ(absl::StrCat(VariantsRewriter::kFullWidth, " ",
+                           VariantsRewriter::kAlphabet),
+              candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -1002,4 +993,5 @@ TEST_F(VariantsRewriterTest, Finish) {
   EXPECT_EQ(manager->GetConversionCharacterForm("0"), Config::FULL_WIDTH);
 }
 
+}  // namespace
 }  // namespace mozc

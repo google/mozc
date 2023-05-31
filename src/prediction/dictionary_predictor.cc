@@ -396,8 +396,39 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
+  MaybeMoveLiteralCandidateToTop(request, segments);
+
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
+}
+
+// static
+void DictionaryPredictor::MaybeMoveLiteralCandidateToTop(
+    const ConversionRequest &request, Segments *segments) {
+  if (!request.request()
+           .decoder_experiment_params()
+           .typing_correction_move_literal_candidate_to_top() ||
+      segments->conversion_segments_size() == 0) {
+    return;
+  }
+
+  // Do nothing when the top candidate is already literal.
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() <= 1 ||
+      !(segment->candidate(0).attributes &
+        Segment::Candidate::TYPING_CORRECTION)) {
+    return;
+  }
+
+  const int max_size = std::min<int>(10, segment->candidates_size());
+  for (int i = 1; i < max_size; ++i) {
+    if (segment->candidate(i).attributes &
+        Segment::Candidate::TYPING_CORRECTION) {
+      continue;
+    }
+    segment->move_candidate(i, 0);
+    break;
+  }
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

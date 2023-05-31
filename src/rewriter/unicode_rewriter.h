@@ -30,18 +30,19 @@
 #ifndef MOZC_REWRITER_UNICODE_REWRITER_H_
 #define MOZC_REWRITER_UNICODE_REWRITER_H_
 
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class ConverterInterface;
-class Segments;
-
 class UnicodeRewriter : public RewriterInterface {
  public:
-  explicit UnicodeRewriter(const ConverterInterface *parent_converter);
-  ~UnicodeRewriter() override = default;
+  explicit UnicodeRewriter(const ConverterInterface *parent_converter)
+      : parent_converter_(parent_converter) {
+    DCHECK(parent_converter_);
+  }
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;

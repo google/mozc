@@ -261,6 +261,9 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface *immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
+  static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
+                                             Segments *segments);
+
   // Gets history key/value.
   // Returns false if history segments are
   // not found.

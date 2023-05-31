@@ -30,25 +30,25 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
 
-#include <cstdint>
 #ifndef NO_USAGE_REWRITER
 
-#include <map>
+#include <cstdint>
+#include <iterator>
+#include <new>
 #include <string>
 #include <utility>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class DataManagerInterface;
 
 class UsageRewriter : public RewriterInterface {
  public:
@@ -66,31 +66,25 @@ class UsageRewriter : public RewriterInterface {
  private:
   FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
 
-  static constexpr size_t kUsageItemByteLength = 20;
+  static constexpr size_t kUsageItemSize = 5;
 
   class UsageDictItemIterator {
    public:
-    UsageDictItemIterator() : ptr_(nullptr) {}
-    explicit UsageDictItemIterator(const char *ptr) : ptr_(ptr) {}
+    using iterator_cateogry = std::input_iterator_tag;
+    using value_type = size_t;
 
-    size_t usage_id() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_);
-    }
-    size_t key_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
-    }
-    size_t value_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 8);
-    }
-    size_t conjugation_id() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
-    }
-    size_t meaning_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 16);
-    }
+    UsageDictItemIterator() : ptr_(nullptr) {}
+    explicit UsageDictItemIterator(const char *ptr)
+        : ptr_(std::launder(reinterpret_cast<const uint32_t *>(ptr))) {}
+
+    size_t usage_id() const { return *ptr_; }
+    size_t key_index() const { return *(ptr_ + 1); }
+    size_t value_index() const { return *(ptr_ + 2); }
+    size_t conjugation_id() const { return *(ptr_ + 3); }
+    size_t meaning_index() const { return *(ptr_ + 4); }
 
     UsageDictItemIterator &operator++() {
-      ptr_ += kUsageItemByteLength;
+      ptr_ += kUsageItemSize;
       return *this;
     }
 
@@ -105,7 +99,7 @@ class UsageRewriter : public RewriterInterface {
     }
 
    private:
-    const char *ptr_;
+    const uint32_t *ptr_;
   };
 
   using StrPair = std::pair<std::string, std::string>;
@@ -115,7 +109,7 @@ class UsageRewriter : public RewriterInterface {
       const Segment::Candidate &candidate) const;
   UsageDictItemIterator LookupUsage(const Segment::Candidate &candidate) const;
 
-  std::map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
+  absl::flat_hash_map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
   const dictionary::PosMatcher pos_matcher_;
   const dictionary::DictionaryInterface *dictionary_;
   const uint32_t *base_conjugation_suffix_;

@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -40,18 +41,14 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "absl/algorithm/container.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-UnicodeRewriter::UnicodeRewriter(const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter) {
-  DCHECK(parent_converter_);
-}
-
 namespace {
 
 // Checks given string is ucs4 expression or not.
@@ -63,26 +60,18 @@ bool IsValidUcs4Expression(const absl::string_view input) {
   if (!absl::StartsWith(input, "U+")) {
     return false;
   }
-
-  const std::string hexcode(input.substr(2));
-
-  for (size_t i = 0; i < hexcode.size(); ++i) {
-    if (!::isxdigit(hexcode.at(i))) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(input.substr(2),
+                        [](char c) { return absl::ascii_isxdigit(c); });
 }
 
 // Converts given string to 32bit unsigned integer.
 bool UCS4ExpressionToInteger(const absl::string_view input, uint32_t *ucs4) {
   DCHECK(ucs4);
-  const std::string hexcode(input.substr(2));
-  return absl::SimpleHexAtoi(hexcode, ucs4);
+  return absl::SimpleHexAtoi(input.substr(2), ucs4);
 }
 
-void AddCandidate(const absl::string_view key, const absl::string_view value,
-                  int index, Segment *segment) {
+void AddCandidate(std::string key, std::string value, int index,
+                  Segment *segment) {
   DCHECK(segment);
 
   if (index > segment->candidates_size()) {
@@ -94,9 +83,9 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
   candidate->Init();
   segment->set_key(key);
-  candidate->key = std::string(key);
-  candidate->value = std::string(value);
-  candidate->content_value = std::string(value);
+  candidate->key = std::move(key);
+  candidate->value = value;
+  candidate->content_value = std::move(value);
   candidate->description = absl::StrCat("Unicode 変換 (", key, ")");
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
@@ -131,11 +120,11 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
   size_t mblen = 0;
   const char32_t ucs4 = Util::Utf8ToUcs4(
       source_char.data(), source_char.data() + source_char.size(), &mblen);
-  const std::string value = absl::StrFormat("U+%04X", ucs4);
+  std::string value = absl::StrFormat("U+%04X", ucs4);
 
   const std::string &key = segments->conversion_segment(0).key();
   Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, value, 5, segment);
+  AddCandidate(key, std::move(value), 5, segment);
   return true;
 }
 
@@ -183,7 +172,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
   DCHECK_EQ(1, segments->conversion_segments_size());
 
   Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, value, 0, segment);
+  AddCandidate(std::move(key), std::move(value), 0, segment);
   return true;
 }
 

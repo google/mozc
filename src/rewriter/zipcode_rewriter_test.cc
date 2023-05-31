@@ -29,11 +29,9 @@
 
 #include "rewriter/zipcode_rewriter.h"
 
-#include <memory>
 #include <string>
 
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
@@ -93,8 +91,8 @@ class ZipcodeRewriterTest : public ::testing::Test {
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
-  ZipcodeRewriter *CreateZipcodeRewriter() const {
-    return new ZipcodeRewriter(&pos_matcher_);
+  ZipcodeRewriter CreateZipcodeRewriter() const {
+    return ZipcodeRewriter(pos_matcher_);
   }
 
   dictionary::PosMatcher pos_matcher_;
@@ -105,7 +103,7 @@ class ZipcodeRewriterTest : public ::testing::Test {
 };
 
 TEST_F(ZipcodeRewriterTest, BasicTest) {
-  std::unique_ptr<ZipcodeRewriter> zipcode_rewriter(CreateZipcodeRewriter());
+  ZipcodeRewriter zipcode_rewriter = CreateZipcodeRewriter();
 
   const std::string kZipcode = "107-0052";
   const std::string kAddress = "東京都港区赤坂";
@@ -116,7 +114,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
   {
     Segments segments;
     AddSegment("test", "test", NON_ZIPCODE, pos_matcher_, &segments);
-    EXPECT_FALSE(zipcode_rewriter->Rewrite(request, &segments));
+    EXPECT_FALSE(zipcode_rewriter.Rewrite(request, &segments));
   }
 
   {
@@ -124,7 +122,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
-    zipcode_rewriter->Rewrite(request, &segments);
+    zipcode_rewriter.Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments, kZipcode + " " + kAddress));
   }
 
@@ -133,7 +131,7 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
 
     Segments segments;
     AddSegment(kZipcode, kAddress, ZIPCODE, pos_matcher_, &segments);
-    zipcode_rewriter->Rewrite(request, &segments);
+    zipcode_rewriter.Rewrite(request, &segments);
     EXPECT_TRUE(HasZipcodeAndAddress(segments,
                                      // full-width space
                                      kZipcode + "　" + kAddress));

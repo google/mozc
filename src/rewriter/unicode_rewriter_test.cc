@@ -36,11 +36,8 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "composer/composer.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
@@ -83,8 +80,6 @@ bool ContainCandidate(const Segments &segments,
   return false;
 }
 
-}  // namespace
-
 class UnicodeRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -107,11 +102,11 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   const ConversionRequest request;
 
   struct UCS4UTF8Data {
-    const char *ucs4;
-    const char *utf8;
+    absl::string_view ucs4;
+    absl::string_view utf8;
   };
 
-  const UCS4UTF8Data kUcs4Utf8Data[] = {
+  constexpr UCS4UTF8Data kUcs4Utf8Data[] = {
       // Hiragana
       {"U+3042", "あ"},
       {"U+3044", "い"},
@@ -153,7 +148,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
       {"U+00A1", "¡"},
   };
 
-  const char *kMozcUnsupportedUtf8[] = {
+  constexpr absl::string_view kMozcUnsupportedUtf8[] = {
       // Control characters
       "U+0000",
       "U+001F",
@@ -289,4 +284,5 @@ TEST_F(UnicodeRewriterTest, RewriteToUnicodeCharFormat) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

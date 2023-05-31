@@ -31,9 +31,9 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
@@ -42,25 +42,19 @@
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace {
-using dictionary::PosMatcher;
-}  // namespace
 
 bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
-                                                   std::string *zipcode,
-                                                   std::string *address,
-                                                   size_t *insert_pos) const {
-  DCHECK(zipcode);
-  DCHECK(address);
-  DCHECK(insert_pos);
+                                                   std::string &zipcode,
+                                                   std::string &address,
+                                                   size_t &insert_pos) const {
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const Segment::Candidate &c = seg.candidate(i);
-    if (!pos_matcher_->IsZipcode(c.lid) || !pos_matcher_->IsZipcode(c.rid)) {
+    if (!pos_matcher_.IsZipcode(c.lid) || !pos_matcher_.IsZipcode(c.rid)) {
       continue;
     }
-    *zipcode = c.content_key;
-    *address = c.content_value;
-    *insert_pos = i + 1;
+    zipcode = c.content_key;
+    address = c.content_value;
+    insert_pos = i + 1;
     return true;
   }
   return false;
@@ -68,8 +62,7 @@ bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
 
 // Insert zipcode into the |segment|
 bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
-                                      const absl::string_view zipcode,
-                                      const absl::string_view address,
+                                      std::string zipcode, std::string address,
                                       const ConversionRequest &request,
                                       Segment *segment) const {
   DCHECK(segment);
@@ -104,34 +97,29 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
       break;
   }
 
-  std::string space;
+  absl::string_view space;
   if (is_full_width) {
     space = "　";  // "　" (full-width space)
   } else {
     space = " ";
   }
 
-  const std::string value = absl::StrCat(zipcode, space, address);
+  std::string value = absl::StrCat(zipcode, space, address);
 
   candidate->Init();
-  candidate->lid = pos_matcher_->GetZipcodeId();
-  candidate->rid = pos_matcher_->GetZipcodeId();
+  candidate->lid = pos_matcher_.GetZipcodeId();
+  candidate->rid = pos_matcher_.GetZipcodeId();
   candidate->cost = base_candidate.cost;
   candidate->value = value;
-  candidate->content_value = value;
-  candidate->key = std::string(zipcode);
-  candidate->content_key = std::string(zipcode);
+  candidate->content_value = std::move(value);
+  candidate->key = zipcode;
+  candidate->content_key = std::move(zipcode);
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::NO_LEARNING;
   candidate->description = "郵便番号と住所";
 
   return true;
 }
-
-ZipcodeRewriter::ZipcodeRewriter(const PosMatcher *pos_matcher)
-    : pos_matcher_(pos_matcher) {}
-
-ZipcodeRewriter::~ZipcodeRewriter() = default;
 
 bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
                               Segments *segments) const {
@@ -148,12 +136,12 @@ bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
 
   size_t insert_pos;
   std::string zipcode, address;
-  if (!GetZipcodeCandidatePositions(segment, &zipcode, &address, &insert_pos)) {
+  if (!GetZipcodeCandidatePositions(segment, zipcode, address, insert_pos)) {
     return false;
   }
 
-  return InsertCandidate(insert_pos, zipcode, address, request,
-                         segments->mutable_conversion_segment(0));
+  return InsertCandidate(insert_pos, std::move(zipcode), std::move(address),
+                         request, segments->mutable_conversion_segment(0));
 }
 
 }  // namespace mozc

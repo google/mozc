@@ -32,33 +32,29 @@
 
 #include <string>
 
-#include "base/port.h"
+#include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class ZipcodeRewriter : public RewriterInterface {
  public:
-  explicit ZipcodeRewriter(const dictionary::PosMatcher *pos_matcher);
-  ZipcodeRewriter(const ZipcodeRewriter &) = delete;
-  ZipcodeRewriter &operator=(const ZipcodeRewriter &) = delete;
-  ~ZipcodeRewriter() override;
+  explicit ZipcodeRewriter(const dictionary::PosMatcher pos_matcher)
+      : pos_matcher_(pos_matcher) {}
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
  private:
-  bool GetZipcodeCandidatePositions(const Segment &seg, std::string *zipcode,
-                                    std::string *address,
-                                    size_t *insert_pos) const;
-  bool InsertCandidate(size_t insert_pos, absl::string_view zipcode,
-                       absl::string_view address,
-                       const ConversionRequest &request,
+  bool GetZipcodeCandidatePositions(const Segment &seg, std::string &zipcode,
+                                    std::string &address,
+                                    size_t &insert_pos) const;
+  bool InsertCandidate(size_t insert_pos, std::string zipcode,
+                       std::string address, const ConversionRequest &request,
                        Segment *segment) const;
 
-  const dictionary::PosMatcher *pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace mozc
