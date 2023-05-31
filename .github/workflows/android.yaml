@@ -21,6 +21,12 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: setup
+        run: |
+          sudo apt-get update
+          echo "CC=clang-12" >> $GITHUB_ENV
+          echo "CXX=clang++-12" >> $GITHUB_ENV
+
       - name: build
         working-directory: ./src
         run: |
