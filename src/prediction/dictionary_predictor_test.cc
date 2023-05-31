@@ -139,6 +139,11 @@ class DictionaryPredictorTestPeer {
     return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
+  static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
+                                             Segments *segments) {
+    DictionaryPredictor::MaybeMoveLiteralCandidateToTop(request, segments);
+  }
+
  private:
   DictionaryPredictor predictor_;
 };
@@ -1724,6 +1729,50 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   InitSegmentsWithKey("こーひー", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
+}
+
+TEST_F(DictionaryPredictorTest, MaybeMoveLiteralCandidateToTopTest) {
+  Segments segments;
+  InitSegmentsWithKey("key", &segments);
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  for (int i = 0; i < 10; ++i) {
+    auto *candidate = segment->add_candidate();
+    candidate->key = absl::StrCat("key_", i);
+    candidate->value = absl::StrCat("value_", i);
+  }
+
+  auto get_top_value = [&segments]() {
+    return segments.conversion_segment(0).candidate(0).value;
+  };
+
+  DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
+      *convreq_for_suggestion_, &segments);
+
+  // Top is still literal
+  for (int i = 1; i <= 2; ++i) {
+    segment->mutable_candidate(i)->attributes |=
+        Segment::Candidate::TYPING_CORRECTION;
+  }
+
+  DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // Top is TYPING CORRECTION, but
+  // `typing_correction_move_literal_candidate_to_top` is false.
+  segment->mutable_candidate(0)->attributes |=
+      Segment::Candidate::TYPING_CORRECTION;
+  DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // The fist literal candidate is moved to top.
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_move_literal_candidate_to_top(true);
+  DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_3");
 }
 
 }  // namespace
