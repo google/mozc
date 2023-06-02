@@ -149,6 +149,7 @@ mozc_cc_library(
         ":dictionary_prediction_aggregator",
         ":prediction_aggregator_interface",
         ":predictor_interface",
+        ":rescorer_interface",
         ":result",
         ":suggestion_filter",
         "//base:japanese_util",
@@ -181,7 +182,9 @@ mozc_cc_library(
     name = "result",
     srcs = ["result.cc"],
     hdrs = ["result.h"],
-    visibility = ["//visibility:private"],
+    visibility = [
+        "//prediction:__subpackages__",
+    ],
     deps = [
         ":zero_query_dict",
         "//base:util",
@@ -292,6 +295,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
+        ":rescorer_mock",
         ":suggestion_filter",
         "//base:logging",
         "//base:system_util",
@@ -305,6 +309,7 @@ mozc_cc_test(
         "//converter:immutable_converter_interface",
         "//converter:segmenter",
         "//converter:segments",
+        "//converter:segments_matchers",
         "//data_manager:data_manager_interface",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_token",
@@ -516,5 +521,26 @@ mozc_cc_test(
         "//testing:mozctest",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "rescorer_interface",
+    hdrs = ["rescorer_interface.h"],
+    deps = [
+        ":result",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+mozc_cc_library(
+    name = "rescorer_mock",
+    testonly = 1,
+    hdrs = ["rescorer_mock.h"],
+    deps = [
+        ":rescorer_interface",
+        "//testing",
     ],
 )
