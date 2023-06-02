@@ -136,6 +136,11 @@
       'x86_Base': {
         'abstract': 1,
         'msvs_settings': {
+          'VCCLCompilerTool': {
+            'AdditionalOptions': [
+              '/bigobj',
+            ],
+          },
           'VCLibrarianTool': {
             'AdditionalLibraryDirectories': [
               '<@(msvs_libs_x86)',
@@ -175,6 +180,11 @@
         },
         'msvs_configuration_platform': 'x64',
         'msvs_settings': {
+          'VCCLCompilerTool': {
+            'AdditionalOptions': [
+              '/bigobj',
+            ],
+          },
           'VCLibrarianTool': {
             'AdditionalLibraryDirectories': [
               '<@(msvs_libs_x64)',
