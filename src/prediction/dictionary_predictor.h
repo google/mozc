@@ -48,6 +48,7 @@
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
@@ -74,7 +75,8 @@ class DictionaryPredictor : public PredictorInterface {
                       const dictionary::DictionaryInterface *suffix_dictionary,
                       const Connector &connector, const Segmenter *segmenter,
                       const dictionary::PosMatcher *pos_matcher,
-                      const SuggestionFilter &suggestion_filter);
+                      const SuggestionFilter &suggestion_filter,
+                      const prediction::RescorerInterface *rescorer = nullptr);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -139,7 +141,8 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter &suggestion_filter);
+      const SuggestionFilter &suggestion_filter,
+      const prediction::RescorerInterface *rescorer = nullptr);
 
   static void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                           std::vector<Result> *results);
@@ -270,6 +273,10 @@ class DictionaryPredictor : public PredictorInterface {
   static bool GetHistoryKeyAndValue(const Segments &segments, std::string *key,
                                     std::string *value);
 
+  void MaybeRescoreResults(const ConversionRequest &request,
+                           const Segments &segments,
+                           absl::Span<Result> results) const;
+
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;
 
@@ -284,6 +291,7 @@ class DictionaryPredictor : public PredictorInterface {
   const dictionary::PosMatcher *pos_matcher_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
+  const prediction::RescorerInterface *rescorer_ = nullptr;
 };
 
 }  // namespace mozc

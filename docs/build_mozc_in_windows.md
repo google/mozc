@@ -138,7 +138,7 @@ python build_mozc.py build -c Debug package
 
 ### Installers
 
-You have release build binaries in `out_win\Release\Mozc32.msi` and `out_win\Release\Mozc64.msi`.
+You have release build binaries in `out_win\Release\Mozc64.msi`.
 
 ### Clean up the Tree
 
@@ -155,8 +155,6 @@ On a 64-bit environment, run the following command (or simply double click the c
 ```
 out_win\Release\Mozc64.msi
 ```
-
-For 32-bit environment, use `Mozc32.msi` instead.
 
 ## Uninstall Mozc
 

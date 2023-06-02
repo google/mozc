@@ -50,10 +50,12 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/rescorer_mock.h"
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -80,9 +82,11 @@ class DictionaryPredictorTestPeer {
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter &suggestion_filter)
+      const SuggestionFilter &suggestion_filter,
+      const prediction::RescorerInterface *rescorer = nullptr)
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
-                   connector, segmenter, pos_matcher, suggestion_filter) {}
+                   connector, segmenter, pos_matcher, suggestion_filter,
+                   rescorer) {}
   ~DictionaryPredictorTestPeer() = default;
 
   bool PredictForRequest(const ConversionRequest &request,
@@ -153,6 +157,8 @@ using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::testing::_;
 using ::testing::DoAll;
+using ::testing::Field;
+using ::testing::Invoke;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
@@ -319,7 +325,8 @@ class MockAggregator : public prediction::PredictionAggregatorInterface {
 // Helper class to hold predictor objects.
 class MockDataAndPredictor {
  public:
-  MockDataAndPredictor()
+  explicit MockDataAndPredictor(
+      const prediction::RescorerInterface *rescorer = nullptr)
       : data_manager_(),
         mock_immutable_converter_(),
         mock_aggregator_(new MockAggregator()),
@@ -333,7 +340,7 @@ class MockDataAndPredictor {
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         absl::WrapUnique(mock_aggregator_), data_manager_,
         &mock_immutable_converter_, connector_, segmenter_.get(), &pos_matcher_,
-        suggestion_filter_);
+        suggestion_filter_, rescorer);
   }
 
   MockImmutableConverter *mutable_immutable_converter() {
@@ -385,8 +392,9 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   static std::unique_ptr<MockDataAndPredictor>
-  CreateDictionaryPredictorWithMockData() {
-    return std::make_unique<MockDataAndPredictor>();
+  CreateDictionaryPredictorWithMockData(
+      const prediction::RescorerInterface *rescorer = nullptr) {
+    return std::make_unique<MockDataAndPredictor>(rescorer);
   }
 
   std::unique_ptr<composer::Composer> composer_;
@@ -1773,6 +1781,44 @@ TEST_F(DictionaryPredictorTest, MaybeMoveLiteralCandidateToTopTest) {
   DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
       *convreq_for_suggestion_, &segments);
   EXPECT_EQ(get_top_value(), "value_3");
+}
+
+TEST_F(DictionaryPredictorTest, Rescoring) {
+  prediction::MockRescorer rescorer;
+  EXPECT_CALL(rescorer, RescoreResults(_, _, _))
+      .WillRepeatedly(
+          Invoke([](const ConversionRequest &request, absl::string_view history,
+                    absl::Span<Result> results) {
+            for (Result &r : results) r.cost = 100;
+          }));
+
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData(&rescorer);
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  EXPECT_CALL(*aggregator, AggregateResults(_, _))
+      .WillOnce(Return(std::vector<Result>{
+          CreateResult5("こーひー", "コーヒー", 500, prediction::UNIGRAM,
+                        Token::NONE),
+          CreateResult5("こーひー", "珈琲", 600, prediction::UNIGRAM,
+                        Token::NONE),
+          CreateResult5("こーひー", "coffee", 700, prediction::UNIGRAM,
+                        Token::NONE),
+      }));
+
+  Segments segments;
+  InitSegmentsWithKey("こーひー", &segments);
+
+  predictor.PredictForRequest(*convreq_for_prediction_, &segments);
+
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_THAT(segments.conversion_segment(0),
+              CandidatesAreArray({
+                  Field(&Segment::Candidate::cost, 100),
+                  Field(&Segment::Candidate::cost, 100),
+                  Field(&Segment::Candidate::cost, 100),
+              }));
 }
 
 }  // namespace

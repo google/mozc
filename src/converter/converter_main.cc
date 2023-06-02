@@ -68,6 +68,10 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
+#ifndef NDEBUG
+#define MOZC_DEBUG
+#endif  // NDEBUG
+
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
 ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
@@ -228,6 +232,15 @@ void PrintCandidate(const Segment &parent, int num,
   if (!segbdd_str.empty()) {
     lines.push_back("segbdd: " + segbdd_str);
   }
+#ifdef MOZC_DEBUG
+  if (!cand.log.empty()) {
+    lines.push_back("log:");
+    for (absl::string_view line : absl::StrSplit(cand.log, '\n')) {
+      if (line.empty()) continue;
+      lines.push_back(absl::StrCat("    ", line));
+    }
+  }
+#endif  // MOZC_DEBUG
 
   (*os) << "  " << num << " " << cand.value << std::endl;
   for (size_t i = 0; i < lines.size(); ++i) {

@@ -68,19 +68,11 @@
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
-#define MOZC_WORD_LOG_MESSAGE(message) \
-  absl::StrCat(__FILE__, ":", __LINE__, " ", message, "\n")
-#define MOZC_WORD_LOG(result, message) \
-  (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
-
-#else  // NDEBUG
-#define MOZC_WORD_LOG(result, message) \
-  {}
-
 #endif  // NDEBUG
 
 namespace mozc {
 namespace {
+
 using ::mozc::commands::Request;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::PosMatcher;
@@ -183,7 +175,8 @@ DictionaryPredictor::DictionaryPredictor(
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary, const Connector &connector,
     const Segmenter *segmenter, const PosMatcher *pos_matcher,
-    const SuggestionFilter &suggestion_filter)
+    const SuggestionFilter &suggestion_filter,
+    const prediction::RescorerInterface *rescorer)
     : aggregator_(std::make_unique<prediction::DictionaryPredictionAggregator>(
           data_manager, converter, immutable_converter, dictionary,
           suffix_dictionary, pos_matcher)),
@@ -195,14 +188,16 @@ DictionaryPredictor::DictionaryPredictor(
           new dictionary::SingleKanjiDictionary(data_manager)),
       pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
-      predictor_name_("DictionaryPredictor") {}
+      predictor_name_("DictionaryPredictor"),
+      rescorer_(rescorer) {}
 
 DictionaryPredictor::DictionaryPredictor(
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
     const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
     const Connector &connector, const Segmenter *segmenter,
-    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter)
+    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter,
+    const prediction::RescorerInterface *rescorer)
     : aggregator_(std::move(aggregator)),
       immutable_converter_(immutable_converter),
       connector_(connector),
@@ -212,7 +207,8 @@ DictionaryPredictor::DictionaryPredictor(
           new dictionary::SingleKanjiDictionary(data_manager)),
       pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
-      predictor_name_("DictionaryPredictorForTest") {}
+      predictor_name_("DictionaryPredictorForTest"),
+      rescorer_(rescorer) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
@@ -300,6 +296,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     if (!IsEnableNewSpatialScoring(request)) {
       ApplyPenaltyForKeyExpansion(*segments, &results);
     }
+    MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
+
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
     // not called.
@@ -311,6 +309,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   if (!IsEnableNewSpatialScoring(request)) {
     ApplyPenaltyForKeyExpansion(*segments, &results);
   }
+  MaybeRescoreResults(request, *segments, absl::MakeSpan(results));
+
   const std::string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
   RemoveMissSpelledCandidates(input_key_len, &results);
@@ -1030,10 +1030,13 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Penalty for prefix results.
     if (result.candidate_attributes &
         Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-      cost +=
+      const int prefix_penalty =
           CalculatePrefixPenalty(request, input_key, result,
                                  immutable_converter_, &prefix_penalty_cache);
-      MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost));
+      result.prefix_penalty = prefix_penalty;
+      cost += prefix_penalty;
+      MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost,
+                                         "; prefix penalty: ", prefix_penalty));
     }
 
     // Note that the cost is defined as -500 * log(prob).
@@ -1269,6 +1272,20 @@ bool DictionaryPredictor::GetHistoryKeyAndValue(const Segments &segments,
   key->assign(history_segment.candidate(0).key);
   value->assign(history_segment.candidate(0).value);
   return true;
+}
+
+void DictionaryPredictor::MaybeRescoreResults(
+    const ConversionRequest &request, const Segments &segments,
+    absl::Span<Result> results) const {
+  if (!rescorer_) return;
+  // Concatenate top values of history segments.
+  std::string history;
+  for (size_t i = 0; i < segments.history_segments_size(); ++i) {
+    const Segment &seg = segments.history_segment(i);
+    if (seg.candidates_size() == 0) continue;
+    history.append(seg.candidate(0).value);
+  }
+  rescorer_->RescoreResults(request, history, results);
 }
 
 }  // namespace mozc
