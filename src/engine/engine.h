@@ -47,6 +47,7 @@
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/status/status.h"
@@ -141,6 +142,7 @@ class Engine : public EngineInterface {
 
   std::unique_ptr<ConverterImpl> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
+  std::unique_ptr<const prediction::RescorerInterface> rescorer_;
 };
 
 }  // namespace mozc

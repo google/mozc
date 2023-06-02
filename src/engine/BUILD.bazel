@@ -136,6 +136,7 @@ mozc_cc_library(
         "//prediction:dictionary_predictor",
         "//prediction:predictor",
         "//prediction:predictor_interface",
+        "//prediction:rescorer_interface",
         "//prediction:suggestion_filter",
         "//prediction:user_history_predictor",
         "//rewriter",

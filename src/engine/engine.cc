@@ -52,6 +52,7 @@
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/user_history_predictor.h"
 #include "rewriter/rewriter.h"
@@ -128,6 +129,11 @@ bool UserDataManagerImpl::ClearUserPredictionEntry(
 }
 
 bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
+
+std::unique_ptr<prediction::RescorerInterface> MaybeCreateRescorer(
+    const DataManagerInterface &data_manager) {
+  return nullptr;
+}
 
 }  // namespace
 
@@ -244,10 +250,12 @@ absl::Status Engine::Init(
   {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
+    rescorer_ = MaybeCreateRescorer(*data_manager);
     auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *data_manager, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_,
-        segmenter_.get(), pos_matcher_.get(), suggestion_filter_);
+        segmenter_.get(), pos_matcher_.get(), suggestion_filter_,
+        rescorer_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;

@@ -68,15 +68,6 @@
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
-#define MOZC_WORD_LOG_MESSAGE(message) \
-  absl::StrCat(__FILE__, ":", __LINE__, " ", message, "\n")
-#define MOZC_WORD_LOG(result, message) \
-  (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
-
-#else  // NDEBUG
-#define MOZC_WORD_LOG(result, message) \
-  {}
-
 #endif  // NDEBUG
 
 namespace mozc {
@@ -1039,10 +1030,13 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Penalty for prefix results.
     if (result.candidate_attributes &
         Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-      cost +=
+      const int prefix_penalty =
           CalculatePrefixPenalty(request, input_key, result,
                                  immutable_converter_, &prefix_penalty_cache);
-      MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost));
+      result.prefix_penalty = prefix_penalty;
+      cost += prefix_penalty;
+      MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost,
+                                         "; prefix penalty: ", prefix_penalty));
     }
 
     // Note that the cost is defined as -500 * log(prob).
