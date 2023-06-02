@@ -114,10 +114,7 @@ mozc_cc_library(
 mozc_cc_library(
     name = "node_allocator",
     hdrs = ["node_allocator.h"],
-    visibility = [
-        "//dictionary:__subpackages__",
-        "//prediction:__pkg__",
-    ],
+    visibility = ["//dictionary:__subpackages__"],
     deps = [
         ":node",
         "//base:logging",
