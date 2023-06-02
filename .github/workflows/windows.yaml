@@ -68,15 +68,6 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
           python build_mozc.py build -c Release package
 
-      # Each actions/upload-artifact step can be seen as one artifact entry with '{name}' on the
-      # webpage, and '{name}.zip' will be downloaded by clicking it. Instead of uploading
-      # installer.zip, let's have two separate artifact entries for discoverability.
-      - name: Upload Mozc32.msi
-        uses: actions/upload-artifact@v3
-        with:
-          name: Mozc32.msi
-          path: src/out_win/Release/Mozc32.msi
-          if-no-files-found: warn
       - name: upload Mozc64.msi
         uses: actions/upload-artifact@v3
         with:
