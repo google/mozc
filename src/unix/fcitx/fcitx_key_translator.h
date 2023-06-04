@@ -1,5 +1,5 @@
 // Copyright 2010-2012, Google Inc.
-// Copyright 2012~2013, Weng Xuetian <wengxt@gmail.com>
+// Copyright 2012~2023, Weng Xuetian <wengxt@gmail.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,19 +43,20 @@
 #include <fcitx/ime.h>
 
 namespace mozc {
-
 namespace fcitx {
 
-// This class is responsible for converting scim::KeyEvent object (defined in
-// /usr/include/scim-1.0/scim_event.h) to IPC input for mozc_server.
+// This class is responsible for converting key code sent from ibus-daemon
+// (defined in /usr/include/ibus-1.0/ibuskeysyms.h) to a KeyEvent object for
+// the input of session_interface.
 class KeyTranslator {
 public:
-  KeyTranslator();
+  KeyTranslator() = default;
   KeyTranslator(const KeyTranslator &) = delete;
-  virtual ~KeyTranslator();
+  KeyTranslator &operator=(const KeyTranslator &) = delete;
+  virtual ~KeyTranslator() = default;
 
-  // Converts scim_key into Mozc key code and stores them on out_translated.
-  // scim_key must satisfy the following precondition: CanConvert(scim_key)
+  // Converts ibus keycode to Mozc key code and stores them on |out_event|.
+  // Returns true if ibus keycode is successfully converted to Mozc key code.
   bool Translate(FcitxKeySym keyval,
                  uint32_t keycode,
                  uint32_t modifiers,
@@ -64,20 +65,6 @@ public:
                  mozc::commands::KeyEvent *out_event) const;
 
 private:
-  typedef std::map<uint32_t, commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef std::map<uint32_t, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<uint32_t, std::pair<std::string, std::string> > KanaMap;
-
-  // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(uint32_t keyval,
-                     uint32_t keycode,
-                     uint32_t modifiers) const;
-
-  // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(uint32_t keyval,
-                    uint32_t keycode,
-                    uint32_t modifiers) const;
-
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(uint32_t keyval,
                        uint32_t keycode,
@@ -98,24 +85,9 @@ private:
                                              uint32_t keycode,
                                              uint32_t modifiers);
 
-  // Initializes private fields.
-  void Init();
-
-  // Stores a mapping from ibus keys to Mozc's special keys.
-  SpecialKeyMap special_key_map_;
-  // Stores a mapping from ibus modifier keys to Mozc's modifier keys.
-  ModifierKeyMap modifier_key_map_;
-  // Stores a mapping from ibus modifier masks to Mozc's modifier keys.
-  ModifierKeyMap modifier_mask_map_;
-  // Stores a mapping from ASCII to Kana character. For example, ASCII character
-  // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
-  // 'Hiragana Letter Small U' (with Shift modifier).
-  KanaMap kana_map_jp_;  // mapping for JP keyboard.
-  KanaMap kana_map_us_;  // mapping for US keyboard.
 };
 
 }  // namespace fcitx
-
 }  // namespace mozc
 
 #endif  // MOZC_UNIX_FCITX_FCITX_KEY_TRANSLATOR_H_

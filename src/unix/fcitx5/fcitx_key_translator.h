@@ -1,5 +1,5 @@
 // Copyright 2010-2012, Google Inc.
-// Copyright 2012-2017, Weng Xuetian <wengxt@gmail.com>
+// Copyright 2012~2023, Weng Xuetian <wengxt@gmail.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include <fcitx-utils/key.h>
 
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string>
@@ -46,9 +47,10 @@ namespace fcitx {
 // mozc_server.
 class KeyTranslator {
  public:
-  KeyTranslator();
+  KeyTranslator() = default;
   KeyTranslator(const KeyTranslator &) = delete;
-  virtual ~KeyTranslator();
+  KeyTranslator &operator=(const KeyTranslator &) = delete;
+  virtual ~KeyTranslator() = default;
 
   // Converts fcitx key into Mozc key code and stores them on out_translated.
   bool Translate(KeySym keyval, uint32_t keycode, KeyStates modifiers,
@@ -56,19 +58,6 @@ class KeyTranslator {
                  mozc::commands::KeyEvent *out_event) const;
 
  private:
-  typedef std::map<uint32_t, mozc::commands::KeyEvent::SpecialKey>
-      SpecialKeyMap;
-  typedef std::map<uint32_t, mozc::commands::KeyEvent::ModifierKey>
-      ModifierKeyMap;
-  typedef std::map<uint32_t, std::pair<std::string, std::string>> KanaMap;
-
-  // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(KeySym keyval, uint32_t keycode,
-                     KeyStates modifiers) const;
-
-  // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(KeySym keyval, uint32_t keycode, KeyStates modifiers) const;
-
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(KeySym keyval, uint32_t keycode, KeyStates modifiers,
                        bool layout_is_jp, std::string *out) const;
@@ -82,21 +71,6 @@ class KeyTranslator {
   // Returns true iff key is HiraganaKatakana with shift modifier.
   static bool IsHiraganaKatakanaKeyWithShift(KeySym keyval, uint32_t keycode,
                                              KeyStates modifiers);
-
-  // Initializes private fields.
-  void Init();
-
-  // Stores a mapping from ibus keys to Mozc's special keys.
-  SpecialKeyMap special_key_map_;
-  // Stores a mapping from ibus modifier keys to Mozc's modifier keys.
-  ModifierKeyMap modifier_key_map_;
-  // Stores a mapping from ibus modifier masks to Mozc's modifier keys.
-  ModifierKeyMap modifier_mask_map_;
-  // Stores a mapping from ASCII to Kana character. For example, ASCII character
-  // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
-  // 'Hiragana Letter Small U' (with Shift modifier).
-  KanaMap kana_map_jp_;  // mapping for JP keyboard.
-  KanaMap kana_map_us_;  // mapping for US keyboard.
 };
 
 }  // namespace fcitx
