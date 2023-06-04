@@ -32,16 +32,21 @@
 
 #include <cstdint>
 
+#include "absl/base/attributes.h"
+
 namespace mozc {
 namespace dictionary {
 
 // Manages pos grouping rule.
+// This class holds a pointer to the array managed by DataManager, so pass it by
+// value like string_view.
 class PosGroup {
  public:
-  explicit PosGroup(const uint8_t *lid_group) : lid_group_(lid_group) {}
-  PosGroup(const PosGroup &) = delete;
-  PosGroup &operator=(const PosGroup &) = delete;
-  ~PosGroup() = default;
+  explicit PosGroup(const uint8_t *lid_group ABSL_ATTRIBUTE_LIFETIME_BOUND)
+      : lid_group_(lid_group) {}
+
+  PosGroup(const PosGroup &) = default;
+  PosGroup &operator=(const PosGroup &) = default;
 
   // Returns grouped pos id based on an array pre-generated from
   // data/rules/user_segment_history_pos_group.def.
@@ -50,7 +55,7 @@ class PosGroup {
   }
 
  private:
-  const uint8_t *const lid_group_;
+  const uint8_t *lid_group_;
 };
 
 }  // namespace dictionary
