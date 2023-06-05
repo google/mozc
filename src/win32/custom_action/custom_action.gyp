@@ -64,13 +64,6 @@
           ],
         },
         {
-          'target_name': 'mozc_custom_action32',
-          'product_name': '<(custom_action_dll_product_name_win)32',
-          'includes': [
-            'custom_action.gypi',
-          ],
-        },
-        {
           'target_name': 'mozc_custom_action64',
           'product_name': '<(custom_action_dll_product_name_win)64',
           'includes': [
