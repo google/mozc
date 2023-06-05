@@ -500,7 +500,7 @@ int main(int argc, char **argv) {
         << "Invalid DecoderExperimentParams: " << textproto;
     request.mutable_decoder_experiment_params()->MergeFrom(params);
     LOG(INFO) << "DecoderExperimentParams was set:\n"
-              << request.decoder_experiment_params();
+              << MOZC_LOG_PROTOBUF(request.decoder_experiment_params());
   }
 
   mozc::ConverterInterface *converter = engine->GetConverter();
