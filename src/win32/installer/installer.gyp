@@ -122,14 +122,12 @@
         'mozc_tip64_path': '<(mozc_tip64_path)',
         'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker64_path': '<(mozc_broker64_path)',
-        'mozc_ca32_path': '<(mozc_ca32_path)',
         'mozc_ca64_path': '<(mozc_ca64_path)',
         'mozc_content_dir': '<(mozc_content_dir)',
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_64bit_msi': '<(outdir32)/<(branding)64.msi',
         'mozc_64bit_postbuild_stamps': [
           '<(mozc_broker64_path).postbuild',
-          '<(mozc_ca32_path).postbuild',
           '<(mozc_ca64_path).postbuild',
           '<(mozc_cache_service64_path).postbuild',
           '<(mozc_renderer64_path).postbuild',
@@ -163,11 +161,6 @@
         {
           'target_name': 'mozc_tool_postbuild',
           'variables': { 'target_file': '<(mozc_tool_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_ca32_postbuild',
-          'variables': { 'target_file': '<(mozc_ca32_path)' },
           'includes': [ 'postbuilds_win.gypi' ],
         },
         {
