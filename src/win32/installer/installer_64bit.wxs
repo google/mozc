@@ -535,7 +535,7 @@
       <Custom Action='UnregisterTIP64' After='UnregisterTIPRollback64' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
       </Custom>
-      <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP32' >
+      <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP64' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
