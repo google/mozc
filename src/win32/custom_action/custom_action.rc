@@ -27,35 +27,18 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 // Version
 //
 
-#ifdef _WIN64
-  #ifndef MOZC_RES_INTERNAL_NAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaInstallerHelper64"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_installer_helper64"
-    #endif
+#ifndef MOZC_RES_INTERNAL_NAME
+  #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+    #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaInstallerHelper"
+  #elif defined(MOZC_BUILD)
+    #define MOZC_RES_INTERNAL_NAME "mozc_installer_helper"
   #endif
-  #ifndef MOZC_RES_ORIGINAL_FILENAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaInstallerHelper64.dll"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_installer_helper64.dll"
-    #endif
-  #endif
-#else
-  #ifndef MOZC_RES_INTERNAL_NAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaInstallerHelper32"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_installer_helper32"
-    #endif
-  #endif
-  #ifndef MOZC_RES_ORIGINAL_FILENAME
-    #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaInstallerHelper32.dll"
-    #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_installer_helper32.dll"
-    #endif
+#endif
+#ifndef MOZC_RES_ORIGINAL_FILENAME
+  #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+    #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaInstallerHelper.dll"
+  #elif defined(MOZC_BUILD)
+    #define MOZC_RES_ORIGINAL_FILENAME "mozc_installer_helper.dll"
   #endif
 #endif
 #ifndef MOZC_RES_FILE_DESCRIPTION
