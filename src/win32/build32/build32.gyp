@@ -43,7 +43,6 @@
           'target_name': 'mozc_win32_build32',
           'type': 'none',
           'dependencies': [
-            '../custom_action/custom_action.gyp:mozc_custom_action32',
             '../tip/tip.gyp:mozc_tip32',
           ],
           'conditions': [

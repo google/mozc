@@ -47,7 +47,7 @@
             '../../server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker',
             '../cache_service/cache_service.gyp:mozc_cache_service',
-            '../custom_action/custom_action.gyp:mozc_custom_action64',
+            '../custom_action/custom_action.gyp:mozc_custom_action',
             '../tip/tip.gyp:mozc_tip64',
           ],
         },

@@ -445,19 +445,8 @@
       <ComponentRef Id='CreditsEn' />
     </Feature>
 
-    <Binary Id='CustomActions32' SourceFile='$(var.CustomActions32Path)' />
     <Binary Id='CustomActions64' SourceFile='$(var.CustomActions64Path)' />
 
-    <CustomAction Id='RegisterTIP32' BinaryKey='CustomActions32'
-        DllEntry='RegisterTIP' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='RegisterTIPRollback32' BinaryKey='CustomActions32'
-        DllEntry='RegisterTIPRollback' Execute='rollback' Impersonate='no' />
-    <CustomAction Id='UnregisterTIP32' BinaryKey='CustomActions32'
-        DllEntry='UnregisterTIP' Execute='deferred' Impersonate='no'
-        Return='ignore' />
-    <CustomAction Id='UnregisterTIPRollback32' BinaryKey='CustomActions32'
-        DllEntry='UnregisterTIPRollback' Execute='rollback' Impersonate='no'
-        Return='ignore' />
     <CustomAction Id='RegisterTIP64' BinaryKey='CustomActions64'
         DllEntry='RegisterTIP' Execute='deferred' Impersonate='no' />
     <CustomAction Id='RegisterTIPRollback64' BinaryKey='CustomActions64'
@@ -472,9 +461,9 @@
         BinaryKey='CustomActions64'
         DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
         Impersonate='no' Return='ignore' />
-    <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions32'
+    <CustomAction Id='OpenUninstallSurveyPage' BinaryKey='CustomActions64'
         DllEntry='OpenUninstallSurveyPage' Impersonate='yes' Return='ignore' />
-    <CustomAction Id='ShutdownServer' BinaryKey='CustomActions32'
+    <CustomAction Id='ShutdownServer' BinaryKey='CustomActions64'
         DllEntry='ShutdownServer' Impersonate='yes' Return='ignore' />
     <CustomAction Id='RestoreUserIMEEnvironment' BinaryKey='CustomActions64'
         DllEntry='RestoreUserIMEEnvironment' Impersonate='yes' Return='ignore'/>
@@ -486,28 +475,28 @@
         BinaryKey='CustomActions64' Execute='deferred'
         DllEntry='EnsureIMEIsDisabledForServiceAccount' Impersonate='no'
         Return='ignore'/>
-    <CustomAction Id='InitialInstallation' BinaryKey='CustomActions32'
+    <CustomAction Id='InitialInstallation' BinaryKey='CustomActions64'
         DllEntry='InitialInstallation' Execute='deferred'
         Impersonate='no' />
-    <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions32'
+    <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions64'
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
     <CustomAction Id='EnableTipProfile' BinaryKey='CustomActions64'
         DllEntry='EnableTipProfile' Execute='commit'
         Impersonate='yes' />
-    <CustomAction Id='HideCancelButton' BinaryKey='CustomActions32'
+    <CustomAction Id='HideCancelButton' BinaryKey='CustomActions64'
         DllEntry='HideCancelButton' Return='ignore' />
-    <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions32'
+    <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions64'
         DllEntry='SaveCustomActionData' />
-    <CustomAction Id='RestoreServiceState' BinaryKey='CustomActions32'
+    <CustomAction Id='RestoreServiceState' BinaryKey='CustomActions64'
         DllEntry='RestoreServiceState' Impersonate='no' Execute='deferred'
         Return='ignore' />
-    <CustomAction Id='StopCacheServiceForRollback' BinaryKey='CustomActions32'
+    <CustomAction Id='StopCacheServiceForRollback' BinaryKey='CustomActions64'
         DllEntry='StopCacheService' Impersonate='no'
         Execute='rollback' Return='ignore' />
-    <CustomAction Id='WriteApValue' BinaryKey='CustomActions32'
+    <CustomAction Id='WriteApValue' BinaryKey='CustomActions64'
         DllEntry='WriteApValue' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='WriteApValueRollback' BinaryKey='CustomActions32'
+    <CustomAction Id='WriteApValueRollback' BinaryKey='CustomActions64'
         DllEntry='WriteApValueRollback' Execute='rollback' Impersonate='no' />
     <CustomAction Id="NewerVersionError" Error="4000"/>
 
@@ -546,14 +535,7 @@
       <Custom Action='UnregisterTIP64' After='UnregisterTIPRollback64' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (VersionNT64)
       </Custom>
-      <!-- This action invoked only when removal of the old product failed. -->
-      <Custom Action='UnregisterTIPRollback32' After='UnregisterTIP64' >
-        (REMOVE="ALL") AND UPGRADINGPRODUCTCODE
-      </Custom>
-      <Custom Action='UnregisterTIP32' After='UnregisterTIPRollback32' >
-        (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
-      </Custom>
-      <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP32' >
+      <Custom Action='OpenUninstallSurveyPage' After='UnregisterTIP64' >
         (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE) AND (UILevel &gt;= 3)
       </Custom>
       <SelfRegModules />
@@ -584,20 +566,14 @@
       <Custom Action='StopCacheServiceForRollback' Before='RestoreServiceState'>
         (NOT (REMOVE="ALL"))
       </Custom>
-      <Custom Action='RestoreServiceState' Before='RegisterTIPRollback32'>
+      <Custom Action='RestoreServiceState' Before='RegisterTIPRollback64'>
         (NOT (REMOVE="ALL"))
       </Custom>
       <!--
-        If error occurs after RegisterTIP32,
+        If error occurs after RegisterTIP64,
         the registration needs to be canceled by registering the old product.
-        So RegisterTIP32 needs to be scheduled after RemoveExistingProduct.
+        So RegisterTIP64 needs to be scheduled after RemoveExistingProduct.
       -->
-      <Custom Action='RegisterTIPRollback32' Before='RegisterTIP32' >
-        (NOT (REMOVE="ALL")) AND (NOT UPGRADING)
-      </Custom>
-      <Custom Action='RegisterTIP32' Before='RegisterTIPRollback64' >
-        (NOT (REMOVE="ALL"))
-      </Custom>
       <Custom Action='RegisterTIPRollback64' Before='RegisterTIP64' >
         (NOT (REMOVE="ALL")) AND (VersionNT64) AND (NOT UPGRADING)
       </Custom>

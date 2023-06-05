@@ -64,18 +64,34 @@
           ],
         },
         {
-          'target_name': 'mozc_custom_action32',
-          'product_name': '<(custom_action_dll_product_name_win)32',
-          'includes': [
-            'custom_action.gypi',
+          'target_name': 'mozc_custom_action',
+          'product_name': '<(custom_action_dll_product_name_win)',
+          'type': 'shared_library',
+          'sources': [
+            'custom_action.cc',
+            'custom_action.def',
+            '<(gen_out_dir)/custom_action_autogen.rc',
           ],
-        },
-        {
-          'target_name': 'mozc_custom_action64',
-          'product_name': '<(custom_action_dll_product_name_win)64',
-          'includes': [
-            'custom_action.gypi',
+          'dependencies': [
+            '../../base/base.gyp:base',
+            '../../base/base.gyp:url',
+            '../../client/client.gyp:client',
+            '../../config/config.gyp:stats_config_util',
+            '../../renderer/renderer.gyp:renderer_client',
+            '../base/win32_base.gyp:ime_base',
+            '../base/win32_base.gyp:imframework_util',
+            '../base/win32_base.gyp:input_dll_import_lib',
+            '../cache_service/cache_service.gyp:cache_service_manager',
+            'gen_custom_action_resource_header',
           ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'crypt32.lib',  # used in 'custom_action.cc'
+                'msi.lib',      # used in 'custom_action.cc'
+              ],
+            },
+          },
         },
       ],
     },],

@@ -51,8 +51,7 @@
             'omaha_clientstate_key': r'Software\Google\Update\ClientState\{<(omaha_guid)}',
             'wxs_64bit_file': '<(DEPTH)/win32/installer/installer_64bit.wxs',
             'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker.exe',
-            'mozc_ca32_path': '<(outdir32)/GoogleIMEJaInstallerHelper32.dll',
-            'mozc_ca64_path': '<(outdir64)/GoogleIMEJaInstallerHelper64.dll',
+            'mozc_ca64_path': '<(outdir64)/GoogleIMEJaInstallerHelper.dll',
             'mozc_cache_service64_path': '<(outdir64)/GoogleIMEJaCacheService.exe',
             'mozc_content_dir': '<(DEPTH)/data',
             'mozc_renderer64_path': '<(outdir64)/GoogleIMEJaRenderer.exe',
@@ -67,8 +66,7 @@
             'omaha_clientstate_key': '',
             'wxs_64bit_file': '<(DEPTH)/win32/installer/installer_oss_64bit.wxs',
             'mozc_broker64_path': '<(outdir64)/mozc_broker.exe',
-            'mozc_ca32_path': '<(outdir32)/mozc_installer_helper32.dll',
-            'mozc_ca64_path': '<(outdir64)/mozc_installer_helper64.dll',
+            'mozc_ca64_path': '<(outdir64)/mozc_installer_helper.dll',
             'mozc_cache_service64_path': '<(outdir64)/mozc_cache_service.exe',
             'mozc_content_dir': '<(DEPTH)/data',
             'mozc_renderer64_path': '<(outdir64)/mozc_renderer.exe',
@@ -124,14 +122,12 @@
         'mozc_tip64_path': '<(mozc_tip64_path)',
         'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker64_path': '<(mozc_broker64_path)',
-        'mozc_ca32_path': '<(mozc_ca32_path)',
         'mozc_ca64_path': '<(mozc_ca64_path)',
         'mozc_content_dir': '<(mozc_content_dir)',
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_64bit_msi': '<(outdir32)/<(branding)64.msi',
         'mozc_64bit_postbuild_stamps': [
           '<(mozc_broker64_path).postbuild',
-          '<(mozc_ca32_path).postbuild',
           '<(mozc_ca64_path).postbuild',
           '<(mozc_cache_service64_path).postbuild',
           '<(mozc_renderer64_path).postbuild',
@@ -168,11 +164,6 @@
           'includes': [ 'postbuilds_win.gypi' ],
         },
         {
-          'target_name': 'mozc_ca32_postbuild',
-          'variables': { 'target_file': '<(mozc_ca32_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
           'target_name': 'mozc_tip64_postbuild',
           'variables': { 'target_file': '<(mozc_tip64_path)' },
           'includes': [ 'postbuilds_win.gypi' ],
@@ -189,14 +180,133 @@
         },
         {
           'target_name': 'mozc_64bit_installer',
+          'type': 'none',
           'variables': {
             'wxs_file': '<(wxs_64bit_file)',
             'wixobj_file': '<(mozc_64bit_wixobj)',
             'stamp_files': '<(mozc_64bit_postbuild_stamps)',
             'msi_file': '<(mozc_64bit_msi)',
           },
-          'includes': [
-            'wix.gypi',
+          'actions': [
+            {
+              'action_name': 'candle',
+              'conditions': [
+                ['channel_dev==1', {
+                  'variables': {
+                    'omaha_channel_type': 'dev',
+                  },
+                }, { # else
+                  'variables': {
+                    'omaha_channel_type': 'stable',
+                  },
+                }],
+              ],
+              'variables': {
+                'additional_args%': [],
+                'conditions': [
+                  ['qt5core_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5CoreDllPath=<(qt5core_dll_path)',
+                    ],
+                  }],
+                  ['qt5cored_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5CoredDllPath=<(qt5cored_dll_path)',
+                    ],
+                  }],
+                  ['qt5gui_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5GuiDllPath=<(qt5gui_dll_path)',
+                    ],
+                  }],
+                  ['qt5guid_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5GuidDllPath=<(qt5guid_dll_path)',
+                    ],
+                  }],
+                  ['qt5widgets_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5WidgetsDllPath=<(qt5widgets_dll_path)',
+                    ],
+                  }],
+                  ['qt5widgetsd_dll_path!=""', {
+                    'additional_args': [
+                      '-dQt5WidgetsdDllPath=<(qt5widgetsd_dll_path)',
+                    ],
+                  }],
+                  ['qwindows_dll_path!=""', {
+                    'additional_args': [
+                      '-dQWindowsDllPath=<(qwindows_dll_path)',
+                    ],
+                  }],
+                  ['qwindowsd_dll_path!=""', {
+                    'additional_args': [
+                      '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
+                    ],
+                  }],
+                ],
+                'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
+                'document_dir': '<(mozc_content_dir)/installer',
+              },
+              'inputs': [
+                '<(wxs_file)',
+              ],
+              'outputs': [
+                '<(wixobj_file)',
+              ],
+              'action': [
+                '<(wix_dir)/candle.exe',
+                '-nologo',
+                '-dMozcVersion=<(version)',
+                '-dUpgradeCode=<(upgrade_code)',
+                '-dOmahaGuid=<(omaha_guid)',
+                '-dOmahaClientKey=<(omaha_client_key)',
+                '-dOmahaClientStateKey=<(omaha_clientstate_key)',
+                '-dOmahaChannelType=<(omaha_channel_type)',
+                '-dVSConfigurationName=<(CONFIGURATION_NAME)',
+                '-dReleaseRedistCrt32Dir=<(release_redist_32bit_crt_dir)',
+                '-dReleaseRedistCrt64Dir=<(release_redist_64bit_crt_dir)',
+                '-dAddRemoveProgramIconPath=<(icon_path)',
+                '-dMozcTIP32Path=<(mozc_tip32_path)',
+                '-dMozcTIP64Path=<(mozc_tip64_path)',
+                '-dMozcBroker64Path=<(mozc_broker64_path)',
+                '-dMozcServer64Path=<(mozc_server64_path)',
+                '-dMozcCacheService64Path=<(mozc_cache_service64_path)',
+                '-dMozcRenderer64Path=<(mozc_renderer64_path)',
+                '-dMozcToolPath=<(mozc_tool_path)',
+                '-dCustomActions64Path=<(mozc_ca64_path)',
+                '-dDocumentsDir=<(document_dir)',
+                '<@(additional_args)',
+                '-o', '<@(_outputs)',
+                # We do not use '<@(_inputs)' here because it contains some
+                # input files just for peoper rebiuld condition.
+                '<(wxs_file)',
+              ],
+              'message': 'candle is generating <@(_outputs)',
+            },
+            {
+              'action_name': 'generate_msi',
+              'inputs': [
+                # ninja.exe will invoke this action if any file listed here is
+                # newer than files in 'outputs'.
+                '<(wixobj_file)',
+                '<@(stamp_files)',
+              ],
+              'outputs': [
+                '<(msi_file)',
+              ],
+              'action': [
+                '<(wix_dir)/light.exe',
+                '-nologo',
+                # Suppress the validation to address the LGHT0217 error.
+                '-sval',
+                '-o', '<@(_outputs)',
+                # We do not use '<@(_inputs)' here because it contains some
+                # input files just for peoper rebiuld condition.
+                '<(wixobj_file)',
+              ],
+              'message': 'light is generating <@(_outputs)',
+            },
           ],
         },
         {

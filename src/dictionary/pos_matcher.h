@@ -96,6 +96,10 @@ class PosMatcher {
   PosMatcher() : data_(nullptr) {}
   explicit PosMatcher(const uint16_t *data ABSL_ATTRIBUTE_LIFETIME_BOUND)
       : data_(data) {}
+
+  PosMatcher(const PosMatcher &) = default;
+  PosMatcher &operator=(const PosMatcher &) = default;
+
   void Set(const uint16_t *data ABSL_ATTRIBUTE_LIFETIME_BOUND) { data_ = data; }
 
  private:
