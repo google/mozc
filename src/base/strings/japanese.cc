@@ -30,6 +30,8 @@
 #include "base/strings/japanese.h"
 
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/strings/internal/double_array.h"
 #include "base/strings/internal/japanese_rules.h"
@@ -164,6 +166,18 @@ void NormalizeVoicedSoundMark(absl::string_view input, std::string *output) {
 std::string NormalizeVoicedSoundMark(const absl::string_view input) {
   return ConvertUsingDoubleArray(internal::normalize_voiced_sound_da,
                                  internal::normalize_voiced_sound_table, input);
+}
+
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignRomanjiToHiragana(absl::string_view input) {
+  return AlignUsingDoubleArray(internal::romanji_to_hiragana_da,
+                               internal::romanji_to_hiragana_table, input);
+}
+
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignHiraganaToRomanji(absl::string_view input) {
+  return AlignUsingDoubleArray(internal::hiragana_to_romanji_da,
+                               internal::hiragana_to_romanji_table, input);
 }
 
 }  // namespace mozc::japanese

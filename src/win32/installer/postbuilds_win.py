@@ -50,7 +50,6 @@ def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--targetpath', dest='targetpath')
-  parser.add_option('--pdbpath', dest='pdbpath', default='')
 
   (opts, _) = parser.parse_args()
 
@@ -61,23 +60,13 @@ def PostProcessOnWindows(opts):
   """Apply post-processes for Windows binaries.
 
   Update the specified executable to be 'release quality' by
-  - bind import functions by bind.exe
-  - Set 'freeze' bit in the PE header.
   - Code signing.
-  See the following issues for details.
-    http://b/1504561, http://b/1507272, http://b/2289857, http://b/1893852
 
   Args:
     opts: build options to be used to update the executable.
   """
   abs_target_path = os.path.abspath(opts.targetpath)
   abs_touch_file_path = abs_target_path + '.postbuild'
-
-  # If the target looks like a PE image, update it.
-  (_, extension) = os.path.splitext(opts.targetpath)
-  if extension.lower() in ['.exe', '.dll']:
-    # Protect it against further binding, which invalidates code signing.
-    RunOrDie(['editbin.exe', '/ALLOWBIND:NO', '/RELEASE', abs_target_path])
 
   Codesign(abs_target_path)
 

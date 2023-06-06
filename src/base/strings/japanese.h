@@ -31,6 +31,8 @@
 #define MOZC_BASE_STRINGS_JAPANESE_H_
 
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 
@@ -79,6 +81,13 @@ std::string HalfWidthToFullWidth(absl::string_view input);
 
 void NormalizeVoicedSoundMark(absl::string_view input, std::string *output);
 std::string NormalizeVoicedSoundMark(absl::string_view input);
+
+// Returns alignment.
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignRomanjiToHiragana(absl::string_view input);
+
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignHiraganaToRomanji(absl::string_view input);
 
 }  // namespace mozc::japanese
 

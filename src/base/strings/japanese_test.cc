@@ -31,6 +31,8 @@
 
 #include <iterator>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "testing/gunit.h"
 
@@ -191,6 +193,26 @@ TEST(JapaneseUtilTest, FullWidthAndHalfWidth) {
   // Half- and full-width spaces
   HalfWidthKatakanaToFullWidthKatakana(" 　", &output);
   EXPECT_EQ(output, " 　");  // Not changed
+}
+
+TEST(JapaneseUtilTest, AlignTest) {
+  using V = std::vector<std::pair<absl::string_view, absl::string_view>>;
+
+  EXPECT_EQ(V({{"ga", "が"}, {"k", "っ"}, {"ko", "こ"}, {"u", "う"}}),
+            AlignRomanjiToHiragana("gakkou"));
+
+  EXPECT_EQ(V({{"が", "ga"}, {"っこ", "kko"}, {"う", "u"}}),
+            AlignHiraganaToRomanji("がっこう"));
+
+  EXPECT_EQ(V({{"re", "れ"},
+               {"si", "し"},
+               {"pi", "ぴ"},
+               {"no", "の"},
+               {"ka", "か"},
+               {"l", "l"},
+               {"ze", "ぜ"},
+               {"nn", "ん"}}),
+            AlignRomanjiToHiragana("resipinokalzenn"));
 }
 
 }  // namespace

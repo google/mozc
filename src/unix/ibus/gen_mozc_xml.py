@@ -227,15 +227,15 @@ def main():
       'layout_variant': '',
       'layout_option': '',
       'rank': 80,
-      'symbol': '&#x3042;',
+      'symbol': 'あ',
   }, {
       'name': 'mozc-on',
-      'longname': product_name + u':&#x3042',
+      'longname': product_name + u':あ',
       'layout': 'default',
       'layout_variant': '',
       'layout_option': '',
       'rank': 99,
-      'symbol': '&#x3042;',
+      'symbol': 'あ',
       'composition_mode': 'HIRAGANA',
   }, {
       'name': 'mozc-off',

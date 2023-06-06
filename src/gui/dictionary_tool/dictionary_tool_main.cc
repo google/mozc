@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/init_mozc.h"
-#include "absl/flags/flag.h"
 
 #ifdef _WIN32
 #include "base/win32/winmain.h"

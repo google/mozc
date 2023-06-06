@@ -1592,15 +1592,18 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   std::vector<Result> results = {
-      CreateResult6("test", "テスト１", 0, 10, prediction::UNIGRAM,
+      CreateResult6("test", "テストＡ", 0, 10, prediction::UNIGRAM,
                     Token::NONE),
-      CreateResult6("test", "テスト２", 0, 100, prediction::UNIGRAM,
+      CreateResult6("test", "テストＢ", 0, 100, prediction::UNIGRAM,
                     Token::NONE),
       CreateResult6("test", "テスト０００", 0, 1, prediction::UNIGRAM,
                     Token::NONE),
       CreateResult6("test", "テスト００", 0, 1, prediction::UNIGRAM,
                     Token::NONE),
+      CreateResult6("test", "テスト１０", 0, 1, prediction::UNIGRAM,
+                    Token::NONE),
       CreateResult6("test", "テスト０", 0, 1, prediction::UNIGRAM, Token::NONE),
+      CreateResult6("test", "テスト１", 0, 1, prediction::UNIGRAM, Token::NONE),
   };
   Segments segments;
   InitSegmentsWithKey("test", &segments);
@@ -1609,12 +1612,14 @@ TEST_F(DictionaryPredictorTest, SortResult) {
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
-  ASSERT_EQ(segment.candidates_size(), 5);
-  ASSERT_EQ(segment.candidate(0).value, "テスト０");
-  ASSERT_EQ(segment.candidate(1).value, "テスト００");
-  ASSERT_EQ(segment.candidate(2).value, "テスト０００");
-  ASSERT_EQ(segment.candidate(3).value, "テスト１");
-  ASSERT_EQ(segment.candidate(4).value, "テスト２");
+  ASSERT_EQ(segment.candidates_size(), 7);
+  ASSERT_EQ(segment.candidate(0).value, "テスト０");      // cost:1
+  ASSERT_EQ(segment.candidate(1).value, "テスト１");      // cost:1
+  ASSERT_EQ(segment.candidate(2).value, "テスト００");    // cost:1
+  ASSERT_EQ(segment.candidate(3).value, "テスト１０");    // cost:1
+  ASSERT_EQ(segment.candidate(4).value, "テスト０００");  // cost:1
+  ASSERT_EQ(segment.candidate(5).value, "テストＡ");      // cost:10
+  ASSERT_EQ(segment.candidate(6).value, "テストＢ");      // cost:100
 }
 
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
