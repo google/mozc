@@ -30,6 +30,8 @@
 #include "base/strings/internal/double_array.h"
 
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/strings/unicode.h"
 #include "absl/strings/str_cat.h"
@@ -102,6 +104,29 @@ std::string ConvertUsingDoubleArray(const DoubleArray *da, const char *ctable,
       // Not found in the table. Copy from input.
       mblen = OneCharLen(input[i]);
       absl::StrAppend(&output, input.substr(i, mblen));
+    }
+  }
+  return output;
+}
+
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignUsingDoubleArray(const DoubleArray *da, const char *ctable,
+                      absl::string_view input) {
+  std::vector<std::pair<absl::string_view, absl::string_view>> output;
+  int mblen = 0;
+  for (size_t i = 0; i < input.size(); i += mblen) {
+    const LookupResult result = LookupDoubleArray(da, input.substr(i));
+    if (result.seekto > 0) {
+      // Each entry in ctable consists of:
+      // - null-terminated string
+      // - one byte offset to rewind the input
+      const absl::string_view s(ctable + result.index);
+      mblen = AdvanceInputBy(ctable, result, s.size());
+      output.emplace_back(input.substr(i, mblen), s);
+    } else {
+      // Not found in the table. Copy from input.
+      mblen = OneCharLen(input[i]);
+      output.emplace_back(input.substr(i, mblen), input.substr(i, mblen));
     }
   }
   return output;

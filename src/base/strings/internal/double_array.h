@@ -32,6 +32,8 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/strings/string_view.h"
 
@@ -44,6 +46,10 @@ struct DoubleArray {
 
 std::string ConvertUsingDoubleArray(const DoubleArray *da, const char *table,
                                     absl::string_view input);
+
+std::vector<std::pair<absl::string_view, absl::string_view>>
+AlignUsingDoubleArray(const DoubleArray *da, const char *ctable,
+                      absl::string_view input);
 
 }  // namespace mozc::japanese::internal
 
