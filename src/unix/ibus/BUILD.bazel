@@ -55,23 +55,31 @@ mozc_py_binary(
 genrule(
     name = "gen_mozc_xml",
     outs = ["mozc.xml"],
-    cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
-           " --server_dir=" + LINUX_MOZC_SERVER_DIR +
-           " --ibus_mozc_path=" + IBUS_MOZC_PATH +
-           " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
-           " > $@"),
+    cmd = " ".join([
+        "LANG=C",
+        "$(location :gen_mozc_xml_main)",
+        "--branding=Mozc",
+        "--server_dir=" + LINUX_MOZC_SERVER_DIR,
+        "--ibus_mozc_path=" + IBUS_MOZC_PATH,
+        "--ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH,
+        "> $@",
+    ]),
     tools = [":gen_mozc_xml_main"],
 )
 
 genrule(
     name = "gen_main_h",
     outs = ["main.h"],
-    cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
-           " --output_cpp" +
-           " --server_dir=" + LINUX_MOZC_SERVER_DIR +
-           " --ibus_mozc_path=" + IBUS_MOZC_PATH +
-           " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
-           " > $@"),
+    cmd = " ".join([
+        "LANG=C",
+        "$(location :gen_mozc_xml_main)",
+        "--branding=Mozc",
+        "--output_cpp",
+        "--server_dir=" + LINUX_MOZC_SERVER_DIR,
+        "--ibus_mozc_path=" + IBUS_MOZC_PATH,
+        "--ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH,
+        "> $@",
+    ]),
     tools = [":gen_mozc_xml_main"],
 )
 
