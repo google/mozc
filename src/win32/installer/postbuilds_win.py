@@ -50,7 +50,6 @@ def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--targetpath', dest='targetpath')
-  parser.add_option('--pdbpath', dest='pdbpath', default='')
 
   (opts, _) = parser.parse_args()
 
@@ -61,7 +60,6 @@ def PostProcessOnWindows(opts):
   """Apply post-processes for Windows binaries.
 
   Update the specified executable to be 'release quality' by
-  - bind import functions by bind.exe
   - Set 'freeze' bit in the PE header.
   - Code signing.
   See the following issues for details.

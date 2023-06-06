@@ -279,10 +279,8 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
                          'bin/Qt5Widgets.dll',
                          'plugins/platforms/qwindows.dll']
   for target_filename in target_filenames:
-    abs_pdbpath = qt_dir.joinpath('lib')
     abs_targetpath = qt_dir.joinpath(target_filename)
     commands = [post_build_script,
-                '--pdbpath', abs_pdbpath,
                 '--targetpath', abs_targetpath]
     if args.dryrun:
       print(f'dryrun: RunOrDie({commands}, env={env})')
