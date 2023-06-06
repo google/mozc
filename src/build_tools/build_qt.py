@@ -82,6 +82,13 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                           '-silent',
                           '-no-cups',
                           '-no-dbus',
+                          '-no-feature-concurrent',
+                          '-no-feature-imageformatplugin',
+                          '-no-feature-network',
+                          '-no-feature-sql',
+                          '-no-feature-sqlmodel',
+                          '-no-feature-testlib',
+                          '-no-feature-xml',
                           '-no-icu',
                           '-no-opengl',
                           '-no-sql-db2',
@@ -96,6 +103,11 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                           '-nomake', 'examples',
                           '-nomake', 'tests',
                           '-nomake', 'tools',
+                          '-skip', 'src/network',
+                          '-skip', 'src/plugins/sqldrivers',
+                          '-skip', 'src/sql',
+                          '-skip', 'src/testlib',
+                          '-skip', 'src/xml',
                          ]
 
   if IsMac():
@@ -109,6 +121,7 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                              '-ltcg',  # Note: ignored in debug build
                              '-mp',    # enable parallel build
                              '-no-angle',
+                             '-no-direct2d',
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']
