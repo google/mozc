@@ -32,7 +32,6 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "client/client.h"
-#include "absl/flags/flag.h"
 
 // Simple command line tool to ping mozc server
 int main(int argc, char **argv) {
