@@ -35,7 +35,7 @@
       ['branding=="GoogleJapaneseInput"', {
         'tipfile_product_name_win': 'GoogleIMEJaTIP',
       }, {  # else
-        'tipfile_product_name_win': 'mozc_ja_tip',
+        'tipfile_product_name_win': 'mozc_tip',
       }],
     ],
   },
