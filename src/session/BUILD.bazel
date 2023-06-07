@@ -690,7 +690,6 @@ mozc_cc_test(
         ":random_keyevents_generator",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/algorithm:container",
     ],
 )
 
@@ -712,7 +711,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/random",
     ],
 )
 

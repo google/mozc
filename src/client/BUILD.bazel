@@ -224,7 +224,6 @@ mozc_cc_binary(
         ":client",
         "//base:init_mozc",
         "//base:logging",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 

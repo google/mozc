@@ -32,17 +32,15 @@
 #include <atomic>
 #include <string>
 #include <thread>  // NOLINT for portability
+#include <utility>
 
 #include "base/logging.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
-
-constexpr absl::string_view kDelimiter = "\t";
 
 class Unlocker final {
  public:
@@ -55,8 +53,7 @@ class Unlocker final {
 
 }  // namespace
 
-bool SuppressionDictionary::AddEntry(const absl::string_view key,
-                                     const absl::string_view value) {
+bool SuppressionDictionary::AddEntry(std::string key, std::string value) {
   if (!locked_.load(std::memory_order_relaxed)) {
     LOG(ERROR) << "Dictionary is not locked";
     return false;
@@ -68,14 +65,12 @@ bool SuppressionDictionary::AddEntry(const absl::string_view key,
   }
 
   if (key.empty()) {
-    has_key_empty_ = true;
+    values_only_.insert(std::move(value));
+  } else if (value.empty()) {
+    keys_only_.insert(std::move(key));
+  } else {
+    keys_values_.emplace(std::move(key), std::move(value));
   }
-
-  if (value.empty()) {
-    has_value_empty_ = true;
-  }
-
-  dic_.insert(absl::StrCat(key, kDelimiter, value));
 
   return true;
 }
@@ -85,9 +80,9 @@ void SuppressionDictionary::Clear() {
     LOG(ERROR) << "Dictionary is not locked";
     return;
   }
-  has_key_empty_ = false;
-  has_value_empty_ = false;
-  dic_.clear();
+  keys_values_.clear();
+  keys_only_.clear();
+  values_only_.clear();
 }
 
 void SuppressionDictionary::Lock() {
@@ -119,7 +114,7 @@ bool SuppressionDictionary::IsEmpty() const {
     return true;
   }
   Unlocker u(&locked_);
-  return dic_.empty();
+  return keys_only_.empty() && values_only_.empty() && keys_values_.empty();
 }
 
 bool SuppressionDictionary::SuppressEntry(const absl::string_view key,
@@ -132,32 +127,14 @@ bool SuppressionDictionary::SuppressEntry(const absl::string_view key,
   }
   Unlocker u(&locked_);
 
-  if (dic_.empty()) {
+  if (keys_only_.empty() && values_only_.empty() && keys_values_.empty()) {
     // Almost all users don't use word suppression function.
     // We can return false as early as possible.
     return false;
   }
 
-  std::string lookup_key(absl::StrCat(key, kDelimiter, value));
-  if (dic_.find(lookup_key) != dic_.end()) {
-    return true;
-  }
-
-  if (has_key_empty_) {
-    lookup_key = absl::StrCat(kDelimiter, value);
-    if (dic_.find(lookup_key) != dic_.end()) {
-      return true;
-    }
-  }
-
-  if (has_value_empty_) {
-    lookup_key = absl::StrCat(key, kDelimiter);
-    if (dic_.find(lookup_key) != dic_.end()) {
-      return true;
-    }
-  }
-
-  return false;
+  return keys_values_.contains(std::make_pair(key, value)) ||
+         keys_only_.contains(key) || values_only_.contains(value);
 }
 
 }  // namespace dictionary

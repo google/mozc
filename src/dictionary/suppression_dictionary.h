@@ -31,10 +31,12 @@
 #define MOZC_DICTIONARY_SUPPRESSION_DICTIONARY_H_
 
 #include <atomic>
-#include <set>
+#include <functional>
 #include <string>
+#include <utility>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/hash/hash.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
@@ -68,7 +70,7 @@ class SuppressionDictionary final {
   void UnLock();
 
   // Adds an entry into the dictionary.
-  bool AddEntry(absl::string_view key, absl::string_view value);
+  bool AddEntry(std::string key, std::string value);
 
   // Clears the dictionary.
   void Clear();
@@ -87,9 +89,19 @@ class SuppressionDictionary final {
   bool SuppressEntry(absl::string_view key, absl::string_view value) const;
 
  private:
-  absl::flat_hash_set<std::string> dic_;
-  bool has_key_empty_ = false;
-  bool has_value_empty_ = false;
+  using KeyValue = std::pair<std::string, std::string>;
+  using KeyValueView = std::pair<absl::string_view, absl::string_view>;
+  struct KeyValueHash : public absl::Hash<KeyValueView> {
+    using is_transparent = void;
+  };
+  struct KeyValueEq : public std::equal_to<KeyValueView> {
+    using is_transparent = void;
+  };
+
+  absl::flat_hash_set<KeyValue, KeyValueHash, KeyValueEq> keys_values_;
+  absl::flat_hash_set<std::string> keys_only_;
+  absl::flat_hash_set<std::string> values_only_;
+
   mutable std::atomic<bool> locked_ = false;
   // TODO(noriyukit): Check if this mutex is still necessary.
   absl::Mutex mutex_;

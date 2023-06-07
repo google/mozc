@@ -78,14 +78,14 @@ END
     #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
       #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaTIP64"
     #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_ja_tip64"
+      #define MOZC_RES_INTERNAL_NAME "mozc_tip64"
     #endif
   #endif
   #ifndef MOZC_RES_ORIGINAL_FILENAME
     #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
       #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaTIP64.dll"
     #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_ja_tip64.dll"
+      #define MOZC_RES_ORIGINAL_FILENAME "mozc_tip64.dll"
     #endif
   #endif
 #else
@@ -93,14 +93,14 @@ END
     #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
       #define MOZC_RES_INTERNAL_NAME "GoogleIMEJaTIP32"
     #elif defined(MOZC_BUILD)
-      #define MOZC_RES_INTERNAL_NAME "mozc_ja_tip32"
+      #define MOZC_RES_INTERNAL_NAME "mozc_tip32"
     #endif
   #endif
   #ifndef MOZC_RES_ORIGINAL_FILENAME
     #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
       #define MOZC_RES_ORIGINAL_FILENAME "GoogleIMEJaTIP32.dll"
     #elif defined(MOZC_BUILD)
-      #define MOZC_RES_ORIGINAL_FILENAME "mozc_ja_tip32.dll"
+      #define MOZC_RES_ORIGINAL_FILENAME "mozc_tip32.dll"
     #endif
   #endif
 #endif

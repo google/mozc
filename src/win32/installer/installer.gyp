@@ -29,14 +29,14 @@
 
 {
   'conditions': [
-    ['OS!="win" or use_wix!="YES"', {
+    ['OS!="win" or use_wix!="YES" or use_qt!="YES"', {
       'targets': [
         {
           'target_name': 'mozc_installers_win',
           'type': 'none',
         },
       ],
-    }, {  # else, that is: 'OS=="win" and use_wix=="YES"'
+    }, {  # else, that is: 'OS=="win" and use_wix=="YES" and use_qt=="YES"'
       'variables': {
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
@@ -58,7 +58,7 @@
             'mozc_server64_path': '<(outdir64)/GoogleIMEJaConverter.exe',
             'mozc_tip32_path': '<(outdir32)/GoogleIMEJaTIP32.dll',
             'mozc_tip64_path': '<(outdir64)/GoogleIMEJaTIP64.dll',
-            'mozc_tool_name': 'GoogleIMEJaTool.exe',
+            'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
           }, {  # branding!="GoogleJapaneseInput"
             'upgrade_code': 'DD94B570-B5E2-4100-9D42-61930C611D8A',
             'omaha_guid': '',
@@ -71,50 +71,25 @@
             'mozc_content_dir': '<(DEPTH)/data',
             'mozc_renderer64_path': '<(outdir64)/mozc_renderer.exe',
             'mozc_server64_path': '<(outdir64)/mozc_server.exe',
-            'mozc_tip32_path': '<(outdir32)/mozc_ja_tip32.dll',
-            'mozc_tip64_path': '<(outdir64)/mozc_ja_tip64.dll',
-            'mozc_tool_name': 'mozc_tool.exe',
+            'mozc_tip32_path': '<(outdir32)/mozc_tip32.dll',
+            'mozc_tip64_path': '<(outdir64)/mozc_tip64.dll',
+            'mozc_tool_path': '<(outdir32_dynamic)/mozc_tool.exe',
           }],
         ],
-        'variables': {
-          'qt5core_dll_path': '',
-          'qt5cored_dll_path': '',
-          'qt5gui_dll_path': '',
-          'qt5guid_dll_path': '',
-          'qt5widgets_dll_path': '',
-          'qt5widgetsd_dll_path': '',
-          'qwindows_dll_path': '',
-          'qwindowsd_dll_path': '',
-          'mozc_tool_name' : '<(mozc_tool_name)',
-          'mozc_tool_path': '<(outdir32)/<(mozc_tool_name)',
-          'conditions': [
-            ['use_qt=="YES"', {
-              'mozc_tool_path': '<(outdir32_dynamic)/<(mozc_tool_name)',
-              'qt5core_dll_path': '<(qt_dir)/bin/Qt5Core.dll',
-              'qt5cored_dll_path': '<(qt_dir)/bin/Qt5Cored.dll',
-              'qt5gui_dll_path': '<(qt_dir)/bin/Qt5Gui.dll',
-              'qt5guid_dll_path': '<(qt_dir)/bin/Qt5Guid.dll',
-              'qt5widgets_dll_path': '<(qt_dir)/bin/Qt5Widgets.dll',
-              'qt5widgetsd_dll_path': '<(qt_dir)/bin/Qt5Widgetsd.dll',
-              'qwindows_dll_path': '<(qt_dir)/plugins/platforms/qwindows.dll',
-              'qwindowsd_dll_path': '<(qt_dir)/plugins/platforms/qwindowsd.dll',
-            }],
-          ],
-        },
         'upgrade_code': '<(upgrade_code)',
         'omaha_guid': '<(omaha_guid)',
         'omaha_client_key': '<(omaha_client_key)',
         'omaha_clientstate_key': '<(omaha_clientstate_key)',
         'release_redist_32bit_crt_dir': '<!(echo %VCToolsRedistDir%)/x86/Microsoft.VC<(vcruntime_ver).CRT',
         'release_redist_64bit_crt_dir': '<!(echo %VCToolsRedistDir%)/x64/Microsoft.VC<(vcruntime_ver).CRT',
-        'qt5core_dll_path': '<(qt5core_dll_path)',
-        'qt5cored_dll_path': '<(qt5cored_dll_path)',
-        'qt5gui_dll_path': '<(qt5gui_dll_path)',
-        'qt5guid_dll_path': '<(qt5guid_dll_path)',
-        'qt5widgets_dll_path': '<(qt5widgets_dll_path)',
-        'qt5widgetsd_dll_path': '<(qt5widgetsd_dll_path)',
-        'qwindows_dll_path': '<(qwindows_dll_path)',
-        'qwindowsd_dll_path': '<(qwindowsd_dll_path)',
+        'qt5core_dll_path': '<(qt_dir)/bin/Qt5Core.dll',
+        'qt5cored_dll_path': '<(qt_dir)/bin/Qt5Cored.dll',
+        'qt5gui_dll_path': '<(qt_dir)/bin/Qt5Gui.dll',
+        'qt5guid_dll_path': '<(qt_dir)/bin/Qt5Guid.dll',
+        'qt5widgets_dll_path': '<(qt_dir)/bin/Qt5Widgets.dll',
+        'qt5widgetsd_dll_path': '<(qt_dir)/bin/Qt5Widgetsd.dll',
+        'qwindows_dll_path': '<(qt_dir)/plugins/platforms/qwindows.dll',
+        'qwindowsd_dll_path': '<(qt_dir)/plugins/platforms/qwindowsd.dll',
         'mozc_cache_service64_path': '<(mozc_cache_service64_path)',
         'mozc_renderer64_path': '<(mozc_renderer64_path)',
         'mozc_server64_path': '<(mozc_server64_path)',
@@ -202,49 +177,6 @@
                 }],
               ],
               'variables': {
-                'additional_args%': [],
-                'conditions': [
-                  ['qt5core_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5CoreDllPath=<(qt5core_dll_path)',
-                    ],
-                  }],
-                  ['qt5cored_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5CoredDllPath=<(qt5cored_dll_path)',
-                    ],
-                  }],
-                  ['qt5gui_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5GuiDllPath=<(qt5gui_dll_path)',
-                    ],
-                  }],
-                  ['qt5guid_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5GuidDllPath=<(qt5guid_dll_path)',
-                    ],
-                  }],
-                  ['qt5widgets_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5WidgetsDllPath=<(qt5widgets_dll_path)',
-                    ],
-                  }],
-                  ['qt5widgetsd_dll_path!=""', {
-                    'additional_args': [
-                      '-dQt5WidgetsdDllPath=<(qt5widgetsd_dll_path)',
-                    ],
-                  }],
-                  ['qwindows_dll_path!=""', {
-                    'additional_args': [
-                      '-dQWindowsDllPath=<(qwindows_dll_path)',
-                    ],
-                  }],
-                  ['qwindowsd_dll_path!=""', {
-                    'additional_args': [
-                      '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
-                    ],
-                  }],
-                ],
                 'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
                 'document_dir': '<(mozc_content_dir)/installer',
               },
@@ -276,7 +208,14 @@
                 '-dMozcToolPath=<(mozc_tool_path)',
                 '-dCustomActions64Path=<(mozc_ca64_path)',
                 '-dDocumentsDir=<(document_dir)',
-                '<@(additional_args)',
+                '-dQt5CoreDllPath=<(qt5core_dll_path)',
+                '-dQt5CoredDllPath=<(qt5cored_dll_path)',
+                '-dQt5GuiDllPath=<(qt5gui_dll_path)',
+                '-dQt5GuidDllPath=<(qt5guid_dll_path)',
+                '-dQt5WidgetsDllPath=<(qt5widgets_dll_path)',
+                '-dQt5WidgetsdDllPath=<(qt5widgetsd_dll_path)',
+                '-dQWindowsDllPath=<(qwindows_dll_path)',
+                '-dQWindowsdDllPath=<(qwindowsd_dll_path)',
                 '-o', '<@(_outputs)',
                 # We do not use '<@(_inputs)' here because it contains some
                 # input files just for peoper rebiuld condition.
