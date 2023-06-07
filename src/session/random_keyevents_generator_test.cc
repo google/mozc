@@ -36,7 +36,6 @@
 
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
-#include "absl/algorithm/container.h"
 
 namespace mozc {
 namespace session {
