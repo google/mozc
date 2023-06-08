@@ -41,6 +41,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/container/btree_map.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -50,7 +51,8 @@ using commands::KeyEvent;
 namespace {
 
 typedef std::map<std::string, KeyEvent::SpecialKey> SpecialKeysMap;
-typedef std::map<std::string, std::vector<KeyEvent::ModifierKey>> ModifiersMap;
+typedef absl::btree_map<std::string, std::vector<KeyEvent::ModifierKey>>
+    ModifiersMap;
 
 class KeyParserData {
  public:
