@@ -33,6 +33,7 @@
 #include "testing/gunit.h"
 
 namespace mozc {
+namespace {
 
 class IvsVariantsRewriterTest : public ::testing::Test {};
 
@@ -190,4 +191,6 @@ TEST_F(IvsVariantsRewriterTest,
     EXPECT_EQ(seg->candidate(5).value, "Ｃ:。ミ");
   }
 }
+
+}  // namespace
 }  // namespace mozc

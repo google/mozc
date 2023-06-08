@@ -29,14 +29,17 @@
 
 #include "rewriter/small_letter_rewriter.h"
 
-#include <map>
 #include <string>
-#include <vector>
+#include <utility>
 
-#include "composer/composer.h"
+#include "base/util.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -45,8 +48,8 @@ namespace {
 // mapping can be extended for other letters like '+' or 'a', implementation
 // based on array will not work in the future. In order to avoid that,
 // std::map is chosen.
-const std::map<char, absl::string_view> *kSuperscriptTable =
-    new std::map<char, absl::string_view>({
+const auto *kSuperscriptTable =
+    new absl::flat_hash_map<char, absl::string_view>({
         {'0', "⁰"},
         {'1', "¹"},
         {'2', "²"},
@@ -64,24 +67,23 @@ const std::map<char, absl::string_view> *kSuperscriptTable =
         {')', "⁾"},
     });
 
-const std::map<char, absl::string_view> *kSubscriptTable =
-    new std::map<char, absl::string_view>({
-        {'0', "₀"},
-        {'1', "₁"},
-        {'2', "₂"},
-        {'3', "₃"},
-        {'4', "₄"},
-        {'5', "₅"},
-        {'6', "₆"},
-        {'7', "₇"},
-        {'8', "₈"},
-        {'9', "₉"},
-        {'+', "₊"},
-        {'-', "₋"},
-        {'=', "₌"},
-        {'(', "₍"},
-        {')', "₎"},
-    });
+const auto *kSubscriptTable = new absl::flat_hash_map<char, absl::string_view>({
+    {'0', "₀"},
+    {'1', "₁"},
+    {'2', "₂"},
+    {'3', "₃"},
+    {'4', "₄"},
+    {'5', "₅"},
+    {'6', "₆"},
+    {'7', "₇"},
+    {'8', "₈"},
+    {'9', "₉"},
+    {'+', "₊"},
+    {'-', "₋"},
+    {'=', "₌"},
+    {'(', "₍"},
+    {')', "₎"},
+});
 
 enum ParserState : char {
   DEFAULT,
@@ -126,13 +128,12 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
         }
         break;
       case SUPERSCRIPT_ALL:
-        if (isdigit(c)) {
-          value->append(kSuperscriptTable->at(c).data(),
-                        kSuperscriptTable->at(c).size());
+        if (absl::ascii_isdigit(c)) {
+          absl::StrAppend(value, kSuperscriptTable->at(c));
           state = SUPERSCRIPT_DIGIT;
-        } else if (kSuperscriptTable->find(c) != kSuperscriptTable->end()) {
-          value->append(kSuperscriptTable->at(c).data(),
-                        kSuperscriptTable->at(c).size());
+        } else if (const auto it = kSuperscriptTable->find(c);
+                   it != kSuperscriptTable->end()) {
+          absl::StrAppend(value, it->second);
           state = DEFAULT;
         } else {
           value->push_back('^');
@@ -141,13 +142,12 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
         }
         break;
       case SUBSCRIPT_ALL:
-        if (isdigit(c)) {
-          value->append(kSubscriptTable->at(c).data(),
-                        kSubscriptTable->at(c).size());
+        if (absl::ascii_isdigit(c)) {
+          absl::StrAppend(value, kSubscriptTable->at(c));
           state = SUBSCRIPT_DIGIT;
-        } else if (kSubscriptTable->find(c) != kSubscriptTable->end()) {
-          value->append(kSubscriptTable->at(c).data(),
-                        kSubscriptTable->at(c).size());
+        } else if (const auto it = kSubscriptTable->find(c);
+                   it != kSubscriptTable->end()) {
+          absl::StrAppend(value, it->second);
           state = DEFAULT;
         } else {
           value->push_back('_');
@@ -156,9 +156,8 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
         }
         break;
       case SUPERSCRIPT_DIGIT:
-        if (isdigit(c)) {
-          value->append(kSuperscriptTable->at(c).data(),
-                        kSuperscriptTable->at(c).size());
+        if (absl::ascii_isdigit(c)) {
+          absl::StrAppend(value, kSuperscriptTable->at(c));
         } else if (c == '^') {
           state = SUPERSCRIPT_ALL;
         } else if (c == '_') {
@@ -169,9 +168,8 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
         }
         break;
       case SUBSCRIPT_DIGIT:
-        if (isdigit(c)) {
-          value->append(kSubscriptTable->at(c).data(),
-                        kSubscriptTable->at(c).size());
+        if (absl::ascii_isdigit(c)) {
+          absl::StrAppend(value, kSubscriptTable->at(c));
         } else if (c == '^') {
           state = SUPERSCRIPT_ALL;
         } else if (c == '_') {
@@ -193,6 +191,8 @@ bool ConvertExpressions(const absl::string_view input, std::string *value) {
   return input != *value;
 }
 
+// Resizes the segment size if not previously modified. Returns true if the
+// segment size is 1 after resize.
 bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
                          const ConverterInterface *parent_converter,
                          const absl::string_view key) {
@@ -215,9 +215,8 @@ bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
   return true;
 }
 
-void AddCandidate(const absl::string_view key,
-                  const absl::string_view description,
-                  const absl::string_view value, int index, Segment *segment) {
+void AddCandidate(std::string key, std::string description, std::string value,
+                  int index, Segment *segment) {
   DCHECK(segment);
 
   if (index < 0 || index > segment->candidates_size()) {
@@ -229,10 +228,10 @@ void AddCandidate(const absl::string_view key,
 
   candidate->Init();
   segment->set_key(key);
-  candidate->key = std::string(key);
-  candidate->value = std::string(value);
-  candidate->content_value = std::string(value);
-  candidate->description = std::string(description);
+  candidate->key = std::move(key);
+  candidate->value = value;
+  candidate->content_value = std::move(value);
+  candidate->description = std::move(description);
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
 }
@@ -276,7 +275,7 @@ bool SmallLetterRewriter::Rewrite(const ConversionRequest &request,
 
   // Candidates from this function should not be on high position. -1 will
   // overwritten with the last index of candidates.
-  AddCandidate(key, "上下付き文字", value, -1, segment);
+  AddCandidate(std::move(key), "上下付き文字", std::move(value), -1, segment);
   return true;
 }
 

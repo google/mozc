@@ -29,9 +29,9 @@
 
 #include "rewriter/small_letter_rewriter.h"
 
-#include <iterator>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/system_util.h"
 #include "engine/mock_data_engine_factory.h"
@@ -44,20 +44,18 @@
 namespace mozc {
 namespace {
 
-void AddSegment(const absl::string_view key, const absl::string_view value,
-                Segments *segments) {
+void AddSegment(std::string key, std::string value, Segments *segments) {
   Segment *seg = segments->add_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
-  candidate->content_key = std::string(key);
-  candidate->value = std::string(value);
-  candidate->content_value = std::string(value);
+  candidate->content_key = std::move(key);
+  candidate->value = value;
+  candidate->content_value = std::move(value);
 }
 
-void InitSegments(const absl::string_view key, const absl::string_view value,
-                  Segments *segments) {
+void InitSegments(std::string key, std::string value, Segments *segments) {
   segments->Clear();
-  AddSegment(key, value, segments);
+  AddSegment(std::move(key), std::move(value), segments);
 }
 
 bool ContainCandidate(const Segments &segments,
@@ -70,8 +68,6 @@ bool ContainCandidate(const Segments &segments,
   }
   return false;
 }
-
-}  // namespace
 
 class SmallLetterRewriterTest : public ::testing::Test {
  protected:
@@ -156,7 +152,7 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
       "x^^x",
   };
 
-  // Test behavior for each test cases in kInpuOutputData.
+  // Test behavior for each test cases in kInputOutputData.
   for (const InputOutputData &item : kInputOutputData) {
     InitSegments(item.input, item.input, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
@@ -213,4 +209,5 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
   EXPECT_EQ(segments.conversion_segment(0).candidate(1).value, "¹²³");
 }
 
+}  // namespace
 }  // namespace mozc

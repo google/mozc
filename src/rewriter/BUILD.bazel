@@ -319,10 +319,12 @@ mozc_cc_library(
     hdrs = ["small_letter_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//composer",
+        "//base:util",
         "//converter:converter_interface",
         "//converter:segments",
+        "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -1618,8 +1620,9 @@ mozc_cc_library(
     hdrs = ["ivs_variants_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base:util",
         "//converter:segments",
+        "//request:conversion_request",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

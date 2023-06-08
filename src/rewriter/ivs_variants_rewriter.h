@@ -31,12 +31,10 @@
 #define MOZC_REWRITER_IVS_VARIANTS_REWRITER_H_
 
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
-class ConversionRequest;
-class Segments;
 
 // A rewriter to expand an IVS variant candidate.
 // For example, "葛\U000E0100城市" (an IVS variant candidate) is added right
@@ -47,9 +45,6 @@ class Segments;
 // (content_key=かつらぎしりつとしょかん, content_value=葛城市立図書館) doesn't.
 class IvsVariantsRewriter : public RewriterInterface {
  public:
-  IvsVariantsRewriter() = default;
-  ~IvsVariantsRewriter() override = default;
-
   int capability(const ConversionRequest &request) const override;
 
   bool Rewrite(const ConversionRequest &request,
