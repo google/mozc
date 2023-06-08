@@ -47,6 +47,7 @@
 #include "base/number_util.h"
 #include "base/status.h"
 #include "absl/base/config.h"
+#include "absl/container/btree_map.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -119,7 +120,7 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly
   // compressed.
-  std::map<std::string, uint32_t> string_index;
+  absl::btree_map<std::string, uint32_t> string_index;
   for (const auto &kv : dic) {
     // This phase just collects all the strings and temporarily assigns 0 as
     // index.
