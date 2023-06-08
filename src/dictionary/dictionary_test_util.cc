@@ -36,6 +36,7 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -161,7 +162,7 @@ namespace internal {
            << "Expected: " << PrintTokens(expected) << "\n"
            << "Actual: " << PrintTokens(actual);
   }
-  std::set<std::string> encoded_actual;
+  absl::btree_set<std::string> encoded_actual;
   for (size_t i = 0; i < actual.size(); ++i) {
     encoded_actual.insert(PrintToken(actual[i]));
   }
