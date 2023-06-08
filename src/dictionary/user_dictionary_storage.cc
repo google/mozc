@@ -198,7 +198,7 @@ absl::Status UserDictionaryStorage::Save() {
         absl::StrFormat("%s; Atomic rename from %s to %s failed (SYNC_FAILURE)",
                         s.message(), tmp_file_name, file_name_);
     if (last_error_type_ == TOO_BIG_FILE_BYTES) {
-      msg.append("; ").append(size_error_msg);
+      absl::StrAppend(&msg, "; ", size_error_msg);
     }
     last_error_type_ = SYNC_FAILURE;
     return absl::Status(s.code(), msg);

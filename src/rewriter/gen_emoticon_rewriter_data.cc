@@ -79,8 +79,8 @@ std::string GetDescription(
               }
               return x_count < y_count;
             });
-  return absl::StrFormat("%s %s", sorted_key_list.back().c_str(),
-                         sorted_key_list.front().c_str());
+  return absl::StrFormat("%s %s", sorted_key_list.back(),
+                         sorted_key_list.front());
 }
 
 std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {

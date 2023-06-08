@@ -35,12 +35,11 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/louds_trie.h"
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -54,7 +53,7 @@ class TokenDecodeIterator {
                       const storage::louds::LoudsTrie &value_trie,
                       const uint32_t *frequent_pos, absl::string_view key,
                       const uint8_t *ptr);
-  ~TokenDecodeIterator() {}
+  ~TokenDecodeIterator() = default;
 
   const TokenInfo &Get() const { return token_info_; }
   bool Done() const { return state_ == DONE; }
@@ -178,8 +177,7 @@ inline void TokenDecodeIterator::NextInternal() {
   }
 
   if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
-    token_.value.append(1, '_').append(
-        absl::StrFormat("%d", token_info_.accent_type));
+    absl::StrAppend(&token_.value, "_", token_info_.accent_type);
   }
 
   if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {

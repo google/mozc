@@ -205,7 +205,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
   if (FileUtil::FileExists(config_file_).ok()) {
     ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write
   }
-  std::ofstream ofs(config_file_.c_str(),
+  std::ofstream ofs(config_file_,
                     std::ios::binary | std::ios::out | std::ios::trunc);
   if (!ofs) {
     return false;

@@ -99,8 +99,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
     }
 
     const std::string &label = item.label;
-    std::string line = tsv_line;
-    line.append("\tActual: ").append(actual_value);
+    std::string line = absl::StrCat(tsv_line, "\tActual: ", actual_value);
     if (*test_result) {
       // use "-1.0" as a dummy expected ratio
       (*table)[label].push_back(std::make_pair(-1.0, line));

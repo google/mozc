@@ -200,16 +200,9 @@ std::string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   std::vector<std::string> pieces;
   for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
        iter.Next()) {
-    std::string s = "<";
-    s.append(iter.GetKey().data(), iter.GetKey().size());
-    s.append(", ");
-    s.append(iter.GetValue().data(), iter.GetValue().size());
-    s.append(", ");
-    s.append(iter.GetContentKey().data(), iter.GetContentKey().size());
-    s.append(", ");
-    s.append(iter.GetContentValue().data(), iter.GetContentValue().size());
-    s.append(1, '>');
-    pieces.push_back(s);
+    pieces.push_back(absl::StrCat("<", iter.GetKey(), ", ", iter.GetValue(),
+                                  ", ", iter.GetContentKey(), ", ",
+                                  iter.GetContentValue(), ">"));
   }
   return absl::StrJoin(pieces, " | ");
 }

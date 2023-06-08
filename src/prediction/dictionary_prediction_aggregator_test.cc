@@ -2545,14 +2545,14 @@ TEST_F(DictionaryPredictionAggregatorTest, GetZeroQueryCandidates) {
         if (i != 0) {
           types.append(", ");
         }
-        types.append(absl::StrFormat("%d", types[i]));
+        absl::StrAppendFormat(&types, "%d", types[i]);
       }
       return absl::StrFormat(
           "key: %s\n"
           "expected_result: %d\n"
           "expected_candidates: %s\n"
           "expected_types: %s",
-          key.c_str(), expected_result, candidates.c_str(), types.c_str());
+          key, expected_result, candidates, types);
     }
   } kTestCases[] = {
       {"あい", true, {"❕", "❣"}, {ZERO_QUERY_EMOJI, ZERO_QUERY_NONE}},

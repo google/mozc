@@ -93,11 +93,9 @@ mozc_cc_library(
         ":words_info",
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//dictionary:dictionary_token",
         "//storage/louds:louds_trie",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

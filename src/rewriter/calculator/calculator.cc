@@ -79,7 +79,6 @@ class CalculatorImpl : public CalculatorInterface {
 
   // Max byte length of operator character
   static constexpr size_t kMaxLengthOfOperator = 3;
-  static constexpr size_t kBufferSizeOfOutputNumber = 32;
 
   // Tokenizes |expression_body| and sets the tokens into |tokens|.
   // It returns false if |expression_body| includes an invalid token or
@@ -100,7 +99,7 @@ CalculatorImpl::CalculatorImpl() {
   operator_map_["-"] = MINUS;
   // "ー". It is called cho-ompu, onbiki, bobiki, or "nobashi-bou" casually.
   // It is not a full-width hyphen, and may appear in conversion segments by
-  // typing '-' more than one time continuouslly.
+  // typing '-' more than one time continuously.
   operator_map_["ー"] = MINUS;
   operator_map_["*"] = TIMES;
   operator_map_["/"] = DIVIDE;
@@ -152,9 +151,7 @@ bool CalculatorImpl::CalculateString(const absl::string_view key,
     result->clear();
     return false;
   }
-  char buffer[kBufferSizeOfOutputNumber];
-  absl::SNPrintF(buffer, sizeof(buffer), "%.8g", result_value);
-  *result = buffer;
+  *result = absl::StrFormat("%.8g", result_value);
   return true;
 }
 
