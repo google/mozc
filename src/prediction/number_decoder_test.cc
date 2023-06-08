@@ -39,7 +39,6 @@
 #include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace {

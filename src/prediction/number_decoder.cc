@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/number_util.h"
-#include "absl/strings/str_split.h"
 
 namespace mozc {
 
