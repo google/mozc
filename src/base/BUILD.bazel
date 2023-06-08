@@ -551,6 +551,7 @@ mozc_cc_library(
     hdrs = ["file_util_mock.h"],
     deps = [
         ":file_util",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
     ],
