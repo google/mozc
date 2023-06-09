@@ -117,8 +117,8 @@ struct Result {
   // Please refer to Composer for query expansion.
   std::string non_expanded_original_key;
   size_t consumed_key_size = 0;
-  // If the key is a prefix of the user input, this penalty was added to `cost`.
-  int prefix_penalty = 0;
+  // The total penalty added to this result.
+  int penalty = 0;
   // If removed is true, this result is not used for a candidate.
   bool removed = false;
 #ifndef NDEBUG
@@ -130,12 +130,12 @@ struct Result {
     absl::Format(&sink,
                  "key: %s, value: %s, types: %d, wcost: %d, cost: %d, lid: %d, "
                  "rid: %d, attrs: %d, bdd: %s, srcinfo: %d, origkey: %s, "
-                 "consumed_key_size: %d, prefix_penalty: %d, removed: %v",
+                 "consumed_key_size: %d, penalty: %d, removed: %v",
                  r.key, r.value, r.types, r.wcost, r.cost, r.lid, r.rid,
                  r.candidate_attributes,
                  absl::StrJoin(r.inner_segment_boundary, ","), r.source_info,
-                 r.non_expanded_original_key, r.consumed_key_size,
-                 r.prefix_penalty, r.removed);
+                 r.non_expanded_original_key, r.consumed_key_size, r.penalty,
+                 r.removed);
 #ifndef NDEBUG
     sink.Append(", log:\n");
     for (absl::string_view line : absl::StrSplit(r.log, '\n')) {

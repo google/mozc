@@ -36,7 +36,9 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit.h"
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -123,17 +125,19 @@ std::string PrintToken(const Token &token) {
 std::string PrintTokens(const std::vector<Token> &tokens) {
   std::string s = "[";
   for (size_t i = 0; i < tokens.size(); ++i) {
-    s.append(PrintToken(tokens[i])).append(", ");
+    absl::StrAppend(&s, PrintToken(tokens[i]), ", ");
   }
-  return s.append(1, ']');
+  absl::StrAppend(&s, "]");
+  return s;
 }
 
 std::string PrintTokens(const std::vector<Token *> &token_ptrs) {
   std::string s = "[";
   for (size_t i = 0; i < token_ptrs.size(); ++i) {
-    s.append(PrintToken(*token_ptrs[i])).append(", ");
+    absl::StrAppend(&s, PrintToken(*token_ptrs[i]), ", ");
   }
-  return s.append(1, ']');
+  absl::StrAppend(&s, "]");
+  return s;
 }
 
 namespace internal {
@@ -161,7 +165,7 @@ namespace internal {
            << "Expected: " << PrintTokens(expected) << "\n"
            << "Actual: " << PrintTokens(actual);
   }
-  std::set<std::string> encoded_actual;
+  absl::btree_set<std::string> encoded_actual;
   for (size_t i = 0; i < actual.size(); ++i) {
     encoded_actual.insert(PrintToken(actual[i]));
   }

@@ -46,6 +46,7 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gunit.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -1149,8 +1150,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestion) {
     nodes.push_back(n2);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key);
-    c->value.assign(n1->value).append(n2->value);
+    c->key = absl::StrCat(n1->key, n2->key);
+    c->value = absl::StrCat(n1->value, n2->value);
     c->content_key = c->key;
     c->content_value = c->value;
     c->cost = 1000;
@@ -1188,8 +1189,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestion) {
     nodes.push_back(n3);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key).append(n3->key);
-    c->value.assign(n1->value).append(n2->value).append(n3->value);
+    c->key = absl::StrCat(n1->key, n2->key, n3->key);
+    c->value = absl::StrCat(n1->value, n2->value, n3->value);
     c->content_key = c->key;
     c->content_value = c->value;
     c->cost = 1000;
@@ -1288,8 +1289,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterPrediction) {
     nodes.push_back(n2);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key);
-    c->value.assign(n1->value).append(n2->value);
+    c->key = absl::StrCat(n1->key, n2->key);
+    c->value = absl::StrCat(n1->value, n2->value);
     c->content_key = c->key;
     c->content_value = c->value;
     c->cost = 1000;
@@ -1328,8 +1329,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterPrediction) {
     nodes.push_back(n3);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key).append(n3->key);
-    c->value.assign(n1->value).append(n2->value).append(n3->value);
+    c->key = absl::StrCat(n1->key, n2->key, n3->key);
+    c->value = absl::StrCat(n1->value, n2->value, n3->value);
     c->content_key = c->key;
     c->content_value = c->value;
     c->cost = 1000;

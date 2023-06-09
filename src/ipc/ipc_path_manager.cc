@@ -391,10 +391,9 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 
 #ifdef __linux__
   // load from /proc/<pid>/exe
-  char proc[128];
+  std::string proc = absl::StrFormat("/proc/%u/exe", pid);
   char filename[512];
-  absl::SNPrintF(proc, sizeof(proc) - 1, "/proc/%u/exe", pid);
-  const ssize_t size = readlink(proc, filename, sizeof(filename) - 1);
+  const ssize_t size = readlink(proc.c_str(), filename, sizeof(filename) - 1);
   if (size == -1) {
     LOG(ERROR) << "readlink failed: " << strerror(errno);
     return false;

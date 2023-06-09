@@ -29,23 +29,28 @@
 
 #include "rewriter/ivs_variants_rewriter.h"
 
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "base/util.h"
 #include "converter/segments.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
+
+struct ExpansionValue {
+  absl::string_view ivs_surface;
+  absl::string_view additional_description;
+};
+
 // {"reading", "base surface"}, {"IVS surface", "additional description"}},
-const auto *kIvsExpansionTable =
-    new std::map<std::pair<std::string, std::string>,
-                 std::pair<std::string, std::string>>{
+const auto *kIvsExpansionTable = new absl::flat_hash_map<
+    std::pair<absl::string_view, absl::string_view>, ExpansionValue>{
     {{"かつらぎし", "葛城市"}, {"葛\U000E0100城市", "正式字体"}},  // 葛󠄀城市
-    {{"ぎおん", "祇園"}, {"祇\U000E0100園", "礻"}},                  // 祇󠄀園
+    {{"ぎおん", "祇園"}, {"祇\U000E0100園", "礻"}},                // 祇󠄀園
     {{"つじのぞみ", "辻希美"}, {"辻\U000E0100希美", "「辻󠄀」"}},  // 辻󠄀希美
     {{"つじもときよみ", "辻元清美"},
      {"辻\U000E0100元清美", "「辻󠄀」"}},  // 辻󠄀元清美
@@ -54,10 +59,8 @@ const auto *kIvsExpansionTable =
     {{"つじしんぱち", "辻親八"}, {"辻\U000E0100新八", "「辻󠄀」"}},  // 辻󠄀新八
     {{"つじもとけんと", "辻本賢人"},
      {"辻\U000E0100本賢人", "「辻󠄀」"}},  // 辻󠄀本賢人
-    {{"つじあゆみ", "辻あゆみ"},
-     {"辻\U000E0100あゆみ", "「辻󠄀」"}},  // 辻󠄀あゆみ
-    {{"つじかおり", "辻香緒里"},
-     {"辻\U000E0100香緒里", "「辻󠄀」"}},  // 辻󠄀香緒里
+    {{"つじあゆみ", "辻あゆみ"}, {"辻\U000E0100あゆみ", "「辻󠄀」"}},  // 辻󠄀あゆみ
+    {{"つじかおり", "辻香緒里"}, {"辻\U000E0100香緒里", "「辻󠄀」"}},  // 辻󠄀香緒里
     {{"つじかおり", "辻香織"}, {"辻\U000E0100香織", "「辻󠄀」"}},  // 辻󠄀香織
     {{"つじもとたつのり", "辻本達規"},
      {"辻\U000E0100本達規", "「辻󠄀」"}},  // 辻󠄀本達規
@@ -107,16 +110,16 @@ const auto *kIvsExpansionTable =
      {"煉\U000E0101獄槇寿郎", "正式字体"}},  // 煉󠄁獄槇寿郎
     {{"れんごくせんじゅろう", "煉獄千寿郎"},
      {"煉\U000E0101獄千寿郎", "正式字体"}},  // 煉󠄁獄千寿郎
-    {{"れんごく", "煉獄"}, {"煉\U000E0101獄", "「煉󠄁」"}},    // 煉󠄁獄
+    {{"れんごく", "煉獄"}, {"煉\U000E0101獄", "「煉󠄁」"}},      // 煉󠄁獄
     {{"ねずこ", "禰豆子"}, {"禰\U000E0100豆子", "正式字体"}},  // 禰󠄀豆子
-    {{"みそ", "味噌"}, {"味噌\U000E0100", "「噌󠄀」"}},                // 味噌󠄀
+    {{"みそ", "味噌"}, {"味噌\U000E0100", "「噌󠄀」"}},          // 味噌󠄀
     {{"つじ", "辻"}, {"辻\U000E0100", "一点しんにょう"}},      // 辻󠄀
     {{"つじもと", "辻本"}, {"辻\U000E0100本", "一点しんにょう"}},  // 辻󠄀本
     {{"つじもと", "辻元"}, {"辻\U000E0100元", "一点しんにょう"}},  // 辻󠄀元
     {{"つじなか", "辻中"}, {"辻\U000E0100中", "一点しんにょう"}},  // 辻󠄀中
     {{"つじい", "辻井"}, {"辻\U000E0100井", "一点しんにょう"}},    // 辻󠄀井
     {{"さかき", "榊"}, {"榊\U000E0100", ""}},                      // 榊󠄀
-    {{"さかきばら", "榊原"}, {"榊\U000E0100原", "「榊」"}}               // 榊󠄀原
+    {{"さかきばら", "榊原"}, {"榊\U000E0100原", "「榊」"}}         // 榊󠄀原
 };
 
 constexpr char kIvsVariantDescription[] = "環境依存(IVS)";
@@ -127,25 +130,29 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
   bool modified = false;
   for (int i = seg->candidates_size() - 1; i >= 0; --i) {
     const Segment::Candidate &original_candidate = seg->candidate(i);
-    auto it = kIvsExpansionTable->find(std::pair(
-        original_candidate.content_key, original_candidate.content_value));
+    auto it = kIvsExpansionTable->find(
+        {original_candidate.content_key, original_candidate.content_value});
     if (it == kIvsExpansionTable->end()) {
       continue;
     }
     modified = true;
 
+    const auto &[key, value] = *it;
+
     auto new_candidate =
         std::make_unique<Segment::Candidate>(original_candidate);
     // "は" for "葛城市は"
-    const absl::string_view non_content_value(
-        original_candidate.value.data() +
-        original_candidate.content_value.size());
-    new_candidate->value = absl::StrCat(it->second.first, non_content_value);
-    new_candidate->content_value = it->second.first;
+    const absl::string_view non_content_value =
+        absl::string_view(original_candidate.value)
+            .substr(original_candidate.content_value.size());
+    new_candidate->value = absl::StrCat(value.ivs_surface, non_content_value);
+    new_candidate->content_value.assign(value.ivs_surface.data(),
+                                        value.ivs_surface.size());
     new_candidate->description =
-        it->second.second.empty()
+        value.additional_description.empty()
             ? kIvsVariantDescription
-            : absl::StrCat(kIvsVariantDescription, " ", it->second.second);
+            : absl::StrCat(kIvsVariantDescription, " ",
+                           value.additional_description);
     seg->insert_candidate(i + 1, std::move(new_candidate));
   }
   return modified;

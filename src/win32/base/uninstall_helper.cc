@@ -466,8 +466,7 @@ bool IsEqualProfile(const LayoutProfileInfo &lhs,
   if (lhs.klid != rhs.klid) {
     return false;
   }
-  if (!WinUtil::SystemEqualString(lhs.ime_filename.c_str(),
-                                  rhs.ime_filename.c_str(), true)) {
+  if (!WinUtil::SystemEqualString(lhs.ime_filename, rhs.ime_filename, true)) {
     return false;
   }
   return true;

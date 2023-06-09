@@ -807,7 +807,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
     std::string query;
     composer.GetQueryForConversion(&query);
     SCOPED_TRACE(absl::StrFormat("char code = %d, ascii_input = %s, query = %s",
-                                 i, ascii_input.c_str(), query.c_str()));
+                                 i, ascii_input, query));
 
     Segments segments;
     Segment *segment = segments.add_segment();

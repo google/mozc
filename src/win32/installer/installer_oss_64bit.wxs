@@ -156,6 +156,11 @@
                 Name='mozc_renderer.exe' DiskId='1' Vital='yes'
                 Checksum='yes' Source='$(var.MozcRenderer64Path)' />
           </Component>
+          <Component Id='MozcTool' Guid='*'>
+            <File Id='mozc_tool.exe'
+                Name='mozc_tool.exe' DiskId='1'
+                Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
+          </Component>
           <?if $(var.VSConfigurationName) = "Release" ?>
             <Component Id='msvcp140' Guid='*'>
               <File Id='msvcp140.dll' Name='msvcp140.dll'
@@ -167,35 +172,6 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.ReleaseRedistCrt32Dir)/vcruntime140.dll' />
             </Component>
-          <?endif?>
-          <Component Id='MozcTool' Guid='*'>
-            <File Id='mozc_tool.exe'
-                Name='mozc_tool.exe' DiskId='1'
-                Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
-          </Component>
-          <?if $(var.VSConfigurationName) = "Debug" ?>
-            <Component Id='Qt5CoredDll' Guid='*'>
-              <!-- Always overwrite: b/31845781 -->
-              <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
-              <File Id='Qt5Cored.dll'
-                  Name='Qt5Cored.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
-            </Component>
-            <Component Id='Qt5GuidDll' Guid='*'>
-              <!-- Always overwrite: b/31845781 -->
-              <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
-              <File Id='Qt5Guid.dll'
-                  Name='Qt5Guid.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
-            </Component>
-            <Component Id='Qt5WidgetsdDll' Guid='*'>
-              <!-- Always overwrite: b/31845781 -->
-              <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
-              <File Id='Qt5Widgetsd.dll'
-                  Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
-            </Component>
-          <?else?>
             <Component Id='Qt5CoreDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Core.dll' Name='Qt5Core.dll' On="install" />
@@ -216,6 +192,28 @@
               <File Id='Qt5Widgets.dll'
                   Name='Qt5Widgets.dll' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.Qt5WidgetsDllPath)' />
+            </Component>
+          <?else?>
+            <Component Id='Qt5CoredDll' Guid='*'>
+              <!-- Always overwrite: b/31845781 -->
+              <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
+              <File Id='Qt5Cored.dll'
+                  Name='Qt5Cored.dll' DiskId='1' Vital='yes'
+                  Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
+            </Component>
+            <Component Id='Qt5GuidDll' Guid='*'>
+              <!-- Always overwrite: b/31845781 -->
+              <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
+              <File Id='Qt5Guid.dll'
+                  Name='Qt5Guid.dll' DiskId='1' Vital='yes'
+                  Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
+            </Component>
+            <Component Id='Qt5WidgetsdDll' Guid='*'>
+              <!-- Always overwrite: b/31845781 -->
+              <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
+              <File Id='Qt5Widgetsd.dll'
+                  Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
+                  Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
             </Component>
           <?endif?>
           <Directory Id='DocumentsDir' Name='documents'>
@@ -304,68 +302,66 @@
       <?if $(var.VSConfigurationName) = "Release" ?>
         <ComponentRef Id='msvcp140' />
         <ComponentRef Id='vcruntime140' />
-      <?endif?>
-      <?if $(var.VSConfigurationName) = "Debug" ?>
-        <ComponentRef Id='Qt5CoredDll' />
-        <ComponentRef Id='Qt5GuidDll' />
-        <ComponentRef Id='Qt5WidgetsdDll' />
-        <ComponentRef Id='QWindowsdDll' />
-      <?else?>
         <ComponentRef Id='Qt5CoreDll' />
         <ComponentRef Id='Qt5GuiDll' />
         <ComponentRef Id='Qt5WidgetsDll' />
         <ComponentRef Id='QWindowsDll' />
+      <?else?>
+        <ComponentRef Id='Qt5CoredDll' />
+        <ComponentRef Id='Qt5GuidDll' />
+        <ComponentRef Id='Qt5WidgetsdDll' />
+        <ComponentRef Id='QWindowsdDll' />
       <?endif?>
       <ComponentRef Id='SysProcs' />
       <ComponentRef Id='PrelaunchProcesses' />
       <ComponentRef Id='CreditsEn' />
     </Feature>
 
-    <Binary Id='CustomActions64' SourceFile='$(var.CustomActions64Path)' />
+    <Binary Id='mozc_installer_helper.dll' SourceFile='$(var.CustomActions64Path)' />
 
-    <CustomAction Id='RegisterTIP64' BinaryKey='CustomActions64'
+    <CustomAction Id='RegisterTIP64' BinaryKey='mozc_installer_helper.dll'
         DllEntry='RegisterTIP' Execute='deferred' Impersonate='no' />
-    <CustomAction Id='RegisterTIPRollback64' BinaryKey='CustomActions64'
+    <CustomAction Id='RegisterTIPRollback64' BinaryKey='mozc_installer_helper.dll'
         DllEntry='RegisterTIPRollback' Execute='rollback' Impersonate='no' />
-    <CustomAction Id='UnregisterTIP64' BinaryKey='CustomActions64'
+    <CustomAction Id='UnregisterTIP64' BinaryKey='mozc_installer_helper.dll'
         DllEntry='UnregisterTIP' Execute='deferred' Impersonate='no'
         Return='ignore' />
-    <CustomAction Id='UnregisterTIPRollback64' BinaryKey='CustomActions64'
+    <CustomAction Id='UnregisterTIPRollback64' BinaryKey='mozc_installer_helper.dll'
         DllEntry='UnregisterTIPRollback' Execute='rollback' Impersonate='no'
         Return='ignore' />
     <CustomAction Id='EnsureAllApplicationPackagesPermisssions'
-        BinaryKey='CustomActions64'
+        BinaryKey='mozc_installer_helper.dll'
         DllEntry='EnsureAllApplicationPackagesPermisssions' Execute='deferred'
         Impersonate='no' Return='ignore' />
-    <CustomAction Id='ShutdownServer' BinaryKey='CustomActions64'
+    <CustomAction Id='ShutdownServer' BinaryKey='mozc_installer_helper.dll'
         DllEntry='ShutdownServer' Impersonate='yes' Return='ignore' />
-    <CustomAction Id='RestoreUserIMEEnvironment' BinaryKey='CustomActions64'
+    <CustomAction Id='RestoreUserIMEEnvironment' BinaryKey='mozc_installer_helper.dll'
         DllEntry='RestoreUserIMEEnvironment' Impersonate='yes' Return='ignore'/>
     <CustomAction Id='EnsureIMEIsDisabledForServiceAccountBeforeUninstall'
-        BinaryKey='CustomActions64' Execute='deferred'
+        BinaryKey='mozc_installer_helper.dll' Execute='deferred'
         DllEntry='EnsureIMEIsDisabledForServiceAccount' Impersonate='no'
         Return='ignore'/>
     <CustomAction Id='EnsureIMEIsDisabledForServiceAccountAfterInstall'
-        BinaryKey='CustomActions64' Execute='deferred'
+        BinaryKey='mozc_installer_helper.dll' Execute='deferred'
         DllEntry='EnsureIMEIsDisabledForServiceAccount' Impersonate='no'
         Return='ignore'/>
-    <CustomAction Id='InitialInstallation' BinaryKey='CustomActions64'
+    <CustomAction Id='InitialInstallation' BinaryKey='mozc_installer_helper.dll'
         DllEntry='InitialInstallation' Execute='deferred'
         Impersonate='no' />
-    <CustomAction Id='InitialInstallationCommit' BinaryKey='CustomActions64'
+    <CustomAction Id='InitialInstallationCommit' BinaryKey='mozc_installer_helper.dll'
         DllEntry='InitialInstallationCommit' Execute='commit'
         Impersonate='no' />
-    <CustomAction Id='EnableTipProfile' BinaryKey='CustomActions64'
+    <CustomAction Id='EnableTipProfile' BinaryKey='mozc_installer_helper.dll'
         DllEntry='EnableTipProfile' Execute='commit'
         Impersonate='yes' />
-    <CustomAction Id='HideCancelButton' BinaryKey='CustomActions64'
+    <CustomAction Id='HideCancelButton' BinaryKey='mozc_installer_helper.dll'
         DllEntry='HideCancelButton' Return='ignore' />
-    <CustomAction Id='SaveCustomActionData' BinaryKey='CustomActions64'
+    <CustomAction Id='SaveCustomActionData' BinaryKey='mozc_installer_helper.dll'
         DllEntry='SaveCustomActionData' />
-    <CustomAction Id='RestoreServiceState' BinaryKey='CustomActions64'
+    <CustomAction Id='RestoreServiceState' BinaryKey='mozc_installer_helper.dll'
         DllEntry='RestoreServiceState' Impersonate='no' Execute='deferred'
         Return='ignore' />
-    <CustomAction Id='StopCacheServiceForRollback' BinaryKey='CustomActions64'
+    <CustomAction Id='StopCacheServiceForRollback' BinaryKey='mozc_installer_helper.dll'
         DllEntry='StopCacheService' Impersonate='no'
         Execute='rollback' Return='ignore' />
     <CustomAction Id="NewerVersionError" Error="4000"/>

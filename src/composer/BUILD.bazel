@@ -195,6 +195,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:util",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
     ],
 )

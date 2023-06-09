@@ -153,8 +153,8 @@ std::string Segment::Candidate::DebugString() const {
       const int value_len = (encoded_lengths >> 16) & 0xff;
       const int content_key_len = (encoded_lengths >> 8) & 0xff;
       const int content_value_len = encoded_lengths & 0xff;
-      os << absl::StrFormat("<%d,%d,%d,%d>", key_len, value_len,
-                            content_key_len, content_value_len);
+      os << absl::StreamFormat("<%d,%d,%d,%d>", key_len, value_len,
+                               content_key_len, content_value_len);
     }
   }
   os << ")" << std::endl;

@@ -57,6 +57,7 @@
 #include "absl/container/btree_set.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -610,7 +611,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   {
     // test for non exact transliterated index string.
     // append "が"
-    const std::string key = tokens[7].value + "が";
+    const std::string key = absl::StrCat(tokens[7].value, "が");
     CollectTokenCallback callback;
     system_dic->LookupReverse(key, convreq_, &callback);
     bool found = false;

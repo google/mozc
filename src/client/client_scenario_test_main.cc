@@ -193,8 +193,8 @@ int main(int argc, char **argv) {
 
   if (!absl::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
-    input_file = std::make_unique<mozc::InputFileStream>(
-        absl::GetFlag(FLAGS_input).c_str());
+    input_file =
+        std::make_unique<mozc::InputFileStream>(absl::GetFlag(FLAGS_input));
     if (input_file->fail()) {
       LOG(ERROR) << "File not opened: " << absl::GetFlag(FLAGS_input);
       return 1;

@@ -46,6 +46,7 @@
 #include "base/util.h"
 #include "gui/base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/container/btree_set.h"
 
 namespace mozc {
 namespace gui {
@@ -133,7 +134,7 @@ bool GenericTableEditorDialog::LoadFromString(const std::string &str) {
 }
 
 void GenericTableEditorDialog::DeleteSelectedItems() {
-  std::set<int> rows;
+  absl::btree_set<int> rows;
   QList<QTableWidgetItem *> selected = editorTableWidget->selectedItems();
 
   for (auto item : selected) {

@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -80,6 +81,8 @@ ABSL_FLAG(std::string, engine_name, "default",
 ABSL_FLAG(std::string, engine_type, "desktop", "Engine type: (desktop|mobile)");
 ABSL_FLAG(bool, output_debug_string, true,
           "output debug string for each input");
+ABSL_FLAG(size_t, max_candidates_to_show, 100,
+          "Max number of candidates to show per segment");
 ABSL_FLAG(bool, show_meta_candidates, false, "if true, show meta candidates");
 
 // Advanced options for data files.  These are automatically set when --engine
@@ -200,21 +203,14 @@ std::string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
   std::vector<std::string> pieces;
   for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
        iter.Next()) {
-    std::string s = "<";
-    s.append(iter.GetKey().data(), iter.GetKey().size());
-    s.append(", ");
-    s.append(iter.GetValue().data(), iter.GetValue().size());
-    s.append(", ");
-    s.append(iter.GetContentKey().data(), iter.GetContentKey().size());
-    s.append(", ");
-    s.append(iter.GetContentValue().data(), iter.GetContentValue().size());
-    s.append(1, '>');
-    pieces.push_back(s);
+    pieces.push_back(absl::StrCat("<", iter.GetKey(), ", ", iter.GetValue(),
+                                  ", ", iter.GetContentKey(), ", ",
+                                  iter.GetContentValue(), ">"));
   }
   return absl::StrJoin(pieces, " | ");
 }
 
-void PrintCandidate(const Segment &parent, int num,
+void PrintCandidate(const Segment &parent, size_t candidates_size, int num,
                     const Segment::Candidate &cand, std::ostream *os) {
   std::vector<std::string> lines;
   if (parent.key() != cand.key) {
@@ -242,7 +238,8 @@ void PrintCandidate(const Segment &parent, int num,
   }
 #endif  // MOZC_DEBUG
 
-  (*os) << "  " << num << " " << cand.value << std::endl;
+  (*os) << "  " << num << '/' << candidates_size << " " << cand.value
+        << std::endl;
   for (size_t i = 0; i < lines.size(); ++i) {
     if (!lines[i].empty()) {
       (*os) << "       " << lines[i] << std::endl;
@@ -258,11 +255,15 @@ void PrintSegment(size_t num, size_t segments_size, const Segment &segment,
         << segment.key() << std::endl;
   if (absl::GetFlag(FLAGS_show_meta_candidates)) {
     for (int i = 0; i < segment.meta_candidates_size(); ++i) {
-      PrintCandidate(segment, -i - 1, segment.meta_candidate(i), os);
+      PrintCandidate(segment, segment.meta_candidates_size(), -i - 1,
+                     segment.meta_candidate(i), os);
     }
   }
-  for (size_t i = 0; i < segment.candidates_size(); ++i) {
-    PrintCandidate(segment, i, segment.candidate(i), os);
+  const size_t n = std::min(segment.candidates_size(),
+                            absl::GetFlag(FLAGS_max_candidates_to_show));
+  for (size_t i = 0; i < n; ++i) {
+    PrintCandidate(segment, segment.candidates_size(), i, segment.candidate(i),
+                   os);
   }
 }
 

@@ -56,7 +56,7 @@ namespace {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-         << message << " c = " << absl::StrFormat("U+%05X", c);
+         << message << " c = " << absl::StreamFormat("U+%05X", c);
 }
 
 ::testing::AssertionResult IsExpectedEncodedSize(

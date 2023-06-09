@@ -66,6 +66,12 @@ using ::mozc::prediction::Result;
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
+  // Cost penalty 1151 means that expanded candidates are evaluated
+  // 10 times smaller in frequency.
+  // Note that the cost is calcurated by cost = -500 * log(prob)
+  // 1151 = 500 * log(10)
+  static constexpr int kKeyExpansionPenalty = 1151;
+
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const DataManagerInterface &data_manager,

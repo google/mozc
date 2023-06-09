@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 
@@ -171,11 +172,11 @@ class FileUtilMock : public FileUtilInterface {
   mutable std::map<std::string, FileTimeStamp> files_;
   FileTimeStamp base_id_{1'000'000'000};
   mutable std::map<std::string, bool> dirs_;
-  mutable std::map<std::string, std::string> canonical_paths_;
+  mutable absl::btree_map<std::string, std::string> canonical_paths_;
 
  private:
   template <typename T>
-  T At(const std::map<std::string, T> &map, const std::string &key,
+  T At(const absl::btree_map<std::string, T> &map, const std::string &key,
        const T &fallback_value) const {
     auto it = map.find(key);
     return it == map.end() ? fallback_value : it->second;

@@ -141,7 +141,7 @@ TEST(CalculatorTest, StressTest) {
       {"data", "test", "calculator", "testset.txt"});
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
-  std::ifstream finput(filename.c_str());
+  std::ifstream finput(filename);
   std::string line;
   int lineno = 0;
   while (std::getline(finput, line)) {

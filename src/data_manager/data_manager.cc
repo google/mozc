@@ -119,7 +119,7 @@ std::string DataManager::StatusCodeToString(Status code) {
       s.assign("Status::UNKNOWN");
       break;
   }
-  s.append(absl::StrFormat("(%d)", static_cast<int>(code)));
+  absl::StrAppendFormat(&s, "(%d)", static_cast<int>(code));
   return s;
 }
 

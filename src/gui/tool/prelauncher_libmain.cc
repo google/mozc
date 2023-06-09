@@ -34,10 +34,10 @@
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
-#include "absl/flags/flag.h"
 
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"
+#include "absl/flags/flag.h"
 #endif  // __APPLE__
 
 #ifdef __APPLE__
