@@ -38,9 +38,7 @@
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
-#include "absl/algorithm/container.h"
 #include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
