@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "absl/container/btree_set.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -55,7 +56,7 @@ UserPos::UserPos(absl::string_view token_array_data,
 
 void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
-  std::set<uint16_t> seen;
+  absl::btree_set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
