@@ -1033,7 +1033,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       const int prefix_penalty =
           CalculatePrefixPenalty(request, input_key, result,
                                  immutable_converter_, &prefix_penalty_cache);
-      result.prefix_penalty = prefix_penalty;
+      result.penalty += prefix_penalty;
       cost += prefix_penalty;
       MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost,
                                          "; prefix penalty: ", prefix_penalty));
@@ -1063,13 +1063,7 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   std::string history_key, history_value;
   GetHistoryKeyAndValue(segments, &history_key, &history_value);
 
-  // Cost penalty 1151 means that expanded candidates are evaluated
-  // 10 times smaller in frequency.
-  // Note that the cost is calcurated by cost = -500 * log(prob)
-  // 1151 = 500 * log(10)
-  constexpr int kKeyExpansionPenalty = 1151;
-  for (size_t i = 0; i < results->size(); ++i) {
-    Result &result = results->at(i);
+  for (Result &result : *results) {
     // For TYPING_CORRECTION, query cost is already added.
     // (DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection)
     if (result.types & PredictionType::TYPING_CORRECTION ||
@@ -1085,7 +1079,10 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
     const std::string result_key = GetCandidateKey(result, history_key);
     if (!absl::StartsWith(result_key, lookup_key)) {
       result.cost += kKeyExpansionPenalty;
-      MOZC_WORD_LOG(result, absl::StrCat("KeyExpansionPenalty: ", result.cost));
+      result.penalty += kKeyExpansionPenalty;
+      MOZC_WORD_LOG(
+          result, absl::StrCat("KeyExpansionPenalty: ", result.cost,
+                               "; expansion penalty: ", kKeyExpansionPenalty));
     }
   }
 }
