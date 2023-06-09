@@ -183,6 +183,11 @@
                   Name='GoogleIMEJaRenderer.exe' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.MozcRenderer64Path)' />
             </Component>
+            <Component Id='GIMEJaTool' Guid='*'>
+              <File Id='GoogleIMEJaTool.exe'
+                  Name='GoogleIMEJaTool.exe' DiskId='1'
+                  Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
+            </Component>
             <?if $(var.VSConfigurationName) = "Release" ?>
               <Component Id='msvcp140' Guid='*'>
                 <File Id='msvcp140.dll' Name='msvcp140.dll'
@@ -194,35 +199,6 @@
                     DiskId='1' Checksum='yes'
                     Source='$(var.ReleaseRedistCrt32Dir)/vcruntime140.dll' />
               </Component>
-            <?endif?>
-            <Component Id='GIMEJaTool' Guid='*'>
-              <File Id='GoogleIMEJaTool.exe'
-                  Name='GoogleIMEJaTool.exe' DiskId='1'
-                  Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
-            </Component>
-            <?if $(var.VSConfigurationName) = "Debug" ?>
-              <Component Id='Qt5CoredDll' Guid='*'>
-                <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
-                <File Id='Qt5Cored.dll'
-                    Name='Qt5Cored.dll' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
-              </Component>
-              <Component Id='Qt5GuidDll' Guid='*'>
-                <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
-                <File Id='Qt5Guid.dll'
-                    Name='Qt5Guid.dll' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
-              </Component>
-              <Component Id='Qt5WidgetsdDll' Guid='*'>
-                <!-- Always overwrite: b/31845781 -->
-                <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
-                <File Id='Qt5Widgetsd.dll'
-                    Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
-              </Component>
-            <?else?>
               <Component Id='Qt5CoreDll' Guid='*'>
                 <!-- Always overwrite: b/31845781 -->
                 <RemoveFile Id='Qt5Core.dll' Name='Qt5Core.dll' On="install" />
@@ -243,6 +219,28 @@
                 <File Id='Qt5Widgets.dll'
                     Name='Qt5Widgets.dll' DiskId='1' Vital='yes'
                     Checksum='yes' Source='$(var.Qt5WidgetsDllPath)' />
+              </Component>
+            <?else?>
+              <Component Id='Qt5CoredDll' Guid='*'>
+                <!-- Always overwrite: b/31845781 -->
+                <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
+                <File Id='Qt5Cored.dll'
+                    Name='Qt5Cored.dll' DiskId='1' Vital='yes'
+                    Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
+              </Component>
+              <Component Id='Qt5GuidDll' Guid='*'>
+                <!-- Always overwrite: b/31845781 -->
+                <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
+                <File Id='Qt5Guid.dll'
+                    Name='Qt5Guid.dll' DiskId='1' Vital='yes'
+                    Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
+              </Component>
+              <Component Id='Qt5WidgetsdDll' Guid='*'>
+                <!-- Always overwrite: b/31845781 -->
+                <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
+                <File Id='Qt5Widgetsd.dll'
+                    Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
+                    Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
               </Component>
             <?endif?>
             <Directory Id='DocumentsDir' Name='documents'>
@@ -367,17 +365,15 @@
       <?if $(var.VSConfigurationName) = "Release" ?>
         <ComponentRef Id='msvcp140' />
         <ComponentRef Id='vcruntime140' />
-      <?endif?>
-      <?if $(var.VSConfigurationName) = "Debug" ?>
-        <ComponentRef Id='Qt5CoredDll' />
-        <ComponentRef Id='Qt5GuidDll' />
-        <ComponentRef Id='Qt5WidgetsdDll' />
-        <ComponentRef Id='QWindowsdDll' />
-      <?else?>
         <ComponentRef Id='Qt5CoreDll' />
         <ComponentRef Id='Qt5GuiDll' />
         <ComponentRef Id='Qt5WidgetsDll' />
         <ComponentRef Id='QWindowsDll' />
+      <?else?>
+        <ComponentRef Id='Qt5CoredDll' />
+        <ComponentRef Id='Qt5GuidDll' />
+        <ComponentRef Id='Qt5WidgetsdDll' />
+        <ComponentRef Id='QWindowsdDll' />
       <?endif?>
       <ComponentRef Id='OmahaRegister' />
       <ComponentRef Id='OmahaRegLaunchCmdLine' />
