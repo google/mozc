@@ -339,22 +339,22 @@ TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
   std::vector<std::string> errors;
   std::unique_ptr<std::istream> is(
-      ConfigFileStream::LegacyOpen("system://atok.tsv"));
+      ConfigFileStream::OpenReadText("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
-  is.reset(ConfigFileStream::LegacyOpen("system://ms-ime.tsv"));
+  is = ConfigFileStream::OpenReadText("system://ms-ime.tsv");
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
-  is.reset(ConfigFileStream::LegacyOpen("system://kotoeri.tsv"));
+  is = ConfigFileStream::OpenReadText("system://kotoeri.tsv");
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 
   errors.clear();
-  is.reset(ConfigFileStream::LegacyOpen("system://mobile.tsv"));
+  is = ConfigFileStream::OpenReadText("system://mobile.tsv");
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
   EXPECT_TRUE(errors.empty());
 }

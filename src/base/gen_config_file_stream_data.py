@@ -46,10 +46,11 @@ def GenerateFileData(path):
   r"""Generate FileData entry from given file path.
 
   The generated FileData entry looks as follows:
-   { "something_original_file_path", "\xAA\xBB\xCC", 3 }
+   { "something_original_file_path", "\xAA\xBB\xCC"}
 
   Args:
     path: a filepath to be converted into FileData.
+
   Returns:
     Generated code of a FileData entry.
   """
@@ -58,7 +59,7 @@ def GenerateFileData(path):
   with open(path, 'rb') as stream:
     # bytearray is necessary for the Python2 compatibility.
     result.extend(r'\x%02X' % byte for byte in bytearray(stream.read()))
-  result.append('",  %d }' % os.path.getsize(path))
+  result.append('"}')
 
   return ''.join(result)
 
@@ -70,19 +71,21 @@ def OutputConfigFileStreamData(path_list, output):
   of files in given path_list, to the output stream.
   The generated code looks like:
 
-  static const FileData kFileData[] = {
-    { "filename1", "\x00\x01\x02\x03", 4 },
-    { "filename2", "\x10\x11\x12\x13\x14\x15\x16\x17", 8 },
+  namespace {
+  constexpr FileData kFileData[] = {
+    { "filename1", "\x00\x01\x02\x03"},
+    { "filename2", "\x10\x11\x12\x13\x14\x15\x16\x17"},
         :
         :
   };
+  }  // namespace
 
   Args:
     path_list: a list of file path which should be included in the
       config_file_stream_data as FileData entries.
     output: a stream of the output data.
   """
-  output.write('static const FileData kFileData[] = {\n')
+  output.write('constexpr FileData kFileData[] = {\n')
   for path in path_list:
     output.write(GenerateFileData(path))
     output.write(',\n')
@@ -98,7 +101,9 @@ def main():
     sys.exit(2)
 
   with open(options.output, 'w') as output:
+    output.write('namespace {\n')
     OutputConfigFileStreamData(args, output)
+    output.write('}  // namespace\n')
 
 
 if __name__ == '__main__':
