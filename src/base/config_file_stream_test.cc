@@ -30,7 +30,6 @@
 #include "base/config_file_stream.h"
 
 #include <cstddef>
-#include <ios>
 #include <istream>
 #include <memory>
 #include <string>
@@ -43,18 +42,7 @@
 #include "absl/flags/flag.h"
 
 namespace mozc {
-
 namespace {
-// Returns all data of the filename.
-std::string GetFileData(const std::string &filename) {
-  InputFileStream ifs(filename, std::ios::binary);
-  char c = '\0';
-  std::string data;
-  while (!ifs.get(c).fail()) {
-    data.append(1, c);
-  }
-  return data;
-}
 
 // Returns true if |input_stream| is at the end of stream. This function
 // peeks one more character in case the current position is actually at
@@ -124,13 +112,13 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   ConfigFileStream::AtomicUpdate(prefixed_filename, contents);
   EXPECT_OK(FileUtil::FileExists(filename));
   EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
-  EXPECT_EQ(GetFileData(filename), contents);
+  EXPECT_EQ(FileUtil::GetContents(filename).value_or(""), contents);
 
   const std::string new_contents = "246\n4\n6";
   ConfigFileStream::AtomicUpdate(prefixed_filename, new_contents);
   EXPECT_OK(FileUtil::FileExists(filename));
   EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
-  EXPECT_EQ(GetFileData(filename), new_contents);
+  EXPECT_EQ(FileUtil::GetContents(filename).value_or(""), new_contents);
 
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
@@ -167,16 +155,12 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
 TEST_F(ConfigFileStreamTest, OpenReadText) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
-  constexpr char kTestFileName[] = "my_text_file.dat";
+  constexpr absl::string_view kTestFileName = "my_text_file.dat";
   const std::string &test_file_path =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
-  constexpr char kSourceTextData[] = {
-      'a', 'b', '\r', 'c', '\n', 'd', '\r', '\n', 'e',
-  };
-  ASSERT_OK(FileUtil::SetContents(
-      test_file_path,
-      absl::string_view(kSourceTextData, sizeof(kSourceTextData))));
+  constexpr absl::string_view kSourceTextData = "ab\rc\nd\r\ne";
+  ASSERT_OK(FileUtil::SetContents(test_file_path, kSourceTextData));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
   FileUnlinker unlinker(test_file_path);
 

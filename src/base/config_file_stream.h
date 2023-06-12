@@ -32,9 +32,10 @@
 
 #include <ios>
 #include <istream>
+#include <memory>
 #include <string>
 
-#include "base/file_stream.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -49,7 +50,7 @@ namespace mozc {
 //   system://ms-ime.tsv
 //   system://kotoeri.tsv
 //
-// B) user file. expaneded into $(USER_PROFILE_DIR)/file_name
+// B) user file. expanded into $(USER_PROFILE_DIR)/file_name
 //   user://foo.tsv
 //   user://foo.bar
 //
@@ -63,18 +64,20 @@ namespace mozc {
 class ConfigFileStream {
  public:
   // Open |filename| as a text file with read permission.
-  static std::istream *OpenReadText(const std::string &filename) {
+  static std::unique_ptr<std::istream> OpenReadText(
+      const std::string &filename) {
     return Open(filename, std::ios_base::in);
   }
 
   // Open |filename| as a binary file with read permission.
-  static std::istream *OpenReadBinary(const std::string &filename) {
+  static std::unique_ptr<std::istream> OpenReadBinary(
+      const std::string &filename) {
     return Open(filename, std::ios_base::in | std::ios_base::binary);
   }
 
   // Mozc 1.3 and prior had had a following method, which opens |filename|
   // as a text file with read permission.
-  //   static istream *Open(const std::string &filename) {
+  //   static istream Open(const std::string &filename) {
   //     return Open(filename, ios_base::in);
   //   }
   // As of Mozc 1.3, a number of files had had depended on this method.
@@ -86,7 +89,7 @@ class ConfigFileStream {
   // You should not use this method in new code.
   // TODO(yukawa): Add unit tests and replace |LegacyOpen| with |OpenReadText|
   //     or |OpenReadBinary| where this method is used.
-  static std::istream *LegacyOpen(const std::string &filename) {
+  static std::unique_ptr<std::istream> LegacyOpen(const std::string &filename) {
     return Open(filename, std::ios_base::in);
   }
 
@@ -99,17 +102,17 @@ class ConfigFileStream {
                            const std::string &new_binary_contens);
 
   // if prefix is system:// or memory:// return "";
-  static std::string GetFileName(const std::string &filename);
+  static std::string GetFileName(absl::string_view filename);
 
   // Clear all memory:// files.  This is a utility method for testing.
   static void ClearOnMemoryFiles();
 
  private:
-  // This function was deplicated. Use OpenReadText or OpenReadBinary instead.
+  // This function is deprecated. Use OpenReadText or OpenReadBinary instead.
   // TODO(yukawa): Move this function to anonymous namespace in
   //     config_file_stream.cc.
-  static std::istream *Open(const std::string &filename,
-                            std::ios_base::openmode mode);
+  static std::unique_ptr<std::istream> Open(const std::string &filename,
+                                            std::ios_base::openmode mode);
 };
 }  // namespace mozc
 

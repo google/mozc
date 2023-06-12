@@ -33,17 +33,22 @@
 #include <ios>
 #include <istream>
 #include <iterator>
-#include <map>
+#include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -52,62 +57,54 @@
 namespace mozc {
 namespace {
 
-constexpr char kSystemPrefix[] = "system://";
-constexpr char kUserPrefix[] = "user://";
-constexpr char kFilePrefix[] = "file://";
-constexpr char kMemoryPrefix[] = "memory://";
+constexpr absl::string_view kSystemPrefix = "system://";
+constexpr absl::string_view kUserPrefix = "user://";
+constexpr absl::string_view kFilePrefix = "file://";
+constexpr absl::string_view kMemoryPrefix = "memory://";
 
 struct FileData {
-  const char *name;
-  const char *data;
-  size_t size;
+  absl::string_view name;
+  absl::string_view data;
 };
 
-std::string RemovePrefix(const char *prefix, const std::string &filename) {
-  const size_t size = strlen(prefix);
-  if (filename.size() < size) {
-    return "";
-  }
-  return filename.substr(size, filename.size() - size);
-}
+#include "base/config_file_stream_data.inc"
 
 class OnMemoryFileMap {
  public:
-  std::string get(const std::string &key) const {
-    std::map<std::string, std::string>::const_iterator it = map_.find(key);
+  const std::string &get(const absl::string_view key) const {
+    auto it = map_.find(key);
     if (it != map_.end()) {
       return it->second;
     }
-    return std::string("");
+    return empty_string_;
   }
 
-  void set(const std::string &key, const std::string &value) {
+  void set(const absl::string_view key, const std::string &value) {
     map_[key] = value;
   }
 
   void clear() { map_.clear(); }
 
  private:
-  std::map<std::string, std::string> map_;
+  absl::flat_hash_map<std::string, std::string> map_;
+  const std::string empty_string_;
 };
-
-#include "base/config_file_stream_data.inc"
 }  // namespace
 
-std::istream *ConfigFileStream::Open(const std::string &filename,
-                                     std::ios_base::openmode mode) {
+std::unique_ptr<std::istream> ConfigFileStream::Open(
+    const std::string &filename, std::ios_base::openmode mode) {
   // system://foo.bar.txt
   if (absl::StartsWith(filename, kSystemPrefix)) {
-    const std::string new_filename = RemovePrefix(kSystemPrefix, filename);
+    const absl::string_view new_filename =
+        absl::StripPrefix(filename, kSystemPrefix);
     for (size_t i = 0; i < std::size(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
-        std::istringstream *ifs = new std::istringstream(
-            std::string(kFileData[i].data, kFileData[i].size), mode);
+        auto ifs = std::make_unique<std::istringstream>(
+            std::string(kFileData[i].data), mode);
         CHECK(ifs);
         if (ifs->good()) {
           return ifs;
         }
-        delete ifs;
         return nullptr;
       }
     }
@@ -115,41 +112,39 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
   } else if (absl::StartsWith(filename, kUserPrefix)) {
     const std::string new_filename =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
-                           RemovePrefix(kUserPrefix, filename));
-    InputFileStream *ifs = new InputFileStream(new_filename, mode);
+                           absl::StripPrefix(filename, kUserPrefix));
+    auto ifs = std::make_unique<InputFileStream>(new_filename, mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
     }
-    delete ifs;
     return nullptr;
     // file:///foo.map
   } else if (absl::StartsWith(filename, kFilePrefix)) {
-    const std::string new_filename = RemovePrefix(kFilePrefix, filename);
-    InputFileStream *ifs = new InputFileStream(new_filename, mode);
+    const absl::string_view new_filename =
+        absl::StripPrefix(filename, kFilePrefix);
+    auto ifs =
+        std::make_unique<InputFileStream>(std::string(new_filename), mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
     }
-    delete ifs;
     return nullptr;
   } else if (absl::StartsWith(filename, kMemoryPrefix)) {
-    std::istringstream *ifs = new std::istringstream(
+    auto ifs = std::make_unique<std::istringstream>(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
     }
-    delete ifs;
     return nullptr;
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";
-    InputFileStream *ifs = new InputFileStream(filename, mode);
+    auto ifs = std::make_unique<InputFileStream>(filename, mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
     }
-    delete ifs;
     return nullptr;
   }
 
@@ -173,7 +168,7 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
     return false;
   }
 
-  const std::string tmp_filename = real_filename + ".tmp";
+  const std::string tmp_filename = absl::StrCat(real_filename, ".tmp");
   if (absl::Status s = FileUtil::SetContents(tmp_filename, new_binary_contens);
       !s.ok()) {
     LOG(ERROR) << "Cannot write the contents to " << tmp_filename << ": " << s;
@@ -203,18 +198,18 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
   return true;
 }
 
-std::string ConfigFileStream::GetFileName(const std::string &filename) {
+std::string ConfigFileStream::GetFileName(const absl::string_view filename) {
   if (absl::StartsWith(filename, kSystemPrefix) ||
       absl::StartsWith(filename, kMemoryPrefix)) {
     return "";
   } else if (absl::StartsWith(filename, kUserPrefix)) {
     return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
-                              RemovePrefix(kUserPrefix, filename));
+                              absl::StripPrefix(filename, kUserPrefix));
   } else if (absl::StartsWith(filename, kFilePrefix)) {
-    return RemovePrefix(kUserPrefix, filename);
+    return std::string(absl::StripPrefix(filename, kUserPrefix));
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";
-    return filename;
+    return std::string(filename);
   }
   return "";
 }
