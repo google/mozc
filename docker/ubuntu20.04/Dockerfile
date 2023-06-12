@@ -69,5 +69,8 @@ RUN mkdir /home/mozc_builder/work/mozc
 # COPY --chown=mozc_builder:mozc_builder src/ /home/mozc_builder/work/mozc/src/
 RUN git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 
+# Use clang instead of gcc to support decltype
+ENV CC=clang CXX=clang++
+
 WORKDIR /home/mozc_builder/work/mozc/src
 ENTRYPOINT bash
