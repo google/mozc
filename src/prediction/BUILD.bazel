@@ -187,7 +187,7 @@ mozc_cc_library(
     ],
     deps = [
         ":zero_query_dict",
-        "//base:util",
+        "//base/strings:unicode",
         "//converter:segments",
         "//dictionary:dictionary_token",
         "@com_google_absl//absl/strings",
@@ -237,6 +237,7 @@ mozc_cc_library(
         "//request:conversion_request",
         "//transliteration",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

@@ -45,6 +45,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -54,6 +55,8 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/number_decoder.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
@@ -62,6 +65,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG

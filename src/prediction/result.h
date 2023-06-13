@@ -30,15 +30,19 @@
 #ifndef MOZC_PREDICTION_RESULT_H_
 #define MOZC_PREDICTION_RESULT_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace prediction {
@@ -88,7 +92,9 @@ struct Result {
       PredictionTypes prediction_types,
       dictionary::Token::AttributesBitfield token_attr);
   void SetSourceInfoForZeroQuery(ZeroQueryType zero_query_type);
-  bool IsUserDictionaryResult() const;
+  bool IsUserDictionaryResult() const {
+    return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
+  }
 
   std::string key;
   std::string value;
@@ -145,18 +151,38 @@ struct Result {
   }
 };
 
+namespace result_internal {
+
+// ValueLess returns if lhs is less than rhs by comparing the two strings by
+// the number of Unicode characters and then value.
+// Examples,
+//  "ん" < "あいうえお"
+//  "あいうえお" < "かきくけこ"
+//  "テスト1" < "テスト00"
+bool ValueLess(absl::string_view lhs, absl::string_view rhs);
+
+}  // namespace result_internal
+
 // Comparator for sorting prediction candidates.
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
-class ResultWCostLess {
- public:
-  bool operator()(const Result &lhs, const Result &rhs) const;
+struct ResultWCostLess {
+  bool operator()(const Result &lhs, const Result &rhs) const {
+    if (lhs.wcost == rhs.wcost) {
+      return result_internal::ValueLess(lhs.value, rhs.value);
+    }
+    return lhs.wcost < rhs.wcost;
+  }
 };
 
 // Returns true if `lhs` is less than `rhs`
-class ResultCostLess {
- public:
-  bool operator()(const Result &lhs, const Result &rhs) const;
+struct ResultCostLess {
+  bool operator()(const Result &lhs, const Result &rhs) const {
+    if (lhs.cost == rhs.cost) {
+      return result_internal::ValueLess(lhs.value, rhs.value);
+    }
+    return lhs.cost < rhs.cost;
+  }
 };
 
 #ifndef NDEBUG

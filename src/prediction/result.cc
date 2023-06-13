@@ -29,26 +29,47 @@
 
 #include "prediction/result.h"
 
-#include "base/util.h"
+#include <tuple>
+
+#include "base/strings/unicode.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace prediction {
+namespace result_internal {
 
-namespace {
-
-// Returns true if `lhs` is less than `rhs`
-bool ValueCmp(absl::string_view lhs, absl::string_view rhs) {
-  const size_t lhs_len = Util::CharsLen(lhs);
-  const size_t rhs_len = Util::CharsLen(rhs);
-  if (lhs_len != rhs_len) {
-    return lhs_len < rhs_len;
+bool ValueLess(absl::string_view lhs, absl::string_view rhs) {
+  // This loop processes lhs and rhs in one pass.
+  while (!lhs.empty() && !rhs.empty()) {
+    // Read each Unicode character.
+    absl::string_view lhs_char, rhs_char;
+    std::tie(lhs_char, lhs) = strings::FrontChar(lhs);
+    std::tie(rhs_char, rhs) = strings::FrontChar(rhs);
+    if (lhs_char != rhs_char) {
+      // If they're different, count the number of characters first.
+      auto lhs_it = lhs.begin(), rhs_it = rhs.begin();
+      while (lhs_it != lhs.end() && rhs_it != rhs.end()) {
+        lhs_it += strings::OneCharLen(*lhs_it);
+        rhs_it += strings::OneCharLen(*rhs_it);
+      }
+      if (lhs_it == lhs.end() && rhs_it == rhs.end()) {
+        // Same lengths, use the codepoint order.
+        return lhs_char < rhs_char;
+      } else {
+        // Different lengths. Check if lhs is shorter.
+        return lhs_it == lhs.end();
+      }
+    }
   }
-  return lhs < rhs;
+  // Here, the numbers of chars in lhs and rhs are different.
+  // Return true if the remaining lhs is shorter than the remaining lhs.
+  return lhs.size() < rhs.size();
 }
 
-}  // namespace
+}  // namespace result_internal
 
 using ::mozc::dictionary::Token;
 
@@ -114,24 +135,6 @@ void Result::SetSourceInfoForZeroQuery(ZeroQueryType type) {
       LOG(ERROR) << "Should not come here";
       return;
   }
-}
-
-bool Result::IsUserDictionaryResult() const {
-  return (candidate_attributes & Segment::Candidate::USER_DICTIONARY) != 0;
-}
-
-bool ResultWCostLess::operator()(const Result &lhs, const Result &rhs) const {
-  if (lhs.wcost != rhs.wcost) {
-    return lhs.wcost < rhs.wcost;
-  }
-  return ValueCmp(lhs.value, rhs.value);
-}
-
-bool ResultCostLess::operator()(const Result &lhs, const Result &rhs) const {
-  if (lhs.cost != rhs.cost) {
-    return lhs.cost < rhs.cost;
-  }
-  return ValueCmp(lhs.value, rhs.value);
 }
 
 }  // namespace prediction
