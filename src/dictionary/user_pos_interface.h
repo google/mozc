@@ -32,10 +32,10 @@
 
 #include <cstdint>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -45,16 +45,10 @@ namespace mozc {
 // executables.
 class PosListProviderInterface {
  public:
-  PosListProviderInterface(const PosListProviderInterface &) = delete;
-  PosListProviderInterface &operator=(const PosListProviderInterface &) =
-      delete;
   virtual ~PosListProviderInterface() = default;
 
-  // Sets posssible list of POS which Mozc can handle.
+  // Sets possible list of POS which Mozc can handle.
   virtual void GetPosList(std::vector<std::string> *pos_list) const = 0;
-
- protected:
-  PosListProviderInterface() = default;
 };
 
 // Interface of the helper class used by POS.
@@ -84,19 +78,17 @@ class UserPosInterface : public PosListProviderInterface {
     }
     inline void remove_attribute(Attribute attr) { attributes &= ~attr; }
 
-    friend void swap(Token &l, Token &r) {
+    void swap(Token &other) noexcept {
+      static_assert(std::is_nothrow_swappable_v<std::string>);
       using std::swap;
-      swap(l.key, r.key);
-      swap(l.value, r.value);
-      swap(l.id, r.id);
-      swap(l.attributes, r.attributes);
-      swap(l.comment, r.comment);
+      swap(key, other.key);
+      swap(value, other.value);
+      swap(id, other.id);
+      swap(attributes, other.attributes);
+      swap(comment, other.comment);
     }
+    friend void swap(Token &lhs, Token &rhs) noexcept { lhs.swap(rhs); }
   };
-
-  UserPosInterface(const UserPosInterface &) = delete;
-  UserPosInterface &operator=(const UserPosInterface &) = delete;
-  ~UserPosInterface() override = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
   virtual bool IsValidPos(absl::string_view pos) const = 0;
@@ -115,9 +107,6 @@ class UserPosInterface : public PosListProviderInterface {
                  absl::string_view pos, std::vector<Token> *tokens) const {
     return GetTokens(key, value, pos, "", tokens);
   }
-
- protected:
-  UserPosInterface() = default;
 };
 
 }  // namespace mozc

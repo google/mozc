@@ -503,10 +503,9 @@ mozc_cc_library(
     deps = [
         ":user_pos_interface",
         "//base:logging",
-        "//base:port",
         "//base/container:serialized_string_array",
         "//data_manager:data_manager_interface",
-        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -695,10 +694,7 @@ mozc_cc_library(
         "//engine:__subpackages__",
         "//rewriter:__subpackages__",
     ],
-    deps = [
-        "//base:port",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 mozc_cc_library(

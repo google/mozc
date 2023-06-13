@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_POS_H_
 #define MOZC_DICTIONARY_USER_POS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -38,7 +39,6 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_pos_interface.h"
 #include "absl/strings/string_view.h"
