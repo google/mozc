@@ -78,8 +78,8 @@ class BitArray {
                              0x00000001);
   }
 
-  void swap(BitArray &other) noexcept(
-      noexcept(std::is_nothrow_swappable_v<decltype(array_)>)) {
+  void swap(BitArray &other) noexcept {
+    static_assert(std::is_nothrow_swappable_v<decltype(array_)>);
     using std::swap;
     swap(array_, other.array_);
     swap(size_, other.size_);
@@ -90,10 +90,7 @@ class BitArray {
   size_t size_;
 };
 
-inline void swap(BitArray &lhs,
-                 BitArray &rhs) noexcept(noexcept(lhs.swap(rhs))) {
-  lhs.swap(rhs);
-}
+inline void swap(BitArray &lhs, BitArray &rhs) noexcept { lhs.swap(rhs); }
 
 }  // namespace mozc
 

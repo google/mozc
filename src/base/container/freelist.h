@@ -77,8 +77,9 @@ class FreeList {
 
   constexpr size_t size() const { return size_; }
 
-  void swap(FreeList& other) noexcept(
-      std::is_nothrow_swappable_v<decltype(pool_)>) {
+  void swap(FreeList& other) noexcept {
+    static_assert(
+      std::is_nothrow_swappable_v<decltype(pool_)>);
     using std::swap;
     swap(pool_, other.pool_);
     swap(current_index_, other.current_index_);
@@ -87,7 +88,7 @@ class FreeList {
   }
 
   friend void swap(FreeList& lhs,
-                   FreeList& rhs) noexcept(noexcept(lhs.swap(rhs))) {
+                   FreeList& rhs) noexcept {
     lhs.swap(rhs);
   }
 
@@ -123,18 +124,15 @@ class ObjectPool {
 
   constexpr size_t size() const { return freelist_.size(); }
 
-  void swap(ObjectPool& other) noexcept(
-      std::is_nothrow_swappable_v<decltype(released_)> &&
-      std::is_nothrow_swappable_v<decltype(freelist_)>) {
+  void swap(ObjectPool& other) noexcept {
+    static_assert(std::is_nothrow_swappable_v<decltype(released_)>);
+    static_assert(std::is_nothrow_swappable_v<decltype(freelist_)>);
     using std::swap;
     swap(released_, other.released_);
     swap(freelist_, other.freelist_);
   }
 
-  friend void swap(ObjectPool& lhs,
-                   ObjectPool& rhs) noexcept(noexcept(lhs.swap(rhs))) {
-    lhs.swap(rhs);
-  }
+  friend void swap(ObjectPool& lhs, ObjectPool& rhs) noexcept { lhs.swap(rhs); }
 
  private:
   std::vector<T*> released_;

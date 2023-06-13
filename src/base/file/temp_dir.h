@@ -51,7 +51,7 @@ class TempFile {
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempFile &operator=(TempFile &&other) noexcept(kIsNothrowSwappable) {
+  TempFile &operator=(TempFile &&other) noexcept {
     this->swap(other);
     return *this;
   }
@@ -61,7 +61,8 @@ class TempFile {
 
   constexpr const std::string &path() const { return path_; }
 
-  void swap(TempFile &other) noexcept(kIsNothrowSwappable) {
+  void swap(TempFile &other) noexcept {
+    static_assert(std::is_nothrow_swappable_v<decltype(path_)>);
     using std::swap;
     swap(path_, other.path_);
     swap(keep_, other.keep_);
@@ -71,8 +72,6 @@ class TempFile {
   std::string path_;
   // Delete a temp file by default.
   bool keep_ = false;
-  static constexpr bool kIsNothrowSwappable =
-      std::is_nothrow_swappable_v<decltype(path_)>;
 };
 
 class TempDirectory {
@@ -81,8 +80,7 @@ class TempDirectory {
       : path_(std::move(other.path_)), keep_(other.keep_) {
     other.keep_ = true;
   }
-  TempDirectory &operator=(TempDirectory &&other) noexcept(
-      kIsNothrowSwappable) {
+  TempDirectory &operator=(TempDirectory &&other) noexcept {
     this->swap(other);
     return *this;
   }
@@ -105,7 +103,8 @@ class TempDirectory {
 
   constexpr const std::string &path() const { return path_; }
 
-  void swap(TempDirectory &other) noexcept(kIsNothrowSwappable) {
+  void swap(TempDirectory &other) noexcept {
+    static_assert(std::is_nothrow_swappable_v<decltype(path_)>);
     using std::swap;
     swap(path_, other.path_);
     swap(keep_, other.keep_);
@@ -121,18 +120,11 @@ class TempDirectory {
   // The default value for keep_ is true here because there are more code paths
   // where we don't want to delete the directory (also for safety).
   bool keep_ = true;
-
-  static constexpr bool kIsNothrowSwappable =
-      std::is_nothrow_swappable_v<decltype(path_)>;
 };
 
-inline void swap(TempFile &lhs,
-                 TempFile &rhs) noexcept(noexcept(lhs.swap(rhs))) {
-  lhs.swap(rhs);
-}
+inline void swap(TempFile &lhs, TempFile &rhs) noexcept { lhs.swap(rhs); }
 
-inline void swap(TempDirectory &lhs,
-                 TempDirectory &rhs) noexcept(noexcept(lhs.swap(rhs))) {
+inline void swap(TempDirectory &lhs, TempDirectory &rhs) noexcept {
   lhs.swap(rhs);
 }
 
