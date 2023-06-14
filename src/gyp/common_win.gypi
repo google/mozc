@@ -197,7 +197,7 @@
             'TargetMachine': '<(win_target_machine_x64)',
             'AdditionalLibraryDirectories': [
               '<@(msvs_libs_x64)',
-            ],
+           ],
             'AdditionalLibraryDirectories!': [
               '<@(msvs_libs_x86)',
             ],
