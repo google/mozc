@@ -105,6 +105,8 @@
         'logging.cc',
         'mmap.cc',
         'random.cc',
+        'strings/unicode.cc',
+        'strings/internal/utf8_internal.cc',
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',

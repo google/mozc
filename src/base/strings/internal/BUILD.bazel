@@ -33,6 +33,7 @@ load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
     "mozc_cc_library",
+    "mozc_cc_test",
 )
 
 package(default_visibility = ["//base/strings:__subpackages__"])
@@ -77,6 +78,24 @@ mozc_cc_binary(
         "@com_google_absl//absl/flags:flag",
         # For OSS, darts is also required.
         # http://chasen.org/~taku/software/darts/
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_library(
+    name = "utf8_internal",
+    srcs = ["utf8_internal.cc"],
+    hdrs = ["utf8_internal.h"],
+    deps = ["@com_google_absl//absl/base:core_headers"],
+)
+
+mozc_cc_test(
+    name = "utf8_internal_test",
+    size = "small",
+    srcs = ["utf8_internal_test.cc"],
+    deps = [
+        ":utf8_internal",
+        "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],
 )
