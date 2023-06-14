@@ -1568,11 +1568,6 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
 bool UserHistoryPredictor::ShouldInsert(
     RequestType request_type, absl::string_view key, absl::string_view value,
     const absl::string_view description) const {
-  // Strip trailing spaces from key and value.
-  // Space can be appended on commit for alphanumeric input.
-  key = absl::StripTrailingAsciiWhitespace(key);
-  value = absl::StripTrailingAsciiWhitespace(value);
-
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
       description.size() > kMaxStringLength) {
@@ -1585,6 +1580,25 @@ bool UserHistoryPredictor::ShouldInsert(
     return false;
   }
   return true;
+}
+
+template <typename Key, typename Value, typename Description>
+void UserHistoryPredictor::TryInsert(RequestType request_type, Key &&key,
+                                     Value &&value, Description &&description,
+                                     bool is_suggestion_selected,
+                                     uint32_t next_fp,
+                                     uint64_t last_access_time,
+                                     Segments *segments) {
+  // b/279560433: Preprocess key value
+  absl::string_view new_key =
+      absl::StripTrailingAsciiWhitespace(std::forward<Key>(key));
+  absl::string_view new_value =
+      absl::StripTrailingAsciiWhitespace(std::forward<Value>(value));
+  if (ShouldInsert(request_type, new_key, new_value, description)) {
+    Insert(std::string(new_key), std::string(new_value),
+           std::forward<Description>(description), is_suggestion_selected,
+           next_fp, last_access_time, segments);
+  }
 }
 
 void UserHistoryPredictor::Insert(std::string key, std::string value,

@@ -442,13 +442,7 @@ class UserHistoryPredictor : public PredictorInterface {
   void TryInsert(RequestType request_type, Key &&key, Value &&value,
                  Description &&description, bool is_suggestion_selected,
                  uint32_t next_fp, uint64_t last_access_time,
-                 Segments *segments) {
-    if (ShouldInsert(request_type, key, value, description)) {
-      Insert(std::forward<Key>(key), std::forward<Value>(value),
-             std::forward<Description>(description), is_suggestion_selected,
-             next_fp, last_access_time, segments);
-    }
-  }
+                 Segments *segments);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
