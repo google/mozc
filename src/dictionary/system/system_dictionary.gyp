@@ -77,6 +77,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:louds_trie',
         '../dictionary_base.gyp:pos_matcher',
         '../file/dictionary_file.gyp:codec_factory',

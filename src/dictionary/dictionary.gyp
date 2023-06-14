@@ -57,6 +57,7 @@
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
+        '../request/request.gyp:conversion_request',
       ],
     },
     {
@@ -119,6 +120,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../request/request.gyp:conversion_request',
         '../testing/testing.gyp:testing',
       ],
     },
