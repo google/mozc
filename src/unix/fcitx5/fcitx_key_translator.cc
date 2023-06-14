@@ -376,7 +376,10 @@ bool KeyTranslator::IsKanaAvailable(KeySym keyval, uint32_t keycode,
   // key generate the same |keyval|. In this case, we have to check |keycode|
   // to return an appropriate string. See the following IBus issue for
   // details: https://github.com/ibus/ibus/issues/73
-  if (layout_is_jp && keyval == '\\' && keycode == FcitxKey_bar) {
+  // Note the difference(8, evdev offset) of keycode value between ibus/fcitx.
+  // IBUS_bar was wrongly used in mozc (it's a keysym value, not key code, so
+  // the intention is to compare against 124 (a.k.a 124 + 8 here).
+  if (layout_is_jp && keyval == '\\' && keycode == 132) {
     keyval = static_cast<KeySym>(U'¥');  // U+00A5
   }
 
