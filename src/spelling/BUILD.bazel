@@ -101,6 +101,8 @@ mozc_cc_library(
         "//base:port",
         "//base:thread",
         "//base:util",
+        "//base/protobuf",
+        "//base/protobuf:repeated_field",
         "//engine:engine_builder",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
