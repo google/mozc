@@ -57,14 +57,7 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 
-#ifdef __ANDROID__
-constexpr bool kDefaultUseActualConverterForRealtimeConversion = false;
-#else   // __ANDROID__
-constexpr bool kDefaultUseActualConverterForRealtimeConversion = true;
-#endif  // __ANDROID__
-
-ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion,
-          kDefaultUseActualConverterForRealtimeConversion,
+ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion, true,
           "If true, use the actual (non-immutable) converter for real "
           "time conversion.");
 
@@ -120,11 +113,6 @@ void SetUseActualConverterForRealtimeConversion(
     const Request &request, ConversionRequest *conversion_request) {
   conversion_request->set_use_actual_converter_for_realtime_conversion(
       absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
-  if (request.mixed_conversion()) {  // i.e., mobile request
-    conversion_request->set_use_actual_converter_for_realtime_conversion(
-        request.decoder_experiment_params()
-            .use_actual_converter_for_realtime_conversion());
-  }
 }
 
 }  // namespace

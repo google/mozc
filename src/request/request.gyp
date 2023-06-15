@@ -33,10 +33,7 @@
   'targets': [
     {
       'target_name': 'conversion_request',
-      'type': 'static_library',
-      'sources': [
-        'conversion_request.cc',
-      ],
+      'type': 'none',
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',

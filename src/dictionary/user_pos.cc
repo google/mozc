@@ -30,15 +30,17 @@
 #include "dictionary/user_pos.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "absl/container/btree_set.h"
+#include "data_manager/data_manager_interface.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -56,7 +58,7 @@ UserPos::UserPos(absl::string_view token_array_data,
 
 void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
-  absl::btree_set<uint16_t> seen;
+  absl::flat_hash_set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
@@ -102,12 +104,11 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
   if (str_iter == string_array_.end() || *str_iter != pos) {
     return false;
   }
-  std::pair<iterator, iterator> range =
-      std::equal_range(begin(), end(), str_iter.index());
-  if (range.first == range.second) {
+  const auto [first, last] = std::equal_range(begin(), end(), str_iter.index());
+  if (first == last) {
     return false;
   }
-  const size_t size = range.second - range.first;
+  const ptrdiff_t size = last - first;
   CHECK_GE(size, 1);
   tokens->resize(size);
 
@@ -115,8 +116,8 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
   const bool is_non_ja_locale =
       !locale.empty() && !absl::StartsWith(locale, "ja");
 
-  constexpr char kIsolatedWordPos[] = "短縮よみ";
-  constexpr char kSuggestionOnlyPos[] = "サジェストのみ";
+  constexpr absl::string_view kIsolatedWordPos = "短縮よみ";
+  constexpr absl::string_view kSuggestionOnlyPos = "サジェストのみ";
 
   uint16_t attributes = 0;
   if (pos == kIsolatedWordPos) {
@@ -129,43 +130,38 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
   }
 
   if (size == 1) {  // no conjugation
-    const auto &token_iter = range.first;
-    (*tokens)[0].key = std::string(key);
-    (*tokens)[0].value = std::string(value);
-    (*tokens)[0].id = token_iter.conjugation_id();
-    (*tokens)[0].attributes = attributes;
+    tokens->front().key = std::string(key);
+    tokens->front().value = std::string(value);
+    tokens->front().id = first.conjugation_id();
+    tokens->front().attributes = attributes;
   } else {
-    const auto &base_form_token_iter = range.first;
     // expand all other forms
-    std::string key_stem = std::string(key);
-    std::string value_stem = std::string(value);
+    absl::string_view key_stem = key;
+    absl::string_view value_stem = value;
     // assume that conjugation_form[0] contains the suffix of "base form".
     const absl::string_view base_key_suffix =
-        string_array_[base_form_token_iter.key_suffix_index()];
+        string_array_[first.key_suffix_index()];
     const absl::string_view base_value_suffix =
-        string_array_[base_form_token_iter.value_suffix_index()];
+        string_array_[first.value_suffix_index()];
 
     if (base_key_suffix.size() < key.size() &&
         base_value_suffix.size() < value.size() &&
         absl::EndsWith(key, base_key_suffix) &&
         absl::EndsWith(value, base_value_suffix)) {
-      key_stem.assign(key.data(), key.size() - base_key_suffix.size());
-      value_stem.assign(value.data(), value.size() - base_value_suffix.size());
+      key_stem.remove_suffix(base_key_suffix.size());
+      value_stem.remove_suffix(base_value_suffix.size());
     }
-    for (size_t i = 0; i < size; ++i, ++range.first) {
-      const auto &token_iter = range.first;
+    auto dest = tokens->begin();
+    for (auto src = first; src != last; ++src, ++dest) {
       const absl::string_view key_suffix =
-          string_array_[token_iter.key_suffix_index()];
+          string_array_[src.key_suffix_index()];
       const absl::string_view value_suffix =
-          string_array_[token_iter.value_suffix_index()];
-      (*tokens)[i].key.clear();
-      (*tokens)[i].value.clear();
-      absl::StrAppend(&(*tokens)[i].key, key_stem, key_suffix);
-      absl::StrAppend(&(*tokens)[i].value, value_stem, value_suffix);
-      (*tokens)[i].id = token_iter.conjugation_id();
-      (*tokens)[i].attributes = attributes;
+          string_array_[src.value_suffix_index()];
+      dest->key = absl::StrCat(key_stem, key_suffix);
+      dest->value = absl::StrCat(value_stem, value_suffix);
+      dest->id = src.conjugation_id();
+      dest->attributes = attributes;
     }
-    DCHECK(range.first == range.second);
   }
 
   return true;

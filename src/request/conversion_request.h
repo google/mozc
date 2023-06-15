@@ -30,27 +30,16 @@
 #ifndef MOZC_REQUEST_CONVERSION_REQUEST_H_
 #define MOZC_REQUEST_CONVERSION_REQUEST_H_
 
-#include <string>
+#include <type_traits>
 
-#include "base/port.h"
+#include "base/logging.h"
+#include "composer/composer.h"
+#include "config/config_handler.h"
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 inline constexpr size_t kMaxConversionCandidatesSize = 200;
-
-// Protocol buffers, commands::Request and config::Config should be forward
-// declaration instead of include header files.  Otherwise, we need to specify
-// 'hard_dependency' to all affected rules in the GYP files.
-namespace commands {
-class Request;
-}  // namespace commands
-
-namespace composer {
-class Composer;
-}  // namespace composer
-
-namespace config {
-class Config;
-}  // namespace config
 
 // Contains utilizable information for conversion, suggestion and prediction,
 // including composition, preceding text, etc.
@@ -84,66 +73,121 @@ class ConversionRequest {
     // of possible hiragana.
   };
 
-  ConversionRequest();
+  ConversionRequest()
+      : ConversionRequest(nullptr, &commands::Request::default_instance(),
+                          &config::ConfigHandler::DefaultConfig()) {}
   ConversionRequest(const composer::Composer *c,
                     const commands::Request *request,
-                    const config::Config *config);
+                    const config::Config *config)
+      : request_type_(ConversionRequest::CONVERSION),
+        composer_(c),
+        request_(request),
+        config_(config) {}
 
-  // This class is copyable.
-  ConversionRequest(const ConversionRequest &x);
-  ConversionRequest &operator=(const ConversionRequest &x);
+  // Copyable.
+  ConversionRequest(const ConversionRequest &) = default;
+  ConversionRequest &operator=(const ConversionRequest &) = default;
 
-  ~ConversionRequest();
+  RequestType request_type() const { return request_type_; }
+  void set_request_type(RequestType request_type) {
+    request_type_ = request_type;
+  }
 
-  RequestType request_type() const;
-  void set_request_type(RequestType request_type);
+  bool has_composer() const { return composer_ != nullptr; }
+  const composer::Composer &composer() const {
+    DCHECK(composer_);
+    return *composer_;
+  }
+  void set_composer(const composer::Composer *c) { composer_ = c; }
 
-  bool has_composer() const;
-  const composer::Composer &composer() const;
-  void set_composer(const composer::Composer *c);
+  bool use_actual_converter_for_realtime_conversion() const {
+    return use_actual_converter_for_realtime_conversion_;
+  }
+  void set_use_actual_converter_for_realtime_conversion(bool value) {
+    use_actual_converter_for_realtime_conversion_ = value;
+  }
 
-  bool use_actual_converter_for_realtime_conversion() const;
-  void set_use_actual_converter_for_realtime_conversion(bool value);
+  bool create_partial_candidates() const { return create_partial_candidates_; }
+  void set_create_partial_candidates(bool value) {
+    create_partial_candidates_ = value;
+  }
 
-  bool create_partial_candidates() const;
-  void set_create_partial_candidates(bool value);
+  bool enable_user_history_for_conversion() const {
+    return enable_user_history_for_conversion_;
+  }
+  void set_enable_user_history_for_conversion(bool value) {
+    enable_user_history_for_conversion_ = value;
+  }
 
-  bool enable_user_history_for_conversion() const;
-  void set_enable_user_history_for_conversion(bool value);
+  ComposerKeySelection composer_key_selection() const {
+    return composer_key_selection_;
+  }
+  void set_composer_key_selection(ComposerKeySelection selection) {
+    composer_key_selection_ = selection;
+  }
 
-  ComposerKeySelection composer_key_selection() const;
-  void set_composer_key_selection(ComposerKeySelection selection);
+  const commands::Request &request() const {
+    DCHECK(request_);
+    return *request_;
+  }
+  void set_request(const commands::Request *request) { request_ = request; }
 
-  const commands::Request &request() const;
-  void set_request(const commands::Request *request);
-
-  const config::Config &config() const;
-  void set_config(const config::Config *config);
+  const config::Config &config() const {
+    DCHECK(config_);
+    return *config_;
+  }
+  void set_config(const config::Config *config) { config_ = config; }
 
   // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
   // flag.
-  bool skip_slow_rewriters() const;
-  void set_skip_slow_rewriters(bool value);
+  bool skip_slow_rewriters() const { return skip_slow_rewriters_; }
+  void set_skip_slow_rewriters(bool value) { skip_slow_rewriters_ = value; }
 
-  bool IsKanaModifierInsensitiveConversion() const;
+  bool IsKanaModifierInsensitiveConversion() const {
+    return request_->kana_modifier_insensitive_conversion() &&
+           config_->use_kana_modifier_insensitive_conversion() &&
+           kana_modifier_insensitive_conversion_;
+  }
 
-  size_t max_conversion_candidates_size() const;
-  void set_max_conversion_candidates_size(size_t value);
+  size_t max_conversion_candidates_size() const {
+    return max_conversion_candidates_size_;
+  }
+  void set_max_conversion_candidates_size(size_t value) {
+    max_conversion_candidates_size_ = value;
+  }
 
-  size_t max_user_history_prediction_candidates_size() const;
-  void set_max_user_history_prediction_candidates_size(size_t value);
+  size_t max_user_history_prediction_candidates_size() const {
+    return max_user_history_prediction_candidates_size_;
+  }
+  void set_max_user_history_prediction_candidates_size(size_t value) {
+    max_user_history_prediction_candidates_size_ = value;
+  }
 
-  size_t max_user_history_prediction_candidates_size_for_zero_query() const;
+  size_t max_user_history_prediction_candidates_size_for_zero_query() const {
+    return max_user_history_prediction_candidates_size_for_zero_query_;
+  }
   void set_max_user_history_prediction_candidates_size_for_zero_query(
-      size_t value);
+      size_t value) {
+    max_user_history_prediction_candidates_size_for_zero_query_ = value;
+  }
 
-  size_t max_dictionary_prediction_candidates_size() const;
-  void set_max_dictionary_prediction_candidates_size(size_t value);
+  size_t max_dictionary_prediction_candidates_size() const {
+    return max_dictionary_prediction_candidates_size_;
+  }
+  void set_max_dictionary_prediction_candidates_size(size_t value) {
+    max_dictionary_prediction_candidates_size_ = value;
+  }
 
-  bool should_call_set_key_in_prediction() const;
-  void set_should_call_set_key_in_prediction(bool value);
+  bool should_call_set_key_in_prediction() const {
+    return should_call_set_key_in_prediction_;
+  }
+  void set_should_call_set_key_in_prediction(bool value) {
+    should_call_set_key_in_prediction_ = value;
+  }
 
-  void set_kana_modifier_insensitive_conversion(bool value);
+  void set_kana_modifier_insensitive_conversion(bool value) {
+    kana_modifier_insensitive_conversion_ = value;
+  }
 
  private:
   RequestType request_type_ = CONVERSION;
@@ -197,6 +241,11 @@ class ConversionRequest {
   // this structure, e.g., Segments::request_type_.
   // Also, a key for conversion is eligible to live in this class.
 };
+
+// ConversionRequest is currently trivially copyable and destructible.
+// Make it movable if appropriate when you add non-trivial data members.
+static_assert(std::is_trivially_copyable_v<ConversionRequest>);
+static_assert(std::is_trivially_destructible_v<ConversionRequest>);
 
 }  // namespace mozc
 

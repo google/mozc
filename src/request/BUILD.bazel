@@ -38,12 +38,12 @@ package(default_visibility = [
 
 mozc_cc_library(
     name = "conversion_request",
-    srcs = ["conversion_request.cc"],
     hdrs = ["conversion_request.h"],
     deps = [
         "//base:logging",
-        "//base:port",
+        "//composer",
         "//config:config_handler",
         "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
     ],
 )

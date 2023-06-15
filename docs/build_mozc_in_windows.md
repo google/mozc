@@ -119,16 +119,6 @@ python build_mozc.py build -c Release package
 The directory of Qt (`C:\Qt\Qt5.12.2\msvc2019` in this example) differs
 based on Qt version.
 
-If you want to build Mozc with Visual Studio other than Visual Studio 2022, e.g. Visual Studio 2019, try `--msvs_version` option as follows.
-
-```
-python build_mozc.py build_tools/update_deps.py
-
-python build_mozc.py build_tools/build_qt.py --release --confirm_license --msvs_version=2019
-python build_mozc.py gyp --msvs_version=2019
-python build_mozc.py build -c Release package
-```
-
 If you need debug information, you can build debug version of Mozc as follows.
 
 ```

@@ -169,8 +169,7 @@ int main(int argc, char **argv) {
 
   if (absl::GetFlag(FLAGS_header)) {
     mozc::OutputFileStream ofs(absl::GetFlag(FLAGS_output));
-    mozc::CodeGenByteArrayOutputStream codegen_stream(
-        &ofs, mozc::codegenstream::NOT_OWN_STREAM);
+    mozc::CodeGenByteArrayOutputStream codegen_stream(ofs);
     codegen_stream.OpenVarDef(absl::GetFlag(FLAGS_name));
     codegen_stream.write(buf.data(), buf.size());
     codegen_stream.CloseVarDef();

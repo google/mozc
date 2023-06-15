@@ -194,6 +194,22 @@
       },
     },
     {
+      'target_name': 'strings_unicode_test',
+      'type': 'executable',
+      'sources': [
+        'strings/internal/utf8_internal_test.cc',
+        'strings/unicode_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
+        'base.gyp:base_core',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'util_test',
       'type': 'executable',
       'sources': [
@@ -455,6 +471,7 @@
         'obfuscator_support_test',
         'serialized_string_array_test',
         'strings_japanese_test',
+        'strings_unicode_test',
         'system_util_test',
         'trie_test',
         'update_util_test',

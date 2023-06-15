@@ -47,6 +47,7 @@
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:engine_builder_proto',
+        '../request/request.gyp:conversion_request',
       ],
     },
     {
@@ -75,6 +76,7 @@
         '../prediction/prediction_base.gyp:suggestion_filter',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
+        '../request/request.gyp:conversion_request',
         '../rewriter/rewriter.gyp:rewriter',
       ],
       'export_dependent_settings': [
@@ -102,6 +104,7 @@
       'dependencies': [
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../request/request.gyp:conversion_request',
         'engine',
       ],
     },

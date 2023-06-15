@@ -259,9 +259,8 @@ def ParseGypOptions(args):
                     'is installed. This option is used only on Linux.')
 
   if IsWindows():
-    default_msvs_version = '2022'
     parser.add_option('--msvs_version', dest='msvs_version',
-                      default=default_msvs_version,
+                      default='2022',
                       help='Version of the Visual Studio.')
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),
@@ -569,6 +568,10 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'target_platform=%s' % target_platform_value])
 
   if IsWindows():
+    if int(options.msvs_version) < 2022:
+      raise RuntimeError(
+          'Visual Studio earlier than 2022 is no longer supported'
+      )
     gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
   if (target_platform == 'Linux' and

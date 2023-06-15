@@ -35,7 +35,6 @@
 #include <cstdint>
 #include <memory>
 #include <queue>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -52,6 +51,7 @@
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -60,8 +60,8 @@ class UserHistoryPredictorSyncer;
 // Added serialization method for UserHistory.
 class UserHistoryStorage {
  public:
-  explicit UserHistoryStorage(absl::string_view filename);
-  ~UserHistoryStorage();
+  explicit UserHistoryStorage(const absl::string_view filename)
+      : storage_(filename) {}
 
   // Loads from encrypted file.
   bool Load();
@@ -83,7 +83,7 @@ class UserHistoryStorage {
   }
 
  private:
-  std::unique_ptr<storage::StringStorageInterface> storage_;
+  storage::EncryptedStringStorage storage_;
   mozc::user_history_predictor::UserHistory proto_;
 };
 
@@ -171,68 +171,12 @@ class UserHistoryPredictor : public PredictorInterface {
   };
   static uint32_t LearningSegmentFingerprint(const SegmentForLearning &segment);
 
-  class SegmentsForLearning {
-   public:
-    SegmentsForLearning() = default;
+  struct SegmentsForLearning {
+    std::string conversion_segments_key;
+    std::string conversion_segments_value;
 
-    virtual ~SegmentsForLearning() = default;
-
-    void push_back_history_segment(const SegmentForLearning &val) {
-      history_segments_.push_back(val);
-    }
-
-    void push_back_conversion_segment(const SegmentForLearning &val) {
-      conversion_segments_.push_back(val);
-    }
-
-    void set_conversion_segments_key(std::string val) {
-      conversion_segments_key_ = std::move(val);
-    }
-
-    void set_conversion_segments_value(std::string val) {
-      conversion_segments_value_ = std::move(val);
-    }
-
-    const std::string &conversion_segments_key() const {
-      return conversion_segments_key_;
-    }
-
-    const std::string &conversion_segments_value() const {
-      return conversion_segments_value_;
-    }
-
-    size_t history_segments_size() const { return history_segments_.size(); }
-
-    size_t conversion_segments_size() const {
-      return conversion_segments_.size();
-    }
-
-    size_t all_segments_size() const {
-      return history_segments_size() + conversion_segments_size();
-    }
-
-    const SegmentForLearning &history_segment(size_t i) const {
-      return history_segments_[i];
-    }
-
-    const SegmentForLearning &conversion_segment(size_t i) const {
-      return conversion_segments_[i];
-    }
-
-    const SegmentForLearning &all_segment(size_t i) const {
-      if (i < history_segments_size()) {
-        return history_segment(i);
-      } else {
-        return conversion_segments_[i - history_segments_size()];
-      }
-    }
-
-   private:
-    std::string conversion_segments_key_;
-    std::string conversion_segments_value_;
-
-    std::vector<SegmentForLearning> history_segments_;
-    std::vector<SegmentForLearning> conversion_segments_;
+    std::vector<SegmentForLearning> history_segments;
+    std::vector<SegmentForLearning> conversion_segments;
   };
 
   friend class UserHistoryPredictorSyncer;
@@ -359,22 +303,25 @@ class UserHistoryPredictor : public PredictorInterface {
   // Priority Queue class for entry. New item is sorted by
   // |score| internally. By calling Pop() in sequence, you
   // can obtain the list of entry sorted by |score|.
-  class EntryPriorityQueue {
+  class EntryPriorityQueue final {
    public:
-    EntryPriorityQueue();
-    virtual ~EntryPriorityQueue();
+    EntryPriorityQueue() : pool_(kEntryPoolSize) {}
     size_t size() const { return agenda_.size(); }
     bool Push(Entry *entry);
     Entry *Pop();
     Entry *NewEntry();
 
    private:
-    friend class UserHistoryPredictor;
     typedef std::pair<uint32_t, Entry *> QueueElement;
     typedef std::priority_queue<QueueElement> Agenda;
+
+    friend class UserHistoryPredictor;
+
+    // Default object pool size for EntryPriorityQueue
+    static constexpr size_t kEntryPoolSize = 16;
     Agenda agenda_;
     FreeList<Entry> pool_;
-    std::set<uint32_t> seen_;
+    absl::flat_hash_set<size_t> seen_;
   };
 
   typedef mozc::storage::LruCache<uint32_t, Entry> DicCache;
@@ -413,8 +360,8 @@ class UserHistoryPredictor : public PredictorInterface {
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;
 
   // Adds the entry whose key and value are modified to a priority queue.
-  Entry *AddEntryWithNewKeyValue(absl::string_view key, absl::string_view value,
-                                 const Entry &entry,
+  Entry *AddEntryWithNewKeyValue(std::string key, std::string value,
+                                 Entry entry,
                                  EntryPriorityQueue *results) const;
 
   void GetResultsFromHistoryDictionary(RequestType request_type,
@@ -441,7 +388,7 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true if |prefix| is a fuzzy-prefix of |str|.
   // 'Fuzzy' means that
-  // 1) Allows one character deletation in the |prefix|.
+  // 1) Allows one character deletion in the |prefix|.
   // 2) Allows one character swap in the |prefix|.
   static bool RomanFuzzyPrefixMatch(absl::string_view str,
                                     absl::string_view prefix);
@@ -450,7 +397,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // misspelled. It first tries to get the preedit string with
   // composer() if composer is available. If not, use the key
   // directory. It also use MaybeRomanMisspelledKey() defined
-  // below to check the preedit looks missspelled or not.
+  // below to check the preedit looks misspelled or not.
   static std::string GetRomanMisspelledKey(const ConversionRequest &request,
                                            const Segments &segments);
 
@@ -479,17 +426,23 @@ class UserHistoryPredictor : public PredictorInterface {
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
   // |next_fp|: fingerprint of the next segment.
-  // |last_access_time|: the time when this entrty was created
-  void Insert(absl::string_view key, absl::string_view value,
-              absl::string_view description, bool is_suggestion_selected,
-              uint32_t next_fp, uint64_t last_access_time, Segments *segments);
+  // |last_access_time|: the time when this entry was created
+  void Insert(std::string key, std::string value, std::string description,
+              bool is_suggestion_selected, uint32_t next_fp,
+              uint64_t last_access_time, Segments *segments);
+
+  // Called by TryInsert to check the Entry to insert.
+  bool ShouldInsert(RequestType request_type, absl::string_view key,
+                    absl::string_view value,
+                    absl::string_view description) const;
 
   // Tries to insert entry.
-  // Entry's contents and request_type will be checked before insersion.
-  void TryInsert(RequestType request_type, absl::string_view key,
-                 absl::string_view value, absl::string_view description,
-                 bool is_suggestion_selected, uint32_t next_fp,
-                 uint64_t last_access_time, Segments *segments);
+  // Entry's contents and request_type will be checked before insertion.
+  template <typename Key, typename Value, typename Description>
+  void TryInsert(RequestType request_type, Key &&key, Value &&value,
+                 Description &&description, bool is_suggestion_selected,
+                 uint32_t next_fp, uint64_t last_access_time,
+                 Segments *segments);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
@@ -501,7 +454,7 @@ class UserHistoryPredictor : public PredictorInterface {
   static void EraseNextEntries(uint32_t fp, Entry *entry);
 
   // Recursively removes a chain of Entries in |dic_|. See the comment in
-  // implemenetation for details.
+  // implementation for details.
   RemoveNgramChainResult RemoveNgramChain(
       absl::string_view target_key, absl::string_view target_value,
       Entry *entry, std::vector<absl::string_view> *key_ngrams,

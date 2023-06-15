@@ -45,6 +45,7 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
+#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -54,6 +55,8 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/number_decoder.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
@@ -62,6 +65,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
@@ -96,7 +100,7 @@ bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
       .enable_single_kanji_prediction();
 }
 
-// Returns true if the |target| may be reduncant result.
+// Returns true if the |target| may be redundant result.
 bool MaybeRedundant(const absl::string_view reference,
                     const absl::string_view target) {
   return absl::StartsWith(target, reference);
@@ -837,7 +841,12 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
   DCHECK(immutable_converter_);
   DCHECK(results);
   // First insert a top conversion result.
-  if (request.use_actual_converter_for_realtime_conversion()) {
+  // Note: Do not call actual converter for partial suggestion / prediction.
+  // Converter::StartConversionForRequest() resets conversion key from composer
+  // rather than using the key in segments.
+  if (request.use_actual_converter_for_realtime_conversion() &&
+      request.request_type() != ConversionRequest::PARTIAL_SUGGESTION &&
+      request.request_type() != ConversionRequest::PARTIAL_PREDICTION) {
     if (!PushBackTopConversionResult(request, segments, results)) {
       LOG(WARNING) << "Realtime conversion with converter failed";
     }
