@@ -137,6 +137,8 @@ constexpr char32_t AppendTrailingByte(char32_t base, char byte) {
 
 template <int Needed>
 DecodeResult DecodeSequence(const char* ptr, const char mask) {
+  // By using a template parameter, we force the compiler to check the value for
+  // Needed and optimize each case at compile time.
   static_assert(Needed <= kMaxByteSize);
 
   const char leading_byte = *ptr++;
