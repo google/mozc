@@ -533,7 +533,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     // turn on
     { config::ConfigHandler::GetDefaultConfig(config_.get()); }
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
@@ -589,7 +589,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     WaitForSyncer(predictor);
     Segments segments;
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 
@@ -603,7 +603,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
     WaitForSyncer(predictor);
     Segments segments;
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 
@@ -651,6 +651,28 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
       EXPECT_EQ(
           expected_candidates.erase(segments.segment(0).candidate(i).value), 1);
     }
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreprocessInput) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+
+  {
+    // Commit can be triggered by space in alphanumeric keyboard layout.
+    // In this case, trailing white space is included to the key and value.
+    Segments segments;
+    SetUpInputForSuggestion("android ", composer_.get(), &segments);
+    AddCandidate(0, "android ", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  {
+    Segments segments;
+    SetUpInputForSuggestion("androi", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    // Preprocessed value should be learned.
+    EXPECT_TRUE(FindCandidateByValue("android", segments));
+    EXPECT_FALSE(FindCandidateByValue("android ", segments));
   }
 }
 
@@ -718,7 +740,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
       WaitForSyncer(predictor);
     }
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
     EXPECT_EQ(segments.segment(0).candidate(0).value, "私の名前は中野です");
@@ -756,7 +778,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
     WaitForSyncer(predictor);
     Segments segments;
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 
@@ -770,7 +792,7 @@ TEST_F(UserHistoryPredictorTest, DescriptionTest) {
     WaitForSyncer(predictor);
     Segments segments;
 
-    // reproducesd
+    // reproduced
     SetUpInputForSuggestion("わたしの", composer_.get(), &segments);
     EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 
