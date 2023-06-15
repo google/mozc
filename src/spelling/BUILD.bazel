@@ -94,7 +94,6 @@ mozc_cc_library(
     deps = [
         ":rulebased_filter",
         ":rulebased_lm",
-        ":rulebased_spellchecker",
         ":spellchecker_service_interface",
         "//base:file_util",
         "//base:japanese_util",
