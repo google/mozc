@@ -27,8 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// A utility function that convert string array into exsistence filter
-// data file.
+// A utility function that convert string array into existence filter data file.
 
 #include "rewriter/gen_existence_data.h"
 
@@ -77,8 +76,7 @@ void OutputExistenceHeader(const absl::Span<const std::string> entries,
 
   *ofs << "namespace " << data_namespace << "{" << std::endl;
 
-  CodeGenByteArrayOutputStream codegen_stream(ofs,
-                                              codegenstream::NOT_OWN_STREAM);
+  CodeGenByteArrayOutputStream codegen_stream(*ofs);
   codegen_stream.OpenVarDef("ExistenceFilter");
   codegen_stream.write(existence_data.data(), existence_data.size());
   codegen_stream.CloseVarDef();

@@ -184,7 +184,9 @@ mozc_cc_library(
     ),
     visibility = ["//:__subpackages__"],
     deps = [
-        ":port",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -201,8 +203,9 @@ mozc_cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":codegen_bytearray_stream",
-        ":port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

@@ -29,28 +29,19 @@
 
 // Provides CodeGenByteArrayStream class which generates C/C++ source code
 // to define a byte array as a C string literal.
-//
-// Usage:
-//   ofstream ofs("output.cc");
-//   CodeGenByteArrayOutputStream codegen_stream(&ofs,
-//                                               codegenstream::NOT_OWN_STREAM);
-//   codegen_stream.OpenVarDef("MyVar");
-//   codegen_stream.put(single_byte_data);
-//   codegen_stream.write(large_data, large_data_size);
-//   codegen_stream.CloseVarDef();
 
 #ifndef MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 #define MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 
-#include <algorithm>
-#include <cstdint>
+#include <cstddef>
 #include <ios>
-#include <memory>
 #include <ostream>
 #include <streambuf>
 #include <string>
+#include <vector>
 
-#include "base/port.h"
+#include "absl/base/attributes.h"
+#include "absl/strings/string_view.h"
 
 #ifdef __ANDROID__
 // This is used only for code generation, so shouldn't be used from android
@@ -59,56 +50,21 @@
     "base/codegen_bytearray_stream.h shouldn't be used from android platform."
 #endif  // __ANDROID__
 
-#ifdef _WIN32
-// Visual C++ does not support string literals longer than 65535 characters
-// so integer arrays (e.g. arrays of uint64_t) are used to represent byte arrays
-// on Windows.
-//
-// The generated code looks like:
-//   const uint64_t kVAR_data_wordtype[] = {
-//       0x0123456789ABCDEF, ...
-//   };
-//   const char * const kVAR_data =
-//       reinterpret_cast<const char *>(kVAR_data_wordtype);
-//   const size_t kVAR_size = 123;
-//
-// This implementation works well with other toolchains, too, but we use
-// string literals for other toolchains.
-//
-// The generated code with a string literal looks like:
-//   const char kVAR_data[] =
-//       "\\x12\\x34\\x56\\x78...";
-//   const size_t kVAR_size = 123;
-#define MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-#endif  // _WIN32
-
 namespace mozc {
-namespace codegenstream {
-enum StreamOwner {
-  NOT_OWN_STREAM,
-  OWN_STREAM,
-};
-}  // namespace codegenstream
 
 class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  public:
-  BasicCodeGenByteArrayStreamBuf(const BasicCodeGenByteArrayStreamBuf &) =
-      delete;
-  BasicCodeGenByteArrayStreamBuf &operator=(
-      const BasicCodeGenByteArrayStreamBuf &) = delete;
-  typedef std::char_traits<char> traits_type;
-
   // Args:
   //   output_stream: The output stream to which generated code is written.
-  //   own_output_stream: The object pointed to by |output_stream| will be
-  //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
-  BasicCodeGenByteArrayStreamBuf(std::ostream *output_stream,
-                                 codegenstream::StreamOwner own_output_stream);
+  explicit BasicCodeGenByteArrayStreamBuf(
+      std::ostream &output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  ~BasicCodeGenByteArrayStreamBuf() override;
+  BasicCodeGenByteArrayStreamBuf(BasicCodeGenByteArrayStreamBuf &&) = default;
+  BasicCodeGenByteArrayStreamBuf &operator=(BasicCodeGenByteArrayStreamBuf &&) =
+      default;
 
   // Writes the beginning of a variable definition.
-  bool OpenVarDef(const std::string &var_name_base);
+  bool OpenVarDef(absl::string_view var_name_base);
 
   // Writes the end of a variable definition.
   bool CloseVarDef();
@@ -119,63 +75,54 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 
   // Writes a given character sequence.  The implementation is expected to be
   // more efficient than the one of the base class.
-  std::streamsize xsputn(const char *s, std::streamsize n) override;
+  std::streamsize xsputn(const char_type *s, std::streamsize n) override;
 
   // Writes the data body of a variable definition.
   int overflow(int c) override;
 
  private:
-  static constexpr size_t kDefaultInternalBufferSize =
-      4000 * 1024;  // 4 mega chars
-#ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64_t);
-#else   // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
+  static constexpr size_t kDefaultInternalBufferSize = 4000 * 1024;  // 4 MB
   static constexpr size_t kNumOfBytesOnOneLine = 20;
-#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   // Converts a raw byte stream to C source code.
-  void WriteBytes(const char *begin, const char *end);
+  void WriteBytes(const char_type *begin, const char_type *end);
 
-#ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  void WriteWordBuffer();
-#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-
-  size_t internal_output_buffer_size_;
-  std::unique_ptr<char[]> internal_output_buffer_;
-
-  std::basic_ostream<char> *output_stream_;
-  codegenstream::StreamOwner own_output_stream_;
-#ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  std::ios_base::fmtflags output_stream_format_flags_;
-  char output_stream_format_fill_;
-#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-
+  std::vector<char_type> internal_output_buffer_;
+  std::ostream *output_stream_;
   bool is_open_;
   std::string var_name_base_;
   size_t output_count_;
-
-#ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-  uint64_t word_buffer_;
-#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 };
 
+// Generates C/C++ source code to define a byte array as a C string literal.
+//
+// The generated code with a string literal looks like:
+//   alignas(std::max_align_t) constexpr char kVAR_data[] = {
+//   0x12, 0x34, 0x56, 0x78, ...,
+//   };
+//   constexpr size_t kVAR_size = 123;
+//
+// Usage:
+//   ofstream ofs("output.cc");
+//   CodeGenByteArrayOutputStream codegen_stream(ofs);
+//   codegen_stream.OpenVarDef("MyVar");
+//   codegen_stream.put(single_byte_data);
+//   codegen_stream.write(large_data, large_data_size);
+//   codegen_stream.CloseVarDef();
 class CodeGenByteArrayOutputStream : public std::ostream {
  public:
   // Args:
   //   output_stream: The output stream to which generated code is written.
-  //   own_output_stream: The object pointed to by |output_stream| will be
-  //       destroyed if |own_output_stream| equals to |OWN_STREAM|.
-  CodeGenByteArrayOutputStream(std::ostream *output_stream,
-                               codegenstream::StreamOwner own_output_stream);
+  explicit CodeGenByteArrayOutputStream(
+      std::ostream &output_stream ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
-  CodeGenByteArrayOutputStream(const CodeGenByteArrayOutputStream &) = delete;
-
+  CodeGenByteArrayOutputStream(CodeGenByteArrayOutputStream &&other) noexcept;
   CodeGenByteArrayOutputStream &operator=(
-      const CodeGenByteArrayOutputStream &) = delete;
+      CodeGenByteArrayOutputStream &&other) noexcept;
 
   // Writes the beginning of a variable definition.
   // A call to |OpenVarDef| must precede any output to the instance.
-  void OpenVarDef(const std::string &var_name_base);
+  void OpenVarDef(absl::string_view var_name_base);
 
   // Writes the end of a variable definition.
   // An output to the instance after a call to |CloseVarDef| is not allowed
