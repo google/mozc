@@ -101,65 +101,24 @@
         'mozc_content_dir': '<(mozc_content_dir)',
         'mozc_64bit_wixobj': '<(outdir32)/installer_64bit.wixobj',
         'mozc_64bit_msi': '<(outdir32)/<(branding)64.msi',
-        'mozc_64bit_postbuild_stamps': [
-          '<(mozc_broker64_path).postbuild',
-          '<(mozc_ca64_path).postbuild',
-          '<(mozc_cache_service64_path).postbuild',
-          '<(mozc_renderer64_path).postbuild',
-          '<(mozc_server64_path).postbuild',
-          '<(mozc_tip32_path).postbuild',
-          '<(mozc_tip64_path).postbuild',
-          '<(mozc_tool_path).postbuild',
+        'mozc_64bit_installer_inputs': [
+          '<(mozc_broker64_path)',
+          '<(mozc_ca64_path)',
+          '<(mozc_cache_service64_path)',
+          '<(mozc_renderer64_path)',
+          '<(mozc_server64_path)',
+          '<(mozc_tip32_path)',
+          '<(mozc_tip64_path)',
+          '<(mozc_tool_path)',
         ],
       },
       'targets': [
-        {
-          'target_name': 'mozc_tip32_postbuild',
-          'variables': { 'target_file': '<(mozc_tip32_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_server64_postbuild',
-          'variables': { 'target_file': '<(mozc_server64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_cache_service64_postbuild',
-          'variables': { 'target_file': '<(mozc_cache_service64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_renderer64_postbuild',
-          'variables': { 'target_file': '<(mozc_renderer64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_tool_postbuild',
-          'variables': { 'target_file': '<(mozc_tool_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_tip64_postbuild',
-          'variables': { 'target_file': '<(mozc_tip64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_broker64_postbuild',
-          'variables': { 'target_file': '<(mozc_broker64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
-          'target_name': 'mozc_ca64_postbuild',
-          'variables': { 'target_file': '<(mozc_ca64_path)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
         {
           'target_name': 'mozc_64bit_installer',
           'type': 'none',
           'variables': {
             'wxs_file': '<(wxs_64bit_file)',
             'wixobj_file': '<(mozc_64bit_wixobj)',
-            'stamp_files': '<(mozc_64bit_postbuild_stamps)',
             'msi_file': '<(mozc_64bit_msi)',
           },
           'actions': [
@@ -229,7 +188,7 @@
                 # ninja.exe will invoke this action if any file listed here is
                 # newer than files in 'outputs'.
                 '<(wixobj_file)',
-                '<@(stamp_files)',
+                '<@(mozc_64bit_installer_inputs)',
               ],
               'outputs': [
                 '<(msi_file)',
@@ -249,15 +208,10 @@
           ],
         },
         {
-          'target_name': 'mozc_installer64_postbuild',
-          'variables': { 'target_file': '<(mozc_64bit_msi)' },
-          'includes': [ 'postbuilds_win.gypi' ],
-        },
-        {
           'target_name': 'mozc_installers_win',
           'type': 'none',
           'dependencies': [
-            'mozc_installer64_postbuild',
+            'mozc_64bit_installer',
           ],
         },
         {
@@ -269,7 +223,6 @@
               'inputs': [
                 '../../mozc_version.txt',
                 '../../build_tools/versioning_files.py',
-                '<(mozc_64bit_msi).postbuild',
                 '<(mozc_64bit_msi)',
               ],
               'outputs': [

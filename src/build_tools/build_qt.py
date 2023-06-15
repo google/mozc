@@ -277,29 +277,6 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
   else:
     subprocess.run(str(make), shell=True, check=True, cwd=qt_dir, env=env)
 
-  # Run post-build process for Windows
-  post_build_script = ABS_MOZC_SRC_DIR.joinpath('win32', 'installer',
-                                                'postbuilds_win.py')
-  target_filenames = []
-  if args.debug:
-    target_filenames += ['bin/Qt5Cored.dll',
-                         'bin/Qt5Guid.dll',
-                         'bin/Qt5Widgetsd.dll',
-                         'plugins/platforms/qwindowsd.dll']
-  if args.release:
-    target_filenames += ['bin/Qt5Core.dll',
-                         'bin/Qt5Gui.dll',
-                         'bin/Qt5Widgets.dll',
-                         'plugins/platforms/qwindows.dll']
-  for target_filename in target_filenames:
-    abs_targetpath = qt_dir.joinpath(target_filename)
-    commands = [post_build_script,
-                '--targetpath', abs_targetpath]
-    if args.dryrun:
-      print(f'dryrun: RunOrDie({commands}, env={env})')
-    else:
-      RunOrDie(commands, env=env)
-
 
 def RunOrDie(
     argv: list[Union[str, pathlib.Path]],
