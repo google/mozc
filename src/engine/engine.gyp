@@ -47,6 +47,7 @@
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:engine_builder_proto',
+        '../request/request.gyp:conversion_request',
       ],
     },
     {
