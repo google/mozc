@@ -621,6 +621,39 @@ TEST_F(DictionaryPredictionAggregatorTest, PartialSuggestion) {
                                *suggestion_convreq_, segments, &results));
 }
 
+TEST_F(DictionaryPredictionAggregatorTest,
+       PartialSuggestionWithRealtimeConversion) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+
+  Segments segments;
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(true);
+  // turn on mobile mode
+  request_->set_mixed_conversion(true);
+
+  SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
+  composer_->MoveCursorLeft();
+  segments.mutable_conversion_segment(0)->set_key("ぐーぐる");
+
+  suggestion_convreq_->set_use_actual_converter_for_realtime_conversion(true);
+  suggestion_convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
+
+  // StartConversion should not be called for partial.
+  EXPECT_CALL(*data_and_aggregator->mutable_converter(),
+              StartConversionForRequest(_, _))
+      .Times(0);
+  EXPECT_CALL(*data_and_aggregator->mutable_immutable_converter(),
+              ConvertForRequest(_, _))
+      .Times(AnyNumber());
+
+  std::vector<Result> results;
+  EXPECT_NE(NO_PREDICTION, aggregator.AggregatePredictionForRequest(
+                               *suggestion_convreq_, segments, &results));
+}
+
 TEST_F(DictionaryPredictionAggregatorTest, BigramTest) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
       CreateAggregatorWithMockData();
