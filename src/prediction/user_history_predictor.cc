@@ -75,10 +75,10 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryInterface;
-using dictionary::PosMatcher;
-using dictionary::SuppressionDictionary;
-using usage_stats::UsageStats;
+using ::mozc::dictionary::DictionaryInterface;
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::usage_stats::UsageStats;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
@@ -1582,22 +1582,16 @@ bool UserHistoryPredictor::ShouldInsert(
   return true;
 }
 
-template <typename Key, typename Value, typename Description>
-void UserHistoryPredictor::TryInsert(RequestType request_type, Key &&key,
-                                     Value &&value, Description &&description,
-                                     bool is_suggestion_selected,
-                                     uint32_t next_fp,
-                                     uint64_t last_access_time,
-                                     Segments *segments) {
+void UserHistoryPredictor::TryInsert(
+    RequestType request_type, absl::string_view key, absl::string_view value,
+    absl::string_view description, bool is_suggestion_selected,
+    uint32_t next_fp, uint64_t last_access_time, Segments *segments) {
   // b/279560433: Preprocess key value
-  absl::string_view new_key =
-      absl::StripTrailingAsciiWhitespace(std::forward<Key>(key));
-  absl::string_view new_value =
-      absl::StripTrailingAsciiWhitespace(std::forward<Value>(value));
-  if (ShouldInsert(request_type, new_key, new_value, description)) {
-    Insert(std::string(new_key), std::string(new_value),
-           std::forward<Description>(description), is_suggestion_selected,
-           next_fp, last_access_time, segments);
+  key = absl::StripTrailingAsciiWhitespace(key);
+  value = absl::StripTrailingAsciiWhitespace(value);
+  if (ShouldInsert(request_type, key, value, description)) {
+    Insert(std::string(key), std::string(value), std::string(description),
+           is_suggestion_selected, next_fp, last_access_time, segments);
   }
 }
 
