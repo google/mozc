@@ -29,7 +29,6 @@
 
 #include "rewriter/unicode_rewriter.h"
 
-#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -86,7 +85,7 @@ void AddCandidate(std::string key, std::string value, int index,
   candidate->key = std::move(key);
   candidate->value = value;
   candidate->content_value = std::move(value);
-  candidate->description = absl::StrCat("Unicode 変換 (", key, ")");
+  candidate->description = absl::StrCat("Unicode 変換 (", candidate->key, ")");
   // NO_MODIFICATION is required here, in order to escape
   // EnvironmentalFilterRewriter. Otherwise, some candidates from
   // UnicodeRewriter will be removed because they are unrenderable.
@@ -96,7 +95,7 @@ void AddCandidate(std::string key, std::string value, int index,
 }
 }  // namespace
 
-// If the key is a single unicode character, the correspoinding
+// If the key is a single unicode character, the corresponding
 // Unicode "U+xxxx" format is added. (ex. "A" -> "U+0041").  This is
 // triggered on reverse conversion only.
 bool UnicodeRewriter::RewriteToUnicodeCharFormat(
