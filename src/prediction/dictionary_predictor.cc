@@ -1230,13 +1230,13 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   // "ょうの".
   int penalty = 0;
   Segments tmp_segments;
-  Segment *segment = tmp_segments.add_segment();
-  segment->set_key(Util::Utf8SubString(input_key, key_len));
+  tmp_segments.add_segment()->set_key(Util::Utf8SubString(input_key, key_len));
   ConversionRequest req = request;
   req.set_max_conversion_candidates_size(1);
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
-      segment->candidates_size() > 0) {
-    const Segment::Candidate &top_candidate = segment->candidate(0);
+      tmp_segments.segment(0).candidates_size() > 0) {
+    const Segment::Candidate &top_candidate =
+        tmp_segments.segment(0).candidate(0);
     penalty = (connector_.GetTransitionCost(result_rid, top_candidate.lid) +
                top_candidate.cost);
   }
