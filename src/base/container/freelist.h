@@ -32,7 +32,7 @@
 
 #include <cstddef>
 #include <limits>
-#include <new>
+#include <memory>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -45,27 +45,44 @@ namespace mozc {
 template <class T>
 class FreeList {
  public:
-  explicit FreeList(const size_t chunk_size) : chunk_size_(chunk_size) {}
+  using value_type = T;
+  // FreeList currently only supports std::allocator.
+  using allocator_type = std::allocator<T>;
+  using allocator_traits = std::allocator_traits<std::allocator<T>>;
+  using reference = T&;
+  using const_reference = const T&;
+  using size_type = typename allocator_traits::size_type;
+  using difference_type = typename allocator_traits::difference_type;
+  using pointer = typename allocator_traits::pointer;
+  using const_pointer = typename allocator_traits::const_pointer;
+
+  static_assert(!std::is_const_v<T>, "FreeList can't hold a const type.");
+
+  explicit FreeList(const size_type chunk_size) : chunk_size_(chunk_size) {}
 
   FreeList(FreeList&& other) noexcept
       : pool_(std::move(other.pool_)),
         next_in_chunk_(other.next_in_chunk_),
-        chunk_size_(other.chunk_size_) {
+        chunk_size_(other.chunk_size_),
+        allocator_(std::move(other.allocator_)) {
     static_assert(std::is_nothrow_move_constructible_v<decltype(pool_)>);
-    // Only need to clear the pool because both DestructPools and
-    // DeallocatePools are no-op if the pool is empty.
+    // Only need to clear the pool because Destroy is no-op if the pool is
+    // empty.
     other.pool_.clear();
   }
+
   FreeList& operator=(FreeList&& other) noexcept {
     static_assert(std::is_nothrow_move_assignable_v<decltype(pool_)>);
-    if (this != &other) {
-      // Destroy `this` freelist and move `other` over.
-      Destroy();
-      pool_ = std::move(other.pool_);
-      next_in_chunk_ = other.next_in_chunk_;
-      chunk_size_ = other.chunk_size_;
-      other.pool_.clear();
-    }
+    // Destroy `this` freelist and move `other` over.
+    Destroy();
+    pool_ = std::move(other.pool_);
+    next_in_chunk_ = other.next_in_chunk_;
+    chunk_size_ = other.chunk_size_;
+    static_assert(
+        allocator_traits::propagate_on_container_move_assignment::value,
+        "std::allocator is supposed to propagate on move assignments.");
+    allocator_ = std::move(other.allocator_);
+    other.pool_.clear();
     return *this;
   }
 
@@ -74,35 +91,35 @@ class FreeList {
   void Free() {
     Destroy();
     pool_.clear();
-    next_in_chunk_ = std::numeric_limits<size_t>::max();
+    next_in_chunk_ = std::numeric_limits<size_type>::max();
   }
 
   T* Alloc() {
     if (next_in_chunk_ >= chunk_size_) {
       next_in_chunk_ = 0;
-      // Allocate the chunk with operator new to delay construction until the
-      // object is actually requested.
-      static_assert(
-          alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__,
-          "FreeList doesn't support alignment bigger than std::max_align_t.");
-      pool_.push_back(reinterpret_cast<std::byte*>(
-          ::operator new(sizeof(T) * chunk_size_)));
+      // Allocate the chunk with the allocate and delay the constructions until
+      // the objects are actually requested.
+      pool_.push_back(allocator_traits::allocate(allocator_, chunk_size_));
     }
 
-    // Default construct T with placement new.
-    return new (ObjectStorageAt(pool_.back(), next_in_chunk_++)) T;
+    // Default construct T.
+    T* ptr = pool_.back() + next_in_chunk_++;
+    allocator_traits::construct(allocator_, ptr);
+    return ptr;
   }
 
   constexpr bool empty() const { return size() == 0; }
-  constexpr size_t size() const {
+  constexpr size_type size() const {
     if (pool_.empty()) {
       return 0;
     } else {
       return (pool_.size() - 1) * chunk_size_ + next_in_chunk_;
     }
   }
-  constexpr size_t capacity() const { return pool_.size() * chunk_size_; }
-  constexpr size_t chunk_size() const { return chunk_size_; }
+  constexpr size_type capacity() const { return pool_.size() * chunk_size_; }
+  constexpr size_type chunk_size() const { return chunk_size_; }
+
+  allocator_type get_allocator() const { return allocator_; }
 
   void swap(FreeList& other) noexcept {
     static_assert(std::is_nothrow_swappable_v<decltype(pool_)>);
@@ -110,54 +127,42 @@ class FreeList {
     swap(pool_, other.pool_);
     swap(next_in_chunk_, other.next_in_chunk_);
     swap(chunk_size_, other.chunk_size_);
+    if constexpr (allocator_traits::propagate_on_container_swap::value) {
+      swap(allocator_, other.allocator_);
+    }
   }
 
   friend void swap(FreeList& lhs, FreeList& rhs) noexcept { lhs.swap(rhs); }
 
  private:
-  // Destructs all objects in the pool.
-  void DestructAllObjects() {
-    // Skip it entirely if T is trivially destructible.
-    if constexpr (!std::is_trivially_destructible_v<T>) {
-      // Destruct all elements.
-      if (!pool_.empty()) {
-        for (auto it = pool_.begin(); it != pool_.end() - 1; ++it) {
-          for (size_t j = 0; j < chunk_size_; ++j) {
-            ObjectAt(*it, j)->~T();
-          }
-        }
-        for (size_t i = 0; i < next_in_chunk_; ++i) {
-          ObjectAt(pool_.back(), i)->~T();
-        }
-      }
-    }
-  }
-  // Deallocates chunks in the pool. It doesn't actually clear the pool.
-  void DeallocateChunks() {
-    for (auto it = pool_.begin(); it != pool_.end(); ++it) {
-      ::operator delete(*it);
-    }
-  }
   // Destroys the freelist so it's ready to be destructed or overwritten by
   // move.
   void Destroy() {
-    DestructAllObjects();
-    DeallocateChunks();
-  }
-  // Returns a pointer to a byte array in the pool where the n-th object of T
-  // should occupy.
-  std::byte* ObjectStorageAt(std::byte* chunk, size_t n) {
-    return chunk + n * sizeof(T);
-  }
-  // Returns a pointer to T at index n in the byte array.
-  T* ObjectAt(std::byte* chunk, size_t n) {
-    return std::launder(reinterpret_cast<T*>(ObjectStorageAt(chunk, n)));
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      // Destruct all elements. Skip this entirely if T is trivially
+      // destructible.
+      if (!pool_.empty()) {
+        for (auto it = pool_.begin(); it != pool_.end() - 1; ++it) {
+          for (difference_type i = 0; i < chunk_size_; ++i) {
+            allocator_traits::destroy(allocator_, *it + i);
+          }
+        }
+        for (difference_type i = 0; i < next_in_chunk_; ++i) {
+          allocator_traits::destroy(allocator_, pool_.back() + i);
+        }
+      }
+    }
+
+    // Deallocate the chunks in the pool.
+    for (T* chunk : pool_) {
+      allocator_traits::deallocate(allocator_, chunk, chunk_size_);
+    }
   }
 
-  // Using std::byte here instead of T because std::byte allows storage reuse.
-  std::vector<std::byte*> pool_;
-  size_t next_in_chunk_ = std::numeric_limits<size_t>::max();
-  size_t chunk_size_;
+  std::vector<T*> pool_;
+  size_type next_in_chunk_ = std::numeric_limits<size_type>::max();
+  size_type chunk_size_;
+  allocator_type allocator_;
 };
 
 template <class T>
