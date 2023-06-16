@@ -38,19 +38,21 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "data_manager/data_manager.h"
-#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "space separated input text files");
@@ -67,28 +69,26 @@ namespace {
 // flags for dictionary and reading correction, but due to the limitation
 // of internal build system, it turned out that the description of the rules
 // will become much complicated, if we use two flags.
-constexpr char kReadingCorrectionFile[] = "reading_correction.tsv";
+constexpr absl::string_view kReadingCorrectionFile = "reading_correction.tsv";
 
-// convert space delimtered text to CSV
-void GetInputFileName(const absl::string_view input_file,
-                      std::string *system_dictionary_input,
-                      std::string *reading_correction_input) {
-  CHECK(system_dictionary_input);
-  CHECK(reading_correction_input);
-  system_dictionary_input->clear();
-  reading_correction_input->clear();
-  const absl::string_view kDelimiter(", ", 1);
-  for (SplitIterator<SingleDelimiter> iter(input_file, " "); !iter.Done();
-       iter.Next()) {
-    const absl::string_view &input_file = iter.Get();
-    if (absl::EndsWith(input_file, kReadingCorrectionFile)) {
-      Util::AppendStringWithDelimiter(kDelimiter, input_file,
-                                      reading_correction_input);
+// Converts space delimited text to CSV and returns {system_dictionary_input,
+// reading_correction_input}.
+std::pair<std::string, std::string> GetInputFileName(
+    const absl::string_view input_file) {
+  constexpr absl::string_view kDelimiter = ",";
+  const std::vector<absl::string_view> fields =
+      absl::StrSplit(input_file, ' ', absl::SkipWhitespace());
+  std::vector<absl::string_view> system_dictionary_inputs,
+      reading_correction_inputs;
+  for (const absl::string_view &field : fields) {
+    if (absl::EndsWith(field, kReadingCorrectionFile)) {
+      reading_correction_inputs.push_back(field);
     } else {
-      Util::AppendStringWithDelimiter(kDelimiter, input_file,
-                                      system_dictionary_input);
+      system_dictionary_inputs.push_back(field);
     }
   }
+  return {absl::StrJoin(system_dictionary_inputs, kDelimiter),
+          absl::StrJoin(reading_correction_inputs, kDelimiter)};
 }
 
 }  // namespace
@@ -98,8 +98,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string system_dictionary_input, reading_correction_input;
-  mozc::GetInputFileName(absl::GetFlag(FLAGS_input), &system_dictionary_input,
-                         &reading_correction_input);
+  std::tie(system_dictionary_input, reading_correction_input) =
+      mozc::GetInputFileName(absl::GetFlag(FLAGS_input));
 
   // User POS manager data for build tools has no magic number.
   const char *kMagicNumber = "";

@@ -30,7 +30,6 @@
 #ifndef MOZC_BASE_UTIL_H_
 #define MOZC_BASE_UTIL_H_
 
-#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -42,67 +41,6 @@
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-// SplitIterator - Iteratively splits a absl::string_view to
-// sub-absl::string_views.
-//
-// This template class takes two template parameters, Delimiter and Option.
-//
-// Delimiter:
-//   - SingleDelimiter: Input is split by only one character.  If your
-//         delimiter is a single character, use this parameter because algorithm
-//         is optimized for this common case.
-//   - MultiDelimiter: Input is split by any of the specified characters.
-//
-// Option:
-//   - SkipEmpty (default): empty pieces are ignored:
-//         ",a,b,,c," -> {"a", "b", "c"}  (delimiter = ',')
-//   - AllowEmpty: empty pieces are not ignored:
-//         ",a,b,,c," -> {"", "a", "b", "", "c", ""}  (delimiter = ',')
-//
-// Usage Example:
-//
-// // 1. SingleDelimiter and SkipEmpty
-// for (SplitIterator<SingleDelimiter> iter("this,is,,mozc", ",");
-//      !iter.Done(); iter.Next()) {
-//   absl::string_view sp = iter.Get();  // "this", "is", and finally "mozc"
-//   ...
-// }
-//
-// // 2. SingleDelimiter and AllowEmpty
-// for (SplitIterator<SingleDelimiter, AllowEmpty> iter("this,is,,mozc", ",");
-//      !iter.Done(); iter.Next()) {
-//   absl::string_view sp = iter.Get();  // "this", "is", "", and finally "mozc"
-//   ...
-// }
-//
-// // 3. MultiDelimiter and SkipEmpty
-// for (SplitIterator<MultiDelimiter> iter("this,is:\tmozc", ",:\t");
-//      !iter.Done(); iter.Next()) {
-//   absl::string_view sp = iter.Get();  // "this", "is", and finally "mozc"
-//   ...
-// }
-//
-// // 4. MultiDelimiter and AllowEmpty
-// for (SplitIterator<MultiDelimiter, AllowEmpty>
-//          iter("this,is::\tmozc", ",:\t"); !iter.Done(); iter.Next()) {
-//   absl::string_view sp = iter.Get();  // "this", "is", "", "", and finally
-//   "mozc"
-//   ...
-// }
-class SingleDelimiter;
-class MultiDelimiter;
-struct SkipEmpty {};
-struct AllowEmpty {};
-
-template <typename Delimiter, typename Option = SkipEmpty>
-class SplitIterator {
- public:
-  SplitIterator(absl::string_view s, const char *delim);
-  absl::string_view Get() const;
-  void Next();
-  bool Done() const;
-};
 
 class Util {
  public:
@@ -402,78 +340,6 @@ class ConstChar32ReverseIterator {
   bool done_;
 };
 
-// Actual definitions of delimiter classes.
-class SingleDelimiter {
- public:
-  explicit SingleDelimiter(const char *delim) : delim_(*delim) {}
-  SingleDelimiter(const SingleDelimiter &) = delete;
-  SingleDelimiter &operator=(const SingleDelimiter &) = delete;
-  bool Contains(char c) const { return c == delim_; }
-
- private:
-  const char delim_;
-};
-
-class MultiDelimiter {
- public:
-  static constexpr size_t kTableSize = UCHAR_MAX / 8;
-
-  explicit MultiDelimiter(const char *delim);
-  MultiDelimiter(const MultiDelimiter &) = delete;
-  MultiDelimiter &operator=(const MultiDelimiter &) = delete;
-
-  bool Contains(char c) const {
-    const unsigned char uc = static_cast<unsigned char>(c);
-    return (lookup_table_[uc >> 3] & (1 << (uc & 0x07))) != 0;
-  }
-
- private:
-  // Bit field for looking up delimiters. Think of this as a 256-bit array where
-  // n-th bit is set to 1 if the delimiters contain a character whose unsigned
-  // char code is n.
-  unsigned char lookup_table_[kTableSize];
-};
-
-// Declarations of the partial specializations of SplitIterator for two options.
-// Implementations are explicitly instantiated in util.cc.
-template <typename Delimiter>
-class SplitIterator<Delimiter, SkipEmpty> {
- public:
-  SplitIterator(absl::string_view s, const char *delim);
-  SplitIterator(const SplitIterator &) = delete;
-  SplitIterator &operator=(const SplitIterator &) = delete;
-  absl::string_view Get() const {
-    return absl::string_view(sp_begin_, sp_len_);
-  }
-  bool Done() const { return sp_begin_ == end_; }
-  void Next();
-
- private:
-  const char *const end_;
-  const Delimiter delim_;
-  const char *sp_begin_;
-  absl::string_view::size_type sp_len_;
-};
-
-template <typename Delimiter>
-class SplitIterator<Delimiter, AllowEmpty> {
- public:
-  SplitIterator(absl::string_view s, const char *delim);
-  SplitIterator(const SplitIterator &) = delete;
-  SplitIterator &operator=(const SplitIterator &) = delete;
-  absl::string_view Get() const {
-    return absl::string_view(sp_begin_, sp_len_);
-  }
-  bool Done() const { return done_; }
-  void Next();
-
- private:
-  const char *const end_;
-  const char *sp_begin_;
-  absl::string_view::size_type sp_len_;
-  const Delimiter delim_;
-  bool done_;
-};
 }  // namespace mozc
 
 #endif  // MOZC_BASE_UTIL_H_

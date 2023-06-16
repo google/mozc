@@ -36,7 +36,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -95,76 +94,6 @@ void ConstChar32ReverseIterator::Next() {
 }
 
 bool ConstChar32ReverseIterator::Done() const { return done_; }
-
-MultiDelimiter::MultiDelimiter(const char *delim) {
-  std::fill(lookup_table_, lookup_table_ + kTableSize, 0);
-  for (const char *p = delim; *p != '\0'; ++p) {
-    const unsigned char c = static_cast<unsigned char>(*p);
-    lookup_table_[c >> 3] |= 1 << (c & 0x07);
-  }
-}
-
-template <typename Delimiter>
-SplitIterator<Delimiter, SkipEmpty>::SplitIterator(absl::string_view s,
-                                                   const char *delim)
-    : end_(s.data() + s.size()),
-      delim_(delim),
-      sp_begin_(s.data()),
-      sp_len_(0) {
-  while (sp_begin_ != end_ && delim_.Contains(*sp_begin_)) ++sp_begin_;
-  const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {
-  }
-  sp_len_ = p - sp_begin_;
-}
-
-template <typename Delimiter>
-void SplitIterator<Delimiter, SkipEmpty>::Next() {
-  sp_begin_ += sp_len_;
-  while (sp_begin_ != end_ && delim_.Contains(*sp_begin_)) ++sp_begin_;
-  if (sp_begin_ == end_) {
-    sp_len_ = 0;
-    return;
-  }
-  const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {
-  }
-  sp_len_ = p - sp_begin_;
-}
-
-template <typename Delimiter>
-SplitIterator<Delimiter, AllowEmpty>::SplitIterator(absl::string_view s,
-                                                    const char *delim)
-    : end_(s.data() + s.size()),
-      sp_begin_(s.data()),
-      sp_len_(0),
-      delim_(delim),
-      done_(sp_begin_ == end_) {
-  const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {
-  }
-  sp_len_ = p - sp_begin_;
-}
-
-template <typename Delimiter>
-void SplitIterator<Delimiter, AllowEmpty>::Next() {
-  sp_begin_ += sp_len_;
-  if (sp_begin_ == end_) {
-    sp_len_ = 0;
-    done_ = true;
-    return;
-  }
-  const char *p = ++sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {
-  }
-  sp_len_ = p - sp_begin_;
-}
-
-// Explicitly instantiate the implementations of 4 patterns.
-template class SplitIterator<SingleDelimiter, SkipEmpty>;
-template class SplitIterator<MultiDelimiter, SkipEmpty>;
-template class SplitIterator<SingleDelimiter, AllowEmpty>;
-template class SplitIterator<MultiDelimiter, AllowEmpty>;
 
 void Util::SplitStringToUtf8Chars(absl::string_view str,
                                   std::vector<std::string> *output) {
