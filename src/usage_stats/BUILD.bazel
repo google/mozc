@@ -36,6 +36,7 @@ load(
     "mozc_cc_test",
     "mozc_py_binary",
 )
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -103,6 +104,7 @@ mozc_cc_library(
     deps = [
         "//base:port",
         "//storage:registry",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -130,9 +132,6 @@ mozc_cc_library(
     srcs = ["usage_stats_testing_util.cc"],
     hdrs = ["usage_stats_testing_util.h"],
     deps = [
-        ":usage_stats",
-        ":usage_stats_cc_proto",
-        "//base:port",
         "//config:stats_config_util",
         "//config:stats_config_util_mock",
         "//testing",
@@ -145,10 +144,13 @@ mozc_py_binary(
     srcs = ["gen_stats_list.py"],
 )
 
-genrule(
+run_binary(
     name = "usage_stats_list",
     srcs = ["//data/usage_stats:stats.def"],
-    outs = ["usage_stats_list.h"],
-    cmd = "$(location :gen_stats_list) $(SRCS) > $@",
-    tools = [":gen_stats_list"],
+    outs = ["usage_stats_list.inc"],
+    args = [
+        "--output=$(location :usage_stats_list.inc)",
+        "$(location //data/usage_stats:stats.def)",
+    ],
+    tool = ":gen_stats_list",
 )

@@ -46,15 +46,15 @@ namespace mozc {
 namespace usage_stats {
 
 namespace {
-constexpr char kRegistryPrefix[] = "usage_stats.";
+constexpr absl::string_view kRegistryPrefix = "usage_stats.";
 
-#include "usage_stats/usage_stats_list.h"
+#include "usage_stats/usage_stats_list.inc"
 
 bool LoadStats(const absl::string_view name, Stats *stats) {
   DCHECK(UsageStats::IsListed(name)) << name << " is not in the list";
   std::string stats_str;
   const std::string key = absl::StrCat(kRegistryPrefix, name);
-  if (!mozc::storage::Registry::Lookup(key, &stats_str)) {
+  if (!storage::Registry::Lookup(key, &stats_str)) {
     VLOG(1) << "Usage stats " << name << " is not registered yet.";
     return false;
   }
@@ -93,7 +93,7 @@ void UsageStats::ClearStats() {
   std::string stats_str;
   Stats stats;
   for (size_t i = 0; i < std::size(kStatsList); ++i) {
-    const std::string key = std::string(kRegistryPrefix) + kStatsList[i];
+    const std::string key = absl::StrCat(kRegistryPrefix,  kStatsList[i]);
     if (storage::Registry::Lookup(key, &stats_str)) {
       if (!stats.ParseFromString(stats_str)) {
         storage::Registry::Erase(key);
@@ -112,7 +112,7 @@ void UsageStats::ClearStats() {
 
 void UsageStats::ClearAllStats() {
   for (size_t i = 0; i < std::size(kStatsList); ++i) {
-    const std::string key = std::string(kRegistryPrefix) + kStatsList[i];
+    const std::string key = absl::StrCat(kRegistryPrefix, kStatsList[i]);
     storage::Registry::Erase(key);
   }
 }

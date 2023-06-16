@@ -48,6 +48,7 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "absl/base/attributes.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -100,16 +101,12 @@ struct OrderByValue {
 
 // Parses one line of reading correction file.  Since the result is returned as
 // string views, |line| needs to outlive |value_key|.
-ValueAndKey ParseReadingCorrectionTSV(const absl::string_view line) {
+ValueAndKey ParseReadingCorrectionTSV(
+    const absl::string_view line ABSL_ATTRIBUTE_LIFETIME_BOUND) {
   // Format: value\terror\tcorrect
-  SplitIterator<SingleDelimiter> iter(line, "\t");
-  CHECK(!iter.Done());
-  ValueAndKey value_key;
-  value_key.first = iter.Get();
-  iter.Next();
-  CHECK(!iter.Done());
-  value_key.second = iter.Get();
-  return value_key;
+  const std::vector<absl::string_view> fields = absl::StrSplit(line, '\t');
+  CHECK_GE(fields.size(), 2);
+  return {fields[0], fields[1]};
 }
 
 }  // namespace

@@ -438,11 +438,10 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insertion.
-  template <typename Key, typename Value, typename Description>
-  void TryInsert(RequestType request_type, Key &&key, Value &&value,
-                 Description &&description, bool is_suggestion_selected,
-                 uint32_t next_fp, uint64_t last_access_time,
-                 Segments *segments);
+  void TryInsert(RequestType request_type, absl::string_view key,
+                 absl::string_view value, absl::string_view description,
+                 bool is_suggestion_selected, uint32_t next_fp,
+                 uint64_t last_access_time, Segments *segments);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);

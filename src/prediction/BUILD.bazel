@@ -507,9 +507,9 @@ mozc_cc_library(
         "number_decoder.h",
     ],
     deps = [
-        "//base:number_util",
         "//base/container:trie",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

@@ -463,6 +463,12 @@ INSTANTIATE_TEST_SUITE_P(
                              request.mutable_decoder_experiment_params()
                                  ->set_cancel_content_word_suffix_penalty(true);
                              return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_number_style_learning(true);
+                             return request;
                            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {

@@ -32,17 +32,24 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "base/container/trie.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
-enum NumberDecoderEntryType : std::uint8_t {
+struct NumberDecoderResult;
+
+namespace number_decoder_internal {
+
+enum class Type : std::uint8_t {
   STOP_DECODING,  // "にん", "せんち", ...
   UNIT,           // 0-9
   SMALL_DIGIT,    // 10, 100, 1000
@@ -55,11 +62,11 @@ enum NumberDecoderEntryType : std::uint8_t {
   UNIT_AND_STOP_DECODING,
 };
 
-struct NumberDecoderEntry {
-  NumberDecoderEntryType type = STOP_DECODING;
+struct Entry {
+  Type type = Type::STOP_DECODING;
   int number = 0;
   int digit = 1;
-  std::string digit_str = "";
+  absl::string_view digit_str;
   // Output the current status before decoding the input with the entry.
   bool output_before_decode = false;
   // For UNIT_AND_BIG_DIGIT and UNIT_AND_STOP_DECODING.
@@ -73,7 +80,22 @@ struct NumberDecoderEntry {
 //
 // |small_digit| and |big_digit| will be used to validate the current state.
 // For example, we do not decode "兆" after decoding "万".
-struct NumberDecoderState {
+struct State {
+  bool IsValid() const {
+    return !(small_digit_num == -1 && small_digit == -1 && big_digit == -1);
+  }
+
+  std::optional<NumberDecoderResult> Result() const;
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const State &state) {
+    absl::StrFormat(
+        &sink,
+        "small_digit_num: %d, num_str: %s, sd: %d, bd: %d, consumed_blen: %d",
+        state.small_digit_num, state.current_num_str, state.small_digit,
+        state.big_digit, state.consumed_key_byte_len);
+  }
+
   // Current small digit number in integer (e.g. 2000, <= 9999)
   int small_digit_num = -1;
   // Current number in string (e.g. 46億, 2億6000万)
@@ -85,61 +107,58 @@ struct NumberDecoderState {
   // e.g. (digit_str : digit index) = ("万":1), ("億", 2), ...
   int big_digit = -1;
   size_t consumed_key_byte_len = 0;
-
-  bool IsValid() const {
-    return !(small_digit_num == -1 && small_digit == -1 && big_digit == -1);
-  }
-
-  std::string DebugString() const {
-    return absl::StrCat("small_digit_num: ", small_digit_num,
-                        "\tnum_str: ", current_num_str, "\tsd: ", small_digit,
-                        "\tbd: ", big_digit,
-                        "\tconsumed_blen: ", consumed_key_byte_len);
-  }
 };
+
+}  // namespace number_decoder_internal
 
 struct NumberDecoderResult {
+  NumberDecoderResult() = default;
+  NumberDecoderResult(size_t len, std::string c)
+      : consumed_key_byte_len(len), candidate(std::move(c)) {}
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const NumberDecoderResult &result) {
+    absl::Format(&sink, "(%d, %s)", result.consumed_key_byte_len,
+                 result.candidate);
+  }
+
   size_t consumed_key_byte_len;
   std::string candidate;
-
-  NumberDecoderResult(size_t len, const absl::string_view c)
-      : consumed_key_byte_len(len), candidate(c) {}
-
-  bool operator==(const NumberDecoderResult &other) const {
-    return consumed_key_byte_len == other.consumed_key_byte_len &&
-           candidate == other.candidate;
-  }
-
-  friend std::ostream &operator<<(std::ostream &s,
-                                  const NumberDecoderResult &r) {
-    return s << "(" << r.consumed_key_byte_len << ", \"" << r.candidate
-             << "\")";
-  }
 };
+
+constexpr bool operator==(const NumberDecoderResult &lhs,
+                          const NumberDecoderResult &rhs) {
+  return std::tie(lhs.consumed_key_byte_len, lhs.candidate) ==
+         std::tie(rhs.consumed_key_byte_len, rhs.candidate);
+}
+
+std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r);
 
 class NumberDecoder {
  public:
-  using State = NumberDecoderState;
-  using Entry = NumberDecoderEntry;
   using Result = NumberDecoderResult;
 
   NumberDecoder();
-  bool Decode(absl::string_view key, std::vector<Result> *results) const;
+
+  NumberDecoder(NumberDecoder &&) = default;
+  NumberDecoder &operator=(NumberDecoder &&) = default;
+
+  std::vector<Result> Decode(absl::string_view key) const;
 
  private:
-  void DecodeAux(absl::string_view key, State *state,
-                 std::vector<Result> *results) const;
-  bool HandleUnitEntry(const Entry &entry, State *state,
-                       std::vector<Result> *results) const;
-  bool HandleSmallDigitEntry(const Entry &entry, State *state,
-                             std::vector<Result> *results) const;
-  bool HandleBigDigitEntry(const Entry &entry, State *state,
-                           std::vector<Result> *results) const;
-  void MayAppendResults(const State &state, size_t consumed_byte_len,
-                        std::vector<Result> *results) const;
-  void InitEntries();
+  void DecodeAux(absl::string_view key, number_decoder_internal::State &state,
+                 std::vector<Result> &results) const;
+  bool HandleUnitEntry(const number_decoder_internal::Entry &entry,
+                       number_decoder_internal::State &state,
+                       std::vector<Result> &results) const;
+  bool HandleSmallDigitEntry(const number_decoder_internal::Entry &entry,
+                             number_decoder_internal::State &state,
+                             std::vector<Result> &results) const;
+  bool HandleBigDigitEntry(const number_decoder_internal::Entry &entry,
+                           number_decoder_internal::State &state,
+                           std::vector<Result> &results) const;
 
-  Trie<Entry> entries_;
+  Trie<number_decoder_internal::Entry> entries_;
 };
 
 }  // namespace mozc

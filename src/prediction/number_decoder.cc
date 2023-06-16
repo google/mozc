@@ -30,79 +30,93 @@
 #include "prediction/number_decoder.h"
 
 #include <algorithm>
-#include <istream>
-#include <memory>
-#include <sstream>
+#include <optional>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "base/number_util.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
-NumberDecoder::NumberDecoder() { InitEntries(); }
+using ::mozc::number_decoder_internal::Entry;
+using ::mozc::number_decoder_internal::State;
+using ::mozc::number_decoder_internal::Type;
 
-void NumberDecoder::InitEntries() {
+void MaybeAppendResult(const State &state,
+                       std::vector<NumberDecoder::Result> &results) {
+  std::optional<NumberDecoder::Result> result = state.Result();
+  if (result.has_value()) {
+    results.push_back(*std::move(result));
+  }
+}
+
+Trie<Entry> InitEntries() {
+  Trie<Entry> result;
   // unit
-  entries_.AddEntry("ぜろ", Entry({UNIT, 0}));
-  entries_.AddEntry("いち", Entry({UNIT, 1}));
-  entries_.AddEntry("いっ", Entry({UNIT, 1}));
-  entries_.AddEntry("に", Entry({UNIT, 2}));
-  entries_.AddEntry("さん", Entry({UNIT, 3}));
-  entries_.AddEntry("し", Entry({UNIT, 4}));
-  entries_.AddEntry("よん", Entry({UNIT, 4}));
-  entries_.AddEntry("よ", Entry({UNIT, 4}));
-  entries_.AddEntry("ご", Entry({UNIT, 5}));
-  entries_.AddEntry("ろく", Entry({UNIT, 6}));
-  entries_.AddEntry("ろっ", Entry({UNIT, 6}));
-  entries_.AddEntry("なな", Entry({UNIT, 7}));
-  entries_.AddEntry("しち", Entry({UNIT, 7}));
-  entries_.AddEntry("はち", Entry({UNIT, 8}));
-  entries_.AddEntry("はっ", Entry({UNIT, 8}));
-  entries_.AddEntry("きゅう", Entry({UNIT, 9}));
-  entries_.AddEntry("きゅー", Entry({UNIT, 9}));
-  entries_.AddEntry("く", Entry({UNIT, 9}));
+  result.AddEntry("ぜろ", Entry({Type::UNIT, 0}));
+  result.AddEntry("いち", Entry({Type::UNIT, 1}));
+  result.AddEntry("いっ", Entry({Type::UNIT, 1}));
+  result.AddEntry("に", Entry({Type::UNIT, 2}));
+  result.AddEntry("さん", Entry({Type::UNIT, 3}));
+  result.AddEntry("し", Entry({Type::UNIT, 4}));
+  result.AddEntry("よん", Entry({Type::UNIT, 4}));
+  result.AddEntry("よ", Entry({Type::UNIT, 4}));
+  result.AddEntry("ご", Entry({Type::UNIT, 5}));
+  result.AddEntry("ろく", Entry({Type::UNIT, 6}));
+  result.AddEntry("ろっ", Entry({Type::UNIT, 6}));
+  result.AddEntry("なな", Entry({Type::UNIT, 7}));
+  result.AddEntry("しち", Entry({Type::UNIT, 7}));
+  result.AddEntry("はち", Entry({Type::UNIT, 8}));
+  result.AddEntry("はっ", Entry({Type::UNIT, 8}));
+  result.AddEntry("きゅう", Entry({Type::UNIT, 9}));
+  result.AddEntry("きゅー", Entry({Type::UNIT, 9}));
+  result.AddEntry("く", Entry({Type::UNIT, 9}));
 
   // small digit
   // "重", etc
-  entries_.AddEntry("じゅう", Entry({SMALL_DIGIT, 10, 2, "", true}));
-  entries_.AddEntry("じゅー", Entry({SMALL_DIGIT, 10, 2, "", true}));
-  entries_.AddEntry("じゅっ", Entry({SMALL_DIGIT, 10, 2}));
-  entries_.AddEntry("ひゃく", Entry({SMALL_DIGIT, 100, 3}));
-  entries_.AddEntry("ひゃっ", Entry({SMALL_DIGIT, 100, 3}));
-  entries_.AddEntry("びゃく", Entry({SMALL_DIGIT, 100, 3}));
-  entries_.AddEntry("びゃっ", Entry({SMALL_DIGIT, 100, 3}));
-  entries_.AddEntry("ぴゃく", Entry({SMALL_DIGIT, 100, 3}));
-  entries_.AddEntry("ぴゃっ", Entry({SMALL_DIGIT, 100, 3}));
+  result.AddEntry("じゅう", Entry({Type::SMALL_DIGIT, 10, 2, "", true}));
+  result.AddEntry("じゅー", Entry({Type::SMALL_DIGIT, 10, 2, "", true}));
+  result.AddEntry("じゅっ", Entry({Type::SMALL_DIGIT, 10, 2}));
+  result.AddEntry("ひゃく", Entry({Type::SMALL_DIGIT, 100, 3}));
+  result.AddEntry("ひゃっ", Entry({Type::SMALL_DIGIT, 100, 3}));
+  result.AddEntry("びゃく", Entry({Type::SMALL_DIGIT, 100, 3}));
+  result.AddEntry("びゃっ", Entry({Type::SMALL_DIGIT, 100, 3}));
+  result.AddEntry("ぴゃく", Entry({Type::SMALL_DIGIT, 100, 3}));
+  result.AddEntry("ぴゃっ", Entry({Type::SMALL_DIGIT, 100, 3}));
   // "戦", etc
-  entries_.AddEntry("せん", Entry({SMALL_DIGIT, 1000, 4, "", true}));
+  result.AddEntry("せん", Entry({Type::SMALL_DIGIT, 1000, 4, "", true}));
   // "膳"
-  entries_.AddEntry("ぜん", Entry({SMALL_DIGIT, 1000, 4, "", true}));
+  result.AddEntry("ぜん", Entry({Type::SMALL_DIGIT, 1000, 4, "", true}));
 
   // big digit
-  entries_.AddEntry("まん", Entry({BIG_DIGIT, 10000, 1, "万"}));
-  entries_.AddEntry("おく", Entry({BIG_DIGIT, -1, 2, "億"}));
-  entries_.AddEntry("おっ", Entry({BIG_DIGIT, -1, 2, "億"}));
+  result.AddEntry("まん", Entry({Type::BIG_DIGIT, 10000, 1, "万"}));
+  result.AddEntry("おく", Entry({Type::BIG_DIGIT, -1, 2, "億"}));
+  result.AddEntry("おっ", Entry({Type::BIG_DIGIT, -1, 2, "億"}));
   // "町", etc
-  entries_.AddEntry("ちょう", Entry({BIG_DIGIT, -1, 3, "兆", true}));
+  result.AddEntry("ちょう", Entry({Type::BIG_DIGIT, -1, 3, "兆", true}));
   // "系", etc
-  entries_.AddEntry("けい", Entry({BIG_DIGIT, -1, 4, "京", true}));
-  entries_.AddEntry("がい", Entry({BIG_DIGIT, -1, 5, "垓"}));
+  result.AddEntry("けい", Entry({Type::BIG_DIGIT, -1, 4, "京", true}));
+  result.AddEntry("がい", Entry({Type::BIG_DIGIT, -1, 5, "垓"}));
 
   // spacial cases
   // conflict with "にち"
-  entries_.AddEntry("にちょう",
-                    Entry({UNIT_AND_BIG_DIGIT, 2, 3, "兆", true, 3}));
-  entries_.AddEntry("にちょうめ",
-                    Entry({UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
-  entries_.AddEntry("にちゃん",
-                    Entry({UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
+  result.AddEntry("にちょう",
+                    Entry({Type::UNIT_AND_BIG_DIGIT, 2, 3, "兆", true, 3}));
+  result.AddEntry("にちょうめ",
+                    Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
+  result.AddEntry("にちゃん",
+                    Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
   // サンチーム (currency) v.s. 3チーム
-  entries_.AddEntry("さんちーむ",
-                    Entry({UNIT_AND_STOP_DECODING, 3, -1, "", true, 6}));
+  result.AddEntry("さんちーむ",
+                    Entry({Type::UNIT_AND_STOP_DECODING, 3, -1, "", true, 6}));
 
   // number suffix conflicting with the other entries
-  const std::vector<std::string> kSuffixEntries = {
+  constexpr absl::string_view kSuffixEntries[] = {
       // に
       // 握り, 日, 人
       "にぎり",
@@ -149,23 +163,33 @@ void NumberDecoder::InitEntries() {
       "ちょうめ",
   };
   for (const auto &key : kSuffixEntries) {
-    entries_.AddEntry(key, Entry());
+    result.AddEntry(key, Entry());
   }
+  return result;
 }
 
-bool NumberDecoder::Decode(absl::string_view key,
-                           std::vector<Result> *results) const {
+}  // namespace
+
+std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r) {
+  os << absl::StreamFormat("%v", r);
+  return os;
+}
+
+NumberDecoder::NumberDecoder(): entries_(InitEntries()) {}
+
+std::vector<NumberDecoder::Result> NumberDecoder::Decode(
+    absl::string_view key) const {
   State state;
-  results->clear();
-  DecodeAux(key, &state, results);
+  std::vector<NumberDecoder::Result> results;
+  DecodeAux(key, state, results);
 
-  MayAppendResults(state, state.consumed_key_byte_len, results);
-  return !results->empty();
+  MaybeAppendResult(state, results);
+  return results;
 }
 
-void NumberDecoder::DecodeAux(absl::string_view key, State *state,
-                              std::vector<Result> *results) const {
-  if (key.size() == 0) {
+void NumberDecoder::DecodeAux(absl::string_view key, State &state,
+                              std::vector<Result> &results) const {
+  if (key.empty()) {
     return;
   }
   size_t key_byte_len;
@@ -174,42 +198,42 @@ void NumberDecoder::DecodeAux(absl::string_view key, State *state,
     return;
   }
   switch (e.type) {
-    case STOP_DECODING:
+    case Type::STOP_DECODING:
       return;
-    case UNIT:
+    case Type::UNIT:
       if (!HandleUnitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len += key_byte_len;
+      state.consumed_key_byte_len += key_byte_len;
       break;
-    case SMALL_DIGIT:
+    case Type::SMALL_DIGIT:
       if (!HandleSmallDigitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len += key_byte_len;
+      state.consumed_key_byte_len += key_byte_len;
       break;
-    case BIG_DIGIT:
+    case Type::BIG_DIGIT:
       if (!HandleBigDigitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len += key_byte_len;
+      state.consumed_key_byte_len += key_byte_len;
       break;
-    case UNIT_AND_BIG_DIGIT:
+    case Type::UNIT_AND_BIG_DIGIT:
       if (!HandleUnitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len += e.consume_byte_len_of_first;
+      state.consumed_key_byte_len += e.consume_byte_len_of_first;
       if (!HandleBigDigitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len +=
+      state.consumed_key_byte_len +=
           (key_byte_len - e.consume_byte_len_of_first);
       break;
-    case UNIT_AND_STOP_DECODING:
+    case Type::UNIT_AND_STOP_DECODING:
       if (!HandleUnitEntry(e, state, results)) {
         return;
       }
-      state->consumed_key_byte_len += e.consume_byte_len_of_first;
+      state.consumed_key_byte_len += e.consume_byte_len_of_first;
       return;
     default:
       LOG(ERROR) << "Error";
@@ -218,107 +242,107 @@ void NumberDecoder::DecodeAux(absl::string_view key, State *state,
   DecodeAux(key.substr(key_byte_len), state, results);
 }
 
-bool NumberDecoder::HandleUnitEntry(const Entry &entry, State *state,
-                                    std::vector<Result> *results) const {
-  results->clear();
-
-  if (state->IsValid() && entry.number == 0) {
+bool NumberDecoder::HandleUnitEntry(const Entry &entry, State &state,
+                                    std::vector<Result> &results) const {
+  results.clear();
+  if (state.IsValid() && entry.number == 0) {
     // Supports 0 only as a dependent number.
     return false;
   }
-  if ((state->small_digit_num == 0) ||
-      (state->small_digit_num != -1 && state->small_digit_num % 10 != 0)) {
+  if ((state.small_digit_num == 0) ||
+      (state.small_digit_num != -1 && state.small_digit_num % 10 != 0)) {
     // Unit has been already decoded.
-    // Invlaid: いちさん, ぜろご
+    // Invalid: いちさん, ぜろご
     return false;
   }
 
   if (entry.output_before_decode) {
-    MayAppendResults(*state, state->consumed_key_byte_len, results);
+    MaybeAppendResult(state, results);
   }
 
-  if (state->small_digit_num == -1) {
-    state->small_digit_num = entry.number;
+  if (state.small_digit_num == -1) {
+    state.small_digit_num = entry.number;
   } else {
-    DCHECK_EQ(state->small_digit_num % 10, 0);
-    state->small_digit_num += entry.number;
+    DCHECK_EQ(state.small_digit_num % 10, 0);
+    state.small_digit_num += entry.number;
   }
   return true;
 }
 
-bool NumberDecoder::HandleSmallDigitEntry(const Entry &entry, State *state,
-                                          std::vector<Result> *results) const {
-  results->clear();
-  if (state->small_digit > 1 && entry.digit >= state->small_digit) {
+bool NumberDecoder::HandleSmallDigitEntry(const Entry &entry, State &state,
+                                          std::vector<Result> &results) const {
+  results.clear();
+  if (state.small_digit > 1 && entry.digit >= state.small_digit) {
     // Invalid: じゅうせん
     return false;
   }
-  if (state->small_digit_num == 0) {
+  if (state.small_digit_num == 0) {
     // Invalid: ぜろじゅう
     return false;
   }
 
   if (entry.output_before_decode) {
-    MayAppendResults(*state, state->consumed_key_byte_len, results);
+    MaybeAppendResult(state, results);
   }
 
-  if (state->small_digit_num == -1) {
-    state->small_digit_num = entry.number;
+  if (state.small_digit_num == -1) {
+    state.small_digit_num = entry.number;
   } else {
-    const int unit = std::max(1, state->small_digit_num % 10);
-    const int base = (state->small_digit_num / 10) * 10;
-    state->small_digit_num = base + unit * entry.number;
+    const int unit = std::max(1, state.small_digit_num % 10);
+    const int base = (state.small_digit_num / 10) * 10;
+    state.small_digit_num = base + unit * entry.number;
   }
-  state->small_digit = entry.digit;
+  state.small_digit = entry.digit;
   return true;
 }
 
-bool NumberDecoder::HandleBigDigitEntry(const Entry &entry, State *state,
-                                        std::vector<Result> *results) const {
-  results->clear();
-
-  if (state->big_digit > 0 && entry.digit >= state->big_digit) {
+bool NumberDecoder::HandleBigDigitEntry(const Entry &entry, State &state,
+                                        std::vector<Result> &results) const {
+  results.clear();
+  if (state.big_digit > 0 && entry.digit >= state.big_digit) {
     // Invalid: おくまん
     return false;
   }
-  if (state->small_digit_num == -1 || state->small_digit_num == 0) {
+  if (state.small_digit_num == -1 || state.small_digit_num == 0) {
     // Do not decode "まん" to "10000"
     return false;
   }
 
   if (entry.output_before_decode) {
-    MayAppendResults(*state, state->consumed_key_byte_len, results);
+    MaybeAppendResult(state, results);
   }
 
-  //  state->current_num = -1;
-  state->current_num_str.append(
-      absl::StrCat(state->small_digit_num, entry.digit_str));
-  state->small_digit_num = -1;
-  state->small_digit = -1;
-  state->big_digit = entry.digit;
+  //  state.current_num = -1;
+  absl::StrAppend(&state.current_num_str, state.small_digit_num,
+                  entry.digit_str);
+  state.small_digit_num = -1;
+  state.small_digit = -1;
+  state.big_digit = entry.digit;
   return true;
 }
 
-void NumberDecoder::MayAppendResults(const State &state,
-                                     size_t consumed_byte_len,
-                                     std::vector<Result> *results) const {
-  if (!state.IsValid()) {
-    return;
+namespace number_decoder_internal {
+
+std::optional<NumberDecoderResult> State::Result() const {
+  if (!IsValid()) {
+    return std::nullopt;
   }
-  const int small_digit =
-      (state.small_digit_num > 0) ? state.small_digit_num : 0;
+
+  const int small_digit = std::max(small_digit_num, 0);
 
   if (small_digit > 0) {
     // "1万" + "2000"
-    results->emplace_back(Result{
-        consumed_byte_len, absl::StrCat(state.current_num_str, small_digit)});
-  } else if (!state.current_num_str.empty()) {
+    return NumberDecoderResult{consumed_key_byte_len,
+                               absl::StrCat(current_num_str, small_digit)};
+  } else if (!current_num_str.empty()) {
     // "1万"
-    results->emplace_back(Result{consumed_byte_len, state.current_num_str});
+    return NumberDecoderResult{consumed_key_byte_len, current_num_str};
   } else if (small_digit == 0) {
     // "0"
-    results->emplace_back(Result{consumed_byte_len, absl::StrCat(0)});
+    return NumberDecoderResult{consumed_key_byte_len, "0"};
   }
+  return std::nullopt;
 }
 
+}  // namespace number_decoder_internal
 }  // namespace mozc

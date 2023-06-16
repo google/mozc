@@ -33,42 +33,38 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/port.h"
+#include "config/stats_config_util_mock.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace config {
-class StatsConfigUtilMock;
-}  // namespace config
-
 namespace usage_stats {
-
 namespace internal {
-::testing::AssertionResult ExpectStatsExist(const char *name_string,
-                                            const char *param_string,
+::testing::AssertionResult ExpectStatsExist(absl::string_view name_string,
+                                            absl::string_view param_string,
                                             absl::string_view name,
                                             bool expected);
 
-::testing::AssertionResult ExpectCountStats(const char *name_string,
-                                            const char *expected_string,
+::testing::AssertionResult ExpectCountStats(absl::string_view name_string,
+                                            absl::string_view expected_string,
                                             absl::string_view name,
                                             uint32_t expected);
 
-::testing::AssertionResult ExpectIntegerStats(const char *name_string,
-                                              const char *expected_string,
+::testing::AssertionResult ExpectIntegerStats(absl::string_view name_string,
+                                              absl::string_view expected_string,
                                               absl::string_view name,
                                               int32_t expected);
 
-::testing::AssertionResult ExpectBooleanStats(const char *name_string,
-                                              const char *expected_string,
+::testing::AssertionResult ExpectBooleanStats(absl::string_view name_string,
+                                              absl::string_view expected_string,
                                               absl::string_view name,
                                               bool expected);
 
 ::testing::AssertionResult ExpectTimingStats(
-    const char *name_string, const char *expected_total_string,
-    const char *expected_num_string, const char *expected_min_string,
-    const char *expected_max_string, absl::string_view name,
+    absl::string_view name_string, absl::string_view expected_total_string,
+    absl::string_view expected_num_string,
+    absl::string_view expected_min_string,
+    absl::string_view expected_max_string, absl::string_view name,
     uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
     uint32_t expected_max);
 }  // namespace internal
