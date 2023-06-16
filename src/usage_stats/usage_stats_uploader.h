@@ -30,12 +30,6 @@
 #ifndef MOZC_USAGE_STATS_USAGE_STATS_UPLOADER_H_
 #define MOZC_USAGE_STATS_USAGE_STATS_UPLOADER_H_
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "base/port.h"
-
 namespace mozc {
 namespace usage_stats {
 

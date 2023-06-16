@@ -30,19 +30,19 @@
 #include "usage_stats/usage_stats_uploader.h"
 
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "storage/registry.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace usage_stats {
 
 namespace {
-constexpr char kRegistryPrefix[] = "usage_stats.";
-constexpr char kLastUploadKey[] = "last_upload";
-constexpr char kMozcVersionKey[] = "mozc_version";
-constexpr char kClientIdKey[] = "client_id";
+constexpr absl::string_view kRegistryPrefix = "usage_stats.";
+constexpr absl::string_view kLastUploadKey = "last_upload";
+constexpr absl::string_view kMozcVersionKey = "mozc_version";
+constexpr absl::string_view kClientIdKey = "client_id";
 }  // namespace
 
 bool UsageStatsUploader::Send(void *data) {
@@ -54,11 +54,10 @@ bool UsageStatsUploader::Send(void *data) {
 }
 
 void UsageStatsUploader::ClearMetaData() {
-  const std::string upload_key = std::string(kRegistryPrefix) + kLastUploadKey;
+  const std::string upload_key = absl::StrCat(kRegistryPrefix, kLastUploadKey);
   const std::string mozc_version_key =
-      std::string(kRegistryPrefix) + kMozcVersionKey;
-  const std::string client_id_key =
-      std::string(kRegistryPrefix) + std::string(kClientIdKey);
+      absl::StrCat(kRegistryPrefix, kMozcVersionKey);
+  const std::string client_id_key = absl::StrCat(kRegistryPrefix, kClientIdKey);
   storage::Registry::Erase(upload_key);
   storage::Registry::Erase(mozc_version_key);
   storage::Registry::Erase(client_id_key);

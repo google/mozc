@@ -43,46 +43,47 @@ namespace mozc {
 namespace usage_stats {
 namespace internal {
 
-::testing::AssertionResult ExpectStatsExist(const char *name_string,
-                                            const char *param_string,
-                                            const absl::string_view name,
-                                            bool expected) {
+::testing::AssertionResult ExpectStatsExist(
+    const absl::string_view name_string, const absl::string_view param_string,
+    const absl::string_view name, bool expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
 }
 
-::testing::AssertionResult ExpectCountStats(const char *name_string,
-                                            const char *expected_string,
-                                            const absl::string_view name,
-                                            uint32_t expected) {
+::testing::AssertionResult ExpectCountStats(
+    const absl::string_view name_string,
+    const absl::string_view expected_string, const absl::string_view name,
+    uint32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
 }
 
-::testing::AssertionResult ExpectIntegerStats(const char *name_string,
-                                              const char *expected_string,
-                                              const absl::string_view name,
-                                              int32_t expected) {
+::testing::AssertionResult ExpectIntegerStats(
+    const absl::string_view name_string,
+    const absl::string_view expected_string, const absl::string_view name,
+    int32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
 }
 
-::testing::AssertionResult ExpectBooleanStats(const char *name_string,
-                                              const char *expected_string,
-                                              const absl::string_view name,
-                                              bool expected) {
+::testing::AssertionResult ExpectBooleanStats(
+    const absl::string_view name_string,
+    const absl::string_view expected_string, const absl::string_view name,
+    bool expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
 }
 
 ::testing::AssertionResult ExpectTimingStats(
-    const char *name_string, const char *expected_total_string,
-    const char *expected_num_string, const char *expected_min_string,
-    const char *expected_max_string, const absl::string_view name,
+    const absl::string_view name_string,
+    const absl::string_view expected_total_string,
+    const absl::string_view expected_num_string,
+    const absl::string_view expected_min_string,
+    const absl::string_view expected_max_string, const absl::string_view name,
     uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
     uint32_t expected_max) {
   // Always returns success for now.
@@ -93,7 +94,8 @@ namespace internal {
 }  // namespace internal
 
 scoped_usage_stats_enabler::scoped_usage_stats_enabler()
-    : stats_config_util_(new mozc::config::StatsConfigUtilMock) {
+    : stats_config_util_(
+          std::make_unique<mozc::config::StatsConfigUtilMock>()) {
   mozc::config::StatsConfigUtil::SetHandler(stats_config_util_.get());
 }
 
