@@ -29,119 +29,124 @@
 
 #include "prediction/number_decoder.h"
 
-#include <algorithm>
+#include <initializer_list>
 #include <iterator>
 #include <string>
 #include <vector>
 
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/random/random.h"
-#include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-TEST(NumberDecoderTest, Decode) {
-  struct TestData {
-    const std::string key;
-    const std::vector<NumberDecoder::Result> expected;
-    TestData(const std::string k, const std::vector<NumberDecoder::Result> rs)
-        : key(k), expected(rs) {}
-    static TestData CreateForAllConsumed(const std::string k,
-                                         const std::vector<std::string> cs) {
-      std::vector<NumberDecoder::Result> expected;
-      for (const auto &e : cs) {
-        expected.emplace_back(k.size(), e);
-      }
-      return TestData(k, expected);
-    }
-  };
-  const TestData kTestDataList[] = {
-      // Units
-      TestData::CreateForAllConsumed("ぜろ", {"0"}),
-      TestData::CreateForAllConsumed("いち", {"1"}),
-      TestData::CreateForAllConsumed("に", {"2"}),
-      TestData::CreateForAllConsumed("さん", {"3"}),
-      TestData::CreateForAllConsumed("し", {"4"}),
-      TestData::CreateForAllConsumed("ご", {"5"}),
-      TestData::CreateForAllConsumed("ろく", {"6"}),
-      TestData::CreateForAllConsumed("なな", {"7"}),
-      TestData::CreateForAllConsumed("はち", {"8"}),
-      TestData::CreateForAllConsumed("きゅう", {"9"}),
-      // Small digits
-      TestData::CreateForAllConsumed("じゅう", {"10"}),
-      TestData::CreateForAllConsumed("ひゃく", {"100"}),
-      TestData::CreateForAllConsumed("せん", {"1000"}),
-      // Big digits
-      TestData::CreateForAllConsumed("まん", {}),
-      TestData::CreateForAllConsumed("おく", {}),
-      TestData::CreateForAllConsumed("ちょう", {}),
-      TestData::CreateForAllConsumed("けい", {}),
-      TestData::CreateForAllConsumed("がい", {}),
-      TestData::CreateForAllConsumed("いちまん", {"1万"}),
-      TestData::CreateForAllConsumed("いちおく", {"1億"}),
-      TestData("いっちょう", {{6, "1"}, {15, "1兆"}}),
-      TestData("いっけい", {{6, "1"}, {12, "1京"}}),
-      TestData::CreateForAllConsumed("いちがい", {"1垓"}),
-      // Suffix
-      TestData("にせんち", {{3, "2"}}),
-      TestData("にちょうめ", {{3, "2"}}),
-      TestData("さんちょうめ", {{6, "3"}}),
-      // Others
-      TestData("ぜろに", {{6, "0"}}),
-      TestData("にいち", {{3, "2"}}),
-      TestData("にぜろ", {{3, "2"}}),
-      TestData("にこ", {{3, "2"}}),
-      TestData("にこにこ", {{3, "2"}}),
-      TestData("にさんじゅう", {{3, "2"}}),
-      TestData("にさんひゃく", {{3, "2"}}),
-      TestData("にじゅう", {{3, "2"}, {12, "20"}}),
-      TestData("にじゅうさん", {{18, "23"}}),
-      TestData("にじゅうさんぜん", {{18, "23"}}),
-      TestData("にせん", {{3, "2"}, {9, "2000"}}),
-      TestData("にせんの", {{3, "2"}, {9, "2000"}}),
-      TestData("にせんさん", {{15, "2003"}}),
-      TestData("にせんさんせん", {{15, "2003"}}),
-      TestData("いちまんにせん", {{15, "1万2"}, {21, "1万2000"}}),
-      TestData("いちまんにせんさん", {{27, "1万2003"}}),
-      TestData("いちおくさんぜんまん", {{30, "1億3000万"}}),
-      TestData("いちまんさんおく", {{18, "1万3"}}),
-      TestData("いちまんさんまん", {{18, "1万3"}}),
-      TestData("いちおくにせん", {{15, "1億2"}, {21, "1億2000"}}),
-      TestData("にちょう", {{3, "2"}, {12, "2兆"}}),
-      TestData("にちょうせ", {{3, "2"}, {12, "2兆"}}),
-      TestData("にちょうせん", {{12, "2兆"}, {18, "2兆1000"}}),
-      TestData("じゅうにちょう", {{12, "12"}, {21, "12兆"}}),
-      TestData("じゅうにちょうの", {{12, "12"}, {21, "12兆"}}),
-      TestData("じゅうにちょうでも", {{12, "12"}, {21, "12兆"}}),
-      TestData("じゅうにちょうめ", {{12, "12"}}),
-      TestData("じゅうにちょうめの", {{12, "12"}}),
-      TestData("にちゃん", {{3, "2"}}),
-      TestData("にちゃんねる", {{3, "2"}}),
-      TestData("じゅうにちゃん", {{12, "12"}}),
-      TestData("ごごう", {{3, "5"}}),
-      TestData("じゅうごう", {{9, "10"}}),
-      TestData("じゅうさんちーむ", {{9, "10"}, {15, "13"}}),
-      TestData("にじゅうさんちーむ", {{12, "20"}, {18, "23"}}),
-      TestData("にじゅうまんさんぜん", {{30, "20万3000"}, {24, "20万3"}}),
-      TestData("せんにひゃくおくさんぜんよんひゃくまんごせんろっぴゃく",
-               {{27 * 3, "1200億3400万5600"}}),
-  };
+using ::testing::UnorderedElementsAreArray;
 
-  mozc::NumberDecoder decoder;
-  for (const auto &data : kTestDataList) {
-    std::vector<mozc::NumberDecoder::Result> results;
-    const bool ret = decoder.Decode(data.key, &results);
-    EXPECT_EQ(ret, !data.expected.empty()) << data.key;
-    EXPECT_THAT(results, ::testing::UnorderedElementsAreArray(data.expected))
-        << data.key;
+struct TestParam {
+  explicit TestParam(absl::string_view key) : key(key) {}
+  TestParam(const absl::string_view key,
+            const std::initializer_list<NumberDecoder::Result> results)
+      : key(key), expected(results) {}
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const TestParam &param) {
+    sink.Append(param.key);
   }
+
+  absl::string_view key;
+  std::vector<NumberDecoder::Result> expected;
+};
+
+TestParam AllConsumed(const absl::string_view key,
+                      const std::initializer_list<absl::string_view> results) {
+  TestParam param(key);
+  for (const absl::string_view &result : results) {
+    param.expected.emplace_back(key.size(), std::string(result));
+  }
+  return param;
 }
 
-TEST(NumberDecoderTest, Random) {
-  const std::vector<std::string> kKeys = {
+class NumberDecoderTest : public ::testing::TestWithParam<TestParam> {};
+
+TEST_P(NumberDecoderTest, Decode) {
+  NumberDecoder decoder;
+  EXPECT_THAT(decoder.Decode(GetParam().key),
+              UnorderedElementsAreArray(GetParam().expected));
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Units, NumberDecoderTest,
+    ::testing::Values(AllConsumed("ぜろ", {"0"}), AllConsumed("いち", {"1"}),
+                      AllConsumed("に", {"2"}), AllConsumed("さん", {"3"}),
+                      AllConsumed("し", {"4"}), AllConsumed("ご", {"5"}),
+                      AllConsumed("ろく", {"6"}), AllConsumed("なな", {"7"}),
+                      AllConsumed("はち", {"8"}),
+                      AllConsumed("きゅう", {"9"})));
+
+INSTANTIATE_TEST_SUITE_P(SmallDigits, NumberDecoderTest,
+                         ::testing::Values(AllConsumed("じゅう", {"10"}),
+                                           AllConsumed("ひゃく", {"100"}),
+                                           AllConsumed("せん", {"1000"})));
+
+INSTANTIATE_TEST_SUITE_P(
+    BigDigits, NumberDecoderTest,
+    ::testing::Values(AllConsumed("まん", {}), AllConsumed("おく", {}),
+                      AllConsumed("ちょう", {}), AllConsumed("けい", {}),
+                      AllConsumed("がい", {}), AllConsumed("いちまん", {"1万"}),
+                      AllConsumed("いちおく", {"1億"}),
+                      TestParam{"いっちょう", {{6, "1"}, {15, "1兆"}}},
+                      TestParam{"いっけい", {{6, "1"}, {12, "1京"}}},
+                      AllConsumed("いちがい", {"1垓"})));
+
+INSTANTIATE_TEST_SUITE_P(Suffix, NumberDecoderTest,
+                         ::testing::Values(TestParam("にせんち", {{3, "2"}}),
+                                           TestParam("にちょうめ", {{3, "2"}}),
+                                           TestParam("さんちょうめ",
+                                                     {{6, "3"}})));
+
+INSTANTIATE_TEST_SUITE_P(
+    Others, NumberDecoderTest,
+    ::testing::Values(
+        TestParam("ぜろに", {{6, "0"}}), TestParam("にいち", {{3, "2"}}),
+        TestParam("にぜろ", {{3, "2"}}), TestParam("にこ", {{3, "2"}}),
+        TestParam("にこにこ", {{3, "2"}}),
+        TestParam("にさんじゅう", {{3, "2"}}),
+        TestParam("にさんひゃく", {{3, "2"}}),
+        TestParam("にじゅう", {{3, "2"}, {12, "20"}}),
+        TestParam("にじゅうさん", {{18, "23"}}),
+        TestParam("にじゅうさんぜん", {{18, "23"}}),
+        TestParam("にせん", {{3, "2"}, {9, "2000"}}),
+        TestParam("にせんの", {{3, "2"}, {9, "2000"}}),
+        TestParam("にせんさん", {{15, "2003"}}),
+        TestParam("にせんさんせん", {{15, "2003"}}),
+        TestParam("いちまんにせん", {{15, "1万2"}, {21, "1万2000"}}),
+        TestParam("いちまんにせんさん", {{27, "1万2003"}}),
+        TestParam("いちおくさんぜんまん", {{30, "1億3000万"}}),
+        TestParam("いちまんさんおく", {{18, "1万3"}}),
+        TestParam("いちまんさんまん", {{18, "1万3"}}),
+        TestParam("いちおくにせん", {{15, "1億2"}, {21, "1億2000"}}),
+        TestParam("にちょう", {{3, "2"}, {12, "2兆"}}),
+        TestParam("にちょうせ", {{3, "2"}, {12, "2兆"}}),
+        TestParam("にちょうせん", {{12, "2兆"}, {18, "2兆1000"}}),
+        TestParam("じゅうにちょう", {{12, "12"}, {21, "12兆"}}),
+        TestParam("じゅうにちょうの", {{12, "12"}, {21, "12兆"}}),
+        TestParam("じゅうにちょうでも", {{12, "12"}, {21, "12兆"}}),
+        TestParam("じゅうにちょうめ", {{12, "12"}}),
+        TestParam("じゅうにちょうめの", {{12, "12"}}),
+        TestParam("にちゃん", {{3, "2"}}),
+        TestParam("にちゃんねる", {{3, "2"}}),
+        TestParam("じゅうにちゃん", {{12, "12"}}),
+        TestParam("ごごう", {{3, "5"}}), TestParam("じゅうごう", {{9, "10"}}),
+        TestParam("じゅうさんちーむ", {{9, "10"}, {15, "13"}}),
+        TestParam("にじゅうさんちーむ", {{12, "20"}, {18, "23"}}),
+        TestParam("にじゅうまんさんぜん", {{30, "20万3000"}, {24, "20万3"}}),
+        TestParam("せんにひゃくおくさんぜんよんひゃくまんごせんろっぴゃく",
+                  {{27 * 3, "1200億3400万5600"}})));
+
+TEST(NumberDecoderRandomTest, Random) {
+  constexpr absl::string_view kKeys[] = {
       "ぜろ",   "いち",   "いっ",   "に",     "さん",   "し",     "よん",
       "ご",     "ろく",   "ろっ",   "なな",   "しち",   "はち",   "はっ",
       "きゅう", "きゅー", "く",     "じゅう", "じゅー", "じゅっ", "ひゃく",
@@ -151,20 +156,16 @@ TEST(NumberDecoderTest, Random) {
 
   constexpr int kTestSize = 1000;
   constexpr int kKeySize = 10;
+  NumberDecoder decoder;
   absl::BitGen gen;
-  mozc::NumberDecoder decoder;
-  std::vector<mozc::NumberDecoder::Result> results;
   for (int try_count = 0; try_count < kTestSize; ++try_count) {
-    std::vector<int> indices(kKeySize);
-    std::generate(std::begin(indices), std::end(indices), [&]() {
-      return absl::Uniform(gen, 0, static_cast<int>(kKeys.size()));
-    });
-    std::vector<std::string> key_vector;
-    absl::c_transform(indices, std::back_inserter(key_vector),
-                      [&](const auto &i) { return kKeys[i]; });
-    std::string key = absl::StrJoin(key_vector, "");
+    std::string key;
+    for (int i = 0; i < kKeySize; ++i) {
+      absl::StrAppend(&key, kKeys[absl::Uniform(gen, 0u, std::size(kKeys))]);
+    }
     // Check the key does not cause any failure.
-    decoder.Decode(key, &results);
+    EXPECT_NO_FATAL_FAILURE(
+        { std::vector<NumberDecoder::Result> results = decoder.Decode(key); });
   }
 }
 

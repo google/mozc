@@ -1665,27 +1665,29 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
   }
 
   // NumberDecoder decoder;
-  std::vector<NumberDecoder::Result> decode_results;
-  if (!number_decoder_.Decode(input_key, &decode_results)) {
+  std::vector<NumberDecoder::Result> decode_results =
+      number_decoder_.Decode(input_key);
+  if (decode_results.empty()) {
     return false;
   }
 
-  for (const auto &r : decode_results) {
+  for (NumberDecoder::Result &decode_result : decode_results) {
     Result result;
-    const bool is_arabic = Util::GetScriptType(r.candidate) == Util::NUMBER;
+    const bool is_arabic =
+        Util::GetScriptType(decode_result.candidate) == Util::NUMBER;
     result.types = PredictionType::NUMBER;
-    result.key = input_key.substr(0, r.consumed_key_byte_len);
-    result.value = r.candidate;
+    result.key = input_key.substr(0, decode_result.consumed_key_byte_len);
+    result.value = std::move(decode_result.candidate);
     result.candidate_attributes |= Segment::Candidate::NO_SUGGEST_LEARNING;
     // Heuristic small cost: 1000 ~= 500 * log(10)
     result.wcost = 1000;
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
     result.rid = is_arabic ? number_id_ : kanji_number_id_;
-    if (r.consumed_key_byte_len < input_key.size()) {
+    if (decode_result.consumed_key_byte_len < input_key.size()) {
       result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
       result.consumed_key_size = Util::CharsLen(result.key);
     }
-    results->emplace_back(result);
+    results->push_back(std::move(result));
   }
   return true;
 }
