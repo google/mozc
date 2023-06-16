@@ -62,7 +62,7 @@ inline absl::string_view DataAt(const char *data, uint32_t index) {
 class const_iterator {
  public:
   using value_type = absl::string_view;
-  using difference_type = uint32_t;
+  using difference_type = int32_t;
   using pointer = const value_type *;
   using reference = const value_type &;
   using iterator_category = std::random_access_iterator_tag;
@@ -220,7 +220,7 @@ class SerializedStringArray {
   using reference = value_type &;
   using const_reference = const value_type &;
   using size_type = uint32_t;
-  using difference_type = uint32_t;
+  using difference_type = int32_t;
 
   using iterator = serialized_string_array_internal::const_iterator;
   using const_iterator = iterator;
