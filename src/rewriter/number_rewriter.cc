@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,6 +42,7 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
+#include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -48,12 +50,14 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
+using ::mozc::config::CharacterFormManager;
 using ::mozc::dictionary::PosMatcher;
 
 // Rewrite type
@@ -65,9 +69,15 @@ enum RewriteType {
 
 struct RewriteCandidateInfo {
   RewriteType type;
-  int position;
-  Segment::Candidate candidate;
+  int position;                  // Base (arabic number) candidate position
+  Segment::Candidate candidate;  // Base candidate
 };
+
+bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_number_style_learning();
+}
 
 // Returns rewrite type for the given segment and base candidate information.
 // base_candidate_pos: the index of the base candidate.
@@ -201,6 +211,45 @@ void SetCandidatesInfo(const Segment::Candidate &arabic_cand,
   }
 }
 
+// Note:
+// Some number characters such as superscript (¹) is out of target of
+// number styles.
+bool IsNumberCandidate(const Segment::Candidate &candidate,
+                       const PosMatcher &pos_matcher) {
+  if (candidate.lid != candidate.rid) {
+    return false;
+  }
+  return pos_matcher.IsNumber(candidate.lid) ||
+         pos_matcher.IsKanjiNumber(candidate.rid);
+}
+
+void SetNumberInfoToExistingCandidates(
+    const std::vector<NumberUtil::NumberString> &numbers,
+    const PosMatcher &pos_matcher, Segment *segment) {
+  absl::flat_hash_map<std::string, NumberUtil::NumberString> number_map;
+  // Different number style can have the same surface
+  // ex. (123, NUMBER_SEPARATED_ARABIC_HALFWIDTH) and (123, DEFAULT_STYLE)
+  for (const auto &entry : numbers) {
+    number_map.emplace(entry.value, entry);
+  }
+
+  for (size_t i = 0; i < segment->candidates_size(); ++i) {
+    Segment::Candidate *candidate = segment->mutable_candidate(i);
+    const auto &itr = number_map.find(candidate->value);
+    if (itr == number_map.end()) {
+      continue;
+    }
+    if (!IsNumberCandidate(*candidate, pos_matcher)) {
+      continue;
+    }
+
+    candidate->style = itr->second.style;
+    if (candidate->description.empty()) {
+      candidate->description = itr->second.description;
+    }
+  }
+}
+
 class CheckValueOperator {
  public:
   explicit CheckValueOperator(const absl::string_view v) : find_value_(v) {}
@@ -293,7 +342,7 @@ void UpdateCandidate(Segment *segment, int32_t update_position,
   //    Segment::Candidate. In such situation, simply calling |c->Init()|
   //    for an existing candidate may result in unexpeced data loss.
   // 2) In order to preserve existing attribute information such as
-  //    Segment::Candidate::USER_DICTIONARY bit in |c|, we cannot not call
+  //    Segment::Candidate::USER_DICTIONARY bit in |c|, we cannot call
   //    |c->Init()|. Note that neither |base_cand| nor |result[0]| has
   //    valid value in its |attributes|.
   MergeCandidateInfoInternal(base_cand, result_cand, c);
@@ -325,7 +374,7 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
     if (itr != results.end() &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI &&
         itr->style != NumberUtil::NumberString::NUMBER_KANJI_ARABIC) {
-      // Update exsisting base candidate
+      // Update existing base candidate
       UpdateCandidate(seg, base_candidate_pos, base_cand, results[0]);
     } else {
       // Insert candidate just below the base candidate
@@ -351,36 +400,87 @@ void InsertHalfArabic(const absl::string_view half_arabic,
                        NumberUtil::NumberString::DEFAULT_STYLE);
 }
 
-void GetNumbers(RewriteType type, bool exec_radix_conversion,
-                const absl::string_view arabic_content_value,
-                std::vector<NumberUtil::NumberString> *output) {
-  DCHECK(output);
+std::vector<NumberUtil::NumberString> GetNumbersInDefaultOrder(
+    RewriteType type, bool exec_radix_conversion,
+    const absl::string_view arabic_content_value) {
+  std::vector<NumberUtil::NumberString> output;
   if (type == ARABIC_FIRST) {
-    InsertHalfArabic(arabic_content_value, output);
-    NumberUtil::ArabicToWideArabic(arabic_content_value, output);
-    NumberUtil::ArabicToSeparatedArabic(arabic_content_value, output);
-    NumberUtil::ArabicToKanji(arabic_content_value, output);
-    NumberUtil::ArabicToOtherForms(arabic_content_value, output);
+    InsertHalfArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToWideArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToSeparatedArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToKanji(arabic_content_value, &output);
+    NumberUtil::ArabicToOtherForms(arabic_content_value, &output);
   } else if (type == KANJI_FIRST) {
-    NumberUtil::ArabicToKanji(arabic_content_value, output);
-    InsertHalfArabic(arabic_content_value, output);
-    NumberUtil::ArabicToWideArabic(arabic_content_value, output);
-    NumberUtil::ArabicToSeparatedArabic(arabic_content_value, output);
-    NumberUtil::ArabicToOtherForms(arabic_content_value, output);
+    NumberUtil::ArabicToKanji(arabic_content_value, &output);
+    InsertHalfArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToWideArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToSeparatedArabic(arabic_content_value, &output);
+    NumberUtil::ArabicToOtherForms(arabic_content_value, &output);
   }
 
   if (exec_radix_conversion) {
-    NumberUtil::ArabicToOtherRadixes(arabic_content_value, output);
+    NumberUtil::ArabicToOtherRadixes(arabic_content_value, &output);
   }
+  return output;
 }
 
-bool RewriteOneSegment(const SerializedStringArray &suffix_array,
-                       const PosMatcher &pos_matcher,
-                       bool exec_radix_conversion, Segment *seg) {
-  DCHECK(seg);
+}  // namespace
+
+NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
+    : pos_matcher_(data_manager->GetPosMatcherData()) {
+  const char *array = nullptr;
+  size_t size = 0;
+  data_manager->GetCounterSuffixSortedArray(&array, &size);
+  const absl::string_view data(array, size);
+  // Data manager is responsible for providing a valid data.  Just verify data
+  // in debug build.
+  DCHECK(SerializedStringArray::VerifyData(data));
+  suffix_array_.Set(data);
+
+  Reload();
+}
+
+NumberRewriter::~NumberRewriter() = default;
+
+int NumberRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {
+    return RewriterInterface::ALL;
+  }
+  return RewriterInterface::CONVERSION;
+}
+
+bool NumberRewriter::Rewrite(const ConversionRequest &request,
+                             Segments *segments) const {
+  DCHECK(segments);
+  if (!request.config().use_number_conversion()) {
+    VLOG(2) << "no use_number_conversion";
+    return false;
+  }
+
+  bool modified = false;
+
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    modified |= RewriteOneSegment(request, i, segments);
+  }
+
+  return modified;
+}
+
+bool NumberRewriter::RewriteOneSegment(const ConversionRequest &request,
+                                       size_t index, Segments *segments) const {
+  DCHECK(segments);
+  // Radix conversion is done only for conversion mode.
+  // Showing radix candidates is annoying for a user.
+  const bool exec_radix_conversion =
+      (segments->conversion_segments_size() == 1 &&
+       request.request_type() == ConversionRequest::CONVERSION);
+  const bool should_rarank = ShouldRerankCandidates(request, *segments);
+
+  Segment *seg = segments->mutable_conversion_segment(index);
+
   bool modified = false;
   std::vector<RewriteCandidateInfo> rewrite_candidate_infos;
-  GetRewriteCandidateInfos(suffix_array, *seg, pos_matcher,
+  GetRewriteCandidateInfos(suffix_array_, *seg, pos_matcher_,
                            &rewrite_candidate_infos);
 
   for (int i = rewrite_candidate_infos.size() - 1; i >= 0; --i) {
@@ -406,73 +506,142 @@ bool RewriteOneSegment(const SerializedStringArray &suffix_array,
                  << arabic_content_value;
       break;
     }
-    std::vector<NumberUtil::NumberString> output;
-    GetNumbers(info.type, exec_radix_conversion, arabic_content_value, &output);
-    std::vector<Segment::Candidate> converted_numbers;
-    for (int j = 0; j < output.size(); ++j) {
-      PushBackCandidate(output[j].value, output[j].description, output[j].style,
-                        &converted_numbers);
-    }
-    SetCandidatesInfo(info.candidate, &converted_numbers);
+    const std::vector<NumberUtil::NumberString> &output =
+        GetNumbersInDefaultOrder(info.type, exec_radix_conversion,
+                                 arabic_content_value);
+    SetNumberInfoToExistingCandidates(output, pos_matcher_, seg);
+
+    const std::vector<Segment::Candidate> &number_candidates =
+        GenerateCandidatesToInsert(info.candidate, output, should_rarank);
 
     // Caution!!!: This invocation will update the data inside of the
     // rewrite_candidate_infos. Thus, |info| also can be updated as well
     // regardless of whether it's const reference-ness.
-    EraseExistingCandidates(converted_numbers, info.position, info.type, seg,
+    EraseExistingCandidates(number_candidates, info.position, info.type, seg,
                             &rewrite_candidate_infos);
     int insert_pos = GetInsertPos(info.position, *seg, info.type);
     DCHECK_LT(info.position, insert_pos);
-    InsertConvertedCandidates(converted_numbers, info.candidate, info.position,
+    InsertConvertedCandidates(number_candidates, info.candidate, info.position,
                               insert_pos, seg);
     modified = true;
   }
   return modified;
 }
-}  // namespace
 
-NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPosMatcherData()) {
-  const char *array = nullptr;
-  size_t size = 0;
-  data_manager->GetCounterSuffixSortedArray(&array, &size);
-  const absl::string_view data(array, size);
-  // Data manager is responsible for providing a valid data.  Just verify data
-  // in debug build.
-  DCHECK(SerializedStringArray::VerifyData(data));
-  suffix_array_.Set(data);
-}
-
-NumberRewriter::~NumberRewriter() = default;
-
-int NumberRewriter::capability(const ConversionRequest &request) const {
-  if (request.request().mixed_conversion()) {
-    return RewriterInterface::ALL;
+std::vector<Segment::Candidate> NumberRewriter::GenerateCandidatesToInsert(
+    const Segment::Candidate &arabic_candidate,
+    const std::vector<NumberUtil::NumberString> &numbers,
+    bool should_rerank) const {
+  std::vector<Segment::Candidate> converted_numbers;
+  for (const auto &number_string : numbers) {
+    PushBackCandidate(number_string.value, number_string.description,
+                      number_string.style, &converted_numbers);
   }
-  return RewriterInterface::CONVERSION;
+  SetCandidatesInfo(arabic_candidate, &converted_numbers);
+  if (should_rerank) {
+    RerankCandidates(converted_numbers);
+  }
+  return converted_numbers;
 }
 
-bool NumberRewriter::Rewrite(const ConversionRequest &request,
-                             Segments *segments) const {
-  DCHECK(segments);
-  if (!request.config().use_number_conversion()) {
-    VLOG(2) << "no use_number_conversion";
+bool NumberRewriter::ShouldRerankCandidates(const ConversionRequest &request,
+                                            const Segments &segments) const {
+  if (!IsNumberStyleLearningEnabled(request)) {
+    VLOG(2) << "number style learning is not enabled.";
     return false;
   }
-
-  bool modified = false;
-  // Radix conversion is done only for conversion mode.
-  // Showing radix candidates is annoying for a user.
-  const bool exec_radix_conversion =
-      (segments->conversion_segments_size() == 1 &&
-       request.request_type() == ConversionRequest::CONVERSION);
-
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    Segment *seg = segments->mutable_conversion_segment(i);
-    modified |= RewriteOneSegment(suffix_array_, pos_matcher_,
-                                  exec_radix_conversion, seg);
+  if (request.config().incognito_mode()) {
+    VLOG(2) << "incognito mode";
+    return false;
   }
-
-  return modified;
+  if (request.config().history_learning_level() == config::Config::NO_HISTORY) {
+    VLOG(2) << "history learning level is NO_HISTORY";
+    return false;
+  }
+  if (!request.config().use_history_suggest() &&
+      request.request_type() == ConversionRequest::SUGGESTION) {
+    VLOG(2) << "no history suggest";
+    return false;
+  }
+  if (segments.conversion_segments_size() != 1) {
+    // Rewriting "2|階" to "弐|階" using the history would be noisy.
+    VLOG(2) << "do not apply to the multiple segments.";
+    return false;
+  }
+  return true;
 }
 
+void NumberRewriter::RerankCandidates(
+    std::vector<Segment::Candidate> &candidates) const {
+  std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =
+      CharacterFormManager::GetCharacterFormManager()->GetLastNumberStyle();
+  if (!stored_entry.has_value()) {
+    return;
+  }
+  const NumberUtil::NumberString::Style style = stored_entry->style;
+  const config::Config::CharacterForm form = stored_entry->form;
+
+  auto top_number_entry = candidates.begin();
+  for (auto itr = candidates.begin(); itr != candidates.end(); ++itr) {
+    if (itr->style != style) {
+      continue;
+    }
+    if (style == NumberUtil::NumberString::DEFAULT_STYLE &&
+        ((Util::GetFormType(itr->value) == Util::HALF_WIDTH) !=
+         (form == config::Config::HALF_WIDTH))) {
+      continue;
+    }
+    top_number_entry = itr;
+    break;
+  }
+
+  // Rerank `top_number_entry` to top.
+  std::rotate(candidates.begin(), top_number_entry, top_number_entry + 1);
+}
+
+void NumberRewriter::Finish(const ConversionRequest &request,
+                            Segments *segments) {
+  if (!IsNumberStyleLearningEnabled(request)) {
+    VLOG(2) << "number style learning is not enabled.";
+    return;
+  }
+
+  if (request.config().incognito_mode()) {
+    VLOG(2) << "incognito_mode";
+    return;
+  }
+
+  if (request.config().history_learning_level() !=
+      config::Config::DEFAULT_HISTORY) {
+    VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
+    return;
+  }
+
+  for (size_t i = segments->history_segments_size();
+       i < segments->segments_size(); ++i) {
+    const Segment &segment = segments->segment(i);
+    if (segment.candidates_size() <= 0 ||
+        segment.segment_type() != Segment::FIXED_VALUE ||
+        segment.candidate(0).attributes &
+            Segment::Candidate::NO_HISTORY_LEARNING) {
+      continue;
+    }
+    if (segment.candidates_size() == 0) {
+      continue;
+    }
+    if (!IsNumberCandidate(segment.candidate(0), pos_matcher_)) {
+      continue;
+    }
+    RememberNumberStyle(segment.candidate(0));
+  }
+}
+
+void NumberRewriter::RememberNumberStyle(const Segment::Candidate &candidate) {
+  const Util::FormType form = Util::GetFormType(candidate.value);
+  CharacterFormManager::NumberFormStyle entry = {
+      form == Util::HALF_WIDTH ? config::Config::HALF_WIDTH
+                               : config::Config::FULL_WIDTH,
+      candidate.style};
+  CharacterFormManager::GetCharacterFormManager()->SetLastNumberStyle(entry);
+}
 }  // namespace mozc

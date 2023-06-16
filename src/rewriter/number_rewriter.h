@@ -30,15 +30,20 @@
 #ifndef MOZC_REWRITER_NUMBER_REWRITER_H_
 #define MOZC_REWRITER_NUMBER_REWRITER_H_
 
+#include <cstddef>
+#include <vector>
+
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
+#include "base/number_util.h"
+#include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class DataManagerInterface;
-
+// A rewriter to expand number styles (NumberUtil::NumberString::Style)
 class NumberRewriter : public RewriterInterface {
  public:
   explicit NumberRewriter(const DataManagerInterface *data_manager);
@@ -51,7 +56,20 @@ class NumberRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
+  void Finish(const ConversionRequest &request, Segments *segments) override;
+
  private:
+  bool RewriteOneSegment(const ConversionRequest &request, size_t index,
+                         Segments *segments) const;
+  void RememberNumberStyle(const Segment::Candidate &candidate);
+  std::vector<Segment::Candidate> GenerateCandidatesToInsert(
+      const Segment::Candidate &arabic_candidate,
+      const std::vector<NumberUtil::NumberString> &numbers,
+      bool should_rerank) const;
+  bool ShouldRerankCandidates(const ConversionRequest &request,
+                              const Segments &segments) const;
+  void RerankCandidates(std::vector<Segment::Candidate> &candidates) const;
+
   SerializedStringArray suffix_array_;
   const dictionary::PosMatcher pos_matcher_;
 };

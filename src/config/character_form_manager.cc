@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -40,6 +41,7 @@
 #include "base/config_file_stream.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -186,6 +188,63 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
   }
 };
 
+// A class to handle storage entries for number style.
+class NumberStyleManager {
+ public:
+  NumberStyleManager()
+      : key_(reinterpret_cast<const char *>(&kKey), sizeof(uint16_t)),
+        storage_(nullptr) {}
+
+  void SetNumberStyle(const CharacterFormManager::NumberFormStyle &form_style) {
+    const NumberStyleEntry entry(form_style);
+    storage_->Insert(key_, reinterpret_cast<const char *>(&entry));
+  }
+
+  std::optional<const CharacterFormManager::NumberFormStyle> GetNumberStyle()
+      const {
+    const char *value = storage_->Lookup(key_);
+    if (value == nullptr) {
+      return std::nullopt;
+    }
+    const NumberStyleEntry *entry =
+        reinterpret_cast<const NumberStyleEntry *>(value);
+    CharacterFormManager::NumberFormStyle form_style{entry->form(),
+                                                     entry->style()};
+    return form_style;
+  }
+
+  void set_storage(LruStorage *storage) { storage_ = storage; }
+
+ private:
+  // Entry should fit value_size (sizeof uint32_t) of the storage.
+  class NumberStyleEntry {
+   public:
+    explicit NumberStyleEntry(
+        const CharacterFormManager::NumberFormStyle &form_style)
+        : form_(form_style.form), style_(form_style.style) {}
+
+    NumberUtil::NumberString::Style style() const {
+      return static_cast<NumberUtil::NumberString::Style>(style_);
+    }
+
+    Config::CharacterForm form() const {
+      return static_cast<Config::CharacterForm>(form_);
+    }
+
+   private:
+    [[maybe_unused]] uint32_t reversed_ : 26;
+    uint32_t form_ : 2;
+    uint32_t style_ : 4;
+  };
+
+  // Note that "N" will not be returned by GetNormalizedCharacter().
+  static constexpr uint16_t kKey = 0x004E;  // "N"
+  const absl::string_view key_;
+
+  // This class does not have the ownership of `storage_`.
+  LruStorage *storage_;
+};
+
 // Returns canonical/normalized UCS2 character for given string.
 // Example:
 // "インターネット" -> "ア"  (All katakana becomes "ア")
@@ -313,7 +372,8 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
   if (storage_ == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
-  const std::string key(reinterpret_cast<const char *>(&ucs2), sizeof(ucs2));
+  const absl::string_view key(reinterpret_cast<const char *>(&ucs2),
+                              sizeof(ucs2));
   const char *value = storage_->Lookup(key);
   if (value == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
@@ -332,7 +392,8 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     return;
   }
 
-  const std::string key(reinterpret_cast<const char *>(&ucs2), sizeof(ucs2));
+  const absl::string_view key(reinterpret_cast<const char *>(&ucs2),
+                              sizeof(ucs2));
   const char *value = storage_->Lookup(key);
   if (value != nullptr && static_cast<Config::CharacterForm>(*value) == form) {
     return;
@@ -349,8 +410,8 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     const std::vector<uint16_t> &group = iter->second;
     for (size_t i = 0; i < group.size(); ++i) {
       const uint16_t group_ucs2 = group[i];
-      const std::string group_key(reinterpret_cast<const char *>(&group_ucs2),
-                                  sizeof(group_ucs2));
+      const absl::string_view group_key(
+          reinterpret_cast<const char *>(&group_ucs2), sizeof(group_ucs2));
       storage_->Insert(group_key, reinterpret_cast<const char *>(&iform));
     }
   }
@@ -554,10 +615,12 @@ class CharacterFormManager::Data {
 
   CharacterFormManagerImpl *GetPreeditManager() { return preedit_.get(); }
   CharacterFormManagerImpl *GetConversionManager() { return conversion_.get(); }
+  NumberStyleManager *GetNumberStyleManager() { return number_style_.get(); }
 
  private:
   std::unique_ptr<PreeditCharacterFormManagerImpl> preedit_;
   std::unique_ptr<ConversionCharacterFormManagerImpl> conversion_;
+  std::unique_ptr<NumberStyleManager> number_style_;
   std::unique_ptr<LruStorage> storage_;
 };
 
@@ -569,8 +632,10 @@ CharacterFormManager::Data::Data() {
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
   preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();
+  number_style_ = std::make_unique<NumberStyleManager>();
   preedit_->set_storage(storage_.get());
   conversion_->set_storage(storage_.get());
+  number_style_->set_storage(storage_.get());
 }
 
 CharacterFormManager *CharacterFormManager::GetCharacterFormManager() {
@@ -674,6 +739,16 @@ void CharacterFormManager::GuessAndSetCharacterForm(
   // no need to call Preedit, as storage is shared
   // GetPreeditManager()->SetCharacterForm(input, form);
   data_->GetConversionManager()->GuessAndSetCharacterForm(input);
+}
+
+void CharacterFormManager::SetLastNumberStyle(
+    const NumberFormStyle &form_style) {
+  data_->GetNumberStyleManager()->SetNumberStyle(form_style);
+}
+
+std::optional<const CharacterFormManager::NumberFormStyle>
+CharacterFormManager::GetLastNumberStyle() const {
+  return data_->GetNumberStyleManager()->GetNumberStyle();
 }
 
 void CharacterFormManager::AddPreeditRule(const absl::string_view input,

@@ -31,8 +31,10 @@
 #define MOZC_CONFIG_CHARACTER_FORM_MANAGER_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 
+#include "base/number_util.h"
 #include "base/singleton.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
@@ -46,6 +48,10 @@ namespace config {
 class CharacterFormManager {
  public:
   enum FormType { UNKNOWN_FORM, HALF_WIDTH, FULL_WIDTH };
+  struct NumberFormStyle {
+    Config::CharacterForm form;
+    NumberUtil::NumberString::Style style;
+  };
 
   CharacterFormManager(const CharacterFormManager &) = delete;
   CharacterFormManager &operator=(const CharacterFormManager &) = delete;
@@ -91,6 +97,9 @@ class CharacterFormManager {
   // You can just pass the final final conversion string to this method.
   void GuessAndSetCharacterForm(absl::string_view input);
 
+  void SetLastNumberStyle(const NumberFormStyle &form_style);
+  std::optional<const NumberFormStyle> GetLastNumberStyle() const;
+
   // Clears history data. This method does not clear config data.
   void ClearHistory();
 
@@ -120,7 +129,7 @@ class CharacterFormManager {
   // This function tries to find the difference between
   // |input1| and |input2| and find the place where the script
   // form (halfwidth/fullwidth) is different. This function returns
-  // true if input1 or input2 needs to have full/half width anotation.
+  // true if input1 or input2 needs to have full/half width annotation.
   //
   // Example:
   //  input1="ABCぐーぐる input2="ＡＢＣ"

@@ -140,6 +140,7 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:japanese_util",
         "//base:logging",
+        "//base:number_util",
         "//base:singleton",
         "//base:util",
         "//protocol:config_cc_proto",

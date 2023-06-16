@@ -35,14 +35,17 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/util.h"
+#include "base/number_util.h"
+#include "base/system_util.h"
+#include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "testing/gmock.h"
+#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
@@ -117,6 +120,8 @@ bool FindCandidateId(const Segment &segment, const absl::string_view value,
 class NumberRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+    config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
@@ -1049,6 +1054,138 @@ TEST_F(NumberRewriterTest, RewritePhonePrefix_b16668386) {
   candidate->content_value = "090-";
 
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
+}
+
+// Creates Segments which have one conversion segment.
+// The number candidate will be inserted at the `base_pos`.
+Segments PrepareNumberSegments(absl::string_view segment_key,
+                               absl::string_view number_value, int base_pos,
+                               const PosMatcher &pos_matcher) {
+  Segments segments;
+  {
+    Segment *seg = segments.add_segment();
+    seg->set_key(segment_key);
+    for (int i = 0; i < base_pos; ++i) {
+      Segment::Candidate *c = seg->add_candidate();
+      c->key = std::string(segment_key);
+      c->content_key = c->key;
+      c->value = absl::StrCat("placeholder", i);
+      c->content_value = c->value;
+    }
+    Segment::Candidate *c = seg->add_candidate();
+    c->key = std::string(segment_key);
+    c->content_key = c->key;
+    c->value = std::string(number_value);
+    c->content_value = c->value;
+    c->lid = pos_matcher.GetNumberId();
+    c->rid = pos_matcher.GetNumberId();
+  }
+
+  return segments;
+}
+
+void LearnNumberStyle(const ConversionRequest &request,
+                      const PosMatcher &pos_matcher, NumberRewriter &rewriter) {
+  Segments segments = PrepareNumberSegments("3000", "3000", 3, pos_matcher);
+  rewriter.Rewrite(request, &segments);
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  ASSERT_GT(segments.conversion_segment(0).candidates_size(), 9);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(3).style,
+            NumberUtil::NumberString::DEFAULT_STYLE);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(3).value, "3000");
+  ASSERT_EQ(segments.conversion_segment(0).candidate(4).style,
+            NumberUtil::NumberString::NUMBER_KANJI_ARABIC);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(4).value, "三〇〇〇");
+  ASSERT_EQ(segments.conversion_segment(0).candidate(5).style,
+            NumberUtil::NumberString::DEFAULT_STYLE);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(5).value, "３０００");
+  ASSERT_EQ(segments.conversion_segment(0).candidate(6).style,
+            NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(6).value, "3,000");
+  ASSERT_EQ(segments.conversion_segment(0).candidate(7).style,
+            NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH);
+  ASSERT_EQ(segments.conversion_segment(0).candidate(7).value, "３，０００");
+
+  segments.mutable_conversion_segment(0)->move_candidate(6, 0);
+  segments.mutable_conversion_segment(0)->set_segment_type(
+      Segment::FIXED_VALUE);
+  rewriter.Finish(request, &segments);
+}
+
+TEST_F(NumberRewriterTest, NumberStyleLearningNotEnabled) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
+      false);
+  ConversionRequest convreq(nullptr, &request,
+                            &config::ConfigHandler::DefaultConfig());
+
+  LearnNumberStyle(convreq, pos_matcher_, *rewriter);
+
+  {
+    Segments new_segments =
+        PrepareNumberSegments("2000", "2000", 3, pos_matcher_);
+    rewriter->Rewrite(convreq, &new_segments);
+    ASSERT_EQ(new_segments.conversion_segments_size(), 1);
+    ASSERT_GT(new_segments.conversion_segment(0).candidates_size(), 3);
+    // Learned style should not be applied.
+    ASSERT_NE(new_segments.conversion_segment(0).candidate(3).value, "2,000");
+  }
+}
+
+TEST_F(NumberRewriterTest, NumberStyleLearning) {
+  std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
+      true);
+  ConversionRequest convreq(nullptr, &request,
+                            &config::ConfigHandler::DefaultConfig());
+
+  LearnNumberStyle(convreq, pos_matcher_, *rewriter);
+
+  {
+    Segments new_segments =
+        PrepareNumberSegments("2000", "2000", 3, pos_matcher_);
+    rewriter->Rewrite(convreq, &new_segments);
+    ASSERT_EQ(new_segments.conversion_segments_size(), 1);
+    ASSERT_GT(new_segments.conversion_segment(0).candidates_size(), 6);
+    // Learned style should be applied.
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(3).style,
+              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH);
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(3).value, "2,000");
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(4).style,
+              NumberUtil::NumberString::DEFAULT_STYLE);
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(4).value, "2000");
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(5).style,
+              NumberUtil::NumberString::NUMBER_KANJI_ARABIC);
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(5).value,
+              "二〇〇〇");
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(6).style,
+              NumberUtil::NumberString::DEFAULT_STYLE);
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(6).value,
+              "２０００");
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(7).style,
+              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH);
+    ASSERT_EQ(new_segments.conversion_segment(0).candidate(7).value,
+              "２，０００");
+  }
+
+  {
+    // Should not apply the learned number style for the multiple segments.
+    Segments new_segments =
+        PrepareNumberSegments("2000", "2000", 3, pos_matcher_);
+    Segment *seg = new_segments.add_segment();
+    seg->set_key("かい");
+    Segment::Candidate *c = seg->add_candidate();
+    c->key = "かい";
+    c->content_key = c->key;
+    c->value = "回";
+    c->content_value = c->value;
+    rewriter->Rewrite(convreq, &new_segments);
+    ASSERT_EQ(new_segments.conversion_segments_size(), 2);
+    ASSERT_GT(new_segments.conversion_segment(0).candidates_size(), 3);
+    ASSERT_NE(new_segments.conversion_segment(0).candidate(3).value, "2,000");
+  }
 }
 
 }  // namespace mozc

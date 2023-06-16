@@ -29,6 +29,7 @@
 
 #include "config/character_form_manager.h"
 
+#include <optional>
 #include <string>
 
 #include "base/system_util.h"
@@ -601,6 +602,28 @@ TEST_F(CharacterFormManagerTest, InvalidStringTest) {
   manager->ConvertConversionString("\xE3\x82\x8B\x88\xE3\x82\x8B", &output);
 
   EXPECT_EQ(output, "るる");
+}
+
+TEST_F(CharacterFormManagerTest, NumberStyle) {
+  CharacterFormManager *manager =
+      CharacterFormManager::GetCharacterFormManager();
+  {
+    std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =
+        manager->GetLastNumberStyle();
+    EXPECT_EQ(stored_entry, std::nullopt);
+  }
+
+  CharacterFormManager::NumberFormStyle entry = {
+      config::Config::FULL_WIDTH, NumberUtil::NumberString::DEFAULT_STYLE};
+  manager->SetLastNumberStyle(entry);
+
+  {
+    std::optional<const CharacterFormManager::NumberFormStyle> stored_entry =
+        manager->GetLastNumberStyle();
+    ASSERT_NE(stored_entry, std::nullopt);
+    EXPECT_EQ(stored_entry->form, entry.form);
+    EXPECT_EQ(stored_entry->style, entry.style);
+  }
 }
 
 }  // namespace config
