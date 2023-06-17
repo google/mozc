@@ -92,5 +92,9 @@ mozc_win32_lib(
 )
 
 mozc_win32_lib(
+    name = "pathcch",
+)
+
+mozc_win32_lib(
     name = "user32",
 )
