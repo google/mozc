@@ -149,12 +149,14 @@ mozc_cc_library(
             ":const",
             ":singleton",
             "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/strings:str_format",
         ],
         wasm = [
             ":clock",
             ":const",
             ":singleton",
             "@com_google_absl//absl/strings",
+            "@com_google_absl//absl/strings:str_format",
         ],
     ) + [
         "@com_google_absl//absl/flags:flag",
@@ -170,6 +172,7 @@ mozc_cc_test(
     deps = [
         ":logging",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -710,8 +713,8 @@ mozc_cc_test(
     srcs = ["process_mutex_test.cc"],
     requires_full_emulation = False,
     deps = [
-        "logging",
         ":file_util",
+        ":logging",
         ":process_mutex",
         ":system_util",
         "//testing:gunit_main",

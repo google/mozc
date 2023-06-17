@@ -34,9 +34,12 @@
 
 
 #include <iostream>
+#include <sstream>
+#include <type_traits>
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 ABSL_DECLARE_FLAG(bool, logtostderr);
 
@@ -65,7 +68,7 @@ enum LogSeverity {
 #endif  // _WIN32
   LOG_FATAL = 3,
   LOG_SEVERITY_SIZE = 4,
-#endif  // __ANDROID__
+#endif  // !__ANDROID__
 };
 
 // DFATAL is FATAL in debug mode, ERROR in normal mode
@@ -73,8 +76,9 @@ enum LogSeverity {
 #define LOG_DFATAL LOG_FATAL
 #else  // DEBUG
 #define LOG_DFATAL LOG_ERROR
-#endif  // DEBUG
+#endif  // !DEBUG
 
+class WorkingLogStream;
 class NullLogStream;
 
 class Logging {
@@ -90,14 +94,14 @@ class Logging {
 
   // Gets working log stream. The log message can be written to the stream.
   // The stream must be finalized by FinalizeWorkingLogStream().
-  static std::ostream &GetWorkingLogStream();
+  static WorkingLogStream &GetWorkingLogStream();
 
   // Finalizes the working stream.
   // - Appends std::endl to working stream.
   // - Writes the content to real backing logging stream, which is initialized
   //     by InitLogStream().
   // - Deletes the working stream object.
-  static void FinalizeWorkingLogStream(LogSeverity, std::ostream *);
+  static void FinalizeWorkingLogStream(LogSeverity, WorkingLogStream *);
 
   // Gets NullLogStream for MOZC_NO_LOGGING mode
   static NullLogStream &GetNullLogStream();
@@ -127,6 +131,59 @@ class Logging {
   static void SetLogToStderr(bool log_to_stderr);
 };
 
+namespace logging_internal {
+
+// Based on
+// https://github.com/abseil/abseil-cpp/blob/master/absl/strings/internal/has_absl_stringify.h
+template <typename T, typename = void>
+struct HasAbslStringify : std::false_type {};
+
+template <typename T>
+struct HasAbslStringify<
+    T, std::void_t<decltype(AbslStringify(std::declval<WorkingLogStream &>(),
+                                          std::declval<const T &>()))>>
+    : std::true_type {};
+
+}  // namespace logging_internal
+
+// WorkingLogStream is a std::ostringstream that also implements Abseil's Sink.
+class WorkingLogStream {
+ public:
+  WorkingLogStream() = default;
+
+  // Sink methods.
+  // https://github.com/abseil/abseil-cpp/blob/master/absl/strings/internal/stringify_sink.h
+  void Append(size_t count, char ch);
+  void Append(absl::string_view v);
+  friend void AbslFormatFlush(WorkingLogStream *sink, absl::string_view v) {
+    sink->Append(v);
+  }
+
+  template <
+      typename T,
+      std::enable_if_t<logging_internal::HasAbslStringify<T>::value, int> = 0>
+  WorkingLogStream &operator<<(const T &v) {
+    AbslStringify(*this, v);
+    return *this;
+  }
+  template <
+      typename T,
+      std::enable_if_t<!logging_internal::HasAbslStringify<T>::value, int> = 0>
+  WorkingLogStream &operator<<(const T &v) {
+    os_ << v;
+    return *this;
+  }
+  WorkingLogStream &operator<<(std::ostream &(*func)(std::ostream &)) {
+    os_ << func;
+    return *this;
+  }
+
+  std::string str() const { return os_.str(); }
+
+ private:
+  std::ostringstream os_;
+};
+
 // Finalizer to flush/delete working log stream.
 // Finalizer takes woking log stream instance through operator&()
 // and finalizes it in destructor.
@@ -135,13 +192,11 @@ class LogFinalizer {
   explicit LogFinalizer(LogSeverity severity);
   ~LogFinalizer();
 
-  // Google's C++ style guide requires reference argument to be const.
-  // Here we need non-const reference in order to delete working stream object.
-  void operator&(std::ostream &);
+  void operator&(WorkingLogStream &);
 
  private:
   const LogSeverity severity_;
-  std::ostream *working_stream_;
+  WorkingLogStream *working_stream_;
 };
 
 // When using NullLogStream, all debug message will be stripped
@@ -236,7 +291,7 @@ class NullLogFinalizer {
                 << mozc::Logging::GetBeginColorEscapeSequence(mozc::LOG_FATAL) \
                 << "CHECK" << mozc::Logging::GetEndColorEscapeSequence()       \
                 << " [" << #condition << "] "
-#endif  // end MOZC_NO_LOGGING
+#endif  // !MOZC_NO_LOGGING
 
 #define VLOG_IS_ON(verboselevel) \
   (mozc::Logging::GetVerboseLevel() >= verboselevel)
@@ -292,7 +347,7 @@ class NullLogFinalizer {
 #define DCHECK_LT(a, b) \
   while (false) CHECK_LT(a, b)
 
-#endif  // DEBUG
+#endif  // opt build
 
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
 
@@ -304,10 +359,10 @@ class NullLogFinalizer {
 #ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
-#endif  // DVLOG_IF
+#endif  // !DVLOG_IF
 
 #ifndef MOZC_LOG_PROTOBUF
 #define MOZC_LOG_PROTOBUF(message) (message)
-#endif  // MOZC_LOG_PROTOBUF
+#endif  // !MOZC_LOG_PROTOBUF
 
 #endif  // MOZC_BASE_LOGGING_H_
