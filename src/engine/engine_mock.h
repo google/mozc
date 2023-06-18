@@ -37,11 +37,9 @@ namespace mozc {
 
 class MockEngine : public EngineInterface {
  public:
-  MockEngine() = default;
-  ~MockEngine() override = default;
-
   MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
-  MOCK_METHOD(PredictorInterface *, GetPredictor, (), (const, override));
+  MOCK_METHOD(prediction::PredictorInterface *, GetPredictor, (),
+              (const, override));
   MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
               (override));
   MOCK_METHOD(bool, Reload, (), (override));

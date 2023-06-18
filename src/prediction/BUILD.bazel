@@ -56,6 +56,8 @@ mozc_cc_library(
     name = "predictor_interface",
     hdrs = ["predictor_interface.h"],
     deps = [
+        "//converter:segments",
+        "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],

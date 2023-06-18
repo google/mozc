@@ -33,14 +33,22 @@
 #include <string>
 #include <vector>
 
+#include "converter/converter_interface.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
+#include "engine/user_data_manager_interface.h"
+#include "prediction/predictor_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class EngineStub : public EngineInterface {
  public:
   ConverterInterface *GetConverter() const override { return nullptr; }
-  PredictorInterface *GetPredictor() const override { return nullptr; }
+  prediction::PredictorInterface *GetPredictor() const override {
+    return nullptr;
+  }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return nullptr;
   }

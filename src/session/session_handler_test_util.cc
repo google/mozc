@@ -30,21 +30,15 @@
 #include "session/session_handler_test_util.h"
 
 #include <cstdint>
-#include <utility>
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/logging.h"
 #include "base/system_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
-#include "engine/engine_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_handler.h"
-#include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "testing/googletest.h"
 #include "absl/flags/declare.h"
@@ -61,9 +55,9 @@ namespace mozc {
 namespace session {
 namespace testing {
 
-using commands::Command;
-using config::CharacterFormManager;
-using config::ConfigHandler;
+using ::mozc::commands::Command;
+using ::mozc::config::CharacterFormManager;
+using ::mozc::config::ConfigHandler;
 
 bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   Command command;
@@ -107,9 +101,6 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
   handler->EvalCommand(&command);
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
-
-SessionHandlerTestBase::SessionHandlerTestBase() = default;
-SessionHandlerTestBase::~SessionHandlerTestBase() = default;
 
 void SessionHandlerTestBase::SetUp() {
   flags_max_session_size_backup_ = absl::GetFlag(FLAGS_max_session_size);
@@ -160,7 +151,8 @@ void SessionHandlerTestBase::ClearState() {
       ConfigFileStream::GetFileName("user://boundary.db"));
   FileUtil::UnlinkOrLogError(
       ConfigFileStream::GetFileName("user://segment.db"));
-  FileUtil::UnlinkOrLogError(UserHistoryPredictor::GetUserHistoryFileName());
+  FileUtil::UnlinkOrLogError(
+      prediction::UserHistoryPredictor::GetUserHistoryFileName());
 }
 
 }  // namespace testing

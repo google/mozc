@@ -62,6 +62,7 @@
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 ABSL_FLAG(bool, colored_log, true,
@@ -138,13 +139,13 @@ void Logging::InitLogStream(const std::string &log_file_path) {}
 
 void Logging::CloseLogStream() {}
 
-std::ostream &Logging::GetWorkingLogStream() {
+WorkingLogStream &Logging::GetWorkingLogStream() {
   // Never called.
-  return *(new std::ostringstream);
+  return *(new WorkingLogStream);
 }
 
 void Logging::FinalizeWorkingLogStream(LogSeverity severity,
-                                       std::ostream *working_stream) {
+                                       WorkingLogStream *working_stream) {
   // Never called.
   delete working_stream;
 }
@@ -205,7 +206,7 @@ class LogStreamImpl {
 #else   // __ANDROID__
     absl::MutexLock l(&mutex_);
     use_cerr_ = log_to_stderr;
-#endif  // __ANDROID__
+#endif  // !__ANDROID__
   }
 
  private:
@@ -239,7 +240,7 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
       *real_log_stream_ << log;
       real_log_stream_->flush();
     }
-#endif  // __ANDROID__
+#endif  // !__ANDROID__
   }
 }
 
@@ -275,7 +276,7 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   real_log_stream_ =
       std::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
-#endif  // __ANDROID__
+#endif  // !(_WIN32 ||__ANDROID__)
   DCHECK(!use_cerr_ || !real_log_stream_);
 }
 
@@ -296,7 +297,7 @@ void LogStreamImpl::ResetUnlocked() {
 #else   // __ANDROID__, _WIN32
   support_color_ = (use_cerr_ && absl::GetFlag(FLAGS_colored_log) &&
                     ::isatty(::fileno(stderr)));
-#endif  // __ANDROID__, _WIN32
+#endif  // !(__ANDROID__ || _WIN32)
   // use_cerr_ is updated by ABSL_FLAG.OnUpdate().
 }
 
@@ -305,22 +306,21 @@ LogStreamImpl::~LogStreamImpl() { Reset(); }
 
 void Logging::InitLogStream(const std::string &log_file_path) {
   Singleton<LogStreamImpl>::get()->Init(log_file_path);
-  std::ostream &stream = GetWorkingLogStream();
+  WorkingLogStream &stream = GetWorkingLogStream();
   stream << "Log file created at: " << Logging::GetLogMessageHeader();
   FinalizeWorkingLogStream(LogSeverity::LOG_INFO, &stream);
 }
 
 void Logging::CloseLogStream() { Singleton<LogStreamImpl>::get()->Reset(); }
 
-std::ostream &Logging::GetWorkingLogStream() {
-  return *(new std::ostringstream);
+WorkingLogStream &Logging::GetWorkingLogStream() {
+  return *(new WorkingLogStream);
 }
 
 void Logging::FinalizeWorkingLogStream(LogSeverity severity,
-                                       std::ostream *working_stream) {
+                                       WorkingLogStream *working_stream) {
   *working_stream << std::endl;
-  Singleton<LogStreamImpl>::get()->Write(
-      severity, static_cast<std::ostringstream *>(working_stream)->str());
+  Singleton<LogStreamImpl>::get()->Write(severity, working_stream->str());
   // The working stream is new'd in LogStreamImpl::GetWorkingLogStream().
   // Must be deleted by finalizer.
   delete working_stream;
@@ -359,7 +359,7 @@ constexpr struct SeverityProperty {
     {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},
     {"FATAL", kRedEscapeSequence},
-#endif  // __ANDROID__
+#endif  // !__ANDROID__
 };
 }  // namespace
 
@@ -396,7 +396,7 @@ void Logging::SetConfigVerboseLevel(int verboselevel) {
 void Logging::SetLogToStderr(bool log_to_stderr) {
   Singleton<LogStreamImpl>::get()->set_log_to_stderr(log_to_stderr);
 }
-#endif  // MOZC_NO_LOGGING
+#endif  // !MOZC_NO_LOGGING
 
 LogFinalizer::LogFinalizer(LogSeverity severity) : severity_(severity) {}
 
@@ -410,11 +410,21 @@ LogFinalizer::~LogFinalizer() {
 #else   // _WIN32
     mozc::Logging::CloseLogStream();
     exit(-1);
-#endif  // _WIN32
+#endif  // !_WIN32
   }
 }
 
-void LogFinalizer::operator&(std::ostream &working_stream) {
+void WorkingLogStream::Append(size_t count, const char ch) {
+  while (count-- > 0) {
+    os_.put(ch);
+  }
+}
+
+void WorkingLogStream::Append(const absl::string_view v) {
+  os_.write(v.data(), v.size());
+}
+
+void LogFinalizer::operator&(WorkingLogStream &working_stream) {
   working_stream_ = &working_stream;
 }
 
@@ -423,7 +433,7 @@ void NullLogFinalizer::OnFatal() {
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
 #else   // _WIN32
   exit(-1);
-#endif  // _WIN32
+#endif  // !_WIN32
 }
 
 }  // namespace mozc

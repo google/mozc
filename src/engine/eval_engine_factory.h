@@ -33,6 +33,7 @@
 #include <memory>
 
 #include "engine/engine.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

@@ -32,6 +32,7 @@
 #include <sstream>
 
 #include "testing/gunit.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -121,7 +122,7 @@ TEST(LoggingTest, SideEffectTest) {
   flag = true;
   LOG_IF(DFATAL, flag = false) << "";
   EXPECT_TRUE(flag);
-#else  // MOZC_NO_LOGGING
+#else   // MOZC_NO_LOGGING
   flag = true;
   LOG_IF(INFO, flag = false) << "";
   EXPECT_FALSE(flag);
@@ -137,7 +138,7 @@ TEST(LoggingTest, SideEffectTest) {
   flag = true;
   LOG_IF(DFATAL, flag = false) << "";
   EXPECT_FALSE(flag);
-#endif  // MOZC_NO_LOGGING
+#endif  // !MOZC_NO_LOGGING
 
   flag = true;
   LOG_IF(FATAL, flag = false) << "";
@@ -192,9 +193,9 @@ TEST(LoggingTest, RightHandSideEvaluation) {
 
 #ifdef MOZC_NO_LOGGING
   EXPECT_EQ(g_counter, 0);
-#else  // MOZC_NO_LOGGING
+#else   // MOZC_NO_LOGGING
   EXPECT_EQ(g_counter, 3);
-#endif  // MOZC_NO_LOGGING
+#endif  // !MOZC_NO_LOGGING
 
   g_counter = 0;
   LOG_IF(INFO, true) << "test: " << DebugString();
@@ -203,7 +204,7 @@ TEST(LoggingTest, RightHandSideEvaluation) {
 
 #ifdef MOZC_NO_LOGGING
   EXPECT_EQ(g_counter, 0);
-#else  // MOZC_NO_LOGGING
+#else   // MOZC_NO_LOGGING
   EXPECT_EQ(g_counter, 3);
 #endif  // MOZC_NO_LOGGING
 
@@ -213,6 +214,30 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG_IF(WARNING, false) << "test: " << DebugString();
 
   EXPECT_EQ(g_counter, 0);
+}
+
+struct StubStringify {
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const StubStringify &v) {
+    sink.Append(v.str);
+  }
+
+  std::string str;
+};
+
+TEST(LoggingTest, AbslStringify) {
+  LOG(INFO) << "test: " << StubStringify{"testing info"};
+  LOG(ERROR) << "test: " << StubStringify{"testing error"};
+  LOG(WARNING) << "test: " << StubStringify{"testing warning"};
+}
+
+TEST(LoggingTest, WorkingLogStreamAsSink) {
+  WorkingLogStream stream;
+  stream.Append("hello");
+  stream.Append(5, 'o');
+  stream.Append(0, 'z');
+  absl::Format(&stream, ", world");
+  EXPECT_EQ(stream.str(), "helloooooo, world");
 }
 
 }  // namespace

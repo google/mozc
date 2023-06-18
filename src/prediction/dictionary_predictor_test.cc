@@ -71,7 +71,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
+namespace mozc::prediction {
 
 class DictionaryPredictorTestPeer {
  public:
@@ -87,7 +87,6 @@ class DictionaryPredictorTestPeer {
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
                    connector, segmenter, pos_matcher, suggestion_filter,
                    rescorer) {}
-  ~DictionaryPredictorTestPeer() = default;
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const {
@@ -1827,4 +1826,4 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
 }
 
 }  // namespace
-}  // namespace mozc
+}  // namespace mozc::prediction

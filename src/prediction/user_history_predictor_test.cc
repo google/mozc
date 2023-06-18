@@ -72,7 +72,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
@@ -4267,4 +4267,4 @@ TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
   }
 }
 
-}  // namespace mozc
+}  // namespace mozc::prediction

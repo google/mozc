@@ -30,6 +30,7 @@
 #include "engine/minimal_engine.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,10 +47,12 @@
 namespace mozc {
 namespace {
 
+using ::mozc::prediction::PredictorInterface;
+
 class UserDataManagerStub : public UserDataManagerInterface {
  public:
   UserDataManagerStub() = default;
-  ~UserDataManagerStub() override = default;
+
   bool Sync() override { return true; }
   bool Reload() override { return true; }
   bool ClearUserHistory() override { return true; }
@@ -98,7 +101,6 @@ bool AddAsIsCandidate(const ConversionRequest &request, Segments *segments) {
 class MinimalConverter : public ConverterInterface {
  public:
   MinimalConverter() = default;
-  ~MinimalConverter() override = default;
 
   bool StartConversionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override {
@@ -208,7 +210,6 @@ class MinimalConverter : public ConverterInterface {
 class MinimalPredictor : public PredictorInterface {
  public:
   MinimalPredictor() : name_("MinimalPredictor") {}
-  ~MinimalPredictor() override = default;
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
@@ -224,13 +225,12 @@ class MinimalPredictor : public PredictorInterface {
 }  // namespace
 
 MinimalEngine::MinimalEngine()
-    : converter_(new MinimalConverter()),
-      predictor_(new MinimalPredictor()),
-      suppression_dictionary_(new dictionary::SuppressionDictionary()),
-      user_data_manager_(new UserDataManagerStub()),
-      data_manager_(new DataManager()) {}
-
-MinimalEngine::~MinimalEngine() = default;
+    : converter_(std::make_unique<MinimalConverter>()),
+      predictor_(std::make_unique<MinimalPredictor>()),
+      suppression_dictionary_(
+          std::make_unique<dictionary::SuppressionDictionary>()),
+      user_data_manager_(std::make_unique<UserDataManagerStub>()),
+      data_manager_(std::make_unique<DataManager>()) {}
 
 ConverterInterface *MinimalEngine::GetConverter() const {
   return converter_.get();

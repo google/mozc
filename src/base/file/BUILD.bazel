@@ -48,8 +48,6 @@ mozc_cc_library(
     name = "temp_dir",
     srcs = ["temp_dir.cc"],
     hdrs = ["temp_dir.h"],
-    # TODO(b/271087668) false positive
-    tags = ["nomsan"],
     deps = [
         ":recursive",
         "//base:environ",
@@ -85,19 +83,21 @@ mozc_cc_library(
     name = "recursive",
     srcs = ["recursive.cc"],
     hdrs = ["recursive.h"],
-    # TODO(b/271087668) false positive
-    tags = ["nomsan"],
     deps = [
         "//base:file_util",
         "//base:logging",
         "//base:util",
+        "//base/strings:zstring_view",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [
-            "//base/win32:scoped_com",
+            "//base/win32:hresult",
             "//base/win32:wide_char",
+            "//bazel/win32:pathcch",
+            "//third_party/wil",
         ],
     ),
 )

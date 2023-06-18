@@ -11,8 +11,8 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
-    runs-on: ubuntu-20.04
+    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
 
     steps:
@@ -44,8 +44,8 @@ jobs:
           if-no-files-found: warn
 
   test:
-    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
-    runs-on: ubuntu-20.04
+    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
 
     steps:
@@ -58,8 +58,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
-          echo "CC=clang-12" >> $GITHUB_ENV
-          echo "CXX=clang++-12" >> $GITHUB_ENV
+          echo "CC=clang-14" >> $GITHUB_ENV
+          echo "CXX=clang++-14" >> $GITHUB_ENV
           #
           # Unset the Android NDK setting to skip the unnecessary configuration.
           echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV

@@ -59,7 +59,7 @@ class ConverterImpl final : public ConverterInterface {
   // Lazily initializes the internal members. Must be called before the use.
   void Init(const dictionary::PosMatcher *pos_matcher,
             const dictionary::SuppressionDictionary *suppression_dictionary,
-            std::unique_ptr<PredictorInterface> predictor,
+            std::unique_ptr<prediction::PredictorInterface> predictor,
             std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);
 
@@ -189,7 +189,7 @@ class ConverterImpl final : public ConverterInterface {
 
   const dictionary::PosMatcher *pos_matcher_ = nullptr;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  std::unique_ptr<PredictorInterface> predictor_;
+  std::unique_ptr<prediction::PredictorInterface> predictor_;
   std::unique_ptr<RewriterInterface> rewriter_;
   const ImmutableConverterInterface *immutable_converter_ = nullptr;
   uint16_t general_noun_id_ = std::numeric_limits<uint16_t>::max();

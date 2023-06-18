@@ -93,7 +93,9 @@ class Engine : public EngineInterface {
   Engine &operator=(const Engine &) = delete;
 
   ConverterImpl *GetConverter() const override { return converter_.get(); }
-  PredictorInterface *GetPredictor() const override { return predictor_; }
+  prediction::PredictorInterface *GetPredictor() const override {
+    return predictor_;
+  }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return suppression_dictionary_.get();
   }
@@ -137,7 +139,7 @@ class Engine : public EngineInterface {
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better
   // if Engine class owns these two instances.
-  PredictorInterface *predictor_ = nullptr;
+  prediction::PredictorInterface *predictor_ = nullptr;
   RewriterInterface *rewriter_ = nullptr;
 
   std::unique_ptr<ConverterImpl> converter_;

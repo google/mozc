@@ -72,6 +72,7 @@ using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::UserDictionary;
 using ::mozc::dictionary::UserPos;
 using ::mozc::dictionary::ValueDictionary;
+using ::mozc::prediction::PredictorInterface;
 
 class UserDataManagerImpl final : public UserDataManagerInterface {
  public:
@@ -251,24 +252,26 @@ absl::Status Engine::Init(
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     rescorer_ = MaybeCreateRescorer(*data_manager);
-    auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
-        *data_manager, converter_.get(), immutable_converter_.get(),
-        dictionary_.get(), suffix_dictionary_.get(), connector_,
-        segmenter_.get(), pos_matcher_.get(), suggestion_filter_,
-        rescorer_.get());
+    auto dictionary_predictor =
+        std::make_unique<prediction::DictionaryPredictor>(
+            *data_manager, converter_.get(), immutable_converter_.get(),
+            dictionary_.get(), suffix_dictionary_.get(), connector_,
+            segmenter_.get(), pos_matcher_.get(), suggestion_filter_,
+            rescorer_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;
-    auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
-        dictionary_.get(), pos_matcher_.get(), suppression_dictionary_.get(),
-        enable_content_word_learning);
+    auto user_history_predictor =
+        std::make_unique<prediction::UserHistoryPredictor>(
+            dictionary_.get(), pos_matcher_.get(),
+            suppression_dictionary_.get(), enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
 
     if (is_mobile) {
-      predictor = MobilePredictor::CreateMobilePredictor(
+      predictor = prediction::MobilePredictor::CreateMobilePredictor(
           std::move(dictionary_predictor), std::move(user_history_predictor));
     } else {
-      predictor = DefaultPredictor::CreateDefaultPredictor(
+      predictor = prediction::DefaultPredictor::CreateDefaultPredictor(
           std::move(dictionary_predictor), std::move(user_history_predictor));
     }
     RETURN_IF_NULL(predictor);

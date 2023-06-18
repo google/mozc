@@ -43,7 +43,7 @@
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 constexpr int kPredictionSize = 100;
@@ -90,8 +90,6 @@ BasePredictor::BasePredictor(
   DCHECK(dictionary_predictor_);
   DCHECK(user_history_predictor_);
 }
-
-BasePredictor::~BasePredictor() = default;
 
 void BasePredictor::Finish(const ConversionRequest &request,
                            Segments *segments) {
@@ -298,4 +296,4 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
   return result;
 }
 
-}  // namespace mozc
+}  // namespace mozc::prediction

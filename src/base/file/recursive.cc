@@ -32,22 +32,23 @@
 #include <string>
 
 #include "base/logging.h"
+#include "base/strings/zstring_view.h"
 #include "absl/cleanup/cleanup.h"
 #include "absl/status/status.h"
 
 #ifdef _WIN32
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <shellapi.h>
-#include <shobjidl.h>
+#include <wil/filesystem.h>
 #include <windows.h>
 
-#include "base/win32/scoped_com.h"
+#include "base/win32/hresult.h"
 #include "base/win32/wide_char.h"
+#include "absl/strings/str_cat.h"
 #else  // _WIN32
 #include <fts.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <cerrno>
 
 #include "base/file_util.h"
 #endif  // !_WIN32
@@ -66,69 +67,22 @@ namespace mozc::file {
 
 #ifdef _WIN32
 
-namespace {
-
-using ATL::CComPtr;
-
-absl::StatusCode HResultToStatusCode(const HRESULT hr) {
-  switch (hr) {
-    case S_OK:
-      return absl::StatusCode::kOk;
-    case E_ABORT:
-      return absl::StatusCode::kAborted;
-    case E_ACCESSDENIED:
-      return absl::StatusCode::kPermissionDenied;
-    case E_OUTOFMEMORY:
-      return absl::StatusCode::kResourceExhausted;
-    default:
-      if (HRESULT_CODE(hr) == ERROR_ACCESS_DENIED) {
-        return absl::StatusCode::kPermissionDenied;
-      }
-      return absl::StatusCode::kInternal;
+absl::Status DeleteRecursively(const zstring_view path) {
+  const win32::HResult hr(wil::RemoveDirectoryRecursiveNoThrow(
+      win32::Utf8ToWide(path).c_str(),
+      wil::RemoveDirectoryOptions::RemoveReadOnly));
+  if (hr.Succeeded()) {
+    return absl::OkStatus();
   }
-}
-
-absl::Status ComError(absl::string_view op, HRESULT hr) {
-  return absl::Status(HResultToStatusCode(hr),
-                      absl::StrCat(op, "failed: code = ", hr));
-}
-
-}  // namespace
-
-absl::Status DeleteRecursively(const absl::string_view path) {
-  ScopedCOMInitializer com_initializer;
-
-  CComPtr<IShellItem> shell_item;
-  if (HRESULT hr = SHCreateItemFromParsingName(
-          win32::Utf8ToWide(path).c_str(), nullptr, IID_PPV_ARGS(&shell_item));
-      FAILED(hr)) {
-    if (HRESULT_CODE(hr) == ERROR_FILE_NOT_FOUND ||
-        HRESULT_CODE(hr) == ERROR_PATH_NOT_FOUND) {
-      // Return Ok if file is not found. Same behavior as the POSIX version.
-      return absl::OkStatus();
-    }
-    return ComError("SHCreateItemFromParsingName", hr);
+  if (HRESULT_CODE(hr) == ERROR_FILE_NOT_FOUND ||
+      HRESULT_CODE(hr) == ERROR_PATH_NOT_FOUND) {
+    // Return Ok if file is not found. Same behavior as the POSIX version.
+    return absl::OkStatus();
   }
-
-  CComPtr<IFileOperation> file_operation;
-  if (HRESULT hr = file_operation.CoCreateInstance(CLSID_FileOperation);
-      FAILED(hr)) {
-    return ComError("IFileOperation.CoCreateInstance", hr);
+  if (HRESULT_CODE(hr) == ERROR_ACCESS_DENIED) {
+    return absl::PermissionDeniedError(hr.ToString());
   }
-  if (HRESULT hr = file_operation->SetOperationFlags(
-          FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT);
-      FAILED(hr)) {
-    return ComError("IFileOperation.SetOperationFlags", hr);
-  }
-  if (HRESULT hr = file_operation->DeleteItem(shell_item, nullptr);
-      FAILED(hr)) {
-    return ComError("IFileOperation.DeleteItem", hr);
-  }
-  if (HRESULT hr = file_operation->PerformOperations(); FAILED(hr)) {
-    return ComError("IFileOperation.PerformOperations", hr);
-  }
-
-  return absl::OkStatus();
+  return absl::UnknownError(hr.ToString());
 }
 
 #else  // _WIN32
@@ -152,10 +106,11 @@ void UnlinkFileOrLog(const char *path) {
 #if (defined(__linux__) && !defined(__ANDROID__)) || \
     (defined(TARGET_OS_OSX) && TARGET_OS_OSX)
 
-absl::Status DeleteRecursively(const absl::string_view path) {
+absl::Status DeleteRecursively(const zstring_view path) {
   // fts is not POSIX, but it's available on both Linux and MacOS.
-  std::string path_str(path);
-  char *files[] = {path_str.data(), nullptr};
+  std::string path_str =
+      to_string(path);  // fts_open takes a non-const pointer.
+  char *const files[] = {path_str.data(), nullptr};
   // - FTS_NOCHDIR: don't change current directory.
   // - FTS_NOSTAT: don't stat(2).
   // - FTS_PHYSICAL: don't follow symlinks.
@@ -224,12 +179,11 @@ int FtwDelete(const char *path, const struct stat *sb, int typeflag,
 }
 }  // namespace
 
-absl::Status DeleteRecursively(const absl::string_view path) {
-  const std::string path_str(path);  // for null-termination.
+absl::Status DeleteRecursively(const zstring_view path) {
   // ntfw() is a POSIX interface but it's not recommended on (at least) macOS.
   // This is a fallback implementation.
   constexpr int kOpenFdLimit = 100;
-  if (nftw(path_str.c_str(), FtwDelete, kOpenFdLimit,
+  if (nftw(path.c_str(), FtwDelete, kOpenFdLimit,
            FTW_DEPTH | FTW_PHYS | FTW_MOUNT) < 0) {
     return absl::ErrnoToStatus(errno, "nftw failed");
   }

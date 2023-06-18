@@ -32,13 +32,12 @@
 
 #include <string>
 
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
-
-class ConversionRequest;
-class Segments;
+namespace mozc::prediction {
 
 class PredictorInterface {
  public:
@@ -81,12 +80,8 @@ class PredictorInterface {
   virtual bool Wait() { return true; }
 
   virtual const std::string &GetPredictorName() const = 0;
-
- protected:
-  // Disable the construction.
-  PredictorInterface() = default;
 };
 
-}  // namespace mozc
+}  // namespace mozc::prediction
 
 #endif  // MOZC_PREDICTION_PREDICTOR_INTERFACE_H_

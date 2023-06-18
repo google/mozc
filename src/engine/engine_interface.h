@@ -59,7 +59,7 @@ class EngineInterface {
 
   // Returns a reference to a predictor. The returned instance is managed by the
   // engine class and should not be deleted by callers.
-  virtual PredictorInterface *GetPredictor() const = 0;
+  virtual prediction::PredictorInterface *GetPredictor() const = 0;
 
   // Returns a reference to the suppression dictionary. The returned instance is
   // managed by the engine class and should not be deleted by callers.

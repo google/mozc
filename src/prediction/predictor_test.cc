@@ -50,7 +50,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 using ::mozc::dictionary::MockDictionary;
@@ -383,4 +383,4 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   EXPECT_TRUE(pred2->predict_called());
 }
 
-}  // namespace mozc
+}  // namespace mozc::prediction

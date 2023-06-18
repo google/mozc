@@ -34,8 +34,12 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "converter/converter_interface.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
+#include "engine/user_data_manager_interface.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc {
 
@@ -46,10 +50,9 @@ class MinimalEngine : public EngineInterface {
   MinimalEngine();
   MinimalEngine(const MinimalEngine &) = delete;
   MinimalEngine &operator=(const MinimalEngine &) = delete;
-  ~MinimalEngine() override;
 
   ConverterInterface *GetConverter() const override;
-  PredictorInterface *GetPredictor() const override;
+  prediction::PredictorInterface *GetPredictor() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
   UserDataManagerInterface *GetUserDataManager() override;
@@ -59,7 +62,7 @@ class MinimalEngine : public EngineInterface {
 
  private:
   std::unique_ptr<ConverterInterface> converter_;
-  std::unique_ptr<PredictorInterface> predictor_;
+  std::unique_ptr<prediction::PredictorInterface> predictor_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
   std::unique_ptr<const DataManagerInterface> data_manager_;
