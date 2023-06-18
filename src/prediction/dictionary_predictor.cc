@@ -72,14 +72,12 @@
 #define MOZC_DEBUG
 #endif  // NDEBUG
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 using ::mozc::commands::Request;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::PosMatcher;
-using ::mozc::prediction::PredictionType;
-using ::mozc::prediction::ResultCostLess;
 using ::mozc::usage_stats::UsageStats;
 
 // Used to emulate positive infinity for cost. This value is set for those
@@ -1287,7 +1285,7 @@ void DictionaryPredictor::MaybeRescoreResults(
   rescorer_->RescoreResults(request, history, results);
 }
 
-}  // namespace mozc
+}  // namespace mozc::prediction
 
 #undef MOZC_WORD_LOG_MESSAGE
 #undef MOZC_WORD_LOG

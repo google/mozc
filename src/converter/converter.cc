@@ -59,6 +59,7 @@ namespace {
 
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::prediction::PredictorInterface;
 using ::mozc::usage_stats::UsageStats;
 
 constexpr size_t kErrorIndex = static_cast<size_t>(-1);

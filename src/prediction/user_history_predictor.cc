@@ -72,7 +72,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
+namespace mozc::prediction {
 namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
@@ -2129,4 +2129,4 @@ uint32_t UserHistoryPredictor::max_next_entries_size() {
   return kMaxNextEntriesSize;
 }
 
-}  // namespace mozc
+}  // namespace mozc::prediction

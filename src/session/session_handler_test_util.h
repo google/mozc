@@ -33,11 +33,8 @@
 #define MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 
 #include <cstdint>
-#include <memory>
 #include <string>
 
-#include "base/port.h"
-#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_interface.h"
@@ -69,12 +66,6 @@ class SessionHandlerTestBase : public ::testing::Test {
  protected:
   void SetUp() override;
   void TearDown() override;
-
-  // This class should not be instantiated directly.
-  SessionHandlerTestBase();
-  SessionHandlerTestBase(const SessionHandlerTestBase &) = delete;
-  SessionHandlerTestBase &operator=(const SessionHandlerTestBase &) = delete;
-  ~SessionHandlerTestBase() override;
 
   void ClearState();
 

@@ -58,10 +58,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
-namespace mozc {
-
-using ::mozc::prediction::PredictionTypes;
-using ::mozc::prediction::Result;
+namespace mozc::prediction {
 
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
@@ -300,6 +297,6 @@ class DictionaryPredictor : public PredictorInterface {
   const prediction::RescorerInterface *rescorer_ = nullptr;
 };
 
-}  // namespace mozc
+}  // namespace mozc::prediction
 
 #endif  // MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_

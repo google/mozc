@@ -162,7 +162,15 @@ mozc_cc_library(
     testonly = True,
     hdrs = ["engine_stub.h"],
     visibility = ["//session:__subpackages__"],
-    deps = [":engine_interface"],
+    deps = [
+        ":engine_interface",
+        ":user_data_manager_interface",
+        "//converter:converter_interface",
+        "//data_manager:data_manager_interface",
+        "//dictionary:suppression_dictionary",
+        "//prediction:predictor_interface",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 mozc_cc_library(
@@ -182,7 +190,6 @@ mozc_cc_test(
     deps = [
         ":engine_factory",
         ":engine_interface",
-        "//base:logging",
         "//prediction:predictor_interface",
         "//testing:gunit_main",
     ],
@@ -196,6 +203,7 @@ mozc_cc_library(
         ":engine",
         "//data_manager",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -310,11 +318,11 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
-        "//base:port",
         "//composer",
         "//converter:converter_interface",
         "//converter:segments",
         "//data_manager",
+        "//data_manager:data_manager_interface",
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
         "//request:conversion_request",

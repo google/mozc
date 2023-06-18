@@ -54,7 +54,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
+namespace mozc::prediction {
 class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
@@ -477,6 +477,6 @@ class UserHistoryPredictor : public PredictorInterface {
   mutable std::unique_ptr<UserHistoryPredictorSyncer> syncer_;
 };
 
-}  // namespace mozc
+}  // namespace mozc::prediction
 
 #endif  // MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_

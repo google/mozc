@@ -33,21 +33,19 @@
 #include <memory>
 #include <string>
 
+#include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
-namespace mozc {
-
-class Segments;
+namespace mozc::prediction {
 
 class BasePredictor : public PredictorInterface {
  public:
   // Initializes the composite of predictor with given sub-predictors.
   BasePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
                 std::unique_ptr<PredictorInterface> user_history_predictor);
-  ~BasePredictor() override;
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request, Segments *segments) override;
@@ -130,6 +128,6 @@ class MobilePredictor : public BasePredictor {
   const std::string predictor_name_;
 };
 
-}  // namespace mozc
+}  // namespace mozc::prediction
 
 #endif  // MOZC_PREDICTION_PREDICTOR_H_
