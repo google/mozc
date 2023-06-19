@@ -146,6 +146,19 @@ TEST(UnicodeTest, IsValidUtf8) {
   EXPECT_FALSE(IsValidUtf8("\xED\xAF\x41"));
 }
 
+TEST(UnicodeTest, Utf8Substring) {
+  EXPECT_EQ(Utf8Substring("", 0), "");
+  EXPECT_EQ(Utf8Substring("Mozc", 0), "Mozc");
+  EXPECT_EQ(Utf8Substring("あいうえお", 3), "えお");
+  EXPECT_EQ(Utf8Substring("日本語入力", 5), "");
+
+  EXPECT_EQ(Utf8Substring("", 0, 0), "");
+  EXPECT_EQ(Utf8Substring("", 0, 42), "");
+  EXPECT_EQ(Utf8Substring("五十音ABC", 2, 2), "音A");
+  EXPECT_EQ(Utf8Substring("Mozc は便利", 6, 100), "便利");
+  EXPECT_EQ(Utf8Substring("日本語", 2, 0), "");
+}
+
 struct Utf8AsCharsTestParam {
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const Utf8AsCharsTestParam& param) {
@@ -308,6 +321,7 @@ TEST_P(Utf8AsCharsTest, Properties) {
   EXPECT_EQ(s.begin(), s.cbegin());
   EXPECT_EQ(s.end(), s.cend());
   EXPECT_EQ(s.max_size(), input.max_size());
+  EXPECT_EQ(s.view(), input);
 }
 
 TEST_P(Utf8AsCharsTest, Constructors) {
@@ -315,18 +329,52 @@ TEST_P(Utf8AsCharsTest, Constructors) {
   const Utf8AsChars32 data_size(GetParam().input.data(),
                                 GetParam().input.size());
   EXPECT_EQ(data_size, sv);
-
-  const std::string str(GetParam().input);
-  const Utf8AsChars32 null(str.c_str());
-  if (!GetParam().input.empty() && GetParam().input.front() == '\0') {
-    EXPECT_TRUE(null.empty());
-  } else {
-    EXPECT_EQ(null, sv);
-  }
+  Utf8AsChars range(sv.begin(), sv.end());
+  EXPECT_EQ(range, sv);
 }
 
 TEST_P(Utf8AsCharsTest, ToUtf32) {
   EXPECT_EQ(Utf8ToUtf32(GetParam().input), GetParam().chars32);
+}
+
+TEST_P(Utf8AsCharsTest, Substring) {
+  const Utf8AsChars32 sv(GetParam().input);
+  EXPECT_EQ(sv.Substring(sv.begin()), GetParam().input);
+  EXPECT_EQ(sv.Substring(sv.begin(), sv.end()), GetParam().input);
+
+  auto first = sv.begin();
+  auto expected = GetParam().u8_strings.begin();
+  for (int i = 0; i < 2 && first != sv.end(); ++i) {
+    ++first;
+    ++expected;
+  }
+  auto last = first;
+  for (int i = 0; i < 2 && last != sv.end(); ++i) {
+    ++last;
+  }
+  const Utf8AsChars substr(first, last);
+  for (const absl::string_view s : substr) {
+    EXPECT_EQ(s, *expected++);
+  }
+
+  const Utf8AsChars32 substr2(first.SubstringTo(sv.end()));
+  EXPECT_EQ(substr2.begin(), first);
+  EXPECT_EQ(substr2.end(), sv.end());
+}
+
+TEST(Utf8AsCharsStandaloneTest, Comparators) {
+  const Utf8AsChars a("aA");
+  const Utf8AsChars32 b("aあ");
+  EXPECT_EQ(a, a);
+  EXPECT_EQ(b, b);
+  EXPECT_NE(a, b);
+  EXPECT_NE(b, a);
+  EXPECT_LE(a, a);
+  EXPECT_LE(a, b);
+  EXPECT_LT(a, b);
+  EXPECT_GE(b, b);
+  EXPECT_GE(b, a);
+  EXPECT_GT(b, a);
 }
 
 }  // namespace

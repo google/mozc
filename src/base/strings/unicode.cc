@@ -66,5 +66,24 @@ std::string Utf32ToUtf8(const std::u32string_view sv) {
   return result;
 }
 
+absl::string_view Utf8Substring(absl::string_view sv, size_t pos) {
+  while (pos > 0) {
+    sv.remove_prefix(OneCharLen(sv.front()));
+    --pos;
+  }
+  return sv;
+}
+
+absl::string_view Utf8Substring(absl::string_view sv, const size_t pos,
+                                size_t count) {
+  sv = Utf8Substring(sv, pos);
+  size_t i = 0;
+  while (i < sv.size() && count > 0) {
+    i += OneCharLen(sv[i]);
+    --count;
+  }
+  return sv.substr(0, i);
+}
+
 }  // namespace strings
 }  // namespace mozc
