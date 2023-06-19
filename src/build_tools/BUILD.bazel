@@ -36,6 +36,7 @@ load(
     "mozc_py_binary",
     "mozc_py_library",
 )
+load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -165,4 +166,13 @@ mozc_py_binary(
     name = "tweak_pkgproj",
     srcs = ["tweak_pkgproj.py"],
     deps = [":mozc_version_lib"],
+)
+
+bzl_library(
+    name = "embed_file_bzl",
+    srcs = ["embed_file.bzl"],
+    test_size = "small",
+    deps = [
+        "//bazel:run_build_tool_bzl",
+    ],
 )

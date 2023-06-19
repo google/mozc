@@ -27,38 +27,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//bazel:stubs.bzl", "bzl_library")
+"""mozc_embed_file macro to embed binary files as C++ variables."""
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-bzl_library(
-    name = "qt_bzl",
-    srcs = ["qt.bzl"],
-    test_size = "small",
-    visibility = ["//visibility:private"],
-    deps = [
-        "//:build_defs_bzl",
-        "//:config_bzl",
-        "//devtools/build_cleaner/skylark:build_defs_lib",
-        "@build_bazel_rules_apple//apple:macos",
-    ],
-)
-
-bzl_library(
-    name = "stubs_bzl",
-    srcs = ["stubs.bzl"],
-    test_size = "small",
-    visibility = ["//visibility:private"],
-    deps = ["@rules_python//python:defs.bzl"],
-)
-
-bzl_library(
-    name = "run_build_tool_bzl",
-    srcs = ["run_build_tool.bzl"],
-    test_size = "small",
-    deps = [
-        "@bazel_skylib//lib:dicts",
-    ],
-)
+def mozc_embed_file(name, srcs, out, var_name, **kwargs):
+    mozc_run_build_tool(
+        name = name,
+        srcs = {
+            "--input": srcs,
+        },
+        args = [
+            "--name=" + var_name,
+        ],
+        outs = {"--output": out},
+        tool = "//build_tools:embed_file",
+        **kwargs
+    )

@@ -29,18 +29,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Generate a C++ array definition for file embedding."""
-import binascii
-import optparse
+import argparse
 import os
 
 
-def _ParseOption():
+def _ParseArgs():
   """Parse command line options."""
-  parser = optparse.OptionParser()
-  parser.add_option('--input', dest='input')
-  parser.add_option('--name', dest='name')
-  parser.add_option('--output', dest='output')
-  return parser.parse_args()[0]
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--input')
+  parser.add_argument('--name')
+  parser.add_argument(
+      '--output', type=argparse.FileType(mode='w', encoding='utf-8')
+  )
+  return parser.parse_args()
 
 
 def _FormatAsUint64LittleEndian(s):
@@ -48,41 +49,43 @@ def _FormatAsUint64LittleEndian(s):
   for _ in range(len(s), 8):
     s += b'\0'
   s = s[::-1]  # Reverse the string
-  return b'0x%s' % binascii.b2a_hex(s)
+  return '0x' + s.hex()
 
 
 def main():
-  opts = _ParseOption()
-  with open(opts.input, 'rb') as infile:
-    with open(opts.output, 'wb') as outfile:
-      outfile.write(
-          (
-              '#ifdef MOZC_EMBEDDED_FILE_%(name)s\n'
-              '#error "%(name)s was already included or defined elsewhere"\n'
-              '#else\n'
-              '#define MOZC_EMBEDDED_FILE_%(name)s\n'
-              'const uint64_t %(name)s_data[] = {\n'
-              % {'name': opts.name}
-          ).encode('utf-8')
-      )
+  args = _ParseArgs()
+  args.output.write(
+      '#ifdef MOZC_EMBEDDED_FILE_%(name)s\n'
+      '#error "%(name)s was already included or defined elsewhere"\n'
+      '#else\n'
+      '#define MOZC_EMBEDDED_FILE_%(name)s\n'
+      'constexpr uint64_t %(name)s_data[] = {'
+      % {'name': args.name}
+  )
 
-      while True:
-        chunk = infile.read(8)
-        if not chunk:
-          break
-        outfile.write(b'  ')
-        outfile.write(_FormatAsUint64LittleEndian(chunk))
-        outfile.write(b',\n')
+  with open(args.input, 'rb') as infile:
+    i = 0
+    while True:
+      chunk = infile.read(8)
+      if not chunk:
+        break
+      if i % 4 == 0:
+        args.output.write('\n  ')
+      else:
+        args.output.write(' ')
+      args.output.write(_FormatAsUint64LittleEndian(chunk))
+      args.output.write(',')
+      i = i + 1
 
-      outfile.write(('};\n'
-                     'const EmbeddedFile %(name)s = {\n'
-                     '  %(name)s_data,\n'
-                     '  %(size)d,\n'
-                     '};\n'
-                     '#endif  // MOZC_EMBEDDED_FILE_%(name)s\n' % {
-                         'name': opts.name,
-                         'size': os.stat(opts.input).st_size
-                     }).encode('utf-8'))
+  args.output.write(
+      '\n};\n'
+      'constexpr EmbeddedFile %(name)s = {\n'
+      '  %(name)s_data,\n'
+      '  %(size)d,\n'
+      '};\n'
+      '#endif  // MOZC_EMBEDDED_FILE_%(name)s\n'
+      % {'name': args.name, 'size': os.stat(args.input).st_size}
+  )
 
 
 if __name__ == '__main__':
