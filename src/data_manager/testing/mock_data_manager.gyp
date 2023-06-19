@@ -37,13 +37,13 @@
     'current_dir': '.',
     'mozc_dir': '../..',
     'common_data_dir': '<(mozc_dir)/data',
-    'platform_data_dir': '<(mozc_dir)/data/test/dictionary',
+    'platform_data_dir': '<(mozc_oss_src_dir)/data/test/dictionary',
     'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
     'dataset_tag': 'mock',
     'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary.txt',
-      '<(mozc_dir)/data/dictionary_manual/domain.txt',
+      '<(mozc_oss_src_dir)/data/dictionary_manual/domain.txt',
     ],
     'magic_number': '\\x4D\\x4F\\x43\\x4B',  # MOCK
     'mozc_data_varname': 'kMockMozcDataSet',

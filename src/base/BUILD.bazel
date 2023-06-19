@@ -823,7 +823,9 @@ genrule(
         " --target_platform=" + TARGET_PLATFORM
     ),
     tools = ["//build_tools:mozc_version"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
 )
 
 genrule(

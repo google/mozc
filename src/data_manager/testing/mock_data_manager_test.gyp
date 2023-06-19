@@ -54,9 +54,11 @@
       },
       'copies': [
         {
-          'destination': '<(mozc_data_dir)/data/test/dictionary/',
-          'files': [ '../../data/test/dictionary/dictionary.txt',
-                     '../../data/test/dictionary/suggestion_filter.txt', ],
+          'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/mozc/src/data/test/dictionary/',
+          'files': [
+              '<(mozc_oss_src_dir)/data/test/dictionary/dictionary.txt',
+              '<(mozc_oss_src_dir)/data/test/dictionary/suggestion_filter.txt',
+          ],
         },
       ],
     },
@@ -68,7 +70,7 @@
       ],
       'copies': [
         {
-          'destination': '<(mozc_data_dir)/data/test/dictionary/',
+          'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/mozc/src/data/test/dictionary/',
           'files': [
             '<(gen_out_dir)/connection_single_column.txt',
           ],

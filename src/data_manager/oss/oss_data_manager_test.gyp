@@ -56,27 +56,25 @@
     {
       'target_name': 'install_oss_data_manager_test_data',
       'type': 'none',
-      'variables': {
-        'test_data': [
-          '<(gen_out_dir)/connection_single_column.txt',
-          '../../<(test_data_subdir)/dictionary00.txt',
-          '../../<(test_data_subdir)/dictionary01.txt',
-          '../../<(test_data_subdir)/dictionary02.txt',
-          '../../<(test_data_subdir)/dictionary03.txt',
-          '../../<(test_data_subdir)/dictionary04.txt',
-          '../../<(test_data_subdir)/dictionary05.txt',
-          '../../<(test_data_subdir)/dictionary06.txt',
-          '../../<(test_data_subdir)/dictionary07.txt',
-          '../../<(test_data_subdir)/dictionary08.txt',
-          '../../<(test_data_subdir)/dictionary09.txt',
-          '../../<(test_data_subdir)/suggestion_filter.txt'
-        ],
-        'test_data_subdir': 'data/dictionary_oss',
-      },
-      'dependencies': [
-        'oss_data_manager.gyp:gen_connection_single_column_txt_for_oss#host',
+      'copies': [
+        {
+          'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/mozc/src/data/dictionary_oss/',
+          'files': [
+            '<(gen_out_dir)/connection_single_column.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary00.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary01.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary02.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary03.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary04.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary05.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary06.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary07.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary08.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary09.txt',
+            '<(mozc_oss_src_dir)/data/dictionary_oss/suggestion_filter.txt',
+          ],
+        },
       ],
-      'includes': ['../../gyp/install_testdata.gypi'],
     },
   ],
 }

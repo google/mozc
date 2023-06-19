@@ -55,7 +55,9 @@ namespace {
 
 class CodecTest : public ::testing::Test {
  public:
-  CodecTest() : test_file_(absl::GetFlag(FLAGS_test_tmpdir) + "testfile.txt") {}
+  CodecTest()
+      : test_file_(FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
+                                      "testfile.txt")) {}
 
  protected:
   void SetUp() override {

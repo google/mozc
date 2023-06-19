@@ -53,6 +53,7 @@
         '../config/config.gyp:config_handler',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:suffix_dictionary',
+        '../dictionary/dictionary_base.gyp:suppression_dictionary',
         '../dictionary/dictionary_base.gyp:user_dictionary',
         '../dictionary/dictionary_base.gyp:user_pos',
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
