@@ -172,7 +172,6 @@ mozc_cc_library(
         "//request:conversion_request",
         "//transliteration",
         "//usage_stats",
-        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
