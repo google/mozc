@@ -30,12 +30,13 @@
 #include "composer/internal/composition_input.h"
 
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace composer {
@@ -48,8 +49,8 @@ bool CompositionInput::Init(const Table &table,
   } else if (key_event.has_key_string()) {
     raw_ = key_event.key_string();
   } else if (key_event.has_special_key()) {
-    raw_ = table.ParseSpecialKey(
-        "{" + KeyParser::GetSpecialKeyString(key_event.special_key()) + "}");
+    raw_ = table.ParseSpecialKey(absl::StrCat(
+        "{", KeyParser::GetSpecialKeyString(key_event.special_key()), "}"));
   } else {
     LOG(WARNING) << "input is empty";
     return false;
@@ -67,17 +68,16 @@ bool CompositionInput::Init(const Table &table,
   return true;
 }
 
-void CompositionInput::InitFromRaw(const absl::string_view raw,
-                                   bool is_new_input) {
-  set_raw(raw);
+void CompositionInput::InitFromRaw(std::string raw, bool is_new_input) {
+  set_raw(std::move(raw));
   set_is_new_input(is_new_input);
 }
 
-void CompositionInput::InitFromRawAndConv(const absl::string_view raw,
-                                          const absl::string_view conversion,
+void CompositionInput::InitFromRawAndConv(std::string raw,
+                                          std::string conversion,
                                           bool is_new_input) {
-  set_raw(raw);
-  set_conversion(conversion);
+  set_raw(std::move(raw));
+  set_conversion(std::move(conversion));
   set_is_new_input(is_new_input);
 }
 
@@ -91,14 +91,6 @@ void CompositionInput::Clear() {
 
 bool CompositionInput::Empty() const {
   return raw().empty() && conversion().empty();
-}
-
-const std::string &CompositionInput::conversion() const { return conversion_; }
-
-void CompositionInput::clear_conversion() { conversion_.clear(); }
-
-void CompositionInput::set_conversion(const absl::string_view conversion) {
-  conversion_ = std::string(conversion);
 }
 
 }  // namespace composer

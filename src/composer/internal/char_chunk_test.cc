@@ -361,9 +361,9 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_EQ(output, "mo");
 
   // Split "mo" to "m" and "o".
-  std::unique_ptr<CharChunk> left_chunk =
+  absl::StatusOr<CharChunk> left_chunk =
       chunk.SplitChunk(Transliterators::LOCAL, 1);
-  ASSERT_TRUE(left_chunk != nullptr);
+  ASSERT_OK(left_chunk);
 
   // The output should be half width "m" rather than full width "ｍ".
   output.clear();
@@ -1266,7 +1266,7 @@ TEST(CharChunkTest, Issue2990253) {
     chunk.AddInput(&input);
   }
 
-  std::unique_ptr<CharChunk> left_new_chunk =
+  absl::StatusOr<CharChunk> left_new_chunk =
       chunk.SplitChunk(Transliterators::HIRAGANA, 1);
   {
     std::string result;
@@ -1479,13 +1479,13 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
-    std::unique_ptr<CharChunk> left_chunk =
+    absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0);
-    EXPECT_FALSE(left_chunk);
+    EXPECT_FALSE(left_chunk.ok());
     EXPECT_EQ(chunk.GetLength(Transliterators::CONVERSION_STRING), 4);
 
     left_chunk = chunk.SplitChunk(Transliterators::CONVERSION_STRING, 4);
-    EXPECT_FALSE(left_chunk);
+    EXPECT_FALSE(left_chunk.ok());
   }
 
   {
@@ -1493,9 +1493,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
-    std::unique_ptr<CharChunk> left_chunk =
+    absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1);
-    ASSERT_TRUE(left_chunk);
+    ASSERT_OK(left_chunk);
     EXPECT_EQ(left_chunk->conversion(), "a");
     EXPECT_EQ(chunk.conversion(), "bcd");
   }
@@ -1505,9 +1505,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
-    std::unique_ptr<CharChunk> left_chunk =
+    absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2);
-    ASSERT_TRUE(left_chunk);
+    ASSERT_OK(left_chunk);
     EXPECT_EQ(left_chunk->conversion(), "ab");
     EXPECT_EQ(chunk.conversion(), "cd");
   }
@@ -1517,9 +1517,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(table.ParseSpecialKey("ab{1}cd"));
 
-    std::unique_ptr<CharChunk> left_chunk =
+    absl::StatusOr<CharChunk> left_chunk =
         chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3);
-    ASSERT_TRUE(left_chunk);
+    ASSERT_OK(left_chunk);
     EXPECT_EQ(left_chunk->conversion(), "abc");
     EXPECT_EQ(chunk.conversion(), "d");
   }

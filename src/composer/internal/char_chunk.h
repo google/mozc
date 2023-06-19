@@ -30,21 +30,21 @@
 #ifndef MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 #define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 
-#include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 #include <utility>
 
-#include "base/port.h"
+#include "base/strings/assign.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
-
-class CompositionInput;
 
 // This class contains a unit of composition string.  The unit consists of
 // conversion, pending and raw strings.  Every unit should be the shortest
@@ -56,15 +56,17 @@ class CharChunk final {
   // LOCAL transliterator is not accepted.
   CharChunk(Transliterators::Transliterator transliterator, const Table *table);
 
-  // Copyable.
+  // Copyable and movable.
   CharChunk(const CharChunk &x) = default;
   CharChunk &operator=(const CharChunk &x) = default;
+  CharChunk(CharChunk &&x) = default;
+  CharChunk &operator=(CharChunk &&x) = default;
 
   void Clear();
 
   size_t GetLength(Transliterators::Transliterator t12r) const;
 
-  // Append the characters representing this CharChunk accoring to the
+  // Append the characters representing this CharChunk according to the
   // transliterator.  If the transliterator is LOCAL, the local
   // transliterator specified via SetTransliterator is used.
   void AppendResult(Transliterators::Transliterator t12r,
@@ -97,8 +99,8 @@ class CharChunk final {
 
   // Splits this CharChunk at |position| and returns the left chunk. Returns
   // nullptr on failure.
-  std::unique_ptr<CharChunk> SplitChunk(Transliterators::Transliterator t12r,
-                                        size_t position);
+  absl::StatusOr<CharChunk> SplitChunk(Transliterators::Transliterator t12r,
+                                       size_t position);
 
   // Return true if this chunk should be committed immediately.  This
   // function refers DIRECT_INPUT attribute.
@@ -139,19 +141,55 @@ class CharChunk final {
   const Table *table() const { return table_; }
 
   const std::string &raw() const { return raw_; }
-  void set_raw(absl::string_view raw);
+  template <typename String>
+  void set_raw(String &&raw) {
+    strings::Assign(raw_, std::forward<String>(raw));
+    local_length_cache_ = std::string::npos;
+  }
 
   const std::string &conversion() const { return conversion_; }
-  void set_conversion(absl::string_view conversion);
+  template <typename String>
+  void set_conversion(String &&conversion) {
+    strings::Assign(conversion_, std::forward<String>(conversion));
+    local_length_cache_ = std::string::npos;
+  }
 
   const std::string &pending() const { return pending_; }
-  void set_pending(absl::string_view pending);
+  template <typename String>
+  void set_pending(String &&pending) {
+    strings::Assign(pending_, std::forward<String>(pending));
+    local_length_cache_ = std::string::npos;
+  }
 
   const std::string &ambiguous() const { return ambiguous_; }
-  void set_ambiguous(absl::string_view ambiguous);
+  template <typename String>
+  void set_ambiguous(String &&ambiguous) {
+    strings::Assign(ambiguous_, std::forward<String>(ambiguous));
+    local_length_cache_ = std::string::npos;
+  }
 
   TableAttributes attributes() const { return attributes_; }
   void set_attributes(TableAttributes attributes);
+
+  friend bool operator==(const CharChunk &lhs, const CharChunk &rhs) {
+    return std::tie(lhs.table_, lhs.raw_, lhs.conversion_, lhs.pending_,
+                    lhs.ambiguous_, lhs.transliterator_, lhs.attributes_) ==
+           std::tie(rhs.table_, rhs.raw_, rhs.conversion_, rhs.pending_,
+                    rhs.ambiguous_, rhs.transliterator_, rhs.attributes_);
+  }
+
+  friend bool operator!=(const CharChunk &lhs, const CharChunk &rhs) {
+    return !(lhs == rhs);
+  }
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const CharChunk &chunk) {
+    absl::Format(&sink,
+                 "table = %p, raw = %s, conversion = %s, pending = %s, "
+                 "ambiguous = %s, transliterator = %v, attributes = %v",
+                 chunk.table_, chunk.raw_, chunk.conversion_, chunk.pending_,
+                 chunk.ambiguous_, chunk.transliterator_, chunk.attributes_);
+  }
 
   // bool = should loop
   // string_view = rest of the input
@@ -188,7 +226,7 @@ class CharChunk final {
   // it is not yet determined (e.g. "ん").
   // If the `raw_` is "n", it can be converted to "ん" at this moment.
   // However it can be converted to "な", if the next input is "a".
-  // In this case, "ん" is stored to `ambiguous_` instaeed of `conversion_`.
+  // In this case, "ん" is stored to `ambiguous_` instead of `conversion_`.
   std::string ambiguous_;
   Transliterators::Transliterator transliterator_;
   TableAttributes attributes_;

@@ -29,7 +29,6 @@
 
 #include "composer/internal/char_chunk.h"
 
-#include <memory>
 #include <set>
 #include <string>
 #include <tuple>
@@ -49,11 +48,11 @@
 
 namespace mozc {
 namespace composer {
-
 namespace {
-using internal::DeleteSpecialKeys;
-using internal::TrimLeadingSpecialKey;
-using strings::FrontChar;
+
+using ::mozc::composer::internal::DeleteSpecialKeys;
+using ::mozc::composer::internal::TrimLeadingSpecialKey;
+using ::mozc::strings::FrontChar;
 
 // Max recursion count for looking up pending loop.
 constexpr int kMaxRecursion = 4;
@@ -142,8 +141,9 @@ size_t CharChunk::GetLength(Transliterators::Transliterator t12r) const {
 
 void CharChunk::AppendResult(Transliterators::Transliterator t12r,
                              std::string *result) const {
-  const std::string t13n = Transliterate(
-      t12r, DeleteSpecialKeys(raw_), DeleteSpecialKeys(conversion_ + pending_));
+  const std::string t13n =
+      Transliterate(t12r, DeleteSpecialKeys(raw_),
+                    DeleteSpecialKeys(absl::StrCat(conversion_, pending_)));
   result->append(t13n);
 }
 
@@ -165,18 +165,18 @@ void CharChunk::AppendTrimedResult(Transliterators::Transliterator t12r,
 
 void CharChunk::AppendFixedResult(Transliterators::Transliterator t12r,
                                   std::string *result) const {
-  std::string converted = conversion_;
+  std::string converted;
   if (!ambiguous_.empty()) {
     // Add the |ambiguous_| value as a fixed value.  |ambiguous_|
     // contains an undetermined result string like "ん" converted
     // from a single 'n'.
-    converted.append(ambiguous_);
+    converted = absl::StrCat(conversion_, ambiguous_);
   } else {
     // If |pending_| exists but |ambiguous_| does not exist,
     // |pending_| is appended.  If |ambiguous_| exists, the value of
     // |pending_| is usually equal to |ambiguous_| so it is not
     // appended.
-    converted.append(pending_);
+    converted = absl::StrCat(conversion_, pending_);
   }
   result->append(Transliterate(t12r, DeleteSpecialKeys(raw_),
                                DeleteSpecialKeys(converted)));
@@ -532,36 +532,16 @@ void CharChunk::SetTransliterator(
   transliterator_ = transliterator;
 }
 
-void CharChunk::set_raw(const absl::string_view raw) {
-  raw_ = std::string(raw);
-  local_length_cache_ = std::string::npos;
-}
-
-void CharChunk::set_conversion(const absl::string_view conversion) {
-  conversion_ = std::string(conversion);
-  local_length_cache_ = std::string::npos;
-}
-
-void CharChunk::set_pending(const absl::string_view pending) {
-  pending_ = std::string(pending);
-  local_length_cache_ = std::string::npos;
-}
-
-void CharChunk::set_ambiguous(const absl::string_view ambiguous) {
-  ambiguous_ = std::string(ambiguous);
-  local_length_cache_ = std::string::npos;
-}
-
 void CharChunk::set_attributes(TableAttributes attributes) {
   attributes_ = attributes;
   local_length_cache_ = std::string::npos;
 }
 
-std::unique_ptr<CharChunk> CharChunk::SplitChunk(
+absl::StatusOr<CharChunk> CharChunk::SplitChunk(
     Transliterators::Transliterator t12r, const size_t position) {
   if (position <= 0 || position >= GetLength(t12r)) {
-    LOG(WARNING) << "Invalid position: " << position;
-    return nullptr;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Invalid position: ", position));
   }
 
   local_length_cache_ = std::string::npos;
@@ -571,22 +551,22 @@ std::unique_ptr<CharChunk> CharChunk::SplitChunk(
               DeleteSpecialKeys(conversion_ + pending_), &raw_lhs, &raw_rhs,
               &converted_lhs, &converted_rhs);
 
-  auto left_new_chunk = std::make_unique<CharChunk>(transliterator_, table_);
-  left_new_chunk->set_raw(raw_lhs);
-  set_raw(raw_rhs);
+  CharChunk left_new_chunk(transliterator_, table_);
+  left_new_chunk.set_raw(raw_lhs);
+  set_raw(std::move(raw_rhs));
 
   if (converted_lhs.size() > conversion_.size()) {
     // [ conversion | pending ] => [ conv | pend#1 ] [ pend#2 ]
-    const std::string pending_lhs(converted_lhs, conversion_.size());
-    left_new_chunk->set_conversion(conversion_);
-    left_new_chunk->set_pending(pending_lhs);
+    std::string pending_lhs(converted_lhs, conversion_.size());
+    left_new_chunk.set_conversion(conversion_);
+    left_new_chunk.set_pending(std::move(pending_lhs));
 
     conversion_.clear();
-    pending_ = converted_rhs;
+    pending_ = std::move(converted_rhs);
     ambiguous_.clear();
   } else {
     // [ conversion | pending ] => [ conv#1 ] [ conv#2 | pending ]
-    left_new_chunk->set_conversion(converted_lhs);
+    left_new_chunk.set_conversion(std::move(converted_lhs));
     // left_new_chunk->set_pending("");
     const size_t pending_pos = converted_rhs.size() - pending_.size();
     conversion_.assign(converted_rhs, 0, pending_pos);

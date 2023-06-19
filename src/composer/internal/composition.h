@@ -31,21 +31,21 @@
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 
 #include <list>
-#include <memory>
 #include <set>
 #include <string>
+#include <tuple>
 
-#include "base/port.h"
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 namespace composer {
 
-using CharChunkList = std::list<std::unique_ptr<CharChunk>>;
+using CharChunkList = std::list<CharChunk>;
 
 enum TrimMode {
   TRIM,  // "かn" => "か"
@@ -55,12 +55,14 @@ enum TrimMode {
 
 class Composition final {
  public:
-  explicit Composition(const Table *table);
+  explicit Composition(const Table *table)
+      : table_(table), input_t12r_(Transliterators::CONVERSION_STRING) {}
 
-  Composition(const Composition &);
-  Composition &operator=(const Composition &);
-
-  ~Composition() = default;
+  // Copyable and movable.
+  Composition(const Composition &) = default;
+  Composition &operator=(const Composition &) = default;
+  Composition(Composition &&) = default;
+  Composition &operator=(Composition &&) = default;
 
   // Deletes a right-hand character of the composition at the position.
   // e.g.
@@ -96,12 +98,12 @@ class Composition final {
   //   ["a", "{b}", "c"].DeleteAt(1) -> ["a"]
   size_t DeleteAt(size_t position);
 
-  size_t InsertAt(size_t position, absl::string_view input);
-  size_t InsertKeyAndPreeditAt(size_t position, absl::string_view key,
-                               absl::string_view preedit);
+  size_t InsertAt(size_t position, std::string input);
+  size_t InsertKeyAndPreeditAt(size_t position, std::string key,
+                               std::string preedit);
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
-  size_t InsertInput(size_t position, const CompositionInput &input);
+  size_t InsertInput(size_t position, CompositionInput input);
 
   // Clear all chunks.
   void Erase();
@@ -165,7 +167,6 @@ class Composition final {
 
   CharChunkList::iterator InsertChunk(CharChunkList::const_iterator it);
 
-
   // Return the iterator to the right side CharChunk at the `position`.
   // If the `position` is in the middle of a CharChunk, that CharChunk is split.
   //
@@ -198,6 +199,21 @@ class Composition final {
   const Table *table() const { return table_; }
   const CharChunkList &chunks() const { return chunks_; }
   Transliterators::Transliterator input_t12r() const { return input_t12r_; }
+
+  friend bool operator==(const Composition &lhs, const Composition &rhs) {
+    return std::tie(lhs.table_, lhs.chunks_, lhs.input_t12r_) ==
+           std::tie(rhs.table_, rhs.chunks_, rhs.input_t12r_);
+  }
+  friend bool operator!=(const Composition &lhs, const Composition &rhs) {
+    return !(lhs == rhs);
+  }
+
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const Composition &composition) {
+    absl::Format(&sink, "table = %p, input transliterator = %v, chunks = [%s]",
+                 composition.table_, composition.input_t12r_,
+                 absl::StrJoin(composition.chunks_, ", "));
+  }
 
  private:
   void GetStringWithModes(Transliterators::Transliterator transliterator,

@@ -135,7 +135,6 @@ mozc_cc_binary(
         ":composer",
         ":table",
         "//base:init_mozc",
-        "//base/protobuf",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//transliteration",

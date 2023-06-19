@@ -56,12 +56,14 @@ mozc_cc_library(
         ":special_key",
         ":transliterators",
         "//base:logging",
-        "//base:port",
         "//base:util",
+        "//base/strings:assign",
         "//base/strings:unicode",
         "//composer:table",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -121,6 +123,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:util",
         "//base/protobuf:repeated_field",
+        "//base/strings:assign",
         "//composer:key_parser",
         "//composer:table",
         "//protocol:commands_cc_proto",
@@ -154,10 +157,12 @@ mozc_cc_library(
         ":composition_input",
         ":transliterators",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//composer:table",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -172,11 +177,10 @@ mozc_cc_test(
         ":char_chunk",
         ":composition",
         ":composition_input",
-        ":transliterator_interface",
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
-        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

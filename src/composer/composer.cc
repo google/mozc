@@ -72,8 +72,8 @@ namespace mozc {
 namespace composer {
 namespace {
 
-using config::CharacterFormManager;
-using strings::OneCharLen;
+using ::mozc::config::CharacterFormManager;
+using ::mozc::strings::OneCharLen;
 
 Transliterators::Transliterator GetTransliterator(
     transliteration::TransliterationType comp_mode) {
@@ -284,16 +284,11 @@ Composer::Composer(const Table *table, const commands::Request *request,
   Reset();
 }
 
-Composer::Composer(const Composer &) = default;
-Composer &Composer::operator=(const Composer &) = default;
-
-Composer::~Composer() = default;
-
 void Composer::Reset() {
   EditErase();
   ResetInputMode();
   SetOutputMode(transliteration::HIRAGANA);
-  source_text_.assign("");
+  source_text_.clear();
   typing_corrector_.Reset();
   timeout_threshold_msec_ = config_->composing_timeout_threshold_msec();
 }
@@ -460,21 +455,21 @@ void Composer::ApplyTemporaryInputMode(const absl::string_view input,
   }
 }
 
-bool Composer::ProcessCompositionInput(const CompositionInput &input) {
+bool Composer::ProcessCompositionInput(CompositionInput input) {
   if (!EnableInsert()) {
     return false;
   }
 
-  position_ = composition_.InsertInput(position_, input);
-  is_new_input_ = false;
   typing_corrector_.InsertCharacter(input);
+  position_ = composition_.InsertInput(position_, std::move(input));
+  is_new_input_ = false;
   return true;
 }
 
-void Composer::InsertCharacter(const absl::string_view key) {
+void Composer::InsertCharacter(std::string key) {
   CompositionInput input;
-  input.InitFromRaw(key, is_new_input_);
-  ProcessCompositionInput(input);
+  input.InitFromRaw(std::move(key), is_new_input_);
+  ProcessCompositionInput(std::move(input));
 }
 
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
@@ -482,11 +477,11 @@ void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
   switch (internal_command) {
     case REWIND:
       input.InitFromRaw(table_->ParseSpecialKey("{<}"), is_new_input_);
-      ProcessCompositionInput(input);
+      ProcessCompositionInput(std::move(input));
       break;
     case STOP_KEY_TOGGLING:
       input.InitFromRaw(table_->ParseSpecialKey("{!}"), is_new_input_);
-      ProcessCompositionInput(input);
+      ProcessCompositionInput(std::move(input));
       break;
     default:
       LOG(ERROR) << "Unknown command : " << internal_command;
@@ -517,7 +512,8 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
     CompositionInput composition_input;
     composition_input.set_raw(input.substr(begin, mblen));
     composition_input.set_is_new_input(is_new_input_);
-    position_ = composition_.InsertInput(position_, composition_input);
+    position_ =
+        composition_.InsertInput(position_, std::move(composition_input));
     is_new_input_ = false;
     begin += mblen;
   }
@@ -535,8 +531,9 @@ void Composer::SetPreeditTextForTestOnly(const absl::string_view input) {
 bool Composer::InsertCharacterKeyAndPreedit(const absl::string_view key,
                                             const absl::string_view preedit) {
   CompositionInput input;
-  input.InitFromRawAndConv(key, preedit, is_new_input_);
-  return ProcessCompositionInput(input);
+  input.InitFromRawAndConv(std::string(key), std::string(preedit),
+                           is_new_input_);
+  return ProcessCompositionInput(std::move(input));
 }
 
 bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
@@ -591,12 +588,12 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
       composition_.SetInputMode(Transliterators::CONVERSION_STRING);
       // Disable typing correction mainly for Android. b/258369101
       typing_corrector_.Invalidate();
-      ProcessCompositionInput(input);
+      ProcessCompositionInput(std::move(input));
       SetInputMode(comeback_input_mode_);
     } else {
       // Kana input usually has conversion. Note that, the existence of
       // key_string never determine if the input mode is Kana or Romaji.
-      ProcessCompositionInput(input);
+      ProcessCompositionInput(std::move(input));
     }
   } else {
     // Romaji input usually does not has conversion. Note that, the
@@ -604,7 +601,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     // Kana or Romaji.
     const uint32_t modifiers = KeyEventUtil::GetModifiers(key);
     ApplyTemporaryInputMode(input.raw(), KeyEventUtil::HasCaps(modifiers));
-    ProcessCompositionInput(input);
+    ProcessCompositionInput(std::move(input));
   }
 
   if (comeback_input_mode_ == input_mode_) {
@@ -720,7 +717,7 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
   composition_.GetPreedit(position_, left, focused, right);
 
   // TODO(komatsu): This function can be obsolete.
-  std::string preedit = *left + *focused + *right;
+  std::string preedit = absl::StrCat(*left, *focused, *right);
   if (TransformCharactersForNumbers(&preedit)) {
     const size_t left_size = Util::CharsLen(*left);
     const size_t focused_size = Util::CharsLen(*focused);
@@ -1247,7 +1244,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
   // It is possible that the query's size in byte differs from the
   // orig_query's size in byte.
   DCHECK_EQ(Util::CharsLen(*query), Util::CharsLen(transformed_query));
-  *query = transformed_query;
+  *query = std::move(transformed_query);
   return true;
 }
 

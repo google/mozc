@@ -31,11 +31,12 @@
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_INPUT_H_
 
 #include <string>
+#include <utility>
 
 #include "base/protobuf/repeated_field.h"
+#include "base/strings/assign.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -47,19 +48,19 @@ class CompositionInput final {
 
   CompositionInput() = default;
 
+  // Copyable and movable.
   CompositionInput(const CompositionInput &x) = default;
   CompositionInput &operator=(const CompositionInput &x) = default;
-
-  ~CompositionInput() = default;
+  CompositionInput(CompositionInput &&x) = default;
+  CompositionInput &operator=(CompositionInput &&x) = default;
 
   // Initializes with KeyEvent.
   // If KeyEvent has a special key (e.g. Henkan),
   // it is used as an input of a command key. (e.g. "{henkan}").
   bool Init(const Table &table, const commands::KeyEvent &key_event,
             bool is_new_input);
-  void InitFromRaw(absl::string_view raw, bool is_new_input);
-  void InitFromRawAndConv(absl::string_view raw,
-                          absl::string_view conversion,
+  void InitFromRaw(std::string raw, bool is_new_input);
+  void InitFromRawAndConv(std::string raw, std::string conversion,
                           bool is_new_input);
 
   void Clear();
@@ -68,11 +69,17 @@ class CompositionInput final {
   const std::string &raw() const { return raw_; }
   void clear_raw() { raw_.clear(); }
   std::string *mutable_raw() { return &raw_; }
-  void set_raw(const absl::string_view raw) { raw_ = std::string(raw); }
+  template <typename String>
+  void set_raw(String &&raw) {
+    strings::Assign(raw_, std::forward<String>(raw));
+  }
 
-  const std::string &conversion() const;
-  void clear_conversion();
-  void set_conversion(absl::string_view conversion);
+  const std::string &conversion() const { return conversion_; }
+  void clear_conversion() { conversion_.clear(); }
+  template <typename String>
+  void set_conversion(String &&conversion) {
+    strings::Assign(conversion_, std::forward<String>(conversion));
+  }
 
   const ProbableKeyEvents &probable_key_events() const {
     return probable_key_events_;
