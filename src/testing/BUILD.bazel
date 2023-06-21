@@ -34,6 +34,7 @@ load(
     "mozc_objc_library",
     "mozc_select",
 )
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 package(
     default_visibility = [
@@ -46,28 +47,25 @@ alias(
     actual = "gunit_main",
 )
 
-genrule(
+mozc_run_build_tool(
     name = "gen_mozc_data_dir_header",
-    srcs = [
-        # Used only for getting the directory name.
-        ":testing.gyp",
+    srcs = {
+        # Used only to get the directory name.
+        "--path_to_be_embedded": ["mozctest.h"],
+    },
+    outs = {
+        "--output": "mozc_data_dir.h",
+    },
+    args = [
+        "--constant_name=kMozcDataDir",
+        "-p=2",
     ],
-    outs = ["mozc_data_dir.h"],
-    cmd = (
-        "$(location //build_tools:embed_pathname) " +
-        "--path_to_be_embedded " +
-        "$$(dirname $$(dirname $<)) " +
-        "--constant_name " +
-        "kMozcDataDir " +
-        "--output " +
-        "$@"
-    ),
-    tools = ["//build_tools:embed_pathname"],
+    tool = "//build_tools:embed_pathname",
 )
 
 mozc_cc_library(
     name = "mozc_data_dir_header",
-    hdrs = ["mozc_data_dir.h"],
+    hdrs = [":gen_mozc_data_dir_header"],
 )
 
 mozc_cc_library(
