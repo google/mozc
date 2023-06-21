@@ -85,11 +85,16 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
   bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
                                      const absl::string_view key,
-                                     std::string *composition,
+                                     bool is_mobile, std::string *composition,
                                      Segments *segments) {
     commands::Request client_request;
     client_request.set_language_aware_input(
         commands::Request::LANGUAGE_AWARE_SUGGESTION);
+
+    if (is_mobile) {
+      client_request.set_zero_query_suggestion(true);
+      client_request.set_mixed_conversion(true);
+    }
 
     composer::Table table;
     config::Config default_config;
@@ -107,6 +112,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
     Segment *segment = segments->mutable_conversion_segment(0);
     segment->set_key(*composition);
     ConversionRequest request(&composer, &client_request, &default_config);
+
     request.set_request_type(ConversionRequest::SUGGESTION);
 
     return rewriter->Rewrite(request, segments);
@@ -126,6 +132,14 @@ void PushFrontCandidate(const absl::string_view data, Segment *segment) {
   candidate->key = std::string(data);
   candidate->content_value = std::string(data);
   candidate->content_key = std::string(data);
+}
+
+void PushFrontCandidate(const absl::string_view data, int attributes,
+                        Segment *segment) {
+  PushFrontCandidate(data, segment);
+  if (attributes) {
+    segment->mutable_candidate(0)->attributes |= attributes;
+  }
 }
 
 // A matcher for Segment::Candidate to test if a candidate has the given value.
@@ -153,8 +167,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     // because alphabet characters are in the middle of the word.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
-                                              &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", false,
+                                              &composition, &segments));
 
     EXPECT_EQ(composition, "ｐｙてょｎ");
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -163,12 +177,50 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     Mock::VerifyAndClearExpectations(&dictionary);
   }
   {
+    // On mobile, we insert the new candidate at the third position.
+    std::string composition;
+    Segments segments;
+    Segment *segment = segments.push_back_segment();
+    PushFrontCandidate("cand3", segment);
+    PushFrontCandidate("cand2", segment);
+    PushFrontCandidate("cand1", segment);
+    PushFrontCandidate("cand0", segment);
+    ASSERT_EQ(segment->candidates_size(), 4);
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", true,
+                                              &composition, &segments));
+    EXPECT_EQ(composition, "ｐｙてょｎ");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(2).value, "python");
+    EXPECT_TRUE(segments.conversion_segment(0).candidate(2).prefix.empty());
+    Mock::VerifyAndClearExpectations(&dictionary);
+  }
+  {
+    // On mobile, the candidate is inserted after the typing correction.
+    std::string composition;
+    Segments segments;
+    Segment *segment = segments.push_back_segment();
+    PushFrontCandidate("cand4", segment);
+    PushFrontCandidate("cand3", Segment::Candidate::TYPING_CORRECTION, segment);
+    PushFrontCandidate("cand2", Segment::Candidate::TYPING_CORRECTION, segment);
+    PushFrontCandidate("cand1", segment);
+    PushFrontCandidate("cand0", segment);
+    ASSERT_EQ(segment->candidates_size(), 5);
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python",
+                                              true, /* is_mobile */
+                                              &composition, &segments));
+    EXPECT_EQ(composition, "ｐｙてょｎ");
+    ASSERT_EQ(segments.conversion_segments_size(), 1);
+    EXPECT_EQ(segments.conversion_segment(0).candidate(4).value, "python");
+    EXPECT_TRUE(segments.conversion_segment(0).candidate(4).prefix.empty());
+    Mock::VerifyAndClearExpectations(&dictionary);
+  }
+  {
     // "mozuk" is composed to "もずｋ", then "mozuk" is not suggested.
     // The trailing alphabet characters are not counted.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "mozuk", &composition,
-                                               &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(
+        &rewriter, "mozuk", false, /* is_mobile */ &composition, &segments));
 
     EXPECT_EQ(composition, "もずｋ");
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -194,8 +246,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
 
     // "house" should be inserted as the 3rd candidate (b/w cand1 and cand2).
     // => ["cand0", "cand1", "house", "cand2"]
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "house", &composition,
-                                              &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(
+        &rewriter, "house", false, /* is_mobile */ &composition, &segments));
     EXPECT_EQ(composition, "ほうせ");
     EXPECT_THAT(*segment, CandidatesAreArray({
                               ValueIs("cand0"),
@@ -213,8 +265,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     // unlike the above "mozuk" case, "query" should be suggested.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "query", &composition,
-                                              &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(
+        &rewriter, "query", false, /* is_mobile */ &composition, &segments));
 
     EXPECT_EQ(composition, "くえｒｙ");
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -229,6 +281,7 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     std::string composition;
     Segments segments;
     EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "google",
+                                               false, /* is_mobile */
                                                &composition, &segments));
     EXPECT_EQ(composition, "google");
     Mock::VerifyAndClearExpectations(&dictionary);
@@ -245,8 +298,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
     // In this case, language aware rewriter should not be triggered.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "naru", &composition,
-                                               &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(
+        &rewriter, "naru", false, /* is_mobile */ &composition, &segments));
 
     EXPECT_EQ(composition, "なる");
     ASSERT_EQ(segments.conversion_segments_size(), 1);
@@ -270,8 +323,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     // because alphabet characters are in the middle of the word.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
-                                              &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(
+        &rewriter, "python", false, /* is_mobile */ &composition, &segments));
     EXPECT_EQ(composition, kPyTeyoN);
     ASSERT_EQ(1, segments.conversion_segments_size());
     EXPECT_THAT(segments.conversion_segment(0),
@@ -328,16 +381,16 @@ TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
     // half width ascii by LanguageAwareRewriter.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "1d*=", &composition,
-                                               &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(
+        &rewriter, "1d*=", false, /* is_mobile */ &composition, &segments));
     EXPECT_EQ(composition, "１ｄ＊＝");
   }
   {
     // "xyzw" is composed to "ｘｙｚｗ". Do not rewrite.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "xyzw", &composition,
-                                               &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(
+        &rewriter, "xyzw", false, /* is_mobile */ &composition, &segments));
     EXPECT_EQ(composition, "ｘｙｚｗ");
   }
 }
