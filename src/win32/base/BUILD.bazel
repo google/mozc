@@ -464,7 +464,9 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:const",
         "//base:logging",
+        "//base/win32:com",
         "//base/win32:wide_char",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
@@ -497,8 +499,10 @@ mozc_cc_library(
         ":tsf_profile",
         "//base:logging",
         "//base:system_util",
+        "//base/win32:com",
         "//base/win32:scoped_com",
         "//testing:gunit_prod",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
