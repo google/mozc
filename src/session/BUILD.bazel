@@ -38,6 +38,7 @@ load(
     "mozc_py_binary",
     "mozc_select",
 )
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 package(
     default_visibility = [
@@ -646,16 +647,17 @@ mozc_py_binary(
     srcs = ["gen_session_stress_test_data.py"],
 )
 
-genrule(
+mozc_run_build_tool(
     name = "session_stress_test_data",
-    srcs = mozc_select(
-        oss = [
+    srcs = {
+        "--input": [
             "//data/test/quality_regression_test:oss.tsv",
         ],
-    ),
-    outs = ["session_stress_test_data.h"],
-    cmd = "$(location :gen_session_stress_test_data) --input $(SRCS) --output $@",
-    tools = [":gen_session_stress_test_data"],
+    },
+    outs = {
+        "--output": "session_stress_test_data.h",
+    },
+    tool = ":gen_session_stress_test_data",
 )
 
 mozc_cc_library(
