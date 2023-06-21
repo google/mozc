@@ -67,7 +67,6 @@ void SetSegment(const absl::string_view key, const absl::string_view value,
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -341,7 +340,6 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
     for (int i = 0; i < kExpectPosition * 2; ++i) {
       std::string value = "candidate" + std::to_string(i);
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->Init();
       candidate->value = value;
       candidate->content_key = "Neko";
       candidate->content_value = value;

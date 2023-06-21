@@ -427,7 +427,6 @@ void TransliterationRewriter::InitT13nCandidate(
     const absl::string_view key, const absl::string_view value,
     const uint16_t lid, const uint16_t rid, Segment::Candidate *cand) const {
   DCHECK(cand);
-  cand->Init();
   cand->value = std::string(value);
   cand->key = std::string(key);
   cand->content_value = std::string(value);

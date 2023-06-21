@@ -42,7 +42,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -52,7 +51,7 @@ namespace {
 constexpr size_t kMaxHistorySize = 32;
 }  // namespace
 
-void Segment::Candidate::Init() {
+void Segment::Candidate::Clear() {
   key.clear();
   value.clear();
   content_value.clear();
@@ -220,19 +219,19 @@ void Segment::clear_candidates() {
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
-  Candidate *candidate =
-      pool_.emplace_back(std::make_unique<Candidate>()).get();
-  candidate->Init();
-  candidates_.push_back(candidate);
-  return candidate;
+  auto candidate = std::make_unique<Candidate>();
+  Candidate *ptr = candidate.get();
+  pool_.push_back(std::move(candidate));
+  candidates_.push_back(ptr);
+  return ptr;
 }
 
 Segment::Candidate *Segment::push_front_candidate() {
-  Candidate *candidate =
-      pool_.emplace_back(std::make_unique<Candidate>()).get();
-  candidate->Init();
-  candidates_.push_front(candidate);
-  return candidate;
+  auto candidate = std::make_unique<Candidate>();
+  Candidate *ptr = candidate.get();
+  pool_.push_back(std::move(candidate));
+  candidates_.push_front(ptr);
+  return ptr;
 }
 
 Segment::Candidate *Segment::insert_candidate(int i) {
@@ -248,7 +247,6 @@ Segment::Candidate *Segment::insert_candidate(int i) {
   }
   Candidate *candidate =
       pool_.emplace_back(std::make_unique<Candidate>()).get();
-  candidate->Init();
   candidates_.insert(candidates_.begin() + i, candidate);
   return candidate;
 }
@@ -333,10 +331,7 @@ Segment::Candidate *Segment::mutable_meta_candidate(size_t i) {
 }
 
 Segment::Candidate *Segment::add_meta_candidate() {
-  Candidate candidate;
-  candidate.Init();
-  meta_candidates_.push_back(candidate);
-  return &meta_candidates_[meta_candidates_size() - 1];
+  return &meta_candidates_.emplace_back();
 }
 
 void Segment::move_candidate(int old_idx, int new_idx) {
@@ -381,7 +376,9 @@ void Segment::DeepCopyCandidates(const std::deque<Candidate *> &candidates) {
   DCHECK(pool_.empty());
   pool_.reserve(candidates.size());
   for (const Candidate *cand : candidates) {
-    *add_candidate() = *cand;
+    auto new_cand = std::make_unique<Candidate>(*cand);
+    candidates_.push_back(new_cand.get());
+    pool_.push_back(std::move(new_cand));
   }
 }
 

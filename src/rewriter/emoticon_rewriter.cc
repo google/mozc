@@ -112,7 +112,6 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
       continue;
     }
 
-    c->Init();
     // TODO(taku): set an appropriate POS here.
     c->lid = sorted_value[i].lid();
     c->rid = sorted_value[i].rid();

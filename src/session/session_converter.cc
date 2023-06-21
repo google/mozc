@@ -399,7 +399,6 @@ void PrependCandidates(const Segment &previous_segment,
   if (segments->conversion_segments_size() == 0) {
     segments->clear_conversion_segments();
     Segment *segment = segments->add_segment();
-    segment->Clear();
     segment->set_key(preedit);
   }
 

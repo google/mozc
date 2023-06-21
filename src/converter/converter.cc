@@ -80,7 +80,6 @@ void SetKey(Segments *segments, const absl::string_view key) {
   mozc::Segment *seg = segments->add_segment();
   DCHECK(seg);
 
-  seg->Clear();
   seg->set_key(key);
   seg->set_segment_type(mozc::Segment::FREE);
 
@@ -342,7 +341,6 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
     if (TryNormalizingKeyAsMathExpression(key, &value)) {
       Segment::Candidate *cand =
           segments->mutable_segment(0)->push_back_candidate();
-      cand->Init();
       cand->key = std::string(key);
       cand->value = std::move(value);
       return true;

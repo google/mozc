@@ -232,7 +232,6 @@ class SessionConverterTest : public ::testing::Test {
         segment->mutable_meta_candidates();
     meta_candidates->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
-      meta_candidates->at(i).Init();
       meta_candidates->at(i).value = segment->key();
       meta_candidates->at(i).content_value = segment->key();
       meta_candidates->at(i).content_key = segment->key();
@@ -254,7 +253,6 @@ class SessionConverterTest : public ::testing::Test {
           segment->mutable_meta_candidates();
       meta_candidates->resize(transliteration::NUM_T13N_TYPES);
       for (size_t j = 0; j < transliteration::NUM_T13N_TYPES; ++j) {
-        meta_candidates->at(j).Init();
         meta_candidates->at(j).value = t13ns[j];
         meta_candidates->at(j).content_value = t13ns[j];
         meta_candidates->at(j).content_key = segment->key();
@@ -2348,7 +2346,6 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
         segment->mutable_meta_candidates();
     meta_candidates->clear();
     meta_candidates->resize(1);
-    meta_candidates->at(0).Init();
     meta_candidates->at(0).value = "t13nValue";
     meta_candidates->at(0).content_value = "t13nValue";
     meta_candidates->at(0).content_key = segment->key();

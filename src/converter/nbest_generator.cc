@@ -143,7 +143,7 @@ void NBestGenerator::MakeCandidate(
     int32_t wcost, const std::vector<const Node *> &nodes) const {
   CHECK(!nodes.empty());
 
-  candidate->Init();
+  candidate->Clear();
   candidate->lid = nodes.front()->lid;
   candidate->rid = nodes.back()->rid;
   candidate->cost = cost;
@@ -264,7 +264,6 @@ void NBestGenerator::SetCandidates(const ConversionRequest &request,
   while (segment->candidates_size() < expand_size) {
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
-    candidate->Init();
 
     // if Next() returns false, no more entries are generated.
     if (!Next(request, original_key, candidate)) {

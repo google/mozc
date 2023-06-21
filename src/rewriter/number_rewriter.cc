@@ -128,7 +128,7 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
   }
   const std::string suffix(c.value, c.content_value.size(),
                            c.value.size() - c.content_value.size());
-  arabic_candidate->Init();
+  arabic_candidate->Clear();
   arabic_candidate->value = new_content_value + suffix;
   arabic_candidate->content_value = new_content_value;
   arabic_candidate->key = c.key;
@@ -327,7 +327,6 @@ void InsertCandidate(Segment *segment, int32_t insert_position,
                      const Segment::Candidate &result_cand) {
   DCHECK(segment);
   Segment::Candidate *c = segment->insert_candidate(insert_position);
-  c->Init();
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 

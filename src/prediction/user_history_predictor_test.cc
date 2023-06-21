@@ -359,7 +359,6 @@ class UserHistoryPredictorTest : public ::testing::Test {
     Segment::Candidate *candidate =
         segments->mutable_segment(index)->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->value = std::string(value);
     candidate->content_value = std::string(value);
     candidate->key = segments->segment(index).key();
@@ -372,7 +371,6 @@ class UserHistoryPredictorTest : public ::testing::Test {
     Segment::Candidate *candidate =
         segments->mutable_segment(index)->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->value = std::string(value);
     candidate->content_value = std::string(value);
     candidate->key = segments->segment(index).key();
@@ -2910,7 +2908,6 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->value = kValue;
     candidate->content_value = kValue;
     candidate->key = kKey;
@@ -2947,7 +2944,6 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->value = kValue;
     candidate->content_value = kValue;
     candidate->key = kKey;
@@ -2988,7 +2984,6 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->value = kValue;
     candidate->content_value = kValue;
     candidate->key = kKey;
@@ -3621,7 +3616,6 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
     seg->set_key("きょうも");
     seg->set_segment_type(Segment::FIXED_VALUE);
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "今日も";
     candidate->content_value = "今日";
     candidate->key = seg->key();
@@ -3632,7 +3626,6 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
     seg->set_key("いいてんき");
     seg->set_segment_type(Segment::FIXED_VALUE);
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "いい天気";
     candidate->content_value = candidate->value;
     candidate->key = seg->key();
@@ -3643,7 +3636,6 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
     seg->set_key("！");
     seg->set_segment_type(Segment::FIXED_VALUE);
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "!";
     candidate->content_value = "!";
     candidate->key = seg->key();
@@ -3682,7 +3674,6 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
     SetUpInputForPrediction(kKey, composer_.get(), &segments);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
-    candidate->Init();
     candidate->key = kKey;
     candidate->value = kValue;
     candidate->content_key = kKey;

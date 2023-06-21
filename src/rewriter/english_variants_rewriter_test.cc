@@ -103,7 +103,6 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
   // T13N
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -128,11 +127,9 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
 
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
-      candidate1->Init();
       candidate1->value = std::to_string(i);
       candidate1->content_value = std::to_string(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
-      candidate2->Init();
       candidate2->content_key = "ぐーぐる";
       candidate2->key = "ぐーぐる";
       candidate2->value = "Google";
@@ -166,7 +163,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
   // NO_VARIANTS_EXPANSION is passed to the candidate only.
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "まいけるじゃくそん";
     candidate->key = "まいけるじゃくそん";
     candidate->value = "Michael Jackson";
@@ -194,7 +190,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -210,7 +205,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
   {
     seg->clear_candidates();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "Google";
@@ -240,21 +234,18 @@ TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
     candidate->content_value = "GOOGLE";
 
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "グーグル";
     candidate->content_value = "グーグル";
 
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "google";
@@ -274,21 +265,18 @@ TEST_F(EnglishVariantsRewriterTest, KeepRank) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "GOOGLE";
     candidate->content_value = "GOOGLE";
 
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "グーグル";
     candidate->content_value = "グーグル";
 
     candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "ぐーぐる";
     candidate->key = "ぐーぐる";
     candidate->value = "google";
@@ -317,7 +305,6 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->content_key = "google";
     candidate->key = "google";
     candidate->value = "Google";

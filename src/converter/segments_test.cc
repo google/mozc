@@ -254,7 +254,6 @@ TEST(CandidateTest, BasicTest) {
 
 TEST(CandidateTest, IsValid) {
   Segment::Candidate c;
-  c.Init();
   EXPECT_TRUE(c.IsValid());
 
   c.key = "key";
@@ -383,7 +382,6 @@ TEST(SegmentsTest, CopyTest) {
 
 TEST(CandidateTest, functional_key) {
   Segment::Candidate candidate;
-  candidate.Init();
 
   candidate.key = "testfoobar";
   candidate.content_key = "test";
@@ -414,7 +412,6 @@ TEST(CandidateTest, functional_key) {
 
 TEST(CandidateTest, functional_value) {
   Segment::Candidate candidate;
-  candidate.Init();
 
   candidate.value = "testfoobar";
   candidate.content_value = "test";
@@ -447,7 +444,6 @@ TEST(CandidateTest, InnerSegmentIterator) {
   {
     // For empty inner_segment_boundary, the initial state is done.
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.key = "testfoobar";
     candidate.value = "redgreenblue";
     Segment::Candidate::InnerSegmentIterator iter(&candidate);
@@ -459,7 +455,6 @@ TEST(CandidateTest, InnerSegmentIterator) {
     //   content key: test | foo
     // content value:  red | green
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.key = "testfoobar";
     candidate.value = "redgreenblue";
     candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
@@ -573,9 +568,8 @@ TEST(SegmentTest, MetaCandidateTest) {
         segment.mutable_meta_candidates();
     EXPECT_EQ(meta_candidates->size(), kCandidatesSize);
     Segment::Candidate cand;
-    cand.Init();
     cand.value = "Test";
-    meta_candidates->push_back(cand);
+    meta_candidates->push_back(std::move(cand));
   }
 
   // meta_candidates

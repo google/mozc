@@ -50,7 +50,6 @@ namespace {
 
 void AddCandidate(Segment *segment, const absl::string_view value) {
   Segment::Candidate *c = segment->add_candidate();
-  c->Init();
   c->value = std::string(value);
   c->content_value = std::string(value);
 }
@@ -59,7 +58,6 @@ void AddCandidateWithContentValue(Segment *segment,
                                   const absl::string_view value,
                                   const absl::string_view content_value) {
   Segment::Candidate *c = segment->add_candidate();
-  c->Init();
   c->value = std::string(value);
   c->content_value = std::string(content_value);
 }
@@ -287,7 +285,6 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
         seg[0]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
-      meta_cands->at(i).Init();
       meta_cands->at(i).value = "「";
       meta_cands->at(i).content_value = "「";
     }
@@ -314,7 +311,6 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
         seg[2]->mutable_meta_candidates();
     meta_cands->resize(transliteration::NUM_T13N_TYPES);
     for (size_t i = 0; i < transliteration::NUM_T13N_TYPES; ++i) {
-      meta_cands->at(i).Init();
       meta_cands->at(i).value = "」";
       meta_cands->at(i).content_value = "」";
     }

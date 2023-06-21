@@ -61,7 +61,6 @@ using ::testing::SetArgPointee;
 // Creates a simple candidate whose key and value are set to `text`.
 Segment::Candidate MakeCandidate(absl::string_view text) {
   Segment::Candidate cand;
-  cand.Init();
   cand.key = std::string(text);
   cand.content_key = cand.key;
   cand.value = cand.key;

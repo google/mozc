@@ -76,7 +76,6 @@ void SetCandidate(absl::string_view key, absl::string_view value,
                   Segment *segment) {
   segment->set_key(key);
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
 #ifdef ABSL_USES_STD_STRING_VIEW
   candidate->key = key;
   candidate->value = value;
@@ -267,7 +266,6 @@ TEST(ImmutableConverterTest, PredictiveNodesOnlyForConversionKey) {
     segment->set_key("いいんじゃな");
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = "いいんじゃな";
     candidate->value = "いいんじゃな";
 
@@ -432,7 +430,6 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
     segment->set_key(kA100);
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = kA100;
     candidate->value = kA100;
   }

@@ -66,7 +66,6 @@ bool InsertCandidate(int top_face_number, size_t insert_pos, Segment *segment) {
   }
   const Segment::Candidate &trigger_c = segment->candidate(offset - 1);
 
-  c->Init();
   c->lid = trigger_c.lid;
   c->rid = trigger_c.rid;
   c->cost = trigger_c.cost;

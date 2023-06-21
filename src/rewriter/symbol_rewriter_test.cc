@@ -62,7 +62,6 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->value = std::string(value);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
@@ -70,7 +69,6 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
 
 void AddCandidate(const absl::string_view value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->value = std::string(value);
   candidate->content_key = segment->key();
   candidate->content_value = std::string(value);
@@ -315,7 +313,6 @@ TEST_F(SymbolRewriterTest, SetKey) {
   const std::string kKey = "てん";
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = "strange key";
   candidate->value = "strange value";
   candidate->content_key = "strange key";
@@ -353,7 +350,6 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   Segment *segment = segments.push_back_segment();
   segment->set_key(" ");
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = " ";
   candidate->value = " ";
   candidate->content_key = " ";
