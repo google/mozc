@@ -67,10 +67,11 @@ class Composer final {
   Composer(const Table *table, const commands::Request *request,
            const config::Config *config);
 
-  Composer(const Composer &);
-  Composer &operator=(const Composer &);
-
-  ~Composer();
+  // Copyable and movable.
+  Composer(const Composer &) = default;
+  Composer &operator=(const Composer &) = default;
+  Composer(Composer &&) = default;
+  Composer &operator=(Composer &&) = default;
 
   // Reset all composing data except table.
   void Reset();
@@ -154,7 +155,7 @@ class Composer final {
   // Delete multiple characters beginning at specified position.
   void DeleteRange(size_t pos, size_t length);
 
-  void InsertCharacter(absl::string_view key);
+  void InsertCharacter(std::string key);
 
   // Set preedit text to composer.
   //
@@ -262,7 +263,7 @@ class Composer final {
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
-  bool ProcessCompositionInput(const CompositionInput &input);
+  bool ProcessCompositionInput(CompositionInput input);
 
   // Change input mode temporarily accoding to the current context and
   // the given input character.

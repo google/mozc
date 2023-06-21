@@ -27,46 +27,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    # Top directory of third party libraries.
-    'third_party_dir': '<(DEPTH)/third_party',
-    'absl_dir': '<(third_party_dir)/abseil-cpp',
-    'absl_srcdir': '<(absl_dir)/absl',
-    'absl_include_dirs': ['<(absl_dir)'],
+"""mozc_embed_file macro to embed binary files as C++ variables."""
 
-    'mozc_oss_src_dir': '<(DEPTH)',
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-    # TODO(komatsu): This can be replaced with 'android_ndk_dir'.
-    'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',
-
-    'proto_out_dir': '<(SHARED_INTERMEDIATE_DIR)/proto_out',
-
-    # server_dir represents the directory where mozc_server is
-    # installed. This option is only for Linux.
-    'server_dir%': '/usr/lib/mozc',
-
-    # Represents the directory where the source code of protobuf is
-    # extracted. This value is ignored when 'use_libprotobuf' is 1.
-    'protobuf_root': '<(third_party_dir)/protobuf',
-
-    'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
-
-    # Ninja requires <(abs_depth) instead of <(DEPTH).
-    'mac_breakpad_dir': '<(PRODUCT_DIR)/Breakpad',
-    # This points to the same dir with mac_breakpad_dir, but this should use
-    # '${BUILT_PRODUCTS_DIR}' instead of '<(PRODUCT_DIR)'.
-    # See post_build_mac.gypi
-    'mac_breakpad_tools_dir': '${BUILT_PRODUCTS_DIR}/Breakpad',
-    'mac_breakpad_framework': '<(mac_breakpad_dir)/Breakpad.framework',
-
-    'conditions': [
-      ['target_platform=="Windows"', {
-        'wtl_dir': '<(third_party_dir)/wtl',
-      }],
-    ],
-
-    # glob command to get files.
-    'glob': '<(python) <(abs_depth)/gyp/glob_files.py',
-  },
-}
+def mozc_embed_file(name, srcs, out, var_name, **kwargs):
+    mozc_run_build_tool(
+        name = name,
+        srcs = {
+            "--input": srcs,
+        },
+        args = [
+            "--name=" + var_name,
+        ],
+        outs = {"--output": out},
+        tool = "//build_tools:embed_file",
+        **kwargs
+    )

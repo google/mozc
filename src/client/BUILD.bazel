@@ -35,6 +35,7 @@ load(
     "mozc_py_binary",
     "mozc_select",
 )
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -232,14 +233,15 @@ mozc_py_binary(
     srcs = ["gen_client_quality_test_data.py"],
 )
 
-genrule(
+mozc_run_build_tool(
     name = "client_quality_test_data",
-    srcs = [
+    outs = {
+        "--output": "client_quality_test_data.inc",
+    },
+    positional_srcs = [
         # TSV files formatted as "label <tab> expected <tab> query"
     ],
-    outs = ["client_quality_test_data.inc"],
-    cmd = "$(location :gen_client_quality_test_data) $(SRCS) > $@",
-    tools = [":gen_client_quality_test_data"],
+    tool = ":gen_client_quality_test_data",
 )
 
 mozc_cc_binary(

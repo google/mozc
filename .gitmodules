@@ -12,7 +12,7 @@
 	url = https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git
 [submodule "src/third_party/protobuf"]
 	path = src/third_party/protobuf
-	url = https://github.com/google/protobuf.git
+	url = https://github.com/protocolbuffers/protobuf.git
 [submodule "src/third_party/abseil-cpp"]
 	path = src/third_party/abseil-cpp
 	url = https://github.com/abseil/abseil-cpp.git

@@ -29,9 +29,14 @@
 
 load("//bazel:stubs.bzl", "bzl_library")
 
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
 bzl_library(
     name = "qt_bzl",
     srcs = ["qt.bzl"],
+    test_size = "small",
     visibility = ["//visibility:private"],
     deps = [
         "//:build_defs_bzl",
@@ -47,4 +52,13 @@ bzl_library(
     test_size = "small",
     visibility = ["//visibility:private"],
     deps = ["@rules_python//python:defs.bzl"],
+)
+
+bzl_library(
+    name = "run_build_tool_bzl",
+    srcs = ["run_build_tool.bzl"],
+    test_size = "small",
+    deps = [
+        "@bazel_skylib//lib:dicts",
+    ],
 )

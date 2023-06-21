@@ -37,7 +37,7 @@
     'current_dir': '.',
     'mozc_dir': '../..',
     'common_data_dir': '<(mozc_dir)/data',
-    'platform_data_dir': '<(mozc_dir)/data/dictionary_oss',
+    'platform_data_dir': '<(mozc_oss_src_dir)/data/dictionary_oss',
     'dataset_tag': 'oss',
   },
   # This 'includes' defines the following targets:

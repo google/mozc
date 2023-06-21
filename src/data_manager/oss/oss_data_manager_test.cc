@@ -60,13 +60,14 @@ class OssDataManagerTest : public DataManagerTestBase {
                 {"data_manager", "oss", "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
-                {"data", "dictionary_oss"},
+                {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss"},
                 {"dictionary00.txt", "dictionary01.txt", "dictionary02.txt",
                  "dictionary03.txt", "dictionary04.txt", "dictionary05.txt",
                  "dictionary06.txt", "dictionary07.txt", "dictionary08.txt",
                  "dictionary09.txt"}),
-            mozc::testing::GetSourceFilesInDirOrDie({"data", "dictionary_oss"},
-                                                    {"suggestion_filter.txt"}),
+            mozc::testing::GetSourceFilesInDirOrDie(
+                {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss"},
+                {"suggestion_filter.txt"}),
             {
                 GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
                 GetTypingModelEntry("typing_model_flick-hiragana.tsv"),

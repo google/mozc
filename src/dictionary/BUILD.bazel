@@ -224,13 +224,17 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_aux_dictionary",
     srcs = ["gen_aux_dictionary.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
 )
 
 mozc_py_binary(
     name = "gen_filtered_dictionary",
     srcs = ["gen_filtered_dictionary.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
 )
 
 mozc_cc_library(
@@ -756,5 +760,7 @@ run_binary(
         ],
     ),
     tool = ":gen_zip_code_seed",
-    visibility = ["//:__subpackages__"],
+    visibility = [
+        "//:__subpackages__",
+    ],
 )

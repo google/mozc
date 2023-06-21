@@ -129,6 +129,19 @@ inline void StrAppendChar32(std::string* dest, const char32_t cp) {
   dest->append(ec.data(), ec.size());
 }
 
+// Returns a substring of the UTF-8 string sv [pos, pos + count), or [pos,
+// sv.end()) if count is not provided, by the number of Unicode characters. The
+// result is clipped if pos + count > CharsLen().
+//
+// Note that this function is linear and slower than Utf8AsChars::Substring as
+// it needs to traverse through each character. Use Utf8AsChars::Substring if
+// you already have the character iterators.
+//
+// REQUIRES: The UTF-8 string is valid. pos <= CharsLen(sv).
+// Complexity: linear to pos + count or pos if count it not provided.
+absl::string_view Utf8Substring(absl::string_view sv, size_t pos);
+absl::string_view Utf8Substring(absl::string_view sv, size_t pos, size_t count);
+
 }  // namespace strings
 
 // Utf8CharIterator is an iterator adapter for a string-like iterator to iterate
@@ -178,14 +191,17 @@ class Utf8CharIterator {
     return tmp;
   }
 
-  // Comparison operators.
-  friend bool operator==(const Utf8CharIterator& lhs,
-                         const Utf8CharIterator& rhs) {
-    return lhs.ptr_ == rhs.ptr_;
-  }
-  friend bool operator!=(const Utf8CharIterator& lhs,
-                         const Utf8CharIterator& rhs) {
-    return !(lhs == rhs);
+  // Returns a const char pointer to the current iterator position.
+  const char* to_address() const { return ptr_; }
+
+  // Returns a substring of the original string between this iterator and
+  // another iterator last.
+  //
+  // REQUIRES: last points to the same string object.
+  template <bool AsChar32Last>
+  absl::string_view SubstringTo(
+      const Utf8CharIterator<AsChar32Last> last) const {
+    return absl::string_view(ptr_, last.ptr_ - ptr_);
   }
 
  private:
@@ -200,6 +216,18 @@ class Utf8CharIterator {
   const char* last_;
   utf8_internal::DecodeResult dr_;
 };
+
+// Comparison operators for Utf8CharIterator.
+template <bool AsChar32L, bool AsChar32R>
+bool operator==(const Utf8CharIterator<AsChar32L> lhs,
+                const Utf8CharIterator<AsChar32R> rhs) {
+  return lhs.to_address() == rhs.to_address();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator!=(const Utf8CharIterator<AsChar32L> lhs,
+                const Utf8CharIterator<AsChar32R> rhs) {
+  return !(lhs == rhs);
+}
 
 // Utf8AsCharsBase is a wrapper to iterate over a UTF-8 string as a char32_t
 // code point or an absl::string_view substring of each character. Use the
@@ -231,19 +259,26 @@ class Utf8AsCharsBase {
   Utf8AsCharsBase() = default;
 
   // Constructs Utf8AsCharBase with a string pointed by string_view.
+  //
   // Complexity: constant
   explicit Utf8AsCharsBase(const StringViewT sv) : sv_(sv) {}
 
   // Constructs Utf8AsCharBase of the first count characters in the array s.
+  //
   // Complexity: constant
   Utf8AsCharsBase(const CharT* s ABSL_ATTRIBUTE_LIFETIME_BOUND,
                   const size_type count)
       : sv_(s, count) {}
 
-  // Constructs Utf8AsCharBase of the null-terminated string at the pointer.
-  // Complexity: linear
-  explicit Utf8AsCharsBase(const CharT* s ABSL_ATTRIBUTE_LIFETIME_BOUND)
-      : sv_(s) {}
+  // Constructs Utf8AsCharBase for string from a range of [first, last), where
+  // both are const_iterator values of Utf8AsCharBase. The AsChar32 parameter
+  // can be different among first, last, and the constructed class.
+  //
+  // Complexity: constant
+  template <bool AsChar32First, bool AsChar32Last>
+  Utf8AsCharsBase(const Utf8CharIterator<AsChar32First> first,
+                  const Utf8CharIterator<AsChar32Last> last)
+      : sv_(first.to_address(), last.to_address() - first.to_address()) {}
 
   // Construction from a null pointer is disallowed.
   Utf8AsCharsBase(std::nullptr_t) = delete;
@@ -278,34 +313,67 @@ class Utf8AsCharsBase {
   // Complexity: constant
   value_type back() const;
 
-  constexpr void swap(Utf8AsCharsBase& other) noexcept { sv_.swap(other.sv_); }
+  // Returns a substring of two Utf8CharIterator [first, last) as StringViewT,
+  // where last = end() if omitted. Prefer this function over other substring
+  // functions if you already have iterators because this function has constant
+  // complexity.
+  //
+  // Complexity: constant
+  template <bool AsChar32First>
+  StringViewT Substring(const Utf8CharIterator<AsChar32First> first) const {
+    return first.SubstringTo(end());
+  }
+  template <bool AsChar32First, bool AsChar32Last>
+  StringViewT Substring(const Utf8CharIterator<AsChar32First> first,
+                        const Utf8CharIterator<AsChar32Last> last) const {
+    return first.SubstringTo(last);
+  }
 
-  // Bitwise comparison operators that compare two Utf8AsCharBase using the
-  // underlying string_view comparators.
-  friend bool operator==(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ == rhs.sv_;
-  }
-  friend bool operator!=(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ != rhs.sv_;
-  }
-  friend bool operator<(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ < rhs.sv_;
-  }
-  friend bool operator<=(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ <= rhs.sv_;
-  }
-  friend bool operator>=(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ >= rhs.sv_;
-  }
-  friend bool operator>(const Utf8AsCharsBase lhs, const Utf8AsCharsBase rhs) {
-    return lhs.sv_ > rhs.sv_;
-  }
+  // Returns StringViewT to the underlying string.
+  //
+  // Complexity: constant
+  constexpr StringViewT view() const { return sv_; }
+
+  constexpr void swap(Utf8AsCharsBase& other) noexcept { sv_.swap(other.sv_); }
 
  private:
   const CharT* EndPtr() const { return sv_.data() + sv_.size(); }
 
   StringViewT sv_;
 };
+
+// Bitwise comparison operators that compare two Utf8AsCharBase using the
+// underlying string_view comparators.
+template <bool AsChar32L, bool AsChar32R>
+bool operator==(const Utf8AsCharsBase<AsChar32L> lhs,
+                const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() == rhs.view();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator!=(const Utf8AsCharsBase<AsChar32L> lhs,
+                const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() != rhs.view();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator<(const Utf8AsCharsBase<AsChar32L> lhs,
+               const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() < rhs.view();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator<=(const Utf8AsCharsBase<AsChar32L> lhs,
+                const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() <= rhs.view();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator>=(const Utf8AsCharsBase<AsChar32L> lhs,
+                const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() >= rhs.view();
+}
+template <bool AsChar32L, bool AsChar32R>
+bool operator>(const Utf8AsCharsBase<AsChar32L> lhs,
+               const Utf8AsCharsBase<AsChar32R> rhs) {
+  return lhs.view() > rhs.view();
+}
 
 // Utf8AsChars32 is a wrapper to iterator a UTF-8 string over each character as
 // char32_t code points.

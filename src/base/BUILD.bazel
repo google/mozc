@@ -41,6 +41,8 @@ load(
     "LINUX_MOZC_DOCUMENT_DIR",
     "LINUX_MOZC_SERVER_DIR",
 )
+load("//build_tools:embed_file.bzl", "mozc_embed_file")
+load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -263,20 +265,16 @@ mozc_py_binary(
     srcs = ["gen_character_set.py"],
 )
 
-genrule(
+mozc_run_build_tool(
     name = "character_set_data",
-    srcs = [
-        "//data/unicode:JIS0201.TXT",
-        "//data/unicode:JIS0208.TXT",
-    ],
-    outs = ["character_set.inc"],
-    cmd = (
-        "$(location :gen_character_set)" +
-        " --jisx0201file=$(location //data/unicode:JIS0201.TXT)" +
-        " --jisx0208file=$(location //data/unicode:JIS0208.TXT)" +
-        " --output=$@"
-    ),
-    tools = [":gen_character_set"],
+    srcs = {
+        "--jisx0201file": ["//data/unicode:JIS0201.TXT"],
+        "--jisx0208file": ["//data/unicode:JIS0208.TXT"],
+    },
+    outs = {
+        "--output": "character_set.inc",
+    },
+    tool = ":gen_character_set",
     visibility = ["//visibility:private"],
 )
 
@@ -754,15 +752,16 @@ mozc_py_binary(
     srcs = ["gen_config_file_stream_data.py"],
 )
 
-genrule(
+mozc_run_build_tool(
     name = "config_file_stream_data",
-    srcs = [
+    outs = {
+        "--output": "config_file_stream_data.inc",
+    },
+    positional_srcs = [
         "//data/keymap:keymap_files",
         "//data/preedit:composition_table",
     ],
-    outs = ["config_file_stream_data.inc"],
-    cmd = "$(location :gen_config_file_stream_data) --output=$@ $(SRCS)",
-    tools = [":gen_config_file_stream_data"],
+    tool = ":gen_config_file_stream_data",
     visibility = ["//visibility:private"],
 )
 
@@ -800,46 +799,43 @@ mozc_cc_test(
     ],
 )
 
-TARGET_PLATFORM = mozc_select(
-    android = "Android",
-    chromiumos = "ChromeOS",
-    default = "",
-    linux = "Linux",
-    macos = "Mac",
-    wasm = "Wasm",
-    windows = "Windows",
-)
-
-genrule(
+mozc_run_build_tool(
     name = "mozc_version_txt",
-    srcs = [
-        "//data/version:mozc_version_template.bzl",
+    srcs = {
+        "--template_path": ["//data/version:mozc_version_template.bzl"],
+    },
+    outs = {
+        "--output": "mozc_version.txt",
+    },
+    args =
+        mozc_select(
+            android = ["--target_platform=Android"],
+            chromiumos = ["--target_platform=ChromeOS"],
+            default = ["--target_platform="],
+            linux = ["--target_platform=Linux"],
+            macos = ["--target_platform=Mac"],
+            wasm = ["--target_platform=Wasm"],
+            windows = ["--target_platform=Windows"],
+        ),
+    tool = "//build_tools:mozc_version",
+    visibility = [
+        "//:__subpackages__",
     ],
-    outs = ["mozc_version.txt"],
-    cmd = (
-        "$(location //build_tools:mozc_version)" +
-        ' --template_path="$(location //data/version:mozc_version_template.bzl)"' +
-        ' --output="$(OUTS)"' +
-        " --target_platform=" + TARGET_PLATFORM
-    ),
-    tools = ["//build_tools:mozc_version"],
-    visibility = ["//:__subpackages__"],
 )
 
-genrule(
+mozc_run_build_tool(
     name = "version_def_h",
-    srcs = [
-        "mozc_version.txt",
-        "version_def_template.h",
+    srcs = {
+        "--version_file": [":mozc_version_txt"],
+        "--input": ["version_def_template.h"],
+    },
+    outs = {
+        "--output": "version_def.h",
+    },
+    args = [
+        "--branding=Mozc",
     ],
-    outs = ["version_def.h"],
-    cmd = (
-        "$(location //build_tools:replace_version)" +
-        " --version_file=$(location mozc_version.txt) " +
-        " --input=$(location version_def_template.h) --output=$(OUTS)" +
-        " --branding=Mozc"
-    ),
-    tools = ["//build_tools:replace_version"],
+    tool = "//build_tools:replace_version",
     visibility = ["//visibility:private"],
 )
 
@@ -847,11 +843,10 @@ mozc_cc_library(
     name = "version",
     srcs = [
         "version.cc",
-        ":version_def_h",
     ],
     hdrs = [
         "version.h",
-        "version_def.h",
+        ":version_def_h",
     ],
     deps = [
         ":logging",
@@ -1124,12 +1119,11 @@ mozc_cc_library(
     deps = ["@com_google_absl//absl/strings"],
 )
 
-genrule(
+mozc_embed_file(
     name = "gen_embedded_file_test_data",
     srcs = ["embedded_file.h"],
-    outs = ["embedded_file_test_data.inc"],
-    cmd = "$(location //build_tools:embed_file) --input=$< --name=kEmbeddedFileTestData --output=$@",
-    tools = ["//build_tools:embed_file"],
+    out = "embedded_file_test_data.inc",
+    var_name = "kEmbeddedFileTestData",
 )
 
 mozc_cc_test(

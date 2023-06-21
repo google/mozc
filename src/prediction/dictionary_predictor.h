@@ -52,7 +52,6 @@
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
-#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -130,7 +129,7 @@ class DictionaryPredictor : public PredictorInterface {
     // Seen set for dup value check.
     absl::flat_hash_set<std::string> seen_;
     // Seen set for typing correction dup key check.
-    absl::btree_multiset<std::string> seen_tc_keys_;
+    absl::flat_hash_map<std::string, int> seen_tc_keys_;
   };
 
   // pair: <rid, key_length>

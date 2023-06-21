@@ -460,8 +460,9 @@ int main(int argc, char **argv) {
       << "--engine_name=" << absl::GetFlag(FLAGS_engine_name);
 
   if (absl::GetFlag(FLAGS_id_def).empty()) {
+    std::string mozc_idfile_dir = ".";
     absl::SetFlag(&FLAGS_id_def,
-                  mozc::SelectIdDefFromName(mozc_runfiles_dir,
+                  mozc::SelectIdDefFromName(mozc_idfile_dir,
                                             absl::GetFlag(FLAGS_engine_name)));
   }
 

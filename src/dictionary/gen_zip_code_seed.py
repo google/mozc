@@ -124,7 +124,14 @@ def ReadJigyosyoEntry(zip_code, level1, level2, level3, name):
 
 def ParseTownName(level3):
   """Parse town name."""
-  if level3.find(u'以下に掲載がない場合') != -1:
+  # Skip some exceptional cases
+  # 871-0099 中津市の次に番地がくる場合 (大分県中津市)
+  # 409-0142 小菅村の次に1~663番地がくる場合 (山梨県北都留郡小菅村)
+  # 409-0211 小菅村の次に664番地以降がくる場合 (山梨県北都留郡小菅村)
+  # 901-3601 渡名喜村一円 (沖縄県島尻郡渡名喜村)
+  if (level3.find(u'以下に掲載がない場合') != -1 or
+      level3.endswith(u'がくる場合') or
+      level3.endswith(u'村一円')):
     return ['']
 
   assert CanParseAddress(level3), ('failed to be merged %s'

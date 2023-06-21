@@ -37,7 +37,7 @@
     'current_dir': '.',
     'mozc_dir': '../..',
     'common_data_dir': '<(mozc_dir)/data',
-    'platform_data_dir': '<(mozc_dir)/data/test/dictionary',
+    'platform_data_dir': '<(mozc_oss_src_dir)/data/test/dictionary',
     'dataset_tag': 'mock',
   },
   # This 'includes' defines the following targets:

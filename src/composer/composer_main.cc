@@ -27,10 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>  // NOLINT
+#include <iostream>
 #include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
 
 #include "base/init_mozc.h"
 #include "composer/composer.h"
@@ -84,7 +85,7 @@ int main(int argc, char **argv) {
     } else if (command == "!!") {
       composer->EditErase();
     } else {
-      composer->InsertCharacter(command);
+      composer->InsertCharacter(std::move(command));
     }
     composer->GetPreedit(&left, &focused, &right);
     std::cout << left << "[" << focused << "]" << right << std::endl;

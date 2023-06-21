@@ -30,7 +30,6 @@
 #include "composer/internal/composition.h"
 
 #include <iterator>
-#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -41,65 +40,39 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/algorithm/container.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
-namespace {
-
-CharChunkList DeepCopyCharChunkList(const CharChunkList &chunks) {
-  CharChunkList copy;
-  for (const std::unique_ptr<CharChunk> &chunk : chunks) {
-    copy.push_back(std::make_unique<CharChunk>(*chunk));
-  }
-  return copy;
-}
-
-}  // namespace
-
-Composition::Composition(const Table *table)
-    : table_(table), input_t12r_(Transliterators::CONVERSION_STRING) {}
-
-Composition::Composition(const Composition &x)
-    : table_(x.table_),
-      chunks_(DeepCopyCharChunkList(x.chunks_)),
-      input_t12r_(x.input_t12r_) {}
-
-Composition &Composition::operator=(const Composition &x) {
-  Erase();
-  table_ = x.table_;
-  chunks_ = DeepCopyCharChunkList(x.chunks_);
-  input_t12r_ = x.input_t12r_;
-  return *this;
-}
 
 void Composition::Erase() { chunks_.clear(); }
 
-size_t Composition::InsertAt(size_t pos, const absl::string_view input) {
+size_t Composition::InsertAt(size_t pos, std::string input) {
   CompositionInput composition_input;
-  composition_input.set_raw(input);
-  return InsertInput(pos, composition_input);
+  composition_input.set_raw(std::move(input));
+  return InsertInput(pos, std::move(composition_input));
 }
 
-size_t Composition::InsertKeyAndPreeditAt(const size_t pos,
-                                          const absl::string_view key,
-                                          const absl::string_view preedit) {
+size_t Composition::InsertKeyAndPreeditAt(const size_t pos, std::string key,
+                                          std::string preedit) {
   CompositionInput composition_input;
-  composition_input.set_raw(key);
-  composition_input.set_conversion(preedit);
-  return InsertInput(pos, composition_input);
+  composition_input.set_raw(std::move(key));
+  composition_input.set_conversion(std::move(preedit));
+  return InsertInput(pos, std::move(composition_input));
 }
 
-size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
+size_t Composition::InsertInput(size_t pos, CompositionInput input) {
   if (input.Empty()) {
     return pos;
   }
 
   CharChunkList::iterator right_chunk = MaybeSplitChunkAt(pos);
   while (right_chunk != chunks_.end() &&
-         (*right_chunk)->GetLength(input_t12r_) == 0) {
+         right_chunk->GetLength(input_t12r_) == 0) {
     ++right_chunk;
   }
 
@@ -107,14 +80,13 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
 
   CombinePendingChunks(left_chunk, input);
 
-  CompositionInput mutable_input = input;
   while (true) {
-    (*left_chunk)->AddCompositionInput(&mutable_input);
-    if (mutable_input.Empty()) {
+    left_chunk->AddCompositionInput(&input);
+    if (input.Empty()) {
       break;
     }
     left_chunk = InsertChunk(right_chunk);
-    mutable_input.set_is_new_input(false);
+    input.set_is_new_input(false);
   }
 
   return GetPosition(Transliterators::LOCAL, right_chunk);
@@ -140,13 +112,16 @@ size_t Composition::DeleteAt(const size_t position) {
     // We have to consider 0-length chunk.
     // If a chunk contains only invisible characters,
     // the result of GetLength is 0.
-    if ((*chunk_it)->GetLength(Transliterators::LOCAL) <= 1) {
+    if (chunk_it->GetLength(Transliterators::LOCAL) <= 1) {
       chunks_.erase(chunk_it);
       continue;
     }
 
-    std::unique_ptr<CharChunk> left_deleted_chunk =
-        (*chunk_it)->SplitChunk(Transliterators::LOCAL, 1);
+    absl::StatusOr<CharChunk> left_deleted_chunk =
+        chunk_it->SplitChunk(Transliterators::LOCAL, 1);
+    if (!left_deleted_chunk.ok()) {
+      LOG(WARNING) << "SplitChunk: " << left_deleted_chunk.status();
+    }
   }
   return new_position;
 }
@@ -169,7 +144,7 @@ size_t Composition::ConvertPosition(
     return 0;
   }
 
-  const size_t chunk_length_from = (*chunk_it)->GetLength(transliterator_from);
+  const size_t chunk_length_from = chunk_it->GetLength(transliterator_from);
 
   CHECK(inner_position_from <= chunk_length_from);
 
@@ -179,7 +154,7 @@ size_t Composition::ConvertPosition(
     return position_to;
   }
 
-  const size_t chunk_length_to = (*chunk_it)->GetLength(transliterator_to);
+  const size_t chunk_length_to = chunk_it->GetLength(transliterator_to);
   if (inner_position_from == chunk_length_from) {
     // If the inner_position_from is the end of the chunk (ex. "ka|"
     // vs "か"), the converterd position should be the end of the
@@ -232,10 +207,10 @@ void Composition::SetTransliterator(
 
   // chunk_it and end_it can be the same iterator from the beginning.
   while (chunk_it != end_it) {
-    (*chunk_it)->SetTransliterator(transliterator);
+    chunk_it->SetTransliterator(transliterator);
     ++chunk_it;
   }
-  (*end_it)->SetTransliterator(transliterator);
+  end_it->SetTransliterator(transliterator);
 }
 
 Transliterators::Transliterator Composition::GetTransliterator(
@@ -244,7 +219,7 @@ Transliterators::Transliterator Composition::GetTransliterator(
   const auto chunk_it =
       GetChunkAt(position, Transliterators::LOCAL, &inner_position);
   DCHECK(chunk_it != chunks_.end());
-  return (*chunk_it)->GetTransliterator(Transliterators::LOCAL);
+  return chunk_it->GetTransliterator(Transliterators::LOCAL);
 }
 
 size_t Composition::GetLength() const {
@@ -263,19 +238,19 @@ void Composition::GetStringWithModes(
   }
 
   CharChunkList::const_iterator it;
-  for (it = chunks_.begin(); *it != chunks_.back(); ++it) {
-    (*it)->AppendResult(transliterator, composition);
+  for (it = chunks_.begin(); it != std::prev(chunks_.end()); ++it) {
+    it->AppendResult(transliterator, composition);
   }
 
   switch (trim_mode) {
     case TRIM:
-      (*it)->AppendTrimedResult(transliterator, composition);
+      it->AppendTrimedResult(transliterator, composition);
       break;
     case ASIS:
-      (*it)->AppendResult(transliterator, composition);
+      it->AppendResult(transliterator, composition);
       break;
     case FIX:
-      (*it)->AppendFixedResult(transliterator, composition);
+      it->AppendFixedResult(transliterator, composition);
       break;
     default:
       LOG(WARNING) << "Unexpected trim mode: " << trim_mode;
@@ -301,13 +276,13 @@ void Composition::GetExpandedStringsWithTransliterator(
   }
 
   CharChunkList::const_iterator it;
-  for (it = chunks_.begin(); (*it) != chunks_.back(); ++it) {
-    (*it)->AppendFixedResult(transliterator, base);
+  for (it = chunks_.begin(); it != std::prev(chunks_.end()); ++it) {
+    it->AppendFixedResult(transliterator, base);
   }
 
-  chunks_.back()->AppendTrimedResult(transliterator, base);
+  chunks_.back().AppendTrimedResult(transliterator, base);
   // Get expanded from the last chunk
-  chunks_.back()->GetExpandedResults(expanded);
+  chunks_.back().GetExpandedResults(expanded);
 }
 
 void Composition::GetString(std::string *composition) const {
@@ -319,7 +294,7 @@ void Composition::GetString(std::string *composition) const {
 
   for (CharChunkList::const_iterator it = chunks_.begin(); it != chunks_.end();
        ++it) {
-    (*it)->AppendResult(Transliterators::LOCAL, composition);
+    it->AppendResult(Transliterators::LOCAL, composition);
   }
 }
 
@@ -342,7 +317,7 @@ void Composition::GetPreedit(size_t position, std::string *left,
   Util::Utf8SubString(composition, position + 1, std::string::npos, right);
 }
 
-// This function is essentialy a const function, but it cannot be const because
+// This function is essentially a const function, but it cannot be const because
 // it outputs a mutable CharChunkList::iterator.  Const version is provided
 // below.
 CharChunkList::iterator Composition::GetChunkAt(
@@ -356,7 +331,7 @@ CharChunkList::iterator Composition::GetChunkAt(
   size_t chunk_offset = 0;
   size_t chunk_length = 0;
   for (auto it = chunks_.begin(); it != chunks_.end(); ++it) {
-    chunk_length = (*it)->GetLength(transliterator);
+    chunk_length = it->GetLength(transliterator);
     if (chunk_offset + chunk_length < position) {
       chunk_offset += chunk_length;
       continue;
@@ -383,7 +358,7 @@ size_t Composition::GetPosition(Transliterators::Transliterator transliterator,
   size_t position = 0;
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); it != cur_it; ++it) {
-    position += (*it)->GetLength(transliterator);
+    position += it->GetLength(transliterator);
   }
   return position;
 }
@@ -398,14 +373,16 @@ CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
     return it;
   }
 
-  CharChunk *chunk = it->get();
-  if (inner_position == chunk->GetLength(Transliterators::LOCAL)) {
+  CharChunk &chunk = *it;
+  if (inner_position == chunk.GetLength(Transliterators::LOCAL)) {
     return std::next(it);
   }
 
-  std::unique_ptr<CharChunk> left_chunk =
-      chunk->SplitChunk(Transliterators::LOCAL, inner_position);
-  chunks_.insert(it, std::move(left_chunk));
+  absl::StatusOr<CharChunk> left_chunk =
+      chunk.SplitChunk(Transliterators::LOCAL, inner_position);
+  if (left_chunk.ok()) {
+    chunks_.insert(it, *std::move(left_chunk));
+  }
   return it;
 }
 
@@ -422,12 +399,12 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
   while (it != chunks_.begin()) {
     CharChunkList::iterator left_it = it;
     --left_it;
-    if (!(*left_it)->IsConvertible(
-            input_t12r_, table_, absl::StrCat((*it)->pending(), next_input))) {
+    if (!left_it->IsConvertible(input_t12r_, table_,
+                                absl::StrCat(it->pending(), next_input))) {
       return;
     }
 
-    (*it)->Combine(**left_it);
+    it->Combine(*left_it);
     chunks_.erase(left_it);
   }
 }
@@ -435,18 +412,14 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
 // Insert a chunk to the prev of it.
 CharChunkList::iterator Composition::InsertChunk(
     CharChunkList::const_iterator it) {
-  return chunks_.insert(it, std::make_unique<CharChunk>(input_t12r_, table_));
+  return chunks_.insert(it, CharChunk(input_t12r_, table_));
 }
 
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
 
 bool Composition::ShouldCommit() const {
-  for (const std::unique_ptr<CharChunk> &chunk : chunks_) {
-    if (!chunk->ShouldCommit()) {
-      return false;
-    }
-  }
-  return true;
+  return absl::c_all_of(
+      chunks_, [](const CharChunk &chunk) { return chunk.ShouldCommit(); });
 }
 
 // Return charchunk to be inserted and iterator of the *next* char chunk.
@@ -457,7 +430,7 @@ CharChunkList::iterator Composition::GetInsertionChunk(
   }
 
   const CharChunkList::iterator left_it = std::prev(it);
-  if ((*left_it)->IsAppendable(input_t12r_, table_)) {
+  if (left_it->IsAppendable(input_t12r_, table_)) {
     return left_it;
   }
   return InsertChunk(it);
@@ -475,7 +448,7 @@ bool Composition::IsToggleable(size_t position) const {
   if (it == chunks_.end()) {
     return false;
   }
-  return absl::StartsWith((*it)->pending(), table_->ParseSpecialKey("{?}"));
+  return absl::StartsWith(it->pending(), table_->ParseSpecialKey("{?}"));
 }
 
 }  // namespace composer

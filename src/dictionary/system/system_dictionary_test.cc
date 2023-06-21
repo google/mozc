@@ -79,7 +79,7 @@ class SystemDictionaryTest : public ::testing::Test {
         dic_fn_(
             FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
     const std::string dic_path = mozc::testing::GetSourceFileOrDie(
-        {"data", "dictionary_oss", "dictionary00.txt"});
+        {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss", "dictionary00.txt"});
     text_dict_.LoadWithLineLimit(dic_path, "",
                                  absl::GetFlag(FLAGS_dictionary_test_size));
 

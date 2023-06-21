@@ -470,7 +470,7 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
       lm_cost += CalculatePrefixPenalty(request, input_key, result,
                                         immutable_converter_, cache);
     }
-    const auto &it = min_cost_map.find(result.value);
+    const auto it = min_cost_map.find(result.value);
     if (it == min_cost_map.end()) {
       min_cost_map[result.value] = lm_cost;
       continue;
@@ -556,18 +556,19 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
   std::string key, value;
   GetCandidateKeyAndValue(result, history_key_, history_value_, &key, &value);
 
-  if (seen_.find(value) != seen_.end()) {
+  if (seen_.contains(value)) {
     *log_message = "Duplicated";
     return true;
   }
 
   if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION) &&
-      !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION) &&
-      seen_tc_keys_.count(result.non_expanded_original_key) >=
-          kTcMaxCountPerKey) {
-    *log_message =
-        absl::StrCat("Too many TC for key: ", result.non_expanded_original_key);
-    return true;
+      !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
+    auto it = seen_tc_keys_.find(result.non_expanded_original_key);
+    if (it != seen_tc_keys_.end() && it->second >= kTcMaxCountPerKey) {
+      *log_message = absl::StrCat("Too many TC for key: ",
+                                  result.non_expanded_original_key);
+      return true;
+    }
   }
 
   // User input: "おーすとり" (len = 5)
@@ -637,7 +638,7 @@ bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
   }
 
   if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION)) {
-    seen_tc_keys_.insert(result.non_expanded_original_key);
+    ++seen_tc_keys_[result.non_expanded_original_key];
   }
   return false;
 }

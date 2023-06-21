@@ -95,6 +95,10 @@ class ScopedTempUserProfileDirectory {
   const std::string original_dir_;
 };
 
+#ifndef MOZC_DICT_DIR_COMPONENTS
+#define MOZC_DICT_DIR_COMPONENTS "data"
+#endif  // MOZC_DICT_DIR_COMPONENTS
+
 }  // namespace testing
 }  // namespace mozc
 

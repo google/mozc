@@ -60,9 +60,11 @@ class MockDataManagerTest : public DataManagerTestBase {
                 {"data_manager", "testing", "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
-                {"data", "test", "dictionary"}, {"dictionary.txt"}),
+                {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary"},
+                {"dictionary.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
-                {"data", "test", "dictionary"}, {"suggestion_filter.txt"}),
+                {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary"},
+                {"suggestion_filter.txt"}),
             {
                 GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
                 GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
