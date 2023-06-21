@@ -24,8 +24,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	~	ちるだ きごう	チルダ		GENERAL
 記号	¯	まくろん きごう	マクロン
 記号	＾	^ きごう	ハット		GENERAL
-記号	￣	~ きごう うえ	オーバライン
-記号	＿	_ きごう した	アンダーライン		GENERAL
+記号	￣	~ きごう うえ おーばーらいん	オーバーライン
+記号	＿	_ きごう した あんだーばー あんだーすこあ あんだーらいん	アンダーライン		GENERAL
 記号	　	すぺーす くうはく	空白		GENERAL
 記号	␣	すぺーす くうはく	空白記号		SYMBOL		U+2423
 記号	ヽ	おなじ くりかえし どう きごう おどりじ おどり かさねじ おくりじ ゆすりじ じゅうてん じょうじ	繰り返し記号 踊り字		OTHER
