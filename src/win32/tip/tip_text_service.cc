@@ -38,7 +38,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -72,6 +71,7 @@
 #include "win32/tip/tip_ui_handler.h"
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 
 namespace mozc {
 namespace win32 {
@@ -285,17 +285,15 @@ class PrivateContextWrapper final {
   PrivateContextWrapper(const PrivateContextWrapper &) = delete;
   PrivateContextWrapper &operator=(const PrivateContextWrapper &) = delete;
 
-  // absl::AnyInvocable<T> causes an internal compiler error with VS2017.
-  // TODO(b/277086747): Update to VS2022 and switch to absl::AnyInvocable<T>
-  explicit PrivateContextWrapper(std::function<void()> &&sink_cleaner)
+  explicit PrivateContextWrapper(absl::AnyInvocable<void() &&> sink_cleaner)
       : sink_cleaner_(std::move(sink_cleaner)) {}
 
-  ~PrivateContextWrapper() { sink_cleaner_(); }
+  ~PrivateContextWrapper() { std::move(sink_cleaner_)(); }
 
   TipPrivateContext *get() { return &private_context_; }
 
  private:
-  std::function<void()> sink_cleaner_;
+  absl::AnyInvocable<void() &&> sink_cleaner_;
   TipPrivateContext private_context_;
 };
 
