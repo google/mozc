@@ -51,7 +51,7 @@
 #include <cerrno>
 
 #include "base/file_util.h"
-#include "absl/base/attributes.h"
+#include "absl/base/dynamic_annotations.h"
 #endif  // !_WIN32
 
 #ifdef __APPLE__
@@ -89,16 +89,14 @@ absl::Status DeleteRecursively(const zstring_view path) {
 #else  // _WIN32
 
 namespace {
-// TODO(b/271087668): msan false positive in fts functions.
-ABSL_ATTRIBUTE_NO_SANITIZE_MEMORY void RemoveDirectoryOrLog(const char *path) {
+void RemoveDirectoryOrLog(const char *path) {
   const absl::Status s = FileUtil::RemoveDirectory(path);
   if (!s.ok() && !absl::IsNotFound(s)) {
     LOG(ERROR) << "Cannot remove directory " << path << ":" << s;
   }
 }
 
-// TODO(b/271087668): msan false positive in fts functions.
-ABSL_ATTRIBUTE_NO_SANITIZE_MEMORY void UnlinkFileOrLog(const char *path) {
+void UnlinkFileOrLog(const char *path) {
   const absl::Status s = FileUtil::Unlink(path);
   if (!s.ok() && !absl::IsNotFound(s)) {
     LOG(ERROR) << "Cannot unlink " << path << ":" << s;
@@ -130,6 +128,9 @@ absl::Status DeleteRecursively(const zstring_view path) {
   };
 
   while (FTSENT *ent = fts_read(ftsp)) {
+    // TODO(b/271087668): msan false positive in fts functions.
+    ABSL_ANNOTATE_MEMORY_IS_INITIALIZED(ent, sizeof(*ent));
+    ABSL_ANNOTATE_MEMORY_IS_INITIALIZED(ent->fts_path, ent->fts_pathlen + 1);
     switch (ent->fts_info) {
       case FTS_DP:  // directory postorder
         RemoveDirectoryOrLog(ent->fts_path);
