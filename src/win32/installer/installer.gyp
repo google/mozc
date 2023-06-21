@@ -215,33 +215,6 @@
           ],
         },
         {
-          'target_name': 'mozc_installers_win_versioning',
-          'type': 'none',
-          'actions': [
-            {
-              'action_name': 'mozc_installers_win_versioning',
-              'inputs': [
-                '../../mozc_version.txt',
-                '../../build_tools/versioning_files.py',
-                '<(mozc_64bit_msi)',
-              ],
-              'outputs': [
-                '<(PRODUCT_DIR)/mozc_installers_win_versioning_dummy',
-              ],
-              'action': [
-                '<(python)',
-                '../../build_tools/versioning_files.py',
-                '--version_file', '../../mozc_version.txt',
-                '--configuration', '<(CONFIGURATION_NAME)',
-                '<(mozc_64bit_msi)',
-              ],
-            },
-          ],
-          'dependencies': [
-            'mozc_installers_win',
-          ],
-        },
-        {
           'target_name': 'mozc_installers_win_size_check',
           'type': 'none',
           'actions': [
