@@ -59,6 +59,11 @@ LanguageAwareRewriter::~LanguageAwareRewriter() = default;
 
 namespace {
 
+bool IsMobileRequest(const ConversionRequest &request) {
+  return request.request().zero_query_suggestion() &&
+         request.request().mixed_conversion();
+}
+
 bool IsRomanHiraganaInput(const ConversionRequest &request) {
   const auto table = request.request().special_romanji_table();
   switch (table) {
@@ -195,6 +200,21 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
 
   Segment *segment = segments->mutable_conversion_segment(0);
 
+  // Language aware candidates are useful on desktop as users may forget
+  // switching the IME. However, on mobile software keyboard, such mistakes do
+  // rarely occur, so we can fix the position for the sake of consistency.
+  if (IsMobileRequest(request)) {
+    rank = 2;
+    // Do no insert the new candidate over the typing corrections.
+    while (rank < segment->candidates_size()) {
+      if (!(segment->candidate(rank).attributes &
+            Segment::Candidate::TYPING_CORRECTION)) {
+        break;
+      }
+      ++rank;
+    }
+  }
+
   std::string raw_string;
   request.composer().GetRawString(&raw_string);
 
@@ -218,8 +238,11 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
 
   candidate->attributes |= (Segment::Candidate::NO_VARIANTS_EXPANSION |
                             Segment::Candidate::NO_EXTRA_DESCRIPTION);
-  candidate->prefix = "→ ";
-  candidate->description = "もしかして";
+
+  if (!IsMobileRequest(request)) {
+    candidate->prefix = "→ ";
+    candidate->description = "もしかして";
+  }
 
   // Set usage stats
   usage_stats::UsageStats::IncrementCount("LanguageAwareSuggestionTriggered");
