@@ -39,11 +39,12 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash_testing.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
 
-using testing::IsEmpty;
+using ::testing::IsEmpty;
 
 TEST(zpfstring_viewTest, Nullptr) {
   constexpr zpfstring_view zpsv;
@@ -54,6 +55,7 @@ TEST(zpfstring_viewTest, Nullptr) {
 
 TEST(ZStringViewTest, Smoke) {
   constexpr zpfstring_view zpsv = PF_STRING("test string");
+  EXPECT_EQ(std::char_traits<pfchar_t>::length(zpsv.c_str()), zpsv.size());
 
   EXPECT_EQ(zpsv, pfstring(PF_STRING("test string")));
   EXPECT_EQ(zpsv, PF_STRING("test string"));
@@ -62,7 +64,7 @@ TEST(ZStringViewTest, Smoke) {
   EXPECT_NE(PF_STRING(""), zpsv);
   EXPECT_LT(zpsv, PF_STRING("z"));
   EXPECT_LT(PF_STRING("a"), zpsv);
-  const zpfstring_view::element_type sv = *zpsv;
+  const pfstring_view sv = zpsv.view();
   EXPECT_EQ(sv, zpsv);
   const std::string s = to_string(zpsv);
   EXPECT_EQ(s, "test string");
@@ -70,6 +72,18 @@ TEST(ZStringViewTest, Smoke) {
   std::basic_ostringstream<pfchar_t> os;
   os << zpsv;
   EXPECT_EQ(os.str(), sv);
+
+  // Constructor with explicit length.
+  constexpr zstring_view zsv("test", 4);
+  EXPECT_EQ(zsv.size(), 4);
+  EXPECT_EQ(zsv, "test");
+  EXPECT_EQ(std::char_traits<char>::length(zsv.c_str()), zsv.size());
+
+  EXPECT_EQ(zsv.max_size(), zsv->max_size());
+  EXPECT_EQ(zsv.begin(), zsv->begin());
+  EXPECT_EQ(zsv.end(), zsv->end());
+  EXPECT_EQ(zsv.cbegin(), zsv->cbegin());
+  EXPECT_EQ(zsv.cend(), zsv->cend());
 }
 
 TEST(ZStringViewTest, Container) {
@@ -87,6 +101,7 @@ TEST(ZStringViewTest, Container) {
 }
 
 TEST(ZStringViewTest, AbslHash) {
+  // Hashing is supported via implicit conversion to string_view.
   EXPECT_TRUE(absl::VerifyTypeImplementsAbslHashCorrectly({
       pfstring_view(),
       pfstring_view(PF_STRING("")),
@@ -95,9 +110,11 @@ TEST(ZStringViewTest, AbslHash) {
   }));
 }
 
-TEST(ZStringViewTest, AbslStringify) {
+TEST(ZStringViewTest, AbslStringFuncs) {
   constexpr zstring_view a = "あいう", b = "えお";
-  EXPECT_EQ(absl::StrCat(a, b), "あいうえお");
+  EXPECT_EQ(absl::StrCat(a.view(), b.view()), "あいうえお");
+
+  EXPECT_EQ(absl::StrFormat("%s", a), "あいう");
 }
 
 }  // namespace
