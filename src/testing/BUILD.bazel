@@ -215,11 +215,13 @@ mozc_cc_library(
     ],
     deps = [
         ":googletest",
+        ":gunit",
         "//base:file_util",
         "//base:logging",
         "//base:status",
         "//base:system_util",
         "//base/file:temp_dir",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -234,6 +236,7 @@ mozc_cc_test(
     deps = [
         ":gunit_main",
         ":mozctest",
+        "//base:system_util",
         "//base/file:temp_dir",
     ],
 )

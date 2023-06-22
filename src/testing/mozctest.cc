@@ -118,5 +118,18 @@ ScopedTempUserProfileDirectory::~ScopedTempUserProfileDirectory() {
   SystemUtil::SetUserProfileDirectory(original_dir_);
 }
 
+TestWithTempUserProfile::TestWithTempUserProfile()
+    : temp_dir_(MakeTempDirectoryOrDie()) {
+  SystemUtil::SetUserProfileDirectory(temp_dir_.path());
+}
+
+TestWithTempUserProfile::~TestWithTempUserProfile() {
+  if (HasFailure()) {
+    LOG(INFO) << "Test failed. The temp profile directory will not be deleted: "
+              << temp_dir_.path();
+    temp_dir_.set_keep(true);
+  }
+}
+
 }  // namespace testing
 }  // namespace mozc

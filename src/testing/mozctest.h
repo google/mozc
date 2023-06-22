@@ -34,6 +34,8 @@
 #include <vector>
 
 #include "base/file/temp_dir.h"
+#include "testing/gunit.h"
+#include "absl/base/attributes.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -83,7 +85,8 @@ TempDirectory MakeTempDirectoryOrDie();
 // Temporarily sets the user profile directory to a unique temp directory during
 // the scope.  The original directory is restored at the end of the scope.
 // Exits if it fails to create a temporary directory.
-class ScopedTempUserProfileDirectory {
+class ABSL_DEPRECATED("Use TestWithTempUserProfile instead.")
+    ScopedTempUserProfileDirectory {
  public:
   ScopedTempUserProfileDirectory();
   ~ScopedTempUserProfileDirectory();
@@ -98,6 +101,21 @@ class ScopedTempUserProfileDirectory {
 #ifndef MOZC_DICT_DIR_COMPONENTS
 #define MOZC_DICT_DIR_COMPONENTS "data"
 #endif  // MOZC_DICT_DIR_COMPONENTS
+
+// A test base fixture class for tests that use the user profile directory.
+// During the construction, it sets the user profile directory to a unique
+// temporary directory. The temporary directory will be deleted as the end of
+// the test if the test is successful.
+// Derive your test fixtures from TestWithTempUserProfile instead of
+// ::testing::Test.
+class TestWithTempUserProfile : public ::testing::Test {
+ protected:
+  TestWithTempUserProfile();
+  ~TestWithTempUserProfile() override;
+
+ private:
+  TempDirectory temp_dir_;
+};
 
 }  // namespace testing
 }  // namespace mozc

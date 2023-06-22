@@ -102,6 +102,8 @@ class TempDirectory {
   absl::StatusOr<TempDirectory> CreateTempDirectory() const;
 
   constexpr const std::string &path() const { return path_; }
+  constexpr bool keep() const { return keep_; }
+  constexpr void set_keep(bool keep) { keep_ = keep; }
 
   void swap(TempDirectory &other) noexcept {
     static_assert(std::is_nothrow_swappable_v<decltype(path_)>);
