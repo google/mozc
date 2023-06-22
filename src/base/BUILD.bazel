@@ -758,8 +758,8 @@ mozc_run_build_tool(
         "--output": "config_file_stream_data.inc",
     },
     positional_srcs = [
-        "//data/keymap:keymap_files",
         "//data/preedit:composition_table",
+        "//data/keymap:keymap_files",
     ],
     tool = ":gen_config_file_stream_data",
     visibility = ["//visibility:private"],
