@@ -363,7 +363,6 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       Segment::Candidate *new_candidate = seg->insert_candidate(i);
       DCHECK(new_candidate);
 
-      new_candidate->Init();
       new_candidate->key = original_candidate->key;
       new_candidate->value = std::move(default_value);
       new_candidate->content_key = original_candidate->content_key;

@@ -124,7 +124,6 @@ class CandidateFilterTest : public ::testing::Test {
 
   Segment::Candidate *NewCandidate() {
     Segment::Candidate *c = candidate_freelist_->Alloc();
-    c->Init();
     c->cost = 100;
     c->structure_cost = 100;
     return c;

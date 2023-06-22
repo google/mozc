@@ -125,12 +125,6 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
 
   const Segment::Candidate &base_candidate = segment->candidate(0);
   size_t offset = std::min(insert_pos, segment->candidates_size());
-
-  Segment::Candidate *c = segment->insert_candidate(offset);
-  if (c == nullptr) {
-    LOG(ERROR) << "cannot insert candidate at " << offset;
-    return false;
-  }
   const Segment::Candidate &trigger_c = segment->candidate(offset - 1);
 
   std::string value;
@@ -158,7 +152,11 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
       return false;
   }
 
-  c->Init();
+  Segment::Candidate *c = segment->insert_candidate(offset);
+  if (c == nullptr) {
+    LOG(ERROR) << "cannot insert candidate at " << offset;
+    return false;
+  }
   c->lid = trigger_c.lid;
   c->rid = trigger_c.rid;
   c->cost = trigger_c.cost;

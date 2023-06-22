@@ -34,7 +34,7 @@
 #include <atlbase.h>
 #include <msctf.h>
 #include <objbase.h>
-#include <wrl/client.h>
+#include <wil/com.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -46,6 +46,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/win32/com.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/win_util.h"
 #include "win32/base/imm_util.h"
@@ -62,7 +63,6 @@ namespace win32 {
 namespace {
 
 using ATL::CRegKey;
-using Microsoft::WRL::ComPtr;
 
 typedef std::map<int, DWORD> PreloadOrderToKLIDMap;
 
@@ -196,15 +196,14 @@ bool GetInstalledProfilesByLanguageForTSF(
 
   HRESULT hr = S_OK;
 
-  ComPtr<ITfInputProcessorProfiles> profiles;
-  hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_ALL,
-                        IID_PPV_ARGS(&profiles));
-  if (FAILED(hr)) {
+  auto profiles = ComCreateInstance<ITfInputProcessorProfiles>(
+      CLSID_TF_InputProcessorProfiles);
+  if (!profiles) {
     return false;
   }
 
-  ComPtr<IEnumTfLanguageProfiles> enum_profiles;
-  hr = profiles->EnumLanguageProfiles(langid, &enum_profiles);
+  wil::com_ptr_nothrow<IEnumTfLanguageProfiles> enum_profiles;
+  hr = profiles->EnumLanguageProfiles(langid, enum_profiles.put());
   if (FAILED(hr)) {
     return false;
   }
@@ -339,12 +338,9 @@ bool EnableAndBroadcastNewLayout(const LayoutProfileInfo &profile,
       return false;
     }
 
-    ComPtr<ITfInputProcessorProfileMgr> profile_manager;
-
-    HRESULT hr = S_OK;
-    hr = CoCreateInstance(CLSID_TF_InputProcessorProfiles, nullptr, CLSCTX_ALL,
-                          IID_PPV_ARGS(&profile_manager));
-    if (FAILED(hr)) {
+    auto profile_manager = ComCreateInstance<ITfInputProcessorProfileMgr>(
+        CLSID_TF_InputProcessorProfiles);
+    if (!profile_manager) {
       return false;
     }
 
@@ -354,7 +350,7 @@ bool EnableAndBroadcastNewLayout(const LayoutProfileInfo &profile,
     if (broadcast_change) {
       activate_flags |= TF_IPPMF_FORSESSION;
     }
-    hr = profile_manager->ActivateProfile(
+    HRESULT hr = profile_manager->ActivateProfile(
         TF_PROFILETYPE_INPUTPROCESSOR, profile.langid, profile.clsid,
         profile.profile_guid, nullptr, activate_flags);
     if (FAILED(hr)) {

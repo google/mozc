@@ -73,7 +73,6 @@ std::unique_ptr<Segment::Candidate> CreateCandidate(absl::string_view key,
                                    absl::string_view value,
                                    absl::string_view description, int cost) {
   auto candidate = std::make_unique<Segment::Candidate>();
-  candidate->Init();
   // Fill 0 (BOS/EOS) pos code intentionally.
   candidate->lid = 0;
   candidate->rid = 0;

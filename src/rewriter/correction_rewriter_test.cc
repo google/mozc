@@ -59,7 +59,6 @@ Segment::Candidate *AddCandidate(const absl::string_view key,
                                  const absl::string_view content_value,
                                  Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(content_key);

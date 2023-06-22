@@ -166,13 +166,11 @@ class InsertDummyWordsRewriter : public RewriterInterface {
       Segment *seg = segments->mutable_conversion_segment(i);
       {
         Segment::Candidate *cand = seg->add_candidate();
-        cand->Init();
         cand->key = "tobefiltered";
         cand->value = "ToBeFiltered";
       }
       {
         Segment::Candidate *cand = seg->add_candidate();
-        cand->Init();
         cand->key = "nottobefiltered";
         cand->value = "NotToBeFiltered";
       }

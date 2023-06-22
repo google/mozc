@@ -80,7 +80,6 @@ void AddCandidate(std::string key, std::string value, int index,
   Segment::Candidate *candidate = segment->insert_candidate(index);
   DCHECK(candidate);
 
-  candidate->Init();
   segment->set_key(key);
   candidate->key = std::move(key);
   candidate->value = value;

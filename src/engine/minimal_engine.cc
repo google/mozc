@@ -75,7 +75,6 @@ bool AddAsIsCandidate(const absl::string_view key, Segments *segments) {
 
   Segment::Candidate *candidate = segment->push_back_candidate();
   DCHECK(candidate);
-  candidate->Init();
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(key);
   candidate->key = std::string(key);

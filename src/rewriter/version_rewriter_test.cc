@@ -64,7 +64,6 @@ class VersionRewriterTest : public ::testing::Test {
   static void AddCandidate(std::string key, std::string value,
                            Segment *segment) {
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->value = value;
     candidate->content_value = std::move(value);
     candidate->content_key = std::move(key);

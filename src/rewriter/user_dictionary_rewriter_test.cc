@@ -57,7 +57,6 @@ void AddCandidate(std::string value, const bool is_user_dictionary,
     seg = segments->mutable_segment(0);
   }
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->key = value;
   candidate->content_key = value;
   candidate->value = value;

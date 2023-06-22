@@ -227,7 +227,6 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
     rank = segment->candidates_size();
   }
   Segment::Candidate *candidate = segment->insert_candidate(rank);
-  candidate->Init();
   candidate->value = raw_string;
   candidate->key = raw_string;
   candidate->content_value = raw_string;

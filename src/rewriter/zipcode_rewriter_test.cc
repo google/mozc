@@ -58,7 +58,6 @@ void AddSegment(const absl::string_view key, const absl::string_view value,
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->value = std::string(key);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);

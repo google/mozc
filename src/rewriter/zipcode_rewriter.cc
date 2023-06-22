@@ -71,15 +71,6 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
     return false;
   }
 
-  const size_t offset = std::min(insert_pos, segment->candidates_size());
-  Segment::Candidate *candidate = segment->insert_candidate(offset);
-  if (candidate == nullptr) {
-    LOG(ERROR) << "cannot insert candidate at " << offset;
-    return false;
-  }
-  DCHECK_GE(offset, 1);
-  const Segment::Candidate &base_candidate = segment->candidate(offset - 1);
-
   bool is_full_width = true;
   switch (request.config().space_character_form()) {
     case config::Config::FUNDAMENTAL_INPUT_MODE:
@@ -106,7 +97,14 @@ bool ZipcodeRewriter::InsertCandidate(const size_t insert_pos,
 
   std::string value = absl::StrCat(zipcode, space, address);
 
-  candidate->Init();
+  const size_t offset = std::min(insert_pos, segment->candidates_size());
+  Segment::Candidate *candidate = segment->insert_candidate(offset);
+  if (candidate == nullptr) {
+    LOG(ERROR) << "cannot insert candidate at " << offset;
+    return false;
+  }
+  DCHECK_GE(offset, 1);
+  const Segment::Candidate &base_candidate = segment->candidate(offset - 1);
   candidate->lid = pos_matcher_.GetZipcodeId();
   candidate->rid = pos_matcher_.GetZipcodeId();
   candidate->cost = base_candidate.cost;

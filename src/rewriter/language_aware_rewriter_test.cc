@@ -127,7 +127,6 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
 void PushFrontCandidate(const absl::string_view data, Segment *segment) {
   Segment::Candidate *candidate = segment->push_front_candidate();
-  candidate->Init();
   candidate->value = std::string(data);
   candidate->key = std::string(data);
   candidate->content_value = std::string(data);

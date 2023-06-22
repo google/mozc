@@ -34,43 +34,35 @@ Example:
   ./embed_pathname.py --path_to_be_embedded=d:\data\mozc
       --constant_name=kMozcDataDir --output=mozc_data_dir.h
   Then you will get 'mozc_data_dir.h' which consists of the following line.
-      const char kMozcDataDir[] = "d:\\data\\mozc";
+      constexpr char kMozcDataDir[] = "d:\\data\\mozc";
 """
 
-import optparse
+import argparse
 import os
-import sys
 
 
-def ParseOption():
+def ParseArgs():
   """Parse command line options."""
-  parser = optparse.OptionParser()
-  parser.add_option('--path_to_be_embedded', dest='path_to_be_embedded')
-  parser.add_option('--constant_name', dest='constant_name')
-  parser.add_option('--output', dest='output')
-
-  (options, unused_args) = parser.parse_args()
-  if not all(vars(options).values()):
-    print(parser.print_help())
-    sys.exit(1)
-
-  return options
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--path_to_be_embedded')
+  parser.add_argument('--constant_name')
+  parser.add_argument('-p', type=int, default=0)
+  parser.add_argument(
+      '--output', type=argparse.FileType(mode='w', encoding='utf-8')
+  )
+  return parser.parse_args()
 
 
 def main():
-  opt = ParseOption()
-  path = os.path.abspath(opt.path_to_be_embedded)
+  args = ParseArgs()
+  path = os.path.abspath(args.path_to_be_embedded)
+  for _ in range(args.p):
+    path = os.path.dirname(path)
   # TODO(yukawa): Consider the case of non-ASCII characters.
-  if isinstance(path, str):
-    # Python3
-    escaped_path = path.replace('\\', r'\\')
-  else:
-    # Python2
-    escaped_path = path.encode('string-escape')
-  with open(opt.output, 'w') as output_file:
-    output_file.write(
-        'constexpr char %s[] = "%s";\n' % (opt.constant_name, escaped_path)
-    )
+  escaped_path = path.replace('\\', r'\\')
+  args.output.write(
+      'constexpr char %s[] = "%s";\n' % (args.constant_name, escaped_path)
+  )
 
 
 if __name__ == '__main__':

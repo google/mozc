@@ -121,6 +121,7 @@ bzl_library(
     ],
     deps = [
         ":config_bzl",
+        "//bazel:run_build_tool_bzl",
         "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
         "@build_bazel_rules_apple//apple:macos",

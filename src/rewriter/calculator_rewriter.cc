@@ -157,7 +157,6 @@ bool CalculatorRewriter::InsertCandidate(const absl::string_view value,
     const Segment::Candidate &reference_candidate =
         segment->candidate(reference_index);
 
-    candidate->Init();
     candidate->lid = reference_candidate.lid;
     candidate->rid = reference_candidate.rid;
     candidate->cost = reference_candidate.cost;

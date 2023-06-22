@@ -1447,7 +1447,6 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
 
     Segment::Candidate *candidate = segment->push_back_candidate();
     DCHECK(candidate);
-    candidate->Init();
     candidate->key = result_entry->key();
     candidate->content_key = result_entry->key();
     candidate->value = result_entry->value();

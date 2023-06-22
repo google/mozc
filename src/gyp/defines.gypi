@@ -71,6 +71,7 @@
   },
   'target_defaults': {
     'defines': [
+      'MOZC_GYP_BUILD',
     ],
     'conditions': [
       ['branding=="GoogleJapaneseInput"', {

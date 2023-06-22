@@ -75,7 +75,6 @@ class SingleKanjiRewriterTest : public ::testing::Test {
     segment->set_key(key);
 
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key.assign(key.data(), key.size());
     candidate->content_key.assign(key.data(), key.size());
     candidate->value.assign(value.data(), value.size());
@@ -119,7 +118,6 @@ TEST_F(SingleKanjiRewriterTest, SetKeyTest) {
   segment->set_key(kKey);
   Segment::Candidate *candidate = segment->add_candidate();
   // First candidate may be inserted by other rewriters.
-  candidate->Init();
   candidate->key = "strange key";
   candidate->content_key = "starnge key";
   candidate->value = "starnge value";
@@ -158,7 +156,6 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   segment1->set_key("み");
   Segment::Candidate *candidate1 = segment1->add_candidate();
 
-  candidate1->Init();
   candidate1->key = "み";
   candidate1->content_key = "見";
   candidate1->value = "見";
@@ -174,7 +171,6 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   segment2->set_key("こうたい");
   Segment::Candidate *candidate2 = segment2->add_candidate();
 
-  candidate2->Init();
   candidate2->key = "こうたい";
   candidate2->content_key = "後退";
   candidate2->value = "後退";
@@ -183,7 +179,7 @@ TEST_F(SingleKanjiRewriterTest, NounPrefixTest) {
   candidate2->rid = pos_matcher().GetContentWordWithConjugationId();
 
   candidate1 = segment1->mutable_candidate(0);
-  candidate1->Init();
+  *candidate1 = Segment::Candidate();
   candidate1->key = "み";
   candidate1->content_key = "見";
   candidate1->value = "見";
@@ -211,7 +207,6 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
   segment->set_key("あ");
   for (int i = 0; i < 10; ++i) {
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
     candidate->value = absl::StrFormat("cand%d", i);
@@ -237,7 +232,6 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   segment->set_key("あ");
   {
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
     candidate->value = "亞";  // variant of "亜".

@@ -504,7 +504,6 @@ std::unique_ptr<Segment::Candidate> CreateCandidate(
     const Segment::Candidate &base_candidate, std::string value,
     std::string description) {
   auto candidate = std::make_unique<Segment::Candidate>();
-  candidate->Init();
   candidate->lid = base_candidate.lid;
   candidate->rid = base_candidate.rid;
   candidate->cost = base_candidate.cost;

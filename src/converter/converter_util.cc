@@ -40,11 +40,9 @@ void ConverterUtil::InitSegmentsFromString(const std::string &key,
                                            Segments *segments) {
   segments->clear_conversion_segments();
   Segment *segment = segments->add_segment();
-  segment->Clear();
   segment->set_key(key);
   segment->set_segment_type(Segment::FIXED_VALUE);
   Segment::Candidate *c = segment->add_candidate();
-  c->Init();
   c->value = preedit;
   c->content_value = preedit;
   c->key = key;

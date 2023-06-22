@@ -46,7 +46,6 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし";
     candidate->value = "葛城市";
@@ -71,7 +70,6 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "ぎおんの";
     candidate->content_key = "ぎおん";
     candidate->value = "祇園の";
@@ -102,7 +100,6 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし？";
     candidate->value = "葛城市";
@@ -114,7 +111,6 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "かつらぎし";
     candidate->content_key = "かつらぎし";
     candidate->value = "葛城市";
@@ -126,7 +122,6 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_noMatching) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "かつらぎしりつとしょかん";
     candidate->content_key = "かつらぎしりつとしょかん";
     candidate->value = "葛城市立図書館";
@@ -147,7 +142,6 @@ TEST_F(IvsVariantsRewriterTest,
     // IVS 1
     {
       Segment::Candidate *candidate = seg->add_candidate();
-      candidate->Init();
       candidate->key = "かつらぎし";
       candidate->content_key = "かつらぎし";
       candidate->value = "葛城市";
@@ -156,7 +150,6 @@ TEST_F(IvsVariantsRewriterTest,
     // Non-IVS 1
     {
       Segment::Candidate *candidate = seg->add_candidate();
-      candidate->Init();
       candidate->key = "いか";
       candidate->content_key = "いか";
       candidate->value = "くコ:彡";
@@ -165,7 +158,6 @@ TEST_F(IvsVariantsRewriterTest,
     // IVS 2
     {
       Segment::Candidate *candidate = seg->add_candidate();
-      candidate->Init();
       candidate->key = "ぎおん";
       candidate->content_key = "ぎおん";
       candidate->value = "祇園";
@@ -174,7 +166,6 @@ TEST_F(IvsVariantsRewriterTest,
     // Non-IVS 2
     {
       Segment::Candidate *candidate = seg->add_candidate();
-      candidate->Init();
       candidate->key = "たこ";
       candidate->content_key = "たこ";
       candidate->value = "Ｃ:。ミ";

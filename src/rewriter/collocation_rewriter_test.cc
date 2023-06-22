@@ -84,7 +84,6 @@ class CollocationRewriterTest : public ::testing::Test {
 
   // Makes a segment from SegmentData.
   static void MakeSegment(const SegmentData &data, Segment *segment) {
-    segment->Clear();
     segment->set_key(data.key);
     for (size_t i = 0; i < data.candidates_size; ++i) {
       Segment::Candidate *cand = segment->add_candidate();

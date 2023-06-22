@@ -75,7 +75,6 @@ class VariantsRewriterTest : public ::testing::Test {
     segment->set_key(value);
     Segment::Candidate *candidate = segment->add_candidate();
     CHECK(candidate);
-    candidate->Init();
     candidate->key = std::string(value);
     candidate->content_key = std::string(value);
     candidate->value = std::string(value);
@@ -102,7 +101,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "あいう";
     candidate->content_value = "あいう";
     EXPECT_FALSE(rewriter->Rewrite(request, &segments));
@@ -111,7 +109,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "012";
     candidate->content_value = "012";
     CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
@@ -128,7 +125,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "012";
     candidate->content_value = "012";
     candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -142,7 +138,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "Google";
     candidate->content_value = "Google";
     CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
@@ -159,7 +154,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "@";
     candidate->content_value = "@";
     CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
@@ -176,7 +170,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "グーグル";
     candidate->content_value = "グーグル";
     CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
@@ -188,7 +181,6 @@ TEST_F(VariantsRewriterTest, RewriteTest) {
 
   {
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->value = "グーグル";
     candidate->content_value = "グーグル";
     CharacterFormManager::GetCharacterFormManager()->AddConversionRule(
@@ -213,11 +205,9 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
   {
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
-      candidate1->Init();
       candidate1->value = std::to_string(i);
       candidate1->content_value = std::to_string(i);
       Segment::Candidate *candidate2 = seg->add_candidate();
-      candidate2->Init();
       candidate2->content_key = "ぐーぐる";
       candidate2->key = "ぐーぐる";
       candidate2->value = "ぐーぐる";
@@ -245,13 +235,11 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
 
     for (int i = 0; i < 10; ++i) {
       Segment::Candidate *candidate1 = seg->add_candidate();
-      candidate1->Init();
       candidate1->content_key = "ぐーぐる";
       candidate1->key = "ぐーぐる";
       candidate1->value = "ぐーぐる";
       candidate1->content_value = "ぐーぐる";
       Segment::Candidate *candidate2 = seg->add_candidate();
-      candidate2->Init();
       candidate2->value = std::to_string(i);
       candidate2->content_value = std::to_string(i);
     }
@@ -276,7 +264,6 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
 TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
@@ -286,7 +273,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "ＦｕｌｌＡＳＣＩＩ";
     candidate.content_value = candidate.value;
     candidate.content_key = "fullascii";
@@ -298,7 +284,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "コギトエルゴスム";
     candidate.content_value = candidate.value;
     candidate.content_key = "こぎとえるごすむ";
@@ -308,7 +293,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "ｺｷﾞﾄｴﾙｺﾞｽﾑ";
     candidate.content_value = candidate.value;
     candidate.content_key = "こぎとえるごすむ";
@@ -320,7 +304,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "123";
     candidate.content_value = candidate.value;
     candidate.content_key = "123";
@@ -330,7 +313,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "１２３";
     candidate.content_value = candidate.value;
     candidate.content_key = "123";
@@ -343,7 +325,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   // containing symbols
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "Half ASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "half ascii";
@@ -353,7 +334,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "Half!ASCII!";
     candidate.content_value = candidate.value;
     candidate.content_key = "half!ascii!";
@@ -363,7 +343,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "CD-ROM";
     candidate.content_value = candidate.value;
     candidate.content_key = "しーでぃーろむ";
@@ -373,7 +352,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "コギト・エルゴ・スム";
     candidate.content_value = candidate.value;
     candidate.content_key = "こぎとえるごすむ";
@@ -383,7 +361,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
@@ -392,7 +369,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "「ＡＢＣ」";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
@@ -404,7 +380,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "\\";
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
@@ -414,7 +389,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "＼";  // Full-width backslash
     candidate.content_value = candidate.value;
     candidate.content_key = "ばっくすらっしゅ";
@@ -424,7 +398,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "¥";  // Half-width yen-symbol
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
@@ -434,7 +407,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "￥";  // Full-width yen-symbol
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
@@ -444,7 +416,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "~";  // Tilde
     candidate.content_value = candidate.value;
     candidate.content_key = "~";
@@ -454,7 +425,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // An emoji character of mouse face.
     candidate.value = "🐭";
     candidate.content_value = candidate.value;
@@ -466,7 +436,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // A symbol representing "パーセント".
     candidate.value = "㌫";
     candidate.content_value = candidate.value;
@@ -478,7 +447,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // Minus sign.
     candidate.value = "−";
     candidate.content_value = candidate.value;
@@ -493,7 +461,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
 TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
@@ -504,7 +471,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
@@ -515,7 +481,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "「ＡＢＣ」";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
@@ -528,7 +493,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // A symbol representing "パーセント".
     candidate.value = "㌫";
     candidate.content_value = candidate.value;
@@ -541,7 +505,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // Minus sign.
     candidate.value = "−";
     candidate.content_value = candidate.value;
@@ -557,7 +520,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
 TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "HalfASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
@@ -567,7 +529,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   // containing symbols
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "Half ASCII";
     candidate.content_value = candidate.value;
     candidate.content_key = "half ascii";
@@ -576,7 +537,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "Half!ASCII!";
     candidate.content_value = candidate.value;
     candidate.content_key = "half!ascii!";
@@ -585,7 +545,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "CD-ROM";
     candidate.content_value = candidate.value;
     candidate.content_key = "しーでぃーろむ";
@@ -594,7 +553,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "!@#";
     candidate.content_value = candidate.value;
     candidate.content_key = "!@#";
@@ -603,7 +561,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "「ＡＢＣ」";
     candidate.content_value = candidate.value;
     candidate.content_key = "[ABC]";
@@ -612,7 +569,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // A symbol representing "パーセント".
     candidate.value = "㌫";
     candidate.content_value = candidate.value;
@@ -623,7 +579,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
   }
   {
     Segment::Candidate candidate;
-    candidate.Init();
     // Minus sign.
     candidate.value = "−";
     candidate.content_value = candidate.value;
@@ -645,7 +600,6 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
       Segment *segment = segments.push_back_segment();
       segment->set_key("abc");
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->Init();
       candidate->key = "abc";
       candidate->content_key = "abc";
       candidate->value = "abc";
@@ -668,7 +622,6 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
       Segment *segment = segments.push_back_segment();
       segment->set_key("abc");
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->Init();
       candidate->key = "abc";
       candidate->content_key = "abc";
       candidate->value = "abc";
@@ -690,7 +643,6 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
       Segment *segment = segments.push_back_segment();
       segment->set_key("~");
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->Init();
       candidate->key = "~";
       candidate->content_key = "~";
       candidate->value = "〜";
@@ -789,7 +741,6 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
     segment->set_key("さんえん");
 
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = "さんえん";
     candidate->content_key = candidate->key;
     candidate->value = "３円";  // Full-width three.
@@ -844,7 +795,6 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
     segment->set_key("3えん");
 
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = "3";
     candidate->content_key = candidate->key;
     candidate->value = "３";  // Full-width three.
@@ -907,7 +857,6 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     segment->set_key("まじ!");
 
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->key = "まじ!";
     candidate->content_key = candidate->key;
     candidate->value = "マジ!";
@@ -958,7 +907,6 @@ TEST_F(VariantsRewriterTest, Finish) {
   segment->set_segment_type(Segment::FIXED_VALUE);
 
   Segment::Candidate *cand = segment->add_candidate();
-  cand->Init();
   cand->key = "いちにさん";
   cand->content_key = cand->key;
 

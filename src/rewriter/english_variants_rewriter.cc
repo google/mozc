@@ -154,7 +154,6 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           }
           Segment::Candidate *new_candidate = seg->insert_candidate(i + 1);
           DCHECK(new_candidate);
-          new_candidate->Init();
           new_candidate->value = std::move(new_value);
           new_candidate->key = original_candidate->key;
           new_candidate->content_value = std::move(*it);

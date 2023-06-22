@@ -270,7 +270,10 @@ class Segment final {
       size_t index_;
     };
 
-    void Init();
+    // Clears the Candidate with default values. Note that the default
+    // constructor already does the same so you don't need to call Clear
+    // explicitly.
+    void Clear();
 
     // Returns functional key.
     // functional_key =

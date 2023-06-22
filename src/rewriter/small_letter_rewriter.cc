@@ -226,7 +226,6 @@ void AddCandidate(std::string key, std::string description, std::string value,
   Segment::Candidate *candidate = segment->insert_candidate(index);
   DCHECK(candidate);
 
-  candidate->Init();
   segment->set_key(key);
   candidate->key = std::move(key);
   candidate->value = value;

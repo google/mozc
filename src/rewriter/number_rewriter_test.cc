@@ -86,7 +86,6 @@ Segment *SetupSegments(const PosMatcher &pos_matcher,
   segments->Clear();
   Segment *segment = segments->push_back_segment();
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher.GetNumberId();
   candidate->rid = pos_matcher.GetNumberId();
   candidate->value = std::string(candidate_value);
@@ -151,7 +150,6 @@ TEST_F(NumberRewriterTest, BasicTest) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012";
@@ -210,7 +208,6 @@ TEST_F(NumberRewriterTest, RequestType) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "012";
@@ -228,7 +225,6 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012が";
@@ -271,7 +267,6 @@ TEST_F(NumberRewriterTest, BasicTestWithNumberSuffix) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "十五個";
@@ -297,13 +292,11 @@ TEST_F(NumberRewriterTest, TestWithMultipleNumberSuffix) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "十五回";
   candidate->content_value = "十五回";
   candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetCounterSuffixWordId();
   candidate->value = "十五階";
@@ -385,14 +378,12 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *first_candidate = seg->add_candidate();
-  first_candidate->Init();
 
   // this candidate should be skipped
   first_candidate->value = "";
   first_candidate->content_value = first_candidate->value;
 
   Segment::Candidate *second_candidate = seg->add_candidate();
-  second_candidate->Init();
 
   second_candidate->value = "0";
   second_candidate->lid = pos_matcher_.GetNumberId();
@@ -432,7 +423,6 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
 
   candidate->value = "タンポポ";
   candidate->content_value = candidate->value;
@@ -452,7 +442,6 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "0";
@@ -489,7 +478,6 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "00";
@@ -526,7 +514,6 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "1000000000000000000";
@@ -577,7 +564,6 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "18446744073709551616";  // 2^64
@@ -629,7 +615,6 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetNumberId();
 
@@ -705,7 +690,6 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
     segment->set_key("さんびゃく");
     Segment::Candidate *candidate = segment->add_candidate();
     candidate = segment->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "さんびゃく";
@@ -732,7 +716,6 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
     DCHECK(segment);
     segment->set_key("さんびゃく");
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "さんびゃく";
@@ -740,7 +723,6 @@ TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
     candidate->content_value = "参百";
 
     candidate = segment->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "さんびゃく";
@@ -765,7 +747,6 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     DCHECK(segment);
     segment->set_key("いち");
     Segment::Candidate *candidate = segment->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetUnknownId();  // Not number POS
     candidate->rid = pos_matcher_.GetUnknownId();
     candidate->key = "いち";
@@ -774,7 +755,6 @@ TEST_F(NumberRewriterTest, EraseExistingCandidates) {
     candidate->content_value = "壱";
 
     candidate = segment->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();  // Number POS
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "いち";
@@ -814,7 +794,6 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = kSuccess[i][0];
@@ -837,7 +816,6 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = kFail[i][0];
@@ -863,7 +841,6 @@ TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
     {
       Segment *seg = segments.push_back_segment();
       Segment::Candidate *candidate = seg->add_candidate();
-      candidate->Init();
       candidate->lid = pos_matcher_.GetGeneralNounId();
       candidate->rid = pos_matcher_.GetGeneralNounId();
       candidate->key = "はやぶさ";
@@ -919,7 +896,6 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
   Segment *segment = segments.push_back_segment();
   segment->set_key("");
   Segment::Candidate *cand = segment->add_candidate();
-  cand->Init();
   cand->key = "もず";
   cand->content_key = cand->key;
   cand->value = "百舌鳥";
@@ -948,7 +924,6 @@ TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
 
   for (const auto &cand_data : kCandList) {
     Segment::Candidate *cand = segment->add_candidate();
-    cand->Init();
     cand->key = "いち";
     cand->content_key = cand->key;
     cand->value = cand_data.value;
@@ -969,7 +944,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "090";
@@ -983,7 +957,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->key = "-";
     candidate->value = "-";
     candidate->content_key = "-";
@@ -1010,7 +983,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     Segment *seg = segments.push_back_segment();
     seg->set_key("ひとりひとぱっく");
     Segment::Candidate *candidate = seg->add_candidate();
-    candidate->Init();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->key = "ひとり";
@@ -1045,7 +1017,6 @@ TEST_F(NumberRewriterTest, RewritePhonePrefix_b16668386) {
   Segments segments;
   Segment *seg = segments.push_back_segment();
   Segment::Candidate *candidate = seg->add_candidate();
-  candidate->Init();
   candidate->lid = pos_matcher_.GetNumberId();
   candidate->rid = pos_matcher_.GetGeneralSymbolId();
   candidate->key = "090-";

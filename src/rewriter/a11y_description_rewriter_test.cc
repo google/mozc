@@ -43,7 +43,6 @@ namespace {
 
 void AddCandidateWithValue(const absl::string_view value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = segment->key();
   candidate->content_key = segment->key();
   candidate->value = std::string(value);

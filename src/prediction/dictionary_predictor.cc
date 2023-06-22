@@ -654,7 +654,6 @@ void DictionaryPredictor::FillCandidate(
       request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
 
-  candidate->Init();
   candidate->content_key = key;
   candidate->content_value = value;
   candidate->key = key;

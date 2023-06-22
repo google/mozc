@@ -30,18 +30,17 @@
 #ifndef MOZC_BASE_WIN32_WIN_SANDBOX_H_
 #define MOZC_BASE_WIN32_WIN_SANDBOX_H_
 
-// skip all unless _WIN32
-#ifdef _WIN32
-
 #include <accctrl.h>
+#include <wil/resource.h>
 #include <windows.h>
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "base/port.h"
-#include "base/win32/scoped_handle.h"
+#include "base/strings/zstring_view.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 class Sid {
@@ -131,7 +130,7 @@ class WinSandbox {
     kIPCServerProcess,
   };
   static bool MakeSecurityAttributes(ObjectSecurityType shareble_object_type,
-                                     SECURITY_ATTRIBUTES *security_descriptor);
+                                     SECURITY_ATTRIBUTES *security_attributes);
 
   // Adds an ACE represented by |known_sid| and |access| to the dacl of the
   // kernel object referenced by |object|. |inheritance_flag| is a set of bit
@@ -154,12 +153,12 @@ class WinSandbox {
     bool in_system_dir;
   };
 
-  // Spawn a process specified by path as the specified integriy level and job
+  // Spawn a process specified by path as the specified integrity level and job
   // level.
   // Return true if process is successfully launched.
   // if pid is specified, pid of child process is set.
-  static bool SpawnSandboxedProcess(const std::string &path,
-                                    const std::string &arg,
+  static bool SpawnSandboxedProcess(absl::string_view path,
+                                    absl::string_view arg,
                                     const SecurityInfo &info, DWORD *pid);
 
   // Following three methods returns corresponding list of SID or LUID for
@@ -176,16 +175,15 @@ class WinSandbox {
 
   // Returns true if a restricted token handle is successfully assigned into
   // |restricted_token|.
-  static bool GetRestrictedTokenHandle(HANDLE original_token,
-                                       TokenLevel security_level,
-                                       IntegrityLevel integrity_level,
-                                       ScopedHandle *restricted_token);
+  static wil::unique_process_handle GetRestrictedTokenHandle(
+      HANDLE effective_token, TokenLevel security_level,
+      IntegrityLevel integrity_level);
 
   // Returns true if a restricted token handle for impersonation is
   // successfully assigned into |restricted_token|.
-  static bool GetRestrictedTokenHandleForImpersonation(
-      HANDLE original_token, TokenLevel security_level,
-      IntegrityLevel integrity_level, ScopedHandle *restricted_token);
+  static wil::unique_process_handle GetRestrictedTokenHandleForImpersonation(
+      HANDLE effective_token, TokenLevel security_level,
+      IntegrityLevel integrity_level);
 
   // Returns true |file_name| already has or is updated to have an ACE
   // (Access Control Entry) for "All Application Packages" group to have the
@@ -195,18 +193,17 @@ class WinSandbox {
   //   - FILE_EXECUTE
   //   - READ_CONTROL
   //   - SYNCHRONIZE
-  static bool EnsureAllApplicationPackagesPermisssion(
-      const std::wstring &file_name);
+  static bool EnsureAllApplicationPackagesPermisssion(zwstring_view file_name);
 
  protected:
   // Returns SDDL for given |shareble_object_type|.
   // This method is placed here for unit testing.
   static std::wstring GetSDDL(ObjectSecurityType shareble_object_type,
-                              const std::wstring &token_user_sid,
-                              const std::wstring &token_primary_group_sid,
+                              std::wstring_view token_user_sid,
+                              std::wstring_view token_primary_group_sid,
                               bool is_windows_8_or_later);
 };
 
 }  // namespace mozc
-#endif  // _WIN32
+
 #endif  // MOZC_BASE_WIN32_WIN_SANDBOX_H_

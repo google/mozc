@@ -152,6 +152,7 @@ mozc_cc_library(
         "//win32/base:win32_window_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_microsoft_wil//:wil",
     ],
 )

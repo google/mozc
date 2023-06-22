@@ -356,8 +356,6 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
       *new_candidate = *last_candidate;
       // We cannot copy inner_segment_boundary; see b/8109381.
       new_candidate->inner_segment_boundary.clear();
-    } else {
-      new_candidate->Init();
     }
     new_candidate->key = segment->key();
     new_candidate->value = segment->key();
@@ -387,7 +385,6 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     Segment::Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
     DCHECK(last_candidate);
-    new_candidate->Init();
     new_candidate->key = segment->key();
     new_candidate->value = katakana_value;
     new_candidate->content_key = segment->key();

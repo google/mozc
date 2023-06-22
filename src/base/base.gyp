@@ -379,12 +379,12 @@
         {
           'action_name': 'gen_config_file_stream_data',
           'inputs': [
-            '../data/keymap/atok.tsv',
-            '../data/keymap/chromeos.tsv',
-            '../data/keymap/kotoeri.tsv',
-            '../data/keymap/mobile.tsv',
-            '../data/keymap/ms-ime.tsv',
-            '../data/keymap/overlay_henkan_muhenkan_to_ime_on_off.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/atok.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/chromeos.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/kotoeri.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/mobile.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/ms-ime.tsv',
+            '<(mozc_oss_src_dir)/data/keymap/overlay_henkan_muhenkan_to_ime_on_off.tsv',
             '../data/preedit/12keys-halfwidthascii.tsv',
             '../data/preedit/12keys-hiragana.tsv',
             '../data/preedit/12keys-hiragana_intuitive.tsv',

@@ -41,7 +41,6 @@ TEST(RemoveRedundantCandidateRewriterTest, RemoveTest) {
   Segment *segment = segments.add_segment();
   segment->set_key("a");
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = "a";
   candidate->value = "a";
 
@@ -56,7 +55,6 @@ TEST(RemoveRedundantCandidateRewriterTest, NoRemoveTest) {
   Segment *segment = segments.add_segment();
   segment->set_key("a");
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->Init();
   candidate->key = "a";
   candidate->value = "aa";
 

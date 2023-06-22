@@ -208,7 +208,6 @@ void SymbolRewriter::InsertCandidates(
                               const SerializedDictionary::const_iterator &iter)
       -> std::unique_ptr<Segment::Candidate> {
     auto candidate = std::make_unique<Segment::Candidate>();
-    candidate->Init();
     candidate->lid = iter.lid();
     candidate->rid = iter.rid();
     candidate->cost = base_candidate.cost;

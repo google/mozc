@@ -129,11 +129,12 @@ mozc_cc_library(
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
-        ":scoped_handle",
         ":wide_char",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_microsoft_wil//:wil",
     ],
 )
 
