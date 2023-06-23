@@ -29,34 +29,26 @@
 
 #include "base/process_mutex.h"
 
+#include "base/file_util.h"
+#include "base/logging.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
+#include "absl/status/status.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+
 #ifndef _WIN32
 #include <unistd.h>
 
 #include <cstdlib>
-#include <string>
 #endif  // _WIN32
-
-#include "base/file_util.h"
-#include "base/logging.h"
-#include "base/system_util.h"
-#include "testing/googletest.h"
-#include "testing/gunit.h"
-#include "absl/flags/flag.h"
-#include "absl/status/status.h"
-#include "absl/time/clock.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
 static constexpr char kName[] = "process_mutex_test";
 
-class ProcessMutexTest : public testing::Test {
+class ProcessMutexTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
   void TearDown() override {
     ProcessMutex mutex(kName);
     if (absl::Status s = FileUtil::FileExists(mutex.lock_filename());
@@ -65,12 +57,7 @@ class ProcessMutexTest : public testing::Test {
           << "Lock file unexpectedly remains or cannot check the existence: "
           << mutex.lock_filename() << ": " << s;
     }
-
-    SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);
   }
-
- private:
-  std::string original_user_profile_dir_;
 };
 
 #if !defined(_WIN32)

@@ -33,15 +33,12 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/system_util.h"
 #include "ipc/ipc_test_util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "renderer/renderer_interface.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -113,17 +110,10 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 
   void set_suppress_error_dialog(bool suppress) override {}
 };
-}  // namespace
 
-class RendererServerTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class RendererServerTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(RendererServerTest, IPCTest) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 
   std::unique_ptr<TestRendererServer> server(new TestRendererServer);
@@ -161,5 +151,6 @@ TEST_F(RendererServerTest, IPCTest) {
   server->Wait();
 }
 
+}  // namespace
 }  // namespace renderer
 }  // namespace mozc

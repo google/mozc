@@ -157,10 +157,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":character_form_manager",
-        ":config_handler",
-        "//base:system_util",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )

@@ -29,9 +29,6 @@
 
 #include "rewriter/user_boundary_history_rewriter.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
 #include <string>
 
 #include "base/file_util.h"
@@ -42,9 +39,8 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -88,10 +84,10 @@ Segments MakeSegments(absl::Span<const absl::string_view> segments_texts,
   return segments;
 }
 
-class UserBoundaryHistoryRewriterTest : public ::testing::Test {
+class UserBoundaryHistoryRewriterTest
+    : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
     request_.set_config(&config_);
   }
@@ -118,7 +114,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   MockConverter converter;
   const UserBoundaryHistoryRewriter rewriter(&converter);
   const std::string history_file =
-      absl::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "boundary.db");
   EXPECT_OK(FileUtil::FileExists(history_file));
 }
 

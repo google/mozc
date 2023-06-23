@@ -32,21 +32,17 @@
 #include <optional>
 #include <string>
 
-#include "base/system_util.h"
-#include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace config {
+namespace {
 
-class CharacterFormManagerTest : public ::testing::Test {
- public:
+class CharacterFormManagerTest : public testing::TestWithTempUserProfile {
+ protected:
   void SetUp() override {
-    // set default user profile directory
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();
@@ -626,5 +622,6 @@ TEST_F(CharacterFormManagerTest, NumberStyle) {
   }
 }
 
+}  // namespace
 }  // namespace config
 }  // namespace mozc

@@ -31,15 +31,15 @@
 
 #include <string>
 
-#include "base/system_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
-TEST(PasswordManager, PasswordManagerTest) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+namespace {
 
+class PasswordManagerTest : public testing::TestWithTempUserProfile {};
+
+TEST_F(PasswordManagerTest, PasswordManagerTest) {
   std::string password1, password2;
   EXPECT_TRUE(PasswordManager::InitPassword());
   EXPECT_TRUE(PasswordManager::GetPassword(&password1));
@@ -56,4 +56,6 @@ TEST(PasswordManager, PasswordManagerTest) {
   EXPECT_TRUE(PasswordManager::GetPassword(&password2));
   EXPECT_EQ(password1, password2);
 }
+
+}  // namespace
 }  // namespace mozc

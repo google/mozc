@@ -42,6 +42,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'storage.gyp:storage',
       ],
       'variables': {

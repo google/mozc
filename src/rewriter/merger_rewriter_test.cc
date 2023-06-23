@@ -32,14 +32,11 @@
 #include <memory>
 #include <string>
 
-#include "base/system_util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -104,12 +101,7 @@ class TestRewriter : public RewriterInterface {
   int capability_;
 };
 
-class MergerRewriterTest : public testing::Test {
- protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class MergerRewriterTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(MergerRewriterTest, Rewrite) {
   std::string call_result;

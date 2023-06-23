@@ -33,12 +33,11 @@
 #include <string>
 #include <utility>
 
-#include "base/system_util.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -69,12 +68,9 @@ bool ContainCandidate(const Segments &segments,
   return false;
 }
 
-class SmallLetterRewriterTest : public ::testing::Test {
+class SmallLetterRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    engine_ = MockDataEngineFactory::Create().value();
-  }
+  void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
   std::unique_ptr<EngineInterface> engine_;
   const commands::Request &default_request() const { return default_request_; }

@@ -34,7 +34,6 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_py_binary",
-    "mozc_select",
 )
 
 package(default_visibility = [
@@ -707,15 +706,14 @@ mozc_cc_binary(
     deps = [
         ":quality_regression_util",
         "//base:init_mozc",
+        "//base:system_util",
+        "//base/file:temp_dir",
         "//engine:eval_engine_factory",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-    ] + mozc_select(
-        default = [
-        ],
-        windows = [],
-    ),
+    ],
 )
 
 mozc_py_binary(

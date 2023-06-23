@@ -29,10 +29,6 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#if defined(__ANDROID__) || defined(__wasm__)
-#error "This platform is not supported."
-#endif  // __ANDROID__ || __wasm__
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,20 +42,18 @@
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
+#if defined(__ANDROID__) || defined(__wasm__)
+#error "This platform is not supported."
+#endif  // __ANDROID__ || __wasm__
+
 namespace mozc {
 
-class IPCPathManagerTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class IPCPathManagerTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   std::string path_created;

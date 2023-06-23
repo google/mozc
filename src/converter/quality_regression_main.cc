@@ -34,10 +34,13 @@
 #include <string>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/init_mozc.h"
+#include "base/system_util.h"
 #include "converter/quality_regression_util.h"
 #include "engine/eval_engine_factory.h"
 #include "absl/flags/flag.h"
+#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
@@ -47,10 +50,11 @@ ABSL_FLAG(std::string, data_type, "", "engine data type");
 ABSL_FLAG(std::string, engine_type, "desktop", "engine type");
 ABSL_FLAG(std::string, output, "", "output file");
 
-using mozc::Engine;
-using mozc::quality_regression::QualityRegressionUtil;
-
 namespace {
+
+using ::mozc::Engine;
+using ::mozc::TempDirectory;
+using ::mozc::quality_regression::QualityRegressionUtil;
 
 absl::Status Run(std::ostream &out, const Engine &engine,
                  const std::vector<QualityRegressionUtil::TestItem> &items) {
@@ -76,6 +80,10 @@ absl::Status Run(std::ostream &out, const Engine &engine,
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
+  absl::StatusOr<TempDirectory> temp_dir =
+      TempDirectory::Default().CreateTempDirectory();
+  CHECK_OK(temp_dir);
+  mozc::SystemUtil::SetUserProfileDirectory(temp_dir->path());
 
   absl::StatusOr<std::unique_ptr<Engine>> create_result =
       mozc::CreateEvalEngine(absl::GetFlag(FLAGS_data_file),

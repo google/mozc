@@ -34,17 +34,15 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "testing/testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -66,13 +64,10 @@ constexpr char kDictionaryData[] =
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
 constexpr uint64_t kInvalidDictionaryId = 0;
 
-class UserDictionarySessionHandlerTest : public ::testing::Test {
+class UserDictionarySessionHandlerTest
+    : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
-
     handler_ = std::make_unique<UserDictionarySessionHandler>();
     command_ = std::make_unique<UserDictionaryCommand>();
     status_ = std::make_unique<UserDictionaryCommandStatus>();
@@ -82,7 +77,6 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
 
   void TearDown() override {
     EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
-    SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
 
   void Clear() {
@@ -91,7 +85,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   static std::string GetUserDictionaryFile() {
-    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
+    return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "test.db");
   }
 
   uint64_t CreateSession() {
@@ -194,9 +188,6 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   std::unique_ptr<UserDictionarySessionHandler> handler_;
   std::unique_ptr<UserDictionaryCommand> command_;
   std::unique_ptr<UserDictionaryCommandStatus> status_;
-
- private:
-  std::string original_user_profile_directory_;
 };
 
 TEST_F(UserDictionarySessionHandlerTest, InvalidCommand) {

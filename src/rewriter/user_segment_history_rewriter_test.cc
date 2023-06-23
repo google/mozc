@@ -39,7 +39,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -51,9 +50,8 @@
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -112,20 +110,11 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
   AppendCandidateSuffix(segment, index, suffix, lid, 1);
 }
 
-}  // namespace
-
-class UserSegmentHistoryRewriterTest : public ::testing::Test {
+class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
 
-  UserSegmentHistoryRewriterTest(const UserSegmentHistoryRewriterTest &) =
-      delete;
-  UserSegmentHistoryRewriterTest &operator=(
-      const UserSegmentHistoryRewriterTest &) = delete;
-
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
     ConfigHandler::GetDefaultConfig(&config_);
     for (int i = 0; i < config_.character_form_rules_size(); ++i) {
       Config::CharacterFormRule *rule = config_.mutable_character_form_rules(i);
@@ -192,7 +181,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const std::string history_file =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "/segment.db");
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "/segment.db");
   EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
@@ -1579,4 +1568,5 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

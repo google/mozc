@@ -34,7 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -46,9 +45,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -70,7 +68,7 @@ void AddCandidate(const absl::string_view key, const absl::string_view value,
 
 }  // namespace
 
-class UsageRewriterTest : public ::testing::Test {
+class UsageRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   UsageRewriterTest() {
     convreq_.set_request(&request_);
@@ -78,7 +76,6 @@ class UsageRewriterTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_ = std::make_unique<testing::MockDataManager>();

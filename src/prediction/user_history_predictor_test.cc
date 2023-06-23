@@ -40,6 +40,7 @@
 
 #include "base/clock_mock.h"
 #include "base/container/trie.h"
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/random.h"
@@ -61,11 +62,10 @@
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
@@ -82,10 +82,9 @@ using ::mozc::dictionary::SuppressionDictionary;
 
 }  // namespace
 
-class UserHistoryPredictorTest : public ::testing::Test {
+class UserHistoryPredictorTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = std::make_unique<Request>();
     config_ = std::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
@@ -2203,6 +2202,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   ScopedClockMock clock(1, 0);
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
 
   // Create a history proto containing old entries (timestamp = 1).
   user_history_predictor::UserHistory history;
@@ -2223,7 +2223,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Load().
   {
     const std::string filename =
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testload");
+        FileUtil::JoinPath(temp_dir.path(), "testload");
     // Write directly to the file to keep old entries for testing.
     storage::EncryptedStringStorage file_storage(filename);
     ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
@@ -2242,7 +2242,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Save().
   {
     const std::string filename =
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testsave");
+        FileUtil::JoinPath(temp_dir.path(), "testsave");
     UserHistoryStorage storage(filename);
     storage.GetProto() = history;
     ASSERT_TRUE(storage.Save());
@@ -2265,6 +2265,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
   // This test checks invalid entries are not loaded into dic_.
   ScopedClockMock clock(1, 0);
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
 
   // Create a history proto containing invalid entries (timestamp = 1).
   user_history_predictor::UserHistory history;
@@ -2290,11 +2291,10 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
   // Test Load().
   {
     const std::string filename =
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testload");
+        FileUtil::JoinPath(temp_dir.path(), "testload");
     // Write directly to the file to keep invalid entries for testing.
     storage::EncryptedStringStorage file_storage(filename);
     ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
-    FileUnlinker unlinker(filename);
 
     UserHistoryStorage storage(filename);
     ASSERT_TRUE(storage.Load());

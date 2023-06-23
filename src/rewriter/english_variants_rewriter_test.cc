@@ -33,23 +33,17 @@
 #include <string>
 #include <vector>
 
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
-class EnglishVariantsRewriterTest : public ::testing::Test {
+class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
   bool GetRankFromValue(const Segment &segment, const absl::string_view value,
                         int *rank) {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {

@@ -714,9 +714,8 @@ mozc_cc_test(
         ":file_util",
         ":logging",
         ":process_mutex",
-        ":system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/time",
     ],
@@ -795,7 +794,7 @@ mozc_cc_test(
         ":file_util",
         ":system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 
@@ -964,9 +963,8 @@ mozc_cc_test(
     deps = [
         ":encryptor",
         ":random",
-        ":system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 

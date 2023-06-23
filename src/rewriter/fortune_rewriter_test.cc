@@ -33,12 +33,10 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -71,12 +69,7 @@ bool HasFortune(const Segments &segments) {
   return false;
 }
 
-class FortuneRewriterTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class FortuneRewriterTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(FortuneRewriterTest, BasicTest) {
   FortuneRewriter fortune_rewriter;

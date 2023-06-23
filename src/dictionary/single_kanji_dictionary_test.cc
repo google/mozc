@@ -35,25 +35,19 @@
 #include <tuple>
 #include <vector>
 
-#include "base/system_util.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace dictionary {
+namespace {
 
-class SingleKanjiDictionaryTest : public ::testing::Test {
+class SingleKanjiDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
-  SingleKanjiDictionaryTest() {
-    data_manager_ = std::make_unique<testing::MockDataManager>();
-  }
+  SingleKanjiDictionaryTest()
+      : data_manager_(std::make_unique<testing::MockDataManager>()) {}
 
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
- protected:
   std::unique_ptr<testing::MockDataManager> data_manager_;
 };
 
@@ -131,5 +125,6 @@ TEST_F(SingleKanjiDictionaryTest, LookupKanjiEntries) {
   }
 }
 
+}  // namespace
 }  // namespace dictionary
 }  // namespace mozc

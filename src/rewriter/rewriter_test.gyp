@@ -105,6 +105,7 @@
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'rewriter.gyp:rewriter',
       ],
       'variables': {

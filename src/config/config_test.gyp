@@ -88,6 +88,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'config.gyp:character_form_manager',
       ],
       'variables': {

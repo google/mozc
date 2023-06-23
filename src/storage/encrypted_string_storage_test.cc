@@ -38,9 +38,8 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace storage {
@@ -75,15 +74,14 @@ class TestEncryptedStringStorage : public EncryptedStringStorage {
   mutable std::string salt_;
   mutable std::string original_data_;
 };
-#else  // __ANDROID__
+#else   // __ANDROID__
 typedef EncryptedStringStorage TestEncryptedStringStorage;
 #endif  // __ANDROID__
 }  // namespace
 
-class EncryptedStringStorageTest : public testing::Test {
+class EncryptedStringStorageTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");
 

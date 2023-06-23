@@ -204,6 +204,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../testing/testing.gyp:testing_util',
         'session.gyp:session',
       ],

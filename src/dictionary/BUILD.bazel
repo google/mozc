@@ -298,8 +298,8 @@ mozc_cc_test(
         "//base:system_util",
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "//testing:testing_util",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -328,15 +328,14 @@ mozc_cc_test(
     requires_full_emulation = True,
     deps = [
         ":user_dictionary_session_handler",
-        "//base:file_stream",
         "//base:file_util",
         "//base:system_util",
         "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "//testing:testing_util",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -375,9 +374,10 @@ mozc_cc_test(
         "//base:mmap",
         "//base:random",
         "//base:system_util",
+        "//base/file:temp_dir",
         "//protocol:user_dictionary_storage_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -723,9 +723,9 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":single_kanji_dictionary",
-        "//base:system_util",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
+        "//testing:mozctest",
     ],
 )
 

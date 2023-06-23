@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -62,11 +61,10 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -366,10 +364,9 @@ class MockDataAndPredictor {
   std::unique_ptr<DictionaryPredictorTestPeer> predictor_;
 };
 
-class DictionaryPredictorTest : public ::testing::Test {
+class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());

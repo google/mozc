@@ -35,21 +35,18 @@
 #include <memory>
 #include <string>
 
-#include "base/logging.h"
-#include "base/system_util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
 
 using ::mozc::dictionary::PosMatcher;
 
-class CollocationRewriterTest : public ::testing::Test {
+class CollocationRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   // Helper data structures to define test cases.
   // Used to generate Segment::Candidate.
@@ -79,7 +76,6 @@ class CollocationRewriterTest : public ::testing::Test {
   CollocationRewriterTest()
       : pos_matcher_(data_manager_.GetPosMatcherData()),
         collocation_rewriter_(CollocationRewriter::Create(data_manager_)) {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   // Makes a segment from SegmentData.

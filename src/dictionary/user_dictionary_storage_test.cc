@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -44,38 +45,21 @@
 #include "dictionary/user_dictionary_importer.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
 
-using user_dictionary::UserDictionary;
+using ::mozc::user_dictionary::UserDictionary;
 
-}  // namespace
-
-class UserDictionaryStorageTest : public ::testing::Test {
+class UserDictionaryStorageTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
+  std::string GetUserDictionaryFile() {
+    return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "test.db");
   }
-
-  void TearDown() override {
-    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
-    SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
-  }
-
-  static std::string GetUserDictionaryFile() {
-    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
-  }
-
- private:
-  std::string backup_user_profile_directory_;
 };
 
 TEST_F(UserDictionaryStorageTest, FileTest) {
@@ -212,8 +196,9 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
     entry->set_comment(prefix + "comment");
   }
 
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string export_file =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "export.txt");
+      FileUtil::JoinPath(temp_dir.path(), "export.txt");
 
   EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
   EXPECT_TRUE(storage.ExportDictionary(id, export_file));
@@ -435,8 +420,9 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 
 TEST_F(UserDictionaryStorageTest, Export) {
   constexpr int kDummyDictionaryId = 10;
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string kPath =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "exported_file");
+      FileUtil::JoinPath(temp_dir.path(), "exported_file");
 
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
@@ -466,4 +452,5 @@ TEST_F(UserDictionaryStorageTest, Export) {
 #endif  // _WIN32
 }
 
+}  // namespace
 }  // namespace mozc

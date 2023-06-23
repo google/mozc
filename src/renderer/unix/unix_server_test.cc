@@ -31,24 +31,19 @@
 
 #include "base/system_util.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
+
+namespace mozc {
+namespace renderer {
+namespace gtk {
+namespace {
 
 using testing::_;
 using testing::Return;
 using testing::StrictMock;
 
-namespace mozc {
-namespace renderer {
-namespace gtk {
-
-class UnixServerTest : public testing::Test {
- protected:
-  virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class UnixServerTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(UnixServerTest, StartMessageLoopTest) {
   GtkWrapperMock *gtk_mock = new StrictMock<GtkWrapperMock>();
@@ -72,6 +67,7 @@ TEST_F(UnixServerTest, StartMessageLoopTest) {
   server.StartMessageLoop();
 }
 
+}  // namespace
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc

@@ -36,11 +36,9 @@
 #include <vector>
 
 #include "base/clock.h"
-#include "base/system_util.h"
 #include "base/thread2.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
@@ -55,17 +53,16 @@ class NamedEventListenerThread {
                            absl::Duration wait, int max_num_wait)
       : listener_(name), first_triggered_time_(0) {
     EXPECT_TRUE(listener_.IsAvailable());
-    thread_ =
-        mozc::Thread2([initial_wait, wait, max_num_wait, &listener = listener_,
+    thread_ = Thread2([initial_wait, wait, max_num_wait, &listener = listener_,
                        &first_triggered_time = first_triggered_time_]() {
-          absl::SleepFor(initial_wait);
-          for (int i = 0; i < max_num_wait; ++i) {
-            if (listener.Wait(wait)) {
-              first_triggered_time = absl::ToUnixNanos(Clock::GetAbslTime());
-              return;
-            }
-          }
-        });
+      absl::SleepFor(initial_wait);
+      for (int i = 0; i < max_num_wait; ++i) {
+        if (listener.Wait(wait)) {
+          first_triggered_time = absl::ToUnixNanos(Clock::GetAbslTime());
+          return;
+        }
+      }
+    });
   }
 
   absl::Time first_triggered_time() const {
@@ -78,7 +75,7 @@ class NamedEventListenerThread {
 
  private:
   NamedEventListener listener_;
-  mozc::Thread2 thread_;
+  Thread2 thread_;
 
   // std::atomic requires the type to be is_trivially_copyable, and some
   // (older?) versions of msvc and clang think absl::Time is not.
@@ -86,19 +83,7 @@ class NamedEventListenerThread {
   std::atomic<uint64_t> first_triggered_time_;
 };
 
-class NamedEventTest : public testing::Test {
-  void SetUp() override {
-    original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
-  void TearDown() override {
-    SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
-  }
-
- private:
-  std::string original_user_profile_directory_;
-};
+class NamedEventTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(NamedEventTest, NamedEventBasicTest) {
   NamedEventListenerThread listener(kName, absl::ZeroDuration(),
@@ -136,7 +121,7 @@ TEST_F(NamedEventTest, IsOwnerTest) {
   EXPECT_TRUE(l1.IsOwner());
   EXPECT_TRUE(l1.IsAvailable());
   NamedEventListener l2(kName);
-  EXPECT_FALSE(l2.IsOwner());  // the instance is owneded by l1
+  EXPECT_FALSE(l2.IsOwner());  // the instance is owned by l1
   EXPECT_TRUE(l2.IsAvailable());
 }
 
@@ -171,7 +156,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
 TEST_F(NamedEventTest, NamedEventPathLengthTest) {
 #ifndef _WIN32
   const std::string name_path = NamedEventUtil::GetEventPath(kName);
-  // length should be less than 14 not includeing terminating null.
+  // length should be less than 14 not including terminating null.
   EXPECT_EQ(name_path.length(), 13);
 #endif  // _WIN32
 }

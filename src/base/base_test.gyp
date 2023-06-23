@@ -75,6 +75,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'absl.gyp:absl_status',
         'absl.gyp:absl_time',
         'base.gyp:base',
@@ -322,6 +323,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'base.gyp:encryptor',
       ],
     },
@@ -333,6 +335,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'base.gyp:config_file_stream',
       ],
       'variables': {

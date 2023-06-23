@@ -33,9 +33,7 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -45,9 +43,8 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -101,14 +98,9 @@ bool HasCandidate(const Segments &segments, int index,
 
 }  // namespace
 
-class SymbolRewriterTest : public ::testing::Test {
+class SymbolRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  SymbolRewriterTest() = default;
-  ~SymbolRewriterTest() override = default;
-
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
     // We cannot use mock converter here because SymbolRewriter uses
     // ResizeSegment of converter implementation. However, SymbolRewriter is
     // independent of underlying dictionary and, hence, we can use a converter

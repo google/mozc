@@ -33,13 +33,11 @@
 #include <string>
 #include <utility>
 
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -48,12 +46,8 @@ namespace {
 
 constexpr absl::string_view kDummyDataVersion = "dataversion";
 
-class VersionRewriterTest : public ::testing::Test {
+class VersionRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
   static void AddSegment(std::string key, std::string value,
                          Segments *segments) {
     Segment *segment = segments->push_back_segment();

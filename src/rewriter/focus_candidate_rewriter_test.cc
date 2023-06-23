@@ -35,14 +35,11 @@
 #include <vector>
 
 #include "base/number_util.h"
-#include "base/system_util.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -62,12 +59,9 @@ void AddCandidateWithContentValue(Segment *segment,
   c->content_value = std::string(content_value);
 }
 
-}  // namespace
-
-class FocusCandidateRewriterTest : public ::testing::Test {
+class FocusCandidateRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     rewriter_ = std::make_unique<FocusCandidateRewriter>(&mock_data_manager_);
   }
 
@@ -757,4 +751,5 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

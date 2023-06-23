@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/system_util.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
@@ -43,10 +42,9 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -165,16 +163,14 @@ class TestDataManager : public testing::MockDataManager {
   std::unique_ptr<uint32_t[]> string_array_buf_;
 };
 
-class EnvironmentalFilterRewriterTest : public ::testing::Test {
+class EnvironmentalFilterRewriterTest
+    : public testing::TestWithTempUserProfile {
  protected:
-  EnvironmentalFilterRewriterTest() = default;
-  ~EnvironmentalFilterRewriterTest() override = default;
-
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     rewriter_ =
         std::make_unique<EnvironmentalFilterRewriter>(test_data_manager_);
   }
+
   std::unique_ptr<EnvironmentalFilterRewriter> rewriter_;
 
  private:
