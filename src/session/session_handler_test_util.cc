@@ -33,14 +33,13 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/system_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "storage/registry.h"
-#include "testing/googletest.h"
+#include "testing/gunit.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -113,8 +112,6 @@ void SessionHandlerTestBase::SetUp() {
       absl::GetFlag(FLAGS_last_create_session_timeout);
   flags_restricted_backup_ = absl::GetFlag(FLAGS_restricted);
 
-  user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   ConfigHandler::GetConfig(&config_backup_);
   ClearState();
 }
@@ -122,7 +119,6 @@ void SessionHandlerTestBase::SetUp() {
 void SessionHandlerTestBase::TearDown() {
   ClearState();
   ConfigHandler::SetConfig(config_backup_);
-  SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
 
   absl::SetFlag(&FLAGS_max_session_size, flags_max_session_size_backup_);
   absl::SetFlag(&FLAGS_create_session_min_interval,

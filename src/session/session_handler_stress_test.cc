@@ -27,22 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <random>
-#include <string>
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_tool.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
@@ -55,39 +54,66 @@ namespace {
 
 using ::mozc::session::SessionHandlerTool;
 
-TEST(SessionHandlerStressTest, BasicStressTest) {
-  std::vector<commands::KeyEvent> keys;
-  commands::Output output;
-  std::unique_ptr<Engine> engine = EngineFactory::Create().value();
-  SessionHandlerTool client(std::move(engine));
-  size_t keyevents_size = 0;
-  constexpr size_t kMaxEventSize = 2500;
-  ASSERT_TRUE(client.CreateSession());
+constexpr size_t kTotalEventSize = 2500;
 
-  session::RandomKeyEventsGenerator generator;
-  if (absl::GetFlag(FLAGS_random_seed).has_value()) {
-    const uint32_t random_seed = absl::GetFlag(FLAGS_random_seed).value();
-    LOG(INFO) << "Random seed: " << random_seed;
-    generator = session::RandomKeyEventsGenerator(std::seed_seq{random_seed});
-  }
+constexpr size_t kShardCount = 32;
+constexpr size_t kEventsPerShard = kTotalEventSize / kShardCount;
 
-  if (absl::GetFlag(FLAGS_set_mobile_request)) {
-    commands::Request request;
-    commands::RequestForUnitTest::FillMobileRequest(&request);
-    client.SetRequest(request, &output);
-  }
-
-  while (keyevents_size < kMaxEventSize) {
-    keys.clear();
-    generator.GenerateSequence(&keys);
-    for (size_t i = 0; i < keys.size(); ++i) {
-      ++keyevents_size;
-      EXPECT_TRUE(client.TestSendKey(keys[i], &output));
-      EXPECT_TRUE(client.SendKey(keys[i], &output));
+class SessionHandlerStressTest
+    : public ::mozc::testing::TestWithTempUserProfile,
+      public ::testing::WithParamInterface<int> {
+ protected:
+  SessionHandlerStressTest() : client_(EngineFactory::Create().value()) {
+    if (absl::GetFlag(FLAGS_random_seed).has_value()) {
+      const uint32_t random_seed =
+          absl::GetFlag(FLAGS_random_seed).value() + GetParam();
+      LOG(INFO) << "Random seed: " << random_seed;
+      generator_ =
+          session::RandomKeyEventsGenerator(std::seed_seq{random_seed});
     }
   }
-  EXPECT_TRUE(client.DeleteSession());
+
+  void SetMobileRequest() {
+    if (absl::GetFlag(FLAGS_set_mobile_request)) {
+      commands::Output output;
+      commands::Request request;
+      commands::RequestForUnitTest::FillMobileRequest(&request);
+      client_.SetRequest(request, &output);
+    }
+  }
+
+  SessionHandlerTool client_;
+  session::RandomKeyEventsGenerator generator_;
+};
+
+TEST_P(SessionHandlerStressTest, BasicStressTest) {
+  std::vector<commands::KeyEvent> keys;
+  commands::Output output;
+  size_t keyevents_size = 0;
+
+  ASSERT_TRUE(client_.CreateSession());
+  SetMobileRequest();
+
+  while (keyevents_size < kEventsPerShard) {
+    keys.clear();
+    generator_.GenerateSequence(&keys);
+    for (const commands::KeyEvent &key : keys) {
+      ++keyevents_size;
+      EXPECT_TRUE(client_.TestSendKey(key, &output));
+      EXPECT_TRUE(client_.SendKey(key, &output));
+    }
+  }
+  EXPECT_TRUE(client_.DeleteSession());
 }
+
+template <typename T, T... I>
+std::array<T, sizeof...(I)> ToArray(std::integer_sequence<T, I...> sequence) {
+  return {{I...}};
+}
+
+INSTANTIATE_TEST_SUITE_P(Shards, SessionHandlerStressTest,
+                         ::testing::ValuesIn(ToArray(
+                             std::make_integer_sequence<int, kShardCount>{})));
 
 }  // namespace
 }  // namespace mozc

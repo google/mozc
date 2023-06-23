@@ -92,13 +92,13 @@ mozc_cc_test(
     timeout = "moderate",
     srcs = ["session_converter_test.cc"],
     requires_full_emulation = False,
+    shard_count = 8,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":request_test_util",
         ":session_converter",
         ":session_converter_interface",
         "//base:logging",
-        "//base:system_util",
         "//base:util",
         "//composer",
         "//composer:table",
@@ -112,20 +112,21 @@ mozc_cc_test(
         "//request:conversion_request",
         "//session/internal:candidate_list",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "//testing:testing_util",
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
 
 mozc_cc_test(
     name = "session_converter_stress_test",
-    size = "large",
+    size = "small",
     srcs = ["session_converter_stress_test.cc"],
     requires_full_emulation = False,
+    shard_count = 8,
     deps = [
         ":session_converter",
         "//base:port",
@@ -178,9 +179,10 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "session_test",
-    size = "large",
+    size = "small",
     srcs = ["session_test.cc"],
     requires_full_emulation = False,
+    shard_count = 8,
     deps = [
         ":request_test_util",
         ":session",
@@ -218,35 +220,30 @@ mozc_cc_test(
 
 mozc_cc_test(
     name = "session_regression_test",
-    size = "large",
+    size = "small",
     srcs = [
         "common.h",
         "session_regression_test.cc",
     ],
     requires_full_emulation = False,
+    shard_count = 8,
     deps = [
         ":request_test_util",
         ":session",
-        ":session_converter_interface",
         ":session_handler",
-        "//base:file_util",
         "//base:logging",
-        "//base:port",
-        "//base:system_util",
         "//composer:key_parser",
         "//composer:table",
         "//config:config_handler",
-        "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//engine:mock_data_engine_factory",
         "//engine:user_data_manager_interface",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//rewriter:rewriter_interface",
         "//session/internal:ime_context",
-        "//session/internal:keymap",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -371,6 +368,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:port",
         "//base:system_util",
+        "//base/file:temp_dir",
         "//composer:table",
         "//config:character_form_manager",
         "//config:config_handler",
@@ -386,6 +384,7 @@ mozc_cc_library(
         "//storage:registry",
         "//testing",
         "//testing:gunit_prod",
+        "//testing:mozctest",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
@@ -519,7 +518,7 @@ mozc_cc_library(
 
 mozc_cc_test(
     name = "session_watch_dog_test",
-    size = "large",
+    size = "small",
     srcs = ["session_watch_dog_test.cc"],
     requires_full_emulation = False,
     tags = [
@@ -697,21 +696,23 @@ mozc_cc_test(
 
 mozc_cc_test(
     name = "session_handler_stress_test",
-    size = "large",
+    size = "small",
+    timeout = "moderate",
     srcs = [
         "common.h",
         "session_handler_stress_test.cc",
     ],
     requires_full_emulation = False,
+    shard_count = 16,
     tags = ["noandroid"],  # TODO(b/73698251): disabled due to errors
     deps = [
         ":random_keyevents_generator",
         ":request_test_util",
         ":session_handler_tool",
-        "//base:port",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -780,13 +781,15 @@ mozc_cc_binary(
 
 mozc_cc_test(
     name = "session_handler_scenario_test",
-    size = "large",
+    size = "small",
+    timeout = "moderate",
     srcs = ["session_handler_scenario_test.cc"],
     data = [
         "//data/test/session/scenario:scenario_files",
         "//data/test/session/scenario/usage_stats:usage_stats_scenario_files",
     ],
     requires_full_emulation = False,
+    shard_count = 8,
     tags = [
         "manual",
         "noandroid",  # TODO(b/73698251): disabled due to errors

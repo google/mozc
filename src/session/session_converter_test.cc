@@ -44,7 +44,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -60,13 +59,12 @@
 #include "session/request_test_util.h"
 #include "session/session_converter_interface.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "testing/testing_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -104,10 +102,9 @@ void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
   cand->content_value = cand->value;
 }
 
-class SessionConverterTest : public ::testing::Test {
+class SessionConverterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
     config_ = std::make_unique<Config>();
