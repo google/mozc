@@ -105,6 +105,26 @@ bool HasCharacterFormDescription(const absl::string_view value) {
   return IsConvertibleToHalfWidthForm(value);
 }
 
+// Returns NumberString::Style corresponding to the given form
+NumberUtil::NumberString::Style GetStyle(
+    const NumberUtil::NumberString::Style original_style,
+    CharacterFormManager::FormType form) {
+  switch (original_style) {
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH:
+    case NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH:
+      return (form == CharacterFormManager::HALF_WIDTH)
+                 ? NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH
+                 : NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH:
+    case NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH:
+      return (form == CharacterFormManager::HALF_WIDTH)
+                 ? NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH
+                 : NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH;
+    default:
+      return original_style;
+  }
+}
+
 }  // namespace
 
 // static
@@ -376,12 +396,15 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       new_candidate->inner_segment_boundary =
           std::move(default_inner_segment_boundary);
       new_candidate->attributes = original_candidate->attributes;
+      new_candidate->style = GetStyle(original_candidate->style, default_form);
       SetDescription(pos_matcher_, default_description_type, new_candidate);
 
       original_candidate->value = std::move(alternative_value);
       original_candidate->content_value = std::move(alternative_content_value);
       original_candidate->inner_segment_boundary =
           std::move(alternative_inner_segment_boundary);
+      original_candidate->style =
+          GetStyle(original_candidate->style, alternative_form);
       SetDescription(pos_matcher_, alternative_description_type,
                      original_candidate);
       ++i;  // skip inserted candidate
@@ -391,6 +414,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
       original_candidate->content_value = std::move(default_content_value);
       original_candidate->inner_segment_boundary =
           std::move(default_inner_segment_boundary);
+      original_candidate->style =
+          GetStyle(original_candidate->style, default_form);
       SetDescription(pos_matcher_, default_description_type,
                      original_candidate);
     }

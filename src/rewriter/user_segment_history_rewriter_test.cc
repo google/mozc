@@ -1263,6 +1263,58 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   }
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, NumberStyleLearningEnabled) {
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
+      true);
+  request_.set_request(&request);
+
+  SetNumberForm(Config::FULL_WIDTH);
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("1234");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "1,234";
+    candidate->content_value = "1,2344";
+    candidate->content_key = "1234";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style =
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(request_, &segments);  // half-width for separated number
+  }
+
+  {
+    // This rewriter does not handle number candidate
+    segments.Clear();
+    segments.add_segment();
+    {
+      segments.mutable_segment(0)->set_key("1234");
+      Segment::Candidate *candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "1234";
+      candidate->content_value = "1234";
+      candidate->content_key = "1234";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+    EXPECT_TRUE(number_rewriter->Rewrite(request_, &segments));
+    rewriter->Rewrite(request_, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "1234");
+  }
+}
+
 TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   SetNumberForm(Config::HALF_WIDTH);
   Segments segments;

@@ -219,8 +219,17 @@ bool IsNumberCandidate(const Segment::Candidate &candidate,
   if (candidate.lid != candidate.rid) {
     return false;
   }
+  const bool has_number_style =
+      candidate.style != NumberUtil::NumberString::DEFAULT_STYLE;
+  // Support number candidate with the default POS.
+  // For example, transliteration rewriter can generate number
+  // candidate with the unknown_id.
+  const bool is_unknown_number_candidate =
+      (pos_matcher.IsUnknown(candidate.lid) &&
+       Util::IsScriptType(candidate.value, Util::NUMBER));
   return pos_matcher.IsNumber(candidate.lid) ||
-         pos_matcher.IsKanjiNumber(candidate.rid);
+         pos_matcher.IsKanjiNumber(candidate.lid) || has_number_style ||
+         is_unknown_number_candidate;
 }
 
 void SetNumberInfoToExistingCandidates(
@@ -320,6 +329,8 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->attributes |=
       base_cand.attributes & (Segment::Candidate::PARTIALLY_KEY_CONSUMED |
                               Segment::Candidate::NO_LEARNING);
+  cand->attributes |=
+      result_cand.attributes & Segment::Candidate::NO_VARIANTS_EXPANSION;
 }
 
 void InsertCandidate(Segment *segment, int32_t insert_position,
@@ -596,6 +607,7 @@ void NumberRewriter::RerankCandidates(
 
   // Rerank `top_number_entry` to top.
   std::rotate(candidates.begin(), top_number_entry, top_number_entry + 1);
+  candidates.begin()->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
 }
 
 void NumberRewriter::Finish(const ConversionRequest &request,

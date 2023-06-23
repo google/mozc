@@ -124,6 +124,10 @@ class NumberRewriterTest : public ::testing::Test {
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
+  void TearDown() override {
+    config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
+  }
+
   NumberRewriter *CreateNumberRewriter() {
     return new NumberRewriter(&mock_data_manager_);
   }
@@ -1124,6 +1128,9 @@ TEST_F(NumberRewriterTest, NumberStyleLearning) {
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(3).style,
               NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH);
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(3).value, "2,000");
+    ASSERT_TRUE(new_segments.conversion_segment(0).candidate(3).attributes &
+                Segment::Candidate::NO_VARIANTS_EXPANSION);
+
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(4).style,
               NumberUtil::NumberString::DEFAULT_STYLE);
     ASSERT_EQ(new_segments.conversion_segment(0).candidate(4).value, "2000");

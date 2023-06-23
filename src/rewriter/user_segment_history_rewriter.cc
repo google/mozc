@@ -80,6 +80,12 @@ constexpr size_t kMaxRerankSize = 5;
 
 constexpr char kFileName[] = "user://segment.db";
 
+bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_number_style_learning();
+}
+
 class FeatureValue {
  public:
   FeatureValue() : feature_type_(1), reserved_(0) {}
@@ -715,7 +721,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
             Segment::Candidate::NO_HISTORY_LEARNING) {
       continue;
     }
-    if (IsNumberSegment(segment)) {
+    if (IsNumberSegment(segment) && !IsNumberStyleLearningEnabled(request)) {
       RememberNumberPreference(segment);
       continue;
     }
@@ -885,7 +891,11 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
     }
 
     if (IsNumberSegment(*segment)) {
-      modified |= RewriteNumber(segment);
+      // Number candidates will be rewritten in number rewriter
+      // when number style learning is on.
+      if (!IsNumberStyleLearningEnabled(request)) {
+        modified |= RewriteNumber(segment);
+      }
       continue;
     }
 
