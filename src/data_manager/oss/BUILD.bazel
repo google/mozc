@@ -54,7 +54,7 @@ mozc_dataset(
     cforms = "//data/rules:cforms.def",
     collocation_src = "//data/dictionary_oss:collocation.txt",
     collocation_suppression_src = "//data/dictionary_oss:collocation_suppression.txt",
-    connection_deflate = "//data/dictionary_oss:connection.deflate",
+    connection_single_column_src = "//data/dictionary_oss:connection_single_column.txt",
     dictionary_srcs = [
         "//data/dictionary_oss:dictionary_data",
         "//data/dictionary_oss:reading_correction.tsv",
@@ -121,9 +121,9 @@ mozc_cc_test(
     ],
     copts = ["-Wno-parentheses"],
     data = [
-        ":mozc_dataset_for_oss@connection_single_column",
         ":mozc_dataset_for_oss@typing_models",
         "//data/dictionary_oss:base_dictionary_data",
+        "//data/dictionary_oss:connection_single_column.txt",
         "//data/dictionary_oss:suggestion_filter.txt",
     ],
     requires_full_emulation = False,

@@ -57,7 +57,8 @@ class OssDataManagerTest : public DataManagerTestBase {
       : DataManagerTestBase(
             new OssDataManager, kLSize, kRSize, IsBoundaryInternal,
             mozc::testing::GetSourceFileOrDie(
-                {"data_manager", "oss", "connection_single_column.txt"}),
+                {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss",
+                 "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
                 {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss"},

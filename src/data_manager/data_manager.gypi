@@ -349,35 +349,6 @@
       ],
     },
     {
-      'target_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        '<(mozc_dir)/build_tools/zlib_util.py',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
-          'variables': {
-            'connection_deflate': '<(platform_data_dir)/connection.deflate',
-          },
-          'inputs': [
-            '<(connection_deflate)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/connection_single_column.txt',
-          ],
-          'action': [
-            '<(python)', '<(mozc_dir)/build_tools/zlib_util.py', 'decompress',
-            '<(connection_deflate)',
-            '<(gen_out_dir)/connection_single_column.txt',
-          ],
-          'message': ('[<(dataset_tag)] Decompressing ' +
-                      '<(connection_deflate)'),
-        },
-      ],
-    },
-    {
       'target_name': 'gen_separate_connection_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -385,14 +356,11 @@
         '<(mozc_dir)/build_tools/code_generator_util.py',
         '<(mozc_dir)/data_manager/gen_connection_data.py',
       ],
-      'dependencies': [
-        'gen_connection_single_column_txt_for_<(dataset_tag)#host',
-      ],
       'actions': [
         {
           'action_name': 'gen_separate_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(gen_out_dir)/connection_single_column.txt',
+            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',

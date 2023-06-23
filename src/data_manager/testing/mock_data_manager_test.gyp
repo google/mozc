@@ -54,7 +54,7 @@
       },
       'copies': [
         {
-          'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/mozc/src/data/test/dictionary/',
+          'destination': '<(mozc_data_dir)/data/test/dictionary',
           'files': [
               '<(mozc_oss_src_dir)/data/test/dictionary/dictionary.txt',
               '<(mozc_oss_src_dir)/data/test/dictionary/suggestion_filter.txt',
@@ -65,14 +65,11 @@
     {
       'target_name': 'install_test_connection_txt',
       'type': 'none',
-      'dependencies': [
-        'mock_data_manager.gyp:gen_connection_single_column_txt_for_mock#host',
-      ],
       'copies': [
         {
-          'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/mozc/src/data/test/dictionary/',
+          'destination': '<(mozc_data_dir)/data/test/dictionary',
           'files': [
-            '<(gen_out_dir)/connection_single_column.txt',
+            '<(mozc_oss_src_dir)/data/test/dictionary/connection_single_column.txt',
           ],
         }
       ],
