@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/file/temp_dir.h"
+#include "base/system_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 
@@ -51,6 +52,12 @@ TEST(MozcTestTest, GetSourcePath) {
 TEST(MozcTestTest, MakeTempDirectoryOrDie) {
   TempDirectory temp_dir = MakeTempDirectoryOrDie();
   EXPECT_THAT(temp_dir.path(), Not(IsEmpty()));
+}
+
+class TestWithTempUserProfileTest : public TestWithTempUserProfile {};
+
+TEST_F(TestWithTempUserProfileTest, SmokeTest) {
+  EXPECT_THAT(SystemUtil::GetUserProfileDirectory(), Not(IsEmpty()));
 }
 
 }  // namespace

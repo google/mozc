@@ -262,8 +262,8 @@
           'action_name': 'gen_character_set',
           'variables': {
             'input_files': [
-              '../data/unicode/JIS0201.TXT',
-              '../data/unicode/JIS0208.TXT',
+              '<(mozc_oss_src_dir)/data/unicode/JIS0201.TXT',
+              '<(mozc_oss_src_dir)/data/unicode/JIS0208.TXT',
             ],
           },
           'inputs': [
@@ -275,8 +275,8 @@
           ],
           'action': [
             '<(python)', 'gen_character_set.py',
-            '--jisx0201file=../data/unicode/JIS0201.TXT',
-            '--jisx0208file=../data/unicode/JIS0208.TXT',
+            '--jisx0201file=<(mozc_oss_src_dir)/data/unicode/JIS0201.TXT',
+            '--jisx0208file=<(mozc_oss_src_dir)/data/unicode/JIS0208.TXT',
             '--output=<(gen_out_dir)/character_set.inc'
           ],
         },

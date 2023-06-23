@@ -35,7 +35,7 @@ def mozc_dataset(
         cforms,
         collocation_src,
         collocation_suppression_src,
-        connection_deflate,
+        connection_single_column_src,
         dictionary_srcs,
         emoji_src,
         emoticon_categorized_src,
@@ -76,7 +76,6 @@ def mozc_dataset(
       - collocation: Collocation data
       - collocation_suppression: Collocation suppression data
       - connection: Connection matrix data
-      - connection_single_column: Connection data in text format
       - dictionary: System dictionary data
       - suggestion_filter: Suggestion filter data
       - pos_group: POS group data
@@ -109,7 +108,7 @@ def mozc_dataset(
       cforms: cform definition file.
       collocation_src: collocation data file.
       collocation_suppression_src: collocation suppression data file.
-      connection_deflate: deflated connection matrix file.
+      connection_single_column_src: Connection data in text format
       dictionary_srcs: a list of dictionary files.
       emoji_src: emoji data file.
       emoticon_categorized_src: categorized emoji data file.
@@ -347,20 +346,9 @@ def mozc_dataset(
     )
 
     native.genrule(
-        name = name + "@connection_single_column",
-        srcs = [connection_deflate],
-        outs = ["connection_single_column.txt"],
-        cmd = (
-            "$(location //build_tools:zlib_util) " +
-            "decompress $< $@"
-        ),
-        tools = ["//build_tools:zlib_util"],
-    )
-
-    native.genrule(
         name = name + "@connection",
         srcs = [
-            name + "@connection_single_column",
+            connection_single_column_src,
             id_def,
             special_pos,
         ],
@@ -368,7 +356,7 @@ def mozc_dataset(
         cmd = (
             "$(location //data_manager:gen_connection_data) " +
             "--text_connection_file=" +
-            "$(location :" + name + "@connection_single_column) " +
+            "$(location " + connection_single_column_src + ") " +
             "--id_file=$(location " + id_def + ") " +
             "--special_pos_file=$(location " + special_pos + ") " +
             "--binary_output_file=$@ " +

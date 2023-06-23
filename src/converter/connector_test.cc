@@ -64,7 +64,8 @@ TEST(ConnectorTest, CompareWithRawData) {
   ASSERT_EQ(1, connector.GetResolution());
 
   const std::string connection_text_path = testing::GetSourceFileOrDie(
-      {"data_manager", "testing", "connection_single_column.txt"});
+      {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary",
+       "connection_single_column.txt"});
   std::vector<ConnectionDataEntry> data;
   for (ConnectionFileReader reader(connection_text_path); !reader.done();
        reader.Next()) {

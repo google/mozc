@@ -116,12 +116,6 @@
         'compiler_host': 'clang',
         'compiler_host_version_int': 303,  # Clang 3.3 or higher
       }],
-      ['target_platform=="Android"', {
-        'compiler_target': 'clang',
-        'compiler_target_version_int': 308,  # Clang 3.8 or higher
-        'compiler_host': 'clang',
-        'compiler_host_version_int': 304,  # Clang 3.4 or higher
-      }],
       ['target_platform=="Linux"', {
         'compiler_target': 'clang',
         'compiler_target_version_int': 304,  # Clang 3.4 or higher
@@ -155,15 +149,6 @@
           ['OS=="linux"', {
             'cflags': [
               '<@(debug_extra_cflags)',
-            ],
-          }],
-          ['target_platform=="Android"', {
-            'target_conditions' : [
-              ['_toolset=="target"', {
-                # We won't debug target's .so file so remove debug symbol.
-                # If the symbol is required, remove following line.
-                'cflags!': ['-g'],
-              }],
             ],
           }],
         ],
@@ -259,62 +244,6 @@
           ['target_platform=="Linux"', {
             # OS_LINUX is defined always (target and host).
             'defines': ['OS_LINUX',],
-          }],
-          ['target_platform=="Android"', {
-            'defines': ['NO_USAGE_REWRITER'],
-            'target_conditions' : [
-              ['_toolset=="host"', {
-                'defines': ['OS_LINUX',],
-              }],
-              ['_toolset=="target" and _type=="executable"', {
-                # For unittest:
-                # Android 5.0+ requires standalone native executables to be PIE.
-                # See crbug.com/373219.
-                'ldflags': [
-                  '-pie',
-                ],
-              }],
-              ['_toolset=="target"', {
-                'defines': [
-                  'OS_ANDROID',
-                  # For the ambiguity of wcsstr.
-                  '_WCHAR_H_CPLUSPLUS_98_CONFORMANCE_',
-                ],
-                'cflags': [
-                  # For unittest:
-                  # Android 5.0+ requires standalone native executables to be
-                  # PIE. Note that we can specify this option even for ICS
-                  # unless we ship a standalone native executable.
-                  # See crbug.com/373219.
-                  '-fPIE',
-                ],
-                'ldflags!': [  # Remove all libraries for GNU/Linux.
-                  '<@(linux_ldflags)',
-                ],
-                'ldflags': [
-                  '-llog',
-                  '-static-libstdc++',
-                ],
-                'conditions': [
-                  ['android_arch=="arm"', {
-                    'ldflags': [
-                      # Support only armv7-a.
-                      # Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                    ],
-                    'cflags': [
-                      # Support only armv7-a.
-                      # Both LDFLAG and CLFAGS should have this.
-                      '-march=armv7-a',
-                      '-mfloat-abi=softfp',
-                      '-mfpu=vfpv3-d16',
-                      # Force thumb interaction set for smaller file size.
-                      '-mthumb',
-                    ],
-                  }],
-                ],
-              }],
-            ],
           }],
         ],
       }],
@@ -415,56 +344,6 @@
         ['LD', '<!(which ld)'],
         ['NM', '<!(which nm)'],
         ['READELF', '<!(which readelf)'],
-      ],
-    }],
-    ['target_platform=="Android"', {
-      'conditions': [
-        ['android_arch=="arm"', {
-          'variables': {
-            'toolchain_prefix': 'arm-linux-androideabi',
-          },
-        }],
-        ['android_arch=="x86"', {
-          'variables': {
-            'toolchain_prefix': 'i686-linux-android',
-          },
-        }],
-        ['android_arch=="mips"', {
-          'variables': {
-            'toolchain_prefix': 'mipsel-linux-android',
-          },
-        }],
-        ['android_arch=="arm64"', {
-          'variables': {
-            'toolchain_prefix': 'aarch64-linux-android',
-          },
-        }],
-        ['android_arch=="x86_64"', {
-          'variables': {
-            'toolchain_prefix': 'x86_64-linux-android',
-          },
-        }],
-        ['android_arch=="mips64"', {
-          'variables': {
-            'toolchain_prefix': 'mips64el-linux-android',
-          },
-        }],
-      ],
-      # To use clang only CC and CXX should point clang directly.
-      # c.f., https://android.googlesource.com/platform/ndk/+/tools_ndk_r9d/docs/text/STANDALONE-TOOLCHAIN.text
-      'make_global_settings': [
-        ['AR', '<(ndk_bin_dir)/<(toolchain_prefix)-ar'],
-        ['CC', '<(ndk_bin_dir)/<(toolchain_prefix)-clang'],
-        ['CXX', '<(ndk_bin_dir)/<(toolchain_prefix)-clang++'],
-        ['LD', '<(ndk_bin_dir)/<(toolchain_prefix)-ld'],
-        ['NM', '<(ndk_bin_dir)/<(toolchain_prefix)-nm'],
-        ['READELF', '<(ndk_bin_dir)/<(toolchain_prefix)-readelf'],
-        ['AR.host', '<!(which ar)'],
-        ['CC.host', '<!(which clang)'],
-        ['CXX.host', '<!(which clang++)'],
-        ['LD.host', '<!(which ld)'],
-        ['NM.host', '<!(which nm)'],
-        ['READELF.host', '<!(which readelf)'],
       ],
     }],
   ],

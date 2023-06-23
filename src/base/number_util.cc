@@ -865,6 +865,10 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     }
     DCHECK(suffix);
     suffix->assign(begin, end);
+    if (Util::ContainsScriptType(*suffix, Util::NUMBER)) {
+      // We do want to treat "2,000" as "2" + ",000".
+      return false;
+    }
   }
 
   if (numbers.empty()) {

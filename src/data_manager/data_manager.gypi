@@ -349,35 +349,6 @@
       ],
     },
     {
-      'target_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
-      'type': 'none',
-      'toolsets': ['host'],
-      'sources': [
-        '<(mozc_dir)/build_tools/zlib_util.py',
-      ],
-      'actions': [
-        {
-          'action_name': 'gen_connection_single_column_txt_for_<(dataset_tag)',
-          'variables': {
-            'connection_deflate': '<(platform_data_dir)/connection.deflate',
-          },
-          'inputs': [
-            '<(connection_deflate)',
-          ],
-          'outputs': [
-            '<(gen_out_dir)/connection_single_column.txt',
-          ],
-          'action': [
-            '<(python)', '<(mozc_dir)/build_tools/zlib_util.py', 'decompress',
-            '<(connection_deflate)',
-            '<(gen_out_dir)/connection_single_column.txt',
-          ],
-          'message': ('[<(dataset_tag)] Decompressing ' +
-                      '<(connection_deflate)'),
-        },
-      ],
-    },
-    {
       'target_name': 'gen_separate_connection_data_for_<(dataset_tag)',
       'type': 'none',
       'toolsets': ['host'],
@@ -385,14 +356,11 @@
         '<(mozc_dir)/build_tools/code_generator_util.py',
         '<(mozc_dir)/data_manager/gen_connection_data.py',
       ],
-      'dependencies': [
-        'gen_connection_single_column_txt_for_<(dataset_tag)#host',
-      ],
       'actions': [
         {
           'action_name': 'gen_separate_connection_data_for_<(dataset_tag)',
           'variables': {
-            'text_connection_file': '<(gen_out_dir)/connection_single_column.txt',
+            'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
             'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
@@ -828,7 +796,7 @@
           'variables': {
             'generator': '<(mozc_dir)/rewriter/gen_emoji_rewriter_data.py',
             'input_files': [
-              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+              '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             ],
           },
           'inputs': [
@@ -841,7 +809,7 @@
           ],
           'action': [
             '<(python)', '<(generator)',
-            '--input=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--input=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--output_token_array=<(gen_out_dir)/emoji_token.data',
             '--output_string_array=<(gen_out_dir)/emoji_string.data',
           ],
@@ -948,7 +916,7 @@
           'variables': {
             'generator': '<(mozc_dir)/prediction/gen_zero_query_data.py',
             'input_files': [
-              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+              '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_dir)/data/emoticon/categorized.tsv',
               '<(mozc_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/zero_query/zero_query.def',
@@ -966,7 +934,7 @@
             '<(python)', '<(generator)',
             '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
             '--input_symbol=<(mozc_dir)/data/symbol/symbol.tsv',
-            '--input_emoji=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--input_emoji=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--input_emoticon=<(mozc_dir)/data/emoticon/categorized.tsv',
             '--output_token_array=<(gen_out_dir)/zero_query_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_string.data',

@@ -58,7 +58,7 @@
       'type': 'none',
       'variables': {
         'test_data': [
-          '<(gen_out_dir)/connection_single_column.txt',
+          '<(mozc_oss_src_dir)/data/dictionary_oss/connection_single_column.txt',
           '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary00.txt',
           '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary01.txt',
           '<(mozc_oss_src_dir)/data/dictionary_oss/dictionary02.txt',
@@ -73,9 +73,6 @@
         ],
         'test_data_subdir': 'data/dictionary_oss',
       },
-      'dependencies': [
-        'oss_data_manager.gyp:gen_connection_single_column_txt_for_oss#host',
-      ],
       'includes': ['../../gyp/install_testdata.gypi'],
     },
   ],

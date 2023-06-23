@@ -100,6 +100,17 @@ TEST_F(TempDirectoryTest, Default) {
   TempDirectory nested_dir = CreateDirectory(temp_dir);
   TempFile nested1 = CreateFile(nested_dir);
   TempFile nested2 = CreateFile(nested_dir);
+  std::string dir_to_keep_path;
+  {
+    // Test keep().
+    TempDirectory dir_to_keep = CreateDirectory(nested_dir);
+    dir_to_keep_path = dir_to_keep.path();
+    EXPECT_FALSE(dir_to_keep.keep());
+    dir_to_keep.set_keep(true);
+    EXPECT_TRUE(dir_to_keep.keep());
+  }
+  // This directory should continue to exist after going out of scope.
+  EXPECT_OK(FileUtil::DirectoryExists(dir_to_keep_path));
 
   std::ofstream of2(FileUtil::JoinPath(nested_dir.path(), "test"));
   EXPECT_TRUE(of2.good());

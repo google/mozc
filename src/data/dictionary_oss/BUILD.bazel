@@ -36,7 +36,7 @@ package(default_visibility = [
 exports_files([
     "collocation.txt",
     "collocation_suppression.txt",
-    "connection.deflate",
+    "connection_single_column.txt",
     "dictionary00.txt",
     "dictionary01.txt",
     "dictionary02.txt",
@@ -82,7 +82,7 @@ filegroup(
 filegroup(
     name = "dictionary",
     srcs = [
-        ":connection.deflate",
+        ":connection_single_column.txt",
         ":dictionary00.txt",
         ":dictionary01.txt",
         ":dictionary02.txt",

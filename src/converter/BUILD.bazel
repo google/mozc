@@ -162,8 +162,8 @@ mozc_cc_test(
     size = "small",
     srcs = ["connector_test.cc"],
     data = [
+        "//data/test/dictionary:connection_single_column.txt",
         "//data_manager/testing:mozc_dataset_for_testing@connection",
-        "//data_manager/testing:mozc_dataset_for_testing@connection_single_column",
     ],
     requires_full_emulation = False,
     deps = [
