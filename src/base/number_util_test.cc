@@ -482,6 +482,21 @@ TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
     EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
         kInput, true, &kanji_output, &arabic_output, &suffix));
   }
+
+  {
+    constexpr absl::string_view kInput =
+        "２，０００";  // separated number style
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
+        kInput, true, &kanji_output, &arabic_output, &suffix));
+  }
+
+  {
+    constexpr absl::string_view kInput = "２時３０分";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
+        kInput, true, &kanji_output, &arabic_output, &suffix));
+  }
 }
 
 TEST(NumberUtilTest, ArabicToWideArabicTest) {
