@@ -796,7 +796,7 @@
           'variables': {
             'generator': '<(mozc_dir)/rewriter/gen_emoji_rewriter_data.py',
             'input_files': [
-              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+              '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             ],
           },
           'inputs': [
@@ -809,7 +809,7 @@
           ],
           'action': [
             '<(python)', '<(generator)',
-            '--input=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--input=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--output_token_array=<(gen_out_dir)/emoji_token.data',
             '--output_string_array=<(gen_out_dir)/emoji_string.data',
           ],
@@ -916,7 +916,7 @@
           'variables': {
             'generator': '<(mozc_dir)/prediction/gen_zero_query_data.py',
             'input_files': [
-              '<(mozc_dir)/data/emoji/emoji_data.tsv',
+              '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_dir)/data/emoticon/categorized.tsv',
               '<(mozc_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/zero_query/zero_query.def',
@@ -934,7 +934,7 @@
             '<(python)', '<(generator)',
             '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
             '--input_symbol=<(mozc_dir)/data/symbol/symbol.tsv',
-            '--input_emoji=<(mozc_dir)/data/emoji/emoji_data.tsv',
+            '--input_emoji=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--input_emoticon=<(mozc_dir)/data/emoticon/categorized.tsv',
             '--output_token_array=<(gen_out_dir)/zero_query_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_string.data',

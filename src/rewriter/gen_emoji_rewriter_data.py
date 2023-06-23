@@ -45,7 +45,7 @@ File format:
   7th) unicode version
 
   Detailed format is described in the default input file
-  "mozc/data/emoji/emoji_data.tsv".
+  "mozc/src/data/emoji/emoji_data.tsv".
 """
 
 import argparse
