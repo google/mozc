@@ -332,6 +332,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":small_letter_rewriter",
+        "//base/strings:assign",
         "//engine:mock_data_engine_factory",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
