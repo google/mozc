@@ -260,6 +260,10 @@ class Composer final {
   int timeout_threshold_msec() const;
   void set_timeout_threshold_msec(int threshold_msec);
 
+  const spelling::SpellCheckerServiceInterface *spellchecker_service() const {
+    return spellchecker_service_;
+  }
+
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
