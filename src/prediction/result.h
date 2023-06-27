@@ -125,6 +125,8 @@ struct Result {
   size_t consumed_key_size = 0;
   // The total penalty added to this result.
   int penalty = 0;
+  // The original cost before rescoring. Used for debugging purpose.
+  int cost_before_rescoring = 0;
   // If removed is true, this result is not used for a candidate.
   bool removed = false;
 #ifndef NDEBUG

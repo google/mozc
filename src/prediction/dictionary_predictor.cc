@@ -402,6 +402,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   MaybeMoveLiteralCandidateToTop(request, segments);
 
+  if (rescorer_ != nullptr && IsDebug(request)) {
+    AddRescoringDebugDescription(segments);
+  }
+
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
 }
@@ -700,6 +704,7 @@ void DictionaryPredictor::FillCandidate(
     auto it = merged_types.find(result.value);
     SetDebugDescription(it == merged_types.end() ? 0 : it->second,
                         &candidate->description);
+    candidate->cost_before_rescoring = result.cost_before_rescoring;
   }
 #ifdef MOZC_DEBUG
   candidate->log += "\n" + result.log;
@@ -1279,6 +1284,9 @@ void DictionaryPredictor::MaybeRescoreResults(
     const ConversionRequest &request, const Segments &segments,
     absl::Span<Result> results) const {
   if (!rescorer_) return;
+  if (IsDebug(request)) {
+    for (Result &r : results) r.cost_before_rescoring = r.cost;
+  }
   // Concatenate top values of history segments.
   std::string history;
   for (size_t i = 0; i < segments.history_segments_size(); ++i) {
@@ -1287,6 +1295,41 @@ void DictionaryPredictor::MaybeRescoreResults(
     history.append(seg.candidate(0).value);
   }
   rescorer_->RescoreResults(request, history, results);
+}
+
+void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
+  if (segments->conversion_segments_size() == 0) {
+    return;
+  }
+  Segment *seg = segments->mutable_conversion_segment(0);
+  if (seg->candidates_size() == 0) {
+    return;
+  }
+  // Calculate the ranking by the original costs. Note: this can be slightly
+  // different from the actual ranking because, when the candidates were
+  // generated, `filter.ShouldRemove()` was applied to the results ordered by
+  // the rescored costs. To get the true original ranking, we need to apply
+  // `filter.ShouldRemove()` to the results ordered by the original cost.
+  // This is just for debugging, so such difference won't matter.
+  std::vector<const Segment::Candidate *> cands;
+  cands.reserve(seg->candidates_size());
+  for (int i = 0; i < seg->candidates_size(); ++i) {
+    cands.push_back(&seg->candidate(i));
+  }
+  std::sort(cands.begin(), cands.end(),
+            [](const Segment::Candidate *l, const Segment::Candidate *r) {
+              return l->cost_before_rescoring < r->cost_before_rescoring;
+            });
+  absl::flat_hash_map<const Segment::Candidate *, size_t> orig_rank;
+  for (size_t i = 0; i < cands.size(); ++i) orig_rank[cands[i]] = i + 1;
+
+  // Populate the debug description.
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    Segment::Candidate *c = seg->mutable_candidate(i);
+    const size_t rank = i + 1;
+    Util::AppendStringWithDelimiter(" ", absl::StrCat(orig_rank[c], "→", rank),
+                                    &c->description);
+  }
 }
 
 }  // namespace mozc::prediction

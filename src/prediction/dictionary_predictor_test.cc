@@ -146,6 +146,10 @@ class DictionaryPredictorTestPeer {
     DictionaryPredictor::MaybeMoveLiteralCandidateToTop(request, segments);
   }
 
+  static void AddRescoringDebugDescription(Segments *segments) {
+    DictionaryPredictor::AddRescoringDebugDescription(segments);
+  }
+
  private:
   DictionaryPredictor predictor_;
 };
@@ -1821,6 +1825,32 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
                   Field(&Segment::Candidate::cost, 100),
                   Field(&Segment::Candidate::cost, 100),
               }));
+}
+
+TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
+  Segments segments;
+  Segment *segment = segments.add_segment();
+
+  Segment::Candidate *cand1 = segment->push_back_candidate();
+  cand1->key = "Cand1";
+  cand1->cost = 1000;
+  cand1->cost_before_rescoring = 3000;
+
+  Segment::Candidate *cand2 = segment->push_back_candidate();
+  cand2->key = "Cand2";
+  cand2->cost = 2000;
+  cand2->cost_before_rescoring = 2000;
+
+  Segment::Candidate *cand3 = segment->push_back_candidate();
+  cand3->key = "Cand3";
+  cand3->cost = 3000;
+  cand3->cost_before_rescoring = 1000;
+
+  DictionaryPredictorTestPeer::AddRescoringDebugDescription(&segments);
+
+  EXPECT_EQ(cand1->description, "3→1");
+  EXPECT_EQ(cand2->description, "2→2");
+  EXPECT_EQ(cand3->description, "1→3");
 }
 
 }  // namespace
