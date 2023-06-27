@@ -151,7 +151,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 std::vector<Result> *results) const;
+                                 absl::Span<Result> results) const;
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,

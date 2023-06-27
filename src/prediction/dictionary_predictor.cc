@@ -301,7 +301,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
     // not called.
-    return AddPredictionToCandidates(request, segments, &results);
+    return AddPredictionToCandidates(request, segments,
+                                     absl::MakeSpan(results));
   }
 
   // Normal prediction.
@@ -314,14 +315,13 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   const std::string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
   RemoveMissSpelledCandidates(input_key_len, &results);
-  return AddPredictionToCandidates(request, segments, &results);
+  return AddPredictionToCandidates(request, segments, absl::MakeSpan(results));
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request, Segments *segments,
-    std::vector<Result> *results) const {
+    absl::Span<Result> results) const {
   DCHECK(segments);
-  DCHECK(results);
 
   std::string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
@@ -329,26 +329,30 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
+  // This pointer array is used to perform heap operations efficiently.
+  std::vector<const Result *> result_ptrs;
+  result_ptrs.reserve(results.size());
+  for (const auto &r : results) result_ptrs.push_back(&r);
+
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  auto min_heap_cmp = [](const Result &lhs, const Result &rhs) {
+  auto min_heap_cmp = [](const Result *lhs, const Result *rhs) {
     // `rhs < lhs` instead of `lhs < rhs`, since `make_heap()` creates max heap
     // by default.
-    return ResultCostLess()(rhs, lhs);
+    return ResultCostLess()(*rhs, *lhs);
   };
-  std::make_heap(results->begin(), results->end(), min_heap_cmp);
+  std::make_heap(result_ptrs.begin(), result_ptrs.end(), min_heap_cmp);
 
   const size_t max_candidates_size = std::min(
-      request.max_dictionary_prediction_candidates_size(), results->size());
+      request.max_dictionary_prediction_candidates_size(), results.size());
 
   ResultFilter filter(request, *segments, suggestion_filter_);
-  int added = 0;
 
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   absl::flat_hash_map<std::string, int32_t> merged_types;
   if (IsDebug(request)) {
-    for (const auto &result : *results) {
+    for (const auto &result : results) {
       if (!result.removed) {
         merged_types[result.value] |= result.types;
       }
@@ -373,10 +377,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #endif  // MOZC_DEBUG
 
-  for (size_t i = 0; i < results->size(); ++i) {
-    // Pop a result from a heap. Please pay attention not to use results->at(i).
-    std::pop_heap(results->begin(), results->end() - i, min_heap_cmp);
-    const Result &result = results->at(results->size() - i - 1);
+  int added = 0;
+  for (size_t i = 0; i < result_ptrs.size(); ++i) {
+    std::pop_heap(result_ptrs.begin(), result_ptrs.end() - i, min_heap_cmp);
+    const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
 
     if (added >= max_candidates_size || result.cost >= kInfinity) {
       break;

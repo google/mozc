@@ -68,6 +68,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc::prediction {
 
@@ -136,7 +137,7 @@ class DictionaryPredictorTestPeer {
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 std::vector<Result> *results) const {
+                                 absl::Span<Result> results) const {
     return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
@@ -1007,7 +1008,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   // Enables debug mode.
   config_->set_verbose_level(1);
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1033,7 +1034,7 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   InitSegmentsWithKey("test", &segments);
 
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1075,7 +1076,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
       kTestSize);
 
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   ASSERT_EQ(kTestSize, segments.conversion_segment(0).candidates_size());
@@ -1115,7 +1116,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       kLowCostCandidateSize + 1);
 
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   ASSERT_EQ(1, segments.conversion_segments_size());
   ASSERT_EQ(kLowCostCandidateSize,
@@ -1500,7 +1501,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     Segments segments;
     InitSegmentsWithKey("test", &segments);
     predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        &results);
+                                        absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
@@ -1527,7 +1528,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     Segments segments;
     InitSegmentsWithKey("test", &segments);
     predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        &results);
+                                        absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
@@ -1569,7 +1570,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   Segments segments;
   InitSegmentsWithKey("original_key", &segments);
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.candidates_size(), 4);
@@ -1604,7 +1605,7 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   Segments segments;
   InitSegmentsWithKey("test", &segments);
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
