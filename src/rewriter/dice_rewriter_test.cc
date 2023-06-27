@@ -32,12 +32,10 @@
 #include <cstddef>
 #include <string>
 
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -108,12 +106,7 @@ size_t GetDiceNumberIndex(const Segment &segment) {
   return dice_number_index;
 }
 
-class DiceRewriterTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-};
+class DiceRewriterTest : public testing::TestWithTempUserProfile {};
 
 // Test candidate insert positions.
 TEST_F(DiceRewriterTest, InsertTest) {

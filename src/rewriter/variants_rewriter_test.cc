@@ -850,6 +850,23 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
     EXPECT_EQ(segments.segment(0).candidate(0).value, "abc");
   }
   {
+    Segments segments;
+    Segment *segment = segments.push_back_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->value = "1,000";
+    candidate->content_value = "1,000";
+    candidate->style =
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH;
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    ASSERT_EQ(segments.segments_size(), 1);
+    ASSERT_EQ(segments.segment(0).candidates_size(), 1);
+    const Segment::Candidate &rewritten_candidate =
+        segments.segment(0).candidate(0);
+    EXPECT_EQ(rewritten_candidate.value, "１，０００");
+    EXPECT_EQ(rewritten_candidate.style,
+              NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH);
+  }
+  {
     // Test for candidate with inner segment boundary.
     Segments segments;
 

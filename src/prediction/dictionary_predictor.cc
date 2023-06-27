@@ -301,7 +301,8 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
     // not called.
-    return AddPredictionToCandidates(request, segments, &results);
+    return AddPredictionToCandidates(request, segments,
+                                     absl::MakeSpan(results));
   }
 
   // Normal prediction.
@@ -314,14 +315,13 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   const std::string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
   RemoveMissSpelledCandidates(input_key_len, &results);
-  return AddPredictionToCandidates(request, segments, &results);
+  return AddPredictionToCandidates(request, segments, absl::MakeSpan(results));
 }
 
 bool DictionaryPredictor::AddPredictionToCandidates(
     const ConversionRequest &request, Segments *segments,
-    std::vector<Result> *results) const {
+    absl::Span<Result> results) const {
   DCHECK(segments);
-  DCHECK(results);
 
   std::string history_key, history_value;
   GetHistoryKeyAndValue(*segments, &history_key, &history_value);
@@ -329,26 +329,30 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
 
+  // This pointer array is used to perform heap operations efficiently.
+  std::vector<const Result *> result_ptrs;
+  result_ptrs.reserve(results.size());
+  for (const auto &r : results) result_ptrs.push_back(&r);
+
   // Instead of sorting all the results, we construct a heap.
   // This is done in linear time and
   // we can pop as many results as we need efficiently.
-  auto min_heap_cmp = [](const Result &lhs, const Result &rhs) {
+  auto min_heap_cmp = [](const Result *lhs, const Result *rhs) {
     // `rhs < lhs` instead of `lhs < rhs`, since `make_heap()` creates max heap
     // by default.
-    return ResultCostLess()(rhs, lhs);
+    return ResultCostLess()(*rhs, *lhs);
   };
-  std::make_heap(results->begin(), results->end(), min_heap_cmp);
+  std::make_heap(result_ptrs.begin(), result_ptrs.end(), min_heap_cmp);
 
   const size_t max_candidates_size = std::min(
-      request.max_dictionary_prediction_candidates_size(), results->size());
+      request.max_dictionary_prediction_candidates_size(), results.size());
 
   ResultFilter filter(request, *segments, suggestion_filter_);
-  int added = 0;
 
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   absl::flat_hash_map<std::string, int32_t> merged_types;
   if (IsDebug(request)) {
-    for (const auto &result : *results) {
+    for (const auto &result : results) {
       if (!result.removed) {
         merged_types[result.value] |= result.types;
       }
@@ -373,10 +377,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #endif  // MOZC_DEBUG
 
-  for (size_t i = 0; i < results->size(); ++i) {
-    // Pop a result from a heap. Please pay attention not to use results->at(i).
-    std::pop_heap(results->begin(), results->end() - i, min_heap_cmp);
-    const Result &result = results->at(results->size() - i - 1);
+  int added = 0;
+  for (size_t i = 0; i < result_ptrs.size(); ++i) {
+    std::pop_heap(result_ptrs.begin(), result_ptrs.end() - i, min_heap_cmp);
+    const Result &result = *result_ptrs[result_ptrs.size() - i - 1];
 
     if (added >= max_candidates_size || result.cost >= kInfinity) {
       break;
@@ -397,6 +401,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   }
 
   MaybeMoveLiteralCandidateToTop(request, segments);
+
+  if (rescorer_ != nullptr && IsDebug(request)) {
+    AddRescoringDebugDescription(segments);
+  }
 
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
@@ -696,6 +704,7 @@ void DictionaryPredictor::FillCandidate(
     auto it = merged_types.find(result.value);
     SetDebugDescription(it == merged_types.end() ? 0 : it->second,
                         &candidate->description);
+    candidate->cost_before_rescoring = result.cost_before_rescoring;
   }
 #ifdef MOZC_DEBUG
   candidate->log += "\n" + result.log;
@@ -1275,6 +1284,9 @@ void DictionaryPredictor::MaybeRescoreResults(
     const ConversionRequest &request, const Segments &segments,
     absl::Span<Result> results) const {
   if (!rescorer_) return;
+  if (IsDebug(request)) {
+    for (Result &r : results) r.cost_before_rescoring = r.cost;
+  }
   // Concatenate top values of history segments.
   std::string history;
   for (size_t i = 0; i < segments.history_segments_size(); ++i) {
@@ -1283,6 +1295,41 @@ void DictionaryPredictor::MaybeRescoreResults(
     history.append(seg.candidate(0).value);
   }
   rescorer_->RescoreResults(request, history, results);
+}
+
+void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
+  if (segments->conversion_segments_size() == 0) {
+    return;
+  }
+  Segment *seg = segments->mutable_conversion_segment(0);
+  if (seg->candidates_size() == 0) {
+    return;
+  }
+  // Calculate the ranking by the original costs. Note: this can be slightly
+  // different from the actual ranking because, when the candidates were
+  // generated, `filter.ShouldRemove()` was applied to the results ordered by
+  // the rescored costs. To get the true original ranking, we need to apply
+  // `filter.ShouldRemove()` to the results ordered by the original cost.
+  // This is just for debugging, so such difference won't matter.
+  std::vector<const Segment::Candidate *> cands;
+  cands.reserve(seg->candidates_size());
+  for (int i = 0; i < seg->candidates_size(); ++i) {
+    cands.push_back(&seg->candidate(i));
+  }
+  std::sort(cands.begin(), cands.end(),
+            [](const Segment::Candidate *l, const Segment::Candidate *r) {
+              return l->cost_before_rescoring < r->cost_before_rescoring;
+            });
+  absl::flat_hash_map<const Segment::Candidate *, size_t> orig_rank;
+  for (size_t i = 0; i < cands.size(); ++i) orig_rank[cands[i]] = i + 1;
+
+  // Populate the debug description.
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    Segment::Candidate *c = seg->mutable_candidate(i);
+    const size_t rank = i + 1;
+    Util::AppendStringWithDelimiter(" ", absl::StrCat(orig_rank[c], "→", rank),
+                                    &c->description);
+  }
 }
 
 }  // namespace mozc::prediction

@@ -39,10 +39,12 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/singleton.h"
+#include "base/strings/assign.h"
+#include "base/strings/japanese.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
@@ -100,9 +102,9 @@ class CharacterFormManagerImpl {
   }
 
  private:
-  Config::CharacterForm GetCharacterFormFromStorage(uint16_t ucs2) const;
+  Config::CharacterForm GetCharacterFormFromStorage(char16_t ucs2) const;
 
-  void SaveCharacterFormToStorage(uint16_t ucs2, Config::CharacterForm);
+  void SaveCharacterFormToStorage(char16_t ucs2, Config::CharacterForm);
 
   // Returns true if input string will be consistent character form after
   // conversion.
@@ -121,9 +123,9 @@ class CharacterFormManagerImpl {
   LruStorage *storage_;
 
   // store the setting of a character
-  absl::flat_hash_map<uint16_t, Config::CharacterForm> conversion_table_;
+  absl::flat_hash_map<char16_t, Config::CharacterForm> conversion_table_;
 
-  absl::flat_hash_map<uint16_t, std::vector<uint16_t>> group_table_;
+  absl::flat_hash_map<char16_t, std::vector<char16_t>> group_table_;
 
   // When this flag is true,
   // character form conversion requires that output has consistent forms.
@@ -192,7 +194,7 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
 class NumberStyleManager {
  public:
   NumberStyleManager()
-      : key_(reinterpret_cast<const char *>(&kKey), sizeof(uint16_t)),
+      : key_(reinterpret_cast<const char *>(&kKey), sizeof(char16_t)),
         storage_(nullptr) {}
 
   void SetNumberStyle(const CharacterFormManager::NumberFormStyle &form_style) {
@@ -238,7 +240,7 @@ class NumberStyleManager {
   };
 
   // Note that "N" will not be returned by GetNormalizedCharacter().
-  static constexpr uint16_t kKey = 0x004E;  // "N"
+  static constexpr char16_t kKey = 0x004E;  // "N"
   const absl::string_view key_;
 
   // This class does not have the ownership of `storage_`.
@@ -253,9 +255,9 @@ class NumberStyleManager {
 // "&" -> "&"                (Symbol is used as it is)
 // "ほげほげ" -> 0x0000      (Unknown)
 // "𠮟"       -> 0x0000      (Non BMP character is also Unknown)
-uint16_t GetNormalizedCharacter(const absl::string_view str) {
+char16_t GetNormalizedCharacter(const absl::string_view str) {
   const Util::ScriptType type = Util::GetScriptType(str);
-  uint16_t ucs2 = 0x0000;
+  char16_t ucs2 = 0x0000;
   switch (type) {
     case Util::KATAKANA:
       ucs2 = 0x30A2;  // return "ア"
@@ -270,14 +272,13 @@ uint16_t GetNormalizedCharacter(const absl::string_view str) {
     case Util::HIRAGANA:
       ucs2 = 0x0000;  // no conversion
       break;
-    default:                           // maybe symbol
-      if (Util::CharsLen(str) == 1) {  // must be 1 character
+    default:                                        // maybe symbol
+      if (strings::AtLeastCharsLen(str, 2) == 1) {  // must be 1 character
         // normalize it to half width
-        std::string tmp;
-        japanese_util::HalfWidthToFullWidth(str, &tmp);
-        char32_t ucs4 = 0;
-        if (Util::SplitFirstChar32(tmp, &ucs4, nullptr) && ucs4 <= 0xffff) {
-          ucs2 = static_cast<uint16_t>(ucs4);
+        std::string tmp = japanese::HalfWidthToFullWidth(str);
+        char32_t ucs4 = Utf8AsChars32(tmp).front();
+        if (ucs4 <= 0xffff) {
+          ucs2 = static_cast<char16_t>(ucs4);
         } else {
           ucs2 = 0x0000;  // no conversion as fall back
         }
@@ -288,30 +289,28 @@ uint16_t GetNormalizedCharacter(const absl::string_view str) {
   return ucs2;
 }
 
-std::string ConvertToAlternative(const absl::string_view input,
-                                 Util::FormType form, Util::ScriptType type) {
-  std::string output;
+std::string ConvertToAlternative(std::string input, Util::FormType form,
+                                 Util::ScriptType type) {
   switch (form) {
     case Util::FULL_WIDTH:
       if (type == Util::KATAKANA ||
           Util::IsFullWidthSymbolInHalfWidthKatakana(input)) {
-        japanese_util::HalfWidthToFullWidth(input, &output);
+        return japanese::HalfWidthToFullWidth(input);
       } else {
-        japanese_util::FullWidthToHalfWidth(input, &output);
+        return japanese::FullWidthToHalfWidth(input);
       }
       break;
     case Util::HALF_WIDTH:
-      japanese_util::HalfWidthToFullWidth(input, &output);
+      return japanese::HalfWidthToFullWidth(input);
       break;
     default:
-      output = std::string(input);
+      return input;
   }
-  return output;
 }
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
     const absl::string_view str) const {
-  const uint16_t ucs2 = GetNormalizedCharacter(str);
+  const char16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
     return Config::NO_CONVERSION;
   }
@@ -351,7 +350,7 @@ void CharacterFormManagerImpl::GuessAndSetCharacterForm(
 
 void CharacterFormManagerImpl::SetCharacterForm(const absl::string_view str,
                                                 Config::CharacterForm form) {
-  const uint16_t ucs2 = GetNormalizedCharacter(str);
+  const char16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
     return;
   }
@@ -368,7 +367,7 @@ void CharacterFormManagerImpl::SetCharacterForm(const absl::string_view str,
 }
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
-    uint16_t ucs2) const {
+    char16_t ucs2) const {
   if (storage_ == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
@@ -383,7 +382,7 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
 }
 
 void CharacterFormManagerImpl::SaveCharacterFormToStorage(
-    uint16_t ucs2, Config::CharacterForm form) {
+    char16_t ucs2, Config::CharacterForm form) {
   if (form != Config::FULL_WIDTH && form != Config::HALF_WIDTH) {
     return;
   }
@@ -407,9 +406,9 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {
     // Update values in the same group.
-    const std::vector<uint16_t> &group = iter->second;
+    const std::vector<char16_t> &group = iter->second;
     for (size_t i = 0; i < group.size(); ++i) {
-      const uint16_t group_ucs2 = group[i];
+      const char16_t group_ucs2 = group[i];
       const absl::string_view group_key(
           reinterpret_cast<const char *>(&group_ucs2), sizeof(group_ucs2));
       storage_->Insert(group_key, reinterpret_cast<const char *>(&iform));
@@ -426,39 +425,32 @@ void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
 bool CharacterFormManagerImpl::TryConvertStringWithPreference(
     const absl::string_view str, std::string *output) const {
   DCHECK(output);
-  const char *begin = str.data();
-  const char *end = begin + str.size();
   Config::CharacterForm target_form = Config::NO_CONVERSION;
   Config::CharacterForm prev_form = Config::NO_CONVERSION;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
   bool ret = true;
 
   std::string buf;
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
-    if (mblen == 0) {  // Invalid Utf8 string
-      ++begin;
+  const Utf8AsChars32 chars(str);
+  for (auto it = chars.begin(); it != chars.end(); ++it) {
+    if (!it.ok()) {
       continue;
     }
-    const Util::ScriptType type = Util::GetScriptType(ucs4);
+    const Util::ScriptType type = Util::GetScriptType(*it);
     // Cache previous ScriptType to reduce to call GetCharacterForm()
     Config::CharacterForm form = prev_form;
-    const std::string current(begin, mblen);
     if ((type == Util::UNKNOWN_SCRIPT) ||
         (type == Util::KATAKANA && prev_type != Util::KATAKANA) ||
         (type == Util::NUMBER && prev_type != Util::NUMBER) ||
         (type == Util::ALPHABET && prev_type != Util::ALPHABET)) {
-      form = GetCharacterForm(current);
+      form = GetCharacterForm(it.view());
     } else if (type == Util::KANJI || type == Util::HIRAGANA) {
       form = Config::NO_CONVERSION;
     }
 
     // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (begin != str.data() && prev_form != form) {
-      std::string tmp;
-      CharacterFormManager::ConvertWidth(buf, &tmp, prev_form);
-      *output += tmp;
+    if (it != chars.begin() && prev_form != form) {
+      *output += CharacterFormManager::ConvertWidth(std::move(buf), prev_form);
       buf.clear();
     }
 
@@ -467,16 +459,13 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
     } else if (form != Config::NO_CONVERSION && form != target_form) {
       ret = false;
     }
-    buf += current;
+    absl::StrAppend(&buf, it.view());
     prev_type = type;
     prev_form = form;
-    begin += mblen;
   }
 
   if (!buf.empty()) {
-    std::string tmp;
-    CharacterFormManager::ConvertWidth(buf, &tmp, prev_form);
-    *output += tmp;
+    *output += CharacterFormManager::ConvertWidth(std::move(buf), prev_form);
   }
 
   return ret;
@@ -485,43 +474,38 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
 void CharacterFormManagerImpl::ConvertStringAlternative(
     const absl::string_view str, std::string *output) const {
   DCHECK(output);
-  const char *begin = str.data();
-  const char *end = str.data() + str.size();
   Util::FormType prev_form = Util::UNKNOWN_FORM;
   Util::ScriptType prev_type = Util::UNKNOWN_SCRIPT;
 
   std::string buf;
-  while (begin < end) {
-    size_t mblen = 0;
-    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
-    const Util::ScriptType type = Util::GetScriptType(ucs4);
+  const Utf8AsChars32 chars(str);
+  for (auto it = chars.begin(); it != chars.end(); ++it) {
+    const Util::ScriptType type = Util::GetScriptType(*it);
     // Cache previous ScriptType to reduce to call GetFormType()
     Util::FormType form = prev_form;
-    const std::string current(begin, mblen);
 
     if ((type == Util::UNKNOWN_SCRIPT) ||
         (type == Util::KATAKANA && prev_type != Util::KATAKANA) ||
         (type == Util::NUMBER && prev_type != Util::NUMBER) ||
         (type == Util::ALPHABET && prev_type != Util::ALPHABET)) {
-      form = Util::GetFormType(current);
+      form = Util::GetFormType(*it);
     } else if (type == Util::KANJI || type == Util::HIRAGANA) {
       form = Util::UNKNOWN_FORM;
     }
 
     // Cache previous Form to reduce to call ConvertToFullWidthOrHalf
-    if (begin != str.data() && prev_form != form) {
-      absl::StrAppend(output, ConvertToAlternative(buf, prev_form, prev_type));
+    if (it != chars.begin() && prev_form != form) {
+      *output += ConvertToAlternative(std::move(buf), prev_form, prev_type);
       buf.clear();
     }
 
-    buf += current;
+    absl::StrAppend(&buf, it.view());
     prev_type = type;
     prev_form = form;
-    begin += mblen;
   }
 
   if (!buf.empty()) {
-    absl::StrAppend(output, ConvertToAlternative(buf, prev_form, prev_type));
+    *output += ConvertToAlternative(std::move(buf), prev_form, prev_type);
   }
 }
 
@@ -534,7 +518,7 @@ bool CharacterFormManagerImpl::ConvertStringWithAlternative(
   output->clear();
   if (!TryConvertStringWithPreference(str, output) &&
       require_consistent_conversion_) {
-    *output = std::string(str);
+    strings::Assign(*output, str);
   }
 
   if (alternative_output != nullptr) {
@@ -553,18 +537,12 @@ void CharacterFormManagerImpl::Clear() {
 
 void CharacterFormManagerImpl::AddRule(const absl::string_view key,
                                        Config::CharacterForm form) {
-  const char *begin = key.data();
-  const char *end = key.data() + key.size();
-
-  std::vector<uint16_t> group;
-  while (begin < end) {
-    const size_t mblen = Util::OneCharLen(begin);
-    const std::string tmp(begin, mblen);
-    const uint16_t ucs2 = GetNormalizedCharacter(tmp);
+  std::vector<char16_t> group;
+  for (const absl::string_view ch : Utf8AsChars(key)) {
+    const char16_t ucs2 = GetNormalizedCharacter(ch);
     if (ucs2 != 0x0000) {
       group.push_back(ucs2);
     }
-    begin += mblen;
   }
 
   if (group.empty()) {
@@ -589,14 +567,11 @@ void CharacterFormManagerImpl::AddRule(const absl::string_view key,
   // sort + unique
   // use vector because set is slower.
   // group table is used in SaveCharacterFormToStorage and this will be called
-  // everytime user submits conversion.
+  // every time user submits conversion.
   std::sort(group.begin(), group.end());
-  std::vector<uint16_t>::iterator last =
-      std::unique(group.begin(), group.end());
-  group.erase(last, group.end());
+  group.erase(std::unique(group.begin(), group.end()), group.end());
 
-  for (size_t i = 0; i < group.size(); ++i) {
-    const uint16_t ucs2 = group[i];
+  for (const char16_t ucs2 : group) {
     conversion_table_[ucs2] = form;  // overwrite
     if (group.size() > 1) {
       // add to group table
@@ -665,18 +640,15 @@ void CharacterFormManager::ReloadConfig(const Config &config) {
   }
 }
 
-void CharacterFormManager::ConvertWidth(const absl::string_view input,
-                                        std::string *output,
-                                        Config::CharacterForm form) {
+std::string CharacterFormManager::ConvertWidth(std::string input,
+                                               Config::CharacterForm form) {
   switch (form) {
     case Config::FULL_WIDTH:
-      japanese_util::HalfWidthToFullWidth(input, output);
-      break;
+      return japanese::HalfWidthToFullWidth(input);
     case Config::HALF_WIDTH:
-      japanese_util::FullWidthToHalfWidth(input, output);
-      break;
+      return japanese::FullWidthToHalfWidth(input);
     default:
-      *output = std::string(input);
+      return input;
   }
 }
 
@@ -767,27 +739,23 @@ void CharacterFormManager::SetDefaultRule() {
 }
 
 namespace {
-// Almost the same as Utf8ToUcs4, but skip halfwidth
-// voice/semi-voice sound mark as they are treated as one character.
-char32_t SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
-                                     size_t *mblen) {
-  char32_t c = 0;
-  *mblen = 0;
-  while (begin < end) {
-    size_t tmp_mblen = 0;
-    c = Util::Utf8ToUcs4(begin, end, &tmp_mblen);
-    CHECK_GT(tmp_mblen, 0);
-    *mblen += tmp_mblen;
-    begin += tmp_mblen;
-    // 0xFF9E: Halfwidth voice sound mark
-    // 0xFF9F: Halfwidth semi-voice sound mark
-    if (c != 0xFF9E && c != 0xFF9F) {
-      break;
-    }
-  }
 
-  return c;
+bool IsHalfWidthVoiceSoundMark(char32_t ch) {
+  // 0xFF9E: Halfwidth voice sound mark
+  // 0xFF9F: Halfwidth semi-voice sound mark
+  return ch == 0xFF9E || ch == 0xFF9F;
 }
+
+// Skip halfwidth voice/semi-voice sound mark as they are treated as one
+// character.
+Utf8AsChars32::const_iterator SkipHalfWidthVoiceSoundMark(
+    Utf8AsChars32::const_iterator it, Utf8AsChars32::const_iterator last) {
+  while (it != last && IsHalfWidthVoiceSoundMark(*it)) {
+    ++it;
+  }
+  return it;
+}
+
 }  // namespace
 
 bool CharacterFormManager::GetFormTypesFromStringPair(
@@ -799,29 +767,19 @@ bool CharacterFormManager::GetFormTypesFromStringPair(
   *output_form1 = CharacterFormManager::UNKNOWN_FORM;
   *output_form2 = CharacterFormManager::UNKNOWN_FORM;
 
-  if (input1.empty() || input2.empty()) {
-    return false;
-  }
+  Utf8AsChars32 chars1(input1), chars2(input2);
+  auto it1 = chars1.begin(), it2 = chars2.begin();
+  for (; it1 != chars1.end() && it2 != chars2.end(); ++it1, ++it2) {
+    it1 = SkipHalfWidthVoiceSoundMark(it1, chars1.end());
+    it2 = SkipHalfWidthVoiceSoundMark(it2, chars2.end());
+    if (it1 == chars1.end() || it2 == chars2.end()) {
+      break;
+    }
 
-  const char *begin1 = input1.data();
-  const char *end1 = input1.data() + input1.size();
-  const char *begin2 = input2.data();
-  const char *end2 = input2.data() + input2.size();
-
-  while (begin1 < end1 && begin2 < end2) {
-    size_t mblen1 = 0;
-    size_t mblen2 = 0;
-    const char32_t c1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
-    const char32_t c2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
-    CHECK_GT(mblen1, 0);
-    CHECK_GT(mblen2, 0);
-    begin1 += mblen1;
-    begin2 += mblen2;
-
-    const Util::ScriptType script1 = Util::GetScriptType(c1);
-    const Util::ScriptType script2 = Util::GetScriptType(c2);
-    const Util::FormType form1 = Util::GetFormType(c1);
-    const Util::FormType form2 = Util::GetFormType(c2);
+    const Util::ScriptType script1 = Util::GetScriptType(*it1);
+    const Util::ScriptType script2 = Util::GetScriptType(*it2);
+    const Util::FormType form1 = Util::GetFormType(*it1);
+    const Util::FormType form2 = Util::GetFormType(*it2);
 
     // TODO(taku): have to check that normalized w1 and w2 are identical
     if (script1 != script2) {
@@ -851,7 +809,7 @@ bool CharacterFormManager::GetFormTypesFromStringPair(
   }
 
   // length should be the same
-  if (begin1 != end1 || begin2 != end2) {
+  if (it1 != chars1.end() || it2 != chars2.end()) {
     return false;
   }
 

@@ -139,6 +139,7 @@
         '../base/base.gyp:base_core',
         '../base/base.gyp:version',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'ipc',
         'ipc_test_util',
       ],

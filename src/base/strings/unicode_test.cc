@@ -377,5 +377,21 @@ TEST(Utf8AsCharsStandaloneTest, Comparators) {
   EXPECT_GT(b, a);
 }
 
+TEST(Utf8AsCharsStandaloneTest, IteratorMethods) {
+  Utf8AsChars chars("a\uFFFD\xDF");
+  auto it = chars.begin();
+  EXPECT_EQ(it.char32(), 'a');
+  EXPECT_EQ(it.view(), "a");
+  EXPECT_TRUE(it.ok());
+  ++it;
+  EXPECT_EQ(it.char32(), 0xFFFD);
+  EXPECT_EQ(it.view(), "\uFFFD");
+  EXPECT_TRUE(it.ok());
+  ++it;
+  EXPECT_EQ(it.char32(), 0xFFFD);
+  EXPECT_EQ(it.view(), "\xDF");
+  EXPECT_FALSE(it.ok());
+}
+
 }  // namespace
 }  // namespace mozc::strings

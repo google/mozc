@@ -288,7 +288,6 @@ mozc_cc_test(
         ":keyboard",
         ":keyevent_handler",
         "//base:logging",
-        "//base:system_util",
         "//base:version",
         "//client",
         "//client:client_interface",
@@ -296,7 +295,7 @@ mozc_cc_test(
         "//ipc:ipc_mock",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/strings",
     ],
 )

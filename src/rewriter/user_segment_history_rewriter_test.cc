@@ -39,7 +39,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -51,9 +50,8 @@
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -112,20 +110,11 @@ void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
   AppendCandidateSuffix(segment, index, suffix, lid, 1);
 }
 
-}  // namespace
-
-class UserSegmentHistoryRewriterTest : public ::testing::Test {
+class UserSegmentHistoryRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
 
-  UserSegmentHistoryRewriterTest(const UserSegmentHistoryRewriterTest &) =
-      delete;
-  UserSegmentHistoryRewriterTest &operator=(
-      const UserSegmentHistoryRewriterTest &) = delete;
-
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
     ConfigHandler::GetDefaultConfig(&config_);
     for (int i = 0; i < config_.character_form_rules_size(); ++i) {
       Config::CharacterFormRule *rule = config_.mutable_character_form_rules(i);
@@ -192,7 +181,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const std::string history_file =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "/segment.db");
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "/segment.db");
   EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
@@ -1263,6 +1252,58 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   }
 }
 
+TEST_F(UserSegmentHistoryRewriterTest, NumberStyleLearningEnabled) {
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
+      true);
+  request_.set_request(&request);
+
+  SetNumberForm(Config::FULL_WIDTH);
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  rewriter->Clear();
+
+  {
+    segments.Clear();
+    segments.add_segment();
+    segments.mutable_segment(0)->set_key("1234");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->insert_candidate(0);
+    candidate->value = "1,234";
+    candidate->content_value = "1,2344";
+    candidate->content_key = "1234";
+    candidate->lid = pos_matcher().GetNumberId();
+    candidate->rid = pos_matcher().GetNumberId();
+    candidate->style =
+        NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    rewriter->Finish(request_, &segments);  // half-width for separated number
+  }
+
+  {
+    // This rewriter does not handle number candidate
+    segments.Clear();
+    segments.add_segment();
+    {
+      segments.mutable_segment(0)->set_key("1234");
+      Segment::Candidate *candidate =
+          segments.mutable_segment(0)->insert_candidate(0);
+      candidate->value = "1234";
+      candidate->content_value = "1234";
+      candidate->content_key = "1234";
+      candidate->lid = pos_matcher().GetNumberId();
+      candidate->rid = pos_matcher().GetNumberId();
+    }
+    EXPECT_TRUE(number_rewriter->Rewrite(request_, &segments));
+    rewriter->Rewrite(request_, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "1234");
+  }
+}
+
 TEST_F(UserSegmentHistoryRewriterTest, NumberNoSeparated) {
   SetNumberForm(Config::HALF_WIDTH);
   Segments segments;
@@ -1527,4 +1568,5 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

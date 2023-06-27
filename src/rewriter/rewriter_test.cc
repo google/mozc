@@ -33,17 +33,14 @@
 #include <memory>
 #include <string>
 
-#include "base/system_util.h"
-#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -64,10 +61,9 @@ size_t CommandCandidatesSize(const Segment &segment) {
 
 }  // namespace
 
-class RewriterTest : public ::testing::Test {
+class RewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     const testing::MockDataManager data_manager;
     pos_group_ = std::make_unique<PosGroup>(data_manager.GetPosGroupData());
     const DictionaryInterface *kNullDictionary = nullptr;

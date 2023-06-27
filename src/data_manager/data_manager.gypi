@@ -724,9 +724,9 @@
           'variables': {
             'generator' : '<(PRODUCT_DIR)/gen_symbol_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
             'input_files': [
-              '<(mozc_dir)/data/symbol/symbol.tsv',
+              '<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/rules/sorting_map.tsv',
-              '<(mozc_dir)/data/symbol/ordering_rule.txt',
+              '<(mozc_oss_src_dir)/data/symbol/ordering_rule.txt',
               '<(gen_out_dir)/user_pos_manager.data',
             ],
           },
@@ -740,10 +740,10 @@
           ],
           'action': [
             '<(generator)',
-            '--input=<(mozc_dir)/data/symbol/symbol.tsv',
+            '--input=<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
             '--user_pos_manager_data=<(gen_out_dir)/user_pos_manager.data',
             '--sorting_table=<(mozc_dir)/data/rules/sorting_map.tsv',
-            '--ordering_rule=<(mozc_dir)/data/symbol/ordering_rule.txt',
+            '--ordering_rule=<(mozc_oss_src_dir)/data/symbol/ordering_rule.txt',
             '--output_token_array=<(gen_out_dir)/symbol_token.data',
             '--output_string_array=<(gen_out_dir)/symbol_string.data',
           ],
@@ -918,7 +918,7 @@
             'input_files': [
               '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_dir)/data/emoticon/categorized.tsv',
-              '<(mozc_dir)/data/symbol/symbol.tsv',
+              '<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
               '<(mozc_dir)/data/zero_query/zero_query.def',
             ],
           },
@@ -933,7 +933,7 @@
           'action': [
             '<(python)', '<(generator)',
             '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
-            '--input_symbol=<(mozc_dir)/data/symbol/symbol.tsv',
+            '--input_symbol=<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
             '--input_emoji=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--input_emoticon=<(mozc_dir)/data/emoticon/categorized.tsv',
             '--output_token_array=<(gen_out_dir)/zero_query_token.data',

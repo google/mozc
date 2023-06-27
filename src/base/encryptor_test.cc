@@ -31,18 +31,15 @@
 
 #include <cstdint>
 #include <iterator>
-#include <memory>
 #include <string>
 
 #include "base/random.h"
-#include "base/system_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
-
 namespace {
+
 struct TestData {
   const char *password;
   size_t password_size;
@@ -73,9 +70,10 @@ constexpr TestData kTestData[] = {
      "\x0A\x06\xE0\x9A\x03\x72\x48\xB3\x8F\x9A\x5E\xAC\xCD\x5D\xB8\x0B"
      "\x01\x1D\x2C\xD7\xAA\x55\x05\x0F\x4E\xD5\x73\xC0\xCB\xE2\x10\x69",
      64}};
-}  // namespace
 
-TEST(EncryptorTest, VerificationTest) {
+class EncryptorTest : public testing::TestWithTempUserProfile {};
+
+TEST_F(EncryptorTest, VerificationTest) {
   {
     const std::string password(kTestData[0].password,
                                kTestData[0].password_size);
@@ -162,7 +160,7 @@ TEST(EncryptorTest, VerificationTest) {
   }
 }
 
-TEST(EncryptorTest, BasicTest) {
+TEST_F(EncryptorTest, BasicTest) {
   Encryptor::Key key;
   EXPECT_FALSE(key.DeriveFromPassword(""));
   EXPECT_FALSE(key.IsAvailable());
@@ -173,7 +171,7 @@ TEST(EncryptorTest, BasicTest) {
   EXPECT_EQ(key.iv_size(), 16);
 }
 
-TEST(EncryptorTest, EncryptBatch) {
+TEST_F(EncryptorTest, EncryptBatch) {
   constexpr size_t kSizeTable[] = {1,    10,   16,    32,    100,
                                    1000, 1600, 10000, 16000, 100000};
 
@@ -224,8 +222,7 @@ TEST(EncryptorTest, EncryptBatch) {
   }
 }
 
-TEST(EncryptorTest, ProtectData) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+TEST_F(EncryptorTest, ProtectData) {
   constexpr size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
 
   Random random;
@@ -240,4 +237,5 @@ TEST(EncryptorTest, ProtectData) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

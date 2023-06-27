@@ -35,29 +35,22 @@
 #include <string>
 #include <utility>
 
-#include "base/file_util.h"
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/system_util.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "rewriter/rewriter_interface.h"
 #include "session/internal/ime_context.h"
-#include "session/internal/keymap.h"
 #include "session/request_test_util.h"
 #include "session/session.h"
-#include "session/session_converter_interface.h"
 #include "session/session_handler.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
@@ -89,11 +82,9 @@ void InitSessionToPrecomposition(session::Session *session) {
 
 }  // namespace
 
-class SessionRegressionTest : public ::testing::Test {
+class SessionRegressionTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
     orig_use_history_rewriter_ = absl::GetFlag(FLAGS_use_history_rewriter);
     absl::SetFlag(&FLAGS_use_history_rewriter, true);
 

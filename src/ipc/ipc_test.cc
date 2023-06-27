@@ -33,11 +33,9 @@
 #include <string>
 #include <vector>
 
-#include "base/system_util.h"
 #include "base/thread2.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -77,25 +75,12 @@ class EchoServer : public IPCServer {
 };
 
 constexpr size_t kBaseBufferSizes[] = {
-  16,
-  256,
-  1024,
-  16 * 1024,
-  32 * 1024,
-  64 * 1024,
-  256 * 1024,
-  512 * 1024,
-  1024 * 1024,
+    16,        256,        1024,       16 * 1024,   32 * 1024,
+    64 * 1024, 256 * 1024, 512 * 1024, 1024 * 1024,
 };
 
 constexpr int kBufferDiffs[] = {
-  0,
-  -1,
-  1,
-  -31,
-  31,
-  -63,
-  63,
+    0, -1, 1, -31, 31, -63, 63,
 };
 
 std::string GenerateInputData(int i) {
@@ -108,7 +93,7 @@ std::string GenerateInputData(int i) {
 
   // Fill the result with 'x' then add some entropy to it.
   std::string result(size, 'x');
-  for (size_t j = 0; true ; ++j) {
+  for (size_t j = 0; true; ++j) {
     const size_t index = j * 13;
     if (index >= size) {
       break;
@@ -120,10 +105,11 @@ std::string GenerateInputData(int i) {
   return result;
 }
 
-}  // namespace
+class IPCTest : public testing::TestWithTempUserProfile {};
 
-TEST(IPCTest, IPCTest) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+TEST_F(IPCTest, IPCTest) {
+  testing::ScopedTempUserProfileDirectory temp_user_profile_dir_;
+
 #ifdef __APPLE__
   TestMachPortManager manager;
 #endif  // __APPLE__
@@ -138,7 +124,7 @@ TEST(IPCTest, IPCTest) {
   for (int i = 0; i < kNumThreads; ++i) {
     cons.push_back(Thread2([
 #ifdef __APPLE__
-                                     &manager
+                               &manager
 #endif  // __APPLE__
     ] {
       absl::SleepFor(absl::Milliseconds(100));
@@ -178,4 +164,5 @@ TEST(IPCTest, IPCTest) {
   con.Wait();
 }
 
+}  // namespace
 }  // namespace mozc

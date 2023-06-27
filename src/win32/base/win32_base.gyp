@@ -137,6 +137,7 @@
             '../../base/base_test.gyp:clock_mock',
             '../../client/client.gyp:client',
             '../../testing/testing.gyp:gtest_main',
+            '../../testing/testing.gyp:mozctest',
             'ime_impl_base',
           ],
         },

@@ -38,14 +38,12 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/system_util.h"
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace keymap {
@@ -57,12 +55,8 @@ config::Config GetDefaultConfig(config::Config::SessionKeymap keymap) {
 }
 }  // namespace
 
-class KeyMapTest : public testing::Test {
+class KeyMapTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
   bool isInputModeXCommandSupported() const {
     return KeyMapManager::kInputModeXCommandSupported;
   }

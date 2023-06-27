@@ -122,8 +122,8 @@ class CharacterFormManager {
   void ReloadConfig(const Config &config);
 
   // Utility function: pass character form.
-  static void ConvertWidth(absl::string_view input, std::string *output,
-                           Config::CharacterForm form);
+  static std::string ConvertWidth(std::string input,
+                                  Config::CharacterForm form);
 
   // Returns form types for given two pair of strings.
   // This function tries to find the difference between

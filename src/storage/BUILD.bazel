@@ -188,9 +188,8 @@ mozc_cc_test(
     srcs = ["registry_test.cc"],
     deps = [
         ":registry",
-        "//base:system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 
@@ -223,6 +222,6 @@ mozc_cc_test(
         "//base:logging",
         "//base:system_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )

@@ -33,9 +33,7 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -47,9 +45,8 @@
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -98,7 +95,7 @@ int GetIndexOfCalculatedCandidate(const Segments &segments) {
 
 }  // namespace
 
-class CalculatorRewriterTest : public ::testing::Test {
+class CalculatorRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   CalculatorRewriterTest() {
     convreq_.set_request(&request_);
@@ -114,8 +111,6 @@ class CalculatorRewriterTest : public ::testing::Test {
   CalculatorMock &calculator_mock() { return calculator_mock_; }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);
     request_.Clear();

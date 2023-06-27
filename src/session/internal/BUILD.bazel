@@ -157,13 +157,12 @@ mozc_cc_test(
     deps = [
         ":keymap",
         "//base:config_file_stream",
-        "//base:system_util",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 

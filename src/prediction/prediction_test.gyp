@@ -67,6 +67,7 @@
         '../session/session_base.gyp:request_test_util',
         '../storage/storage.gyp:storage',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'prediction.gyp:prediction',
       ],

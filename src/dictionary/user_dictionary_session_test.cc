@@ -33,21 +33,17 @@
 #include <string>
 #include <vector>
 
-#ifndef _WIN32
-#include <sys/stat.h>
-#endif  // _WIN32
-
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "testing/testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
+namespace mozc::user_dictionary {
 namespace {
 
 constexpr char kDictionaryData[] =
@@ -56,31 +52,10 @@ constexpr char kDictionaryData[] =
     "とうきょう\t東京\t地名\tコメント\n"
     "すずき\t鈴木\t人名\n";
 
-using ::mozc::FileUtil;
-using ::mozc::SystemUtil;
-using ::mozc::user_dictionary::UserDictionary;
-using ::mozc::user_dictionary::UserDictionaryCommandStatus;
-using ::mozc::user_dictionary::UserDictionarySession;
-using ::mozc::user_dictionary::UserDictionaryStorage;
-
-class UserDictionarySessionTest : public ::testing::Test {
+class UserDictionarySessionTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
-  }
-
-  void TearDown() override {
-    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
-    SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
-  }
-
-  static std::string GetUserDictionaryFile() {
-#ifndef _WIN32
-    chmod(absl::GetFlag(FLAGS_test_tmpdir).c_str(), 0777);
-#endif  // _WIN32
-    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
+  std::string GetUserDictionaryFile() {
+    return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), "test.db");
   }
 
   void ResetEntry(const absl::string_view key, const absl::string_view value,
@@ -91,9 +66,6 @@ class UserDictionarySessionTest : public ::testing::Test {
     entry->set_value(std::string(value));
     entry->set_pos(pos);
   }
-
- private:
-  std::string original_user_profile_directory_;
 };
 
 TEST_F(UserDictionarySessionTest, SaveAndLoad) {
@@ -738,3 +710,4 @@ TEST_F(UserDictionarySessionTest, ClearDictionariesAndUndoHistory) {
 }
 
 }  // namespace
+}  // namespace mozc::user_dictionary

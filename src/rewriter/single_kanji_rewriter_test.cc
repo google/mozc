@@ -33,16 +33,14 @@
 #include <memory>
 #include <string>
 
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -50,17 +48,11 @@ namespace mozc {
 
 using dictionary::PosMatcher;
 
-class SingleKanjiRewriterTest : public ::testing::Test {
+class SingleKanjiRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   SingleKanjiRewriterTest() {
     data_manager_ = std::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
-  }
-
-  ~SingleKanjiRewriterTest() override = default;
-
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {
@@ -92,8 +84,6 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   }
 
   const ConversionRequest default_request_;
-
- protected:
   std::unique_ptr<testing::MockDataManager> data_manager_;
   PosMatcher pos_matcher_;
 };

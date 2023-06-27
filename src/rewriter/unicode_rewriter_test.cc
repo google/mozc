@@ -36,7 +36,6 @@
 #include <memory>
 #include <string>
 
-#include "base/system_util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
@@ -44,9 +43,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -80,12 +78,9 @@ bool ContainCandidate(const Segments &segments,
   return false;
 }
 
-class UnicodeRewriterTest : public ::testing::Test {
+class UnicodeRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    engine_ = MockDataEngineFactory::Create().value();
-  }
+  void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
   std::unique_ptr<EngineInterface> engine_;
   const commands::Request &default_request() const { return default_request_; }

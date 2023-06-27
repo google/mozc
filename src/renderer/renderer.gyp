@@ -132,6 +132,7 @@
         '../base/absl.gyp:absl_time',
         '../ipc/ipc.gyp:ipc_test_util',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'renderer_client',
         'renderer_server',
       ],
@@ -551,6 +552,7 @@
           ],
           'dependencies': [
             '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
             'mozc_renderer_lib',
           ],
         },

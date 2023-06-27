@@ -32,17 +32,16 @@
 #include <cstdint>
 #include <string>
 
-#include "base/system_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace storage {
+namespace {
 
-TEST(RegistryTest, TinyStorageTest) {
-  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+class RegistryTest : public testing::TestWithTempUserProfile {};
 
+TEST_F(RegistryTest, TinyStorageTest) {
   {
     uint64_t value = 20;
     EXPECT_TRUE(Registry::Insert("uint64_t", value));
@@ -91,5 +90,7 @@ TEST(RegistryTest, TinyStorageTest) {
     EXPECT_EQ(value, expected);
   }
 }
+
+}  // namespace
 }  // namespace storage
 }  // namespace mozc

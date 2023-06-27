@@ -31,15 +31,13 @@
 
 #include <string>
 
-#include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -65,7 +63,7 @@ std::string GetCommandCandidateValue(const Segment &segment) {
   return "";
 }
 
-class CommandRewriterTest : public ::testing::Test {
+class CommandRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   CommandRewriterTest() {
     convreq_.set_request(&request_);
@@ -73,7 +71,6 @@ class CommandRewriterTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
     request_.Clear();
   }

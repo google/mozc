@@ -214,6 +214,8 @@ class Segment final {
     std::vector<uint32_t> inner_segment_boundary;
     // LINT.ThenChange(//converter/segments_matchers.h)
 
+    // The original cost before rescoring. Used for debugging purpose.
+    int32_t cost_before_rescoring = 0;
 #ifdef MOZC_CANDIDATE_DEBUG
     void Dlog(absl::string_view filename, int line,
               absl::string_view message) const;

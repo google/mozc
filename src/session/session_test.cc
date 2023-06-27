@@ -380,7 +380,7 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
 
 }  // namespace
 
-class SessionTest : public ::testing::Test {
+class SessionTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     UsageStats::ClearAllStatsForTest();
@@ -698,9 +698,6 @@ class SessionTest : public ::testing::Test {
   std::unique_ptr<Request> mobile_request_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
   const testing::MockDataManager mock_data_manager_;
-
- private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 // This test is intentionally defined at this location so that this

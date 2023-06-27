@@ -151,7 +151,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 std::vector<Result> *results) const;
+                                 absl::Span<Result> results) const;
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
@@ -278,6 +278,7 @@ class DictionaryPredictor : public PredictorInterface {
   void MaybeRescoreResults(const ConversionRequest &request,
                            const Segments &segments,
                            absl::Span<Result> results) const;
+  static void AddRescoringDebugDescription(Segments *segments);
 
   // Test peer to access private methods
   friend class DictionaryPredictorTestPeer;

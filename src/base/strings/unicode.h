@@ -171,11 +171,12 @@ class Utf8CharIterator {
   Utf8CharIterator(const Utf8CharIterator&) = default;
   Utf8CharIterator& operator=(const Utf8CharIterator&) = default;
 
+  // Returns the current character.
   reference operator*() const {
     if constexpr (AsChar32) {
-      return dr_.code_point();
+      return char32();
     } else {
-      return reference(ptr_, dr_.bytes_seen());
+      return view();
     }
   }
 
@@ -190,6 +191,22 @@ class Utf8CharIterator {
     ++*this;
     return tmp;
   }
+
+  // Returns the code point of the  current character as char32_t.
+  char32_t char32() const { return dr_.code_point(); }
+
+  // Returns the UTF-8 string of the current character as absl::string_view.
+  absl::string_view view() const {
+    return absl::string_view(ptr_, dr_.bytes_seen());
+  }
+
+  // Returns if the current character has a valid UTF-8 encoding.
+  //
+  // Most of the time, it's not necessary to explicitly call this function as
+  // invalid characters are replaced with U+FFFD when the iterator is
+  // dereferenced. Use this if you need to distinguish decoding errors from
+  // U+FFFD in the source string when processing untrusted UTF-8 inputs.
+  bool ok() const { return dr_.ok(); }
 
   // Returns a const char pointer to the current iterator position.
   const char* to_address() const { return ptr_; }

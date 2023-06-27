@@ -41,18 +41,16 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -246,12 +244,9 @@ class MockState {
   TestServerLauncher *launcher_;
 };
 
-}  // namespace
-
-class KeyEventHandlerTest : public testing::Test {
+class KeyEventHandlerTest : public testing::TestWithTempUserProfile {
  protected:
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }
@@ -2909,5 +2904,6 @@ TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
   }
 }
 
+}  // namespace
 }  // namespace win32
 }  // namespace mozc

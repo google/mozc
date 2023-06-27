@@ -35,12 +35,10 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
@@ -76,17 +74,7 @@ std::string GetCandidates(const Segments &segments) {
   return absl::StrJoin(results, " ");
 }
 
-class UserDictionaryRewriterTest : public testing::Test {
- protected:
-  UserDictionaryRewriterTest() = default;
-  ~UserDictionaryRewriterTest() override = default;
-
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
-  void TearDown() override {}
-};
+class UserDictionaryRewriterTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(UserDictionaryRewriterTest, RewriteTest) {
   UserDictionaryRewriter rewriter;

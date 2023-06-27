@@ -30,32 +30,32 @@
 #include "rewriter/small_letter_rewriter.h"
 
 #include <memory>
-#include <string>
-#include <utility>
 
-#include "base/system_util.h"
+#include "base/strings/assign.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void AddSegment(std::string key, std::string value, Segments *segments) {
+void AddSegment(absl::string_view key, absl::string_view value,
+                Segments *segments) {
   Segment *seg = segments->add_segment();
   Segment::Candidate *candidate = seg->add_candidate();
   seg->set_key(key);
-  candidate->content_key = std::move(key);
-  candidate->value = value;
-  candidate->content_value = std::move(value);
+  strings::Assign(candidate->content_key, key);
+  strings::Assign(candidate->value, value);
+  strings::Assign(candidate->content_value, value);
 }
 
-void InitSegments(std::string key, std::string value, Segments *segments) {
+void InitSegments(absl::string_view key, absl::string_view value,
+                  Segments *segments) {
   segments->Clear();
-  AddSegment(std::move(key), std::move(value), segments);
+  AddSegment(key, value, segments);
 }
 
 bool ContainCandidate(const Segments &segments,
@@ -69,12 +69,9 @@ bool ContainCandidate(const Segments &segments,
   return false;
 }
 
-class SmallLetterRewriterTest : public ::testing::Test {
+class SmallLetterRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    engine_ = MockDataEngineFactory::Create().value();
-  }
+  void SetUp() override { engine_ = MockDataEngineFactory::Create().value(); }
 
   std::unique_ptr<EngineInterface> engine_;
   const commands::Request &default_request() const { return default_request_; }
@@ -91,11 +88,11 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
   const ConversionRequest request;
 
   struct InputOutputData {
-    const char *input;
-    const char *output;
+    absl::string_view input;
+    absl::string_view output;
   };
 
-  const InputOutputData kInputOutputData[] = {
+  constexpr InputOutputData kInputOutputData[] = {
       // Superscript
       {"^123", "¹²³"},
       {"^4", "⁴"},
@@ -126,7 +123,7 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
       {"あ^2", "あ²"},
   };
 
-  const char *kMozcUnsupportedInput[] = {
+  constexpr absl::string_view kMozcUnsupportedInput[] = {
       // Roman alphabet superscript
       "^n",
       "^x",
@@ -160,7 +157,7 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
   }
 
   // Mozc does not accept some superscript/subscript supported in Unicode
-  for (const char* &item : kMozcUnsupportedInput) {
+  for (const absl::string_view &item : kMozcUnsupportedInput) {
     InitSegments(item, item, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }

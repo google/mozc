@@ -33,12 +33,11 @@
 #define MOZC_SESSION_SESSION_HANDLER_TEST_UTIL_H_
 
 #include <cstdint>
-#include <string>
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_interface.h"
-#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
 
 namespace mozc {
@@ -62,7 +61,7 @@ bool CleanUp(SessionHandlerInterface *handler, uint64_t id);
 bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id);
 
 // Base implementation of test cases.
-class SessionHandlerTestBase : public ::testing::Test {
+class SessionHandlerTestBase : public ::mozc::testing::TestWithTempUserProfile {
  protected:
   void SetUp() override;
   void TearDown() override;
@@ -70,8 +69,6 @@ class SessionHandlerTestBase : public ::testing::Test {
   void ClearState();
 
  private:
-  // Keep the global configurations here, and restore them in tear down phase.
-  std::string user_profile_directory_backup_;
   config::Config config_backup_;
   int32_t flags_max_session_size_backup_;
   int32_t flags_create_session_min_interval_backup_;

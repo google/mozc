@@ -30,38 +30,20 @@
 
 """Script to generate config_file_stream_data.h."""
 
-import optparse
+import argparse
 import os.path
-import sys
 
 
-def ParseOptions():
+def ParseArguments():
   """Parses options from given argument."""
-  parser = optparse.OptionParser()
-  parser.add_option('--output', dest='output', help='Output file path')
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '--output',
+      type=argparse.FileType(mode='w', encoding='utf-8'),
+      help='Output file path',
+  )
+  parser.add_argument('input', nargs='+', help='Input file paths')
   return parser.parse_args()
-
-
-def GenerateFileData(path):
-  r"""Generate FileData entry from given file path.
-
-  The generated FileData entry looks as follows:
-   { "something_original_file_path", "\xAA\xBB\xCC"}
-
-  Args:
-    path: a filepath to be converted into FileData.
-
-  Returns:
-    Generated code of a FileData entry.
-  """
-  result = []
-  result.append(' { "%s",  "' % os.path.basename(path))
-  with open(path, 'rb') as stream:
-    # bytearray is necessary for the Python2 compatibility.
-    result.extend(r'\x%02X' % byte for byte in bytearray(stream.read()))
-  result.append('"}')
-
-  return ''.join(result)
 
 
 def OutputConfigFileStreamData(path_list, output):
@@ -71,14 +53,12 @@ def OutputConfigFileStreamData(path_list, output):
   of files in given path_list, to the output stream.
   The generated code looks like:
 
-  namespace {
   constexpr FileData kFileData[] = {
-    { "filename1", "\x00\x01\x02\x03"},
-    { "filename2", "\x10\x11\x12\x13\x14\x15\x16\x17"},
+    {"filename1", "\x00\x01\x02\x03"},
+    {"filename2", "\x10\x11\x12\x13\x14\x15\x16\x17"},
         :
         :
   };
-  }  // namespace
 
   Args:
     path_list: a list of file path which should be included in the
@@ -87,23 +67,18 @@ def OutputConfigFileStreamData(path_list, output):
   """
   output.write('constexpr FileData kFileData[] = {\n')
   for path in path_list:
-    output.write(GenerateFileData(path))
-    output.write(',\n')
+    output.write('  {"%s", "' % os.path.basename(path))
+    with open(path, 'rb') as stream:
+      while (byte := stream.read(1)):
+        output.write(r'\x' + byte.hex())
+    output.write('"},\n')
   output.write('};\n')
 
 
 def main():
-  (options, args) = ParseOptions()
-  if not options.output:
-    print(
-        ('usage: gen_config_file_stream_data.py --output=filepath input ...'),
-        file=sys.stderr)
-    sys.exit(2)
+  args = ParseArguments()
 
-  with open(options.output, 'w') as output:
-    output.write('namespace {\n')
-    OutputConfigFileStreamData(args, output)
-    output.write('}  // namespace\n')
+  OutputConfigFileStreamData(args.input, args.output)
 
 
 if __name__ == '__main__':

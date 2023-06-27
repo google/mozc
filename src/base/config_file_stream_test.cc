@@ -37,9 +37,8 @@
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -58,22 +57,7 @@ bool IsEof(std::istream *input_stream) {
           input_stream->eof());
 }
 
-}  // namespace
-
-class ConfigFileStreamTest : public testing::Test {
- protected:
-  void SetUp() override {
-    default_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  }
-
-  void TearDown() override {
-    SystemUtil::SetUserProfileDirectory(default_profile_directory_);
-  }
-
- private:
-  std::string default_profile_directory_;
-};
+class ConfigFileStreamTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(ConfigFileStreamTest, OnMemoryFiles) {
   const std::string kData = "data";
@@ -137,7 +121,6 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   ASSERT_OK(FileUtil::SetContents(
       test_file_path, absl::string_view(kBinaryData, kBinaryDataSize)));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
-  FileUnlinker unlinker(test_file_path);
   {
     std::unique_ptr<std::istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + std::string(kTestFileName)));
@@ -162,7 +145,6 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   constexpr absl::string_view kSourceTextData = "ab\rc\nd\r\ne";
   ASSERT_OK(FileUtil::SetContents(test_file_path, kSourceTextData));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
-  FileUnlinker unlinker(test_file_path);
 
 #ifdef _WIN32
 #define TRAILING_CARRIAGE_RETURN ""
@@ -191,4 +173,5 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

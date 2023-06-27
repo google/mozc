@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -62,14 +61,14 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc::prediction {
 
@@ -138,13 +137,17 @@ class DictionaryPredictorTestPeer {
 
   bool AddPredictionToCandidates(const ConversionRequest &request,
                                  Segments *segments,
-                                 std::vector<Result> *results) const {
+                                 absl::Span<Result> results) const {
     return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
   static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
                                              Segments *segments) {
     DictionaryPredictor::MaybeMoveLiteralCandidateToTop(request, segments);
+  }
+
+  static void AddRescoringDebugDescription(Segments *segments) {
+    DictionaryPredictor::AddRescoringDebugDescription(segments);
   }
 
  private:
@@ -366,10 +369,9 @@ class MockDataAndPredictor {
   std::unique_ptr<DictionaryPredictorTestPeer> predictor_;
 };
 
-class DictionaryPredictorTest : public ::testing::Test {
+class DictionaryPredictorTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
@@ -1010,7 +1012,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   // Enables debug mode.
   config_->set_verbose_level(1);
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1036,7 +1038,7 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   InitSegmentsWithKey("test", &segments);
 
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1078,7 +1080,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
       kTestSize);
 
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   EXPECT_EQ(segments.conversion_segments_size(), 1);
   ASSERT_EQ(kTestSize, segments.conversion_segment(0).candidates_size());
@@ -1118,7 +1120,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       kLowCostCandidateSize + 1);
 
   predictor.AddPredictionToCandidates(*convreq_for_suggestion_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   ASSERT_EQ(1, segments.conversion_segments_size());
   ASSERT_EQ(kLowCostCandidateSize,
@@ -1503,7 +1505,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     Segments segments;
     InitSegmentsWithKey("test", &segments);
     predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        &results);
+                                        absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), kSize);
@@ -1530,7 +1532,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
     Segments segments;
     InitSegmentsWithKey("test", &segments);
     predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        &results);
+                                        absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
     EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
@@ -1572,7 +1574,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   Segments segments;
   InitSegmentsWithKey("original_key", &segments);
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.candidates_size(), 4);
@@ -1607,7 +1609,7 @@ TEST_F(DictionaryPredictorTest, SortResult) {
   Segments segments;
   InitSegmentsWithKey("test", &segments);
   predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                      &results);
+                                      absl::MakeSpan(results));
 
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment &segment = segments.conversion_segment(0);
@@ -1823,6 +1825,32 @@ TEST_F(DictionaryPredictorTest, Rescoring) {
                   Field(&Segment::Candidate::cost, 100),
                   Field(&Segment::Candidate::cost, 100),
               }));
+}
+
+TEST_F(DictionaryPredictorTest, AddRescoringDebugDescription) {
+  Segments segments;
+  Segment *segment = segments.add_segment();
+
+  Segment::Candidate *cand1 = segment->push_back_candidate();
+  cand1->key = "Cand1";
+  cand1->cost = 1000;
+  cand1->cost_before_rescoring = 3000;
+
+  Segment::Candidate *cand2 = segment->push_back_candidate();
+  cand2->key = "Cand2";
+  cand2->cost = 2000;
+  cand2->cost_before_rescoring = 2000;
+
+  Segment::Candidate *cand3 = segment->push_back_candidate();
+  cand3->key = "Cand3";
+  cand3->cost = 3000;
+  cand3->cost_before_rescoring = 1000;
+
+  DictionaryPredictorTestPeer::AddRescoringDebugDescription(&segments);
+
+  EXPECT_EQ(cand1->description, "3→1");
+  EXPECT_EQ(cand2->description, "2→2");
+  EXPECT_EQ(cand3->description, "1→3");
 }
 
 }  // namespace

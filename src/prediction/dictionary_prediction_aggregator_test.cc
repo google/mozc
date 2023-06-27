@@ -41,7 +41,6 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/internal/typing_model.h"
@@ -66,10 +65,9 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
-#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
@@ -465,10 +463,10 @@ class MockDataAndAggregator {
   std::unique_ptr<DictionaryPredictionAggregatorTestPeer> aggregator_;
 };
 
-class DictionaryPredictionAggregatorTest : public ::testing::Test {
+class DictionaryPredictionAggregatorTest
+    : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = std::make_unique<commands::Request>();
     config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
