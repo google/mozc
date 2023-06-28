@@ -414,7 +414,8 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
       storage_->Insert(group_key, reinterpret_cast<const char *>(&iform));
     }
   }
-  VLOG(2) << ucs2 << " is stored to " << kFileName << " as " << form;
+  VLOG(2) << static_cast<uint16_t>(ucs2) << " is stored to " << kFileName
+          << " as " << form;
 }
 
 void CharacterFormManagerImpl::ConvertString(const absl::string_view str,
