@@ -70,6 +70,8 @@ constexpr char kOldKanjiDescription[] = "大字";
 constexpr char kMaruNumberDescription[] = "丸数字";
 constexpr char kRomanCapitalDescription[] = "ローマ数字(大文字)";
 constexpr char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
+constexpr char kSuperscriptDescription[] = "上付き文字";
+constexpr char kSubscriptDescription[] = "下付き文字";
 
 bool FindValue(const Segment &segment, const absl::string_view value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -333,12 +335,15 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
 
-  // Special forms doesn't have zeros.
+  // These special forms doesn't have zeros.
   Segment *seg = SetupSegments(pos_matcher_, "0", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
+  // "0" has superscripts and subscripts
+  EXPECT_TRUE(HasDescription(*seg, kSuperscriptDescription));
+  EXPECT_TRUE(HasDescription(*seg, kSubscriptDescription));
 
   // "1" has special forms.
   seg = SetupSegments(pos_matcher_, "1", &segments);
@@ -346,13 +351,17 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
+  EXPECT_TRUE(HasDescription(*seg, kSuperscriptDescription));
+  EXPECT_TRUE(HasDescription(*seg, kSubscriptDescription));
 
-  // "12" has every special forms.
+  // "12" has every special forms except superscript and subscript.
   seg = SetupSegments(pos_matcher_, "12", &segments);
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_TRUE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_TRUE(HasDescription(*seg, kRomanNoCapitalDescription));
+  EXPECT_FALSE(HasDescription(*seg, kSuperscriptDescription));
+  EXPECT_FALSE(HasDescription(*seg, kSubscriptDescription));
 
   // "13" doesn't have roman forms.
   seg = SetupSegments(pos_matcher_, "13", &segments);
@@ -374,6 +383,8 @@ TEST_F(NumberRewriterTest, SpecialFormBoundaries) {
   EXPECT_FALSE(HasDescription(*seg, kMaruNumberDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanCapitalDescription));
   EXPECT_FALSE(HasDescription(*seg, kRomanNoCapitalDescription));
+  EXPECT_FALSE(HasDescription(*seg, kSuperscriptDescription));
+  EXPECT_FALSE(HasDescription(*seg, kSubscriptDescription));
 }
 
 TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
@@ -455,7 +466,7 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(seg->candidates_size(), 4);
+  EXPECT_EQ(seg->candidates_size(), 6);
 
   EXPECT_EQ(seg->candidate(0).value, "0");
   EXPECT_EQ(seg->candidate(0).content_value, "0");
@@ -472,6 +483,14 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   EXPECT_EQ(seg->candidate(3).value, "零");
   EXPECT_EQ(seg->candidate(3).content_value, "零");
   EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
+
+  EXPECT_EQ(seg->candidate(4).value, "⁰");
+  EXPECT_EQ(seg->candidate(4).content_value, "⁰");
+  EXPECT_EQ(seg->candidate(4).description, kSuperscriptDescription);
+
+  EXPECT_EQ(seg->candidate(5).value, "₀");
+  EXPECT_EQ(seg->candidate(5).content_value, "₀");
+  EXPECT_EQ(seg->candidate(5).description, kSubscriptDescription);
 
   seg->clear_candidates();
 }
@@ -491,7 +510,7 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  EXPECT_EQ(seg->candidates_size(), 4);
+  EXPECT_EQ(seg->candidates_size(), 6);
 
   EXPECT_EQ(seg->candidate(0).value, "00");
   EXPECT_EQ(seg->candidate(0).content_value, "00");
@@ -508,6 +527,14 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   EXPECT_EQ(seg->candidate(3).value, "零");
   EXPECT_EQ(seg->candidate(3).content_value, "零");
   EXPECT_EQ(seg->candidate(3).description, kOldKanjiDescription);
+
+  EXPECT_EQ(seg->candidate(4).value, "⁰");
+  EXPECT_EQ(seg->candidate(4).content_value, "⁰");
+  EXPECT_EQ(seg->candidate(4).description, kSuperscriptDescription);
+
+  EXPECT_EQ(seg->candidate(5).value, "₀");
+  EXPECT_EQ(seg->candidate(5).content_value, "₀");
+  EXPECT_EQ(seg->candidate(5).description, kSubscriptDescription);
 
   seg->clear_candidates();
 }
