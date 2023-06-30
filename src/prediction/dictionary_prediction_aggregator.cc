@@ -1617,8 +1617,12 @@ void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
 
   const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
 
-  std::string history_key, history_value;
-  GetHistoryKeyAndValue(segments, &history_key, &history_value);
+  std::string history_key;
+  for (size_t i = 0; i < segments.history_segments_size(); ++i) {
+    const Segment &seg = segments.history_segment(i);
+    if (seg.candidates_size() == 0) continue;
+    history_key.append(seg.candidate(0).key);
+  }
 
   const std::optional<std::vector<composer::TypeCorrectedQuery>> corrected =
       request.composer().GetTypeCorrectedQueries(history_key);
