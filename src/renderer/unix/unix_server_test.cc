@@ -39,9 +39,9 @@ namespace renderer {
 namespace gtk {
 namespace {
 
-using testing::_;
-using testing::Return;
-using testing::StrictMock;
+using ::testing::_;
+using ::testing::Return;
+using ::testing::StrictMock;
 
 class UnixServerTest : public testing::TestWithTempUserProfile {};
 
