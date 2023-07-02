@@ -677,7 +677,7 @@ TEST(NumberUtilTest, ArabicToOtherFormsTest) {
   arabic = "5";
   output.clear();
   EXPECT_TRUE(NumberUtil::ArabicToOtherForms(arabic, &output));
-  ASSERT_EQ(output.size(), 3);
+  ASSERT_EQ(output.size(), 5);
 
   EXPECT_EQ(output[0].value, "Ⅴ");
   EXPECT_EQ(output[0].style, NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL);
@@ -687,6 +687,12 @@ TEST(NumberUtilTest, ArabicToOtherFormsTest) {
 
   EXPECT_EQ(output[2].value, "⑤");
   EXPECT_EQ(output[2].style, NumberUtil::NumberString::NUMBER_CIRCLED);
+
+  EXPECT_EQ(output[3].value, "⁵");
+  EXPECT_EQ(output[3].style, NumberUtil::NumberString::NUMBER_SUPERSCRIPT);
+
+  EXPECT_EQ(output[4].value, "₅");
+  EXPECT_EQ(output[4].style, NumberUtil::NumberString::NUMBER_SUBSCRIPT);
 
   arabic = "0123456789";
   output.clear();

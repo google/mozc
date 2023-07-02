@@ -89,6 +89,11 @@ constexpr absl::string_view kCircledNumbers[] = {
     "㉝", "㉞", "㉟", "㊱", "㊲", "㊳", "㊴", "㊵", "㊶", "㊷", "㊸",
     "㊹", "㊺", "㊻", "㊼", "㊽", "㊾", "㊿", ""};
 
+constexpr absl::string_view kSuperscriptNumbers[] = {
+    "⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", ""};
+constexpr absl::string_view kSubscriptNumbers[] = {"₀", "₁", "₂", "₃", "₄", "₅",
+                                                   "₆", "₇", "₈", "₉", ""};
+
 // Structure to store character set variations.
 struct NumberStringVariation {
   absl::Span<const absl::string_view> digits;
@@ -432,6 +437,10 @@ constexpr NumberStringVariation kSpecialNumericVariations[] = {
      NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
     {kCircledNumbers, "丸数字", "", "", std::size(kCircledNumbers),
      NumberUtil::NumberString::NUMBER_CIRCLED},
+    {kSuperscriptNumbers, "上付き文字", "", "", std::size(kSuperscriptNumbers),
+     NumberUtil::NumberString::NUMBER_SUPERSCRIPT},
+    {kSubscriptNumbers, "下付き文字", "", "", std::size(kSubscriptNumbers),
+     NumberUtil::NumberString::NUMBER_SUBSCRIPT},
 };
 
 }  // namespace

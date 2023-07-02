@@ -1,7 +1,23 @@
-Contributing Guide
-==================
+# Contributing Guide
 
-## Pull Requests
+## Before you begin
+
+### Sign our Contributor License Agreement
+
+Contributions to this project must be accompanied by a
+[Contributor License Agreement](https://cla.developers.google.com/about) (CLA).
+You (or your employer) retain the copyright to your contribution; this simply
+gives us permission to use and redistribute your contributions as part of the
+project.
+
+If you or your current employer have already signed the Google CLA (even if it
+was for a different project), you probably don't need to do it again.
+
+Visit <https://cla.developers.google.com/> to see your current agreements or to
+sign a new one.
+
+### Check locations of files and directories you plan to edit
+
 **Pull requests to the Mozc project are limited to the specific directories.**
 
 Files and directories we may accept pull requests:
@@ -18,7 +34,7 @@ Files and directories we may accept pull requests:
 * [src/unix/ibus/](https://github.com/google/mozc/tree/master/src/unix/ibus/)
 * [src/WORKSPACE.bazel](https://github.com/google/mozc/tree/master/src/WORKSPAE.bazel)
 
-### Why is there such a limitation?
+#### Why is there such a limitation?
 
 The limitation is due to the Google corporate policy that requires OSS code to
 be place under the `third_party` directory in the Google internal source

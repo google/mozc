@@ -190,6 +190,8 @@ std::string NumberStyleToString(NumberUtil::NumberString::Style style) {
     RETURN_STR(NUMBER_HEX);
     RETURN_STR(NUMBER_OCT);
     RETURN_STR(NUMBER_BIN);
+    RETURN_STR(NUMBER_SUPERSCRIPT);
+    RETURN_STR(NUMBER_SUBSCRIPT);
     default:
       return "UNKNOWN";
   }

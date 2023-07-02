@@ -88,6 +88,10 @@ class NumberUtil {
       NUMBER_OCT,
       // "0b10011010010" (1234 in decimal)
       NUMBER_BIN,
+      // "¹²³⁴⁵⁶⁷⁸⁹"
+      NUMBER_SUPERSCRIPT,
+      // "₁₂₃₄₅₆₇₈₉"
+      NUMBER_SUBSCRIPT,
     };
 
     // description is string_view because it's mostly a static string.
