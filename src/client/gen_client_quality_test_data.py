@@ -70,7 +70,7 @@ def convert_tsv(tsv, outfile):
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      'inputs', nargs='+', type=argparse.FileType(mode='r', encoding='utf-8')
+      'inputs', nargs='*', type=argparse.FileType(mode='r', encoding='utf-8')
   )
   parser.add_argument(
       '--output',
