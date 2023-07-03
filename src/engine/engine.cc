@@ -31,6 +31,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include "base/logging.h"
@@ -130,11 +132,6 @@ bool UserDataManagerImpl::ClearUserPredictionEntry(
 }
 
 bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
-
-std::unique_ptr<prediction::RescorerInterface> MaybeCreateRescorer(
-    const DataManagerInterface &data_manager) {
-  return nullptr;
-}
 
 }  // namespace
 
@@ -251,7 +248,6 @@ absl::Status Engine::Init(
   {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
-    rescorer_ = MaybeCreateRescorer(*data_manager);
     auto dictionary_predictor =
         std::make_unique<prediction::DictionaryPredictor>(
             *data_manager, converter_.get(), immutable_converter_.get(),
