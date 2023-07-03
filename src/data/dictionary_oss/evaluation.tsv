@@ -281,6 +281,7 @@ FAILED:	かれはみかたなのか	彼は味方７日	Conversion Expected	彼�
 OK:	しっちゃく	失着	Conversion Expected 2	失着	2.28.5085
 OK:	さいひんち	最頻値	Conversion Expected 2	最頻値	2.29.5111
 OK:	くうしゅうごう	空集合	Conversion Expected	空集合	2.29.5111
+OK:	たいしょうがい	対象外	Conversion Expected	対象外	2.29.5135
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
