@@ -269,6 +269,9 @@ class DictionaryPredictor : public PredictorInterface {
   static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
                                              Segments *segments);
 
+  static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
+                                          Segments *segments);
+
   // Gets history key/value.
   // Returns false if history segments are
   // not found.
