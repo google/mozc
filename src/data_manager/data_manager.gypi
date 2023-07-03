@@ -975,7 +975,7 @@
           'variables': {
             'generator': '<(mozc_dir)/rewriter/gen_a11y_description_rewriter_data.py',
             'input_files': [
-              '<(mozc_dir)/data/a11y_description/a11y_description_data.tsv',
+              '<(mozc_oss_src_dir)/data/a11y_description/a11y_description_data.tsv',
             ],
           },
           'inputs': [
@@ -988,7 +988,7 @@
           ],
           'action': [
             '<(python)', '<(generator)',
-            '--input=<(mozc_dir)/data/a11y_description/a11y_description_data.tsv',
+            '--input=<(mozc_oss_src_dir)/data/a11y_description/a11y_description_data.tsv',
             '--output_token_array=<(gen_out_dir)/a11y_description_token.data',
             '--output_string_array=<(gen_out_dir)/a11y_description_string.data',
           ],
