@@ -459,9 +459,7 @@ mozc_cc_library(
     name = "init_mozc_renderer",
     srcs = ["init_mozc_renderer.cc"],
     hdrs = ["init_mozc_renderer.h"],
-    visibility = [
-        "//renderer:__subpackages__",
-    ],
+    visibility = ["//renderer:__subpackages__"],
     deps = [
         "//base:crash_report_handler",
         "//base:init_mozc",
