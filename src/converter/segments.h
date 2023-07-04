@@ -500,6 +500,14 @@ class Segments final {
   bool resized() const { return resized_; }
   void set_resized(bool resized) { resized_ = resized; }
 
+  // Returns history key of `size` segments.
+  // Returns all history key when size == -1.
+  std::string history_key(int size = -1) const;
+
+  // Returns history value of `size` segments.
+  // Returns all history value when size == -1.
+  std::string history_value(int size = -1) const;
+
   // clear segments
   void Clear();
 

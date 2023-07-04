@@ -128,6 +128,22 @@ TEST(SegmentsTest, BasicTest) {
   EXPECT_EQ(segments.mutable_conversion_segment(0), seg[2]);
   EXPECT_EQ(segments.mutable_history_segment(0), seg[0]);
 
+  segments.mutable_history_segment(0)->add_candidate()->key = "a";
+  segments.mutable_history_segment(1)->add_candidate()->key = "b";
+
+  EXPECT_EQ(segments.history_key(), "ab");
+  EXPECT_EQ(segments.history_key(1), "b");
+  EXPECT_EQ(segments.history_key(2), "ab");
+  EXPECT_EQ(segments.history_key(3), "ab");
+
+  segments.mutable_history_segment(0)->mutable_candidate(0)->value = "A";
+  segments.mutable_history_segment(1)->mutable_candidate(0)->value = "B";
+
+  EXPECT_EQ(segments.history_value(), "AB");
+  EXPECT_EQ(segments.history_value(1), "B");
+  EXPECT_EQ(segments.history_value(2), "AB");
+  EXPECT_EQ(segments.history_value(3), "AB");
+
   segments.clear_history_segments();
   EXPECT_EQ(segments.segments_size(), 3);
 
