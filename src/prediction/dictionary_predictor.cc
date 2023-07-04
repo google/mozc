@@ -482,14 +482,9 @@ void DictionaryPredictor::MaybeApplyHomonymCorrection(
     queries.emplace_back(value);
   }
 
-  // TODO(taku): Uses all history value. GetCandidateKeyAndValue returns the
-  // last value only.
-  std::string history_key, history_value;
-  GetHistoryKeyAndValue(*segments, &history_key, &history_value);
-
   // Runs spellchecker.
   const auto result =
-      spellchecker->CheckHomonymSpelling(queries, history_value);
+      spellchecker->CheckHomonymSpelling(queries, segments->history_value());
   if (!result) return;
 
   const auto corrections = std::move(result.value());
@@ -1385,14 +1380,7 @@ void DictionaryPredictor::MaybeRescoreResults(
   if (IsDebug(request)) {
     for (Result &r : results) r.cost_before_rescoring = r.cost;
   }
-  // Concatenate top values of history segments.
-  std::string history;
-  for (size_t i = 0; i < segments.history_segments_size(); ++i) {
-    const Segment &seg = segments.history_segment(i);
-    if (seg.candidates_size() == 0) continue;
-    history.append(seg.candidate(0).value);
-  }
-  rescorer_->RescoreResults(request, history, results);
+  rescorer_->RescoreResults(request, segments.history_value(), results);
 }
 
 void DictionaryPredictor::AddRescoringDebugDescription(Segments *segments) {
