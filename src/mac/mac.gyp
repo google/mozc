@@ -103,7 +103,7 @@
         {
           'action_name': 'mac-kana',
           'variables': {
-            'input_file': '../data/preedit/mac-kana.tsv',
+            'input_file': '<(mozc_oss_src_dir)/data/preedit/mac-kana.tsv',
             'output_file': '<(gen_out_dir)/init_kanamap.h',
           },
           'inputs': [
@@ -124,7 +124,7 @@
         {
           'action_name': 'mac-specialkeys',
           'variables': {
-            'input_file': '../data/preedit/mac-specialkeys.tsv',
+            'input_file': '<(mozc_oss_src_dir)/data/preedit/mac-specialkeys.tsv',
             'output_file': '<(gen_out_dir)/init_specialkeymap.h',
           },
           'inputs': [
@@ -145,7 +145,7 @@
         {
           'action_name': 'mac-specialchars',
           'variables': {
-            'input_file': '../data/preedit/mac-specialchars.tsv',
+            'input_file': '<(mozc_oss_src_dir)/data/preedit/mac-specialchars.tsv',
             'output_file': '<(gen_out_dir)/init_specialcharmap.h',
           },
           'inputs': [
