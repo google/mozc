@@ -34,84 +34,65 @@
 
 #include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
 
-#include "base/container/freelist.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_pos_interface.h"
-#include "absl/container/btree_map.h"
-#include "absl/strings/string_view.h"
+#include "absl/container/btree_set.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace rewriter {
 
-class Token final {
- public:
-  Token() = default;
-  ~Token() = default;
+struct Token {
+  void MergeFrom(Token new_token);
 
-  Token(const Token &) = delete;
-  Token &operator=(const Token &) = delete;
-
-  // Merge the values of the token.
-  void MergeFrom(const Token &token);
-
-  // Return the fingerprint of the keys (key, value and pos).
-  uint64_t GetID() const;
-
-  // Accessors
-  int sorting_key() const { return sorting_key_; }
-  void set_sorting_key(int sorting_key) { sorting_key_ = sorting_key; }
-
-  const std::string &key() const { return key_; }
-  void set_key(const absl::string_view key) { key_ = std::string(key); }
-
-  const std::string &value() const { return value_; }
-  void set_value(const absl::string_view value) { value_ = std::string(value); }
-
-  const std::string &pos() const { return pos_; }
-  void set_pos(const absl::string_view pos) { pos_ = std::string(pos); }
-
-  const std::string &description() const { return description_; }
-  const std::string &additional_description() const {
-    return additional_description_;
-  }
-  void set_description(const absl::string_view description) {
-    description_ = std::string(description);
-  }
-  void set_additional_description(
-      const absl::string_view additional_description) {
-    additional_description_ = std::string(additional_description);
+  template <typename Sink>
+  friend void AbslStringify(Sink &sink, const Token &token) {
+    absl::Format(
+        &sink,
+        "sorting_key = %d, key = %s, value = %s, pos = %s, description "
+        "= %s, additional_description = %s",
+        token.sorting_key, token.key, token.value, token.pos, token.description,
+        token.additional_description);
   }
 
- private:
-  int sorting_key_ = 0;
-  std::string key_;
-  std::string value_;
-  std::string pos_;
-  std::string description_;
-  std::string additional_description_;
+  int sorting_key = 0;
+  std::string key;
+  std::string value;
+  std::string pos;
+  std::string description;
+  std::string additional_description;
   // NOTE(komatsu): When new arguments are added, MergeFrom function
   // should be updated too.
 };
 
+bool operator==(const Token &lhs, const Token &rhs);
+inline bool operator!=(const Token &lhs, const Token &rhs) {
+  return !(lhs == rhs);
+}
+// Sort by keys first.  Key represents the reading of the token. If the keys are
+// equal, sorting keys are used.  Sorting keys are typically character encodings
+// like CP932, Unicode, etc. If the both keys are equal, values (encoded in
+// UTF8) are used.
+bool operator<(const Token &lhs, const Token &rhs);
+
 class DictionaryGenerator {
  public:
   explicit DictionaryGenerator(const DataManagerInterface &data_manager);
-  virtual ~DictionaryGenerator();
 
-  DictionaryGenerator(const DictionaryGenerator &) = delete;
-  DictionaryGenerator &operator=(const DictionaryGenerator &) = delete;
+  DictionaryGenerator(DictionaryGenerator &&) = default;
+  DictionaryGenerator &operator=(DictionaryGenerator &&) = default;
 
   // Add the token into the pool.
-  void AddToken(const Token &token);
+  const Token &AddToken(Token token);
 
-  // Output the tokens into the filename.
-  bool Output(const std::string &filename) const;
+  // Output the tokens into the stream.
+  bool Output(std::ostream &os) const;
 
  private:
-  ObjectPool<Token> token_pool_;
-  absl::btree_map<uint64_t, Token *> token_map_;
+  absl::btree_set<Token> tokens_;
   std::unique_ptr<const UserPosInterface> user_pos_;
   uint16_t open_bracket_id_;
   uint16_t close_bracket_id_;
