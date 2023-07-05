@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -80,7 +81,7 @@ class DictionaryPredictorTestPeer {
       const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
-      const dictionary::PosMatcher *pos_matcher,
+      const dictionary::PosMatcher pos_matcher,
       const SuggestionFilter &suggestion_filter,
       const prediction::RescorerInterface *rescorer = nullptr)
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
@@ -120,8 +121,8 @@ class DictionaryPredictorTestPeer {
   }
 
   static void SetDebugDescription(PredictionTypes types,
-                                  std::string *description) {
-    DictionaryPredictor::SetDebugDescription(types, description);
+                                  Segment::Candidate *candidate) {
+    DictionaryPredictor::SetDebugDescription(types, candidate);
   }
 
   int GetLMCost(const Result &result, int rid) const {
@@ -175,8 +176,8 @@ Result CreateResult4(absl::string_view key, absl::string_view value,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
 }
@@ -185,8 +186,8 @@ Result CreateResult5(absl::string_view key, absl::string_view value, int wcost,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.wcost = wcost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
@@ -196,8 +197,8 @@ Result CreateResult6(absl::string_view key, absl::string_view value, int wcost,
                      int cost, PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.wcost = wcost;
   result.cost = cost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
@@ -222,10 +223,10 @@ void SetSegmentForCommit(absl::string_view candidate_value,
   segment->set_key("");
   segment->set_segment_type(Segment::FIXED_VALUE);
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->key = std::string(candidate_value);
-  candidate->content_key = std::string(candidate_value);
-  candidate->value = std::string(candidate_value);
-  candidate->content_value = std::string(candidate_value);
+  strings::Assign(candidate->key, candidate_value);
+  strings::Assign(candidate->content_key, candidate_value);
+  strings::Assign(candidate->value, candidate_value);
+  strings::Assign(candidate->content_value, candidate_value);
   candidate->source_info = candidate_source_info;
 }
 
@@ -346,7 +347,7 @@ class MockDataAndPredictor {
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         absl::WrapUnique(mock_aggregator_), data_manager_,
-        &mock_immutable_converter_, connector_, segmenter_.get(), &pos_matcher_,
+        &mock_immutable_converter_, connector_, segmenter_.get(), pos_matcher_,
         suggestion_filter_, rescorer);
   }
 
@@ -970,23 +971,24 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 
 TEST_F(DictionaryPredictorTest, SetDebugDescription) {
   {
-    std::string description;
+    Segment::Candidate candidate;
     const PredictionTypes types = prediction::UNIGRAM | prediction::ENGLISH;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "UE");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "UE");
   }
   {
-    std::string description = "description";
+    Segment::Candidate candidate;
+    candidate.description = "description";
     const PredictionTypes types = prediction::REALTIME | prediction::BIGRAM;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "description BR");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "description BR");
   }
   {
-    std::string description;
+    Segment::Candidate candidate;
     const PredictionTypes types =
         prediction::BIGRAM | prediction::REALTIME | prediction::SUFFIX;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "BRS");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "BRS");
   }
 }
 

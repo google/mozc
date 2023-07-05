@@ -252,7 +252,7 @@ absl::Status Engine::Init(
         std::make_unique<prediction::DictionaryPredictor>(
             *data_manager, converter_.get(), immutable_converter_.get(),
             dictionary_.get(), suffix_dictionary_.get(), connector_,
-            segmenter_.get(), pos_matcher_.get(), suggestion_filter_,
+            segmenter_.get(), *pos_matcher_, suggestion_filter_,
             rescorer_.get());
     RETURN_IF_NULL(dictionary_predictor);
 

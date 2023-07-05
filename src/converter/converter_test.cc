@@ -262,7 +262,7 @@ class ConverterTest : public ::testing::Test {
         converter_and_data.dictionary.get(),
         converter_and_data.suffix_dictionary.get(),
         converter_and_data.connector, converter_and_data.segmenter.get(),
-        pos_matcher, converter_and_data.suggestion_filter);
+        *pos_matcher, converter_and_data.suggestion_filter);
     CHECK(dictionary_predictor);
 
     auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
@@ -1271,7 +1271,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                      std::make_unique<DictionaryPredictor>(
                          data_manager, &converter, immutable_converter.get(),
                          dictionary.get(), suffix_dictionary.get(), connector,
-                         segmenter.get(), &pos_matcher, suggestion_filter),
+                         segmenter.get(), pos_matcher, suggestion_filter),
                      std::make_unique<UserHistoryPredictor>(
                          dictionary.get(), &pos_matcher,
                          suppression_dictionary.get(), false)),
