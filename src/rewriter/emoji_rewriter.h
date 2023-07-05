@@ -31,20 +31,17 @@
 #define MOZC_REWRITER_EMOJI_REWRITER_H_
 
 #include <cstddef>
-#include <cstdint>
-#include <iterator>
 #include <utility>
 
 #include "base/container/serialized_string_array.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/emoji_data.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class ConversionRequest;
 
 // EmojiRewriter class adds UTF-8 emoji characters in converted candidates of
 // given segments, if each segment has a special key to convert.
@@ -77,7 +74,6 @@ class EmojiRewriter : public RewriterInterface {
   explicit EmojiRewriter(const DataManagerInterface &data_manager);
   EmojiRewriter(const EmojiRewriter &) = delete;
   EmojiRewriter &operator=(const EmojiRewriter &) = delete;
-  ~EmojiRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
 
