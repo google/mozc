@@ -674,7 +674,6 @@ void SystemDictionary::LookupPredictive(
         continue;
       case DictionaryInterface::Callback::TRAVERSE_CULL:
         LOG(FATAL) << "Culling is not implemented.";
-        continue;
       default:
         break;
     }
@@ -695,7 +694,6 @@ void SystemDictionary::LookupPredictive(
         continue;
       case Callback::TRAVERSE_CULL:
         LOG(FATAL) << "Culling is not implemented.";
-        continue;
       default:
         break;
     }

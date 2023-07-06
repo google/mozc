@@ -103,7 +103,6 @@ void SuffixDictionary::LookupPredictive(
         continue;
       case Callback::TRAVERSE_CULL:
         LOG(FATAL) << "Culling is not supported.";
-        continue;
       default:
         break;
     }
