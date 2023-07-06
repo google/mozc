@@ -33,7 +33,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "composer/type_corrected_query.h"
@@ -54,7 +53,7 @@ struct HomonymCorrection {
 
 class SpellCheckerServiceInterface {
  public:
-  virtual ~SpellCheckerServiceInterface() {}
+  virtual ~SpellCheckerServiceInterface() = default;
 
   // Performs spelling correction.
   // `request.text` may contains multiple sentences.
