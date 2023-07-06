@@ -588,9 +588,9 @@ bool ConverterImpl::ReconstructHistory(
   candidate->rid = id;
   candidate->lid = id;
   candidate->content_key = key;
-  candidate->key = key;
+  candidate->key = std::move(key);
   candidate->content_value = value;
-  candidate->value = value;
+  candidate->value = std::move(value);
   candidate->attributes = Segment::Candidate::NO_LEARNING;
   return true;
 }
@@ -741,26 +741,23 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
       Segment *segment = segments->mutable_segment(segment_index);
       segment->Clear();
       segment->set_segment_type(Segment::FIXED_BOUNDARY);
-      segment->set_key(new_key);
+      segment->set_key(std::move(new_key));
     }  // scope out |segment|, |new_key|
 
     if (length < 0) {  // remaining part
       Segment *segment = segments->insert_segment(segment_index + 1);
       segment->set_segment_type(Segment::FREE);
-      std::string new_key;
-      Util::Utf8SubString(last_key, static_cast<size_t>(length + last_clen),
-                          static_cast<size_t>(-length), &new_key);
-      segment->set_key(new_key);
+      segment->set_key(
+          Util::Utf8SubString(last_key, static_cast<size_t>(length + last_clen),
+                              static_cast<size_t>(-length)));
     }
   } else if (offset_length < 0) {
     if (cur_length + offset_length > 0) {
       Segment *segment1 = segments->mutable_segment(segment_index);
       segment1->Clear();
       segment1->set_segment_type(Segment::FIXED_BOUNDARY);
-      std::string new_key;
-      Util::Utf8SubString(cur_segment_key, 0, cur_length + offset_length,
-                          &new_key);
-      segment1->set_key(new_key);
+      segment1->set_key(
+          Util::Utf8SubString(cur_segment_key, 0, cur_length + offset_length));
     }
 
     if (segment_index + 1 < segments->segments_size()) {
@@ -771,15 +768,13 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
                           std::max<size_t>(0, cur_length + offset_length),
                           cur_length, &tmp);
       tmp += segment2->key();
-      segment2->set_key(tmp);
+      segment2->set_key(std::move(tmp));
     } else {
       Segment *segment2 = segments->add_segment();
       segment2->set_segment_type(Segment::FREE);
-      std::string new_key;
-      Util::Utf8SubString(cur_segment_key,
-                          std::max<size_t>(0, cur_length + offset_length),
-                          cur_length, &new_key);
-      segment2->set_key(new_key);
+      segment2->set_key(Util::Utf8SubString(
+          cur_segment_key, std::max<size_t>(0, cur_length + offset_length),
+          cur_length));
     }
   }
 
@@ -831,14 +826,13 @@ bool ConverterImpl::ResizeSegment(
 
   for (size_t new_size : new_size_array) {
     if (new_size != 0 && consumed < key_len) {
-      new_keys.push_back(
-          std::string(Util::Utf8SubString(key, consumed, new_size)));
+      new_keys.emplace_back(Util::Utf8SubString(key, consumed, new_size));
       consumed += new_size;
     }
   }
   if (consumed < key_len) {
-    new_keys.push_back(
-        std::string(Util::Utf8SubString(key, consumed, key_len - consumed)));
+    new_keys.emplace_back(
+        Util::Utf8SubString(key, consumed, key_len - consumed));
   }
 
   segments->erase_segments(start_segment_index, segments_size);
@@ -846,7 +840,7 @@ bool ConverterImpl::ResizeSegment(
   for (size_t i = 0; i < new_keys.size(); ++i) {
     Segment *seg = segments->insert_segment(start_segment_index + i);
     seg->set_segment_type(Segment::FIXED_BOUNDARY);
-    seg->set_key(new_keys[i]);
+    seg->set_key(std::move(new_keys[i]));
   }
 
   segments->set_resized(true);
