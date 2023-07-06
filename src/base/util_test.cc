@@ -53,30 +53,6 @@ namespace {
 
 using ::testing::ElementsAreArray;
 
-TEST(UtilTest, AppendStringWithDelimiter) {
-  std::string result;
-  std::string input;
-  constexpr char kDelemiter[] = ":";
-
-  {
-    result.clear();
-    Util::AppendStringWithDelimiter(kDelemiter, "test", &result);
-    EXPECT_EQ(result, "test");
-  }
-
-  {
-    result = "foo";
-    Util::AppendStringWithDelimiter(kDelemiter, "test", &result);
-    EXPECT_EQ(result, "foo:test");
-  }
-
-  {
-    result = "foo";
-    Util::AppendStringWithDelimiter(kDelemiter, "", &result);
-    EXPECT_EQ(result, "foo:");
-  }
-}
-
 TEST(UtilTest, SplitStringToUtf8Chars) {
   {
     std::vector<std::string> output;
