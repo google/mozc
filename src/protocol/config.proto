@@ -189,6 +189,9 @@ message Config {
   optional HistoryLearningLevel history_learning_level = 50
       [default = DEFAULT_HISTORY];
 
+  // The style of candidate selection shortcut.
+  // Note that if the current Request has SpecialRomajiTable (== the keyevent
+  // is from a virtual keyboard), shortcut is no-op.
   enum SelectionShortcut {
     NO_SHORTCUT = 0;
     SHORTCUT_123456789 = 1;
