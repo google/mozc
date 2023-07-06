@@ -544,6 +544,34 @@ Segments::RevertEntry *Segments::push_back_revert_entry() {
   return entry;
 }
 
+std::string Segments::history_key(int size) const {
+  const int hsize = history_segments_size();
+  const int start = size == -1 ? 0 : std::max<int>(0, hsize - size);
+
+  std::string history_key;
+  for (size_t i = start; i < hsize; ++i) {
+    const Segment &seg = history_segment(i);
+    if (seg.candidates_size() == 0) continue;
+    history_key.append(seg.candidate(0).key);
+  }
+
+  return history_key;
+}
+
+std::string Segments::history_value(int size) const {
+  const int hsize = history_segments_size();
+  const int start = size == -1 ? 0 : std::max<int>(0, hsize - size);
+
+  std::string history_value;
+  for (size_t i = start; i < hsize; ++i) {
+    const Segment &seg = history_segment(i);
+    if (seg.candidates_size() == 0) continue;
+    history_value.append(seg.candidate(0).value);
+  }
+
+  return history_value;
+}
+
 std::string Segments::DebugString() const {
   std::stringstream os;
   os << "{" << std::endl;

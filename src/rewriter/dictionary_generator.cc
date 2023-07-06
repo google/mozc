@@ -31,122 +31,79 @@
 
 #include "rewriter/dictionary_generator.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <ostream>
 #include <string>
-#include <vector>
+#include <tuple>
+#include <utility>
 
-#include "base/container/freelist.h"
-#include "base/file_stream.h"
-#include "base/hash.h"
 #include "base/logging.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
-#include "absl/container/btree_map.h"
 
 namespace mozc {
 namespace rewriter {
+namespace {
 
-void Token::MergeFrom(const Token &token) {
-  if (token.sorting_key() != 0) {
-    sorting_key_ = token.sorting_key();
-  }
-  if (!token.key().empty()) {
-    key_ = token.key();
-  }
-  if (!token.value().empty()) {
-    value_ = token.value();
-  }
-  if (!token.pos().empty()) {
-    pos_ = token.pos();
-  }
-  if (!token.description().empty()) {
-    description_ = token.description();
-  }
-  if (!token.additional_description().empty()) {
-    additional_description_ = token.additional_description();
+void MergeTokenString(std::string &base, std::string &new_string) {
+  if (!new_string.empty()) {
+    base = std::move(new_string);
   }
 }
 
-uint64_t Token::GetID() const {
-  return Hash::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
+}  // namespace
+
+void Token::MergeFrom(Token new_token) {
+  sorting_key =
+      new_token.sorting_key == 0 ? sorting_key : new_token.sorting_key;
+  MergeTokenString(key, new_token.key);
+  MergeTokenString(value, new_token.value);
+  MergeTokenString(pos, new_token.pos);
+  MergeTokenString(description, new_token.description);
+  MergeTokenString(additional_description, new_token.additional_description);
 }
 
-static constexpr size_t kTokenSize = 1000;
+bool operator==(const Token &lhs, const Token &rhs) {
+  return std::tie(lhs.key, lhs.value, lhs.pos) ==
+         std::tie(rhs.key, rhs.value, rhs.pos);
+}
+
+bool operator<(const Token &lhs, const Token &rhs) {
+  return std::tie(lhs.key, lhs.sorting_key, lhs.value) <
+         std::tie(rhs.key, rhs.sorting_key, rhs.value);
+}
 
 DictionaryGenerator::DictionaryGenerator(
-    const DataManagerInterface &data_manager)
-    : token_pool_(kTokenSize) {
+    const DataManagerInterface &data_manager) {
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
   user_pos_ = dictionary::UserPos::CreateFromDataManager(data_manager);
 }
 
-DictionaryGenerator::~DictionaryGenerator() = default;
-
-void DictionaryGenerator::AddToken(const Token &token) {
-  Token *new_token = nullptr;
-  if (auto it = token_map_.find(token.GetID()); it != token_map_.end()) {
-    new_token = it->second;
+const Token &DictionaryGenerator::AddToken(Token token) {
+  // Take the token as node_type of tokens_.
+  auto node = tokens_.extract(token);
+  if (node.empty()) {
+    return *tokens_.insert(std::move(token)).first;
   } else {
-    new_token = token_pool_.Alloc();
-    token_map_.emplace(token.GetID(), new_token);
+    node.value().MergeFrom(std::move(token));
+    return *tokens_.insert(std::move(node.value())).first;
   }
-  new_token->MergeFrom(token);
 }
 
-namespace {
-
-struct CompareToken {
-  bool operator()(const Token *t1, const Token *t2) const {
-    if (t1->key() != t2->key()) {
-      // Sort by keys first.  Key represents the reading of the token.
-      return (t1->key() < t2->key());
-    } else if (t1->sorting_key() != t2->sorting_key()) {
-      // If the keys are equal, sorting keys are used.  Sorting keys
-      // are tipically character encodings like CP932, Unicode, etc.
-      return (t1->sorting_key() < t2->sorting_key());
-    }
-    // If the both keys are equal, values (encoded in UTF8) are used.
-    return (t1->value() < t2->value());
-  }
-};
-
-std::vector<const Token *> GetSortedTokens(
-    const absl::btree_map<uint64_t, Token *> &token_map) {
-  std::vector<const Token *> tokens;
-  tokens.reserve(token_map.size());
-  for (auto [unused, token] : token_map) {
-    tokens.push_back(token);
-  }
-  std::sort(tokens.begin(), tokens.end(), CompareToken());
-  return tokens;
-}
-
-}  // namespace
-
-bool DictionaryGenerator::Output(const std::string &filename) const {
-  mozc::OutputFileStream ofs(filename);
-  if (!ofs) {
-    LOG(ERROR) << "Failed to open: " << filename;
-    return false;
-  }
-
-  const std::vector<const Token *> tokens = GetSortedTokens(token_map_);
-
+bool DictionaryGenerator::Output(std::ostream &os) const {
   uint32_t num_same_keys = 0;
   std::string prev_key;
-  for (const Token *token : tokens) {
-    const std::string &pos = token->pos();
+  for (const Token &token : tokens_) {
+    const std::string &pos = token.pos;
 
     // Update the number of the sequence of the same keys
-    if (prev_key == token->key()) {
+    if (prev_key == token.key) {
       ++num_same_keys;
     } else {
       num_same_keys = 0;
-      prev_key = token->key();
+      prev_key = token.key;
     }
     const uint32_t cost = 10 * num_same_keys;
 
@@ -160,13 +117,9 @@ bool DictionaryGenerator::Output(const std::string &filename) const {
     }
 
     // Output in mozc dictionary format
-    ofs << token->key() << "\t" << id << "\t" << id << "\t" << cost << "\t"
-        << token->value() << "\t"
-        << (token->description().empty() ? "" : token->description()) << "\t"
-        << (token->additional_description().empty()
-                ? ""
-                : token->additional_description());
-    ofs << std::endl;
+    os << token.key << "\t" << id << "\t" << id << "\t" << cost << "\t"
+       << token.value << "\t" << token.description << "\t"
+       << token.additional_description << std::endl;
   }
   return true;
 }

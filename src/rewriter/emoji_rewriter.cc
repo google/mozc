@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -40,8 +39,7 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/util.h"
-#include "config/config_handler.h"
+#include "base/strings/assign.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -49,19 +47,17 @@
 #include "rewriter/rewriter_util.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 // EmojiRewriter:
 // Converts HIRAGANA strings to emoji characters, if they are names of emojis.
 
 namespace mozc {
-
-using commands::Request;
-
 namespace {
 
-constexpr char kEmoji[] = "絵文字";
-constexpr char kEmojiKey[] = "えもじ";
+constexpr absl::string_view kEmoji = "絵文字";
+constexpr absl::string_view kEmojiKey = "えもじ";
 // Where to insert emoji candidate by default.
 constexpr size_t kDefaultInsertPos = 6;
 
@@ -69,22 +65,22 @@ constexpr size_t kDefaultInsertPos = 6;
 using EmojiEntryList =
     std::vector<std::pair<absl::string_view, absl::string_view>>;
 
-std::unique_ptr<Segment::Candidate> CreateCandidate(absl::string_view key,
-                                   absl::string_view value,
-                                   absl::string_view description, int cost) {
+std::unique_ptr<Segment::Candidate> CreateCandidate(
+    absl::string_view key, absl::string_view value,
+    absl::string_view description, int cost) {
   auto candidate = std::make_unique<Segment::Candidate>();
   // Fill 0 (BOS/EOS) pos code intentionally.
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->cost = cost;
-  candidate->value.assign(value.data(), value.size());
-  candidate->content_value.assign(value.data(), value.size());
-  candidate->key.assign(key.data(), key.size());
-  candidate->content_key.assign(key.data(), key.size());
-  candidate->description.assign(kEmoji);
-  if (!description.empty()) {
-    Util::AppendStringWithDelimiter(" ", description,
-                                    &(candidate->description));
+  strings::Assign(candidate->value, value);
+  strings::Assign(candidate->content_value, value);
+  strings::Assign(candidate->key, key);
+  strings::Assign(candidate->content_key, key);
+  if (description.empty()) {
+    strings::Assign(candidate->description, kEmoji);
+  } else {
+    candidate->description = absl::StrCat(kEmoji, " ", description);
   }
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
@@ -117,7 +113,7 @@ std::vector<std::unique_ptr<Segment::Candidate>> CreateAllEmojiData(
   std::vector<std::unique_ptr<Segment::Candidate>> candidates;
   candidates.reserve(utf8_emoji_list.size());
   for (const auto &emoji_entry : utf8_emoji_list) {
-    candidates.emplace_back(
+    candidates.push_back(
         CreateCandidate(key, emoji_entry.first, emoji_entry.second, cost));
   }
   return candidates;
@@ -133,7 +129,7 @@ std::vector<std::unique_ptr<Segment::Candidate>> CreateEmojiData(
     if (utf8_emoji.empty()) {
       continue;
     }
-    candidates.emplace_back(CreateCandidate(
+    candidates.push_back(CreateCandidate(
         key, utf8_emoji, string_array[iter.description_utf8_index()], cost));
   }
   return candidates;
@@ -146,8 +142,6 @@ EmojiRewriter::EmojiRewriter(const DataManagerInterface &data_manager) {
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   string_array_.Set(string_array_data);
 }
-
-EmojiRewriter::~EmojiRewriter() = default;
 
 int EmojiRewriter::capability(const ConversionRequest &request) const {
   // The capability of the EmojiRewriter is up to the client's request.
@@ -217,7 +211,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
       return false;
     }
     const size_t insert_position =
-      RewriterUtil::CalculateInsertPosition(*segment, kDefaultInsertPos);
+        RewriterUtil::CalculateInsertPosition(*segment, kDefaultInsertPos);
     segment->insert_candidates(insert_position, std::move(cands));
     return true;
   };

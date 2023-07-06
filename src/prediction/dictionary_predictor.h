@@ -52,12 +52,21 @@
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
+#include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 namespace mozc::prediction {
+namespace dictionary_predictor_internal {
+
+// Views for a key and a value. Pass by value.
+struct KeyValueView {
+  absl::string_view key, value;
+};
+
+}  // namespace dictionary_predictor_internal
 
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
@@ -76,7 +85,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const dictionary::DictionaryInterface *dictionary,
                       const dictionary::DictionaryInterface *suffix_dictionary,
                       const Connector &connector, const Segmenter *segmenter,
-                      const dictionary::PosMatcher *pos_matcher,
+                      dictionary::PosMatcher pos_matcher,
                       const SuggestionFilter &suggestion_filter,
                       const prediction::RescorerInterface *rescorer = nullptr);
 
@@ -96,14 +105,15 @@ class DictionaryPredictor : public PredictorInterface {
   class ResultFilter {
    public:
     ResultFilter(const ConversionRequest &request, const Segments &segments,
-                 const SuggestionFilter &suggestion_filter);
+                 const SuggestionFilter &suggestion_filter
+                     ABSL_ATTRIBUTE_LIFETIME_BOUND);
     bool ShouldRemove(const Result &result, int added_num,
                       std::string *log_message);
 
    private:
     static constexpr int kTcMaxCountPerKey = 2;
 
-    bool CheckDupAndReturn(const std::string &value, const Result &result,
+    bool CheckDupAndReturn(absl::string_view value, const Result &result,
                            std::string *log_message);
 
     const std::string input_key_;
@@ -142,7 +152,7 @@ class DictionaryPredictor : public PredictorInterface {
       const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
-      const dictionary::PosMatcher *pos_matcher,
+      dictionary::PosMatcher pos_matcher,
       const SuggestionFilter &suggestion_filter,
       const prediction::RescorerInterface *rescorer = nullptr);
 
@@ -155,7 +165,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
-      const std::string &key, const std::string &value,
+      dictionary_predictor_internal::KeyValueView key_value,
       const absl::flat_hash_map<std::string, int32_t> &merged_types,
       Segment::Candidate *candidate) const;
 
@@ -256,7 +266,7 @@ class DictionaryPredictor : public PredictorInterface {
                       Segment::Candidate *candidate) const;
   // Description for DEBUG mode.
   static void SetDebugDescription(PredictionTypes types,
-                                  std::string *description);
+                                  Segment::Candidate *candidate);
 
   static std::string GetPredictionTypeDebugString(PredictionTypes types);
 
@@ -269,11 +279,8 @@ class DictionaryPredictor : public PredictorInterface {
   static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
                                              Segments *segments);
 
-  // Gets history key/value.
-  // Returns false if history segments are
-  // not found.
-  static bool GetHistoryKeyAndValue(const Segments &segments, std::string *key,
-                                    std::string *value);
+  static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
+                                          Segments *segments);
 
   void MaybeRescoreResults(const ConversionRequest &request,
                            const Segments &segments,
@@ -291,7 +298,7 @@ class DictionaryPredictor : public PredictorInterface {
   const SuggestionFilter &suggestion_filter_;
   std::unique_ptr<const dictionary::SingleKanjiDictionary>
       single_kanji_dictionary_;
-  const dictionary::PosMatcher *pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
   const uint16_t general_symbol_id_;
   const std::string predictor_name_;
   const prediction::RescorerInterface *rescorer_ = nullptr;

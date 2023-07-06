@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -80,7 +81,7 @@ class DictionaryPredictorTestPeer {
       const DataManagerInterface &data_manager,
       const ImmutableConverterInterface *immutable_converter,
       const Connector &connector, const Segmenter *segmenter,
-      const dictionary::PosMatcher *pos_matcher,
+      const dictionary::PosMatcher pos_matcher,
       const SuggestionFilter &suggestion_filter,
       const prediction::RescorerInterface *rescorer = nullptr)
       : predictor_(std::move(aggregator), data_manager, immutable_converter,
@@ -120,8 +121,8 @@ class DictionaryPredictorTestPeer {
   }
 
   static void SetDebugDescription(PredictionTypes types,
-                                  std::string *description) {
-    DictionaryPredictor::SetDebugDescription(types, description);
+                                  Segment::Candidate *candidate) {
+    DictionaryPredictor::SetDebugDescription(types, candidate);
   }
 
   int GetLMCost(const Result &result, int rid) const {
@@ -144,6 +145,11 @@ class DictionaryPredictorTestPeer {
   static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
                                              Segments *segments) {
     DictionaryPredictor::MaybeMoveLiteralCandidateToTop(request, segments);
+  }
+
+  static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
+                                          Segments *segments) {
+    DictionaryPredictor::MaybeApplyHomonymCorrection(request, segments);
   }
 
   static void AddRescoringDebugDescription(Segments *segments) {
@@ -170,8 +176,8 @@ Result CreateResult4(absl::string_view key, absl::string_view value,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
 }
@@ -180,8 +186,8 @@ Result CreateResult5(absl::string_view key, absl::string_view value, int wcost,
                      PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.wcost = wcost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
   return result;
@@ -191,8 +197,8 @@ Result CreateResult6(absl::string_view key, absl::string_view value, int wcost,
                      int cost, PredictionTypes types,
                      Token::AttributesBitfield token_attrs) {
   Result result;
-  result.key = std::string(key);
-  result.value = std::string(value);
+  strings::Assign(result.key, key);
+  strings::Assign(result.value, value);
   result.wcost = wcost;
   result.cost = cost;
   result.SetTypesAndTokenAttributes(types, token_attrs);
@@ -217,10 +223,10 @@ void SetSegmentForCommit(absl::string_view candidate_value,
   segment->set_key("");
   segment->set_segment_type(Segment::FIXED_VALUE);
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->key = std::string(candidate_value);
-  candidate->content_key = std::string(candidate_value);
-  candidate->value = std::string(candidate_value);
-  candidate->content_value = std::string(candidate_value);
+  strings::Assign(candidate->key, candidate_value);
+  strings::Assign(candidate->content_key, candidate_value);
+  strings::Assign(candidate->value, candidate_value);
+  strings::Assign(candidate->content_value, candidate_value);
   candidate->source_info = candidate_source_info;
 }
 
@@ -341,7 +347,7 @@ class MockDataAndPredictor {
 
     predictor_ = std::make_unique<DictionaryPredictorTestPeer>(
         absl::WrapUnique(mock_aggregator_), data_manager_,
-        &mock_immutable_converter_, connector_, segmenter_.get(), &pos_matcher_,
+        &mock_immutable_converter_, connector_, segmenter_.get(), pos_matcher_,
         suggestion_filter_, rescorer);
   }
 
@@ -965,23 +971,24 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
 
 TEST_F(DictionaryPredictorTest, SetDebugDescription) {
   {
-    std::string description;
+    Segment::Candidate candidate;
     const PredictionTypes types = prediction::UNIGRAM | prediction::ENGLISH;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "UE");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "UE");
   }
   {
-    std::string description = "description";
+    Segment::Candidate candidate;
+    candidate.description = "description";
     const PredictionTypes types = prediction::REALTIME | prediction::BIGRAM;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "description BR");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "description BR");
   }
   {
-    std::string description;
+    Segment::Candidate candidate;
     const PredictionTypes types =
         prediction::BIGRAM | prediction::REALTIME | prediction::SUFFIX;
-    DictionaryPredictorTestPeer::SetDebugDescription(types, &description);
-    EXPECT_EQ(description, "BRS");
+    DictionaryPredictorTestPeer::SetDebugDescription(types, &candidate);
+    EXPECT_EQ(candidate.description, "BRS");
   }
 }
 
@@ -1787,6 +1794,70 @@ TEST_F(DictionaryPredictorTest, MaybeMoveLiteralCandidateToTopTest) {
   DictionaryPredictorTestPeer::MaybeMoveLiteralCandidateToTop(
       *convreq_for_suggestion_, &segments);
   EXPECT_EQ(get_top_value(), "value_3");
+}
+
+TEST_F(DictionaryPredictorTest, MaybeApplyHomonymCorrectionTest) {
+  Segments segments;
+  InitSegmentsWithKey("key", &segments);
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+
+  auto add_candidate = [&](const std::string &key, const std::string &value) {
+    auto *candidate = segment->add_candidate();
+    candidate->key = key;
+    candidate->value = value;
+  };
+
+  add_candidate("key_0", "value_0");
+  add_candidate("key_1", "value_1");
+  add_candidate("key_2", "value_2");
+  add_candidate("key_2", "value_3");
+  add_candidate("key_0", "value_4");
+
+  class MockSpellCheckerService
+      : public spelling::SpellCheckerServiceInterface {
+   public:
+    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
+                (const commands::CheckSpellingRequest &), (const, override));
+    MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
+                CheckCompositionSpelling,
+                (absl::string_view, absl::string_view,
+                 const commands::Request &),
+                (const, override));
+    MOCK_METHOD(std::optional<std::vector<spelling::HomonymCorrection>>,
+                CheckHomonymSpelling,
+                (absl::Span<const absl::string_view>, absl::string_view),
+                (const, override));
+  };
+
+  std::vector<spelling::HomonymCorrection> expected;
+  auto add_expected = [&](const std::string &s) {
+    expected.emplace_back(spelling::HomonymCorrection{s, 1.0});
+  };
+
+  add_expected("replace");  // key_2
+  add_expected("value_1");  // key_1
+  add_expected("value_4");  // key_0
+
+  auto mock = std::make_unique<MockSpellCheckerService>();
+  EXPECT_CALL(*mock,
+              CheckHomonymSpelling(
+                  absl::Span<const absl::string_view>(
+                      // The first appearing values of key_2, key_1 and key_0.
+                      {"value_2", "value_1", "value_0"}),
+                  absl::string_view("")))
+      .WillOnce(Return(expected));
+
+  composer_->SetSpellCheckerService(mock.get());
+  DictionaryPredictorTestPeer::MaybeApplyHomonymCorrection(
+      *convreq_for_suggestion_, &segments);
+  composer_->SetSpellCheckerService(nullptr);
+
+  EXPECT_EQ(segment->candidate(0).value, "value_4");  // moved from 4
+  EXPECT_EQ(segment->candidate(1).value, "value_0");  // stay.
+  EXPECT_EQ(segment->candidate(2).value, "value_1");  // unchanged.
+  EXPECT_EQ(segment->candidate(3).value, "replace");  // value2 -> replace
+  EXPECT_EQ(segment->candidate(4).value, "value_3");  // stay.
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {

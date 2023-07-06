@@ -835,16 +835,13 @@ mozc_cc_library(
     ],
     hdrs = ["dictionary_generator.h"],
     deps = [
-        "//base:file_stream",
-        "//base:hash",
         "//base:logging",
-        "//base/container:freelist",
         "//data_manager:data_manager_interface",
         "//dictionary:pos_matcher",
         "//dictionary:user_pos",
         "//dictionary:user_pos_interface",
         "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -855,7 +852,11 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_generator",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher",
+        "//dictionary:user_pos",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -865,16 +866,18 @@ mozc_cc_binary(
     deps = [
         ":dictionary_generator",
         "//base:file_stream",
-        "//base:file_util",
         "//base:init_mozc_buildtool",
-        "//base:japanese_util",
         "//base:logging",
         "//base:status",
         "//base:util",
+        "//base/file:temp_dir",
+        "//base/strings:japanese",
         "//data_manager",
         "//data_manager:serialized_dictionary",
-        "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -912,9 +915,8 @@ mozc_cc_library(
         ":rewriter_util",
         "//base:japanese_util",
         "//base:logging",
-        "//base:util",
         "//base/container:serialized_string_array",
-        "//config:config_handler",
+        "//base/strings:assign",
         "//converter:segments",
         "//data_manager:data_manager_interface",
         "//data_manager:emoji_data",
