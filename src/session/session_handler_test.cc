@@ -582,6 +582,23 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
   }
 }
 
+TEST_F(SessionHandlerTest, SyncData) {
+  MockUserDataManager mock_user_data_manager;
+  auto engine = std::make_unique<MockEngine>();
+  EXPECT_CALL(*engine, GetUserDataManager())
+      .WillRepeatedly(Return(&mock_user_data_manager));
+
+  // Set up a session handler and a input command.
+  SessionHandler handler(std::move(engine));
+  commands::Command command;
+  command.mutable_input()->set_id(0);
+  command.mutable_input()->set_type(commands::Input::SYNC_DATA);
+
+  EXPECT_CALL(mock_user_data_manager, Sync()).WillOnce(Return(true));
+  EXPECT_CALL(mock_user_data_manager, Wait()).WillOnce(Return(true));
+  handler.EvalCommand(&command);
+}
+
 // Tests the interaction with EngineBuilderInterface for successful Engine
 // reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenario) {

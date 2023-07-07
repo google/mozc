@@ -105,6 +105,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool TestSendKey(commands::Command *command);
   bool SendKey(commands::Command *command);
   bool SendCommand(commands::Command *command);
+  // Syncs internal data to local file system and wait for finish.
   bool SyncData(commands::Command *command);
   bool ClearUserHistory(commands::Command *command);
   bool ClearUserPrediction(commands::Command *command);
