@@ -1619,17 +1619,18 @@ TEST_F(DictionaryPredictionAggregatorTest, AggregateRealtimeConversion) {
     // "Watashino" | "Namaeha" | "Nakanodesu"
     Segments segments;
 
-    Segment *segment = segments.add_segment();
-    segment->set_key("わたしの");
-    segment->add_candidate()->value = "Watashino";
+    auto add_segment = [&segments](absl::string_view key,
+                                   absl::string_view value) {
+      Segment *segment = segments.add_segment();
+      segment->set_key(key);
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->key = std::string(key);
+      candidate->value = std::string(value);
+    };
 
-    segment = segments.add_segment();
-    segment->set_key("なまえは");
-    segment->add_candidate()->value = "Namaeha";
-
-    segment = segments.add_segment();
-    segment->set_key("なかのです");
-    segment->add_candidate()->value = "Nakanodesu";
+    add_segment("わたしの", "Watashino");
+    add_segment("なまえは", "Namaeha");
+    add_segment("なかのです", "Nakanodesu");
 
     EXPECT_CALL(*data_and_aggregator->mutable_converter(),
                 StartConversionForRequest(_, _))
