@@ -55,6 +55,7 @@ class MinimalEngine : public EngineInterface {
   prediction::PredictorInterface *GetPredictor() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
+  bool ReloadAndWait() override { return true; }
   UserDataManagerInterface *GetUserDataManager() override;
   absl::string_view GetDataVersion() const override { return "0.0.0"; }
   const DataManagerInterface *GetDataManager() const override;

@@ -102,6 +102,8 @@ class Engine : public EngineInterface {
 
   bool Reload() override;
 
+  bool ReloadAndWait() override;
+
   UserDataManagerInterface *GetUserDataManager() override {
     return user_data_manager_.get();
   }

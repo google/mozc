@@ -68,6 +68,9 @@ class EngineInterface {
   // Reloads internal data, e.g., user dictionary, etc.
   virtual bool Reload() = 0;
 
+  // Reloads internal data and wait for reloader.
+  virtual bool ReloadAndWait() = 0;
+
   // Gets a user data manager.
   virtual UserDataManagerInterface *GetUserDataManager() = 0;
 

@@ -53,6 +53,7 @@ class EngineStub : public EngineInterface {
     return nullptr;
   }
   bool Reload() override { return true; }
+  bool ReloadAndWait() override { return true; }
   UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
   absl::string_view GetDataVersion() const override {
     return absl::string_view();
