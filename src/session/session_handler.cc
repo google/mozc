@@ -260,6 +260,7 @@ void SessionHandler::UpdateSessions(const config::Config &config,
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
   engine_->GetUserDataManager()->Sync();
+  engine_->GetUserDataManager()->Wait();
   return true;
 }
 

@@ -83,7 +83,7 @@ class SessionOutput {
                          commands::Candidates *candidates_proto);
 
   // Fill the access key of Candidates protobuf with the sequence of shortcuts.
-  static void FillShortcuts(const std::string &shortcuts,
+  static void FillShortcuts(absl::string_view shortcuts,
                             commands::Candidates *candidates_proto);
 
   // Fill the sub_label of footer_proto.  This function should be

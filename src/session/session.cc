@@ -1395,6 +1395,12 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
   if (context_->state() != ImeContext::CONVERSION) {
     return false;
   }
+  // When using special romaji table (== The key event is from a virtual
+  // keyboard), don't consume it as a shortcut selection operation.
+  if (context_->GetRequest().special_romanji_table() !=
+      commands::Request::DEFAULT_TABLE) {
+    return false;
+  }
 
   // Note that SHORTCUT_ASDFGHJKL should be handled even when the CapsLock is
   // enabled. This is why we need to normalize the key event here.

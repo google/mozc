@@ -54,6 +54,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:number_util",
         "//base/container:freelist",
+        "//base/strings:assign",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -413,17 +414,6 @@ mozc_cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
-    ],
-)
-
-mozc_cc_library(
-    name = "converter_util",
-    srcs = ["converter_util.cc"],
-    hdrs = ["converter_util.h"],
-    visibility = ["//session:__pkg__"],
-    deps = [
-        ":segments",
-        "//base:port",
     ],
 )
 

@@ -117,6 +117,7 @@ mozc_cc_library(
         "//base:text_normalizer",
         "//base:util",
         "//base:version",
+        "//base/strings:assign",
         "//composer",
         "//converter:segments",
         "//protocol:candidates_cc_proto",

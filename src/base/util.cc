@@ -236,16 +236,6 @@ void Util::SplitCSV(absl::string_view input, std::vector<std::string> *output) {
   }
 }
 
-void Util::AppendStringWithDelimiter(absl::string_view delimiter,
-                                     absl::string_view append_string,
-                                     std::string *output) {
-  CHECK(output);
-  if (!output->empty()) {
-    output->append(delimiter.data(), delimiter.size());
-  }
-  output->append(append_string.data(), append_string.size());
-}
-
 // The offset value to transform the upper case character to the lower
 // case.  The value comes from both of (0x0061 "a" - 0x0041 "A") and
 // (0xFF41 "ａ" - 0xFF21 "Ａ").

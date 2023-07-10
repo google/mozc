@@ -3901,6 +3901,51 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   EXPECT_EQ(GetComposition(command), "アイウエオ");
 }
 
+TEST_F(SessionTest, ShortcutFromVK) {
+  config::Config config;
+  config.set_selection_shortcut(config::Config::SHORTCUT_123456789);
+  Request client_request;
+  client_request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
+
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  session.SetConfig(&config);
+  InitSessionToPrecomposition(&session, client_request);
+
+  Segments segments;
+  SetAiueo(&segments);
+  ConversionRequest request;
+  SetComposer(&session, &request);
+  FillT13Ns(request, &segments);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  commands::Command command;
+  InsertCharacterChars("aiueo", &session, &command);
+
+  command.Clear();
+  session.Convert(&command);
+
+  command.Clear();
+  // Convert next
+  SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
+  ASSERT_TRUE(command.output().has_candidates());
+
+  const commands::Candidates &candidates = command.output().candidates();
+  EXPECT_EQ(candidates.candidate(0).annotation().shortcut(), "1");
+  EXPECT_EQ(candidates.candidate(1).annotation().shortcut(), "2");
+
+  // Because the request has a special romaji table (== the event is from VK),
+  // "1" must be treated not as shortcut selection but as character insertion.
+  EXPECT_TRUE(SendKey("1", &session, &command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_RESULT("アイウエオ", command);
+  EXPECT_EQ(GetComposition(command), "１");
+}
+
 TEST_F(SessionTest, NumpadKey) {
   MockConverter converter;
   MockEngine engine;

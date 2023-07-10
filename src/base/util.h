@@ -62,10 +62,6 @@ class Util {
   static void SplitCSV(absl::string_view input,
                        std::vector<std::string> *output);
 
-  static void AppendStringWithDelimiter(absl::string_view delimiter,
-                                        absl::string_view append_string,
-                                        std::string *output);
-
   static void LowerString(std::string *str);
   static void UpperString(std::string *str);
 

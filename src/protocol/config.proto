@@ -189,6 +189,9 @@ message Config {
   optional HistoryLearningLevel history_learning_level = 50
       [default = DEFAULT_HISTORY];
 
+  // The style of candidate selection shortcut.
+  // Note that if the current Request has SpecialRomajiTable (== the keyevent
+  // is from a virtual keyboard), shortcut is no-op.
   enum SelectionShortcut {
     NO_SHORTCUT = 0;
     SHORTCUT_123456789 = 1;
@@ -328,10 +331,17 @@ message Config {
   //
   // Suggest (100-119)
   //
+  // Suggest is a feature of word suggestion with prefix search.
+  // When you type "あ", you may get "ありがとう", "朝" (あさ), "明日" (あした)
+  // as suggested words.
+  //
   // Use history-based suggest feature.
+  // If this is true, your previously typed words are prioritized.
   optional bool use_history_suggest = 100 [default = true];
 
   // Use dictionary-based suggest feature.
+  // If this is true, words in the word dictionary are suggested even if
+  // you haven't typed before.
   optional bool use_dictionary_suggest = 101 [default = true];
 
   // Use realtime conversion feature.

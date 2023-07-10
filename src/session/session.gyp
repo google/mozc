@@ -46,7 +46,7 @@
         '../base/base.gyp:version',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
-        '../converter/converter_base.gyp:converter_util',
+        '../converter/converter_base.gyp:segments',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../request/request.gyp:conversion_request',

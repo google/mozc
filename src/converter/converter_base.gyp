@@ -93,16 +93,6 @@
       ],
     },
     {
-      'target_name': 'converter_util',
-      'type': 'static_library',
-      'sources': [
-        'converter_util.cc',
-      ],
-      'dependencies': [
-        'segments',
-      ],
-    },
-    {
       'target_name': 'immutable_converter_interface',
       'type': 'static_library',
       'sources': [
