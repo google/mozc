@@ -47,7 +47,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
@@ -90,16 +89,16 @@ class RendererLauncher : public RendererLauncherInterface {
   RendererLauncher() = default;
 
   ~RendererLauncher() override {
-    if (!thread_.has_value()) {
+    if (!launcher_.has_value()) {
       // StartRenderer has never been called.
       return;
     }
 
-    if (!done_.HasBeenNotified()) {
+    if (!launcher_->Ready()) {
       NamedEventNotifier notify(name_.c_str());
       notify.Notify();
     }
-    thread_->Join();
+    launcher_->Wait();
   }
 
   void StartRenderer(
@@ -111,11 +110,10 @@ class RendererLauncher : public RendererLauncherInterface {
     path_ = path;
     disable_renderer_path_check_ = disable_renderer_path_check;
     ipc_client_factory_interface_ = ipc_client_factory_interface;
-    if (thread_.has_value()) {
-      thread_->Join();
+    if (launcher_.has_value()) {
+      launcher_->Wait();
     }
-    thread_ = mozc::CreateThreadWithDoneNotification(&done_,
-                                                     [this] { ThreadMain(); });
+    launcher_.emplace([this] { ThreadMain(); });
   }
 
   bool ForceTerminateRenderer(const std::string &name) override {
@@ -231,7 +229,7 @@ class RendererLauncher : public RendererLauncherInterface {
     info.in_system_dir = true;  // use system dir not to lock current directory
     info.creation_flags = CREATE_DEFAULT_ERROR_MODE;
 
-    // start renreder process
+    // start renderer process
     const bool result =
         WinSandbox::SpawnSandboxedProcess(path_, arg, info, &pid);
 #elif defined(__APPLE__)  // _WIN32
@@ -299,7 +297,7 @@ class RendererLauncher : public RendererLauncherInterface {
     pending_command_.reset();
 
     // |renderer_status_| is also protected by mutex.
-    // Until this method finsihs, SetPendingCommand is blocked.
+    // Until this method finishes, SetPendingCommand is blocked.
     // RendererClint checks the status AGAIN after SetPendingCommand.
     renderer_status_ = RendererStatus::RENDERER_READY;
     error_times_ = 0;
@@ -323,12 +321,11 @@ class RendererLauncher : public RendererLauncherInterface {
   mutable absl::Mutex mu_;
   std::optional<commands::RendererCommand> pending_command_
       ABSL_GUARDED_BY(mu_);
-  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_)
-      = RendererStatus::RENDERER_UNKNOWN;
+  volatile RendererStatus renderer_status_ ABSL_GUARDED_BY(mu_) =
+      RendererStatus::RENDERER_UNKNOWN;
   bool disable_renderer_path_check_ = false;
   bool suppress_error_dialog_ = false;
-  absl::Notification done_;
-  std::optional<mozc::Thread2> thread_;
+  std::optional<BackgroundFuture<void>> launcher_;
 };
 
 RendererClient::RendererClient()

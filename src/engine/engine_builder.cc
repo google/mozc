@@ -41,13 +41,11 @@
 #include "base/logging.h"
 #include "base/thread2.h"
 #include "data_manager/data_manager.h"
-#include "data_manager/data_manager_interface.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/synchronization/notification.h"
 
 namespace mozc {
 namespace {
@@ -93,87 +91,90 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
     return;
   }
 
-  if (inflight_.has_value()) {
-    if (!inflight_->done.HasBeenNotified()) {
+  if (prepare_.has_value()) {
+    if (!prepare_->Ready()) {
       response->set_status(EngineReloadResponse::ALREADY_RUNNING);
       return;
     }
-    inflight_->thread.Join();
-    inflight_.reset();
     VLOG(1) << "Previously loaded data is discarded";
   }
 
-  inflight_.emplace();
-  inflight_->thread = CreateThreadWithDoneNotification(
-      &inflight_->done, [&inflight = *inflight_, request] {
-        *inflight.response.mutable_request() = request;
+  prepare_.emplace([request]() -> Prepared {
+    EngineReloadResponse response;
+    *response.mutable_request() = request;
 
-        auto init_data_manager = [](const EngineReloadRequest &request,
-                                    DataManager *data_manager) {
-          if (request.has_magic_number()) {
-            return data_manager->InitFromFile(request.file_path(),
-                                              request.magic_number());
-          }
-          return data_manager->InitFromFile(request.file_path());
+    auto init_data_manager = [](const EngineReloadRequest &request,
+                                DataManager *data_manager) {
+      if (request.has_magic_number()) {
+        return data_manager->InitFromFile(request.file_path(),
+                                          request.magic_number());
+      }
+      return data_manager->InitFromFile(request.file_path());
+    };
+
+    auto data_manager = std::make_unique<DataManager>();
+    if (DataManager::Status status =
+            init_data_manager(request, data_manager.get());
+        status != DataManager::Status::OK) {
+      LOG(ERROR) << "Failed to load data [" << status << "] "
+                 << request.Utf8DebugString();
+      response.set_status(ConvertStatus(status));
+      return {std::move(response), std::move(data_manager)};
+    }
+
+    if (request.has_install_location()) {
+      if (absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
+                                                    request.install_location());
+          !s.ok()) {
+        LOG(ERROR) << "Copy faild: " << request.Utf8DebugString() << ": " << s;
+        response.set_status(EngineReloadResponse::INSTALL_FAILURE);
+        return {
+            std::move(response),
+            std::move(data_manager),
         };
+      }
+    }
 
-        auto data_manager = std::make_unique<DataManager>();
-        if (DataManager::Status status =
-                init_data_manager(request, data_manager.get());
-            status != DataManager::Status::OK) {
-          LOG(ERROR) << "Failed to load data [" << status << "] "
-                     << request.Utf8DebugString();
-          inflight.response.set_status(ConvertStatus(status));
-          return;
-        }
-
-        if (request.has_install_location()) {
-          if (absl::Status s = FileUtil::LinkOrCopyFile(
-                  request.file_path(), request.install_location());
-              !s.ok()) {
-            LOG(ERROR) << "Copy faild: " << request.Utf8DebugString() << ": "
-                       << s;
-            inflight.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
-            return;
-          }
-        }
-
-        inflight.response.set_status(EngineReloadResponse::RELOAD_READY);
-        inflight.data_manager = std::move(data_manager);
-      });
+    response.set_status(EngineReloadResponse::RELOAD_READY);
+    return {std::move(response), std::move(data_manager)};
+  });
   response->set_status(EngineReloadResponse::ACCEPTED);
 }
 
 void EngineBuilder::Wait() {
-  if (inflight_.has_value()) {
-    inflight_->thread.Join();
+  if (prepare_.has_value()) {
+    prepare_->Wait();
   }
 }
 
 bool EngineBuilder::HasResponse() const {
-  return inflight_.has_value() && inflight_->done.HasBeenNotified();
+  return prepare_.has_value() && prepare_->Ready();
 }
 
 void EngineBuilder::GetResponse(EngineReloadResponse *response) const {
   if (!HasResponse()) {
     return;
   }
-  *response = inflight_->response;
+  *response = prepare_->Get().response;
 }
 
 std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
-  if (!HasResponse() || inflight_->data_manager == nullptr ||
-      inflight_->response.status() != EngineReloadResponse::RELOAD_READY) {
+  if (!HasResponse() || prepare_->Get().data_manager == nullptr ||
+      prepare_->Get().response.status() != EngineReloadResponse::RELOAD_READY) {
     LOG(ERROR) << "Build() is called in invalid state";
     return nullptr;
   }
+  // operator-> doesn't support rvalue delegation :/
+  Prepared prepared = (*std::move(prepare_)).Get();
+  prepare_.reset();
+
   absl::StatusOr<std::unique_ptr<Engine>> engine;
-  switch (inflight_->response.request().engine_type()) {
+  switch (prepared.response.request().engine_type()) {
     case EngineReloadRequest::DESKTOP:
-      engine = Engine::CreateDesktopEngine(std::move(inflight_->data_manager));
+      engine = Engine::CreateDesktopEngine(std::move(prepared.data_manager));
       break;
     case EngineReloadRequest::MOBILE:
-      engine = Engine::CreateMobileEngine(std::move(inflight_->data_manager));
+      engine = Engine::CreateMobileEngine(std::move(prepared.data_manager));
       break;
     default:
       LOG(DFATAL) << "Should not reach here";
@@ -185,17 +186,17 @@ std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
     return nullptr;
   }
 
-  model_path_fp_.store(GetRequestHash(inflight_->response.request()));
+  model_path_fp_.store(GetRequestHash(prepared.response.request()));
 
   return *std::move(engine);
 }
 
 void EngineBuilder::Clear() {
-  if (!inflight_.has_value()) {
+  if (!prepare_.has_value()) {
     return;
   }
-  inflight_->thread.Join();
-  inflight_.reset();
+  prepare_->Wait();
+  prepare_.reset();
 }
 
 }  // namespace mozc

@@ -40,7 +40,6 @@
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
-#include "absl/synchronization/notification.h"
 
 namespace mozc {
 
@@ -66,16 +65,11 @@ class EngineBuilder : public EngineBuilderInterface {
  private:
   std::atomic<uint64_t> model_path_fp_ = 0;
 
-  struct Inflight {
-    absl::Notification done;
-    mozc::Thread2 thread;
-    // Parent thread must not access these until `done` is notified.
-    // NOTE: this is essentially a future/promise, so we may want to introduce
-    // std and Google bridge like `mozc::Thread2`.
+  struct Prepared {
     EngineReloadResponse response;
     std::unique_ptr<DataManager> data_manager;
   };
-  std::optional<Inflight> inflight_;
+  std::optional<BackgroundFuture<Prepared>> prepare_;
 };
 
 }  // namespace mozc

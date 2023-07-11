@@ -30,7 +30,7 @@
 #include "base/thread2.h"
 
 #include <atomic>
-#include <string>
+#include <memory>
 #include <utility>
 
 #include "testing/gunit.h"
@@ -43,21 +43,25 @@ namespace {
 
 class CopyCounter {
  public:
-  explicit CopyCounter(std::atomic<int> *copied) : copied_(copied) {}
+  explicit CopyCounter() : count_(std::make_shared<std::atomic<int>>()) {}
 
   CopyCounter(const CopyCounter &other) { *this = other; }
   CopyCounter(CopyCounter &&other) = default;
 
   CopyCounter &operator=(const CopyCounter &other) {
-    this->copied_ = other.copied_;
+    this->count_ = other.count_;
 
-    copied_->fetch_add(1);
+    count_->fetch_add(1);
     return *this;
   }
   CopyCounter &operator=(CopyCounter &&other) = default;
 
+  std::shared_ptr<std::atomic<int>> get() const { return count_; }
+
+  int count() const { return count_->load(); }
+
  private:
-  std::atomic<int> *copied_;
+  std::shared_ptr<std::atomic<int>> count_;
 };
 
 TEST(ThreadTest, SpawnsSuccessfully) {
@@ -73,57 +77,91 @@ TEST(ThreadTest, SpawnsSuccessfully) {
   t1.Join();
   t2.Join();
   t3.Join();
+
   EXPECT_EQ(counter.load(), 5000);
 }
 
 TEST(ThreadTest, CopiesThingsAtMostOnce) {
-  std::atomic<int> copied1 = 0, copied2 = 0;
-  CopyCounter cc1(&copied1), cc2(&copied2);
-  Thread2 t(
-      [](const CopyCounter &, const CopyCounter &) {
-        absl::SleepFor(absl::Milliseconds(100));
-      },
-      cc1, std::move(cc2));
+  CopyCounter counter1;
+  CopyCounter counter2;
+  std::shared_ptr<std::atomic<int>> c2 = counter2.get();
+
+  Thread2 t([](CopyCounter, CopyCounter) {}, counter1, std::move(counter2));
   t.Join();
-  EXPECT_EQ(copied1, 1);
-  EXPECT_EQ(copied2, 0);
+
+  EXPECT_EQ(counter1.count(), 1);
+  EXPECT_EQ(c2->load(), 0);
 }
 
-TEST(CreateThreadWithDoneNotificationTest, NotifiesOnCompletion) {
+TEST(BackgroundFutureTest, ReturnsComputedValueOnReady) {
+  auto future = BackgroundFuture<int>([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return 42;
+  });
+
+  EXPECT_FALSE(future.Ready());
+  future.Wait();
+  EXPECT_EQ(future.Get(), 42);
+}
+
+TEST(BackgroundFutureTest, GetAlsoWaitsForValue) {
+  auto future = BackgroundFuture<int>([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return 42;
+  });
+
+  EXPECT_FALSE(future.Ready());
+  EXPECT_EQ(future.Get(), 42);
+}
+
+TEST(BackgroundFutureTest, GetByMoveDoesNotCopy) {
+  auto future = BackgroundFuture<CopyCounter>([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return CopyCounter();
+  });
+
+  EXPECT_EQ(std::move(future).Get().count(), 0);
+}
+
+TEST(BackgroundFutureTest, WaitWaitsForCompletion) {
   absl::Notification done;
-  Thread2 t = CreateThreadWithDoneNotification(
-      &done, [] { absl::SleepFor(absl::Milliseconds(100)); });
+
+  auto future = BackgroundFuture<void>([&done] {
+    absl::SleepFor(absl::Milliseconds(100));
+    done.Notify();
+  });
+
   EXPECT_FALSE(done.HasBeenNotified());
-  t.Join();
+  future.Wait();
   EXPECT_TRUE(done.HasBeenNotified());
 }
 
-TEST(CreateThreadWithDoneNotificationTest, NotifiesOnlyWhenCompleted) {
-  absl::Notification done;
-  Thread2 t = CreateThreadWithDoneNotification(
-      &done, [](absl::Duration d) { absl::SleepFor(d); },
-      absl::Milliseconds(100));
-  EXPECT_FALSE(done.HasBeenNotified());
-  done.WaitForNotification();
-  EXPECT_TRUE(done.HasBeenNotified());
-  t.Join();
-}
+TEST(BackgroundFutureTest, CopiesThingsAtMostOnce) {
+  {
+    CopyCounter counter1;
+    CopyCounter counter2;
+    std::shared_ptr<std::atomic<int>> c2 = counter2.get();
 
-TEST(CreateThreadWithDoneNotificationTest, CopiesThingsAtMostOnce) {
-  std::atomic<int> copied1 = 0, copied2 = 0;
-  CopyCounter cc1(&copied1), cc2(&copied2);
+    BackgroundFuture<int>([](CopyCounter, CopyCounter) { return 42; }, counter1,
+                          std::move(counter2))
+        .Wait();
 
-  absl::Notification done;
-  Thread2 t = CreateThreadWithDoneNotification(
-      &done,
-      [](const CopyCounter &, const CopyCounter &) {
-        absl::SleepFor(absl::Milliseconds(100));
-      },
-      cc1, std::move(cc2));
-  done.WaitForNotification();
-  t.Join();
-  EXPECT_EQ(copied1, 1);
-  EXPECT_EQ(copied2, 0);
+    EXPECT_EQ(counter1.count(), 1);
+    EXPECT_EQ(c2->load(), 0);
+  }
+
+  {
+    CopyCounter counter1;
+    CopyCounter counter2;
+    std::shared_ptr<std::atomic<int>> c2 = counter2.get();
+
+    BackgroundFuture<void>([](CopyCounter, CopyCounter) {}, counter1,
+                           std::move(counter2))
+        .Wait();
+
+    EXPECT_EQ(counter1.count(), 1);
+    EXPECT_EQ(c2->load(), 0);
+  }
 }
 
 }  // namespace
