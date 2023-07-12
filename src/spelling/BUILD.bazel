@@ -97,7 +97,7 @@ mozc_cc_library(
         ":spellchecker_service_interface",
         "//base:file_util",
         "//base:mmap",
-        "//base:thread",
+        "//base:thread2",
         "//base:util",
         "//base/protobuf",
         "//base/protobuf:repeated_field",

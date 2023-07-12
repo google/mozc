@@ -305,4 +305,14 @@ bool Engine::Reload() {
   return result_dictionary && result_user_data;
 }
 
+bool Engine::ReloadAndWait() {
+  if (!Reload()) {
+    return false;
+  }
+  if (user_dictionary_) {
+    user_dictionary_->WaitForReloader();
+  }
+  return GetUserDataManager()->Wait();
+}
+
 }  // namespace mozc

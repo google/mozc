@@ -63,11 +63,9 @@ mozc_cc_library(
         "//base:logging",
         "//base:thread2",
         "//data_manager",
-        "//data_manager:data_manager_interface",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 

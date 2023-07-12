@@ -114,6 +114,8 @@ class SessionHandler : public SessionHandlerInterface {
   // Reloads all the sessions.
   // Before that, UpdateSessions() is called to update them.
   bool Reload(commands::Command *command);
+  // Reloads and waits for reloader finish.
+  bool ReloadAndWait(commands::Command *command);
   bool GetConfig(commands::Command *command);
   bool SetConfig(commands::Command *command);
   // Updates all the sessions by UpdateSessions() with given |request|.

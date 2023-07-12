@@ -1158,6 +1158,7 @@ mozc_cc_library(
     hdrs = ["thread2.h"],
     deps = [
         ":thread",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/synchronization",
     ],

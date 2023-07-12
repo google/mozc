@@ -793,7 +793,6 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
 
   results->push_back(Result());
   Result *result = &results->back();
-  result->key = segments.conversion_segment(0).key();
   result->lid = tmp_segments.conversion_segment(0).candidate(0).lid;
   result->rid =
       tmp_segments
@@ -814,6 +813,7 @@ bool DictionaryPredictionAggregator::PushBackTopConversionResult(
     const Segment &segment = tmp_segments.conversion_segment(i);
     const Segment::Candidate &candidate = segment.candidate(0);
     result->value.append(candidate.value);
+    result->key.append(candidate.key);
     result->wcost += candidate.wcost;
 
     uint32_t encoded_lengths;
@@ -1365,8 +1365,11 @@ void DictionaryPredictionAggregator::
       // typing correction annotation is not necessary.
       if (!query.is_kana_modifier_insensitive_only) {
         result.types |= TYPING_CORRECTION;
-        result.types |= EXTENDED_TYPING_CORRECTION;
       }
+      // EXTENDED_TYPING_CORRECTION is added to all candidates generated
+      // with the new composition spellchecker. They include
+      // kana modifier insensitive correction.
+      result.types |= EXTENDED_TYPING_CORRECTION;
       result.wcost += query.cost;
       result.cost += query.cost;
       results->emplace_back(std::move(result));

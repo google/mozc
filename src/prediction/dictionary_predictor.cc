@@ -474,6 +474,9 @@ void DictionaryPredictor::MaybeApplyHomonymCorrection(
   Segment *segment = segments->mutable_conversion_segment(0);
   if (segment->candidates_size() == 0) return;
 
+  // Do not apply the NWP candidates.
+  if (segment->key().empty()) return;
+
   // Aggregates candidates passed to homonym spellchecker.
   // Only apply the spellchecker to the top values grouped by the same key.
   // key -> [value, candidate_index].
@@ -868,6 +871,18 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
   }
   if (types & PredictionType::ENGLISH) {
     debug_desc.append(1, 'E');
+  }
+  if (types & PredictionType::EXTENDED_TYPING_CORRECTION) {
+    if (types & PredictionType::TYPING_CORRECTION) {
+      // Non-hiragana variant. よろさく→よろしく
+      debug_desc.append("T1");
+    } else {
+      // Hiragana variant insensitive (a.k.a かつこう) from composition
+      // spellchecker.
+      debug_desc.append("H1");
+    }
+  } else if (types & PredictionType::TYPING_CORRECTION) {
+    debug_desc.append(1, 'T');  //  Legacy typing correction.
   }
   return debug_desc;
 }

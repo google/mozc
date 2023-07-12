@@ -279,6 +279,13 @@ bool SessionHandler::Reload(commands::Command *command) {
   return true;
 }
 
+bool SessionHandler::ReloadAndWait(commands::Command *command) {
+  VLOG(1) << "Reloading server and wait for reloader";
+  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
+  engine_->ReloadAndWait();
+  return true;
+}
+
 bool SessionHandler::ClearUserHistory(commands::Command *command) {
   VLOG(1) << "Clearing user history";
   engine_->GetUserDataManager()->ClearUserHistory();
@@ -385,6 +392,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       break;
     case commands::Input::RELOAD:
       eval_succeeded = Reload(command);
+      break;
+    case commands::Input::RELOAD_AND_WAIT:
+      eval_succeeded = ReloadAndWait(command);
       break;
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);

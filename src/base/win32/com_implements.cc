@@ -36,7 +36,7 @@
 namespace mozc::win32 {
 namespace com_implements_internal {
 
-std::atomic<int> com_module_ref_count = 0;
+ABSL_CONST_INIT std::atomic<int> com_module_ref_count = 0;
 
 }  // namespace com_implements_internal
 
