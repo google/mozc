@@ -226,10 +226,7 @@ mozc_cc_test(
 mozc_py_library(
     name = "gen_data_version_lib",
     srcs = ["gen_data_version.py"],
-    visibility = [
-        "//data_manager:__subpackages__",
-        "//tools:__subpackages__",
-    ],
+    visibility = ["//tools:__subpackages__"],
 )
 
 mozc_py_binary(
