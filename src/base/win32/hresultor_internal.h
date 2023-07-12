@@ -172,28 +172,28 @@ class HResultOrImpl : public HResultOrStorageBase<T> {
   using Base::Base;
 
   // error() returns the error code as HRESULT.
-  constexpr HResult error() const noexcept { return HResult(hr_); }
+  constexpr HResult error() const noexcept { return HResult(this->hr_); }
 
   // Same as HResultOr<T>::operator *() but defined here to use internally too.
   constexpr T& operator*() & noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_;
+    return this->value_;
   }
   constexpr const T& operator*() const& noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return value_;
+    return this->value_;
   }
   constexpr T&& operator*() && noexcept ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return std::move(value_);
+    return std::move(this->value_);
   }
   constexpr const T&& operator*() const&& noexcept
       ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return std::move(value_);
+    return std::move(this->value_);
   }
 
   template <typename... Args>
   constexpr void ConstructValue(Args&&... args) {
     // TODO(yuryu): use std::construct_at() when C++20 is ready.
-    ::new (std::addressof(dummy_)) T(std::forward<Args>(args)...);
-    hr_ = S_OK;
+    ::new (std::addressof(this->dummy_)) T(std::forward<Args>(args)...);
+    this->hr_ = S_OK;
   }
 
   template <typename U>
