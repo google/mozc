@@ -99,7 +99,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
 
   const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
   if (lib == nullptr) {
-    LOG(ERROR) << L"GetModuleHandle for user32.dll failed.";
+    LOG(ERROR) << "GetModuleHandle for user32.dll failed.";
     return false;
   }
 
@@ -115,7 +115,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
       // Note: this actually fails in Internet Explorer 10 on Windows 8
       // with ERROR_ACCESS_DENIED (0x5).
       const int error = ::GetLastError();
-      VLOG(1) << L"ChangeWindowMessageFilterEx failed. error = " << error;
+      VLOG(1) << "ChangeWindowMessageFilterEx failed. error = " << error;
       return false;
     }
     return true;
@@ -124,7 +124,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
   // Windows Vista
   if (!::ChangeWindowMessageFilter(message, MSGFLT_ADD)) {
     const int error = ::GetLastError();
-    LOG(ERROR) << L"ChangeWindowMessageFilter failed. error = " << error;
+    LOG(ERROR) << "ChangeWindowMessageFilter failed. error = " << error;
     return false;
   }
 
