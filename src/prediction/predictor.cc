@@ -32,15 +32,18 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
 #include "base/logging.h"
+#include "base/util.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::prediction {
@@ -80,19 +83,40 @@ size_t GetHistoryPredictionSizeFromRequest(const ConversionRequest &request) {
   return 3;
 }
 
+std::optional<std::string> GetReading(const ConverterInterface &converter,
+                                      absl::string_view text) {
+  Segments segments;
+  if (!converter.StartReverseConversion(&segments, text)) {
+    LOG(ERROR) << "Reverse conversion failed to get the reading of " << text;
+    return std::nullopt;
+  }
+  if (segments.conversion_segments_size() != 1 ||
+      segments.conversion_segment(0).candidates_size() == 0) {
+    LOG(ERROR) << "Reverse conversion returned an invalid result for " << text;
+    return std::nullopt;
+  }
+  return std::move(
+      segments.mutable_conversion_segment(0)->mutable_candidate(0)->value);
+}
+
 }  // namespace
 
 BasePredictor::BasePredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor)
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface *converter)
     : dictionary_predictor_(std::move(dictionary_predictor)),
-      user_history_predictor_(std::move(user_history_predictor)) {
+      user_history_predictor_(std::move(user_history_predictor)),
+      converter_{converter} {
   DCHECK(dictionary_predictor_);
   DCHECK(user_history_predictor_);
+  DCHECK(converter_);
 }
 
 void BasePredictor::Finish(const ConversionRequest &request,
                            Segments *segments) {
+  PopulateReadingOfCommittedCandidateIfMissing(segments);
+
   user_history_predictor_->Finish(request, segments);
   dictionary_predictor_->Finish(request, segments);
 
@@ -136,19 +160,59 @@ bool BasePredictor::Sync() { return user_history_predictor_->Sync(); }
 
 bool BasePredictor::Reload() { return user_history_predictor_->Reload(); }
 
+void BasePredictor::PopulateReadingOfCommittedCandidateIfMissing(
+    Segments *segments) const {
+  if (segments->conversion_segments_size() == 0) return;
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() == 0) return;
+
+  Segment::Candidate *cand = segment->mutable_candidate(0);
+  if (!cand->key.empty() || cand->value.empty()) return;
+
+  if (cand->content_value == cand->value) {
+    if (std::optional<std::string> key = GetReading(*converter_, cand->value);
+        key.has_value()) {
+      cand->key = *key;
+      cand->content_key = *std::move(key);
+    }
+    return;
+  }
+
+  if (cand->content_value.empty()) {
+    LOG(ERROR) << "Content value is empty: " << *cand;
+    return;
+  }
+
+  const absl::string_view functional_value = cand->functional_value();
+  if (Util::GetScriptType(functional_value) != Util::HIRAGANA) {
+    LOG(ERROR) << "The functional value is not hiragana: " << *cand;
+    return;
+  }
+  if (std::optional<std::string> content_key =
+          GetReading(*converter_, cand->content_value);
+      content_key.has_value()) {
+    cand->key = absl::StrCat(*content_key, functional_value);
+    cand->content_key = *std::move(content_key);
+  }
+}
+
 // static
 std::unique_ptr<PredictorInterface> DefaultPredictor::CreateDefaultPredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor) {
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface *converter) {
   return std::make_unique<DefaultPredictor>(std::move(dictionary_predictor),
-                                            std::move(user_history_predictor));
+                                            std::move(user_history_predictor),
+                                            converter);
 }
 
 DefaultPredictor::DefaultPredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor)
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface *converter)
     : BasePredictor(std::move(dictionary_predictor),
-                    std::move(user_history_predictor)),
+                    std::move(user_history_predictor), converter),
       predictor_name_("DefaultPredictor") {}
 
 DefaultPredictor::~DefaultPredictor() = default;
@@ -195,16 +259,19 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 // static
 std::unique_ptr<PredictorInterface> MobilePredictor::CreateMobilePredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor) {
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface *converter) {
   return std::make_unique<MobilePredictor>(std::move(dictionary_predictor),
-                                           std::move(user_history_predictor));
+                                           std::move(user_history_predictor),
+                                           converter);
 }
 
 MobilePredictor::MobilePredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
-    std::unique_ptr<PredictorInterface> user_history_predictor)
+    std::unique_ptr<PredictorInterface> user_history_predictor,
+    const ConverterInterface *converter)
     : BasePredictor(std::move(dictionary_predictor),
-                    std::move(user_history_predictor)),
+                    std::move(user_history_predictor), converter),
       predictor_name_("MobilePredictor") {}
 
 MobilePredictor::~MobilePredictor() = default;

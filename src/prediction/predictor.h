@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 
+#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
@@ -45,7 +46,8 @@ class BasePredictor : public PredictorInterface {
  public:
   // Initializes the composite of predictor with given sub-predictors.
   BasePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                std::unique_ptr<PredictorInterface> user_history_predictor);
+                std::unique_ptr<PredictorInterface> user_history_predictor,
+                const ConverterInterface *converter);
 
   // Hook(s) for all mutable operations.
   void Finish(const ConversionRequest &request, Segments *segments) override;
@@ -80,6 +82,11 @@ class BasePredictor : public PredictorInterface {
  protected:
   std::unique_ptr<PredictorInterface> dictionary_predictor_;
   std::unique_ptr<PredictorInterface> user_history_predictor_;
+
+ private:
+  void PopulateReadingOfCommittedCandidateIfMissing(Segments *segments) const;
+
+  const ConverterInterface *converter_;
 };
 
 // TODO(team): The name should be DesktopPredictor
@@ -87,10 +94,12 @@ class DefaultPredictor : public BasePredictor {
  public:
   static std::unique_ptr<PredictorInterface> CreateDefaultPredictor(
       std::unique_ptr<PredictorInterface> dictionary_predictor,
-      std::unique_ptr<PredictorInterface> user_history_predictor);
+      std::unique_ptr<PredictorInterface> user_history_predictor,
+      const ConverterInterface *converter);
 
   DefaultPredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                   std::unique_ptr<PredictorInterface> user_history_predictor);
+                   std::unique_ptr<PredictorInterface> user_history_predictor,
+                   const ConverterInterface *converter);
   ~DefaultPredictor() override;
 
   ABSL_MUST_USE_RESULT bool PredictForRequest(
@@ -108,10 +117,12 @@ class MobilePredictor : public BasePredictor {
  public:
   static std::unique_ptr<PredictorInterface> CreateMobilePredictor(
       std::unique_ptr<PredictorInterface> dictionary_predictor,
-      std::unique_ptr<PredictorInterface> user_history_predictor);
+      std::unique_ptr<PredictorInterface> user_history_predictor,
+      const ConverterInterface *converter);
 
   MobilePredictor(std::unique_ptr<PredictorInterface> dictionary_predictor,
-                  std::unique_ptr<PredictorInterface> user_history_predictor);
+                  std::unique_ptr<PredictorInterface> user_history_predictor,
+                  const ConverterInterface *converter);
   ~MobilePredictor() override;
 
   ABSL_MUST_USE_RESULT bool PredictForRequest(

@@ -266,10 +266,12 @@ absl::Status Engine::Init(
 
     if (is_mobile) {
       predictor = prediction::MobilePredictor::CreateMobilePredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor));
+          std::move(dictionary_predictor), std::move(user_history_predictor),
+          converter_.get());
     } else {
       predictor = prediction::DefaultPredictor::CreateDefaultPredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor));
+          std::move(dictionary_predictor), std::move(user_history_predictor),
+          converter_.get());
     }
     RETURN_IF_NULL(predictor);
   }

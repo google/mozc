@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "composer/composer.h"
 #include "config/config_handler.h"
+#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
@@ -58,6 +59,8 @@ using ::mozc::dictionary::SuppressionDictionary;
 using ::testing::_;
 using ::testing::AtMost;
 using ::testing::Return;
+using ::testing::StrEq;
+using ::testing::Unused;
 
 class CheckCandSizeDictionaryPredictor : public PredictorInterface {
  public:
@@ -170,9 +173,10 @@ class MobilePredictorTest : public ::testing::Test {
 };
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
+  MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -183,10 +187,11 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
+  MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictior
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -197,9 +202,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
+  MockConverter converter;
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -210,6 +216,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
+  MockConverter converter;
   MockDictionary dictionary_mock;
   testing::MockDataManager data_manager;
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
@@ -217,7 +224,8 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   auto predictor = std::make_unique<MobilePredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(200),
       std::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
-                                             &suppression_dictionary, true));
+                                             &suppression_dictionary, true),
+      &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -237,8 +245,9 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
       .Times(AtMost(1))
       .WillOnce(Return(true));
 
-  auto predictor = std::make_unique<MobilePredictor>(std::move(predictor1),
-                                                     std::move(predictor2));
+  MockConverter converter;
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::move(predictor1), std::move(predictor2), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -268,9 +277,10 @@ class PredictorTest : public ::testing::Test {
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  auto predictor =
-      std::make_unique<DefaultPredictor>(std::make_unique<NullPredictor>(true),
-                                         std::make_unique<NullPredictor>(true));
+  MockConverter converter;
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(true), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -281,9 +291,10 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
+  MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<NullPredictor>(true),
-      std::make_unique<NullPredictor>(false));
+      std::make_unique<NullPredictor>(false), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -294,9 +305,10 @@ TEST_F(PredictorTest, MixedReturnValue) {
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
+  MockConverter converter;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<NullPredictor>(false),
-      std::make_unique<NullPredictor>(false));
+      std::make_unique<NullPredictor>(false), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -307,12 +319,14 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
+  MockConverter converter;
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
-                                                          suggestions_size));
+                                                          suggestions_size),
+      &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -323,11 +337,13 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
+  MockConverter converter;
   constexpr int kPredictionSize = 100;
   auto predictor = std::make_unique<DefaultPredictor>(
       std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
       std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
-                                                          kPredictionSize));
+                                                          kPredictionSize),
+      &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -347,8 +363,9 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .Times(AtMost(1))
       .WillOnce(Return(true));
 
-  auto predictor = std::make_unique<DefaultPredictor>(std::move(predictor1),
-                                                      std::move(predictor2));
+  MockConverter converter;
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::move(predictor1), std::move(predictor2), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -363,8 +380,9 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   auto predictor2 = std::make_unique<NullPredictor>(true);
   const auto *pred1 = predictor1.get();  // Keep the reference
   const auto *pred2 = predictor2.get();  // Keep the reference
-  auto predictor = std::make_unique<DefaultPredictor>(std::move(predictor1),
-                                                      std::move(predictor2));
+  MockConverter converter;
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::move(predictor1), std::move(predictor2), &converter);
   Segments segments;
   {
     Segment *segment = segments.add_segment();
@@ -381,6 +399,98 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
   EXPECT_TRUE(pred1->predict_called());
   EXPECT_TRUE(pred2->predict_called());
+}
+
+TEST_F(PredictorTest, PopulateReadingOfCommittedCandidateIfMissing) {
+  MockConverter converter;
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(true), &converter);
+
+  // Mock reverse conversion adds reading "とうきょう".
+  EXPECT_CALL(converter, StartReverseConversion(_, StrEq("東京")))
+      .WillRepeatedly([](Segments *segments, Unused) {
+        segments->add_segment()->add_candidate()->value = "とうきょう";
+        return true;
+      });
+
+  // Test the case where value == content_value.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京";
+    cand1->content_value = "東京";
+
+    Segment::Candidate *cand2 = segment->add_candidate();
+    cand2->value = "大阪";
+    cand2->content_value = "大阪";
+
+    Segment::Candidate *cand3 = segment->add_candidate();
+    cand3->value = "群馬";
+    cand3->content_value = "群馬";
+
+    predictor->Finish(*convreq_, &segments);
+    EXPECT_EQ(cand1->key, "とうきょう");
+    EXPECT_EQ(cand1->content_key, "とうきょう");
+    EXPECT_TRUE(cand2->key.empty());
+    EXPECT_TRUE(cand2->content_key.empty());
+    EXPECT_TRUE(cand3->key.empty());
+    EXPECT_TRUE(cand3->content_key.empty());
+  }
+  // Test the case where value != content_value.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京に";
+    cand1->content_value = "東京";
+
+    Segment::Candidate *cand2 = segment->add_candidate();
+    cand2->value = "大阪に";
+    cand2->content_value = "大阪";
+
+    Segment::Candidate *cand3 = segment->add_candidate();
+    cand3->value = "群馬に";
+    cand3->content_value = "群馬";
+
+    predictor->Finish(*convreq_, &segments);
+    EXPECT_EQ(cand1->key, "とうきょうに");
+    EXPECT_EQ(cand1->content_key, "とうきょう");
+    EXPECT_TRUE(cand2->key.empty());
+    EXPECT_TRUE(cand2->content_key.empty());
+    EXPECT_TRUE(cand3->key.empty());
+    EXPECT_TRUE(cand3->content_key.empty());
+  }
+  // Test the case where value != content_value and the functional value is not
+  // Hiragana. We cannot add the reading in this case.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京便";
+    cand1->content_value = "東京";
+
+    predictor->Finish(*convreq_, &segments);
+    EXPECT_TRUE(cand1->key.empty());
+    EXPECT_TRUE(cand1->content_key.empty());
+  }
+  // Test the case where value != content_value and content_value is empty.
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+
+    Segment::Candidate *cand1 = segment->add_candidate();
+    cand1->value = "東京";
+    cand1->content_value.clear();
+
+    predictor->Finish(*convreq_, &segments);
+    EXPECT_TRUE(cand1->key.empty());
+    EXPECT_TRUE(cand1->content_key.empty());
+  }
 }
 
 }  // namespace mozc::prediction

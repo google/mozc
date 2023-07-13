@@ -386,6 +386,8 @@ mozc_cc_library(
     deps = [
         ":predictor_interface",
         "//base:logging",
+        "//base:util",
+        "//converter:converter_interface",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
@@ -408,6 +410,7 @@ mozc_cc_test(
         "//base:logging",
         "//composer",
         "//config:config_handler",
+        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_mock",
