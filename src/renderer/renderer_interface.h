@@ -30,38 +30,17 @@
 #ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
 #define MOZC_RENDERER_RENDERER_INTERFACE_H_
 
-#include <functional>
+#include "client/client_interface.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;  // protocol buffer
-}
-
-namespace client {
-class SendCommandInterface;
-}
-
 namespace renderer {
-
-using ReceiverLoopFunc = std::function<void(void)>;
 
 // An abstract interface class for renderer
 class RendererInterface {
  public:
-  RendererInterface() {}
-  virtual ~RendererInterface() {}
-
-  // Start the main loop of GUI took kit.
-  virtual int StartRendererLoop(int argc, char **argv) {
-    return 0;
-  }
-
-  // Set a loop function to receive RendererCommand from
-  // RendererServer::AsyncExecCommand, then call
-  // RendererServer::ExecCommandInternal. This function may be executed in
-  // a thread of the GUI system.
-  virtual void SetReceiverLoopFunction(ReceiverLoopFunc func) {}
+  RendererInterface() = default;
+  virtual ~RendererInterface() = default;
 
   // Activate candidate window.
   // For instance, if the renderer is out-proc renderer,
