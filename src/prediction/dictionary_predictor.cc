@@ -201,22 +201,17 @@ DictionaryPredictor::DictionaryPredictor(
     const DictionaryInterface *suffix_dictionary, const Connector &connector,
     const Segmenter *segmenter, const PosMatcher pos_matcher,
     const SuggestionFilter &suggestion_filter,
-    const prediction::RescorerInterface *rescorer)
-    : aggregator_(std::make_unique<prediction::DictionaryPredictionAggregator>(
-          data_manager, converter, immutable_converter, dictionary,
-          suffix_dictionary, &pos_matcher)),
-      immutable_converter_(immutable_converter),
-      connector_(connector),
-      segmenter_(segmenter),
-      suggestion_filter_(suggestion_filter),
-      single_kanji_dictionary_(
-          std::make_unique<dictionary::SingleKanjiDictionary>(data_manager)),
-      pos_matcher_(pos_matcher),
-      general_symbol_id_(pos_matcher.GetGeneralSymbolId()),
-      predictor_name_("DictionaryPredictor"),
-      rescorer_(rescorer) {}
+    const prediction::RescorerInterface *rescorer, const void *user_arg)
+    : DictionaryPredictor(
+          "DictionaryPredictor",
+          std::make_unique<prediction::DictionaryPredictionAggregator>(
+              data_manager, converter, immutable_converter, dictionary,
+              suffix_dictionary, &pos_matcher, user_arg),
+          data_manager, immutable_converter, connector, segmenter, pos_matcher,
+          suggestion_filter, rescorer) {}
 
 DictionaryPredictor::DictionaryPredictor(
+    std::string predictor_name,
     std::unique_ptr<const prediction::PredictionAggregatorInterface> aggregator,
     const DataManagerInterface &data_manager,
     const ImmutableConverterInterface *immutable_converter,
@@ -232,7 +227,7 @@ DictionaryPredictor::DictionaryPredictor(
           std::make_unique<dictionary::SingleKanjiDictionary>(data_manager)),
       pos_matcher_(pos_matcher),
       general_symbol_id_(pos_matcher.GetGeneralSymbolId()),
-      predictor_name_("DictionaryPredictorForTest"),
+      predictor_name_(std::move(predictor_name)),
       rescorer_(rescorer) {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,

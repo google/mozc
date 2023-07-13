@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <string>
 #include <utility>
@@ -41,6 +42,7 @@
 
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
+#include "base/thread2.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -50,12 +52,11 @@
 #include "request/conversion_request.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST
+#include "testing/gunit_prod.h"  // IWYU pragma: keep
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc::prediction {
-class UserHistoryPredictorSyncer;
 
 // Added serialization method for UserHistory.
 class UserHistoryStorage {
@@ -179,7 +180,6 @@ class UserHistoryPredictor : public PredictorInterface {
     std::vector<SegmentForLearning> conversion_segments;
   };
 
-  friend class UserHistoryPredictorSyncer;
   friend class UserHistoryPredictorTest;
 
   FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion);
@@ -474,7 +474,7 @@ class UserHistoryPredictor : public PredictorInterface {
   bool content_word_learning_enabled_;
   mutable std::atomic<bool> updated_;
   std::unique_ptr<DicCache> dic_;
-  mutable std::unique_ptr<UserHistoryPredictorSyncer> syncer_;
+  mutable std::optional<BackgroundFuture<void>> sync_;
 };
 
 }  // namespace mozc::prediction

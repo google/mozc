@@ -744,33 +744,6 @@ bool SystemUtil::EnsureVitalImmutableDataIsAvailable() {
 }
 #endif  // _WIN32
 
-bool SystemUtil::IsWindows7OrLater() {
-#ifdef _WIN32
-  static const bool result = ::IsWindows7OrGreater();
-  return result;
-#else   // _WIN32
-  return false;
-#endif  // _WIN32
-}
-
-bool SystemUtil::IsWindows8OrLater() {
-#ifdef _WIN32
-  static const bool result = ::IsWindows8OrGreater();
-  return result;
-#else   // _WIN32
-  return false;
-#endif  // _WIN32
-}
-
-bool SystemUtil::IsWindows8_1OrLater() {
-#ifdef _WIN32
-  static const bool result = ::IsWindows8Point1OrGreater();
-  return result;
-#else   // _WIN32
-  return false;
-#endif  // _WIN32
-}
-
 namespace {
 volatile mozc::SystemUtil::IsWindowsX64Mode g_is_windows_x64_mode =
     mozc::SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE;

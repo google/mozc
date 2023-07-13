@@ -48,14 +48,11 @@ directories are where the migrations have been completed so far, and the Mozc
 team is still working on other files and directories. This is why the above list
 exists and keeps growing in an incremental manner.
 
-[1]: [Open Source at Google - Linuxcon 2016](http://events.linuxfoundation.org/sites/events/files/slides/OSS_at_Google.pdf#page=30)
-> ### License Compliance
-> - We store all external open source code in a third_party hierarchy,
-> along with the licenses for each project. We only allow the use of OSS
-> under licenses we can comply with.
-> - Use of external open source is not allowed unless it is put in that
-> third_party tree.
-> - This makes it easier to ensure we are only using software with
-licenses that we can abide.
-> - This also allows us to generate a list of all licenses used by any
-project we build when they are released externally.
+[1]: [Accepting Contributions](https://opensource.google/documentation/reference/releasing/contributions#thirdparty)
+> ### Patched code is third_party code
+> Once external patches to a project have been accepted, that code is no longer
+> exclusively copyrighted by Google. That means that, like any other open source
+> software we use, it is subject to our
+> [go/thirdparty](https://opensource.google/documentation/reference/thirdparty)
+> policies and must be moved to a third_party directory. This means
+> //third_party if stored in Piper.

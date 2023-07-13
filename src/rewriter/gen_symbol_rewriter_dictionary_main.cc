@@ -60,6 +60,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
 ABSL_FLAG(std::string, ordering_rule, "", "sorting order file");
@@ -119,7 +120,7 @@ SortingKeyMap CreateSortingKeyMap(const std::string &auto_file,
 
 void AddSymbolToDictionary(const absl::string_view pos,
                            const absl::string_view value,
-                           std::vector<std::string> keys,
+                           const absl::Span<const std::string> keys,
                            const absl::string_view description,
                            const absl::string_view additional_description,
                            const SortingKeyMap &sorting_keys,
@@ -138,9 +139,9 @@ void AddSymbolToDictionary(const absl::string_view pos,
     sorting_key = it->second;
   }
 
-  for (std::string &key : keys) {
+  for (const std::string &key : keys) {
     const rewriter::Token &token = dictionary.AddToken(
-        {sorting_key, std::move(key), std::string(value), std::string(pos),
+        {sorting_key, key, std::string(value), std::string(pos),
          std::string(description), std::string(additional_description)});
 
     std::string fw_key = japanese::HalfWidthAsciiToFullWidthAscii(token.key);
@@ -187,16 +188,17 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
       seen.emplace(value);
     }
 
-    std::vector<std::string> keys =
-        absl::StrSplit(fields[2], ' ', absl::SkipEmpty());
-    for (std::string &key : keys) {
-      absl::StrReplaceAll({{"　", " "}}, &key);  // Full-width space
+    std::vector<std::string> keys;
+    for (const absl::string_view key :
+         absl::StrSplit(fields[2], ' ', absl::SkipEmpty())) {
+      keys.push_back(
+          absl::StrReplaceAll(key, {{"　", " "}}));  // Full-width space
     }
     const absl::string_view description = fields.size() > 3 ? fields[3] : "";
     const absl::string_view additional_description =
         fields.size() > 4 ? fields[4] : "";
-    AddSymbolToDictionary(pos, value, std::move(keys), description,
-                          additional_description, sorting_keys, dictionary);
+    AddSymbolToDictionary(pos, value, keys, description, additional_description,
+                          sorting_keys, dictionary);
   }
   // Add space as a symbol
   AddSymbolToDictionary("記号", " ", {" "}, "空白", "", sorting_keys,

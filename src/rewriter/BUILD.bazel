@@ -492,9 +492,7 @@ mozc_cc_library(
         ":rewriter_util",
         "//base:japanese_util",
         "//base:logging",
-        "//base:singleton",
         "//base:util",
-        "//config:config_handler",
         "//converter:converter_interface",
         "//converter:segments",
         "//data_manager:data_manager_interface",
@@ -879,6 +877,7 @@ mozc_cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -966,6 +965,7 @@ mozc_cc_library(
         ":rewriter_util",
         "//base:logging",
         "//base:port",
+        "//base/strings:assign",
         "//converter:segments",
         "//data_manager:data_manager_interface",
         "//data_manager:serialized_dictionary",

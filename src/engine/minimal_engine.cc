@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "base/strings/assign.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
@@ -75,10 +76,10 @@ bool AddAsIsCandidate(const absl::string_view key, Segments *segments) {
 
   Segment::Candidate *candidate = segment->push_back_candidate();
   DCHECK(candidate);
-  candidate->content_key = std::string(key);
-  candidate->content_value = std::string(key);
-  candidate->key = std::string(key);
-  candidate->value = std::string(key);
+  strings::Assign(candidate->content_key, key);
+  strings::Assign(candidate->content_value, key);
+  strings::Assign(candidate->key, key);
+  strings::Assign(candidate->value, key);
   candidate->lid = 0;
   candidate->rid = 0;
   candidate->wcost = 0;

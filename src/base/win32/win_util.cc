@@ -90,6 +90,13 @@ bool IsProcessSandboxedImpl() {
   return in_appcontainer;
 }
 
+// A workaround until we improve the method signature of
+// ShellExecuteInSystemDir.
+// TODO(b/290998032): Remove this.
+constexpr std::wstring_view to_wstring_view(const wchar_t *ptr) {
+  return ptr == nullptr ? std::wstring_view() : std::wstring_view(ptr);
+}
+
 }  // namespace
 
 HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
@@ -102,7 +109,7 @@ HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
   if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -118,7 +125,7 @@ HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
   if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -134,7 +141,7 @@ HMODULE WinUtil::GetSystemModuleHandle(const std::wstring &base_filename) {
                          fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -150,7 +157,7 @@ HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
   if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -315,26 +322,7 @@ bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool *is_immersive) {
   if (is_immersive == nullptr) {
     return false;
   }
-  *is_immersive = false;
-  // ImmersiveMode is supported only in Windows8 and later.
-  if (!SystemUtil::IsWindows8OrLater()) {
-    return true;
-  }
-
-  const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
-  if (module == nullptr) {
-    return false;
-  }
-
-  typedef BOOL(WINAPI * IsImmersiveProcessFunc)(HANDLE process);
-  IsImmersiveProcessFunc is_immersive_process =
-      reinterpret_cast<IsImmersiveProcessFunc>(
-          ::GetProcAddress(module, "IsImmersiveProcess"));
-  if (is_immersive_process == nullptr) {
-    return false;
-  }
-
-  *is_immersive = !!is_immersive_process(process_handle);
+  *is_immersive = IsImmersiveProcess(process_handle) != FALSE;
   return true;
 }
 
@@ -368,11 +356,6 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
     return false;
   }
   *in_appcontainer = false;
-
-  // AppContainer is supported only in Windows8 and later.
-  if (!SystemUtil::IsWindows8OrLater()) {
-    return true;
-  }
 
   HANDLE token = nullptr;
   if (!::OpenProcessToken(process_handle, TOKEN_QUERY | TOKEN_QUERY_SOURCE,
@@ -499,13 +482,9 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
 #endif  // SPI_GETTHREADLOCALINPUTSETTINGS
 
 bool WinUtil::IsPerUserInputSettingsEnabled() {
-  if (!SystemUtil::IsWindows8OrLater()) {
-    // Windows 7 and below does not support per-user input mode.
-    return false;
-  }
   BOOL is_thread_local = FALSE;
   if (::SystemParametersInfo(SPI_GETTHREADLOCALINPUTSETTINGS, 0,
-                             reinterpret_cast<void *>(&is_thread_local),
+                             static_cast<void *>(&is_thread_local),
                              0) == FALSE) {
     return false;
   }
@@ -525,8 +504,10 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
           0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."
-      << ", error:" << result << ", verb: " << verb << ", file: " << file
-      << ", parameters: " << parameters;
+      << ", error:" << result
+      << ", verb: " << win32::WideToUtf8(to_wstring_view(verb))
+      << ", file: " << win32::WideToUtf8(to_wstring_view(file))
+      << ", parameters: " << win32::WideToUtf8(to_wstring_view(parameters));
   return result > 32;
 }
 

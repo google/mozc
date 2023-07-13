@@ -71,7 +71,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ImmutableConverterInterface *immutable_converter,
       const dictionary::DictionaryInterface *dictionary,
       const dictionary::DictionaryInterface *suffix_dictionary,
-      const dictionary::PosMatcher *pos_matcher);
+      const dictionary::PosMatcher *pos_matcher,
+      const void *user_arg = nullptr);
 
   std::vector<Result> AggregateResults(const ConversionRequest &request,
                                        const Segments &segments) const override;
@@ -99,7 +100,8 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::PosMatcher *pos_matcher,
       std::unique_ptr<PredictionAggregatorInterface>
-          single_kanji_prediction_aggregator);
+          single_kanji_prediction_aggregator,
+      const void *user_arg = nullptr);
 
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.

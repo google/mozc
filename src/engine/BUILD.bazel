@@ -316,6 +316,7 @@ mozc_cc_library(
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",
+        "//base/strings:assign",
         "//composer",
         "//converter:converter_interface",
         "//converter:segments",

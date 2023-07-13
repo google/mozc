@@ -47,6 +47,7 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:hash",
         "//base:logging",
+        "//base:port",
         "//base:singleton",
         "//base:system_util",
         "//base:version",

@@ -43,6 +43,7 @@
 #include "base/clock.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -174,11 +175,11 @@ void Transliterate(const transliteration::TransliterationType mode,
       japanese_util::HiraganaToKatakana(input, output);
       break;
     case transliteration::HIRAGANA:
-      *output = std::string(input);
+      strings::Assign(*output, input);
       break;
     default:
       LOG(ERROR) << "Unknown TransliterationType: " << mode;
-      *output = std::string(input);
+      strings::Assign(*output, input);
       break;
   }
 }
@@ -1265,7 +1266,7 @@ size_t Composer::shifted_sequence_count() const {
 const std::string &Composer::source_text() const { return source_text_; }
 std::string *Composer::mutable_source_text() { return &source_text_; }
 void Composer::set_source_text(const absl::string_view source_text) {
-  source_text_ = std::string(source_text);
+  strings::Assign(source_text_, source_text);
 }
 
 size_t Composer::max_length() const { return max_length_; }

@@ -84,9 +84,9 @@ class DictionaryPredictorTestPeer {
       const dictionary::PosMatcher pos_matcher,
       const SuggestionFilter &suggestion_filter,
       const prediction::RescorerInterface *rescorer = nullptr)
-      : predictor_(std::move(aggregator), data_manager, immutable_converter,
-                   connector, segmenter, pos_matcher, suggestion_filter,
-                   rescorer) {}
+      : predictor_("DictionaryPredictorForTest", std::move(aggregator),
+                   data_manager, immutable_converter, connector, segmenter,
+                   pos_matcher, suggestion_filter, rescorer) {}
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const {

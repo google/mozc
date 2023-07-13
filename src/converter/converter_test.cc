@@ -233,7 +233,8 @@ class ConverterTest : public ::testing::Test {
 
     std::unique_ptr<PredictorInterface> (*predictor_factory)(
         std::unique_ptr<PredictorInterface>,
-        std::unique_ptr<PredictorInterface>) = nullptr;
+        std::unique_ptr<PredictorInterface>, const ConverterInterface *) =
+        nullptr;
     bool enable_content_word_learning = false;
 
     switch (predictor_type) {
@@ -272,7 +273,8 @@ class ConverterTest : public ::testing::Test {
     CHECK(user_history_predictor);
 
     auto ret_predictor = (*predictor_factory)(
-        std::move(dictionary_predictor), std::move(user_history_predictor));
+        std::move(dictionary_predictor), std::move(user_history_predictor),
+        converter_and_data.converter.get());
     CHECK(ret_predictor);
     return ret_predictor;
   }
@@ -1274,7 +1276,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
                          segmenter.get(), pos_matcher, suggestion_filter),
                      std::make_unique<UserHistoryPredictor>(
                          dictionary.get(), &pos_matcher,
-                         suppression_dictionary.get(), false)),
+                         suppression_dictionary.get(), false),
+                     &converter),
                  std::make_unique<RewriterImpl>(&converter, &data_manager,
                                                 &pos_group, kNullDictionary),
                  immutable_converter.get());

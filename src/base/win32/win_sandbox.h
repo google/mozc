@@ -200,8 +200,7 @@ class WinSandbox {
   // This method is placed here for unit testing.
   static std::wstring GetSDDL(ObjectSecurityType shareble_object_type,
                               std::wstring_view token_user_sid,
-                              std::wstring_view token_primary_group_sid,
-                              bool is_windows_8_or_later);
+                              std::wstring_view token_primary_group_sid);
 };
 
 }  // namespace mozc

@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "base/run_level.h"
+#include "base/strings/assign.h"
 #include "client/client_interface.h"
 #include "composer/key_event_util.h"
 #include "ipc/ipc.h"
@@ -71,7 +72,7 @@ class ServerLauncher : public ServerLauncherInterface {
   // specify server program. On Mac, we need to specify the server path
   // using this method.
   void set_server_program(const absl::string_view server_program) override {
-    server_program_ = std::string(server_program);
+    strings::Assign(server_program_, server_program);
   }
 
   // return server program

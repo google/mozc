@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "base/strings/assign.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -109,7 +110,7 @@ class UserDictionarySessionHandler {
                   UserDictionaryCommandStatus *status);
 
   void set_dictionary_path(absl::string_view dictionary_path) {
-    dictionary_path_ = std::string(dictionary_path);
+    strings::Assign(dictionary_path_, dictionary_path);
   }
 
  private:

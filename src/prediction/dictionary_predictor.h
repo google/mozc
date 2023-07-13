@@ -87,7 +87,8 @@ class DictionaryPredictor : public PredictorInterface {
                       const Connector &connector, const Segmenter *segmenter,
                       dictionary::PosMatcher pos_matcher,
                       const SuggestionFilter &suggestion_filter,
-                      const prediction::RescorerInterface *rescorer = nullptr);
+                      const prediction::RescorerInterface *rescorer = nullptr,
+                      const void *user_arg = nullptr);
 
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
@@ -147,6 +148,7 @@ class DictionaryPredictor : public PredictorInterface {
 
   // Constructor for testing
   DictionaryPredictor(
+      std::string predictor_name,
       std::unique_ptr<const prediction::PredictionAggregatorInterface>
           aggregator,
       const DataManagerInterface &data_manager,

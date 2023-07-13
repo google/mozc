@@ -39,6 +39,7 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
@@ -341,7 +342,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
     if (TryNormalizingKeyAsMathExpression(key, &value)) {
       Segment::Candidate *cand =
           segments->mutable_segment(0)->push_back_candidate();
-      cand->key = std::string(key);
+      strings::Assign(cand->key, key);
       cand->value = std::move(value);
       return true;
     }
@@ -485,7 +486,8 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
 
   std::string conversion_key;
   request.composer().GetQueryForConversion(&conversion_key);
-  conversion_key = std::string(Util::Utf8SubString(conversion_key, 0, cursor));
+  strings::Assign(conversion_key,
+                  Util::Utf8SubString(conversion_key, 0, cursor));
   return Predict(request, conversion_key, segments);
 }
 
@@ -508,7 +510,8 @@ bool ConverterImpl::StartPartialPredictionForRequest(
 
   std::string conversion_key;
   request.composer().GetQueryForConversion(&conversion_key);
-  conversion_key = std::string(Util::Utf8SubString(conversion_key, 0, cursor));
+  strings::Assign(conversion_key,
+                  Util::Utf8SubString(conversion_key, 0, cursor));
 
   return Predict(request, conversion_key, segments);
 }

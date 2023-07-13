@@ -68,13 +68,11 @@ class TipLangBar {
   bool IsInitialized() const;
 
  private:
-  // Represents the language bar item manager iff the running OS is Windows 8.
+  // Represents the language bar item manager.
   // NOTE: We must use the same instance of this class to initialize and
   //     uninitialize LangBar items. Otherwise, you will see weird crashes
   //     around refcount on Windows 8 release preview. b/6106437
-  // NOTE: Currently we cannot use the same logic for Windows 7 due to another
-  //     crash issue as filed as b/6641460.
-  wil::com_ptr_nothrow<ITfLangBarItemMgr> lang_bar_item_mgr_for_win8_;
+  wil::com_ptr_nothrow<ITfLangBarItemMgr> lang_bar_item_mgr_;
 
   // Represents the button menu in the language bar.
   // NOTE: ImeToggleButtonMenu inherits ITfLangBarItemButton and ITfSource,

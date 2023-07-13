@@ -435,6 +435,7 @@ mozc_cc_library(
         "//base:japanese_util",
         "//base:logging",
         "//base:util",
+        "//base/strings:assign",
         "//composer",
         "//dictionary:pos_matcher",
         "//dictionary:suppression_dictionary",

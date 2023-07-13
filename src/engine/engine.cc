@@ -246,6 +246,7 @@ absl::Status Engine::Init(
 
   std::unique_ptr<PredictorInterface> predictor;
   {
+    const void *user_arg = nullptr;
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
     auto dictionary_predictor =
@@ -253,7 +254,7 @@ absl::Status Engine::Init(
             *data_manager, converter_.get(), immutable_converter_.get(),
             dictionary_.get(), suffix_dictionary_.get(), connector_,
             segmenter_.get(), *pos_matcher_, suggestion_filter_,
-            rescorer_.get());
+            rescorer_.get(), user_arg);
     RETURN_IF_NULL(dictionary_predictor);
 
     const bool enable_content_word_learning = is_mobile;
@@ -265,10 +266,12 @@ absl::Status Engine::Init(
 
     if (is_mobile) {
       predictor = prediction::MobilePredictor::CreateMobilePredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor));
+          std::move(dictionary_predictor), std::move(user_history_predictor),
+          converter_.get());
     } else {
       predictor = prediction::DefaultPredictor::CreateDefaultPredictor(
-          std::move(dictionary_predictor), std::move(user_history_predictor));
+          std::move(dictionary_predictor), std::move(user_history_predictor),
+          converter_.get());
     }
     RETURN_IF_NULL(predictor);
   }

@@ -183,6 +183,10 @@ mozc_cc_library(
     name = "renderer_interface",
     hdrs = ["renderer_interface.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//client:client_interface",
+        "//protocol:renderer_cc_proto",
+    ],
 )
 
 mozc_cc_library(

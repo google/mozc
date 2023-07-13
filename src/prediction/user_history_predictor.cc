@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -45,11 +46,12 @@
 #include "base/bits.h"
 #include "base/clock.h"
 #include "base/config_file_stream.h"
+#include "base/container/freelist.h"
 #include "base/container/trie.h"
 #include "base/hash.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
@@ -338,36 +340,6 @@ UserHistoryPredictor::EntryPriorityQueue::NewEntry() {
   return pool_.Alloc();
 }
 
-class UserHistoryPredictorSyncer : public Thread {
- public:
-  enum RequestType { LOAD, SAVE };
-
-  UserHistoryPredictorSyncer(UserHistoryPredictor *predictor, RequestType type)
-      : predictor_(predictor), type_(type) {
-    DCHECK(predictor_);
-  }
-
-  void Run() override {
-    switch (type_) {
-      case LOAD:
-        VLOG(1) << "Executing Reload method";
-        predictor_->Load();
-        break;
-      case SAVE:
-        VLOG(1) << "Executing Sync method";
-        predictor_->Save();
-        break;
-      default:
-        LOG(ERROR) << "Unknown request: " << static_cast<int>(type_);
-    }
-  }
-
-  ~UserHistoryPredictorSyncer() override { Join(); }
-
-  UserHistoryPredictor *predictor_;
-  RequestType type_;
-};
-
 UserHistoryPredictor::UserHistoryPredictor(
     const DictionaryInterface *dictionary, const PosMatcher *pos_matcher,
     const SuppressionDictionary *suppression_dictionary,
@@ -398,9 +370,9 @@ std::string UserHistoryPredictor::GetUserHistoryFileName() {
 uint16_t UserHistoryPredictor::revert_id() { return kRevertId; }
 
 void UserHistoryPredictor::WaitForSyncer() {
-  if (syncer_ != nullptr) {
-    syncer_->Join();
-    syncer_.reset();
+  if (sync_.has_value()) {
+    sync_->Wait();
+    sync_.reset();
   }
 }
 
@@ -410,12 +382,11 @@ bool UserHistoryPredictor::Wait() {
 }
 
 bool UserHistoryPredictor::CheckSyncerAndDelete() const {
-  if (syncer_ != nullptr) {
-    if (syncer_->IsRunning()) {
+  if (sync_.has_value()) {
+    if (!sync_->Ready()) {
       return false;
-    } else {
-      syncer_.reset();
     }
+    sync_.reset();
   }
 
   return true;
@@ -436,9 +407,10 @@ bool UserHistoryPredictor::AsyncLoad() {
     return true;
   }
 
-  syncer_ = std::make_unique<UserHistoryPredictorSyncer>(
-      this, UserHistoryPredictorSyncer::LOAD);
-  syncer_->Start("UserHistoryPredictor:Load");
+  sync_.emplace([this] {
+    VLOG(1) << "Executing Reload method";
+    Load();
+  });
 
   return true;
 }
@@ -452,9 +424,10 @@ bool UserHistoryPredictor::AsyncSave() {
     return true;
   }
 
-  syncer_ = std::make_unique<UserHistoryPredictorSyncer>(
-      this, UserHistoryPredictorSyncer::SAVE);
-  syncer_->Start("UserHistoryPredictor:Save");
+  sync_.emplace([this] {
+    VLOG(1) << "Executing Sync method";
+    Save();
+  });
 
   return true;
 }

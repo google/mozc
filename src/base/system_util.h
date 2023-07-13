@@ -33,8 +33,6 @@
 #include <cstdint>
 #include <string>
 
-#include "base/port.h"
-
 namespace mozc {
 
 // SystemUtil class supports utility methods which are related to OSes or user
@@ -123,15 +121,6 @@ class SystemUtil {
   //   likely to fail.  See b/3216603.
   static bool EnsureVitalImmutableDataIsAvailable();
 #endif  // _WIN32
-
-  // returns true if the version of Windows is 6.1 or later.
-  static bool IsWindows7OrLater();
-
-  // returns true if the version of Windows is 6.2 or later.
-  static bool IsWindows8OrLater();
-
-  // returns true if the version of Windows is 6.3 or later.
-  static bool IsWindows8_1OrLater();
 
   // returns true if the version of Windows is x64 Edition.
   static bool IsWindowsX64();

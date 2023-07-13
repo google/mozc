@@ -287,24 +287,24 @@ class [[nodiscard]] HResultOr
   using Base::error;
 
   ABSL_DEPRECATED("Use error() instead.")
-  constexpr HRESULT hr() const noexcept { return hr_; }
+  constexpr HRESULT hr() const noexcept { return error(); }
 
   // value() tests has_value() with `CHECK()` and returns the value.
   constexpr T& value() & ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(has_value());
-    return value_;
+    return this->value_;
   }
   constexpr const T& value() const& ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(has_value());
-    return value_;
+    return this->value_;
   }
   constexpr T&& value() && ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(has_value());
-    return std::move(value_);
+    return std::move(this->value_);
   }
   constexpr const T&& value() const&& ABSL_ATTRIBUTE_LIFETIME_BOUND {
     CHECK(has_value());
-    return std::move(value_);
+    return std::move(this->value_);
   }
 
   // operator*() returns the value. Requires has_value() == true.
@@ -328,14 +328,14 @@ class [[nodiscard]] HResultOr
   template <typename U>
   constexpr T value_or(U&& default_value) const& {
     if (has_value()) {
-      return value_;
+      return this->value_;
     }
     return std::forward<U>(default_value);
   }
   template <typename U>
   constexpr T value_or(U&& default_value) && {
     if (has_value()) {
-      return std::move(value_);
+      return std::move(this->value_);
     }
     return std::forward<U>(default_value);
   }
@@ -350,10 +350,10 @@ class [[nodiscard]] HResultOr
       if (has_value()) {
         const HRESULT other_hr = other.hr();
         other.ConstructValue(*std::move(*this));
-        AssignHResult(other_hr);
+        this->AssignHResult(other_hr);
       } else {
         const HRESULT this_hr = hr();
-        ConstructValue(*std::move(other));
+        this->ConstructValue(*std::move(other));
         other.AssignHResult(this_hr);
       }
     }

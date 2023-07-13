@@ -473,11 +473,12 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const ImmutableConverterInterface *immutable_converter,
     const dictionary::DictionaryInterface *dictionary,
     const dictionary::DictionaryInterface *suffix_dictionary,
-    const dictionary::PosMatcher *pos_matcher)
+    const dictionary::PosMatcher *pos_matcher, const void *user_arg)
     : DictionaryPredictionAggregator(
           data_manager, converter, immutable_converter, dictionary,
           suffix_dictionary, pos_matcher,
-          std::make_unique<SingleKanjiPredictionAggregator>(data_manager)) {}
+          std::make_unique<SingleKanjiPredictionAggregator>(data_manager),
+          user_arg) {}
 
 DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const DataManagerInterface &data_manager,
@@ -487,7 +488,8 @@ DictionaryPredictionAggregator::DictionaryPredictionAggregator(
     const dictionary::DictionaryInterface *suffix_dictionary,
     const dictionary::PosMatcher *pos_matcher,
     std::unique_ptr<PredictionAggregatorInterface>
-        single_kanji_prediction_aggregator)
+        single_kanji_prediction_aggregator,
+    const void *user_arg)
     : converter_(converter),
       immutable_converter_(immutable_converter),
       dictionary_(dictionary),
