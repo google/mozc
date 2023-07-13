@@ -350,10 +350,10 @@ class [[nodiscard]] HResultOr
       if (has_value()) {
         const HRESULT other_hr = other.hr();
         other.ConstructValue(*std::move(*this));
-        AssignHResult(other_hr);
+        this->AssignHResult(other_hr);
       } else {
         const HRESULT this_hr = hr();
-        ConstructValue(*std::move(other));
+        this->ConstructValue(*std::move(other));
         other.AssignHResult(this_hr);
       }
     }
