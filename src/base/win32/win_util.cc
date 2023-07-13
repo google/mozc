@@ -90,6 +90,13 @@ bool IsProcessSandboxedImpl() {
   return in_appcontainer;
 }
 
+// A workaround until we improve the method signature of
+// ShellExecuteInSystemDir.
+// TODO(b/290998032): Remove this.
+constexpr std::wstring_view to_wstring_view(const wchar_t *ptr) {
+  return ptr == nullptr ? std::wstring_view() : std::wstring_view(ptr);
+}
+
 }  // namespace
 
 HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
@@ -102,7 +109,7 @@ HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
   if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -118,7 +125,7 @@ HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
   if (nullptr == module) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "LoadLibraryEx failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -134,7 +141,7 @@ HMODULE WinUtil::GetSystemModuleHandle(const std::wstring &base_filename) {
                          fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -150,7 +157,7 @@ HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
   if (GetModuleHandleExW(0, fullpath.c_str(), &module) == FALSE) {
     const int last_error = ::GetLastError();
     DLOG(WARNING) << "GetModuleHandleExW failed."
-                  << " fullpath = " << fullpath.c_str()
+                  << " fullpath = " << win32::WideToUtf8(fullpath)
                   << " error = " << last_error;
   }
   return module;
@@ -525,8 +532,10 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
           0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."
-      << ", error:" << result << ", verb: " << verb << ", file: " << file
-      << ", parameters: " << parameters;
+      << ", error:" << result
+      << ", verb: " << win32::WideToUtf8(to_wstring_view(verb))
+      << ", file: " << win32::WideToUtf8(to_wstring_view(file))
+      << ", parameters: " << win32::WideToUtf8(to_wstring_view(parameters));
   return result > 32;
 }
 
