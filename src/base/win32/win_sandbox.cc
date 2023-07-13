@@ -195,8 +195,7 @@ static_assert(PROCESS_QUERY_LIMITED_INFORMATION == 0x1000,
 
 std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
                                  std::wstring_view token_user_sid,
-                                 std::wstring_view token_primary_group_sid,
-                                 bool is_windows_8_or_later) {
+                                 std::wstring_view token_primary_group_sid) {
   // See
   // http://social.msdn.microsoft.com/Forums/en-US/windowssecurity/thread/e92502b1-0b9f-4e02-9d72-e4e47e924a8f/
   // for how to access named objects from an AppContainer.
@@ -212,10 +211,8 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
-      if (is_windows_8_or_later) {
-        // Allow general access to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow general access to ALL APPLICATION PACKAGES
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Allow read/write access to low integrity
@@ -229,10 +226,8 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
-      if (is_windows_8_or_later) {
-        // Allow general access to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow general access to ALL APPLICATION PACKAGES
+      dacl += Allow(SDDL_GENERIC_ALL, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Skip 2nd-phase ACL validation against restricted tokens.
@@ -248,10 +243,8 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
-      if (is_windows_8_or_later) {
-        // Allow state change/synchronize to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow state change/synchronize to ALL APPLICATION PACKAGES
+      dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Skip 2nd-phase ACL validation against restricted tokens regarding
@@ -268,10 +261,8 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
-      if (is_windows_8_or_later) {
-        // Allow state change/synchronize to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow state change/synchronize to ALL APPLICATION PACKAGES
+      dacl += Allow(SDDL_GENERIC_EXECUTE, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Skip 2nd-phase ACL validation against restricted tokens regarding
@@ -289,10 +280,8 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
       // Allow read access to low integrity
-      if (is_windows_8_or_later) {
-        // Allow general read access to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_GENERIC_READ, SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow general read access to ALL APPLICATION PACKAGES
+      dacl += Allow(SDDL_GENERIC_READ, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Skip 2nd-phase ACL validation against restricted tokens regarding
@@ -309,11 +298,9 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_LOCAL_SYSTEM);
       // Allow general access to Built-in Administorators
       dacl += Allow(SDDL_GENERIC_ALL, SDDL_BUILTIN_ADMINISTRATORS);
-      if (is_windows_8_or_later) {
-        // Allow PROCESS_QUERY_LIMITED_INFORMATION to ALL APPLICATION PACKAGES
-        dacl += Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION,
-                      SDDL_ALL_APP_PACKAGES);
-      }
+      // Allow PROCESS_QUERY_LIMITED_INFORMATION to ALL APPLICATION PACKAGES
+      dacl +=
+          Allow(SDDL_PROCESS_QUERY_LIMITED_INFORMATION, SDDL_ALL_APP_PACKAGES);
       // Allow general access to the current user
       dacl += Allow(SDDL_GENERIC_ALL, token_user_sid);
       // Allow PROCESS_QUERY_LIMITED_INFORMATION to restricted tokens
@@ -407,8 +394,7 @@ bool WinSandbox::MakeSecurityAttributes(
   }
 
   const std::wstring &sddl =
-      GetSDDL(shareble_object_type, token_user_sid, token_primary_group_sid,
-              SystemUtil::IsWindows8OrLater());
+      GetSDDL(shareble_object_type, token_user_sid, token_primary_group_sid);
 
   // Create self-relative SD
   wil::unique_hlocal_security_descriptor self_relative_desc;

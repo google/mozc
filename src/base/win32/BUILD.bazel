@@ -132,6 +132,7 @@ mozc_cc_library(
         ":wide_char",
         "//base:logging",
         "//base:system_util",
+        "//base/strings:zstring_view",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
         "@com_microsoft_wil//:wil",

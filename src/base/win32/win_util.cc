@@ -322,26 +322,7 @@ bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool *is_immersive) {
   if (is_immersive == nullptr) {
     return false;
   }
-  *is_immersive = false;
-  // ImmersiveMode is supported only in Windows8 and later.
-  if (!SystemUtil::IsWindows8OrLater()) {
-    return true;
-  }
-
-  const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
-  if (module == nullptr) {
-    return false;
-  }
-
-  typedef BOOL(WINAPI * IsImmersiveProcessFunc)(HANDLE process);
-  IsImmersiveProcessFunc is_immersive_process =
-      reinterpret_cast<IsImmersiveProcessFunc>(
-          ::GetProcAddress(module, "IsImmersiveProcess"));
-  if (is_immersive_process == nullptr) {
-    return false;
-  }
-
-  *is_immersive = !!is_immersive_process(process_handle);
+  *is_immersive = IsImmersiveProcess(process_handle) != FALSE;
   return true;
 }
 
@@ -375,11 +356,6 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
     return false;
   }
   *in_appcontainer = false;
-
-  // AppContainer is supported only in Windows8 and later.
-  if (!SystemUtil::IsWindows8OrLater()) {
-    return true;
-  }
 
   HANDLE token = nullptr;
   if (!::OpenProcessToken(process_handle, TOKEN_QUERY | TOKEN_QUERY_SOURCE,
@@ -506,13 +482,9 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
 #endif  // SPI_GETTHREADLOCALINPUTSETTINGS
 
 bool WinUtil::IsPerUserInputSettingsEnabled() {
-  if (!SystemUtil::IsWindows8OrLater()) {
-    // Windows 7 and below does not support per-user input mode.
-    return false;
-  }
   BOOL is_thread_local = FALSE;
   if (::SystemParametersInfo(SPI_GETTHREADLOCALINPUTSETTINGS, 0,
-                             reinterpret_cast<void *>(&is_thread_local),
+                             static_cast<void *>(&is_thread_local),
                              0) == FALSE) {
     return false;
   }

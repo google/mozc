@@ -42,11 +42,9 @@
 
 #include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "base/win32/win_util.h"
 #include "protocol/renderer_command.pb.h"
 
@@ -194,9 +192,7 @@ bool GetWorkingAreaFromPointImpl(const POINT &point, RECT *working_area) {
 
 class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
-  NativeWindowPositionAPI()
-      : logical_to_physical_point_for_per_monitor_dpi_(
-            GetLogicalToPhysicalPointForPerMonitorDPI()) {}
+  NativeWindowPositionAPI() = default;
 
   NativeWindowPositionAPI(const NativeWindowPositionAPI &) = delete;
   NativeWindowPositionAPI &operator=(const NativeWindowPositionAPI &) = delete;
@@ -231,19 +227,11 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     *physical_coordinate = logical_coordinate;
 
     // Despite its name, LogicalToPhysicalPoint API no longer converts
-    // coordinates on Windows 8.1 and later. We must use
-    // LogicalToPhysicalPointForPerMonitorDPI API instead when it is available.
+    // coordinates on Windows 8.1 and later. We must use the
+    // LogicalToPhysicalPointForPerMonitorDPI API instead.
     // See http://go.microsoft.com/fwlink/?LinkID=307061
-    if (SystemUtil::IsWindows8_1OrLater()) {
-      if (logical_to_physical_point_for_per_monitor_dpi_ == nullptr) {
-        return false;
-      }
-      return logical_to_physical_point_for_per_monitor_dpi_(
-                 root_window_handle, physical_coordinate) != FALSE;
-    }
-    // On Windows 8 and prior, it's OK to rely on LogicalToPhysicalPoint API.
-    return ::LogicalToPhysicalPoint(root_window_handle, physical_coordinate) !=
-           FALSE;
+    return LogicalToPhysicalPointForPerMonitorDPI(root_window_handle,
+                                                  physical_coordinate) != FALSE;
   }
 
   // This method is not const to implement Win32WindowInterface.
@@ -272,28 +260,6 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
     // http://msdn.microsoft.com/en-us/library/ms997562.aspx
     return ::GetAncestor(window_handle, GA_ROOT);
   }
-
- private:
-  typedef BOOL(WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
-      HWND window_handle, POINT *point);
-  static LogicalToPhysicalPointForPerMonitorDPIFunc
-  GetLogicalToPhysicalPointForPerMonitorDPI() {
-    // LogicalToPhysicalPointForPerMonitorDPI API is available on Windows 8.1
-    // and later.
-    if (!SystemUtil::IsWindows8_1OrLater()) {
-      return nullptr;
-    }
-
-    const HMODULE module = WinUtil::GetSystemModuleHandle(L"user32.dll");
-    if (module == nullptr) {
-      return nullptr;
-    }
-    return reinterpret_cast<LogicalToPhysicalPointForPerMonitorDPIFunc>(
-        ::GetProcAddress(module, "LogicalToPhysicalPointForPerMonitorDPI"));
-  }
-
-  const LogicalToPhysicalPointForPerMonitorDPIFunc
-      logical_to_physical_point_for_per_monitor_dpi_;
 };
 
 struct WindowInfo {
@@ -413,7 +379,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
  private:
   HWND GetNextWindowHandle() const {
-    if (window_map_.size() > 0) {
+    if (!window_map_.empty()) {
       const HWND last_hwnd = window_map_.rbegin()->first;
       return WinUtil::DecodeWindowHandle(
           WinUtil::EncodeWindowHandle(last_hwnd) + 7);

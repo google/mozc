@@ -267,7 +267,6 @@ mozc_cc_library(
         ":tip_lang_bar_menu",
         ":tip_resource",
         "//base:logging",
-        "//base:system_util",
         "//base/win32:com",
         "//base/win32:hresultor",
         "//protocol:commands_cc_proto",

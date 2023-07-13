@@ -39,6 +39,7 @@
 #include "base/config_file_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -65,13 +66,9 @@ void AddCharacterFormRule(const char *group,
 bool GetPlatformSpecificDefaultEmojiSetting() {
   // Disable Unicode emoji conversion by default on specific platforms.
   bool use_emoji_conversion_default = true;
-#if defined(_WIN32)
-  if (!SystemUtil::IsWindows8OrLater()) {
+  if constexpr (TargetIsAndroid()) {
     use_emoji_conversion_default = false;
   }
-#elif defined(__ANDROID__)
-  use_emoji_conversion_default = false;
-#endif  // defined(_WIN32), defined(__ANDROID__)
   return use_emoji_conversion_default;
 }
 
