@@ -32,16 +32,13 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/singleton.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -96,12 +93,11 @@ std::string SymbolRewriter::GetDescription(
   if (description.empty()) {
     return "";
   }
-  std::string result = std::string(description);
   // Merge description
-  if (!additional_description.empty()) {
-    absl::StrAppend(&result, "(", additional_description, ")");
+  if (additional_description.empty()) {
+    return std::string(description);
   }
-  return result;
+  return absl::StrCat(description, "(", additional_description, ")");
 }
 
 // return true key has no-hiragana
@@ -120,8 +116,8 @@ bool SymbolRewriter::IsSymbol(const absl::string_view key) {
 void SymbolRewriter::ExpandSpace(Segment *segment) {
   auto insert_candidate = [segment](int base, absl::string_view value) {
     auto c = std::make_unique<Segment::Candidate>(segment->candidate(base));
-    c->value = std::string(value);
-    c->content_value = std::string(value);
+    strings::Assign(c->value, value);
+    strings::Assign(c->content_value, value);
     // Boundary is invalidated and unnecessary for space.
     c->inner_segment_boundary.clear();
     segment->insert_candidate(base + 1, std::move(c));

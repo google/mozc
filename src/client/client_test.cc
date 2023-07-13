@@ -37,6 +37,7 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/strings/assign.h"
 #include "base/version.h"
 #include "client/client_interface.h"
 #include "composer/key_parser.h"
@@ -153,7 +154,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   }
 
   void set_product_version_after_start_server(const absl::string_view version) {
-    product_version_after_start_server_ = std::string(version);
+    strings::Assign(product_version_after_start_server_, version);
   }
 
  private:

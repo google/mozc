@@ -343,6 +343,7 @@ mozc_cc_library(
         ":prediction_aggregator_interface",
         ":result",
         "//base:util",
+        "//base/strings:assign",
         "//composer",
         "//converter:segments",
         "//data_manager:data_manager_interface",

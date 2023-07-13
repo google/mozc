@@ -41,6 +41,7 @@
 #include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
+#include "base/strings/assign.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
@@ -322,7 +323,7 @@ UserDictionarySession::SetDefaultDictionaryName(
       UserDictionaryUtil::ValidateDictionaryName(
           UserDictionaryStorage::default_instance(), dictionary_name);
   if (status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
-    default_dictionary_name_ = std::string(dictionary_name);
+    strings::Assign(default_dictionary_name_, dictionary_name);
   }
   return status;
 }

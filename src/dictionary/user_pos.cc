@@ -39,6 +39,7 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "data_manager/data_manager_interface.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
@@ -130,8 +131,8 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
   }
 
   if (size == 1) {  // no conjugation
-    tokens->front().key = std::string(key);
-    tokens->front().value = std::string(value);
+    strings::Assign(tokens->front().key, key);
+    strings::Assign(tokens->front().value, value);
     tokens->front().id = first.conjugation_id();
     tokens->front().attributes = attributes;
   } else {

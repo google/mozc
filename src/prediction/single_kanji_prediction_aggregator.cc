@@ -34,6 +34,7 @@
 #include <string>
 #include <vector>
 
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
@@ -128,7 +129,7 @@ void SingleKanjiPredictionAggregator::AppendResults(
     // Set the wcost to keep the `kanji_list` order.
     result.wcost = offset + results->size();
     result.types = SINGLE_KANJI;
-    result.key = std::string(kanji_key);
+    strings::Assign(result.key, kanji_key);
     result.value = kanji;
     result.lid = general_symbol_id_;
     result.rid = general_symbol_id_;

@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/strings/assign.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
@@ -89,10 +90,10 @@ void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
     c->lid = pos_matcher.GetNounPrefixId();
     c->rid = pos_matcher.GetNounPrefixId();
     c->cost = 5000;
-    c->content_value = std::string(iter.value());
+    strings::Assign(c->content_value, iter.value());
     c->key = candidate_key;
     c->content_key = candidate_key;
-    c->value = std::string(iter.value());
+    strings::Assign(c->value, iter.value());
     c->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
     c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   }
@@ -235,10 +236,10 @@ void SingleKanjiRewriter::FillCandidate(const absl::string_view key,
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;
-  cand->content_key = std::string(key);
-  cand->content_value = std::string(value);
-  cand->key = std::string(key);
-  cand->value = std::string(value);
+  strings::Assign(cand->content_key, key);
+  strings::Assign(cand->content_value, value);
+  strings::Assign(cand->key, key);
+  strings::Assign(cand->value, value);
   cand->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
   cand->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   single_kanji_dictionary_->GenerateDescription(value, &cand->description);

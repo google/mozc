@@ -34,6 +34,7 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "absl/strings/string_view.h"
@@ -80,7 +81,7 @@ bool SplitPrimaryString(const size_t position, const absl::string_view primary,
   }
 
   *secondary_rhs = *primary_rhs;
-  *secondary_lhs = std::string(secondary.substr(0, secondary_position));
+  strings::Assign(*secondary_lhs, secondary.substr(0, secondary_position));
   return true;
 }
 
