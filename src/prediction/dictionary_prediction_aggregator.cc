@@ -123,6 +123,12 @@ bool IsLanguageAwareInputEnabled(const ConversionRequest &request) {
   return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
 }
 
+bool IsZeroQuerySuffixPredictionDisabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .disable_zero_query_suffix_prediction();
+}
+
 // Returns true if |segments| contains number history.
 // Normalized number will be set to |number_key|
 // Note:
@@ -1549,15 +1555,17 @@ void DictionaryPredictionAggregator::AggregateZeroQuerySuffixPrediction(
     // input mode. For example, we do not need "です", "。" just after "when".
     return;
   }
-  // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
-  // all suffix entries.
-  const size_t cutoff_threshold = kPredictionMaxResultsSize;
-  const std::string kEmptyHistoryKey = "";
-  GetPredictiveResults(
-      *suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
-      cutoff_threshold,
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX, zip_code_id_,
-      unknown_id_, results);
+  if (results->empty() || !IsZeroQuerySuffixPredictionDisabled(request)) {
+    // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
+    // all suffix entries.
+    const size_t cutoff_threshold = kPredictionMaxResultsSize;
+    const std::string kEmptyHistoryKey = "";
+    GetPredictiveResults(
+        *suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
+        cutoff_threshold,
+        Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX,
+        zip_code_id_, unknown_id_, results);
+  }
 }
 
 void DictionaryPredictionAggregator::AggregateEnglishPrediction(
