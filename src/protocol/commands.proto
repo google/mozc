@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 36
+// Next ID: 37
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -622,6 +622,8 @@ message DecoderExperimentParams {
 
   // Cancel suffix penalty for content word in prediction module.
   optional bool cancel_content_word_suffix_penalty = 20 [default = false];
+
+  optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
   // Enable number style learning.
   optional bool enable_number_style_learning = 30 [default = false];

@@ -282,3 +282,7 @@ oss_issue720	しっちゃく	失着	Conversion Expected 2
 oss_issue750	さいひんち	最頻値	Conversion Expected 2
 oss_issue751	くうしゅうごう	空集合	Conversion Expected
 oss_issue766	たいしょうがい	対象外	Conversion Expected
+oss_issue768	かいていこう	改訂稿	Conversion Expected 2
+oss_issue768	けっていこう	決定稿	Conversion Expected
+oss_issue768	さいしゅうこう	最終稿	Conversion Expected
+oss_issue768	しゅうせいこう	修正稿	Conversion Expected
