@@ -67,7 +67,7 @@ python build_tools/update_deps.py
 In this step, additional build dependencies will be downloaded.
 
   * [WiX 3.14.0.6526](https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip)
-  * [Qt 5.15.9](https://download.qt.io/archive/qt/5.15/5.15.9/submodules/qtbase-everywhere-opensource-src-5.15.9.tar.xz)
+  * [Qt 5.15.10](https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz)
   * [Jom 1.1.3](https://download.qt.io/official_releases/jom/jom_1_1_3.zip)
 
 You can skip this step if you would like to manually download these libraries.

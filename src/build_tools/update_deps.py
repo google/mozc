@@ -84,9 +84,9 @@ class ArchiveInfo:
 
 QT = ArchiveInfo(
     dest='qt',
-    url='https://download.qt.io/archive/qt/5.15/5.15.9/submodules/qtbase-everywhere-opensource-src-5.15.9.tar.xz',
-    size=50389220,
-    sha256='1947deb9d98aaf46bf47e6659b3e1444ce6616974470523756c082041d396d1e',
+    url='https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz',
+    size=50422688,
+    sha256='c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9',
 )
 
 JOM = ArchiveInfo(
