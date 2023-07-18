@@ -38,6 +38,7 @@
 #include <string_view>
 
 #include "base/port.h"
+#include "base/strings/zstring_view.h"
 #include "testing/gunit_prod.h"
 // for FRIEND_TEST()
 #include "absl/status/status.h"
@@ -54,14 +55,14 @@ class WinUtil {
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
   // If the function fails, the return value is nullptr.
-  static HMODULE LoadSystemLibrary(const std::wstring &base_filename);
+  static HMODULE LoadSystemLibrary(std::wstring_view base_filename);
 
   // Load a DLL which has the specified base-name and is located in the
   // Mozc server directory.
   // If the function succeeds, the return value is a handle to the module.
   // You should call FreeLibrary with the handle.
   // If the function fails, the return value is nullptr.
-  static HMODULE LoadMozcLibrary(const std::wstring &base_filename);
+  static HMODULE LoadMozcLibrary(std::wstring_view base_filename);
 
   // If a DLL which has the specified base-name and located in the system
   // directory is loaded in the caller process, retrieve its module handle.
@@ -69,12 +70,12 @@ class WinUtil {
   // without incrementing its reference count so that you should not call
   // FreeLibrary with the handle.
   // If the function fails, the return value is nullptr.
-  static HMODULE GetSystemModuleHandle(const std::wstring &base_filename);
+  static HMODULE GetSystemModuleHandle(std::wstring_view base_filename);
 
   // A variant ot GetSystemModuleHandle except that this method increments
   // reference count of the target DLL.
   static HMODULE GetSystemModuleHandleAndIncrementRefCount(
-      const std::wstring &base_filename);
+      std::wstring_view base_filename);
 
   // Retrieve whether the calling thread hold loader lock or not.
   // Return true if the state is retrieved successfully.
@@ -129,20 +130,20 @@ class WinUtil {
 
   // Returns true if |info| is filled with a valid file information that
   // describes |path|. |path| can be a directory or a file.
-  static bool GetFileSystemInfoFromPath(const std::wstring &path,
+  static bool GetFileSystemInfoFromPath(zwstring_view path,
                                         BY_HANDLE_FILE_INFORMATION *info);
 
   // Returns true if |left_path| and |right_path| are the same file system
   // object. This method takes hard-link into consideration.
   // Returns false if either |left_path| or |right_path| does not exist even
   // when |left_path| == |right_path|.
-  static bool AreEqualFileSystemObject(const std::wstring &left_path,
-                                       const std::wstring &right_path);
+  static bool AreEqualFileSystemObject(zwstring_view left_path,
+                                       zwstring_view right_path);
 
   // Returns true if the file or directory specified by |dos_path| exists and
   // its NT path is retrieved as |nt_path|. This function can work only on
   // Vista and later.
-  static bool GetNtPath(const std::wstring &dos_path, std::wstring *nt_path);
+  static bool GetNtPath(zwstring_view dos_path, std::wstring *nt_path);
 
   // Returns true if the process specified by |pid| exists and its *initial*
   // NT path is retrieved as |nt_path|. Note that even when the process path is

@@ -99,7 +99,7 @@ constexpr std::wstring_view to_wstring_view(const wchar_t *ptr) {
 
 }  // namespace
 
-HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
+HMODULE WinUtil::LoadSystemLibrary(std::wstring_view base_filename) {
   std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
@@ -115,7 +115,7 @@ HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
   return module;
 }
 
-HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
+HMODULE WinUtil::LoadMozcLibrary(std::wstring_view base_filename) {
   std::wstring fullpath = win32::Utf8ToWide(SystemUtil::GetServerDirectory());
   fullpath += L"\\";
   fullpath += base_filename;
@@ -131,7 +131,7 @@ HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
   return module;
 }
 
-HMODULE WinUtil::GetSystemModuleHandle(const std::wstring &base_filename) {
+HMODULE WinUtil::GetSystemModuleHandle(std::wstring_view base_filename) {
   std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
@@ -148,7 +148,7 @@ HMODULE WinUtil::GetSystemModuleHandle(const std::wstring &base_filename) {
 }
 
 HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
-    const std::wstring &base_filename) {
+    std::wstring_view base_filename) {
   std::wstring fullpath = SystemUtil::GetSystemDir();
   fullpath += L"\\";
   fullpath += base_filename;
@@ -385,7 +385,7 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   return true;
 }
 
-bool WinUtil::GetFileSystemInfoFromPath(const std::wstring &path,
+bool WinUtil::GetFileSystemInfoFromPath(zwstring_view path,
                                         BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.
   ScopedHandle handle(::CreateFileW(
@@ -401,8 +401,8 @@ bool WinUtil::GetFileSystemInfoFromPath(const std::wstring &path,
   return !!::GetFileInformationByHandle(handle.get(), info);
 }
 
-bool WinUtil::AreEqualFileSystemObject(const std::wstring &left_path,
-                                       const std::wstring &right_path) {
+bool WinUtil::AreEqualFileSystemObject(zwstring_view left_path,
+                                       zwstring_view right_path) {
   BY_HANDLE_FILE_INFORMATION left_info = {};
   if (!GetFileSystemInfoFromPath(left_path, &left_info)) {
     return false;
@@ -415,7 +415,7 @@ bool WinUtil::AreEqualFileSystemObject(const std::wstring &left_path,
          (left_info.nFileIndexHigh == right_info.nFileIndexHigh);
 }
 
-bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
+bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring *nt_path) {
   if (nt_path == nullptr) {
     return false;
   }
