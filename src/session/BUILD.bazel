@@ -405,11 +405,7 @@ mozc_cc_test(
         ":session_handler",
         ":session_handler_test_util",
         "//base:clock_mock",
-        "//base:port",
-        "//base:stopwatch",
-        "//base:util",
         "//config:config_handler",
-        "//converter:converter_mock",
         "//engine:engine_builder_interface",
         "//engine:engine_mock",
         "//engine:engine_stub",
@@ -418,9 +414,9 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/random",
     ],
 )
 

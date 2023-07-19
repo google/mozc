@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
@@ -66,6 +65,7 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -1009,8 +1009,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
       CreateResult4("a3", "A3", prediction::SUFFIX, Token::NONE),
   };
 
-  std::random_device rd;
-  std::mt19937 urbg(rd());
+  absl::BitGen urbg;
   std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
@@ -1077,8 +1076,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
     result->cost = i + 1000;
     result->SetTypesAndTokenAttributes(prediction::REALTIME, Token::NONE);
   }
-  std::random_device rd;
-  std::mt19937 urbg(rd());
+  absl::BitGen urbg;
   std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
@@ -1118,8 +1116,8 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       result->cost = i + kInfinity;
     }
   }
-  std::shuffle(results.begin(), results.end(),
-               std::mt19937(std::random_device()()));
+  absl::BitGen urbg;
+  std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
   InitSegmentsWithKey("test", &segments);

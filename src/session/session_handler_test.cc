@@ -34,16 +34,12 @@
 #include <iterator>
 #include <memory>
 #include <optional>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/clock_mock.h"
-#include "base/port.h"
-#include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/converter_mock.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
@@ -53,12 +49,11 @@
 #include "protocol/config.pb.h"
 #include "session/session_handler_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/random/random.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -247,8 +242,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       clock.PutClockForward(interval_time, 0);
     }
 
-    std::random_device rd;
-    std::mt19937 urbg(rd());
+    absl::BitGen urbg;
     std::shuffle(ids.begin(), ids.end(), urbg);
     const uint64_t oldest_id = ids[0];
     for (size_t i = 0; i < session_size; ++i) {
