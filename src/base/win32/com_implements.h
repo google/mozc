@@ -138,12 +138,15 @@ ComImplements<Traits, Interfaces...>::AddRef() {
 template <typename Traits, typename... Interfaces>
 STDMETHODIMP_(ULONG)
 ComImplements<Traits, Interfaces...>::Release() {
-  // All other AddRef() calls must be visible to Release().
-  // std::memory_order_release guarantees that this fetch_sub comes after all
-  // other operations.
+  // We need to make sure that all `Release()`s happens-before the final
+  // `Release()` that actually deletes `this`.
+  // This can be achieved by using acquire-release in `fetch_sub` below, but
+  // we slightly optimize it by just `release`-ing in `fetch_sub` and adding a
+  // fence in case we observe `ref_count_` down to 0.
   const ULONG new_value =
       ref_count_.fetch_sub(1, std::memory_order_release) - 1;
   if (new_value == 0) {
+    std::atomic_thread_fence(std::memory_order_acquire);
     delete this;
   }
   return new_value;
