@@ -29,36 +29,19 @@
 
 #include "dictionary/suppression_dictionary.h"
 
-#include <atomic>
 #include <string>
-#include <thread>  // NOLINT for portability
 #include <utility>
 
 #include "base/logging.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
-namespace {
 
-class Unlocker final {
- public:
-  explicit Unlocker(std::atomic<bool> *locked) : locked_{locked} {}
-  ~Unlocker() { locked_->store(false, std::memory_order_release); }
-
- private:
-  std::atomic<bool> *locked_;
-};
-
-}  // namespace
-
-bool SuppressionDictionary::AddEntry(std::string key, std::string value) {
-  if (!locked_.load(std::memory_order_relaxed)) {
-    LOG(ERROR) << "Dictionary is not locked";
-    return false;
-  }
-
+bool SuppressionDictionary::AddEntry(std::string key, std::string value)
+    ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
   if (key.empty() && value.empty()) {
     LOG(WARNING) << "Both key and value are empty";
     return false;
@@ -75,66 +58,48 @@ bool SuppressionDictionary::AddEntry(std::string key, std::string value) {
   return true;
 }
 
-void SuppressionDictionary::Clear() {
-  if (!locked_.load(std::memory_order_relaxed)) {
-    LOG(ERROR) << "Dictionary is not locked";
-    return;
-  }
+void SuppressionDictionary::Clear() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
   keys_values_.clear();
   keys_only_.clear();
   values_only_.clear();
 }
 
-void SuppressionDictionary::Lock() {
-  absl::MutexLock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
-  for (;;) {
-    bool expected = false;
-    if (locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
-                                      std::memory_order_relaxed)) {
-      return;
-    }
-    std::this_thread::yield();
-  }
+void SuppressionDictionary::Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION(mutex_) {
+  mutex_.Lock();
 }
 
-void SuppressionDictionary::UnLock() {
-  absl::MutexLock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
-  bool expected = true;
-  if (!locked_.compare_exchange_weak(expected, false, std::memory_order_release,
-                                     std::memory_order_relaxed)) {
-    LOG(DFATAL) << "The dictionary was not locked";
-  }
+void SuppressionDictionary::UnLock() ABSL_UNLOCK_FUNCTION(mutex_) {
+  mutex_.Unlock();
 }
 
 bool SuppressionDictionary::IsEmpty() const {
-  bool expected = false;
-  if (!locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
-                                     std::memory_order_relaxed)) {
-    VLOG(2) << "Dictionary is locked now";
-    return true;
+  if (mutex_.TryLock()) {
+    bool is_empty =
+        keys_only_.empty() && values_only_.empty() && keys_values_.empty();
+    mutex_.Unlock();
+    return is_empty;
   }
-  Unlocker u(&locked_);
-  return keys_only_.empty() && values_only_.empty() && keys_values_.empty();
+
+  return true;
 }
 
 bool SuppressionDictionary::SuppressEntry(const absl::string_view key,
                                           const absl::string_view value) const {
-  bool expected = false;
-  if (!locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
-                                     std::memory_order_relaxed)) {
-    VLOG(2) << "Dictionary is locked now";
-    return false;
-  }
-  Unlocker u(&locked_);
+  if (mutex_.TryLock()) {
+    if (keys_only_.empty() && values_only_.empty() && keys_values_.empty()) {
+      // Almost all users don't use word suppression function.
+      // We can return false as early as possible.
+      mutex_.Unlock();
+      return false;
+    }
 
-  if (keys_only_.empty() && values_only_.empty() && keys_values_.empty()) {
-    // Almost all users don't use word suppression function.
-    // We can return false as early as possible.
-    return false;
+    bool suppress = keys_values_.contains(std::make_pair(key, value)) ||
+                    keys_only_.contains(key) || values_only_.contains(value);
+    mutex_.Unlock();
+    return suppress;
   }
 
-  return keys_values_.contains(std::make_pair(key, value)) ||
-         keys_only_.contains(key) || values_only_.contains(value);
+  return false;
 }
 
 }  // namespace dictionary

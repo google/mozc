@@ -51,9 +51,6 @@ TEST(SuppressionDictionary, BasicTest) {
 
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
-    // Not locked
-    EXPECT_FALSE(dic.AddEntry("test", "test"));
-
     // IsEmpty() returns always true when dic is locked
     {
       const SuppressionDictionaryLock l(&dic);
@@ -70,9 +67,6 @@ TEST(SuppressionDictionary, BasicTest) {
     }
 
     EXPECT_FALSE(dic.IsEmpty());
-
-    // Not locked
-    EXPECT_FALSE(dic.AddEntry("test", "test"));
 
     // locked now => SuppressEntry always returns false
     {
@@ -128,7 +122,7 @@ TEST(SuppressionDictionary, ThreadTest) {
         EXPECT_TRUE(dic.AddEntry(key, value));
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
         // Sleep only for 1 msec. On iOS, sleep takes a very longer time
-        // like 30 times compaired with MacOS. This should be a temporary
+        // like 30 times compared with MacOS. This should be a temporary
         // solution.
         absl::SleepFor(absl::Milliseconds(1));
 #else   // TARGET_OS_IPHONE
