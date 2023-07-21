@@ -32,7 +32,6 @@
 #include <QApplication>
 #include <QDialog>
 #include <QStringList>
-#include <QTextCodec>
 #include <QtGui>
 #include <string>
 
