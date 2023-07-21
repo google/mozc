@@ -141,7 +141,11 @@ class UTF16TextLineIterator
       LOG(ERROR) << "Cannot open: " << filename;
     }
     stream_->setDevice(&file_);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    stream_->setEncoding(QStringConverter::Utf16);
+#else  // Qt5 or lower
     stream_->setCodec("UTF-16");
+#endif  // QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     progress_.reset(CreateProgressDialog(message, parent, file_.size()));
   }
 
@@ -178,7 +182,11 @@ class UTF16TextLineIterator
     file_.seek(0);
     stream_ = std::make_unique<QTextStream>();
     stream_->setDevice(&file_);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    stream_->setEncoding(QStringConverter::Utf16);
+#else  // Qt5 or lower
     stream_->setCodec("UTF-16");
+#endif  // QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   }
 
  private:
