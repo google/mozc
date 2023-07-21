@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Category of the typing issue**
+## Category of the typing issue
 Choose one of them (delete rest of them)
 1. Out-of-vocabulary (e.g. "夕日" is not in the candidate list at all).
 2. Word ranking issue (e.g. "夕日" is in the list, but ranking is lower than expected).
@@ -15,7 +15,7 @@ Choose one of them (delete rest of them)
 4. Others
 
 
-**Issues**
+## Issues
 Write issues to the following table. (It's in the markdown format)
 
 | input [e.g.ゆうひ] | expected [e.g. 夕日] | actual [e.g. ユウヒ] |
@@ -23,10 +23,10 @@ Write issues to the following table. (It's in the markdown format)
 | (write here) | (write here) | (optional, write here) |
 
 
-**Version or commit-id**
+## Version or commit-id
 [e.g. Mozc-2.28.4960.100+24.11.oss or d50a8b9ae28c4fba265f734b38bc5ae392fe4d25]
 You can get the version string by converting "Version" or "ばーじょん".
 
 
-**Additional context**
+## Additional context
 Add any other context about the problem here.

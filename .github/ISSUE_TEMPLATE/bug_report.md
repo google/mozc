@@ -7,41 +7,41 @@ assignees: ''
 
 ---
 
-**Description**
+## Description
 A clear and concise description of what the bug is.
 
 
-**Steps to reproduce**
+## Steps to reproduce
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Type '....'
 
 
-**Expected behavior**
+## Expected behavior
 A clear and concise description of what you expected to happen.
 
 
-**Actual behavior**
+## Actual behavior
 A clear and concise description of what you actually got.
 
 
-**Screenshots**
+## Screenshots
 If applicable, add screenshots to help explain your problem.
 
 
-**Version or commit-id**
+## Version or commit-id
 [e.g. Mozc-2.28.4960.100+24.11.oss or d50a8b9ae28c4fba265f734b38bc5ae392fe4d25]
 You can get the version string by converting "Version" or "ばーじょん".
 
 
-**Environment**
+## Environment
  - OS: [e.g. Ubuntu 20.04, macOS 13.1, etc]
  - IMF (for Linux) [e.g. Ibus, Fcitx, etc]
  - Related Applications [e.g. Chromium 109, gedit, etc]
 
 
-**Investigations**
+## Investigations
  - Whether this issue happens on both Ibus and other IMF (e.g. Fcitx, uim).
    + yes, no, N/A
  - Whether this issue happens on other IMEs (e.g. Anthy, SKK).
@@ -54,5 +54,5 @@ You can get the version string by converting "Version" or "ばーじょん".
    (e.g. Mozc-2.28.4960.100+24.11.oss).
    + list of versions or commit-ids, or no-investigation.
 
-**Additional context**
+## Additional context
 Add any other context about the problem here.
