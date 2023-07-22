@@ -30,9 +30,7 @@
 #include "base/system_util.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
-#include <sstream>
 #include <string>
 
 #include "base/const.h"
@@ -74,6 +72,8 @@
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
+
+#include "absl/container/fixed_array.h"
 #endif  // _WIN32
 
 namespace mozc {
@@ -498,22 +498,14 @@ std::string SystemUtil::GetUserNameAsString() {
   const BOOL result = ::GetUserName(wusername, &name_size);
   DCHECK_NE(FALSE, result);
   return win32::WideToUtf8(wusername);
-#endif  // _WIN32
-
-#if defined(__ANDROID__)
-  // Android doesn't seem to support getpwuid_r.
-  struct passwd *ppw = getpwuid(geteuid());
-  CHECK(ppw != nullptr);
-  return ppw->pw_name;
-#elif defined(__APPLE__) || defined(__linux__) || defined(__wasm__)
+#else   // _WIN32
+  const int bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  CHECK_NE(bufsize, -1);
+  absl::FixedArray<char> buf(bufsize);
   struct passwd pw, *ppw;
-  char buf[1024];
-  CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
+  CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf.data(), buf.size(), &ppw));
   return pw.pw_name;
-#endif  // __APPLE__ || __linux__ || __wasm__
-
-  // If none of the above platforms is specified, the compiler raises an error
-  // because of no return value.
+#endif  // !_WIN32
 }
 
 #ifdef _WIN32

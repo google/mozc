@@ -28,7 +28,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QGuiApplication>
-#include <QTextCodec>
 #include <QTranslator>
 #include <string>
 

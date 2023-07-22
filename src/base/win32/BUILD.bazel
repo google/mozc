@@ -161,6 +161,7 @@ mozc_cc_test(
         ":win_util_test_dll",  # fixdeps: keep
         "//base:system_util",
         "//base:util",
+        "//base/strings:zstring_view",
         "//testing:gunit_main",
         "@com_microsoft_wil//:wil",
     ],

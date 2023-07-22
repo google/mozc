@@ -477,12 +477,7 @@ mozc_cc_library(
     features = features_gdi(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [
-        "//base:logging",
-        "//base:port",
-        "//base:system_util",
-        "//third_party/wtl",
-    ],
+    deps = ["//base:logging"],
 )
 
 mozc_cc_library(

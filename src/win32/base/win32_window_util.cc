@@ -29,27 +29,15 @@
 
 #include "win32/base/win32_window_util.h"
 
-// clang-format off
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlwin.h>
-#include <atlstr.h>
-// clang-format on
+#include <windows.h>
 
-#include <memory>
+#include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/win32/win_util.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
-
-using ATL::CStringW;
-using ATL::CWindow;
 
 std::wstring SafeGetWindowText(HWND window_handle) {
   if (!::IsWindow(window_handle)) {
@@ -61,17 +49,16 @@ std::wstring SafeGetWindowText(HWND window_handle) {
     return std::wstring();
   }
 
-  const size_t buffer_len = text_len_without_null + 1;
-  std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
+  std::wstring buffer(text_len_without_null, 0);
 
   const int copied_len_without_null =
-      GetWindowText(window_handle, buffer.get(), buffer_len);
+      GetWindowText(window_handle, buffer.data(), buffer.size() + 1);
 
   if (copied_len_without_null <= 0) {
     return std::wstring();
   }
 
-  return std::wstring(buffer.get(), copied_len_without_null);
+  return buffer;
 }
 
 }  // namespace
@@ -90,44 +77,15 @@ std::wstring WindowUtil::GetWindowClassName(HWND window_handle) {
 
 // static
 bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
-  typedef BOOL(WINAPI * FPChangeWindowMessageFilterEx)(HWND, UINT, DWORD,
-                                                       LPVOID);
-
-  // The following constant is not available unless we change the WINVER
-  // higher enough.
-  constexpr int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
-
-  const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
-  if (lib == nullptr) {
-    LOG(ERROR) << "GetModuleHandle for user32.dll failed.";
-    return false;
-  }
-
-  // Windows 7+
   // http://msdn.microsoft.com/en-us/library/dd388202.aspx
-  FPChangeWindowMessageFilterEx change_window_message_filter_ex =
-      reinterpret_cast<FPChangeWindowMessageFilterEx>(
-          ::GetProcAddress(lib, "ChangeWindowMessageFilterEx"));
-  if (change_window_message_filter_ex != nullptr) {
-    // Windows 7+ only
-    if (!(*change_window_message_filter_ex)(window_handle, message,
-                                            kMessageFilterAllow, nullptr)) {
-      // Note: this actually fails in Internet Explorer 10 on Windows 8
-      // with ERROR_ACCESS_DENIED (0x5).
-      const int error = ::GetLastError();
-      VLOG(1) << "ChangeWindowMessageFilterEx failed. error = " << error;
-      return false;
-    }
-    return true;
-  }
-
-  // Windows Vista
-  if (!::ChangeWindowMessageFilter(message, MSGFLT_ADD)) {
+  if (!ChangeWindowMessageFilterEx(window_handle, message, MSGFLT_ALLOW,
+                                   nullptr)) {
+    // Note: this actually fails in Internet Explorer 10 on Windows 8
+    // with ERROR_ACCESS_DENIED (0x5).
     const int error = ::GetLastError();
-    LOG(ERROR) << "ChangeWindowMessageFilter failed. error = " << error;
+    VLOG(1) << "ChangeWindowMessageFilterEx failed. error = " << error;
     return false;
   }
-
   return true;
 }
 

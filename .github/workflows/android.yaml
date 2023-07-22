@@ -4,6 +4,8 @@ name: CI for Android
 # Run on push.
 on: push
 
+permissions: read-all
+
 # Prevent previous workflows from running.
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

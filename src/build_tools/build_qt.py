@@ -35,13 +35,23 @@ with dropping unnecessary features to minimize the installer size.
 
   python build_tools/build_qt.py --debug --release --confirm_license
 
-By default, this script assumes that Qt is checked out at src/third_party/qt.
+By default, this script assumes that Qt source is checked out at
+
+  src/third_party/qt_src
+
+and files that are necessary to build Mozc will be installed into
+
+  src/third_party/qt.
+
+This way we can later delete src/third_party/qt_src to free up disk space by 2GB
+or so.
 """
 
 import argparse
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 from typing import Union
@@ -50,7 +60,8 @@ from typing import Union
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
 # src/build_tools/build_qt.py -> src/
 ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
-ABS_QT_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
+ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
+ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 
 
 def IsWindows() -> bool:
@@ -102,12 +113,6 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                           '-no-sql-tds',
                           '-nomake', 'examples',
                           '-nomake', 'tests',
-                          '-nomake', 'tools',
-                          '-skip', 'src/network',
-                          '-skip', 'src/plugins/sqldrivers',
-                          '-skip', 'src/sql',
-                          '-skip', 'src/testlib',
-                          '-skip', 'src/xml',
                          ]
 
   if IsMac():
@@ -135,6 +140,11 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
   elif args.release:
     qt_configure_options += ['-release']
 
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
+  if qt_src_dir != qt_dest_dir:
+    qt_configure_options += ['-prefix', str(qt_dest_dir)]
+
   return qt_configure_options
 
 
@@ -147,8 +157,10 @@ def ParseOption() -> argparse.Namespace:
   parser.add_argument('--release', dest='release', default=False,
                       action='store_true',
                       help='make release build')
-  parser.add_argument('--qt_dir', help='qt directory', type=str,
-                      default=ABS_QT_DIR)
+  parser.add_argument('--qt_src_dir', help='qt src directory', type=str,
+                      default=str(ABS_QT_SRC_DIR))
+  parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
+                      default=str(ABS_QT_DEST_DIR))
   parser.add_argument('--confirm_license',
                       help='set to accept Qt OSS license',
                       action='store_true', default=False)
@@ -165,20 +177,34 @@ def BuildOnMac(args: argparse.Namespace) -> None:
 
   Args:
     args: build options to be used to customize configure options of Qt.
+  Raises:
+    FileNotFoundError: when any required file is not found.
   """
-  abs_qtdir = args.qt_dir.absolute()
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
+
+  if not qt_src_dir.exists():
+    raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
   jobs = os.cpu_count() * 2
   os.environ['MAKEFLAGS'] = '--jobs=%s' % jobs
-  os.chdir(abs_qtdir)
+  os.chdir(qt_src_dir)
 
   commands = ['./configure'] + MakeConfigureOption(args)
   if args.dryrun:
     print(f'dryrun: RunOrDie({commands})')
     print('dryrun: make')
+    if qt_src_dir != qt_dest_dir:
+      if qt_dest_dir.exists():
+        print(f'dryrun: delete {qt_dest_dir}')
+      print('dryrun: make install')
   else:
     RunOrDie(commands)
     RunOrDie(['make'])
+    if qt_src_dir != qt_dest_dir:
+      if qt_dest_dir.exists():
+        shutil.rmtree(qt_dest_dir)
+      RunOrDie(['make', 'install'])
 
 
 def GetVisualCppEnvironmentVariables(
@@ -251,12 +277,13 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
     args: build options to be used to customize configure options of Qt.
 
   Raises:
-    FileNotFoundError: when some required file is not found.
+    FileNotFoundError: when any required file is not found.
   """
-  qt_dir = args.qt_dir.resolve()
+  qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
+  qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
 
-  if not qt_dir.exists():
-    raise FileNotFoundError('Could not find qt_dir=%s' % qt_dir)
+  if not qt_src_dir.exists():
+    raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
   env = GetVisualCppEnvironmentVariables(args.msvs_version, 'amd64_x86')
 
@@ -265,17 +292,27 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
   command = f'configure.bat {configs}'
   if args.dryrun:
     print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
-          f' cwd={qt_dir}, env={env})')
+          f' cwd={qt_src_dir}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True, cwd=qt_dir, env=env)
+    subprocess.run(command, shell=True, check=True, cwd=qt_src_dir, env=env)
 
-  jom_path = qt_dir.joinpath('jom.exe')
+  jom_path = qt_src_dir.joinpath('jom.exe')
   make = jom_path if jom_path.exists() else 'nmake.exe'
   if args.dryrun:
     print(f'dryrun: subprocess.run(str({make}), shell=True, check=True,'
-          f' cwd={qt_dir}, env={env})')
+          f' cwd={qt_src_dir}, env={env})')
+    if qt_src_dir != qt_dest_dir:
+      if qt_dest_dir.exists():
+        print(f'dryrun: delete {qt_dest_dir}')
+      print(f"dryrun: subprocess.run([str({make}), 'install'], shell=True,"
+            f" check=True, cwd={qt_src_dir}, env={env})")
   else:
-    subprocess.run(str(make), shell=True, check=True, cwd=qt_dir, env=env)
+    subprocess.run(str(make), shell=True, check=True, cwd=qt_src_dir, env=env)
+    if qt_src_dir != qt_dest_dir:
+      if qt_dest_dir.exists():
+        shutil.rmtree(qt_dest_dir)
+      subprocess.run([str(make), 'install'], shell=True, check=True,
+                     cwd=qt_src_dir, env=env)
 
 
 def RunOrDie(

@@ -30,11 +30,11 @@
 #ifndef MOZC_DICTIONARY_SUPPRESSION_DICTIONARY_H_
 #define MOZC_DICTIONARY_SUPPRESSION_DICTIONARY_H_
 
-#include <atomic>
 #include <functional>
 #include <string>
 #include <utility>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
 #include "absl/strings/string_view.h"
@@ -48,7 +48,7 @@ namespace dictionary {
 // single-producer single-consumer model, provided that the usage is correct. In
 // our usage, the producer is UserDictionary::UserDictionaryReloader thread and
 // the consumer is the main converter thread.
-class SuppressionDictionary final {
+class ABSL_LOCKABLE SuppressionDictionary final {
  public:
   SuppressionDictionary() = default;
   SuppressionDictionary(const SuppressionDictionary &) = delete;
@@ -64,19 +64,17 @@ class SuppressionDictionary final {
 
   // Locks the dictionary (the producer thread is blocked until it gets the
   // lock). Should not be called recursively.
-  void Lock();
+  void Lock() ABSL_EXCLUSIVE_LOCK_FUNCTION();
 
   // Unlocks the dictionary.
-  void UnLock();
+  void UnLock() ABSL_UNLOCK_FUNCTION();
 
   // Adds an entry into the dictionary.
-  bool AddEntry(std::string key, std::string value);
+  bool AddEntry(std::string key, std::string value)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(this);
 
   // Clears the dictionary.
-  void Clear();
-
-  // Returns true if the dictionary is locked. This method is for debugging.
-  bool IsLocked() const { return locked_.load(std::memory_order_relaxed); }
+  void Clear() ABSL_EXCLUSIVE_LOCKS_REQUIRED(this);
 
   // Methods for the consumer thread. If the producer thread is updating the
   // dictionary contents, the following methods behave as if the dictionary is
@@ -86,6 +84,7 @@ class SuppressionDictionary final {
   bool IsEmpty() const;
 
   // Returns true if a word having `key` and `value` should be suppressed.
+  // Returns false if the dictionary is locked.
   bool SuppressEntry(absl::string_view key, absl::string_view value) const;
 
  private:
@@ -98,21 +97,29 @@ class SuppressionDictionary final {
     using is_transparent = void;
   };
 
-  absl::flat_hash_set<KeyValue, KeyValueHash, KeyValueEq> keys_values_;
-  absl::flat_hash_set<std::string> keys_only_;
-  absl::flat_hash_set<std::string> values_only_;
+  absl::flat_hash_set<KeyValue, KeyValueHash, KeyValueEq> keys_values_
+      ABSL_GUARDED_BY(mutex_);
+  absl::flat_hash_set<std::string> keys_only_ ABSL_GUARDED_BY(mutex_);
+  absl::flat_hash_set<std::string> values_only_ ABSL_GUARDED_BY(mutex_);
 
-  mutable std::atomic<bool> locked_ = false;
-  // TODO(noriyukit): Check if this mutex is still necessary.
-  absl::Mutex mutex_;
+  mutable absl::Mutex mutex_;
 };
 
-class SuppressionDictionaryLock final {
+class ABSL_SCOPED_LOCKABLE SuppressionDictionaryLock final {
  public:
-  explicit SuppressionDictionaryLock(SuppressionDictionary *dic) : dic_{dic} {
+  explicit SuppressionDictionaryLock(SuppressionDictionary *dic)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(dic)
+      : dic_(dic) {
     dic_->Lock();
   }
-  ~SuppressionDictionaryLock() { dic_->UnLock(); }
+
+  SuppressionDictionaryLock(const SuppressionDictionaryLock &) = delete;
+  SuppressionDictionaryLock &operator=(const SuppressionDictionaryLock &) =
+      delete;
+  SuppressionDictionaryLock(SuppressionDictionaryLock &&) = delete;
+  SuppressionDictionaryLock &operator=(SuppressionDictionaryLock &&) = delete;
+
+  ~SuppressionDictionaryLock() ABSL_UNLOCK_FUNCTION() { dic_->UnLock(); }
 
  private:
   SuppressionDictionary *dic_;

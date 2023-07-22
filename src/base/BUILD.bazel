@@ -618,9 +618,11 @@ mozc_cc_library(
         ":port",
         ":singleton",
         ":util",
+        "//base/strings:zstring_view",
         "//bazel/win32:aux_ulib",  # win_util
         "//bazel/win32:imm32",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",

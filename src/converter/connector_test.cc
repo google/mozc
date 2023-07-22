@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,6 +41,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/random/random.h"
 
 namespace mozc {
 namespace {
@@ -76,10 +76,9 @@ TEST(ConnectorTest, CompareWithRawData) {
     data.push_back(entry);
   }
 
+  absl::BitGen urbg;
   for (int trial = 0; trial < 3; ++trial) {
     // Lookup in random order for a few times.
-    std::random_device rd;
-    std::mt19937 urbg(rd());
     std::shuffle(data.begin(), data.end(), urbg);
     for (size_t i = 0; i < data.size(); ++i) {
       int actual = connector.GetTransitionCost(data[i].rid, data[i].lid);

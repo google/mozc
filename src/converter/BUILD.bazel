@@ -173,6 +173,7 @@ mozc_cc_test(
         "//data_manager:connection_file_reader",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/random",
     ],
 )
 

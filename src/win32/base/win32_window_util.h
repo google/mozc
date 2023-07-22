@@ -31,9 +31,8 @@
 #define MOZC_WIN32_BASE_WIN32_WINDOW_UTIL_H_
 
 #include <windows.h>
-#include <string>
 
-#include "base/port.h"
+#include <string>
 
 namespace mozc {
 namespace win32 {
