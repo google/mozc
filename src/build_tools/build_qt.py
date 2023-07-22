@@ -113,12 +113,6 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                           '-no-sql-tds',
                           '-nomake', 'examples',
                           '-nomake', 'tests',
-                          '-nomake', 'tools',
-                          '-skip', 'src/network',
-                          '-skip', 'src/plugins/sqldrivers',
-                          '-skip', 'src/sql',
-                          '-skip', 'src/testlib',
-                          '-skip', 'src/xml',
                          ]
 
   if IsMac():
