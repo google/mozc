@@ -123,7 +123,7 @@
           '<(subdir)/<(qrc_base_name).qrc',
           '<(subdir)/<(qrc_base_name)_en.qm',
           '<(subdir)/<(qrc_base_name)_ja.qm',
-          '../data/images/product_icon_32bpp-128.png',
+          '<(mozc_oss_src_dir)/data/images/product_icon_32bpp-128.png',
         ],
       },
       'includes': [
@@ -929,7 +929,7 @@
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
+            '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
             '<(gen_out_dir)/ConfigDialog/English.lproj/InfoPlist.strings',
             '<(gen_out_dir)/ConfigDialog/Japanese.lproj/InfoPlist.strings',
           ],
@@ -982,7 +982,7 @@
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
+            '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
             '<(mozc_oss_src_dir)/data/mac/DictionaryTool/English.lproj/InfoPlist.strings',
             '<(mozc_oss_src_dir)/data/mac/DictionaryTool/Japanese.lproj/InfoPlist.strings',
           ],
@@ -1029,7 +1029,7 @@
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_info',
           },
           'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns',
+            '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
           ],
           'includes': [
             'mac_gui.gypi',

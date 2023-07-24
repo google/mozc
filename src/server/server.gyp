@@ -63,7 +63,7 @@
           ],
           'mac_bundle': 1,
           'mac_bundle_resources': [
-            '../data/images/mac/product_icon.icns'
+            '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns'
           ],
           'xcode_settings': {
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
