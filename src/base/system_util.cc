@@ -68,13 +68,14 @@
 
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
+#include "absl/strings/str_cat.h"
 #else  // _WIN32
 #include <pwd.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #include "absl/container/fixed_array.h"
-#endif  // _WIN32
+#endif  // !_WIN32
 
 namespace mozc {
 namespace {
@@ -691,7 +692,7 @@ std::string SystemUtil::GetDesktopNameAsString() {
     return "";
   }
 
-  return (session_id + "." + window_station_name + "." + desktop_name);
+  return absl::StrCat(session_id, ".", window_station_name, ".", desktop_name);
 #endif  // _WIN32
 }
 
