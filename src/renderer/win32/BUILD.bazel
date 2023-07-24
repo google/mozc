@@ -173,6 +173,8 @@ mozc_cc_library(
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_style_handler",
         "//third_party/wtl",
+        "@com_google_absl//absl/types:span",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

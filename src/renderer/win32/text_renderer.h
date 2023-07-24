@@ -39,10 +39,13 @@
 #include <atlmisc.h>
 // clang-format on
 
+#include <memory>
 #include <string>
-#include <vector>
+#include <string_view>
+#include <utility>
 
 #include "base/coordinates.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace renderer {
@@ -50,14 +53,15 @@ namespace win32 {
 
 // text-rect pair for batch text rendering.
 struct TextRenderingInfo {
+  TextRenderingInfo(std::wstring str, Rect r)
+      : text(std::move(str)), rect(std::move(r)) {}
+
   std::wstring text;
   Rect rect;
-  TextRenderingInfo(const std::wstring &str, const Rect &r)
-      : text(str), rect(r) {}
 };
 
 // An interface which manages text rendering for Windows. This class
-// is currently implemented with Win32 GDI functions.
+// is currently implemented with Win32 GDI and Direct2D.
 class TextRenderer {
  public:
   // Text rendering styles for a candidate window
@@ -74,26 +78,29 @@ class TextRenderer {
     SIZE_OF_FONT_TYPE,  // DO NOT DELETE THIS
   };
 
-  // Returns an instance of TextRenderer. Caller takes ownership.
-  static TextRenderer *Create();
+  TextRenderer() = default;
+  TextRenderer(TextRenderer &&) = default;
+  TextRenderer &operator=(TextRenderer &&) = default;
+  virtual ~TextRenderer() = default;
 
-  virtual ~TextRenderer();
+  // Returns an instance of TextRenderer.
+  static std::unique_ptr<TextRenderer> Create();
 
   // Updates font cache.
   virtual void OnThemeChanged() = 0;
 
   // Retrieves the bounding box for a given string.
   virtual Size MeasureString(FONT_TYPE font_type,
-                             const std::wstring &str) const = 0;
+                             std::wstring_view str) const = 0;
   virtual Size MeasureStringMultiLine(FONT_TYPE font_type,
-                                      const std::wstring &str,
-                                      const int width) const = 0;
+                                      std::wstring_view str,
+                                      int width) const = 0;
   // Renders the given |text|.
-  virtual void RenderText(WTL::CDCHandle dc, const std::wstring &text,
+  virtual void RenderText(WTL::CDCHandle dc, std::wstring_view text,
                           const Rect &rect, FONT_TYPE font_type) const = 0;
-  virtual void RenderTextList(
-      WTL::CDCHandle dc, const std::vector<TextRenderingInfo> &display_list,
-      FONT_TYPE font_type) const = 0;
+  virtual void RenderTextList(WTL::CDCHandle dc,
+                              absl::Span<const TextRenderingInfo> display_list,
+                              FONT_TYPE font_type) const = 0;
 };
 
 }  // namespace win32
