@@ -105,9 +105,9 @@
           'action_name': 'gen_separate_user_pos_data_for_<(dataset_tag)',
           'variables': {
             'id_def': '<(platform_data_dir)/id.def',
-            'special_pos': '<(common_data_dir)/rules/special_pos.def',
-            'user_pos': '<(common_data_dir)/rules/user_pos.def',
-            'cforms': '<(common_data_dir)/rules/cforms.def',
+            'special_pos': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
+            'user_pos': '<(mozc_oss_src_dir)/data/rules/user_pos.def',
+            'cforms': '<(mozc_oss_src_dir)/data/rules/cforms.def',
             'token_array_data': '<(gen_out_dir)/user_pos_token_array.data',
             'string_array_data': '<(gen_out_dir)/user_pos_string_array.data',
             'pos_list': '<(gen_out_dir)/pos_list.data',
@@ -150,8 +150,8 @@
           'action_name': 'gen_separate_pos_matcher_data_for_<(dataset_tag)',
           'variables': {
             'id_def': '<(platform_data_dir)/id.def',
-            'special_pos': '<(common_data_dir)/rules/special_pos.def',
-            'pos_matcher_rule': '<(common_data_dir)/rules/pos_matcher_rule.def',
+            'special_pos': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
+            'pos_matcher_rule': '<(mozc_oss_src_dir)/data/rules/pos_matcher_rule.def',
             'pos_matcher_data': '<(gen_out_dir)/pos_matcher.data',
           },
           'inputs': [

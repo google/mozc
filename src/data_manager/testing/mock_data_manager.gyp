@@ -38,7 +38,7 @@
     'mozc_dir': '../..',
     'common_data_dir': '<(mozc_dir)/data',
     'platform_data_dir': '<(mozc_oss_src_dir)/data/test/dictionary',
-    'boundary_def': '<(mozc_dir)/data/rules/boundary.def',
+    'boundary_def': '<(mozc_oss_src_dir)/data/rules/boundary.def',
     'dataset_tag': 'mock',
     'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [

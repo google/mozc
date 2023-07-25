@@ -53,7 +53,7 @@
               '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
             ],
             'cforms_file': [
-              '../data/rules/cforms.def',
+              '<(mozc_oss_src_dir)/data/rules/cforms.def',
             ],
           },
           'inputs': [

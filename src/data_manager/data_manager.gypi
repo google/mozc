@@ -325,8 +325,8 @@
           'action_name': 'gen_separate_pos_group_data_for_<(dataset_tag)',
           'variables': {
             'id_def': '<(platform_data_dir)/id.def',
-            'special_pos': '<(common_data_dir)/rules/special_pos.def',
-            'pos_group_def': '<(common_data_dir)/rules/user_segment_history_pos_group.def',
+            'special_pos': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
+            'pos_group_def': '<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
           },
           'inputs': [
             '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
@@ -341,8 +341,8 @@
             '<(python)',
             '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
             '--id_def=<(platform_data_dir)/id.def',
-            '--special_pos=<(common_data_dir)/rules/special_pos.def',
-            '--pos_group_def=<(common_data_dir)/rules/user_segment_history_pos_group.def',
+            '--special_pos=<(mozc_oss_src_dir)/data/rules/special_pos.def',
+            '--pos_group_def=<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
             '--output=<(gen_out_dir)/pos_group.data',
           ],
         },
@@ -362,7 +362,7 @@
           'variables': {
             'text_connection_file': '<(platform_data_dir)/connection_single_column.txt',
             'id_file': '<(platform_data_dir)/id.def',
-            'special_pos_file': '<(common_data_dir)/rules/special_pos.def',
+            'special_pos_file': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
             'use_1byte_cost_flag': '<(use_1byte_cost_for_connection_data)',
           },
           'inputs': [
@@ -436,8 +436,8 @@
             'input_files': [
               # Order is important; files are passed to argv in this order.
               '<(platform_data_dir)/id.def',
-              '<(common_data_dir)/rules/special_pos.def',
-              '<(common_data_dir)/rules/segmenter.def',
+              '<(mozc_oss_src_dir)/data/rules/special_pos.def',
+              '<(mozc_oss_src_dir)/data/rules/segmenter.def',
             ],
           },
           'inputs': [
@@ -516,7 +516,7 @@
           'variables': {
             'boundary_def_var': '<(boundary_def)',
             'id_def': '<(platform_data_dir)/id.def',
-            'special_pos': '<(common_data_dir)/rules/special_pos.def',
+            'special_pos': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
           },
           'inputs': [
             '<(mozc_dir)/converter/gen_boundary_data.py',
@@ -532,7 +532,7 @@
             '<(mozc_dir)/converter/gen_boundary_data.py',
             '--boundary_def=<(boundary_def)',
             '--id_def=<(platform_data_dir)/id.def',
-            '--special_pos=<(common_data_dir)/rules/special_pos.def',
+            '--special_pos=<(mozc_oss_src_dir)/data/rules/special_pos.def',
             '--output=<(gen_out_dir)/boundary.data',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -725,7 +725,7 @@
             'generator' : '<(PRODUCT_DIR)/gen_symbol_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
             'input_files': [
               '<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
-              '<(mozc_dir)/data/rules/sorting_map.tsv',
+              '<(mozc_oss_src_dir)/data/rules/sorting_map.tsv',
               '<(mozc_oss_src_dir)/data/symbol/ordering_rule.txt',
               '<(gen_out_dir)/user_pos_manager.data',
             ],
@@ -742,7 +742,7 @@
             '<(generator)',
             '--input=<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
             '--user_pos_manager_data=<(gen_out_dir)/user_pos_manager.data',
-            '--sorting_table=<(mozc_dir)/data/rules/sorting_map.tsv',
+            '--sorting_table=<(mozc_oss_src_dir)/data/rules/sorting_map.tsv',
             '--ordering_rule=<(mozc_oss_src_dir)/data/symbol/ordering_rule.txt',
             '--output_token_array=<(gen_out_dir)/symbol_token.data',
             '--output_string_array=<(gen_out_dir)/symbol_string.data',

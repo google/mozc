@@ -72,7 +72,7 @@
         {
           'action_name': 'gen_pos_matcher',
           'variables': {
-            'pos_matcher_rule': '../data/rules/pos_matcher_rule.def',
+            'pos_matcher_rule': '<(mozc_oss_src_dir)/data/rules/pos_matcher_rule.def',
             'pos_matcher_header': '<(gen_out_dir)/pos_matcher_impl.inc',
           },
           'inputs': [
@@ -128,8 +128,8 @@
         {
           'action_name': 'gen_pos_map',
           'variables': {
-            'user_pos': '../data/rules/user_pos.def',
-            'third_party_pos_map': '../data/rules/third_party_pos_map.def',
+            'user_pos': '<(mozc_oss_src_dir)/data/rules/user_pos.def',
+            'third_party_pos_map': '<(mozc_oss_src_dir)/data/rules/third_party_pos_map.def',
             'pos_map_header': '<(gen_out_dir)/pos_map.inc',
           },
           'inputs': [
