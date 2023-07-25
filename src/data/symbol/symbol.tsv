@@ -215,7 +215,12 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	∫	すうがく いんてぐらる せきぶん けいさん きごう	積分記号		SYMBOL
 記号	∬	すうがく いんてぐらる せきぶん にじゅうせきぶん けいさん きごう	二重積分記号		SYMBOL
 記号	⊕	すうがく ちょくわ えっくすおあ けいさん + きごう	直和		SYMBOL
-記号	∅	すうがく くうしゅうごう	空集合		SYMBOL		U+2205
+記号	∅	すうがく くうしゅうごう きごう	空集合		SYMBOL		U+2205
+記号	ℕ	すうがく しぜんすう きごう	自然数		SYMBOL		U+2115
+記号	ℤ	すうがく せいすう きごう	整数		SYMBOL		U+2124
+記号	ℚ	すうがく ゆうりすう きごう	有理数		SYMBOL		U+211A
+記号	ℝ	すうがく じっすう きごう	実数		SYMBOL		U+211D
+記号	ℂ	すうがく ふくそすう きごう	複素数		SYMBOL		U+2102
 記号	Å	おんぐすとろーむ たんい A きごう	オングストローム		SYMBOL
 記号	‰	ぱーみる たんい きごう	単位		SYMBOL
 記号	♯	しゃーぷ おんがく # きごう	シャープ(音楽記号)		SYMBOL
