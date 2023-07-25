@@ -35,26 +35,30 @@ with dropping unnecessary features to minimize the installer size.
 
   python build_tools/build_qt.py --debug --release --confirm_license
 
-By default, this script assumes that Qt source is checked out at
+By default, this script assumes that Qt archive is stored as
 
-  src/third_party/qt_src
+  src/third_party_cache/qtbase-everywhere-opensource-src-5.15.10.tar.xz
 
-and files that are necessary to build Mozc will be installed into
+and Qt src files that are necessary to build Mozc will be checked out into
 
-  src/third_party/qt.
+  src/third_party/qt_src.
 
 This way we can later delete src/third_party/qt_src to free up disk space by 2GB
 or so.
 """
 
 import argparse
+from collections.abc import Iterator
 import json
 import os
 import pathlib
 import shutil
 import subprocess
 import sys
+import tarfile
+import time
 from typing import Union
+import zipfile
 
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
@@ -62,6 +66,11 @@ ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
 ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
+# The archive filename should be consistent with update_deps.py.
+ABS_QT_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
+    'third_party_cache', 'qtbase-everywhere-opensource-src-5.15.10.tar.xz')
+ABS_JOM_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
+    'third_party_cache', 'jom_1_1_3.zip')
 
 
 def is_windows() -> bool:
@@ -77,6 +86,93 @@ def is_mac() -> bool:
 def is_linux() -> bool:
   """Returns true if the platform is Linux."""
   return os.name == 'posix' and os.uname()[0] == 'Linux'
+
+
+class ProgressPrinter:
+  """A utility to print progress message with carriage return and trancatoin."""
+
+  def __enter__(self):
+    if not sys.stdout.isatty():
+
+      class NoOpImpl:
+        """A no-op implementation in case stdout is not attached to concole."""
+
+        def print_line(self, msg: str) -> None:
+          """No-op implementation.
+
+          Args:
+            msg: Unused.
+          """
+          del msg  # Unused
+          return
+
+      self.cleaner = None
+      return NoOpImpl()
+
+    class Impl:
+      """A real implementation in case stdout is attached to concole."""
+      last_output_time_ns = time.time_ns()
+
+      def print_line(self, msg: str) -> None:
+        """Print the given message with carriage return and trancatoin.
+
+        Args:
+          msg: Message to be printed.
+        """
+        colmuns = os.get_terminal_size().columns
+        now = time.time_ns()
+        if (now - self.last_output_time_ns) < 25000000:
+          return
+        msg = msg + ' ' * max(colmuns - len(msg), 0)
+        msg = msg[0 : (colmuns)] + '\r'
+        sys.stdout.write(msg)
+        sys.stdout.flush()
+        self.last_output_time_ns = now
+
+    class Cleaner:
+      def cleanup(self) -> None:
+        colmuns = os.get_terminal_size().columns
+        sys.stdout.write(' ' * colmuns + '\r')
+        sys.stdout.flush()
+
+    self.cleaner = Cleaner()
+    return Impl()
+
+  def __exit__(self, *exc):
+    if self.cleaner:
+      self.cleaner.cleanup()
+
+
+def qt_extract_filter(
+    members: Iterator[tarfile.TarInfo],
+) -> Iterator[tarfile.TarInfo]:
+  """Custom extract filter for the Qt Tar file.
+
+  This custom filter can be used to adjust directory structure and drop
+  unnecessary files/directories to save disk space.
+
+  Args:
+    members: an iterator of TarInfo from the Tar file.
+
+  Yields:
+    An iterator of TarInfo to be extracted.
+  """
+  with ProgressPrinter() as printer:
+    for info in members:
+      paths = info.name.split('/')
+      if '..' in paths:
+        continue
+      if len(paths) < 1:
+        continue
+      paths = paths[1:]
+      new_path = '/'.join(paths)
+      if len(paths) >= 1 and paths[0] == 'examples':
+        printer.print_line('skipping   ' + new_path)
+        continue
+      else:
+        printer.print_line('extracting ' + new_path)
+        info.name = new_path
+        yield info
 
 
 def make_configure_options(args: argparse.Namespace) -> list[str]:
@@ -159,6 +255,10 @@ def parse_args() -> argparse.Namespace:
                       help='make release build')
   parser.add_argument('--qt_src_dir', help='qt src directory', type=str,
                       default=str(ABS_QT_SRC_DIR))
+  parser.add_argument('--qt_archive_path', help='qtbase archive path', type=str,
+                      default=str(ABS_QT_ARCHIVE_PATH))
+  parser.add_argument('--jom_archive_path', help='qtbase archive path',
+                      type=str, default=str(ABS_JOM_ARCHIVE_PATH))
   parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
                       default=str(ABS_QT_DEST_DIR))
   parser.add_argument('--confirm_license',
@@ -336,6 +436,31 @@ def run_or_die(
   print('Done.')
 
 
+def extract_qt_src(args: argparse.Namespace) -> None:
+  """Extract Qt src from the archive.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+  """
+  qt_src_dir = pathlib.Path(args.qt_src_dir).absolute()
+  if qt_src_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: delete {qt_src_dir}')
+    else:
+      shutil.rmtree(qt_src_dir)
+  if args.dryrun:
+    print(f'dryrun: extracting {args.qt_archive_path} to {qt_src_dir}')
+    if is_windows():
+      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
+  else:
+    qt_src_dir.mkdir(parents=True)
+    with tarfile.open(args.qt_archive_path, mode='r|xz') as f:
+      f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
+    if is_windows():
+      with zipfile.ZipFile(args.jom_archive_path) as z:
+        z.extractall(path=qt_src_dir)
+
+
 def main():
   if is_linux():
     print('On Linux, please use shared library provided by distributions.')
@@ -346,6 +471,8 @@ def main():
   if not (args.debug or args.release):
     print('neither --release nor --debug is specified.')
     sys.exit(1)
+
+  extract_qt_src(args)
 
   if is_mac():
     build_on_mac(args)
