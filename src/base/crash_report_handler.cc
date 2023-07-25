@@ -218,7 +218,8 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   while (StackWalk64(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(),
                      GetCurrentThread(), &stack, context, 0,
                      SymFunctionTableAccess64, SymGetModuleBase64, 0)) {
-    if (IsAddressInCurrentModule(stack.AddrPC.Offset)) {
+    if (IsAddressInCurrentModule(
+            reinterpret_cast<void *>(stack.AddrPC.Offset))) {
       return true;
     }
   }
