@@ -267,8 +267,8 @@ def parse_args() -> argparse.Namespace:
                       action='store_true', default=False)
   parser.add_argument('--dryrun', action='store_true', default=False)
   if is_windows():
-    parser.add_argument('--msvs_version', help='Visual Studio ver (e.g. 2022)',
-                        type=str, default='2022')
+    parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
+                        type=str, default=None)
   return parser.parse_args()
 
 
@@ -327,8 +327,36 @@ def build_on_mac(args: argparse.Namespace) -> None:
       run_or_die(['make', 'install'])
 
 
+def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
+  """Returns the path of 'vcvarsall.bat'.
+
+  Args:
+    path_hint: optional path to vcvarsall.bat
+
+  Returns:
+    The path of 'vcvarsall.bat'.
+
+  Raises:
+    FileNotFoundError: When 'vcvarsall.bat' cannot be found.
+  """
+  if path_hint is not None:
+    path = pathlib.Path(path_hint).resolve()
+    if path.exists():
+      return path
+
+  for edition in ['Community', 'Professional', 'Enterprise']:
+    vcvarsall = pathlib.Path('C:\\', 'Program Files', 'Microsoft Visual Studio',
+                             '2022', edition, 'VC', 'Auxiliary', 'Build',
+                             'vcvarsall.bat')
+    if vcvarsall.exists():
+      return vcvarsall
+
+  raise FileNotFoundError('Could not find vcvarsall.bat')
+
+
 def get_vs_env_vars(
-    msvs_version: str, arch: str
+    arch: str,
+    vcvarsall_path_hint: Union[str, None] = None,
 ) -> dict[str, str]:
   """Returns environment variables for the specified Visual Studio C++ tool.
 
@@ -342,21 +370,21 @@ def get_vs_env_vars(
   from the actual command execution as follows.
 
     cwd = ...
-    env = get_vs_env_vars('2022', 'amd64_x86')
+    env = get_vs_env_vars('amd64_x86')
     subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
 
   or
 
     cwd = ...
-    env = get_vs_env_vars('2022', 'amd64_x86')
+    env = get_vs_env_vars('amd64_x86')
     subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
 
   For the 'arch' argument, see the following link to find supported values.
   https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line#vcvarsall-syntax
 
   Args:
-    msvs_version: Visual Studio version to be used to build Qt, e.g. '2022'
     arch: The architecture to be used to build Qt, e.g. 'amd64_x86'
+    vcvarsall_path_hint: optional path to vcvarsall.bat
 
   Returns:
     A dict of environment variable.
@@ -365,19 +393,7 @@ def get_vs_env_vars(
     ChildProcessError: When 'vcvarsall.bat' cannot be executed.
     FileNotFoundError: When 'vcvarsall.bat' cannot be found.
   """
-  if msvs_version == '2022':
-    program_files = 'Program Files'
-  else:
-    program_files = 'Program Files (x86)'
-  vcvarsall = None
-  for edition in ['Community', 'Professional', 'Enterprise']:
-    vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
-                             msvs_version, edition, 'VC', 'Auxiliary', 'Build',
-                             'vcvarsall.bat')
-    if vcvarsall.exists():
-      break
-  if vcvarsall is None:
-    raise FileNotFoundError('Could not find vcvarsall.bat')
+  vcvarsall = get_vcvarsall(vcvarsall_path_hint)
 
   pycmd = (r'import json;'
            r'import os;'
@@ -418,7 +434,7 @@ def build_on_windows(args: argparse.Namespace) -> None:
       ]),
       args.dryrun)
 
-  env = get_vs_env_vars(args.msvs_version, 'amd64_x86')
+  env = get_vs_env_vars('amd64_x86', args.vcvarsall_path)
 
   options = make_configure_options(args)
   configs = ' '.join(options)
