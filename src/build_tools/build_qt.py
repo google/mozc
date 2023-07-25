@@ -52,6 +52,7 @@ from collections.abc import Iterator
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -271,6 +272,25 @@ def parse_args() -> argparse.Namespace:
   return parser.parse_args()
 
 
+def patch_file(file: pathlib.Path, pattern: str, replaced: str,
+               dryrun: bool = False) -> None:
+  """Apply local patch(es) to the specified file.
+
+  Args:
+    file: file to be patched.
+    pattern: regex pattern to be matched.
+    replaced: string to be replaced with.
+    dryrun: True to do as a dry run.
+  """
+  content = file.read_text()
+  new_content = re.sub(pattern, replaced, content, flags=re.MULTILINE)
+  if content != new_content:
+    if dryrun:
+      print(f'dryrun: patchint {file}')
+    else:
+      file.write_text(new_content)
+
+
 def build_on_mac(args: argparse.Namespace) -> None:
   """Build the Qt5 library on Mac.
 
@@ -386,6 +406,18 @@ def build_on_windows(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
+  patch_file(
+      qt_src_dir.joinpath('mkspecs', 'win32-msvc', 'qmake.conf'),
+      '^load\\(qt_config\\)',
+      '\n'.join([
+          # Hide PDB path (b/1507329)
+          'QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO += /PDBALTPATH:%_PDB%',
+          # Hide PDB path (b/1507329)
+          'QMAKE_LFLAGS_DEBUG += /PDBALTPATH:%_PDB%',
+          'load(qt_config)',
+      ]),
+      args.dryrun)
+
   env = get_vs_env_vars(args.msvs_version, 'amd64_x86')
 
   options = make_configure_options(args)
@@ -396,6 +428,15 @@ def build_on_windows(args: argparse.Namespace) -> None:
           f' cwd={qt_src_dir}, env={env})')
   else:
     subprocess.run(command, shell=True, check=True, cwd=qt_src_dir, env=env)
+
+  # In order not to expose internal build path, replace paths in qconfig.cpp,
+  # which have been embedded by configure.exe based on the build directory.
+  # See b/2202493 for details.
+  patch_file(
+      qt_src_dir.joinpath('src', 'corelib', 'global', 'qconfig.cpp'),
+      str(qt_dest_dir).replace('\\', '/'),
+      'C:/qtbase',
+      args.dryrun)
 
   jom_path = qt_src_dir.joinpath('jom.exe')
   make = jom_path if jom_path.exists() else 'nmake.exe'
