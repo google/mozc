@@ -64,22 +64,22 @@ ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 
 
-def IsWindows() -> bool:
+def is_windows() -> bool:
   """Returns true if the platform is Windows."""
   return os.name == 'nt'
 
 
-def IsMac() -> bool:
+def is_mac() -> bool:
   """Returns true if the platform is Mac."""
   return os.name == 'posix' and os.uname()[0] == 'Darwin'
 
 
-def IsLinux() -> bool:
+def is_linux() -> bool:
   """Returns true if the platform is Linux."""
   return os.name == 'posix' and os.uname()[0] == 'Linux'
 
 
-def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
+def make_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options based on args.
 
   Args:
@@ -115,13 +115,13 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
                           '-nomake', 'tests',
                          ]
 
-  if IsMac():
+  if is_mac():
     qt_configure_options += [
         '-platform', 'macx-clang',
         '-qt-libpng',
         '-qt-pcre',
     ]
-  elif IsWindows():
+  elif is_windows():
     qt_configure_options += ['-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
                              '-mp',    # enable parallel build
@@ -148,7 +148,7 @@ def MakeConfigureOption(args: argparse.Namespace) -> list[str]:
   return qt_configure_options
 
 
-def ParseOption() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
   """Parse command line options."""
   parser = argparse.ArgumentParser()
   parser.add_argument('--debug', dest='debug', default=False,
@@ -165,13 +165,13 @@ def ParseOption() -> argparse.Namespace:
                       help='set to accept Qt OSS license',
                       action='store_true', default=False)
   parser.add_argument('--dryrun', action='store_true', default=False)
-  if IsWindows():
+  if is_windows():
     parser.add_argument('--msvs_version', help='Visual Studio ver (e.g. 2022)',
                         type=str, default='2022')
   return parser.parse_args()
 
 
-def BuildOnMac(args: argparse.Namespace) -> None:
+def build_on_mac(args: argparse.Namespace) -> None:
   """Build the Qt5 library on Mac.
 
 
@@ -190,24 +190,24 @@ def BuildOnMac(args: argparse.Namespace) -> None:
   os.environ['MAKEFLAGS'] = '--jobs=%s' % jobs
   os.chdir(qt_src_dir)
 
-  commands = ['./configure'] + MakeConfigureOption(args)
+  commands = ['./configure'] + make_configure_options(args)
   if args.dryrun:
-    print(f'dryrun: RunOrDie({commands})')
+    print(f'dryrun: run_or_die({commands})')
     print('dryrun: make')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
       print('dryrun: make install')
   else:
-    RunOrDie(commands)
-    RunOrDie(['make'])
+    run_or_die(commands)
+    run_or_die(['make'])
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      RunOrDie(['make', 'install'])
+      run_or_die(['make', 'install'])
 
 
-def GetVisualCppEnvironmentVariables(
+def get_vs_env_vars(
     msvs_version: str, arch: str
 ) -> dict[str, str]:
   """Returns environment variables for the specified Visual Studio C++ tool.
@@ -218,17 +218,17 @@ def GetVisualCppEnvironmentVariables(
   to methods like subprocess.run() can easily become complicated and difficult
   to maintain.
 
-  With GetEnvironmentVariable() you can easily decouple environment variable
-  handling from the actual command execution as follows.
+  With get_vs_env_vars() you can easily decouple environment variable handling
+  from the actual command execution as follows.
 
     cwd = ...
-    env = GetVisualCppEnvironmentVariables('2022', 'amd64_x86')
+    env = get_vs_env_vars('2022', 'amd64_x86')
     subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
 
   or
 
     cwd = ...
-    env = GetVisualCppEnvironmentVariables('2022', 'amd64_x86')
+    env = get_vs_env_vars('2022', 'amd64_x86')
     subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
 
   For the 'arch' argument, see the following link to find supported values.
@@ -249,6 +249,7 @@ def GetVisualCppEnvironmentVariables(
     program_files = 'Program Files'
   else:
     program_files = 'Program Files (x86)'
+  vcvarsall = None
   for edition in ['Community', 'Professional', 'Enterprise']:
     vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
                              msvs_version, edition, 'VC', 'Auxiliary', 'Build',
@@ -270,7 +271,7 @@ def GetVisualCppEnvironmentVariables(
   return json.loads(stdout.decode('ascii'))
 
 
-def BuildOnWindows(args: argparse.Namespace) -> None:
+def build_on_windows(args: argparse.Namespace) -> None:
   """Build Qt from the source code on Windows.
 
   Args:
@@ -285,9 +286,9 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  env = GetVisualCppEnvironmentVariables(args.msvs_version, 'amd64_x86')
+  env = get_vs_env_vars(args.msvs_version, 'amd64_x86')
 
-  options = MakeConfigureOption(args)
+  options = make_configure_options(args)
   configs = ' '.join(options)
   command = f'configure.bat {configs}'
   if args.dryrun:
@@ -315,7 +316,7 @@ def BuildOnWindows(args: argparse.Namespace) -> None:
                      cwd=qt_src_dir, env=env)
 
 
-def RunOrDie(
+def run_or_die(
     argv: list[Union[str, pathlib.Path]],
     env: Union[dict[str, str], None] = None,
 ) -> None:
@@ -336,20 +337,20 @@ def RunOrDie(
 
 
 def main():
-  if IsLinux():
+  if is_linux():
     print('On Linux, please use shared library provided by distributions.')
     sys.exit(1)
 
-  args = ParseOption()
+  args = parse_args()
 
   if not (args.debug or args.release):
     print('neither --release nor --debug is specified.')
     sys.exit(1)
 
-  if IsMac():
-    BuildOnMac(args)
-  elif IsWindows():
-    BuildOnWindows(args)
+  if is_mac():
+    build_on_mac(args)
+  elif is_windows():
+    build_on_windows(args)
 
 
 if __name__ == '__main__':
