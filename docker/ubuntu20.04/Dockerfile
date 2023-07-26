@@ -40,7 +40,7 @@ RUN apt upgrade -y
 ## Common packages for linux build environment
 RUN apt-get install -y clang libc++-dev libc++abi-dev python3 pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
-RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
+RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev
 ## Packages for misc tools
 RUN apt-get install -y nano
 

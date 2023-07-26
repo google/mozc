@@ -367,6 +367,7 @@
           '/Zc:strictStrings',
           '/utf-8',
           '/std:c++20',
+          '/Zc:__cplusplus',
         ],
       },
       'VCLinkerTool': {

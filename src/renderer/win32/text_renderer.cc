@@ -37,25 +37,30 @@
 #include <d2d1.h>
 #include <dwrite.h>
 #include <objbase.h>
+#include <wil/com.h>
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace renderer {
 namespace win32 {
 
-using ATL::CComPtr;
 using ::mozc::renderer::RendererStyle;
 using ::mozc::renderer::RendererStyleHandler;
-using WTL::CDC;
-using WTL::CDCHandle;
-using WTL::CFont;
-using WTL::CFontHandle;
-using WTL::CLogFont;
+using ::WTL::CDC;
+using ::WTL::CDCHandle;
+using ::WTL::CFont;
+using ::WTL::CFontHandle;
+using ::WTL::CLogFont;
 
 namespace {
 
@@ -199,19 +204,21 @@ DWORD GetGdiDrawTextStyle(TextRenderer::FONT_TYPE type) {
 
 class GdiTextRenderer : public TextRenderer {
  public:
-  GdiTextRenderer() : render_info_(new RenderInfo[SIZE_OF_FONT_TYPE]) {
+  GdiTextRenderer() : render_info_(SIZE_OF_FONT_TYPE) {
     mem_dc_.CreateCompatibleDC();
     OnThemeChanged();
   }
 
-  GdiTextRenderer(const GdiTextRenderer &) = delete;
-  GdiTextRenderer &operator=(const GdiTextRenderer &) = delete;
-
-  virtual ~GdiTextRenderer() {}
-
  private:
+  struct RenderInfo {
+    RenderInfo() : color(0), style(0) {}
+    COLORREF color;
+    DWORD style;
+    CFont font;
+  };
+
   // TextRenderer overrides:
-  virtual void OnThemeChanged() {
+  void OnThemeChanged() override {
     // delete old fonts
     for (size_t i = 0; i < SIZE_OF_FONT_TYPE; ++i) {
       if (!render_info_[i].font.IsNull()) {
@@ -228,102 +235,99 @@ class GdiTextRenderer : public TextRenderer {
     }
   }
 
-  virtual Size MeasureString(FONT_TYPE font_type,
-                             const std::wstring &str) const {
+  Size MeasureString(FONT_TYPE font_type,
+                     const std::wstring_view str) const override {
     const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect;
-    mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
+    mem_dc_.DrawTextW(str.data(), str.length(), &rect,
                       DT_NOPREFIX | DT_LEFT | DT_SINGLELINE | DT_CALCRECT);
     mem_dc_.SelectFont(previous_font);
     return Size(rect.Width(), rect.Height());
   }
 
-  virtual Size MeasureStringMultiLine(FONT_TYPE font_type,
-                                      const std::wstring &str,
-                                      const int width) const {
+  Size MeasureStringMultiLine(FONT_TYPE font_type, const std::wstring_view str,
+                              const int width) const override {
     const auto previous_font = mem_dc_.SelectFont(render_info_[font_type].font);
     CRect rect(0, 0, width, 0);
-    mem_dc_.DrawTextW(str.c_str(), str.length(), &rect,
+    mem_dc_.DrawTextW(str.data(), str.length(), &rect,
                       DT_NOPREFIX | DT_LEFT | DT_WORDBREAK | DT_CALCRECT);
     mem_dc_.SelectFont(previous_font);
     return Size(rect.Width(), rect.Height());
   }
 
-  virtual void RenderText(CDCHandle dc, const std::wstring &text,
-                          const Rect &rect, FONT_TYPE font_type) const {
+  void RenderText(CDCHandle dc, const std::wstring_view text, const Rect &rect,
+                  FONT_TYPE font_type) const override {
     std::vector<TextRenderingInfo> infolist;
-    infolist.push_back(TextRenderingInfo(text, rect));
+    infolist.emplace_back(std::wstring(text), rect);
     RenderTextList(dc, infolist, font_type);
   }
 
-  virtual void RenderTextList(
-      CDCHandle dc, const std::vector<TextRenderingInfo> &display_list,
-      FONT_TYPE font_type) const {
+  void RenderTextList(CDCHandle dc,
+                      const absl::Span<const TextRenderingInfo> display_list,
+                      FONT_TYPE font_type) const override {
     const auto &render_info = render_info_[font_type];
     const auto old_font = dc.SelectFont(render_info.font);
     const auto previous_color = dc.SetTextColor(render_info.color);
-    for (auto it = display_list.begin(); it != display_list.end(); ++it) {
-      const auto &info = *it;
-      CRect rect(info.rect.Left(), info.rect.Top(), info.rect.Right(),
-                 info.rect.Bottom());
-      const auto &text = info.text;
-      dc.DrawTextW(text.data(), text.size(), &rect, render_info.style);
+    for (const TextRenderingInfo &info : display_list) {
+      CRect rect = ToCRect(info.rect);
+      dc.DrawTextW(info.text.data(), info.text.size(), &rect,
+                   render_info.style);
     }
     dc.SetTextColor(previous_color);
     dc.SelectFont(old_font);
   }
 
-  struct RenderInfo {
-    RenderInfo() : color(0), style(0) {}
-    COLORREF color;
-    DWORD style;
-    CFont font;
-  };
-  std::unique_ptr<RenderInfo[]> render_info_;
+  std::vector<RenderInfo> render_info_;
   mutable CDC mem_dc_;
 };
 
 class DirectWriteTextRenderer : public TextRenderer {
  public:
-  static DirectWriteTextRenderer *Create() {
-    HRESULT hr = S_OK;
-    CComPtr<ID2D1Factory> d2d_factory;
-    hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
-                             __uuidof(ID2D1Factory), nullptr,
-                             reinterpret_cast<void **>(&d2d_factory));
-    if (FAILED(hr)) {
-      return nullptr;
-    }
-    CComPtr<IDWriteFactory> dwrite_factory;
-    hr = ::DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
-                               __uuidof(IDWriteFactory),
-                               reinterpret_cast<IUnknown **>(&dwrite_factory));
-    if (FAILED(hr)) {
-      return nullptr;
-    }
-    CComPtr<IDWriteGdiInterop> interop;
-    hr = dwrite_factory->GetGdiInterop(&interop);
-    if (FAILED(hr)) {
-      return nullptr;
-    }
-    return new DirectWriteTextRenderer(d2d_factory, dwrite_factory, interop);
-  }
-  DirectWriteTextRenderer(const DirectWriteTextRenderer &) = delete;
-  DirectWriteTextRenderer &operator=(const DirectWriteTextRenderer &) = delete;
-  virtual ~DirectWriteTextRenderer() {}
-
- private:
-  DirectWriteTextRenderer(ID2D1Factory *d2d2_factory,
-                          IDWriteFactory *dwrite_factory,
-                          IDWriteGdiInterop *dwrite_interop)
-      : d2d2_factory_(d2d2_factory),
-        dwrite_factory_(dwrite_factory),
-        dwrite_interop_(dwrite_interop) {
+  DirectWriteTextRenderer(
+      wil::com_ptr_nothrow<ID2D1Factory> d2d2_factory,
+      wil::com_ptr_nothrow<IDWriteFactory> dwrite_factory,
+      wil::com_ptr_nothrow<IDWriteGdiInterop> dwrite_interop)
+      : d2d2_factory_(std::move(d2d2_factory)),
+        dwrite_factory_(std::move(dwrite_factory)),
+        dwrite_interop_(std::move(dwrite_interop)) {
     OnThemeChanged();
   }
 
+  static std::unique_ptr<DirectWriteTextRenderer> Create() {
+    HRESULT hr = S_OK;
+    wil::com_ptr_nothrow<ID2D1Factory> d2d_factory;
+    hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                             __uuidof(ID2D1Factory), nullptr,
+                             d2d_factory.put_void());
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    wil::com_ptr_nothrow<IDWriteFactory> dwrite_factory;
+    hr = ::DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
+                               __uuidof(IDWriteFactory),
+                               dwrite_factory.put_unknown());
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    wil::com_ptr_nothrow<IDWriteGdiInterop> interop;
+    hr = dwrite_factory->GetGdiInterop(interop.put());
+    if (FAILED(hr)) {
+      return nullptr;
+    }
+    return std::make_unique<DirectWriteTextRenderer>(
+        std::move(d2d_factory), std::move(dwrite_factory), std::move(interop));
+  }
+
+ private:
+  struct RenderInfo {
+    RenderInfo() : color(0) {}
+    COLORREF color;
+    wil::com_ptr_nothrow<IDWriteTextFormat> format;
+    wil::com_ptr_nothrow<IDWriteTextFormat> format_to_render;
+  };
+
   // TextRenderer overrides:
-  virtual void OnThemeChanged() {
+  void OnThemeChanged() override {
     // delete old fonts
     render_info_.clear();
     render_info_.resize(SIZE_OF_FONT_TYPE);
@@ -352,27 +356,26 @@ class DirectWriteTextRenderer : public TextRenderer {
   }
 
   // Retrieves the bounding box for a given string.
-  virtual Size MeasureString(FONT_TYPE font_type,
-                             const std::wstring &str) const {
+  Size MeasureString(FONT_TYPE font_type,
+                     const std::wstring_view str) const override {
     return MeasureStringImpl(font_type, str, 0, false);
   }
 
-  virtual Size MeasureStringMultiLine(FONT_TYPE font_type,
-                                      const std::wstring &str,
-                                      const int width) const {
+  Size MeasureStringMultiLine(FONT_TYPE font_type, const std::wstring_view str,
+                              const int width) const override {
     return MeasureStringImpl(font_type, str, width, true);
   }
 
-  virtual void RenderText(CDCHandle dc, const std::wstring &text,
-                          const Rect &rect, FONT_TYPE font_type) const {
+  void RenderText(CDCHandle dc, const std::wstring_view text, const Rect &rect,
+                  FONT_TYPE font_type) const override {
     std::vector<TextRenderingInfo> infolist;
-    infolist.push_back(TextRenderingInfo(text, rect));
+    infolist.emplace_back(std::wstring(text), rect);
     RenderTextList(dc, infolist, font_type);
   }
 
-  virtual void RenderTextList(
-      CDCHandle dc, const std::vector<TextRenderingInfo> &display_list,
-      FONT_TYPE font_type) const {
+  void RenderTextList(CDCHandle dc,
+                      const absl::Span<const TextRenderingInfo> display_list,
+                      FONT_TYPE font_type) const override {
     constexpr size_t kMaxTrial = 3;
     size_t trial = 0;
     while (true) {
@@ -384,7 +387,7 @@ class DirectWriteTextRenderer : public TextRenderer {
       const HRESULT hr = RenderTextListImpl(dc, display_list, font_type);
       if (hr == D2DERR_RECREATE_TARGET && trial < kMaxTrial) {
         // This is a recoverable error just by recreating the render target.
-        dc_render_target_.Release();
+        dc_render_target_.reset();
         ++trial;
         continue;
       }
@@ -394,9 +397,9 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
   }
 
-  HRESULT RenderTextListImpl(CDCHandle dc,
-                             const std::vector<TextRenderingInfo> &display_list,
-                             FONT_TYPE font_type) const {
+  HRESULT RenderTextListImpl(
+      CDCHandle dc, const absl::Span<const TextRenderingInfo> display_list,
+      FONT_TYPE font_type) const {
     CRect total_rect;
     for (const auto &item : display_list) {
       const auto &item_rect = ToCRect(item.rect);
@@ -408,14 +411,14 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return hr;
     }
-    CComPtr<ID2D1SolidColorBrush> brush;
+    wil::com_ptr_nothrow<ID2D1SolidColorBrush> brush;
     hr = dc_render_target_->CreateSolidColorBrush(
-        ToD2DColor(render_info_[font_type].color), &brush);
+        ToD2DColor(render_info_[font_type].color), brush.put());
     if (FAILED(hr)) {
       return hr;
     }
-    constexpr D2D1_DRAW_TEXT_OPTIONS option = D2D1_DRAW_TEXT_OPTIONS_NONE |
-        D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
+    constexpr D2D1_DRAW_TEXT_OPTIONS option =
+        D2D1_DRAW_TEXT_OPTIONS_NONE | D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
     dc_render_target_->BeginDraw();
     dc_render_target_->SetTransform(D2D1::Matrix3x2F::Identity());
     for (size_t i = 0; i < display_list.size(); ++i) {
@@ -426,21 +429,22 @@ class DirectWriteTextRenderer : public TextRenderer {
           static_cast<float>(item.rect.Right()),
           static_cast<float>(item.rect.Bottom()),
       };
-      dc_render_target_->DrawText(item.text.data(), item.text.size(),
-                                  render_info_[font_type].format_to_render,
-                                  render_rect, brush, option);
+      dc_render_target_->DrawText(
+          item.text.data(), item.text.size(),
+          render_info_[font_type].format_to_render.get(), render_rect,
+          brush.get(), option);
     }
     return dc_render_target_->EndDraw();
   }
 
-  Size MeasureStringImpl(FONT_TYPE font_type, const std::wstring &str,
+  Size MeasureStringImpl(FONT_TYPE font_type, const std::wstring_view str,
                          const int width, bool use_width) const {
     HRESULT hr = S_OK;
-    const FLOAT kLayoutLimit = 100000.0f;
-    CComPtr<IDWriteTextLayout> layout;
+    constexpr FLOAT kLayoutLimit = 100000.0f;
+    wil::com_ptr_nothrow<IDWriteTextLayout> layout;
     hr = dwrite_factory_->CreateTextLayout(
-        str.data(), str.size(), render_info_[font_type].format,
-        (use_width ? width : kLayoutLimit), kLayoutLimit, &layout);
+        str.data(), str.size(), render_info_[font_type].format.get(),
+        (use_width ? width : kLayoutLimit), kLayoutLimit, layout.put());
     if (FAILED(hr)) {
       return Size();
     }
@@ -462,20 +466,20 @@ class DirectWriteTextRenderer : public TextRenderer {
     return color;
   }
 
-  CComPtr<IDWriteTextFormat> CreateFormat(CLogFont logfont) {
+  wil::com_ptr_nothrow<IDWriteTextFormat> CreateFormat(CLogFont logfont) {
     HRESULT hr = S_OK;
-    CComPtr<IDWriteFont> font;
-    hr = dwrite_interop_->CreateFontFromLOGFONT(&logfont, &font);
+    wil::com_ptr_nothrow<IDWriteFont> font;
+    hr = dwrite_interop_->CreateFontFromLOGFONT(&logfont, font.put());
     if (FAILED(hr)) {
       return nullptr;
     }
-    CComPtr<IDWriteFontFamily> font_family;
-    hr = font->GetFontFamily(&font_family);
+    wil::com_ptr_nothrow<IDWriteFontFamily> font_family;
+    hr = font->GetFontFamily(font_family.put());
     if (FAILED(hr)) {
       return nullptr;
     }
-    CComPtr<IDWriteLocalizedStrings> localized_family_names;
-    hr = font_family->GetFamilyNames(&localized_family_names);
+    wil::com_ptr_nothrow<IDWriteLocalizedStrings> localized_family_names;
+    hr = font_family->GetFamilyNames(localized_family_names.put());
     if (FAILED(hr)) {
       return nullptr;
     }
@@ -484,9 +488,8 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return nullptr;
     }
-    length += 1;  // for NUL.
-    std::unique_ptr<wchar_t[]> family_name(new wchar_t[length]);
-    hr = localized_family_names->GetString(0, family_name.get(), length);
+    std::wstring family_name(length, 0);
+    hr = localized_family_names->GetString(0, family_name.data(), length);
     if (FAILED(hr)) {
       return nullptr;
     }
@@ -507,10 +510,10 @@ class DirectWriteTextRenderer : public TextRenderer {
       return nullptr;
     }
 
-    CComPtr<IDWriteTextFormat> format;
+    wil::com_ptr_nothrow<IDWriteTextFormat> format;
     hr = dwrite_factory_->CreateTextFormat(
-        family_name.get(), nullptr, font->GetWeight(), font->GetStyle(),
-        font->GetStretch(), font_size, locale_name, &format);
+        family_name.c_str(), nullptr, font->GetWeight(), font->GetStyle(),
+        font->GetStretch(), font_size, locale_name, format.put());
     return format;
   }
 
@@ -525,31 +528,23 @@ class DirectWriteTextRenderer : public TextRenderer {
     d2d2_factory_->CreateDCRenderTarget(&property, &dc_render_target_);
   }
 
-  struct RenderInfo {
-    RenderInfo() : color(0) {}
-    COLORREF color;
-    CComPtr<IDWriteTextFormat> format;
-    CComPtr<IDWriteTextFormat> format_to_render;
-  };
-
-  CComPtr<ID2D1Factory> d2d2_factory_;
-  CComPtr<IDWriteFactory> dwrite_factory_;
-  mutable CComPtr<ID2D1DCRenderTarget> dc_render_target_;
-  CComPtr<IDWriteGdiInterop> dwrite_interop_;
+  wil::com_ptr_nothrow<ID2D1Factory> d2d2_factory_;
+  wil::com_ptr_nothrow<IDWriteFactory> dwrite_factory_;
+  mutable wil::com_ptr_nothrow<ID2D1DCRenderTarget> dc_render_target_;
+  wil::com_ptr_nothrow<IDWriteGdiInterop> dwrite_interop_;
   std::vector<RenderInfo> render_info_;
 };
 
 }  // namespace
 
-TextRenderer::~TextRenderer() {}
-
 // static
-TextRenderer *TextRenderer::Create() {
-  auto *dwrite_text_renderer = DirectWriteTextRenderer::Create();
+std::unique_ptr<TextRenderer> TextRenderer::Create() {
+  std::unique_ptr<TextRenderer> dwrite_text_renderer =
+      DirectWriteTextRenderer::Create();
   if (dwrite_text_renderer != nullptr) {
     return dwrite_text_renderer;
   }
-  return new GdiTextRenderer();
+  return std::make_unique<GdiTextRenderer>();
 }
 
 }  // namespace win32

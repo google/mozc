@@ -122,8 +122,7 @@ bool IsPeerValid(int socket, pid_t *pid) {
 
   struct ucred peer_cred;
   int peer_cred_len = sizeof(peer_cred);
-  if (getsockopt(socket, SOL_SOCKET, SO_PEERCRED,
-                 reinterpret_cast<void *>(&peer_cred),
+  if (getsockopt(socket, SOL_SOCKET, SO_PEERCRED, &peer_cred,
                  reinterpret_cast<socklen_t *>(&peer_cred_len)) < 0) {
     LOG(ERROR) << "cannot get peer credential. Not a Unix socket?";
     return false;

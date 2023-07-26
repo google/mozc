@@ -41,7 +41,7 @@
           'actions': [
             {
               'action_name': 'tweak_info_plist',
-              'inputs': [ '../data/mac/ios_test_info' ],
+              'inputs': [ '<(mozc_oss_src_dir)/data/mac/ios_test_info' ],
               'outputs': [ '<(SHARED_INTERMEDIATE_DIR)/ios_test_Info.plist' ],
               'action': [
                 '<(python)', '../build_tools/tweak_info_plist.py',

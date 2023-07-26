@@ -160,6 +160,7 @@ mozc_cc_library(
 mozc_cc_test(
     name = "connector_test",
     size = "small",
+    timeout = "moderate",
     srcs = ["connector_test.cc"],
     data = [
         "//data/test/dictionary:connection_single_column.txt",

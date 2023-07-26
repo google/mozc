@@ -47,6 +47,7 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -76,8 +77,7 @@ std::string GetServiceName() {
   std::string name = kServiceName;
   const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
-    name += ".";
-    name += desktop_name;
+    absl::StrAppend(&name, ".", desktop_name);
   }
   return name;
 }

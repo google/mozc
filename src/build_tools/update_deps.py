@@ -43,7 +43,6 @@ import pathlib
 import shutil
 import subprocess
 import sys
-import tarfile
 import time
 import zipfile
 
@@ -63,12 +62,10 @@ class ArchiveInfo:
   """Third party archive file to be used to build Mozc binaries.
 
   Attributes:
-    dest: Destination directory name under the third_party directory.
     url: URL of the archive.
     size: File size of the archive.
     sha256: SHA-256 of the archive.
   """
-  dest: str
   url: str
   size: int
   sha256: str
@@ -83,21 +80,18 @@ class ArchiveInfo:
 
 
 QT = ArchiveInfo(
-    dest='qt_src',
     url='https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz',
     size=50422688,
     sha256='c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9',
 )
 
 JOM = ArchiveInfo(
-    dest='qt_src',
     url='https://download.qt.io/official_releases/jom/jom_1_1_3.zip',
     size=1213852,
     sha256='128fdd846fe24f8594eed37d1d8929a0ea78df563537c0c1b1861a635013fff8',
 )
 
 WIX = ArchiveInfo(
-    dest='wix',
     url='https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip',
     size=41223699,
     sha256='4c89898df3bcab13e12f7ca54399c35ad273475ad2cb6284611d00ae2d063c2c',
@@ -231,38 +225,6 @@ class ProgressPrinter:
       self.cleaner.cleanup()
 
 
-def qt_extract_filter(
-    members: Iterator[tarfile.TarInfo],
-) -> Iterator[tarfile.TarInfo]:
-  """Custom extract filter for the Qt Tar file.
-
-  This custom filter can be used to adjust directory structure and drop
-  unnecessary files/directories to save disk space.
-
-  Args:
-    members: an iterator of TarInfo from the Tar file.
-
-  Yields:
-    An iterator of TarInfo to be extracted.
-  """
-  with ProgressPrinter() as printer:
-    for info in members:
-      paths = info.name.split('/')
-      if '..' in paths:
-        continue
-      if len(paths) < 1:
-        continue
-      paths = paths[1:]
-      new_path = '/'.join(paths)
-      if len(paths) >= 1 and paths[0] == 'examples':
-        printer.print_line('skipping   ' + new_path)
-        continue
-      else:
-        printer.print_line('extracting ' + new_path)
-        info.name = new_path
-        yield info
-
-
 def wix_extract_filter(
     members: Iterator[zipfile.ZipInfo],
 ) -> Iterator[zipfile.ZipInfo]:
@@ -290,41 +252,30 @@ def wix_extract_filter(
         yield info
 
 
-def extract(
-    archive: ArchiveInfo,
-    dryrun: bool = False,
-) -> None:
-  """Extract the given archive.
+def extract_wix(dryrun: bool = False) -> None:
+  """Extract WiX archive.
 
   Args:
-    archive: ArchiveInfo to be exptracted.
     dryrun: True if this is a dry-run.
   """
-  dest = ABS_THIRD_PARTY_DIR.joinpath(archive.dest).absolute()
-  src = CACHE_DIR.joinpath(archive.filename)
-  if src.suffix == '.xz':
-    if dryrun:
-      print(f'dryrun: Extracting {src}')
-    else:
-      with tarfile.open(src, mode='r|xz') as f:
-        if archive == QT:
-          f.extractall(path=dest, members=qt_extract_filter(f))
-        else:
-          f.extractall(path=dest)
-  elif src.suffix == '.zip':
-    if dryrun:
-      print(f'dryrun: Extracting {src}')
-    else:
-      def filename(members: Iterator[zipfile.ZipInfo]):
-        for info in members:
-          yield info.filename
-      with zipfile.ZipFile(src) as z:
-        if archive == WIX:
-          z.extractall(
-              path=dest, members=filename(wix_extract_filter(z.infolist()))
-          )
-        else:
-          z.extractall(path=dest)
+  dest = ABS_THIRD_PARTY_DIR.joinpath('wix').absolute()
+  src = CACHE_DIR.joinpath(WIX.filename)
+
+  if dryrun:
+    if dest.exists():
+      print(f"dryrun: shutil.rmtree(r'{dest}')")
+    print(f'dryrun: Extracting {src}')
+    return
+
+  def filename(members: Iterator[zipfile.ZipInfo]):
+    if dest.exists():
+      shutil.rmtree(dest)
+    for info in members:
+      yield info.filename
+  with zipfile.ZipFile(src) as z:
+    z.extractall(
+        path=dest, members=filename(wix_extract_filter(z.infolist()))
+    )
 
 
 def is_windows() -> bool:
@@ -374,19 +325,8 @@ def main():
   if args.cache_only:
     return
 
-  dest_dirs = set()
-  for archive in archives:
-    dest_dirs.add(ABS_THIRD_PARTY_DIR.joinpath(archive.dest))
-
-  for dest_dir in dest_dirs:
-    if dest_dir.exists():
-      if args.dryrun:
-        print(f"dryrun: shutil.rmtree(r'{dest_dir}')")
-      else:
-        shutil.rmtree(dest_dir)
-
-  for archive in archives:
-    extract(archive, args.dryrun)
+  if WIX in archives:
+    extract_wix(args.dryrun)
 
   if not args.nosubmodules:
     update_submodules(args.dryrun)

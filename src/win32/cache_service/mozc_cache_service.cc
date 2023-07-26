@@ -34,18 +34,21 @@
 #include <atlstr.h>  // for CString
 #endif               // !MOZC_NO_LOGGING
 #include <psapi.h>
+#include <wil/resource.h>
 
 #include <algorithm>
+#include <string>
+#include <string_view>
 
 #include "base/file_util.h"
 #include "base/system_util.h"
-#include "base/util.h"
-#include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "base/win32/winmain.h"  // use WinMain
 #include "win32/cache_service/cache_service_manager.h"
 
+namespace mozc::win32 {
 namespace {
-HANDLE g_stop_event = NULL;
+HANDLE g_stop_event = nullptr;
 
 #if defined(MOZC_NO_LOGGING)
 #define LOG_WIN32_ERROR(message)
@@ -88,12 +91,12 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
   // MEMORY_BASIC_INFORMATION::Type should be MEM_IMAGE.
 
   // Store the source filename.
-  const std::wstring &filename = ::GetMappedFileNameByAddress(address);
+  const std::wstring &filename = GetMappedFileNameByAddress(address);
   if (filename.empty()) {
     return false;
   }
 
-  void *start_address = NULL;
+  void *start_address = nullptr;
   DWORD total_region_size = 0;
 
   void *current = address;
@@ -119,7 +122,7 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
       }
     }
 
-    if (start_address == NULL) {
+    if (start_address == nullptr) {
       start_address = mem_info.BaseAddress;
     }
     total_region_size += mem_info.RegionSize;
@@ -127,7 +130,7 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
     current = static_cast<char *>(mem_info.BaseAddress) + mem_info.RegionSize;
   }
 
-  if (result_info != NULL &&
+  if (result_info != nullptr &&
       ::VirtualQuery(address, result_info, sizeof(MEMORY_BASIC_INFORMATION)) ==
           0) {
     LOG_WIN32_ERROR(L"VirtualQuery failed.");
@@ -137,7 +140,6 @@ bool MakeReadOnlyForMappedModule(LPVOID address,
   result_info->RegionSize = total_region_size;
   return true;
 }
-}  // namespace
 
 void WINAPI ServiceHandlerProc(DWORD control_code) {
   switch (control_code) {
@@ -148,7 +150,7 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
       break;
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
-      if (NULL != g_stop_event) {
+      if (g_stop_event != nullptr) {
         if (!::SetEvent(g_stop_event)) {  // raise event
           // call ExitProcess() if SetEvent failed just in case.
           ::ExitProcess(0);
@@ -177,9 +179,9 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
 // See http://b/2470180 for the whole story.
 bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
   bool verify_privilege = false;
-  const std::wstring test_mode = L"--verify_privilege_restriction";
+  constexpr std::wstring_view kTestMode = L"--verify_privilege_restriction";
   for (size_t i = 0; i < dwArgc; ++i) {
-    if (test_mode == lpszArgv[i]) {
+    if (lpszArgv[i] == kTestMode) {
       verify_privilege = true;
       break;
     }
@@ -188,22 +190,20 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
     return true;
   }
 
-  const std::string temp_path = mozc::FileUtil::JoinPath(
-      mozc::SystemUtil::GetServerDirectory(), "delete_me.txt");
-  std::wstring wtemp_path;
-  mozc::Util::Utf8ToWide(temp_path, &wtemp_path);
-  const HANDLE temp_file =
+  const std::string temp_path =
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "delete_me.txt");
+  std::wstring wtemp_path = Utf8ToWide(temp_path);
+  wil::unique_hfile temp_file =
       ::CreateFileW(wtemp_path.c_str(), GENERIC_READ | GENERIC_WRITE,
-                    FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                    FILE_SHARE_READ, nullptr, CREATE_ALWAYS,
                     FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
                         FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                    NULL);
-  if (temp_file != INVALID_HANDLE_VALUE) {
-    ::CloseHandle(temp_file);
+                    nullptr);
+  if (!temp_file) {
     LOG_WIN32_ERROR(L"CreateEvent should have failed but succeeded.");
     return false;
   }
-  if (ERROR_ACCESS_DENIED != ::GetLastError()) {
+  if (::GetLastError() != ERROR_ACCESS_DENIED) {
     LOG_WIN32_ERROR(L"Unexpected error code.");
     return false;
   }
@@ -214,9 +214,9 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
 
 VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   SERVICE_STATUS_HANDLE service_status_handle = ::RegisterServiceCtrlHandler(
-      mozc::CacheServiceManager::GetServiceName(), ServiceHandlerProc);
+      CacheServiceManager::GetServiceName(), ServiceHandlerProc);
 
-  if (NULL == service_status_handle) {
+  if (service_status_handle == nullptr) {
     return;
   }
 
@@ -238,40 +238,39 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   }
 #endif  // _DEBUG
 
-  if (!mozc::CacheServiceManager::HasEnoughMemory()) {
+  if (!CacheServiceManager::HasEnoughMemory()) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  mozc::ScopedHandle stop_event(::CreateEvent(NULL, TRUE, FALSE, NULL));
-  g_stop_event = stop_event.get();
-  if (NULL == g_stop_event) {
+  wil::unique_event_nothrow stop_event;
+  if (FAILED(stop_event.create(wil::EventOptions::ManualReset))) {
     LOG_WIN32_ERROR(L"CreateEvent failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
+  g_stop_event = stop_event.get();
 
   // when low_memory_event is signaled, unkcok the memory image.
-  mozc::ScopedHandle low_memory_event(
+  wil::unique_handle low_memory_event(
       ::CreateMemoryResourceNotification(LowMemoryResourceNotification));
-  if (NULL == low_memory_event.get()) {
+  if (!low_memory_event) {
     LOG_WIN32_ERROR(L"CreateMemoryResourceNotification failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
   // when high_memory_event is signaled, lcok the memory image.
-  mozc::ScopedHandle high_memory_event(
+  wil::unique_handle high_memory_event(
       ::CreateMemoryResourceNotification(HighMemoryResourceNotification));
-  if (NULL == high_memory_event.get()) {
+  if (!high_memory_event) {
     LOG_WIN32_ERROR(L"CreateMemoryResourceNotification failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  std::wstring server_path;
-  mozc::Util::Utf8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
+  std::wstring server_path = Utf8ToWide(SystemUtil::GetServerPath());
 
-  mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(), GENERIC_READ,
-                                              FILE_SHARE_READ, 0, OPEN_EXISTING,
-                                              0, 0));
-  if (NULL == file_handle.get()) {
+  wil::unique_hfile file_handle(::CreateFile(server_path.c_str(), GENERIC_READ,
+                                             FILE_SHARE_READ, nullptr,
+                                             OPEN_EXISTING, 0, nullptr));
+  if (!file_handle) {
     LOG_WIN32_ERROR(L"CreateFile failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
@@ -294,16 +293,15 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   // section for the same file share their memory pages?
   // Anyway we can use SEC_IMAGE to make an IMAGE section for a given file
   // through which we can keep the content of the file on-memory.
-  mozc::ScopedHandle mmap_handle(::CreateFileMapping(
-      file_handle.get(), NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL));
-  if (NULL == mmap_handle.get()) {
+  wil::unique_handle mmap_handle(::CreateFileMapping(
+      file_handle.get(), nullptr, PAGE_READONLY | SEC_IMAGE, 0, 0, nullptr));
+  if (!mmap_handle) {
     LOG_WIN32_ERROR(L"CreateFileMapping failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  LPVOID image = reinterpret_cast<LPVOID>(
-      ::MapViewOfFile(mmap_handle.get(), FILE_MAP_READ, 0, 0, 0));
-  if (NULL == image) {
+  LPVOID image = ::MapViewOfFile(mmap_handle.get(), FILE_MAP_READ, 0, 0, 0);
+  if (image == nullptr) {
     LOG_WIN32_ERROR(L"MapViewOfFile failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
@@ -340,7 +338,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   DWORD lock_time = 0;
   DWORD unlock_time = 0;
 
-WAIT_HIGH : {
+WAIT_HIGH: {
   const HANDLE handles[] = {g_stop_event, high_memory_event.get()};
   const DWORD result =
       ::WaitForMultipleObjects(std::size(handles), handles, FALSE, INFINITE);
@@ -354,7 +352,7 @@ WAIT_HIGH : {
   }
 }
 
-TRY_LOCK : {
+TRY_LOCK: {
   constexpr int kMaxTimeout = 10 * 60 * 1000;  // 10 min.
   constexpr int kMinTimeout = 1 * 60 * 1000;   // 1min.
 
@@ -394,7 +392,7 @@ TRY_LOCK : {
   }
 }
 
-WAIT_LOW : {
+WAIT_LOW: {
   const HANDLE handles[] = {g_stop_event, low_memory_event.get()};
   const DWORD result =
       ::WaitForMultipleObjects(std::size(handles), handles, FALSE, INFINITE);
@@ -415,15 +413,16 @@ WAIT_LOW : {
 
   STOP_SERVICE_AND_EXIT_FUNCTION();
 }
+}  // namespace
+}  // namespace mozc::win32
 
 int main(int argc, char **argv) {
   if (argc <= 1) {
-    SERVICE_TABLE_ENTRY kDispatchTable[] = {
-        {const_cast<wchar_t *>(mozc::CacheServiceManager::GetServiceName()),
-         ServiceMain},
-        {NULL, NULL}};
+    std::wstring service_name = mozc::CacheServiceManager::GetServiceName();
+    SERVICE_TABLE_ENTRY dispatch_table[] = {
+        {service_name.data(), mozc::win32::ServiceMain}, {nullptr, nullptr}};
 
-    ::StartServiceCtrlDispatcher(kDispatchTable);
+    ::StartServiceCtrlDispatcher(dispatch_table);
     return 0;
   }
   return 0;

@@ -394,8 +394,8 @@
             'mac/mac_view_util.mm',
           ],
           'mac_bundle_resources': [
-            '../data/images/mac/candidate_window_logo.tiff',
-            '../data/images/mac/product_icon.icns',
+            '<(mozc_oss_src_dir)/data/images/mac/candidate_window_logo.tiff',
+            '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
           ],
           'dependencies': [
             '../base/absl.gyp:absl_base',
