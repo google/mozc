@@ -723,8 +723,6 @@ mozc_cc_library(
     deps = [
         ":quality_regression_util",
         "//base:logging",
-        "//base:port",
-        "//testing:gunit",
         "//testing:mozctest",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/status",

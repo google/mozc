@@ -558,8 +558,6 @@ mozc_cc_test(
     deps = [
         ":emoticon_rewriter",
         "//base:logging",
-        "//base:system_util",
-        "//base:util",
         "//config:config_handler",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",

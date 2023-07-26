@@ -34,8 +34,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/system_util.h"
-#include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -73,12 +71,9 @@ bool HasEmoticon(const Segments &segments) {
   return false;
 }
 
-class EmoticonRewriterTest : public ::testing::Test {
+class EmoticonRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   testing::MockDataManager mock_data_manager_;
-
- private:
-  testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(EmoticonRewriterTest, BasicTest) {

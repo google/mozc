@@ -31,14 +31,11 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <map>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "converter/quality_regression_util.h"
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"

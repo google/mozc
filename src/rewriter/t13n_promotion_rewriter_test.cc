@@ -66,7 +66,7 @@ int GetCandidateIndexByValue(const absl::string_view value,
   return -1;
 }
 
-class T13nPromotionRewriterTest : public ::testing::Test {
+class T13nPromotionRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     t13n_rewriter_ = std::make_unique<TransliterationRewriter>(
@@ -88,7 +88,6 @@ class T13nPromotionRewriterTest : public ::testing::Test {
   commands::Request mobile_request_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
 };
 

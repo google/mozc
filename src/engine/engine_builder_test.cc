@@ -47,7 +47,7 @@ namespace {
 
 constexpr char kMockMagicNumber[] = "MOCK";
 
-class EngineBuilderTest : public ::testing::Test {
+class EngineBuilderTest : public testing::TestWithTempUserProfile {
  protected:
   EngineBuilderTest()
       : mock_data_path_(testing::GetSourcePath(
@@ -63,9 +63,6 @@ class EngineBuilderTest : public ::testing::Test {
   EngineBuilder builder_;
   EngineReloadRequest request_;
   EngineReloadResponse response_;
-
- private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 TEST_F(EngineBuilderTest, PrepareAsync) {
