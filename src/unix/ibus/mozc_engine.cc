@@ -59,7 +59,6 @@
 #include "unix/ibus/path_util.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
-#include "unix/ibus/selection_monitor.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
@@ -110,7 +109,6 @@ struct SurroundingTextInfo {
 };
 
 bool GetSurroundingText(IbusEngineWrapper *engine,
-                        SelectionMonitorInterface *selection_monitor,
                         SurroundingTextInfo *info) {
   if (!(engine->CheckCapabilities(IBUS_CAP_SURROUNDING_TEXT))) {
     VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
@@ -121,18 +119,6 @@ bool GetSurroundingText(IbusEngineWrapper *engine,
   uint anchor_pos = 0;
   const absl::string_view surrounding_text =
       engine->GetSurroundingText(&cursor_pos, &anchor_pos);
-
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-  if (cursor_pos == anchor_pos && selection_monitor != nullptr) {
-    const SelectionInfo &info = selection_monitor->GetSelectionInfo();
-    uint new_anchor_pos = 0;
-    if (SurroundingTextUtil::GetAnchorPosFromSelection(
-            surrounding_text, info.selected_text, cursor_pos,
-            &new_anchor_pos)) {
-      anchor_pos = new_anchor_pos;
-    }
-  }
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
   if (!SurroundingTextUtil::GetSafeDelta(cursor_pos, anchor_pos,
                                          &info->relative_selected_length)) {
@@ -218,16 +204,10 @@ MozcEngine::MozcEngine()
     : last_sync_time_(Clock::GetTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateAndConfigureClient()),
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-      selection_monitor_(SelectionMonitorFactory::Create(1024)),
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       preedit_handler_(new PreeditHandler()),
       use_mozc_candidate_window_(UseMozcCandidateWindow()),
       mozc_candidate_window_handler_(new renderer::RendererClient()),
       preedit_method_(config::Config::ROMAN) {
-  if (selection_monitor_ != nullptr) {
-    selection_monitor_->StartMonitoring();
-  }
   if (use_mozc_candidate_window_) {
     mozc_candidate_window_handler_.RegisterGSettingsObserver();
   }
@@ -389,8 +369,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
 
   commands::Context context;
   SurroundingTextInfo surrounding_text_info;
-  if (GetSurroundingText(engine, selection_monitor_.get(),
-                         &surrounding_text_info)) {
+  if (GetSurroundingText(engine, &surrounding_text_info)) {
     context.set_preceding_text(surrounding_text_info.preceding_text);
     context.set_following_text(surrounding_text_info.following_text);
   }
@@ -591,8 +570,7 @@ bool MozcEngine::ExecuteCallback(IbusEngineWrapper *engine,
       }
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
-      if (!GetSurroundingText(engine, selection_monitor_.get(),
-                              &surrounding_text_info)) {
+      if (!GetSurroundingText(engine, &surrounding_text_info)) {
         return false;
       }
       session_command.set_text(surrounding_text_info.selection_text);

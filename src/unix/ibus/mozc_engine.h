@@ -58,7 +58,6 @@ namespace ibus {
 class CandidateWindowHandlerInterface;
 class KeyEventHandler;
 class LaunchToolTest;
-class SelectionMonitorInterface;
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -137,7 +136,6 @@ class MozcEngine : public EngineInterface {
   uint64_t last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
   std::unique_ptr<client::ClientInterface> client_;
-  std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
 
   std::unique_ptr<PropertyHandler> property_handler_;
   std::unique_ptr<PreeditHandler> preedit_handler_;

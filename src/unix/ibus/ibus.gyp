@@ -33,9 +33,6 @@
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'ibus_mozc_icon_path%': '/usr/share/ibus-mozc/product_icon.png',
     'ibus_mozc_path%': '/usr/lib/ibus-mozc/ibus-engine-mozc',
-    # enable_x11_selection_monitor represents if ibus_mozc uses X11 selection
-    # monitor or not.
-    'enable_x11_selection_monitor%': 1,
   },
   'targets': [
     {
@@ -187,13 +184,6 @@
         'message_translator',
         'path_util',
       ],
-      'conditions': [
-        ['enable_x11_selection_monitor==1', {
-          'dependencies': [
-            'selection_monitor',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'gen_ibus_mozc_files',
@@ -275,52 +265,6 @@
             'candidate_window_handler_test',
           ],
         }],
-      ],
-    },
-    {
-      # Meta target to set up build environment for ibus. Required 'cflags'
-      # and 'link_settings' will be automatically injected into any target
-      # which directly or indirectly depends on this target.
-      'target_name': 'xcb_build_environment',
-      'type': 'none',
-      'variables': {
-        'target_libs': [
-          'xcb',
-          'xcb-xfixes',
-        ],
-      },
-      'all_dependent_settings': {
-        'cflags': [
-          '<!@(pkg-config --cflags <@(target_libs))',
-        ],
-        'link_settings': {
-          'libraries': [
-            '<!@(pkg-config --libs-only-l <@(target_libs))',
-          ],
-          'ldflags': [
-            '<!@(pkg-config --libs-only-L <@(target_libs))',
-          ],
-        },
-        'conditions': [
-          ['enable_x11_selection_monitor==1', {
-            'defines': [
-              'MOZC_ENABLE_X11_SELECTION_MONITOR=1'
-            ],
-          }],
-        ],
-      },
-    },
-    {
-      'target_name': 'selection_monitor',
-      'type': 'static_library',
-      'sources': [
-        'selection_monitor.cc',
-      ],
-      'dependencies': [
-        '../../base/absl.gyp:absl_synchronization',
-        '../../base/absl.gyp:absl_time',
-        '../../base/base.gyp:base',
-        'xcb_build_environment',
       ],
     },
     {

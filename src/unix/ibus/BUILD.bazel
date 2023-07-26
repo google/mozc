@@ -194,7 +194,6 @@ mozc_cc_library(
     ),
     defines = [
         "ENABLE_QT_RENDERER",
-        "MOZC_ENABLE_X11_SELECTION_MONITOR",
     ],
     deps = [
         ":candidate_window_handler",
@@ -203,7 +202,6 @@ mozc_cc_library(
         ":ibus_property_handler",
         ":ibus_utils",
         ":ibus_wrapper",
-        ":x11_selection_monitor",
         "//base:clock",
         "//base:const",
         "//base:file_util",
@@ -368,32 +366,4 @@ mozc_cc_test(
         "//renderer:renderer_mock",
         "//testing:gunit_main",
     ],
-)
-
-mozc_cc_library(
-    name = "x11_selection_monitor",
-    srcs = mozc_select(linux = ["selection_monitor.cc"]),
-    hdrs = mozc_select(linux = ["selection_monitor.h"]),
-    defines = ["MOZC_ENABLE_X11_SELECTION_MONITOR"],
-    linkopts = mozc_select(
-        oss_linux = [
-            "-lxcb",
-            "-lxcb-xfixes",
-        ],
-    ),
-    deps = [
-        "//base:logging",
-        "//base:port",
-        "//base:thread2",
-        "//base:util",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/time",
-    ] + mozc_select(
-        linux = [
-            "//third_party/libxcb",
-            "//third_party/libxcb:includes",
-            "//third_party/libxcb:libxcb-xfixes",
-        ],
-        oss_linux = [],
-    ),
 )
