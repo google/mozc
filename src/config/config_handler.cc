@@ -41,6 +41,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
+#include "base/strings/assign.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "protocol/config.pb.h"
@@ -180,7 +181,8 @@ void ConfigHandlerImpl::SetConfig(const Config &config) {
       "# This is a text-based config file for debugging.\n"
       "# Nothing happens when you edit this file manually.\n");
   debug_content += output_config.DebugString();
-  ConfigFileStream::AtomicUpdate(filename_ + ".txt", debug_content);
+  ConfigFileStream::AtomicUpdate(absl::StrCat(filename_, ".txt"),
+                                 debug_content);
 #endif  // DEBUG
 
   SetConfigInternal(output_config);
@@ -211,7 +213,7 @@ void ConfigHandlerImpl::ReloadUnlocked() {
 void ConfigHandlerImpl::SetConfigFileName(const absl::string_view filename) {
   absl::MutexLock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
-  filename_ = std::string(filename);
+  strings::Assign(filename_, filename);
   ReloadUnlocked();
 }
 
