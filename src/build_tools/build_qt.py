@@ -305,25 +305,26 @@ def build_on_mac(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  jobs = os.cpu_count() * 2
-  os.environ['MAKEFLAGS'] = '--jobs=%s' % jobs
   os.chdir(qt_src_dir)
 
-  commands = ['./configure'] + make_configure_options(args)
+  configure_cmds = ['./configure'] + make_configure_options(args)
+  build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
+  install_cmds = ['make', 'install']
   if args.dryrun:
-    print(f'dryrun: run_or_die({commands})')
-    print('dryrun: make')
+    print(f'dryrun: run_or_die({configure_cmds})')
+    print('dryrun: run_or_die({build_cmds})')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
-      print('dryrun: make install')
+      print('dryrun: run_or_die({install_cmds})')
   else:
-    run_or_die(commands)
-    run_or_die(['make'])
+    run_or_die(configure_cmds)
+
+    run_or_die(build_cmds)
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      run_or_die(['make', 'install'])
+      run_or_die(install_cmds)
 
 
 def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
@@ -437,12 +438,13 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   options = make_configure_options(args)
   configs = ' '.join(options)
-  command = f'configure.bat {configs}'
+  configure_cmds = f'configure.bat {configs}'
   if args.dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
-          f' cwd={qt_src_dir}, env={env})')
+    print(f"dryrun: subprocess.run('{configure_cmds}', shell=True, check=True,"
+          f' cwd={configure_cmds}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True, cwd=qt_src_dir, env=env)
+    subprocess.run(configure_cmds, shell=True, check=True, cwd=qt_src_dir,
+                   env=env)
 
   # In order not to expose internal build path, replace paths in qconfig.cpp,
   # which have been embedded by configure.exe based on the build directory.
@@ -454,20 +456,22 @@ def build_on_windows(args: argparse.Namespace) -> None:
       args.dryrun)
 
   jom = qt_src_dir.joinpath('jom.exe')
+  build_cmds = [str(jom)]
+  install_cmds = [str(jom), 'install']
   if args.dryrun:
-    print(f'dryrun: subprocess.run(str({jom}), shell=True, check=True,'
+    print(f'dryrun: subprocess.run({build_cmds}, shell=True, check=True,'
           f' cwd={qt_src_dir}, env={env})')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
-      print(f"dryrun: subprocess.run([str({jom}), 'install'], shell=True,"
-            f" check=True, cwd={qt_src_dir}, env={env})")
+      print(f'dryrun: subprocess.run({install_cmds}, shell=True,'
+            f' check=True, cwd={qt_src_dir}, env={env})')
   else:
-    subprocess.run(str(jom), shell=True, check=True, cwd=qt_src_dir, env=env)
+    subprocess.run(build_cmds, shell=True, check=True, cwd=qt_src_dir, env=env)
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      subprocess.run([str(jom), 'install'], shell=True, check=True,
+      subprocess.run(install_cmds, shell=True, check=True,
                      cwd=qt_src_dir, env=env)
 
 
