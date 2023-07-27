@@ -96,7 +96,8 @@ enum class Endian : int8_t {
 // types. It's not constexpr in MSVC, either.
 // If this file is compiled for C++23, it'll be an alias of std::byteswap.
 #ifndef __cpp_lib_byteswap
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
 inline MOZC_BITS_BYTESWAP_CONSTEXPR T byteswap(T n) {
   static_assert(
       sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
@@ -131,8 +132,9 @@ template <typename T, typename Iterator,
           typename IterTag =
               typename std::iterator_traits<Iterator>::iterator_category,
           // TODO(yuryu): C++20: require std::contiguous_iterator.
-          typename = std::enable_if_t<
-              std::is_convertible_v<IterTag, std::random_access_iterator_tag>>>
+          std::enable_if_t<
+              std::is_convertible_v<IterTag, std::random_access_iterator_tag>,
+              std::nullptr_t> = nullptr>
 inline T LoadUnaligned(Iterator iter) {
   static_assert(std::is_arithmetic_v<T>,
                 "The value type must be an arithmetic type");
@@ -183,8 +185,9 @@ template <typename T, typename U, typename Iterator,
           typename IterTag =
               typename std::iterator_traits<Iterator>::iterator_category,
           // TODO(yuryu): C++20: require std::contiguous_iterator.
-          typename = std::enable_if_t<
-              std::is_convertible_v<IterTag, std::random_access_iterator_tag>>>
+          std::enable_if_t<
+              std::is_convertible_v<IterTag, std::random_access_iterator_tag>,
+              std::nullptr_t> = nullptr>
 inline Iterator StoreUnaligned(const U value, Iterator iter) {
   static_assert(std::is_arithmetic_v<T>,
                 "The value type must be an arithmetic type.");
@@ -197,7 +200,8 @@ inline Iterator StoreUnaligned(const U value, Iterator iter) {
 }
 
 // HostToNet changes the host byte order value to the network byte order.
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
 inline T HostToNet(const T n) {
   if constexpr (Endian::kNative == Endian::kLittle) {
     return byteswap(n);
@@ -207,13 +211,15 @@ inline T HostToNet(const T n) {
 }
 
 // NetToHost changes the network byte order value to the host byte order.
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
 inline T NetToHost(const T n) {
   return HostToNet(n);
 }
 
 // HostToLittle changes the host byte order value to the little endian order.
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
 inline T HostToLittle(const T n) {
   if constexpr (Endian::kNative == Endian::kLittle) {
     return n;
@@ -223,7 +229,8 @@ inline T HostToLittle(const T n) {
 }
 
 // LittleToHost changes the little endian byte order to the host byte order.
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+template <typename T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
 inline T LittleToHost(const T n) {
   return HostToLittle(n);
 }

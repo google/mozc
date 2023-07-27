@@ -159,16 +159,16 @@ class WorkingLogStream {
     sink->Append(v);
   }
 
-  template <
-      typename T,
-      std::enable_if_t<logging_internal::HasAbslStringify<T>::value, int> = 0>
+  template <typename T,
+            std::enable_if_t<logging_internal::HasAbslStringify<T>::value,
+                             std::nullptr_t> = nullptr>
   WorkingLogStream &operator<<(const T &v) {
     AbslStringify(*this, v);
     return *this;
   }
-  template <
-      typename T,
-      std::enable_if_t<!logging_internal::HasAbslStringify<T>::value, int> = 0>
+  template <typename T,
+            std::enable_if_t<!logging_internal::HasAbslStringify<T>::value,
+                             std::nullptr_t> = nullptr>
   WorkingLogStream &operator<<(const T &v) {
     os_ << v;
     return *this;

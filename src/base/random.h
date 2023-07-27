@@ -49,8 +49,9 @@ class Random {
   Random() = default;
   // Construct using an existing BitGen, std::seed_eq, or any other value that
   // absl::BitGen can construct from.
-  template <typename Rng, typename = std::enable_if_t<
-                              !std::is_same_v<std::decay_t<Rng>, Random>>>
+  template <typename Rng,
+            std::enable_if_t<!std::is_same_v<std::decay_t<Rng>, Random>,
+                             std::nullptr_t> = nullptr>
   explicit Random(Rng &&rng) : bitgen_(std::forward<Rng>(rng)) {}
 
   // Disallow copy, allow move.

@@ -557,14 +557,15 @@ constexpr bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2,
 }
 
 // Avoid implicit casts.
-template <typename SrcType, typename DestType,
-          std::enable_if_t<!std::is_integral_v<SrcType>, int> = 0>
-bool SafeCast(SrcType src, DestType *dest) = delete;
-
 template <
     typename SrcType, typename DestType,
-    std::enable_if_t<
-        std::is_integral_v<SrcType> && std::is_integral_v<DestType>, int> = 0>
+    std::enable_if_t<!std::is_integral_v<SrcType>, std::nullptr_t> = nullptr>
+bool SafeCast(SrcType src, DestType *dest) = delete;
+
+template <typename SrcType, typename DestType,
+          std::enable_if_t<std::is_integral_v<SrcType> &&
+                               std::is_integral_v<DestType>,
+                           std::nullptr_t> = nullptr>
 constexpr bool SafeCast(SrcType src, DestType *dest) {
   if (std::numeric_limits<SrcType>::is_signed &&
       !std::numeric_limits<DestType>::is_signed && src < 0) {

@@ -72,7 +72,7 @@ inline pfstring to_pfstring(std::string &&str) {
 // Zero overhead overload for cases where pfstring == std::string.
 template <
     typename T = pfstring,
-    typename std::enable_if_t<std::is_same_v<T, std::string>, bool> = true>
+    std::enable_if_t<std::is_same_v<T, std::string>, std::nullptr_t> = nullptr>
 inline const pfstring &to_pfstring(const std::string &str) {
   return str;
 }
@@ -100,7 +100,7 @@ inline std::string to_string(pfstring &&str) {
 // Zero overhead overload for cases where pfstring == std::string.
 template <
     typename T = pfstring,
-    typename std::enable_if_t<std::is_same_v<T, std::string>, bool> = true>
+    std::enable_if_t<std::is_same_v<T, std::string>, std::nullptr_t> = nullptr>
 inline const std::string &to_string(const pfstring &str) {
   return str;
 }

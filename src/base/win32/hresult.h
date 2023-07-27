@@ -82,8 +82,9 @@ class [[nodiscard]] HResult {
   //    // return hr;  // compile error
   //    return hr.Succeeded();
   // }
-  template <typename T, typename = std::enable_if_t<
-                            !std::is_same_v<T, HRESULT> && std::is_scalar_v<T>>>
+  template <typename T,
+            std::enable_if_t<!std::is_same_v<T, HRESULT> && std::is_scalar_v<T>,
+                             std::nullptr_t> = nullptr>
   operator T() = delete;
 
   [[nodiscard]] constexpr bool Succeeded() const noexcept {
