@@ -49,6 +49,8 @@ or so.
 
 import argparse
 from collections.abc import Iterator
+import dataclasses
+import functools
 import json
 import os
 import pathlib
@@ -58,7 +60,7 @@ import subprocess
 import sys
 import tarfile
 import time
-from typing import Union
+from typing import Any, Union
 import zipfile
 
 
@@ -176,6 +178,68 @@ def qt_extract_filter(
         yield info
 
 
+@dataclasses.dataclass
+@functools.total_ordering
+class QtVersion:
+  """Data type for Qt version.
+
+  Attributes:
+    major: Major version.
+    minor: Minor version.
+    patch: Patch level.
+  """
+  major: int
+  minor: int
+  patch: int
+
+  def __hash__(self) -> int:
+    return hash(self.major, self.minor, self.patch)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, QtVersion):
+      return NotImplemented
+    return (
+        self.major == other.major
+        and self.minor == other.minor
+        and self.patch == other.patch
+    )
+
+  def __lt__(self, other: Any) -> bool:
+    if not isinstance(other, QtVersion):
+      return NotImplemented
+    if self.major != other.major:
+      return self.major < other.major
+    if self.minor != other.minor:
+      return self.minor < other.minor
+    return self.patch < other.patch
+
+
+def get_qt_version(args: argparse.Namespace) -> QtVersion:
+  """Get the Qt version.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+
+  Returns:
+    QtVersion object.
+  """
+  archive_name = pathlib.Path(args.qt_archive_path).resolve().name
+  ver_string_tuple = (
+      archive_name
+      .removeprefix('qtbase-everywhere-opensource-src-')
+      .removeprefix('qtbase-everywhere-src-')
+      .removesuffix('.tar.xz')
+      .split('.')
+  )
+  if len(ver_string_tuple) != 3:
+    raise ValueError(f'Unsupported qt archive name: {archive_name}')
+  return QtVersion(
+      major=int(ver_string_tuple[0]),
+      minor=int(ver_string_tuple[1]),
+      patch=int(ver_string_tuple[2]),
+  )
+
+
 def make_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options based on args.
 
@@ -185,6 +249,8 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   Returns:
     A list of configure options to be passed to configure of Qt.
   """
+
+  qt_version = get_qt_version(args)
 
   qt_configure_options = ['-opensource',
                           '-silent',
@@ -206,11 +272,11 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                           '-no-sql-odbc',
                           '-no-sql-psql',
                           '-no-sql-sqlite',
-                          '-no-sql-sqlite2',
-                          '-no-sql-tds',
                           '-nomake', 'examples',
                           '-nomake', 'tests',
                          ]
+  if qt_version.major == 5:
+    qt_configure_options += ['-no-sql-sqlite2', '-no-sql-tds']
 
   if is_mac():
     qt_configure_options += [
@@ -221,11 +287,11 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   elif is_windows():
     qt_configure_options += ['-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
-                             '-no-angle',
-                             '-no-direct2d',
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']
+    if qt_version.major == 5:
+      qt_configure_options += ['-no-angle', '-no-direct2d']
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
 
@@ -291,7 +357,7 @@ def patch_file(file: pathlib.Path, pattern: str, replaced: str,
 
 
 def build_on_mac(args: argparse.Namespace) -> None:
-  """Build the Qt5 library on Mac.
+  """Build Qt from the source code on Mac.
 
 
   Args:
@@ -308,8 +374,12 @@ def build_on_mac(args: argparse.Namespace) -> None:
   os.chdir(qt_src_dir)
 
   configure_cmds = ['./configure'] + make_configure_options(args)
-  build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
-  install_cmds = ['make', 'install']
+  if get_qt_version(args).major == 5:
+    build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
+    install_cmds = ['make', 'install']
+  else:
+    build_cmds = ['cmake', '--build', '.', '--parallel']
+    install_cmds = ['cmake', '--install', '.']
   if args.dryrun:
     print(f'dryrun: run_or_die({configure_cmds})')
     print('dryrun: run_or_die({build_cmds})')
@@ -455,9 +525,13 @@ def build_on_windows(args: argparse.Namespace) -> None:
       'C:/qtbase',
       args.dryrun)
 
-  jom = qt_src_dir.joinpath('jom.exe')
-  build_cmds = [str(jom)]
-  install_cmds = [str(jom), 'install']
+  if get_qt_version(args).major == 5:
+    jom = qt_src_dir.joinpath('jom.exe')
+    build_cmds = [str(jom)]
+    install_cmds = [str(jom), 'install']
+  else:
+    build_cmds = ['cmake.exe', '--build', '.', '--parallel']
+    install_cmds = ['cmake.exe', '--install', '.']
   if args.dryrun:
     print(f'dryrun: subprocess.run({build_cmds}, shell=True, check=True,'
           f' cwd={qt_src_dir}, env={env})')
