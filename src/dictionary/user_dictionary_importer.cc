@@ -64,8 +64,8 @@ uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
   DCHECK(UserDictionary::PosType_IsValid(entry.pos()));
   static_assert(UserDictionary::PosType_MAX <=
                 std::numeric_limits<char>::max());
-  return Hash::Fingerprint(entry.key() + "\t" + entry.value() + "\t" +
-                           static_cast<char>(entry.pos()));
+  return Fingerprint(entry.key() + "\t" + entry.value() + "\t" +
+                     static_cast<char>(entry.pos()));
 }
 
 void NormalizePos(const absl::string_view input, std::string *output) {

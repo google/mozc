@@ -30,61 +30,51 @@
 #ifndef MOZC_BASE_HASH_H_
 #define MOZC_BASE_HASH_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
-class Hash {
- public:
-  Hash() = delete;
-  Hash(const Hash&) = delete;
-  Hash& operator=(const Hash&) = delete;
-  // Calculates 64-bit fingerprint.
-  static uint64_t Fingerprint(absl::string_view str);
-  static uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed);
+// Calculates 64-bit fingerprint.
+uint64_t Fingerprint(absl::string_view str);
+uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed);
 
-  // Calculates 32-bit fingerprint.
-  static uint32_t Fingerprint32(absl::string_view str);
-  static uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed);
+// Calculates 32-bit fingerprint.
+uint32_t Fingerprint32(absl::string_view str);
+uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed);
 
-  // Calculates 64-bit fingerprint for integral types.
-  // Note: This function depends on endian.
-  template <typename T>
-  static typename std::enable_if<std::is_integral<T>::value, uint64_t>::type
-  Fingerprint(T num) {
-    return Fingerprint(
-        absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
-  }
+template <class T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+uint64_t Fingerprint(T num) {
+  return Fingerprint(
+      absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
+}
 
-  template <typename T>
-  static typename std::enable_if<std::is_integral<T>::value, uint64_t>::type
-  FingerprintWithSeed(T num, uint32_t seed) {
-    return FingerprintWithSeed(
-        absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
-        seed);
-  }
+template <class T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+uint64_t FingerprintWithSeed(T num, uint32_t seed) {
+  return FingerprintWithSeed(
+      absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
+      seed);
+}
 
-  // Calculates 32-bit fingerprint for integral types.
-  // Note: This function depends on endian.
-  template <typename T>
-  static typename std::enable_if<std::is_integral<T>::value, uint32_t>::type
-  Fingerprint32(T num) {
-    return Fingerprint32(
-        absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
-  }
+template <class T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+uint32_t Fingerprint32(T num) {
+  return Fingerprint32(
+      absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)));
+}
 
-  template <typename T>
-  static typename std::enable_if<std::is_integral<T>::value, uint32_t>::type
-  Fingerprint32WithSeed(T num, uint32_t seed) {
-    return Fingerprint32WithSeed(
-        absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
-        seed);
-  }
-};
+template <class T,
+          std::enable_if_t<std::is_integral_v<T>, std::nullptr_t> = nullptr>
+uint32_t Fingerprint32WithSeed(T num, uint32_t seed) {
+  return Fingerprint32WithSeed(
+      absl::string_view(reinterpret_cast<const char*>(&num), sizeof(num)),
+      seed);
+}
 
 }  // namespace mozc
 

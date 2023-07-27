@@ -178,9 +178,8 @@ class UserDictionary::TokensIndex {
         DCHECK(user_dictionary::UserDictionary_PosType_IsValid(entry.pos()));
         static_assert(user_dictionary::UserDictionary_PosType_PosType_MAX <=
                       std::numeric_limits<char>::max());
-        const uint64_t fp =
-            Hash::Fingerprint(reading + "\t" + entry.value() + "\t" +
-                              static_cast<char>(entry.pos()));
+        const uint64_t fp = Fingerprint(reading + "\t" + entry.value() + "\t" +
+                                        static_cast<char>(entry.pos()));
         if (!seen.insert(fp).second) {
           VLOG(1) << "Found dup item";
           continue;

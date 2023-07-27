@@ -58,7 +58,7 @@ std::string GenExistenceData(const absl::Span<const std::string> entries,
   ExistenceFilterBuilder builder(ExistenceFilterBuilder::CreateOptimal(m, n));
 
   for (const std::string &entry : entries) {
-    const uint64_t id = Hash::Fingerprint(entry);
+    const uint64_t id = Fingerprint(entry);
     builder.Insert(id);
   }
   return builder.SerializeAsString();

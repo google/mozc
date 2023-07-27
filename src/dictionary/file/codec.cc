@@ -99,7 +99,7 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
 std::string DictionaryFileCodec::GetSectionName(
     const absl::string_view name) const {
   VLOG(1) << "seed\t" << seed_;
-  const uint64_t name_fp = Hash::FingerprintWithSeed(name, seed_);
+  const uint64_t name_fp = FingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
                               sizeof(name_fp));
   std::string escaped;

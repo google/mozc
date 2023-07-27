@@ -283,7 +283,7 @@ mozc_cc_library(
     srcs = ["hash.cc"],
     hdrs = ["hash.h"],
     deps = [
-        ":port",
+        ":logging",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -294,7 +294,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":hash",
-        ":port",
         "//testing:gunit_main",
     ],
 )

@@ -54,7 +54,7 @@ uint64_t GetRequestHash(const EngineReloadRequest &request) {
   if (request.file_path().empty() || request.install_location().empty()) {
     return 0;
   }
-  return Hash::Fingerprint(request.SerializeAsString());
+  return Fingerprint(request.SerializeAsString());
 }
 
 EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {

@@ -50,7 +50,7 @@ namespace {
 void CheckValues(const ExistenceFilter &filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
-    uint64_t hash = Hash::Fingerprint(i);
+    uint64_t hash = Fingerprint(i);
     bool should_exist = ((i % 2) == 0);
     bool actual = filter.Exists(hash);
     if (should_exist) {
@@ -77,7 +77,7 @@ void RunTest(int m, int n) {
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
-    uint64_t hash = Hash::Fingerprint(val);
+    uint64_t hash = Fingerprint(val);
     builder.Insert(hash);
   }
 
@@ -121,7 +121,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
       ExistenceFilterBuilder::CreateOptimal(num_bytes, std::size(kWords)));
 
   for (const absl::string_view &word : kWords) {
-    builder.Insert(Hash::Fingerprint(word));
+    builder.Insert(Fingerprint(word));
   }
 
   const std::string buf = builder.SerializeAsString();
@@ -131,7 +131,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
   EXPECT_OK(filter_read);
 
   for (const absl::string_view &word : kWords) {
-    EXPECT_TRUE(filter_read->Exists(Hash::Fingerprint(word)));
+    EXPECT_TRUE(filter_read->Exists(Fingerprint(word)));
   }
 }
 
@@ -147,13 +147,13 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
       ExistenceFilterBuilder::CreateOptimal(num_bytes, words.size()));
 
   for (const std::string &word : words) {
-    builder.Insert(Hash::Fingerprint(word));
+    builder.Insert(Fingerprint(word));
   }
 
   ExistenceFilter filter = builder.Build();
 
   for (const std::string &word : words) {
-    EXPECT_TRUE(filter.Exists(Hash::Fingerprint(word)));
+    EXPECT_TRUE(filter.Exists(Fingerprint(word)));
   }
 }
 

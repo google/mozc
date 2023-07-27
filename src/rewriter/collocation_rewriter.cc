@@ -75,7 +75,7 @@ bool CollocationFilter::Exists(const absl::string_view left,
   if (left.empty() || right.empty()) {
     return false;
   }
-  const uint64_t id = Hash::Fingerprint(absl::StrCat(left, right));
+  const uint64_t id = Fingerprint(absl::StrCat(left, right));
   return filter_.Exists(id);
 }
 
@@ -91,8 +91,8 @@ absl::StatusOr<SuppressionFilter> SuppressionFilter::Create(
 bool SuppressionFilter::Exists(const Segment::Candidate &cand) const {
   // TODO(noriyukit): We should share key generation rule with
   // gen_collocation_suppression_data_main.cc.
-  const uint64_t id = Hash::Fingerprint(
-      absl::StrCat(cand.content_value, "\t", cand.content_key));
+  const uint64_t id =
+      Fingerprint(absl::StrCat(cand.content_value, "\t", cand.content_key));
   return filter_.Exists(id);
 }
 
