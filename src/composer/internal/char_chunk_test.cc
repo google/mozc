@@ -197,6 +197,29 @@ TEST(CharChunkTest, AddInput_WithString) {
   EXPECT_THAT(result, RestIsEmpty());
 }
 
+TEST(CharChunkTest, AddInput_EmptyOutput) {
+  // Test against http://b/289217346
+  Table table;
+  table.AddRule("a", "", "");
+  table.AddRuleWithAttributes("b", "", "", NO_TRANSLITERATION);
+  table.AddRuleWithAttributes("c", "", "", NEW_CHUNK | NO_TRANSLITERATION);
+
+  CharChunk chunk_a(Transliterators::CONVERSION_STRING, &table);
+  std::pair<bool, absl::string_view> result_a = chunk_a.AddInputInternal("a");
+  EXPECT_TRUE(result_a.second.empty());
+  EXPECT_EQ(chunk_a.raw(), "a");
+
+  CharChunk chunk_b(Transliterators::CONVERSION_STRING, &table);
+  std::pair<bool, absl::string_view> result_b = chunk_b.AddInputInternal("b");
+  EXPECT_TRUE(result_b.second.empty());
+  EXPECT_TRUE(chunk_b.raw().empty());
+
+  CharChunk chunk_c(Transliterators::CONVERSION_STRING, &table);
+  std::pair<bool, absl::string_view> result_c = chunk_c.AddInputInternal("c");
+  EXPECT_TRUE(result_c.second.empty());
+  EXPECT_TRUE(chunk_c.raw().empty());
+}
+
 TEST(CharChunkTest, GetLength) {
   CharChunk chunk1(Transliterators::CONVERSION_STRING, nullptr);
   chunk1.set_conversion("ね");

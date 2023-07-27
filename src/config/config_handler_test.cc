@@ -37,65 +37,31 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "base/thread2.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/flags/flag.h"
 #include "absl/random/random.h"
-#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
-#ifdef _WIN32
-#include <windows.h>
-
-#include "base/util.h"
-#endif  // _WIN32
-
 namespace mozc {
 namespace config {
 namespace {
 
-class ConfigHandlerTest : public ::testing::Test {
+class ConfigHandlerTest : public testing::TestWithTempUserProfile {
  protected:
-  void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    default_config_filename_ = ConfigHandler::GetConfigFileName();
-    Config default_config;
-    ConfigHandler::GetDefaultConfig(&default_config);
-    ConfigHandler::SetConfig(default_config);
-  }
-
-  void TearDown() override {
-    ConfigHandler::SetConfigFileName(default_config_filename_);
-    Config default_config;
-    ConfigHandler::GetDefaultConfig(&default_config);
-    ConfigHandler::SetConfig(default_config);
-  }
-
- private:
-  std::string default_config_filename_;
-};
-
-class ScopedSetConfigFileName {
- public:
-  ScopedSetConfigFileName() = delete;
-  ScopedSetConfigFileName(const ScopedSetConfigFileName &) = delete;
-  ScopedSetConfigFileName &operator=(const ScopedSetConfigFileName &) = delete;
-  explicit ScopedSetConfigFileName(const absl::string_view new_name)
-      : default_config_filename_(ConfigHandler::GetConfigFileName()) {
-    ConfigHandler::SetConfigFileName(new_name);
-  }
-
-  ~ScopedSetConfigFileName() {
+  ConfigHandlerTest()
+      : default_config_filename_(ConfigHandler::GetConfigFileName()) {}
+  ~ConfigHandlerTest() override {
     ConfigHandler::SetConfigFileName(default_config_filename_);
   }
 
@@ -107,10 +73,11 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   Config input;
   Config output;
 
-  const std::string config_file = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string config_file =
+      FileUtil::JoinPath(temp_dir.path(), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
-  ScopedSetConfigFileName scoped_config_file_name(config_file);
+  ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
   ConfigHandler::Reload();
 
@@ -195,10 +162,11 @@ TEST_F(ConfigHandlerTest, SetMetadata) {
 TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
   Config input;
 
-  const std::string config_file = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string config_file =
+      FileUtil::JoinPath(temp_dir.path(), "mozc_config_test_tmp");
   ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
-  ScopedSetConfigFileName scoped_config_file_name(config_file);
+  ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
   ConfigHandler::Reload();
 
@@ -227,10 +195,9 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
   const std::string config_file =
-      std::string("config") + std::to_string(config::CONFIG_VERSION) + ".db";
-
+      absl::StrCat("config", config::CONFIG_VERSION, ".db");
   const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), config_file);
+      FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), config_file);
   ASSERT_OK(FileUtil::UnlinkIfExists(filename));
   Config input;
   ConfigHandler::SetConfig(input);
@@ -242,9 +209,7 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   const bool default_incognito_mode = mozc_config.incognito_mode();
   mozc_config.set_incognito_mode(!default_incognito_mode);
   ConfigHandler::SetConfig(mozc_config);
-  // ScopedSetConfigFileName internally calls SetConfigFileName.
-  ScopedSetConfigFileName scoped_config_file_name(
-      "memory://set_config_file_name_test.db");
+  ConfigHandler::SetConfigFileName("memory://set_config_file_name_test.db");
   // After SetConfigFileName called, settings are set as default.
   Config updated_config;
   ConfigHandler::GetConfig(&updated_config);
@@ -272,23 +237,11 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))
         << "Copy failed: " << src_path << " to " << dest_path;
 
-    ScopedSetConfigFileName scoped_config_file_name("user://" +
-                                                    std::string(file_name));
+    ConfigHandler::SetConfigFileName(absl::StrCat("user://", file_name));
     ConfigHandler::Reload();
 
     Config default_config;
     ConfigHandler::GetConfig(&default_config);
-
-#ifdef _WIN32
-    // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
-    std::wstring wdest_path;
-    Util::Utf8ToWide(dest_path, &wdest_path);
-    ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
-#endif  // _WIN32
-
-    // Remove test file just in case.
-    ASSERT_OK(FileUtil::Unlink(dest_path));
-    EXPECT_FALSE(FileUtil::FileExists(dest_path).ok());
   }
 }
 #endif  // !__ANDROID__
@@ -425,8 +378,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     Config returned_config;
     ConfigHandler::GetConfig(&returned_config);
     const auto &rules = ExtractCharacterFormRules(returned_config);
-    ASSERT_NE(character_form_rules_set.end(),
-              character_form_rules_set.find(rules));
+    ASSERT_TRUE(character_form_rules_set.contains(rules));
   }
 
   {

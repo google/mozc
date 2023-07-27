@@ -3514,6 +3514,32 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
   EXPECT_EQ(GetPreedit(composer_.get()), "おととお");
 }
 
+// Confirms empty entries (e.g. the 大⇔小 key to は) are skipped. b/289217346
+TEST_F(ComposerTest, SkipEmptyEntries) {
+  // Rules are extracted from data/preedit/toggle_flick-hiragana.tsv
+  // specified from Request::TOGGLE_FLICK_TO_HIRAGANA.
+  table_->AddRuleWithAttributes("6", "", "{?}は",
+                                NEW_CHUNK | NO_TRANSLITERATION);
+  // "*" is the raw input for the 大⇔小 key.
+  table_->AddRule("{?}は*", "", "{*}ば");
+  // "`" is the raw input for the sliding up of the 大⇔小 key.
+  table_->AddRuleWithAttributes("`", "", "", NO_TRANSLITERATION);
+  table_->AddRuleWithAttributes("*", "", "", NO_TRANSLITERATION);
+
+  // Type は from 6
+  ASSERT_TRUE(InsertKeyWithMode("6", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "は");
+
+  // Slide up the 大⇔小 key to try to make は smaller, but it's invalid.
+  ASSERT_TRUE(InsertKeyWithMode("`", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "は");
+
+  // Tap the 大⇔小 key to make は to ば. It should work regardless the above
+  // step.
+  ASSERT_TRUE(InsertKeyWithMode("*", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ(GetPreedit(composer_.get()), "ば");
+}
+
 TEST_F(ComposerTest, SpellCheckerServiceTest) {
   table_->AddRule("a", "あ", "");
   table_->AddRule("i", "い", "");

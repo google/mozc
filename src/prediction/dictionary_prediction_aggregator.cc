@@ -103,7 +103,15 @@ bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
 // Returns true if the |target| may be redundant result.
 bool MaybeRedundant(const absl::string_view reference,
                     const absl::string_view target) {
-  return absl::StartsWith(target, reference);
+  if (!absl::StartsWith(target, reference)) {
+    return false;
+  }
+  const absl::string_view suffix = target.substr(reference.size());
+  if (suffix.empty()) {
+    return true;
+  }
+  const Util::ScriptType script_type = Util::GetScriptType(suffix);
+  return (script_type != Util::EMOJI && script_type != Util::UNKNOWN_SCRIPT);
 }
 
 bool IsLatinInputMode(const ConversionRequest &request) {

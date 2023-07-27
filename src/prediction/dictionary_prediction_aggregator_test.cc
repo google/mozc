@@ -1160,15 +1160,21 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
     EXPECT_CALL(*mock, LookupPredictive(StrEq("とうきょう"), _, _))
         .WillRepeatedly(InvokeCallbackWithTokens(std::vector<Token>{
             {"とうきょう", "東京", 100, kPosId, kPosId, Token::NONE},
-            {"とうきょう", "TOKYO", 100, kPosId, kPosId, Token::NONE},
+            {"とうきょう", "TOKYO", 200, kPosId, kPosId, Token::NONE},
             {"とうきょうと", "東京都", 110, kPosId, kPosId, Token::NONE},
+            {"とうきょう", "東京", 120, kPosId, kPosId, Token::NONE},
+            {"とうきょう", "TOKYO", 120, kPosId, kPosId, Token::NONE},
             {"とうきょうわん", "東京湾", 120, kPosId, kPosId, Token::NONE},
             {"とうきょうえき", "東京駅", 130, kPosId, kPosId, Token::NONE},
             {"とうきょうべい", "東京ベイ", 140, kPosId, kPosId, Token::NONE},
             {"とうきょうゆき", "東京行", 150, kPosId, kPosId, Token::NONE},
             {"とうきょうしぶ", "東京支部", 160, kPosId, kPosId, Token::NONE},
             {"とうきょうてん", "東京店", 170, kPosId, kPosId, Token::NONE},
-            {"とうきょうがす", "東京ガス", 180, kPosId, kPosId, Token::NONE}}));
+            {"とうきょうがす", "東京ガス", 180, kPosId, kPosId, Token::NONE},
+            {"とうきょう!", "東京!", 1100, kPosId, kPosId, Token::NONE},
+            {"とうきょう!?", "東京!?", 1200, kPosId, kPosId, Token::NONE},
+            {"とうきょう", "東京❤", 1300, kPosId, kPosId, Token::NONE},
+        }));
   }
 
   std::vector<Result> results;
@@ -1184,7 +1190,15 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
     }
   }
   // Should not have same prefix candidates a lot.
-  EXPECT_LE(prefix_count, 6);
+  EXPECT_LE(prefix_count, 11);
+  // Candidates that predict symbols should not be handled as the redundant
+  // candidates.
+  const absl::string_view kExpected[] = {
+      "東京", "TOKYO", "東京!", "東京!?", "東京❤",
+  };
+  for (int i = 0; i < ABSL_ARRAYSIZE(kExpected); ++i) {
+    EXPECT_EQ(results[i].value, kExpected[i]);
+  }
 }
 
 // We are not sure what should we suggest after the end of sentence for now.

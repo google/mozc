@@ -30,22 +30,18 @@
 #ifndef MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
 #define MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
 
-#include <map>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "converter/quality_regression_util.h"
-#include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 
 namespace mozc {
 
-class QualityRegressionTest : public ::testing::Test {
+class QualityRegressionTest : public testing::TestWithTempUserProfile {
  protected:
   static absl::Status RunTestForPlatform(
       uint32_t platform, quality_regression::QualityRegressionUtil *util);
@@ -54,12 +50,9 @@ class QualityRegressionTest : public ::testing::Test {
   // and any failure is reported as test failure.  If false, actual conversion
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
-      const bool enabled, uint32_t platform,
+      bool enabled, uint32_t platform,
       absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
           *results);
-
- private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
 };
 
 }  // namespace mozc
