@@ -392,6 +392,16 @@ std::pair<bool, absl::string_view> CharChunk::AddInputInternal(
     ambiguous_ = entry->result();
   }
 
+  // If the lookup is deterministically done (e.g. fixed is true and input is
+  // empty) but the output is empty and the raw input is not used (e.g.
+  // NO_TRANSLITERATION), raw_ is also cleared to make an empty chunk to be
+  // removed by the caller (see: Composition::InsertInput).
+  if (fixed && input.empty() && conversion_.empty() && pending_.empty() &&
+      (attributes_ & NO_TRANSLITERATION)) {
+    raw_.clear();
+    return {kNoLoop, input};
+  }
+
   if (input.empty() || pending_.empty()) {
     // If the remaining input character or pending character is empty,
     // there is no reason to continue the looping.
