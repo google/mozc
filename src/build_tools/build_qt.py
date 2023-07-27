@@ -221,7 +221,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   elif is_windows():
     qt_configure_options += ['-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
-                             '-mp',    # enable parallel build
                              '-no-angle',
                              '-no-direct2d',
                              '-no-freetype',
@@ -454,22 +453,21 @@ def build_on_windows(args: argparse.Namespace) -> None:
       'C:/qtbase',
       args.dryrun)
 
-  jom_path = qt_src_dir.joinpath('jom.exe')
-  make = jom_path if jom_path.exists() else 'nmake.exe'
+  jom = qt_src_dir.joinpath('jom.exe')
   if args.dryrun:
-    print(f'dryrun: subprocess.run(str({make}), shell=True, check=True,'
+    print(f'dryrun: subprocess.run(str({jom}), shell=True, check=True,'
           f' cwd={qt_src_dir}, env={env})')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
-      print(f"dryrun: subprocess.run([str({make}), 'install'], shell=True,"
+      print(f"dryrun: subprocess.run([str({jom}), 'install'], shell=True,"
             f" check=True, cwd={qt_src_dir}, env={env})")
   else:
-    subprocess.run(str(make), shell=True, check=True, cwd=qt_src_dir, env=env)
+    subprocess.run(str(jom), shell=True, check=True, cwd=qt_src_dir, env=env)
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      subprocess.run([str(make), 'install'], shell=True, check=True,
+      subprocess.run([str(jom), 'install'], shell=True, check=True,
                      cwd=qt_src_dir, env=env)
 
 
