@@ -659,6 +659,10 @@ def GetNinjaPath():
   """Returns the path to Ninja."""
   ninja = 'ninja'
   if IsWindows():
+    possible_ninja_path = pathlib.Path(ABS_SCRIPT_DIR).joinpath(
+        'third_party', 'ninja', 'ninja.exe').resolve()
+    if possible_ninja_path.exists():
+      return str(possible_ninja_path)
     ninja = 'ninja.exe'
   return ninja
 

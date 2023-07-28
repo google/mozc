@@ -29,14 +29,6 @@ jobs:
         run: |
           python -m pip install six requests
 
-      # See https://github.com/google/mozc/commit/c34fd2962edd53a245d961be6526d8ea62d368c9
-      # about why we need this step.
-      - name: Install Ninja 1.11.0
-        shell: cmd
-        working-directory: .\src
-        run: |
-          choco install ninja --version 1.11.0 -y --no-progress
-
       - name: Try to restore update_deps cache
         uses: actions/cache@v3
         with:
@@ -100,13 +92,6 @@ jobs:
         working-directory: .\src
         run: |
           python -m pip install six requests
-
-      # See comment above about why we need this step.
-      - name: Install Ninja 1.11.0
-        shell: cmd
-        working-directory: .\src
-        run: |
-          choco install ninja --version 1.11.0 -y --no-progress
 
       - name: Try to restore update_deps cache
         uses: actions/cache@v3

@@ -103,6 +103,12 @@ WIX = ArchiveInfo(
     sha256='4c89898df3bcab13e12f7ca54399c35ad273475ad2cb6284611d00ae2d063c2c',
 )
 
+NINJA_WIN = ArchiveInfo(
+    url='https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip',
+    size=285411,
+    sha256='d0ee3da143211aa447e750085876c9b9d7bcdd637ab5b2c5b41349c617f22f3b',
+)
+
 
 def get_sha256(path: pathlib.Path) -> str:
   """Returns SHA-256 hash digest of the specified file.
@@ -284,6 +290,25 @@ def extract_wix(dryrun: bool = False) -> None:
     )
 
 
+def extract_ninja_win(dryrun: bool = False) -> None:
+  """Extract ninja-win archive.
+
+  Args:
+    dryrun: True if this is a dry-run.
+  """
+  dest = ABS_THIRD_PARTY_DIR.joinpath('ninja').absolute()
+  src = CACHE_DIR.joinpath(NINJA_WIN.filename)
+
+  if dryrun:
+    if dest.exists():
+      print(f"dryrun: shutil.rmtree(r'{dest}')")
+    print(f'dryrun: Extracting ninja.exe from {src} into {dest}')
+    return
+
+  with zipfile.ZipFile(src) as z:
+    z.extract('ninja.exe', path=dest)
+
+
 def is_windows() -> bool:
   """Returns true if the platform is Windows."""
   return os.name == 'nt'
@@ -325,6 +350,7 @@ def main():
       archives.append(JOM)
   if (not args.nowix) and is_windows():
     archives.append(WIX)
+    archives.append(NINJA_WIN)
 
   for archive in archives:
     download(archive, args.dryrun)
@@ -334,6 +360,9 @@ def main():
 
   if WIX in archives:
     extract_wix(args.dryrun)
+
+  if NINJA_WIN in archives:
+    extract_ninja_win(args.dryrun)
 
   if not args.nosubmodules:
     update_submodules(args.dryrun)
