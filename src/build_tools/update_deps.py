@@ -79,10 +79,16 @@ class ArchiveInfo:
     return hash(self.sha256)
 
 
-QT = ArchiveInfo(
+QT5 = ArchiveInfo(
     url='https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz',
     size=50422688,
     sha256='c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9',
+)
+
+QT6 = ArchiveInfo(
+    url='https://download.qt.io/archive/qt/6.5/6.5.2/submodules/qtbase-everywhere-src-6.5.2.tar.xz',
+    size=48410716,
+    sha256='3db4c729b4d80a9d8fda8dd77128406353baff4755ca619177eda4cddae71269',
 )
 
 JOM = ArchiveInfo(
@@ -313,7 +319,8 @@ def main():
 
   archives = []
   if (not args.noqt) and (is_windows() or is_mac()):
-    archives.append(QT)
+    archives.append(QT5)
+    archives.append(QT6)
     if is_windows():
       archives.append(JOM)
   if (not args.nowix) and is_windows():
