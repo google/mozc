@@ -259,13 +259,6 @@
       'dependencies': [
         'ibus_mozc_test',
       ],
-      'conditions': [
-        ['enable_gtk_renderer==1', {
-          'dependencies': [
-            'candidate_window_handler_test',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'candidate_window_handler',

@@ -102,12 +102,6 @@ new_local_repository(
 )
 
 
-# Gtk2
-pkg_config_repository(
-  name = "gtk2",
-  packages = ["glib-2.0", "gobject-2.0", "gthread-2.0", "gtk+-2.0", "gdk-2.0"],
-)
-
 # iBus
 pkg_config_repository(
   name = "ibus",

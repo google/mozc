@@ -44,10 +44,6 @@
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 
-    # enable_gtk_renderer represents if mozc_renderer is supported on Linux
-    # or not.
-    'enable_gtk_renderer%': '0',
-
     # enable ambiguous search (a.k.a. KATSUKOU-conversion).
     'enable_ambiguous_search%': '0',
 
@@ -81,9 +77,6 @@
       }],
       ['channel_dev==1', {
         'defines': ['CHANNEL_DEV'],
-      }],
-      ['target_platform=="Linux" and enable_gtk_renderer==1', {
-        'defines': ['ENABLE_GTK_RENDERER'],
       }],
     ]
   }

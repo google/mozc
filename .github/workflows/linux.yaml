@@ -26,7 +26,7 @@ jobs:
       - name: Setup
         run: |
           sudo apt-get update
-          sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev
+          sudo apt-get install -y libibus-1.0-dev qtbase5-dev
           echo "CC=clang-12" >> $GITHUB_ENV
           echo "CXX=clang++-12" >> $GITHUB_ENV
           #
@@ -59,7 +59,7 @@ jobs:
       - name: Setup
         run: |
           sudo apt-get update
-          sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev
+          sudo apt-get install -y libibus-1.0-dev qtbase5-dev
           echo "CC=clang-14" >> $GITHUB_ENV
           echo "CXX=clang++-14" >> $GITHUB_ENV
           #

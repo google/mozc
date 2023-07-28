@@ -72,13 +72,6 @@ ABS_SCRIPT_DIR = CaseAwareAbsPath(os.path.dirname(__file__))
 MOZC_ROOT = ABS_SCRIPT_DIR
 EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
-# Gtk2 candidate window is deprecated.
-# The build rules and code will be removed in future.
-#   https://github.com/google/mozc/issues/567
-# Qt5 candidate window built by Bazel is the alternative.
-#   https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
-USE_DEPRECATED_GTK_RENDERER = False
-
 # Ibus build is no longer supported by GYP build.
 # The build rules and code will be removed in future.
 #   https://github.com/google/mozc/issues/567
@@ -296,15 +289,9 @@ def ExpandMetaTarget(options, meta_target_name):
     return dependencies + [meta_target_name]
 
   if target_platform == 'Linux':
-    CheckGtkBuild(options)
     CheckIbusBuild(options)
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
-    if USE_DEPRECATED_GTK_RENDERER:
-      # Gtk candidate window built by mozc_renderer is no longer
-      # included in the package alias.
-      # USE_DEPRECATED_GTK_RENDERER should be False unless the code is modified.
-      targets.append(SRC_DIR + '/renderer/renderer.gyp:mozc_renderer')
     if USE_UNSUPPORTED_IBUS_BUILD:
       # GYP no longer support Ibus builds.
       # USE_UNSUPPORTED_IBUS_BUILD should be False unless the code is modified.
@@ -339,30 +326,12 @@ def CheckIbusBuild(options):
   PrintErrorAndExit('\n'.join(message))
 
 
-def CheckGtkBuild(options):
-  """Check if targets contains gtk builds without the command flag."""
-  if options.no_gtk_build:
-    return
-
-  message = [
-      'The GYP build no longer support the IBus renderer with GTK.',
-      'https://github.com/google/mozc/issues/567',
-      '',
-      'The new renderer with Qt for Bazel build is the alternative.',
-      'https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md',
-      '',
-      'Please add the --no_gtk_build flag to continue build_mozc.py.',
-  ]
-  PrintErrorAndExit('\n'.join(message))
-
-
 def ParseBuildOptions(args):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--no_gtk_build', action='store_true')
   parser.add_option('--no_ibus_build', action='store_true')
 
   (options, args) = parser.parse_args(args)
@@ -516,12 +485,6 @@ def GypMain(options, unused_args):
 
   if options.branding:
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
-
-  # Gtk configurations
-  # Gtk2 candidate window is deprecated.
-  # USE_DEPRECATED_GTK_RENDERER should be False unless the code is modified.
-  if USE_DEPRECATED_GTK_RENDERER:
-    gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
 
   # Qt configurations
   if options.noqt:
