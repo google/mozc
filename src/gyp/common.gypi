@@ -49,10 +49,6 @@
     'mac_sdk%': '13.0',
     'mac_deployment_target%': '10.9',
 
-    # Flag to specify if the build target is for simulator or not.
-    # This is used for iOS simulator so far.
-    'simulator_build%': '0',
-
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
     # you can have only one 'conditions' in a gyp element.
@@ -258,40 +254,6 @@
           ['LDPLUSPLUS', '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++'],
         ],
         'conditions': [
-          ['target_platform=="iOS"', {
-            'target_conditions': [
-              ['_toolset=="target"', {
-                # OS_IOS and __APPLE__ should be exclusive
-                # when iOS is fully supported.
-                'defines': ['OS_IOS'],
-                'xcode_settings': {
-                  'SDKROOT': 'iphoneos',
-                  'IPHONEOS_DEPLOYMENT_TARGET': '7.0',
-                },
-              }],
-              ['_toolset=="host"', {
-                'xcode_settings': {
-                  # TODO(komatsu): If it is possible to remove the setting of
-                  # MACOSX_DEPLOYMENT_TARGET when _toolset is "target"
-                  # we should do it rather than setting it here and the
-                  # next condition.
-                  'MACOSX_DEPLOYMENT_TARGET': '<(mac_deployment_target)',
-                },
-              }],
-            ],
-            'link_settings': {
-              'target_conditions': [
-                ['_toolset=="target"', {
-                  'libraries': [
-                    '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
-                  ],
-                  'libraries!': [
-                    '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
-                  ],
-                }],
-              ],
-            },
-          }],
           ['target_platform=="Mac"', {
             'xcode_settings': {
               'ARCHS': ['x86_64'],

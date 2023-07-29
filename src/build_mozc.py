@@ -96,7 +96,6 @@ def GetBuildShortBaseName(target_platform):
       'Windows': 'out_win',
       'Mac': 'out_mac',
       'Linux': 'out_linux',
-      'iOS': 'out_ios',
   }
 
   if target_platform not in platform_dict:
@@ -658,28 +657,6 @@ def RunTest(binary_path, output_dir, options):
   RemoveFile(tmp_xml_path)
 
 
-def RunTestOnIos(binary_path, output_dir, _):
-  """Run test with options.
-
-  Args:
-    binary_path: The path of unittest.
-    output_dir: The directory of output results.
-    _: Unused arg for the compatibility with RunTest.
-  """
-  iossim = '%s/third_party/iossim/iossim' % MOZC_ROOT
-  binary_filename = os.path.basename(binary_path)
-  tmp_xml_path = os.path.join(output_dir, '%s.xml.running' % binary_filename)
-  env_options = [
-      '-e', 'GUNIT_OUTPUT=xml:%s' % tmp_xml_path,
-      '-e', 'GTEST_OUTPUT=xml:%s' % tmp_xml_path,
-  ]
-  RunOrDie([iossim] + env_options + [binary_path])
-
-  xml_path = os.path.join(output_dir, '%s.xml' % binary_filename)
-  CopyFile(tmp_xml_path, xml_path)
-  RemoveFile(tmp_xml_path)
-
-
 def RunTests(target_platform, configuration, parallel_num):
   """Run built tests actually.
 
@@ -711,10 +688,6 @@ def RunTests(target_platform, configuration, parallel_num):
   test_function = RunTest
   if target_platform == 'Windows':
     executable_suffix = '.exe'
-  elif target_platform == 'iOS':
-    executable_suffix = '.app'
-    test_function = RunTestOnIos
-    parallel_num = 1
 
   test_binaries = glob.glob(
       os.path.join(base_path, '*_test' + executable_suffix))
