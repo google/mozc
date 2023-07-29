@@ -40,7 +40,6 @@
 #include <string>
 #include <string_view>
 
-#include "base/file_util.h"
 #include "base/system_util.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/winmain.h"  // use WinMain
@@ -171,47 +170,6 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
     return;                                                     \
   } while (false)
 
-#if defined(DEBUG)
-// This function try to make a temporary file in the same directory of the
-// service if the arguments contains "--verify_privilege_restriction".
-// This attempt should fail by ERROR_ACCESS_DENIED since the cache service
-// runs under write-restricted SID in Windows Vista or later by default.
-// See http://b/2470180 for the whole story.
-bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
-  bool verify_privilege = false;
-  constexpr std::wstring_view kTestMode = L"--verify_privilege_restriction";
-  for (size_t i = 0; i < dwArgc; ++i) {
-    if (lpszArgv[i] == kTestMode) {
-      verify_privilege = true;
-      break;
-    }
-  }
-  if (!verify_privilege) {
-    return true;
-  }
-
-  const std::string temp_path =
-      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "delete_me.txt");
-  std::wstring wtemp_path = Utf8ToWide(temp_path);
-  wil::unique_hfile temp_file =
-      ::CreateFileW(wtemp_path.c_str(), GENERIC_READ | GENERIC_WRITE,
-                    FILE_SHARE_READ, nullptr, CREATE_ALWAYS,
-                    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-                        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                    nullptr);
-  if (!temp_file) {
-    LOG_WIN32_ERROR(L"CreateEvent should have failed but succeeded.");
-    return false;
-  }
-  if (::GetLastError() != ERROR_ACCESS_DENIED) {
-    LOG_WIN32_ERROR(L"Unexpected error code.");
-    return false;
-  }
-
-  return true;
-}
-#endif  // DEBUG
-
 VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   SERVICE_STATUS_HANDLE service_status_handle = ::RegisterServiceCtrlHandler(
       CacheServiceManager::GetServiceName(), ServiceHandlerProc);
@@ -231,12 +189,6 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
 
   service_status.dwCurrentState = SERVICE_RUNNING;
   ::SetServiceStatus(service_status_handle, &service_status);
-
-#if defined(_DEBUG)
-  if (!VerifyPrivilegeRestrictionIfNeeded(dwArgc, lpszArgv)) {
-    STOP_SERVICE_AND_EXIT_FUNCTION();
-  }
-#endif  // _DEBUG
 
   if (!CacheServiceManager::HasEnoughMemory()) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
