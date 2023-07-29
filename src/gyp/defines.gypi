@@ -60,10 +60,6 @@
     # - https://github.com/google/mozc/issues/14
     # for the background information.
     'use_libprotobuf%': '0',
-
-    # use_libibus represents if ibus library is used or not.
-    # This option is only for Linux.
-    'use_libibus%': '0',
   },
   'target_defaults': {
     'defines': [

@@ -72,13 +72,6 @@ ABS_SCRIPT_DIR = CaseAwareAbsPath(os.path.dirname(__file__))
 MOZC_ROOT = ABS_SCRIPT_DIR
 EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
-# Ibus build is no longer supported by GYP build.
-# The build rules and code will be removed in future.
-#   https://github.com/google/mozc/issues/567
-# Bazel build is the alternative.
-#   https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
-USE_UNSUPPORTED_IBUS_BUILD = False
-
 sys.path.append(SRC_DIR)
 
 
@@ -164,8 +157,6 @@ def GetGypFileNames(options):
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % SRC_DIR))
-    if USE_UNSUPPORTED_IBUS_BUILD:
-      gyp_file_names.extend('%s/unix/ibus/*.gyp' % SRC_DIR)
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -289,13 +280,8 @@ def ExpandMetaTarget(options, meta_target_name):
     return dependencies + [meta_target_name]
 
   if target_platform == 'Linux':
-    CheckIbusBuild(options)
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
-    if USE_UNSUPPORTED_IBUS_BUILD:
-      # GYP no longer support Ibus builds.
-      # USE_UNSUPPORTED_IBUS_BUILD should be False unless the code is modified.
-      targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':
@@ -309,30 +295,12 @@ def ExpandMetaTarget(options, meta_target_name):
   return dependencies + targets
 
 
-def CheckIbusBuild(options):
-  """Check if targets contains ibus builds without the command flag."""
-  if options.no_ibus_build:
-    return
-
-  message = [
-      'The GYP build no longer support IBus client and renderer.',
-      'https://github.com/google/mozc/issues/567',
-      '',
-      'The Bazel build is the alternative.',
-      'https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md',
-      '',
-      'Please add the --no_ibus_build flag to confirm it.',
-  ]
-  PrintErrorAndExit('\n'.join(message))
-
-
 def ParseBuildOptions(args):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
-  parser.add_option('--no_ibus_build', action='store_true')
 
   (options, args) = parser.parse_args(args)
 
@@ -534,10 +502,6 @@ def GypMain(options, unused_args):
           'Visual Studio earlier than 2022 is no longer supported'
       )
     gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
-
-  if (target_platform == 'Linux' and
-      '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):
-    gyp_options.extend(['-D', 'use_libibus=1'])
 
   if options.server_dir:
     gyp_options.extend([
