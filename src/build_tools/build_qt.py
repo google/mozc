@@ -414,14 +414,20 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
     if path.exists():
       return path
 
-  for edition in ['Community', 'Professional', 'Enterprise']:
-    vcvarsall = pathlib.Path('C:\\', 'Program Files', 'Microsoft Visual Studio',
-                             '2022', edition, 'VC', 'Auxiliary', 'Build',
-                             'vcvarsall.bat')
-    if vcvarsall.exists():
-      return vcvarsall
+  for program_files in ['Program Files', 'Program Files (x86)']:
+    for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
+      vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
+                               '2022', edition, 'VC', 'Auxiliary', 'Build',
+                               'vcvarsall.bat')
+      if vcvarsall.exists():
+        return vcvarsall
 
-  raise FileNotFoundError('Could not find vcvarsall.bat')
+  raise FileNotFoundError(
+      'Could not find vcvarsall.bat. '
+      'Consider using --vcvarsall_path option e.g.\n'
+      'python build_qt.py --release --confirm_license '
+      r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+  )
 
 
 def get_vs_env_vars(
