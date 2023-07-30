@@ -172,21 +172,21 @@
                   DiskId='1' Checksum='yes'
                   Source='$(var.ReleaseRedistCrt32Dir)/vcruntime140.dll' />
             </Component>
-            <Component Id='Qt5CoreDll' Guid='*'>
+            <Component Id='QtCoreDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Core.dll' Name='Qt5Core.dll' On="install" />
               <File Id='Qt5Core.dll'
                   Name='Qt5Core.dll' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.QtDir)/bin/Qt5Core.dll' />
             </Component>
-            <Component Id='Qt5GuiDll' Guid='*'>
+            <Component Id='QtGuiDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Gui.dll' Name='Qt5Gui.dll' On="install" />
               <File Id='Qt5Gui.dll'
                   Name='Qt5Gui.dll' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.QtDir)/bin/Qt5Gui.dll' />
             </Component>
-            <Component Id='Qt5WidgetsDll' Guid='*'>
+            <Component Id='QtWidgetsDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Widgets.dll' Name='Qt5Widgets.dll' On="install" />
               <File Id='Qt5Widgets.dll'
@@ -194,21 +194,21 @@
                   Checksum='yes' Source='$(var.QtDir)/bin/Qt5Widgets.dll' />
             </Component>
           <?else?>
-            <Component Id='Qt5CoredDll' Guid='*'>
+            <Component Id='QtCoredDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
               <File Id='Qt5Cored.dll'
                   Name='Qt5Cored.dll' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.QtDir)/bin/Qt5Cored.dll' />
             </Component>
-            <Component Id='Qt5GuidDll' Guid='*'>
+            <Component Id='QtGuidDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
               <File Id='Qt5Guid.dll'
                   Name='Qt5Guid.dll' DiskId='1' Vital='yes'
                   Checksum='yes' Source='$(var.QtDir)/bin/Qt5Guid.dll' />
             </Component>
-            <Component Id='Qt5WidgetsdDll' Guid='*'>
+            <Component Id='QtWidgetsdDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
               <File Id='Qt5Widgetsd.dll'
@@ -302,14 +302,14 @@
       <?if $(var.VSConfigurationName) = "Release" ?>
         <ComponentRef Id='msvcp140' />
         <ComponentRef Id='vcruntime140' />
-        <ComponentRef Id='Qt5CoreDll' />
-        <ComponentRef Id='Qt5GuiDll' />
-        <ComponentRef Id='Qt5WidgetsDll' />
+        <ComponentRef Id='QtCoreDll' />
+        <ComponentRef Id='QtGuiDll' />
+        <ComponentRef Id='QtWidgetsDll' />
         <ComponentRef Id='QWindowsDll' />
       <?else?>
-        <ComponentRef Id='Qt5CoredDll' />
-        <ComponentRef Id='Qt5GuidDll' />
-        <ComponentRef Id='Qt5WidgetsdDll' />
+        <ComponentRef Id='QtCoredDll' />
+        <ComponentRef Id='QtGuidDll' />
+        <ComponentRef Id='QtWidgetsdDll' />
         <ComponentRef Id='QWindowsdDll' />
       <?endif?>
       <ComponentRef Id='SysProcs' />
