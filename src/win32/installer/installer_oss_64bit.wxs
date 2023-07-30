@@ -177,21 +177,21 @@
               <RemoveFile Id='Qt5Core.dll' Name='Qt5Core.dll' On="install" />
               <File Id='Qt5Core.dll'
                   Name='Qt5Core.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5CoreDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Core.dll' />
             </Component>
             <Component Id='Qt5GuiDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Gui.dll' Name='Qt5Gui.dll' On="install" />
               <File Id='Qt5Gui.dll'
                   Name='Qt5Gui.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5GuiDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Gui.dll' />
             </Component>
             <Component Id='Qt5WidgetsDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Widgets.dll' Name='Qt5Widgets.dll' On="install" />
               <File Id='Qt5Widgets.dll'
                   Name='Qt5Widgets.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5WidgetsDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Widgets.dll' />
             </Component>
           <?else?>
             <Component Id='Qt5CoredDll' Guid='*'>
@@ -199,21 +199,21 @@
               <RemoveFile Id='Qt5Cored.dll' Name='Qt5Cored.dll' On="install" />
               <File Id='Qt5Cored.dll'
                   Name='Qt5Cored.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5CoredDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Cored.dll' />
             </Component>
             <Component Id='Qt5GuidDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Guid.dll' Name='Qt5Guid.dll' On="install" />
               <File Id='Qt5Guid.dll'
                   Name='Qt5Guid.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5GuidDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Guid.dll' />
             </Component>
             <Component Id='Qt5WidgetsdDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
               <RemoveFile Id='Qt5Widgetsd.dll' Name='Qt5Widgetsd.dll' On="install" />
               <File Id='Qt5Widgetsd.dll'
                   Name='Qt5Widgetsd.dll' DiskId='1' Vital='yes'
-                  Checksum='yes' Source='$(var.Qt5WidgetsdDllPath)' />
+                  Checksum='yes' Source='$(var.QtDir)/bin/Qt5Widgetsd.dll' />
             </Component>
           <?endif?>
           <Directory Id='DocumentsDir' Name='documents'>
@@ -230,7 +230,7 @@
                 <RemoveFile Id='qwindowsd.dll' Name='qwindowsd.dll' On="install" />
                 <File Id='qwindowsd.dll'
                     Name='qwindowsd.dll' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QWindowsdDllPath)' />
+                    Checksum='yes' Source='$(var.QtDir)/plugins/platforms/qwindowsd.dll' />
               </Component>
             <?else?>
               <Component Id='QWindowsDll' Guid='*'>
@@ -238,7 +238,7 @@
                 <RemoveFile Id='qwindows.dll' Name='qwindows.dll' On="install" />
                 <File Id='qwindows.dll'
                     Name='qwindows.dll' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.QWindowsDllPath)' />
+                    Checksum='yes' Source='$(var.QtDir)/plugins/platforms/qwindows.dll' />
               </Component>
             <?endif?>
           </Directory>
