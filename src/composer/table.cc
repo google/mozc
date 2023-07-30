@@ -580,7 +580,7 @@ const Table &Table::GetDefaultTable() {
 // TableContainer
 // ========================================
 TableManager::TableManager()
-    : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {}
+    : custom_roman_table_fingerprint_(Fingerprint32("")) {}
 
 const Table *TableManager::GetTable(
     const mozc::commands::Request &request, const mozc::config::Config &config,
@@ -600,7 +600,7 @@ const Table *TableManager::GetTable(
   if ((config.preedit_method() == config::Config::ROMAN) &&
       config.has_custom_roman_table() && !config.custom_roman_table().empty()) {
     const uint32_t custom_roman_table_fingerprint =
-        Hash::Fingerprint32(config.custom_roman_table());
+        Fingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
       update_custom_roman_table = true;
       custom_roman_table_fingerprint_ = custom_roman_table_fingerprint;

@@ -47,7 +47,6 @@ mozc_cc_binary(
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
         ":cache_service_manager",
-        "//base:file_util",
         "//base:system_util",
         "//base/win32:wide_char",
         "//base/win32:winmain",

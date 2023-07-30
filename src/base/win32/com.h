@@ -75,8 +75,9 @@ wil::com_ptr_nothrow<Interface> ComCreateInstance() {
 namespace com_internal {
 
 template <typename Ptr, typename Interface,
-          typename = std::enable_if_t<std::is_pointer_v<Ptr> &&
-                                      std::is_base_of_v<IUnknown, Interface>>>
+          std::enable_if_t<std::is_pointer_v<Ptr> &&
+                               std::is_base_of_v<IUnknown, Interface>,
+                           std::nullptr_t> = nullptr>
 using is_convertible =
     std::is_convertible<absl::remove_cvref_t<Ptr>, Interface *>;
 

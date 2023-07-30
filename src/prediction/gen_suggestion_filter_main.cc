@@ -68,7 +68,7 @@ void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
       continue;
     }
     mozc::Util::LowerString(&line);
-    words->push_back(mozc::Hash::Fingerprint(line));
+    words->push_back(mozc::Fingerprint(line));
   }
 }
 
@@ -107,7 +107,7 @@ bool TestFilter(const ExistenceFilterBuilder &builder,
                 const std::vector<std::string> &safe_word_list) {
   ExistenceFilter filter = builder.Build();
   for (const std::string &word : safe_word_list) {
-    if (filter.Exists(mozc::Hash::Fingerprint(word))) {
+    if (filter.Exists(mozc::Fingerprint(word))) {
       LOG(WARNING) << "Safe word, " << word
                    << " is determined as bad suggestion.";
       return false;

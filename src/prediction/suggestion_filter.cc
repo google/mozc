@@ -64,7 +64,7 @@ SuggestionFilter SuggestionFilter::CreateOrDie(
 bool SuggestionFilter::IsBadSuggestion(const absl::string_view text) const {
   std::string lower_text(text);
   Util::LowerString(&lower_text);
-  return filter_.Exists(Hash::Fingerprint(lower_text));
+  return filter_.Exists(Fingerprint(lower_text));
 }
 
 }  // namespace mozc

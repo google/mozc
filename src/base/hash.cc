@@ -30,8 +30,9 @@
 #include "base/hash.h"
 
 #include <cstdint>
+#include <limits>
 
-#include "base/port.h"
+#include "base/logging.h"
 
 namespace mozc {
 namespace {
@@ -40,49 +41,51 @@ constexpr uint32_t kFingerPrint32Seed = 0xfd12deff;
 constexpr uint32_t kFingerPrintSeed0 = 0x6d6f;
 constexpr uint32_t kFingerPrintSeed1 = 0x7a63;
 
+uint32_t ToUint32(char a, char b, char c, char d) {
+  return uint32_t{a} + (uint32_t{b} << 8) + (uint32_t{c} << 16) +
+         (uint32_t{d} << 24);
+}
+
+template <class T>
+void Mix(T &a, T &b, T &c) {
+  a -= b;
+  a -= c;
+  a ^= (c >> 13);
+  b -= c;
+  b -= a;
+  b ^= (a << 8);
+  c -= a;
+  c -= b;
+  c ^= (b >> 13);
+  a -= b;
+  a -= c;
+  a ^= (c >> 12);
+  b -= c;
+  b -= a;
+  b ^= (a << 16);
+  c -= a;
+  c -= b;
+  c ^= (b >> 5);
+  a -= b;
+  a -= c;
+  a ^= (c >> 3);
+  b -= c;
+  b -= a;
+  b ^= (a << 10);
+  c -= a;
+  c -= b;
+  c ^= (b >> 15);
+}
+
 }  // namespace
 
-#define Mix(a, b, c) \
-  {                  \
-    a -= b;          \
-    a -= c;          \
-    a ^= (c >> 13);  \
-    b -= c;          \
-    b -= a;          \
-    b ^= (a << 8);   \
-    c -= a;          \
-    c -= b;          \
-    c ^= (b >> 13);  \
-    a -= b;          \
-    a -= c;          \
-    a ^= (c >> 12);  \
-    b -= c;          \
-    b -= a;          \
-    b ^= (a << 16);  \
-    c -= a;          \
-    c -= b;          \
-    c ^= (b >> 5);   \
-    a -= b;          \
-    a -= c;          \
-    a ^= (c >> 3);   \
-    b -= c;          \
-    b -= a;          \
-    b ^= (a << 10);  \
-    c -= a;          \
-    c -= b;          \
-    c ^= (b >> 15);  \
-  }
-
-uint32_t Hash::Fingerprint32(absl::string_view str) {
+uint32_t Fingerprint32(absl::string_view str) {
   return Fingerprint32WithSeed(str, kFingerPrint32Seed);
 }
 
-uint32_t Hash::Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
-#define U32(x) static_cast<uint32_t>(x)
-#define ToUint32(a, b, c, d) \
-  (U32(a) + (U32(b) << 8) + (U32(c) << 16) + (U32(d) << 24))
-
-  const uint32_t str_len = U32(str.size());
+uint32_t Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
+  DCHECK_LE(str.size(), std::numeric_limits<uint32_t>::max());
+  const uint32_t str_len = static_cast<uint32_t>(str.size());
   uint32_t a = 0x9e3779b9;
   uint32_t b = a;
   uint32_t c = seed;
@@ -95,54 +98,52 @@ uint32_t Hash::Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
     str.remove_prefix(12);
   }
 
-  c += U32(str_len);
+  c += str_len;
   switch (str.size()) {
     case 11:
-      c += U32(str[10]) << 24;
+      c += uint32_t{str[10]} << 24;
       ABSL_FALLTHROUGH_INTENDED;
     case 10:
-      c += U32(str[9]) << 16;
+      c += uint32_t{str[9]} << 16;
       ABSL_FALLTHROUGH_INTENDED;
     case 9:
-      c += U32(str[8]) << 8;
+      c += uint32_t{str[8]} << 8;
       ABSL_FALLTHROUGH_INTENDED;
     case 8:
-      b += U32(str[7]) << 24;
+      b += uint32_t{str[7]} << 24;
       ABSL_FALLTHROUGH_INTENDED;
     case 7:
-      b += U32(str[6]) << 16;
+      b += uint32_t{str[6]} << 16;
       ABSL_FALLTHROUGH_INTENDED;
     case 6:
-      b += U32(str[5]) << 8;
+      b += uint32_t{str[5]} << 8;
       ABSL_FALLTHROUGH_INTENDED;
     case 5:
-      b += U32(str[4]);
+      b += uint32_t{str[4]};
       ABSL_FALLTHROUGH_INTENDED;
     case 4:
-      a += U32(str[3]) << 24;
+      a += uint32_t{str[3]} << 24;
       ABSL_FALLTHROUGH_INTENDED;
     case 3:
-      a += U32(str[2]) << 16;
+      a += uint32_t{str[2]} << 16;
       ABSL_FALLTHROUGH_INTENDED;
     case 2:
-      a += U32(str[1]) << 8;
+      a += uint32_t{str[1]} << 8;
       ABSL_FALLTHROUGH_INTENDED;
     case 1:
-      a += U32(str[0]);
+      a += uint32_t{str[0]};
       break;
   }
   Mix(a, b, c);
 
   return c;
-#undef ToUint32
-#undef U32
 }
 
-uint64_t Hash::Fingerprint(absl::string_view str) {
+uint64_t Fingerprint(absl::string_view str) {
   return FingerprintWithSeed(str, kFingerPrintSeed0);
 }
 
-uint64_t Hash::FingerprintWithSeed(absl::string_view str, uint32_t seed) {
+uint64_t FingerprintWithSeed(absl::string_view str, uint32_t seed) {
   const uint32_t hi = Fingerprint32WithSeed(str, seed);
   const uint32_t lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
   uint64_t result = static_cast<uint64_t>(hi) << 32 | static_cast<uint64_t>(lo);

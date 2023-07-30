@@ -156,7 +156,7 @@ void ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 }
 
 void ConfigHandlerImpl::SetConfig(const Config &config) {
-  uint64_t hash = Hash::Fingerprint(config.SerializeAsString());
+  uint64_t hash = Fingerprint(config.SerializeAsString());
 
   absl::MutexLock lock(&mutex_);
 

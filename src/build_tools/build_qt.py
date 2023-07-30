@@ -49,6 +49,8 @@ or so.
 
 import argparse
 from collections.abc import Iterator
+import dataclasses
+import functools
 import json
 import os
 import pathlib
@@ -58,7 +60,7 @@ import subprocess
 import sys
 import tarfile
 import time
-from typing import Union
+from typing import Any, Union
 import zipfile
 
 
@@ -176,6 +178,68 @@ def qt_extract_filter(
         yield info
 
 
+@dataclasses.dataclass
+@functools.total_ordering
+class QtVersion:
+  """Data type for Qt version.
+
+  Attributes:
+    major: Major version.
+    minor: Minor version.
+    patch: Patch level.
+  """
+  major: int
+  minor: int
+  patch: int
+
+  def __hash__(self) -> int:
+    return hash(self.major, self.minor, self.patch)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, QtVersion):
+      return NotImplemented
+    return (
+        self.major == other.major
+        and self.minor == other.minor
+        and self.patch == other.patch
+    )
+
+  def __lt__(self, other: Any) -> bool:
+    if not isinstance(other, QtVersion):
+      return NotImplemented
+    if self.major != other.major:
+      return self.major < other.major
+    if self.minor != other.minor:
+      return self.minor < other.minor
+    return self.patch < other.patch
+
+
+def get_qt_version(args: argparse.Namespace) -> QtVersion:
+  """Get the Qt version.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+
+  Returns:
+    QtVersion object.
+  """
+  archive_name = pathlib.Path(args.qt_archive_path).resolve().name
+  ver_string_tuple = (
+      archive_name
+      .removeprefix('qtbase-everywhere-opensource-src-')
+      .removeprefix('qtbase-everywhere-src-')
+      .removesuffix('.tar.xz')
+      .split('.')
+  )
+  if len(ver_string_tuple) != 3:
+    raise ValueError(f'Unsupported qt archive name: {archive_name}')
+  return QtVersion(
+      major=int(ver_string_tuple[0]),
+      minor=int(ver_string_tuple[1]),
+      patch=int(ver_string_tuple[2]),
+  )
+
+
 def make_configure_options(args: argparse.Namespace) -> list[str]:
   """Makes necessary configure options based on args.
 
@@ -185,6 +249,8 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   Returns:
     A list of configure options to be passed to configure of Qt.
   """
+
+  qt_version = get_qt_version(args)
 
   qt_configure_options = ['-opensource',
                           '-silent',
@@ -206,11 +272,11 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                           '-no-sql-odbc',
                           '-no-sql-psql',
                           '-no-sql-sqlite',
-                          '-no-sql-sqlite2',
-                          '-no-sql-tds',
                           '-nomake', 'examples',
                           '-nomake', 'tests',
                          ]
+  if qt_version.major == 5:
+    qt_configure_options += ['-no-sql-sqlite2', '-no-sql-tds']
 
   if is_mac():
     qt_configure_options += [
@@ -221,11 +287,11 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   elif is_windows():
     qt_configure_options += ['-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
-                             '-no-angle',
-                             '-no-direct2d',
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']
+    if qt_version.major == 5:
+      qt_configure_options += ['-no-angle', '-no-direct2d']
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
 
@@ -291,7 +357,7 @@ def patch_file(file: pathlib.Path, pattern: str, replaced: str,
 
 
 def build_on_mac(args: argparse.Namespace) -> None:
-  """Build the Qt5 library on Mac.
+  """Build Qt from the source code on Mac.
 
 
   Args:
@@ -305,25 +371,30 @@ def build_on_mac(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  jobs = os.cpu_count() * 2
-  os.environ['MAKEFLAGS'] = '--jobs=%s' % jobs
   os.chdir(qt_src_dir)
 
-  commands = ['./configure'] + make_configure_options(args)
+  configure_cmds = ['./configure'] + make_configure_options(args)
+  if get_qt_version(args).major == 5:
+    build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
+    install_cmds = ['make', 'install']
+  else:
+    build_cmds = ['cmake', '--build', '.', '--parallel']
+    install_cmds = ['cmake', '--install', '.']
   if args.dryrun:
-    print(f'dryrun: run_or_die({commands})')
-    print('dryrun: make')
+    print(f'dryrun: run_or_die({configure_cmds})')
+    print('dryrun: run_or_die({build_cmds})')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
-      print('dryrun: make install')
+      print('dryrun: run_or_die({install_cmds})')
   else:
-    run_or_die(commands)
-    run_or_die(['make'])
+    run_or_die(configure_cmds)
+
+    run_or_die(build_cmds)
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      run_or_die(['make', 'install'])
+      run_or_die(install_cmds)
 
 
 def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
@@ -343,14 +414,20 @@ def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
     if path.exists():
       return path
 
-  for edition in ['Community', 'Professional', 'Enterprise']:
-    vcvarsall = pathlib.Path('C:\\', 'Program Files', 'Microsoft Visual Studio',
-                             '2022', edition, 'VC', 'Auxiliary', 'Build',
-                             'vcvarsall.bat')
-    if vcvarsall.exists():
-      return vcvarsall
+  for program_files in ['Program Files', 'Program Files (x86)']:
+    for edition in ['Community', 'Professional', 'Enterprise', 'BuildTools']:
+      vcvarsall = pathlib.Path('C:\\', program_files, 'Microsoft Visual Studio',
+                               '2022', edition, 'VC', 'Auxiliary', 'Build',
+                               'vcvarsall.bat')
+      if vcvarsall.exists():
+        return vcvarsall
 
-  raise FileNotFoundError('Could not find vcvarsall.bat')
+  raise FileNotFoundError(
+      'Could not find vcvarsall.bat. '
+      'Consider using --vcvarsall_path option e.g.\n'
+      'python build_qt.py --release --confirm_license '
+      r' --vcvarsall_path=C:\VS\VC\Auxiliary\Build\vcvarsall.bat'
+  )
 
 
 def get_vs_env_vars(
@@ -437,12 +514,13 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   options = make_configure_options(args)
   configs = ' '.join(options)
-  command = f'configure.bat {configs}'
+  configure_cmds = f'configure.bat {configs}'
   if args.dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
-          f' cwd={qt_src_dir}, env={env})')
+    print(f"dryrun: subprocess.run('{configure_cmds}', shell=True, check=True,"
+          f' cwd={configure_cmds}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True, cwd=qt_src_dir, env=env)
+    subprocess.run(configure_cmds, shell=True, check=True, cwd=qt_src_dir,
+                   env=env)
 
   # In order not to expose internal build path, replace paths in qconfig.cpp,
   # which have been embedded by configure.exe based on the build directory.
@@ -453,21 +531,27 @@ def build_on_windows(args: argparse.Namespace) -> None:
       'C:/qtbase',
       args.dryrun)
 
-  jom = qt_src_dir.joinpath('jom.exe')
+  if get_qt_version(args).major == 5:
+    jom = qt_src_dir.joinpath('jom.exe')
+    build_cmds = [str(jom)]
+    install_cmds = [str(jom), 'install']
+  else:
+    build_cmds = ['cmake.exe', '--build', '.', '--parallel']
+    install_cmds = ['cmake.exe', '--install', '.']
   if args.dryrun:
-    print(f'dryrun: subprocess.run(str({jom}), shell=True, check=True,'
+    print(f'dryrun: subprocess.run({build_cmds}, shell=True, check=True,'
           f' cwd={qt_src_dir}, env={env})')
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         print(f'dryrun: delete {qt_dest_dir}')
-      print(f"dryrun: subprocess.run([str({jom}), 'install'], shell=True,"
-            f" check=True, cwd={qt_src_dir}, env={env})")
+      print(f'dryrun: subprocess.run({install_cmds}, shell=True,'
+            f' check=True, cwd={qt_src_dir}, env={env})')
   else:
-    subprocess.run(str(jom), shell=True, check=True, cwd=qt_src_dir, env=env)
+    subprocess.run(build_cmds, shell=True, check=True, cwd=qt_src_dir, env=env)
     if qt_src_dir != qt_dest_dir:
       if qt_dest_dir.exists():
         shutil.rmtree(qt_dest_dir)
-      subprocess.run([str(jom), 'install'], shell=True, check=True,
+      subprocess.run(install_cmds, shell=True, check=True,
                      cwd=qt_src_dir, env=env)
 
 

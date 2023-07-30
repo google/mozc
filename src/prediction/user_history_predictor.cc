@@ -2020,9 +2020,9 @@ uint32_t UserHistoryPredictor::Fingerprint(const absl::string_view key,
     // Since we have already used the fingerprint function for next entries and
     // next entries are saved in user's local machine, we are not able
     // to change the Fingerprint function for the old key/value type.
-    return Hash::Fingerprint32(absl::StrCat(key, kDelimiter, value));
+    return Fingerprint32(absl::StrCat(key, kDelimiter, value));
   } else {
-    return Hash::Fingerprint32(static_cast<uint8_t>(type));
+    return Fingerprint32(static_cast<uint8_t>(type));
   }
 }
 

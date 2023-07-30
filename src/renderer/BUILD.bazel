@@ -29,7 +29,6 @@
 
 load(
     "//:build_defs.bzl",
-    "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
     "mozc_macos_application",
@@ -190,12 +189,6 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
-    name = "unix_const",
-    hdrs = ["unix/const.h"],
-    deps = ["//base:port"],
-)
-
-mozc_cc_library(
     name = "renderer_mock",
     testonly = True,
     hdrs = ["renderer_mock.h"],
@@ -243,144 +236,6 @@ mozc_cc_test(
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
     ],
-)
-
-# This rule is only for Linux application build.
-mozc_cc_library(
-    name = "gtk_mozc_renderer_lib",
-    srcs = mozc_select(
-        linux = [
-            "unix/cairo_factory.cc",
-            "unix/cairo_wrapper.cc",
-            "unix/candidate_window.cc",
-            "unix/draw_tool.cc",
-            "unix/font_spec.cc",
-            "unix/gtk_window_base.cc",
-            "unix/gtk_wrapper.cc",
-            "unix/infolist_window.cc",
-            "unix/pango_wrapper.cc",
-            "unix/text_renderer.cc",
-            "unix/unix_renderer.cc",
-            "unix/unix_server.cc",
-            "unix/window_manager.cc",
-        ],
-    ),
-    hdrs = mozc_select(
-        linux = [
-            "unix/cairo_factory.h",
-            "unix/cairo_factory_interface.h",
-            "unix/cairo_wrapper.h",
-            "unix/cairo_wrapper_interface.h",
-            "unix/candidate_window.h",
-            "unix/const.h",
-            "unix/draw_tool.h",
-            "unix/draw_tool_interface.h",
-            "unix/font_spec.h",
-            "unix/font_spec_interface.h",
-            "unix/gtk_window_base.h",
-            "unix/gtk_window_interface.h",
-            "unix/gtk_wrapper.h",
-            "unix/gtk_wrapper_interface.h",
-            "unix/infolist_window.h",
-            "unix/pango_wrapper.h",
-            "unix/pango_wrapper_interface.h",
-            "unix/text_renderer.h",
-            "unix/text_renderer_interface.h",
-            "unix/unix_renderer.h",
-            "unix/unix_server.h",
-            "unix/window_manager.h",
-            "unix/window_manager_interface.h",
-        ],
-    ),
-    deps = [
-        ":renderer_interface",
-        ":renderer_server",
-        ":renderer_style_handler",
-        ":table_layout",
-        ":window_util",
-        "//base:coordinates",
-        "//base:logging",
-        "//base:port",
-        "//base:util",
-        "//client",
-        "//client:client_interface",
-        "//config:stats_config_util",
-        "//ipc",
-        "//protocol:config_cc_proto",
-        "//protocol:renderer_cc_proto",
-        "//testing:gunit_prod",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
-    ] + mozc_select(
-        oss_linux = ["@gtk2//:gtk2"],
-    ),
-)
-
-mozc_cc_binary(
-    name = "gtk_mozc_renderer",
-    srcs = ["unix/gtk_renderer_main.cc"],
-    defines = mozc_select(linux = ["ENABLE_GTK_RENDERER"]),
-    deps = [
-        ":gtk_mozc_renderer_lib",
-        ":renderer_client",
-        ":table_layout",
-        "//renderer:init_mozc_renderer",
-    ],
-)
-
-# This rule is only for Linux application build.
-mozc_cc_test(
-    name = "gtk_renderer_test",
-    srcs = mozc_select(
-        linux = [
-            "renderer_mock.h",
-            "table_layout_mock.h",
-            "unix/cairo_factory_interface.h",
-            "unix/cairo_factory_mock.h",
-            "unix/cairo_wrapper_interface.h",
-            "unix/cairo_wrapper_mock.h",
-            "unix/candidate_window_test.cc",
-            "unix/draw_tool_interface.h",
-            "unix/draw_tool_mock.h",
-            "unix/draw_tool_test.cc",
-            "unix/font_spec_interface.h",
-            "unix/font_spec_test.cc",
-            "unix/gtk_window_base_test.cc",
-            "unix/gtk_window_interface.h",
-            "unix/gtk_window_mock.h",
-            "unix/gtk_wrapper_interface.h",
-            "unix/gtk_wrapper_mock.h",
-            "unix/infolist_window_test.cc",
-            "unix/pango_wrapper_interface.h",
-            "unix/text_renderer_interface.h",
-            "unix/text_renderer_mock.h",
-            "unix/text_renderer_test.cc",
-            "unix/unix_renderer_test.cc",
-            "unix/unix_server_test.cc",
-            "unix/window_manager_interface.h",
-            "unix/window_manager_mock.h",
-            "unix/window_manager_test.cc",
-        ],
-    ),
-    deps = [
-        ":gtk_mozc_renderer_lib",
-        ":renderer_interface",
-        ":renderer_style_handler",
-        "//base:coordinates",
-        "//base:logging",
-        "//base:port",
-        "//base:system_util",
-        "//base:util",
-        "//client:client_interface",
-        "//protocol:renderer_cc_proto",
-        "//testing:gunit_main",
-        "//testing:mozctest",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/random",
-    ] + mozc_select(
-        oss_linux = ["@gtk2//:gtk2"],
-    ),
 )
 
 # macOS

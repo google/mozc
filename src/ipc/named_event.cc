@@ -92,8 +92,8 @@ std::string NamedEventUtil::GetEventPath(const char *name) {
   //  equal to or less than 13 characters in length not including the
   //  terminating null character."
   constexpr size_t kEventPathLength = 13;
-  std::string buf = absl::StrFormat(
-      "/%x", static_cast<uint64_t>(Hash::Fingerprint(event_name)));
+  std::string buf =
+      absl::StrFormat("/%x", static_cast<uint64_t>(Fingerprint(event_name)));
   buf.erase(std::min(kEventPathLength, buf.size()));
   return buf;
 #endif  // _WIN32

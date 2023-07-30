@@ -67,8 +67,10 @@ namespace wide_char_internal {
 // These helper functions explicitly take std::wstring_view to prevent object
 // size bloat. Also it's explicitly marked noinline because otherwise it'll get
 // inlined into StrAppendW.
-template <typename... Ts, typename = std::enable_if_t<std::conjunction_v<
-                              std::is_same<Ts, std::wstring_view>...>>>
+template <
+    typename... Ts,
+    std::enable_if_t<std::conjunction_v<std::is_same<Ts, std::wstring_view>...>,
+                     std::nullptr_t> = nullptr>
 ABSL_ATTRIBUTE_NOINLINE void StrAppendWInternal(std::wstring *dest,
                                                 const Ts... args) {
   dest->reserve(dest->size() + (0 + ... + args.size()));
@@ -87,9 +89,11 @@ void StrAppendWInternal(std::wstring *dest,
 // libc++).
 // There is no portable way to efficiently append multiple strings in C++ yet:
 // http://wg21.link/P1072R10
-template <typename... Ts,
-          typename = std::enable_if_t<std::conjunction_v<
-              std::is_constructible<std::wstring_view, Ts &>...>>>
+template <
+    typename... Ts,
+    std::enable_if_t<
+        std::conjunction_v<std::is_constructible<std::wstring_view, Ts &>...>,
+        std::nullptr_t> = nullptr>
 void StrAppendW(std::wstring *dest, const Ts &...args) {
   if constexpr (sizeof...(Ts) == 1) {
     // No need to call reserve() for one string.
@@ -107,9 +111,11 @@ void StrAppendW(std::wstring *dest, const Ts &...args) {
 inline void StrAppendW(std::wstring *dest) {}
 
 // Simplified absl::StrCat. Same restrictions apply as StrAppendW.
-template <typename... Ts,
-          typename = std::enable_if_t<std::conjunction_v<
-              std::is_constructible<std::wstring_view, Ts &>...>>>
+template <
+    typename... Ts,
+    std::enable_if_t<
+        std::conjunction_v<std::is_constructible<std::wstring_view, Ts &>...>,
+        std::nullptr_t> = nullptr>
 ABSL_MUST_USE_RESULT std::wstring StrCatW(const Ts &...args) {
   if constexpr (sizeof...(Ts) <= 1) {
     return std::wstring(args...);

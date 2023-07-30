@@ -62,8 +62,8 @@ using ::mozc::utf8_internal::OneCharLen;
 // REQUIRES: The iterator is valid, points to the leading byte of the UTF-8
 // character, and the value type is char.
 template <typename InputIterator,
-          typename std::enable_if_t<!std::is_convertible_v<InputIterator, char>,
-                                    int> = 0>
+          std::enable_if_t<!std::is_convertible_v<InputIterator, char>,
+                           std::nullptr_t> = nullptr>
 constexpr uint8_t OneCharLen(const InputIterator it) {
   static_assert(
       std::is_same_v<typename std::iterator_traits<InputIterator>::value_type,
