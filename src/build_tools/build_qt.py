@@ -483,6 +483,25 @@ def get_vs_env_vars(
   return json.loads(stdout.decode('ascii'))
 
 
+def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
+                 env: dict[str, str], dryrun: bool = False) -> None:
+  """Run the specified command.
+
+  Args:
+    command: Command to run.
+    cwd: Directory to execute the command.
+    env: Environment variables.
+    dryrun: True to execute the specified command as a dry run.
+  Raises:
+    CalledProcessError: When the process failed.
+  """
+  if dryrun:
+    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
+          f' cwd={cwd}, env={env})')
+  else:
+    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+
+
 def build_on_windows(args: argparse.Namespace) -> None:
   """Build Qt from the source code on Windows.
 
@@ -515,12 +534,7 @@ def build_on_windows(args: argparse.Namespace) -> None:
   options = make_configure_options(args)
   configs = ' '.join(options)
   configure_cmds = f'configure.bat {configs}'
-  if args.dryrun:
-    print(f"dryrun: subprocess.run('{configure_cmds}', shell=True, check=True,"
-          f' cwd={configure_cmds}, env={env})')
-  else:
-    subprocess.run(configure_cmds, shell=True, check=True, cwd=qt_src_dir,
-                   env=env)
+  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
   # In order not to expose internal build path, replace paths in qconfig.cpp,
   # which have been embedded by configure.exe based on the build directory.
@@ -538,21 +552,26 @@ def build_on_windows(args: argparse.Namespace) -> None:
   else:
     build_cmds = ['cmake.exe', '--build', '.', '--parallel']
     install_cmds = ['cmake.exe', '--install', '.']
-  if args.dryrun:
-    print(f'dryrun: subprocess.run({build_cmds}, shell=True, check=True,'
-          f' cwd={qt_src_dir}, env={env})')
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        print(f'dryrun: delete {qt_dest_dir}')
-      print(f'dryrun: subprocess.run({install_cmds}, shell=True,'
-            f' check=True, cwd={qt_src_dir}, env={env})')
-  else:
-    subprocess.run(build_cmds, shell=True, check=True, cwd=qt_src_dir, env=env)
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        shutil.rmtree(qt_dest_dir)
-      subprocess.run(install_cmds, shell=True, check=True,
-                     cwd=qt_src_dir, env=env)
+
+  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  if qt_src_dir == qt_dest_dir:
+    # No need to run 'install' command.
+    return
+
+  if qt_dest_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: shutil.rmtree({qt_dest_dir})')
+    else:
+      shutil.rmtree(qt_dest_dir)
+
+  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  # When both '--debug' and '--release' are specified for Qt6, we need to run
+  # the command again with '--config debug' option to install debug DLLs.
+  if get_qt_version(args).major == 6 and args.debug and args.release:
+    install_cmds += ['--config', 'debug']
+    exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
 
 def run_or_die(
