@@ -567,6 +567,12 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
+  # When both '--debug' and '--release' are specified for Qt6, we need to run
+  # the command again with '--config debug' option to install debug DLLs.
+  if get_qt_version(args).major == 6 and args.debug and args.release:
+    install_cmds += ['--config', 'debug']
+    exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
 
 def run_or_die(
     argv: list[Union[str, pathlib.Path]],
