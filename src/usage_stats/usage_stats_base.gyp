@@ -58,7 +58,7 @@
           'action_name': 'gen_usage_stats_list',
           'variables': {
             'input_files': [
-              '../data/usage_stats/stats.def',
+              '<(mozc_oss_src_dir)/data/usage_stats/stats.def',
             ],
           },
           'inputs': [
