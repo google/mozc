@@ -829,8 +829,8 @@
           'action_name': 'gen_single_kanji_data_for_<(dataset_tag)',
           'variables': {
             'generator': '<(mozc_dir)/rewriter/gen_single_kanji_rewriter_data.py',
-            'single_kanji_file': '<(mozc_dir)/data/single_kanji/single_kanji.tsv',
-            'variant_file': '<(mozc_dir)/data/single_kanji/variant_rule.txt',
+            'single_kanji_file': '<(mozc_oss_src_dir)/data/single_kanji/single_kanji.tsv',
+            'variant_file': '<(mozc_oss_src_dir)/data/single_kanji/variant_rule.txt',
           },
           'inputs': [
             '<(generator)',
