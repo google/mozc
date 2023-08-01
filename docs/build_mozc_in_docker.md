@@ -145,7 +145,6 @@ Note: This section is not about our officially supported build process.
 * Ibus: 1.5.4 or later
 * Qt5: 5.12 or later
 * libglib
-* libxcb
 
 You may also need other libraries.
 See the configurations of
