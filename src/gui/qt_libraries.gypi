@@ -53,9 +53,9 @@
                 '<(qt_dir)/lib',
               ],
               'AdditionalDependencies': [
-                'Qt5Cored.lib',
-                'Qt5Guid.lib',
-                'Qt5Widgetsd.lib',
+                'Qt<(qt_ver)Cored.lib',
+                'Qt<(qt_ver)Guid.lib',
+                'Qt<(qt_ver)Widgetsd.lib',
               ],
             },
           },
@@ -67,9 +67,9 @@
                 '<(qt_dir)/lib',
               ],
               'AdditionalDependencies': [
-                'Qt5Core.lib',
-                'Qt5Gui.lib',
-                'Qt5Widgets.lib',
+                'Qt<(qt_ver)Core.lib',
+                'Qt<(qt_ver)Gui.lib',
+                'Qt<(qt_ver)Widgets.lib',
               ],
             },
           },
@@ -109,8 +109,8 @@
       ]
     }],
     ['target_platform=="Linux"', {
-      'cflags': ['<!@(pkg-config --cflags Qt5Widgets Qt5Gui Qt5Core)'],
-      'libraries': ['<!@(pkg-config --libs Qt5Widgets Qt5Gui Qt5Core)'],
+      'cflags': ['<!@(pkg-config --cflags Qt<(qt_ver)Widgets Qt<(qt_ver)Gui Qt<(qt_ver)Core)'],
+      'libraries': ['<!@(pkg-config --libs Qt<(qt_ver)Widgets Qt<(qt_ver)Gui Qt<(qt_ver)Core)'],
     }],
     # Workarounds related with clang.
     ['(_toolset=="target" and compiler_target=="clang") or '
