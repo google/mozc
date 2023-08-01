@@ -43,6 +43,7 @@ import optparse
 import os
 import pathlib
 import re
+import subprocess
 import sys
 
 from build_tools import mozc_version
@@ -208,6 +209,21 @@ def GetDefaultQtPath():
   if possible_qt_path.exists():
     return possible_qt_path
   return None
+
+
+def GetQtMajorVersion(qtdir: str) -> int:
+  """Returns the Qt major version."""
+  if IsWindows():
+    moc_filename = 'moc.exe'
+  else:
+    moc_filename = 'moc'
+  moc = pathlib.Path(qtdir, 'bin', moc_filename).resolve()
+  if not moc.exists():
+    return None
+  result = subprocess.run([str(moc), '--version'], check=True,
+                          stdout=subprocess.PIPE)
+  qt_full_ver = result.stdout.decode('utf-8').split(' ')[1]
+  return int(qt_full_ver.split('.')[0])
 
 
 def ParseGypOptions(args):
@@ -454,24 +470,26 @@ def GypMain(options, unused_args):
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
 
   # Qt configurations
+  qt_dir = None
+  qt_ver = None
   if options.noqt:
     gyp_options.extend(['-D', 'use_qt=NO'])
-    gyp_options.extend(['-D', 'qt_dir='])
-  elif target_platform == 'Linux':
-    gyp_options.extend(['-D', 'use_qt=YES'])
-    gyp_options.extend(['-D', 'qt_dir='])
-
-    # Check if Qt libraries are installed.
-    if not PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
-      PrintErrorAndExit('Qt is required to build GUI Tool. '
-                        'Specify --noqt to skip building GUI Tool.')
-
   else:
     gyp_options.extend(['-D', 'use_qt=YES'])
-    if options.qtdir:
-      gyp_options.extend(['-D', 'qt_dir=%s' % os.path.abspath(options.qtdir)])
-    else:
-      gyp_options.extend(['-D', 'qt_dir='])
+    if target_platform == 'Linux':
+      if PkgExists('Qt6Core', 'Qt6Gui', 'Qt6Widgets'):
+        qt_ver = 6
+      if PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
+        qt_ver = 5
+      else:
+        PrintErrorAndExit('Qt is required to build GUI Tool. '
+                          'Specify --noqt to skip building GUI Tool.')
+    elif options.qtdir:
+      qt_dir = os.path.abspath(options.qtdir)
+      qt_ver = GetQtMajorVersion(options.qtdir)
+
+  gyp_options.extend(['-D', 'qt_dir=' + (qt_dir or '')])
+  gyp_options.extend(['-D', 'qt_ver=' + str(qt_ver or '')])
 
   if target_platform == 'Windows' and options.wix_dir:
     gyp_options.extend(['-D', 'use_wix=YES'])
@@ -531,7 +549,7 @@ def GypMain(options, unused_args):
     out_dir = os.path.join(MOZC_ROOT, 'out_win')
     UpdateEnvironmentFilesForWindows(out_dir)
 
-  if IsWindows() and (not options.noqt):
+  if IsWindows() and qt_dir and qt_ver:
     # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
     # and debug symbols into Mozc's build directory. This is important because:
     # - We can easily back up all the artifacts if relevant product binaries and
@@ -541,33 +559,32 @@ def GypMain(options, unused_args):
     # Perhaps the following code can also be implemented in gyp, but we atopt
     # this ad hock workaround as a first step.
     # TODO(yukawa): Implement the following logic in gyp, if magically possible.
-    abs_qtdir = os.path.abspath(options.qtdir)
-    abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
-    abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
+    abs_qt_bin_dir = os.path.join(qt_dir, 'bin')
+    abs_qt_lib_dir = os.path.join(qt_dir, 'lib')
     abs_out_win = GetBuildBaseName(target_platform)
     abs_out_win_debug_dynamic = os.path.join(abs_out_win, 'DebugDynamic')
     abs_out_win_release_dynamic = os.path.join(abs_out_win, 'ReleaseDynamic')
     copy_script = os.path.join(ABS_SCRIPT_DIR, 'build_tools',
                                'copy_dll_and_symbol.py')
     copy_params = [{
-        'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
+        'basenames': f'Qt{qt_ver}Cored;Qt{qt_ver}Guid;Qt{qt_ver}Widgetsd',
         'dll_paths': abs_qt_bin_dir,
         'pdb_paths': abs_qt_lib_dir,
         'target_dir': abs_out_win_debug_dynamic,
     }, {
-        'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets',
+        'basenames': f'Qt{qt_ver}Core;Qt{qt_ver}Gui;Qt{qt_ver}Widgets',
         'dll_paths': abs_qt_bin_dir,
         'pdb_paths': abs_qt_lib_dir,
         'target_dir': abs_out_win_release_dynamic,
     }, {
         'basenames': 'qwindowsd',
-        'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-        'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'dll_paths': os.path.join(qt_dir, 'plugins', 'platforms'),
+        'pdb_paths': os.path.join(qt_dir, 'plugins', 'platforms'),
         'target_dir': os.path.join(abs_out_win_debug_dynamic, 'platforms'),
     }, {
         'basenames': 'qwindows',
-        'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-        'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'dll_paths': os.path.join(qt_dir, 'plugins', 'platforms'),
+        'pdb_paths': os.path.join(qt_dir, 'plugins', 'platforms'),
         'target_dir': os.path.join(abs_out_win_release_dynamic, 'platforms'),
     }]
     for copy_param in copy_params:
