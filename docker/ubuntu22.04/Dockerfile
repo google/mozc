@@ -30,7 +30,7 @@
 # Build instructions with this Dockerfile.
 # https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -61,8 +61,8 @@ RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
 
 ## For Android NDK
-RUN curl -LO http://dl.google.com/android/repository/android-ndk-r21b-linux-x86_64.zip && unzip android-ndk-r21b-linux-x86_64.zip && rm android-ndk-r21b-linux-x86_64.zip
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r21b
+RUN curl -LO https://dl.google.com/android/repository/android-ndk-r25c-linux.zip && unzip android-ndk-r25c-linux.zip && rm android-ndk-r25c-linux.zip
+ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r25c
 
 # check out Mozc source with submodules
 RUN mkdir /home/mozc_builder/work/mozc
