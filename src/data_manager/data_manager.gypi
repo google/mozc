@@ -1005,7 +1005,7 @@
           'action_name': 'gen_qwerty_mobile-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1028,7 +1028,7 @@
           'action_name': 'gen_12keys-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_12keys-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_12keys-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1051,7 +1051,7 @@
           'action_name': 'gen_flick-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_flick-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_flick-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1074,7 +1074,7 @@
           'action_name': 'gen_godan-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_godan-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_godan-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1097,7 +1097,7 @@
           'action_name': 'gen_toggle_flick-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
             ],
           },
           'inputs': [
