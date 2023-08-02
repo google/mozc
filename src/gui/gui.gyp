@@ -687,6 +687,7 @@
                   'action': [
                     '<(python)', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--qtver', '<(qt_ver)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/GuiTool_lib.framework/Versions/A/GuiTool_lib',
                   ],
@@ -951,6 +952,7 @@
                   'action': [
                     '<(python)', '../build_tools/change_reference_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--qtver', '<(qt_ver)',
                     '--target',
                     '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',
                   ],

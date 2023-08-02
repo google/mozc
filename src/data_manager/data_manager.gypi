@@ -829,8 +829,8 @@
           'action_name': 'gen_single_kanji_data_for_<(dataset_tag)',
           'variables': {
             'generator': '<(mozc_dir)/rewriter/gen_single_kanji_rewriter_data.py',
-            'single_kanji_file': '<(mozc_dir)/data/single_kanji/single_kanji.tsv',
-            'variant_file': '<(mozc_dir)/data/single_kanji/variant_rule.txt',
+            'single_kanji_file': '<(mozc_oss_src_dir)/data/single_kanji/single_kanji.tsv',
+            'variant_file': '<(mozc_oss_src_dir)/data/single_kanji/variant_rule.txt',
           },
           'inputs': [
             '<(generator)',
@@ -919,7 +919,7 @@
               '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_oss_src_dir)/data/emoticon/categorized.tsv',
               '<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
-              '<(mozc_dir)/data/zero_query/zero_query.def',
+              '<(mozc_oss_src_dir)/data/zero_query/zero_query.def',
             ],
           },
           'inputs': [
@@ -932,7 +932,7 @@
           ],
           'action': [
             '<(python)', '<(generator)',
-            '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
+            '--input_rule=<(mozc_oss_src_dir)/data/zero_query/zero_query.def',
             '--input_symbol=<(mozc_oss_src_dir)/data/symbol/symbol.tsv',
             '--input_emoji=<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             '--input_emoticon=<(mozc_oss_src_dir)/data/emoticon/categorized.tsv',
@@ -945,7 +945,7 @@
           'variables': {
             'generator': '<(mozc_dir)/prediction/gen_zero_query_number_data.py',
             'input_files': [
-              '<(mozc_dir)/data/zero_query/zero_query_number.def',
+              '<(mozc_oss_src_dir)/data/zero_query/zero_query_number.def',
             ],
           },
           'inputs': [
@@ -958,7 +958,7 @@
           ],
           'action': [
             '<(python)', '<(generator)',
-            '--input=<(mozc_dir)/data/zero_query/zero_query_number.def',
+            '--input=<(mozc_oss_src_dir)/data/zero_query/zero_query_number.def',
             '--output_token_array=<(gen_out_dir)/zero_query_number_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_number_string.data',
           ],
@@ -1005,7 +1005,7 @@
           'action_name': 'gen_qwerty_mobile-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_qwerty_mobile-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1028,7 +1028,7 @@
           'action_name': 'gen_12keys-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_12keys-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_12keys-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1051,7 +1051,7 @@
           'action_name': 'gen_flick-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_flick-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_flick-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1074,7 +1074,7 @@
           'action_name': 'gen_godan-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_godan-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_godan-hiragana.tsv',
             ],
           },
           'inputs': [
@@ -1097,7 +1097,7 @@
           'action_name': 'gen_toggle_flick-hiragana_typing_model_<(dataset_tag)',
           'variables': {
             'input_files': [
-              '<(mozc_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
+              '<(mozc_oss_src_dir)/data/typing/typing_model_toggle_flick-hiragana.tsv',
             ],
           },
           'inputs': [

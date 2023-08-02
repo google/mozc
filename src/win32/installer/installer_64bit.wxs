@@ -31,12 +31,12 @@
 -->
 
 
-<?define QtCoreFilename="Qt5Core.dll" ?>
-<?define QtCoredFilename="Qt5Cored.dll" ?>
-<?define QtGuiFilename="Qt5Gui.dll" ?>
-<?define QtGuidFilename="Qt5Guid.dll" ?>
-<?define QtWidgetsFilename="Qt5Widgets.dll" ?>
-<?define QtWidgetsdFilename="Qt5Widgetsd.dll" ?>
+<?define QtCoreFilename="Qt$(var.QtVer)Core.dll" ?>
+<?define QtCoredFilename="Qt$(var.QtVer)Cored.dll" ?>
+<?define QtGuiFilename="Qt$(var.QtVer)Gui.dll" ?>
+<?define QtGuidFilename="Qt$(var.QtVer)Guid.dll" ?>
+<?define QtWidgetsFilename="Qt$(var.QtVer)Widgets.dll" ?>
+<?define QtWidgetsdFilename="Qt$(var.QtVer)Widgetsd.dll" ?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 

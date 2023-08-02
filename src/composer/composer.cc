@@ -60,6 +60,7 @@
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -238,8 +239,8 @@ const ModifierRemovalMap *GetModifierRemovalMap() {
 void RemoveExpandedCharsForModifier(absl::string_view asis,
                                     absl::string_view base,
                                     std::set<std::string> *expanded) {
-  if (asis.size() < base.size()) {
-    LOG(DFATAL) << "asis.size() is smaller than base.size().";
+  if (!absl::StartsWith(asis, base)) {
+    LOG(DFATAL) << "base is not a prefix of asis.";
     return;
   }
 

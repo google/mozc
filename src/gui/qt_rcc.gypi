@@ -34,7 +34,7 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        'rcc_path': '<!(pkg-config --variable=host_bins Qt5Core)/rcc',
+        'rcc_path': '<!(pkg-config --variable=host_bins Qt<(qt_ver)Core)/rcc',
       }, 'qt_dir', {
         'rcc_path': '<(qt_dir)/bin/rcc<(EXECUTABLE_SUFFIX)',
       }, {

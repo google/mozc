@@ -34,7 +34,7 @@
   'variables': {
     'conditions': [
       ['target_platform=="Linux"', {
-        'uic_path': '<!(pkg-config --variable=host_bins Qt5Core)/uic',
+        'uic_path': '<!(pkg-config --variable=host_bins Qt<(qt_ver)Core)/uic',
       }, 'qt_dir', {
         'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
       }, {

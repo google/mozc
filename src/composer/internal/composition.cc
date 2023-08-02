@@ -284,7 +284,7 @@ void Composition::GetExpandedStringsWithTransliterator(
 
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); it != std::prev(chunks_.end()); ++it) {
-    it->AppendFixedResult(transliterator, base);
+    it->AppendResult(transliterator, base);
   }
 
   chunks_.back().AppendTrimedResult(transliterator, base);

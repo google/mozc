@@ -53,6 +53,9 @@
     # use_qt is 'YES' only if you want to use GUI binaries.
     'use_qt%': 'YES',
 
+    # Qt version to be used.
+    'qt_ver%': '5',
+
     # use_libprotobuf represents if protobuf library is used or not.
     # This option is only for Linux.
     # You should not set this flag if you want to use "dlopen" to

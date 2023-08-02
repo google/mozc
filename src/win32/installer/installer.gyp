@@ -160,6 +160,7 @@
                 '-dCustomActions64Path=<(mozc_ca64_path)',
                 '-dDocumentsDir=<(document_dir)',
                 '-dQtDir=<(qt_dir)',
+                '-dQtVer=<(qt_ver)',
                 '-o', '<@(_outputs)',
                 # We do not use '<@(_inputs)' here because it contains some
                 # input files just for peoper rebiuld condition.

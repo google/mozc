@@ -32,7 +32,7 @@ r"""Change the reference to frameworks.
 
 Typical usage:
 
-  % change_reference_mac.py --qtdir=/path/to/qtdir/ \
+  % change_reference_mac.py --qtdir=/path/to/qtdir/ --qtver=5 \
       --target=/path/to/target.app/Contents/MacOS/target
 """
 
@@ -49,6 +49,7 @@ def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
+  parser.add_option('--qtver', dest='qtver')
   parser.add_option('--target', dest='target')
 
   (opts, _) = parser.parse_args()
@@ -76,28 +77,32 @@ def main():
   if not opt.qtdir:
     PrintErrorAndExit('--qtdir option is mandatory.')
 
+  if not opt.qtver:
+    PrintErrorAndExit('--qtver option is mandatory.')
+
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
   unused_qtdir = os.path.abspath(opt.qtdir)  # TODO(komatsu): remove this.
   target = os.path.abspath(opt.target)
+  qtver = str(opt.qtver)
 
   # Changes the reference to QtCore framework from the target application
   # From: @rpath/QtCore.framework/Versions/5/QtCore
   #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
-  qtcore_framework = GetFrameworkPath('QtCore', '5')
+  qtcore_framework = GetFrameworkPath('QtCore', qtver)
   InstallNameTool(target,
                   '@rpath/%s' % qtcore_framework,
                   GetReferenceTo(qtcore_framework))
 
   # Changes the reference to QtGui framework from the target application
-  qtgui_framework = GetFrameworkPath('QtGui', '5')
+  qtgui_framework = GetFrameworkPath('QtGui', qtver)
   InstallNameTool(target,
                   '@rpath/%s' % qtgui_framework,
                   GetReferenceTo(qtgui_framework))
 
   # Changes the reference to QtWidgets framework from the target application
-  qtwidgets_framework = GetFrameworkPath('QtWidgets', '5')
+  qtwidgets_framework = GetFrameworkPath('QtWidgets', qtver)
   InstallNameTool(target,
                   '@rpath/%s' % qtwidgets_framework,
                   GetReferenceTo(qtwidgets_framework))

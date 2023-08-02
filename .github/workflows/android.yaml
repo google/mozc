@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md
-    runs-on: ubuntu-20.04
+    # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
 
     steps:
@@ -26,8 +26,8 @@ jobs:
       - name: setup
         run: |
           sudo apt-get update
-          echo "CC=clang-12" >> $GITHUB_ENV
-          echo "CXX=clang++-12" >> $GITHUB_ENV
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
 
       - name: build
         working-directory: ./src
