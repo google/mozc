@@ -570,15 +570,18 @@ def extract_qt_src(args: argparse.Namespace) -> None:
       print(f'dryrun: delete {qt_src_dir}')
     else:
       shutil.rmtree(qt_src_dir)
+
   if args.dryrun:
     print(f'dryrun: extracting {args.qt_archive_path} to {qt_src_dir}')
-    if is_windows():
-      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
   else:
     qt_src_dir.mkdir(parents=True)
     with tarfile.open(args.qt_archive_path, mode='r|xz') as f:
       f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
-    if is_windows():
+
+  if is_windows() and get_qt_version(args).major == 5:
+    if args.dryrun:
+      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
+    else:
       with zipfile.ZipFile(args.jom_archive_path) as z:
         z.extractall(path=qt_src_dir)
 
