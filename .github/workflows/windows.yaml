@@ -76,6 +76,70 @@ jobs:
           path: src/out_win/Release/Mozc64.msi
           if-no-files-found: warn
 
+  build_with_qt5:
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up pip
+        shell: cmd
+        working-directory: .\src
+        run: |
+          python -m pip install six requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install Dependencies
+        shell: cmd
+        working-directory: .\src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          python build_tools/update_deps.py
+
+      - name: Biuld Qt
+        shell: cmd
+        working-directory: .\src
+        run: |
+          python build_tools/build_qt.py --release --confirm_license --qt_archive_path=third_party_cache/qtbase-everywhere-opensource-src-5.15.10.tar.xz
+
+      # This is needed only for GitHub Actions where free disk space is quite limited.
+      - name: Delete Qt src to save disk space
+        shell: cmd
+        working-directory: .\src
+        run: |
+          rmdir third_party\qt_src /s /q
+
+      - name: gyp
+        shell: cmd
+        working-directory: .\src
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py gyp
+
+      - name: build package
+        shell: cmd
+        working-directory: .\src
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py build -c Release package
+
+      - name: upload Mozc64.msi
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mozc64_with_qt5.msi
+          path: src/out_win/Release/Mozc64.msi
+          if-no-files-found: warn
+
   test:
     # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2022-Readme.md
     runs-on: windows-2022
