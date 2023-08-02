@@ -531,6 +531,11 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   env = get_vs_env_vars('amd64_x86', args.vcvarsall_path)
 
+  # Add qt_src_dir to 'PATH'.
+  # https://doc.qt.io/qt-5/windows-building.html#step-3-set-the-environment-variables
+  # https://doc.qt.io/qt-6/windows-building.html#step-3-set-the-environment-variables
+  env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
+
   options = make_configure_options(args)
   configs = ' '.join(options)
   configure_cmds = f'configure.bat {configs}'
