@@ -69,7 +69,7 @@ def ParseTSV(file):
 
 def GetText(node):
   if len(node) >= 1 and node[0].firstChild:
-    return node[0].firstChild.nodeValue.strip().replace('\t', ' ')
+    return node[0].firstChild.nodeValue.strip().replace('\t', ' ')  # pytype: disable=attribute-error
   else:
     return ''
 
