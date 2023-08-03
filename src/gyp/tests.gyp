@@ -70,7 +70,7 @@
         }],
         ['target_platform=="Linux"', {
           'dependencies': [
-            '../unix/emacs/emacs.gyp:emacs_all_test',
+            '<(mozc_oss_src_dir)/unix/emacs/emacs.gyp:emacs_all_test',
           ],
         }],
       ],

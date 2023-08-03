@@ -27,15 +27,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Visibility:  please choose a more appropriate default for the package,
-# and update any rules that should be different.
-
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
     "mozc_cc_library",
     "mozc_cc_test",
 )
+
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 exports_files(["mozc.el"])
 
@@ -45,7 +46,6 @@ mozc_cc_binary(
     copts = [
         "$(STACK_FRAME_UNLIMITED)",  # mozc_emacs_helper.cc
     ],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":mozc_emacs_helper_lib",
         "//base:init_mozc",
