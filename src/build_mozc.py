@@ -382,7 +382,7 @@ def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.
   logging.info('Generating version definition file...')
-  template_path = '%s/%s' % (SRC_DIR, options.version_file)
+  template_path = '%s/%s' % (OSS_SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
   version_override = os.environ.get('MOZC_VERSION', None)
   GenerateVersionFile(template_path, version_path, options.target_platform,
