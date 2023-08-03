@@ -30,10 +30,13 @@
 #include "rewriter/english_variants_rewriter.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -42,8 +45,15 @@
 
 namespace mozc {
 
+using ::mozc::dictionary::PosMatcher;
+
 class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
  protected:
+  void SetUp() override {
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
+    rewriter_ = std::make_unique<EnglishVariantsRewriter>(pos_matcher_);
+  }
+
   bool GetRankFromValue(const Segment &segment, const absl::string_view value,
                         int *rank) {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -54,42 +64,46 @@ class EnglishVariantsRewriterTest : public testing::TestWithTempUserProfile {
     }
     return false;
   }
+
+  PosMatcher pos_matcher_;
+  std::unique_ptr<EnglishVariantsRewriter> rewriter_;
+
+ private:
+  const testing::MockDataManager mock_data_manager_;
 };
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
-  EnglishVariantsRewriter rewriter;
   std::vector<std::string> variants;
 
-  EXPECT_TRUE(rewriter.ExpandEnglishVariants("foo", &variants));
+  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("foo", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "Foo");
   EXPECT_EQ(variants[1], "FOO");
 
-  EXPECT_TRUE(rewriter.ExpandEnglishVariants("Bar", &variants));
+  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("Bar", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "bar");
   EXPECT_EQ(variants[1], "BAR");
 
-  EXPECT_TRUE(rewriter.ExpandEnglishVariants("HOGE", &variants));
+  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("HOGE", &variants));
   EXPECT_EQ(variants.size(), 2);
   EXPECT_EQ(variants[0], "hoge");
   EXPECT_EQ(variants[1], "Hoge");
 
-  EXPECT_FALSE(rewriter.ExpandEnglishVariants("Foo Bar", &variants));
+  EXPECT_FALSE(rewriter_->ExpandEnglishVariants("Foo Bar", &variants));
 
-  EXPECT_TRUE(rewriter.ExpandEnglishVariants("iPhone", &variants));
+  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("iPhone", &variants));
   EXPECT_EQ(variants.size(), 1);
   EXPECT_EQ(variants[0], "iphone");
 
-  EXPECT_TRUE(rewriter.ExpandEnglishVariants("MeCab", &variants));
+  EXPECT_TRUE(rewriter_->ExpandEnglishVariants("MeCab", &variants));
   EXPECT_EQ(variants.size(), 1);
   EXPECT_EQ(variants[0], "mecab");
 
-  EXPECT_FALSE(rewriter.ExpandEnglishVariants("グーグル", &variants));
+  EXPECT_FALSE(rewriter_->ExpandEnglishVariants("グーグル", &variants));
 }
 
 TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -106,7 +120,7 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 3);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
@@ -131,7 +145,7 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
       candidate2->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
 
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 40);
 
     for (int i = 0; i < 10; ++i) {
@@ -148,7 +162,6 @@ TEST_F(EnglishVariantsRewriterTest, RewriteTest) {
 }
 
 TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -166,7 +179,7 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
     EXPECT_EQ(seg->candidate(0).content_value, "Michael Jackson");
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Michael Jackson");
     EXPECT_EQ(seg->candidate(0).content_value, "Michael Jackson");
@@ -177,7 +190,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression3242753) {
 }
 
 TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -192,7 +204,7 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
-    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+    EXPECT_FALSE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 1);
   }
 
@@ -209,7 +221,7 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 3);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
@@ -221,7 +233,6 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
 }
 
 TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -246,13 +257,12 @@ TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
     candidate->content_value = "google";
 
     EXPECT_EQ(seg->candidates_size(), 3);
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 4);  // Kana, lower, upper, capitalized
   }
 }
 
 TEST_F(EnglishVariantsRewriterTest, KeepRank) {
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -277,7 +287,7 @@ TEST_F(EnglishVariantsRewriterTest, KeepRank) {
     candidate->content_value = "google";
 
     EXPECT_EQ(seg->candidates_size(), 3);
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
 
     int upper_rank, lower_rank, capitalized_rank, kana_rank;
     EXPECT_TRUE(GetRankFromValue(*seg, "GOOGLE", &upper_rank));
@@ -292,7 +302,6 @@ TEST_F(EnglishVariantsRewriterTest, KeepRank) {
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
   // Fix variants
-  EnglishVariantsRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
   Segment *seg = segments.push_back_segment();
@@ -308,7 +317,7 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
-    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
     EXPECT_EQ(seg->candidates_size(), 1);
     EXPECT_EQ(seg->candidate(0).value, "Google");
     EXPECT_EQ(seg->candidate(0).content_value, "Google");
@@ -318,20 +327,75 @@ TEST_F(EnglishVariantsRewriterTest, ExpandEnglishEntry) {
   }
 }
 
+TEST_F(EnglishVariantsRewriterTest, DoNotExpandUpperCaseProperNouns) {
+  Segments segments;
+  const ConversionRequest request;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->content_key = "なさ";
+    candidate->key = "なさ";
+    candidate->content_value = "NASA";
+    candidate->value = "NASA";
+    candidate->lid = pos_matcher_.GetUniqueNounId();
+    candidate->rid = pos_matcher_.GetUniqueNounId();
+    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+  }
+
+  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+  EXPECT_EQ(seg->candidates_size(), 1);
+  EXPECT_EQ(seg->candidate(0).value, "NASA");
+  EXPECT_NE((seg->candidate(0).attributes &
+             Segment::Candidate::NO_VARIANTS_EXPANSION),
+            0);
+}
+
+TEST_F(EnglishVariantsRewriterTest, ProperNouns) {
+  Segments segments;
+  const ConversionRequest request;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->content_value = "google";
+    candidate->value = "google";
+    candidate->lid = pos_matcher_.GetUniqueNounId();
+    candidate->rid = pos_matcher_.GetUniqueNounId();
+    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+  }
+
+  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+  ASSERT_EQ(seg->candidates_size(), 3);
+  EXPECT_EQ(seg->candidate(0).value, "google");
+  EXPECT_NE((seg->candidate(0).attributes &
+             Segment::Candidate::NO_VARIANTS_EXPANSION),
+            0);
+  EXPECT_EQ(seg->candidate(1).value, "Google");
+  EXPECT_NE((seg->candidate(1).attributes &
+             Segment::Candidate::NO_VARIANTS_EXPANSION),
+            0);
+  EXPECT_EQ(seg->candidate(2).value, "GOOGLE");
+  EXPECT_NE((seg->candidate(2).attributes &
+             Segment::Candidate::NO_VARIANTS_EXPANSION),
+            0);
+}
+
 TEST_F(EnglishVariantsRewriterTest, MobileEnvironmentTest) {
   ConversionRequest convreq;
   commands::Request request;
   convreq.set_request(&request);
-  EnglishVariantsRewriter rewriter;
 
   {
     request.set_mixed_conversion(true);
-    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::ALL);
+    EXPECT_EQ(rewriter_->capability(convreq), RewriterInterface::ALL);
   }
 
   {
     request.set_mixed_conversion(false);
-    EXPECT_EQ(rewriter.capability(convreq), RewriterInterface::CONVERSION);
+    EXPECT_EQ(rewriter_->capability(convreq), RewriterInterface::CONVERSION);
   }
 }
 

@@ -130,17 +130,31 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     }
 
     if (IsT13NCandidate(original_candidate)) {
-      if (expanded_t13n_candidates.find(original_candidate->value) !=
-          expanded_t13n_candidates.end()) {
+      if (!(original_candidate->attributes &
+            Segment::Candidate::NO_VARIANTS_EXPANSION)) {
+        modified = true;
         original_candidate->attributes |=
             Segment::Candidate::NO_VARIANTS_EXPANSION;
+      }
+
+      if (expanded_t13n_candidates.find(original_candidate->value) !=
+          expanded_t13n_candidates.end()) {
+        continue;
+      }
+
+      const bool is_proper_noun =
+          (original_candidate->lid == original_candidate->rid &&
+           pos_matcher_.IsUniqueNoun(original_candidate->lid));
+      if (is_proper_noun && Util::IsUpperAscii(original_candidate->value)) {
+        // We do not have to expand upper case proper nouns (ex. NASA).
+        // Note:
+        // It is very popular that some company or service name is written in
+        // lower case, but their formal form is capital case (ex. google)
+        // so we suppress expansion only for capital case here.
         continue;
       }
 
       // Expand T13N candidate variants
-      modified = true;
-      original_candidate->attributes |=
-          Segment::Candidate::NO_VARIANTS_EXPANSION;
       std::vector<std::string> variants;
       if (ExpandEnglishVariants(original_candidate->content_value, &variants)) {
         CHECK(!variants.empty());
@@ -152,6 +166,8 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
               original_candidates.end()) {
             continue;
           }
+          modified = true;
+
           Segment::Candidate *new_candidate = seg->insert_candidate(i + 1);
           DCHECK(new_candidate);
           new_candidate->value = std::move(new_value);

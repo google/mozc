@@ -621,6 +621,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:util",
         "//converter:segments",
+        "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
@@ -638,6 +639,8 @@ mozc_cc_test(
     deps = [
         ":english_variants_rewriter",
         "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",

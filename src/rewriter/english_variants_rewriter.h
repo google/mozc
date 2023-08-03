@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/strings/string_view.h"
@@ -43,7 +44,8 @@ class ConversionRequest;
 
 class EnglishVariantsRewriter : public RewriterInterface {
  public:
-  EnglishVariantsRewriter() = default;
+  explicit EnglishVariantsRewriter(dictionary::PosMatcher pos_matcher)
+      : pos_matcher_(pos_matcher) {}
   ~EnglishVariantsRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
@@ -58,6 +60,8 @@ class EnglishVariantsRewriter : public RewriterInterface {
   bool ExpandEnglishVariants(absl::string_view input,
                              std::vector<std::string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
+
+  const dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace mozc
