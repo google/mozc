@@ -395,37 +395,37 @@ Key code and symbols are renamed so that the helper process understands them."
                  (?\b 'backspace)
                  (?\s 'space)
                  (?\d 'backspace)
-                 ('eisu-toggle 'eisu)
-                 ('hiragana-katakana 'kana)
-                 ('next 'pagedown)
-                 ('prior 'pageup)
-                 ('kp-decimal 'decimal)
-                 ('kp-0 'numpad0)
-                 ('kp-1 'numpad1)
-                 ('kp-2 'numpad2)
-                 ('kp-3 'numpad3)
-                 ('kp-4 'numpad4)
-                 ('kp-5 'numpad5)
-                 ('kp-6 'numpad6)
-                 ('kp-7 'numpad7)
-                 ('kp-8 'numpad8)
-                 ('kp-9 'numpad9)
-                 ('kp-delete 'delete)  ; .
-                 ('kp-insert 'insert)  ; 0
-                 ('kp-end 'end)        ; 1
-                 ('kp-down 'down)      ; 2
-                 ('kp-next 'pagedown)  ; 3
-                 ('kp-left 'left)      ; 4
-                 ('kp-begin 'clear)    ; 5
-                 ('kp-right 'right)    ; 6
-                 ('kp-home 'home)      ; 7
-                 ('kp-up 'up)          ; 8
-                 ('kp-prior 'pageup)   ; 9
-                 ('kp-add 'add)
-                 ('kp-subtract 'subtract)
-                 ('kp-multiply 'multiply)
-                 ('kp-divide 'divide)
-                 ('kp-enter 'enter)
+                 (eisu-toggle 'eisu)
+                 (hiragana-katakana 'kana)
+                 (next 'pagedown)
+                 (prior 'pageup)
+                 (kp-decimal 'decimal)
+                 (kp-0 'numpad0)
+                 (kp-1 'numpad1)
+                 (kp-2 'numpad2)
+                 (kp-3 'numpad3)
+                 (kp-4 'numpad4)
+                 (kp-5 'numpad5)
+                 (kp-6 'numpad6)
+                 (kp-7 'numpad7)
+                 (kp-8 'numpad8)
+                 (kp-9 'numpad9)
+                 (kp-delete 'delete)  ; .
+                 (kp-insert 'insert)  ; 0
+                 (kp-end 'end)        ; 1
+                 (kp-down 'down)      ; 2
+                 (kp-next 'pagedown)  ; 3
+                 (kp-left 'left)      ; 4
+                 (kp-begin 'clear)    ; 5
+                 (kp-right 'right)    ; 6
+                 (kp-home 'home)      ; 7
+                 (kp-up 'up)          ; 8
+                 (kp-prior 'pageup)   ; 9
+                 (kp-add 'add)
+                 (kp-subtract 'subtract)
+                 (kp-multiply 'multiply)
+                 (kp-divide 'divide)
+                 (kp-enter 'enter)
                  (t basic-type))))
       (cond
        ;; kana + shift + rest => katakana + rest
