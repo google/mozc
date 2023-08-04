@@ -33,24 +33,23 @@
 #include <map>
 #include <string>
 
-#include "base/port.h"
-#include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "storage/registry.h"
-#include "storage/storage_interface.h"
-#include "testing/googletest.h"
+#include "storage/tiny_storage.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.pb.h"
-#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace usage_stats {
+namespace {
 
-class UsageStatsTest : public ::testing::Test {
+class UsageStatsTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+    // Update the registry file path by creating a new storage.
+    storage::Registry::SetStorage(storage::TinyStorage::New());
     EXPECT_TRUE(storage::Registry::Clear());
     mozc::config::StatsConfigUtil::SetHandler(&stats_config_util_);
   }
@@ -194,5 +193,6 @@ TEST_F(UsageStatsTest, StoreTouchEventStats) {
                                          &stats_str));
 }
 
+}  // namespace
 }  // namespace usage_stats
 }  // namespace mozc

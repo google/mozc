@@ -31,17 +31,15 @@
 #define MOZC_STORAGE_REGISTRY_H_
 
 #include <cstdint>
-#include <cstring>
+#include <memory>
 #include <string>
 
 #include "base/bits.h"
 #include "base/logging.h"
-#include "base/port.h"
+#include "storage/storage_interface.h"
 
 namespace mozc {
 namespace storage {
-
-class StorageInterface;
 
 // The idea of Registry module is the same as Windows Registry.
 // You can use it for saving small data like timestamp, auth_token.
@@ -123,7 +121,7 @@ class Registry {
   // Inject internal storage for unittesting.
   // TinyStorage is used by default
   // TODO(taku) replace it with SQLITE
-  static void SetStorage(StorageInterface *handler);
+  static void SetStorage(std::unique_ptr<StorageInterface> handler);
 
  private:
   static bool LookupInternal(const std::string &key, std::string *value);
