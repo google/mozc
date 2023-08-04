@@ -36,6 +36,7 @@
     'absl_include_dirs': ['<(absl_dir)'],
 
     'mozc_oss_src_dir': '<(DEPTH)',
+    'mozc_src_dir': '<(DEPTH)',
 
     # TODO(komatsu): This can be replaced with 'android_ndk_dir'.
     'mozc_build_tools_dir': '<(abs_depth)/<(build_short_base)/mozc_build_tools',

@@ -83,14 +83,12 @@ mozc_cc_test(
     deps = [
         ":usage_stats",
         ":usage_stats_cc_proto",
-        "//base:port",
-        "//base:system_util",
         "//config:stats_config_util",
         "//config:stats_config_util_mock",
         "//storage:registry",
-        "//storage:storage_interaface",
+        "//storage:tiny_storage",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 
@@ -117,11 +115,11 @@ mozc_cc_test(
     ],
     deps = [
         ":usage_stats_uploader",
-        "//base:system_util",
         "//base:version",
         "//storage:registry",
+        "//storage:tiny_storage",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/strings",
     ],
 )

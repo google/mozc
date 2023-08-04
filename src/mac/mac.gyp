@@ -298,7 +298,7 @@
             '<(mozc_oss_src_dir)/data/images/mac/half_katakana.tiff',
             '<(mozc_oss_src_dir)/data/images/mac/hiragana.tiff',
             '<(mozc_oss_src_dir)/data/images/mac/product_icon.icns',
-            '../data/installer/credits_en.html',
+            '<(mozc_oss_src_dir)/data/installer/credits_en.html',
             'English.lproj/Config.xib',
             '<(gen_out_dir)/English.lproj/InfoPlist.strings',
             'Japanese.lproj/Config.xib',

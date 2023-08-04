@@ -30,8 +30,7 @@ Files and directories we may accept pull requests:
 * [src/data/oss/](https://github.com/google/mozc/tree/master/src/data/oss/)
 * [src/data/test/quality_regression_test/](https://github.com/google/mozc/tree/master/src/data/test/quality_regression_test/)
 * [src/renderer/qt/](https://github.com/google/mozc/tree/master/src/renderer/qt/)
-* [src/unix/emacs/mozc.el](https://github.com/google/mozc/tree/master/src/unix/emacs/mozc.el)
-* [src/unix/ibus/](https://github.com/google/mozc/tree/master/src/unix/ibus/)
+* [src/unix/](https://github.com/google/mozc/tree/master/src/unix/)
 * [src/WORKSPACE.bazel](https://github.com/google/mozc/tree/master/src/WORKSPAE.bazel)
 
 #### Why is there such a limitation?

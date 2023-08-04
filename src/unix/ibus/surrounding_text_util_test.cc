@@ -80,7 +80,7 @@ TEST(SurroundingTextUtilTest, GetSafeDelta) {
 
   // The abs(result) exceeds int32_t.
   EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      static_cast<uint>(-std::numeric_limits<int32_t>::min()), 0, &delta));
+      static_cast<uint>(abs(std::numeric_limits<int32_t>::min())), 0, &delta));
 }
 
 TEST(SurroundingTextUtilTest, GetAnchorPosFromSelection) {

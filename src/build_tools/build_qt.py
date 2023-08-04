@@ -35,9 +35,10 @@ with dropping unnecessary features to minimize the installer size.
 
   python build_tools/build_qt.py --debug --release --confirm_license
 
-By default, this script assumes that Qt archive is stored as
+By default, this script assumes that Qt archives are stored as
 
   src/third_party_cache/qtbase-everywhere-opensource-src-5.15.10.tar.xz
+  src/third_party_cache/qtbase-everywhere-src-6.5.2.tar.xz
 
 and Qt src files that are necessary to build Mozc will be checked out into
 
@@ -69,8 +70,10 @@ ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 # The archive filename should be consistent with update_deps.py.
-ABS_QT_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
+ABS_QT5_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-opensource-src-5.15.10.tar.xz')
+ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
+    'third_party_cache', 'qtbase-everywhere-src-6.5.2.tar.xz')
 ABS_JOM_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'jom_1_1_3.zip')
 
@@ -320,8 +323,12 @@ def parse_args() -> argparse.Namespace:
                       help='make release build')
   parser.add_argument('--qt_src_dir', help='qt src directory', type=str,
                       default=str(ABS_QT_SRC_DIR))
+  if is_windows():
+    qt_archive_path_default = ABS_QT6_ARCHIVE_PATH
+  else:
+    qt_archive_path_default = ABS_QT5_ARCHIVE_PATH
   parser.add_argument('--qt_archive_path', help='qtbase archive path', type=str,
-                      default=str(ABS_QT_ARCHIVE_PATH))
+                      default=str(qt_archive_path_default))
   parser.add_argument('--jom_archive_path', help='qtbase archive path',
                       type=str, default=str(ABS_JOM_ARCHIVE_PATH))
   parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
@@ -570,15 +577,18 @@ def extract_qt_src(args: argparse.Namespace) -> None:
       print(f'dryrun: delete {qt_src_dir}')
     else:
       shutil.rmtree(qt_src_dir)
+
   if args.dryrun:
     print(f'dryrun: extracting {args.qt_archive_path} to {qt_src_dir}')
-    if is_windows():
-      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
   else:
     qt_src_dir.mkdir(parents=True)
     with tarfile.open(args.qt_archive_path, mode='r|xz') as f:
       f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
-    if is_windows():
+
+  if is_windows() and get_qt_version(args).major == 5:
+    if args.dryrun:
+      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
+    else:
       with zipfile.ZipFile(args.jom_archive_path) as z:
         z.extractall(path=qt_src_dir)
 

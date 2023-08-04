@@ -31,15 +31,18 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "storage/storage_interface.h"
 #include "storage/tiny_storage.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -48,35 +51,30 @@ namespace {
 
 ABSL_CONST_INIT absl::Mutex g_mutex(absl::kConstInit);
 
-#ifdef _WIN32
-constexpr char kRegistryFileName[] = "registry.db";
-#else   // _WIN32
-constexpr char kRegistryFileName[] = ".registry.db";  // hidden file
-#endif  // _WIN32
+constexpr absl::string_view RegistryFileName() {
+  if constexpr (TargetIsWindows()) {
+    return "registry.db";
+  } else {
+    return ".registry.db";  // hidden file
+  }
+}
 
 class StorageInitializer {
  public:
-  StorageInitializer()
-      : default_storage_(TinyStorage::New()), current_storage_(nullptr) {
-    if (!default_storage_->Open(FileUtil::JoinPath(
-            SystemUtil::GetUserProfileDirectory(), kRegistryFileName))) {
+  StorageInitializer() { SetStorage(TinyStorage::New()); }
+
+  StorageInterface *GetStorage() const { return storage_.get(); }
+
+  void SetStorage(std::unique_ptr<StorageInterface> storage) {
+    storage_ = std::move(storage);
+    if (!storage_->Open(FileUtil::JoinPath(
+            SystemUtil::GetUserProfileDirectory(), RegistryFileName()))) {
       LOG(ERROR) << "cannot open registry";
     }
   }
 
-  StorageInterface *GetStorage() const {
-    if (current_storage_ == nullptr) {
-      return default_storage_.get();
-    } else {
-      return current_storage_;
-    }
-  }
-
-  void SetStorage(StorageInterface *storage) { current_storage_ = storage; }
-
  private:
-  std::unique_ptr<StorageInterface> default_storage_;
-  StorageInterface *current_storage_;
+  std::unique_ptr<StorageInterface> storage_;
 };
 }  // namespace
 
@@ -96,10 +94,10 @@ bool Registry::Clear() {
   return Singleton<StorageInitializer>::get()->GetStorage()->Clear();
 }
 
-void Registry::SetStorage(StorageInterface *handler) {
+void Registry::SetStorage(std::unique_ptr<StorageInterface> handler) {
   VLOG(1) << "New storage interface is set";
   absl::MutexLock l(&g_mutex);
-  Singleton<StorageInitializer>::get()->SetStorage(handler);
+  Singleton<StorageInitializer>::get()->SetStorage(std::move(handler));
 }
 
 bool Registry::LookupInternal(const std::string &key, std::string *value) {

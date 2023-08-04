@@ -32,12 +32,11 @@
 #include <cstdint>
 #include <string>
 
-#include "base/system_util.h"
 #include "base/version.h"
 #include "storage/registry.h"
-#include "testing/googletest.h"
+#include "storage/tiny_storage.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -56,10 +55,11 @@ void SetUpMetaData(uint32_t last_upload_time) {
   SetUpMetaDataWithMozcVersion(last_upload_time, Version::GetMozcVersion());
 }
 
-class UsageStatsUploaderTest : public ::testing::Test {
+class UsageStatsUploaderTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
+    // Update the registry file path by creating a new storage.
+    storage::Registry::SetStorage(storage::TinyStorage::New());
     EXPECT_TRUE(storage::Registry::Clear());
   }
 

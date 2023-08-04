@@ -55,6 +55,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'usage_stats_base.gyp:usage_stats',
       ],
       'variables': {
@@ -70,6 +71,7 @@
       'dependencies': [
         '../base/base.gyp:version',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'usage_stats_base.gyp:usage_stats_uploader',
         'usage_stats_testing_util',
       ],

@@ -63,6 +63,7 @@ from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
 
 SRC_DIR = '.'
+OSS_SRC_DIR = '.'
 # We need to obtain the absolute path of this script before change directory.
 # Note that if any import above has already changed the current
 # directory, this code cannot work anymore.
@@ -156,9 +157,9 @@ def GetGypFileNames(options):
   if options.target_platform == 'Windows':
     gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
   elif options.target_platform == 'Linux':
-    gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % SRC_DIR))
-    gyp_file_names.extend(glob.glob('%s/unix/fcitx/*.gyp' % SRC_DIR))
-    gyp_file_names.extend(glob.glob('%s/unix/fcitx5/*.gyp' % SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % OSS_SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/unix/fcitx/*.gyp' % OSS_SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/unix/fcitx5/*.gyp' % OSS_SRC_DIR))
   gyp_file_names.sort()
   return gyp_file_names
 
@@ -383,7 +384,7 @@ def GypMain(options, unused_args):
   """The main function for the 'gyp' command."""
   # Generate a version definition file.
   logging.info('Generating version definition file...')
-  template_path = '%s/%s' % (SRC_DIR, options.version_file)
+  template_path = '%s/%s' % (OSS_SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
   version_override = os.environ.get('MOZC_VERSION', None)
   GenerateVersionFile(template_path, version_path, options.target_platform,
