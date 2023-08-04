@@ -128,7 +128,7 @@
                 }],
               ],
               'variables': {
-                'icon_path': '<(mozc_oss_src_dir)/data/images/win/product_icon.ico',
+                'icon_path': '<(mozc_content_dir)/images/win/product_icon.ico',
                 'document_dir': '<(mozc_content_dir)/installer',
               },
               'inputs': [
