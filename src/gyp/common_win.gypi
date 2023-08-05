@@ -330,6 +330,7 @@
       '_ATL_ALLOW_CHAR_UNSIGNED',
       '_ATL_CSTRING_EXPLICIT_CONSTRUCTORS',
       '_ATL_NO_HOSTING',
+      '_ATL_NO_AUTOMATIC_NAMESPACE',
       '_CRT_SECURE_NO_DEPRECATE',
       '_MIDL_USE_GUIDDEF_',
       '_STL_MSVC',
@@ -337,7 +338,7 @@
       '_WIN32',
       '_WIN32_WINNT=0x0A00',
       '_WINDOWS',
-      '_WTL_NO_WTYPES',  # TODO(yuryu): Remove after upgrading to WTL 10.
+      '_WTL_NO_AUTOMATIC_NAMESPACE',
     ],
     'include_dirs': [
       '<@(absl_include_dirs)',
