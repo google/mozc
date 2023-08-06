@@ -32,21 +32,22 @@
 // clang-format off
 #include <windows.h>
 #include <atlbase.h>
-#if !defined(MOZC_NO_LOGGING)
-#include <atlstr.h>
-#endif  // !MOZC_NO_LOGGING
 #include <msiquery.h>
 // clang-format on
 
+#undef StrCat  // NOLINT: TODO: triggers clang-tidy, defined by windows.h.
+
+#include <cstdarg>
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/const.h"
 #include "base/process.h"
+#include "base/strings/zstring_view.h"
 #include "base/system_util.h"
 #include "base/url.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "base/win32/scoped_com.h"
 #include "base/win32/wide_char.h"
@@ -54,18 +55,20 @@
 #include "base/win32/win_util.h"
 #include "client/client.h"
 #include "client/client_interface.h"
-#include "config/stats_config_util.h"
-#include "protocol/commands.pb.h"
 #include "renderer/renderer_client.h"
-#include "win32/base/imm_util.h"
 #include "win32/base/input_dll.h"
-#include "win32/base/keyboard_layout_id.h"
 #include "win32/base/omaha_util.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/tsf_registrar.h"
 #include "win32/base/uninstall_helper.h"
 #include "win32/cache_service/cache_service_manager.h"
 #include "win32/custom_action/resource.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+
+#if !defined(MOZC_NO_LOGGING)
+#include <atlstr.h>
+#endif  // !MOZC_NO_LOGGING
 
 #ifdef _DEBUG
 #define DEBUG_BREAK_FOR_DEBUGGER()                                      \
@@ -84,64 +87,42 @@ using mozc::win32::OmahaUtil;
 
 HMODULE g_module = nullptr;
 
-std::wstring GetMozcComponentPath(const std::string &filename) {
-  const std::string path =
-      mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
-  std::wstring wpath;
-  mozc::Util::Utf8ToWide(path, &wpath);
-  return wpath;
+std::wstring GetMozcComponentPath(const absl::string_view filename) {
+  return mozc::win32::Utf8ToWide(
+      absl::StrCat(mozc::SystemUtil::GetServerDirectory(), "\\", filename));
 }
 
 // Retrieves the value for an installer property.
 // Returns an empty string if a property corresponding to |name| is not found or
 // error occurs.
-std::wstring GetProperty(MSIHANDLE msi, const std::wstring &name) {
+std::wstring GetProperty(MSIHANDLE msi, const mozc::zwstring_view name) {
   DWORD num_buf = 0;
   // Obtains the size of the property's string, without null termination.
   // Note: |MsiGetProperty()| requires non-null writable buffer.
-  wchar_t dummy_buffer[1] = {L'\0'};
-  UINT result = MsiGetProperty(msi, name.c_str(), dummy_buffer, &num_buf);
-  if (ERROR_MORE_DATA != result) {
+  std::wstring buf;
+  UINT result = MsiGetProperty(msi, name.c_str(), buf.data(), &num_buf);
+  if (result != ERROR_MORE_DATA) {
     return L"";
   }
 
+  buf.resize(num_buf);
   // add 1 for null termination
-  ++num_buf;
-  std::unique_ptr<wchar_t[]> buf(new wchar_t[num_buf]);
-  result = MsiGetProperty(msi, name.c_str(), buf.get(), &num_buf);
-  if (ERROR_SUCCESS != result) {
+  num_buf += 1;
+  result = MsiGetProperty(msi, name.c_str(), buf.data(), &num_buf);
+  if (result != ERROR_SUCCESS) {
     return L"";
   }
 
-  return std::wstring(buf.get());
+  return buf;
 }
 
-bool SetProperty(MSIHANDLE msi, const std::wstring &name,
-                 const std::wstring &value) {
+bool SetProperty(MSIHANDLE msi, const mozc::zwstring_view name,
+                 const mozc::zwstring_view value) {
   if (MsiSetProperty(msi, name.c_str(), value.c_str()) != ERROR_SUCCESS) {
     return false;
   }
   return true;
 }
-
-#ifndef MOZC_NO_LOGGING
-bool DisableErrorReportingInternal(const wchar_t *key_name,
-                                   const wchar_t *value_name, DWORD value,
-                                   REGSAM additional_sam_desired) {
-  ATL::CRegKey key;
-  LONG result =
-      key.Create(HKEY_LOCAL_MACHINE, key_name, REG_NONE,
-                 REG_OPTION_NON_VOLATILE, KEY_WRITE | additional_sam_desired);
-  if (ERROR_SUCCESS != result) {
-    return false;
-  }
-  result = key.SetDWORDValue(value_name, value);
-  if (ERROR_SUCCESS != result) {
-    return false;
-  }
-  return true;
-}
-#endif  // MOZC_NO_LOGGING
 
 std::wstring FormatMessageByResourceId(int resourceID, ...) {
   wchar_t format_message[4096];
