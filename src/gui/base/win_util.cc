@@ -61,6 +61,9 @@ namespace gui {
 #ifdef _WIN32
 namespace {
 
+using ::ATL::CComPtr;
+using ::ATL::CComQIPtr;
+
 CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
                                             const char *item_title) {
   HRESULT hr = S_OK;
@@ -253,10 +256,10 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
       0) {
     LOG(ERROR) << "Could not find the exsisting window.";
   }
-  const CWindow window(info.found_window_handle);
+  const ATL::CWindow window(info.found_window_handle);
   std::wstring window_title_wide;
   {
-    CString buf;
+    ATL::CString buf;
     window.GetWindowTextW(buf);
     window_title_wide.assign(buf.GetString(), buf.GetLength());
   }
@@ -295,7 +298,7 @@ const wchar_t kIMEHotKeyEntryData[] = L"3";
 // static
 bool WinUtil::GetIMEHotKeyDisabled() {
 #ifdef _WIN32
-  CRegKey key;
+  ATL::CRegKey key;
   LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_READ);
 
   // When the key doesn't exist, can return |false| as well.
@@ -330,7 +333,7 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
   }
 
   if (disabled) {
-    CRegKey key;
+    ATL::CRegKey key;
     LONG result = key.Create(HKEY_CURRENT_USER, kIMEHotKeyEntryKey);
     if (ERROR_SUCCESS != result) {
       return false;
@@ -341,7 +344,7 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
 
     return ERROR_SUCCESS == result;
   } else {
-    CRegKey key;
+    ATL::CRegKey key;
     LONG result =
         key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_SET_VALUE | DELETE);
     if (result == ERROR_FILE_NOT_FOUND) {

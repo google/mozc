@@ -1249,7 +1249,7 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
 
   // Check if the desired ACE is already specified or not.
   for (UINT i = 0; i < dacl.GetAceCount(); ++i) {
-    CSid ace_sid;
+    ATL::CSid ace_sid;
     ACCESS_MASK access_mask = 0;
     BYTE ace_type = 0;
     dacl.GetAclEntry(i, &ace_sid, &access_mask, &ace_type);

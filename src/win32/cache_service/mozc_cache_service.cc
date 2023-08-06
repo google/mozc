@@ -55,7 +55,7 @@ HANDLE g_stop_event = nullptr;
 template <size_t num_elements>
 void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
                     const wchar_t *message, int error_no) {
-  CString buffer;
+  ATL::CString buffer;
   buffer.Format(_T("%s (%d): %s (error: %d)\n"), file, line, message, error_no);
   ::OutputDebugString(buffer);
 }

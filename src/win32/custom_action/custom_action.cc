@@ -128,7 +128,7 @@ bool SetProperty(MSIHANDLE msi, const std::wstring &name,
 bool DisableErrorReportingInternal(const wchar_t *key_name,
                                    const wchar_t *value_name, DWORD value,
                                    REGSAM additional_sam_desired) {
-  CRegKey key;
+  ATL::CRegKey key;
   LONG result =
       key.Create(HKEY_LOCAL_MACHINE, key_name, REG_NONE,
                  REG_OPTION_NON_VOLATILE, KEY_WRITE | additional_sam_desired);
@@ -190,7 +190,7 @@ bool WriteOmahaErrorById(int resource_id) {
 template <size_t num_elements>
 bool WriteOmahaError(const wchar_t (&function)[num_elements], int line) {
 #if !defined(MOZC_NO_LOGGING)
-  CStringW log;
+  ATL::CStringW log;
   log.Format(L"%s: %s; %s(%d)", L"WriteOmahaError: ",
              mozc::Version::GetMozcVersionW().c_str(), function, line);
   ::OutputDebugStringW(log);

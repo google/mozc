@@ -44,8 +44,8 @@
 #include <unistd.h>
 #endif  // _WIN32
 
-#include <cstdint>
 #ifdef __APPLE__
+#include <cstdint>
 #include <fstream>
 #include <string>
 
@@ -95,7 +95,7 @@ bool WinStatsConfigUtilImpl::IsEnabled() {
   // Like the crash handler, check the "ClientStateMedium" key first.
   // Then we check "ClientState" key.
   {
-    CRegKey key_medium;
+    ATL::CRegKey key_medium;
     LONG result = key_medium.Open(HKEY_LOCAL_MACHINE, kOmahaUsageKeyForEveryone,
                                   sam_desired);
     if (result == ERROR_SUCCESS && key_medium) {
@@ -107,7 +107,7 @@ bool WinStatsConfigUtilImpl::IsEnabled() {
     }
   }  // Close |key_medium|
 
-  CRegKey key;
+  ATL::CRegKey key;
   LONG result = key.Open(HKEY_LOCAL_MACHINE, kOmahaUsageKey, sam_desired);
   if (result != ERROR_SUCCESS || !key) {
     return false;
@@ -131,7 +131,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
   constexpr bool kReturnCodeInError = false;
 #endif  // CHANNEL_DEV
 
-  CRegKey key;
+  ATL::CRegKey key;
   const REGSAM sam_desired =
       KEY_WRITE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   LONG result = key.Create(HKEY_LOCAL_MACHINE, kOmahaUsageKey, REG_NONE,
