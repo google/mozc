@@ -39,6 +39,7 @@
 #include <objbase.h>
 #include <wil/com.h>
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -483,16 +484,21 @@ class DirectWriteTextRenderer : public TextRenderer {
     if (FAILED(hr)) {
       return nullptr;
     }
-    UINT32 length = 0;
-    hr = localized_family_names->GetStringLength(0, &length);
+    UINT32 length_without_null = 0;
+    hr = localized_family_names->GetStringLength(0, &length_without_null);
     if (FAILED(hr)) {
       return nullptr;
     }
-    std::wstring family_name(length, 0);
-    hr = localized_family_names->GetString(0, family_name.data(), length);
+    // |IDWriteLocalizedStrings::GetString()| requires the return buffer to be
+    // large enough to store a result with the terminating null character.
+    // https://learn.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwritelocalizedstrings-getstring#parameters
+    std::wstring family_name(size_t(length_without_null + 1), L'\0');
+    hr = localized_family_names->GetString(0, family_name.data(),
+                                           family_name.size());
     if (FAILED(hr)) {
       return nullptr;
     }
+    family_name.resize(length_without_null);
     auto font_size = logfont.lfHeight;
     if (font_size < 0) {
       font_size = -font_size;
