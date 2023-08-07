@@ -54,7 +54,7 @@
             '<(proto_out_dir)/<(relative_dir)/test_spec.pb.cc',
           ],
           'dependencies': [
-            '../../../../protobuf/protobuf.gyp:protobuf',
+            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
             'genproto_test_spec_proto#host',
           ],
           'export_dependent_settings': [

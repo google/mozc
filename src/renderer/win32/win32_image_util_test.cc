@@ -53,11 +53,11 @@
 #include "base/protobuf/text_format.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_font_test_helper.h"
-#include "data/test/renderer/win32/test_spec.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
+#include "data/test/renderer/win32/test_spec.pb.h"
 
 using ::std::max;
 using ::std::min;
@@ -321,7 +321,7 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
 
 TEST_P(BalloonImageTest, TestImpl) {
   const std::string &expected_image_path = mozc::testing::GetSourceFileOrDie(
-      {"data", "test", "renderer", "win32", GetParam()});
+      {MOZC_DICT_DIR_COMPONENTS, "test", "renderer", "win32", GetParam()});
   const std::string textproto_path = expected_image_path + ".textproto";
   ASSERT_OK(FileUtil::FileExists(textproto_path))
       << "Manifest file is not found: " << textproto_path;

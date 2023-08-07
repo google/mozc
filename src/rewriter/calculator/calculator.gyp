@@ -70,7 +70,7 @@
       'type': 'none',
       'variables': {
         'test_data': [
-          '../../<(test_data_subdir)/testset.txt',
+          '<(mozc_oss_src_dir)/<(test_data_subdir)/testset.txt',
         ],
         'test_data_subdir': 'data/test/calculator',
       },

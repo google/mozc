@@ -85,7 +85,7 @@ class SessionHandlerScenarioTest : public SessionHandlerScenarioTestBase,
 
 // Tests should be passed.
 const char *kScenarioFileList[] = {
-#define DATA_DIR "data/test/session/scenario/"
+#define DATA_DIR "test/session/scenario/"
     DATA_DIR "auto_partial_suggestion.txt",
     DATA_DIR "b12751061_scenario.txt",
     DATA_DIR "b16123009_scenario.txt",
@@ -158,7 +158,7 @@ INSTANTIATE_TEST_SUITE_P(SessionHandlerScenarioParameters,
                          ::testing::ValuesIn(kScenarioFileList));
 
 const char *kUsageStatsScenarioFileList[] = {
-#define DATA_DIR "data/test/session/scenario/usage_stats/"
+#define DATA_DIR "test/session/scenario/usage_stats/"
     DATA_DIR "auto_partial_suggestion.txt",
     DATA_DIR "backspace_after_commit.txt",
     DATA_DIR "backspace_after_commit_after_backspace.txt",
@@ -422,7 +422,7 @@ class SessionHandlerScenarioTestForRequest
       public WithParamInterface<std::tuple<const char *, commands::Request>> {};
 
 const char *kScenariosForExperimentParams[] = {
-#define DATA_DIR "data/test/session/scenario/"
+#define DATA_DIR "test/session/scenario/"
     DATA_DIR "mobile_zero_query.txt",
     DATA_DIR "mobile_preedit.txt",
 #undef DATA_DIR
@@ -474,7 +474,8 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.
   const absl::StatusOr<std::string> scenario_path =
-      mozc::testing::GetSourceFile({std::get<0>(GetParam())});
+      mozc::testing::GetSourceFile(
+          {MOZC_DICT_DIR_COMPONENTS, std::get<0>(GetParam())});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
 
   handler_->SetRequest(std::get<1>(GetParam()));
