@@ -143,10 +143,12 @@ def GetGypFileNames(options):
   for name in mozc_top_level_names:
     gyp_file_names.extend(glob.glob(name + '/*.gyp'))
   # Include subdirectories of data/test/session/scenario
-  gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*.gyp' %
-                                  SRC_DIR))
-  gyp_file_names.extend(glob.glob('%s/data/test/session/scenario/*/*.gyp' %
-                                  SRC_DIR))
+  gyp_file_names.extend(
+      glob.glob('%s/data/test/session/scenario/*.gyp' % OSS_SRC_DIR)
+  )
+  gyp_file_names.extend(
+      glob.glob('%s/data/test/session/scenario/*/*.gyp' % OSS_SRC_DIR)
+  )
   # Include subdirectories of data_manager
   gyp_file_names.extend(glob.glob('%s/data_manager/*/*.gyp' % SRC_DIR))
   # Include subdirectory of dictionary
@@ -301,7 +303,7 @@ def ExpandMetaTarget(options, meta_target_name):
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
   elif target_platform == 'Mac':
-    targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
+    targets = [OSS_SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':
     targets = [
         'out_win/%s:mozc_win32_build32' % config,
@@ -744,7 +746,7 @@ def RunTests(target_platform, configuration, parallel_num):
       try:
         test_function(binary, gtest_report_dir, options)
       except RunOrDieError as e:
-        logging.error(e)
+        logging.exception(e)
         failed_tests.append(binary)
   else:
     launcher = test_launcher.TestLauncher(gtest_report_dir)

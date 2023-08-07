@@ -39,7 +39,7 @@
       '<(mac_breakpad_framework)',
     ],
   },
-  'dependencies': ['../base/base.gyp:breakpad'],
+  'dependencies': ['<(mozc_src_dir)/base/base.gyp:breakpad'],
   'copies': [
     {
       'files': [
@@ -53,7 +53,7 @@
     {
       'postbuild_name': 'dump symbols',
       'action': [
-        '<(python)', '../build_tools/redirect.py',
+        '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
         '${BUILT_PRODUCTS_DIR}/<(product_name)_x86_64.breakpad',
         '<(mac_breakpad_tools_dir)/dump_syms',
         '-a', 'x86_64',

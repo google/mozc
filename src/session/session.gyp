@@ -208,7 +208,7 @@
         {
           'action_name': 'gen_session_stress_test_data',
           'inputs': [
-            '../data/test/stress_test/sentences.txt',
+            '<(mozc_oss_src_dir)/data/test/stress_test/sentences.txt',
           ],
           'outputs': [
             '<(gen_out_dir)/session_stress_test_data.h'
@@ -216,7 +216,7 @@
           'action': [
             '<(python)', 'gen_session_stress_test_data.py',
             '--input',
-            '../data/test/stress_test/sentences.txt',
+            '<(mozc_oss_src_dir)/data/test/stress_test/sentences.txt',
             '--output',
             '<(gen_out_dir)/session_stress_test_data.h',
           ],

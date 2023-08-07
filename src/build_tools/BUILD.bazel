@@ -38,9 +38,7 @@ load(
 )
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_py_binary(
     name = "replace_macros",

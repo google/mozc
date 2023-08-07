@@ -65,7 +65,7 @@
         }],
         ['target_platform=="Mac"', {
           'dependencies': [
-            '../mac/mac.gyp:mac_all_test',
+            '<(mozc_oss_src_dir)/mac/mac.gyp:mac_all_test',
           ],
         }],
         ['target_platform=="Linux"', {

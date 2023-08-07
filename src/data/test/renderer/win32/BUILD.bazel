@@ -29,9 +29,7 @@
 
 # Renderer test images.
 
-package(
-    default_visibility = ["//renderer/win32:__subpackages__"],
-)
+package(default_visibility = ["//renderer/win32:__subpackages__"])
 
 proto_library(
     name = "test_spec_proto",

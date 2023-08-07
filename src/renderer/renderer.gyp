@@ -255,8 +255,8 @@
           ],
           'dependencies': [
             '../base/win32/base_win32.gyp:win_font_test_helper',
-            '../data/test/renderer/win32/test_data.gyp:install_test_data',
-            '../data/test/renderer/win32/test_data.gyp:test_spec_proto',
+            '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:install_test_data',
+            '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:test_spec_proto',
             '../protobuf/protobuf.gyp:protobuf',
             '../testing/testing.gyp:gtest_main',
             '../testing/testing.gyp:mozctest',

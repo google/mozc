@@ -138,7 +138,7 @@ TEST(CalculatorTest, BasicTest) {
 // i.e. it is a false test.
 TEST(CalculatorTest, StressTest) {
   const std::string filename = testing::GetSourceFileOrDie(
-      {"data", "test", "calculator", "testset.txt"});
+      {MOZC_DICT_DIR_COMPONENTS, "test", "calculator", "testset.txt"});
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   std::ifstream finput(filename);

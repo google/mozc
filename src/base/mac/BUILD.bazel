@@ -92,7 +92,6 @@ mozc_objc_library(
         "Foundation",
         "IOKit",
     ],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//base:const",
         "//base:logging",

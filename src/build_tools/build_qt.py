@@ -294,6 +294,8 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                              '-platform', 'win32-msvc']
     if qt_version.major == 5:
       qt_configure_options += ['-no-angle', '-no-direct2d']
+    elif qt_version.major == 6:
+      qt_configure_options += ['-c++std', 'c++20']
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
 
