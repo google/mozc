@@ -3,6 +3,7 @@
 ;; Copyright 2010-2021, Google Inc. All rights reserved.
 
 ;; Keywords: mule, multilingual, input method
+;; Package-Requires: ((emacs "24.3"))
 
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions are
@@ -1689,8 +1690,8 @@ A returned object is alist on success.  Otherwise, an error symbol."
       (condition-case nil
           (let ((obj-index
                  (read-from-string response)))  ; may signal end-of-file.
-            (if (mozc-string-match-p "^[ \t\n\v\f\r]*$"
-                                     (substring response (cdr obj-index)))
+            (if (string-match-p "^[ \t\n\v\f\r]*$"
+                                (substring response (cdr obj-index)))
                 ;; Only white spaces remain.
                 (car obj-index)
               ;; Unexpected characters remain at the end.
@@ -1752,16 +1753,6 @@ and LIST.  The default value of N is 1."
         (cons nil list)
       (setcdr pre-boundary nil)  ; Drop the rest of list.
       (cons list post-boundary))))
-
-(defun mozc-string-match-p (regexp string &optional start)
-  "Same as `string-match' except this function never change the match data.
-REGEXP, STRING and optional START are the same as for `string-match'.
-
-This function is equivalent to `string-match-p', which is available since
-Emacs 23."
-  (let ((inhibit-changing-match-data t))
-    (string-match regexp string start)))
-
 
 
 ;;;; Custom keymap
