@@ -171,7 +171,15 @@ def qt_extract_filter(
         continue
       paths = paths[1:]
       new_path = '/'.join(paths)
+      skipping = False
       if len(paths) >= 1 and paths[0] == 'examples':
+        skipping = True
+      elif len(paths) >= 1 and paths[0] == 'tests':
+        # Qt5 build fails without files under test/auto/cmake/.
+        # TODO(b/292165679): Drop all when building Qt6.
+        if not (len(paths) >= 3 and paths[1] == 'auto' and paths[2] == 'cmake'):
+          skipping = True
+      if skipping:
         printer.print_line('skipping   ' + new_path)
         continue
       else:
