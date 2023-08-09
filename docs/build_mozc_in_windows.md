@@ -52,7 +52,7 @@ python3 -m pip install six requests
 ### Download the repository from GitHub
 
 ```
-git clone https://github.com/google/mozc.git --recursive
+git clone https://github.com/google/mozc.git
 cd mozc\src
 ```
 
@@ -66,8 +66,10 @@ python build_tools/update_deps.py
 
 In this step, additional build dependencies will be downloaded.
 
-  * [WiX 3.14.0.6526](https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip)
+  * [Ninja 1.11.0](https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-win.zip)
   * [Qt 6.5.2](https://download.qt.io/archive/qt/6.5/6.5.2/submodules/qtbase-everywhere-src-6.5.2.tar.xz)
+  * [WiX 3.14.0.6526](https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip)
+  * [git submodules](../.gitmodules)
 
 You can skip this step if you would like to manually download these libraries.
 

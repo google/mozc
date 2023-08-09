@@ -1354,6 +1354,11 @@ message Command {
   optional Output output = 2;
 }
 
+// Message used by ProtoXDB as "mozc_commands".
+message MozcCommands {
+  repeated Command commands = 1;
+}
+
 message CommandList {
   // This message is used for unittest.
   repeated Command commands = 1;

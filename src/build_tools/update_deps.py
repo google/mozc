@@ -41,6 +41,7 @@ import hashlib
 import os
 import pathlib
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -101,6 +102,12 @@ WIX = ArchiveInfo(
     url='https://wixtoolset.org/downloads/v3.14.0.6526/wix314-binaries.zip',
     size=41223699,
     sha256='4c89898df3bcab13e12f7ca54399c35ad273475ad2cb6284611d00ae2d063c2c',
+)
+
+NINJA_MAC = ArchiveInfo(
+    url='https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-mac.zip',
+    size=277298,
+    sha256='21915277db59756bfc61f6f281c1f5e3897760b63776fd3d360f77dd7364137f',
 )
 
 NINJA_WIN = ArchiveInfo(
@@ -290,23 +297,35 @@ def extract_wix(dryrun: bool = False) -> None:
     )
 
 
-def extract_ninja_win(dryrun: bool = False) -> None:
+def extract_ninja(dryrun: bool = False) -> None:
   """Extract ninja-win archive.
 
   Args:
     dryrun: True if this is a dry-run.
   """
   dest = ABS_THIRD_PARTY_DIR.joinpath('ninja').absolute()
-  src = CACHE_DIR.joinpath(NINJA_WIN.filename)
+  if is_mac():
+    archive = NINJA_MAC
+    exe = 'ninja'
+  elif is_windows():
+    archive = NINJA_WIN
+    exe = 'ninja.exe'
+  else:
+    return
+  src = CACHE_DIR.joinpath(archive.filename)
 
   if dryrun:
     if dest.exists():
       print(f"dryrun: shutil.rmtree(r'{dest}')")
-    print(f'dryrun: Extracting ninja.exe from {src} into {dest}')
+    print(f'dryrun: Extracting {exe} from {src} into {dest}')
     return
 
   with zipfile.ZipFile(src) as z:
-    z.extract('ninja.exe', path=dest)
+    z.extract(exe, path=dest)
+
+  if is_mac():
+    ninja = dest.joinpath(exe)
+    ninja.chmod(ninja.stat().st_mode | stat.S_IXUSR)
 
 
 def is_windows() -> bool:
@@ -335,6 +354,7 @@ def update_submodules(dryrun: bool = False) -> None:
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--dryrun', action='store_true', default=False)
+  parser.add_argument('--noninja', action='store_true', default=False)
   parser.add_argument('--noqt', action='store_true', default=False)
   parser.add_argument('--nowix', action='store_true', default=False)
   parser.add_argument('--nosubmodules', action='store_true', default=False)
@@ -348,9 +368,13 @@ def main():
     archives.append(QT6)
     if is_windows():
       archives.append(JOM)
+  if (not args.noninja):
+    if is_mac():
+      archives.append(NINJA_MAC)
+    elif is_windows():
+      archives.append(NINJA_WIN)
   if (not args.nowix) and is_windows():
     archives.append(WIX)
-    archives.append(NINJA_WIN)
 
   for archive in archives:
     download(archive, args.dryrun)
@@ -361,8 +385,8 @@ def main():
   if WIX in archives:
     extract_wix(args.dryrun)
 
-  if NINJA_WIN in archives:
-    extract_ninja_win(args.dryrun)
+  if (NINJA_WIN in archives) or (NINJA_MAC in archives):
+    extract_ninja(args.dryrun)
 
   if not args.nosubmodules:
     update_submodules(args.dryrun)
