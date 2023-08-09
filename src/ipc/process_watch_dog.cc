@@ -55,7 +55,7 @@ ProcessWatchDog::ProcessWatchDog()
       timeout_(-1),
       is_finished_(false) {
   if (win32::HResult hr(event_.create(wil::EventOptions::ManualReset));
-      !hr.ok()) {
+      hr.Failed()) {
     LOG(ERROR) << "::CreateEvent() failed." << hr;
     return;
   }

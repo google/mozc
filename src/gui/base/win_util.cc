@@ -29,13 +29,9 @@
 
 #include "gui/base/win_util.h"
 
-#include <cstdint>
-
-#ifdef _WIN32
 // clang-format off
 #include <windows.h>
 #include <atlbase.h>
-#include <atlcom.h>
 #include <atlstr.h>
 #include <atlwin.h>
 
@@ -46,80 +42,75 @@
 #include <shlobj.h>
 #include <shobjidl.h>
 // clang-format on
-#endif  // _WIN32
+#include <wil/com.h>
+#include <wil/resource.h>
 
-#ifdef _WIN32
-#include "base/const.h"
-#endif  // _WIN32
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+
 #include "base/logging.h"
+#include "base/strings/zstring_view.h"
 #include "base/system_util.h"
-#include "base/util.h"
+#include "base/win32/com.h"
+#include "base/win32/hresult.h"
+#include "base/win32/wide_char.h"
 
 namespace mozc {
 namespace gui {
 
-#ifdef _WIN32
 namespace {
 
-using ::ATL::CComPtr;
-using ::ATL::CComQIPtr;
+using unique_prop_variant_default_init =
+    ::wil::unique_struct<PROPVARIANT, decltype(&::PropVariantClear),
+                         ::PropVariantClear>;
+using ::mozc::win32::ComCreateInstance;
+using ::mozc::win32::HResult;
+using ::mozc::win32::Utf8ToWide;
 
-CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
-                                            const char *item_title) {
-  HRESULT hr = S_OK;
-  CComPtr<IShellLink> link;
-  hr = link.CoCreateInstance(CLSID_ShellLink);
-  if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instantiate CLSID_ShellLink. hr = " << hr;
+wil::com_ptr_nothrow<IShellLink> InitializeShellLinkItem(
+    const zwstring_view argument, const zwstring_view item_title) {
+  auto link = ComCreateInstance<IShellLink>(CLSID_ShellLink);
+  if (!link) {
+    DLOG(INFO) << "Failed to instantiate CLSID_ShellLink.";
     return nullptr;
   }
 
-  {
-    std::wstring mozc_tool_path_wide;
-    Util::Utf8ToWide(SystemUtil::GetToolPath(), &mozc_tool_path_wide);
-    hr = link->SetPath(mozc_tool_path_wide.c_str());
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "SetPath failed. hr = " << hr;
-      return nullptr;
-    }
+  HResult hr(link->SetPath(Utf8ToWide(SystemUtil::GetToolPath()).c_str()));
+  if (hr.Failed()) {
+    DLOG(ERROR) << "SetPath failed. hr = " << hr;
+    return nullptr;
   }
 
-  {
-    std::wstring argument_wide;
-    Util::Utf8ToWide(argument, &argument_wide);
-    hr = link->SetArguments(argument_wide.c_str());
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "SetArguments failed. hr = " << hr;
-      return nullptr;
-    }
+  hr = link->SetArguments(argument.c_str());
+  if (hr.Failed()) {
+    DLOG(ERROR) << "SetArguments failed. hr = " << hr;
+    return nullptr;
   }
 
-  CComQIPtr<IPropertyStore> property_store(link);
+  auto property_store = win32::ComQuery<IPropertyStore>(link);
   if (property_store == nullptr) {
     DLOG(ERROR) << "QueryInterface failed.";
     return nullptr;
   }
 
-  {
-    std::wstring item_title_wide;
-    Util::Utf8ToWide(item_title, &item_title_wide);
-    PROPVARIANT prop_variant;
-    hr = ::InitPropVariantFromString(item_title_wide.c_str(), &prop_variant);
-    if (FAILED(hr)) {
-      DLOG(ERROR) << "QueryInterface failed. hr = " << hr;
-      return nullptr;
-    }
-    hr = property_store->SetValue(PKEY_Title, prop_variant);
-    ::PropVariantClear(&prop_variant);
+  unique_prop_variant_default_init prop_variant;
+  hr = ::InitPropVariantFromString(item_title.c_str(),
+                                   prop_variant.reset_and_addressof());
+  if (hr.Failed()) {
+    DLOG(ERROR) << "InitPropVariantFromString failed. hr = " << hr;
+    return nullptr;
   }
 
-  if (FAILED(hr)) {
+  hr = property_store->SetValue(PKEY_Title, prop_variant);
+  if (hr.Failed()) {
     DLOG(ERROR) << "SetValue failed. hr = " << hr;
     return nullptr;
   }
 
   hr = property_store->Commit();
-  if (FAILED(hr)) {
+  if (hr.Failed()) {
     DLOG(ERROR) << "Commit failed. hr = " << hr;
     return nullptr;
   }
@@ -128,28 +119,24 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 }
 
 struct LinkInfo {
-  const char *argument;
-  const char *title_english;
-  const char *title_japanese;
+  zwstring_view argument;
+  zwstring_view title_english;
+  zwstring_view title_japanese;
 };
 
-bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
-  HRESULT hr = S_OK;
-  CComPtr<IObjectCollection> object_collection;
-
-  hr = object_collection.CoCreateInstance(CLSID_EnumerableObjectCollection);
-  if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instantiate CLSID_EnumerableObjectCollection."
-                  " hr = "
-               << hr;
+bool AddTasksToList(ICustomDestinationList *destination_list) {
+  auto object_collection =
+      ComCreateInstance<IObjectCollection>(CLSID_EnumerableObjectCollection);
+  if (!object_collection) {
+    DLOG(INFO) << "Failed to instantiate CLSID_EnumerableObjectCollection.";
     return false;
   }
 
   // TODO(yukawa): Investigate better way to localize strings.
-  const LinkInfo kLinks[] = {
-      {"--mode=dictionary_tool", "Dictionary Tool", "辞書ツール"},
-      {"--mode=word_register_dialog", "Add Word", "単語登録"},
-      {"--mode=config_dialog", "Properties", "プロパティ"},
+  constexpr LinkInfo kLinks[] = {
+      {L"--mode=dictionary_tool", L"Dictionary Tool", L"辞書ツール"},
+      {L"--mode=word_register_dialog", L"Add Word", L"単語登録"},
+      {L"--mode=config_dialog", L"Properties", L"プロパティ"},
   };
 
   const LANGID kJapaneseLangId =
@@ -158,27 +145,22 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
       (kJapaneseLangId == ::GetUserDefaultUILanguage());
 
   for (size_t i = 0; i < std::size(kLinks); ++i) {
-    CComPtr<IShellLink> link;
-    if (use_japanese_ui) {
-      link =
-          InitializeShellLinkItem(kLinks[i].argument, kLinks[i].title_japanese);
-    } else {
-      link =
-          InitializeShellLinkItem(kLinks[i].argument, kLinks[i].title_english);
-    }
-    if (link != nullptr) {
-      object_collection->AddObject(link);
+    wil::com_ptr_nothrow<IShellLink> link = InitializeShellLinkItem(
+        kLinks[i].argument,
+        use_japanese_ui ? kLinks[i].title_japanese : kLinks[i].title_english);
+    if (link) {
+      object_collection->AddObject(link.get());
     }
   }
 
-  CComQIPtr<IObjectArray> object_array(object_collection);
-  if (object_array == nullptr) {
+  auto object_array = win32::ComQuery<IObjectArray>(object_collection);
+  if (!object_array) {
     DLOG(ERROR) << "QueryInterface failed.";
     return false;
   }
 
-  hr = destination_list->AddUserTasks(object_array);
-  if (FAILED(hr)) {
+  HResult hr(destination_list->AddUserTasks(object_array.get()));
+  if (hr.Failed()) {
     DLOG(ERROR) << "AddUserTasks failed. hr = " << hr;
     return false;
   }
@@ -187,38 +169,34 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
 }
 
 void InitializeJumpList() {
-  HRESULT hr = S_OK;
-
-  CComPtr<ICustomDestinationList> destination_list;
-  hr = destination_list.CoCreateInstance(CLSID_DestinationList);
-  if (FAILED(hr)) {
-    DLOG(INFO) << "Failed to instantiate CLSID_DestinationList. hr = " << hr;
+  auto destination_list =
+      ComCreateInstance<ICustomDestinationList>(CLSID_DestinationList);
+  if (!destination_list) {
+    DLOG(INFO) << "Failed to instantiate CLSID_DestinationList.";
     return;
   }
 
   UINT min_slots = 0;
-  CComPtr<IObjectArray> removed_objects;
-  hr = destination_list->BeginList(&min_slots, IID_IObjectArray,
-                                   reinterpret_cast<void **>(&removed_objects));
-  if (FAILED(hr)) {
+  wil::com_ptr_nothrow<IObjectArray> removed_objects;
+  HResult hr(destination_list->BeginList(&min_slots, IID_IObjectArray,
+                                         removed_objects.put_void()));
+  if (hr.Failed()) {
     DLOG(INFO) << "BeginList failed. hr = " << hr;
     return;
   }
 
-  if (!AddTasksToList(destination_list)) {
+  if (!AddTasksToList(destination_list.get())) {
     return;
   }
 
   hr = destination_list->CommitList();
-  if (FAILED(hr)) {
+  if (hr.Failed()) {
     DLOG(INFO) << "Commit failed. hr = " << hr;
     return;
   }
 }
 }  // namespace
-#endif  // _WIN32
 
-#ifdef _WIN32
 namespace {
 
 struct FindVisibleWindowInfo {
@@ -243,10 +221,8 @@ BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
 }
 
 }  // namespace
-#endif  // _WIN32
 
 void WinUtil::ActivateWindow(uint32_t process_id) {
-#ifdef _WIN32
   FindVisibleWindowInfo info = {};
   info.target_process_id = process_id;
 
@@ -257,16 +233,12 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
     LOG(ERROR) << "Could not find the exsisting window.";
   }
   const ATL::CWindow window(info.found_window_handle);
-  std::wstring window_title_wide;
-  {
-    ATL::CString buf;
-    window.GetWindowTextW(buf);
-    window_title_wide.assign(buf.GetString(), buf.GetLength());
-  }
-  std::string window_title_utf8;
-  Util::WideToUtf8(window_title_wide, &window_title_utf8);
-  LOG(INFO) << "A visible window found. hwnd: " << window.m_hWnd
-            << ", title: " << window_title_utf8;
+  ATL::CStringW window_title_wide;
+  window.GetWindowTextW(window_title_wide);
+  LOG(INFO) << "A visible window found. hwnd: " << window.m_hWnd << ", title: "
+            << win32::WideToUtf8(
+                   std::wstring_view(window_title_wide.GetString(),
+                                     window_title_wide.GetLength()));
 
   // SetForegroundWindow API does not automatically restore the minimized
   // window. Use explicitly OpenIcon API in this case.
@@ -284,49 +256,37 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
   if (::SetForegroundWindow(window.m_hWnd) == FALSE) {
     LOG(ERROR) << "::SetForegroundWindow() failed.";
   }
-#endif  // _WIN32
 }
 
-#ifdef _WIN32
 namespace {
-const wchar_t kIMEHotKeyEntryKey[] = L"Keyboard Layout\\Toggle";
-const wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
-const wchar_t kIMEHotKeyEntryData[] = L"3";
+constexpr wchar_t kIMEHotKeyEntryKey[] = L"Keyboard Layout\\Toggle";
+constexpr wchar_t kIMEHotKeyEntryValue[] = L"Layout Hotkey";
+constexpr wchar_t kIMEHotKeyEntryData[] = L"3";
 }  // namespace
-#endif  // _WIN32
 
 // static
 bool WinUtil::GetIMEHotKeyDisabled() {
-#ifdef _WIN32
   ATL::CRegKey key;
   LONG result = key.Open(HKEY_CURRENT_USER, kIMEHotKeyEntryKey, KEY_READ);
 
   // When the key doesn't exist, can return |false| as well.
-  if (ERROR_SUCCESS != result) {
+  if (result != ERROR_SUCCESS) {
     return false;
   }
 
-  wchar_t data[4] = {};
-  ULONG num_chars = std::size(data);
-  result = key.QueryStringValue(kIMEHotKeyEntryValue, data, &num_chars);
-  // Returned |num_char| includes nullptr character.
-
-  // This is only the condition when this function
-  // can return |true|
-  if (ERROR_SUCCESS == result && num_chars < std::size(data) &&
-      std::wstring(data) == kIMEHotKeyEntryData) {
-    return true;
+  std::wstring data(3, 0);
+  ULONG num_chars = data.size() + 1;
+  result = key.QueryStringValue(kIMEHotKeyEntryValue, data.data(), &num_chars);
+  // Returned |num_char| includes null character.
+  if (result != ERROR_SUCCESS || num_chars > data.size()) {
+    return false;
   }
-
-  return false;
-#else   // _WIN32
-  return false;
-#endif  // _WIN32
+  data.erase(num_chars - 1);
+  return data == kIMEHotKeyEntryData;
 }
 
 // static
 bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
-#ifdef _WIN32
   if (WinUtil::GetIMEHotKeyDisabled() == disabled) {
     // Do not need to update this entry.
     return true;
@@ -335,14 +295,14 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
   if (disabled) {
     ATL::CRegKey key;
     LONG result = key.Create(HKEY_CURRENT_USER, kIMEHotKeyEntryKey);
-    if (ERROR_SUCCESS != result) {
+    if (result != ERROR_SUCCESS) {
       return false;
     }
 
     // set "3"
     result = key.SetStringValue(kIMEHotKeyEntryValue, kIMEHotKeyEntryData);
 
-    return ERROR_SUCCESS == result;
+    return result == ERROR_SUCCESS;
   } else {
     ATL::CRegKey key;
     LONG result =
@@ -351,32 +311,25 @@ bool WinUtil::SetIMEHotKeyDisabled(bool disabled) {
       return true;  // default value will be used.
     }
 
-    if (ERROR_SUCCESS != result) {
+    if (result != ERROR_SUCCESS) {
       return false;
     }
 
     result = key.DeleteValue(kIMEHotKeyEntryValue);
 
-    return (ERROR_SUCCESS == result || ERROR_FILE_NOT_FOUND == result);
+    return (result == ERROR_SUCCESS || result != ERROR_FILE_NOT_FOUND);
   }
-#endif  // _WIN32
-
-  return false;
 }
 
 void WinUtil::KeepJumpListUpToDate() {
-#ifdef _WIN32
-  HRESULT hr = S_OK;
-
-  hr = ::CoInitializeEx(nullptr,
-                        COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-  if (FAILED(hr)) {
+  HResult hr(::CoInitializeEx(
+      nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
+  if (hr.Failed()) {
     DLOG(INFO) << "CoInitializeEx failed. hr = " << hr;
     return;
   }
   InitializeJumpList();
   ::CoUninitialize();
-#endif  // _WIN32
 }
 }  // namespace gui
 }  // namespace mozc

@@ -45,12 +45,15 @@ TEST(HResultTest, ErrorCodes) {
   EXPECT_EQ(hr, E_FAIL);
   EXPECT_EQ(hr.hr(), E_FAIL);
   EXPECT_FALSE(hr.Succeeded());
+  EXPECT_TRUE(hr.Failed());
 
   HResult hr1 = HResultOk(), hr2 = HResultUnexpected();
   EXPECT_EQ(hr1.hr(), S_OK);
   EXPECT_TRUE(hr1.Succeeded());
+  EXPECT_FALSE(hr1.Failed());
   EXPECT_EQ(hr2.hr(), E_UNEXPECTED);
   EXPECT_FALSE(hr2.Succeeded());
+  EXPECT_TRUE(hr2.Failed());
 
   using std::swap;
   swap(hr1, hr2);
@@ -59,6 +62,7 @@ TEST(HResultTest, ErrorCodes) {
 
   HResult hr3 = HResultWin32(ERROR_SUCCESS);
   EXPECT_TRUE(hr3.Succeeded());
+  EXPECT_FALSE(hr3.Failed());
   EXPECT_EQ(hr3.hr(), S_OK);
 }
 
