@@ -76,6 +76,7 @@ ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-src-6.5.2.tar.xz')
 ABS_JOM_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'jom_1_1_3.zip')
+ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 
 
 def is_windows() -> bool:
@@ -347,10 +348,38 @@ def parse_args() -> argparse.Namespace:
                       help='set to accept Qt OSS license',
                       action='store_true', default=False)
   parser.add_argument('--dryrun', action='store_true', default=False)
+  parser.add_argument('--ninja_dir', help='Directory of ninja executable',
+                      type=str, default=None)
   if is_windows():
     parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
                         type=str, default=None)
   return parser.parse_args()
+
+
+def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
+  """Return the directory of ninja executable to be used, or None.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+  Returns:
+    The directory of ninja executable if ninja should be used. None otherwise.
+  """
+  # For Qt5 and prior, we don't use cmake/ninja
+  if get_qt_version(args).major < 6:
+    return None
+
+  ninja_exe = 'ninja.exe' if is_windows() else 'ninja'
+
+  if args.ninja_dir:
+    ninja_dir = pathlib.Path(args.ninja_dir).resolve()
+    if ninja_dir.joinpath(ninja_exe).exists():
+      return ninja_dir
+    else:
+      return None
+
+  if ABS_DEFAULT_NINJA_DIR.joinpath(ninja_exe).exists():
+    return ABS_DEFAULT_NINJA_DIR
+  return None
 
 
 def build_on_mac(args: argparse.Namespace) -> None:
@@ -369,6 +398,11 @@ def build_on_mac(args: argparse.Namespace) -> None:
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
   env = dict(os.environ)
+
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
   configure_cmds = ['./configure'] + make_configure_options(args)
   if get_qt_version(args).major == 5:
@@ -517,6 +551,11 @@ def build_on_windows(args: argparse.Namespace) -> None:
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
   env = get_vs_env_vars('amd64_x86', args.vcvarsall_path)
+
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
   # Add qt_src_dir to 'PATH'.
   # https://doc.qt.io/qt-5/windows-building.html#step-3-set-the-environment-variables
