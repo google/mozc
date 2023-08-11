@@ -444,13 +444,13 @@ def get_vs_env_vars(
 
     cwd = ...
     env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
 
   or
 
     cwd = ...
     env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
+    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
 
   For the 'arch' argument, see the following link to find supported values.
   https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line#vcvarsall-syntax
@@ -493,10 +493,10 @@ def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
     CalledProcessError: When the process failed.
   """
   if dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
+    print(f"dryrun: subprocess.run('{command}', shell=False, check=True,"
           f' cwd={cwd}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+    subprocess.run(command, shell=False, check=True, cwd=cwd, env=env)
 
 
 def build_on_windows(args: argparse.Namespace) -> None:
@@ -521,9 +521,8 @@ def build_on_windows(args: argparse.Namespace) -> None:
   # https://doc.qt.io/qt-6/windows-building.html#step-3-set-the-environment-variables
   env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
 
-  options = make_configure_options(args)
-  configs = ' '.join(options)
-  configure_cmds = f'configure.bat {configs}'
+  cmd = str(shutil.which('cmd.exe', path=env['PATH']))
+  configure_cmds = [cmd, '/C', 'configure.bat'] + make_configure_options(args)
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
   if get_qt_version(args).major == 5:
@@ -531,8 +530,9 @@ def build_on_windows(args: argparse.Namespace) -> None:
     build_cmds = [str(jom)]
     install_cmds = [str(jom), 'install']
   else:
-    build_cmds = ['cmake.exe', '--build', '.', '--parallel']
-    install_cmds = ['cmake.exe', '--install', '.']
+    cmake = str(shutil.which('cmake.exe', path=env['PATH']))
+    build_cmds = [cmake, '--build', '.', '--parallel']
+    install_cmds = [cmake, '--install', '.']
 
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
