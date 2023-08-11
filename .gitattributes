@@ -38,3 +38,9 @@
 *.bmp binary
 *.ico binary
 *.tiff binary
+
+# Workaround for GitHub graph timeouts
+# Treat large dictionary data files as binary.
+# https://github.com/google/mozc/issues/789
+src/data/dictionary_oss/connection_single_column.txt binary
+src/data/test/dictionary/connection_single_column.txt binary
