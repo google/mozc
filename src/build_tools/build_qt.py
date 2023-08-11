@@ -368,30 +368,32 @@ def build_on_mac(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  os.chdir(qt_src_dir)
+  env = dict(os.environ)
 
   configure_cmds = ['./configure'] + make_configure_options(args)
   if get_qt_version(args).major == 5:
-    build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
-    install_cmds = ['make', 'install']
+    make = str(shutil.which('make', path=env['PATH']))
+    build_cmds = [make, '--jobs=%s' % (os.cpu_count() * 2)]
+    install_cmds = [make, 'install']
   else:
-    build_cmds = ['cmake', '--build', '.', '--parallel']
-    install_cmds = ['cmake', '--install', '.']
-  if args.dryrun:
-    print(f'dryrun: run_or_die({configure_cmds})')
-    print('dryrun: run_or_die({build_cmds})')
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        print(f'dryrun: delete {qt_dest_dir}')
-      print('dryrun: run_or_die({install_cmds})')
-  else:
-    run_or_die(configure_cmds)
+    cmake = str(shutil.which('cmake', path=env['PATH']))
+    build_cmds = [cmake, '--build', '.', '--parallel']
+    install_cmds = [cmake, '--install', '.']
 
-    run_or_die(build_cmds)
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        shutil.rmtree(qt_dest_dir)
-      run_or_die(install_cmds)
+  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  if qt_src_dir == qt_dest_dir:
+    # No need to run 'install' command.
+    return
+
+  if qt_dest_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: delete {qt_dest_dir}')
+    else:
+      shutil.rmtree(qt_dest_dir)
+
+  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
 
 def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
@@ -553,26 +555,6 @@ def build_on_windows(args: argparse.Namespace) -> None:
   if get_qt_version(args).major == 6 and args.debug and args.release:
     install_cmds += ['--config', 'debug']
     exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
-
-def run_or_die(
-    argv: list[Union[str, pathlib.Path]],
-    env: Union[dict[str, str], None] = None,
-) -> None:
-  """Run the command, or die if it failed."""
-
-  # Rest are the target program name and the parameters, but we special
-  # case if the target program name ends with '.py'
-  if pathlib.Path(argv[0]).suffix == '.py':
-    argv.insert(0, sys.executable)  # Inject the python interpreter path.
-
-  print('Running: ' + ' '.join([str(arg) for arg in argv]))
-  try:
-    subprocess.run(argv, check=True, env=env)
-  except subprocess.CalledProcessError as e:
-    print(e.output.decode('utf-8'))
-    sys.exit(e.returncode)
-  print('Done.')
 
 
 def extract_qt_src(args: argparse.Namespace) -> None:
