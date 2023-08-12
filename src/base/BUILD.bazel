@@ -105,13 +105,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "port",
     hdrs = ["port.h"],
-    deps = mozc_select(
-        default = [
-            "//base",
-            "//base:port",
-        ],
-        oss = ["@com_google_absl//absl/base:core_headers"],
-    ),
 )
 
 mozc_cc_test(
