@@ -38,6 +38,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc::win32 {
 namespace {
@@ -75,10 +76,6 @@ absl::string_view CommonCodeToString(HRESULT hr) {
   }
 }
 
-std::string CodeToHex(HRESULT hr) {
-  return absl::StrCat("0x", absl::Hex(hr, absl::kZeroPad8));
-}
-
 }  // namespace
 
 std::string HResult::ToStringSlow() const {
@@ -88,7 +85,7 @@ std::string HResult::ToStringSlow() const {
     return absl::StrCat(Succeeded() ? "Success: " : "Failure: ", code_str);
   }
   if (Succeeded()) {
-    return absl::StrCat("Success: ", CodeToHex(hr_));
+    return absl::StrFormat("Success: 0x%08x", hr_);
   }
 
   wil::unique_hlocal_string message;
@@ -99,14 +96,13 @@ std::string HResult::ToStringSlow() const {
       reinterpret_cast<wchar_t *>(message.put()), 0, nullptr);
   if (result == 0) {
     return absl::StrFormat(
-        "Failure: %s, additional error during message formatting (%s)",
-        CodeToHex(hr_), CodeToHex(GetLastError()));
+        "Failure: 0x%08x, additional error during message formatting (0x%08x)",
+        hr_, GetLastError());
   }
   return absl::StrFormat(
-      "Failure: %s (%s)",
+      "Failure: %s (0x%08x)",
       // FormatMessageW adds \r\n at the end of the message.
-      absl::StripTrailingAsciiWhitespace(WideToUtf8(message.get())),
-      CodeToHex(hr_));
+      absl::StripTrailingAsciiWhitespace(WideToUtf8(message.get())), hr_);
 }
 
 }  // namespace mozc::win32

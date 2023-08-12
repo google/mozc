@@ -51,7 +51,6 @@
         'base/singleton_window_helper.cc',
         'base/table_util.cc',
         'base/util.cc',
-        'base/win_util.cc',
         'base/window_title_modifier.cc',
       ],
       'dependencies': [
@@ -67,6 +66,13 @@
       ],
       'includes': [
         'qt_libraries.gypi',
+      ],
+      'conditions': [
+        ['OS=="win"', {
+          'sources': [
+            'base/win_util.cc',
+          ],
+        }],
       ],
     },
     {

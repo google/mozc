@@ -32,8 +32,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
-
 namespace mozc {
 namespace gui {
 

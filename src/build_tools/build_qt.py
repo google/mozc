@@ -76,6 +76,7 @@ ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-src-6.5.2.tar.xz')
 ABS_JOM_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'jom_1_1_3.zip')
+ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 
 
 def is_windows() -> bool:
@@ -347,10 +348,38 @@ def parse_args() -> argparse.Namespace:
                       help='set to accept Qt OSS license',
                       action='store_true', default=False)
   parser.add_argument('--dryrun', action='store_true', default=False)
+  parser.add_argument('--ninja_dir', help='Directory of ninja executable',
+                      type=str, default=None)
   if is_windows():
     parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
                         type=str, default=None)
   return parser.parse_args()
+
+
+def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
+  """Return the directory of ninja executable to be used, or None.
+
+  Args:
+    args: build options to be used to customize configure options of Qt.
+  Returns:
+    The directory of ninja executable if ninja should be used. None otherwise.
+  """
+  # For Qt5 and prior, we don't use cmake/ninja
+  if get_qt_version(args).major < 6:
+    return None
+
+  ninja_exe = 'ninja.exe' if is_windows() else 'ninja'
+
+  if args.ninja_dir:
+    ninja_dir = pathlib.Path(args.ninja_dir).resolve()
+    if ninja_dir.joinpath(ninja_exe).exists():
+      return ninja_dir
+    else:
+      return None
+
+  if ABS_DEFAULT_NINJA_DIR.joinpath(ninja_exe).exists():
+    return ABS_DEFAULT_NINJA_DIR
+  return None
 
 
 def build_on_mac(args: argparse.Namespace) -> None:
@@ -368,30 +397,37 @@ def build_on_mac(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  os.chdir(qt_src_dir)
+  env = dict(os.environ)
+
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
   configure_cmds = ['./configure'] + make_configure_options(args)
   if get_qt_version(args).major == 5:
-    build_cmds = ['make', '--jobs=%s' % (os.cpu_count() * 2)]
-    install_cmds = ['make', 'install']
+    make = str(shutil.which('make', path=env['PATH']))
+    build_cmds = [make, '--jobs=%s' % (os.cpu_count() * 2)]
+    install_cmds = [make, 'install']
   else:
-    build_cmds = ['cmake', '--build', '.', '--parallel']
-    install_cmds = ['cmake', '--install', '.']
-  if args.dryrun:
-    print(f'dryrun: run_or_die({configure_cmds})')
-    print('dryrun: run_or_die({build_cmds})')
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        print(f'dryrun: delete {qt_dest_dir}')
-      print('dryrun: run_or_die({install_cmds})')
-  else:
-    run_or_die(configure_cmds)
+    cmake = str(shutil.which('cmake', path=env['PATH']))
+    build_cmds = [cmake, '--build', '.', '--parallel']
+    install_cmds = [cmake, '--install', '.']
 
-    run_or_die(build_cmds)
-    if qt_src_dir != qt_dest_dir:
-      if qt_dest_dir.exists():
-        shutil.rmtree(qt_dest_dir)
-      run_or_die(install_cmds)
+  exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+  exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
+
+  if qt_src_dir == qt_dest_dir:
+    # No need to run 'install' command.
+    return
+
+  if qt_dest_dir.exists():
+    if args.dryrun:
+      print(f'dryrun: delete {qt_dest_dir}')
+    else:
+      shutil.rmtree(qt_dest_dir)
+
+  exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
 
 def get_vcvarsall(path_hint: Union[str, None] = None) -> pathlib.Path:
@@ -444,13 +480,13 @@ def get_vs_env_vars(
 
     cwd = ...
     env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
 
   or
 
     cwd = ...
     env = get_vs_env_vars('amd64_x86')
-    subprocess.run(command_fullpath, shell=False, check=True, cwd=cwd, env=env)
+    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
 
   For the 'arch' argument, see the following link to find supported values.
   https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line#vcvarsall-syntax
@@ -493,10 +529,10 @@ def exec_command(command: list[str], cwd: Union[str, pathlib.Path],
     CalledProcessError: When the process failed.
   """
   if dryrun:
-    print(f"dryrun: subprocess.run('{command}', shell=True, check=True,"
+    print(f"dryrun: subprocess.run('{command}', shell=False, check=True,"
           f' cwd={cwd}, env={env})')
   else:
-    subprocess.run(command, shell=True, check=True, cwd=cwd, env=env)
+    subprocess.run(command, shell=False, check=True, cwd=cwd, env=env)
 
 
 def build_on_windows(args: argparse.Namespace) -> None:
@@ -516,14 +552,18 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   env = get_vs_env_vars('amd64_x86', args.vcvarsall_path)
 
+  # Use locally checked out ninja.exe if exists.
+  ninja_dir = get_ninja_dir(args)
+  if ninja_dir:
+    env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
+
   # Add qt_src_dir to 'PATH'.
   # https://doc.qt.io/qt-5/windows-building.html#step-3-set-the-environment-variables
   # https://doc.qt.io/qt-6/windows-building.html#step-3-set-the-environment-variables
   env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
 
-  options = make_configure_options(args)
-  configs = ' '.join(options)
-  configure_cmds = f'configure.bat {configs}'
+  cmd = str(shutil.which('cmd.exe', path=env['PATH']))
+  configure_cmds = [cmd, '/C', 'configure.bat'] + make_configure_options(args)
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
   if get_qt_version(args).major == 5:
@@ -531,8 +571,9 @@ def build_on_windows(args: argparse.Namespace) -> None:
     build_cmds = [str(jom)]
     install_cmds = [str(jom), 'install']
   else:
-    build_cmds = ['cmake.exe', '--build', '.', '--parallel']
-    install_cmds = ['cmake.exe', '--install', '.']
+    cmake = str(shutil.which('cmake.exe', path=env['PATH']))
+    build_cmds = [cmake, '--build', '.', '--parallel']
+    install_cmds = [cmake, '--install', '.']
 
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
@@ -553,26 +594,6 @@ def build_on_windows(args: argparse.Namespace) -> None:
   if get_qt_version(args).major == 6 and args.debug and args.release:
     install_cmds += ['--config', 'debug']
     exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
-
-
-def run_or_die(
-    argv: list[Union[str, pathlib.Path]],
-    env: Union[dict[str, str], None] = None,
-) -> None:
-  """Run the command, or die if it failed."""
-
-  # Rest are the target program name and the parameters, but we special
-  # case if the target program name ends with '.py'
-  if pathlib.Path(argv[0]).suffix == '.py':
-    argv.insert(0, sys.executable)  # Inject the python interpreter path.
-
-  print('Running: ' + ' '.join([str(arg) for arg in argv]))
-  try:
-    subprocess.run(argv, check=True, env=env)
-  except subprocess.CalledProcessError as e:
-    print(e.output.decode('utf-8'))
-    sys.exit(e.returncode)
-  print('Done.')
 
 
 def extract_qt_src(args: argparse.Namespace) -> None:

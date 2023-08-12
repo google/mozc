@@ -29,6 +29,7 @@
 
 load(
     "//:build_defs.bzl",
+    "MOZC_TAGS",
     "mozc_cc_library",
     "mozc_select",
 )
@@ -38,6 +39,7 @@ load(
     "mozc_qt_moc",
     "mozc_qt_rcc",
 )
+load("//bazel/win32:build_defs.bzl", "features_gdi")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
@@ -85,7 +87,6 @@ mozc_cc_qt_library(
         "debug_util.cc",
         "table_util.cc",
         "util.cc",
-        "win_util.cc",
         "window_title_modifier.cc",
         ":base_files",
         ":qrc_tr",
@@ -94,7 +95,6 @@ mozc_cc_qt_library(
         "debug_util.h",
         "table_util.h",
         "util.h",
-        "win_util.h",
         "window_title_modifier.h",
     ],
     deps = [
@@ -106,6 +106,26 @@ mozc_cc_qt_library(
         "//base:util",
         "//base:version",
         "@com_google_absl//absl/strings",
+    ] + mozc_select(
+        windows = [":win_util"],
+    ),
+)
+
+mozc_cc_library(
+    name = "win_util",
+    srcs = ["win_util.cc"],
+    hdrs = ["win_util.h"],
+    features = features_gdi(),
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        "//base:logging",
+        "//base:system_util",
+        "//base/strings:zstring_view",
+        "//base/win32:com",
+        "//base/win32:hresult",
+        "//base/win32:wide_char",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

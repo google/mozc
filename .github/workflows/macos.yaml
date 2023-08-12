@@ -12,6 +12,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build_qt6_only:
+    # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
+    runs-on: macos-11
+    timeout-minutes: 90
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: '3.9'
+
+      - name: Install pip dependencies
+        working-directory: ./src
+        run: |
+          python3 -m pip install requests
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          python3 build_tools/update_deps.py
+
+      - name: Build Qt
+        working-directory: ./src
+        run: |
+          python3 build_tools/build_qt.py --release --confirm_license --qt_archive=third_party_cache/qtbase-everywhere-src-6.5.2.tar.xz
+          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
+
   build:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
     runs-on: macos-11
