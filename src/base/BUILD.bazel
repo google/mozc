@@ -111,7 +111,7 @@ mozc_cc_library(
             "//base:port",
         ],
         oss = ["@com_google_absl//absl/base:core_headers"],
-    ) + ["//base:types"],
+    ),
 )
 
 mozc_cc_test(
