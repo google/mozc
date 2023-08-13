@@ -164,7 +164,9 @@ mozc_cc_library(
     copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = ["//win32/tip:__subpackages__"],
+    visibility = [
+        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
+    ],
     deps = [
         "//base:coordinates",
         "//base:logging",
@@ -269,7 +271,9 @@ mozc_cc_library(
     copts = copts_wtl(),
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
-    visibility = ["//win32/tip:__subpackages__"],
+    visibility = [
+        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
+    ],
     deps = [
         "//base:logging",
         "//base:system_util",
