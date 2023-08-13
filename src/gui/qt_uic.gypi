@@ -31,16 +31,11 @@
 {
   'conditions': [['use_qt=="YES"', {
 
+  'includes': [
+    'qt_tool_dir.gypi',
+  ],
   'variables': {
-    'conditions': [
-      ['target_platform=="Linux"', {
-        'uic_path': '<!(pkg-config --variable=host_bins Qt<(qt_ver)Core)/uic',
-      }, 'qt_dir', {
-        'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
-      }, {
-        'uic_path': 'uic<(EXECUTABLE_SUFFIX)',
-      }],
-    ],
+    'uic_path': '<(qt_tool_dir)/uic<(EXECUTABLE_SUFFIX)',
   },
   'rules': [
     {

@@ -27,34 +27,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# This file provides a common action for Qt rcc command.
+# This file provides 'qt_tool_dir' gyp variable.
 {
-  'conditions': [['use_qt=="YES"', {
-
-  'includes': [
-    'qt_tool_dir.gypi',
-  ],
   'variables': {
-    'rcc_path': '<(qt_tool_dir)/rcc<(EXECUTABLE_SUFFIX)',
-  },
-  # In order to specify file dependencies correctly (e.g. *.png), we need to use
-  # 'actions' instead of 'rules'.
-  'actions': [
-    {
-      'action_name': 'qrc',
-      'inputs': ['<@(qrc_inputs)'],
-      'outputs': [
-        '<(gen_out_dir)/<(subdir)/qrc_<(qrc_base_name).cc'
+    'variables': {
+      'conditions': [
+        ['qt_ver==6 and target_platform=="Linux"', {
+          'qt_tool_dir': '<!(pkg-config --variable=libexecdir Qt6Core)',
+        }],
+        ['qt_ver==5 and target_platform=="Linux"', {
+          'qt_tool_dir': '<!(pkg-config --variable=host_bins Qt5Core)',
+        }],
+        ['qt_ver==6 and target_platform=="Mac"', {
+          'qt_tool_dir': '<(qt_dir)/libexec',
+        }],
+        ['qt_ver==5 and target_platform=="Mac"', {
+          'qt_tool_dir': '<(qt_dir)/bin',
+        }],
+        ['target_platform=="Windows"', {
+          'qt_tool_dir': '<(qt_dir)/bin',
+        }],
       ],
-      'action': [
-        '<(rcc_path)',
-        '-o', '<(gen_out_dir)/<(subdir)/qrc_<(qrc_base_name).cc',
-        '-name', 'qrc_<(qrc_base_name)',
-        '<(subdir)/<(qrc_base_name).qrc',
-      ],
-      'message': 'Generating Resource file from <(qrc_base_name).qrc',
     },
-  ],
-
-  }]],  # End of use_qt=="YES"
+    'qt_tool_dir': '<(qt_tool_dir)',
+  },
 }
