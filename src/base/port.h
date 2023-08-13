@@ -34,11 +34,6 @@
 #include <TargetConditionals.h>
 #endif  // __APPLE__
 
-
-#include "absl/base/attributes.h"
-#include "absl/base/macros.h"
-
-
 namespace mozc {
 namespace port_internal {
 // PlatformType represents a mutually exclusive list of target platforms.

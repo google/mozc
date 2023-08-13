@@ -30,7 +30,6 @@
 #ifndef MOZC_TESTING_TESTING_UTIL_H_
 #define MOZC_TESTING_TESTING_UTIL_H_
 
-#include "base/port.h"
 #include "base/protobuf/message.h"
 #include "testing/gunit.h"
 

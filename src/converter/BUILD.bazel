@@ -106,7 +106,6 @@ mozc_cc_library(
         "//dictionary:__subpackages__",
     ],
     deps = [
-        "//base:port",
         "//dictionary:dictionary_token",
     ],
 )
@@ -129,7 +128,6 @@ mozc_cc_library(
         ":node",
         ":node_allocator",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//base/container:trie",
         "//dictionary:dictionary_interface",
@@ -213,7 +211,6 @@ mozc_cc_test(
         ":segmenter",
         ":segments",
         "//base:logging",
-        "//base:port",
         "//data_manager:data_manager_interface",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_impl",
@@ -313,7 +310,6 @@ mozc_cc_test(
     deps = [
         ":lattice",
         ":node",
-        "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/container:btree",
     ],
@@ -411,7 +407,6 @@ mozc_cc_library(
     hdrs = ["converter_interface.h"],
     deps = [
         ":segments",
-        "//base:port",
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
@@ -649,7 +644,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":key_corrector",
-        "//base:port",
         "//testing:gunit_main",
     ],
 )
@@ -678,7 +672,6 @@ mozc_cc_library(
         ":segments",
         "//base:file_stream",
         "//base:logging",
-        "//base:port",
         "//base:text_normalizer",
         "//base:util",
         "//composer",

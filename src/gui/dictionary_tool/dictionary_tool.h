@@ -39,7 +39,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
 

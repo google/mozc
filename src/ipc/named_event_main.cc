@@ -32,7 +32,6 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "ipc/named_event.h"
 #include "absl/flags/flag.h"
 #include "absl/time/time.h"

@@ -484,7 +484,7 @@ def GypMain(options, unused_args):
     if target_platform == 'Linux':
       if PkgExists('Qt6Core', 'Qt6Gui', 'Qt6Widgets'):
         qt_ver = 6
-      if PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
+      elif PkgExists('Qt5Core', 'Qt5Gui', 'Qt5Widgets'):
         qt_ver = 5
       else:
         PrintErrorAndExit('Qt is required to build GUI Tool. '

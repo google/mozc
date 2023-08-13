@@ -33,7 +33,6 @@
 #include <iterator>
 #include <string>
 
-#include "base/port.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"

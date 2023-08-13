@@ -60,7 +60,6 @@ mozc_cc_binary(
         ":tip_ui_handler",
         ":tip_ui_handler_impl",
         "//base:crash_report_handler",
-        "//base:port",
         "//base/protobuf",
         "//base/protobuf:message",
         "//base/win32:com_implements",

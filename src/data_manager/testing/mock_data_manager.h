@@ -30,7 +30,6 @@
 #ifndef MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_TESTING_MOCK_DATA_MANAGER_H_
 
-#include "base/port.h"
 #include "data_manager/data_manager.h"
 
 namespace mozc {

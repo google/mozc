@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"

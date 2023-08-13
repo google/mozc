@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"

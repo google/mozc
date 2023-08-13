@@ -87,7 +87,6 @@ mozc_cc_library(
     ],
     deps = [
         "//base:logging",
-        "//base:port",
         "//base:util",
     ],
 )
@@ -117,7 +116,6 @@ mozc_cc_library(
         ":wide_char",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
         "//testing:mozctest",
     ],
 )

@@ -82,7 +82,6 @@ mozc_cc_qt_library(
     deps = [
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:process",
         "//base:process_mutex",
         "//base:run_level",

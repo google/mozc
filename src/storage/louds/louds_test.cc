@@ -33,7 +33,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/port.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 

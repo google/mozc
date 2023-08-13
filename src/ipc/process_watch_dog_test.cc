@@ -33,7 +33,6 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "testing/gunit.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"

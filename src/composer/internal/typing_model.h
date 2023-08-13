@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/port.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()

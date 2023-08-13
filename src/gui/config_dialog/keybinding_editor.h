@@ -35,7 +35,6 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "gui/config_dialog/ui_keybinding_editor.h"
 
 namespace mozc {

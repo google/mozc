@@ -33,7 +33,6 @@
 #include <limits>
 #include <memory>
 
-#include "base/port.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

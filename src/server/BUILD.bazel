@@ -79,7 +79,6 @@ mozc_cc_library(
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:logging",
-        "//base:port",
         "//base:process_mutex",
         "//base:run_level",
         "//base:singleton",

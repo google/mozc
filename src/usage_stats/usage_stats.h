@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "absl/strings/string_view.h"
 

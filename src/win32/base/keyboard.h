@@ -36,7 +36,6 @@
 #include <memory>
 #include <vector>
 
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {

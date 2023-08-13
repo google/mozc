@@ -41,7 +41,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "testing/gunit.h"
 #ifdef _WIN32
 #include "absl/strings/string_view.h"

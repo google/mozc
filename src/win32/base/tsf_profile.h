@@ -32,7 +32,6 @@
 
 #include <windows.h>
 
-#include "base/port.h"
 
 namespace mozc {
 namespace win32 {

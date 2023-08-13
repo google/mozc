@@ -34,7 +34,6 @@
 #include <memory>
 
 #include "base/container/serialized_string_array.h"
-#include "base/port.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"

@@ -37,7 +37,6 @@
 #include <string>
 #include <string_view>
 
-#include "base/port.h"
 #include "base/strings/zstring_view.h"
 #include "testing/gunit_prod.h"
 // for FRIEND_TEST()

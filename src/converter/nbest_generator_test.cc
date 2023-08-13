@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter.h"
 #include "converter/segmenter.h"

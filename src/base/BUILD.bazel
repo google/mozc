@@ -105,13 +105,6 @@ mozc_cc_library(
 mozc_cc_library(
     name = "port",
     hdrs = ["port.h"],
-    deps = mozc_select(
-        default = [
-            "//base",
-            "//base:port",
-        ],
-        oss = ["@com_google_absl//absl/base:core_headers"],
-    ),
 )
 
 mozc_cc_test(
@@ -221,7 +214,6 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":logging",
-        ":port",
     ],
 )
 
@@ -345,7 +337,6 @@ mozc_cc_library(
     ],
     deps = [
         ":logging",
-        ":port",
         "//base/strings:unicode",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/base:core_headers",
@@ -421,7 +412,6 @@ mozc_cc_library(
     hdrs = ["text_normalizer.h"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":port",
         ":util",
         "@com_google_absl//absl/strings",
     ],
@@ -473,7 +463,6 @@ mozc_cc_library(
     ],
     deps = [
         ":logging",
-        ":port",
         ":util",
         "//base/strings:zstring_view",
         "@com_google_absl//absl/base:core_headers",
@@ -614,7 +603,6 @@ mozc_cc_library(
         ":environ",
         ":file_util",
         ":logging",
-        ":port",
         ":singleton",
         ":util",
         "//base/strings:zstring_view",
@@ -650,7 +638,6 @@ mozc_cc_test(
         ":environ_mock",
         ":file_util",
         ":file_util_mock",
-        ":port",
         ":system_util",
         ":util",
         "//testing:gunit_main",
@@ -670,7 +657,6 @@ mozc_cc_library(
         ":const",
         ":file_util",
         ":logging",
-        ":port",
         ":system_util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
@@ -734,7 +720,6 @@ mozc_cc_library(
     deps = [
         ":const",
         ":logging",
-        ":port",
         ":system_util",
         ":util",
         "@com_google_absl//absl/strings",
@@ -851,7 +836,6 @@ mozc_cc_library(
     deps = [
         ":logging",
         ":number_util",
-        ":port",
         ":util",
         "@com_google_absl//absl/strings",
     ] + mozc_select(
@@ -889,7 +873,6 @@ mozc_cc_library(
     deps = [
         ":bits",
         ":logging",
-        ":port",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/strings",
     ],
@@ -931,7 +914,6 @@ mozc_cc_library(
         ":logging",
         ":mmap",
         ":obfuscator_support",
-        ":port",
         ":random",
         ":singleton",
         ":system_util",
@@ -1137,7 +1119,6 @@ mozc_cc_test(
     deps = [
         ":embedded_file",
         ":file_util",
-        ":port",
         "//testing:gunit_main",
         "//testing:mozctest",
     ],

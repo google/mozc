@@ -34,7 +34,6 @@
 #include <vector>
 
 #include "base/coordinates.h"
-#include "base/port.h"
 #include "renderer/table_layout_interface.h"
 
 namespace mozc {

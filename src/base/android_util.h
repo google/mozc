@@ -35,7 +35,6 @@
 #include <set>
 #include <string>
 
-#include "base/port.h"
 
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"

@@ -81,7 +81,6 @@ mozc_cc_qt_library(
     deps = [
         "//base:const",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
         "//base:util",
         "//client",

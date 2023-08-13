@@ -125,7 +125,6 @@ mozc_cc_library(
     deps = [
         ":gunit",
         "//base:logging",
-        "//base:port",
         "//base/protobuf",
         "//base/protobuf:message",
         "//base/protobuf:text_format",

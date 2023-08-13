@@ -32,7 +32,6 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/port.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

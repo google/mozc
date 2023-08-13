@@ -34,7 +34,6 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"

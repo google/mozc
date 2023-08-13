@@ -48,7 +48,6 @@ mozc_cc_test(
     srcs = ["louds_test.cc"],
     deps = [
         ":louds",
-        "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],
@@ -86,7 +85,6 @@ mozc_cc_test(
     deps = [
         ":louds_trie",
         ":louds_trie_builder",
-        "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
     ],
@@ -126,7 +124,6 @@ mozc_cc_test(
     deps = [
         ":bit_vector_based_array",
         ":bit_vector_based_array_builder",
-        "//base:port",
         "//testing:gunit_main",
     ],
 )
