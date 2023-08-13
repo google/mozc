@@ -35,7 +35,6 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 #include "gui/config_dialog/generic_table_editor.h"
 
 class QAbstractButton;

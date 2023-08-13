@@ -33,7 +33,6 @@
 #include <QTableWidget>
 #include <memory>
 
-#include "base/port.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {

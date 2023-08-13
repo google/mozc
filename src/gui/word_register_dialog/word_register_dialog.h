@@ -35,7 +35,6 @@
 #include <QtGui>
 #include <memory>
 
-#include "base/port.h"
 #include "gui/word_register_dialog/ui_word_register_dialog.h"
 
 namespace mozc {

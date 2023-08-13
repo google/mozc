@@ -30,7 +30,6 @@
 #ifndef MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 #define MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 
-#include "base/port.h"
 
 namespace mozc {
 namespace commands {

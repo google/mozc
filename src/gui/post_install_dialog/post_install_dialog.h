@@ -32,7 +32,6 @@
 
 #include <memory>
 
-#include "base/port.h"
 #include "gui/post_install_dialog/ui_post_install_dialog.h"
 
 namespace mozc {

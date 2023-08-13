@@ -201,7 +201,6 @@ mozc_cc_library(
     srcs = ["converter.cc"],
     hdrs = ["converter.h"],
     deps = [
-        "//base:port",
         "//composer:table",
         "@com_google_absl//absl/strings",
     ],
@@ -265,7 +264,6 @@ mozc_cc_library(
     srcs = ["typing_model.cc"],
     hdrs = ["typing_model.h"],
     deps = [
-        "//base:port",
         "//data_manager:data_manager_interface",
         "//protocol:commands_cc_proto",
         "//testing:gunit_prod",

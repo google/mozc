@@ -90,7 +90,6 @@ mozc_cc_library(
     deps = [
         ":config_handler",
         "//base:file_util",
-        "//base:port",
         "//base:singleton",
         "//base:system_util",
         "//protocol:config_cc_proto",

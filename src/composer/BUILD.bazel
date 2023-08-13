@@ -165,7 +165,6 @@ mozc_cc_library(
     hdrs = ["key_event_util.h"],
     deps = [
         "//base:logging",
-        "//base:port",
         "//protocol:commands_cc_proto",
     ],
 )

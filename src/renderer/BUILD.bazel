@@ -106,7 +106,6 @@ mozc_cc_library(
         ":renderer_interface",
         "//base:const",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
         "//client:client_interface",
         "//config:config_handler",
@@ -152,7 +151,6 @@ mozc_cc_library(
     deps = [
         "//base:coordinates",
         "//base:logging",
-        "//base:port",
     ],
 )
 
@@ -300,7 +298,6 @@ mozc_objc_library(
         "//base:const",
         "//base:coordinates",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//base/mac:mac_util",
         "//client:client_interface",

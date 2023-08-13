@@ -37,7 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 
 namespace mozc {
 

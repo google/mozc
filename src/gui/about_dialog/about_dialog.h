@@ -35,7 +35,6 @@
 #include <QDialog>
 #include <memory>
 
-#include "base/port.h"
 #include "gui/about_dialog/ui_about_dialog.h"
 
 class QImage;

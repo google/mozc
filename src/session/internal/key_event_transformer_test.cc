@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <string>
 
-#include "base/port.h"
 #include "base/singleton.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

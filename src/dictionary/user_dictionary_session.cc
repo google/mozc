@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/strings/assign.h"

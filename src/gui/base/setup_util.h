@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/port.h"
 
 namespace mozc {
 

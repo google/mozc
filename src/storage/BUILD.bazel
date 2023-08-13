@@ -63,7 +63,6 @@ mozc_cc_library(
     hdrs = ["lru_cache.h"],
     deps = [
         "//base:logging",
-        "//base:port",
         "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
@@ -103,7 +102,6 @@ mozc_cc_test(
         "//base:clock_mock",
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:random",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",

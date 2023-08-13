@@ -41,7 +41,6 @@ mozc_cc_library(
     hdrs = ["codec_interface.h"],
     visibility = ["//visibility:private"],
     deps = [
-        "//base:port",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -57,7 +56,6 @@ mozc_cc_library(
     deps = [
         ":words_info",
         "//base:logging",
-        "//base:port",
         "//base:singleton",
         "//base:util",
         "//dictionary:dictionary_token",
@@ -112,7 +110,6 @@ mozc_cc_library(
         "//base:japanese_util",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
         "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
@@ -138,7 +135,6 @@ mozc_cc_library(
         ":codec",
         "//base:logging",
         "//base:mmap",
-        "//base:port",
         "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
@@ -239,7 +235,6 @@ mozc_cc_library(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],
     deps = [
-        "//base:port",
         "@com_google_absl//absl/strings",
     ],
 )

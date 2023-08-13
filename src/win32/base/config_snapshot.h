@@ -32,7 +32,6 @@
 
 #include <vector>
 
-#include "base/port.h"
 #include "session/key_info_util.h"
 
 namespace mozc {

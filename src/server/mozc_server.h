@@ -30,7 +30,6 @@
 #ifndef MOZC_SERVER_MOZC_SERVER_H_
 #define MOZC_SERVER_MOZC_SERVER_H_
 
-#include "base/port.h"
 
 namespace mozc {
 namespace server {

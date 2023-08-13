@@ -32,7 +32,6 @@
 #include <cstdint>
 #include <vector>
 
-#include "base/port.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"

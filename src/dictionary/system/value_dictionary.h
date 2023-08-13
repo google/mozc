@@ -38,7 +38,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "storage/louds/louds_trie.h"
 #include "absl/strings/string_view.h"

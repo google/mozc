@@ -33,7 +33,6 @@
 #include <memory>
 #include <string>
 
-#include "base/port.h"
 
 namespace mozc {
 

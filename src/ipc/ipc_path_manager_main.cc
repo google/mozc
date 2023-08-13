@@ -31,7 +31,6 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/port.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"

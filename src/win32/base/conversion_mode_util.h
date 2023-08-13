@@ -36,7 +36,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {

@@ -33,7 +33,6 @@
 #include <cstdint>
 
 #include "base/logging.h"
-#include "base/port.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {

@@ -34,7 +34,6 @@
 #include <utility>
 
 #include "base/init_mozc.h"
-#include "base/port.h"
 #include "data_manager/serialized_dictionary.h"
 #include "absl/flags/flag.h"
 

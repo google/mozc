@@ -33,7 +33,6 @@
 #include <cstdint>
 #include <string>
 
-#include "base/port.h"
 #include "dictionary/dictionary_token.h"
 
 namespace mozc {

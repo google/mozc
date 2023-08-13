@@ -190,7 +190,6 @@ mozc_cc_library(
     deps = [
         ":window_manager",
         "//base:logging",
-        "//base:port",
         "//base:run_level",
         "//base:util",
         "//protocol:renderer_cc_proto",
@@ -258,7 +257,6 @@ mozc_cc_library(
     deps = [
         "//base:coordinates",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//third_party/wtl",
     ],

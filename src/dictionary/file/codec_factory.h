@@ -32,7 +32,6 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_FACTORY_H_
 #define MOZC_DICTIONARY_FILE_CODEC_FACTORY_H_
 
-#include "base/port.h"
 #include "dictionary/file/codec_interface.h"
 
 namespace mozc {

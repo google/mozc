@@ -33,7 +33,6 @@
 #include <cstddef>
 #include <string>
 
-#include "base/port.h"
 
 namespace mozc {
 namespace storage {

@@ -32,7 +32,6 @@
 
 #include <cstdint>
 
-#include "base/port.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"

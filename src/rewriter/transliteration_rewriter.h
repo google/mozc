@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"

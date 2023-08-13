@@ -89,7 +89,6 @@ mozc_cc_library(
     hdrs = ["codec_interface.h"],
     deps = [
         ":section",
-        "//base:port",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -113,7 +112,6 @@ mozc_cc_library(
         "//base:bits",
         "//base:hash",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -131,7 +129,6 @@ mozc_cc_library(
         ":codec_interface",
         ":codec_util",
         ":section",
-        "//base:port",
         "//base:singleton",
     ],
 )

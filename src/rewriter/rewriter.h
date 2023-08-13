@@ -30,7 +30,6 @@
 #ifndef MOZC_REWRITER_REWRITER_H_
 #define MOZC_REWRITER_REWRITER_H_
 
-#include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"

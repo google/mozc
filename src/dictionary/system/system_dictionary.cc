@@ -61,7 +61,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/port.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"

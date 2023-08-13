@@ -149,7 +149,6 @@ mozc_cc_qt_library(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:process",
         "//base:run_level",
         "//base:system_util",

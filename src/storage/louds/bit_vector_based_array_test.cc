@@ -33,7 +33,6 @@
 #include <iterator>
 #include <string>
 
-#include "base/port.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "testing/gunit.h"
 

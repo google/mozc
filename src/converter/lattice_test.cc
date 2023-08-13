@@ -32,7 +32,6 @@
 #include <set>
 #include <string>
 
-#include "base/port.h"
 #include "converter/node.h"
 #include "testing/gunit.h"
 #include "absl/container/btree_set.h"

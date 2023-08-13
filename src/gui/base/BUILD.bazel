@@ -53,7 +53,6 @@ mozc_cc_library(
         "sjis_to_ucs2_table.h",
     ],
     deps = [
-        "//base:port",
         "//base:util",
         "@com_google_absl//absl/strings",
     ],
@@ -100,7 +99,6 @@ mozc_cc_qt_library(
     deps = [
         ":encoding_util",
         "//base:logging",
-        "//base:port",
         "//base:singleton",
         "//base:system_util",
         "//base:util",
@@ -138,7 +136,6 @@ mozc_cc_qt_library(
         "msime_user_dictionary_importer.h",
     ],
     deps = [
-        "//base:port",
         "//dictionary:user_dictionary_importer",
     ],
 )
@@ -155,7 +152,6 @@ mozc_cc_library(
         ":gui_base",
         ":msime_user_dictionary_importer",
         "//base:logging",
-        "//base:port",
         "//dictionary:user_dictionary",
         "//dictionary:user_dictionary_importer",
         "//dictionary:user_dictionary_storage",
@@ -176,7 +172,6 @@ mozc_cc_qt_library(
         ":gui_base",
         "//base:file_stream",
         "//base:logging",
-        "//base:port",
         "//base:process_mutex",
         "//base:util",
         "//base:version",

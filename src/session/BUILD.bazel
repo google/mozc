@@ -128,7 +128,6 @@ mozc_cc_test(
     shard_count = 8,
     deps = [
         ":session_converter",
-        "//base:port",
         "//base:random",
         "//base:system_util",
         "//composer",
@@ -306,7 +305,6 @@ mozc_cc_library(
         ":session_observer_handler",
         "//base:clock",
         "//base:logging",
-        "//base:port",
         "//base:singleton",
         "//base:stopwatch",
         "//base:util",
@@ -365,7 +363,6 @@ mozc_cc_library(
         "//base:config_file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:port",
         "//base:system_util",
         "//base/file:temp_dir",
         "//composer:table",
@@ -433,7 +430,6 @@ mozc_cc_library(
         ":session_handler_interface",
         ":session_usage_observer",
         "//base:logging",
-        "//base:port",
         "//engine:engine_factory",
         "//ipc",
         "//ipc:named_event",
@@ -448,7 +444,6 @@ mozc_cc_library(
     srcs = ["request_test_util.cc"],
     hdrs = ["request_test_util.h"],
     deps = [
-        "//base:port",
         "//composer:table",
         "//protocol:commands_cc_proto",
     ],
@@ -613,7 +608,6 @@ mozc_cc_library(
     hdrs = ["session_usage_stats_util.h"],
     deps = [
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//protocol:commands_cc_proto",
         "//usage_stats",
@@ -664,7 +658,6 @@ mozc_cc_library(
     deps = [
         "//base:japanese_util",
         "//base:logging",
-        "//base:port",
         "//base:util",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
