@@ -37,6 +37,7 @@
 #include "base/logging.h"
 #include "base/strings/zstring_view.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 
@@ -45,11 +46,11 @@
 #endif                           // __APPLE__
 
 #ifdef _WIN32
+#include <wil/resource.h>
 #include <windows.h>
 
 #include <limits>
 
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #else  // _WIN32
 #include <fcntl.h>
@@ -86,7 +87,7 @@ struct SyscallParams {
 };
 
 using FileDescriptor = HANDLE;
-using FdCloser = ScopedHandle;
+using FdCloser = wil::unique_hfile;
 
 absl::StatusOr<SyscallParams> GetSyscallParams(Mmap::Mode mode) {
   SyscallParams params;
@@ -157,16 +158,15 @@ constexpr std::pair<DWORD, DWORD> GetHiAndLo(size_t value) {
 absl::StatusOr<void *> MapFile(FileDescriptor fd, size_t offset, size_t size,
                                const SyscallParams &params) {
   const auto [max_size_hi, max_size_lo] = GetHiAndLo(size);
-  const HANDLE handle = ::CreateFileMapping(fd, 0, params.protect, max_size_hi,
-                                            max_size_lo, nullptr);
-  if (handle == nullptr) {
+  wil::unique_handle handle(::CreateFileMapping(
+      fd, 0, params.protect, max_size_hi, max_size_lo, nullptr));
+  if (!handle) {
     return absl::UnknownError(
         absl::StrFormat("Error %d: CreateFileMapping failed", GetLastError()));
   }
-  const ScopedHandle closer(handle);
 
   const auto [offset_hi, offset_lo] = GetHiAndLo(offset);
-  const LPVOID ptr = ::MapViewOfFile(handle, params.map_desired_access,
+  const LPVOID ptr = ::MapViewOfFile(handle.get(), params.map_desired_access,
                                      offset_hi, offset_lo, size);
   if (ptr == nullptr) {
     return absl::UnknownError(

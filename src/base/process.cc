@@ -46,9 +46,9 @@
 #include "absl/time/time.h"
 
 #ifdef _WIN32
+#include <wil/resource.h>
 #include <windows.h>
 
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #else  // _WIN32
@@ -253,8 +253,9 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 
 #ifdef _WIN32
   DWORD processe_id = static_cast<DWORD>(pid);
-  ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
-  if (handle.get() == nullptr) {
+  wil::unique_process_handle handle(
+      ::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
+  if (!handle) {
     LOG(ERROR) << "Cannot get handle id";
     return true;
   }
@@ -302,9 +303,9 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
 
 #ifdef _WIN32
   {
-    ScopedHandle handle(
+    wil::unique_process_handle handle(
         ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid)));
-    if (nullptr == handle.get()) {
+    if (!handle) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenProcess failed: " << error;
@@ -343,9 +344,9 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
   }
 
   {
-    ScopedHandle handle(
+    wil::unique_process_handle handle(
         ::OpenThread(SYNCHRONIZE, FALSE, static_cast<DWORD>(thread_id)));
-    if (nullptr == handle.get()) {
+    if (!handle) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenThread failed: " << error;

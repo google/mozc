@@ -30,7 +30,6 @@
 #include "base/run_level.h"
 
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -38,14 +37,15 @@
 
 #ifdef _WIN32
 #include <aclapi.h>
+#include <wil/resource.h>
 #include <windows.h>
 
 #include "base/const.h"
 #include "base/system_util.h"
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
 #include "base/win32/win_util.h"
+#include "absl/strings/string_view.h"
 #else  // _WIN32
 #include <unistd.h>
 #endif  // _WIN32
@@ -80,7 +80,7 @@ bool IsDifferentUser(const HANDLE hToken) {
 
   absl::string_view source_name(src.SourceName, TOKEN_SOURCE_LENGTH);
 
-  return source_name == kSeclogo|| source_name == kCredPro;
+  return source_name == kSeclogo || source_name == kCredPro;
 }
 
 // Returns true if UAC gave the high integrity level to the token
@@ -142,13 +142,12 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Get process token
-  HANDLE hProcessToken = nullptr;
+  wil::unique_process_handle process_token;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
+                          process_token.put())) {
     return RunLevel::DENY;
   }
-
-  ScopedHandle process_token(hProcessToken);
 
   // Opt out of elevated process.
   if (CLIENT == type && GetElevatedProcessDisabled() &&
@@ -157,17 +156,15 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Get thread token (if any)
-  HANDLE hThreadToken = nullptr;
+  wil::unique_process_handle thread_token;
   if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE,
-                         &hThreadToken) &&
+                         thread_token.put()) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
     return RunLevel::DENY;
   }
 
-  ScopedHandle thread_token(hThreadToken);
-
   // Thread token (if any) must not a service account.
-  if (nullptr != thread_token.get()) {
+  if (!thread_token) {
     bool is_service_thread = false;
     if (!WinUtil::IsServiceUser(thread_token.get(), &is_service_thread)) {
       // Returns DENY conservatively.
@@ -188,7 +185,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     }
 
     // Thread token must be created by sandbox.
-    if (nullptr == thread_token.get()) {
+    if (!thread_token) {
       return RunLevel::DENY;
     }
 
@@ -203,10 +200,10 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // See http://b/2301066 for details.
     const std::string user_dir = SystemUtil::GetUserProfileDirectory();
 
-    ScopedHandle dir_handle(::CreateFile(
+    wil::unique_hfile dir_handle(::CreateFile(
         win32::Utf8ToWide(user_dir).c_str(), READ_CONTROL | WRITE_DAC, 0,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
-    if (nullptr != dir_handle.get()) {
+    if (!dir_handle) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;
       if (::GetTokenInformation(thread_token.get(), TokenUser, buffer,
@@ -310,13 +307,13 @@ bool RunLevel::IsProcessInJob() {
 bool RunLevel::IsElevatedByUAC() {
 #ifdef _WIN32
   // Get process token
-  HANDLE hProcessToken = nullptr;
+  wil::unique_process_handle process_token;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
+                          process_token.put())) {
     return false;
   }
 
-  ScopedHandle process_token(hProcessToken);
   return mozc::IsElevatedByUAC(process_token.get());
 #else   // _WIN32
   return false;

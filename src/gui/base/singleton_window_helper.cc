@@ -37,14 +37,15 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
-
 #include "ipc/window_info.pb.h"
+#include "absl/strings/string_view.h"
 
 #ifdef _WIN32
+#include <wil/resource.h>
 #include <windows.h>
 
 #include "base/util.h"
-#include "base/win32/scoped_handle.h"
+#include "base/win32/wide_char.h"
 #include "gui/base/win_util.h"
 #else  // _WIN32
 #include <unistd.h>
@@ -56,14 +57,12 @@ namespace {
 bool ReadWindowInfo(const std::string &lock_name,
                     ipc::WindowInfo *window_info) {
 #ifdef _WIN32
-  std::wstring wfilename;
-  mozc::Util::Utf8ToWide(lock_name, &wfilename);
   {
-    mozc::ScopedHandle handle(
-        ::CreateFileW(wfilename.c_str(), GENERIC_READ,
+    wil::unique_hfile handle(
+        ::CreateFileW(win32::Utf8ToWide(lock_name).c_str(), GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                       nullptr, OPEN_EXISTING, 0, nullptr));
-    if (nullptr == handle.get()) {
+    if (!handle) {
       LOG(ERROR) << "cannot open: " << lock_name << " " << ::GetLastError();
       return false;
     }
@@ -114,11 +113,9 @@ bool ReadWindowInfo(const std::string &lock_name,
 }
 }  // namespace
 
-SingletonWindowHelper::SingletonWindowHelper(const std::string &name) {
-  mutex_ = std::make_unique<mozc::ProcessMutex>(name.c_str());
+SingletonWindowHelper::SingletonWindowHelper(absl::string_view name) {
+  mutex_ = std::make_unique<mozc::ProcessMutex>(name);
 }
-
-SingletonWindowHelper::~SingletonWindowHelper() {}
 
 bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;

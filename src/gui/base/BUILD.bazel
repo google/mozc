@@ -177,10 +177,13 @@ mozc_cc_qt_library(
         "//base:version",
         "//ipc",
         "//ipc:window_info_cc_proto",
+        "@com_google_absl//absl/strings",
     ] + mozc_select(
         windows = [
+            ":win_util",
             "//base:system_util",
-            "//base/win32:scoped_handle",
+            "//base/win32:wide_char",
+            "//third_party/wil",
         ],
     ),
 )

@@ -29,16 +29,19 @@
 
 #include "renderer/win32/win32_renderer_client.h"
 
+#include <wil/resource.h>
 #include <windows.h>
 
+#include <iterator>
 #include <memory>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
-#include "base/win32/scoped_handle.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -70,18 +73,20 @@ volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 
 class SenderThread {
  public:
-  SenderThread(HANDLE command_event, HANDLE quit_event)
-      : command_event_(command_event), quit_event_(quit_event) {}
+  SenderThread(wil::unique_event_nothrow command_event,
+               wil::unique_event_nothrow quit_event)
+      : command_event_(std::move(command_event)),
+        quit_event_(std::move(quit_event)) {}
 
   SenderThread(const SenderThread &) = delete;
   SenderThread &operator=(const SenderThread &) = delete;
 
-  void RequestQuit() { ::SetEvent(quit_event_.get()); }
+  void RequestQuit() { quit_event_.SetEvent(); }
 
   void UpdateCommand(const RendererCommand &new_command) {
     absl::MutexLock lock(&mutex_);
     renderer_command_ = new_command;
-    ::SetEvent(command_event_.get());
+    command_event_.SetEvent();
   }
 
   void RenderLoop() {
@@ -100,7 +105,7 @@ class SenderThread {
       return;
     }
 
-    mozc::renderer::RendererClient renderer_client;
+    RendererClient renderer_client;
     while (true) {
       const HANDLE handles[] = {quit_event_.get(), command_event_.get()};
       const DWORD wait_result = ::WaitForMultipleObjects(
@@ -124,7 +129,7 @@ class SenderThread {
       {
         absl::MutexLock lock(&mutex_);
         command.Swap(&renderer_command_);
-        ::ResetEvent(command_event_.get());
+        command_event_.ResetEvent();
       }
       if (!renderer_client.ExecCommand(command)) {
         DLOG(ERROR) << "RendererClient::ExecCommand failed.";
@@ -133,8 +138,8 @@ class SenderThread {
   }
 
  private:
-  ScopedHandle command_event_;
-  ScopedHandle quit_event_;
+  wil::unique_event_nothrow command_event_;
+  wil::unique_event_nothrow quit_event_;
   RendererCommand renderer_command_;
   absl::Mutex mutex_;
 };
@@ -159,47 +164,48 @@ SenderThread *CreateSenderThread() {
   // be OK because this code will be running as DLL and the CRT can manage
   // thread specific resources through attach/detach notification in DllMain.
   DWORD thread_id = 0;
-  ScopedHandle thread_handle(::CreateThread(nullptr, 0, ThreadProc, nullptr,
-                                            CREATE_SUSPENDED, &thread_id));
-  if (thread_handle.get() == nullptr) {
-    // Failed to create the thread. Restore the reference count of the DLL.
+  wil::unique_process_handle thread_handle(::CreateThread(
+      nullptr, 0, ThreadProc, nullptr, CREATE_SUSPENDED, &thread_id));
+  if (!thread_handle) {
+    // Failed to create the thread.
     return nullptr;
   }
 
   // Increment the reference count of the IME DLL so that the DLL will not
   // be unloaded while the sender thread is running. The reference count
   // will be decremented by FreeLibraryAndExitThread API in the thread routine.
-  HMODULE loaded_module = nullptr;
+  wil::unique_hmodule loaded_module;
   if (::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                            reinterpret_cast<const wchar_t *>(g_module),
-                           &loaded_module) == FALSE) {
+                           loaded_module.put()) == FALSE) {
     ::TerminateThread(thread_handle.get(), 0);
     return nullptr;
   }
-  if (loaded_module != g_module) {
+  if (loaded_module.get() != g_module) {
     ::TerminateThread(thread_handle.get(), 0);
-    ::FreeLibrary(loaded_module);
     return nullptr;
   }
 
   // Create shared objects. We use manual reset events for simplicity.
-  ScopedHandle command_event(::CreateEventW(nullptr, TRUE, FALSE, nullptr));
-  ScopedHandle quit_event(::CreateEventW(nullptr, TRUE, FALSE, nullptr));
-  if ((command_event.get() == nullptr) || (quit_event.get() == nullptr)) {
+  wil::unique_event_nothrow command_event, quit_event;
+  if (FAILED(command_event.create(wil::EventOptions::ManualReset)) ||
+      FAILED(quit_event.create(wil::EventOptions::ManualReset))) {
     ::TerminateThread(thread_handle.get(), 0);
     return nullptr;
   }
 
-  std::unique_ptr<SenderThread> thread(
-      new SenderThread(command_event.release(), quit_event.release()));
+  auto thread(std::make_unique<SenderThread>(std::move(command_event),
+                                             std::move(quit_event)));
 
   // Resume the thread.
   if (::ResumeThread(thread_handle.get()) == -1) {
     ::TerminateThread(thread_handle.get(), 0);
-    ::FreeLibrary(loaded_module);
     return nullptr;
   }
 
+  // Release loaded_module without decrementing the reference count. ThreadProc
+  // will call FreeLibraryAndExitThread.
+  loaded_module.release();
   return thread.release();
 }
 
