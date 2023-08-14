@@ -322,6 +322,23 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   Clock::SetClockForUnitTest(nullptr);
 }
 
+TEST_F(SessionHandlerTest, CreateSessionNegativeInterval) {
+  absl::SetFlag(&FLAGS_create_session_min_interval, 0);
+  ClockMock clock(absl::FromTimeT(1000));
+  Clock::SetClockForUnitTest(&clock);
+
+  SessionHandler handler(CreateMockDataEngine());
+
+  uint64_t id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &id));
+
+  // A user can modify their system clock.
+  clock.Advance(-absl::Seconds(1));
+  EXPECT_TRUE(CreateSession(&handler, &id));
+
+  Clock::SetClockForUnitTest(nullptr);
+}
+
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   const int32_t timeout = 10;  // 10 sec
   absl::SetFlag(&FLAGS_last_create_session_timeout, timeout);
