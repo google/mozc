@@ -44,21 +44,10 @@
       'outputs': [
         '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h'
       ],
-      'conditions': [
-        # In Windows, <(RULE_INPUT_PATH) should be quoted.
-        ['OS=="win"', {
-          'action': [
-            '<(uic_path)',
-            '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
-            '<(RULE_INPUT_PATH)'
-          ],
-        }, {
-          'action': [
-            '<(uic_path)',
-            '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
-            '<(RULE_INPUT_PATH)'
-          ],
-        }],
+      'action': [
+        '<(uic_path)',
+        '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
+        '<(RULE_INPUT_PATH)'
       ],
       'message': 'Generating UI header files from <(RULE_INPUT_PATH)',
     },
