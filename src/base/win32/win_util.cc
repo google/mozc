@@ -32,15 +32,12 @@
 // skip all unless _WIN32
 #ifdef _WIN32
 
+#include <atlbase.h>
 #include <aux_ulib.h>
 #include <psapi.h>
 #include <shellapi.h>
 #include <stringapiset.h>
 #include <winternl.h>
-
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
 
 #include <clocale>
 #include <cstdint>

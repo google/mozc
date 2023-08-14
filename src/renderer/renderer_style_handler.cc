@@ -32,8 +32,6 @@
 // clang-format off
 #if defined(_WIN32)
 #include <windows.h>
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlgdi.h>
@@ -206,7 +204,7 @@ void RendererStyleHandler::GetDefaultRendererStyle(RendererStyle *style) {
 }
 
 void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
-#if defined _WIN32
+#ifdef _WIN32
   WTL::CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   const int dpi_y = desktop_dc.GetDeviceCaps(LOGPIXELSY);
@@ -216,14 +214,14 @@ void RendererStyleHandler::GetDPIScalingFactor(double *x, double *y) {
   if (y != nullptr) {
     *y = static_cast<double>(dpi_y) / kDefaultDPI;
   }
-#else
+#else   // _WIN32
   if (x != nullptr) {
     *x = 1.0;
   }
   if (y != nullptr) {
     *y = 1.0;
   }
-#endif
+#endif  // !_WIN32
 }
 
 }  // namespace renderer

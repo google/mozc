@@ -34,9 +34,6 @@
 #include <algorithm>
 #include <cstdint>
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-
 #include "base/coordinates.h"
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"

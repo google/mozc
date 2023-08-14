@@ -29,8 +29,6 @@
 
 #include "win32/base/uninstall_helper.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <msctf.h>
 #include <objbase.h>
