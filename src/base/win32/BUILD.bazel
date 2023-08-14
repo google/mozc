@@ -42,14 +42,6 @@ package(default_visibility = [
 ])
 
 mozc_cc_library(
-    name = "scoped_handle",
-    srcs = ["scoped_handle.cc"],
-    hdrs = ["scoped_handle.h"],
-    tags = MOZC_TAGS.WIN_ONLY,
-    target_compatible_with = ["@platforms//os:windows"],
-)
-
-mozc_cc_library(
     name = "scoped_com",
     hdrs = ["scoped_com.h"],
     tags = MOZC_TAGS.WIN_ONLY,

@@ -303,7 +303,6 @@
           ],
           'dependencies': [
             '../base/base.gyp:base_core',
-            '../base/base.gyp:scoped_handle',
           ],
           'msvs_settings': {
             'VCLinkerTool': {
