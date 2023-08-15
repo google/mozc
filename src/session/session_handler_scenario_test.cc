@@ -48,6 +48,7 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -402,7 +403,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
 TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   // Open the scenario file.
   const absl::StatusOr<std::string> scenario_path =
-      mozc::testing::GetSourceFile({GetParam()});
+      mozc::testing::GetSourceFile({MOZC_DICT_DIR_COMPONENTS, GetParam()});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
   InputFileStream input_stream(*scenario_path);

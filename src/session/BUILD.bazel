@@ -779,9 +779,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     shard_count = 8,
     tags = [
-        "manual",
         "noandroid",  # TODO(b/73698251): disabled due to errors
-        "nofastbuild",
     ],
     deps = [
         ":request_test_util",
@@ -790,10 +788,6 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:file_util",
         "//base:number_util",
-        "//base:util",
-        "//base/protobuf:descriptor",
-        "//base/protobuf:message",
-        "//base/protobuf:text_format",
         "//engine:engine_interface",
         "//engine:mock_data_engine_factory",
         "//prediction:user_history_predictor",
@@ -803,6 +797,7 @@ mozc_cc_test(
         "//testing:mozctest",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
