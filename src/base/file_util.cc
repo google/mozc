@@ -58,9 +58,9 @@
 #include <windows.h>  // Include windows.h before ktmw32.h
 #include <ktmw32.h>
 // clang-format on
+#include <wil/resource.h>
 
 #include "base/util.h"
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #else  // _WIN32
 #include <sys/stat.h>
@@ -355,9 +355,9 @@ namespace {
 absl::Status TransactionalMoveFile(const std::wstring &from,
                                    const std::wstring &to) {
   constexpr DWORD kTimeout = 5000;  // 5 sec.
-  ScopedHandle handle(
+  wil::unique_hfile handle(
       ::CreateTransaction(nullptr, 0, 0, 0, 0, kTimeout, nullptr));
-  if (handle.get() == 0) {
+  if (!handle) {
     const DWORD create_transaction_error = ::GetLastError();
     return absl::UnknownError(absl::StrFormat("CreateTransaction failed: %d",
                                               create_transaction_error));

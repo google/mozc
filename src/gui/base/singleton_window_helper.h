@@ -45,20 +45,20 @@
 #define MOZC_GUI_BASE_SINGLETON_WINDOW_HELPER_H_
 
 #include <memory>
-#include <string>
 
+#include "base/process_mutex.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-class ProcessMutex;
 namespace gui {
 
-class SingletonWindowHelper {
+class SingletonWindowHelper final {
  public:
+  // name should be unique for the window.
+  explicit SingletonWindowHelper(absl::string_view name);
+
   SingletonWindowHelper(const SingletonWindowHelper&) = delete;
   SingletonWindowHelper& operator=(const SingletonWindowHelper&) = delete;
-  // name should be unique for the window.
-  explicit SingletonWindowHelper(const std::string &name);
-  virtual ~SingletonWindowHelper();
 
   // Find previous window using 'name'.
   bool FindPreviousWindow();

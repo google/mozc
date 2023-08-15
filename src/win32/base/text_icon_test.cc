@@ -30,8 +30,6 @@
 #include "win32/base/text_icon.h"
 
 // clang-format off
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlmisc.h>

@@ -29,8 +29,6 @@
 
 #include "win32/tip/tip_ui_element_delegate.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlstr.h>
 #include <msctf.h>

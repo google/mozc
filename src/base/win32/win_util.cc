@@ -32,15 +32,13 @@
 // skip all unless _WIN32
 #ifdef _WIN32
 
+#include <atlbase.h>
 #include <aux_ulib.h>
 #include <psapi.h>
 #include <shellapi.h>
 #include <stringapiset.h>
+#include <wil/resource.h>
 #include <winternl.h>
-
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
-#include <atlbase.h>
 
 #include <clocale>
 #include <cstdint>
@@ -50,7 +48,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win32/scoped_handle.h"
 #include "base/win32/wide_char.h"
 #include "absl/base/call_once.h"
 #include "absl/status/status.h"
@@ -241,13 +238,12 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
   }
 
   // Get process token
-  HANDLE hProcessToken = nullptr;
+  wil::unique_process_handle process_token;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
+                          process_token.put())) {
     return false;
   }
-
-  ScopedHandle process_token(hProcessToken);
 
   // Process token is one for a service account.
   if (!IsServiceUser(process_token.get(), is_service)) {
@@ -263,20 +259,18 @@ bool WinUtil::IsServiceThread(bool *is_service) {
   }
 
   // Get thread token (if any)
-  HANDLE hThreadToken = nullptr;
+  wil::unique_process_handle thread_token;
   if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE,
-                         &hThreadToken) &&
-      ERROR_NO_TOKEN != ::GetLastError()) {
+                         thread_token.put()) &&
+      ::GetLastError() != ERROR_NO_TOKEN) {
     return false;
   }
 
-  if (hThreadToken == nullptr) {
+  if (!thread_token) {
     // No thread token.
     *is_service = false;
     return true;
   }
-
-  ScopedHandle thread_token(hThreadToken);
 
   // Check if the thread token (if any) is one for a service account.
   if (!IsServiceUser(thread_token.get(), is_service)) {
@@ -332,12 +326,11 @@ bool WinUtil::IsProcessRestricted(HANDLE process_handle, bool *is_restricted) {
   }
   *is_restricted = false;
 
-  HANDLE token = nullptr;
-  if (!::OpenProcessToken(process_handle, TOKEN_QUERY, &token)) {
+  wil::unique_process_handle process_token;
+  if (!::OpenProcessToken(process_handle, TOKEN_QUERY, process_token.put())) {
     return false;
   }
 
-  ScopedHandle process_token(token);
   ::SetLastError(NOERROR);
   if (::IsTokenRestricted(process_token.get()) == FALSE) {
     const DWORD error = ::GetLastError();
@@ -357,23 +350,15 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   }
   *in_appcontainer = false;
 
-  HANDLE token = nullptr;
+  wil::unique_process_handle process_token;
   if (!::OpenProcessToken(process_handle, TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                          &token)) {
+                          process_token.put())) {
     return false;
   }
 
-  // TokenIsAppContainer is defined only in Windows SDK 8.0 and later.
-  ScopedHandle process_token(token);
-  const TOKEN_INFORMATION_CLASS kTokenIsAppContainer =
-      static_cast<TOKEN_INFORMATION_CLASS>(29);  // TokenIsAppContainer
-#if defined(_WIN32_WINNT_WIN8)
-  static_assert(kTokenIsAppContainer == TokenIsAppContainer,
-                "Checking |kTokenIsAppContainer| has correct value.");
-#endif  // _WIN32_WINNT_WIN8
   DWORD returned_size = 0;
   DWORD retval = 0;
-  if (!GetTokenInformation(process_token.get(), kTokenIsAppContainer, &retval,
+  if (!GetTokenInformation(process_token.get(), TokenIsAppContainer, &retval,
                            sizeof(retval), &returned_size)) {
     return false;
   }
@@ -388,14 +373,12 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
 bool WinUtil::GetFileSystemInfoFromPath(zwstring_view path,
                                         BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.
-  ScopedHandle handle(::CreateFileW(
+  wil::unique_hfile handle(::CreateFileW(
       path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
       nullptr, OPEN_EXISTING,
       FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, nullptr));
 
-  // Caveats: handle.get() returns nullptr when it is initialized with
-  //     INVALID_HANDLE_VALUE.
-  if (handle.get() == nullptr) {
+  if (!handle) {
     return false;
   }
   return !!::GetFileInformationByHandle(handle.get(), info);
@@ -422,14 +405,12 @@ bool WinUtil::GetNtPath(zwstring_view dos_path, std::wstring *nt_path) {
 
   nt_path->clear();
 
-  ScopedHandle file_handle(::CreateFileW(
+  wil::unique_hfile file_handle(::CreateFileW(
       dos_path.c_str(), 0,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL,
       nullptr));
-  if (file_handle.get() == nullptr) {
-    // Caveats: |file_handle.get()| becomes nullptr instead of
-    // INVALID_HANDLE_VALUE when failure.
+  if (!file_handle) {
     return false;
   }
 
@@ -454,10 +435,10 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
   }
   nt_path->clear();
 
-  ScopedHandle process_handle(
+  wil::unique_process_handle process_handle(
       ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
 
-  if (process_handle.get() == nullptr) {
+  if (!process_handle) {
     VLOG(1) << "OpenProcess() failed: " << ::GetLastError();
     return false;
   }

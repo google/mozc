@@ -506,9 +506,13 @@ bool SessionHandler::CreateSession(commands::Command *command) {
       std::min(absl::Seconds(absl::GetFlag(FLAGS_create_session_min_interval)),
                absl::Seconds(10)));
 
-  absl::Time current_time = Clock::GetAbslTime();
-  if ((current_time - last_create_session_time_) <
-      create_session_minimum_interval) {
+  const absl::Time current_time = Clock::GetAbslTime();
+  const absl::Duration create_session_interval =
+      current_time - last_create_session_time_;
+  // `create_session_interval` can be nagative if a user modifies their system
+  // clock.
+  if (create_session_interval >= absl::Duration() &&
+      create_session_interval < create_session_minimum_interval) {
     return false;
   }
 

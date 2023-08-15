@@ -29,8 +29,6 @@
 
 #include "renderer/win32/text_renderer.h"
 
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlcom.h>
 #include <atltypes.h>

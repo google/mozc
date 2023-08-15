@@ -30,8 +30,6 @@
 #include "win32/tip/tip_lang_bar_menu.h"
 
 // clang-format off
-#define _ATL_NO_AUTOMATIC_NAMESPACE
-#define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atltypes.h>
 #include <atlapp.h>

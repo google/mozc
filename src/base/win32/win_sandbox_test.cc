@@ -29,9 +29,15 @@
 
 #include "base/win32/win_sandbox.h"
 
-#include "base/win32/scoped_handle.h"
+#include <wil/resource.h>
+#include <windows.h>
+
+#include <cstddef>
+#include <vector>
+
 #include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
@@ -46,7 +52,7 @@ class TestableWinSandbox : public WinSandbox {
   using WinSandbox::GetSDDL;
 };
 
-void VerifySidContained(const std::vector<Sid> sids,
+void VerifySidContained(absl::Span<const Sid> sids,
                         WELL_KNOWN_SID_TYPE expected_well_known_sid) {
   Sid expected_sid(expected_well_known_sid);
   for (size_t i = 0; i < sids.size(); ++i) {
@@ -60,10 +66,9 @@ void VerifySidContained(const std::vector<Sid> sids,
 }
 
 TEST(WinSandboxTest, GetSidsToDisable) {
-  HANDLE process_token_ret = nullptr;
+  wil::unique_process_handle process_token;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
-                     &process_token_ret);
-  ScopedHandle process_token(process_token_ret);
+                     process_token.put());
 
   const std::vector<Sid> lockdown = WinSandbox::GetSidsToDisable(
       process_token.get(), WinSandbox::USER_LOCKDOWN);
@@ -93,10 +98,9 @@ TEST(WinSandboxTest, GetSidsToDisable) {
 }
 
 TEST(WinSandboxTest, GetPrivilegesToDisable) {
-  HANDLE process_token_ret = nullptr;
+  wil::unique_process_handle process_token;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
-                     &process_token_ret);
-  ScopedHandle process_token(process_token_ret);
+                     process_token.put());
 
   const std::vector<LUID> lockdown = WinSandbox::GetPrivilegesToDisable(
       process_token.get(), WinSandbox::USER_LOCKDOWN);
@@ -119,10 +123,9 @@ TEST(WinSandboxTest, GetPrivilegesToDisable) {
 }
 
 TEST(WinSandboxTest, GetSidsToRestrict) {
-  HANDLE process_token_ret = nullptr;
+  wil::unique_process_handle process_token;
   ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ALL_ACCESS,
-                     &process_token_ret);
-  ScopedHandle process_token(process_token_ret);
+                     process_token.put());
 
   const std::vector<Sid> lockdown = WinSandbox::GetSidsToRestrict(
       process_token.get(), WinSandbox::USER_LOCKDOWN);

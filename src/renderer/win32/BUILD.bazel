@@ -129,11 +129,11 @@ mozc_cc_library(
     deps = [
         "//base:logging",
         "//base:system_util",
-        "//base:util",
-        "//base/win32:scoped_handle",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

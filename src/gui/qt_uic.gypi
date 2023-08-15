@@ -31,16 +31,11 @@
 {
   'conditions': [['use_qt=="YES"', {
 
+  'includes': [
+    'qt_tool_dir.gypi',
+  ],
   'variables': {
-    'conditions': [
-      ['target_platform=="Linux"', {
-        'uic_path': '<!(pkg-config --variable=host_bins Qt<(qt_ver)Core)/uic',
-      }, 'qt_dir', {
-        'uic_path': '<(qt_dir)/bin/uic<(EXECUTABLE_SUFFIX)',
-      }, {
-        'uic_path': 'uic<(EXECUTABLE_SUFFIX)',
-      }],
-    ],
+    'uic_path': '<(qt_tool_dir)/uic<(EXECUTABLE_SUFFIX)',
   },
   'rules': [
     {
@@ -49,21 +44,10 @@
       'outputs': [
         '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h'
       ],
-      'conditions': [
-        # In Windows, <(RULE_INPUT_PATH) should be quoted.
-        ['OS=="win"', {
-          'action': [
-            '<(uic_path)',
-            '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
-            '<(RULE_INPUT_PATH)'
-          ],
-        }, {
-          'action': [
-            '<(uic_path)',
-            '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
-            '<(RULE_INPUT_PATH)'
-          ],
-        }],
+      'action': [
+        '<(uic_path)',
+        '-o', '<(gen_out_dir)/<(subdir)/ui_<(RULE_INPUT_ROOT).h',
+        '<(RULE_INPUT_PATH)'
       ],
       'message': 'Generating UI header files from <(RULE_INPUT_PATH)',
     },

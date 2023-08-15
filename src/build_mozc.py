@@ -224,6 +224,8 @@ def GetQtMajorVersion(qtdir: str) -> int:
     moc_filename = 'moc'
   moc = pathlib.Path(qtdir, 'bin', moc_filename).resolve()
   if not moc.exists():
+    moc = pathlib.Path(qtdir, 'libexec', moc_filename).resolve()
+  if not moc.exists():
     return None
   result = subprocess.run([str(moc), '--version'], check=True,
                           stdout=subprocess.PIPE)
