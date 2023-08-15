@@ -101,7 +101,7 @@ def CopyQt(qtdir, qtlib, target):
   Symlink('Versions/Current/Resources', dstdir + 'Resources')
 
 
-def ChangeReferences(path, target, ref_to, references=None):
+def ChangeReferences(path, target, ref_to, ref_framework_paths=None):
   """Change the references of frameworks, by using install_name_tool."""
   # Change id
   cmd = ['install_name_tool',
@@ -109,12 +109,11 @@ def ChangeReferences(path, target, ref_to, references=None):
          '%s/%s' % (target, path)]
   RunOrDie(cmd)
 
-  if not references:
+  if not ref_framework_paths:
     return
 
   # Change references
-  for ref in references:
-    ref_framework_path = GetFrameworkPath(ref)
+  for ref_framework_path in ref_framework_paths:
     change_cmd = ['install_name_tool', '-change',
                   '@rpath/%s' % ref_framework_path,
                   '%s/%s' % (ref_to, ref_framework_path),
@@ -141,27 +140,20 @@ def main():
   CopyQt(qtdir, 'QtWidgets', target)
   CopyQt(qtdir, 'QtPrintSupport', target)
 
-  qtcore_fpath = GetFrameworkPath('QtCore')
-  qtgui_fpath = GetFrameworkPath('QtGui')
-  qtwidgets_fpath = GetFrameworkPath('QtWidgets')
-  qtprint_fpath = GetFrameworkPath('QtPrintSupport')
-
-  ChangeReferences(qtcore_fpath, target, ref_to)
-  ChangeReferences(qtgui_fpath, target, ref_to, references=['QtCore'])
-  ChangeReferences(
-      qtwidgets_fpath, target, ref_to, references=['QtCore', 'QtGui'])
-  ChangeReferences(
-      qtprint_fpath,
-      target,
-      ref_to,
-      references=['QtCore', 'QtGui', 'QtWidgets'])
-
   libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
   CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
             '%s/%s' % (target, libqcocoa))
-  ChangeReferences(libqcocoa, target, ref_to,
-                   references=['QtCore', 'QtGui',
-                               'QtWidgets', 'QtPrintSupport'])
+
+  changed_refs = []
+  for ref in [
+      GetFrameworkPath('QtCore'),
+      GetFrameworkPath('QtGui'),
+      GetFrameworkPath('QtWidgets'),
+      GetFrameworkPath('QtPrintSupport'),
+      libqcocoa,
+  ]:
+    ChangeReferences(ref, target, ref_to, ref_framework_paths=changed_refs)
+    changed_refs.append(ref)
 
 
 if __name__ == '__main__':
