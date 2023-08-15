@@ -32,12 +32,13 @@ r"""Copy Qt frameworks to the target application's frameworks directory.
 
 Typical usage:
 
-  % python copy_qt_frameworks.py --qtdir=/path/to/qtdir/ \
+  % python copy_qt_frameworks.py --qtdir=/path/to/qtdir/ --qtver=6 \
       --target=/path/to/target.app/Contents/Frameworks/
 """
 
 __author__ = "horo"
 
+import dataclasses
 import optparse
 import os
 from copy_file import CopyFiles
@@ -45,10 +46,23 @@ from util import PrintErrorAndExit
 from util import RunOrDie
 
 
+@dataclasses.dataclass
+class QtModule:
+  """A pair of Qt module name and Qt version.
+
+  Attributes:
+    name: the name of the component (e.g. 'QtCore')
+    version: the version string in framework (e.g. '5' and 'A')
+  """
+  name: str
+  version: str
+
+
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
   parser.add_option('--qtdir', dest='qtdir')
+  parser.add_option('--qtver', dest='qtver', type=int, default=None)
   parser.add_option('--target', dest='target')
 
   (opts, _) = parser.parse_args()
@@ -56,9 +70,9 @@ def ParseOption():
   return opts
 
 
-def GetFrameworkPath(name):
+def GetFrameworkPath(module: QtModule):
   """Return path to the library in the framework."""
-  return '%s.framework/Versions/5/%s' % (name, name)
+  return f'{module.name}.framework/Versions/{module.version}/{module.name}'
 
 
 def Symlink(src, dst):
@@ -67,35 +81,36 @@ def Symlink(src, dst):
   os.symlink(src, dst)
 
 
-def CopyQt(qtdir, qtlib, target):
+def CopyQt(qtdir, module: QtModule, target):
   """Copy a Qt framework from qtdir to target."""
-  srcdir = '%s/lib/%s.framework/Versions/5/' % (qtdir, qtlib)
-  dstdir = '%s/%s.framework/' % (target, qtlib)
+  srcdir = f'{qtdir}/lib/{module.name}.framework/Versions/{module.version}/'
+  dstdir = f'{target}/{module.name}.framework/'
 
   # This function creates the following file, directory and symbolic links.
   #
-  # QtCore.framework/Versions/5/QtCore
-  # QtCore.framework/Versions/5/Resources/
-  # QtCore.framwwork/QtCore@ -> Versions/5/QtCore
-  # QtCore.framwwork/Resources@ -> Versions/5/Resources
-  # QtCore.framework/Versions/Current -> 5
+  # QtCore.framework/Versions/{ver}/QtCore
+  # QtCore.framework/Versions/{ver}/Resources/
+  # QtCore.framwwork/QtCore@ -> Versions/{ver}/QtCore
+  # QtCore.framwwork/Resources@ -> Versions/{ver}/Resources
+  # QtCore.framework/Versions/Current -> {ver}
 
-  # cp {qtdir}/lib/QtCore.framework/Versions/5/QtCore
-  #    {target}/QtCore.framework/Versions/5/QtCore
-  CopyFiles([srcdir + qtlib], dstdir + 'Versions/5/' + qtlib)
+  # cp {qtdir}/lib/QtCore.framework/Versions/{ver}/QtCore
+  #    {target}/QtCore.framework/Versions/{ver}/QtCore
+  CopyFiles([srcdir + module.name],
+            f'{dstdir}Versions/{module.version}/{module.name}')
 
   # Copies Resources of QtGui
   # cp -r {qtdir}/lib/QtCore.framework/Resources
-  #       {target}/QtCore.framework/Versions/5/Resources
+  #       {target}/QtCore.framework/Versions/{ver}/Resources
   CopyFiles([srcdir + 'Resources'],
-            dstdir + 'Versions/5/Resources',
+            f'{dstdir}Versions/{module.version}/Resources',
             recursive=True)
 
-  # ln -s 5 {target}/QtCore.framework/Versions/Current
-  Symlink('5', dstdir + 'Versions/Current')
+  # ln -s {ver} {target}/QtCore.framework/Versions/Current
+  Symlink(f'{module.version}', dstdir + 'Versions/Current')
 
   # ln -s Versions/Current/QtCore {target}/QtCore.framework/QtCore
-  Symlink('Versions/Current/' + qtlib, dstdir + qtlib)
+  Symlink('Versions/Current/' + module.name, dstdir + module.name)
 
   # ln -s Versions/Current/Resources {target}/QtCore.framework/Resources
   Symlink('Versions/Current/Resources', dstdir + 'Resources')
@@ -127,6 +142,9 @@ def main():
   if not opt.qtdir:
     PrintErrorAndExit('--qtdir option is mandatory.')
 
+  if not opt.qtver:
+    PrintErrorAndExit('--qtver option is mandatory.')
+
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
@@ -135,10 +153,21 @@ def main():
 
   ref_to = '@executable_path/../../../ConfigDialog.app/Contents/Frameworks'
 
-  CopyQt(qtdir, 'QtCore', target)
-  CopyQt(qtdir, 'QtGui', target)
-  CopyQt(qtdir, 'QtWidgets', target)
-  CopyQt(qtdir, 'QtPrintSupport', target)
+  if opt.qtver == 5:
+    version = '5'  # Qt5 uses '5' as the version name
+  elif opt.qtver == 6:
+    version = 'A'  # Qt5 uses 'A' as the version name
+  else:
+    raise ValueError(f'Invalid qtver: {opt.qtver}')
+  qt_core = QtModule(name='QtCore', version=version)
+  qt_gui = QtModule(name='QtGui', version=version)
+  qt_widgets = QtModule(name='QtWidgets', version=version)
+  qt_print_support = QtModule(name='QtPrintSupport', version=version)
+
+  CopyQt(qtdir, qt_core, target)
+  CopyQt(qtdir, qt_gui, target)
+  CopyQt(qtdir, qt_widgets, target)
+  CopyQt(qtdir, qt_print_support, target)
 
   libqcocoa = 'QtCore.framework/Resources/plugins/platforms/libqcocoa.dylib'
   CopyFiles(['%s/plugins/platforms/libqcocoa.dylib' % qtdir],
@@ -146,10 +175,10 @@ def main():
 
   changed_refs = []
   for ref in [
-      GetFrameworkPath('QtCore'),
-      GetFrameworkPath('QtGui'),
-      GetFrameworkPath('QtWidgets'),
-      GetFrameworkPath('QtPrintSupport'),
+      GetFrameworkPath(qt_core),
+      GetFrameworkPath(qt_gui),
+      GetFrameworkPath(qt_widgets),
+      GetFrameworkPath(qt_print_support),
       libqcocoa,
   ]:
     ChangeReferences(ref, target, ref_to, ref_framework_paths=changed_refs)

@@ -968,6 +968,7 @@
                   'action': [
                     '<(python)', '../build_tools/copy_qt_frameworks_mac.py',
                     '--qtdir', '<(qt_dir)',
+                    '--qtver', '<(qt_ver)',
                     '--target', '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/Frameworks/',
                   ],
                 },
