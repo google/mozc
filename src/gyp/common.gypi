@@ -47,7 +47,7 @@
 
     # Versioning stuff for Mac.
     'mac_sdk%': '13.0',
-    'mac_deployment_target%': '10.9',
+    'mac_deployment_target%': '11.0',
 
     # 'conditions' is put inside of 'variables' so that we can use
     # another 'conditions' in this gyp element level later. Note that
