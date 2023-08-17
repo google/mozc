@@ -28,19 +28,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
-#include <string>
 
-#include "base/file_util.h"
-#include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
-#include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -48,12 +43,9 @@
 namespace mozc {
 namespace {
 
-using composer::Table;
+using ::mozc::composer::Table;
 
-class ConverterRegressionTest : public ::testing::Test {
- private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
-};
+class ConverterRegressionTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();

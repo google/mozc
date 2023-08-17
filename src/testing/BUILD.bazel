@@ -220,7 +220,6 @@ mozc_cc_library(
         "//base:status",
         "//base:system_util",
         "//base/file:temp_dir",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

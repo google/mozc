@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -71,13 +72,13 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-class SystemDictionaryTest : public ::testing::Test {
+class SystemDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
   SystemDictionaryTest()
       : pos_matcher_(mock_data_manager_.GetPosMatcherData()),
         text_dict_(pos_matcher_),
-        dic_fn_(
-            FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
+        temp_dir_(testing::MakeTempDirectoryOrDie()),
+        dic_fn_(FileUtil::JoinPath(temp_dir_.path(), "mozc.dic")) {
     const std::string dic_path = mozc::testing::GetSourceFileOrDie(
         {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss", "dictionary00.txt"});
     text_dict_.LoadWithLineLimit(dic_path, "",
@@ -118,7 +119,6 @@ class SystemDictionaryTest : public ::testing::Test {
   bool CompareTokensForLookup(const Token &a, const Token &b,
                               bool reverse) const;
 
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   dictionary::PosMatcher pos_matcher_;
   TextDictionaryLoader text_dict_;
@@ -126,6 +126,7 @@ class SystemDictionaryTest : public ::testing::Test {
   ConversionRequest convreq_;
   config::Config config_;
   commands::Request request_;
+  TempDirectory temp_dir_;
   const std::string dic_fn_;
   int original_flags_min_key_length_to_use_small_cost_encoding_;
 };

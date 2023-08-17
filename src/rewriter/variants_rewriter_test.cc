@@ -54,7 +54,7 @@ using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::dictionary::PosMatcher;
 
-class VariantsRewriterTest : public ::testing::Test {
+class VariantsRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     Reset();
@@ -88,7 +88,6 @@ class VariantsRewriterTest : public ::testing::Test {
   PosMatcher pos_matcher_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
 };
 

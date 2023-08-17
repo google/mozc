@@ -194,6 +194,7 @@ mozc_cc_test(
         ":system_dictionary",
         ":system_dictionary_builder",
         "//base:file_util",
+        "//base/file:temp_dir",
         "//config:config_handler",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_test_util",

@@ -36,7 +36,6 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
-#include "base/system_util.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -51,7 +50,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
-// To show the value of size_t, 'z' speficier should be used.
+// To show the value of size_t, 'z' specifier should be used.
 // But MSVC doesn't support it yet so use 'l' instead.
 #ifdef _MSC_VER
 #define SIZE_T_PRINTF_FORMAT "%lu"
@@ -118,10 +117,9 @@ bool FindCandidateId(const Segment &segment, const absl::string_view value,
 }
 }  // namespace
 
-class NumberRewriterTest : public ::testing::Test {
+class NumberRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
@@ -137,9 +135,6 @@ class NumberRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
   PosMatcher pos_matcher_;
   const ConversionRequest default_request_;
-
- private:
-  testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
 };
 
 namespace {

@@ -195,7 +195,7 @@ class TestDataManager : public testing::MockDataManager {
   std::unique_ptr<uint32_t[]> string_array_buf_;
 };
 
-class EmojiRewriterTest : public ::testing::Test {
+class EmojiRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   EmojiRewriterTest() {
     convreq_.set_request(&request_);
@@ -224,7 +224,6 @@ class EmojiRewriterTest : public ::testing::Test {
   std::unique_ptr<EmojiRewriter> full_data_rewriter_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory scoped_tmp_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   const TestDataManager test_data_manager_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;

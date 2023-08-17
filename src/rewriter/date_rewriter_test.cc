@@ -123,10 +123,7 @@ ACTION_P(InvokeCallbackWithUserDictionaryToken, value) {
 
 }  // namespace
 
-class DateRewriterTest : public ::testing::Test {
- private:
-  const mozc::testing::ScopedTempUserProfileDirectory scoped_tmp_profile_dir_;
-};
+class DateRewriterTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(DateRewriterTest, DateRewriteTest) {
   ClockMock mock_clock(kTestSeconds, kTestMicroSeconds);

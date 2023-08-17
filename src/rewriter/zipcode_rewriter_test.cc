@@ -29,6 +29,7 @@
 
 #include "rewriter/zipcode_rewriter.h"
 
+#include <cstddef>
 #include <string>
 
 #include "base/logging.h"
@@ -41,10 +42,10 @@
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::PosMatcher;
-
 namespace mozc {
 namespace {
+
+using ::mozc::dictionary::PosMatcher;
 
 enum SegmentType {
   ZIPCODE = 1,
@@ -82,9 +83,7 @@ bool HasZipcodeAndAddress(const Segments &segments,
   return false;
 }
 
-}  // namespace
-
-class ZipcodeRewriterTest : public ::testing::Test {
+class ZipcodeRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
@@ -97,7 +96,6 @@ class ZipcodeRewriterTest : public ::testing::Test {
   dictionary::PosMatcher pos_matcher_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
 };
 
@@ -137,4 +135,5 @@ TEST_F(ZipcodeRewriterTest, BasicTest) {
   }
 }
 
+}  // namespace
 }  // namespace mozc

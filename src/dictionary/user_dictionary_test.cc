@@ -34,18 +34,18 @@
 #include <cstring>
 #include <iterator>
 #include <memory>
-#include <random>
 #include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/random.h"
 #include "base/singleton.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -54,6 +54,7 @@
 #include "dictionary/user_pos.h"
 #include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
@@ -61,7 +62,7 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -177,7 +178,7 @@ class UserPosMock : public UserPosInterface {
   }
 };
 
-class UserDictionaryTest : public ::testing::Test {
+class UserDictionaryTest : public testing::TestWithTempUserProfile {
  protected:
   UserDictionaryTest() { convreq_.set_config(&config_); }
 
@@ -286,8 +287,8 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   static std::string EncodeEntry(const Entry &entry) {
-    return entry.key + "\t" + entry.value + "\t" + std::to_string(entry.lid) +
-           "\t" + std::to_string(entry.rid) + "\n";
+    return absl::StrCat(entry.key, "\t", entry.value, "\t", entry.lid, "\t",
+                        entry.rid, "\n");
   }
 
   static std::string EncodeEntries(const Entry *array, size_t size) {
@@ -321,20 +322,20 @@ class UserDictionaryTest : public ::testing::Test {
       if (line.empty() || line[0] == '#') {
         continue;
       }
-      std::vector<std::string> fields =
+      std::vector<absl::string_view> fields =
           absl::StrSplit(line, '\t', absl::AllowEmpty());
       EXPECT_GE(fields.size(), 3) << line;
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       CHECK(entry);
-      entry->set_key(std::move(fields[0]));
-      entry->set_value(std::move(fields[1]));
+      entry->set_key(fields[0]);
+      entry->set_value(fields[1]);
       if (fields[2] == "verb") {
         entry->set_pos(user_dictionary::UserDictionary::WA_GROUP1_VERB);
       } else if (fields[2] == "noun") {
         entry->set_pos(user_dictionary::UserDictionary::NOUN);
       }
       if (fields.size() >= 4 && !fields[3].empty()) {
-        entry->set_comment(std::move(fields[3]));
+        entry->set_comment(fields[3]);
       }
     }
   }
@@ -352,7 +353,6 @@ class UserDictionaryTest : public ::testing::Test {
   config::Config config_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
@@ -517,9 +517,9 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   user_dic->WaitForReloader();
 
   // Create dictionary
-  const std::string filename = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "suggestion_only_test.db");
   UserDictionaryStorage storage(filename);
   {
     uint64_t id = 0;
@@ -556,9 +556,9 @@ TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
   user_dic->WaitForReloader();
 
   // Create dictionary
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "shortcut_test.db");
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+      FileUtil::JoinPath(temp_dir.path(), "shortcut_test.db");
   UserDictionaryStorage storage(filename);
   {
     uint64_t id = 0;
@@ -629,9 +629,9 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
-  const std::string filename = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "async_load_test.db");
   Random random;
 
   // Create dictionary
@@ -674,16 +674,15 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     }
     dic->WaitForReloader();
   }
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
-  const std::string filename = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "suppression_test.db");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "suppression_test.db");
 
   UserDictionaryStorage storage(filename);
 
@@ -744,16 +743,15 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
           "suppress_value" + std::to_string(static_cast<uint32_t>(j))));
     }
   }
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
-  const std::string filename = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename =
+      FileUtil::JoinPath(temp_dir.path(), "suggestion_only_test.db");
 
   UserDictionaryStorage storage(filename);
 
@@ -802,8 +800,6 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
                   tokens[i].value == "default");
     }
   }
-
-  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {
