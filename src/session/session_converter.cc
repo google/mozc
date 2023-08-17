@@ -1272,6 +1272,39 @@ void SessionConverter::GetConversion(const size_t index, const size_t size,
   }
 }
 
+void SessionConverter::UpdateResultTokens(const size_t index,
+                                          const size_t size) {
+  DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
+  DCHECK(index + size <= segments_->conversion_segments_size());
+
+  auto add_token = [this](absl::string_view key, absl::string_view value,
+                          int lid, int rid) {
+    commands::ResultToken *token = result_->add_tokens();
+    token->set_lid(lid);
+    token->set_rid(rid);
+    token->set_key(key);
+    token->set_value(value);
+  };
+
+  for (size_t i = index; i < size; ++i) {
+    const int id = GetCandidateIndexForConverter(i);
+    const Segment::Candidate &candidate =
+        segments_->conversion_segment(i).candidate(id);
+    absl::string_view content_key = candidate.content_key;
+    absl::string_view content_value = candidate.content_value;
+    absl::string_view functional_key = candidate.functional_key();
+    absl::string_view functional_value = candidate.functional_value();
+
+    if (functional_key.empty() && functional_value.empty()) {
+      add_token(content_key, content_value, candidate.lid, candidate.rid);
+    } else {
+      // Use -1 to the middle ids as an unknown POS.
+      add_token(content_key, content_value, candidate.lid, -1);
+      add_token(functional_key, functional_value, -1, candidate.rid);
+    }
+  }
+}
+
 size_t SessionConverter::GetConsumedPreeditSize(const size_t index,
                                                 const size_t size) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
@@ -1348,6 +1381,7 @@ bool SessionConverter::UpdateResult(size_t index, size_t size,
   SessionOutput::FillConversionResult(preedit, conversion, result_.get());
   SessionOutput::FillCursorOffsetResult(CalculateCursorOffset(conversion),
                                         result_.get());
+  UpdateResultTokens(index, size);
   return true;
 }
 

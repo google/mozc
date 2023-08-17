@@ -300,8 +300,11 @@ class SessionConverter : public SessionConverterInterface {
   // is returned if a command is performed.
   bool MaybePerformCommandCandidate(size_t index, size_t size);
 
-  // Updates internal states
+  // Updates internal states and fill result_.
   bool UpdateResult(size_t index, size_t size, size_t *consumed_key_size);
+
+  // Updates ResultTokens of result_.
+  void UpdateResultTokens(size_t index, size_t size);
 
   // Fills the candidate list with the focused segment's candidates.
   // This method does not clear the candidate list before processing.

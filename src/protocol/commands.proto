@@ -1142,6 +1142,22 @@ message Input {
   optional CheckSpellingRequest check_spelling_request = 16;
 }
 
+// Detailed information of Result.
+message ResultToken {
+  // `value` and `key` represents Segment.Candidate. If the candidante has
+  // functional values, they are stored as a sepalate ResultToken.
+  // e.g. A candidate of {value="今日は", content_value="今日"} results
+  // two ResultToken of {value="今日"} and {value="は"}.
+  optional string value = 1;
+  optional string key = 2;
+  // `lid` and `rid` are copied from Segment.Candidate. -1 is used as a unknown
+  // POS. e.g. A candidate of {value="朝は", content_value="朝", lid=2, rid=3}
+  // results two ResultToken of {value="朝", lid=2, rid=-1} and
+  // {value="は", lid=-1, rid=3}.
+  optional int32 lid = 3 [default = -1];
+  optional int32 rid = 4 [default = -1];
+}
+
 // Result contains data to be submitted to the host application by the
 // ime client.
 message Result {
@@ -1162,6 +1178,9 @@ message Result {
   // e.g.) "-s", where s is the length of value, means the caret position
   // after the committing should be the beginning of the committed value.
   optional int32 cursor_offset = 4 [default = 0];
+
+  // Additional information propagated from the internal status.
+  repeated ResultToken tokens = 5;
 }
 
 // Preedit represents a composition data, which is rendered on the
