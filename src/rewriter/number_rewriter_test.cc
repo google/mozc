@@ -36,6 +36,7 @@
 
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/strings/assign.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -43,34 +44,28 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-
-// To show the value of size_t, 'z' specifier should be used.
-// But MSVC doesn't support it yet so use 'l' instead.
-#ifdef _MSC_VER
-#define SIZE_T_PRINTF_FORMAT "%lu"
-#else  // _MSC_VER
-#define SIZE_T_PRINTF_FORMAT "%zu"
-#endif  // _MSC_VER
 
 namespace mozc {
 namespace {
 
-using dictionary::PosMatcher;
+using ::mozc::dictionary::PosMatcher;
 
-constexpr char kKanjiDescription[] = "漢数字";
-constexpr char kArabicDescription[] = "数字";
-constexpr char kOldKanjiDescription[] = "大字";
-constexpr char kMaruNumberDescription[] = "丸数字";
-constexpr char kRomanCapitalDescription[] = "ローマ数字(大文字)";
-constexpr char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
-constexpr char kSuperscriptDescription[] = "上付き文字";
-constexpr char kSubscriptDescription[] = "下付き文字";
+constexpr absl::string_view kKanjiDescription = "漢数字";
+constexpr absl::string_view kArabicDescription = "数字";
+constexpr absl::string_view kOldKanjiDescription = "大字";
+constexpr absl::string_view kMaruNumberDescription = "丸数字";
+constexpr absl::string_view kRomanCapitalDescription = "ローマ数字(大文字)";
+constexpr absl::string_view kRomanNoCapitalDescription = "ローマ数字(小文字)";
+constexpr absl::string_view kSuperscriptDescription = "上付き文字";
+constexpr absl::string_view kSubscriptDescription = "下付き文字";
 
 bool FindValue(const Segment &segment, const absl::string_view value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -89,8 +84,8 @@ Segment *SetupSegments(const PosMatcher &pos_matcher,
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->lid = pos_matcher.GetNumberId();
   candidate->rid = pos_matcher.GetNumberId();
-  candidate->value = std::string(candidate_value);
-  candidate->content_value = std::string(candidate_value);
+  strings::Assign(candidate->value, candidate_value);
+  strings::Assign(candidate->content_value, candidate_value);
   return segment;
 }
 
@@ -128,8 +123,8 @@ class NumberRewriterTest : public testing::TestWithTempUserProfile {
     config::CharacterFormManager::GetCharacterFormManager()->ClearHistory();
   }
 
-  NumberRewriter *CreateNumberRewriter() {
-    return new NumberRewriter(&mock_data_manager_);
+  std::unique_ptr<NumberRewriter> CreateNumberRewriter() {
+    return std::make_unique<NumberRewriter>(&mock_data_manager_);
   }
 
   const testing::MockDataManager mock_data_manager_;
@@ -139,9 +134,9 @@ class NumberRewriterTest : public testing::TestWithTempUserProfile {
 
 namespace {
 struct ExpectResult {
-  const char *value;
-  const char *content_value;
-  const char *description;
+  absl::string_view value;
+  absl::string_view content_value;
+  absl::string_view description;
 };
 }  // namespace
 
@@ -160,7 +155,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  const ExpectResult kExpectResults[] = {
+  constexpr ExpectResult kExpectResults[] = {
       {"012", "012", ""},
       {"〇一二", "〇一二", kKanjiDescription},
       {"０１２", "０１２", kArabicDescription},
@@ -178,7 +173,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
   EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = %d", i));
     EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
     EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
     EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
@@ -235,7 +230,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  const ExpectResult kExpectResults[] = {
+  constexpr ExpectResult kExpectResults[] = {
       {"012が", "012", ""},
       {"〇一二が", "〇一二", kKanjiDescription},
       {"０１２が", "０１２", kArabicDescription},
@@ -253,7 +248,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = %d", i));
     EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
     EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
     EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
@@ -440,7 +435,7 @@ TEST_F(NumberRewriterTest, RewriteDoesNotHappen) {
   // Number rewrite should not occur
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 
-  // Number of cahdidates should be maintained
+  // Number of candidates should be maintained
   EXPECT_EQ(seg->candidates_size(), 1);
 
   seg->clear_candidates();
@@ -549,7 +544,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  const ExpectResult kExpectResults[] = {
+  constexpr ExpectResult kExpectResults[] = {
       {"1000000000000000000", "1000000000000000000", ""},
       {"一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇",
        "一〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇", kKanjiDescription},
@@ -575,7 +570,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = %d", i));
     EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
     EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
     EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
@@ -599,7 +594,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
-  const ExpectResult kExpectResults[] = {
+  constexpr ExpectResult kExpectResults[] = {
       {"18446744073709551616", "18446744073709551616", ""},
       {"一八四四六七四四〇七三七〇九五五一六一六",
        "一八四四六七四四〇七三七〇九五五一六一六", kKanjiDescription},
@@ -626,7 +621,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   EXPECT_EQ(seg->candidates_size(), kExpectResultSize);
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = %d", i));
     EXPECT_EQ(seg->candidate(i).value, kExpectResults[i].value);
     EXPECT_EQ(seg->candidate(i).content_value, kExpectResults[i].content_value);
     EXPECT_EQ(seg->candidate(i).description, kExpectResults[i].description);
@@ -732,7 +727,7 @@ TEST_F(NumberRewriterTest, RankingForKanjiCandidate) {
 }
 
 TEST_F(NumberRewriterTest, ModifyExsistingRanking) {
-  // Modify exsisting ranking even if the converter returns unusual results
+  // Modify existing ranking even if the converter returns unusual results
   // due to dictionary noise, etc.
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
@@ -810,7 +805,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
   // Expected data to succeed tests.
-  const char *kSuccess[][3] = {
+  constexpr const char *kSuccess[][3] = {
       {"1000", "1,000", "１，０００"},
       {"12345678", "12,345,678", "１２，３４５，６７８"},
       {"1234.5", "1,234.5", "１，２３４．５"},
@@ -832,7 +827,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
   }
 
   // Expected data to fail tests.
-  const char *kFail[][3] = {
+  constexpr const char *kFail[][3] = {
       {"123", ",123", "，１２３"},
       {"999", ",999", "，９９９"},
       {"0000", "0,000", "０，０００"},
@@ -1064,15 +1059,15 @@ Segments PrepareNumberSegments(absl::string_view segment_key,
     seg->set_key(segment_key);
     for (int i = 0; i < base_pos; ++i) {
       Segment::Candidate *c = seg->add_candidate();
-      c->key = std::string(segment_key);
+      strings::Assign(c->key, segment_key);
       c->content_key = c->key;
       c->value = absl::StrCat("placeholder", i);
       c->content_value = c->value;
     }
     Segment::Candidate *c = seg->add_candidate();
-    c->key = std::string(segment_key);
+    strings::Assign(c->key, segment_key);
     c->content_key = c->key;
-    c->value = std::string(number_value);
+    strings::Assign(c->value, number_value);
     c->content_value = c->value;
     c->lid = pos_matcher.GetNumberId();
     c->rid = pos_matcher.GetNumberId();
