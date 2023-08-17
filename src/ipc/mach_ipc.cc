@@ -40,7 +40,6 @@
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "base/singleton.h"
-#include "base/thread.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/time/time.h"
@@ -435,7 +434,7 @@ void IPCServer::Loop() {
   kern_return_t kr;
   bool finished = false;
   std::string response;
-  while (!finished) {
+  while (!finished && !terminate_.HasBeenNotified()) {
     // Receive request
     receive_header = &(receive_message.header);
     receive_header->msgh_local_port = server_port;
@@ -497,7 +496,12 @@ void IPCServer::Loop() {
   }
 }
 
-void IPCServer::Terminate() { server_thread_->Terminate(); }
+void IPCServer::Terminate() {
+  if (server_thread_ != nullptr) {
+    terminate_.Notify();
+    server_thread_->Join();
+  }
+}
 
 }  // namespace mozc
 

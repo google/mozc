@@ -46,7 +46,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/thread.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/status/status.h"
@@ -399,9 +398,7 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
 }
 
 IPCServer::~IPCServer() {
-  if (server_thread_ != nullptr) {
-    server_thread_->Terminate();
-  }
+  Terminate();
   ::shutdown(socket_, SHUT_RDWR);
   ::close(socket_);
   if (!IsAbstractSocket(server_address_)) {
@@ -421,7 +418,7 @@ void IPCServer::Loop() {
   pid_t pid = 0;
   std::string request;
   std::string response;
-  while (!error) {
+  while (!error && !terminate_.HasBeenNotified()) {
     const int new_sock = ::accept(socket_, nullptr, nullptr);
     if (new_sock < 0) {
       LOG(FATAL) << "accept() failed: " << strerror(errno);
@@ -466,7 +463,12 @@ void IPCServer::Loop() {
   socket_ = kInvalidSocket;
 }
 
-void IPCServer::Terminate() { server_thread_->Terminate(); }
+void IPCServer::Terminate() {
+  if (server_thread_ != nullptr) {
+    terminate_.Notify();
+    server_thread_->Join();
+  }
+}
 
 }  // namespace mozc
 

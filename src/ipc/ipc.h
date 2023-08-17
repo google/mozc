@@ -34,7 +34,9 @@
 #include <memory>
 #include <string>
 
+#include "base/thread2.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 
 #ifdef __APPLE__
@@ -48,7 +50,6 @@
 namespace mozc {
 
 class IPCPathManager;
-class Thread;
 
 inline constexpr size_t IPC_INITIAL_READ_BUFFER_SIZE = 16 * 16384;
 
@@ -259,12 +260,16 @@ class IPCServer {
 
  private:
   bool connected_;
-  std::unique_ptr<Thread> server_thread_;
+#ifdef _WIN32
+  wil::unique_event_nothrow quit_event_;
+#else   // _WIN32
+  absl::Notification terminate_;
+#endif  // !_WIN32
+  std::unique_ptr<Thread2> server_thread_;
 
 #ifdef _WIN32
   wil::unique_hfile pipe_handle_;
   wil::unique_event_nothrow pipe_event_;
-  wil::unique_event_nothrow quit_event_;
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;

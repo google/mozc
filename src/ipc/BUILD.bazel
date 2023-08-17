@@ -59,11 +59,12 @@ mozc_cc_library(
         "//base:logging",
         "//base:singleton",
         "//base:system_util",
-        "//base:thread",
+        "//base:thread2",
         "//base:util",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         ios = ["//base/mac:mac_util"],
@@ -282,7 +283,9 @@ mozc_cc_library(
     textual_hdrs = ["ipc.h"],
     visibility = ["//visibility:private"],
     deps = [
+        "//base:thread2",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
         windows = [
