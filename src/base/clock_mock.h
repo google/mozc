@@ -83,7 +83,9 @@ class ClockMock : public ClockInterface {
 // Changes the global clock with a mock during the life time of this object.
 class ScopedClockMock {
  public:
-  explicit ScopedClockMock(absl::Time time) : mock_(time) {}
+  explicit ScopedClockMock(absl::Time time) : mock_(time) {
+    Clock::SetClockForUnitTest(&mock_);
+  }
   ABSL_DEPRECATED("Use the constructor with absl::Time")
   ScopedClockMock(uint64_t sec, uint32_t usec) : mock_(sec, usec) {
     Clock::SetClockForUnitTest(&mock_);

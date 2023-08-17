@@ -448,6 +448,7 @@ mozc_cc_test(
     srcs = ["clock_mock_test.cc"],
     requires_full_emulation = False,
     deps = [
+        ":clock",
         ":clock_mock",
         "//testing:gunit_main",
         "@com_google_absl//absl/time",

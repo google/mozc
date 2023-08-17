@@ -31,8 +31,9 @@
 
 #include <cstdint>
 
-#include "testing/googletest.h"
+#include "base/clock.h"
 #include "testing/gunit.h"
+#include "absl/time/civil_time.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -197,6 +198,14 @@ TEST(ClockMockTest, AutoPutForwardTest) {
     EXPECT_EQ(mock.GetAbslTime(), kTestTime + kDelta);
     EXPECT_EQ(mock.GetAbslTime(), kTestTime + 2 * kDelta);
   }
+}
+
+TEST(ScopedClockMockTest, AbslTime) {
+  {
+    ScopedClockMock mock(kTestTime);
+    EXPECT_EQ(Clock::GetAbslTime(), kTestTime);
+  }
+  EXPECT_NE(Clock::GetAbslTime(), kTestTime);
 }
 
 }  // namespace
