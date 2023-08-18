@@ -108,16 +108,6 @@ TempDirectory MakeTempDirectoryOrDie() {
   return *std::move(result);
 }
 
-ScopedTempUserProfileDirectory::ScopedTempUserProfileDirectory()
-    : temp_dir_(MakeTempDirectoryOrDie()),
-      original_dir_(SystemUtil::GetUserProfileDirectory()) {
-  SystemUtil::SetUserProfileDirectory(temp_dir_.path());
-}
-
-ScopedTempUserProfileDirectory::~ScopedTempUserProfileDirectory() {
-  SystemUtil::SetUserProfileDirectory(original_dir_);
-}
-
 TestWithTempUserProfile::TestWithTempUserProfile()
     : temp_dir_(MakeTempDirectoryOrDie()) {
   SystemUtil::SetUserProfileDirectory(temp_dir_.path());

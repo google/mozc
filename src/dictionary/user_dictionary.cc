@@ -34,7 +34,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
-#include <set>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,7 +45,7 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -59,6 +59,8 @@
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
@@ -105,7 +107,7 @@ class UserDictionaryFileManager {
   UserDictionaryFileManager &operator=(const UserDictionaryFileManager &) =
       delete;
 
-  std::string GetFileName() {
+  std::string GetFileName() ABSL_LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock l(&mutex_);
     if (filename_.empty()) {
       return UserDictionaryUtil::GetUserDictionaryFileName();
@@ -114,13 +116,14 @@ class UserDictionaryFileManager {
     }
   }
 
-  void SetFileName(const absl::string_view filename) {
+  void SetFileName(const absl::string_view filename)
+      ABSL_LOCKS_EXCLUDED(mutex_) {
     absl::MutexLock l(&mutex_);
     strings::Assign(filename_, filename);
   }
 
  private:
-  std::string filename_;
+  std::string filename_ ABSL_GUARDED_BY(mutex_);
   absl::Mutex mutex_;
 };
 
@@ -146,7 +149,7 @@ class UserDictionary::TokensIndex {
 
   void Load(const user_dictionary::UserDictionaryStorage &storage) {
     user_pos_tokens_.clear();
-    std::set<uint64_t> seen;
+    absl::flat_hash_set<uint64_t> seen;
     std::vector<UserPos::Token> tokens;
 
     const SuppressionDictionaryLock l(suppression_dictionary_);
@@ -231,7 +234,7 @@ class UserDictionary::TokensIndex {
   std::vector<UserPos::Token> user_pos_tokens_;
 };
 
-class UserDictionary::UserDictionaryReloader : public Thread {
+class UserDictionary::UserDictionaryReloader {
  public:
   explicit UserDictionaryReloader(UserDictionary *dic)
       : modified_at_(0), dic_(dic) {
@@ -241,11 +244,17 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   UserDictionaryReloader(const UserDictionaryReloader &) = delete;
   UserDictionaryReloader &operator=(const UserDictionaryReloader &) = delete;
 
-  ~UserDictionaryReloader() override { Join(); }
+  ~UserDictionaryReloader() = default;
 
   // When the user dictionary exists AND the modification time has been updated,
   // reloads the dictionary.  Returns true when reloader thread is started.
   bool MaybeStartReload() {
+    if (reload_.has_value() && !reload_->Ready()) {
+      // Previously started reload is still running.
+      // TODO(tomokinat): test this path.
+      return false;
+    }
+
     absl::StatusOr<FileTimeStamp> modification_time =
         FileUtil::GetModificationTime(
             Singleton<UserDictionaryFileManager>::get()->GetFileName());
@@ -262,11 +271,19 @@ class UserDictionary::UserDictionaryReloader : public Thread {
       return false;
     }
     modified_at_ = *modification_time;
-    Start("UserDictionaryReloader");
+    // Runs `ThreadMain()` in a background thread.
+    reload_.emplace([this] { ThreadMain(); });
     return true;
   }
 
-  void Run() override {
+  void Wait() {
+    if (reload_.has_value()) {
+      reload_->Wait();
+    }
+  }
+
+ private:
+  void ThreadMain() {
     UserDictionaryStorage storage(
         Singleton<UserDictionaryFileManager>::get()->GetFileName());
 
@@ -289,7 +306,7 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     dic_->Load(storage.GetProto());
   }
 
- private:
+  std::optional<BackgroundFuture<void>> reload_;
   FileTimeStamp modified_at_;
   UserDictionary *dic_;
   std::string key_;
@@ -303,16 +320,14 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
-      tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)) {
+      tokens_(std::make_unique<TokensIndex>(user_pos_.get(),
+                                            suppression_dictionary)) {
   DCHECK(user_pos_.get());
   DCHECK(suppression_dictionary_);
   Reload();
 }
 
-UserDictionary::~UserDictionary() {
-  reloader_->Join();
-  delete tokens_;
-}
+UserDictionary::~UserDictionary() = default;
 
 bool UserDictionary::HasKey(absl::string_view key) const {
   // TODO(noriyukit): Currently, we don't support HasKey() for user dictionary
@@ -487,9 +502,6 @@ bool UserDictionary::LookupComment(absl::string_view key,
 }
 
 bool UserDictionary::Reload() {
-  if (reloader_->IsRunning()) {
-    return false;
-  }
   if (!reloader_->MaybeStartReload()) {
     LOG(INFO) << "MaybeStartReload() didn't start reloading";
   }
@@ -522,16 +534,12 @@ class FindValueCallback : public DictionaryInterface::Callback {
 
 }  // namespace
 
-void UserDictionary::WaitForReloader() { reloader_->Join(); }
+void UserDictionary::WaitForReloader() { reloader_->Wait(); }
 
-void UserDictionary::Swap(TokensIndex *new_tokens) {
+void UserDictionary::Swap(std::unique_ptr<TokensIndex> new_tokens) {
   DCHECK(new_tokens);
-  TokensIndex *old_tokens = tokens_;
-  {
-    absl::WriterMutexLock l(&mutex_);
-    tokens_ = new_tokens;
-  }
-  delete old_tokens;
+  absl::WriterMutexLock l(&mutex_);
+  tokens_.swap(new_tokens);
 }
 
 bool UserDictionary::Load(
@@ -551,15 +559,15 @@ bool UserDictionary::Load(
 #endif  // __ANDROID__
 
   if (size >= kVeryBigUserDictionarySize) {
-    TokensIndex *dummy_empty_tokens =
-        new TokensIndex(user_pos_.get(), suppression_dictionary_);
-    Swap(dummy_empty_tokens);
+    auto placeholder_empty_tokens =
+        std::make_unique<TokensIndex>(user_pos_.get(), suppression_dictionary_);
+    Swap(std::move(placeholder_empty_tokens));
   }
 
-  TokensIndex *tokens =
-      new TokensIndex(user_pos_.get(), suppression_dictionary_);
+  auto tokens =
+      std::make_unique<TokensIndex>(user_pos_.get(), suppression_dictionary_);
   tokens->Load(storage);
-  Swap(tokens);
+  Swap(std::move(tokens));
   return true;
 }
 

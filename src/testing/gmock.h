@@ -30,7 +30,7 @@
 #ifndef MOZC_TESTING_GMOCK_H_
 #define MOZC_TESTING_GMOCK_H_
 
-#include <gmock/gmock.h>
+#include <gmock/gmock.h>  // IWYU pragma: export
 
 #ifndef EXPECT_OK
 

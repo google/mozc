@@ -3672,5 +3672,64 @@ TEST_F(SessionConverterTest, CandidatePageSize) {
   EXPECT_EQ(GetCandidateList(converter).page_size(), kPageSize);
 }
 
+// Test output.result.tokens is filled on commit.
+TEST_F(SessionConverterTest, ResultTokens) {
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("きょうは");
+    candidate = segment->add_candidate();
+    candidate->key = "きょうは";
+    candidate->value = "今日は";
+    candidate->content_key = "きょう";
+    candidate->content_value = "今日";
+    candidate->lid = 100;
+    candidate->rid = 101;
+  }
+  {
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("はれ");
+    candidate = segment->add_candidate();
+    candidate->key = "はれ";
+    candidate->value = "晴れ";
+    candidate->content_key = candidate->key;
+    candidate->content_value = candidate->value;
+    candidate->lid = 200;
+    candidate->rid = 201;
+  }
+  EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  composer_->InsertCharacterPreedit("きょうははれ");
+  EXPECT_TRUE(converter.Convert(*composer_));
+  ASSERT_TRUE(converter.IsActive());
+
+  commands::Output output;
+  converter.Commit(*composer_, Context::default_instance());
+  converter.FillOutput(*composer_, &output);
+
+  EXPECT_TRUE(output.has_result());
+  EXPECT_EQ(output.result().tokens_size(), 3);
+  EXPECT_EQ(output.result().tokens(0).key(), "きょう");
+  EXPECT_EQ(output.result().tokens(0).value(), "今日");
+  EXPECT_EQ(output.result().tokens(0).lid(), 100);
+  EXPECT_EQ(output.result().tokens(0).rid(), -1);
+
+  EXPECT_EQ(output.result().tokens(1).key(), "は");
+  EXPECT_EQ(output.result().tokens(1).value(), "は");
+  EXPECT_EQ(output.result().tokens(1).lid(), -1);
+  EXPECT_EQ(output.result().tokens(1).rid(), 101);
+
+  EXPECT_EQ(output.result().tokens(2).key(), "はれ");
+  EXPECT_EQ(output.result().tokens(2).value(), "晴れ");
+  EXPECT_EQ(output.result().tokens(2).lid(), 200);
+  EXPECT_EQ(output.result().tokens(2).rid(), 201);
+}
+
 }  // namespace session
 }  // namespace mozc

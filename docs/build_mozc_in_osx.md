@@ -33,13 +33,14 @@ Hint: You can also download `Mozc.pkg` from GitHub Actions. Check [Build with Gi
 
 ### System Requirements
 
-64-bit macOS 10.14 and later versions are supported.
+64-bit macOS 11 and later versions are supported.
 
 ### Software Requirements
 
 Building on Mac requires the following software.
 
 * [Xcode](https://apps.apple.com/us/app/xcode/id497799835)
+  * Xcode 13 (macOS 13 SDK) or later
   * ⚠️Xcode Command Line Tools aren't sufficient.
 * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
 * Python 3.9 or later with the following pip module.
@@ -175,7 +176,7 @@ For GYP build, Ninja and Packages are also required.
 First, you'll need to generate Xcode project using a tool called [GYP](https://chromium.googlesource.com/external/gyp).
 
 ```
-GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp
+GYP_DEFINES="mac_sdk=13.0 mac_deployment_target=11.0" python3 build_mozc.py gyp
 ```
 
 You can customize the SDK version target OS version here.
@@ -189,7 +190,7 @@ python3 build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput
 If you want to build Mozc without Qt dependencies, specify `--noqt` option as follows.  Note that GUI tools will be built as a mock version that does nothing if you specify `--noqt`.
 
 ```
-GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp --noqt
+GYP_DEFINES="mac_sdk=13.0 mac_deployment_target=11.0" python3 build_mozc.py gyp --noqt
 python3 build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput
 ```
 
@@ -203,7 +204,7 @@ GUI tools executables are linked with the libraries in `third_party/qt`. You mig
 
 You can also build an installer.
 ```
-GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp
+GYP_DEFINES="mac_sdk=13.0 mac_deployment_target=11.0" python3 build_mozc.py gyp
 python3 build_mozc.py build -c Release :Installer
 ```
 

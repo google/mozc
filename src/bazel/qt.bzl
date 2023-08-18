@@ -82,12 +82,12 @@ def mozc_qt_moc(name, srcs, outs):
         outs = outs,
         cmd = mozc_select(
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
-            oss_linux = "$(location @qt_linux//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:libexec/moc) -p $$(dirname $<) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:moc"],
-            oss_linux = ["@qt_linux//:bin/moc"],
+            oss_linux = ["@qt_linux//:libexec/moc"],
             oss_macos = ["@qt_mac//:bin/moc"],
         ),
     )
@@ -99,12 +99,12 @@ def mozc_qt_uic(name, srcs, outs):
         outs = outs,
         cmd = mozc_select(
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
-            oss_linux = "$(location @qt_linux//:bin/uic) -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:libexec/uic) -o $@ $(SRCS)",
             oss_macos = "$(location @qt_mac//:bin/uic) -o $@ $(SRCS)",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:uic"],
-            oss_linux = ["@qt_linux//:bin/uic"],
+            oss_linux = ["@qt_linux//:libexec/uic"],
             oss_macos = ["@qt_mac//:bin/uic"],
         ),
     )
@@ -116,12 +116,12 @@ def mozc_qt_rcc(name, qrc_name, qrc_file, srcs, outs):
         outs = outs,
         cmd = mozc_select(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
-            oss_linux = "$(location @qt_linux//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_linux = "$(location @qt_linux//:libexec/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
             oss_macos = "$(location @qt_mac//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = mozc_select(
             default = ["//third_party/qt:rcc"],
-            oss_linux = ["@qt_linux//:bin/rcc"],
+            oss_linux = ["@qt_linux//:libexec/rcc"],
             oss_macos = ["@qt_mac//:bin/rcc"],
         ),
     )

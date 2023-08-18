@@ -291,9 +291,10 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":number_rewriter",
+        ":rewriter_interface",
         "//base:logging",
         "//base:number_util",
-        "//base:system_util",
+        "//base/strings:assign",
         "//config:character_form_manager",
         "//config:config_handler",
         "//converter:segments",
@@ -376,7 +377,6 @@ mozc_cc_test(
     deps = [
         ":transliteration_rewriter",
         "//base:logging",
-        "//base:util",
         "//composer",
         "//composer:table",
         "//config:config_handler",
@@ -426,11 +426,8 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":language_aware_rewriter",
-        "//base:logging",
-        "//base:util",
         "//composer",
         "//composer:table",
-        "//config:config_handler",
         "//converter:segments",
         "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",

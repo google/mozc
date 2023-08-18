@@ -29,14 +29,10 @@
 
 #include "rewriter/language_aware_rewriter.h"
 
-#include <memory>
 #include <string>
 
-#include "base/logging.h"
-#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
-#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -73,12 +69,8 @@ void InsertASCIISequence(const absl::string_view text,
   }
 }
 
-class LanguageAwareRewriterTest : public ::testing::Test {
+class LanguageAwareRewriterTest : public testing::TestWithTempUserProfile {
  protected:
-  // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  LanguageAwareRewriterTest() = default;
-  ~LanguageAwareRewriterTest() override = default;
-
   void SetUp() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
   void TearDown() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
@@ -120,9 +112,6 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
   const testing::MockDataManager data_manager_;
-
- private:
-  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
 };
 
 void PushFrontCandidate(const absl::string_view data, Segment *segment) {

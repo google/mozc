@@ -35,7 +35,7 @@
 
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/string_view.h"
 
@@ -50,31 +50,9 @@
 
 namespace mozc {
 
-namespace {
-
-class IPCServerThread : public Thread {
- public:
-  IPCServerThread(const IPCServerThread &) = delete;
-  IPCServerThread &operator=(const IPCServerThread &) = delete;
-  explicit IPCServerThread(IPCServer *server) : server_(server) {}
-  ~IPCServerThread() override = default;
-  void Run() override {
-    if (server_ != nullptr) {
-      server_->Loop();
-    }
-  }
-
- private:
-  IPCServer *server_;
-};
-
-}  // namespace
-
 void IPCServer::LoopAndReturn() {
   if (server_thread_ == nullptr) {
-    server_thread_ = std::make_unique<IPCServerThread>(this);
-    server_thread_->SetJoinable(true);
-    server_thread_->Start("IPCServer");
+    server_thread_ = std::make_unique<Thread2>([this] { this->Loop(); });
   } else {
     LOG(WARNING) << "Another thead is already running";
   }

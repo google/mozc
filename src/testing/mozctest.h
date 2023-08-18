@@ -35,7 +35,6 @@
 
 #include "base/file/temp_dir.h"
 #include "testing/gunit.h"
-#include "absl/base/attributes.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -81,22 +80,6 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
 
 // Creates a new unique TempDirectory and returns it.
 TempDirectory MakeTempDirectoryOrDie();
-
-// Temporarily sets the user profile directory to a unique temp directory during
-// the scope.  The original directory is restored at the end of the scope.
-// Exits if it fails to create a temporary directory.
-class ABSL_DEPRECATED("Use TestWithTempUserProfile instead.")
-    ScopedTempUserProfileDirectory {
- public:
-  ScopedTempUserProfileDirectory();
-  ~ScopedTempUserProfileDirectory();
-
-  TempDirectory &temp_directory() { return temp_dir_; }
-
- private:
-  TempDirectory temp_dir_;
-  const std::string original_dir_;
-};
 
 #ifndef MOZC_DICT_DIR_COMPONENTS
 #define MOZC_DICT_DIR_COMPONENTS "data"

@@ -70,6 +70,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 namespace mozc::prediction {
@@ -2201,7 +2202,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
 
   // Create a history proto containing old entries (timestamp = 1).
@@ -2212,7 +2213,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     entry->set_value(absl::StrFormat("old_value%d", i));
     entry->set_last_access_time(absl::ToUnixSeconds(clock->GetAbslTime()));
   }
-  clock->PutClockForward(63 * 24 * 60 * 60, 0);  // Advance clock for 63 days.
+  clock->Advance(absl::Hours(24 * 63));  // Advance clock for 63 days.
   for (int i = 0; i < 10; ++i) {
     auto *entry = history.add_entries();
     entry->set_key(absl::StrFormat("new_key%d", i));
@@ -2264,7 +2265,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
 
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
   // This test checks invalid entries are not loaded into dic_.
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
   TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
 
   // Create a history proto containing invalid entries (timestamp = 1).
@@ -2427,8 +2428,8 @@ TEST_F(UserHistoryPredictorTest, RomanFuzzyLookupEntry) {
 
 namespace {
 struct LookupTestData {
-  const std::string entry_key;
-  const bool expect_result;
+  absl::string_view entry_key;
+  bool expect_result;
 };
 }  // namespace
 
@@ -2442,14 +2443,14 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // input_key: "あｋ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  auto expanded = std::make_unique<Trie<std::string>>();
   expanded->AddEntry("か", "");
   expanded->AddEntry("き", "");
   expanded->AddEntry("く", "");
   expanded->AddEntry("け", "");
   expanded->AddEntry("こ", "");
 
-  const LookupTestData kTests1[] = {
+  constexpr LookupTestData kTests1[] = {
       {"", false},       {"あか", true},    {"あき", true},  {"あかい", true},
       {"あまい", false}, {"あ", false},     {"さか", false}, {"さき", false},
       {"さかい", false}, {"さまい", false}, {"さ", false},
@@ -2471,7 +2472,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // key_base: ""
   // key_expanded: "か","き","く","け", "こ"
 
-  const LookupTestData kTests2[] = {
+  constexpr LookupTestData kTests2[] = {
       {"", false},    {"か", true},    {"き", true},
       {"かい", true}, {"まい", false}, {"も", false},
   };
@@ -2495,11 +2496,11 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  auto expanded = std::make_unique<Trie<std::string>>();
   expanded->AddEntry("し", "");
   expanded->AddEntry("じ", "");
 
-  const LookupTestData kTests1[] = {
+  constexpr LookupTestData kTests1[] = {
       {"", false},           {"あ", false},         {"あし", true},
       {"あじ", true},        {"あしかゆい", true},  {"あじうまい", true},
       {"あまにがい", false}, {"あめ", false},       {"まし", false},
@@ -2521,7 +2522,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // input_key: "し"
   // key_base: ""
   // key_expanded: "し","じ"
-  const LookupTestData kTests2[] = {
+  constexpr LookupTestData kTests2[] = {
       {"", false},          {"し", true},         {"じ", true},
       {"しかうまい", true}, {"じゅうかい", true}, {"ま", false},
       {"まめ", false},
@@ -2540,8 +2541,8 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // We have to define this here,
   // because UserHistoryPredictor::MatchType is private
   struct MatchTypeTestData {
-    const std::string target;
-    const UserHistoryPredictor::MatchType expect_type;
+    absl::string_view target;
+    UserHistoryPredictor::MatchType expect_type;
   };
 
   // Roman
@@ -2549,14 +2550,14 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // input_key: "あ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  auto expanded = std::make_unique<Trie<std::string>>();
   expanded->AddEntry("か", "か");
   expanded->AddEntry("き", "き");
   expanded->AddEntry("く", "く");
   expanded->AddEntry("け", "け");
   expanded->AddEntry("こ", "こ");
 
-  const MatchTypeTestData kTests1[] = {
+  constexpr MatchTypeTestData kTests1[] = {
       {"", UserHistoryPredictor::NO_MATCH},
       {"い", UserHistoryPredictor::NO_MATCH},
       {"あ", UserHistoryPredictor::RIGHT_PREFIX_MATCH},
@@ -2577,7 +2578,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // input_key: ""
   // key_base: ""
   // key_expanded: "か","き","く","け", "こ"
-  const MatchTypeTestData kTests2[] = {
+  constexpr MatchTypeTestData kTests2[] = {
       {"", UserHistoryPredictor::NO_MATCH},
       {"い", UserHistoryPredictor::NO_MATCH},
       {"いか", UserHistoryPredictor::NO_MATCH},
@@ -2597,8 +2598,8 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // We have to define this here,
   // because UserHistoryPredictor::MatchType is private
   struct MatchTypeTestData {
-    const std::string target;
-    const UserHistoryPredictor::MatchType expect_type;
+    absl::string_view target;
+    UserHistoryPredictor::MatchType expect_type;
   };
 
   // Kana
@@ -2606,11 +2607,11 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  auto expanded = std::make_unique<Trie<std::string>>();
   expanded->AddEntry("し", "し");
   expanded->AddEntry("じ", "じ");
 
-  const MatchTypeTestData kTests1[] = {
+  constexpr MatchTypeTestData kTests1[] = {
       {"", UserHistoryPredictor::NO_MATCH},
       {"い", UserHistoryPredictor::NO_MATCH},
       {"いし", UserHistoryPredictor::NO_MATCH},
@@ -2633,7 +2634,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // input_key: "し"
   // key_base: ""
   // key_expanded: "し","じ"
-  const MatchTypeTestData kTests2[] = {
+  constexpr MatchTypeTestData kTests2[] = {
       {"", UserHistoryPredictor::NO_MATCH},
       {"い", UserHistoryPredictor::NO_MATCH},
       {"し", UserHistoryPredictor::EXACT_MATCH},
@@ -2728,7 +2729,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
 }
 
 // Found by random test.
-// input_key != base by compoesr modification.
+// input_key != base by composer modification.
 TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_->SetTable(table_.get());
@@ -3095,7 +3096,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryUnigram) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for unigram history.
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
@@ -3123,7 +3124,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryUnigram) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of whole sentence.
@@ -3166,7 +3167,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of the first node of the bigram chain.
@@ -3207,7 +3208,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
   // of the first node of the bigram chain.
@@ -3246,7 +3247,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the whole sentence.
@@ -3307,7 +3308,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the first node of trigram.
@@ -3360,7 +3361,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the second node of trigram.
@@ -3413,7 +3414,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the third node of trigram.
@@ -3466,7 +3467,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirstBigram) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the first bigram of trigram.
@@ -3521,7 +3522,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirstBigram) {
 }
 
 TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecondBigram) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
   // deletion of the latter bigram of trigram.
@@ -4050,7 +4051,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
 }
 
 TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
-  ScopedClockMock clock(1, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(1));
 
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
@@ -4068,7 +4069,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", segments));
 
   // Now, simulate the case where 63 days passed.
-  clock->PutClockForward(63 * 24 * 60 * 60, 0);
+  clock->Advance(absl::Hours(63 * 24));
 
   // Let the predictor learn "私の名前は高橋です".
   segments.Clear();
@@ -4112,7 +4113,7 @@ TEST_F(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync) {
 
 TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   // Test the case where history has "future" timestamps.
-  ScopedClockMock clock(10000, 0);
+  ScopedClockMock clock(absl::FromUnixSeconds(10000));
 
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
@@ -4130,7 +4131,7 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", segments));
 
   // Now, go back to the past.
-  clock->SetTime(1, 0);
+  clock->SetTime(absl::FromUnixSeconds(1));
 
   // Verify that "私の名前は中野です" is predicted without crash.
   segments.Clear();

@@ -45,8 +45,8 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--bpdir', default='./third_party/breakpad')
   parser.add_option('--outdir', default='./out_mac/Release/Breakpad')
-  parser.add_option('--sdk', default='macosx10.15')
-  parser.add_option('--deployment_target', default='10.9')
+  parser.add_option('--sdk', default='macosx13.0')
+  parser.add_option('--deployment_target', default='11.0')
 
   (opts, _) = parser.parse_args()
   return opts

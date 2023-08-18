@@ -29,6 +29,7 @@
 
 #include "ipc/ipc.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -108,8 +109,6 @@ std::string GenerateInputData(int i) {
 class IPCTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(IPCTest, IPCTest) {
-  testing::ScopedTempUserProfileDirectory temp_user_profile_dir_;
-
 #ifdef __APPLE__
   TestMachPortManager manager;
 #endif  // __APPLE__

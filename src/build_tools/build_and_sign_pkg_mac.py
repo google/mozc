@@ -68,7 +68,7 @@ def CodesignPackage(product_dir):
   product_name = 'Mozc'
   app_res = product_name + '.app/Contents/Resources/'
   breakpad = 'Contents/Frameworks/Breakpad.framework/Versions/A/Resources/breakpadUtilities.dylib'
-  libqcocoa = 'Contents/Frameworks/QtCore.framework/Versions/5/Resources/plugins/platforms/libqcocoa.dylib'
+  libqcocoa = 'Contents/Frameworks/QtCore.framework/Versions/Current/Resources/plugins/platforms/libqcocoa.dylib'
   targets = [
       'ConfigDialog.app/' + breakpad,
       'DictionaryTool.app/' + breakpad,

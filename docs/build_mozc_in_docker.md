@@ -143,8 +143,9 @@ Note: This section is not about our officially supported build process.
 
 * Python: 3.7 or later
 * Ibus: 1.5.4 or later
-* Qt5: 5.12 or later
-* libglib
+  * libglib
+* Qt6: 6.2.5 or later, or Qt 6.2.x with working around [QTBUG-86080](https://bugreports.qt.io/browse/QTBUG-86080) by yourself
+  * libgl
 
 You may also need other libraries.
 See the configurations of

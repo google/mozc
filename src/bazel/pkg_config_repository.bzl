@@ -75,7 +75,7 @@ cc_library(
 """
 
 EXPORTS_FILES_TEMPLATE = """
-exports_files(glob(["bin/*"]))
+exports_files(glob(["libexec/*"]))
 """
 
 def _exec_pkg_config(repo_ctx, flag):
@@ -107,10 +107,9 @@ def _pkg_config_repository_impl(repo_ctx):
     }
     build_file_data = BUILD_TEMPLATE.format(**data)
 
-    # host_bins
-    host_bins = _exec_pkg_config(repo_ctx, "--variable=host_bins")
-    if len(host_bins) == 1:
-        repo_ctx.symlink(host_bins[0], "bin")
+    libexecdir = _exec_pkg_config(repo_ctx, "--variable=libexecdir")
+    if len(libexecdir) == 1:
+        repo_ctx.symlink(libexecdir[0], "libexec")
         build_file_data += EXPORTS_FILES_TEMPLATE
 
     repo_ctx.file("BUILD.bazel", build_file_data)

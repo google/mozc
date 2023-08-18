@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -75,7 +74,7 @@ void SetAkann(composer::Composer *composer) {
 
 }  // namespace
 
-class TransliterationRewriterTest : public ::testing::Test {
+class TransliterationRewriterTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
@@ -98,7 +97,6 @@ class TransliterationRewriterTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
 
  private:
-  const testing::ScopedTempUserProfileDirectory tmp_profile_dir_;
   const commands::Request default_request_;
   config::Config default_config_;
 };

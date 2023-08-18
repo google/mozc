@@ -46,7 +46,6 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/thread.h"
 #include "base/util.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
@@ -404,8 +403,8 @@ IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
     // Actually this is an async operation. Let's wait for its completion.
     bool has_more_data = false;
     const IPCErrorType result = SafeWaitOverlappedResult(
-        device_handle, nullptr, absl::ToInt64Milliseconds(timeout),
-        &overlapped, &num_bytes_read, read_type_ack);
+        device_handle, nullptr, absl::ToInt64Milliseconds(timeout), &overlapped,
+        &num_bytes_read, read_type_ack);
     if (result == IPC_MORE_DATA) {
       num_bytes_read_total += num_bytes_read;
       continue;
@@ -445,8 +444,8 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 IPCServer::IPCServer(const std::string &name, int32_t num_connections,
                      absl::Duration timeout)
     : connected_(false),
-      pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
+      pipe_event_(CreateManualResetEvent()),
       timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   std::string server_address;
@@ -508,20 +507,13 @@ void IPCServer::Terminate() {
     return;
   }
 
-  if (!server_thread_->IsRunning()) {
-    return;
-  }
-
   if (!::SetEvent(quit_event_.get())) {
     LOG(ERROR) << "SetEvent failed";
   }
 
   // Close the named pipe.
   // This is a workaround for killing child thread
-  if (server_thread_.get() != nullptr) {
-    server_thread_->Join();
-    server_thread_->Terminate();
-  }
+  server_thread_->Join();
 
   connected_ = false;
 }

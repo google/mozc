@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+bindir=${prefix}/lib/qt6/bin
+libexecdir=${prefix}/lib/qt6/libexec
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include/x86_64-linux-gnu/qt6
+mkspecsdir=${prefix}/lib/x86_64-linux-gnu/qt6/mkspecs
+
+Name: Qt6 Platform
+Description: Qt Platform module
+Version: 6.2.4
+Cflags: -I${mkspecsdir}/linux-g++ -I${includedir}
