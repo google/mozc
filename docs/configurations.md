@@ -176,14 +176,31 @@ engines {
 ```
 
 
-### Use the default Ibus candidate window
+### Candidate window
 
-If the environment variable `MOZC_IBUS_CANDIDATE_WINDOW` is set to `ibus`,
-The default Ibus candidate window is used instead of the Mozc candidate window.
+Linux input method frameworks (e.g. IBus and Fcitx) often provide their own
+candidate window UI, while Mozc also provides candidate window UI via
+`mozc_renderer` process that is used in macOS and Windows as well.
 
-If `MOZC_IBUS_CANDIDATE_WINDOW` is set to `mozc`, the Mozc candidate window is
-always used.
+When `$XDG_SESSION_TYPE` is set to `wayland`, ibus-mozc uses IBus' default
+candidate window by default due to the technical limitations in Wayland.
+Otherwise, Mozc's candidate window will be used by default.
 
-Note, the default Ibus candidate window may not have the full features
-we provide to the Mozc candidate window such as information list
-(e.g. word usage dictionary).
+To override the above behavior, set an environment variable
+`MOZC_IBUS_CANDIDATE_WINDOW` to `mozc` or `ibus`.
+
+Here is the quick comparison of two options.
+
+#### Mozc's candidate window
+
+ * Provides the same UI and functionality as Mozc for macOS and Windows.
+ * Many technical and compatibility challenges to properly work under Wayland sessions
+   ([#431](https://github.com/google/mozc/issues/431)).
+ * Theme support (e.g. dark theme) is planned but not yet implemented.
+
+#### IBus' candidate window
+
+ * Provides a UI that is consistent with the desktop environment (e.g. theme
+   support including dark mode).
+ * Supports Wayland by using deep integration with the desktop shell.
+ * Lacks several features that are available in Mozc for macOS and Windows.

@@ -181,12 +181,10 @@ bool UseMozcCandidateWindow() {
     return true;
   }
 
-#ifndef ENABLE_QT_RENDERER
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
     // mozc_renderer is not supported on wayland session.
     return false;
   }
-#endif  // !ENABLE_QT_RENDERER
 
   // TODO(nona): integrate with renderer/renderer_client.cc
   // TODO(nona): Check executable bit for renderer.
