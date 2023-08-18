@@ -41,6 +41,7 @@
 #include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
@@ -113,13 +114,13 @@ class UserDictionary : public DictionaryInterface {
   class UserDictionaryReloader;
 
   // Swaps internal tokens index to |new_tokens|.
-  void Swap(TokensIndex *new_tokens);
+  void Swap(std::unique_ptr<TokensIndex> new_tokens);
 
   std::unique_ptr<UserDictionaryReloader> reloader_;
   std::unique_ptr<const UserPosInterface> user_pos_;
   const PosMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
-  TokensIndex *tokens_;
+  std::unique_ptr<TokensIndex> tokens_ ABSL_GUARDED_BY(mutex_);
   mutable absl::Mutex mutex_;
 
   friend class UserDictionaryTest;
