@@ -118,7 +118,7 @@ new_local_repository(
 # Qt for Linux
 pkg_config_repository(
   name = "qt_linux",
-  packages = ["Qt5Core", "Qt5Gui", "Qt5Widgets"],
+  packages = ["Qt6Core", "Qt6Gui", "Qt6Widgets"],
 )
 
 # Qt for macOS

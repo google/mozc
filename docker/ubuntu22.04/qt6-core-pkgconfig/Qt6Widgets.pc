@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+bindir=${prefix}/lib/qt6/bin
+libexecdir=${prefix}/lib/qt6/libexec
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include/x86_64-linux-gnu/qt6
+
+Name: Qt6 Widgets
+Description: Qt Widgets module
+Version: 6.2.4
+Libs: -L${libdir} -lQt6Widgets
+Cflags: -I${includedir}/QtWidgets -I${includedir} -DQT_WIDGETS_LIB
+Requires: Qt6Core Qt6Gui

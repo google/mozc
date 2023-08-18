@@ -40,7 +40,7 @@ RUN apt upgrade -y
 ## Common packages for linux build environment
 RUN apt-get install -y clang libc++-dev libc++abi-dev python3 pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
-RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev
+RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev
 ## Packages for misc tools
 RUN apt-get install -y nano
 
@@ -59,6 +59,8 @@ RUN useradd --create-home --shell /bin/bash --base-dir /home mozc_builder
 USER mozc_builder
 RUN mkdir -p /home/mozc_builder/work
 WORKDIR /home/mozc_builder/work
+## Work around https://bugreports.qt.io/browse/QTBUG-86080 for Ubuntu 22.04
+ENV PKG_CONFIG_PATH="/home/mozc_builder/work/mozc/docker/ubuntu22.04/qt6-core-pkgconfig:${PKG_CONFIG_PATH}"
 
 ## For Android NDK
 RUN curl -LO https://dl.google.com/android/repository/android-ndk-r25c-linux.zip && unzip android-ndk-r25c-linux.zip && rm android-ndk-r25c-linux.zip
