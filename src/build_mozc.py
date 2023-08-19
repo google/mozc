@@ -746,7 +746,6 @@ def RunTests(target_platform, configuration, parallel_num):
       try:
         test_function(binary, gtest_report_dir, options)
       except RunOrDieError as e:
-        logging.exception(e)
         failed_tests.append(binary)
   else:
     launcher = test_launcher.TestLauncher(gtest_report_dir)
