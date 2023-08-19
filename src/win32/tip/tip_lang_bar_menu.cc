@@ -69,8 +69,6 @@ using WTL::CIcon;
 using WTL::CMenu;
 using WTL::CMenuItemInfo;
 
-constexpr int kDefaultDPI = 96;
-
 // Represents the cookie for the sink to a TipLangBarButton object.
 constexpr int kTipLangBarMenuCookie =
     (('M' << 24) | ('o' << 16) | ('z' << 8) | ('c' << 0));

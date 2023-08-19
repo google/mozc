@@ -46,7 +46,7 @@ class TipDisplayAttribute : public TipComImplements<ITfDisplayAttributeInfo> {
  public:
   // ITfDisplayAttributeInfo interface methods
   virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid);
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *descriptoin);
+  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description);
   virtual HRESULT STDMETHODCALLTYPE
   GetAttributeInfo(TF_DISPLAYATTRIBUTE *attribute);
   virtual HRESULT STDMETHODCALLTYPE

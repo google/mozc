@@ -81,7 +81,7 @@ class SurrogatePairObserver {
 
   // Returns the expected action of the IME DLL against the given key event.
   ClientAction OnKeyEvent(const VirtualKey &virtual_key, bool is_keydown,
-                          bool is_testkey);
+                          bool is_test_key);
 
   ObservationState state_;
   wchar_t surrogate_high_;

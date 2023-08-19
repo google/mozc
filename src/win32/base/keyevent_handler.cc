@@ -638,7 +638,7 @@ KeyEventHandlerResult::KeyEventHandlerResult()
 
 KeyEventHandlerResult KeyEventHandler::HandleKey(
     const VirtualKey &virtual_key, BYTE scan_code, bool is_key_down,
-    const KeyboardStatus &keyboard_status, const InputBehavior &behavior,
+    const KeyboardStatus &initial_status, const InputBehavior &behavior,
     const InputState &ime_state, Win32KeyboardInterface *keyboard,
     mozc::commands::KeyEvent *key) {
   KeyEventHandlerResult result;
@@ -668,7 +668,7 @@ KeyEventHandlerResult KeyEventHandler::HandleKey(
   }
 
   if (!ConvertToKeyEvent(virtual_key, scan_code, is_key_down, false, behavior,
-                         ime_state, keyboard_status, keyboard, key)) {
+                         ime_state, initial_status, keyboard, key)) {
     result.succeeded = true;
     result.should_be_eaten = false;
     result.should_be_sent_to_server = false;

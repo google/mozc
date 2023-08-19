@@ -133,7 +133,7 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   virtual STDMETHODIMP GetTooltipString(BSTR *tooltip);
 
   // The ITfLangBarItemButton interface methods
-  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point, const RECT *rect);
+  virtual STDMETHODIMP OnClick(TfLBIClick click, POINT point, const RECT *rect);
   virtual STDMETHODIMP InitMenu(ITfMenu *menu) = 0;
   virtual STDMETHODIMP OnMenuSelect(UINT menu_id) = 0;
   virtual STDMETHODIMP GetIcon(HICON *icon) = 0;

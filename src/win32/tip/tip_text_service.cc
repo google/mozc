@@ -319,21 +319,6 @@ class CompositionSinkImpl final : public TipComImplements<ITfCompositionSink> {
   wil::com_ptr_nothrow<ITfContext> context_;
 };
 
-void CloseUIElement(ITfUIElementMgr *ui_element_mgr, DWORD id) {
-  wil::com_ptr_nothrow<ITfUIElement> element;
-  ui_element_mgr->GetUIElement(id, &element);
-  if (element) {
-    element->Show(FALSE);
-  }
-  ui_element_mgr->EndUIElement(id);
-  if (element) {
-    // This corresponds to the additional AddRef just after
-    // ITfUIElementMgr::BeginUIElement. See the comment in
-    // tip_edit_session.cc.
-    element->Release();
-  }
-}
-
 // Represents preserved keys used by this class.
 constexpr wchar_t kTipKeyTilde[] = L"OnOff";
 constexpr wchar_t kTipKeyKanji[] = L"Kanji";
@@ -441,9 +426,7 @@ class TipTextServiceImpl
         thread_mgr_cookie_(TF_INVALID_COOKIE),
         thread_focus_cookie_(TF_INVALID_COOKIE),
         keyboard_openclose_cookie_(TF_INVALID_COOKIE),
-        keyboard_disabled_cookie_(TF_INVALID_COOKIE),
         keyboard_inputmode_conversion_cookie_(TF_INVALID_COOKIE),
-        empty_context_cookie_(TF_INVALID_COOKIE),
         input_attribute_(TF_INVALID_GUIDATOM),
         converted_attribute_(TF_INVALID_GUIDATOM),
         thread_context_(nullptr),
@@ -1496,9 +1479,7 @@ class TipTextServiceImpl
 
   // The cookie issued for installing ITfCompartmentEventSink.
   DWORD keyboard_openclose_cookie_;
-  DWORD keyboard_disabled_cookie_;
   DWORD keyboard_inputmode_conversion_cookie_;
-  DWORD empty_context_cookie_;
 
   // The category manager object to register or query a GUID.
   wil::com_ptr_nothrow<ITfCategoryMgr> category_;
