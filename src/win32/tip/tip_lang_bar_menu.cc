@@ -393,7 +393,7 @@ STDMETHODIMP TipLangBarButton::UnadviseSink(DWORD cookie) {
   return S_OK;
 }
 
-// Initializes an TipLangBarButton instance.
+// Initializes a TipLangBarButton instance.
 // This function is called by a text service to provide the information
 // required for creating a menu button. A text service MUST call this function
 // before calling the ITfLangBarItemMgr::AddItem() function and adding this
@@ -835,7 +835,7 @@ STDMETHODIMP TipSystemLangBarMenu::OnMenuSelect(UINT menu_id) {
   return S_OK;
 }
 
-// Initializes an TipLangBarButton instance.
+// Initializes a TipLangBarButton instance.
 // This function is called by a text service to provide the information
 // required for creating a menu button. A text service MUST call this function
 // before calling the ITfLangBarItemMgr::AddItem() function and adding this
