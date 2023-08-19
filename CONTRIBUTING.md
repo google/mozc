@@ -31,6 +31,7 @@ Files and directories we may accept pull requests:
 * [src/mac/](https://github.com/google/mozc/tree/master/src/mac/)
 * [src/renderer/qt/](https://github.com/google/mozc/tree/master/src/renderer/qt/)
 * [src/unix/](https://github.com/google/mozc/tree/master/src/unix/)
+* [src/win32/](https://github.com/google/mozc/tree/master/src/unix/)
 * [src/WORKSPACE.bazel](https://github.com/google/mozc/tree/master/src/WORKSPAE.bazel)
 
 #### Why is there such a limitation?
