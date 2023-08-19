@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
-#define MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
 
 #include <msctf.h>
 #include <wil/com.h>
 #include <windows.h>
 
-#include "win32/tip/tip_text_service.h"
 #include "absl/container/flat_hash_map.h"
+#include "win32/tip/tip_text_service.h"
 
 namespace mozc {
 namespace win32 {
@@ -76,4 +76,4 @@ class TipUiElementManager {
 }  // namespace win32
 }  // namespace mozc
 
-#endif  // MOZC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_UI_ELEMENT_MANAGER_H_

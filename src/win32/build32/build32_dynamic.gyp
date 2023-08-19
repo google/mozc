@@ -43,7 +43,7 @@
           'target_name': 'mozc_win32_build32_dynamic',
           'type': 'none',
           'dependencies': [
-            '../../gui/gui.gyp:mozc_tool',
+            '<(mozc_src_dir)/gui/gui.gyp:mozc_tool',
           ],
         },
       ],

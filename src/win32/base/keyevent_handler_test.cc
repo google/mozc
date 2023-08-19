@@ -49,9 +49,9 @@
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace win32 {

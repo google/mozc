@@ -56,6 +56,8 @@
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/omaha_util.h"
 #include "win32/base/tsf_profile.h"
@@ -63,8 +65,6 @@
 #include "win32/base/uninstall_helper.h"
 #include "win32/cache_service/cache_service_manager.h"
 #include "win32/custom_action/resource.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 #if !defined(MOZC_NO_LOGGING)
 #include <atlstr.h>

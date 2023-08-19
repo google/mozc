@@ -157,7 +157,7 @@ def GetGypFileNames(options):
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
   if options.target_platform == 'Windows':
-    gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % OSS_SRC_DIR))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % OSS_SRC_DIR))
   gyp_file_names.sort()

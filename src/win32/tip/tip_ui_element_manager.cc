@@ -40,13 +40,13 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "win32/base/input_state.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_thread_context.h"
 #include "win32/tip/tip_ui_element_conventional.h"
-#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace win32 {

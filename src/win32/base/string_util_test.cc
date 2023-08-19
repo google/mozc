@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "win32/base/string_util.h"
+
 #include <string>
+
 #include "protocol/commands.pb.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
