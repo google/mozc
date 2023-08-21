@@ -337,7 +337,7 @@ def parse_args() -> argparse.Namespace:
   if is_windows():
     qt_archive_path_default = ABS_QT6_ARCHIVE_PATH
   else:
-    qt_archive_path_default = ABS_QT5_ARCHIVE_PATH
+    qt_archive_path_default = ABS_QT6_ARCHIVE_PATH
   parser.add_argument('--qt_archive_path', help='qtbase archive path', type=str,
                       default=str(qt_archive_path_default))
   parser.add_argument('--jom_archive_path', help='qtbase archive path',

@@ -50,9 +50,9 @@ MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
 MACOS_MIN_OS_VER = "11.0"
 
 ## Qt path for macOS
-# The paths are the default paths of Qt 5.15.2 installed by "make install".
+# The paths are the default paths of Qt 6.5.2 installed by "make install".
 #
 # If MOZC_QT_PATH env var is specified, it is used for MACOS_QT_PATH instead.
 #
 # For Linux, Qt paths are managed by pkg_config_repository in WORKSPACE.bazel.
-MACOS_QT_PATH = "/usr/local/Qt-5.15.2"
+MACOS_QT_PATH = "/usr/local/Qt-6.5.2"

@@ -50,15 +50,15 @@ cc_library(
     ],
 )
 
-# Versions/5/QtCore and QtCore are same and redudant, it should be merged.
-# Versions/5/QtCore is actually used by the binary (see: otool -l).
+# Versions/A/QtCore and QtCore are same and redudant, it should be merged.
+# Versions/A/QtCore is actually used by the binary (see: otool -l).
 # QtCore is necessary for build. (see: imported_dynamic_framework_processor.py).
 
 apple_dynamic_framework_import(
     name = "QtCore_mac",
     framework_imports = glob(
         include = [
-            "lib/QtCore.framework/Versions/5/QtCore",
+            "lib/QtCore.framework/Versions/A/QtCore",
             "lib/QtCore.framework/QtCore",
             "lib/QtCore.framework/Resoures/**",
         ],
@@ -69,7 +69,7 @@ apple_dynamic_framework_import(
     name = "QtGui_mac",
     framework_imports = glob(
         include = [
-          "lib/QtGui.framework/Versions/5/QtGui",
+          "lib/QtGui.framework/Versions/A/QtGui",
           "lib/QtGui.framework/QtGui",
           "lib/QtGui.framework/Resoures/**",
         ],
@@ -80,7 +80,7 @@ apple_dynamic_framework_import(
     name = "QtPrintSupport_mac",
     framework_imports = glob(
         include = [
-          "lib/QtPrintSupport.framework/Versions/5/QtPrintSupport",
+          "lib/QtPrintSupport.framework/Versions/A/QtPrintSupport",
           "lib/QtPrintSupport.framework/QtPrintSupport",
           "lib/QtPrintSupport.framework/Resoures/**",
         ],
@@ -91,7 +91,7 @@ apple_dynamic_framework_import(
     name = "QtWidgets_mac",
     framework_imports = glob(
         include = [
-          "lib/QtWidgets.framework/Versions/5/QtWidgets",
+          "lib/QtWidgets.framework/Versions/A/QtWidgets",
           "lib/QtWidgets.framework/QtWidgets",
           "lib/QtWidgets.framework/Resoures/**",
         ],
@@ -103,4 +103,4 @@ filegroup(
     srcs = ["plugins/platforms/libqcocoa.dylib"],
 )
 
-exports_files(glob(["bin/*"]))
+exports_files(glob(["libexec/*"]))
