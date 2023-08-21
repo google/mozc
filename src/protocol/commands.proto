@@ -608,10 +608,10 @@ message DecoderExperimentParams {
   optional int32 single_kanji_prediction_cost_offset = 15 [default = 800];
 
   // Parameters for typing correction candidates
-  optional bool use_typing_correction_diff_cost = 16 [default = false];
+  reserved 16;  // Deprecated use_typing_correction_diff_cost
   optional int32 typing_correction_max_count = 17 [default = 3];
   optional int32 typing_correction_max_rank = 18 [default = 10];
-  optional int32 typing_correction_cost_offset = 19 [default = 0];
+  reserved 19;  // Deprecated typing_correction_cost_offset
 
   // Parameters for the new typing correction.
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];

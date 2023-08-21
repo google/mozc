@@ -122,7 +122,6 @@ class DictionaryPredictor : public PredictorInterface {
     const SuggestionFilter &suggestion_filter_;
     const bool is_mixed_conversion_;
     const bool include_exact_key_;
-    const bool limit_tc_per_key_;
 
     std::string history_key_;
     std::string history_value_;

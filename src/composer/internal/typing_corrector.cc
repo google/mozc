@@ -76,10 +76,6 @@ int LookupModelCost(const absl::string_view prev,
 
 int Cost(double prob) { return static_cast<int>(-500.0 * log(prob)); }
 
-bool UseDiffCost(const commands::Request &request) {
-  return request.decoder_experiment_params().use_typing_correction_diff_cost();
-}
-
 }  // namespace
 
 struct TypingCorrector::KeyAndPenaltyLess {
@@ -224,12 +220,10 @@ void TypingCorrector::GetQueriesForPrediction(
   }
 
   int top_cost = 0;
-  if (UseDiffCost(*request_)) {
-    for (const KeyAndPenalty &entry : top_n_) {
-      if (entry.first == raw_key_) {
-        top_cost = entry.second;
-        break;
-      }
+  for (const KeyAndPenalty &entry : top_n_) {
+    if (entry.first == raw_key_) {
+      top_cost = entry.second;
+      break;
     }
   }
 
@@ -286,11 +280,7 @@ void TypingCorrector::GetQueriesForPrediction(
         continue;
       }
     }
-    if (UseDiffCost(*request_)) {
-      query->cost = correction.second - top_cost;
-    } else {
-      query->cost = correction.second;
-    }
+    query->cost = correction.second - top_cost;
     ++result_count;
   }
   // If some queries are filtered, there are unused queries

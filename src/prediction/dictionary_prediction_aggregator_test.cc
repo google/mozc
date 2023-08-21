@@ -2018,8 +2018,6 @@ TEST_F(DictionaryPredictionAggregatorTest,
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_use_typing_correction_diff_cost(true);
 
   constexpr char kInputText[] = "gu-huru";
   constexpr uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
