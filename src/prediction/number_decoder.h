@@ -107,6 +107,13 @@ struct State {
   // e.g. (digit_str : digit index) = ("万":1), ("億", 2), ...
   int big_digit = -1;
   size_t consumed_key_byte_len = 0;
+
+  // Key to decode
+  absl::string_view key;
+
+  // Consumed keys
+  // ["に", "じゅう"] for "にじゅう": "20"
+  std::vector<absl::string_view> consumed_keys;
 };
 
 }  // namespace number_decoder_internal
@@ -148,13 +155,16 @@ class NumberDecoder {
  private:
   void DecodeAux(absl::string_view key, number_decoder_internal::State &state,
                  std::vector<Result> &results) const;
-  bool HandleUnitEntry(const number_decoder_internal::Entry &entry,
+  bool HandleUnitEntry(absl::string_view key,
+                       const number_decoder_internal::Entry &entry,
                        number_decoder_internal::State &state,
                        std::vector<Result> &results) const;
-  bool HandleSmallDigitEntry(const number_decoder_internal::Entry &entry,
+  bool HandleSmallDigitEntry(absl::string_view key,
+                             const number_decoder_internal::Entry &entry,
                              number_decoder_internal::State &state,
                              std::vector<Result> &results) const;
-  bool HandleBigDigitEntry(const number_decoder_internal::Entry &entry,
+  bool HandleBigDigitEntry(absl::string_view key,
+                           const number_decoder_internal::Entry &entry,
                            number_decoder_internal::State &state,
                            std::vector<Result> &results) const;
 
