@@ -30,6 +30,7 @@
 #include "converter/segments.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <iterator>
@@ -42,9 +43,13 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "absl/strings/str_cat.h"
+#include "base/number_util.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+
+#ifndef NDEBUG
+#include "absl/strings/str_cat.h"
+#endif  // !NDEBUG
 
 namespace mozc {
 namespace {

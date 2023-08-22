@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_SEGMENTS_H_
 #define MOZC_CONVERTER_SEGMENTS_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
