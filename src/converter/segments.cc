@@ -198,6 +198,30 @@ absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 
+absl::string_view Segment::Candidate::InnerSegmentIterator::GetFunctionalKey()
+    const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const int key_len = encoded_lengths >> 24;
+  const int content_key_len = (encoded_lengths >> 8) & 0xff;
+  if (const int key_size = key_len - content_key_len; key_size > 0) {
+    return absl::string_view(key_offset_ + content_key_len, key_size);
+  }
+  return absl::string_view();
+}
+
+absl::string_view Segment::Candidate::InnerSegmentIterator::GetFunctionalValue()
+    const {
+  DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const int value_len = (encoded_lengths >> 16) & 0xff;
+  const int content_value_len = encoded_lengths & 0xff;
+  if (const int value_size = value_len - content_value_len; value_size > 0) {
+    return absl::string_view(value_offset_ + content_value_len, value_size);
+  }
+  return absl::string_view();
+}
+
 Segment::Segment(const Segment &x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
       segment_type_(x.segment_type_),
