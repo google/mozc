@@ -86,6 +86,7 @@ def _mozc_run_build_tool_impl(ctx):
         mnemonic = "MozcRunBuildTool",
         env = dicts.add(ctx.configuration.default_shell_env, ctx.attr.env),
         input_manifests = tools_manifests,
+        toolchain = None,
     )
     return DefaultInfo(
         files = depset(outputs),
