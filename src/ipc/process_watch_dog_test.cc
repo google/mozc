@@ -39,20 +39,20 @@
 
 namespace mozc {
 namespace {
-uint64_t g_current_time = 0;
+absl::Time g_current_time = absl::UnixEpoch();
 }
 
 class TestProcessWatchDog : public ProcessWatchDog {
  public:
   void Signaled(ProcessWatchDog::SignalType type) override {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64_t diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(diff, 2);  // allow 1-sec error
+    const absl::Duration diff = Clock::GetAbslTime() - g_current_time;
+    EXPECT_LE(absl::AbsDuration(diff), absl::Seconds(1));
   }
 };
 
 TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Clock::GetTime();
+  g_current_time = Clock::GetAbslTime();
 
 #ifndef _WIN32
   // revoke myself with different parameter

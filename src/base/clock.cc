@@ -29,8 +29,6 @@
 
 #include "base/clock.h"
 
-#include <cstdint>
-
 #include "base/singleton.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -62,14 +60,6 @@ class ClockImpl : public ClockInterface {
   }
   ~ClockImpl() override = default;
 
-  void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override {
-    const absl::Time now = absl::Now();
-    *sec = absl::ToUnixSeconds(now);
-    *usec = absl::ToUnixMicros(now) % 1'000'000;
-  }
-
-  uint64_t GetTime() override { return absl::ToUnixSeconds(absl::Now()); }
-
   absl::Time GetAbslTime() override { return absl::Now(); }
 
   absl::TimeZone GetTimeZone() override { return timezone_; }
@@ -80,12 +70,6 @@ class ClockImpl : public ClockInterface {
 }  // namespace
 
 using ClockSingleton = SingletonMockable<ClockInterface, ClockImpl>;
-
-void Clock::GetTimeOfDay(uint64_t *sec, uint32_t *usec) {
-  ClockSingleton::Get()->GetTimeOfDay(sec, usec);
-}
-
-uint64_t Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
 
 absl::Time Clock::GetAbslTime() { return ClockSingleton::Get()->GetAbslTime(); }
 

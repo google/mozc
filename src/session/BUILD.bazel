@@ -414,6 +414,7 @@ mozc_cc_test(
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -542,6 +543,7 @@ mozc_cc_library(
         "//usage_stats:usage_stats_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -566,6 +568,7 @@ mozc_cc_test(
         "//usage_stats:usage_stats_cc_proto",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 

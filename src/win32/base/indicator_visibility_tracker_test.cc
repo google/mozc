@@ -42,23 +42,19 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const uint64_t kWaitDuration = 500;  // msec
+constexpr absl::Duration kWaitDuration = absl::Milliseconds(500);
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
 
 class IndicatorVisibilityTrackerTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    clock_mock_.reset(new ClockMock(0, 0));
+    clock_mock_ = std::make_unique<ClockMock>(absl::UnixEpoch());
     Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
   virtual void TearDown() { Clock::SetClockForUnitTest(nullptr); }
 
-  void PutForwardMilliseconds(uint64_t milli_sec) {
-    clock_mock_->PutClockForward(
-        milli_sec / absl::ToInt64Milliseconds(absl::Seconds(1)),
-        milli_sec % absl::ToInt64Milliseconds(absl::Seconds(1)));
-  }
+  void Advance(absl::Duration d) { clock_mock_->Advance(d); }
 
  private:
   std::unique_ptr<ClockMock> clock_mock_;
@@ -84,14 +80,14 @@ TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
-  // |kWaitDuration/2| msec later -> WindowMove -> Visible
-  PutForwardMilliseconds(kWaitDuration / 2);
+  // |kWaitDuration/2| later -> WindowMove -> Visible
+  Advance(kWaitDuration / 2);
   EXPECT_EQ(tracker.OnMoveFocusedWindow(),
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
-  // |kWaitDuration*2| msec later -> WindowMove -> Invisible
-  PutForwardMilliseconds(kWaitDuration * 2);
+  // |kWaitDuration*2| later -> WindowMove -> Invisible
+  Advance(kWaitDuration * 2);
   EXPECT_EQ(tracker.OnMoveFocusedWindow(),
             IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());

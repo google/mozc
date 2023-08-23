@@ -47,6 +47,7 @@
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace config {
@@ -289,7 +290,8 @@ std::string ConfigHandler::GetConfigFileName() {
 void ConfigHandler::SetMetaData(Config *config) {
   GeneralConfig *general_config = config->mutable_general_config();
   general_config->set_config_version(CONFIG_VERSION);
-  general_config->set_last_modified_time(Clock::GetTime());
+  general_config->set_last_modified_time(
+      absl::ToUnixSeconds(Clock::GetAbslTime()));
   general_config->set_last_modified_product_version(Version::GetMozcVersion());
   general_config->set_platform(SystemUtil::GetOSVersionString());
 }

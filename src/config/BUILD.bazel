@@ -55,6 +55,7 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 

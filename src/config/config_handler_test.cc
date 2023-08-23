@@ -136,17 +136,17 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 }
 
 TEST_F(ConfigHandlerTest, SetMetadata) {
-  ClockMock clock1(1000, 0);
+  ClockMock clock1(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock1);
   Config input1;
   ConfigHandler::SetMetaData(&input1);
 
-  ClockMock clock2(1000, 0);
+  ClockMock clock2(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock2);
   Config input2;
   ConfigHandler::SetMetaData(&input2);
 
-  ClockMock clock3(1001, 0);
+  ClockMock clock3(absl::FromUnixSeconds(1001));
   Clock::SetClockForUnitTest(&clock3);
   Config input3;
   ConfigHandler::SetMetaData(&input3);
@@ -176,12 +176,13 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
   input.set_verbose_level(2);
 #endif  // MOZC_NO_LOGGING
 
-  ClockMock clock1(1000, 0);
+  ClockMock clock1(absl::FromUnixSeconds(1000));
+
   Clock::SetClockForUnitTest(&clock1);
   ConfigHandler::SetConfig(input);
   std::unique_ptr<config::Config> output1 = ConfigHandler::GetConfig();
 
-  ClockMock clock2(1001, 0);
+  ClockMock clock2(absl::FromUnixSeconds(1001));
   Clock::SetClockForUnitTest(&clock2);
   ConfigHandler::SetConfig(input);
   std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();

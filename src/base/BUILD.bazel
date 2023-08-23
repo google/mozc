@@ -296,7 +296,6 @@ mozc_cc_library(
     hdrs = ["clock.h"],
     deps = [
         ":singleton",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/time",
     ],
 )
@@ -309,6 +308,7 @@ mozc_cc_test(
         ":clock",
         ":clock_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
 )
@@ -437,7 +437,8 @@ mozc_cc_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":clock",
-        "@com_google_absl//absl/base:core_headers",
+        ":logging",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
 )
@@ -448,9 +449,9 @@ mozc_cc_test(
     srcs = ["clock_mock_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":clock",
         ":clock_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
 )

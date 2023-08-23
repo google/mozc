@@ -30,10 +30,6 @@
 #ifndef MOZC_BASE_CLOCK_H_
 #define MOZC_BASE_CLOCK_H_
 
-#include <cstdint>
-#include <ctime>
-
-#include "absl/base/attributes.h"
 #include "absl/time/time.h"
 
 namespace mozc {
@@ -42,13 +38,8 @@ class ClockInterface {
  public:
   virtual ~ClockInterface() = default;
 
-  virtual void GetTimeOfDay(uint64_t *sec, uint32_t *usec) = 0;
-  virtual uint64_t GetTime() = 0;
   virtual absl::Time GetAbslTime() = 0;
   virtual absl::TimeZone GetTimeZone() = 0;
-
- protected:
-  ClockInterface() = default;
 };
 
 class Clock {
@@ -56,18 +47,6 @@ class Clock {
   Clock() = delete;
   Clock(const Clock &) = delete;
   Clock &operator=(const Clock &) = delete;
-
-  // Gets the current time using gettimeofday-like functions.
-  // sec: number of seconds from epoch
-  // usec: micro-second passed: [0,1000000)
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  static void GetTimeOfDay(uint64_t *sec, uint32_t *usec);
-
-  // Gets the current time using time-like function
-  // For Windows, _time64() is used.
-  // For Linux/Mac, time() is used.
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  static uint64_t GetTime();
 
   // Returns the current time in absl::Time.
   static absl::Time GetAbslTime();
