@@ -53,8 +53,6 @@ SetupUtil::SetupUtil()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       is_userdictionary_locked_(false) {}
 
-SetupUtil::~SetupUtil() {}
-
 bool SetupUtil::LockUserDictionary() {
   is_userdictionary_locked_ = storage_->Lock();
   return is_userdictionary_locked_;
