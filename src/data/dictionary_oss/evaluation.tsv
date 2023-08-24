@@ -175,7 +175,7 @@ OK:	ぐぐってみたけど	ググってみたけど	Conversion Expected 2	グ�
 OK:	そざいがぷらすちっくなので	素材がプラスチックなので	Conversion Expected	素材がプラスチックなので	2.26.4596
 OK:	よろしくおねがいします	よろしくお願いします	Conversion Expected	よろしくお願いします	2.26.4596
 FAILED:	おかあさんといっしょなので	おかあさんといっしょなので	Conversion Expected 2	お母さんと一緒なので	2.26.4596
-OK:	そのしごとはあとにしよう	その仕事はあとに使用	Conversion Not Match	しよう	2.26.4596
+FAILED:	そのしごとはあとにしよう	その仕事はあとに使用	Conversion Match	しよう	2.29.5185
 OK:	がいこくめーかーのものはからだにあわない	外国メーカーのものは体に合わない	Conversion Expected	外国メーカーのものは体に合わない	2.28.5065
 OK:	よかったりする	良かったりする	Conversion Expected 2	良かったりする	2.26.4596
 OK:	1つめのはなしは	１つ目の話は	Conversion Expected	１つ目の話は	2.26.4596
