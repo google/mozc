@@ -50,8 +50,11 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "renderer/renderer_client.h"
-#include "unix/ibus/engine_registrar.h"
+#include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "unix/ibus/candidate_window_handler.h"
+#include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/key_event_handler.h"
@@ -60,8 +63,6 @@
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
-#include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
 
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
@@ -77,7 +78,7 @@ const int32_t kBadCandidateId = -1;
 constexpr char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
-const uint64_t kSyncDataInterval = 5 * 60;
+const absl::Duration kSyncDataInterval = absl::Minutes(5);
 
 const char *kUILocaleEnvNames[] = {
     "LC_ALL",
@@ -108,8 +109,7 @@ struct SurroundingTextInfo {
   std::string following_text;
 };
 
-bool GetSurroundingText(IbusEngineWrapper *engine,
-                        SurroundingTextInfo *info) {
+bool GetSurroundingText(IbusEngineWrapper *engine, SurroundingTextInfo *info) {
   if (!(engine->CheckCapabilities(IBUS_CAP_SURROUNDING_TEXT))) {
     VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
             << engine->GetCapabilities();
@@ -199,7 +199,7 @@ bool UseMozcCandidateWindow() {
 }  // namespace
 
 MozcEngine::MozcEngine()
-    : last_sync_time_(Clock::GetTime()),
+    : last_sync_time_(Clock::GetAbslTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateAndConfigureClient()),
       preedit_handler_(new PreeditHandler()),
@@ -494,7 +494,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64_t current_time = Clock::GetTime();
+  const absl::Time current_time = Clock::GetAbslTime();
   if (force || (current_time >= last_sync_time_ &&
                 current_time - last_sync_time_ >= kSyncDataInterval)) {
     VLOG(1) << "Syncing data";

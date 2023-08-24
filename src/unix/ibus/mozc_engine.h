@@ -133,7 +133,7 @@ class MozcEngine : public EngineInterface {
   CandidateWindowHandlerInterface *GetCandidateWindowHandler(
       IbusEngineWrapper *engine);
 
-  uint64_t last_sync_time_;
+  absl::Time last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
   std::unique_ptr<client::ClientInterface> client_;
 
