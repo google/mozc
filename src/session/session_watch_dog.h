@@ -32,59 +32,55 @@
 #ifndef MOZC_SESSION_SESSION_WATCH_DOG_H_
 #define MOZC_SESSION_SESSION_WATCH_DOG_H_
 
+#include <memory>
+
 #include "base/cpu_stats.h"
-#include "base/thread.h"
+#include "base/thread2.h"
 #include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
 // SessionWatchDog class sends Cleanup command to Sessionhandler
 // for every some specified seconds.
-class SessionWatchDog : public Thread {
+class SessionWatchDog {
  public:
+  // Constructs and starts the watch dog by spawning a background thread.
+  explicit SessionWatchDog(absl::Duration interval);
+
+  // DI constructor for testing. Use `Create()` in production code.
+  SessionWatchDog(absl::Duration interval,
+                  std::unique_ptr<client::ClientInterface> client,
+                  std::unique_ptr<CPUStatsInterface> cpu_stats);
+
   SessionWatchDog(const SessionWatchDog &) = delete;
   SessionWatchDog &operator=(const SessionWatchDog &) = delete;
 
-  // return the interval sec of watch dog timer
-  absl::Duration interval() const { return interval_sec_; }
+  // Stops the watchdog and joins the background thread.
+  ~SessionWatchDog();
 
-  // Set client interface. This method doesn't take the ownership.
-  // mainly for unit testing.
-  void SetClientInterface(client::ClientInterface *client);
+  // Returns the interval of this watch dog.
+  absl::Duration interval() const { return interval_; }
 
-  // Set CPUStats interface. This method doesn't take the ownership.
-  // mainly for unit testing.
-  void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
-
-  explicit SessionWatchDog(absl::Duration interval_sec);
-  ~SessionWatchDog() override;
-
-  // inherited from Thread class
-  void Terminate();
-
-  // inherited from Thread class
-  // start watch dog timer and return immediately
-  // virtual void Start();
-
-  // return true if watch dog can send CleanupCommand:
+  // Returns true if watch dog can send CleanupCommand:
   // |cpu_loads|: An array of cpu loads.
   // |cpu_load_index|: the size of cpu loads
   // |last_cleanup_time|: the last UTC time cleanup is executed
   // TODO(taku): want to define it inside private with FRIEND_TEST
-  bool CanSendCleanupCommand(const volatile float *cpu_loads,
-                             int cpu_loads_index,
+  bool CanSendCleanupCommand(absl::Span<const float> cpu_loads,
                              absl::Time current_cleanup_time,
                              absl::Time last_cleanup_time) const;
 
  private:
-  void Run() override;
+  void ThreadMain();
 
-  absl::Duration interval_sec_;
-  client::ClientInterface *client_;
-  CPUStatsInterface *cpu_stats_;
-  absl::Notification terminate_;
+  absl::Duration interval_;
+  std::unique_ptr<client::ClientInterface> client_;
+  std::unique_ptr<CPUStatsInterface> cpu_stats_;
+  absl::Notification stop_;
+  Thread2 thread_;
 };
 
 }  // namespace mozc

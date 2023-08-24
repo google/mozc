@@ -30,29 +30,31 @@
 #include "session/session_watch_dog.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstring>
-#include <iterator>
 #include <memory>
 #include <numeric>
 #include <string>
+#include <utility>
 
 #include "base/clock.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/system_util.h"
+#include "base/thread2.h"
 #include "client/client.h"
 #include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
 
 // IPC timeout
-constexpr absl::Duration kCleanupTimeout =
-    absl::Seconds(30);  // 30 sec for Cleanup Command
-constexpr absl::Duration kPingTimeout = absl::Seconds(5);  // 5 sec for Ping
+constexpr absl::Duration kCleanupTimeout = absl::Seconds(30);
+constexpr absl::Duration kPingTimeout = absl::Seconds(5);
 
 // number of trials for ping
 constexpr int32_t kPingTrial = 3;
@@ -65,87 +67,62 @@ constexpr float kMinimumAllCPULoad = 0.33f;
 // Average CPU load for last 10 secs.
 // If the load > kMinimumLatestCPULoad, don't send Cleanup
 constexpr float kMinimumLatestCPULoad = 0.66f;
+
 }  // namespace
 
-SessionWatchDog::SessionWatchDog(absl::Duration interval_sec)
-    : interval_sec_(interval_sec), client_(nullptr), cpu_stats_(nullptr) {
-  // allow [1..600].
-  interval_sec_ =
-      std::max(absl::Seconds(1), std::min(interval_sec_, absl::Seconds(600)));
+SessionWatchDog::SessionWatchDog(absl::Duration interval)
+    : SessionWatchDog(interval, client::ClientFactory::NewClient(),
+                      std::make_unique<CPUStats>()) {}
+
+SessionWatchDog::SessionWatchDog(
+    absl::Duration interval, std::unique_ptr<client::ClientInterface> client,
+    std::unique_ptr<CPUStatsInterface> cpu_stats)
+    // allow [1..600].
+    : interval_(std::clamp(interval, absl::Seconds(1), absl::Seconds(600))),
+      client_(std::move(client)),
+      cpu_stats_(std::move(cpu_stats)),
+      thread_([this] { ThreadMain(); }) {}
+
+SessionWatchDog::~SessionWatchDog() {
+  stop_.Notify();
+  thread_.Join();
 }
 
-SessionWatchDog::~SessionWatchDog() { Terminate(); }
-
-void SessionWatchDog::SetClientInterface(client::ClientInterface *client) {
-  client_ = client;
-}
-
-void SessionWatchDog::SetCPUStatsInterface(CPUStatsInterface *cpu_stats) {
-  cpu_stats_ = cpu_stats;
-}
-
-void SessionWatchDog::Terminate() {
-  if (!IsRunning()) {
-    return;
-  }
-
-  terminate_.Notify();
-  Join();
-}
-
-void SessionWatchDog::Run() {
-  std::unique_ptr<client::ClientInterface> client_impl;
-  if (client_ == nullptr) {
-    VLOG(2) << "default client is used";
-    client_impl = client::ClientFactory::NewClient();
-    client_ = client_impl.get();
-  }
-
-  std::unique_ptr<CPUStatsInterface> cpu_stats_impl;
-  if (cpu_stats_ == nullptr) {
-    VLOG(2) << "default cpu_stats is used";
-    cpu_stats_impl = std::make_unique<CPUStats>();
-    cpu_stats_ = cpu_stats_impl.get();
-  }
-
+void SessionWatchDog::ThreadMain() {
   // CPU load check
-  // add volatile to store this array in stack
-  volatile float cpu_loads[16];  // 60/5 = 12 is the minimal size
-  volatile float total_cpu_load = 0.0;
-  volatile float current_process_cpu_load = 0.0;
-  const volatile size_t number_of_processors =
-      cpu_stats_->GetNumberOfProcessors();
+  std::array<float, 16> cpu_loads = {};  // 60/5 = 12 is the minimal size
+  float total_cpu_load = 0.0;
+  float current_process_cpu_load = 0.0;
+  const size_t number_of_processors = cpu_stats_->GetNumberOfProcessors();
 
   DCHECK_GE(number_of_processors, 1);
 
   // the first (interval_sec_ - 60) sec: -> Do nothing
-  const absl::Duration idle_interval_msec =
-      std::max(absl::ZeroDuration(), (interval_sec_ - absl::Seconds(60)));
+  const absl::Duration idle_interval =
+      std::max(absl::ZeroDuration(), (interval_ - absl::Seconds(60)));
 
   // last 60 sec: -> check CPU usage
-  const absl::Duration cpu_check_interval_msec =
-      std::min(absl::Seconds(60), interval_sec_);
+  const absl::Duration cpu_check_interval =
+      std::min(absl::Seconds(60), interval_);
 
   // for every 5 second, get CPU load percentage
-  const absl::Duration cpu_check_duration_msec =
-      std::min(absl::Seconds(5), interval_sec_);
-
-  std::fill(cpu_loads, cpu_loads + std::size(cpu_loads), 0.0);
+  const absl::Duration cpu_check_duration =
+      std::min(absl::Seconds(5), interval_);
 
   absl::Time last_cleanup_time = Clock::GetAbslTime();
 
   while (true) {
-    VLOG(1) << "Start sleeping " << idle_interval_msec;
-    if (terminate_.WaitForNotificationWithTimeout(idle_interval_msec)) {
+    VLOG(1) << "Start sleeping " << idle_interval;
+    if (stop_.WaitForNotificationWithTimeout(idle_interval)) {
       VLOG(1) << "Received stop signal";
       return;
     }
-    VLOG(1) << "Finish sleeping " << idle_interval_msec;
+    VLOG(1) << "Finish sleeping " << idle_interval;
 
     int32_t cpu_loads_index = 0;
-    for (absl::Duration n = absl::ZeroDuration(); n < cpu_check_interval_msec;
-         n += cpu_check_duration_msec) {
-      if (terminate_.WaitForNotificationWithTimeout(cpu_check_duration_msec)) {
+    for (absl::Duration n = absl::ZeroDuration(); n < cpu_check_interval;
+         n += cpu_check_duration) {
+      if (stop_.WaitForNotificationWithTimeout(cpu_check_duration)) {
         VLOG(1) << "Received stop signal";
         return;
       }
@@ -166,8 +143,9 @@ void SessionWatchDog::Run() {
     DCHECK_GT(cpu_loads_index, 0);
 
     const absl::Time current_cleanup_time = Clock::GetAbslTime();
-    if (!CanSendCleanupCommand(cpu_loads, cpu_loads_index, current_cleanup_time,
-                               last_cleanup_time)) {
+    if (!CanSendCleanupCommand(
+            absl::MakeSpan(cpu_loads).subspan(0, cpu_loads_index),
+            current_cleanup_time, last_cleanup_time)) {
       VLOG(1) << "CanSendCleanupCommand returned false";
       last_cleanup_time = current_cleanup_time;
       continue;
@@ -189,7 +167,7 @@ void SessionWatchDog::Run() {
     client_->Reset();
     client_->set_timeout(kPingTimeout);
     for (int i = 0; i < kPingTrial; ++i) {
-      if (terminate_.WaitForNotificationWithTimeout(kPingInterval)) {
+      if (stop_.WaitForNotificationWithTimeout(kPingInterval)) {
         VLOG(1) << "Received stop signal";
         return;
       }
@@ -199,11 +177,11 @@ void SessionWatchDog::Run() {
         break;
       }
       LOG(ERROR) << "Ping command failed, waiting " << kPingInterval
-                 << " msec, trial: " << i;
+                 << ", trial: " << i;
     }
 
     if (failed) {
-      if (terminate_.WaitForNotificationWithTimeout(absl::Milliseconds(100))) {
+      if (stop_.WaitForNotificationWithTimeout(absl::Milliseconds(100))) {
         VLOG(1) << "Parent thread is already terminated";
         return;
       }
@@ -224,20 +202,20 @@ void SessionWatchDog::Run() {
 }
 
 bool SessionWatchDog::CanSendCleanupCommand(
-    const volatile float *cpu_loads, int cpu_loads_index,
-    absl::Time current_cleanup_time, absl::Time last_cleanup_time) const {
+    absl::Span<const float> cpu_loads, absl::Time current_cleanup_time,
+    absl::Time last_cleanup_time) const {
   if (current_cleanup_time <= last_cleanup_time) {
     LOG(ERROR) << "time stamps are the same. clock may be altered";
     return false;
   }
 
   const float all_avg =
-      std::accumulate(cpu_loads, cpu_loads + cpu_loads_index, 0.0) /
-      cpu_loads_index;
+      std::accumulate(cpu_loads.begin(), cpu_loads.end(), 0.0) /
+      cpu_loads.size();
 
-  const size_t latest_size = std::min(2, cpu_loads_index);
+  const size_t latest_size = std::min(size_t{2}, cpu_loads.size());
   const float latest_avg =
-      std::accumulate(cpu_loads, cpu_loads + latest_size, 0.0) / latest_size;
+      std::accumulate(cpu_loads.begin(), cpu_loads.end(), 0.0) / latest_size;
 
   VLOG(1) << "Average CPU load=" << all_avg
           << " latest CPU load=" << latest_avg;

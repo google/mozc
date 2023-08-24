@@ -172,11 +172,6 @@ void SessionHandler::Init(
     absl::SetFlag(&FLAGS_last_command_timeout, 60);
   }
 
-#ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  session_watch_dog_ = std::make_unique<SessionWatchDog>(
-      absl::Seconds(absl::GetFlag(FLAGS_watch_dog_interval)));
-#endif  // MOZC_DISABLE_SESSION_WATCHDOG
-
   // allow [2..128] sessions
   max_session_size_ =
       std::max(2, std::min(absl::GetFlag(FLAGS_max_session_size), 128));
@@ -198,23 +193,16 @@ SessionHandler::~SessionHandler() {
     element->value = nullptr;
   }
   session_map_->Clear();
-#ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  if (session_watch_dog_->IsRunning()) {
-    session_watch_dog_->Terminate();
-  }
-#endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
 bool SessionHandler::IsAvailable() const { return is_available_; }
 
-bool SessionHandler::StartWatchDog() {
+void SessionHandler::StartWatchDog() {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  if (!session_watch_dog_->IsRunning()) {
-    session_watch_dog_->Start("WatchDog");
+  if (!session_watch_dog_.has_value()) {
+    session_watch_dog_.emplace(
+        absl::Seconds(absl::GetFlag(FLAGS_watch_dog_interval)));
   }
-  return session_watch_dog_->IsRunning();
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  return false;
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
@@ -609,7 +597,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   absl::Duration suspend_time = absl::ZeroDuration();
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (last_cleanup_time_ != absl::InfinitePast() &&
-      session_watch_dog_->IsRunning() &&
+      session_watch_dog_.has_value() &&
       (current_time - last_cleanup_time_) >
           2 * session_watch_dog_->interval()) {
     suspend_time =

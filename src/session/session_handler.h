@@ -34,6 +34,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "composer/table.h"
 #include "dictionary/user_dictionary_session_handler.h"
@@ -73,7 +74,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool EvalCommand(commands::Command *command) override;
 
   // Starts watch dog timer to cleanup sessions.
-  bool StartWatchDog() override;
+  void StartWatchDog() override;
 
   // NewSession returns new Session.
   // Client needs to delete it properly
@@ -139,7 +140,7 @@ class SessionHandler : public SessionHandlerInterface {
 
   std::unique_ptr<SessionMap> session_map_;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  std::unique_ptr<SessionWatchDog> session_watch_dog_;
+  std::optional<SessionWatchDog> session_watch_dog_;
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_ = false;
   uint32_t max_session_size_ = 0;
