@@ -30,36 +30,16 @@
 #include "win32/base/keyboard.h"
 
 #include <algorithm>
-#include <cstdint>
+#include <cstddef>
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include "base/logging.h"
 
 namespace mozc {
 namespace win32 {
-
-namespace {
-
-BYTE ParseVirtualKey(UINT combined_virtual_key) {
-  const uint16_t loword = LOWORD(combined_virtual_key);
-  if (loword <= 0xff) {
-    return loword;
-  }
-  DLOG(INFO) << "Unexpected VK found. VK = " << loword;
-  return 0;
-}
-
-wchar_t ParseWideChar(UINT combined_virtual_key) {
-  if (ParseVirtualKey(combined_virtual_key) == VK_PACKET) {
-    return HIWORD(combined_virtual_key);
-  } else {
-    return 0;
-  }
-}
-
-}  // namespace
 
 LParamKeyInfo::LParamKeyInfo() : lparam_(0) {}
 
@@ -97,29 +77,6 @@ bool LParamKeyInfo::IsKeyDownInImeProcessKey() const {
 
 LPARAM LParamKeyInfo::lparam() const { return lparam_; }
 
-VirtualKey VirtualKey::FromVirtualKey(BYTE virtual_key) {
-  return VirtualKey(virtual_key, L'\0', L'\0');
-}
-
-VirtualKey VirtualKey::FromCombinedVirtualKey(UINT combined_virtual_key) {
-  const BYTE vk = ParseVirtualKey(combined_virtual_key);
-  const wchar_t wchar = ParseWideChar(combined_virtual_key);
-  char32_t unicode_char = 0;
-  if (!IS_HIGH_SURROGATE(wchar) && !IS_LOW_SURROGATE(wchar)) {
-    unicode_char = wchar;
-  }
-
-  return VirtualKey(vk, wchar, unicode_char);
-}
-
-VirtualKey VirtualKey::FromUnicode(char32_t unicode_char) {
-  wchar_t wchar = L'\0';
-  if (unicode_char <= 0xffff) {
-    wchar = static_cast<wchar_t>(unicode_char);
-  }
-  return VirtualKey(VK_PACKET, wchar, unicode_char);
-}
-
 wchar_t VirtualKey::wide_char() const { return wide_char_; }
 
 char32_t VirtualKey::unicode_char() const { return unicode_char_; }
@@ -128,13 +85,11 @@ BYTE VirtualKey::virtual_key() const { return virtual_key_; }
 
 class DefaultKeyboardInterface : public Win32KeyboardInterface {
  public:
-  // [Overrides]
-  virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) {
+  bool IsKanaLocked(const KeyboardStatus &keyboard_state) override {
     return keyboard_state.IsToggled(VK_KANA);
   }
 
-  // [Overrides]
-  virtual bool SetKeyboardState(const KeyboardStatus &keyboard_state) {
+  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
     KeyboardStatus copy = keyboard_state;
     const bool result = (::SetKeyboardState(copy.mutable_status()) != FALSE);
     if (!result) {
@@ -144,8 +99,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
     return result;
   }
 
-  // [Overrides]
-  virtual bool GetKeyboardState(KeyboardStatus *keyboard_state) {
+  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
     if (keyboard_state == nullptr) {
       return false;
     }
@@ -158,35 +112,26 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
     return result;
   }
 
-  // [Overrides]
-  virtual bool AsyncIsKeyPressed(int virtual_key) {
+  bool AsyncIsKeyPressed(int virtual_key) override {
     // The highest bit represents if the key is pressed or not.
     return ::GetAsyncKeyState(virtual_key) < 0;
   }
 
-  // [Overrides]
-  virtual int ToUnicode(__in UINT wVirtKey, __in UINT wScanCode,
-                        __in_bcount_opt(256) CONST BYTE *lpKeyState,
-                        __out_ecount(cchBuff) LPWSTR pwszBuff, __in int cchBuff,
-                        __in UINT wFlags) {
+  int ToUnicode(__in UINT wVirtKey, __in UINT wScanCode,
+                __in_bcount_opt(256) CONST BYTE *lpKeyState,
+                __out_ecount(cchBuff) LPWSTR pwszBuff, __in int cchBuff,
+                __in UINT wFlags) override {
     return ::ToUnicode(wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff,
                        wFlags);
   }
 
-  // [Overrides]
-  virtual UINT SendInput(const std::vector<INPUT> &inputs) {
-    if (inputs.size() < 1) {
+  UINT SendInput(std::vector<INPUT> inputs) override {
+    if (inputs.empty()) {
       return 0;
     }
 
-    // Unfortunately, SendInput API requires LPINPUT (NOT const INPUT *).
-    // This is why we make a temporary array with the same data here.
-    std::unique_ptr<INPUT[]> input_array(new INPUT[inputs.size()]);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      input_array[i] = inputs[i];
-    }
-
-    return ::SendInput(inputs.size(), input_array.get(), sizeof(INPUT));
+    //  SendInput API requires a non-const buffer.
+    return ::SendInput(inputs.size(), inputs.data(), sizeof(INPUT));
   }
 };
 

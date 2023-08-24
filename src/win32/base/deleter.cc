@@ -29,7 +29,7 @@
 
 #include "win32/base/deleter.h"
 
-#include <deque>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -103,7 +103,7 @@ void VKBackBasedDeleter::BeginDeletion(int deletion_count,
   inputs.push_back(keyup);    // Sentinel Keyup
 
   UnsetModifiers();
-  keyboard_->SendInput(inputs);
+  keyboard_->SendInput(std::move(inputs));
 }
 
 ClientAction VKBackBasedDeleter::OnKeyEvent(UINT vk, bool is_keydown,
