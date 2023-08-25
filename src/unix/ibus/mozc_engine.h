@@ -46,6 +46,7 @@
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 
@@ -154,6 +155,10 @@ class MozcEngine : public EngineInterface {
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
 };
+
+bool CanUseMozcCandidateWindow(
+    const IbusConfig &ibus_config,
+    const absl::flat_hash_map<std::string, std::string> &env);
 
 }  // namespace ibus
 }  // namespace mozc
