@@ -45,7 +45,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
-#include "renderer/renderer_interface.h"
 
 namespace mozc {
 namespace renderer {
