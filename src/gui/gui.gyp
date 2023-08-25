@@ -639,7 +639,7 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../protocol/protocol.gyp:commands_proto',
-        '../renderer/renderer.gyp:renderer_client',
+        '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
       ],
     },
     {

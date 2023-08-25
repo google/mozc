@@ -104,7 +104,7 @@
             '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
             '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
             '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
-            '<(mozc_src_dir)/renderer/renderer.gyp:win32_renderer_client',
+            '<(mozc_oss_src_dir)/renderer/renderer.gyp:win32_renderer_client',
             '../base/win32_base.gyp:ime_base',
             '../base/win32_base.gyp:ime_impl_base',
             '../base/win32_base.gyp:imframework_util',

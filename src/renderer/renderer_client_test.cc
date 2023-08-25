@@ -40,12 +40,12 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/renderer_interface.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
+#include "renderer/renderer_interface.h"
 
 namespace mozc {
 namespace renderer {

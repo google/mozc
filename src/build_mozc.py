@@ -135,7 +135,9 @@ def GetGypFileNames(options):
   """Gets the list of gyp file names."""
   gyp_file_names = []
   exclude_top_dirs = []
-  mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
+  mozc_top_level_names = glob.glob(f'{SRC_DIR}/*')
+  if SRC_DIR != OSS_SRC_DIR:
+    mozc_top_level_names += glob.glob(f'{OSS_SRC_DIR}/*')
 
   mozc_top_level_names = [x for x in mozc_top_level_names if
                           os.path.basename(x) not in exclude_top_dirs]

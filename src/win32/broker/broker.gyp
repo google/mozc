@@ -84,7 +84,7 @@
                 '<(mozc_src_dir)/client/client.gyp:client',
                 '<(mozc_src_dir)/config/config.gyp:stats_config_util',
                 '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-                '<(mozc_src_dir)/renderer/renderer.gyp:renderer_client',
+                '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
                 '../base/win32_base.gyp:ime_base',
                 'gen_mozc_broker_resource_header',
               ],

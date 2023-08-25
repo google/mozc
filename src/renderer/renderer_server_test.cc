@@ -35,13 +35,13 @@
 #include "base/logging.h"
 #include "ipc/ipc_test_util.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/renderer_client.h"
-#include "renderer/renderer_interface.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "renderer/renderer_client.h"
+#include "renderer/renderer_interface.h"
 
 namespace mozc {
 namespace renderer {

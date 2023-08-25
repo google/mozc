@@ -27,19 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_WIN32_WIN32_SERVER_H_
-#define MOZC_RENDERER_WIN32_WIN32_SERVER_H_
+#ifndef THIRD_PARTY_MOZC_SRC_RENDERER_WIN32_WIN32_SERVER_H_
+#define THIRD_PARTY_MOZC_SRC_RENDERER_WIN32_WIN32_SERVER_H_
 
 #include <windows.h>
 
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
 #include "renderer/win32/window_manager.h"
-#include "absl/strings/string_view.h"
-#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -82,4 +82,4 @@ class Win32Server : public RendererServer, public RendererInterface {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_WIN32_WIN32_SERVER_H_
+#endif  // THIRD_PARTY_MOZC_SRC_RENDERER_WIN32_WIN32_SERVER_H_

@@ -45,7 +45,7 @@
         '../gui/gui.gyp:gui_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
         '../prediction/prediction_test.gyp:prediction_all_test',
-        '../renderer/renderer.gyp:renderer_all_test',
+        '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_all_test',
         '../rewriter/rewriter_test.gyp:rewriter_all_test',
         # Currently 'server_all_test' does not exist.
         # '../server/server.gyp:server_all_test',

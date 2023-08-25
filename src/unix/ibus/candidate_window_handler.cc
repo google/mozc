@@ -40,9 +40,9 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "absl/strings/string_view.h"
 #include "renderer/renderer_interface.h"
 #include "unix/ibus/ibus_wrapper.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {

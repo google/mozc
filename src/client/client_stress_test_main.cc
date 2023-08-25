@@ -46,11 +46,11 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "renderer/renderer_client.h"
 
 // TODO(taku)
 // 1. multi-thread testing

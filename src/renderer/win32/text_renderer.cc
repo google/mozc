@@ -46,8 +46,8 @@
 
 #include "base/logging.h"
 #include "protocol/renderer_style.pb.h"
-#include "renderer/renderer_style_handler.h"
 #include "absl/types/span.h"
+#include "renderer/renderer_style_handler.h"
 
 namespace mozc {
 namespace renderer {
