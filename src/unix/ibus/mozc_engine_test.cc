@@ -141,7 +141,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       enabled : True
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
   }));
 
   EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
@@ -150,7 +150,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : []
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
     {"XDG_CURRENT_DESKTOP", "GNOME"}
   }));
 
@@ -160,7 +160,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : ["GNOME"]
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
     {"XDG_CURRENT_DESKTOP", "GNOME"}
   }));
 
@@ -170,7 +170,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : ["GNOME"]
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
     {"XDG_CURRENT_DESKTOP", "KDE:GNOME"}
   }));
 
@@ -180,7 +180,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : ["GNOME"]
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
     {"XDG_CURRENT_DESKTOP", "KDE"}
   }));
 
@@ -190,7 +190,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : ["GNOME"]
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
   }));
 
   EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
@@ -199,7 +199,7 @@ TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
       compatible_wayland_desktop_names : ["GNOME", "KDE"]
     }
   )", {
-    {"XDG_SESSION_TYPE", "wayland"},
+    {"WAYLAND_DISPLAY", "wayland-0"},
     {"XDG_CURRENT_DESKTOP", "KDE"}
   }));
 }

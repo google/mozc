@@ -181,13 +181,7 @@ std::optional<absl::string_view> GetMapValue(
 
 bool IsWaylandSession(
     const absl::flat_hash_map<std::string, std::string> &env) {
-  const std::optional<absl::string_view> env_xdg_session_type =
-      GetMapValue(env, "XDG_SESSION_TYPE");
-  if (env_xdg_session_type.has_value() &&
-      env_xdg_session_type.value() == "wayland") {
-    return true;
-  }
-  return false;
+  return env.contains("WAYLAND_DISPLAY");
 }
 
 std::vector<std::string> GetCurrentDesktops(
@@ -226,7 +220,7 @@ bool UseMozcCandidateWindow(const IbusConfig &ibus_config) {
   absl::flat_hash_map<std::string, std::string> env;
   UpdateEnvironMap(env, "MOZC_IBUS_CANDIDATE_WINDOW");
   UpdateEnvironMap(env, "XDG_CURRENT_DESKTOP");
-  UpdateEnvironMap(env, "XDG_SESSION_TYPE");
+  UpdateEnvironMap(env, "WAYLAND_DISPLAY");
 
   return CanUseMozcCandidateWindow(ibus_config, env);
 }
