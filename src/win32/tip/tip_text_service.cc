@@ -50,6 +50,7 @@
 #include "base/update_util.h"
 #include "base/win32/com.h"
 #include "base/win32/com_implements.h"
+#include "base/win32/hresult.h"
 #include "base/win32/hresultor.h"
 #include "base/win32/win_util.h"
 #include "protocol/commands.pb.h"
@@ -65,6 +66,7 @@
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_keyevent_handler.h"
 #include "win32/tip/tip_lang_bar.h"
+#include "win32/tip/tip_lang_bar_callback.h"
 #include "win32/tip/tip_preferred_touch_keyboard.h"
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_reconvert_function.h"
@@ -308,8 +310,8 @@ class CompositionSinkImpl final : public TipComImplements<ITfCompositionSink> {
   // Implements the ITfCompositionSink::OnCompositionTerminated() function.
   // This function is called by Windows when an ongoing composition is
   // terminated by applications.
-  virtual STDMETHODIMP OnCompositionTerminated(TfEditCookie write_cookie,
-                                               ITfComposition *composition) {
+  STDMETHODIMP OnCompositionTerminated(TfEditCookie write_cookie,
+                                       ITfComposition *composition) override {
     return TipEditSessionImpl::OnCompositionTerminated(
         text_service_.get(), context_.get(), composition, write_cookie);
   }
@@ -371,7 +373,7 @@ class UpdateUiEditSessionImpl final : public TipComImplements<ITfEditSession> {
   // The ITfEditSession interface method.
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
-  virtual HRESULT STDMETHODCALLTYPE DoEditSession(TfEditCookie edit_cookie) {
+  STDMETHODIMP DoEditSession(TfEditCookie edit_cookie) override {
     TipUiHandler::Update(text_service_.get(), context_.get(), edit_cookie);
     return S_OK;
   }
@@ -451,13 +453,12 @@ class TipTextServiceImpl
     ::UnregisterClass(kMessageReceiverClassName, module_handle);
   }
 
- private:
   // ITfTextInputProcessorEx
-  virtual HRESULT STDMETHODCALLTYPE Activate(ITfThreadMgr *thread_mgr,
-                                             TfClientId client_id) {
+  STDMETHODIMP Activate(ITfThreadMgr *thread_mgr,
+                        TfClientId client_id) override {
     return ActivateEx(thread_mgr, client_id, 0);
   }
-  virtual HRESULT STDMETHODCALLTYPE Deactivate() {
+  STDMETHODIMP Deactivate() override {
     if (TipDllModule::IsUnloaded()) {
       // Crash report indicates that this method is called after the DLL is
       // unloaded. In such case, we can do nothing safely.
@@ -507,9 +508,8 @@ class TipTextServiceImpl
 
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE ActivateEx(ITfThreadMgr *thread_mgr,
-                                               TfClientId client_id,
-                                               DWORD flags) {
+  STDMETHODIMP ActivateEx(ITfThreadMgr *thread_mgr, TfClientId client_id,
+                          DWORD flags) override {
     if (TipDllModule::IsUnloaded()) {
       // Crash report indicates that this method is called after the DLL is
       // unloaded. In such case, we can do nothing safely. b/7915484.
@@ -664,8 +664,8 @@ class TipTextServiceImpl
   }
 
   // ITfDisplayAttributeProvider
-  virtual HRESULT STDMETHODCALLTYPE
-  EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **attributes) {
+  STDMETHODIMP
+  EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **attributes) override {
     if (attributes == nullptr) {
       return E_INVALIDARG;
     }
@@ -673,8 +673,8 @@ class TipTextServiceImpl
     *attributes = MakeComPtr<TipEnumDisplayAttributes>().detach();
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE
-  GetDisplayAttributeInfo(REFGUID guid, ITfDisplayAttributeInfo **attribute) {
+  STDMETHODIMP GetDisplayAttributeInfo(
+      REFGUID guid, ITfDisplayAttributeInfo **attribute) override {
     if (attribute == nullptr) {
       return E_INVALIDARG;
     }
@@ -694,14 +694,14 @@ class TipTextServiceImpl
   }
 
   // ITfThreadMgrEventSink
-  virtual HRESULT STDMETHODCALLTYPE
-  OnInitDocumentMgr(ITfDocumentMgr *document) {
+  STDMETHODIMP
+  OnInitDocumentMgr(ITfDocumentMgr *document) override {
     // In order to defer the initialization timing of TipPrivateContext,
     // we won't call OnDocumentMgrChanged against |document| here.
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE
-  OnUninitDocumentMgr(ITfDocumentMgr *document) {
+  STDMETHODIMP
+  OnUninitDocumentMgr(ITfDocumentMgr *document) override {
     // Usually |document| no longer has any context here: all the contexts are
     // likely to be destroyed through ITfThreadMgrEventSink::OnPushContext.
     // We enumerate remaining contexts just in case.
@@ -727,23 +727,23 @@ class TipTextServiceImpl
 
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE OnSetFocus(ITfDocumentMgr *focused,
-                                               ITfDocumentMgr *previous) {
+  STDMETHODIMP OnSetFocus(ITfDocumentMgr *focused,
+                          ITfDocumentMgr *previous) override {
     GetThreadContext()->IncrementFocusRevision();
     OnDocumentMgrChanged(focused);
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE OnPushContext(ITfContext *context) {
+  STDMETHODIMP OnPushContext(ITfContext *context) override {
     EnsurePrivateContextExists(context);
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE OnPopContext(ITfContext *context) {
+  STDMETHODIMP OnPopContext(ITfContext *context) override {
     RemovePrivateContextIfExists(context);
     return S_OK;
   }
 
   // ITfThreadFocusSink
-  virtual HRESULT STDMETHODCALLTYPE OnSetThreadFocus() {
+  STDMETHODIMP OnSetThreadFocus() override {
     EnsureKanaLockUnlocked();
 
     // A temporary workaround for b/24793812.  When previous attempt to
@@ -769,32 +769,30 @@ class TipTextServiceImpl
     TipUiHandler::OnFocusChange(this, document_manager.get());
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE OnKillThreadFocus() {
+  STDMETHODIMP OnKillThreadFocus() override {
     // See the comment in OnSetThreadFocus().
     TipUiHandler::OnFocusChange(this, nullptr);
     return S_OK;
   }
 
   // ITfTextEditSink
-  virtual HRESULT STDMETHODCALLTYPE OnEndEdit(ITfContext *context,
-                                              TfEditCookie edit_cookie,
-                                              ITfEditRecord *edit_record) {
+  STDMETHODIMP OnEndEdit(ITfContext *context, TfEditCookie edit_cookie,
+                         ITfEditRecord *edit_record) override {
     return TipEditSessionImpl::OnEndEdit(this, context, edit_cookie,
                                          edit_record);
   }
 
-  virtual HRESULT STDMETHODCALLTYPE
+  STDMETHODIMP
   OnLayoutChange(ITfContext *context, TfLayoutCode layout_code,
-                 ITfContextView *context_view) {
+                 ITfContextView *context_view) override {
     TipEditSession::OnLayoutChangedAsync(this, context);
     return S_OK;
   }
 
   // ITfKeyEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnSetFocus(BOOL foreground) { return S_OK; }
-  virtual HRESULT STDMETHODCALLTYPE OnTestKeyDown(ITfContext *context,
-                                                  WPARAM wparam, LPARAM lparam,
-                                                  BOOL *eaten) {
+  STDMETHODIMP OnSetFocus(BOOL foreground) override { return S_OK; }
+  STDMETHODIMP OnTestKeyDown(ITfContext *context, WPARAM wparam, LPARAM lparam,
+                             BOOL *eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -805,9 +803,8 @@ class TipTextServiceImpl
   }
 
   // ITfKeyEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnTestKeyUp(ITfContext *context,
-                                                WPARAM wparam, LPARAM lparam,
-                                                BOOL *eaten) {
+  STDMETHODIMP OnTestKeyUp(ITfContext *context, WPARAM wparam, LPARAM lparam,
+                           BOOL *eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -816,9 +813,8 @@ class TipTextServiceImpl
     return TipKeyeventHandler::OnTestKeyUp(this, context, wparam, lparam,
                                            eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnKeyDown(ITfContext *context,
-                                              WPARAM wparam, LPARAM lparam,
-                                              BOOL *eaten) {
+  STDMETHODIMP OnKeyDown(ITfContext *context, WPARAM wparam, LPARAM lparam,
+                         BOOL *eaten) override {
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;
@@ -826,8 +822,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyDown(this, context, wparam, lparam, eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnKeyUp(ITfContext *context, WPARAM wparam,
-                                            LPARAM lparam, BOOL *eaten) {
+  STDMETHODIMP OnKeyUp(ITfContext *context, WPARAM wparam, LPARAM lparam,
+                       BOOL *eaten) override {
     HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
@@ -836,8 +832,8 @@ class TipTextServiceImpl
     *eaten = FALSE;
     return TipKeyeventHandler::OnKeyUp(this, context, wparam, lparam, eaten);
   }
-  virtual HRESULT STDMETHODCALLTYPE OnPreservedKey(ITfContext *context,
-                                                   REFGUID guid, BOOL *eaten) {
+  STDMETHODIMP OnPreservedKey(ITfContext *context, REFGUID guid,
+                              BOOL *eaten) override {
     HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
@@ -865,36 +861,34 @@ class TipTextServiceImpl
   }
 
   // ITfFnConfigure
-  virtual HRESULT STDMETHODCALLTYPE GetDisplayName(BSTR *name) {
+  STDMETHODIMP GetDisplayName(BSTR *name) override {
     if (name == nullptr) {
       return E_INVALIDARG;
     }
     *name = ::SysAllocString(kConfigurationDisplayname);
     return (*name != nullptr) ? S_OK : E_FAIL;
   }
-  virtual HRESULT STDMETHODCALLTYPE Show(HWND parent, LANGID langid,
-                                         REFGUID profile) {
+  STDMETHODIMP Show(HWND parent, LANGID langid, REFGUID profile) override {
     return SpawnTool("config_dialog");
   }
 
   // ITfFunctionProvider
-  virtual HRESULT STDMETHODCALLTYPE GetType(GUID *guid) {
+  STDMETHODIMP GetType(GUID *guid) override {
     if (guid == nullptr) {
       return E_INVALIDARG;
     }
     *guid = kTipFunctionProvider;
     return S_OK;
   }
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description) {
+  STDMETHODIMP GetDescription(BSTR *description) override {
     if (description == nullptr) {
       return E_INVALIDARG;
     }
     *description = SysAllocString(L"");
     return *description ? S_OK : E_FAIL;
   }
-  virtual HRESULT STDMETHODCALLTYPE GetFunction(const GUID &guid,
-                                                const IID &iid,
-                                                IUnknown **unknown) {
+  STDMETHODIMP GetFunction(const GUID &guid, const IID &iid,
+                           IUnknown **unknown) override {
     if (unknown == nullptr) {
       return E_INVALIDARG;
     }
@@ -909,7 +903,7 @@ class TipTextServiceImpl
   }
 
   // ITfCompartmentEventSink
-  virtual HRESULT STDMETHODCALLTYPE OnChange(const GUID &guid) {
+  STDMETHODIMP OnChange(const GUID &guid) override {
     if (!thread_mgr_) {
       return E_FAIL;
     }
@@ -923,7 +917,7 @@ class TipTextServiceImpl
   }
 
   // TipLangBarCallback
-  virtual HRESULT STDMETHODCALLTYPE OnMenuSelect(ItemId menu_id) {
+  STDMETHODIMP OnMenuSelect(ItemId menu_id) override {
     switch (menu_id) {
       case TipLangBarCallback::kDirect:
       case TipLangBarCallback::kHiragana:
@@ -946,7 +940,7 @@ class TipTextServiceImpl
         return S_OK;
     }
   }
-  virtual HRESULT STDMETHODCALLTYPE OnItemClick(const wchar_t *description) {
+  STDMETHODIMP OnItemClick(const wchar_t *description) override {
     // Change input mode to be consistent with MSIME 2012 on Windows 8.
     const bool open =
         thread_context_->GetInputModeManager()->GetEffectiveOpenClose();
@@ -962,13 +956,13 @@ class TipTextServiceImpl
   }
 
   // TipTextService
-  virtual TfClientId GetClientID() const { return client_id_; }
+  TfClientId GetClientID() const override { return client_id_; }
   ITfThreadMgr *GetThreadManager() const override { return thread_mgr_.get(); }
-  virtual TfGuidAtom input_attribute() const { return input_attribute_; }
-  virtual TfGuidAtom converted_attribute() const {
+  TfGuidAtom input_attribute() const override { return input_attribute_; }
+  TfGuidAtom converted_attribute() const override {
     return converted_attribute_;
   }
-  virtual HWND renderer_callback_window_handle() const {
+  HWND renderer_callback_window_handle() const override {
     return renderer_callback_window_handle_;
   }
 
@@ -976,7 +970,7 @@ class TipTextServiceImpl
       ITfContext *context) override {
     return MakeComPtr<CompositionSinkImpl>(this, context);
   }
-  virtual TipPrivateContext *GetPrivateContext(ITfContext *context) {
+  TipPrivateContext *GetPrivateContext(ITfContext *context) override {
     if (context == nullptr) {
       return nullptr;
     }
@@ -986,20 +980,25 @@ class TipTextServiceImpl
     }
     return it->second->get();
   }
-  virtual TipThreadContext *GetThreadContext() { return thread_context_.get(); }
-  virtual void PostUIUpdateMessage() {
+  TipThreadContext *GetThreadContext() override {
+    return thread_context_.get();
+  }
+  void PostUIUpdateMessage() override {
     if (!::IsWindow(task_window_handle_)) {
       return;
     }
     PostMessageW(task_window_handle_, kUpdateUIMessage, 0, 0);
   }
 
-  virtual void UpdateLangbar(bool enabled, uint32_t mozc_mode) {
+  void UpdateLangbar(bool enabled, uint32_t mozc_mode) override {
     langbar_.UpdateMenu(enabled, mozc_mode);
   }
 
-  virtual bool IsLangbarInitialized() const { return langbar_.IsInitialized(); }
+  bool IsLangbarInitialized() const override {
+    return langbar_.IsInitialized();
+  }
 
+ private:
   // Following functions are private utilities.
   static void StorePointerForCurrentThread(TipTextServiceImpl *impl) {
     if (g_module_unloaded) {

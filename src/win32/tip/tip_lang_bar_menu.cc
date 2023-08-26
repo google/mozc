@@ -41,15 +41,20 @@
 #include <olectl.h>
 #include <strsafe.h>
 // clang-format on
+#include <wil/com.h>
 
+#include <cstddef>
 #include <string>
+#include <utility>
 
+#include "base/win32/com.h"
 #include "base/win32/com_implements.h"
 #include "absl/base/casts.h"
 #include "absl/base/macros.h"
 #include "win32/base/text_icon.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_lang_bar_callback.h"
 #include "win32/tip/tip_resource.h"
 
 namespace mozc {
@@ -191,11 +196,10 @@ TipLangBarMenuData *TipLangBarMenuDataArray::data(size_t i) {
 }
 
 // Implements the constructor of the TipLangBarButton class.
-TipLangBarButton::TipLangBarButton(TipLangBarCallback *langbar_callback,
-                                   const GUID &guid, bool is_menu,
-                                   bool show_in_tray)
-    : item_sink_(nullptr),
-      langbar_callback_(nullptr),
+TipLangBarButton::TipLangBarButton(
+    wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback,
+    const GUID &guid, bool is_menu, bool show_in_tray)
+    : lang_bar_callback_(std::move(lang_bar_callback)),
       status_(0),
       context_menu_enabled_(true) {
   // Initialize its TF_LANGBARITEMINFO object, which contains the properties of
@@ -218,20 +222,6 @@ TipLangBarButton::TipLangBarButton(TipLangBarCallback *langbar_callback,
   }
   item_info_.ulSort = 0;
   item_info_.szDescription[0] = L'\0';
-
-  // Save the TipLangBarCallback object who owns this button, and increase its
-  // reference count not to prevent the object from being deleted
-  langbar_callback_ = langbar_callback;
-  langbar_callback_->AddRef();
-}
-
-// Implements the destructor of the TipLangBarButton class.
-TipLangBarButton::~TipLangBarButton() {
-  // Release the owner TipLangBarCallback object.
-  if (langbar_callback_ != nullptr) {
-    langbar_callback_->Release();
-  }
-  langbar_callback_ = nullptr;
 }
 
 // Implements the ITfLangBarItem::GetInfo() function.
@@ -277,7 +267,7 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
     return S_OK;
   }
   if (click == TF_LBI_CLK_LEFT) {
-    return langbar_callback_->OnItemClick(item_info_.szDescription);
+    return lang_bar_callback_->OnItemClick(item_info_.szDescription);
   }
 
   // If context menu is disabled, do nothing.
@@ -342,7 +332,7 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
   if (!result) {
     return E_FAIL;
   }
-  return langbar_callback_->OnMenuSelect(
+  return lang_bar_callback_->OnMenuSelect(
       static_cast<TipLangBarCallback::ItemId>(result));
 }
 
@@ -367,26 +357,26 @@ STDMETHODIMP TipLangBarButton::AdviseSink(REFIID interface_id,
 
   // Retrieve the ITfLangBarItemSink interface from the given object and store
   // it into |item_sink_|.
-  HRESULT result = unknown->QueryInterface(
-      IID_ITfLangBarItemSink, reinterpret_cast<void **>(&item_sink_));
-  if (result != S_OK) {
-    item_sink_ = nullptr;
-    return result;
+  item_sink_ = ComQuery<ITfLangBarItemSink>(unknown);
+  if (item_sink_ == nullptr) {
+    return E_INVALIDARG;
   }
 
   // Return the cookie of this object.
   *cookie = kTipLangBarMenuCookie;
-  return result;
+  return S_OK;
 }
 
 STDMETHODIMP TipLangBarButton::UnadviseSink(DWORD cookie) {
-  // Return if the given cookie
-  if (cookie != kTipLangBarMenuCookie || item_sink_ == nullptr)
+  if (cookie != kTipLangBarMenuCookie) {
+    return E_INVALIDARG;
+  }
+  if (item_sink_ == nullptr) {
     return CONNECT_E_NOCONNECTION;
+  }
 
   // Release the copy of this event.
-  item_sink_->Release();
-  item_sink_ = nullptr;
+  item_sink_.reset();
 
   return S_OK;
 }
@@ -513,7 +503,7 @@ STDMETHODIMP TipLangBarMenuButton::OnMenuSelect(UINT menu_id) {
   if (data->item_id_ == TipLangBarCallback::kCancel) {
     return S_OK;
   }
-  const HRESULT result = langbar_callback_->OnMenuSelect(
+  const HRESULT result = lang_bar_callback_->OnMenuSelect(
       static_cast<TipLangBarCallback::ItemId>(data->item_id_));
   return result;
 }
@@ -668,7 +658,7 @@ STDMETHODIMP TipLangBarToggleButton::OnMenuSelect(UINT menu_id) {
   if (data->item_id_ == TipLangBarCallback::kCancel) {
     return S_OK;
   }
-  const HRESULT result = langbar_callback_->OnMenuSelect(
+  const HRESULT result = lang_bar_callback_->OnMenuSelect(
       static_cast<TipLangBarCallback::ItemId>(data->item_id_));
   if (result != S_OK) {
     return result;
@@ -769,22 +759,10 @@ HRESULT TipLangBarToggleButton::SetEnabled(bool enabled) {
 }
 
 // Implements the constructor of the TipSystemLangBarMenu class.
-TipSystemLangBarMenu::TipSystemLangBarMenu(TipLangBarCallback *langbar_callback,
-                                           const GUID &guid) {
-  // Save the TipLangBarCallback object who owns this button, and increase its
-  // reference count not to prevent the object from being deleted
-  langbar_callback_ = langbar_callback;
-  langbar_callback_->AddRef();
-}
-
-// Implements the destructor of the TipSystemLangBarMenu class.
-TipSystemLangBarMenu::~TipSystemLangBarMenu() {
-  // Release the owner TipLangBarCallback object.
-  if (langbar_callback_ != nullptr) {
-    langbar_callback_->Release();
-  }
-  langbar_callback_ = nullptr;
-}
+TipSystemLangBarMenu::TipSystemLangBarMenu(
+    wil::com_ptr_nothrow<TipLangBarCallback> lang_bar_callback,
+    const GUID &guid)
+    : lang_bar_callback_(std::move(lang_bar_callback)) {}
 
 // Implements the ITfLangBarItemButton::InitMenu() function.
 // This function is called by Windows to create the button menu.
@@ -828,7 +806,7 @@ STDMETHODIMP TipSystemLangBarMenu::OnMenuSelect(UINT menu_id) {
   if (data->item_id_ == TipLangBarCallback::kCancel) {
     return S_OK;
   }
-  const HRESULT result = langbar_callback_->OnMenuSelect(
+  const HRESULT result = lang_bar_callback_->OnMenuSelect(
       static_cast<TipLangBarCallback::ItemId>(data->item_id_));
   return S_OK;
 }
