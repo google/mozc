@@ -72,8 +72,6 @@ PostInstallDialog::PostInstallDialog() : setuputil_(new SetupUtil()) {
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
-PostInstallDialog::~PostInstallDialog() {}
-
 void PostInstallDialog::OnOk() {
   usage_stats::UsageStats::IncrementCount("PostInstallOkButton");
   ApplySettings();

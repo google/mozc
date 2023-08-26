@@ -36,6 +36,8 @@
 #include <string>
 #include <utility>
 
+#include <stdlib.h>
+
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "client/client_interface.h"
@@ -106,6 +108,11 @@ int QtServer::StartServer(int argc, char **argv) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif  // QT_VERSION
+
+  // |QWidget::move()| never works with wayland platform backend. Always use
+  // 'xcb' platform backend.  https://github.com/google/mozc/issues/794
+  ::setenv("QT_QPA_PLATFORM", "xcb", 1);
+
   qRegisterMetaType<std::string>("std::string");
   QApplication app(argc, argv);
 

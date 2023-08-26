@@ -37,9 +37,9 @@
 #include "base/run_level.h"
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/win32/window_manager.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "renderer/win32/window_manager.h"
 
 namespace mozc {
 namespace renderer {

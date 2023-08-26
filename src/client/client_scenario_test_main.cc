@@ -49,12 +49,12 @@
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/renderer_client.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "renderer/renderer_client.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(int32_t, key_duration, 10, "Key duration (msec)");

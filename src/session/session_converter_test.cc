@@ -3731,5 +3731,54 @@ TEST_F(SessionConverterTest, ResultTokens) {
   EXPECT_EQ(output.result().tokens(2).rid(), 201);
 }
 
+TEST_F(SessionConverterTest, ResultTokensWithInnerSegements) {
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+
+  Segments segments;
+  {
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("きょうははれ");
+    candidate = segment->add_candidate();
+    candidate->key = "きょうははれ";
+    candidate->value = "今日は晴れ";
+    candidate->content_key = "きょうははれ";
+    candidate->content_value = "今日は晴れ";
+    candidate->lid = 100;
+    candidate->rid = 201;
+    // 12, 9, 9, 6 = len("きょうは"), len("今日"), len("きょう"), len("今日")
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // 6, 6, 6, 6 = len("はれ"), len("晴れ"), len("はれ"), len("晴れ")
+    candidate->PushBackInnerSegmentBoundary(6, 6, 6, 6);
+  }
+  EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  composer_->InsertCharacterPreedit("きょうははれ");
+  EXPECT_TRUE(converter.Convert(*composer_));
+  ASSERT_TRUE(converter.IsActive());
+
+  commands::Output output;
+  converter.Commit(*composer_, Context::default_instance());
+  converter.FillOutput(*composer_, &output);
+
+  EXPECT_TRUE(output.has_result());
+  EXPECT_EQ(output.result().tokens_size(), 3);
+  EXPECT_EQ(output.result().tokens(0).key(), "きょう");
+  EXPECT_EQ(output.result().tokens(0).value(), "今日");
+  EXPECT_EQ(output.result().tokens(0).lid(), 100);
+  EXPECT_EQ(output.result().tokens(0).rid(), -1);
+
+  EXPECT_EQ(output.result().tokens(1).key(), "は");
+  EXPECT_EQ(output.result().tokens(1).value(), "は");
+  EXPECT_EQ(output.result().tokens(1).lid(), -1);
+  EXPECT_EQ(output.result().tokens(1).rid(), -1);
+
+  EXPECT_EQ(output.result().tokens(2).key(), "はれ");
+  EXPECT_EQ(output.result().tokens(2).value(), "晴れ");
+  EXPECT_EQ(output.result().tokens(2).lid(), -1);
+  EXPECT_EQ(output.result().tokens(2).rid(), 201);
+}
 }  // namespace session
 }  // namespace mozc

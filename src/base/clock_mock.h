@@ -30,47 +30,37 @@
 #ifndef MOZC_BASE_CLOCK_MOCK_H_
 #define MOZC_BASE_CLOCK_MOCK_H_
 
-#include <cstdint>
-
 #include "base/clock.h"
-#include "absl/base/attributes.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
 namespace mozc {
+
+// Parses the given time in RFC3399 format (see `absl::RFC3399_full`), or
+// terminates the program on failure.
+absl::Time ParseTimeOrDie(absl::string_view time);
 
 // Standard mock clock implementation.
 // This mock behaves in UTC
 class ClockMock : public ClockInterface {
  public:
   explicit ClockMock(absl::Time time) : time_(time) {}
-  ABSL_DEPRECATED("Use the constructor with absl::Time")
-  ClockMock(uint64_t sec, uint32_t usec);
 
   ClockMock(const ClockMock &) = delete;
   ClockMock &operator=(const ClockMock &) = delete;
 
   ~ClockMock() override = default;
 
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override;
-  ABSL_DEPRECATED("Use GetAbslTime()")
-  uint64_t GetTime() override;
   absl::Time GetAbslTime() override;
 
   absl::TimeZone GetTimeZone() override;
 
   // Advances the clock.
-  ABSL_DEPRECATED("Use Advance()")
-  void PutClockForward(uint64_t delta_sec, uint32_t delta_usec);
   void Advance(absl::Duration delta) { time_ += delta; }
 
   // Automatically advances the clock every time it returns time.
-  ABSL_DEPRECATED("Use AutoAdvance()")
-  void SetAutoPutClockForward(uint64_t delta_sec, uint32_t delta_usec);
   void AutoAdvance(absl::Duration delta) { auto_delta_ = delta; }
 
-  ABSL_DEPRECATED("Use the overload with absl::Time")
-  void SetTime(uint64_t sec, uint32_t usec);
   void SetTime(absl::Time time) { time_ = time; }
 
  private:
@@ -84,10 +74,6 @@ class ClockMock : public ClockInterface {
 class ScopedClockMock {
  public:
   explicit ScopedClockMock(absl::Time time) : mock_(time) {
-    Clock::SetClockForUnitTest(&mock_);
-  }
-  ABSL_DEPRECATED("Use the constructor with absl::Time")
-  ScopedClockMock(uint64_t sec, uint32_t usec) : mock_(sec, usec) {
     Clock::SetClockForUnitTest(&mock_);
   }
 

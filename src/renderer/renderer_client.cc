@@ -67,7 +67,7 @@ constexpr absl::Duration kIpcTimeout = absl::Milliseconds(100);
 constexpr absl::Duration kRendererWaitTimeout = absl::Seconds(30);
 constexpr absl::Duration kRendererWaitSleepTime = absl::Seconds(10);
 constexpr size_t kMaxErrorTimes = 5;
-constexpr uint64_t kRetryIntervalTime = 30;  // 30 sec
+constexpr absl::Duration kRetryIntervalTime = absl::Seconds(30);
 constexpr char kServiceName[] = "renderer";
 
 inline void CallCommand(IPCClientInterface *client,
@@ -156,7 +156,7 @@ class RendererLauncher : public RendererLauncherInterface {
       case RendererStatus::RENDERER_TIMEOUT:
       case RendererStatus::RENDERER_TERMINATED:
         if (error_times_ <= kMaxErrorTimes &&
-            Clock::GetTime() - last_launch_time_ >= kRetryIntervalTime) {
+            Clock::GetAbslTime() - last_launch_time_ >= kRetryIntervalTime) {
           return true;
         }
         VLOG(1) << "never re-launch renderer";
@@ -208,7 +208,7 @@ class RendererLauncher : public RendererLauncherInterface {
   }
 
   void ThreadMain() {
-    last_launch_time_ = Clock::GetTime();
+    last_launch_time_ = Clock::GetAbslTime();
 
     NamedEventListener listener(name_.c_str());
     const bool listener_is_available = listener.IsAvailable();
@@ -315,7 +315,7 @@ class RendererLauncher : public RendererLauncherInterface {
 
   std::string name_;
   std::string path_;
-  volatile uint64_t last_launch_time_ = 0;
+  absl::Time last_launch_time_ = absl::UnixEpoch();
   volatile size_t error_times_ = 0;
   IPCClientFactoryInterface *ipc_client_factory_interface_ = nullptr;
   mutable absl::Mutex mu_;

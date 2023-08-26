@@ -30,13 +30,14 @@
 #include "base/process_mutex.h"
 
 #include <string>
-#include <utility>
 
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -50,11 +51,11 @@
 #else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <map>
+#include "base/strings/zstring_view.h"
+#include "absl/container/flat_hash_map.h"
 #endif  // !_WIN32
 
 namespace mozc {
@@ -153,29 +154,22 @@ namespace {
 // use it because flock() doesn't work on NFS.
 class FileLockManager {
  public:
-  bool Lock(const std::string &filename, int *fd) {
+  absl::StatusOr<int> Lock(const zstring_view filename) {
     absl::MutexLock l(&mutex_);
 
-    if (fd == nullptr) {
-      LOG(ERROR) << "fd is nullptr";
-      return false;
-    }
-
     if (filename.empty()) {
-      LOG(ERROR) << "filename is empty";
-      return false;
+      return absl::InvalidArgumentError("filename is empty");
     }
 
-    if (fdmap_.find(filename) != fdmap_.end()) {
+    if (fdmap_.contains(filename)) {
       VLOG(1) << filename << " is already locked by the same process";
-      return false;
+      return absl::FailedPreconditionError("already locked");
     }
 
     chmod(filename.c_str(), 0600);  // write temporary
-    *fd = ::open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
-    if (-1 == *fd) {
-      LOG(ERROR) << "open() failed:" << ::strerror(errno);
-      return false;
+    const int fd = ::open(filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) {
+      return absl::ErrnoToStatus(errno, "open() failed");
     }
 
     struct flock command;
@@ -184,61 +178,54 @@ class FileLockManager {
     command.l_start = 0;
     command.l_len = 0;
 
-    const int result = ::fcntl(*fd, F_SETLK, &command);
-    if (-1 == result) {  // failed
-      ::close(*fd);
-      LOG(WARNING) << "already locked";
-      return false;  // another server is already running
+    const int result = ::fcntl(fd, F_SETLK, &command);
+    if (result < 0) {  // failed
+      ::close(fd);
+      return absl::FailedPreconditionError(
+          "Already locked. Another server is already running?");
     }
 
-    fdmap_.insert(std::make_pair(filename, *fd));
-
-    return true;
+    fdmap_.emplace(filename.view(), fd);
+    return fd;
   }
 
-  void UnLock(const std::string &filename) {
+  absl::Status UnLock(const std::string &filename) {
     absl::MutexLock l(&mutex_);
-    std::map<std::string, int>::iterator it = fdmap_.find(filename);
-    if (it == fdmap_.end()) {
-      LOG(ERROR) << filename << " is not locked";
-      return;
+    auto node = fdmap_.extract(filename);
+    if (node.empty()) {
+      return absl::FailedPreconditionError(
+          absl::StrCat(filename, " is not locked"));
     }
-    ::close(it->second);
+    ::close(node.mapped());
     FileUtil::UnlinkOrLogError(filename);
-    fdmap_.erase(it);
+    return absl::OkStatus();
   }
 
   FileLockManager() = default;
 
   ~FileLockManager() {
-    for (std::map<std::string, int>::const_iterator it = fdmap_.begin();
-         it != fdmap_.end(); ++it) {
-      ::close(it->second);
+    for (const auto &[filename, fd] : fdmap_) {
+      ::close(fd);
     }
-    fdmap_.clear();
   }
 
  private:
   absl::Mutex mutex_;
-  std::map<std::string, int> fdmap_;
+  absl::flat_hash_map<std::string, int> fdmap_;
 };
 
 }  // namespace
 
 bool ProcessMutex::LockAndWrite(const absl::string_view message) {
-  int fd = -1;
-  if (!Singleton<FileLockManager>::get()->Lock(filename_, &fd)) {
-    VLOG(1) << filename_ << " is already locked";
+  absl::StatusOr<int> status_or_fd =
+      Singleton<FileLockManager>::get()->Lock(filename_);
+  if (!status_or_fd.ok()) {
+    LOG(ERROR) << status_or_fd.status();
     return false;
   }
-
-  if (fd == -1) {
-    LOG(ERROR) << "file descriptor is -1";
-    return false;
-  }
-
   if (!message.empty()) {
-    if (write(fd, message.data(), message.size()) != message.size()) {
+    if (write(*status_or_fd, message.data(), message.size()) !=
+        message.size()) {
       LOG(ERROR) << "Cannot write message: " << message;
       UnLock();
       return false;
@@ -253,7 +240,11 @@ bool ProcessMutex::LockAndWrite(const absl::string_view message) {
 
 bool ProcessMutex::UnLock() {
   if (locked_) {
-    Singleton<FileLockManager>::get()->UnLock(filename_);
+    if (absl::Status status =
+            Singleton<FileLockManager>::get()->UnLock(filename_);
+        !status.ok()) {
+      LOG(WARNING) << status;
+    }
   }
   locked_ = false;
   return true;

@@ -39,10 +39,10 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/renderer_client.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
+#include "renderer/renderer_client.h"
 
 namespace mozc {
 namespace renderer {

@@ -27,18 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_MAC_MAC_SERVER_H_
-#define MOZC_RENDERER_MAC_MAC_SERVER_H_
+#ifndef THIRD_PARTY_MOZC_SRC_RENDERER_MAC_MAC_SERVER_H_
+#define THIRD_PARTY_MOZC_SRC_RENDERER_MAC_MAC_SERVER_H_
 
 #include <pthread.h>
 
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
-#include "absl/synchronization/mutex.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -82,4 +82,4 @@ class MacServer : public RendererServer {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_MAC_MAC_SERVER_H_
+#endif  // THIRD_PARTY_MOZC_SRC_RENDERER_MAC_MAC_SERVER_H_

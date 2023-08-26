@@ -33,14 +33,12 @@
 #include <cstdint>
 #include <memory>
 
+#include "dictionary/user_dictionary_storage.h"
 
 namespace mozc {
-
-class UserDictionaryStorage;
-
 namespace gui {
 
-class SetupUtil {
+class SetupUtil final {
  public:
   enum SetDefaultFlags {
     NONE = 0,
@@ -52,7 +50,6 @@ class SetupUtil {
   SetupUtil();
   SetupUtil(const SetupUtil&) = delete;
   SetupUtil& operator=(const SetupUtil&) = delete;
-  virtual ~SetupUtil();
 
   // locks user dictionary
   bool LockUserDictionary();
@@ -68,7 +65,7 @@ class SetupUtil {
   // SetupUtil setuputil;
   // setuputil.LockUserDictionary();
   // -- do somethings to keep userdictionary locked -----
-  // setuputil.SetDafaultProperty(flags);
+  // setuputil.SetDefaultProperty(flags);
   void SetDefaultProperty(uint32_t flags);
 
  private:

@@ -48,6 +48,9 @@
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/time/time.h"
+
+// TODO(tomokinat): Refactor this file to use abseil types for time/duration.
 
 namespace mozc {
 namespace session {
@@ -71,10 +74,7 @@ void AddToDoubleValueStats(double value,
 }
 
 uint64_t GetTimeInMilliSecond() {
-  uint64_t second = 0;
-  uint32_t micro_second = 0;
-  Clock::GetTimeOfDay(&second, &micro_second);
-  return second * 1000 + micro_second / 1000;
+  return absl::ToUnixMillis(Clock::GetAbslTime());
 }
 
 uint32_t GetDuration(uint64_t base_value) {
@@ -99,7 +99,7 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
     case commands::Input::SYNC_DATA:
     case commands::Input::CHECK_SPELLING:
     case commands::Input::SET_REQUEST:
-    // LINT.ThenChange()
+      // LINT.ThenChange()
       return true;
     default:
       return false;

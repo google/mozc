@@ -175,7 +175,7 @@ oss_issue151	ぐぐってみたけど	ググってみたけど	Conversion Expect
 oss_issue152	そざいがぷらすちっくなので	素材がプラスチックなので	Conversion Expected
 oss_issue152	よろしくおねがいします	よろしくお願いします	Conversion Expected
 oss_issue152	おかあさんといっしょなので	お母さんと一緒なので	Conversion Expected 2
-oss_issue152	そのしごとはあとにしよう	しよう	Conversion Not Match
+oss_issue152	そのしごとはあとにしよう	しよう	Conversion Match
 oss_issue152	がいこくめーかーのものはからだにあわない	外国メーカーのものは体に合わない	Conversion Expected
 oss_issue154	よかったりする	良かったりする	Conversion Expected 2
 oss_issue154	1つめのはなしは	１つ目の話は	Conversion Expected

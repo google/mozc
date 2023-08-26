@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_
-#define MOZC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_
 
 #include <windows.h>
 
@@ -81,7 +81,7 @@ class SurrogatePairObserver {
 
   // Returns the expected action of the IME DLL against the given key event.
   ClientAction OnKeyEvent(const VirtualKey &virtual_key, bool is_keydown,
-                          bool is_testkey);
+                          bool is_test_key);
 
   ObservationState state_;
   wchar_t surrogate_high_;
@@ -91,4 +91,4 @@ class SurrogatePairObserver {
 }  // namespace win32
 }  // namespace mozc
 
-#endif  // MOZC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_BASE_SURROGATE_PAIR_OBSERVER_H_

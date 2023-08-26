@@ -46,6 +46,7 @@
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 
@@ -133,7 +134,7 @@ class MozcEngine : public EngineInterface {
   CandidateWindowHandlerInterface *GetCandidateWindowHandler(
       IbusEngineWrapper *engine);
 
-  uint64_t last_sync_time_;
+  absl::Time last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
   std::unique_ptr<client::ClientInterface> client_;
 
@@ -154,6 +155,10 @@ class MozcEngine : public EngineInterface {
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
 };
+
+bool CanUseMozcCandidateWindow(
+    const IbusConfig &ibus_config,
+    const absl::flat_hash_map<std::string, std::string> &env);
 
 }  // namespace ibus
 }  // namespace mozc

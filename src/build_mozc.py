@@ -135,7 +135,9 @@ def GetGypFileNames(options):
   """Gets the list of gyp file names."""
   gyp_file_names = []
   exclude_top_dirs = []
-  mozc_top_level_names = glob.glob('%s/*' % SRC_DIR)
+  mozc_top_level_names = glob.glob(f'{SRC_DIR}/*')
+  if SRC_DIR != OSS_SRC_DIR:
+    mozc_top_level_names += glob.glob(f'{OSS_SRC_DIR}/*')
 
   mozc_top_level_names = [x for x in mozc_top_level_names if
                           os.path.basename(x) not in exclude_top_dirs]
@@ -157,7 +159,7 @@ def GetGypFileNames(options):
   gyp_file_names.extend(glob.glob('%s/rewriter/*/*.gyp' % SRC_DIR))
   # Include subdirectory of win32 and breakpad for Windows
   if options.target_platform == 'Windows':
-    gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % SRC_DIR))
+    gyp_file_names.extend(glob.glob('%s/win32/*/*.gyp' % OSS_SRC_DIR))
   elif options.target_platform == 'Linux':
     gyp_file_names.extend(glob.glob('%s/unix/emacs/*.gyp' % OSS_SRC_DIR))
     gyp_file_names.extend(glob.glob('%s/unix/fcitx/*.gyp' % OSS_SRC_DIR))
@@ -748,7 +750,6 @@ def RunTests(target_platform, configuration, parallel_num):
       try:
         test_function(binary, gtest_report_dir, options)
       except RunOrDieError as e:
-        logging.exception(e)
         failed_tests.append(binary)
   else:
     launcher = test_launcher.TestLauncher(gtest_report_dir)

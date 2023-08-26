@@ -31,11 +31,13 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/text_format.h"
 #include "base/system_util.h"
+#include "unix/ibus/ibus_config.pb.h"
 #include "unix/ibus/main.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
@@ -184,4 +186,22 @@ bool IbusConfig::IsActiveOnLaunch() const {
   // https://github.com/google/mozc/issues/201
   return false;
 }
+
+bool IbusConfig::IsMozcRendererEnabled() const {
+  if (!config_.has_mozc_renderer()) {
+    return true;
+  }
+  return config_.mozc_renderer().enabled();
+}
+
+std::vector<std::string>
+IbusConfig::GetMozcRendererCompatibleWaylandDesktopNames() const {
+  if (!config_.has_mozc_renderer()) {
+    return {};
+  }
+  const auto &desktop_names =
+      config_.mozc_renderer().compatible_wayland_desktop_names();
+  return {desktop_names.begin(), desktop_names.end()};
+}
+
 }  // namespace mozc

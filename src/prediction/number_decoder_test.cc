@@ -37,6 +37,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/random/random.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -145,14 +146,22 @@ INSTANTIATE_TEST_SUITE_P(
         TestParam("せんにひゃくおくさんぜんよんひゃくまんごせんろっぴゃく",
                   {{27 * 3, "1200億3400万5600"}})));
 
+INSTANTIATE_TEST_SUITE_P(InvalidSequences, NumberDecoderTest,
+                         ::testing::Values(TestParam("よせん", {}),
+                                           TestParam("しけい", {}),
+                                           TestParam("しせん", {}),
+                                           TestParam("くせん", {}),
+                                           TestParam("しがいせん", {})));
+
 TEST(NumberDecoderRandomTest, Random) {
   constexpr absl::string_view kKeys[] = {
-      "ぜろ",   "いち",   "いっ",   "に",     "さん",   "し",     "よん",
-      "ご",     "ろく",   "ろっ",   "なな",   "しち",   "はち",   "はっ",
-      "きゅう", "きゅー", "く",     "じゅう", "じゅー", "じゅっ", "ひゃく",
-      "ひゃっ", "びゃく", "びゃっ", "ぴゃく", "ぴゃっ", "せん",   "ぜん",
-      "まん",   "おく",   "おっ",   "ちょう", "けい",   "がい",
-  };
+      "ぜろ",     "いち",      "いっ",   "に",     "さん",     "し",
+      "よん",     "ご",        "ろく",   "ろっ",   "なな",     "しち",
+      "はち",     "はっ",      "きゅう", "きゅー", "く",       "じゅう",
+      "じゅー",   "じゅっ",    "ひゃく", "ひゃっ", "びゃく",   "びゃっ",
+      "ぴゃく",   "ぴゃっ",    "せん",   "ぜん",   "まん",     "おく",
+      "おっ",     "ちょう",    "けい",   "がい",   "にちょう", "にちょうめ",
+      "にちゃん", "さんちーむ"};
 
   constexpr int kTestSize = 1000;
   constexpr int kKeySize = 10;

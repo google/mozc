@@ -114,10 +114,6 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
-bool UseTcDiffCost(const Request &request) {
-  return request.decoder_experiment_params().use_typing_correction_diff_cost();
-}
-
 KeyValueView GetCandidateKeyAndValue(const Result &result
                                          ABSL_ATTRIBUTE_LIFETIME_BOUND,
                                      const KeyValueView history) {
@@ -170,12 +166,6 @@ KeyValueView GetHistoryKeyAndValue(
   }
 
   return {history_segment.candidate(0).key, history_segment.candidate(0).value};
-}
-
-int GetTypingCorrectionCostOffset(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .typing_correction_cost_offset();
 }
 
 bool CancelContentWordSuffixPenalty(const ConversionRequest &request) {
@@ -623,8 +613,7 @@ DictionaryPredictor::ResultFilter::ResultFilter(
       input_key_len_(Util::CharsLen(input_key_)),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      include_exact_key_(IsMixedConversionEnabled(request.request())),
-      limit_tc_per_key_(UseTcDiffCost(request.request())) {
+      include_exact_key_(IsMixedConversionEnabled(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -682,7 +671,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
-  if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION) &&
+  if ((result.types & PredictionType::TYPING_CORRECTION) &&
       !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
     auto it = seen_tc_keys_.find(result.non_expanded_original_key);
     if (it != seen_tc_keys_.end() && it->second >= kTcMaxCountPerKey) {
@@ -761,7 +750,7 @@ bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
   }
   seen_.emplace(value);
 
-  if (limit_tc_per_key_ && (result.types & PredictionType::TYPING_CORRECTION)) {
+  if (result.types & PredictionType::TYPING_CORRECTION) {
     ++seen_tc_keys_[result.non_expanded_original_key];
   }
   return false;
@@ -1084,14 +1073,12 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
     if ((result.types & PredictionType::TYPING_CORRECTION) &&
         !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
-      const int typing_correction_cost_offset =
-          GetTypingCorrectionCostOffset(request);
-      if (typing_correction_cost_offset != 0) {
-        cost += typing_correction_cost_offset;
-        MOZC_WORD_LOG(
-            result, absl::StrCat("Typing correction: ", cost, " (with offset ",
-                                 typing_correction_cost_offset, ")"));
-      }
+      // = 500 * log(100)
+      constexpr int kTypingCorrectionCostOffset = 2302;
+      cost += kTypingCorrectionCostOffset;
+      MOZC_WORD_LOG(result,
+                    absl::StrCat("Typing correction: ", cost, " (with offset ",
+                                 kTypingCorrectionCostOffset, ")"));
     }
 
     if (result.types & PredictionType::BIGRAM) {

@@ -49,9 +49,12 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "renderer/renderer_client.h"
-#include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/candidate_window_handler.h"
+#include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/key_event_handler.h"
@@ -60,8 +63,7 @@
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
-#include "absl/flags/flag.h"
-#include "absl/strings/string_view.h"
+#include "absl/strings/str_split.h"
 
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
@@ -77,7 +79,7 @@ const int32_t kBadCandidateId = -1;
 constexpr char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
-const uint64_t kSyncDataInterval = 5 * 60;
+const absl::Duration kSyncDataInterval = absl::Minutes(5);
 
 const char *kUILocaleEnvNames[] = {
     "LC_ALL",
@@ -108,8 +110,7 @@ struct SurroundingTextInfo {
   std::string following_text;
 };
 
-bool GetSurroundingText(IbusEngineWrapper *engine,
-                        SurroundingTextInfo *info) {
+bool GetSurroundingText(IbusEngineWrapper *engine, SurroundingTextInfo *info) {
   if (!(engine->CheckCapabilities(IBUS_CAP_SURROUNDING_TEXT))) {
     VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
             << engine->GetCapabilities();
@@ -167,52 +168,78 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
-bool UseMozcCandidateWindow() {
+std::optional<absl::string_view> GetMapValue(
+    const absl::flat_hash_map<std::string, std::string> &map,
+    absl::string_view key) {
+  absl::flat_hash_map<std::string, std::string>::const_iterator it =
+      map.find(key);
+  if (it == map.end()) {
+    return std::nullopt;
+  }
+  return absl::string_view(it->second);
+}
+
+bool IsWaylandSession(
+    const absl::flat_hash_map<std::string, std::string> &env) {
+  return env.contains("WAYLAND_DISPLAY");
+}
+
+std::vector<std::string> GetCurrentDesktops(
+    const absl::flat_hash_map<std::string, std::string> &env) {
+  const std::optional<absl::string_view> env_xdg_current_desktop =
+      GetMapValue(env, "XDG_CURRENT_DESKTOP");
+  if (!env_xdg_current_desktop.has_value()) {
+    return {};
+  }
+  // $XDG_CURRENT_DESKTOP is a colon-separated list.
+  // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys
+  return absl::StrSplit(env_xdg_current_desktop.value(), ':');
+}
+
+void UpdateEnvironMap(absl::flat_hash_map<std::string, std::string> &env,
+                      const char *envname) {
+  const char *result = ::getenv(envname);
+  if (result == nullptr) {
+    return;
+  }
+  env.insert_or_assign(envname, result);
+}
+
+bool UseMozcCandidateWindow(const IbusConfig &ibus_config) {
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
     return false;
   }
 
-  // Follows the user's preference set in the environment variable.
-  const std::string candidate_window = GetEnv("MOZC_IBUS_CANDIDATE_WINDOW");
-  if (candidate_window == "ibus") {
-    return false;
-  }
-  if (candidate_window == "mozc") {
-    return true;
-  }
-
-#ifndef ENABLE_QT_RENDERER
-  if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
-    // mozc_renderer is not supported on wayland session.
-    return false;
-  }
-#endif  // !ENABLE_QT_RENDERER
-
-  // TODO(nona): integrate with renderer/renderer_client.cc
-  // TODO(nona): Check executable bit for renderer.
   const std::string renderer_path =
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
   if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
     LOG(ERROR) << s;
     return false;
   }
-  return true;
+
+  absl::flat_hash_map<std::string, std::string> env;
+  UpdateEnvironMap(env, "MOZC_IBUS_CANDIDATE_WINDOW");
+  UpdateEnvironMap(env, "XDG_CURRENT_DESKTOP");
+  UpdateEnvironMap(env, "WAYLAND_DISPLAY");
+
+  return CanUseMozcCandidateWindow(ibus_config, env);
 }
+
 }  // namespace
 
 MozcEngine::MozcEngine()
-    : last_sync_time_(Clock::GetTime()),
+    : last_sync_time_(Clock::GetAbslTime()),
       key_event_handler_(new KeyEventHandler),
       client_(CreateAndConfigureClient()),
       preedit_handler_(new PreeditHandler()),
-      use_mozc_candidate_window_(UseMozcCandidateWindow()),
+      use_mozc_candidate_window_(false),
       mozc_candidate_window_handler_(new renderer::RendererClient()),
       preedit_method_(config::Config::ROMAN) {
+  ibus_config_.Initialize();
+  use_mozc_candidate_window_ = UseMozcCandidateWindow(ibus_config_);
   if (use_mozc_candidate_window_) {
     mozc_candidate_window_handler_.RegisterGSettingsObserver();
   }
-
-  ibus_config_.Initialize();
   property_handler_ = std::make_unique<PropertyHandler>(
       std::make_unique<LocaleBasedMessageTranslator>(GetMessageLocale()),
       ibus_config_.IsActiveOnLaunch(), client_.get());
@@ -496,7 +523,7 @@ void MozcEngine::SyncData(bool force) {
     return;
   }
 
-  const uint64_t current_time = Clock::GetTime();
+  const absl::Time current_time = Clock::GetAbslTime();
   if (force || (current_time >= last_sync_time_ &&
                 current_time - last_sync_time_ >= kSyncDataInterval)) {
     VLOG(1) << "Syncing data";
@@ -616,6 +643,39 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
     return &mozc_candidate_window_handler_;
   }
   return &ibus_candidate_window_handler_;
+}
+
+bool CanUseMozcCandidateWindow(
+    const IbusConfig &ibus_config,
+    const absl::flat_hash_map<std::string, std::string> &env) {
+  if (!ibus_config.IsMozcRendererEnabled()) {
+    return false;
+  }
+
+  const std::optional<absl::string_view> env_candidate_window =
+      GetMapValue(env, "MOZC_IBUS_CANDIDATE_WINDOW");
+  if (env_candidate_window.has_value()
+      && env_candidate_window.value() == "ibus") {
+    return false;
+  }
+
+  if (!IsWaylandSession(env)) {
+    return true;
+  }
+
+  const std::vector<std::string> current_desktops = GetCurrentDesktops(env);
+  if (current_desktops.empty()) {
+    return false;
+  }
+  for (const std::string &compatible_desktop :
+           ibus_config.GetMozcRendererCompatibleWaylandDesktopNames()) {
+    if (std::find(current_desktops.begin(),
+                  current_desktops.end(),
+                  compatible_desktop) != current_desktops.end()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace ibus

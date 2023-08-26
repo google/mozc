@@ -74,6 +74,10 @@ engines {
   rank : 80
 }
 active_on_launch: False
+mozc_renderer {
+  enabled : True
+  compatible_wayland_desktop_names : ["GNOME"]
+}
 ```
 
 The variables of `engines` are mapped to the same named variables of IBus.
@@ -175,15 +179,64 @@ engines {
 }
 ```
 
+### Candidate window
 
-### Use the default Ibus candidate window
+Linux input method frameworks (e.g. IBus and Fcitx) often provide their own
+candidate window UI, while Mozc also provides candidate window UI via
+`mozc_renderer` process that is used in macOS and Windows as well.
 
-If the environment variable `MOZC_IBUS_CANDIDATE_WINDOW` is set to `ibus`,
-The default Ibus candidate window is used instead of the Mozc candidate window.
+Here is the quick comparison of two options.
 
-If `MOZC_IBUS_CANDIDATE_WINDOW` is set to `mozc`, the Mozc candidate window is
-always used.
+##### Mozc's candidate window
 
-Note, the default Ibus candidate window may not have the full features
-we provide to the Mozc candidate window such as information list
-(e.g. word usage dictionary).
+ * Provides the same UI and functionality as Mozc for macOS and Windows.
+ * Always needs to use X11 protocol, even under Wayland sessions
+   ([#794](https://github.com/google/mozc/issues/794)).
+ * Theme support (e.g. dark theme) is planned but not yet implemented.
+
+##### IBus' candidate window
+
+ * Provides a UI that is consistent with the desktop environment (e.g. theme
+   support including dark mode).
+ * Supports GNOME Wayland by using deep integration with the desktop shell.
+ * Lacks several features that are available in Mozc for macOS and Windows.
+
+To use IBus' default candidate window, set `enabled : False` as follows.
+
+```
+mozc_renderer {
+  # This means IBus' candidate window is always used.
+  enabled : False
+}
+```
+
+Then restart IBus as follows for your change to take effect.
+```
+ibus restart
+```
+
+#### Wayland compatibility of Mozc's candidate window
+
+While how to support IMEs' candidate window UI under Wayland sessions is still
+[under discussion](https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/40),
+in some desktop environments such as GNOME, Mozc's candidate window may continue
+to work with XWayland ([#794](https://github.com/google/mozc/issues/794)).
+
+You can configure which Wayland desktop environment is compatible with Mozc's
+candidate window will be used as follows.
+
+```
+mozc_renderer {
+  enabled : True
+  compatible_wayland_desktop_names : ["GNOME"]
+}
+```
+
+When one of the desktop name specified in `compatible_wayland_desktop_names` is
+found in `$XDG_CURRENT_DESKTOP` environment variable, Mozc's candidate window
+will be used.
+
+Restart IBus as follows for your change to take effect.
+```
+ibus restart
+```

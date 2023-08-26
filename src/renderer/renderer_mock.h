@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_MOCK_H_
-#define MOZC_RENDERER_RENDERER_MOCK_H_
+#ifndef THIRD_PARTY_MOZC_SRC_RENDERER_RENDERER_MOCK_H_
+#define THIRD_PARTY_MOZC_SRC_RENDERER_RENDERER_MOCK_H_
 
-#include "renderer/renderer_interface.h"
 #include "testing/gmock.h"
+#include "renderer/renderer_interface.h"
 
 namespace mozc {
 namespace renderer {
@@ -48,4 +48,4 @@ class RendererMock : public RendererInterface {
 
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_RENDERER_MOCK_H_
+#endif  // THIRD_PARTY_MOZC_SRC_RENDERER_RENDERER_MOCK_H_

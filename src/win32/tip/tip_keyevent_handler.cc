@@ -413,7 +413,7 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   } else {
     InputBehavior behavior = private_context->input_behavior();
 
-    // Update On/Off state an conversion mode.
+    // Update On/Off state a conversion mode.
     InputState ime_state;
     ime_state.logical_conversion_mode = logical_mode;
     ime_state.visible_conversion_mode = visible_mode;

@@ -47,6 +47,7 @@
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/time/time.h"
 
 using mozc::usage_stats::Stats;
 using mozc::usage_stats::UsageStats;
@@ -135,9 +136,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
     observer->EvalCommandHandler(command);
   }
 
-  constexpr uint64_t kSeconds = 0;
-  constexpr uint32_t kMicroSeconds = 0;
-  ClockMock clock(kSeconds, kMicroSeconds);
+  ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
   // prepare command
@@ -156,25 +155,25 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   orig_hide_command.mutable_input()->mutable_command()->set_usage_stats_event(
       commands::SessionCommand::INFOLIST_WINDOW_HIDE);
 
-  {  // show infolist, wait 1,100,000 usec and hide infolist.
+  {  // show infolist, wait 1100 msec and hide infolist.
     commands::Command show_command, hide_command;
     show_command = orig_show_command;
     hide_command = orig_hide_command;
 
     observer->EvalCommandHandler(show_command);
     EXPECT_STATS_NOT_EXIST("InfolistWindowDurationMSec");
-    clock.PutClockForward(1, 100000);
+    clock.Advance(absl::Milliseconds(1100));
     observer->EvalCommandHandler(hide_command);
     EXPECT_TIMING_STATS("InfolistWindowDurationMSec", 1100, 1, 1100, 1100);
   }
 
-  {  // show infolist, wait 1,200,000 usec and hide infolist.
+  {  // show infolist, wait 1200 msec and hide infolist.
     commands::Command show_command, hide_command;
     show_command = orig_show_command;
     hide_command = orig_hide_command;
 
     observer->EvalCommandHandler(show_command);
-    clock.PutClockForward(1, 200000);
+    clock.Advance(absl::Milliseconds(1200));
     observer->EvalCommandHandler(hide_command);
     EXPECT_TIMING_STATS("InfolistWindowDurationMSec", 2300, 2, 1100, 1200);
   }

@@ -214,7 +214,7 @@
               ],
               'action': [
                 '<(python)',
-                '../../build_tools/binary_size_checker.py',
+                '<(mozc_src_dir)/build_tools/binary_size_checker.py',
                 '--target_filename',
                 '<(mozc_64bit_msi)',
               ],

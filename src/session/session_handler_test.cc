@@ -54,6 +54,7 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
+#include "absl/time/time.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -198,7 +199,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32_t expected_session_created_num = 0;
   const int32_t interval_time = 10;  // 10 sec
   absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
-  ClockMock clock(1000, 0);
+  ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is removed
@@ -215,7 +216,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
-      clock.PutClockForward(interval_time, 0);
+      clock.Advance(absl::Seconds(interval_time));
     }
 
     for (int i = static_cast<int>(ids.size() - 1); i >= 0; --i) {
@@ -239,7 +240,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
       ids.push_back(id);
-      clock.PutClockForward(interval_time, 0);
+      clock.Advance(absl::Seconds(interval_time));
     }
 
     absl::BitGen urbg;
@@ -302,9 +303,10 @@ TEST_F(SessionHandlerTest, CreateSession_Config) {
 }
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
-  const int32_t interval_time = 10;  // 10 sec
-  absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
-  ClockMock clock(1000, 0);
+  constexpr absl::Duration kIntervalTime = absl::Seconds(10);
+  absl::SetFlag(&FLAGS_create_session_min_interval,
+                absl::ToInt64Seconds(kIntervalTime));
+  ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
@@ -313,10 +315,10 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_FALSE(CreateSession(&handler, &id));
 
-  clock.PutClockForward(interval_time - 1, 0);
+  clock.Advance(kIntervalTime - absl::Seconds(1));
   EXPECT_FALSE(CreateSession(&handler, &id));
 
-  clock.PutClockForward(1, 0);
+  clock.Advance(absl::Seconds(1));
   EXPECT_TRUE(CreateSession(&handler, &id));
 
   Clock::SetClockForUnitTest(nullptr);
@@ -340,9 +342,10 @@ TEST_F(SessionHandlerTest, CreateSessionNegativeInterval) {
 }
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
-  const int32_t timeout = 10;  // 10 sec
-  absl::SetFlag(&FLAGS_last_create_session_timeout, timeout);
-  ClockMock clock(1000, 0);
+  constexpr absl::Duration kTimeout = absl::Seconds(10);
+  absl::SetFlag(&FLAGS_last_create_session_timeout,
+                absl::ToInt64Seconds(kTimeout));
+  ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
@@ -350,7 +353,7 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   uint64_t id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
-  clock.PutClockForward(timeout, 0);
+  clock.Advance(kTimeout);
   EXPECT_TRUE(CleanUp(&handler, id));
 
   // the session is removed by server
@@ -362,7 +365,7 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
   const int32_t timeout = 10;  // 10 sec
   absl::SetFlag(&FLAGS_last_command_timeout, timeout);
-  ClockMock clock(1000, 0);
+  ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
@@ -373,7 +376,7 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
   EXPECT_TRUE(CleanUp(&handler, id));
   EXPECT_TRUE(IsGoodSession(&handler, id));
 
-  clock.PutClockForward(timeout, 0);
+  clock.Advance(absl::Seconds(timeout));
   EXPECT_TRUE(CleanUp(&handler, id));
   EXPECT_FALSE(IsGoodSession(&handler, id));
 
@@ -454,7 +457,7 @@ TEST_F(SessionHandlerTest, ElapsedTimeTest) {
 
   uint64_t id = 0;
 
-  ClockMock clock(1000, 0);
+  ClockMock clock(absl::FromUnixSeconds(1000));
   Clock::SetClockForUnitTest(&clock);
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_TIMING_STATS("ElapsedTimeUSec", 0, 1, 0, 0);

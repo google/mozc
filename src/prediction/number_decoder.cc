@@ -50,9 +50,28 @@ using ::mozc::number_decoder_internal::Type;
 void MaybeAppendResult(const State &state,
                        std::vector<NumberDecoder::Result> &results) {
   std::optional<NumberDecoder::Result> result = state.Result();
-  if (result.has_value()) {
-    results.push_back(*std::move(result));
+  if (!result.has_value()) {
+    return;
   }
+
+  // Filter out invalid number sequences.
+  std::vector<absl::string_view> keys = state.consumed_keys;
+  if (state.consumed_key_byte_len < state.key.size()) {
+    keys.emplace_back(state.key.substr(state.consumed_key_byte_len));
+  }
+  for (int i = 0; i < keys.size(); ++i) {
+    const absl::string_view k = keys[i];
+    if ((k == "よ" || k == "く") && i + 1 < keys.size()) {
+      // Other than the tail of the sequence is invalid
+      return;
+    }
+    if (k == "し" && !(i + 1 == keys.size() || keys[i + 1] == "じゅう")) {
+      // Valid: "し:4", "じゅうし:4", "しじゅう:4"
+      // Invalid: "しひゃく", "しせん", etc
+      return;
+    }
+  }
+  results.push_back(*std::move(result));
 }
 
 Trie<Entry> InitEntries() {
@@ -106,14 +125,14 @@ Trie<Entry> InitEntries() {
   // spacial cases
   // conflict with "にち"
   result.AddEntry("にちょう",
-                    Entry({Type::UNIT_AND_BIG_DIGIT, 2, 3, "兆", true, 3}));
+                  Entry({Type::UNIT_AND_BIG_DIGIT, 2, 3, "兆", true, 3}));
   result.AddEntry("にちょうめ",
-                    Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
+                  Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
   result.AddEntry("にちゃん",
-                    Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
+                  Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
   // サンチーム (currency) v.s. 3チーム
   result.AddEntry("さんちーむ",
-                    Entry({Type::UNIT_AND_STOP_DECODING, 3, -1, "", true, 6}));
+                  Entry({Type::UNIT_AND_STOP_DECODING, 3, -1, "", true, 6}));
 
   // number suffix conflicting with the other entries
   constexpr absl::string_view kSuffixEntries[] = {
@@ -175,11 +194,12 @@ std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r) {
   return os;
 }
 
-NumberDecoder::NumberDecoder(): entries_(InitEntries()) {}
+NumberDecoder::NumberDecoder() : entries_(InitEntries()) {}
 
 std::vector<NumberDecoder::Result> NumberDecoder::Decode(
     absl::string_view key) const {
   State state;
+  state.key = key;
   std::vector<NumberDecoder::Result> results;
   DecodeAux(key, state, results);
 
@@ -197,44 +217,54 @@ void NumberDecoder::DecodeAux(absl::string_view key, State &state,
   if (!entries_.LongestMatch(key, &e, &key_byte_len)) {
     return;
   }
+  const absl::string_view k = key.substr(0, key_byte_len);
   switch (e.type) {
     case Type::STOP_DECODING:
       return;
     case Type::UNIT:
-      if (!HandleUnitEntry(e, state, results)) {
+      if (!HandleUnitEntry(k, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len += key_byte_len;
       break;
     case Type::SMALL_DIGIT:
-      if (!HandleSmallDigitEntry(e, state, results)) {
+      if (!HandleSmallDigitEntry(k, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len += key_byte_len;
       break;
     case Type::BIG_DIGIT:
-      if (!HandleBigDigitEntry(e, state, results)) {
+      if (!HandleBigDigitEntry(k, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len += key_byte_len;
       break;
-    case Type::UNIT_AND_BIG_DIGIT:
-      if (!HandleUnitEntry(e, state, results)) {
+    case Type::UNIT_AND_BIG_DIGIT: {
+      const absl::string_view unit_key =
+          key.substr(0, e.consume_byte_len_of_first);
+      if (!HandleUnitEntry(unit_key, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len += e.consume_byte_len_of_first;
-      if (!HandleBigDigitEntry(e, state, results)) {
+      const absl::string_view digit_key =
+          key.substr(e.consume_byte_len_of_first,
+                     (key_byte_len - e.consume_byte_len_of_first));
+      if (!HandleBigDigitEntry(digit_key, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len +=
           (key_byte_len - e.consume_byte_len_of_first);
       break;
-    case Type::UNIT_AND_STOP_DECODING:
-      if (!HandleUnitEntry(e, state, results)) {
+    }
+    case Type::UNIT_AND_STOP_DECODING: {
+      const absl::string_view unit_key =
+          key.substr(0, e.consume_byte_len_of_first);
+      if (!HandleUnitEntry(unit_key, e, state, results)) {
         return;
       }
       state.consumed_key_byte_len += e.consume_byte_len_of_first;
       return;
+    }
     default:
       LOG(ERROR) << "Error";
   }
@@ -242,7 +272,8 @@ void NumberDecoder::DecodeAux(absl::string_view key, State &state,
   DecodeAux(key.substr(key_byte_len), state, results);
 }
 
-bool NumberDecoder::HandleUnitEntry(const Entry &entry, State &state,
+bool NumberDecoder::HandleUnitEntry(absl::string_view key, const Entry &entry,
+                                    State &state,
                                     std::vector<Result> &results) const {
   results.clear();
   if (state.IsValid() && entry.number == 0) {
@@ -266,10 +297,12 @@ bool NumberDecoder::HandleUnitEntry(const Entry &entry, State &state,
     DCHECK_EQ(state.small_digit_num % 10, 0);
     state.small_digit_num += entry.number;
   }
+  state.consumed_keys.emplace_back(key);
   return true;
 }
 
-bool NumberDecoder::HandleSmallDigitEntry(const Entry &entry, State &state,
+bool NumberDecoder::HandleSmallDigitEntry(absl::string_view key,
+                                          const Entry &entry, State &state,
                                           std::vector<Result> &results) const {
   results.clear();
   if (state.small_digit > 1 && entry.digit >= state.small_digit) {
@@ -293,10 +326,12 @@ bool NumberDecoder::HandleSmallDigitEntry(const Entry &entry, State &state,
     state.small_digit_num = base + unit * entry.number;
   }
   state.small_digit = entry.digit;
+  state.consumed_keys.emplace_back(key);
   return true;
 }
 
-bool NumberDecoder::HandleBigDigitEntry(const Entry &entry, State &state,
+bool NumberDecoder::HandleBigDigitEntry(absl::string_view key,
+                                        const Entry &entry, State &state,
                                         std::vector<Result> &results) const {
   results.clear();
   if (state.big_digit > 0 && entry.digit >= state.big_digit) {
@@ -318,6 +353,7 @@ bool NumberDecoder::HandleBigDigitEntry(const Entry &entry, State &state,
   state.small_digit_num = -1;
   state.small_digit = -1;
   state.big_digit = entry.digit;
+  state.consumed_keys.emplace_back(key);
   return true;
 }
 

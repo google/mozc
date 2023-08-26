@@ -53,7 +53,7 @@ class SessionHandlerInterface {
   virtual bool EvalCommand(commands::Command *command) = 0;
 
   // Starts watch dog timer to cleanup sessions.
-  virtual bool StartWatchDog() = 0;
+  virtual void StartWatchDog() = 0;
 
   virtual void AddObserver(session::SessionObserverInterface *observer) = 0;
 

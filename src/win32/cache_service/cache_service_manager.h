@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
-#define MOZC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
 
 #ifdef _WIN32
 #include <string>
@@ -85,12 +85,12 @@ class CacheServiceManager {
   // characters.
   // If the cache service is not installed, default settings is returned
   // with setting |installed| flag to false.
-  static bool BackupStateAsString(std::wstring *buffer);
+  static bool BackupStateAsString(std::wstring *result);
 
   // Return true if the previous status of the service is successfully
   // restored from the specified std::wstring instance.
   // This function may start the service if needed.
-  static bool RestoreStateFromString(const std::wstring &buffer);
+  static bool RestoreStateFromString(const std::wstring &serialized);
 
   // Return true if:
   // - The cache service is not installed.
@@ -102,4 +102,4 @@ class CacheServiceManager {
 }  // namespace mozc
 
 #endif  // _WIN32
-#endif  // MOZC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_CACHE_SERVICE_CACHE_SERVICE_MANAGER_H_

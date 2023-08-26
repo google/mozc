@@ -89,9 +89,9 @@ mozc_cc_test(
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
-        "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 

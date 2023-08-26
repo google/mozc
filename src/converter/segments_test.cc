@@ -475,30 +475,41 @@ TEST(CandidateTest, InnerSegmentIterator) {
     candidate.value = "redgreenblue";
     candidate.PushBackInnerSegmentBoundary(4, 3, 4, 3);
     candidate.PushBackInnerSegmentBoundary(6, 9, 3, 5);
-    std::vector<absl::string_view> keys, values, content_keys, content_values;
+    std::vector<absl::string_view> keys, values, content_keys, content_values,
+        functional_keys, functional_values;
     for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
          !iter.Done(); iter.Next()) {
       keys.push_back(iter.GetKey());
       values.push_back(iter.GetValue());
       content_keys.push_back(iter.GetContentKey());
       content_values.push_back(iter.GetContentValue());
+      functional_keys.push_back(iter.GetFunctionalKey());
+      functional_values.push_back(iter.GetFunctionalValue());
     }
 
-    ASSERT_EQ(2, keys.size());
+    ASSERT_EQ(keys.size(), 2);
     EXPECT_EQ(keys[0], "test");
     EXPECT_EQ(keys[1], "foobar");
 
-    ASSERT_EQ(2, values.size());
+    ASSERT_EQ(values.size(), 2);
     EXPECT_EQ(values[0], "red");
     EXPECT_EQ(values[1], "greenblue");
 
-    ASSERT_EQ(2, content_keys.size());
+    ASSERT_EQ(content_keys.size(), 2);
     EXPECT_EQ(content_keys[0], "test");
     EXPECT_EQ(content_keys[1], "foo");
 
-    ASSERT_EQ(2, content_values.size());
+    ASSERT_EQ(content_values.size(), 2);
     EXPECT_EQ(content_values[0], "red");
     EXPECT_EQ(content_values[1], "green");
+
+    ASSERT_EQ(functional_keys.size(), 2);
+    EXPECT_EQ(functional_keys[0], "");
+    EXPECT_EQ(functional_keys[1], "bar");
+
+    ASSERT_EQ(functional_values.size(), 2);
+    EXPECT_EQ(functional_values[0], "");
+    EXPECT_EQ(functional_values[1], "blue");
   }
 }
 

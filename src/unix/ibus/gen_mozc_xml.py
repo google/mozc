@@ -59,6 +59,8 @@ namespace {"""
 CPP_FOOTER = """}  // namespace
 #endif  // %s"""
 
+XDG_CURRENT_DESKTOP_URL = 'https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys'
+
 
 def GetXmlElement(key, value):
   if key == 'composition_mode':
@@ -113,6 +115,16 @@ def GetIbusConfigTextProto(engines):
       output.append(GetTextProtoElement(key, value))
     output.append('}')
   output.append('active_on_launch: False')
+  output.append('mozc_renderer {')
+  output.append("  # Set 'False' to use IBus' candidate window.")
+  output.append('  enabled : True')
+  output.append("  # For Wayland sessions, 'mozc_renderer' will be used if and "
+                "only if any value")
+  output.append('  # set in this field (e.g. "GNOME", "KDE") is found in '
+                '$XDG_CURRENT_DESKTOP.')
+  output.append(f'  # {XDG_CURRENT_DESKTOP_URL}')
+  output.append('  compatible_wayland_desktop_names : ["GNOME"]')
+  output.append('}')
   return '\n'.join(output)
 
 

@@ -47,7 +47,6 @@ namespace win32 {
 namespace {
 
 using ::testing::AssertionFailure;
-using ::testing::AssertionResult;
 using ::testing::AssertionSuccess;
 using ::WTL::CBitmap;
 using ::WTL::CIcon;

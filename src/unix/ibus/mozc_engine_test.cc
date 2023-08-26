@@ -30,15 +30,30 @@
 #include "unix/ibus/mozc_engine.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "client/client_mock.h"
 #include "protocol/commands.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "unix/ibus/ibus_config.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace ibus {
+namespace {
+
+bool CallCanUseMozcCandidateWindow(
+    const std::string &text_proto,
+    const absl::flat_hash_map<std::string, std::string> &env) {
+  IbusConfig ibus_config;
+  EXPECT_TRUE(ibus_config.LoadConfig(text_proto));
+  return CanUseMozcCandidateWindow(ibus_config, env);
+}
+
+}  // namespace
 
 using ::testing::_;
 using ::testing::Return;
@@ -90,6 +105,103 @@ TEST_F(LaunchToolTest, LaunchToolTest) {
   output.set_launch_tool_mode(commands::Output::CONFIG_DIALOG);
   EXPECT_CALL(*mock_, LaunchToolWithProtoBuf(_)).WillOnce(Return(false));
   EXPECT_FALSE(mozc_engine_->LaunchTool(output));
+}
+
+TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_X11) {
+  // Default enabled
+  EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+    }
+  )", {})) << "mozc_renderer is enabled by default";
+
+  EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+    }
+  )", {}));
+
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : False
+    }
+  )", {}));
+
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+    }
+  )", {
+    {"MOZC_IBUS_CANDIDATE_WINDOW", "ibus"}
+  })) << "MOZC_IBUS_CANDIDATE_WINDOW=ibus is still supported.";
+}
+
+TEST(MozcEngineTest, CanUseMozcCandidateWindowTest_Wayland) {
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+  }));
+
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : []
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+    {"XDG_CURRENT_DESKTOP", "GNOME"}
+  }));
+
+  EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : ["GNOME"]
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+    {"XDG_CURRENT_DESKTOP", "GNOME"}
+  }));
+
+  EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : ["GNOME"]
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+    {"XDG_CURRENT_DESKTOP", "KDE:GNOME"}
+  }));
+
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : ["GNOME"]
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+    {"XDG_CURRENT_DESKTOP", "KDE"}
+  }));
+
+  EXPECT_FALSE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : ["GNOME"]
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+  }));
+
+  EXPECT_TRUE(CallCanUseMozcCandidateWindow(R"(
+    mozc_renderer {
+      enabled : True
+      compatible_wayland_desktop_names : ["GNOME", "KDE"]
+    }
+  )", {
+    {"WAYLAND_DISPLAY", "wayland-0"},
+    {"XDG_CURRENT_DESKTOP", "KDE"}
+  }));
 }
 
 }  // namespace ibus

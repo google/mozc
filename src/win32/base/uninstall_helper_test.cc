@@ -57,8 +57,6 @@ constexpr GUID GUID_IMJPTIP = {
     {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
 constexpr LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
-constexpr DWORD kJapaneseKLID = 0xE0200411;
-
 }  // namespace
 
 TEST(UninstallHelperTest, BasicCaseForWin8) {

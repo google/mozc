@@ -27,18 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_BASE_KEYBOARD_H_
-#define MOZC_WIN32_BASE_KEYBOARD_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_BASE_KEYBOARD_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_BASE_KEYBOARD_H_
 
 #include <windows.h>
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "base/logging.h"
 
 namespace mozc {
 namespace win32 {
+
 class KeyboardStatus {
  public:
   KeyboardStatus() : status_({}) {}
@@ -83,23 +87,26 @@ class VirtualKey {
 
   // Construct an instance from a given |virtual_key|.
   // You cannot specify VK_PACKET for |virtual_key|.
-  static VirtualKey FromVirtualKey(BYTE virtual_key);
+  static constexpr VirtualKey FromVirtualKey(BYTE virtual_key) {
+    return VirtualKey(virtual_key, L'\0', L'\0');
+  }
   // Construct an instance from a given |combined_virtual_key|.
   // If the low word of |combined_virtual_key| is VK_PACKET,
   // the high word will be used as |wide_char_|.
   // Otherwise, the lowest byte of |combined_virtual_key| will be
   // used as |virtual_key_|.
-  static VirtualKey FromCombinedVirtualKey(UINT combined_virtual_key);
+  static constexpr VirtualKey FromCombinedVirtualKey(UINT combined_virtual_key);
   // Construct an instance from a given ucs4 character.
   // In this case, |virtual_key_| will be set to VK_PACKET.
-  static VirtualKey FromUnicode(char32_t unicode);
+  static constexpr VirtualKey FromUnicode(char32_t unicode);
 
   wchar_t wide_char() const;
   char32_t unicode_char() const;
   BYTE virtual_key() const;
 
  private:
-  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32_t unicode_char)
+  constexpr VirtualKey(BYTE virtual_key, wchar_t wide_char,
+                       char32_t unicode_char)
       : unicode_char_(unicode_char),
         wide_char_(wide_char),
         virtual_key_(virtual_key) {}
@@ -136,7 +143,9 @@ class Win32KeyboardInterface {
                         __in UINT wFlags) = 0;
 
   // Injection point for SendInput API.
-  virtual UINT SendInput(const std::vector<INPUT> &inputs) = 0;
+  // Note that the inputs are passed by value because the SendInput API requires
+  // LPINPUT (NOT const INPUT *).
+  virtual UINT SendInput(std::vector<INPUT> inputs) = 0;
 
   static std::unique_ptr<Win32KeyboardInterface> CreateDefault();
 };
@@ -165,6 +174,48 @@ class JapaneseKeyboardLayoutEmulator {
                                         const BYTE keyboard_state[256],
                                         bool is_menu_active);
 };
+
+namespace keyboard_internal {
+
+constexpr BYTE ParseVirtualKey(UINT combined_virtual_key) {
+  const uint16_t loword = LOWORD(combined_virtual_key);
+  if (loword <= 0xff) {
+    return loword;
+  }
+  DLOG(INFO) << "Unexpected VK found. VK = " << loword;
+  return 0;
+}
+
+constexpr wchar_t ParseWideChar(UINT combined_virtual_key) {
+  if (ParseVirtualKey(combined_virtual_key) == VK_PACKET) {
+    return HIWORD(combined_virtual_key);
+  } else {
+    return 0;
+  }
+}
+
+}  // namespace keyboard_internal
+
+constexpr VirtualKey VirtualKey::FromCombinedVirtualKey(
+    UINT combined_virtual_key) {
+  const BYTE vk = keyboard_internal::ParseVirtualKey(combined_virtual_key);
+  const wchar_t wchar = keyboard_internal::ParseWideChar(combined_virtual_key);
+  char32_t unicode_char = 0;
+  if (!IS_HIGH_SURROGATE(wchar) && !IS_LOW_SURROGATE(wchar)) {
+    unicode_char = wchar;
+  }
+
+  return VirtualKey(vk, wchar, unicode_char);
+}
+
+constexpr VirtualKey VirtualKey::FromUnicode(char32_t unicode_char) {
+  wchar_t wchar = L'\0';
+  if (unicode_char <= 0xffff) {
+    wchar = static_cast<wchar_t>(unicode_char);
+  }
+  return VirtualKey(VK_PACKET, wchar, unicode_char);
+}
+
 }  // namespace win32
 }  // namespace mozc
-#endif  // MOZC_WIN32_BASE_KEYBOARD_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_BASE_KEYBOARD_H_

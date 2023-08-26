@@ -80,8 +80,6 @@ AdministrationDialog::AdministrationDialog()
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
-AdministrationDialog::~AdministrationDialog() {}
-
 bool AdministrationDialog::CanStartService() {
 #ifdef _WIN32
   if (!CacheServiceEnabledcheckBox->isChecked()) {

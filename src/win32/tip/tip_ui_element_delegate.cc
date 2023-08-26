@@ -136,9 +136,6 @@ wil::unique_bstr GetResourceString(UINT resource_id) {
   return MakeUniqueBSTR(std::wstring_view(str.GetBuffer(), str.GetLength()));
 }
 
-constexpr bool kIsIndicator = true;
-constexpr bool kIsNotIndicator = false;
-
 class TipUiElementDelegateImpl final : public TipUiElementDelegate {
  public:
   TipUiElementDelegateImpl(const TipUiElementDelegateImpl &) = delete;

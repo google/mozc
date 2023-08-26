@@ -1540,7 +1540,8 @@ TEST_F(DictionaryPredictorTest, Dedup) {
                                         absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
+    // kTcMaxCountPerKey: 2
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 2);
   }
 }
 
@@ -1552,8 +1553,6 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   // turn on mobile mode
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
-  request_->mutable_decoder_experiment_params()
-      ->set_use_typing_correction_diff_cost(true);
   request_->mutable_decoder_experiment_params()
       ->set_typing_correction_max_count(5);
   std::vector<Result> results = {

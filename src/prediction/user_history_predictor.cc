@@ -73,6 +73,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc::prediction {
 namespace {
@@ -119,7 +120,7 @@ constexpr char kFileName[] = "user://.history.db";
 constexpr absl::string_view kDelimiter = "\t";
 constexpr absl::string_view kEmojiDescription = "絵文字";
 
-const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
+constexpr absl::Duration k62Days = absl::Hours(62 * 24);
 
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
@@ -308,9 +309,9 @@ int UserHistoryStorage::DeleteEntriesBefore(uint64_t timestamp) {
 }
 
 int UserHistoryStorage::DeleteEntriesUntouchedFor62Days() {
-  const uint64_t now = Clock::GetTime();
-  const uint64_t timestamp = (now > k62DaysInSec) ? now - k62DaysInSec : 0;
-  return DeleteEntriesBefore(timestamp);
+  const absl::Time now = Clock::GetAbslTime();
+  const absl::Time timestamp = std::max(now - k62Days, absl::UnixEpoch());
+  return DeleteEntriesBefore(absl::ToUnixSeconds(timestamp));
 }
 
 bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
@@ -1228,9 +1229,9 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
   prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
 
   // Check the timestamp of prev_entry.
-  const uint64_t now = Clock::GetTime();
+  const absl::Time now = Clock::GetAbslTime();
   if (prev_entry != nullptr &&
-      prev_entry->last_access_time() + k62DaysInSec < now) {
+      absl::FromUnixSeconds(prev_entry->last_access_time()) + k62Days < now) {
     updated_ = true;  // We found an entry to be deleted at next save.
     return nullptr;
   }
@@ -1296,13 +1297,13 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   std::unique_ptr<Trie<std::string>> expanded;
   GetInputKeyFromSegments(request, segments, &input_key, &base_key, &expanded);
 
-  const uint64_t now = Clock::GetTime();
+  const absl::Time now = Clock::GetAbslTime();
   int trial = 0;
   for (const DicElement *elm = dic_->Head(); elm != nullptr; elm = elm->next) {
     if (!IsValidEntryIgnoringRemovedField(elm->value)) {
       continue;
     }
-    if (elm->value.last_access_time() + k62DaysInSec < now) {
+    if (absl::FromUnixSeconds(elm->value.last_access_time()) + k62Days < now) {
       updated_ = true;  // We found an entry to be deleted at next save.
       continue;
     }
@@ -1520,7 +1521,7 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint64_t last_access_time = Clock::GetTime();
+  const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
   const uint32_t dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
@@ -1690,7 +1691,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
                                        : DEFAULT;
   const bool is_suggestion =
       request.request_type() != ConversionRequest::CONVERSION;
-  const uint64_t last_access_time = Clock::GetTime();
+  const uint64_t last_access_time = absl::ToUnixSeconds(Clock::GetAbslTime());
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatenating the top element in LRU and

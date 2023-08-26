@@ -29,8 +29,8 @@
 
 // Windows specific string utility functions.
 
-#ifndef MOZC_WIN32_BASE_STRING_UTIL_H_
-#define MOZC_WIN32_BASE_STRING_UTIL_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_BASE_STRING_UTIL_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_BASE_STRING_UTIL_H_
 
 #include <windows.h>
 
@@ -68,4 +68,4 @@ class StringUtil {
 }  // namespace win32
 }  // namespace mozc
 
-#endif  // MOZC_WIN32_BASE_STRING_UTIL_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_BASE_STRING_UTIL_H_

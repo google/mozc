@@ -579,21 +579,7 @@ TEST_F(TypingCorrectorTest, Cost) {
 
   {
     TypingCorrector corrector(request_.get(), &table, 30, 30);
-    corrector.SetConfig(&config_);
-    corrector.InsertCharacter(create_input());
-
-    std::vector<TypeCorrectedQuery> queries;
-    corrector.GetQueriesForPrediction(&queries);
-    ASSERT_EQ(queries.size(), 1);
-    EXPECT_EQ(queries[0].base, "b");
-    EXPECT_NEAR(queries[0].cost, -500 * log(0.25), 2);
-  }
-
-  {
-    TypingCorrector corrector(request_.get(), &table, 30, 30);
     Request request;
-    request.mutable_decoder_experiment_params()
-        ->set_use_typing_correction_diff_cost(true);
     corrector.SetRequest(&request);
     corrector.SetConfig(&config_);
     corrector.InsertCharacter(create_input());

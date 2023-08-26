@@ -29,15 +29,19 @@
 
 #include "session/session_watch_dog.h"
 
-#include <string>
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "client/client_mock.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -48,106 +52,75 @@ namespace {
 using ::testing::Mock;
 using ::testing::Return;
 
+// Returns the given CPU load values in order.
 class TestCPUStats : public CPUStatsInterface {
  public:
-  TestCPUStats() : cpu_loads_index_(0) {}
+  explicit TestCPUStats(std::vector<float> cpu_loads) {
+    Set(std::move(cpu_loads));
+  }
 
   float GetSystemCPULoad() override {
-    absl::MutexLock l(&mutex_);
-    CHECK_LT(cpu_loads_index_, cpu_loads_.size());
-    return cpu_loads_[cpu_loads_index_++];
+    absl::MutexLock lock(&mutex_);
+    CHECK_GT(cpu_loads_.size(), 0);
+    float load = cpu_loads_.back();
+    cpu_loads_.pop_back();
+    return load;
   }
 
   float GetCurrentProcessCPULoad() override { return 0.0; }
 
-  size_t GetNumberOfProcessors() const override {
-    return static_cast<size_t>(1);
-  }
+  size_t GetNumberOfProcessors() const override { return size_t{1}; }
 
-  void SetCPULoads(const std::vector<float> &cpu_loads) {
-    absl::MutexLock l(&mutex_);
-    cpu_loads_index_ = 0;
-    cpu_loads_ = cpu_loads;
+  void Set(std::vector<float> cpu_loads) {
+    absl::MutexLock lock(&mutex_);
+    cpu_loads_ = std::move(cpu_loads);
+    std::reverse(cpu_loads_.begin(), cpu_loads_.end());
   }
 
  private:
   absl::Mutex mutex_;
-  std::vector<float> cpu_loads_;
-  int cpu_loads_index_;
+  std::vector<float> cpu_loads_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace
 
-class SessionWatchDogTest : public testing::Test {
- protected:
-  void InitializeClient(mozc::client::ClientMock &client) {
-    EXPECT_CALL(client, PingServer()).WillRepeatedly(Return(true));
-    ON_CALL(client, Cleanup()).WillByDefault(Return(true));
-  }
-};
+client::ClientMock *CreateMockClient() {
+  auto *client = new client::ClientMock();
+  EXPECT_CALL(*client, PingServer()).WillRepeatedly(Return(true));
+  ON_CALL(*client, Cleanup()).WillByDefault(Return(true));
+  return client;
+}
 
-TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
-  constexpr absl::Duration kInterval = absl::Seconds(1);  // for every 1 sec
-  mozc::SessionWatchDog watchdog(kInterval);
-  EXPECT_FALSE(watchdog.IsRunning());  // not running
+TEST(SessionWatchDogTest, SessionWatchDogTest) {
+  constexpr absl::Duration kInterval = absl::Seconds(1);
+  auto *client = CreateMockClient();
+  auto stats = std::make_unique<TestCPUStats>(std::vector<float>(10, 0.0f));
+  EXPECT_CALL(*client, Cleanup()).Times(5);
+
+  SessionWatchDog watchdog(kInterval, absl::WrapUnique(client),
+                           std::move(stats));
   EXPECT_EQ(watchdog.interval(), kInterval);
 
-  mozc::client::ClientMock client;
-  InitializeClient(client);
-  mozc::TestCPUStats stats;
-
-  std::vector<float> cpu_loads;
-  // no CPU loads
-  for (int i = 0; i < 20; ++i) {
-    cpu_loads.push_back(0.0);
-  }
-  stats.SetCPULoads(cpu_loads);
-
-  watchdog.SetClientInterface(&client);
-  watchdog.SetCPUStatsInterface(&stats);
-  Mock::VerifyAndClearExpectations(&client);
-  EXPECT_CALL(client, Cleanup()).Times(5);
-  watchdog.Start("SessionWatchDogTest");  // start
-
   absl::SleepFor(absl::Milliseconds(100));
-  EXPECT_TRUE(watchdog.IsRunning());
   EXPECT_EQ(watchdog.interval(), kInterval);
 
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
   Mock::VerifyAndClearExpectations(&client);
 
-  EXPECT_CALL(client, Cleanup()).Times(5);
+  EXPECT_CALL(*client, Cleanup()).Times(5);
   absl::SleepFor(absl::Milliseconds(5000));  // 10.5 sec
-
-  watchdog.Terminate();
 }
 
-TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
-  constexpr absl::Duration kInterval = absl::Seconds(1);  // for every 1 sec
-  mozc::SessionWatchDog watchdog(kInterval);
-  EXPECT_FALSE(watchdog.IsRunning());  // not running
+TEST(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
+  constexpr absl::Duration kInterval = absl::Seconds(1);
+  auto *client = CreateMockClient();
+  auto *cpu_loads = new TestCPUStats(std::vector<float>(20, 0.8f));
+
+  mozc::SessionWatchDog watchdog(kInterval, absl::WrapUnique(client),
+                                 absl::WrapUnique(cpu_loads));
   EXPECT_EQ(watchdog.interval(), kInterval);
 
-  mozc::client::ClientMock client;
-  InitializeClient(client);
-  mozc::TestCPUStats stats;
-
-  std::vector<float> cpu_loads;
-  // high CPU loads
-  for (int i = 0; i < 20; ++i) {
-    cpu_loads.push_back(0.8);
-  }
-  stats.SetCPULoads(cpu_loads);
-
-  watchdog.SetClientInterface(&client);
-  watchdog.SetCPUStatsInterface(&stats);
-
-  Mock::VerifyAndClearExpectations(&client);
-
-  watchdog.Start("SessionWatchDogCPUStatsTest");  // start
-
   absl::SleepFor(absl::Milliseconds(100));
-  EXPECT_TRUE(watchdog.IsRunning());
   EXPECT_EQ(watchdog.interval(), kInterval);
   absl::SleepFor(absl::Milliseconds(5500));  // 5.5 sec
 
@@ -155,70 +128,45 @@ TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
   Mock::VerifyAndClearExpectations(&client);
 
   // CPU loads become low
-  EXPECT_CALL(client, Cleanup()).Times(5);
-  cpu_loads.clear();
-  for (int i = 0; i < 20; ++i) {
-    cpu_loads.push_back(0.0);
-  }
-  stats.SetCPULoads(cpu_loads);
+  EXPECT_CALL(*client, Cleanup()).Times(5);
+  cpu_loads->Set(std::vector<float>(20, 0.0f));
 
   absl::SleepFor(absl::Milliseconds(5000));  // 5 sec
-
-  watchdog.Terminate();
 }
 
-TEST_F(SessionWatchDogTest, SessionCanSendCleanupCommandTest) {
-  volatile float cpu_loads[16];
-
+TEST(SessionWatchDogTest, SessionCanSendCleanupCommandTest) {
   mozc::SessionWatchDog watchdog(absl::Seconds(2));
-
-  cpu_loads[0] = 0.0;
-  cpu_loads[1] = 0.0;
 
   // suspend
   EXPECT_FALSE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 2, absl::FromUnixSeconds(5), absl::FromUnixSeconds(0)));
+      {0.0, 0.0}, absl::FromUnixSeconds(5), absl::FromUnixSeconds(0)));
 
   // not suspend
   EXPECT_TRUE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 2, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
+      {0.0, 0.0}, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
 
   // error (the same time stamp)
   EXPECT_FALSE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 2, absl::FromUnixSeconds(0), absl::FromUnixSeconds(0)));
+      {0.0, 0.0}, absl::FromUnixSeconds(0), absl::FromUnixSeconds(0)));
 
-  cpu_loads[0] = 0.4;
-  cpu_loads[1] = 0.5;
-  cpu_loads[2] = 0.4;
-  cpu_loads[3] = 0.6;
   // average CPU loads >= 0.33
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand({0.4, 0.5, 0.4, 0.6},
+                                              absl::FromUnixSeconds(1),
+                                              absl::FromUnixSeconds(0)));
 
-  cpu_loads[0] = 0.1;
-  cpu_loads[1] = 0.1;
-  cpu_loads[2] = 0.7;
-  cpu_loads[3] = 0.7;
   // recent CPU loads >= 0.66
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand({0.1, 0.1, 0.7, 0.7},
+                                              absl::FromUnixSeconds(1),
+                                              absl::FromUnixSeconds(0)));
 
-  cpu_loads[0] = 1.0;
-  cpu_loads[1] = 1.0;
-  cpu_loads[2] = 1.0;
-  cpu_loads[3] = 1.0;
-  cpu_loads[4] = 0.1;
-  cpu_loads[5] = 0.1;
   // average CPU loads >= 0.33
-  EXPECT_FALSE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 6, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
+  EXPECT_FALSE(watchdog.CanSendCleanupCommand({1.0, 1.0, 1.0, 1.0, 0.1, 0.1},
+                                              absl::FromUnixSeconds(1),
+                                              absl::FromUnixSeconds(0)));
 
-  cpu_loads[0] = 0.1;
-  cpu_loads[1] = 0.1;
-  cpu_loads[2] = 0.1;
-  cpu_loads[3] = 0.1;
-  EXPECT_TRUE(watchdog.CanSendCleanupCommand(
-      cpu_loads, 4, absl::FromUnixSeconds(1), absl::FromUnixSeconds(0)));
+  EXPECT_TRUE(watchdog.CanSendCleanupCommand({0.1, 0.1, 0.1, 0.1, 0.1},
+                                             absl::FromUnixSeconds(1),
+                                             absl::FromUnixSeconds(0)));
 }
 
 }  // namespace mozc

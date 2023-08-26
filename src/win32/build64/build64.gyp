@@ -43,8 +43,8 @@
           'target_name': 'mozc_win32_build64',
           'type': 'none',
           'dependencies': [
-            '../../renderer/renderer.gyp:mozc_renderer',
-            '../../server/server.gyp:mozc_server',
+            '<(mozc_oss_src_dir)/renderer/renderer.gyp:mozc_renderer',
+            '<(mozc_src_dir)/server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker',
             '../cache_service/cache_service.gyp:mozc_cache_service',
             '../custom_action/custom_action.gyp:mozc_custom_action',

@@ -32,6 +32,7 @@
 
 #include <windows.h>
 
+#include <cstddef>
 #include <initializer_list>
 #include <ostream>
 #include <type_traits>

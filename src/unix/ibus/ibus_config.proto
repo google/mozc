@@ -35,6 +35,8 @@ message Config {
   repeated Engine engines = 1;
   // Whether IME is on (i.e. Hiragana mode) in the initial state.
   optional bool active_on_launch = 2;
+  // Configurations for 'mozc_renderer'.
+  optional MozcRendererConfig mozc_renderer = 3;
 }
 
 message Engine {
@@ -58,4 +60,13 @@ message Engine {
   // Composition mode switched every time this engine is enabled.
   // The value NONE does not change the composition mode.
   optional CompositionMode composition_mode = 8 [default = NONE];
+}
+
+message MozcRendererConfig {
+  // Set 'False' to use IBus' candidate window.
+  optional bool enabled = 1 [default = true];
+  // For Wayland sessions, 'mozc_renderer' will be used if and only if any value
+  // set in this field (e.g. "GNOME", "KDE") is found in $XDG_CURRENT_DESKTOP.
+  // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys
+  repeated string compatible_wayland_desktop_names = 2;
 }

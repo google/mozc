@@ -60,7 +60,7 @@
             '<(proto_out_dir)/<(relative_dir)/win32_service_state.pb.cc',
           ],
           'dependencies': [
-            '../../protobuf/protobuf.gyp:protobuf',
+            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
             'genproto_service_state',
           ],
           'export_dependent_settings': [
@@ -86,8 +86,8 @@
             'cache_service_manager.cc',
           ],
           'dependencies': [
-            '../../base/base.gyp:base',
-            '../../base/base.gyp:encryptor',
+            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_src_dir)/base/base.gyp:encryptor',
             'service_state_orotocol',
           ],
         },

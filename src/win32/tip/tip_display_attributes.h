@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
-#define MOZC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
+#ifndef THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
+#define THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
 
 #include <msctf.h>
 #include <windows.h>
@@ -46,7 +46,7 @@ class TipDisplayAttribute : public TipComImplements<ITfDisplayAttributeInfo> {
  public:
   // ITfDisplayAttributeInfo interface methods
   virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid);
-  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *descriptoin);
+  virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *description);
   virtual HRESULT STDMETHODCALLTYPE
   GetAttributeInfo(TF_DISPLAYATTRIBUTE *attribute);
   virtual HRESULT STDMETHODCALLTYPE
@@ -90,4 +90,4 @@ class TipDisplayAttributeConverted : public TipDisplayAttribute {
 }  // namespace win32
 }  // namespace mozc
 
-#endif  // MOZC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_
+#endif  // THIRD_PARTY_MOZC_SRC_WIN32_TIP_TIP_DISPLAY_ATTRIBUTES_H_

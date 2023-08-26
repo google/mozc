@@ -181,7 +181,7 @@
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../win32/cache_service/cache_service.gyp:cache_service_manager',
+            '<(mozc_oss_src_dir)/win32/cache_service/cache_service.gyp:cache_service_manager',
           ],
         }],
       ],
@@ -607,7 +607,7 @@
       'conditions': [
         ['OS=="win"', {
           'dependencies': [
-            '../win32/base/win32_base.gyp:ime_base',
+            '<(mozc_oss_src_dir)/win32/base/win32_base.gyp:ime_base',
           ],
         }],
       ],
@@ -639,7 +639,7 @@
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../protocol/protocol.gyp:commands_proto',
-        '../renderer/renderer.gyp:renderer_client',
+        '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
       ],
     },
     {
@@ -735,7 +735,7 @@
           ],
           'dependencies': [
             '../base/base.gyp:base',
-            '../win32/base/win32_base.gyp:ime_base',
+            '<(mozc_oss_src_dir)/win32/base/win32_base.gyp:ime_base',
             'gen_mozc_tool_header',
           ],
           'msvs_settings': {

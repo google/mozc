@@ -30,9 +30,10 @@
 #include "win32/base/deleter.h"
 
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 #include "protocol/commands.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
@@ -48,30 +49,28 @@ constexpr uint64_t kOutputId = 0x12345678;
 class KeyboardMock : public Win32KeyboardInterface {
  public:
   KeyboardMock() = default;
-  KeyboardMock(const KeyboardMock &) = delete;
-  KeyboardMock &operator=(const KeyboardMock &) = delete;
 
-  virtual bool IsKanaLocked(const KeyboardStatus &keyboard_state) {
+  bool IsKanaLocked(const KeyboardStatus &keyboard_state) override {
     return keyboard_state.IsPressed(VK_KANA);
   }
 
-  virtual bool SetKeyboardState(const KeyboardStatus &keyboard_state) {
+  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
     key_state_ = keyboard_state;
     return true;
   }
 
-  virtual bool GetKeyboardState(KeyboardStatus *keyboard_state) {
+  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
     *keyboard_state = key_state_;
     return true;
   }
 
-  virtual bool AsyncIsKeyPressed(int virtual_key) {
+  bool AsyncIsKeyPressed(int virtual_key) override {
     return async_key_state_.IsPressed(virtual_key);
   }
 
-  virtual int ToUnicode(UINT virtual_key, UINT scan_code, const BYTE *key_state,
-                        LPWSTR unicode_buffer, int unicode_buffer_num_elements,
-                        UINT flags) {
+  int ToUnicode(UINT virtual_key, UINT scan_code, const BYTE *key_state,
+                LPWSTR unicode_buffer, int unicode_buffer_num_elements,
+                UINT flags) override {
     // We use a mock class in case the Japanese keyboard layout is not
     // available on this system.  This emulator class should work well in most
     // cases.  It returns an unicode character (if any) as if Japanese keyboard
@@ -81,9 +80,9 @@ class KeyboardMock : public Win32KeyboardInterface {
         unicode_buffer_num_elements, flags);
   }
 
-  virtual UINT SendInput(const std::vector<INPUT> &inputs) {
-    last_send_input_data_ = inputs;
-    return inputs.size();
+  UINT SendInput(std::vector<INPUT> inputs) override {
+    last_send_input_data_ = std::move(inputs);
+    return last_send_input_data_.size();
   }
 
   const KeyboardStatus &key_state() const { return key_state_; }
@@ -143,7 +142,7 @@ TEST(VKBackBasedDeleterTest, BeginDeletionTest_DeletionCountZero) {
 }
 
 TEST(VKBackBasedDeleterTest, NormalSequence) {
-  const UINT kLastKey = 'A';
+  constexpr UINT kLastKey = 'A';
 
   KeyboardMock *keyboard_mock = new KeyboardMock();
 
@@ -258,7 +257,7 @@ TEST(VKBackBasedDeleterTest, NormalSequence) {
 }
 
 TEST(VKBackBasedDeleterTest, BeginDeletion_InsuccessfulCase) {
-  const UINT kLastKey = 'A';
+  constexpr UINT kLastKey = 'A';
 
   KeyboardMock *keyboard_mock = new KeyboardMock();
 

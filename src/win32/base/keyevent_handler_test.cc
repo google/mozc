@@ -36,29 +36,33 @@
 // clang-format on
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/version.h"
 #include "client/client.h"
 #include "client/client_interface.h"
+#include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
+#include "session/key_info_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/strings/string_view.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 
-using commands::Context;
-using commands::Output;
+using ::mozc::commands::Context;
+using ::mozc::commands::Output;
 
 class TestableKeyEventHandler : public KeyEventHandler {
  public:
@@ -69,8 +73,8 @@ class TestableKeyEventHandler : public KeyEventHandler {
   using KeyEventHandler::UnlockKanaLock;
 };
 
-const BYTE kPressed = 0x80;
-const BYTE kToggled = 0x01;
+constexpr BYTE kPressed = 0x80;
+constexpr BYTE kToggled = 0x01;
 LPARAM CreateLParam(uint16_t repeat_count, uint8_t scan_code,
                     bool is_extended_key, bool has_context_code,
                     bool is_previous_state_down, bool is_in_transition_state) {
@@ -101,7 +105,7 @@ class TestServerLauncher : public client::ServerLauncherInterface {
   virtual void Wait() {}
   virtual void Error() {}
 
-  virtual bool StartServer(client::ClientInterface *client) {
+  bool StartServer(client::ClientInterface *client) override {
     if (!response_.empty()) {
       factory_->SetMockResponse(response_);
     }
@@ -110,13 +114,13 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     return start_server_result_;
   }
 
-  virtual bool ForceTerminateServer(const absl::string_view name) {
+  bool ForceTerminateServer(const absl::string_view name) override {
     return true;
   }
 
-  virtual bool WaitServer(uint32_t pid) { return true; }
+  bool WaitServer(uint32_t pid) override { return true; }
 
-  virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
+  void OnFatal(ServerLauncherInterface::ServerErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);
     error_map_[static_cast<int>(type)]++;
   }
@@ -131,13 +135,13 @@ class TestServerLauncher : public client::ServerLauncherInterface {
     start_server_called_ = start_server_called;
   }
 
-  virtual void set_restricted(bool restricted) {}
+  void set_restricted(bool restricted) override {}
 
-  virtual void set_suppress_error_dialog(bool suppress) {}
+  void set_suppress_error_dialog(bool suppress) override {}
 
-  virtual void set_server_program(const absl::string_view server_path) {}
+  void set_server_program(const absl::string_view server_path) override {}
 
-  virtual const std::string &server_program() const {
+  const std::string &server_program() const override {
     static const std::string path;
     return path;
   }
@@ -174,27 +178,26 @@ class KeyboardMock : public Win32KeyboardInterface {
       key_state_.SetState(VK_KANA, kPressed);
     }
   }
-  KeyboardMock(const KeyboardMock &) = delete;
-  KeyboardMock &operator=(const KeyboardMock &) = delete;
+
   bool kana_locked() const {
     return ((key_state_.GetState(VK_KANA) & kPressed) == kPressed);
   }
-  virtual bool IsKanaLocked(const KeyboardStatus & /*keyboard_state*/) {
+  bool IsKanaLocked(const KeyboardStatus & /*keyboard_state*/) override {
     return kana_locked();
   }
-  virtual bool SetKeyboardState(const KeyboardStatus &keyboard_state) {
+  bool SetKeyboardState(const KeyboardStatus &keyboard_state) override {
     key_state_ = keyboard_state;
     return true;
   }
-  virtual bool GetKeyboardState(KeyboardStatus *keyboard_state) {
+  bool GetKeyboardState(KeyboardStatus *keyboard_state) override {
     *keyboard_state = key_state_;
     return true;
   }
-  virtual bool AsyncIsKeyPressed(int virtual_key) {
+  bool AsyncIsKeyPressed(int virtual_key) override {
     return key_state_.IsPressed(virtual_key);
   }
-  virtual int ToUnicode(UINT wVirtKey, UINT wScanCode, const BYTE *lpKeyState,
-                        LPWSTR pwszBuff, int cchBuff, UINT wFlags) {
+  int ToUnicode(UINT wVirtKey, UINT wScanCode, const BYTE *lpKeyState,
+                LPWSTR pwszBuff, int cchBuff, UINT wFlags) override {
     // We use a mock class in case the Japanese keyboard layout is not
     // available on this system.  This emulator class should work well in most
     // cases.  It returns an unicode character (if any) as if Japanese keyboard
@@ -202,7 +205,7 @@ class KeyboardMock : public Win32KeyboardInterface {
     return JapaneseKeyboardLayoutEmulator::ToUnicode(
         wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff, wFlags);
   }
-  virtual UINT SendInput(const std::vector<INPUT> &input) {
+  UINT SendInput(std::vector<INPUT> inputs) override {
     // Not implemented.
     return 0;
   }
@@ -246,12 +249,15 @@ class MockState {
 
 class KeyEventHandlerTest : public testing::TestWithTempUserProfile {
  protected:
-  virtual void SetUp() {
+  KeyEventHandlerTest() {
+    LOG(ERROR) << "GetDefaultConfig";
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
+    LOG(ERROR) << "SetConfig";
     mozc::config::ConfigHandler::SetConfig(default_config_);
+    LOG(ERROR) << "Leaving constructor";
   }
 
-  virtual void TearDown() {
+  ~KeyEventHandlerTest() override {
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }
 
@@ -262,12 +268,12 @@ class KeyEventHandlerTest : public testing::TestWithTempUserProfile {
   std::vector<KeyInformation> GetDirectModeKeysCtrlJToEnableIME() const {
     config::Config config = default_config_;
 
-    const char custom_keymap_table[] =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "DirectInput\tCtrl j\tIMEOn\n";
 
     config.set_session_keymap(mozc::config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
 
     return KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
@@ -276,12 +282,12 @@ class KeyEventHandlerTest : public testing::TestWithTempUserProfile {
       const {
     config::Config config = default_config_;
 
-    const char custom_keymap_table[] =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "DirectInput\tCtrl \\\tIMEOn\n";
 
     config.set_session_keymap(mozc::config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
 
     return KeyInfoUtil::ExtractSortedDirectModeKeys(config);
   }
@@ -318,9 +324,10 @@ TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_DBE_DBCSCHAR, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey =
+        VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -330,7 +337,7 @@ TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
         initial_state.logical_conversion_mode;
 
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -395,7 +402,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_ESCAPE, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_ESCAPE);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_ESCAPE);
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x01,     // scan_code
                                             false,    // is_extended_key,
@@ -411,7 +418,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -458,7 +465,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -474,7 +481,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -516,9 +523,9 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
 
   // Ctrl+J
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('J');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('J');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('J', kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -532,7 +539,7 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -593,9 +600,9 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem102) {
 
   // Ctrl+\ (VK_OEM_102; Backslash in 106/109 Japanese Keyboard)
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_OEM_102);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_OEM_102);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_OEM_102, kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -609,7 +616,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem102) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -670,9 +677,9 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem5) {
 
   // Ctrl+\ (VK_OEM_5; Yen in 106/109 Japanese Keyboard)
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_OEM_5);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_OEM_5);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_OEM_5, kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -686,7 +693,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135VkOem5) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -749,9 +756,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
 
   // Ctrl+H should be sent to the server as 'h' + |KeyEvent::CTRL|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -765,7 +772,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -829,9 +836,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
   // Ctrl+Shift+H should be sent to the server as
   // 'h' + |KeyEvent::CTRL| + |KeyEvent::Shift|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -846,7 +853,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -904,9 +911,9 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
 
   // [CapsLock] h should be sent to the server as 'H' + |KeyEvent::Caps|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_CAPITAL, kToggled);
@@ -920,7 +927,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -978,9 +985,9 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
   // [CapsLock] Shift+H should be sent to the server as
   // 'h' + |KeyEvent::Caps|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -995,7 +1002,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1053,9 +1060,9 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
   // [CapsLock] Ctrl+H should be sent to the server as
   // 'H' + |KeyEvent::CTRL| + |KeyEvent::Caps|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -1070,7 +1077,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1129,9 +1136,9 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
   // [CapsLock] Ctrl+Shift+H should be sent to the server as
   // 'h' + |KeyEvent::CTRL| + |KeyEvent::Shift| + |KeyEvent::Caps|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('H');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('H');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('H', kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -1147,7 +1154,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1219,9 +1226,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
   // Ctrl+^ should be sent to the server as '^' + |KeyEvent::CTRL|.
   {
     // '^' on 106/109 Japanese keyboard.
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_OEM_7);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_OEM_7);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_OEM_7, kPressed);
     keyboard_status.SetState(VK_CONTROL, kPressed);
@@ -1235,7 +1242,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1302,9 +1309,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
   // VK_7 + VK_SHIFT + VK_CONTROL must not be sent to the server as
   // '\'' + |KeyEvent::CTRL| nor '7' + |KeyEvent::CTRL| + |KeyEvent::SHIFT|.
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('7');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('7');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('7', kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -1319,7 +1326,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1363,9 +1370,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
   // VK_SPACE + VK_SHIFT + VK_CONTROL must be sent to the server as
   // |KeyEvent::SPACE| + |KeyEvent::CTRL| + |KeyEvent::SHIFT|
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SPACE);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_SPACE);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_SPACE, kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -1380,7 +1387,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1443,9 +1450,9 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
   // VK_BACK + VK_SHIFT + VK_CONTROL must be sent to the server as
   // |KeyEvent::BACKSPACE| + |KeyEvent::CTRL| + |KeyEvent::SHIFT|
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_BACK);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_BACK);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_BACK, kPressed);
     keyboard_status.SetState(VK_SHIFT, kPressed);
@@ -1460,7 +1467,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -1522,7 +1529,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247KeyUpShouldNotBeEaten) {
 
     const VirtualKey last_keydown_virtual_key =
         VirtualKey::FromVirtualKey(VK_F6);
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_F6);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_F6);
     const LParamKeyInfo lparam(CreateLParam(0x0001,  // repeat_count
                                             0x40,    // scan_code
                                             false,   // is_extended_key,
@@ -1541,7 +1548,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247KeyUpShouldNotBeEaten) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1583,7 +1590,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_SHIFT, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SHIFT);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_SHIFT);
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x2a,     // scan_code
                                             false,    // is_extended_key,
@@ -1601,7 +1608,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1618,7 +1625,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
 
     const VirtualKey previous_virtual_key =
         VirtualKey::FromVirtualKey(VK_SHIFT);
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_SHIFT);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_SHIFT);
     const LParamKeyInfo lparam(CreateLParam(0x0001,  // repeat_count
                                             0x2a,    // scan_code
                                             false,   // is_extended_key,
@@ -1637,7 +1644,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1704,7 +1711,7 @@ TEST_F(KeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -1715,7 +1722,7 @@ TEST_F(KeyEventHandlerTest,
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1783,7 +1790,8 @@ TEST_F(KeyEventHandlerTest,
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_DBE_KATAKANA, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_DBE_KATAKANA);
+    constexpr VirtualKey kVirtualKey =
+        VirtualKey::FromVirtualKey(VK_DBE_KATAKANA);
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x70,     // scan_code
                                             false,    // is_extended_key,
@@ -1794,7 +1802,7 @@ TEST_F(KeyEventHandlerTest,
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1867,7 +1875,7 @@ TEST_F(KeyEventHandlerTest,
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -1878,7 +1886,7 @@ TEST_F(KeyEventHandlerTest,
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -1944,7 +1952,7 @@ TEST_F(KeyEventHandlerTest, CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrl) {
     keyboard_status.SetState(VK_CONTROL, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -1955,7 +1963,7 @@ TEST_F(KeyEventHandlerTest, CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrl) {
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -2021,7 +2029,7 @@ TEST_F(KeyEventHandlerTest,
     keyboard_status.SetState(VK_CONTROL, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -2032,7 +2040,7 @@ TEST_F(KeyEventHandlerTest,
 
     Output output;
     result = TestableKeyEventHandler::ImeProcessKey(
-        virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
+        kVirtualKey, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
         keyboard_status, behavior, initial_state, context,
         mock.mutable_client(), &keyboard, &next_state, &output);
 
@@ -2087,9 +2095,10 @@ TEST_F(KeyEventHandlerTest, Issue2801503ModeChangeWhenIMEIsGoingToBeTurnedOff) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_DBE_DBCSCHAR, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey =
+        VirtualKey::FromVirtualKey(VK_DBE_DBCSCHAR);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     // Assume that the temporal half-alphanumeric is on-going.
@@ -2100,7 +2109,7 @@ TEST_F(KeyEventHandlerTest, Issue2801503ModeChangeWhenIMEIsGoingToBeTurnedOff) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -2144,9 +2153,9 @@ TEST_F(KeyEventHandlerTest, Issue3029665KanaLockedWo) {
 
   // "を"
   {
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('0');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('0');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     KeyboardStatus keyboard_status;
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState('0', kPressed);
@@ -2160,7 +2169,7 @@ TEST_F(KeyEventHandlerTest, Issue3029665KanaLockedWo) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -2218,9 +2227,9 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftHenkanShouldBeValid) {
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_CONVERT, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_CONVERT);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_CONVERT);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2231,7 +2240,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftHenkanShouldBeValid) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
   }
@@ -2281,9 +2290,10 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftMuhenkanShouldBeValid) {
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState(VK_NONCONVERT, kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_NONCONVERT);
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey =
+        VirtualKey::FromVirtualKey(VK_NONCONVERT);
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2294,7 +2304,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571ShiftMuhenkanShouldBeValid) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
   }
@@ -2344,9 +2354,9 @@ TEST_F(KeyEventHandlerTest, Issue7098463HideSuggestWindow) {
     KeyboardStatus keyboard_status;
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2357,7 +2367,7 @@ TEST_F(KeyEventHandlerTest, Issue7098463HideSuggestWindow) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
   }
@@ -2675,14 +2685,14 @@ TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
   {
     KeyboardStatus keyboard_status;
 
-    const wchar_t kHiraganaA = L'\u3042';
-    const VirtualKey virtual_key = VirtualKey::FromCombinedVirtualKey(
+    constexpr wchar_t kHiraganaA = L'\u3042';
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromCombinedVirtualKey(
         (static_cast<DWORD>(kHiraganaA) << 16) | VK_PACKET);
-    const VirtualKey last_keydown_virtual_key =
+    constexpr VirtualKey kLastKeydownVirtualKey =
         VirtualKey::FromVirtualKey(VK_ESCAPE);
 
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2693,7 +2703,7 @@ TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -2744,10 +2754,10 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
   {
     KeyboardStatus keyboard_status;
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_CAPITAL);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_CAPITAL);
 
-    const BYTE scan_code = 0;  // will be ignored in this test;
-    const bool is_key_down = true;
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test;
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2758,7 +2768,7 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -2812,10 +2822,10 @@ TEST_F(KeyEventHandlerTest, KanjiKeyIssue7970379) {
   {
     KeyboardStatus keyboard_status;
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey(VK_KANJI);
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey(VK_KANJI);
 
-    const BYTE scan_code = 0;  // will be ignored in this test;
-    const bool is_key_down = true;
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test;
+    constexpr bool kIsKeyDown = true;
 
     InputState initial_state;
     initial_state.logical_conversion_mode =
@@ -2826,7 +2836,7 @@ TEST_F(KeyEventHandlerTest, KanjiKeyIssue7970379) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 
@@ -2873,9 +2883,9 @@ TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
     keyboard_status.SetState(VK_SHIFT, kPressed);
     keyboard_status.SetState('A', kPressed);
 
-    const VirtualKey virtual_key = VirtualKey::FromVirtualKey('A');
-    const BYTE scan_code = 0;  // will be ignored in this test
-    const bool is_key_down = true;
+    constexpr VirtualKey kVirtualKey = VirtualKey::FromVirtualKey('A');
+    constexpr BYTE kScanCode = 0;  // will be ignored in this test
+    constexpr bool kIsKeyDown = true;
     const LParamKeyInfo lparam(CreateLParam(0x0001,   // repeat_count
                                             0x1e,     // scan_code
                                             false,    // is_extended_key,
@@ -2886,7 +2896,7 @@ TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
 
     Output output;
     result = TestableKeyEventHandler::ImeToAsciiEx(
-        virtual_key, scan_code, is_key_down, keyboard_status, behavior,
+        kVirtualKey, kScanCode, kIsKeyDown, keyboard_status, behavior,
         initial_state, context, mock.mutable_client(), &keyboard, &next_state,
         &output);
 

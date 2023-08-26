@@ -34,9 +34,9 @@
 
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"
+#include "absl/strings/str_cat.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
-#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace renderer {

@@ -60,8 +60,8 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "renderer/renderer_client.h"
 #include "absl/strings/string_view.h"
+#include "renderer/renderer_client.h"
 
 using mozc::kProductNameInEnglish;
 using mozc::MacProcess;

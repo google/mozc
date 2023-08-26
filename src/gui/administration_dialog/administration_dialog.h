@@ -42,7 +42,7 @@ class AdministrationDialog : public QDialog, private Ui::AdministrationDialog {
 
  public:
   AdministrationDialog();
-  ~AdministrationDialog() override;
+  ~AdministrationDialog() override = default;
 
  protected slots:
   virtual void clicked(QAbstractButton *button);

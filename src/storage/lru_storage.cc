@@ -92,7 +92,7 @@ void Update(char *ptr, uint64_t fp, const char *value, size_t value_size) {
 }
 
 bool IsOlderThan62Days(uint64_t timestamp) {
-  const uint64_t now = Clock::GetTime();
+  const uint64_t now = absl::ToUnixSeconds(Clock::GetAbslTime());
   return (timestamp + k62DaysInSec < now);
 }
 
@@ -561,7 +561,7 @@ int LruStorage::DeleteElementsBefore(uint32_t timestamp) {
 }
 
 int LruStorage::DeleteElementsUntouchedFor62Days() {
-  const uint64_t now = Clock::GetTime();
+  const uint64_t now = absl::ToUnixSeconds(Clock::GetAbslTime());
   const uint32_t timestamp =
       static_cast<uint32_t>((now > k62DaysInSec) ? now - k62DaysInSec : 0);
   return DeleteElementsBefore(timestamp);

@@ -29,39 +29,31 @@
 
 #include "win32/base/indicator_visibility_tracker.h"
 
-#include <cstdint>
-#include <memory>
-
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/time/time.h"
+#include "win32/base/keyboard.h"
 
 namespace mozc {
 namespace win32 {
 namespace {
 
-const uint64_t kWaitDuration = 500;  // msec
-const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
+constexpr absl::Duration kWaitDuration = absl::Milliseconds(500);
+constexpr VirtualKey kAKey = VirtualKey::FromVirtualKey('A');
 
 class IndicatorVisibilityTrackerTest : public testing::Test {
  protected:
-  virtual void SetUp() {
-    clock_mock_.reset(new ClockMock(0, 0));
-    Clock::SetClockForUnitTest(clock_mock_.get());
+  IndicatorVisibilityTrackerTest() : clock_mock_(absl::UnixEpoch()) {
+    Clock::SetClockForUnitTest(&clock_mock_);
   }
 
   virtual void TearDown() { Clock::SetClockForUnitTest(nullptr); }
 
-  void PutForwardMilliseconds(uint64_t milli_sec) {
-    clock_mock_->PutClockForward(
-        milli_sec / absl::ToInt64Milliseconds(absl::Seconds(1)),
-        milli_sec % absl::ToInt64Milliseconds(absl::Seconds(1)));
-  }
+  void Advance(absl::Duration d) { clock_mock_.Advance(d); }
 
  private:
-  std::unique_ptr<ClockMock> clock_mock_;
+  ClockMock clock_mock_;
 };
 
 TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
@@ -84,34 +76,34 @@ TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
-  // |kWaitDuration/2| msec later -> WindowMove -> Visible
-  PutForwardMilliseconds(kWaitDuration / 2);
+  // |kWaitDuration/2| later -> WindowMove -> Visible
+  Advance(kWaitDuration / 2);
   EXPECT_EQ(tracker.OnMoveFocusedWindow(),
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());
 
-  // |kWaitDuration*2| msec later -> WindowMove -> Invisible
-  PutForwardMilliseconds(kWaitDuration * 2);
+  // |kWaitDuration*2| later -> WindowMove -> Invisible
+  Advance(kWaitDuration * 2);
   EXPECT_EQ(tracker.OnMoveFocusedWindow(),
             IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());
 
   EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(tracker.OnTestKey(AKey, true, false),
+  EXPECT_EQ(tracker.OnTestKey(kAKey, true, false),
             IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());  // TestKeyDown -> Invisible
   EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(tracker.OnKey(AKey, true, false),
+  EXPECT_EQ(tracker.OnKey(kAKey, true, false),
             IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_FALSE(tracker.IsVisible());  // KeyDown -> Invisible
   EXPECT_EQ(tracker.OnChangeInputMode(), IndicatorVisibilityTracker::kUpdateUI);
   EXPECT_TRUE(tracker.IsVisible());  // ChangeInputMode -> Visible
-  EXPECT_EQ(tracker.OnTestKey(AKey, false, false),
+  EXPECT_EQ(tracker.OnTestKey(kAKey, false, false),
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());  // TestKeyUp -> Visible
-  EXPECT_EQ(tracker.OnKey(AKey, false, false),
+  EXPECT_EQ(tracker.OnKey(kAKey, false, false),
             IndicatorVisibilityTracker::kNothing);
   EXPECT_TRUE(tracker.IsVisible());  // KeyUp -> Visible
 }

@@ -55,6 +55,7 @@
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
@@ -408,9 +409,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 
   rewriter->Clear();
 
-  constexpr uint64_t kSeconds = 0;
-  constexpr uint32_t kMicroSeconds = 0;
-  ClockMock clock(kSeconds, kMicroSeconds);
+  ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
   {
@@ -424,7 +423,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
     rewriter->Finish(request_, &segments);  // learn "candidate2"
 
     // Next timestamp of learning should be newer than previous learning.
-    clock.PutClockForward(1, 0);
+    clock.Advance(absl::Seconds(1));
 
     InitSegments(&segments, 2);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -444,7 +443,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
     EXPECT_EQ(segments.segment(1).candidate(0).value, "candidate3");
     rewriter->Finish(request_, &segments);  // learn "candidate3"
 
-    clock.PutClockForward(1, 0);
+    clock.Advance(absl::Seconds(1));
 
     InitSegments(&segments, 3);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -468,7 +467,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
     EXPECT_EQ(segments.segment(2).candidate(0).value, "candidate2");
     rewriter->Finish(request_, &segments);  // learn "candidate2"
 
-    clock.PutClockForward(1, 0);
+    clock.Advance(absl::Seconds(1));
 
     InitSegments(&segments, 4);
     segments.mutable_segment(0)->move_candidate(2, 0);
@@ -500,9 +499,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 
   rewriter->Clear();
 
-  constexpr uint64_t kSeconds = 0;
-  constexpr uint32_t kMicroSeconds = 0;
-  ClockMock clock(kSeconds, kMicroSeconds);
+  ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
   {
@@ -522,7 +519,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    clock.PutClockForward(1, 0);
+    clock.Advance(absl::Seconds(1));
     rewriter->Finish(request_, &segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(request_, &segments);
@@ -534,7 +531,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    clock.PutClockForward(1, 0);
+    clock.Advance(absl::Seconds(1));
     rewriter->Finish(request_, &segments);
     InitSegments(&segments, 1);
     rewriter->Rewrite(request_, &segments);
@@ -1372,9 +1369,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 
   rewriter->Clear();
 
-  constexpr uint64_t kSeconds = 0;
-  constexpr uint32_t kMicroSeconds = 0;
-  ClockMock clock(kSeconds, kMicroSeconds);
+  ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
   InitSegments(&segments, 1);
@@ -1393,7 +1388,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  clock.PutClockForward(1, 0);
+  clock.Advance(absl::Seconds(1));
   rewriter->Finish(request_, &segments);
 
   InitSegments(&segments, 1);
@@ -1405,7 +1400,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::RERANKED;
   segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-  clock.PutClockForward(1, 0);
+  clock.Advance(absl::Seconds(1));
   rewriter->Finish(request_, &segments);
 
   InitSegments(&segments, 1);
@@ -1500,9 +1495,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
 
-  constexpr uint64_t kSeconds = 0;
-  constexpr uint32_t kMicroSeconds = 0;
-  ClockMock clock(kSeconds, kMicroSeconds);
+  ClockMock clock(absl::UnixEpoch());
   Clock::SetClockForUnitTest(&clock);
 
   rewriter->Clear();
@@ -1520,7 +1513,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
     InitSegments(&segments, 1);
     rewriter->Rewrite(request_, &segments);
     EXPECT_EQ(segments.segment(0).candidate(0).value, expected);
-    clock.PutClockForward(1, 0);  // update LRU timer
+    clock.Advance(absl::Seconds(1));  // update LRU timer
   }
 
   Clock::SetClockForUnitTest(nullptr);

@@ -106,6 +106,7 @@ mozc_cc_test(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/time",
     ],
 )
 

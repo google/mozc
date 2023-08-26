@@ -53,6 +53,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace composer {
@@ -3301,15 +3302,14 @@ TEST_F(ComposerTest, CheckTimeout) {
   table_->AddRule("い{!}", "い", "");
   table_->AddRule("い1", "", "う");
 
-  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
-  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  mozc::ScopedClockMock clock(absl::UnixEpoch() + absl::Hours(24));
 
   EXPECT_EQ(composer_->timeout_threshold_msec(), 0);
 
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
-  clock->PutClockForward(3, 0);  // +3.0 sec
+  clock->Advance(absl::Seconds(3));
 
   // Because the threshold is not set, STOP_KEY_TOGGLING is not sent.
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
@@ -3322,11 +3322,13 @@ TEST_F(ComposerTest, CheckTimeout) {
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
-  clock->PutClockForward(3, 0);  // +3.0 sec
+  clock->Advance(absl::Seconds(3));
+
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "ああ");
 
-  clock->PutClockForward(0, 700'000);  // +0.7 sec
+  clock->Advance(absl::Milliseconds(700));
+
   ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "あい");
 }
@@ -3338,13 +3340,13 @@ TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
   table_->AddRule("い{!}", "い", "");
   table_->AddRule("い1", "", "う");
 
-  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
-  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  mozc::ScopedClockMock clock(absl::UnixEpoch() + absl::Hours(24));
 
   config_->set_composing_timeout_threshold_msec(500);
   composer_->Reset();  // The threshold should be updated to 500msec.
 
-  uint64_t timestamp_msec = kBaseSeconds * 1000;
+  int64_t timestamp_msec =
+      absl::ToUnixMillis(absl::UnixEpoch() + absl::Hours(24));
 
   KeyEvent key_event;
   key_event.set_key_code('1');
@@ -3352,20 +3354,20 @@ TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ(GetPreedit(composer_.get()), "あ");
 
-  clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
-  timestamp_msec += 3000;              // +3.0 sec in proto.
+  clock->Advance(absl::Milliseconds(100));
+  timestamp_msec += 3000;  // +3.0 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ(GetPreedit(composer_.get()), "ああ");
 
-  clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
-  timestamp_msec += 700;               // +0.7 sec in proto.
+  clock->Advance(absl::Milliseconds(100));
+  timestamp_msec += 700;  // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ(GetPreedit(composer_.get()), "あああ");
 
-  clock->PutClockForward(3, 0);  // +3.0 sec in the global clock
-  timestamp_msec += 100;         // +0.7 sec in proto.
+  clock->Advance(absl::Milliseconds(300));
+  timestamp_msec += 100;  // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ(GetPreedit(composer_.get()), "ああい");
@@ -3380,31 +3382,31 @@ TEST_F(ComposerTest, SimultaneousInput) {
   table_->AddRule("いd", "れ", "");    // kd → れ
   table_->AddRule("zl", "→", "");      // normal conversion w/o timeout
 
-  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
-  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  mozc::ScopedClockMock clock(absl::UnixEpoch() + absl::Hours(24));
   composer_->set_timeout_threshold_msec(50);
 
   ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "い");
 
-  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  clock->Advance(absl::Milliseconds(30));  // < 50 msec
   ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "れ");
 
-  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  clock->Advance(absl::Milliseconds(30));  // < 50 msec
   ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "れい");
 
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
   ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "れいか");
 
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
+
   ASSERT_TRUE(InsertKeyWithMode("z", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "れいかｚ");
 
   // Even after timeout, normal conversions work.
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
   ASSERT_TRUE(InsertKeyWithMode("l", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "れいか→");
 }
@@ -3475,8 +3477,7 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
   table_->AddRule("{henkan}j", "お", "");
   table_->AddRule("と{henkan}", "お", "");
 
-  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
-  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  mozc::ScopedClockMock clock(absl::UnixEpoch() + absl::Hours(24));
   composer_->set_timeout_threshold_msec(50);
 
   // "j"
@@ -3484,32 +3485,32 @@ TEST_F(ComposerTest, SimultaneousInputWithSpecialKey6) {
   EXPECT_EQ(GetPreedit(composer_.get()), "と");
 
   // "j{henkan}"
-  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  clock->Advance(absl::Milliseconds(30));  // < 50 msec
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "お");
 
   // "j{henkan}j"
-  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  clock->Advance(absl::Milliseconds(30));  // < 50 msec
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おと");
 
   // "j{henkan}j{!}{henkan}"
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おと");
 
   // "j{henkan}j{!}{henkan}{!}j"
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おとと");
 
   // "j{henkan}j{!}{henkan}{!}j{!}{henkan}"
-  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  clock->Advance(absl::Milliseconds(200));  // > 50 msec
   ASSERT_TRUE(InsertKeyWithMode("Henkan", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おとと");
 
   // "j{henkan}j{!}{henkan}{!}j{!}{henkan}j"
-  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  clock->Advance(absl::Milliseconds(30));  // < 50 msec
   ASSERT_TRUE(InsertKeyWithMode("j", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ(GetPreedit(composer_.get()), "おととお");
 }

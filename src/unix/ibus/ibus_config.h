@@ -30,8 +30,8 @@
 #ifndef MOZC_UNIX_IBUS_IBUS_CONFIG_H_
 #define MOZC_UNIX_IBUS_IBUS_CONFIG_H_
 
-#include <map>
 #include <string>
+#include <vector>
 
 #include "unix/ibus/ibus_config.pb.h"
 #include "absl/strings/string_view.h"
@@ -57,6 +57,8 @@ class IbusConfig {
   const std::string &GetLayout(absl::string_view name) const;
   const ibus::Config &GetConfig() const;
   bool IsActiveOnLaunch() const;
+  bool IsMozcRendererEnabled() const;
+  std::vector<std::string> GetMozcRendererCompatibleWaylandDesktopNames() const;
 
   ibus::Engine::CompositionMode GetCompositionMode(
       absl::string_view engine_name) const;
