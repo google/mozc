@@ -48,7 +48,7 @@
           'conditions': [
             ['use_qt!="YES"', {
               'dependencies': [
-                '<(mozc_src_dir)/gui/gui.gyp:mozc_tool',
+                '<(mozc_oss_src_dir)/gui/gui.gyp:mozc_tool',
               ],
             }],
           ],

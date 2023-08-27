@@ -39,9 +39,9 @@
 #include "dictionary/user_dictionary_util.h"
 #ifdef _WIN32
 #include "dictionary/user_dictionary_importer.h"
+#include "usage_stats/usage_stats.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
-#include "usage_stats/usage_stats.h"
 #include "win32/base/imm_util.h"
 #endif  // _WIN32
 

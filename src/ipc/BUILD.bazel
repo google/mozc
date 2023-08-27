@@ -317,6 +317,5 @@ proto_library(
 
 cc_proto_library(
     name = "window_info_cc_proto",
-    visibility = ["//:__subpackages__"],
     deps = [":window_info_proto"],
 )

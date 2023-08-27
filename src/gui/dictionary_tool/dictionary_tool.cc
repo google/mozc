@@ -67,14 +67,14 @@
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
+#include "protocol/user_dictionary_storage.pb.h"
+#include "absl/time/time.h"
 #include "gui/base/encoding_util.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
-#include "protocol/user_dictionary_storage.pb.h"
-#include "absl/time/time.h"
 
 #ifdef _WIN32
 #include "gui/base/win_util.h"

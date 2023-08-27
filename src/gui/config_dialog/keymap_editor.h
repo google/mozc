@@ -36,11 +36,11 @@
 #include <memory>
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/generic_table_editor.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
-#include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 namespace gui {

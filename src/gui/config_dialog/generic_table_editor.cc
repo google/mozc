@@ -44,9 +44,9 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "gui/base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/container/btree_set.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
