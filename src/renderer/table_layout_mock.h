@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef THIRD_PARTY_MOZC_SRC_RENDERER_TABLE_LAYOUT_MOCK_H_
-#define THIRD_PARTY_MOZC_SRC_RENDERER_TABLE_LAYOUT_MOCK_H_
+#ifndef MOZC_RENDERER_TABLE_LAYOUT_MOCK_H_
+#define MOZC_RENDERER_TABLE_LAYOUT_MOCK_H_
 
 #include "testing/gmock.h"
 #include "renderer/table_layout_interface.h"
@@ -66,4 +66,4 @@ class TableLayoutMock : public TableLayoutInterface {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // THIRD_PARTY_MOZC_SRC_RENDERER_TABLE_LAYOUT_MOCK_H_
+#endif  // MOZC_RENDERER_TABLE_LAYOUT_MOCK_H_
