@@ -593,7 +593,7 @@ bool DictionaryTool::eventFilter(QObject *obj, QEvent *event) {
   // Seems that all pending changes are committed to the UI
   // AFTER DictionaryTool receives ApplicationDeactivate event.
   // Here we delayed the execution of OnDeactivate() using QTimer.
-  // This is an workaround for http://b/2190275.
+  // This is a workaround for http://b/2190275.
   // TODO(taku): Find out a better way.
   if (event->type() == QEvent::ApplicationDeactivate) {
     constexpr int kDelayOnDeactivateTime = 200;
@@ -773,7 +773,7 @@ void DictionaryTool::ImportAndCreateDictionary() {
     return;
   }
 
-  ImportHelper(0,  // dic_id == 0 means that "CreateNewDictonary" mode
+  ImportHelper(0,  // dic_id == 0 means that "CreateNewDictionary" mode
                import_dialog_->dic_name().toStdString(),
                import_dialog_->file_name().toStdString(),
                import_dialog_->ime_type(), import_dialog_->encoding_type());
