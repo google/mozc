@@ -31,6 +31,8 @@
 
 #include <QHeaderView>
 #include <QtGui>
+
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -81,7 +83,7 @@ QString GroupToString(const std::string &str) {
   return QString::fromUtf8(str.c_str());
 }
 
-const std::string StringToGroup(const QString &str) {
+std::string StringToGroup(const QString &str) {
   if (str == QObject::tr("Katakana")) {
     // return "ア";
     return "ア";

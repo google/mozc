@@ -49,6 +49,7 @@
 #endif  // _WIN32
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <ios>
 #include <iosfwd>
@@ -59,7 +60,6 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/run_level.h"
 #include "base/util.h"
 #include "client/client.h"
 #include "data_manager/pos_list_provider.h"
@@ -68,15 +68,17 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/status/status.h"
 #include "absl/time/time.h"
 #include "gui/base/encoding_util.h"
-#include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 
 #ifdef _WIN32
+#include "base/run_level.h"
+#include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #endif  // _WIN32
 

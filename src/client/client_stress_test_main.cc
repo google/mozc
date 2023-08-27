@@ -27,10 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
-
-#include "client/client.h"
+#include <memory>
+#include <ostream>
+#include <string>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,12 +42,9 @@
 #include <unistd.h>
 #endif  // _WIN32
 
-#include <memory>
-#include <ostream>
-#include <vector>
-
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "client/client.h"
 #include "protocol/renderer_command.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"

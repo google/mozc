@@ -29,6 +29,7 @@
 
 #include "gui/base/encoding_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 

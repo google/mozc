@@ -31,10 +31,10 @@
 
 #include <QMessageBox>
 
-#include "base/run_level.h"
 #include "config/stats_config_util.h"
 #include "gui/base/util.h"
 #ifdef _WIN32
+#include "base/run_level.h"
 #include "win32/cache_service/cache_service_manager.h"
 #endif  // _WIN32
 

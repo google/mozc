@@ -35,12 +35,7 @@
 
 #include <QtGui>
 
-#ifdef __APPLE__
-#include <cstdlib>
-#ifndef IGNORE_INVALID_FLAG
-#include <iostream>
-#endif  // IGNORE_INVALID_FLAG
-#endif  // __APPLE__
+#include <string>
 
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
@@ -54,6 +49,10 @@
 #include "gui/base/debug_util.h"
 
 #ifdef __APPLE__
+#include <cstdlib>
+#ifndef IGNORE_INVALID_FLAG
+#include <iostream>
+#endif  // IGNORE_INVALID_FLAG
 #include "base/const.h"
 #endif  // __APPLE__
 

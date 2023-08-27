@@ -34,10 +34,8 @@
 #endif  // _WIN32
 
 #include <QtGui>
-#include <cstdint>
 
 #include "base/logging.h"
-#include "base/process.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "usage_stats/usage_stats.h"

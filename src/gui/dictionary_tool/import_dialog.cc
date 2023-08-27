@@ -34,7 +34,6 @@
 
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "gui/base/util.h"
 
 namespace mozc {
