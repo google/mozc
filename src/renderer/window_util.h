@@ -29,8 +29,8 @@
 
 // WindowUtil: OS-independent utility functions to manage candidate windows
 
-#ifndef THIRD_PARTY_MOZC_SRC_RENDERER_WINDOW_UTIL_H_
-#define THIRD_PARTY_MOZC_SRC_RENDERER_WINDOW_UTIL_H_
+#ifndef MOZC_RENDERER_WINDOW_UTIL_H_
+#define MOZC_RENDERER_WINDOW_UTIL_H_
 
 #include "base/coordinates.h"
 
@@ -95,4 +95,4 @@ class WindowUtil {
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // THIRD_PARTY_MOZC_SRC_RENDERER_WINDOW_UTIL_H_
+#endif  // MOZC_RENDERER_WINDOW_UTIL_H_

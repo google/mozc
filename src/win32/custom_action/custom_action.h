@@ -29,8 +29,8 @@
 
 // The custom actions created for installing the IME.
 
-#ifndef THIRD_PARTY_MOZC_SRC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_
-#define THIRD_PARTY_MOZC_SRC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_
+#ifndef MOZC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_
+#define MOZC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_
 
 // clang-format off
 #include <windows.h>
@@ -101,4 +101,4 @@ UINT __stdcall WriteApValue(MSIHANDLE msi_handle);
 // A rollback custom action for WriteApValue.
 UINT __stdcall WriteApValueRollback(MSIHANDLE msi_handle);
 
-#endif  // THIRD_PARTY_MOZC_SRC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_
+#endif  // MOZC_WIN32_CUSTOM_ACTION_CUSTOM_ACTION_H_

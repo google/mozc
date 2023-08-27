@@ -29,8 +29,8 @@
 
 // Pool of Client instances, implemented with LruCache.
 
-#ifndef THIRD_PARTY_MOZC_SRC_UNIX_EMACS_CLIENT_POOL_H_
-#define THIRD_PARTY_MOZC_SRC_UNIX_EMACS_CLIENT_POOL_H_
+#ifndef MOZC_UNIX_EMACS_CLIENT_POOL_H_
+#define MOZC_UNIX_EMACS_CLIENT_POOL_H_
 
 #include <memory>
 
@@ -68,4 +68,4 @@ class ClientPool {
 }  // namespace emacs
 }  // namespace mozc
 
-#endif  // THIRD_PARTY_MOZC_SRC_UNIX_EMACS_CLIENT_POOL_H_
+#endif  // MOZC_UNIX_EMACS_CLIENT_POOL_H_
