@@ -82,8 +82,8 @@ void Loop(std::istream *input, std::ostream *output) {
       LOG(ERROR) << "Command failure";
     }
 
-    *output << command.Utf8DebugString();
-    LOG(INFO) << command.Utf8DebugString();
+    *output << proto2::Utf8Format(command);
+    LOG(INFO) << proto2::Utf8Format(command);
   }
 }
 

@@ -115,24 +115,23 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   const std::string &command = args[0];
 
   if (command == "SHOW_ALL") {
-    std::cout << handler.LastOutput().Utf8DebugString() << std::endl;
+    std::cout << proto2::Utf8Format(handler.LastOutput()) << std::endl;
     return;
   }
   if (command == "SHOW_OUTPUT") {
     commands::Output output = handler.LastOutput();
     output.mutable_removed_candidate_words_for_debug()->Clear();
-    std::cout << output.Utf8DebugString() << std::endl;
+    std::cout << proto2::Utf8Format(output) << std::endl;
     return;
   }
   if (command == "SHOW_CANDIDATES") {
-    std::cout << handler.LastOutput().candidates().Utf8DebugString()
+    std::cout << proto2::Utf8Format(handler.LastOutput().candidates())
               << std::endl;
     return;
   }
   if (command == "SHOW_REMOVED_CANDIDATES") {
-    std::cout << handler.LastOutput()
-                     .removed_candidate_words_for_debug()
-                     .Utf8DebugString()
+    std::cout << proto2::Utf8Format(
+                     handler.LastOutput().removed_candidate_words_for_debug())
               << std::endl;
     return;
   }
