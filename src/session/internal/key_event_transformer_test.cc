@@ -36,6 +36,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace session {
@@ -53,7 +54,7 @@ namespace {
       return ::testing::AssertionFailure()
              << "Key doesn't exist in RHS: key = " << key;
     }
-    if (event.DebugString() != iter->second.DebugString()) {
+    if (absl::StrCat(event) != absl::StrCat(iter->second)) {
       return ::testing::AssertionFailure()
              << "Value mismatch for key = " << key;
     }
