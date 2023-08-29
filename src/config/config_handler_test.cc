@@ -94,8 +94,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
   output2->mutable_general_config()->set_last_modified_time(0);
-  EXPECT_EQ(output.DebugString(), input.DebugString());
-  EXPECT_EQ(output2->DebugString(), input.DebugString());
+  EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
+  EXPECT_EQ(absl::StrCat(*output2), absl::StrCat(input));
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
@@ -111,8 +111,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
   output2->mutable_general_config()->set_last_modified_time(0);
-  EXPECT_EQ(output.DebugString(), input.DebugString());
-  EXPECT_EQ(output2->DebugString(), input.DebugString());
+  EXPECT_EQ(absl::StrCat(output), absl::StrCat(input));
+  EXPECT_EQ(absl::StrCat(*output2), absl::StrCat(input));
 
 #if defined(__ANDROID__) && defined(CHANNEL_DEV)
   input.Clear();
@@ -153,9 +153,9 @@ TEST_F(ConfigHandlerTest, SetMetadata) {
 
   // input1 and input2 are created at the same time,
   // but input3 is not.
-  EXPECT_EQ(input1.DebugString(), input2.DebugString());
-  EXPECT_NE(input2.DebugString(), input3.DebugString());
-  EXPECT_NE(input3.DebugString(), input1.DebugString());
+  EXPECT_EQ(absl::StrCat(input1), absl::StrCat(input2));
+  EXPECT_NE(absl::StrCat(input2), absl::StrCat(input3));
+  EXPECT_NE(absl::StrCat(input3), absl::StrCat(input1));
   Clock::SetClockForUnitTest(nullptr);
 }
 
@@ -190,7 +190,7 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
   // As SetConfig() is called twice with the same config,
   // GetConfig() must return the identical (including metadata!) config.
   // This also means no actual storage write access happened.
-  EXPECT_EQ(output1->DebugString(), output2->DebugString());
+  EXPECT_EQ(absl::StrCat(*output1), absl::StrCat(*output2));
   Clock::SetClockForUnitTest(nullptr);
 }
 
@@ -303,7 +303,7 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
 TEST_F(ConfigHandlerTest, DefaultConfig) {
   Config config;
   ConfigHandler::GetDefaultConfig(&config);
-  EXPECT_EQ(ConfigHandler::DefaultConfig().DebugString(), config.DebugString());
+  EXPECT_EQ(absl::StrCat(ConfigHandler::DefaultConfig()), absl::StrCat(config));
 }
 
 // Returns concatenated serialized data of |Config::character_form_rules|.

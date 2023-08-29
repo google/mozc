@@ -366,10 +366,10 @@ int main(int argc, char *argv[]) {
       std::vector<mozc::commands::KeyEvent> keys;
       key_events_generator.GenerateSequence(&keys);
       for (size_t i = 0; i < keys.size(); ++i) {
-        LOG(INFO) << "Sending to Server: " << keys[i].Utf8DebugString();
+        LOG(INFO) << "Sending to Server: " << proto2::Utf8Format(keys[i]);
         mozc::commands::Output output;
         CHECK(client.SendKey(keys[i], &output));
-        LOG(INFO) << "Output of SendKey: " << output.Utf8DebugString();
+        LOG(INFO) << "Output of SendKey: " << proto2::Utf8Format(output);
       }
     }
     CHECK(client.DeleteSession());

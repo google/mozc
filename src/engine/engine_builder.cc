@@ -117,7 +117,7 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
             init_data_manager(request, data_manager.get());
         status != DataManager::Status::OK) {
       LOG(ERROR) << "Failed to load data [" << status << "] "
-                 << request.Utf8DebugString();
+                 << proto2::Utf8Format(request);
       response.set_status(ConvertStatus(status));
       return {std::move(response), std::move(data_manager)};
     }
@@ -126,7 +126,8 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
       if (absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
                                                     request.install_location());
           !s.ok()) {
-        LOG(ERROR) << "Copy faild: " << request.Utf8DebugString() << ": " << s;
+        LOG(ERROR) << "Copy faild: " << proto2::Utf8Format(request) << ": "
+                   << s;
         response.set_status(EngineReloadResponse::INSTALL_FAILURE);
         return {
             std::move(response),
