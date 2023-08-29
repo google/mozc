@@ -32,7 +32,9 @@
 
 #include <cstdint>
 
-#include "base/thread.h"
+#include "base/thread2.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/synchronization/mutex.h"
 
 #ifdef _WIN32
@@ -43,77 +45,83 @@
 
 // Usage:
 //
-// class MyProcessWatchDog {
-//   void Signaled(SignalType sginal_type) {
-//      std::cout << "signaled! " << std::endl;
-//   }
-// }
-//
-// MyProcessWatchDog dog;
-// dog.SetID(pid, tid, -1);
+// ProcessWatchDog dog([](SignalType signal_type) {
+//    std::cout << "signaled!" << std::endl;
+// });
+// dog.SetId(pid, tid);
 
 namespace mozc {
 
-class ProcessWatchDog : public Thread {
+class ProcessWatchDog {
  public:
-  enum SignalType {
-    UNKNOWN_SIGNALED = 0,                // default value. nerver be signaled.
-    PROCESS_SIGNALED = 1,                // process is signaled,
-    PROCESS_NOT_FOUND_SIGNALED = 3,      // process id was not found
-    PROCESS_ACCESS_DENIED_SIGNALED = 4,  // operation was not allowed
-    PROCESS_ERROR_SIGNALED = 5,         // unknown error in getting process info
-    THREAD_SIGNALED = 6,                // thread is signaled
-    THREAD_NOT_FOUND_SIGNALED = 7,      // thread id was not found
-    THREAD_ACCESS_DENIED_SIGNALED = 8,  // operation was not allowed
-    THREAD_ERROR_SIGNALED = 9,          // unknown error in getting thread info
-    TIMEOUT_SIGNALED = 10,              // timeout is signaled
+  enum class SignalType {
+    UNKNOWN = 0,                // default value. nerver be signaled.
+    PROCESS_SIGNALED = 1,       // process is signaled,
+    PROCESS_NOT_FOUND = 3,      // process id was not found
+    PROCESS_ACCESS_DENIED = 4,  // operation was not allowed
+    PROCESS_ERROR = 5,          // unknown error in getting process info
+    THREAD_SIGNALED = 6,        // thread is signaled
+    THREAD_NOT_FOUND = 7,       // thread id was not found
+    THREAD_ACCESS_DENIED = 8,   // operation was not allowed
+    THREAD_ERROR = 9,           // unknown error in getting thread info
+    TIMEOUT = 10,               // timeout is signaled
   };
 
+  using Handler = absl::AnyInvocable<void(SignalType)>;
+
 #ifdef _WIN32
-  typedef uint32_t ProcessID;
-  typedef uint32_t ThreadID;
+  using ProcessId = uint32_t;
+  using ThreadId = uint32_t;
 #else   // _WIN32
-  typedef pid_t ProcessID;
+  using ProcessId = pid_t;
   // Linux/Mac has no way to export ThreadID to other process.
   // For instance, Mac's thread id is just a pointer to the some
   // internal data structure (_opaque_pthread_t*).
-  typedef uint32_t ThreadID;
-#endif  // _WIN32
+  using ThreadId = uint32_t;
+#endif  // !_WIN32
 
-  static constexpr ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
-  static constexpr ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
+  static constexpr ProcessId kUnknownProcessId = ~ProcessId{0};
+  static constexpr ThreadId kUnknownThreadId = ~ProcessId{0};
 
-  // Define a signal handler.
-  // if the given process or thread is terminated, Signaled() is called
-  // with SignalType defined above.
-  // Please note that Signaled() is called from different thread.
-  virtual void Signaled(ProcessWatchDog::SignalType type) {}
+  // Creates and starts the watchdog with `handler`. If the given process or
+  // thread is terminated, `handler` is invoked with `SignalType` defined above.
+  // Please note that `handler` is invoked from different thread.
+  explicit ProcessWatchDog(Handler handler);
 
-  // Reset process id and thread id.
-  // You can set UnknownProcessID/UnknownProcessID if
-  // they are unknown or not needed to be checked.
-  // This function returns immediately.
-  // You can set the timeout for the signal.
-  // If timeout is negative, it waits forever.
-  bool SetID(ProcessID process_id, ThreadID thread_id, int timeout);
+  // Stops the watchdog and joins the background thread.
+  ~ProcessWatchDog();
 
-  // internally used by thread
-  void Run() override;
-
-  ProcessWatchDog();
-  ~ProcessWatchDog() override;
-  void StartWatchDog();
-  void StopWatchDog();
+  // Resets pid and tid to watch. You can pass
+  // kUnknownProcessId/kUnknownProcessId if they are unknown or not needed to be
+  // checked.
+  bool SetId(ProcessId process_id, ThreadId thread_id)
+      ABSL_LOCKS_EXCLUDED(mutex_);
 
  private:
-#ifdef _WIN32
-  wil::unique_event_nothrow event_;
-#endif  // _WIN32
-  ProcessID process_id_;
-  ThreadID thread_id_;
-  int timeout_;
-  volatile bool is_finished_;
+  // Notifies the background of control operation i.e. pid_, tid_ or stop_ has
+  // been changed.
+  bool SignalControlOperation() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  void ThreadMain();
+
   absl::Mutex mutex_;
+  ProcessId pid_ ABSL_GUARDED_BY(mutex_) = kUnknownProcessId;
+  ThreadId tid_ ABSL_GUARDED_BY(mutex_) = kUnknownThreadId;
+  // Set to true to notify the background thread of termination.
+  // Use mutex-guarded boolean instead of `absl::Notification` so that we can
+  // `Await()` for pid/tid change and termination signal all at once.
+  bool terminating_ ABSL_GUARDED_BY(mutex_) = false;
+#ifdef _WIN32
+  // Used to interrupt `WaitForMultipleObjects` to perform control operations.
+  wil::unique_event_nothrow event_;
+#else   // _WIN32
+  // Set to true when any of pid_, tid_ or terminating_ is updated.
+  // absl::Condition on this is used to interrupt the sleep between polls to
+  // perform control operations.
+  bool dirty_ ABSL_GUARDED_BY(mutex_) = false;
+#endif  // !_WIN32
+  Handler handler_;
+  Thread2 thread_;
 };
 
 }  // namespace mozc
