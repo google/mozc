@@ -236,7 +236,7 @@ void Client::DumpHistorySnapshot(const absl::string_view filename,
   output << "Created at " << Logging::GetLogMessageHeader() << std::endl;
   output << "Version " << Version::GetMozcVersion() << std::endl;
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
-    output << history_inputs_[i].DebugString();
+    output << absl::StrCat(history_inputs_[i]);
   }
   output << "---- End history snapshot for " << label << std::endl;
 }
@@ -252,8 +252,7 @@ void Client::PlaybackHistory() {
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
     history_inputs_[i].set_id(id_);
     if (!Call(history_inputs_[i], &output)) {
-      LOG(ERROR) << "playback history failed: "
-                 << history_inputs_[i].DebugString();
+      LOG(ERROR) << "playback history failed: " << history_inputs_[i];
       break;
     }
   }

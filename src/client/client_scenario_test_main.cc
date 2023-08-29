@@ -144,13 +144,13 @@ int Loop(std::istream *input) {
       absl::SleepFor(absl::Milliseconds(absl::GetFlag(FLAGS_key_duration)));
 
       if (absl::GetFlag(FLAGS_test_testsendkey)) {
-        VLOG(2) << "Sending to Server: " << keys[i].DebugString();
+        VLOG(2) << "Sending to Server: " << keys[i];
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << MOZC_LOG_PROTOBUF(output);
         absl::SleepFor(absl::Milliseconds(10));
       }
 
-      VLOG(2) << "Sending to Server: " << keys[i].DebugString();
+      VLOG(2) << "Sending to Server: " << keys[i];
       client.SendKey(keys[i], &output);
       VLOG(2) << "Output of SendKey: " << MOZC_LOG_PROTOBUF(output);
 
