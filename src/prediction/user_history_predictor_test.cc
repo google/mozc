@@ -68,6 +68,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
@@ -2196,8 +2197,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
   UserHistoryStorage storage2(filename);
   storage2.Load();
 
-  EXPECT_EQ(storage1.GetProto().DebugString(),
-            storage2.GetProto().DebugString());
+  EXPECT_EQ(absl::StrCat(storage1.GetProto()),
+            absl::StrCat(storage2.GetProto()));
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 

@@ -82,7 +82,7 @@ void DataSetWriter::Finish(std::ostream *output) {
 
   CHECK(output->write(image_.data(), image_.size()));
   VLOG(1) << "Wrote data set of " << image_.size() << " bytes:\n"
-          << metadata_.Utf8DebugString();
+          << proto2::Utf8Format(metadata_);
 }
 
 void DataSetWriter::AppendPadding(int alignment) {

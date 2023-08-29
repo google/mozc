@@ -451,7 +451,7 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
     // from user history. This filters such entries.
     if (!Util::IsValidUtf8(entry.value())) {
       LOG(ERROR) << "Invalid UTF8 found in user history: "
-                 << entry.Utf8DebugString();
+                 << proto2::Utf8Format(entry);
       continue;
     }
     dic_->Insert(EntryFingerprint(entry), entry);
@@ -1624,7 +1624,7 @@ void UserHistoryPredictor::Insert(std::string key, std::string value,
   }
 
   VLOG(2) << entry->key() << " " << entry->value()
-          << " has been inserted: " << entry->Utf8DebugString();
+          << " has been inserted: " << proto2::Utf8Format(*entry);
 
   // New entry is inserted to the cache
   updated_ = true;
