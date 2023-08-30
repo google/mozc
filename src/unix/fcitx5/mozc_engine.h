@@ -127,9 +127,11 @@ class MozcEngine final : public InputMethodEngineV2 {
   void SyncData(bool force);
 
   bool deactivating() const { return deactivating_; }
+  auto *parser() const { return parser_.get(); }
 
  private:
   Instance *instance_;
+  const std::unique_ptr<MozcResponseParser> parser_;
   std::unique_ptr<MozcConnection> connection_;
   std::unique_ptr<mozc::client::ClientInterface> client_;
   FactoryFor<MozcState> factory_;

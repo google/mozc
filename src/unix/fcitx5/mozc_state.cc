@@ -57,8 +57,7 @@ MozcState::MozcState(InputContext* ic,
     : ic_(ic),
       client_(std::move(client)),
       engine_(engine),
-      handler_(std::make_unique<KeyEventHandler>()),
-      parser_(std::make_unique<MozcResponseParser>(engine_)) {
+      handler_(std::make_unique<KeyEventHandler>()) {
   // mozc::Logging::SetVerboseLevel(1);
   VLOG(1) << "MozcState created.";
 
@@ -250,7 +249,7 @@ void MozcState::Reset() {
   mozc::commands::Output raw_response;
   if (TrySendCommand(mozc::commands::SessionCommand::REVERT, &raw_response,
                      &error)) {
-    parser_->ParseResponse(raw_response, ic_);
+    engine_->parser()->ParseResponse(raw_response, ic_);
   }
   ClearAll();  // just in case.
   DrawAll();
@@ -264,7 +263,7 @@ bool MozcState::Paging(bool prev) {
            : mozc::commands::SessionCommand::CONVERT_NEXT_PAGE;
   mozc::commands::Output raw_response;
   if (TrySendCommand(command, &raw_response, &error)) {
-    parser_->ParseResponse(raw_response, ic_);
+    engine_->parser()->ParseResponse(raw_response, ic_);
     return true;
   }
   return false;
@@ -290,7 +289,7 @@ void MozcState::FocusOut(const InputContextEvent& event) {
           : mozc::commands::SessionCommand::REVERT;
 
   if (TrySendCommand(command, &raw_response, &error)) {
-    parser_->ParseResponse(raw_response, ic_);
+    engine_->parser()->ParseResponse(raw_response, ic_);
   }
   ClearAll();  // just in case.
   DrawAll();
@@ -299,7 +298,7 @@ void MozcState::FocusOut(const InputContextEvent& event) {
 bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
   auto oldMode = composition_mode_;
   ClearAll();
-  const bool consumed = parser_->ParseResponse(raw_response, ic_);
+  const bool consumed = engine_->parser()->ParseResponse(raw_response, ic_);
   if (!consumed) {
     VLOG(1) << "The input was not consumed by Mozc.";
   }
@@ -336,7 +335,7 @@ void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCompositionMode(mode, &raw_response, &error)) {
-    parser_->ParseResponse(raw_response, ic_);
+    engine_->parser()->ParseResponse(raw_response, ic_);
   }
 }
 

@@ -33,6 +33,7 @@
 #include "base/clock.h"
 #include "base/init_mozc.h"
 #include "base/process.h"
+#include "mozc_response_parser.h"
 #include "unix/fcitx5/mozc_connection.h"
 #include "unix/fcitx5/mozc_response_parser.h"
 
@@ -127,6 +128,7 @@ Instance *Init(Instance *instance) {
 
 MozcEngine::MozcEngine(Instance *instance)
     : instance_(Init(instance)),
+      parser_(std::make_unique<MozcResponseParser>(this)),
       connection_(std::make_unique<MozcConnection>()),
       client_(connection_->CreateClient()),
       factory_([this](InputContext &ic) {

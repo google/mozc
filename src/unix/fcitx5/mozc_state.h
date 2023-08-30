@@ -155,7 +155,6 @@ class MozcState : public InputContextProperty {
   mozc::config::Config::PreeditMethod preedit_method_ =
       mozc::config::Config::ROMAN;
   const std::unique_ptr<KeyEventHandler> handler_;
-  const std::unique_ptr<MozcResponseParser> parser_;
 
   bool displayUsage_ = false;
   Text preedit_;
