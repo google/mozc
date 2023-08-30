@@ -30,9 +30,8 @@
 #ifndef MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
 #define MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
 
-#include <memory>
-
 #include <QWidget>
+#include <memory>
 
 #include "gui/base/setup_util.h"
 #include "gui/post_install_dialog/ui_post_install_dialog.h"

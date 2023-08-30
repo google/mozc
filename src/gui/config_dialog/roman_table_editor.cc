@@ -32,20 +32,18 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QtGui>
-#include <cctype>
 #include <istream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "gui/base/table_util.h"
-#include "gui/base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_split.h"
+#include "gui/base/table_util.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {

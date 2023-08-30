@@ -34,8 +34,8 @@
 #include <QTimer>
 #include <QtGui>
 
-#include "gui/base/util.h"
 #include "absl/flags/flag.h"
+#include "gui/base/util.h"
 
 ABSL_FLAG(std::string, error_type, "", "type of error");
 

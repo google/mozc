@@ -304,8 +304,10 @@ def ExpandMetaTarget(options, meta_target_name):
     return dependencies + [meta_target_name]
 
   if target_platform == 'Linux':
-    targets = [SRC_DIR + '/server/server.gyp:mozc_server',
-               SRC_DIR + '/gui/gui.gyp:mozc_tool']
+    targets = [
+        SRC_DIR + '/server/server.gyp:mozc_server',
+        OSS_SRC_DIR + '/gui/gui.gyp:mozc_tool',
+    ]
   elif target_platform == 'Mac':
     targets = [OSS_SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':

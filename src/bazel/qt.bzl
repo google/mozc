@@ -143,7 +143,10 @@ def mozc_macos_qt_application(name, bundle_name, deps):
             "//data/images/mac:candidate_window_logo.tiff",
             "//gui:qt_conf",
         ],
-        visibility = ["//:__subpackages__"],
+        visibility = [
+            "//:__subpackages__",
+            "//:__subpackages__",
+        ],
         deps = deps + mozc_select(
             default = [],
             oss = [

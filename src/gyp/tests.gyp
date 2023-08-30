@@ -42,7 +42,7 @@
         '../dictionary/file/dictionary_file_test.gyp:dictionary_file_all_test',
         '../dictionary/system/system_dictionary_test.gyp:system_dictionary_all_test',
         '../engine/engine_test.gyp:engine_all_test',
-        '../gui/gui.gyp:gui_all_test',
+        '<(mozc_oss_src_dir)/gui/gui.gyp:gui_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
         '../prediction/prediction_test.gyp:prediction_all_test',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_all_test',

@@ -56,15 +56,16 @@ bazel build @com_google_protobuf//:protoc
 
 ## IBus
 
-IBus specific configurations are customizable in
-`~/.config/mozc/ibus_config.textproto`.
+Starting from version 2.26.4220, IBus specific configurations are customizable
+in `~/.config/mozc/ibus_config.textproto`.
 
 The file path may be `~/.mozc/ibus_config.textproto` if `~/.mozc` directory
 already exists.
 
-Here is the default configuration.
+Here is the default configuration as of version 2.29.5205.
 
 ```
+# `ibus write-cache; ibus restart` might be necessary to apply changes.
 engines {
   name : "mozc-jp"
   longname : "Mozc"
@@ -72,18 +73,47 @@ engines {
   layout_variant : ""
   layout_option : ""
   rank : 80
+  symbol : "あ"
+}
+engines {
+  name : "mozc-on"
+  longname : "Mozc:あ"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 99
+  symbol : "あ"
+  composition_mode : HIRAGANA
+}
+engines {
+  name : "mozc-off"
+  longname : "Mozc:A_"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 99
+  symbol : "A"
+  composition_mode : DIRECT
 }
 active_on_launch: False
 mozc_renderer {
+  # Set 'False' to use IBus' candidate window.
   enabled : True
+  # For Wayland sessions, 'mozc_renderer' will be used if and only if any value
+  # set in this field (e.g. "GNOME", "KDE") is found in $XDG_CURRENT_DESKTOP.
+  # https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys
   compatible_wayland_desktop_names : ["GNOME"]
 }
 ```
 
 The variables of `engines` are mapped to the same named variables of IBus.
 
-**Note:** After modification of `ibus_config.textproto`, `ibus write-cache; ibus
+⚠️ After modification of `ibus_config.textproto`, `ibus write-cache; ibus
 restart` might be necessary to apply changes.
+
+⚠️ Some settings are available only in newer versions of Mozc. To reset the
+settings to default, simply delete `ibus_config.textproto` then run
+`ibus write-cache; ibus restart`.
 
 ### Specify the keyboard layout
 
@@ -156,6 +186,8 @@ The available values are `DIRECT`, `HIRAGANA`, `FULL_KATAKANA`, `HALF_ASCII`, `F
 
 `symbol` is a label to represent the engine used by Ibus.
 
+`composition_mode` and `symbol` are available in 2.28.4950 and later versions.
+
 ```
 engines {
   name : "mozc-on"
@@ -204,6 +236,7 @@ Here is the quick comparison of two options.
 To use IBus' default candidate window, set `enabled : False` as follows.
 
 ```
+# This settings are available in 2.29.5205 and later versions
 mozc_renderer {
   # This means IBus' candidate window is always used.
   enabled : False
@@ -226,6 +259,7 @@ You can configure which Wayland desktop environment is compatible with Mozc's
 candidate window will be used as follows.
 
 ```
+# This settings are available in 2.29.5205 and later versions
 mozc_renderer {
   enabled : True
   compatible_wayland_desktop_names : ["GNOME"]

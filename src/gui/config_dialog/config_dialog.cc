@@ -30,8 +30,6 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
-#include <cstdint>
-
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."
 #endif  // __ANDROID__ || __wasm__
@@ -45,7 +43,7 @@
 
 #include <QMessageBox>
 #include <algorithm>
-#include <cstdlib>
+#include <cstdint>
 #include <istream>
 #include <map>
 #include <memory>
@@ -55,15 +53,14 @@
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "base/util.h"
 #include "client/client.h"
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
+#include "protocol/config.pb.h"
+#include "session/internal/keymap.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
-#include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
 
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"
