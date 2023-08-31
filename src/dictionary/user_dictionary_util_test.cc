@@ -36,6 +36,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -110,7 +111,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "abc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_FALSE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(input.DebugString(), golden.DebugString());
+    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
   }
 
   {
@@ -118,7 +119,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "abc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(input.DebugString(), golden.DebugString());
+    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
   }
 
   {
@@ -126,7 +127,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           "ab\tc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(input.DebugString(), golden.DebugString());
+    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
   }
 
   {
@@ -134,7 +135,7 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
                                           UserDictionary::NOUN, "ab\tc"};
     ConvertUserDictionaryEntry(input_data, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(input.DebugString(), golden.DebugString());
+    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
   }
 }
 

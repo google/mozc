@@ -37,6 +37,7 @@
 #include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/protobuf/message.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
@@ -82,8 +83,8 @@ void Loop(std::istream *input, std::ostream *output) {
       LOG(ERROR) << "Command failure";
     }
 
-    *output << command.Utf8DebugString();
-    LOG(INFO) << command.Utf8DebugString();
+    *output << protobuf::Utf8Format(command);
+    LOG(INFO) << protobuf::Utf8Format(command);
   }
 }
 

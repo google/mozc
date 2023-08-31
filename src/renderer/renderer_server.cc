@@ -83,39 +83,6 @@ std::string GetServiceName() {
 }
 }  // namespace
 
-class ParentApplicationWatchDog : public ProcessWatchDog {
- public:
-  ParentApplicationWatchDog(const ParentApplicationWatchDog &) = delete;
-  ParentApplicationWatchDog &operator=(const ParentApplicationWatchDog &) =
-      delete;
-  explicit ParentApplicationWatchDog(RendererServer *renderer_server)
-      : renderer_server_(renderer_server) {}
-  ~ParentApplicationWatchDog() override = default;
-
-  void Signaled(ProcessWatchDog::SignalType type) override {
-    if (renderer_server_ == nullptr) {
-      LOG(ERROR) << "renderer_server is nullptr";
-      return;
-    }
-    if (type == ProcessWatchDog::PROCESS_SIGNALED ||
-        type == ProcessWatchDog::THREAD_SIGNALED) {
-      VLOG(1) << "Parent process is terminated: call Hide event";
-      mozc::commands::RendererCommand command;
-      command.set_type(mozc::commands::RendererCommand::UPDATE);
-      command.set_visible(false);
-      std::string proto_message;
-      if (command.SerializeToString(&proto_message)) {
-        renderer_server_->AsyncExecCommand(proto_message);
-      } else {
-        LOG(ERROR) << "SerializeToString failed";
-      }
-    }
-  }
-
- private:
-  RendererServer *renderer_server_;
-};
-
 class RendererServerSendCommand : public client::SendCommandInterface {
  public:
   RendererServerSendCommand() : receiver_handle_(0) {}
@@ -172,8 +139,22 @@ RendererServer::RendererServer()
       renderer_interface_(nullptr),
       timeout_(0),
       send_command_(new RendererServerSendCommand) {
-  watch_dog_ = std::make_unique<ParentApplicationWatchDog>(this);
-  watch_dog_->StartWatchDog();
+  watch_dog_ = std::make_unique<ProcessWatchDog>(
+      [this](ProcessWatchDog::SignalType type) {
+        if (type == ProcessWatchDog::SignalType::PROCESS_SIGNALED ||
+            type == ProcessWatchDog::SignalType::THREAD_SIGNALED) {
+          VLOG(1) << "Parent process is terminated: call Hide event";
+          mozc::commands::RendererCommand command;
+          command.set_type(mozc::commands::RendererCommand::UPDATE);
+          command.set_visible(false);
+          if (std::string proto_message = command.SerializeAsString();
+              !proto_message.empty()) {
+            AsyncExecCommand(proto_message);
+          } else {
+            LOG(ERROR) << "SerializeToString failed";
+          }
+        }
+      });
   if (absl::GetFlag(FLAGS_restricted)) {
     absl::SetFlag(&FLAGS_timeout,
                   // set 60sec with restricted mode
@@ -191,7 +172,7 @@ RendererServer::RendererServer()
 #endif  // MOZC_NO_LOGGING
 }
 
-RendererServer::~RendererServer() { watch_dog_->StopWatchDog(); }
+RendererServer::~RendererServer() = default;
 
 void RendererServer::SetRendererInterface(
     RendererInterface *renderer_interface) {
@@ -251,11 +232,10 @@ bool RendererServer::ExecCommandInternal(
     if (command.has_application_info() &&
         command.application_info().has_process_id() &&
         command.application_info().has_thread_id()) {
-      if (!watch_dog_->SetID(static_cast<ProcessWatchDog::ProcessID>(
+      if (!watch_dog_->SetId(static_cast<ProcessWatchDog::ProcessId>(
                                  command.application_info().process_id()),
-                             static_cast<ProcessWatchDog::ThreadID>(
-                                 command.application_info().thread_id()),
-                             -1)) {
+                             static_cast<ProcessWatchDog::ThreadId>(
+                                 command.application_info().thread_id()))) {
         LOG(ERROR) << "Cannot set new ids for watch dog";
       }
     } else {

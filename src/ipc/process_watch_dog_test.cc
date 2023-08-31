@@ -29,7 +29,7 @@
 
 #include "ipc/process_watch_dog.h"
 
-#include <cstdint>
+#include <cstdlib>
 
 #include "base/clock.h"
 #include "base/logging.h"
@@ -38,21 +38,9 @@
 #include "absl/time/time.h"
 
 namespace mozc {
-namespace {
-absl::Time g_current_time = absl::UnixEpoch();
-}
-
-class TestProcessWatchDog : public ProcessWatchDog {
- public:
-  void Signaled(ProcessWatchDog::SignalType type) override {
-    EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const absl::Duration diff = Clock::GetAbslTime() - g_current_time;
-    EXPECT_LE(absl::AbsDuration(diff), absl::Seconds(1));
-  }
-};
 
 TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Clock::GetAbslTime();
+  absl::Time start = absl::Now();
 
 #ifndef _WIN32
   // revoke myself with different parameter
@@ -62,12 +50,14 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
     absl::SleepFor(absl::Seconds(2));
     exit(0);
   } else if (pid > 0) {
-    TestProcessWatchDog dog;
-    dog.StartWatchDog();
-    dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
-              ProcessWatchDog::UnknownThreadID, -1);
+    ProcessWatchDog watchdog([start](ProcessWatchDog::SignalType type) {
+      EXPECT_EQ(type, ProcessWatchDog::SignalType::PROCESS_SIGNALED);
+      const absl::Duration diff = Clock::GetAbslTime() - start;
+      EXPECT_LE(absl::AbsDuration(diff), absl::Seconds(1));
+    });
+    watchdog.SetId(static_cast<ProcessWatchDog::ProcessId>(pid),
+                   ProcessWatchDog::kUnknownThreadId);
     absl::SleepFor(absl::Seconds(4));
-    dog.StopWatchDog();
   } else {
     LOG(ERROR) << "cannot execute fork";
   }

@@ -80,22 +80,10 @@ class ArchiveInfo:
     return hash(self.sha256)
 
 
-QT5 = ArchiveInfo(
-    url='https://download.qt.io/archive/qt/5.15/5.15.10/submodules/qtbase-everywhere-opensource-src-5.15.10.tar.xz',
-    size=50422688,
-    sha256='c0d06cb18d20f10bf7ad53552099e097ec39362d30a5d6f104724f55fa1c8fb9',
-)
-
 QT6 = ArchiveInfo(
     url='https://download.qt.io/archive/qt/6.5/6.5.2/submodules/qtbase-everywhere-src-6.5.2.tar.xz',
     size=48410716,
     sha256='3db4c729b4d80a9d8fda8dd77128406353baff4755ca619177eda4cddae71269',
-)
-
-JOM = ArchiveInfo(
-    url='https://download.qt.io/official_releases/jom/jom_1_1_3.zip',
-    size=1213852,
-    sha256='128fdd846fe24f8594eed37d1d8929a0ea78df563537c0c1b1861a635013fff8',
 )
 
 WIX = ArchiveInfo(
@@ -364,10 +352,7 @@ def main():
 
   archives = []
   if (not args.noqt) and (is_windows() or is_mac()):
-    archives.append(QT5)
     archives.append(QT6)
-    if is_windows():
-      archives.append(JOM)
   if (not args.noninja):
     if is_mac():
       archives.append(NINJA_MAC)

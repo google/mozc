@@ -100,6 +100,7 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//base:singleton",
         "//base:system_util",
+        "//base/protobuf:message",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
         "//session:random_keyevents_generator",

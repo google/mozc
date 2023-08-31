@@ -39,6 +39,7 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
+#include "base/protobuf/message.h"
 #include "base/thread2.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
@@ -117,7 +118,7 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
             init_data_manager(request, data_manager.get());
         status != DataManager::Status::OK) {
       LOG(ERROR) << "Failed to load data [" << status << "] "
-                 << request.Utf8DebugString();
+                 << protobuf::Utf8Format(request);
       response.set_status(ConvertStatus(status));
       return {std::move(response), std::move(data_manager)};
     }
@@ -126,7 +127,8 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
       if (absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
                                                     request.install_location());
           !s.ok()) {
-        LOG(ERROR) << "Copy faild: " << request.Utf8DebugString() << ": " << s;
+        LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
+                   << s;
         response.set_status(EngineReloadResponse::INSTALL_FAILURE);
         return {
             std::move(response),

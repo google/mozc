@@ -35,6 +35,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/protobuf/message.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
@@ -120,7 +121,8 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   for (int i = 0; i < metadata.entries_size(); ++i) {
     const auto& e = metadata.entries(i);
     if (e.offset() < prev_chunk_end || e.offset() >= metadata_offset) {
-      LOG(ERROR) << "Broken: Offset is out of range: " << e.Utf8DebugString()
+      LOG(ERROR) << "Broken: Offset is out of range: "
+                 << protobuf::Utf8Format(e)
                  << ", metadata offset = " << metadata_offset;
       return false;
     }
@@ -128,7 +130,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
     // chunk must point to a block before metadata.
     if (e.size() > metadata_offset || e.offset() > metadata_offset - e.size()) {
       LOG(ERROR) << "Broken: Size exceeds the metadata offset: "
-                 << e.Utf8DebugString()
+                 << protobuf::Utf8Format(e)
                  << ", metadata offset = " << metadata_offset;
       return false;
     }

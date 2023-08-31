@@ -48,6 +48,7 @@
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/random/random.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -224,7 +225,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   dic2.set_id(id);
   dic2.set_name("test");
 
-  EXPECT_EQ(dic->DebugString(), dic2.DebugString());
+  EXPECT_EQ(absl::StrCat(*dic), absl::StrCat(dic2));
 }
 
 TEST_F(UserDictionaryStorageTest, SerializeTest) {
@@ -268,8 +269,8 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
     UserDictionaryStorage storage2(GetUserDictionaryFile());
     EXPECT_OK(storage2.Load()) << "n = " << n;
 
-    EXPECT_EQ(storage2.GetProto().DebugString(),
-              storage1.GetProto().DebugString())
+    EXPECT_EQ(absl::StrCat(storage2.GetProto()),
+              absl::StrCat(storage1.GetProto()))
         << "n = " << n;
   }
 }

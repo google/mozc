@@ -62,6 +62,7 @@ mozc_cc_library(
         "//base:hash",
         "//base:logging",
         "//base:thread2",
+        "//base/protobuf:message",
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/status",

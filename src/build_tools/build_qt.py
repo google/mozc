@@ -61,7 +61,6 @@ import sys
 import tarfile
 import time
 from typing import Any, Union
-import zipfile
 
 
 ABS_SCRIPT_PATH = pathlib.Path(__file__).absolute()
@@ -70,12 +69,8 @@ ABS_MOZC_SRC_DIR = ABS_SCRIPT_PATH.parents[1]
 ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 # The archive filename should be consistent with update_deps.py.
-ABS_QT5_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
-    'third_party_cache', 'qtbase-everywhere-opensource-src-5.15.10.tar.xz')
 ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
     'third_party_cache', 'qtbase-everywhere-src-6.5.2.tar.xz')
-ABS_JOM_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
-    'third_party_cache', 'jom_1_1_3.zip')
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 
 
@@ -176,10 +171,7 @@ def qt_extract_filter(
       if len(paths) >= 1 and paths[0] == 'examples':
         skipping = True
       elif len(paths) >= 1 and paths[0] == 'tests':
-        # Qt5 build fails without files under test/auto/cmake/.
-        # TODO(b/292165679): Drop all when building Qt6.
-        if not (len(paths) >= 3 and paths[1] == 'auto' and paths[2] == 'cmake'):
-          skipping = True
+        skipping = True
       if skipping:
         printer.print_line('skipping   ' + new_path)
         continue
@@ -259,9 +251,14 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   Returns:
     A list of configure options to be passed to configure of Qt.
+  Raises:
+    ValueError: When Qt major version is not 6.
   """
 
   qt_version = get_qt_version(args)
+
+  if qt_version.major != 6:
+    raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
   qt_configure_options = ['-opensource',
                           '-silent',
@@ -286,8 +283,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                           '-nomake', 'examples',
                           '-nomake', 'tests',
                          ]
-  if qt_version.major == 5:
-    qt_configure_options += ['-no-sql-sqlite2', '-no-sql-tds']
 
   if is_mac():
     qt_configure_options += [
@@ -296,15 +291,12 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
         '-qt-pcre',
     ]
   elif is_windows():
-    qt_configure_options += ['-force-debug-info',
+    qt_configure_options += ['-c++std', 'c++20',
+                             '-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']
-    if qt_version.major == 5:
-      qt_configure_options += ['-no-angle', '-no-direct2d']
-    elif qt_version.major == 6:
-      qt_configure_options += ['-c++std', 'c++20']
   if args.confirm_license:
     qt_configure_options += ['-confirm-license']
 
@@ -334,14 +326,8 @@ def parse_args() -> argparse.Namespace:
                       help='make release build')
   parser.add_argument('--qt_src_dir', help='qt src directory', type=str,
                       default=str(ABS_QT_SRC_DIR))
-  if is_windows():
-    qt_archive_path_default = ABS_QT6_ARCHIVE_PATH
-  else:
-    qt_archive_path_default = ABS_QT6_ARCHIVE_PATH
   parser.add_argument('--qt_archive_path', help='qtbase archive path', type=str,
-                      default=str(qt_archive_path_default))
-  parser.add_argument('--jom_archive_path', help='qtbase archive path',
-                      type=str, default=str(ABS_JOM_ARCHIVE_PATH))
+                      default=str(ABS_QT6_ARCHIVE_PATH))
   parser.add_argument('--qt_dest_dir', help='qt dest directory', type=str,
                       default=str(ABS_QT_DEST_DIR))
   parser.add_argument('--confirm_license',
@@ -364,10 +350,6 @@ def get_ninja_dir(args: argparse.Namespace) -> Union[pathlib.Path, None]:
   Returns:
     The directory of ninja executable if ninja should be used. None otherwise.
   """
-  # For Qt5 and prior, we don't use cmake/ninja
-  if get_qt_version(args).major < 6:
-    return None
-
   ninja_exe = 'ninja.exe' if is_windows() else 'ninja'
 
   if args.ninja_dir:
@@ -405,14 +387,9 @@ def build_on_mac(args: argparse.Namespace) -> None:
     env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
   configure_cmds = ['./configure'] + make_configure_options(args)
-  if get_qt_version(args).major == 5:
-    make = str(shutil.which('make', path=env['PATH']))
-    build_cmds = [make, '--jobs=%s' % (os.cpu_count() * 2)]
-    install_cmds = [make, 'install']
-  else:
-    cmake = str(shutil.which('cmake', path=env['PATH']))
-    build_cmds = [cmake, '--build', '.', '--parallel']
-    install_cmds = [cmake, '--install', '.']
+  cmake = str(shutil.which('cmake', path=env['PATH']))
+  build_cmds = [cmake, '--build', '.', '--parallel']
+  install_cmds = [cmake, '--install', '.']
 
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
@@ -558,7 +535,6 @@ def build_on_windows(args: argparse.Namespace) -> None:
     env['PATH'] = str(ninja_dir) + os.pathsep + env['PATH']
 
   # Add qt_src_dir to 'PATH'.
-  # https://doc.qt.io/qt-5/windows-building.html#step-3-set-the-environment-variables
   # https://doc.qt.io/qt-6/windows-building.html#step-3-set-the-environment-variables
   env['PATH'] = str(qt_src_dir) + os.pathsep + env['PATH']
 
@@ -566,14 +542,9 @@ def build_on_windows(args: argparse.Namespace) -> None:
   configure_cmds = [cmd, '/C', 'configure.bat'] + make_configure_options(args)
   exec_command(configure_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
-  if get_qt_version(args).major == 5:
-    jom = qt_src_dir.joinpath('jom.exe')
-    build_cmds = [str(jom)]
-    install_cmds = [str(jom), 'install']
-  else:
-    cmake = str(shutil.which('cmake.exe', path=env['PATH']))
-    build_cmds = [cmake, '--build', '.', '--parallel']
-    install_cmds = [cmake, '--install', '.']
+  cmake = str(shutil.which('cmake.exe', path=env['PATH']))
+  build_cmds = [cmake, '--build', '.', '--parallel']
+  install_cmds = [cmake, '--install', '.']
 
   exec_command(build_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
@@ -591,7 +562,7 @@ def build_on_windows(args: argparse.Namespace) -> None:
 
   # When both '--debug' and '--release' are specified for Qt6, we need to run
   # the command again with '--config debug' option to install debug DLLs.
-  if get_qt_version(args).major == 6 and args.debug and args.release:
+  if args.debug and args.release:
     install_cmds += ['--config', 'debug']
     exec_command(install_cmds, cwd=qt_src_dir, env=env, dryrun=args.dryrun)
 
@@ -615,13 +586,6 @@ def extract_qt_src(args: argparse.Namespace) -> None:
     qt_src_dir.mkdir(parents=True)
     with tarfile.open(args.qt_archive_path, mode='r|xz') as f:
       f.extractall(path=qt_src_dir, members=qt_extract_filter(f))
-
-  if is_windows() and get_qt_version(args).major == 5:
-    if args.dryrun:
-      print(f'dryrun: extracting {args.jom_archive_path} to {qt_src_dir}')
-    else:
-      with zipfile.ZipFile(args.jom_archive_path) as z:
-        z.extractall(path=qt_src_dir)
 
 
 def main():

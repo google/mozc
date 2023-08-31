@@ -37,6 +37,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/number_util.h"
+#include "base/protobuf/message.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/candidates.pb.h"
@@ -236,7 +237,7 @@ bool IsInAllCandidateWords(const absl::string_view expected_candidate,
     return ::testing::AssertionFailure()
            << expected_candidate_string << "(" << expected_candidate << ")"
            << " is not found in " << output_string << "\n"
-           << output.Utf8DebugString();
+           << protobuf::Utf8Format(output);
   }
   return ::testing::AssertionSuccess();
 }
@@ -248,7 +249,7 @@ bool IsInAllCandidateWords(const absl::string_view expected_candidate,
     return ::testing::AssertionFailure()
            << expected_candidate_string << "(" << expected_candidate << ")"
            << " is found in " << output_string << "\n"
-           << output.Utf8DebugString();
+           << protobuf::Utf8Format(output);
   }
   return ::testing::AssertionSuccess();
 }
@@ -291,7 +292,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     }
     EXPECT_EQ(preedit_string, expected_preedit)
         << "Expected preedit: " << expected_preedit << "\n"
-        << "Actual preedit: " << preedit.Utf8DebugString();
+        << "Actual preedit: " << protobuf::Utf8Format(preedit);
   } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
     ASSERT_LE(1, args.size());
     const mozc::commands::Preedit &preedit = output.preedit();
@@ -305,14 +306,14 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     ASSERT_EQ(args.size(), 2);
     const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
     const mozc::commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(preedit.cursor(), expected_pos) << preedit.Utf8DebugString();
+    EXPECT_EQ(preedit.cursor(), expected_pos) << protobuf::Utf8Format(preedit);
   } else if (command == "EXPECT_CANDIDATE") {
     ASSERT_EQ(args.size(), 3);
     uint32_t candidate_id = 0;
     const bool has_result =
         GetCandidateIdByValue(args[2], output, &candidate_id);
     EXPECT_TRUE(has_result) << args[2] + " is not found\n"
-                            << output.candidates().Utf8DebugString();
+                            << protobuf::Utf8Format(output.candidates());
     if (has_result) {
       EXPECT_EQ(candidate_id, NumberUtil::SimpleAtoi(args[1]));
     }
@@ -321,24 +322,24 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     const CandidateWord &cand = handler.GetCandidateByValue(args[1]);
     const bool has_cand = !cand.value().empty();
     EXPECT_TRUE(has_cand) << args[1] + " is not found\n"
-                          << output.candidates().Utf8DebugString();
+                          << protobuf::Utf8Format(output.candidates());
     if (has_cand) {
       EXPECT_EQ(cand.annotation().description(), args[2])
-          << cand.Utf8DebugString();
+          << protobuf::Utf8Format(cand);
     }
   } else if (command == "EXPECT_RESULT") {
     if (args.size() == 2 && !args[1].empty()) {
       ASSERT_TRUE(output.has_result());
       const mozc::commands::Result &result = output.result();
-      EXPECT_EQ(result.value(), args[1]) << result.Utf8DebugString();
+      EXPECT_EQ(result.value(), args[1]) << protobuf::Utf8Format(result);
     } else {
-      EXPECT_FALSE(output.has_result()) << output.result().Utf8DebugString();
+      EXPECT_FALSE(output.has_result()) << protobuf::Utf8Format(output.result());
     }
   } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
     ASSERT_EQ(args.size(), 2);
     EXPECT_IN_ALL_CANDIDATE_WORDS(args[1], output)
         << args[1] << " is not found.\n"
-        << output.Utf8DebugString();
+        << protobuf::Utf8Format(output);
   } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
     ASSERT_EQ(args.size(), 2);
     EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(args[1], output);
@@ -346,7 +347,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     if (args.size() == 2 && !args[1].empty()) {
       ASSERT_TRUE(output.has_candidates());
       ASSERT_GT(output.candidates().size(), NumberUtil::SimpleAtoi(args[1]))
-          << output.Utf8DebugString();
+          << protobuf::Utf8Format(output);
     } else {
       ASSERT_TRUE(output.has_candidates());
     }

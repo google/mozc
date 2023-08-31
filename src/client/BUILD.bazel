@@ -260,6 +260,7 @@ mozc_cc_binary(
         "//base:japanese_util",
         "//base:logging",
         "//base:util",
+        "//base/protobuf:message",
         "//evaluation:scorer",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",

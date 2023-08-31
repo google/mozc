@@ -262,7 +262,10 @@ mozc_cc_library(
     hdrs = ["process_watch_dog.h"],
     deps = [
         "//base:logging",
-        "//base:thread",
+        "//base:port",
+        "//base:thread2",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ] + mozc_select(
