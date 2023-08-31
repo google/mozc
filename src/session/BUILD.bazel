@@ -480,6 +480,7 @@ mozc_cc_binary(
         "//base:logging",
         "//base:system_util",
         "//base:util",
+        "//base/protobuf:message",
         "//composer:key_parser",
         "//engine:engine_factory",
         "//engine:engine_interface",
