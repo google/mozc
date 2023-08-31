@@ -80,6 +80,7 @@ mozc_cc_library(
         "//base:util",
         "//base/container:freelist",
         "//base/container:trie",
+        "//base/protobuf:message",
         "//composer",
         "//converter:segments",
         "//dictionary:dictionary_interface",
