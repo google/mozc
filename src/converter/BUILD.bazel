@@ -333,10 +333,7 @@ mozc_cc_library(
         "immutable_converter.cc",
     ],
     hdrs = ["immutable_converter.h"],
-    visibility = [
-        "//engine:__pkg__",
-        "//prediction:__pkg__",
-    ],
+    visibility = ["//engine:__pkg__"],
     deps = [
         ":connector",
         ":immutable_converter_interface",
