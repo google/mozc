@@ -35,11 +35,12 @@
 #include <optional>
 #include <utility>
 
-#include "base/thread.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/functional/bind_front.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
+
+#include <thread>  // NOLINT(build/c++11): this is external environment only.
 
 namespace mozc {
 
@@ -60,31 +61,26 @@ namespace mozc {
 //
 // NOTE: This serves as a compatibility layer for Google where we use a
 // different threading implementation internally.
-//
-// TODO(tomokinat): Rename this (and the filename) to `Thread` once the old
-// `mozc::Thread` usages are all removed.
 class Thread2 {
  public:
   Thread2() noexcept = default;
+
   template <class Function, class... Args>
-  explicit Thread2(Function &&f, Args &&...args);
+  explicit Thread2(Function &&f, Args &&...args)
+      : thread_(std::forward<Function>(f), std::forward<Args>(args)...) {}
+
   ~Thread2() = default;
 
   Thread2(const Thread2 &) = delete;
-  Thread2(Thread2 &&) noexcept = default;
-
   Thread2 &operator=(const Thread2 &) = delete;
+
+  Thread2(Thread2 &&) noexcept = default;
   Thread2 &operator=(Thread2 &&) noexcept = default;
 
-  void Join();
+  void Join() { thread_.join(); }
 
  private:
-  // TODO(tomokinat): Change this to `std::thread` (and Google stuff internally)
-  // once the entire codebase is migrated from `mozc::Thread`.
-  //
-  // For now, we use `mozc::Thread` as backend so that `mozc::Thread` usages can
-  // be incrementally migrated to `mozc::Thread2`.
-  std::unique_ptr<Thread> thread_;
+  std::thread thread_;
 };
 
 // Represents a value that will be available in the future. This class spawns
@@ -170,38 +166,6 @@ class BackgroundFuture<void> {
 ////////////////////////////////////////////////////////////////////////////////
 // Implementations
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace internal {
-
-template <class Function>
-class FunctorThread : public Thread {
- public:
-  // Callers below should be (decay-)copying things, thus accepts only rvalue to
-  // make sure that we don't copy anything here.
-  explicit FunctorThread(Function &&f) : f_(std::move(f)) {}
-
-  void Run() override { std::invoke(std::move(f_)); }
-
- private:
-  Function f_;
-};
-
-// Workaround for `-Wctad-maybe-unsupported`.
-template <class Function>
-std::unique_ptr<FunctorThread<Function>> CreateFunctorThread(Function &&f) {
-  return std::make_unique<FunctorThread<Function>>(std::forward<Function>(f));
-}
-
-}  // namespace internal
-
-template <class Function, class... Args>
-Thread2::Thread2(Function &&f, Args &&...args)
-    // ref: https://en.cppreference.com/w/cpp/thread/thread/thread
-    // Note that `absl::bind_front` handles decay-copying things for us.
-    : thread_(internal::CreateFunctorThread(absl::bind_front(
-          std::forward<Function>(f), std::forward<Args>(args)...))) {
-  thread_->Start("mozc::Thread2");
-}
 
 template <class R>
 template <class F, class... Args>
