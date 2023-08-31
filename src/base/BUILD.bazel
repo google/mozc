@@ -208,30 +208,6 @@ mozc_cc_test(
 )
 
 mozc_cc_library(
-    name = "thread",
-    srcs = ["thread.cc"],
-    hdrs = ["thread.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":logging",
-    ],
-)
-
-mozc_cc_test(
-    name = "thread_test",
-    size = "small",
-    srcs = [
-        "thread_test.cc",
-    ],
-    requires_full_emulation = False,
-    deps = [
-        ":thread",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-mozc_cc_library(
     name = "singleton",
     srcs = ["singleton.cc"],
     hdrs = ["singleton.h"],
