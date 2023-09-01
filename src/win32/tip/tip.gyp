@@ -98,7 +98,7 @@
             '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
             '<(mozc_src_dir)/base/base.gyp:update_util',
             '<(mozc_src_dir)/base/win32/base_win32.gyp:com_implements',
-            '<(mozc_src_dir)/client/client.gyp:client',
+            '<(mozc_oss_src_dir)/client/client.gyp:client',
             '<(mozc_src_dir)/config/config.gyp:config_handler',
             '<(mozc_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',

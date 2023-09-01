@@ -38,14 +38,14 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "client/client.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
-#include "unix/emacs/client_pool.h"
-#include "unix/emacs/mozc_emacs_helper_lib.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "client/client.h"
+#include "unix/emacs/client_pool.h"
+#include "unix/emacs/mozc_emacs_helper_lib.h"
 
 ABSL_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
 

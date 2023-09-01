@@ -33,9 +33,9 @@
 
 #include <memory>
 
+#include "protocol/commands.pb.h"
 #include "client/client.h"
 #include "client/client_interface.h"
-#include "protocol/commands.pb.h"
 #include "win32/base/config_snapshot.h"
 #include "win32/base/deleter.h"
 #include "win32/base/input_state.h"

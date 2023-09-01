@@ -39,7 +39,6 @@
 #include "base/number_util.h"
 #include "base/strings/assign.h"
 #include "base/version.h"
-#include "client/client_interface.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
@@ -52,6 +51,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace client {

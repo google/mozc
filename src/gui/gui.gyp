@@ -308,7 +308,7 @@
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:config_file_stream',
-        '<(mozc_src_dir)/client/client.gyp:client',
+        '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_src_dir)/composer/composer.gyp:key_parser',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/config/config.gyp:stats_config_util',
@@ -395,7 +395,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_status',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/client/client.gyp:client',
+        '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/data_manager/data_manager.gyp:pos_list_provider',
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
@@ -468,7 +468,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_status',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/client/client.gyp:client',
+        '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_src_dir)/data_manager/data_manager.gyp:pos_list_provider',
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:user_dictionary',
@@ -637,7 +637,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/client/client.gyp:client',
+        '<(mozc_oss_src_dir)/client/client.gyp:client',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
       ],

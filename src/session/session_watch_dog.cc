@@ -43,11 +43,11 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/thread.h"
-#include "client/client.h"
-#include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
+#include "client/client.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace {

@@ -45,13 +45,14 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "client/client.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "client/client.h"
 #include "renderer/renderer_client.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/engine_registrar.h"
@@ -63,7 +64,6 @@
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
-#include "absl/strings/str_split.h"
 
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");

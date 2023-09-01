@@ -34,8 +34,8 @@
 
 #include <memory>
 
-#include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
+#include "client/client_interface.h"
 #include "renderer/win32/candidate_window.h"
 #include "renderer/win32/indicator_window.h"
 #include "renderer/win32/infolist_window.h"

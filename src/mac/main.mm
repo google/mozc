@@ -41,9 +41,9 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "client/client.h"
 #include "config/stats_config_util.h"
 #include "absl/flags/flag.h"
+#include "client/client.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   mozc::InitMozc(argv[0], &argc, &argv);
 
   IMKServer *imkServer = [GoogleJapaneseInputServer getServer];
@@ -75,6 +75,6 @@ int main(int argc, char *argv[]) {
   NSApplicationMain(argc, (const char **)argv);
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   mozc::CrashReportHandler::Uninitialize();
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return 0;
 }

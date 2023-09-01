@@ -37,10 +37,10 @@
 #include <vector>
 
 #include "base/win32/wide_char.h"
-#include "client/client.h"
-#include "client/client_interface.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "client/client.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace win32 {
