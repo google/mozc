@@ -449,11 +449,10 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
     return;
   }
 
-  DWORD message_response = 0;
   constexpr DWORD kSendMessageTimeout = 10 * 1000;  // 10sec.
   const LRESULT send_result =
       ::SendMessageTimeout(focus_window, WM_COPY, 0, 0, SMTO_NORMAL,
-                           kSendMessageTimeout, &message_response);
+                           kSendMessageTimeout, nullptr);
   if (send_result == 0) {
     LOG(ERROR) << "SendMessageTimeout() failed: " << ::GetLastError();
   }
