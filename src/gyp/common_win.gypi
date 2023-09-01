@@ -301,11 +301,11 @@
       'Release': {
         'inherit_from': ['x86_Base', 'Release_Base', 'Win_Static_Release_CRT_Base'],
       },
-      'DebugDynamic': {
-        'inherit_from': ['x86_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
+      'DebugDynamic_x64': {
+        'inherit_from': ['x64_Base', 'Debug_Base', 'Win_Dynamic_Debug_CRT_Base'],
       },
-      'ReleaseDynamic': {
-        'inherit_from': ['x86_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
+      'ReleaseDynamic_x64': {
+        'inherit_from': ['x64_Base', 'Release_Base', 'Win_Dynamic_Release_CRT_Base'],
       },
       'Debug_x64': {
         'inherit_from': ['x64_Base', 'Debug_Base', 'Win_Static_Debug_CRT_Base'],

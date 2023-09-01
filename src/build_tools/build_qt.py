@@ -527,7 +527,7 @@ def build_on_windows(args: argparse.Namespace) -> None:
   if not qt_src_dir.exists():
     raise FileNotFoundError('Could not find qt_src_dir=%s' % qt_src_dir)
 
-  env = get_vs_env_vars('amd64_x86', args.vcvarsall_path)
+  env = get_vs_env_vars('x64', args.vcvarsall_path)
 
   # Use locally checked out ninja.exe if exists.
   ninja_dir = get_ninja_dir(args)

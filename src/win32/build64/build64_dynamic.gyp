@@ -32,7 +32,7 @@
     ['OS!="win"', {
       'targets': [
         {
-          'target_name': 'mozc_win32_build32_dynamic',
+          'target_name': 'mozc_win32_build64_dynamic',
           'type': 'none',
         },
       ],
@@ -40,7 +40,7 @@
     ['OS=="win"', {
       'targets': [
         {
-          'target_name': 'mozc_win32_build32_dynamic',
+          'target_name': 'mozc_win32_build64_dynamic',
           'type': 'none',
           'dependencies': [
             '<(mozc_oss_src_dir)/gui/gui.gyp:mozc_tool',
