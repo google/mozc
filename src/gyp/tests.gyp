@@ -48,7 +48,7 @@
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_all_test',
         '../rewriter/rewriter_test.gyp:rewriter_all_test',
         # Currently 'server_all_test' does not exist.
-        # '../server/server.gyp:server_all_test',
+        # '<(mozc_oss_src_dir)/server/server.gyp:server_all_test',
         '../session/session_test.gyp:session_all_test',
         '../storage/louds/louds_test.gyp:storage_louds_all_test',
         '../storage/storage_test.gyp:storage_all_test',

@@ -286,7 +286,7 @@
             '<(mozc_oss_src_dir)/gui/gui.gyp:word_register_dialog_mac',
             '<(mozc_oss_src_dir)/renderer/renderer.gyp:mozc_renderer',
             '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
-            '<(mozc_src_dir)/server/server.gyp:mozc_server',
+            '<(mozc_oss_src_dir)/server/server.gyp:mozc_server',
             'gen_client_info_plist',
             'gen_key_mappings',
           ],
