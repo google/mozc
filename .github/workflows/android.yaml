@@ -32,4 +32,23 @@ jobs:
       - name: build
         working-directory: ./src
         run: |
-          bazel build --config oss_android package
+          mkdir android_artifacts
+          mkdir android_artifacts/armeabi-v7a
+          mkdir android_artifacts/arm64-v8a
+          mkdir android_artifacts/x86
+          mkdir android_artifacts/x86_64
+          bazel build --config oss_android package --cpu=armeabi-v7a
+          cp bazel-bin/android/jni/libmozcjni.so android_artifacts/armeabi-v7a/
+          bazel build --config oss_android package --cpu=arm64-v8a
+          cp bazel-bin/android/jni/libmozcjni.so android_artifacts/arm64-v8a/
+          bazel build --config oss_android package --cpu=x86
+          cp bazel-bin/android/jni/libmozcjni.so android_artifacts/x86/
+          bazel build --config oss_android package --cpu=x86_64
+          cp bazel-bin/android/jni/libmozcjni.so android_artifacts/x86_64/
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: libmozcjni.so
+          path: src/android_artifacts/
+          if-no-files-found: warn
