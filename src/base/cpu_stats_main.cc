@@ -34,7 +34,7 @@
 
 #include "base/cpu_stats.h"
 #include "base/init_mozc.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
@@ -51,10 +51,10 @@ int main(int argc, char** argv) {
 
   absl::Notification cancel;
 
-  std::vector<mozc::Thread2> threads;
+  std::vector<mozc::Thread> threads;
   threads.reserve(absl::GetFlag(FLAGS_dummy_threads_size));
   for (int i = 0; i < absl::GetFlag(FLAGS_dummy_threads_size); ++i) {
-    threads.push_back(mozc::Thread2([&cancel] {
+    threads.push_back(mozc::Thread([&cancel] {
       volatile uint64_t n = 0;
       while (!cancel.HasBeenNotified()) {
         ++n;

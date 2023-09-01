@@ -37,7 +37,7 @@
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
@@ -57,7 +57,7 @@ class IPCPathManagerTest : public testing::TestWithTempUserProfile {};
 
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   std::string path_created;
-  mozc::Thread2([&path_created] {
+  Thread([&path_created] {
     IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
     EXPECT_TRUE(manager->CreateNewPathName());
     EXPECT_TRUE(manager->SavePathName());
@@ -86,9 +86,9 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
 // Test the thread-safeness of GetPathName() and
 // GetIPCPathManager
 TEST_F(IPCPathManagerTest, IPCPathManagerBatchTest) {
-  std::vector<mozc::Thread2> threads;
+  std::vector<Thread> threads;
   for (int i = 0; i < 64; ++i) {
-    threads.push_back(mozc::Thread2([] {
+    threads.push_back(Thread([] {
       for (int i = 0; i < 100; ++i) {
         IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test2");
         std::string path;

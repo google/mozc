@@ -45,7 +45,7 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/assign.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"

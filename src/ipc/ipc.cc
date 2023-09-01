@@ -35,7 +35,7 @@
 
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
 #include "absl/strings/string_view.h"
 
@@ -52,7 +52,7 @@ namespace mozc {
 
 void IPCServer::LoopAndReturn() {
   if (server_thread_ == nullptr) {
-    server_thread_ = std::make_unique<Thread2>([this] { this->Loop(); });
+    server_thread_ = std::make_unique<Thread>([this] { this->Loop(); });
   } else {
     LOG(WARNING) << "Another thead is already running";
   }

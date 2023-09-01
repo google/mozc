@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_THREAD2_H_
-#define MOZC_BASE_THREAD2_H_
+#ifndef MOZC_BASE_THREAD_H_
+#define MOZC_BASE_THREAD_H_
 
 #include <functional>
 #include <memory>
@@ -47,7 +47,7 @@ namespace mozc {
 // Represents a thread, exposing a subset of `std::thread` APIs.
 //
 // Most notably, threads are undetachable unlike `std::thread`, thus must be
-// `join()`ed before destruction. This means that the `mozc::Thread2` instance
+// `join()`ed before destruction. This means that the `mozc::Thread` instance
 // must be retained even for a long-running one, though which may be until
 // the end of the process.
 //
@@ -61,21 +61,21 @@ namespace mozc {
 //
 // NOTE: This serves as a compatibility layer for Google where we use a
 // different threading implementation internally.
-class Thread2 {
+class Thread {
  public:
-  Thread2() noexcept = default;
+  Thread() noexcept = default;
 
   template <class Function, class... Args>
-  explicit Thread2(Function &&f, Args &&...args)
+  explicit Thread(Function &&f, Args &&...args)
       : thread_(std::forward<Function>(f), std::forward<Args>(args)...) {}
 
-  ~Thread2() = default;
+  ~Thread() = default;
 
-  Thread2(const Thread2 &) = delete;
-  Thread2 &operator=(const Thread2 &) = delete;
+  Thread(const Thread &) = delete;
+  Thread &operator=(const Thread &) = delete;
 
-  Thread2(Thread2 &&) noexcept = default;
-  Thread2 &operator=(Thread2 &&) noexcept = default;
+  Thread(Thread &&) noexcept = default;
+  Thread &operator=(Thread &&) noexcept = default;
 
   void Join() { thread_.join(); }
 
@@ -131,7 +131,7 @@ class BackgroundFuture {
     std::optional<R> value ABSL_GUARDED_BY(mutex);
   };
   std::unique_ptr<State> state_;
-  Thread2 thread_;
+  Thread thread_;
 };
 
 template <>
@@ -140,7 +140,7 @@ class BackgroundFuture<void> {
   // Spawns a dedicated thread to invoke `f(args...)`, and eventually fulfills
   // the future.
   //
-  // This is essentially equivalent to `Thread2` along with "done" notification.
+  // This is essentially equivalent to `Thread` along with "done" notification.
   template <class F, class... Args>
   explicit BackgroundFuture(F &&f, Args &&...args);
 
@@ -160,7 +160,7 @@ class BackgroundFuture<void> {
 
  private:
   std::unique_ptr<absl::Notification> done_;
-  Thread2 thread_;
+  Thread thread_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,4 +241,4 @@ inline bool BackgroundFuture<void>::Ready() const noexcept {
 
 }  // namespace mozc
 
-#endif  // MOZC_BASE_THREAD2_H_
+#endif  // MOZC_BASE_THREAD_H_

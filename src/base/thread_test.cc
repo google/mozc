@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/thread2.h"
+#include "base/thread.h"
 
 #include <atomic>
 #include <memory>
@@ -67,13 +67,13 @@ class CopyCounter {
 TEST(ThreadTest, SpawnsSuccessfully) {
   std::atomic<int> counter = 0;
 
-  Thread2 t1([&counter] {
+  Thread t1([&counter] {
     for (int i = 1; i <= 100; ++i) {
       counter.fetch_add(i);
     }
   });
-  Thread2 t2([&counter](int x) { counter.fetch_add(x); }, 50);
-  Thread2 t3([&counter](int x, int y) { counter.fetch_sub(x * y); }, 10, 10);
+  Thread t2([&counter](int x) { counter.fetch_add(x); }, 50);
+  Thread t3([&counter](int x, int y) { counter.fetch_sub(x * y); }, 10, 10);
   t1.Join();
   t2.Join();
   t3.Join();
@@ -86,7 +86,7 @@ TEST(ThreadTest, CopiesThingsAtMostOnce) {
   CopyCounter counter2;
   std::shared_ptr<std::atomic<int>> c2 = counter2.get();
 
-  Thread2 t([](CopyCounter, CopyCounter) {}, counter1, std::move(counter2));
+  Thread t([](CopyCounter, CopyCounter) {}, counter1, std::move(counter2));
   t.Join();
 
   EXPECT_EQ(counter1.count(), 1);

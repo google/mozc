@@ -76,7 +76,7 @@ mozc_cc_library(
         "//base:hash",
         "//base:japanese_util",
         "//base:logging",
-        "//base:thread2",
+        "//base:thread",
         "//base:util",
         "//base/container:freelist",
         "//base/container:trie",

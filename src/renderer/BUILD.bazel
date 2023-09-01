@@ -57,7 +57,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:process",
         "//base:system_util",
-        "//base:thread2",
+        "//base:thread",
         "//base:version",
         "//ipc",
         "//ipc:named_event",

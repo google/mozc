@@ -32,7 +32,7 @@
 #include <atomic>
 #include <string>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -84,9 +84,9 @@ TEST(SingletonTest, ThreadTest) {
   ThreadInstance *t1;
   ThreadInstance *t2;
   ThreadInstance *t3;
-  mozc::Thread2 thread1([&t1] { t1 = Singleton<ThreadInstance>::get(); });
-  mozc::Thread2 thread2([&t2] { t2 = Singleton<ThreadInstance>::get(); });
-  mozc::Thread2 thread3([&t3] { t3 = Singleton<ThreadInstance>::get(); });
+  Thread thread1([&t1] { t1 = Singleton<ThreadInstance>::get(); });
+  Thread thread2([&t2] { t2 = Singleton<ThreadInstance>::get(); });
+  Thread thread3([&t3] { t3 = Singleton<ThreadInstance>::get(); });
   thread1.Join();
   thread2.Join();
   thread3.Join();

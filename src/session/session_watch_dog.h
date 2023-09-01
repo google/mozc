@@ -35,7 +35,7 @@
 #include <memory>
 
 #include "base/cpu_stats.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "client/client_interface.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
@@ -80,7 +80,7 @@ class SessionWatchDog {
   std::unique_ptr<client::ClientInterface> client_;
   std::unique_ptr<CPUStatsInterface> cpu_stats_;
   absl::Notification stop_;
-  Thread2 thread_;
+  Thread thread_;
 };
 
 }  // namespace mozc

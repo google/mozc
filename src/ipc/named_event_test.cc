@@ -36,7 +36,7 @@
 #include <vector>
 
 #include "base/clock.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/time/clock.h"
@@ -53,8 +53,8 @@ class NamedEventListenerThread {
                            absl::Duration wait, int max_num_wait)
       : listener_(name), first_triggered_time_(0) {
     EXPECT_TRUE(listener_.IsAvailable());
-    thread_ = Thread2([initial_wait, wait, max_num_wait, &listener = listener_,
-                       &first_triggered_time = first_triggered_time_]() {
+    thread_ = Thread([initial_wait, wait, max_num_wait, &listener = listener_,
+                      &first_triggered_time = first_triggered_time_]() {
       absl::SleepFor(initial_wait);
       for (int i = 0; i < max_num_wait; ++i) {
         if (listener.Wait(wait)) {
@@ -75,7 +75,7 @@ class NamedEventListenerThread {
 
  private:
   NamedEventListener listener_;
-  Thread2 thread_;
+  Thread thread_;
 
   // std::atomic requires the type to be is_trivially_copyable, and some
   // (older?) versions of msvc and clang think absl::Time is not.
