@@ -164,7 +164,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Thread token (if any) must not a service account.
-  if (!thread_token) {
+  if (thread_token) {
     bool is_service_thread = false;
     if (!WinUtil::IsServiceUser(thread_token.get(), &is_service_thread)) {
       // Returns DENY conservatively.
@@ -203,7 +203,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     wil::unique_hfile dir_handle(::CreateFile(
         win32::Utf8ToWide(user_dir).c_str(), READ_CONTROL | WRITE_DAC, 0,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
-    if (!dir_handle) {
+    if (dir_handle) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;
       if (::GetTokenInformation(thread_token.get(), TokenUser, buffer,
