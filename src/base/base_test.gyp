@@ -110,7 +110,6 @@
         'singleton_test.cc',
         'text_normalizer_test.cc',
         'thread_test.cc',
-        'thread2_test.cc',
         'version_test.cc',
       ],
       'conditions': [

@@ -32,8 +32,8 @@
 
 #import "mac/KeyCodeMap.h"
 
-#include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "client/client_interface.h"
 #include "renderer/renderer_interface.h"
 
 @interface GoogleJapaneseInputController ()

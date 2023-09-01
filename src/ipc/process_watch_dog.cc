@@ -33,7 +33,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 
@@ -58,11 +58,11 @@ ProcessWatchDog::ProcessWatchDog(Handler handler)
       hr.Failed()) {
     LOG(ERROR) << "::CreateEvent() failed." << hr;
     // Spawn a no-op thread on failure for implementation simplicity.
-    thread_ = Thread2([] {});
+    thread_ = Thread([] {});
     return;
   }
 #endif  // _WIN32
-  thread_ = Thread2([this] { ThreadMain(); });
+  thread_ = Thread([this] { ThreadMain(); });
 }
 
 ProcessWatchDog::~ProcessWatchDog() {

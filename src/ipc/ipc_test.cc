@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
@@ -119,11 +119,11 @@ TEST_F(IPCTest, IPCTest) {
 #endif  // __APPLE__
   con.LoopAndReturn();
 
-  std::vector<Thread2> cons;
+  std::vector<Thread> cons;
   for (int i = 0; i < kNumThreads; ++i) {
-    cons.push_back(Thread2([
+    cons.push_back(Thread([
 #ifdef __APPLE__
-                               &manager
+                              &manager
 #endif  // __APPLE__
     ] {
       absl::SleepFor(absl::Milliseconds(100));
@@ -143,7 +143,7 @@ TEST_F(IPCTest, IPCTest) {
     }));
   }
 
-  for (Thread2 &con : cons) {
+  for (Thread &con : cons) {
     con.Join();
   }
 

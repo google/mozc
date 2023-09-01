@@ -34,7 +34,7 @@
 #include <memory>
 #include <string>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
@@ -265,7 +265,7 @@ class IPCServer {
 #else   // _WIN32
   absl::Notification terminate_;
 #endif  // !_WIN32
-  std::unique_ptr<Thread2> server_thread_;
+  std::unique_ptr<Thread> server_thread_;
 
 #ifdef _WIN32
   wil::unique_hfile pipe_handle_;

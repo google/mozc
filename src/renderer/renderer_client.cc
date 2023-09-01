@@ -40,7 +40,7 @@
 #include "base/logging.h"
 #include "base/process.h"
 #include "base/system_util.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"

@@ -42,7 +42,7 @@
 
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"

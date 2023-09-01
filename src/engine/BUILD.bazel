@@ -61,7 +61,7 @@ mozc_cc_library(
         "//base:file_util",
         "//base:hash",
         "//base:logging",
-        "//base:thread2",
+        "//base:thread",
         "//base/protobuf:message",
         "//data_manager",
         "//protocol:engine_builder_cc_proto",

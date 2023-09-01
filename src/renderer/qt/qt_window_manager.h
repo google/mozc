@@ -37,9 +37,9 @@
 
 #include "base/coordinates.h"
 #include "base/port.h"
-#include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace renderer {

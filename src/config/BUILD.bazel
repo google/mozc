@@ -71,7 +71,7 @@ mozc_cc_test(
         "//base:clock_mock",
         "//base:file_util",
         "//base:system_util",
-        "//base:thread2",
+        "//base:thread",
         "//base/file:temp_dir",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",

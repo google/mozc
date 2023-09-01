@@ -109,7 +109,6 @@
         'strings/internal/utf8_internal.cc',
         'system_util.cc',
         'text_normalizer.cc',
-        'thread.cc',
         'util.cc',
       ],
       'dependencies': [

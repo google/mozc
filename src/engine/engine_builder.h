@@ -35,7 +35,7 @@
 #include <memory>
 #include <optional>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"

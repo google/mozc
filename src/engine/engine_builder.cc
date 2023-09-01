@@ -40,7 +40,7 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/protobuf/message.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_interface.h"

@@ -38,10 +38,10 @@
 #include <string>
 
 // For mozc::commands::CompositionMode
-#include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "client/client_interface.h"
 #include "renderer/renderer_interface.h"
 
 /** GoogleJapaneseInputController is a subclass of |IMKInputController|, which holds a connection

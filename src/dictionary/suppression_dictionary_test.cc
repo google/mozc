@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
@@ -113,7 +113,7 @@ TEST(SuppressionDictionary, ThreadTest) {
   SuppressionDictionary dic;
   for (int iter = 0; iter < 3; ++iter) {
     // Load dictionary in another thread. `dic` will be locked.
-    mozc::Thread2([&dic] {
+    Thread([&dic] {
       const SuppressionDictionaryLock l(&dic);
       dic.Clear();
       for (int i = 0; i < 100; ++i) {

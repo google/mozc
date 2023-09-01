@@ -40,7 +40,7 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "protocol/config.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -385,9 +385,9 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   {
     absl::Notification cancel;
 
-    std::vector<mozc::Thread2> set_threads;
+    std::vector<Thread> set_threads;
     for (int i = 0; i < 2; ++i) {
-      set_threads.push_back(mozc::Thread2([&cancel, &configs] {
+      set_threads.push_back(Thread([&cancel, &configs] {
         absl::BitGen gen;
         while (!cancel.HasBeenNotified()) {
           const size_t next_index = absl::Uniform(gen, 0u, configs.size());
@@ -396,9 +396,9 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
       }));
     }
 
-    std::vector<mozc::Thread2> get_threads;
+    std::vector<Thread> get_threads;
     for (int i = 0; i < 4; ++i) {
-      get_threads.push_back(mozc::Thread2([&cancel, &character_form_rules_set] {
+      get_threads.push_back(Thread([&cancel, &character_form_rules_set] {
         while (!cancel.HasBeenNotified()) {
           Config config;
           ConfigHandler::GetConfig(&config);

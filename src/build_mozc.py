@@ -313,7 +313,7 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Windows':
     targets = [
         'out_win/%s:mozc_win32_build32' % config,
-        'out_win/%sDynamic:mozc_win32_build32_dynamic' % config,
+        'out_win/%sDynamic_x64:mozc_win32_build64_dynamic' % config,
         'out_win/%s_x64:mozc_win32_build64' % config,
         'out_win/%s:mozc_installers_win' % config,
     ]
@@ -573,8 +573,9 @@ def GypMain(options, unused_args):
     abs_qt_bin_dir = os.path.join(qt_dir, 'bin')
     abs_qt_lib_dir = os.path.join(qt_dir, 'lib')
     abs_out_win = GetBuildBaseName(target_platform)
-    abs_out_win_debug_dynamic = os.path.join(abs_out_win, 'DebugDynamic')
-    abs_out_win_release_dynamic = os.path.join(abs_out_win, 'ReleaseDynamic')
+    abs_out_win_debug_dynamic = os.path.join(abs_out_win, 'DebugDynamic_x64')
+    abs_out_win_release_dynamic = os.path.join(abs_out_win,
+                                               'ReleaseDynamic_x64')
     copy_script = os.path.join(ABS_SCRIPT_DIR, 'build_tools',
                                'copy_dll_and_symbol.py')
     copy_params = [{

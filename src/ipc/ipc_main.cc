@@ -35,7 +35,7 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "ipc/ipc.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
@@ -70,12 +70,12 @@ int main(int argc, char **argv) {
   if (absl::GetFlag(FLAGS_test)) {
     mozc::EchoServer con(absl::GetFlag(FLAGS_server_address), 10,
                          absl::Milliseconds(1000));
-    mozc::Thread2 server_thread_main([&con] { con.Loop(); });
+    mozc::Thread server_thread_main([&con] { con.Loop(); });
 
-    std::vector<mozc::Thread2> cons;
+    std::vector<mozc::Thread> cons;
     cons.reserve(absl::GetFlag(FLAGS_num_threads));
     for (int i = 0; i < absl::GetFlag(FLAGS_num_threads); ++i) {
-      cons.push_back(mozc::Thread2([] {
+      cons.push_back(mozc::Thread([] {
         for (int i = 0; i < absl::GetFlag(FLAGS_num_requests); ++i) {
           mozc::IPCClient con(absl::GetFlag(FLAGS_server_address),
                               absl::GetFlag(FLAGS_server_path));

@@ -500,7 +500,7 @@ mozc_cc_library(
         "//base:cpu_stats",
         "//base:logging",
         "//base:system_util",
-        "//base:thread2",
+        "//base:thread",
         "//client",
         "//client:client_interface",
         "@com_google_absl//absl/synchronization",

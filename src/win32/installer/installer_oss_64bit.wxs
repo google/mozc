@@ -172,12 +172,22 @@
             <Component Id='msvcp140' Guid='*'>
               <File Id='msvcp140.dll' Name='msvcp140.dll'
                   DiskId='1' Checksum='yes'
-                  Source='$(var.ReleaseRedistCrt32Dir)/msvcp140.dll' />
+                  Source='$(var.ReleaseRedistCrt64Dir)/msvcp140.dll' />
+            </Component>
+            <Component Id='msvcp140_1' Guid='*'>
+              <File Id='msvcp140_1.dll' Name='msvcp140_1.dll'
+                  DiskId='1' Checksum='yes'
+                  Source='$(var.ReleaseRedistCrt64Dir)/msvcp140_1.dll' />
             </Component>
             <Component Id='vcruntime140' Guid='*'>
               <File Id='vcruntime140.dll' Name='vcruntime140.dll'
                   DiskId='1' Checksum='yes'
-                  Source='$(var.ReleaseRedistCrt32Dir)/vcruntime140.dll' />
+                  Source='$(var.ReleaseRedistCrt64Dir)/vcruntime140.dll' />
+            </Component>
+            <Component Id='vcruntime140_1' Guid='*'>
+              <File Id='vcruntime140_1.dll' Name='vcruntime140_1.dll'
+                  DiskId='1' Checksum='yes'
+                  Source='$(var.ReleaseRedistCrt64Dir)/vcruntime140_1.dll' />
             </Component>
             <Component Id='QtCoreDll' Guid='*'>
               <!-- Always overwrite: b/31845781 -->
@@ -308,7 +318,9 @@
       <ComponentRef Id='MozcTool' />
       <?if $(var.VSConfigurationName) = "Release" ?>
         <ComponentRef Id='msvcp140' />
+        <ComponentRef Id='msvcp140_1' />
         <ComponentRef Id='vcruntime140' />
+        <ComponentRef Id='vcruntime140_1' />
         <ComponentRef Id='QtCoreDll' />
         <ComponentRef Id='QtGuiDll' />
         <ComponentRef Id='QtWidgetsDll' />

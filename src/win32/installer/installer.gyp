@@ -41,7 +41,7 @@
         'relative_dir': 'win32/installer',
         'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
         'outdir32': '<(build_base)/<(CONFIGURATION_NAME)',
-        'outdir32_dynamic': '<(build_base)/<(CONFIGURATION_NAME)Dynamic',
+        'outdir64_dynamic': '<(build_base)/<(CONFIGURATION_NAME)Dynamic_x64',
         'outdir64': '<(build_base)/<(CONFIGURATION_NAME)_x64',
         'conditions': [
           ['branding=="GoogleJapaneseInput"', {
@@ -58,7 +58,7 @@
             'mozc_server64_path': '<(outdir64)/GoogleIMEJaConverter.exe',
             'mozc_tip32_path': '<(outdir32)/GoogleIMEJaTIP32.dll',
             'mozc_tip64_path': '<(outdir64)/GoogleIMEJaTIP64.dll',
-            'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
+            'mozc_tool_path': '<(outdir64_dynamic)/GoogleIMEJaTool.exe',
           }, {  # branding!="GoogleJapaneseInput"
             'upgrade_code': 'DD94B570-B5E2-4100-9D42-61930C611D8A',
             'omaha_guid': '',
@@ -73,7 +73,7 @@
             'mozc_server64_path': '<(outdir64)/mozc_server.exe',
             'mozc_tip32_path': '<(outdir32)/mozc_tip32.dll',
             'mozc_tip64_path': '<(outdir64)/mozc_tip64.dll',
-            'mozc_tool_path': '<(outdir32_dynamic)/mozc_tool.exe',
+            'mozc_tool_path': '<(outdir64_dynamic)/mozc_tool.exe',
           }],
         ],
         'upgrade_code': '<(upgrade_code)',

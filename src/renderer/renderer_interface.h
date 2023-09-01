@@ -30,8 +30,8 @@
 #ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
 #define MOZC_RENDERER_RENDERER_INTERFACE_H_
 
-#include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
+#include "client/client_interface.h"
 
 namespace mozc {
 namespace renderer {

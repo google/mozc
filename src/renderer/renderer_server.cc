@@ -37,7 +37,6 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "client/client_interface.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
@@ -49,6 +48,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "client/client_interface.h"
 #include "renderer/renderer_interface.h"
 
 #ifdef _WIN32

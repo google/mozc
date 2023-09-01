@@ -41,9 +41,9 @@
       ],
       'dependencies': [
         'client.gyp:client',
-        '../base/absl.gyp:absl_strings',
-        '../base/base.gyp:version',
-        '../testing/testing.gyp:gtest_main',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
       ],
       'variables': {
         'test_size': 'small',

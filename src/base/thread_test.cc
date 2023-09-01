@@ -29,87 +29,140 @@
 
 #include "base/thread.h"
 
+#include <atomic>
+#include <memory>
+#include <utility>
+
 #include "testing/gunit.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 
 namespace mozc {
 namespace {
 
-class TestThread : public Thread {
+class CopyCounter {
  public:
-  explicit TestThread(absl::Duration sleep_for)
-      : sleep_for_(sleep_for), invoked_(false) {}
-  ~TestThread() override = default;
+  explicit CopyCounter() : count_(std::make_shared<std::atomic<int>>()) {}
 
-  void Run() override {
-    invoked_ = true;
-    absl::SleepFor(sleep_for_);
+  CopyCounter(const CopyCounter &other) { *this = other; }
+  CopyCounter(CopyCounter &&other) = default;
+
+  CopyCounter &operator=(const CopyCounter &other) {
+    this->count_ = other.count_;
+
+    count_->fetch_add(1);
+    return *this;
   }
+  CopyCounter &operator=(CopyCounter &&other) = default;
 
-  bool invoked() const { return invoked_; }
-  void clear_invoked() { invoked_ = false; }
+  std::shared_ptr<std::atomic<int>> get() const { return count_; }
+
+  int count() const { return count_->load(); }
 
  private:
-  absl::Duration sleep_for_;
-  bool invoked_;
+  std::shared_ptr<std::atomic<int>> count_;
 };
 
-}  // namespace
+TEST(ThreadTest, SpawnsSuccessfully) {
+  std::atomic<int> counter = 0;
 
-TEST(ThreadTest, BasicThreadTest) {
-  {
-    TestThread t(absl::Seconds(1));
-    t.Start("BasicThreadTest");
-    EXPECT_TRUE(t.IsRunning());
-    t.Join();
-    EXPECT_FALSE(t.IsRunning());
-    EXPECT_TRUE(t.invoked());
-  }
+  Thread t1([&counter] {
+    for (int i = 1; i <= 100; ++i) {
+      counter.fetch_add(i);
+    }
+  });
+  Thread t2([&counter](int x) { counter.fetch_add(x); }, 50);
+  Thread t3([&counter](int x, int y) { counter.fetch_sub(x * y); }, 10, 10);
+  t1.Join();
+  t2.Join();
+  t3.Join();
 
-  {
-    TestThread t(absl::Seconds(1));
-    t.clear_invoked();
-    t.Start("BasicThreadTest");
+  EXPECT_EQ(counter.load(), 5000);
+}
 
-    absl::SleepFor(absl::Seconds(3));
-    EXPECT_FALSE(t.IsRunning());
-    EXPECT_TRUE(t.invoked());
-    t.Join();
-  }
+TEST(ThreadTest, CopiesThingsAtMostOnce) {
+  CopyCounter counter1;
+  CopyCounter counter2;
+  std::shared_ptr<std::atomic<int>> c2 = counter2.get();
 
-  {
-    TestThread t(absl::Seconds(3));
-    t.Start("BasicThreadTest");
-    absl::SleepFor(absl::Seconds(1));
-    t.Terminate();
+  Thread t([](CopyCounter, CopyCounter) {}, counter1, std::move(counter2));
+  t.Join();
+
+  EXPECT_EQ(counter1.count(), 1);
+  EXPECT_EQ(c2->load(), 0);
+}
+
+TEST(BackgroundFutureTest, ReturnsComputedValueOnReady) {
+  auto future = BackgroundFuture<int>([] {
     absl::SleepFor(absl::Milliseconds(100));
-    EXPECT_FALSE(t.IsRunning());
-  }
+    return 42;
+  });
+
+  EXPECT_FALSE(future.Ready());
+  future.Wait();
+  EXPECT_EQ(future.Get(), 42);
 }
 
-TEST(ThreadTest, RestartTest) {
+TEST(BackgroundFutureTest, GetAlsoWaitsForValue) {
+  auto future = BackgroundFuture<int>([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return 42;
+  });
+
+  EXPECT_FALSE(future.Ready());
+  EXPECT_EQ(future.Get(), 42);
+}
+
+TEST(BackgroundFutureTest, GetByMoveDoesNotCopy) {
+  auto future = BackgroundFuture<CopyCounter>([] {
+    absl::SleepFor(absl::Milliseconds(100));
+    return CopyCounter();
+  });
+
+  EXPECT_EQ(std::move(future).Get().count(), 0);
+}
+
+TEST(BackgroundFutureTest, WaitWaitsForCompletion) {
+  absl::Notification done;
+
+  auto future = BackgroundFuture<void>([&done] {
+    absl::SleepFor(absl::Milliseconds(100));
+    done.Notify();
+  });
+
+  EXPECT_FALSE(done.HasBeenNotified());
+  future.Wait();
+  EXPECT_TRUE(done.HasBeenNotified());
+}
+
+TEST(BackgroundFutureTest, CopiesThingsAtMostOnce) {
   {
-    TestThread t(absl::Seconds(1));
-    t.clear_invoked();
-    t.Start("RestartTest");
-    EXPECT_TRUE(t.IsRunning());
-    t.Join();
-    EXPECT_TRUE(t.invoked());
-    EXPECT_FALSE(t.IsRunning());
-    t.clear_invoked();
-    t.Start("RestartTest");
-    EXPECT_TRUE(t.IsRunning());
-    t.Join();
-    EXPECT_TRUE(t.invoked());
-    EXPECT_FALSE(t.IsRunning());
-    t.clear_invoked();
-    t.Start("RestartTest");
-    EXPECT_TRUE(t.IsRunning());
-    t.Join();
-    EXPECT_TRUE(t.invoked());
-    EXPECT_FALSE(t.IsRunning());
+    CopyCounter counter1;
+    CopyCounter counter2;
+    std::shared_ptr<std::atomic<int>> c2 = counter2.get();
+
+    BackgroundFuture<int>([](CopyCounter, CopyCounter) { return 42; }, counter1,
+                          std::move(counter2))
+        .Wait();
+
+    EXPECT_EQ(counter1.count(), 1);
+    EXPECT_EQ(c2->load(), 0);
+  }
+
+  {
+    CopyCounter counter1;
+    CopyCounter counter2;
+    std::shared_ptr<std::atomic<int>> c2 = counter2.get();
+
+    BackgroundFuture<void>([](CopyCounter, CopyCounter) {}, counter1,
+                           std::move(counter2))
+        .Wait();
+
+    EXPECT_EQ(counter1.count(), 1);
+    EXPECT_EQ(c2->load(), 0);
   }
 }
 
+}  // namespace
 }  // namespace mozc

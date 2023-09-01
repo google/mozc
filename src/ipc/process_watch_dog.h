@@ -32,7 +32,7 @@
 
 #include <cstdint>
 
-#include "base/thread2.h"
+#include "base/thread.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/synchronization/mutex.h"
@@ -121,7 +121,7 @@ class ProcessWatchDog {
   bool dirty_ ABSL_GUARDED_BY(mutex_) = false;
 #endif  // !_WIN32
   Handler handler_;
-  Thread2 thread_;
+  Thread thread_;
 };
 
 }  // namespace mozc
