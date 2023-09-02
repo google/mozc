@@ -47,9 +47,9 @@
         'mozc_server_main.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../engine/engine.gyp:engine_factory',
-        '../session/session.gyp:session',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_src_dir)/session/session.gyp:session',
         'mozc_server_lib',
       ],
       'conditions': [
@@ -100,10 +100,10 @@
         'mozc_server.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:crash_report_handler',
-        '../session/session.gyp:session_server',
-        '../protocol/protocol.gyp:state_proto',
-        '../usage_stats/usage_stats_base.gyp:usage_stats',
+        '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
+        '<(mozc_src_dir)/session/session.gyp:session_server',
+        '<(mozc_src_dir)/protocol/protocol.gyp:state_proto',
+        '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
       ],
     },
     {
@@ -113,11 +113,11 @@
         'mozc_rpc_server_main.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../engine/engine.gyp:engine_factory',
-        '../session/session.gyp:session_handler',
-        '../session/session.gyp:session_server',
-        '../session/session.gyp:random_keyevents_generator',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_src_dir)/session/session.gyp:session_handler',
+        '<(mozc_src_dir)/session/session.gyp:session_server',
+        '<(mozc_src_dir)/session/session.gyp:random_keyevents_generator',
       ],
     },
   ],
@@ -142,7 +142,7 @@
             '<(proto_out_dir)/<(relative_dir)/win32_service_state.pb.cc',
           ],
           'dependencies': [
-            '../protobuf/protobuf.gyp:protobuf',
+            '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
             'genproto_server',
           ],
           'export_dependent_settings': [
@@ -178,10 +178,10 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                '<(python)', '../build_tools/tweak_info_plist.py',
+                '<(python)', '<(mozc_src_dir)/build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
-                '--version_file', '../mozc_version.txt',
+                '--version_file', '<(mozc_src_dir)/mozc_version.txt',
                 '--branding', '<(branding)',
               ],
             },

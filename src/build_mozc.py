@@ -700,7 +700,7 @@ def RunTests(target_platform, configuration, parallel_num):
   # TODO(nona): move this function to build_tools/test_tools
   base_path = os.path.join(GetBuildBaseName(target_platform), configuration)
   if target_platform == 'Windows':
-    base_path += '_x64'
+    base_path += 'Dynamic_x64'
 
   options = []
 
@@ -807,7 +807,7 @@ def RunTestsMain(options, args):
     # TODO(yukawa): Change the notation rule of 'targets' to reduce the gap
     # between Ninja and make.
     if target_platform == 'Windows':
-      targets.append('out_win/%s_x64:unittests' % options.configuration)
+      targets.append('out_win/%sDynamic_x64:unittests' % options.configuration)
     else:
       targets.append('%s/gyp/tests.gyp:unittests' % SRC_DIR)
 

@@ -27,7 +27,7 @@
 /.vs/
 
 # VSCode per-project settings
-/.vscode/
+.vscode/
 
 # Temporary working dirs
 /oss
