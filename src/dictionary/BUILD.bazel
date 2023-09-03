@@ -760,6 +760,7 @@ run_binary(
             "--jigyosyo",
             "$(location @zip_code_jigyosyo//:JIGYOSYO.CSV)",
         ],
+        prod = [],
     ),
     tool = ":gen_zip_code_seed",
     visibility = [
