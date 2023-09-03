@@ -17,12 +17,20 @@ build:oss_linux --define TARGET=oss_linux --copt "-fPIC"
 build:oss_linux --build_tag_filters=-nolinux
 test:oss_linux --test_tag_filters=-nolinux
 
+build:prod_linux --define TARGET=prod_linux --copt "-fPIC"
+build:prod_linux --build_tag_filters=-nolinux
 
 # macOS
 build:macos --define TARGET=oss_macos --build_tag_filters=-nomac
 test:macos --define TARGET=oss_macos --test_tag_filters=-nomac
 build:oss_macos --define TARGET=oss_macos --build_tag_filters=-nomac
 test:oss_macos --define TARGET=oss_macos --test_tag_filters=-nomac
+build:prod_macos --define TARGET=prod_macos --build_tag_filters=-nomac
+
+# Windows
+build:windows --define TARGET=oss_windows --build_tag_filters=-nowin
+build:oss_windows --define TARGET=oss_windows --build_tag_filters=-nowin
+build:prod_windows --define TARGET=prod_windows --build_tag_filters=-nowin
 
 # Android / OSS Android (same configurations)
 build:android --define TARGET=oss_android --copt "-DOS_ANDROID"

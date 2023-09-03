@@ -364,6 +364,11 @@ def mozc_select(
         oss_android = None,
         oss_linux = None,
         oss_macos = None,
+        oss_windows = None,
+        prod = None,
+        prod_linux = None,
+        prod_macos = None,
+        prod_windows = None,
         wasm = None,
         windows = None):
     """select wrapper for target os selection.
@@ -404,6 +409,10 @@ def mozc_select(
         "//bazel/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
         "//bazel/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
         "//bazel/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
+        "//bazel/cc_target_os:oss_windows": _get_value([oss_windows, oss, windows, client, default]),
+        "//bazel/cc_target_os:prod_linux": _get_value([prod_linux, prod, oss_linux, oss, linux, client, default]),
+        "//bazel/cc_target_os:prod_macos": _get_value([prod_macos, prod, oss_macos, oss, macos, ios, client, default]),
+        "//bazel/cc_target_os:prod_windows": _get_value([prod_windows, prod, oss_windows, oss, windows, client, default]),
         "//conditions:default": default,
     })
 
