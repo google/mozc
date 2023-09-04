@@ -12,7 +12,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build_arm64:
+    # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
+    runs-on: macos-11
+    timeout-minutes: 90
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: '3.9'
+
+      - name: Install pip dependencies
+        working-directory: ./src
+        run: |
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          python3 build_tools/update_deps.py
+
+      - name: Build Qt
+        working-directory: ./src
+        # We haven't succeeded to cross build Qt6 for arm64 on intel mac.
+        # Build a Universal macOS Binary for Qt6 as a workaround.
+        run: |
+          python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=x86_64,arm64
+          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
+
+      - name: bazel build
+        working-directory: ./src
+        run: |
+          bazel build --config oss_macos package --macos_cpus=arm64
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mozc_arm64.pkg
+          path: src/bazel-bin/mac/Mozc.pkg
+          if-no-files-found: warn
+
+  build_intel64:
     # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
     runs-on: macos-11
     timeout-minutes: 90
@@ -49,18 +103,70 @@ jobs:
       - name: Build Qt
         working-directory: ./src
         run: |
-          python3 build_tools/build_qt.py --release --confirm_license
+          python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=x86_64
           echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
 
       - name: bazel build
         working-directory: ./src
         run: |
-          bazel build --config oss_macos package
+          bazel build --config oss_macos package --macos_cpus=x86_64
 
       - name: upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Mozc.pkg
+          name: Mozc_intel64.pkg
+          path: src/bazel-bin/mac/Mozc.pkg
+          if-no-files-found: warn
+
+  build_universal_binary:
+    # https://github.com/actions/virtual-environments/blob/main/images/macos/macos-11-Readme.md
+    runs-on: macos-11
+    timeout-minutes: 90
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: '3.9'
+
+      - name: Install pip dependencies
+        working-directory: ./src
+        run: |
+          python3 -m pip install requests
+
+      - name: Try to restore update_deps cache
+        uses: actions/cache@v3
+        with:
+          path: src/third_party_cache
+          key: update_deps-${{ runner.os }}-${{ hashFiles('src/build_tools/update_deps.py') }}
+
+      - name: Install dependencies
+        working-directory: ./src
+        # This command uses src/third_party_cache as the download cache.
+        run: |
+          python3 build_tools/update_deps.py
+
+      - name: Build Qt
+        working-directory: ./src
+        run: |
+          python3 build_tools/build_qt.py --release --confirm_license --macos_cpus=x86_64,arm64
+          echo "MOZC_QT_PATH=${PWD}/third_party/qt" >> $GITHUB_ENV
+
+      - name: bazel build
+        working-directory: ./src
+        run: |
+          bazel build --config oss_macos package --macos_cpus=x86_64,arm64
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mozc_universal_binary.pkg
           path: src/bazel-bin/mac/Mozc.pkg
           if-no-files-found: warn
 
