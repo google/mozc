@@ -126,15 +126,6 @@
             'USE_HEADERMAP': 'NO',
           },
           'conditions': [
-            ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
-             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
-              'cflags': [
-                '-Wno-invalid-noreturn',
-                '-Wno-tautological-constant-out-of-range-compare',
-                '-Wno-unused-const-variable',
-                '-Wno-unused-function',
-              ],
-            }],
             ['OS=="win"', {
               'defines!': [
                 'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
@@ -176,16 +167,6 @@
             'USE_HEADERMAP': 'NO',
           },
           'conditions': [
-            ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
-             '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
-              'cflags': [
-                '-Wno-invalid-noreturn',
-                '-Wno-tautological-constant-out-of-range-compare',
-                '-Wno-unused-const-variable',
-                '-Wno-unused-function',
-                '-Wno-unused-private-field',
-              ],
-            }],
             ['OS=="win"', {
               'defines!': [
                 'WIN32_LEAN_AND_MEAN',  # protobuf already defines this
