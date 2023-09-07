@@ -32,12 +32,9 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
-
-RemoveRedundantCandidateRewriter::RemoveRedundantCandidateRewriter() {}
-
-RemoveRedundantCandidateRewriter::~RemoveRedundantCandidateRewriter() {}
 
 int RemoveRedundantCandidateRewriter::capability(
     const ConversionRequest &request) const {
