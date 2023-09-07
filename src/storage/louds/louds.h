@@ -96,11 +96,6 @@ class Louds {
             size_t bitvec_lb1_cache_size, size_t select0_cache_size,
             size_t select1_cache_size);
 
-  // Initializes this LOUDS from bit array without cache.
-  void Init(const uint8_t *image, int length) {
-    Init(image, length, 0, 0, 0, 0);
-  }
-
   // Explicitly clears the internal bit array.
   void Reset();
 
