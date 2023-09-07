@@ -383,8 +383,6 @@
             '<(special_pos_file)',
             '--binary_output_file',
             '<@(_outputs)',
-            '--target_compiler',
-            '<(compiler_target)',
             '--use_1byte_cost',
             '<(use_1byte_cost_flag)',
           ],
