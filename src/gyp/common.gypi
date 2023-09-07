@@ -47,18 +47,6 @@
     'mac_sdk%': '13.0',
     'mac_deployment_target%': '11.0',
 
-    # 'conditions' is put inside of 'variables' so that we can use
-    # another 'conditions' in this gyp element level later. Note that
-    # you can have only one 'conditions' in a gyp element.
-    'variables': {
-      'extra_warning_cflags': '',
-      'conditions': [
-        ['warn_as_error!=0', {
-          'extra_warning_cflags': '-Werror',
-        }],
-      ],
-    },
-
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
       '-Wall',
@@ -66,7 +54,6 @@
       '-Wno-sign-compare',
       '-Wno-deprecated-declarations',
       '-Wwrite-strings',
-      '<@(extra_warning_cflags)',
 
       '-Wno-unknown-warning-option',
       '-Wno-inconsistent-missing-override',

@@ -250,12 +250,6 @@ def ParseGypOptions(args):
                     default='data/version/mozc_version_template.bzl')
   AddTargetPlatformOption(parser)
 
-  # Mac and Linux
-  parser.add_option('--warn_as_error', action='store_true',
-                    dest='warn_as_error', default=(default_branding != 'Mozc'),
-                    help='Treat compiler warning as error. This option is used '
-                    'on Mac and Linux.')
-
   # Linux
   parser.add_option('--server_dir', dest='server_dir',
                     default='',
@@ -510,11 +504,6 @@ def GypMain(options, unused_args):
                       GetBuildBaseName(target_platform)])
   gyp_options.extend(['-D', 'build_short_base=%s' %
                       GetBuildShortBaseName(target_platform)])
-
-  if options.warn_as_error:
-    gyp_options.extend(['-D', 'warn_as_error=1'])
-  else:
-    gyp_options.extend(['-D', 'warn_as_error=0'])
 
   if version.IsDevChannel():
     gyp_options.extend(['-D', 'channel_dev=1'])
