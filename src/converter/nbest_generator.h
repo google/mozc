@@ -110,8 +110,13 @@ class NBestGenerator {
   struct QueueElement {
     const Node *node;
     const QueueElement *next;
-    int32_t fx;  // f(x) = h(x) + g(x): cost function for A* search
-    int32_t gx;  // g(x)
+    // f(x) = h(x) + g(x): cost function for A* search
+    int32_t fx;
+    // g(x): current cost
+    // After the search, |gx| should contain the candidates' cost.
+    // Please refer to the comment in NBestGenerator::Next() of .cc file
+    // for more detail on the candidates' cost.
+    int32_t gx;
     // transition cost part of g(x).
     // Do not take the transition costs to edge nodes.
     int32_t structure_gx;

@@ -255,7 +255,6 @@ def ParseOptions():
   parser.add_option('--text_connection_file', dest='text_connection_file')
   parser.add_option('--id_file', dest='id_file')
   parser.add_option('--special_pos_file', dest='special_pos_file')
-  parser.add_option('--target_compiler', dest='target_compiler')
   parser.add_option('--use_1byte_cost', dest='use_1byte_cost')
   parser.add_option('--binary_output_file', dest='binary_output_file')
   parser.add_option('--header_output_file', dest='header_output_file')
@@ -286,8 +285,7 @@ def main():
     if not os.path.exists(dirpath):
       os.makedirs(dirpath)
     with open(options.header_output_file, 'wb') as stream:
-      code_generator_util.WriteCppDataArray(
-          binary, 'ConnectionData', options.target_compiler, stream)
+      code_generator_util.WriteCppDataArray(binary, 'ConnectionData', stream)
 
 
 if __name__ == '__main__':

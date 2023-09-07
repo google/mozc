@@ -359,6 +359,7 @@ mozc_macos_application(
     bundle_name = "Uninstall" + mozc_select(
         default = "GoogleJapaneseInput",
         oss = "Mozc",
+        prod = "GoogleJapaneseInput",
     ),
     infoplists = ["Uninstaller/Info.plist"],
     strings = [
@@ -440,6 +441,14 @@ genrule(
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
         ],
+        prod_macos = [
+            "//gui/config_dialog:config_dialog_macos",
+            "//gui/dictionary_tool:dictionary_tool_macos",
+            "installer/distribution.xml",
+            "installer/InstallerSections.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+            "installer/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+        ],
     ),
     outs = ["installer.zip"],
     cmd = "$(location :zip_files) --inputs $(SRCS) --output $@",
@@ -471,6 +480,7 @@ genrule(
     cmd = "$(location :tweak_installer_files) --productbuild --input $(SRCS) --output $@" + mozc_select(
         default = " --noqt",
         oss_macos = " --oss",
+        prod_macos = "",
     ),
     tags = ["manual"],
     tools = [":tweak_installer_files"],
@@ -491,6 +501,7 @@ genrule(
     name = "installer_oss_macos",
     srcs = [":tweaked_installer_files"] + mozc_select(
         oss_macos = ["installer/Mozc_template.pkgproj"],
+        prod_macos = ["installer/Mozc_template.pkgproj"],
     ),
     outs = ["Mozc_Packages.pkg"],
     cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +
@@ -524,6 +535,7 @@ genrule(
           mozc_select(
               default = "",
               oss = " --oss",
+              prod = "",
           ),
     exec_compatible_with = ["@platforms//os:macos"],
     # TODO(b/269007577): version_file, auto_updater_dir and build_type should be supported.

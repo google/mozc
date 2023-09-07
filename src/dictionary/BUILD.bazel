@@ -697,7 +697,6 @@ mozc_cc_library(
     hdrs = ["user_pos_interface.h"],
     visibility = [
         "//data_manager:__subpackages__",
-        "//engine:__subpackages__",
         "//rewriter:__subpackages__",
     ],
     deps = ["@com_google_absl//absl/strings"],
@@ -760,6 +759,7 @@ run_binary(
             "--jigyosyo",
             "$(location @zip_code_jigyosyo//:JIGYOSYO.CSV)",
         ],
+        prod = [],
     ),
     tool = ":gen_zip_code_seed",
     visibility = [

@@ -253,6 +253,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     A list of configure options to be passed to configure of Qt.
   Raises:
     ValueError: When Qt major version is not 6.
+    ValueError: When --macos_cpus=arm64 is set on Intel64 mac.
   """
 
   qt_version = get_qt_version(args)
@@ -283,6 +284,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                           '-nomake', 'examples',
                           '-nomake', 'tests',
                          ]
+  cmake_options = []
 
   if is_mac():
     qt_configure_options += [
@@ -290,6 +292,20 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
         '-qt-libpng',
         '-qt-pcre',
     ]
+    if args.macos_cpus:
+      macos_cpus = args.macos_cpus.split(',')
+      host_arch = os.uname().machine
+      if host_arch == 'x86_64' and macos_cpus == ['arm64']:
+        # Haven't figured out how to make this work...
+        raise ValueError('--macos_cpus=arm64 on Intel64 mac is not supported.')
+      # 'x86_64' needs to be the first entry if exists.
+      # https://doc-snapshots.qt.io/qt6-6.5/macos-building.html#step-2-build-the-qt-library
+      if 'x86_64' in macos_cpus and macos_cpus[0] != 'x86_64':
+        macos_cpus.remove('x86_64')
+        macos_cpus = ['x86_64'] + macos_cpus
+      cmake_options += [
+          '-DCMAKE_OSX_ARCHITECTURES:STRING=' + ';'.join(macos_cpus),
+      ]
   elif is_windows():
     qt_configure_options += ['-c++std', 'c++20',
                              '-force-debug-info',
@@ -312,7 +328,8 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
   if qt_src_dir != qt_dest_dir:
     qt_configure_options += ['-prefix', str(qt_dest_dir)]
 
-  return qt_configure_options
+  return qt_configure_options + ((['--'] + cmake_options) if cmake_options
+                                 else [])
 
 
 def parse_args() -> argparse.Namespace:
@@ -338,6 +355,12 @@ def parse_args() -> argparse.Namespace:
                       type=str, default=None)
   if is_windows():
     parser.add_argument('--vcvarsall_path', help='Path of vcvarsall.bat',
+                        type=str, default=None)
+  elif is_mac():
+    parser.add_argument('--macos_cpus',
+                        help=('comma-separated CPU archs for mac Build (e.g. '
+                              '"arm64", "x86_64,arm64"). Corresponds to the '
+                              'same option in Bazel.'),
                         type=str, default=None)
   return parser.parse_args()
 

@@ -67,6 +67,13 @@ config_setting(
 )
 
 config_setting(
+    name = "prod_macos",
+    values = {
+        "define": "TARGET=prod_macos",
+    },
+)
+
+config_setting(
     name = "chromiumos",
     values = {
         "define": "TARGET=chromiumos",
@@ -88,6 +95,13 @@ config_setting(
 )
 
 config_setting(
+    name = "prod_linux",
+    values = {
+        "define": "TARGET=prod_linux",
+    },
+)
+
+config_setting(
     name = "wasm",
     values = {
         "define": "TARGET=wasm",
@@ -98,5 +112,19 @@ config_setting(
     name = "windows",
     values = {
         "define": "TARGET=windows",
+    },
+)
+
+config_setting(
+    name = "oss_windows",
+    values = {
+        "define": "TARGET=oss_windows",
+    },
+)
+
+config_setting(
+    name = "prod_windows",
+    values = {
+        "define": "TARGET=prod_windows",
     },
 )

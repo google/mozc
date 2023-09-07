@@ -30,7 +30,6 @@ struct Result {
   ErrorType error_type;
 
   Result() : value(0), error_type(NOT_ACCEPTED) {}
-  ~Result() {}
 
   void CheckValue(double val) {
     if (!IsFinite(val)) {

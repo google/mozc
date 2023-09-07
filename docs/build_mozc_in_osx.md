@@ -22,12 +22,15 @@ MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt
 open bazel-bin/mac/Mozc.pkg
 ```
 
-Hint: With the above build steps, the target CPU architecture of the binaries in
+💡 With the above build steps, the target CPU architecture of the binaries in
 `Mozc.pkg` is the same as the CPU architecture of the build environment.
 That is, if you build Mozc on arm64 environment, `Mozc.pkg` contains arm64
-binaries.
+binaries.  See the
+["how to specify target CPU architectures"](#how-to-specify-target-cpu-architectures)
+section below about how to do cross build.
 
-Hint: You can also download `Mozc.pkg` from GitHub Actions. Check [Build with GitHub Actions](#build-with-github-actions) for details.
+💡 You can also download `Mozc.pkg` from GitHub Actions.
+Check [Build with GitHub Actions](#build-with-github-actions) for details.
 
 ## Setup
 
@@ -85,6 +88,18 @@ You can also specify `--debug` option to build debug version of Mozc.
 python3 build_tools/build_qt.py --release --debug --confirm_license
 ```
 
+You can also specify `--macos_cpus` option, which has the same semantics as the
+[same name option in Bazel](https://bazel.build/reference/command-line-reference#flag--macos_cpus),
+for cross-build including building a Universal macOS Binary.
+
+```
+# Building x86_64 binaries regardless of the host CPU architecture.
+python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x86_64
+
+# Building Universal macOS Binary for both x86_64 and arm64.
+python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x86_64,arm64
+```
+
 You can skip this process if you have already installed Qt prebuilt binaries.
 
 -----
@@ -95,6 +110,22 @@ You can skip this process if you have already installed Qt prebuilt binaries.
 
 ```
 MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt
+open bazel-bin/mac/Mozc.pkg
+```
+
+#### How to specify target CPU architectures
+
+To build an Intel64 macOS binary regardless of the host CPU architecture.
+```
+python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x64_64
+MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt --macos_cpus=x64_64
+open bazel-bin/mac/Mozc.pkg
+```
+
+To build a Universal macOS Binary both x86_64 and arm64.
+```
+python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus=x86_64,arm64
+MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt --macos_cpus=x86_64,arm64
 open bazel-bin/mac/Mozc.pkg
 ```
 

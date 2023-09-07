@@ -38,28 +38,14 @@
     # Compiler to build binaries that run in the target environment.
     # e.g. "clang", "gcc", "msvs".
     'compiler_target%': '',
-    'compiler_target_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Compiler to build binaries that run in the host environment.
     # e.g. "clang", "gcc", "msvs".
     'compiler_host%': '',
-    'compiler_host_version_int%': '0',  # (major_ver) * 100 + (minor_ver)
 
     # Versioning stuff for Mac.
     'mac_sdk%': '13.0',
     'mac_deployment_target%': '11.0',
-
-    # 'conditions' is put inside of 'variables' so that we can use
-    # another 'conditions' in this gyp element level later. Note that
-    # you can have only one 'conditions' in a gyp element.
-    'variables': {
-      'extra_warning_cflags': '',
-      'conditions': [
-        ['warn_as_error!=0', {
-          'extra_warning_cflags': '-Werror',
-        }],
-      ],
-    },
 
     # warning_cflags will be shared with Mac and Linux.
     'warning_cflags': [
@@ -68,7 +54,6 @@
       '-Wno-sign-compare',
       '-Wno-deprecated-declarations',
       '-Wwrite-strings',
-      '<@(extra_warning_cflags)',
 
       '-Wno-unknown-warning-option',
       '-Wno-inconsistent-missing-override',
@@ -108,15 +93,11 @@
     'conditions': [
       ['OS=="mac"', {
         'compiler_target': 'clang',
-        'compiler_target_version_int': 303,  # Clang 3.3 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 303,  # Clang 3.3 or higher
       }],
       ['target_platform=="Linux"', {
         'compiler_target': 'clang',
-        'compiler_target_version_int': 304,  # Clang 3.4 or higher
         'compiler_host': 'clang',
-        'compiler_host_version_int': 304,  # Clang 3.4 or higher
       }],
     ],
   },

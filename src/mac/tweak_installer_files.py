@@ -96,14 +96,18 @@ def SymlinkQtFrameworks(app_dir: str) -> None:
     os.symlink('Versions/Current/Resources', framework_dir + 'Resources')
 
 
-def TweakQtApps(top_dir: str) -> None:
+def TweakQtApps(top_dir: str, oss: bool) -> None:
   """Tweak the resource files for the Qt applications."""
+  name = 'Mozc' if oss else 'GoogleJapaneseInput'
   sub_qt_apps = [
-      'AboutDialog', 'DictionaryTool', 'ErrorMessageDialog', 'MozcPrelauncher',
-      'WordRegisterDialog'
+      'AboutDialog',
+      'DictionaryTool',
+      'ErrorMessageDialog',
+      f'{name}Prelauncher',
+      'WordRegisterDialog',
   ]
   for app in sub_qt_apps:
-    app_dir = os.path.join(top_dir, f'Mozc.app/Contents/Resources/{app}.app')
+    app_dir = os.path.join(top_dir, f'{name}.app/Contents/Resources/{app}.app')
     # Remove _CodeSignature to be invalidated.
     shutil.rmtree(os.path.join(app_dir, 'Contents/_CodeSignature'))
     RemoveQtFrameworks(app_dir, app)
@@ -116,7 +120,7 @@ def TweakQtApps(top_dir: str) -> None:
   main_qt_apps = [
       'ConfigDialog.app',
       'DictionaryTool.app',
-      'Mozc.app/Contents/Resources/ConfigDialog.app',
+      f'{name}.app/Contents/Resources/ConfigDialog.app',
   ]
   for app in main_qt_apps:
     app_dir = os.path.join(top_dir, app)
@@ -192,7 +196,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   tweak_qt = not args.noqt
 
   if tweak_qt:
-    TweakQtApps(top_dir)
+    TweakQtApps(top_dir, args.oss)
 
   if args.productbuild:
     TweakForProductbuild(top_dir, tweak_qt, args.oss)

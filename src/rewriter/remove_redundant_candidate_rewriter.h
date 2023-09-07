@@ -34,17 +34,15 @@
 #ifndef MOZC_REWRITER_REMOVE_REDUNDANT_CANDIDATE_REWRITER_H_
 #define MOZC_REWRITER_REMOVE_REDUNDANT_CANDIDATE_REWRITER_H_
 
+#include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class ConversionRequest;
-class Segments;
-
 class RemoveRedundantCandidateRewriter : public RewriterInterface {
  public:
-  RemoveRedundantCandidateRewriter();
-  ~RemoveRedundantCandidateRewriter() override;
+  RemoveRedundantCandidateRewriter() = default;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
