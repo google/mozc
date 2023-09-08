@@ -49,6 +49,9 @@ namespace mozc {
 template <typename T>
 class Trie final {
  public:
+  // This needs to be public for GCC 9 with '-std=c++17'.
+  using SubTrie = absl::flat_hash_map<char32_t, std::unique_ptr<Trie<T>>>;
+
   template <typename U>
   void AddEntry(absl::string_view key, U &&data) {
     if (key.empty()) {
@@ -202,8 +205,6 @@ class Trie final {
   }
 
  private:
-  using SubTrie = absl::flat_hash_map<char32_t, std::unique_ptr<Trie<T>>>;
-
   struct FindResult {
     Trie<T> *trie = nullptr;
     char32_t first_char = 0;
