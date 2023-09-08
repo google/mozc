@@ -38,6 +38,8 @@
 #include "base/logging.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter.h"
+#include "converter/lattice.h"
+#include "converter/node.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
@@ -124,7 +126,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
     return std::make_unique<NBestGenerator>(
         suppression_dictionary_.get(), segmenter_.get(), connector_,
-        &pos_matcher_, lattice, suggestion_filter_, true);
+        &pos_matcher_, lattice, suggestion_filter_);
   }
 
  private:

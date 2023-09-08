@@ -38,7 +38,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt update --fix-missing
 RUN apt upgrade -y
 ## Common packages for linux build environment
-RUN apt-get install -y clang libc++-dev libc++abi-dev python3 pkg-config git curl bzip2 unzip make ninja-build
+RUN apt-get install -y python3 pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
 RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev
 ## Packages for misc tools
@@ -70,9 +70,6 @@ ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r25c
 RUN mkdir /home/mozc_builder/work/mozc
 # COPY --chown=mozc_builder:mozc_builder src/ /home/mozc_builder/work/mozc/src/
 RUN git clone https://github.com/google/mozc.git -b master --single-branch --recursive
-
-# Use clang instead of gcc to support decltype
-ENV CC=clang CXX=clang++
 
 WORKDIR /home/mozc_builder/work/mozc/src
 ENTRYPOINT bash

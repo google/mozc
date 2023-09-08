@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -46,6 +47,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
 #include "absl/base/attributes.h"
 
@@ -83,15 +85,6 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     MULTI_SEGMENTS,      // Normal conversion ("私の|名前は|中野です")
     SINGLE_SEGMENT,      // Realtime conversion ("私の名前は中野です")
     ONLY_FIRST_SEGMENT,  // Insert only first segment ("私の")
-  };
-
-  enum FilterType {
-    // Suppress exact match for prediction.
-    // Users will use conversion for candidates for exact match.
-    DESKTOP,
-    // Do not suppress exact match for prediction.
-    // Users will mainly use suggestion/prediction for all mach cases.
-    MOBILE,
   };
 
   void ExpandCandidates(const ConversionRequest &request,
@@ -146,14 +139,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
                                       const Lattice &lattice,
                                       const std::vector<uint16_t> &group,
                                       size_t max_candidates_size,
-                                      FilterType filter_type,
                                       bool allow_exact) const;
 
   void InsertCandidates(const ConversionRequest &request, Segments *segments,
                         const Lattice &lattice,
                         const std::vector<uint16_t> &group,
-                        size_t max_candidates_size, InsertCandidatesType type,
-                        FilterType filter_type) const;
+                        size_t max_candidates_size,
+                        InsertCandidatesType type) const;
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.

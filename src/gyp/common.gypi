@@ -86,7 +86,6 @@
     ],
     # Libraries for GNU/Linux environment.
     'linux_ldflags': [
-      '-lc++',
       '-pthread',
     ],
 
@@ -96,8 +95,13 @@
         'compiler_host': 'clang',
       }],
       ['target_platform=="Linux"', {
-        'compiler_target': 'clang',
-        'compiler_host': 'clang',
+        # In most Linux distributions, system-provided Qt6 libraries are
+        # supposed to be built with libstdc++ rather than libc++.  This means
+        # that mozc_tool also need to link to libstdc++ to avoid ABI mismatch
+        # unless we build Qt6 from the source code like we do so in macOS and
+        # Windows builds.  For now, let's assume GCC and libstdc++ in Linux CI.
+        'compiler_target': 'gcc',
+        'compiler_host': 'gcc',
       }],
     ],
   },
@@ -278,16 +282,4 @@
       }],
     ],
   },
-  'conditions': [
-    ['target_platform=="Linux"', {
-      'make_global_settings': [
-        ['AR', '<!(which ar)'],
-        ['CC', '<!(which clang)'],
-        ['CXX', '<!(which clang++)'],
-        ['LD', '<!(which ld)'],
-        ['NM', '<!(which nm)'],
-        ['READELF', '<!(which readelf)'],
-      ],
-    }],
-  ],
 }

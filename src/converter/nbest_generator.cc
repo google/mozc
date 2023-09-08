@@ -99,16 +99,14 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Connector &connector,
                                const PosMatcher *pos_matcher,
                                const Lattice *lattice,
-                               const SuggestionFilter &suggestion_filter,
-                               bool apply_suggestion_filter_for_exact_match)
+                               const SuggestionFilter &suggestion_filter)
     : suppression_dictionary_(suppression_dic),
       segmenter_(segmenter),
       connector_(connector),
       pos_matcher_(pos_matcher),
       lattice_(lattice),
       freelist_(kFreeListSize),
-      filter_(suppression_dic, pos_matcher, suggestion_filter,
-              apply_suggestion_filter_for_exact_match) {
+      filter_(suppression_dic, pos_matcher, suggestion_filter) {
   DCHECK(suppression_dictionary_);
   DCHECK(segmenter);
   if (lattice_ == nullptr || !lattice_->has_lattice()) {
