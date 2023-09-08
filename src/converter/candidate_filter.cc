@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -220,14 +221,11 @@ bool IsStrictModeEnabled(const ConversionRequest &request) {
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
-    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter,
-    bool apply_suggestion_filter_for_exact_match)
+    const PosMatcher *pos_matcher, const SuggestionFilter &suggestion_filter)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
-      top_candidate_(nullptr),
-      apply_suggestion_filter_for_exact_match_(
-          apply_suggestion_filter_for_exact_match) {
+      top_candidate_(nullptr) {
   CHECK(suppression_dictionary_);
   CHECK(pos_matcher_);
 }
@@ -245,6 +243,18 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
   // PREDICTION and SUGGESTION modes.
   switch (request.request_type()) {
     case ConversionRequest::PREDICTION:
+      // - For Mobile
+      // (To be precise, in mixed_conversion mode;
+      //  Mobile IME with physical keyboard can set mixed_conversion=false and
+      //  act similar to the Desktop version)
+      // Most users do not trigger conversion explicitly.
+      // So we don't apply the suggestion filter when the input key is
+      // exactly the same as candidate's.
+      //
+      // Note:
+      // SUGGESTION command is not called when mixed_conversion=true
+
+      // - For Desktop
       // In the PREDICTION mode, the suggestion filter is not applied and the
       // same filtering rule as the CONVERSION mode is used because the
       // PREDICTION is triggered by user action (hitting tab keys), i.e.,
@@ -258,15 +268,7 @@ CandidateFilter::ResultType CandidateFilter::CheckRequestType(
       }
       [[fallthrough]];
     case ConversionRequest::SUGGESTION:
-      // For mobile, most users will use suggestion/prediction only and do not
-      // trigger conversion explicitly.
-      // So we don't apply the suggestion filter if the user input key
-      // is exactly the same as candidate's.
-      if (!apply_suggestion_filter_for_exact_match_ &&
-          original_key == candidate.key) {
-        break;
-      }
-
+      // - For Desktop
       // In contrast to the PREDICTION mode, the SUGGESTION is triggered without
       // any user actions, i.e., suggestion candidates are automatically
       // displayed to users.  Therefore, it's better to filter unfavorable words

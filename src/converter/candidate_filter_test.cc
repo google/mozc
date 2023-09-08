@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "base/container/freelist.h"
+#include "base/logging.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -131,11 +132,9 @@ class CandidateFilterTest : public ::testing::Test {
 
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
-  CandidateFilter *CreateCandidateFilter(
-      bool apply_suggestion_filter_for_exact_match) const {
+  CandidateFilter *CreateCandidateFilter() const {
     return new CandidateFilter(&suppression_dictionary_, &pos_matcher_,
-                               suggestion_filter_,
-                               apply_suggestion_filter_for_exact_match);
+                               suggestion_filter_);
   }
 
   std::unique_ptr<FreeList<Segment::Candidate>> candidate_freelist_;
@@ -156,7 +155,7 @@ class CandidateFilterTestWithParam
 TEST_P(CandidateFilterTestWithParam, FilterTest) {
   ConversionRequest::RequestType type = GetParam();
 
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> n;
 
   GetDefaultNodes(&n);
@@ -227,7 +226,7 @@ TEST_P(CandidateFilterTestWithParam, FilterTest) {
 }
 
 TEST_P(CandidateFilterTestWithParam, DeduplicationTest) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
 
   ConversionRequest::RequestType type = GetParam();
   request_->set_request_type(type);
@@ -295,7 +294,7 @@ TEST_P(CandidateFilterTestWithParam, KatakanaT13N) {
   ConversionRequest::RequestType type = GetParam();
   request_->set_request_type(type);
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
     std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[0] is KatakanaT13N
@@ -315,7 +314,7 @@ TEST_P(CandidateFilterTestWithParam, KatakanaT13N) {
     filter->Reset();
   }
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
     std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is KatakanaT13N
@@ -332,7 +331,7 @@ TEST_P(CandidateFilterTestWithParam, KatakanaT13N) {
               CandidateFilter::BAD_CANDIDATE);
   }
   {
-    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+    std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
     std::vector<const Node *> nodes;
     GetDefaultNodes(&nodes);
     // nodes[1] is not a functional word
@@ -358,7 +357,7 @@ TEST_P(CandidateFilterTestWithParam, KatakanaT13N) {
 
 TEST_P(CandidateFilterTestWithParam, IsolatedWordOrGeneralSymbol) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes;
   Segment::Candidate *c = NewCandidate();
   c->key = "abc";
@@ -428,7 +427,7 @@ TEST_P(CandidateFilterTestWithParam, IsolatedWordOrGeneralSymbol) {
 }
 
 TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
 
   Segment::Candidate *c = NewCandidate();
   c->key = "abcisolatedxyz";
@@ -466,7 +465,7 @@ TEST_F(CandidateFilterTest, IsolatedWordInMultipleNodes) {
 
 TEST_P(CandidateFilterTestWithParam, MayHaveMoreCandidates) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> n;
   GetDefaultNodes(&n);
 
@@ -536,9 +535,7 @@ TEST_P(CandidateFilterTestWithParam, MayHaveMoreCandidates) {
 
 TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   ConversionRequest::RequestType type = GetParam();
-  auto dic = std::make_unique<SuppressionDictionary>();
-  auto filter = std::make_unique<CandidateFilter>(dic.get(), &pos_matcher_,
-                                                  suggestion_filter_, true);
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
 
   std::vector<const Node *> n;
   GetDefaultNodes(&n);
@@ -554,9 +551,9 @@ TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   // "seen" rule.
   filter->Reset();
 
-  dic->Lock();
-  dic->AddEntry("test_key", "test_value");
-  dic->UnLock();
+  suppression_dictionary_.Lock();
+  suppression_dictionary_.AddEntry("test_key", "test_value");
+  suppression_dictionary_.UnLock();
 
   EXPECT_EQ(filter->FilterCandidate(*request_, c1->key, c1, n, n),
             CandidateFilter::BAD_CANDIDATE);
@@ -569,9 +566,9 @@ TEST_P(CandidateFilterTestWithParam, Regression3437022) {
   EXPECT_EQ(filter->FilterCandidate(*request_, "test_key_suffix", c1, n, n),
             CandidateFilter::BAD_CANDIDATE);
 
-  dic->Lock();
-  dic->Clear();
-  dic->UnLock();
+  suppression_dictionary_.Lock();
+  suppression_dictionary_.Clear();
+  suppression_dictionary_.UnLock();
 
   EXPECT_EQ(filter->FilterCandidate(*request_, "test_key_suffix", c1, n, n),
             CandidateFilter::GOOD_CANDIDATE);
@@ -579,7 +576,7 @@ TEST_P(CandidateFilterTestWithParam, Regression3437022) {
 
 TEST_P(CandidateFilterTestWithParam, FilterRealtimeConversionTest) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> n;
 
   n.clear();
@@ -610,7 +607,7 @@ TEST_P(CandidateFilterTestWithParam, FilterRealtimeConversionTest) {
 
 TEST_P(CandidateFilterTestWithParam, DoNotFilterExchangeableCandidates) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   request_->set_request_type(type);
 
@@ -709,7 +706,7 @@ TEST_P(CandidateFilterTestWithParam, DoNotFilterExchangeableCandidates) {
 TEST_P(CandidateFilterTestWithParam,
        DoNotFilterExchangeableCandidatesInStrictMode) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
   commands::RequestForUnitTest::FillMobileRequest(&req);
@@ -783,7 +780,7 @@ TEST_P(CandidateFilterTestWithParam,
 TEST_P(CandidateFilterTestWithParam,
        DoNotFilterTypicalCandidatesForStrictMode) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
   commands::RequestForUnitTest::FillMobileRequest(&req);
@@ -856,7 +853,7 @@ TEST_P(CandidateFilterTestWithParam,
 
 TEST_P(CandidateFilterTestWithParam, FilterCandidatesForStrictMode) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
   commands::RequestForUnitTest::FillMobileRequest(&req);
@@ -920,7 +917,7 @@ TEST_P(CandidateFilterTestWithParam, FilterCandidatesForStrictMode) {
 TEST_P(CandidateFilterTestWithParam,
        DoNotFilterExchangeableCandidatesNoisyNonContentWord) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes1;
   request_->set_request_type(type);
 
@@ -981,7 +978,7 @@ TEST_P(CandidateFilterTestWithParam,
 
 TEST_P(CandidateFilterTestWithParam, FilterMultipleNumberNodesWord) {
   ConversionRequest::RequestType type = GetParam();
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes1;
   request_->set_request_type(type);
 
@@ -1077,7 +1074,7 @@ TEST_P(CandidateFilterTestWithParam, FilterMultipleNumberNodesWord) {
 }
 
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterConversion) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
 
   // For ConversionRequest::CONVERSION, suggestion filter is not applied.
   {
@@ -1103,7 +1100,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterConversion) {
 }
 
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestion) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   request_->set_request_type(ConversionRequest::SUGGESTION);
 
   // For ConversionRequest::SUGGESTION, suggestion filter is applied regardless
@@ -1206,40 +1203,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestion) {
   }
 }
 
-TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestionMobile) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(false));
-  request_->set_request_type(ConversionRequest::SUGGESTION);
-
-  // For Mobile ConversionRequest::SUGGESTION, suggestion filter is NOT applied
-  // for exact match.
-  {
-    Node *n = NewNode();
-    n->key = "ふぃるたー";
-    n->value = "フィルター";
-
-    std::vector<const Node *> nodes;
-    nodes.push_back(n);
-
-    Segment::Candidate *c = NewCandidate();
-    c->key = n->key;
-    c->value = n->value;
-    c->content_key = n->key;
-    c->content_value = n->value;
-    c->cost = 1000;
-    c->structure_cost = 2000;
-
-    // Test case where "フィルター" is suggested from key "ふぃる".
-    EXPECT_EQ(filter->FilterCandidate(*request_, "ふぃる", c, nodes, nodes),
-              CandidateFilter::BAD_CANDIDATE);
-    filter->Reset();
-    // Test case where "フィルター" is suggested from key "ふぃるたー".
-    EXPECT_EQ(filter->FilterCandidate(*request_, n->key, c, nodes, nodes),
-              CandidateFilter::GOOD_CANDIDATE);
-  }
-}
-
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterPrediction) {
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   request_->set_request_type(ConversionRequest::PREDICTION);
 
   // For ConversionRequest::PREDICTION, suggestion filter is applied only when
@@ -1347,7 +1312,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterPrediction) {
 
 TEST_F(CandidateFilterTest, ReverseConversion) {
   request_->set_request_type(ConversionRequest::REVERSE_CONVERSION);
-  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter());
   std::vector<const Node *> nodes;
   GetDefaultNodes(&nodes);
 

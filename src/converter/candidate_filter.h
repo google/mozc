@@ -30,6 +30,8 @@
 #ifndef MOZC_CONVERTER_CANDIDATE_FILTER_H_
 #define MOZC_CONVERTER_CANDIDATE_FILTER_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <string>
 
@@ -40,6 +42,7 @@
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/hash/hash.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
@@ -87,8 +90,7 @@ class CandidateFilter {
   CandidateFilter(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const dictionary::PosMatcher *pos_matcher,
-      const SuggestionFilter &suggestion_filter,
-      bool apply_suggestion_filter_for_exact_match);
+      const SuggestionFilter &suggestion_filter);
   CandidateFilter(const CandidateFilter &) = delete;
   CandidateFilter &operator=(const CandidateFilter &) = delete;
 
@@ -131,7 +133,6 @@ class CandidateFilter {
                       std::equal_to<>>
       seen_;
   const Segment::Candidate *top_candidate_;
-  bool apply_suggestion_filter_for_exact_match_;
 };
 
 }  // namespace converter

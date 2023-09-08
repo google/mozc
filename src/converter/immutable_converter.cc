@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -52,6 +53,7 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -1444,8 +1446,10 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
     dictionary_->ClearReverseLookupCache();
   }
 
-  // Nodes look up for real time conversion
-  // If "enrich_partial_candidates" is true, stop adding predictive nodes here.
+  // Nodes look up for real time conversion for desktop.
+  // Note:
+  // For mobile, we decided to stop adding predictive nodes based on
+  // experiments.
   if (is_prediction && !IsMobileRequest(request)) {
     MakeLatticeNodesForPredictiveNodes(*segments, request, lattice);
   }
@@ -1725,12 +1729,11 @@ void ImmutableConverterImpl::Resegment(const Segments &segments,
 void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
     const ConversionRequest &request, Segments *segments,
     const Lattice &lattice, const std::vector<uint16_t> &group,
-    size_t max_candidates_size, FilterType filter_type,
-    bool allow_exact) const {
+    size_t max_candidates_size, bool allow_exact) const {
   const size_t only_first_segment_candidate_pos =
       segments->conversion_segment(0).candidates_size();
   InsertCandidates(request, segments, lattice, group, max_candidates_size,
-                   ONLY_FIRST_SEGMENT, filter_type);
+                   ONLY_FIRST_SEGMENT);
   // Note that inserted candidates might consume the entire key.
   // e.g. key: "なのは", value: "ナノは"
   // Erase them later.
@@ -1866,8 +1869,7 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
 void ImmutableConverterImpl::InsertCandidates(
     const ConversionRequest &request, Segments *segments,
     const Lattice &lattice, const std::vector<uint16_t> &group,
-    size_t max_candidates_size, InsertCandidatesType type,
-    FilterType filter_type) const {
+    size_t max_candidates_size, InsertCandidatesType type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1882,7 +1884,7 @@ void ImmutableConverterImpl::InsertCandidates(
   const bool is_single_segment = (type == SINGLE_SEGMENT);
   NBestGenerator nbest_generator(suppression_dictionary_, segmenter_,
                                  connector_, pos_matcher_, &lattice,
-                                 suggestion_filter_, (filter_type == DESKTOP));
+                                 suggestion_filter_);
 
   std::string original_key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
@@ -1944,10 +1946,9 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                               type == ConversionRequest::PARTIAL_PREDICTION);
   const bool is_suggestion = (type == ConversionRequest::SUGGESTION ||
                               type == ConversionRequest::PARTIAL_SUGGESTION);
-  const FilterType filter_type = IsMobileRequest(request) ? MOBILE : DESKTOP;
 
   auto do_suggestion = [this, &request, &lattice, &group, &segments,
-                        &filter_type, &is_prediction]() {
+                        &is_prediction]() {
     const size_t max_candidates_size = request.max_conversion_candidates_size();
 
     if (request.create_partial_candidates()) {
@@ -1959,8 +1960,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                ? max_candidates_size - kOnlyFirstSegmentCandidateSize
                : 1);
       InsertCandidates(request, segments, lattice, group,
-                       single_segment_candidates_size, SINGLE_SEGMENT,
-                       filter_type);
+                       single_segment_candidates_size, SINGLE_SEGMENT);
 
       // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
       // is greater than max_candidates_size, we cannot skip
@@ -1977,24 +1977,23 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                                             kOnlyFirstSegmentCandidateSize);
       InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                      only_first_segment_candidates_size,
-                                     filter_type, false /* allow_exact */);
+                                     false /* allow_exact */);
       // TODO(taku): We do not want to refer `is_prediction` here.
       // This is a temporal workaround to fill all personal names appeared
       // as exact partial candidates. Expand candidates as many as possible
       if (is_prediction) {
         InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                        request.max_conversion_candidates_size(),
-                                       filter_type, true /* allow exact */);
+                                       true /* allow exact */);
       }
 
     } else {
       InsertCandidates(request, segments, lattice, group, max_candidates_size,
-                       SINGLE_SEGMENT, filter_type);
+                       SINGLE_SEGMENT);
     }
   };
 
-  auto do_conversion = [this, &request, &lattice, &group, &segments,
-                        &filter_type]() {
+  auto do_conversion = [this, &request, &lattice, &group, &segments]() {
     DCHECK(!request.create_partial_candidates());
     // Currently, we assume that REVERSE_CONVERSION only
     // requires 1 result.
@@ -2012,7 +2011,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     const size_t old_conversion_segments_size =
         segments->conversion_segments_size();
     InsertCandidates(request, segments, lattice, group, max_candidates_size,
-                     MULTI_SEGMENTS, filter_type);
+                     MULTI_SEGMENTS);
     if (old_conversion_segments_size > 0) {
       segments->erase_segments(segments->history_segments_size(),
                                old_conversion_segments_size);
