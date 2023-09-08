@@ -190,7 +190,6 @@ mozc_cc_library(
     srcs = ["result.cc"],
     hdrs = ["result.h"],
     visibility = [
-        "//prediction:__subpackages__",
     ],
     deps = [
         ":zero_query_dict",
