@@ -29,14 +29,13 @@
 
 #include "base/file_util.h"
 
-#include <fstream>
 #include <string>
 
+#include "base/file/temp_dir.h"
 #include "base/logging.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 
@@ -62,10 +61,10 @@ namespace {
   ASSERT_OK(::mozc::FileUtil::SetContents(filename, data))
 
 TEST(FileUtilTest, CreateDirectory) {
-  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  EXPECT_OK(FileUtil::DirectoryExists(temp_dir.path()));
   // dirpath = FLAGS_test_tmpdir/testdir
-  const std::string dirpath =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testdir");
+  const std::string dirpath = FileUtil::JoinPath(temp_dir.path(), "testdir");
 
   // Delete dirpath, if it exists.
   ASSERT_OK(FileUtil::RemoveDirectoryIfExists(dirpath));
@@ -81,9 +80,9 @@ TEST(FileUtilTest, CreateDirectory) {
 }
 
 TEST(FileUtilTest, DirectoryExists) {
-  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
-  const std::string filepath =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  EXPECT_OK(FileUtil::DirectoryExists(temp_dir.path()));
+  const std::string filepath = FileUtil::JoinPath(temp_dir.path(), "testfile");
 
   // Delete filepath, if it exists.
   ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
@@ -100,8 +99,8 @@ TEST(FileUtilTest, DirectoryExists) {
 }
 
 TEST(FileUtilTest, Unlink) {
-  const std::string filepath =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filepath = FileUtil::JoinPath(temp_dir.path(), "testfile");
   ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
   EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
 
@@ -135,9 +134,8 @@ TEST(FileUtilTest, Unlink) {
 
 #ifdef _WIN32
 TEST(FileUtilTest, HideFile) {
-  const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename = FileUtil::JoinPath(temp_dir.path(), "testfile");
 
   EXPECT_FALSE(FileUtil::HideFile(filename));
 
@@ -176,18 +174,14 @@ TEST(FileUtilTest, HideFile) {
             FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
                 FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_ARCHIVE |
                 FILE_ATTRIBUTE_TEMPORARY);
-
-  ASSERT_OK(FileUtil::Unlink(filename));
 }
 #endif  // _WIN32
 
 TEST(FileUtilTest, IsEqualFile) {
-  const std::string filename1 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
-  const std::string filename2 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename1 = FileUtil::JoinPath(temp_dir.path(), "test1");
+  const std::string filename2 = FileUtil::JoinPath(temp_dir.path(), "test2");
+
   EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2).ok());
 
   CreateTestFile(filename1, "test data1");
@@ -207,18 +201,12 @@ TEST(FileUtilTest, IsEqualFile) {
   s = FileUtil::IsEqualFile(filename1, filename2);
   EXPECT_OK(s);
   EXPECT_FALSE(*s);
-
-  ASSERT_OK(FileUtil::Unlink(filename1));
-  ASSERT_OK(FileUtil::Unlink(filename2));
 }
 
 TEST(FileUtilTest, IsEquivalent) {
-  const std::string filename1 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
-  const std::string filename2 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename1 = FileUtil::JoinPath(temp_dir.path(), "test1");
+  const std::string filename2 = FileUtil::JoinPath(temp_dir.path(), "test2");
   EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename1).ok());
   EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename2).ok());
 
@@ -241,13 +229,10 @@ TEST(FileUtilTest, IsEquivalent) {
 }
 
 TEST(FileUtilTest, CopyFile) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   // just test rename operation works as intended
-  const std::string from =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "copy_from");
-  const std::string to =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "copy_to");
-  ASSERT_OK(FileUtil::UnlinkIfExists(from));
-  ASSERT_OK(FileUtil::UnlinkIfExists(to));
+  const std::string from = FileUtil::JoinPath(temp_dir.path(), "copy_from");
+  const std::string to = FileUtil::JoinPath(temp_dir.path(), "copy_to");
 
   CreateTestFile(from, "simple test");
   EXPECT_OK(FileUtil::CopyFile(from, to));
@@ -309,19 +294,15 @@ TEST(FileUtilTest, CopyFile) {
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL));
   }
 #endif  // _WIN32
-
-  ASSERT_OK(FileUtil::Unlink(from));
-  ASSERT_OK(FileUtil::Unlink(to));
 }
 
 TEST(FileUtilTest, AtomicRename) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   // just test rename operation works as intended
-  const std::string from = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                                              "atomic_rename_test_from");
-  const std::string to = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                                            "atomic_rename_test_to");
-  ASSERT_OK(FileUtil::UnlinkIfExists(from));
-  ASSERT_OK(FileUtil::UnlinkIfExists(to));
+  const std::string from =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_from");
+  const std::string to =
+      FileUtil::JoinPath(temp_dir.path(), "atomic_rename_test_to");
 
   // |from| is not found
   EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
@@ -393,18 +374,12 @@ TEST(FileUtilTest, AtomicRename) {
     ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL);
   }
 #endif  // _WIN32
-
-  ASSERT_OK(FileUtil::UnlinkIfExists(from));
-  ASSERT_OK(FileUtil::UnlinkIfExists(to));
 }
 
 TEST(FileUtilTest, CreateHardLink) {
-  const std::string filename1 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
-  const std::string filename2 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename1 = FileUtil::JoinPath(temp_dir.path(), "test1");
+  const std::string filename2 = FileUtil::JoinPath(temp_dir.path(), "test2");
 
   CreateTestFile(filename1, "test data");
   absl::Status s = FileUtil::CreateHardLink(filename1, filename2);
@@ -493,10 +468,12 @@ TEST(FileUtilTest, NormalizeDirectorySeparator) {
 }
 
 TEST(FileUtilTest, GetModificationTime) {
-  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file").ok());
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  EXPECT_FALSE(FileUtil::GetModificationTime(
+                   FileUtil::JoinPath(temp_dir.path(), "not_existent_file"))
+                   .ok());
 
-  const std::string &path =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
+  const std::string &path = FileUtil::JoinPath(temp_dir.path(), "testfile");
   CreateTestFile(path, "content");
   absl::StatusOr<FileTimeStamp> time_stamp1 =
       FileUtil::GetModificationTime(path);
@@ -507,14 +484,11 @@ TEST(FileUtilTest, GetModificationTime) {
       FileUtil::GetModificationTime(path);
   ASSERT_OK(time_stamp2);
   EXPECT_EQ(*time_stamp1, *time_stamp2);
-
-  // Cleanup
-  ASSERT_OK(FileUtil::Unlink(path));
 }
 
 TEST(FileUtilTest, GetAndSetContents) {
-  const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.txt");
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string filename = FileUtil::JoinPath(temp_dir.path(), "test.txt");
 
   // File doesn't exist yet.
   std::string content;
@@ -551,23 +525,23 @@ TEST(FileUtilTest, GetAndSetContents) {
 }
 
 TEST(FileUtilTest, FileUnlinker) {
-  const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.txt");
-  ASSERT_OK(FileUtil::SetContents(filename, "test"));
+  absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(FileUtil::SetContents(temp_file->path(), "test"));
   {
-    FileUnlinker unlinker(filename);
-    EXPECT_OK(FileUtil::FileExists(filename));
+    FileUnlinker unlinker(temp_file->path());
+    EXPECT_OK(FileUtil::FileExists(temp_file->path()));
   }
-  EXPECT_FALSE(FileUtil::FileExists(filename).ok());
+  EXPECT_FALSE(FileUtil::FileExists(temp_file->path()).ok());
 }
 
 TEST(FileUtilTest, LinkOrCopyFile) {
-  const std::string from = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                                              "link_or_copy_test_from.txt");
-  const std::string to = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                                            "link_or_copy_test_to.txt");
-  ASSERT_OK(FileUtil::UnlinkIfExists(from));
-  ASSERT_OK(FileUtil::UnlinkIfExists(to));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string from =
+      FileUtil::JoinPath(temp_dir.path(), "link_or_copy_test_from.txt");
+  const std::string to =
+      FileUtil::JoinPath(temp_dir.path(), "link_or_copy_test_to.txt");
   EXPECT_TRUE(!FileUtil::LinkOrCopyFile(from, to).ok());
   ASSERT_OK(FileUtil::SetContents(from, "test"));
   EXPECT_OK(FileUtil::LinkOrCopyFile(from, to));

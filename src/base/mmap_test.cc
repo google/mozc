@@ -37,26 +37,18 @@
 #include <utility>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/algorithm/container.h"
-#include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 using SharedBitGen = absl::random_internal::PoolURBG<uint32_t, 8>;
-
-std::string GetRandomFilename() {
-  const uint32_t n = absl::Uniform<uint32_t>(SharedBitGen());
-  return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                            absl::StrCat("test_", n));
-}
 
 std::vector<char> GetRandomContents(size_t size) {
   std::vector<char> data(size);
@@ -74,10 +66,12 @@ TEST(MmapTest, DefaultCtor) {
 TEST(MmapTest, MoveCtor) {
   constexpr absl::string_view kTestContents = "mmap test";
 
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename, kTestContents));
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(FileUtil::SetContents(temp_file->path(), kTestContents));
 
-  absl::StatusOr<Mmap> mmap = Mmap::Map(filename);
+  absl::StatusOr<Mmap> mmap = Mmap::Map(temp_file->path());
   ASSERT_OK(mmap);
   EXPECT_EQ(mmap->span(), kTestContents);
 
@@ -89,15 +83,19 @@ TEST(MmapTest, MoveCtor) {
 TEST(MmapTest, MoveAssign) {
   constexpr absl::string_view kTestContents[2] = {"mmap test 1", "mmap test 2"};
 
-  const std::string filename[2] = {GetRandomFilename(), GetRandomFilename()};
-  for (size_t i = 0; i < 2; ++i)
-    ASSERT_OK(FileUtil::SetContents(filename[i], kTestContents[i]));
+  const absl::StatusOr<TempFile> temp_files[] = {
+      TempDirectory::Default().CreateTempFile(),
+      TempDirectory::Default().CreateTempFile()};
+  for (size_t i = 0; i < 2; ++i) {
+    ASSERT_OK(temp_files[i]);
+    ASSERT_OK(FileUtil::SetContents(temp_files[i]->path(), kTestContents[i]));
+  }
 
-  absl::StatusOr<Mmap> mmap1 = Mmap::Map(filename[0]);
+  absl::StatusOr<Mmap> mmap1 = Mmap::Map(temp_files[0]->path());
   ASSERT_OK(mmap1);
   EXPECT_EQ(mmap1->span(), kTestContents[0]);
 
-  absl::StatusOr<Mmap> mmap2 = Mmap::Map(filename[1]);
+  absl::StatusOr<Mmap> mmap2 = Mmap::Map(temp_files[1]->path());
   ASSERT_OK(mmap2);
   EXPECT_EQ(mmap2->span(), kTestContents[1]);
 
@@ -113,22 +111,30 @@ TEST(MmapTest, FailsIfFileDoesNotExist) {
 
 TEST(MmapTest, FailsIfOffsetExceedsFileSize) {
   constexpr size_t kFileSize = 128;
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename, std::string(kFileSize, 'a')));
-  EXPECT_FALSE(Mmap::Map(filename, 512, std::nullopt, Mmap::READ_ONLY).ok());
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(
+      FileUtil::SetContents(temp_file->path(), std::string(kFileSize, 'a')));
+  EXPECT_FALSE(
+      Mmap::Map(temp_file->path(), 512, std::nullopt, Mmap::READ_ONLY).ok());
 }
 
 TEST(MmapTest, FailsIfMapSizeIsZero) {
   constexpr size_t kFileSize = 128;
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename, std::string(kFileSize, 'a')));
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(
+      FileUtil::SetContents(temp_file->path(), std::string(kFileSize, 'a')));
 
-  EXPECT_FALSE(Mmap::Map(filename, 0, 0, Mmap::READ_ONLY).ok());
-  EXPECT_FALSE(Mmap::Map(filename, 100, 0, Mmap::READ_ONLY).ok());
+  EXPECT_FALSE(Mmap::Map(temp_file->path(), 0, 0, Mmap::READ_ONLY).ok());
+  EXPECT_FALSE(Mmap::Map(temp_file->path(), 100, 0, Mmap::READ_ONLY).ok());
 
   // If offset is at the end of file, the resulting size is zero.
   EXPECT_FALSE(
-      Mmap::Map(filename, kFileSize, std::nullopt, Mmap::READ_ONLY).ok());
+      Mmap::Map(temp_file->path(), kFileSize, std::nullopt, Mmap::READ_ONLY)
+          .ok());
 }
 
 TEST(MmapTest, MaybeMLockTest) {
@@ -149,12 +155,15 @@ TEST_P(MmapEntireFileTest, Read) {
   // Create a file with random contents.
   const size_t filesize = GetParam();
   const std::vector<char> &data = GetRandomContents(filesize);
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename,
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(FileUtil::SetContents(temp_file->path(),
                                   absl::string_view(data.data(), data.size())));
 
   // Mmap the file and check its contents.
-  const absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_ONLY);
+  const absl::StatusOr<Mmap> mmap =
+      Mmap::Map(temp_file->path(), Mmap::READ_ONLY);
   ASSERT_OK(mmap);
   EXPECT_EQ(mmap->span(), data);
 }
@@ -162,20 +171,24 @@ TEST_P(MmapEntireFileTest, Read) {
 TEST_P(MmapEntireFileTest, Write) {
   // Create a file with full of a's.
   const size_t filesize = GetParam();
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename, std::string(filesize, 'a')));
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(
+      FileUtil::SetContents(temp_file->path(), std::string(filesize, 'a')));
 
   // Mmap the file and writes random contents.
   const std::vector<char> &data = GetRandomContents(filesize);
   {
-    absl::StatusOr<Mmap> mmap = Mmap::Map(filename, Mmap::READ_WRITE);
+    absl::StatusOr<Mmap> mmap = Mmap::Map(temp_file->path(), Mmap::READ_WRITE);
     ASSERT_OK(mmap);
     ASSERT_EQ(mmap->size(), data.size());
     absl::c_copy(data, mmap->begin());
   }
 
   // Read the file and check its contents.
-  absl::StatusOr<std::string> contents = FileUtil::GetContents(filename);
+  absl::StatusOr<std::string> contents =
+      FileUtil::GetContents(temp_file->path());
   ASSERT_OK(contents);
   EXPECT_EQ(*contents, absl::string_view(data.data(), data.size()));
 }
@@ -192,14 +205,16 @@ TEST_P(MmapPartialFileTest, Read) {
   const auto [filesize, offset, size] = GetParam();
 
   const std::vector<char> &data = GetRandomContents(filesize);
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename,
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(FileUtil::SetContents(temp_file->path(),
                                   absl::string_view(data.data(), data.size())));
 
   const absl::string_view expected(data.data() + offset,
                                    size.value_or(filesize - offset));
   absl::StatusOr<Mmap> mmap =
-      Mmap::Map(filename, offset, size, Mmap::READ_ONLY);
+      Mmap::Map(temp_file->path(), offset, size, Mmap::READ_ONLY);
   ASSERT_OK(mmap) << mmap.status();
   EXPECT_EQ(mmap->span(), expected);
 
@@ -217,18 +232,22 @@ TEST_P(MmapPartialFileTest, Write) {
   const auto [filesize, offset, size] = GetParam();
   const size_t map_size = size.value_or(filesize - offset);
 
-  const std::string &filename = GetRandomFilename();
-  ASSERT_OK(FileUtil::SetContents(filename, std::string(filesize, 'a')));
+  const absl::StatusOr<TempFile> temp_file =
+      TempDirectory::Default().CreateTempFile();
+  ASSERT_OK(temp_file);
+  ASSERT_OK(
+      FileUtil::SetContents(temp_file->path(), std::string(filesize, 'a')));
 
   const std::vector<char> &data = GetRandomContents(map_size);
   {
     absl::StatusOr<Mmap> mmap =
-        Mmap::Map(filename, offset, map_size, Mmap::READ_WRITE);
+        Mmap::Map(temp_file->path(), offset, map_size, Mmap::READ_WRITE);
     ASSERT_OK(mmap) << mmap.status();
     ASSERT_EQ(mmap->size(), data.size());
     absl::c_copy(data, mmap->begin());
   }
-  absl::StatusOr<std::string> contents = FileUtil::GetContents(filename);
+  absl::StatusOr<std::string> contents =
+      FileUtil::GetContents(temp_file->path());
   ASSERT_OK(contents);
   EXPECT_EQ(contents->substr(0, offset), std::string(offset, 'a'));
   EXPECT_EQ(contents->substr(offset, map_size),

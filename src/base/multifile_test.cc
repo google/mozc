@@ -33,12 +33,12 @@
 #include <string>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
@@ -54,10 +54,11 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
     EXPECT_FALSE(multfile.ReadLine(&line));
   }
 
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   // Single path
   {
-    const std::string path = FileUtil::JoinPath(
-        absl::GetFlag(FLAGS_test_tmpdir), "this_file_does_not_exist");
+    const std::string path =
+        FileUtil::JoinPath(temp_dir.path(), "this_file_does_not_exist");
     InputMultiFile multfile(path);
     std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
@@ -68,12 +69,9 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
   // Multiple paths
   {
     std::vector<std::string> filenames;
-    filenames.push_back(
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "these_files"));
-    filenames.push_back(
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "do_not"));
-    filenames.push_back(
-        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "exists"));
+    filenames.push_back(FileUtil::JoinPath(temp_dir.path(), "these_files"));
+    filenames.push_back(FileUtil::JoinPath(temp_dir.path(), "do_not"));
+    filenames.push_back(FileUtil::JoinPath(temp_dir.path(), "exist"));
 
     std::string joined_path = absl::StrJoin(filenames, ",");
     InputMultiFile multfile(joined_path);
@@ -85,9 +83,9 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 }
 
 TEST(InputMultiFileTest, ReadSingleFileTest) {
-  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
   const std::string path =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "i_am_a_test_file");
+      FileUtil::JoinPath(temp_dir.path(), "i_am_a_test_file");
 
   // Create a test file
   std::vector<std::string> expected_lines;
@@ -115,7 +113,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 }
 
 TEST(InputMultiFileTest, ReadMultipleFilesTest) {
-  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
 
   constexpr int kNumFile = 3;
   constexpr int kNumLinesPerFile = 10;
@@ -127,8 +125,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
     int serial_line_no = 0;
     for (int fileno = 0; fileno < kNumFile; ++fileno) {
       std::string filename = absl::StrFormat("testfile%d", fileno);
-      std::string path =
-          FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), filename);
+      std::string path = FileUtil::JoinPath(temp_dir.path(), filename);
       paths.push_back(path);
 
       OutputFileStream ofs(path);
