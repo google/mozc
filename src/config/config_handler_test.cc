@@ -195,8 +195,7 @@ TEST_F(ConfigHandlerTest, SetConfig_IdentityCheck) {
 }
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
-  const std::string config_file =
-      absl::StrCat("config", config::CONFIG_VERSION, ".db");
+  const std::string config_file = absl::StrCat("config", kConfigVersion, ".db");
   const std::string filename =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), config_file);
   ASSERT_OK(FileUtil::UnlinkIfExists(filename));
