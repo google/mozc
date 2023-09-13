@@ -82,11 +82,12 @@ mozc_cc_test(
         ":engine_builder",
         ":engine_interface",
         "//base:file_util",
+        "//base/file:temp_dir",
         "//prediction:predictor_interface",
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
