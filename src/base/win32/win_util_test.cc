@@ -38,7 +38,6 @@
 
 #include "base/system_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {
@@ -52,44 +51,39 @@ MATCHER(LooksLikeNtPath, "") {
 
 class WinUtilLoaderLockTest : public testing::Test {
  protected:
-  WinUtilLoaderLockTest() : module_(nullptr) {}
-
-  void SetUp() override {
-    // Dynamically load the DLL to test the loader lock detection.
-    // This dll checks the loader lock in the DllMain and
-    // returns the result via IsLockHeld exported function.
-    if (!module_) {
-      module_.reset(::LoadLibraryExW(L"win_util_test_dll.dll", nullptr,
-                                     LOAD_LIBRARY_SEARCH_APPLICATION_DIR));
-    }
-  }
+  // Dynamically load the DLL to test the loader lock detection.
+  // This dll checks the loader lock in the DllMain and
+  // returns the result via IsLockHeld exported function.
+  WinUtilLoaderLockTest()
+      : module_(::LoadLibraryExW(L"win_util_test_dll.dll", nullptr,
+                                 LOAD_LIBRARY_SEARCH_APPLICATION_DIR)) {}
 
   wil::unique_hmodule module_;
 };
 
 TEST_F(WinUtilLoaderLockTest, IsDLLSynchronizationHeldTest) {
-  ASSERT_NE(nullptr, module_);
+  ASSERT_NE(module_, nullptr);
 
   using CheckProc = int(__stdcall *)();
 
   CheckProc is_lock_check_succeeded = reinterpret_cast<CheckProc>(
       ::GetProcAddress(module_.get(), "IsLockCheckSucceeded"));
-  EXPECT_NE(nullptr, is_lock_check_succeeded);
-  EXPECT_NE(FALSE, is_lock_check_succeeded());
+  EXPECT_NE(is_lock_check_succeeded, nullptr);
+  EXPECT_NE(is_lock_check_succeeded(), FALSE);
 
   CheckProc is_lock_held = reinterpret_cast<CheckProc>(
       ::GetProcAddress(module_.get(), "IsLockHeld"));
-  EXPECT_NE(nullptr, is_lock_held);
+  EXPECT_NE(is_lock_held, nullptr);
   // The loader lock should be held in the DllMain.
-  EXPECT_NE(FALSE, is_lock_held());
+  EXPECT_NE(is_lock_held(), FALSE);
 
   // Clear flags and check again from the caller which does not
   // own the loader lock. The loader lock should not be detected.
   CheckProc clear_flags_and_check_again = reinterpret_cast<CheckProc>(
       ::GetProcAddress(module_.get(), "ClearFlagsAndCheckAgain"));
-  EXPECT_NE(nullptr, clear_flags_and_check_again);
+  EXPECT_NE(clear_flags_and_check_again, nullptr);
   clear_flags_and_check_again();
-  EXPECT_NE(FALSE, is_lock_check_succeeded());
+  EXPECT_NE(is_lock_check_succeeded(), false);
   EXPECT_FALSE(is_lock_held());
 }
 
