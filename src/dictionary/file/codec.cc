@@ -29,6 +29,7 @@
 
 #include "dictionary/file/codec.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <ostream>
@@ -38,10 +39,11 @@
 #include "base/bits.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
 #include "absl/status/status.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -57,7 +59,7 @@ void DictionaryFileCodec::WriteSections(
     // In production, the number of sections equals 4.  In this case, write the
     // sections in the following deterministic order.  This order was determined
     // by random shuffle for engine version 24 but it's now made deterministic
-    // to obsolte DictionaryFileCodec.
+    // to obsolete DictionaryFileCodec.
     for (size_t i : {0, 2, 1, 3}) {
       WriteSection(sections[i], ofs);
     }
@@ -86,9 +88,8 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
   // uint64_t needs just 8 bytes.
   DCHECK_EQ(8, name.size());
   if (VLOG_IS_ON(1)) {
-    std::string escaped;
-    Util::Escape(name, &escaped);
-    LOG(INFO) << "section=" << escaped << " length=" << section.len;
+    LOG(INFO) << "section=" << absl::CHexEscape(name)
+              << " length=" << section.len;
   }
   filecodec_util::WriteInt32(section.len, ofs);
   ofs->write(name.data(), name.size());
@@ -102,9 +103,10 @@ std::string DictionaryFileCodec::GetSectionName(
   const uint64_t name_fp = FingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
                               sizeof(name_fp));
-  std::string escaped;
-  Util::Escape(fp_string, &escaped);
-  VLOG(1) << "Section name for " << name << ": " << escaped;
+  if (VLOG_IS_ON(1)) {
+    VLOG(1) << "Section name for " << name << ": "
+            << absl::CHexEscape(fp_string);
+  }
   return fp_string;
 }
 
@@ -168,9 +170,8 @@ absl::Status DictionaryFileCodec::ReadSections(
     const absl::string_view fingerprint(ptr, kFingerprintByteLength);
     ptr += kFingerprintByteLength;
     if (VLOG_IS_ON(1)) {
-      std::string escaped;
-      Util::Escape(fingerprint, &escaped);
-      LOG(INFO) << "section=" << escaped << " data_size=" << data_size;
+      LOG(INFO) << "section=" << absl::CHexEscape(fingerprint)
+                << " data_size=" << data_size;
     }
     // Add a section with data and fingerprint.  Note that the data size is
     // |data_size| but |ptr| is advanced by |padded_data_size| to skip padding

@@ -30,17 +30,17 @@
 #include "composer/key_parser.h"
 
 #include <cstdint>
-#include <iterator>
-#include <string>
 #include <utility>
 
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
-using commands::KeyEvent;
+using ::mozc::commands::KeyEvent;
 
 TEST(KeyParserTest, KeyCode) {
   KeyEvent key_event;
@@ -60,7 +60,7 @@ TEST(KeyParserTest, KeyCode) {
 }
 
 TEST(KeyParserTest, ModifierKeys) {
-  const std::pair<std::string, uint32_t> kTestData[] = {
+  constexpr std::pair<absl::string_view, uint32_t> kTestData[] = {
       {"ctrl", KeyEvent::CTRL},
       {"leftctrl", KeyEvent::CTRL | KeyEvent::LEFT_CTRL},
       {"rightctrl", KeyEvent::CTRL | KeyEvent::RIGHT_CTRL},
@@ -78,11 +78,11 @@ TEST(KeyParserTest, ModifierKeys) {
       {"SHIFT", KeyEvent::SHIFT},
   };
 
-  for (const std::pair<std::string, uint32_t> &data : kTestData) {
-    SCOPED_TRACE(data.first);
+  for (const auto [name, modifiers] : kTestData) {
+    SCOPED_TRACE(name);
     KeyEvent key_event;
-    EXPECT_TRUE(KeyParser::ParseKey(data.first, &key_event));
-    EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), data.second);
+    EXPECT_TRUE(KeyParser::ParseKey(name, &key_event));
+    EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), modifiers);
   }
 }
 
@@ -95,7 +95,7 @@ TEST(KeyParserTest, MultipleModifierKeys) {
 }
 
 TEST(KeyParserTest, SpecialKeys) {
-  const std::pair<std::string, KeyEvent::SpecialKey> kTestData[] = {
+  constexpr std::pair<absl::string_view, KeyEvent::SpecialKey> kTestData[] = {
       {"on", KeyEvent::ON},
       {"off", KeyEvent::OFF},
       {"left", KeyEvent::LEFT},
@@ -178,11 +178,11 @@ TEST(KeyParserTest, SpecialKeys) {
       {"on", KeyEvent::ON},
   };
 
-  for (const std::pair<std::string, KeyEvent::SpecialKey> &data : kTestData) {
-    SCOPED_TRACE(data.first);
+  for (const auto& [name, key] : kTestData) {
+    SCOPED_TRACE(name);
     KeyEvent key_event;
-    EXPECT_TRUE(KeyParser::ParseKey(data.first, &key_event));
-    EXPECT_EQ(key_event.special_key(), data.second);
+    EXPECT_TRUE(KeyParser::ParseKey(name, &key_event));
+    EXPECT_EQ(key_event.special_key(), key);
   }
 }
 
@@ -312,4 +312,5 @@ TEST(KeyParserTest, GetSpecialKeyString) {
             "undefinedkey");
 }
 
+}  // namespace
 }  // namespace mozc

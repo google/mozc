@@ -32,22 +32,28 @@
 #include <memory>
 #include <string>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-constexpr char kMockMagicNumber[] = "MOCK";
+constexpr absl::string_view kMockMagicNumber = "MOCK";
 
-class EngineBuilderTest : public testing::TestWithTempUserProfile {
+struct Param {
+  EngineReloadRequest::EngineType type;
+  std::string predictor_name;
+};
+
+class EngineBuilderTest : public testing::TestWithTempUserProfile,
+                          public ::testing::WithParamInterface<Param> {
  protected:
   EngineBuilderTest()
       : mock_data_path_(testing::GetSourcePath(
@@ -65,10 +71,10 @@ class EngineBuilderTest : public testing::TestWithTempUserProfile {
   EngineReloadResponse response_;
 };
 
-TEST_F(EngineBuilderTest, PrepareAsync) {
+TEST_P(EngineBuilderTest, PrepareAsync) {
   {
     // Test request without install.
-    request_.set_engine_type(EngineReloadRequest::MOBILE);
+    request_.set_engine_type(GetParam().type);
     request_.set_file_path(mock_data_path_);
     request_.set_magic_number(kMockMagicNumber);
     builder_.PrepareAsync(request_, &response_);
@@ -83,13 +89,14 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
   {
     // Test request with install.  Since the requested file is copied,
     // |mock_data_path_| is copied to a temporary file.
+    TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
     const std::string src_path =
-        FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
+        FileUtil::JoinPath({temp_dir.path(), "src.data"});
     ASSERT_OK(FileUtil::CopyFile(mock_data_path_, src_path));
 
     const std::string install_path =
-        FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});
-    request_.set_engine_type(EngineReloadRequest::MOBILE);
+        FileUtil::JoinPath({temp_dir.path(), "dst.data"});
+    request_.set_engine_type(GetParam().type);
     request_.set_file_path(src_path);
     request_.set_install_location(install_path);
     request_.set_magic_number(kMockMagicNumber);
@@ -106,102 +113,79 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
   }
 }
 
-TEST_F(EngineBuilderTest, AsyncBuildWithoutInstall) {
-  struct {
-    EngineReloadRequest::EngineType type;
-    const char *predictor_name;
-  } kTestCases[] = {
-      {EngineReloadRequest::DESKTOP, "DefaultPredictor"},
-      {EngineReloadRequest::MOBILE, "MobilePredictor"},
-  };
+TEST_P(EngineBuilderTest, AsyncBuildWithoutInstall) {
+  // Request preparation without install.
+  request_.set_engine_type(GetParam().type);
+  request_.set_file_path(mock_data_path_);
+  request_.set_magic_number(kMockMagicNumber);
+  builder_.PrepareAsync(request_, &response_);
+  ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
-  for (const auto &test_case : kTestCases) {
-    Clear();
+  builder_.Wait();
 
-    // Request preparation without install.
-    request_.set_engine_type(test_case.type);
-    request_.set_file_path(mock_data_path_);
-    request_.set_magic_number(kMockMagicNumber);
-    builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
+  // Builder should be ready now.
+  ASSERT_TRUE(builder_.HasResponse());
+  builder_.GetResponse(&response_);
+  ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
 
-    builder_.Wait();
+  // Build an engine and verify its predictor type (desktop or mobile).
+  auto engine = builder_.BuildFromPreparedData();
+  ASSERT_TRUE(engine);
+  EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
+            GetParam().predictor_name);
 
-    // Builder should be ready now.
-    ASSERT_TRUE(builder_.HasResponse());
-    builder_.GetResponse(&response_);
-    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
-
-    // Build an engine and verify its predictor type (desktop or mobile).
-    auto engine = builder_.BuildFromPreparedData();
-    ASSERT_TRUE(engine);
-    EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
-              test_case.predictor_name);
-
-    // Cannot build twice.
-    engine = builder_.BuildFromPreparedData();
-    EXPECT_FALSE(engine);
-  }
+  // Cannot build twice.
+  engine = builder_.BuildFromPreparedData();
+  EXPECT_FALSE(engine);
 }
 
-TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
-  struct {
-    EngineReloadRequest::EngineType type;
-    const char *predictor_name;
-  } kTestCases[] = {
-      {EngineReloadRequest::DESKTOP, "DefaultPredictor"},
-      {EngineReloadRequest::MOBILE, "MobilePredictor"},
-  };
-  const std::string tmp_src =
-      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
+TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
+  TempDirectory temp_dir = testing::MakeTempDirectoryOrDie();
+  const std::string tmp_src = FileUtil::JoinPath({temp_dir.path(), "src.data"});
   const std::string install_path =
-      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});
+      FileUtil::JoinPath({temp_dir.path(), "dst.data"});
 
-  for (const auto &test_case : kTestCases) {
-    Clear();
+  // Since requested file is copied, copy |mock_data_path_| to a temporary
+  // file.
+  ASSERT_OK(FileUtil::CopyFile(mock_data_path_, tmp_src));
 
-    // Since requested file is copied, copy |mock_data_path_| to a temporary
-    // file.
-    ASSERT_OK(FileUtil::CopyFile(mock_data_path_, tmp_src));
+  // Request preparation with install.
+  request_.set_engine_type(GetParam().type);
+  request_.set_file_path(tmp_src);
+  request_.set_install_location(install_path);
+  request_.set_magic_number(kMockMagicNumber);
+  builder_.PrepareAsync(request_, &response_);
+  ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
 
-    // Request preparation with install.
-    request_.set_engine_type(test_case.type);
-    request_.set_file_path(tmp_src);
-    request_.set_install_location(install_path);
-    request_.set_magic_number(kMockMagicNumber);
-    builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(response_.status(), EngineReloadResponse::ACCEPTED);
+  builder_.Wait();
 
-    builder_.Wait();
+  // Builder should be ready now.
+  ASSERT_TRUE(builder_.HasResponse());
+  builder_.GetResponse(&response_);
+  ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
 
-    // Builder should be ready now.
-    ASSERT_TRUE(builder_.HasResponse());
-    builder_.GetResponse(&response_);
-    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOAD_READY);
+  // |tmp_src| should be copied to |install_path|.
+  ASSERT_OK(FileUtil::FileExists(tmp_src));
+  ASSERT_OK(FileUtil::FileExists(install_path));
 
-    // |tmp_src| should be copied to |install_path|.
-    ASSERT_OK(FileUtil::FileExists(tmp_src));
-    ASSERT_OK(FileUtil::FileExists(install_path));
+  // Build an engine and verify its predictor type (desktop or mobile).
+  auto engine = builder_.BuildFromPreparedData();
+  ASSERT_TRUE(engine);
+  EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
+            GetParam().predictor_name);
 
-    // Build an engine and verify its predictor type (desktop or mobile).
-    auto engine = builder_.BuildFromPreparedData();
-    ASSERT_TRUE(engine);
-    EXPECT_EQ(engine->GetPredictor()->GetPredictorName(),
-              test_case.predictor_name);
+  // Cannot build twice.
+  engine = builder_.BuildFromPreparedData();
+  EXPECT_FALSE(engine);
 
-    // Cannot build twice.
-    engine = builder_.BuildFromPreparedData();
-    EXPECT_FALSE(engine);
-
-    // Skips the duplicated response.
-    builder_.PrepareAsync(request_, &response_);
-    ASSERT_EQ(response_.status(), EngineReloadResponse::RELOADED);
-  }
+  // Skips the duplicated response.
+  builder_.PrepareAsync(request_, &response_);
+  ASSERT_EQ(response_.status(), EngineReloadResponse::RELOADED);
 }
 
-TEST_F(EngineBuilderTest, FailureCaseDataBroken) {
+TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
   // Test the case where input file is invalid.
-  request_.set_engine_type(EngineReloadRequest::MOBILE);
+  request_.set_engine_type(GetParam().type);
   request_.set_file_path(
       testing::GetSourceFileOrDie({"engine", "engine_builder_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
@@ -215,9 +199,9 @@ TEST_F(EngineBuilderTest, FailureCaseDataBroken) {
   ASSERT_EQ(response_.status(), EngineReloadResponse::DATA_BROKEN);
 }
 
-TEST_F(EngineBuilderTest, FailureCaseFileDoesNotExist) {
+TEST_P(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   // Test the case where input file doesn't exist.
-  request_.set_engine_type(EngineReloadRequest::MOBILE);
+  request_.set_engine_type(GetParam().type);
   request_.set_file_path("file_does_not_exist");
   request_.set_magic_number(kMockMagicNumber);
   builder_.PrepareAsync(request_, &response_);
@@ -229,6 +213,14 @@ TEST_F(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   builder_.GetResponse(&response_);
   ASSERT_EQ(response_.status(), EngineReloadResponse::MMAP_FAILURE);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    EngineBuilderTest, EngineBuilderTest,
+    ::testing::Values(Param{EngineReloadRequest::DESKTOP, "DefaultPredictor"},
+                      Param{EngineReloadRequest::MOBILE, "MobilePredictor"}),
+    [](const ::testing::TestParamInfo<Param>& info) -> std::string {
+      return info.param.predictor_name;
+    });
 
 }  // namespace
 }  // namespace mozc

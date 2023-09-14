@@ -29,6 +29,7 @@
 
 #include "session/session_handler_tool.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -41,6 +42,7 @@
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
+#include "base/strings/assign.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/character_form_manager.h"
@@ -63,6 +65,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace session {
@@ -84,47 +87,11 @@ using ::mozc::protobuf::Message;
 using ::mozc::protobuf::TextFormat;
 using ::mozc::session::SessionHandlerTool;
 
-bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
-  Command command;
-  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
-  command.mutable_input()->mutable_capability()->set_text_deletion(
-      commands::Capability::DELETE_PRECEDING_TEXT);
-  handler->EvalCommand(&command);
-  if (id != nullptr) {
-    *id = command.has_output() ? command.output().id() : 0;
-  }
-  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
-}
-
-bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
-  Command command;
-  command.mutable_input()->set_id(id);
-  command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
-  return handler->EvalCommand(&command);
-}
-
-bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
-  Command command;
-  command.mutable_input()->set_id(id);
-  command.mutable_input()->set_type(commands::Input::CLEANUP);
-  return handler->EvalCommand(&command);
-}
-
-bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
-  Command command;
-  command.mutable_input()->set_id(id);
-  command.mutable_input()->set_type(commands::Input::SEND_KEY);
-  command.mutable_input()->mutable_key()->set_special_key(
-      commands::KeyEvent::SPACE);
-  handler->EvalCommand(&command);
-  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
-}
-
 SessionHandlerTool::SessionHandlerTool(std::unique_ptr<EngineInterface> engine)
     : id_(0),
-      usage_observer_(new SessionUsageObserver),
+      usage_observer_(std::make_unique<SessionUsageObserver>()),
       data_manager_(engine->GetUserDataManager()),
-      handler_(new SessionHandler(std::move(engine))) {
+      handler_(std::make_unique<SessionHandler>(std::move(engine))) {
   handler_->AddObserver(usage_observer_.get());
 }
 
@@ -245,8 +212,8 @@ bool SessionHandlerTool::SetConfig(const config::Config &config,
 
 bool SessionHandlerTool::SyncData() { return data_manager_->Wait(); }
 
-void SessionHandlerTool::SetCallbackText(const std::string &text) {
-  callback_text_ = text;
+void SessionHandlerTool::SetCallbackText(const absl::string_view text) {
+  strings::Assign(callback_text_, text);
 }
 
 bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
@@ -301,10 +268,6 @@ SessionHandlerInterpreter::~SessionHandlerInterpreter() {
   CHECK(client_->DeleteSession());
 
   ClearState();
-  request_.reset();
-  last_output_.reset();
-  config_.reset();
-  client_.reset();
 }
 
 void SessionHandlerInterpreter::ClearState() {
@@ -429,8 +392,9 @@ std::vector<uint32_t> SessionHandlerInterpreter::GetCandidateIdsByValue(
   return ids;
 }
 
-bool SetOrAddFieldValueFromString(const std::string &name,
-                                  const std::string &value, Message *message) {
+bool SetOrAddFieldValueFromString(const absl::string_view name,
+                                  const absl::string_view value,
+                                  Message *message) {
   const FieldDescriptor *field =
       message->GetDescriptor()->FindFieldByName(name);
   if (!field) {
@@ -446,8 +410,9 @@ bool SetOrAddFieldValueFromString(const std::string &name,
   return TextFormat::ParseFieldValueFromString(value, field, message);
 }
 
-bool SetOrAddFieldValueFromString(const std::vector<std::string> &names,
-                                  const std::string &value, Message *message) {
+bool SetOrAddFieldValueFromString(const absl::Span<const std::string> names,
+                                  const absl::string_view value,
+                                  Message *message) {
   if (names.empty()) {
     LOG(ERROR) << "Empty names is passed";
     return false;
@@ -460,20 +425,18 @@ bool SetOrAddFieldValueFromString(const std::vector<std::string> &names,
       message->GetDescriptor()->FindFieldByName(first);
   Message *field_message =
       message->GetReflection()->MutableMessage(message, field);
-  return SetOrAddFieldValueFromString(
-      std::vector<std::string>(names.begin() + 1, names.end()), value,
-      field_message);
+  return SetOrAddFieldValueFromString(names.subspan(1), value, field_message);
 }
 
 // Parses protobuf from string without validation.
 // input sample: context.experimental_features="chrome_omnibox"
 // We cannot use TextFormat::ParseFromString since it doesn't allow invalid
 // protobuf. (e.g. lack of required field)
-bool ParseProtobufFromString(const std::string &text, Message *message) {
+bool ParseProtobufFromString(const absl::string_view text, Message *message) {
   const size_t separator_pos = text.find('=');
-  const std::string full_name = text.substr(0, separator_pos);
-  const std::string value = text.substr(separator_pos + 1);
-  std::vector<std::string> names =
+  const absl::string_view full_name = text.substr(0, separator_pos);
+  const absl::string_view value = text.substr(separator_pos + 1);
+  std::vector<absl::string_view> names =
       absl::StrSplit(full_name, '.', absl::SkipEmpty());
 
   Message *msg = message;
@@ -487,11 +450,11 @@ bool ParseProtobufFromString(const std::string &text, Message *message) {
     msg = msg->GetReflection()->MutableMessage(msg, field);
   }
 
-  return SetOrAddFieldValueFromString(names[names.size() - 1], value, msg);
+  return SetOrAddFieldValueFromString(names.back(), value, msg);
 }
 
 std::vector<std::string> SessionHandlerInterpreter::Parse(
-    const std::string &line) {
+    const absl::string_view line) {
   std::vector<std::string> args;
   if (line.empty() || line.front() == '#') {
     return args;
@@ -499,7 +462,7 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
   std::vector<absl::string_view> columns = absl::StrSplit(line, '\t');
   for (absl::string_view column : columns) {
     if (column.empty()) {
-      args.push_back("");
+      args.emplace_back();
       continue;
     }
     // If the first and last characters are doublequotes, trim them.
@@ -507,7 +470,7 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
       column.remove_prefix(1);
       column.remove_suffix(1);
     }
-    args.push_back(std::string(column));
+    args.emplace_back(column);
   }
   return args;
 }
@@ -530,7 +493,7 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
   }
 
 absl::Status SessionHandlerInterpreter::Eval(
-    const std::vector<std::string> &args) {
+    const absl::Span<const std::string> args) {
   if (args.empty()) {
     // Skip empty args
     return absl::Status();

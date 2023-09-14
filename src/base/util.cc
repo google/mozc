@@ -665,14 +665,6 @@ bool Util::ChopReturns(std::string *line) {
 
 namespace {
 
-void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
-  const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
-  const int lo = (static_cast<int>(input) & 0x0F);
-  output->append(prefix.data(), prefix.size());
-  *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
-  *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
-}
-
 // A sorted array of opening and closing brackets.
 // * Both `open` and `close` bracket must be sorted.
 // * Both `open` and `close` bracket must be the same size.
@@ -838,23 +830,6 @@ bool Util::IsEnglishTransliteration(absl::string_view value) {
     }
   }
   return true;
-}
-
-void Util::Escape(absl::string_view input, std::string *output) {
-  output->clear();
-  for (size_t i = 0; i < input.size(); ++i) {
-    EscapeInternal(input[i], "\\x", output);
-  }
-}
-
-std::string Util::Escape(absl::string_view input) {
-  std::string s;
-  Escape(input, &s);
-  return s;
-}
-
-bool Util::Unescape(absl::string_view input, std::string *output) {
-  return absl::CUnescape(input, output);
 }
 
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))

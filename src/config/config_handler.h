@@ -41,9 +41,7 @@
 namespace mozc {
 namespace config {
 
-enum {
-  CONFIG_VERSION = 1,
-};
+inline constexpr int kConfigVersion = 1;
 
 // This is pure static class.  All public static methods are thread-safe.
 class ConfigHandler {
@@ -81,7 +79,7 @@ class ConfigHandler {
   static void SetConfigFileName(absl::string_view filename);
 
   // Get config file name.
-  static std::string GetConfigFileName();
+  static const std::string &GetConfigFileName();
 
   // Utility function to put config meta data
   static void SetMetaData(Config *config);

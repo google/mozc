@@ -36,6 +36,9 @@ option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 message UserDictionary {
   enum PosType {
+    // Use this when the POS tag is not provided or unknown.
+    NO_POS = 0;  // "品詞なし"
+
     NOUN = 1;                            // "名詞"
     ABBREVIATION = 2;                    // "短縮よみ"
     SUGGESTION_ONLY = 3;                 // "サジェストのみ"
@@ -109,7 +112,11 @@ message UserDictionary {
     // Historically we used to use tag number '3' for POS in string format.
     // In order to switch it to enum based POS, we removed (deprecated) the
     // tag number '3' field and created another field numbered '5'.
-    optional PosType pos = 5;
+    // Historically the default POS tag was NOUN, and "NO_POS" is added later.
+    // In order to preserve the original default behavior, default POS tag is
+    // explicitly specified as NOUN. However, this can be changed if there is no
+    // problem with "NO_POS".
+    optional PosType pos = 5 [default = NOUN];
 
     // In multilingual settings, Gboard's personal dictionary will feed entries
     // with locale information. We can change the behavior (filter or demote)

@@ -522,6 +522,8 @@ int main(int argc, char **argv) {
       mozc::ConversionRequest(nullptr, &request, &config);
   conversion_request.set_max_conversion_candidates_size(
       absl::GetFlag(FLAGS_max_conversion_candidates_size));
+  conversion_request.set_create_partial_candidates(
+      request.auto_partial_suggestion());
 
   while (!std::getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, line, request, &config,

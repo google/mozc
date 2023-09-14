@@ -46,6 +46,7 @@ static_assert(!TargetIsDarwin());
 static_assert(!TargetIsOSX());
 static_assert(!TargetIsIPhone());
 static_assert(!TargetIsWASM());
+static_assert(!TargetIsChromeOS());
 #endif  // _WIN32
 
 #if defined(__APPLE__)
@@ -54,6 +55,7 @@ static_assert(!TargetIsLinux());
 static_assert(!TargetIsAndroid());
 static_assert(TargetIsDarwin());
 static_assert(!TargetIsWASM());
+static_assert(!TargetIsChromeOS());
 #if TARGET_OS_OSX
 static_assert(TargetIsOSX());
 static_assert(!TargetIsIPhone());
@@ -77,6 +79,13 @@ static_assert(!TargetIsAndroid());
 #endif  // !__ANDROID__
 #endif  // !__linux__
 
+#ifdef OS_CHROMEOS
+static_assert(TargetIsLinux());
+static_assert(TargetIsChromeOS());
+#else   // OS_CHROMEOS
+static_assert(!TargetIsChromeOS());
+#endif  // !OS_CHROMEOS
+
 #if defined(__wasm__)
 static_assert(!TargetIsWindows());
 static_assert(!TargetIsLinux());
@@ -85,6 +94,7 @@ static_assert(!TargetIsDarwin());
 static_assert(!TargetIsOSX());
 static_assert(!TargetIsIPhone());
 static_assert(TargetIsWASM());
+static_assert(!TargetIsChromeOS());
 #endif  // __wasm__
 
 }  // namespace

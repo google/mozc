@@ -34,13 +34,11 @@
 
 #include <cstdint>
 
+#include "protocol/commands.pb.h"
 
 namespace mozc {
-namespace commands {
-class KeyEvent;
-}  // namespace commands
 
-typedef uint64_t KeyInformation;
+using KeyInformation = uint64_t;
 
 // This is pure static class.
 class KeyEventUtil {

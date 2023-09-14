@@ -29,7 +29,6 @@
 
 #include "session/session_usage_stats_util.h"
 
-#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -37,8 +36,10 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/algorithm/container.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {
@@ -61,13 +62,9 @@ void CamelCaseString(std::string *str, char delm) {
 }  // namespace
 
 bool SessionUsageStatsUtil::HasExperimentalFeature(
-    const commands::Context &context, const char *key) {
-  for (size_t i = 0; i < context.experimental_features_size(); ++i) {
-    if (context.experimental_features(i) == key) {
-      return true;
-    }
-  }
-  return false;
+    const commands::Context &context, const absl::string_view key) {
+  return absl::c_any_of(context.experimental_features(),
+                        [=](const absl::string_view f) { return f == key; });
 }
 
 void SessionUsageStatsUtil::AddSendKeyInputStats(const Input &input) {

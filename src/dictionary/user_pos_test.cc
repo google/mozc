@@ -103,6 +103,10 @@ TEST_F(UserPosTest, UserPosGetTokensWithAttributesTest) {
   EXPECT_EQ(tokens.size(), 1);
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
 
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", "品詞なし", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SHORTCUT));
+
   EXPECT_TRUE(
       user_pos_->GetTokens("test", "test", "サジェストのみ", "en", &tokens));
   EXPECT_EQ(tokens.size(), 1);
@@ -112,6 +116,11 @@ TEST_F(UserPosTest, UserPosGetTokensWithAttributesTest) {
   EXPECT_TRUE(user_pos_->GetTokens("test", "test", "短縮よみ", "en", &tokens));
   EXPECT_EQ(tokens.size(), 1);
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
+
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", "品詞なし", "en", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SHORTCUT));
   EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
 }
 

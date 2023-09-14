@@ -185,7 +185,6 @@ mozc_cc_binary(
         "//base:logging",
         "//base:number_util",
         "//base:status",
-        "//base:util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

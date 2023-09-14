@@ -30,14 +30,10 @@
 #ifndef MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 #define MOZC_SESSION_SESSION_USAGE_STATS_UTIL_H_
 
+#include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace commands {
-class Context;
-class Input;
-class Output;
-}  // namespace commands
-
 namespace session {
 
 class SessionUsageStatsUtil {
@@ -51,7 +47,7 @@ class SessionUsageStatsUtil {
   // acceptable because the size of the experimental_features is very small,
   // which is less than 5.
   static bool HasExperimentalFeature(const commands::Context &context,
-                                     const char *key);
+                                     absl::string_view key);
   static void AddSendKeyInputStats(const mozc::commands::Input &input);
   static void AddSendKeyOutputStats(const mozc::commands::Output &output);
   static void AddSendCommandInputStats(const mozc::commands::Input &input);

@@ -44,6 +44,7 @@
 #include "session/session_observer_interface.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace session {
@@ -82,7 +83,7 @@ class SessionHandlerTool {
   bool SetRequest(const commands::Request &request, commands::Output *output);
   bool SetConfig(const config::Config &config, commands::Output *output);
   bool SyncData();
-  void SetCallbackText(const std::string &text);
+  void SetCallbackText(absl::string_view text);
 
  private:
   bool EvalCommand(commands::Input *input, commands::Output *output);
@@ -96,11 +97,11 @@ class SessionHandlerTool {
   std::string callback_text_;
 };
 
-class SessionHandlerInterpreter {
+class SessionHandlerInterpreter final {
  public:
   SessionHandlerInterpreter();
   explicit SessionHandlerInterpreter(std::unique_ptr<EngineInterface> engine);
-  virtual ~SessionHandlerInterpreter();
+  ~SessionHandlerInterpreter();
 
   void ClearState();
   void ClearAll();
@@ -113,8 +114,8 @@ class SessionHandlerInterpreter {
       absl::string_view value) const;
   bool GetCandidateIdByValue(absl::string_view value, uint32_t *id) const;
   std::vector<uint32_t> GetCandidateIdsByValue(absl::string_view value) const;
-  std::vector<std::string> Parse(const std::string &line);
-  absl::Status Eval(const std::vector<std::string> &args);
+  std::vector<std::string> Parse(absl::string_view line);
+  absl::Status Eval(absl::Span<const std::string> args);
   void SetRequest(const commands::Request &request);
 
  private:

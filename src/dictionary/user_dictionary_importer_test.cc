@@ -173,6 +173,38 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
   }
 }
 
+TEST(UserDictionaryImporter, ImportSpecialPosTagTest) {
+  constexpr char kInput[] =
+      "きょうと\t京都\tサジェストのみ\n"
+      "おおさか\t大阪\t短縮よみ\n"
+      "すずき\t鈴木\t品詞なし\n";
+  {
+    UserDictionaryImporter::StringTextLineIterator iter(kInput);
+    UserDictionaryStorage::UserDictionary user_dic;
+
+    EXPECT_EQ(UserDictionaryImporter::ImportFromTextLineIterator(
+                  UserDictionaryImporter::MOZC, &iter, &user_dic),
+              UserDictionaryImporter::IMPORT_NO_ERROR);
+
+    ASSERT_EQ(user_dic.entries_size(), 3);
+
+    EXPECT_EQ(user_dic.entries(0).key(), "きょうと");
+    EXPECT_EQ(user_dic.entries(0).value(), "京都");
+    EXPECT_EQ(user_dic.entries(0).pos(),
+              user_dictionary::UserDictionary::SUGGESTION_ONLY);
+
+    EXPECT_EQ(user_dic.entries(1).key(), "おおさか");
+    EXPECT_EQ(user_dic.entries(1).value(), "大阪");
+    EXPECT_EQ(user_dic.entries(1).pos(),
+              user_dictionary::UserDictionary::ABBREVIATION);
+
+    EXPECT_EQ(user_dic.entries(2).key(), "すずき");
+    EXPECT_EQ(user_dic.entries(2).value(), "鈴木");
+    EXPECT_EQ(user_dic.entries(2).pos(),
+              user_dictionary::UserDictionary::NO_POS);
+  }
+}
+
 TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
   constexpr char kInput[] =
       "きょうと\t京都\t名詞\n"
