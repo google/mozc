@@ -32,11 +32,10 @@
 #ifndef MOZC_COMPOSER_TABLE_H_
 #define MOZC_COMPOSER_TABLE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <istream>
-#include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -94,7 +93,6 @@ class Table final {
   Table();
   Table(const Table &) = delete;
   Table &operator=(const Table &) = delete;
-  ~Table();
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
                                       const config::Config &config,
@@ -154,7 +152,7 @@ class Table final {
 
   using EntryTrie = Trie<const Entry *>;
   EntryTrie entries_;
-  using EntrySet = absl::flat_hash_set<const Entry *>;
+  using EntrySet = absl::flat_hash_set<std::unique_ptr<Entry>>;
   EntrySet entry_set_;
 
   internal::SpecialKeyMap special_key_map_;
