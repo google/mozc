@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_WIN32_WIN32_SERVER_H_
 #define MOZC_RENDERER_WIN32_WIN32_SERVER_H_
 
+#include <wil/resource.h>
 #include <windows.h>
 
 #include <memory>
@@ -59,8 +60,6 @@ class Win32Server : public RendererServer, public RendererInterface {
   Win32Server(const Win32Server &) = delete;
   Win32Server &operator=(const Win32Server &) = delete;
 
-  ~Win32Server() override;
-
   void AsyncHide() override;
   void AsyncQuit() override;
   bool Activate() override;
@@ -74,7 +73,7 @@ class Win32Server : public RendererServer, public RendererInterface {
  private:
   std::string message_;
   absl::Mutex mutex_;
-  HANDLE event_;
+  wil::unique_event_nothrow event_;
   std::unique_ptr<WindowManager> window_manager_;
 };
 

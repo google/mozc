@@ -63,12 +63,16 @@
 #include <shlobj.h>
 #include <versionhelpers.h>
 // clang-format on
+#include <wil/resource.h>
+#include <wil/token_helpers.h>
 
 #include <memory>  // for unique_ptr
 
+#include "base/win32/hresult.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_util.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #else  // _WIN32
 #include <pwd.h>
 #include <sys/mman.h>
@@ -79,6 +83,10 @@
 
 namespace mozc {
 namespace {
+
+#ifdef _WIN32
+using ::mozc::win32::HResult;
+#endif  // _WIN32
 
 class UserProfileDirectoryImpl final {
  public:
@@ -126,7 +134,7 @@ class LocalAppDataDirectoryCache {
     result_ = SafeTryGetLocalAppData(&path_);
   }
   HRESULT result() const { return result_; }
-  const bool succeeded() const { return SUCCEEDED(result_); }
+  bool succeeded() const { return SUCCEEDED(result_); }
   const std::string &path() const { return path_; }
 
  private:
@@ -199,13 +207,10 @@ class LocalAppDataDirectoryCache {
     }
     dir->clear();
 
-    wchar_t *task_mem_buffer = nullptr;
-    const HRESULT result = ::SHGetKnownFolderPath(FOLDERID_LocalAppDataLow, 0,
-                                                  nullptr, &task_mem_buffer);
+    wil::unique_cotaskmem_string task_mem_buffer;
+    const HRESULT result = ::SHGetKnownFolderPath(
+        FOLDERID_LocalAppDataLow, 0, nullptr, task_mem_buffer.put());
     if (FAILED(result)) {
-      if (task_mem_buffer != nullptr) {
-        ::CoTaskMemFree(task_mem_buffer);
-      }
       return result;
     }
 
@@ -213,10 +218,7 @@ class LocalAppDataDirectoryCache {
       return E_UNEXPECTED;
     }
 
-    std::wstring wpath = task_mem_buffer;
-    ::CoTaskMemFree(task_mem_buffer);
-
-    const std::string path = win32::WideToUtf8(wpath);
+    const std::string path = win32::WideToUtf8(task_mem_buffer.get());
     if (path.empty()) {
       return E_UNEXPECTED;
     }
@@ -345,8 +347,8 @@ class ProgramFilesX86Cache {
   ProgramFilesX86Cache() : result_(E_FAIL) {
     result_ = SafeTryProgramFilesPath(&path_);
   }
-  const bool succeeded() const { return SUCCEEDED(result_); }
-  const HRESULT result() const { return result_; }
+  bool succeeded() const { return SUCCEEDED(result_); }
+  HRESULT result() const { return result_; }
   const std::string &path() const { return path_; }
 
  private:
@@ -376,7 +378,7 @@ class ProgramFilesX86Cache {
 
     wchar_t program_files_path_buffer[MAX_PATH] = {};
 #if defined(_M_X64)
-    // In 64-bit processes (such as Text Input Prosessor DLL for 64-bit apps),
+    // In 64-bit processes (such as Text Input Processor DLL for 64-bit apps),
     // CSIDL_PROGRAM_FILES points 64-bit Program Files directory. In this case,
     // we should use CSIDL_PROGRAM_FILESX86 to find server, renderer, and other
     // binaries' path.
@@ -522,38 +524,22 @@ class UserSidImpl {
 };
 
 UserSidImpl::UserSidImpl() {
-  HANDLE htoken = nullptr;
-  if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &htoken)) {
+  wil::unique_tokeninfo_ptr<TOKEN_USER> user;
+  if (HResult hr(wil::get_token_information_nothrow(user));
+      hr.Failed()) {
     sid_ = SystemUtil::GetUserNameAsString();
-    LOG(ERROR) << "OpenProcessToken failed: " << ::GetLastError();
-    return;
+    LOG(ERROR) << "OpenTokenInformation failed: " << hr;
   }
 
-  DWORD length = 0;
-  ::GetTokenInformation(htoken, TokenUser, nullptr, 0, &length);
-  std::unique_ptr<char[]> buf(new char[length]);
-  PTOKEN_USER p_user = reinterpret_cast<PTOKEN_USER>(buf.get());
-
-  if (length == 0 ||
-      !::GetTokenInformation(htoken, TokenUser, p_user, length, &length)) {
-    ::CloseHandle(htoken);
-    sid_ = SystemUtil::GetUserNameAsString();
-    LOG(ERROR) << "OpenTokenInformation failed: " << ::GetLastError();
-    return;
-  }
-
-  LPTSTR p_sid_user_name;
-  if (!::ConvertSidToStringSidW(p_user->User.Sid, &p_sid_user_name)) {
-    ::CloseHandle(htoken);
-    sid_ = SystemUtil::GetUserNameAsString();
+  wil::unique_hlocal_string_secure sid_user_name;
+  if (!::ConvertSidToStringSidW(user->User.Sid,
+                                wil::out_param(sid_user_name))) {
     LOG(ERROR) << "ConvertSidToStringSidW failed: " << ::GetLastError();
+    sid_ = SystemUtil::GetUserNameAsString();
     return;
   }
 
-  sid_ = win32::WideToUtf8(p_sid_user_name);
-
-  ::LocalFree(p_sid_user_name);
-  ::CloseHandle(htoken);
+  sid_ = win32::WideToUtf8(sid_user_name.get());
 }
 
 }  // namespace
@@ -628,14 +614,11 @@ bool GetCurrentSessionId(uint32_t *session_id) {
 // See
 // http://blogs.adobe.com/asset/2012/10/new-security-capabilities-in-adobe-reader-and-acrobat-xi-now-available.html
 std::string GetInputDesktopName() {
-  const HDESK desktop_handle =
-      ::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
-  if (desktop_handle == nullptr) {
+  wil::unique_hdesk desktop(::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS));
+  if (desktop == nullptr) {
     return "";
   }
-  const std::string desktop_name = GetObjectNameAsString(desktop_handle);
-  ::CloseDesktop(desktop_handle);
-  return desktop_name;
+  return GetObjectNameAsString(desktop.get());
 }
 
 std::string GetProcessWindowStationName() {
@@ -709,10 +692,10 @@ class SystemDirectoryCache {
       // Function failed.
       return;
     }
-    DCHECK_EQ(L'\0', path_buffer_[copied_len_wo_null_if_success]);
+    DCHECK_EQ(path_buffer_[copied_len_wo_null_if_success], L'\0');
     system_dir_ = path_buffer_;
   }
-  const bool succeeded() const { return system_dir_ != nullptr; }
+  bool succeeded() const { return system_dir_ != nullptr; }
   const wchar_t *system_dir() const { return system_dir_; }
 
  private:
@@ -817,26 +800,20 @@ std::string SystemUtil::GetOSVersionString() {
   OSVERSIONINFOEX osvi = {0};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
-    ret += ".";
-    ret += std::to_string(static_cast<uint32_t>(osvi.dwMajorVersion));
-    ret += ".";
-    ret += std::to_string(static_cast<uint32_t>(osvi.dwMinorVersion));
-    ret += "." + std::to_string(osvi.wServicePackMajor);
-    ret += "." + std::to_string(osvi.wServicePackMinor);
+    absl::StrAppendFormat(&ret, ".%d.%d.%d.%d", osvi.dwMajorVersion,
+                          osvi.dwMinorVersion, osvi.wServicePackMajor,
+                          osvi.wServicePackMinor);
   } else {
     LOG(WARNING) << "GetVersionEx failed";
   }
   return ret;
 #elif defined(__APPLE__)
-  const std::string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
-  return ret;
+  return absl::StrCat("MacOSX ", MacUtil::GetOSVersionString());
 #elif defined(__linux__)
-  const std::string ret = "Linux";
-  return ret;
+  return "Linux";
 #else   // !_WIN32 && !__APPLE__ && !__linux__
-  const std::string ret = "Unknown";
-  return ret;
+  return "Unknown";
 #endif  // _WIN32, __APPLE__, __linux__
 }
 

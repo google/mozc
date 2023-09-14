@@ -31,15 +31,14 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <memory>
 #include <string>
-#include <vector>
 
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
@@ -59,6 +58,9 @@
 #include <sys/stat.h>
 
 #include <cerrno>
+#include <vector>
+
+#include "absl/container/fixed_array.h"
 #endif  // !_WIN32
 
 #ifdef __linux
@@ -118,42 +120,29 @@ bool Process::OpenBrowser(const std::string &url) {
 bool Process::SpawnProcess(const std::string &path, const std::string &arg,
                            size_t *pid) {
 #ifdef _WIN32
-  std::wstring wpath = win32::Utf8ToWide(path);
-  wpath = L"\"" + wpath + L"\"";
+  std::wstring wpath = win32::StrCatW(L"\"", win32::Utf8ToWide(path), L"\"");
   if (!arg.empty()) {
-    std::wstring warg = win32::Utf8ToWide(arg);
-    wpath += L" ";
-    wpath += warg;
+    win32::StrAppendW(&wpath, L" ", win32::Utf8ToWide(arg));
   }
 
-  // The |lpCommandLine| parameter of CreateProcessW should be writable
-  // so that we create a std::unique_ptr<wchar_t[]> here.
-  std::unique_ptr<wchar_t[]> wpath2(new wchar_t[wpath.size() + 1]);
-  if (0 != wcscpy_s(wpath2.get(), wpath.size() + 1, wpath.c_str())) {
-    return false;
-  }
-
-  STARTUPINFOW si = {0};
+  STARTUPINFOW si = {};
   si.cb = sizeof(si);
   si.dwFlags = STARTF_FORCEOFFFEEDBACK;
-  PROCESS_INFORMATION pi = {0};
+  wil::unique_process_information pi;
 
   // If both |lpApplicationName| and |lpCommandLine| are non-nullptr,
   // the argument array of the process will be shifted.
   // http://support.microsoft.com/kb/175986
   const bool create_process_succeeded =
       ::CreateProcessW(
-          nullptr, wpath2.get(), nullptr, nullptr, FALSE,
+          nullptr, wpath.data(), nullptr, nullptr, FALSE,
           CREATE_DEFAULT_ERROR_MODE, nullptr,
           // NOTE: Working directory will be locked by the system.
           // We use system directory to spawn process so that users will not
           // to be aware of any undeletable directory. (http://b/2017482)
-          SystemUtil::GetSystemDir(), &si, &pi) != FALSE;
+          SystemUtil::GetSystemDir(), &si, pi.reset_and_addressof()) != FALSE;
 
-  if (create_process_succeeded) {
-    ::CloseHandle(pi.hThread);
-    ::CloseHandle(pi.hProcess);
-  } else {
+  if (!create_process_succeeded) {
     LOG(ERROR) << "Create process failed: " << ::GetLastError();
   }
 
@@ -163,12 +152,13 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   return false;
 #else  // __wasm__ || __ANDROID__
 
-  const std::vector<std::string> arg_tmp =
+  std::vector<std::string> arg_tmp =
       absl::StrSplit(arg, ' ', absl::SkipEmpty());
-  auto argv = std::make_unique<const char *[]>(arg_tmp.size() + 2);
-  argv[0] = path.c_str();
+  absl::FixedArray<char *> argv(arg_tmp.size() + 2);
+  std::string mutable_path(path);
+  argv[0] = mutable_path.data();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
-    argv[i + 1] = arg_tmp[i].c_str();
+    argv[i + 1] = arg_tmp[i].data();
   }
   argv[arg_tmp.size() + 1] = nullptr;
 
@@ -218,9 +208,8 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   // posix_spawn returns 0 even if kMozcServer doesn't exist, because
   // the return value of posix_spawn is basically determined
   // by the return value of fork().
-  const int result =
-      ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
-                    const_cast<char *const *>(argv.get()), environ);
+  const int result = ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
+                                   argv.data(), environ);
   if (result == 0) {
     VLOG(1) << "posix_spawn: child pid is " << tmp_pid;
   } else {
@@ -379,7 +368,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
 
 #ifdef _WIN32
   const std::string arg =
-      "--mode=error_message_dialog --error_type=" + error_type;
+      absl::StrCat("--mode=error_message_dialog --error_type=", error_type);
   size_t pid = 0;
   if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;
@@ -390,7 +379,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
 #if defined(__linux__) && !defined(__ANDROID__)
   constexpr char kMozcTool[] = "mozc_tool";
   const std::string arg =
-      "--mode=error_message_dialog --error_type=" + error_type;
+      absl::StrCat("--mode=error_message_dialog --error_type=", error_type);
   size_t pid = 0;
   if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;

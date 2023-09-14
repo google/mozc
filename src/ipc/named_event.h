@@ -36,10 +36,11 @@
 #include "absl/time/time.h"
 
 #ifdef _WIN32
+#include <wil/resource.h>
 #include <windows.h>
 #else  // _WIN32
 #include <semaphore.h>
-#endif  // _WIN32
+#endif  // !_WIN32
 
 // Named Event class for Inter Process Communication:
 // This is a shallow wrapper for Windows CreateEvent() API.
@@ -97,19 +98,22 @@ class NamedEventUtil {
   static std::string GetEventPath(const char *name);
 };
 
-class NamedEventListener {
+class NamedEventListener final {
  public:
   // Create Named Event named "name"
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.event.<name>
   explicit NamedEventListener(const char *name);
-  virtual ~NamedEventListener();
 
   NamedEventListener(const NamedEventListener &) = delete;
   NamedEventListener &operator=(const NamedEventListener &) = delete;
 
   NamedEventListener(NamedEventListener &&) = delete;
   NamedEventListener &operator=(NamedEventListener &&) = delete;
+
+#ifndef _WIN32
+  ~NamedEventListener();
+#endif  // !_WIN32
 
   // Return true if NamedEventListener is available
   bool IsAvailable() const;
@@ -141,20 +145,22 @@ class NamedEventListener {
   bool is_owner_;
 
 #ifdef _WIN32
-  HANDLE handle_;
+  wil::unique_event_nothrow handle_;
 #else   // _WIN32
   sem_t *sem_;
   std::string key_filename_;
 #endif  // _WIN32
 };
 
-class NamedEventNotifier {
+class NamedEventNotifier final {
  public:
   // Open Named event named "name"
   // The named event object should be created by
   // NamedEventListener before calling the constructor
   explicit NamedEventNotifier(const char *name);
-  virtual ~NamedEventNotifier();
+#ifndef _WIN32
+  ~NamedEventNotifier();
+#endif  // !_WIN32
 
   // return true if NamedEventNotifier is available
   bool IsAvailable() const;
@@ -164,7 +170,7 @@ class NamedEventNotifier {
 
  private:
 #ifdef _WIN32
-  HANDLE handle_;
+  wil::unique_event_nothrow handle_;
 #else   // _WIN32
   sem_t *sem_;
 #endif  // _WIN32
