@@ -28,68 +28,61 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "session/session_observer_handler.h"
+
 #include "protocol/commands.pb.h"
 #include "session/session_observer_interface.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 
 namespace mozc {
 namespace session {
+namespace {
+
+using ::testing::AllOf;
 
 class SessionObserverMock : public SessionObserverInterface {
  public:
-  SessionObserverMock() : eval_count_(0) {}
-  SessionObserverMock(const SessionObserverMock &) = delete;
-  SessionObserverMock &operator=(const SessionObserverMock &) = delete;
-
-  void EvalCommandHandler(const commands::Command &command) override {
-    command_ = command;
-    ++eval_count_;
-  }
-
-  int eval_count() const { return eval_count_; }
-
-  const commands::Command &command() const { return command_; }
-
- private:
-  int eval_count_;
-  commands::Command command_;
+  MOCK_METHOD(void, EvalCommandHandler, (const commands::Command &command),
+              (override));
 };
 
-TEST(SessionObserverHandlerTest, ObserverTest) {
+MATCHER_P(KeyCode, value, "") { return arg.input().key().key_code() == value; }
+MATCHER_P(Consumed, value, "") { return arg.output().consumed() == value; }
+
+struct ObserverTestParam {
+  bool consumed;
+  char key_code;
+};
+
+class SessionObserverHandlerTest
+    : public ::testing::TestWithParam<ObserverTestParam> {};
+
+TEST_P(SessionObserverHandlerTest, ObserverTest) {
   SessionObserverHandler handler;
   SessionObserverMock observer1;
   SessionObserverMock observer2;
   handler.AddObserver(&observer1);
   handler.AddObserver(&observer2);
 
-  // Round1: EvalCommandHandler
+  EXPECT_CALL(observer1,
+              EvalCommandHandler(AllOf(KeyCode(GetParam().key_code),
+                                       Consumed(GetParam().consumed))))
+      .Times(1);
+  EXPECT_CALL(observer2,
+              EvalCommandHandler(AllOf(KeyCode(GetParam().key_code),
+                                       Consumed(GetParam().consumed))))
+      .Times(1);
+
   commands::Command command;
-  command.mutable_input()->mutable_key()->set_key_code('a');
-  command.mutable_output()->set_consumed(true);
+  command.mutable_input()->mutable_key()->set_key_code(GetParam().key_code);
+  command.mutable_output()->set_consumed(GetParam().consumed);
   handler.EvalCommandHandler(command);
-
-  EXPECT_EQ(observer1.eval_count(), 1);
-  EXPECT_EQ(observer1.command().input().key().key_code(), 'a');
-  EXPECT_TRUE(observer1.command().output().consumed());
-
-  EXPECT_EQ(observer2.eval_count(), 1);
-  EXPECT_EQ(observer2.command().input().key().key_code(), 'a');
-  EXPECT_TRUE(observer2.command().output().consumed());
-
-  // Round2: EvalCommandHandler
-  command.Clear();
-  command.mutable_input()->mutable_key()->set_key_code('z');
-  command.mutable_output()->set_consumed(false);
-  handler.EvalCommandHandler(command);
-
-  EXPECT_EQ(observer1.eval_count(), 2);
-  EXPECT_EQ(observer1.command().input().key().key_code(), 'z');
-  EXPECT_FALSE(observer1.command().output().consumed());
-
-  EXPECT_EQ(observer2.eval_count(), 2);
-  EXPECT_EQ(observer2.command().input().key().key_code(), 'z');
-  EXPECT_FALSE(observer2.command().output().consumed());
 }
 
+INSTANTIATE_TEST_SUITE_P(Observer, SessionObserverHandlerTest,
+                         testing::Values(ObserverTestParam{true, 'a'},
+                                         ObserverTestParam{false, 'z'}));
+
+}  // namespace
 }  // namespace session
 }  // namespace mozc
