@@ -30,14 +30,13 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
+#include <QAbstractButton>
 #include <QWidget>
 #include <istream>
-#include <memory>
 #include <string>
 
+#include "absl/container/fixed_array.h"
 #include "gui/config_dialog/generic_table_editor.h"
-
-class QAbstractButton;
 
 namespace mozc {
 namespace gui {
@@ -47,7 +46,6 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
 
  public:
   explicit RomanTableEditorDialog(QWidget *parent);
-  ~RomanTableEditorDialog() override;
 
   // show a modal dialog
   static bool Show(QWidget *parent, const std::string &current_roman_table,
@@ -58,7 +56,9 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   void OnEditMenuAction(QAction *action) override;
 
  protected:
-  std::string GetDefaultFilename() const override { return "romantable.txt"; }
+  QLatin1String GetDefaultFilename() const override {
+    return QLatin1String("romantable.txt");
+  }
   bool LoadFromStream(std::istream *is) override;
   bool Update() override;
 
@@ -67,7 +67,7 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   static std::string GetDefaultRomanTable();
 
  private:
-  std::unique_ptr<QAction *[]> actions_;
+  absl::FixedArray<QAction *> actions_;
   QString dialog_title_;
 };
 

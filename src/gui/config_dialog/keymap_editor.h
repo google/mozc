@@ -36,6 +36,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "gui/config_dialog/combobox_delegate.h"
@@ -60,7 +61,9 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   void OnEditMenuAction(QAction *action) override;
 
  protected:
-  std::string GetDefaultFilename() const override { return "keymap.txt"; }
+  QLatin1String GetDefaultFilename() const override {
+    return QLatin1String("keymap.txt");
+  }
   bool LoadFromStream(std::istream *is) override;
   bool Update() override;
 
@@ -69,8 +72,8 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
   // This is used for deciding whether the user has changed the settings that
   // are valid only for new applications.
   absl::flat_hash_set<std::string> direct_mode_commands_;
-  std::unique_ptr<QAction *[]> actions_;
-  std::unique_ptr<QAction *[]> import_actions_;
+  absl::FixedArray<QAction *> actions_;
+  absl::FixedArray<QAction *> import_actions_;
   std::unique_ptr<ComboBoxDelegate> status_delegate_;
   std::unique_ptr<ComboBoxDelegate> commands_delegate_;
   std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;

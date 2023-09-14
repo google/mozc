@@ -34,7 +34,6 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QtGui>
-#include <cctype>
 #include <cstddef>
 #include <istream>
 #include <sstream>
@@ -42,7 +41,7 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "protocol/commands.pb.h"
+#include "base/port.h"
 #include "absl/container/btree_set.h"
 #include "gui/base/util.h"
 
@@ -55,12 +54,12 @@ int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almost square
   const QRect rect =
-      QFontMetrics(widget->font()).boundingRect(QString::fromUtf8("龍"));
-#ifdef _WIN32
-  return static_cast<int>(rect.height() * 1.3);
-#else  // _WIN32
-  return static_cast<int>(rect.height() * 1.4);
-#endif  // _WIN32
+      QFontMetrics(widget->font()).boundingRect(QStringLiteral("龍"));
+  if constexpr (TargetIsWindows()) {
+    return static_cast<int>(rect.height() * 1.3);
+  } else {
+    return static_cast<int>(rect.height() * 1.4);
+  }
 }
 }  // namespace
 
@@ -76,12 +75,12 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
   CHECK_GT(column_size_, 0);
 
   // Mac style
-#ifdef __APPLE__
-  editorTableWidget->setShowGrid(false);
-  layout()->setContentsMargins(0, 0, 0, 4);
-  gridLayout->setHorizontalSpacing(12);
-  gridLayout->setVerticalSpacing(12);
-#endif  // __APPLE__
+  if constexpr (TargetIsDarwin()) {
+    editorTableWidget->setShowGrid(false);
+    layout()->setContentsMargins(0, 0, 0, 4);
+    gridLayout->setHorizontalSpacing(12);
+    gridLayout->setVerticalSpacing(12);
+  }
 
   editButton->setText(tr("Edit"));
   editButton->setMenu(edit_menu_);
@@ -113,8 +112,6 @@ GenericTableEditorDialog::GenericTableEditorDialog(QWidget *parent,
   GuiUtil::ReplaceWidgetLabels(this);
   UpdateMenuStatus();
 }
-
-GenericTableEditorDialog::~GenericTableEditorDialog() {}
 
 QTableWidget *GenericTableEditorDialog::mutable_table_widget() {
   return editorTableWidget;
@@ -184,7 +181,7 @@ void GenericTableEditorDialog::InsertEmptyItem(int row) {
 
   editorTableWidget->insertRow(row);
   for (size_t i = 0; i < column_size_; ++i) {
-    editorTableWidget->setItem(row, i, new QTableWidgetItem(QLatin1String("")));
+    editorTableWidget->setItem(row, i, new QTableWidgetItem(QString()));
   }
   QTableWidgetItem *item = editorTableWidget->item(row, 0);
   if (item != nullptr) {
@@ -260,8 +257,7 @@ void GenericTableEditorDialog::Export() {
 
   const QString filename = QFileDialog::getSaveFileName(
       this, tr("export to file"),
-      QDir::homePath() + QDir::separator() +
-          QString::fromUtf8(GetDefaultFilename().c_str()));
+      QDir::homePath() + QDir::separator() + GetDefaultFilename());
   if (filename.isEmpty()) {
     return;
   }
@@ -277,7 +273,7 @@ void GenericTableEditorDialog::Export() {
 
 void GenericTableEditorDialog::Clicked(QAbstractButton *button) {
   // Workaround for http://b/242686
-  // By changing the foucs, incomplete entries in QTableView are
+  // By changing the focus, incomplete entries in QTableView are
   // submitted to the model.
   editButton->setFocus(Qt::MouseFocusReason);
 
