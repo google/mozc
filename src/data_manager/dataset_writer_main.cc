@@ -53,9 +53,9 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/status.h"
-#include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string magic;
-  CHECK(mozc::Util::Unescape(absl::GetFlag(FLAGS_magic), &magic))
+  CHECK(absl::CUnescape(absl::GetFlag(FLAGS_magic), &magic))
       << "magic number is not a proper hex-escaped string: "
       << absl::GetFlag(FLAGS_magic);
 

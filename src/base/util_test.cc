@@ -638,36 +638,6 @@ TEST(UtilTest, ChopReturns) {
   EXPECT_EQ(line, "line");
 }
 
-TEST(UtilTest, Escape) {
-  std::string escaped;
-  Util::Escape("らむだ", &escaped);
-  EXPECT_EQ(escaped, "\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0");
-}
-
-TEST(UtilTest, Unescape) {
-  std::string unescaped;
-  EXPECT_TRUE(Util::Unescape("\\xE3\\x82\\x89\\xE3\\x82\\x80\\xE3\\x81\\xA0",
-                             &unescaped));
-  EXPECT_EQ(unescaped, "らむだ");
-
-  EXPECT_TRUE(Util::Unescape("\\x4D\\x6F\\x7A\\x63", &unescaped));
-  EXPECT_EQ(unescaped, "Mozc");
-
-  // A binary sequence (upper case)
-  EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xEF\\xFF", &unescaped));
-  EXPECT_EQ(unescaped, std::string("\x00\x01\xEF\xFF", 4));
-
-  // A binary sequence (lower case)
-  EXPECT_TRUE(Util::Unescape("\\x00\\x01\\xef\\xff", &unescaped));
-  EXPECT_EQ(unescaped, std::string("\x00\x01\xEF\xFF", 4));
-
-  EXPECT_TRUE(Util::Unescape("", &unescaped));
-  EXPECT_TRUE(unescaped.empty());
-
-  EXPECT_FALSE(Util::Unescape("\\AB\\CD\\EFG", &unescaped));
-  EXPECT_FALSE(Util::Unescape("\\01\\XY", &unescaped));
-}
-
 TEST(UtilTest, ScriptType) {
   EXPECT_TRUE(Util::IsScriptType("くどう", Util::HIRAGANA));
   EXPECT_TRUE(Util::IsScriptType("京都", Util::KANJI));

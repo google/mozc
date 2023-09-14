@@ -43,6 +43,7 @@
 //    data/preedit/kanjinumber-arabicnumber.tsv:kanjinumber_to_arabicnumber"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -53,9 +54,10 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/strings/internal/double_array.h"
-#include "base/util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "third_party/darts/v0_32/darts.h"
 
 ABSL_FLAG(std::string, input, "", "input");
@@ -128,10 +130,8 @@ namespace mozc::japanese::internal {
                                 nullptr, &values[0]);
     CHECK_EQ(0, result);
 
-    std::string escaped;
-    Util::Escape(output, &escaped);
-    ofs << "const char " << name << "_table[] = \"" << escaped << "\";"
-        << std::endl;
+    ofs << "const char " << name << "_table[] = \"" << absl::CHexEscape(output)
+        << "\";" << std::endl;
 
     const DoubleArray *array =
         reinterpret_cast<const DoubleArray *>(da.array());

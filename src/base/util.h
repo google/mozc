@@ -205,12 +205,6 @@ class Util {
   // Returns true if input is a bracket pair text (e.g. "「」").
   static bool IsBracketPairText(absl::string_view input);
 
-  // Escape any characters into \x prefixed hex digits.
-  // ex.  "ABC" => "\x41\x42\x43".
-  static void Escape(absl::string_view input, std::string *output);
-  static std::string Escape(absl::string_view input);
-  static bool Unescape(absl::string_view input, std::string *output);
-
   enum ScriptType {
     UNKNOWN_SCRIPT,
     KATAKANA,

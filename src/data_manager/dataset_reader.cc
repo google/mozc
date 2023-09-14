@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_reader.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -39,6 +40,7 @@
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -60,8 +62,8 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   // Check the file magic string.
   if (!absl::StartsWith(memblock, magic)) {
     LOG(ERROR) << "Invalid format: magic number doesn't match: "
-               << Util::Escape(memblock.substr(0, magic.size())) << " vs "
-               << Util::Escape(magic);
+               << absl::CHexEscape(memblock.substr(0, magic.size())) << " vs "
+               << absl::CHexEscape(magic);
     return false;
   }
 
@@ -96,9 +98,9 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Note: This subtraction doesn't cause underflow by the above check.
-  const uint64_t content_and_metadta_size =
+  const uint64_t content_and_metadata_size =
       memblock.size() - magic.size() - kFooterSize;
-  if (metadata_size == 0 || content_and_metadta_size < metadata_size) {
+  if (metadata_size == 0 || content_and_metadata_size < metadata_size) {
     LOG(ERROR) << "Broken: metadata size is broken or metadata is broken";
     return false;
   }
