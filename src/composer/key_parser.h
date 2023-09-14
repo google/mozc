@@ -33,10 +33,10 @@
 #define MOZC_COMPOSER_KEY_PARSER_H_
 
 #include <string>
-#include <vector>
 
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -49,7 +49,7 @@ class KeyParser {
 
   static bool ParseKey(absl::string_view key_string,
                        commands::KeyEvent *key_event);
-  static bool ParseKeyVector(const std::vector<std::string> &keys,
+  static bool ParseKeyVector(absl::Span<const std::string> keys,
                              commands::KeyEvent *key_event);
 
   // Returns corresponding string of SpecialKey (e.g. PAGE_UP → pageup).

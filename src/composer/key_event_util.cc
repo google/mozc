@@ -30,15 +30,17 @@
 #include "composer/key_event_util.h"
 
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 
 #include "base/logging.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
-using commands::KeyEvent;
-
 namespace {
+
+using ::mozc::commands::KeyEvent;
+
 constexpr uint32_t kAltMask =
     KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT;
 constexpr uint32_t kCtrlMask =
@@ -66,8 +68,8 @@ uint32_t KeyEventUtil::GetModifiers(const KeyEvent &key_event) {
   if (key_event.has_modifiers()) {
     modifiers = key_event.modifiers();
   } else {
-    for (size_t i = 0; i < key_event.modifier_keys_size(); ++i) {
-      modifiers |= key_event.modifier_keys(i);
+    for (const int key : key_event.modifier_keys()) {
+      modifiers |= key;
     }
   }
   return modifiers;

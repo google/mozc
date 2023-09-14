@@ -31,9 +31,6 @@
 
 #include "composer/key_parser.h"
 
-#include <algorithm>
-#include <map>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,25 +38,28 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "absl/container/btree_map.h"
+#include "absl/container/btree_set.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
-using commands::KeyEvent;
-
 namespace {
 
-typedef std::map<std::string, KeyEvent::SpecialKey> SpecialKeysMap;
-typedef absl::btree_map<std::string, std::vector<KeyEvent::ModifierKey>>
-    ModifiersMap;
+using ::mozc::commands::KeyEvent;
+
+using SpecialKeysMap = absl::flat_hash_map<std::string, KeyEvent::SpecialKey>;
+using ModifiersMap =
+    absl::flat_hash_map<std::string, std::vector<KeyEvent::ModifierKey>>;
 
 class KeyParserData {
  public:
   KeyParserData() { InitData(); }
 
-  const SpecialKeysMap &keycode_map() { return keycode_map_; }
-  const ModifiersMap &modifiers_map() { return modifiers_map_; }
+  const SpecialKeysMap &keycode_map() const { return keycode_map_; }
+  const ModifiersMap &modifiers_map() const { return modifiers_map_; }
 
  private:
   void InitData() {
@@ -193,15 +193,15 @@ bool KeyParser::ParseKey(const absl::string_view key_string,
 }
 
 // static
-bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
+bool KeyParser::ParseKeyVector(const absl::Span<const std::string> keys,
                                KeyEvent *key_event) {
   CHECK(key_event);
-  static KeyParserData *parser_data = new KeyParserData();
+  static const KeyParserData *parser_data = new KeyParserData();
   const ModifiersMap &modifiers = parser_data->modifiers_map();
   const SpecialKeysMap &specials = parser_data->keycode_map();
 
   key_event->Clear();
-  std::set<commands::KeyEvent::ModifierKey> modifiers_set;
+  absl::btree_set<commands::KeyEvent::ModifierKey> modifiers_set;
 
   for (const std::string &key : keys) {
     if (Util::CharsLen(key) == 1) {
@@ -216,11 +216,11 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
     std::string lower_key(key);
     Util::LowerString(&lower_key);
 
-    if (const auto &it = modifiers.find(lower_key); it != modifiers.end()) {
+    if (const auto it = modifiers.find(lower_key); it != modifiers.end()) {
       modifiers_set.insert(it->second.begin(), it->second.end());
       continue;
     }
-    if (const auto &it = specials.find(lower_key); it != specials.end()) {
+    if (const auto it = specials.find(lower_key); it != specials.end()) {
       if (key_event->has_special_key()) {
         // Multiple special keys are not supported.
         return false;

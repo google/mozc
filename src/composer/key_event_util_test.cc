@@ -29,24 +29,25 @@
 
 #include "composer/key_event_util.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <string>
 
-#include "base/util.h"
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-using commands::KeyEvent;
-
 namespace {
-::testing::AssertionResult CompareKeyEvent(const char *expected_expr,
-                                           const char *actual_expr,
-                                           const KeyEvent &expected,
-                                           const KeyEvent &actual) {
+
+using ::mozc::commands::KeyEvent;
+
+::testing::AssertionResult CompareKeyEvent(
+    const absl::string_view expected_expr, const absl::string_view actual_expr,
+    const KeyEvent &expected, const KeyEvent &actual) {
   {  // Key code
     const int expected_key_code =
         (expected.has_key_code()) ? expected.key_code() : -1;
@@ -104,7 +105,6 @@ namespace {
 
 #define EXPECT_EQ_KEY_EVENT(actual, expected) \
   EXPECT_PRED_FORMAT2(CompareKeyEvent, expected, actual)
-}  // namespace
 
 TEST(KeyEventUtilTest, GetModifiers) {
   KeyEvent key_event;
@@ -135,7 +135,7 @@ TEST(KeyEventUtilTest, GetModifiers) {
 }
 
 TEST(KeyEventUtilTest, GetKeyInformation) {
-  const char *kTestKeys[] = {
+  constexpr absl::string_view kTestKeys[] = {
       "a",
       "Space",
       "Shift",
@@ -148,9 +148,9 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
   KeyEvent key_event;
   uint64_t output;
 
-  for (size_t i = 0; i < std::size(kTestKeys); ++i) {
-    SCOPED_TRACE(kTestKeys[i]);
-    KeyParser::ParseKey(kTestKeys[i], &key_event);
+  for (const absl::string_view test_key : kTestKeys) {
+    SCOPED_TRACE(test_key);
+    KeyParser::ParseKey(test_key, &key_event);
     ASSERT_TRUE(KeyEventUtil::GetKeyInformation(key_event, &output));
 
     uint64_t expected = 0;
@@ -217,9 +217,9 @@ TEST(KeyEventUtilTest, NormalizeModifiers) {
 }
 
 TEST(KeyEventUtilTest, NormalizeNumpadKey) {
-  const struct NormalizeNumpadKeyTestData {
-    const char *from;
-    const char *to;
+  constexpr struct NormalizeNumpadKeyTestData {
+    absl::string_view from;
+    absl::string_view to;
   } kNormalizeNumpadKeyTestData[] = {
       {"a", "a"},
       {"Shift", "Shift"},
@@ -235,8 +235,7 @@ TEST(KeyEventUtilTest, NormalizeNumpadKey) {
       {"NUMPAD0 a", "0"},
   };
 
-  for (size_t i = 0; i < std::size(kNormalizeNumpadKeyTestData); ++i) {
-    const NormalizeNumpadKeyTestData &data = kNormalizeNumpadKeyTestData[i];
+  for (const NormalizeNumpadKeyTestData data : kNormalizeNumpadKeyTestData) {
     SCOPED_TRACE(data.from);
 
     KeyEvent key_event_from, key_event_to, key_event_normalized;
@@ -268,10 +267,10 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
 }
 
 TEST(KeyEventUtilTest, RemoveModifiers) {
-  const struct RemoveModifiersTestData {
-    const char *input;
-    const char *remove;
-    const char *output;
+  constexpr struct RemoveModifiersTestData {
+    absl::string_view input;
+    absl::string_view remove;
+    absl::string_view output;
   } kRemoveModifiersTestData[] = {
       {
           "",
@@ -345,7 +344,7 @@ TEST(KeyEventUtilTest, HasModifiers) {
 }
 
 TEST(KeyEventUtilTest, IsModifiers) {
-  const struct IsModifiersTestData {
+  constexpr struct IsModifiersTestData {
     uint32_t modifiers;
     bool is_alt;
     bool is_ctrl;
@@ -484,8 +483,8 @@ TEST(KeyEventUtilTest, IsModifiers) {
 }
 
 TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
-  const struct IsLowerUpperAlphabetTestData {
-    const char *key;
+  constexpr struct IsLowerUpperAlphabetTestData {
+    absl::string_view key;
     bool is_lower;
     bool is_upper;
   } kIsLowerUpperAlphabetTestData[] = {
@@ -501,8 +500,8 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
       {"Space", false, false},
   };
 
-  for (size_t i = 0; i < std::size(kIsLowerUpperAlphabetTestData); ++i) {
-    const IsLowerUpperAlphabetTestData &data = kIsLowerUpperAlphabetTestData[i];
+  for (const IsLowerUpperAlphabetTestData data :
+       kIsLowerUpperAlphabetTestData) {
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
     KeyParser::ParseKey(data.key, &key_event);
@@ -512,8 +511,8 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
 }
 
 TEST(KeyEventUtilTest, IsNumpadKey) {
-  const struct IsNumpadKeyTestData {
-    const char *key;
+  constexpr struct IsNumpadKeyTestData {
+    absl::string_view key;
     bool is_numpad_key;
   } kIsNumpadKeyTestData[] = {
       {"a", false},       {"A", false},      {"Shift", false},
@@ -522,8 +521,7 @@ TEST(KeyEventUtilTest, IsNumpadKey) {
       {"EQUALS", true},   {"COMMA", true},   {"TEXTINPUT", false},
   };
 
-  for (size_t i = 0; i < std::size(kIsNumpadKeyTestData); ++i) {
-    const IsNumpadKeyTestData &data = kIsNumpadKeyTestData[i];
+  for (const IsNumpadKeyTestData data : kIsNumpadKeyTestData) {
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
     KeyParser::ParseKey(data.key, &key_event);
@@ -531,4 +529,5 @@ TEST(KeyEventUtilTest, IsNumpadKey) {
   }
 }
 
+}  // namespace
 }  // namespace mozc
