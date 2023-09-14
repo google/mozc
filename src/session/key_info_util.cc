@@ -46,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -54,8 +55,8 @@ using ::mozc::config::Config;
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
     std::istream *ifs) {
-  constexpr char kModeDirect[] = "Direct";
-  constexpr char kModeDirectInput[] = "DirectInput";
+  constexpr absl::string_view kModeDirect = "Direct";
+  constexpr absl::string_view kModeDirectInput = "DirectInput";
 
   std::vector<KeyInformation> result;
 
@@ -68,7 +69,7 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
       // empty or comment
       continue;
     }
-    std::vector<std::string> rules =
+    std::vector<absl::string_view> rules =
         absl::StrSplit(line, '\t', absl::SkipEmpty());
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;

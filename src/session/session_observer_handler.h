@@ -40,12 +40,11 @@
 namespace mozc {
 namespace session {
 
-class SessionObserverHandler {
+class SessionObserverHandler final {
  public:
   SessionObserverHandler() = default;
   SessionObserverHandler(const SessionObserverHandler &) = delete;
   SessionObserverHandler &operator=(const SessionObserverHandler &) = delete;
-  virtual ~SessionObserverHandler() = default;
 
   void AddObserver(SessionObserverInterface *observer);
   void EvalCommandHandler(const commands::Command &command);

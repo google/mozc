@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -49,10 +50,8 @@ ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
 ABSL_FLAG(bool, set_mobile_request, false,
           "If true, set commands::Request to the mobine one.");
 
-namespace mozc {
+namespace mozc::session {
 namespace {
-
-using ::mozc::session::SessionHandlerTool;
 
 constexpr size_t kTotalEventSize = 2500;
 
@@ -68,8 +67,7 @@ class SessionHandlerStressTest
       const uint32_t random_seed =
           absl::GetFlag(FLAGS_random_seed).value() + GetParam();
       LOG(INFO) << "Random seed: " << random_seed;
-      generator_ =
-          session::RandomKeyEventsGenerator(std::seed_seq{random_seed});
+      generator_ = RandomKeyEventsGenerator(std::seed_seq{random_seed});
     }
   }
 
@@ -83,7 +81,7 @@ class SessionHandlerStressTest
   }
 
   SessionHandlerTool client_;
-  session::RandomKeyEventsGenerator generator_;
+  RandomKeyEventsGenerator generator_;
 };
 
 TEST_P(SessionHandlerStressTest, BasicStressTest) {
@@ -116,4 +114,4 @@ INSTANTIATE_TEST_SUITE_P(Shards, SessionHandlerStressTest,
                              std::make_integer_sequence<int, kShardCount>{})));
 
 }  // namespace
-}  // namespace mozc
+}  // namespace mozc::session

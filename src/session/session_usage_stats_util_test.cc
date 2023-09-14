@@ -34,6 +34,7 @@
 #include "testing/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/strings/string_view.h"
 
 using mozc::commands::Context;
 using mozc::commands::Input;
@@ -43,6 +44,7 @@ using mozc::commands::SessionCommand;
 
 namespace mozc {
 namespace session {
+namespace {
 
 class SessionUsageStatsUtilTest : public ::testing::Test {
  protected:
@@ -58,8 +60,8 @@ class SessionUsageStatsUtilTest : public ::testing::Test {
 };
 
 TEST_F(SessionUsageStatsUtilTest, HasExperimentalFeature) {
-  constexpr char kFeatureName1[] = "TestFeature1";
-  constexpr char kFeatureName2[] = "TestFeature2";
+  constexpr absl::string_view kFeatureName1 = "TestFeature1";
+  constexpr absl::string_view kFeatureName2 = "TestFeature2";
   Context context;
 
   EXPECT_FALSE(
@@ -182,5 +184,6 @@ TEST_F(SessionUsageStatsUtilTest, AddSendCommandInputStats) {
   EXPECT_COUNT_STATS("MouseSelect", 4);
 }
 
+}  // namespace
 }  // namespace session
 }  // namespace mozc

@@ -37,7 +37,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/util.h"
+#include "base/strings/assign.h"
+#include "base/strings/unicode.h"
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
@@ -60,10 +61,10 @@
 #include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -80,7 +81,7 @@ using ::testing::Mock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
-void SetSendKeyCommandWithKeyString(const std::string &key_string,
+void SetSendKeyCommandWithKeyString(const absl::string_view key_string,
                                     commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -88,13 +89,14 @@ void SetSendKeyCommandWithKeyString(const std::string &key_string,
   key->set_key_string(key_string);
 }
 
-bool SetSendKeyCommand(const std::string &key, commands::Command *command) {
+bool SetSendKeyCommand(const absl::string_view key,
+                       commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   return KeyParser::ParseKey(key, command->mutable_input()->mutable_key());
 }
 
-bool SendKey(const std::string &key, Session *session,
+bool SendKey(const absl::string_view key, Session *session,
              commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
@@ -102,8 +104,9 @@ bool SendKey(const std::string &key, Session *session,
   return session->SendKey(command);
 }
 
-bool SendKeyWithMode(const std::string &key, commands::CompositionMode mode,
-                     Session *session, commands::Command *command) {
+bool SendKeyWithMode(const absl::string_view key,
+                     commands::CompositionMode mode, Session *session,
+                     commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -111,7 +114,7 @@ bool SendKeyWithMode(const std::string &key, commands::CompositionMode mode,
   return session->SendKey(command);
 }
 
-bool SendKeyWithModeAndActivated(const std::string &key, bool activated,
+bool SendKeyWithModeAndActivated(const absl::string_view key, bool activated,
                                  commands::CompositionMode mode,
                                  Session *session, commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
@@ -122,7 +125,7 @@ bool SendKeyWithModeAndActivated(const std::string &key, bool activated,
   return session->SendKey(command);
 }
 
-bool TestSendKey(const std::string &key, Session *session,
+bool TestSendKey(const absl::string_view key, Session *session,
                  commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
@@ -130,8 +133,9 @@ bool TestSendKey(const std::string &key, Session *session,
   return session->TestSendKey(command);
 }
 
-bool TestSendKeyWithMode(const std::string &key, commands::CompositionMode mode,
-                         Session *session, commands::Command *command) {
+bool TestSendKeyWithMode(const absl::string_view key,
+                         commands::CompositionMode mode, Session *session,
+                         commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -139,7 +143,8 @@ bool TestSendKeyWithMode(const std::string &key, commands::CompositionMode mode,
   return session->TestSendKey(command);
 }
 
-bool TestSendKeyWithModeAndActivated(const std::string &key, bool activated,
+bool TestSendKeyWithModeAndActivated(const absl::string_view key,
+                                     bool activated,
                                      commands::CompositionMode mode,
                                      Session *session,
                                      commands::Command *command) {
@@ -173,7 +178,7 @@ bool SendCommand(commands::SessionCommand::CommandType type, Session *session,
 }
 
 bool InsertCharacterCodeAndString(const char key_code,
-                                  const std::string &key_string,
+                                  const absl::string_view key_string,
                                   Session *session,
                                   commands::Command *command) {
   command->Clear();
@@ -183,22 +188,23 @@ bool InsertCharacterCodeAndString(const char key_code,
   return session->InsertCharacter(command);
 }
 
-Segment::Candidate *AddCandidate(const std::string &key,
-                                 const std::string &value, Segment *segment) {
+Segment::Candidate *AddCandidate(const absl::string_view key,
+                                 const absl::string_view value,
+                                 Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
-  candidate->key = key;
-  candidate->content_key = key;
-  candidate->value = value;
+  strings::Assign(candidate->key, key);
+  strings::Assign(candidate->content_key, key);
+  strings::Assign(candidate->value, value);
   return candidate;
 }
 
-Segment::Candidate *AddMetaCandidate(const std::string &key,
-                                     const std::string &value,
+Segment::Candidate *AddMetaCandidate(const absl::string_view key,
+                                     const absl::string_view value,
                                      Segment *segment) {
   Segment::Candidate *candidate = segment->add_meta_candidate();
-  candidate->key = key;
-  candidate->content_key = key;
-  candidate->value = value;
+  strings::Assign(candidate->key, key);
+  strings::Assign(candidate->content_key, key);
+  strings::Assign(candidate->value, value);
   return candidate;
 }
 
@@ -214,7 +220,7 @@ std::string GetComposition(const commands::Command &command) {
   return preedit;
 }
 
-::testing::AssertionResult EnsurePreedit(const std::string &expected,
+::testing::AssertionResult EnsurePreedit(const absl::string_view expected,
                                          const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
@@ -231,7 +237,7 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsureSingleSegment(
-    const std::string &expected, const commands::Command &command) {
+    const absl::string_view expected, const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
@@ -245,7 +251,7 @@ std::string GetComposition(const commands::Command &command) {
   if (!segment.has_value()) {
     return ::testing::AssertionFailure() << "No segment value.";
   }
-  const std::string &actual = segment.value();
+  const absl::string_view actual = segment.value();
   if (expected == actual) {
     return ::testing::AssertionSuccess();
   }
@@ -254,8 +260,8 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsureSingleSegmentAndKey(
-    const std::string &expected_value, const std::string &expected_key,
-    const commands::Command &command) {
+    const absl::string_view expected_value,
+    const absl::string_view expected_key, const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
@@ -283,7 +289,7 @@ std::string GetComposition(const commands::Command &command) {
                                        << ", actual_key: " << actual_key;
 }
 
-::testing::AssertionResult EnsureResult(const std::string &expected,
+::testing::AssertionResult EnsureResult(const absl::string_view expected,
                                         const commands::Command &command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
@@ -300,8 +306,8 @@ std::string GetComposition(const commands::Command &command) {
 }
 
 ::testing::AssertionResult EnsureResultAndKey(
-    const std::string &expected_value, const std::string &expected_key,
-    const commands::Command &command) {
+    const absl::string_view expected_value,
+    const absl::string_view expected_key, const commands::Command &command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
   }
@@ -396,7 +402,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
 
   void TearDown() override { UsageStats::ClearAllStatsForTest(); }
 
-  void InsertCharacterChars(const std::string &chars, Session *session,
+  void InsertCharacterChars(const absl::string_view chars, Session *session,
                             commands::Command *command) const {
     constexpr uint32_t kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
@@ -409,7 +415,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
     }
   }
 
-  void InsertCharacterCharsWithContext(const std::string &chars,
+  void InsertCharacterCharsWithContext(const absl::string_view chars,
                                        const commands::Context &context,
                                        Session *session,
                                        commands::Command *command) const {
@@ -425,26 +431,19 @@ class SessionTest : public testing::TestWithTempUserProfile {
     }
   }
 
-  void InsertCharacterString(const std::string &key_strings,
-                             const std::string &chars, Session *session,
+  void InsertCharacterString(const absl::string_view key_strings,
+                             const absl::string_view chars, Session *session,
                              commands::Command *command) const {
     constexpr uint32_t kNoModifiers = 0;
-    std::vector<std::string> inputs;
-    const char *begin = key_strings.data();
-    const char *end = key_strings.data() + key_strings.size();
-    while (begin < end) {
-      const size_t mblen = Util::OneCharLen(begin);
-      inputs.push_back(std::string(begin, mblen));
-      begin += mblen;
-    }
-    CHECK_EQ(inputs.size(), chars.size());
-    for (int i = 0; i < chars.size(); ++i) {
+    auto chars_it = chars.begin();
+    for (const absl::string_view key : Utf8AsChars(key_strings)) {
+      CHECK_NE(chars_it, chars.end());
       command->Clear();
       command->mutable_input()->set_type(commands::Input::SEND_KEY);
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
-      key_event->set_key_code(chars[i]);
+      key_event->set_key_code(*chars_it++);
       key_event->set_modifiers(kNoModifiers);
-      key_event->set_key_string(inputs[i]);
+      key_event->set_key_string(key);
       session->SendKey(command);
     }
   }
@@ -558,8 +557,8 @@ class SessionTest : public testing::TestWithTempUserProfile {
     request->set_composer(&session->context().composer());
   }
 
-  void SetupMockForReverseConversion(const std::string &kanji,
-                                     const std::string &hiragana,
+  void SetupMockForReverseConversion(const absl::string_view kanji,
+                                     const absl::string_view hiragana,
                                      MockConverter *converter) {
     // Set up Segments for reverse conversion.
     Segments reverse_segments;
@@ -584,7 +583,7 @@ class SessionTest : public testing::TestWithTempUserProfile {
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
-  void SetupCommandForReverseConversion(const std::string &text,
+  void SetupCommandForReverseConversion(const absl::string_view text,
                                         commands::Input *input) {
     input->Clear();
     input->set_type(commands::Input::SEND_COMMAND);
@@ -4485,14 +4484,14 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
 
   Segments segments_jueri;
   Segment *segment = segments_jueri.add_segment();
-  constexpr char kJueri[] = "じゅえり";
+  constexpr absl::string_view kJueri = "じゅえり";
   segment->set_key(kJueri);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->key = "くえり";
   candidate->content_key = candidate->key;
   candidate->value = "クエリ";
   candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-  candidate->consumed_key_size = Util::CharsLen(kJueri);
+  candidate->consumed_key_size = strings::CharsLen(kJueri);
 
   MockConverter converter;
   MockEngine engine;
@@ -4538,43 +4537,43 @@ TEST_F(SessionTest, MobilePartialPrediction) {
   {
     Segment *segment;
     segment = segments_wata.add_segment();
-    constexpr char kWata[] = "わた";
+    constexpr absl::string_view kWata = "わた";
     segment->set_key(kWata);
     Segment::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
     cand1->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-    cand1->consumed_key_size = Util::CharsLen(kWata);
+    cand1->consumed_key_size = strings::CharsLen(kWata);
     Segment::Candidate *cand2 = AddCandidate(kWata, kWata, segment);
     cand2->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-    cand2->consumed_key_size = Util::CharsLen(kWata);
+    cand2->consumed_key_size = strings::CharsLen(kWata);
   }
 
   Segments segments_watashino;
   {
     Segment *segment;
     segment = segments_watashino.add_segment();
-    constexpr char kWatashino[] = "わたしの";
+    constexpr absl::string_view kWatashino = "わたしの";
     segment->set_key(kWatashino);
     Segment::Candidate *cand1 = segment->add_candidate();
     cand1->value = "私の";
     cand1->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-    cand1->consumed_key_size = Util::CharsLen(kWatashino);
+    cand1->consumed_key_size = strings::CharsLen(kWatashino);
     Segment::Candidate *cand2 = segment->add_candidate();
     cand2->value = kWatashino;
     cand2->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-    cand2->consumed_key_size = Util::CharsLen(kWatashino);
+    cand2->consumed_key_size = strings::CharsLen(kWatashino);
   }
 
   Segments segments_shino;
   {
     Segment *segment;
     segment = segments_shino.add_segment();
-    constexpr char kShino[] = "しの";
+    constexpr absl::string_view kShino = "しの";
     segment->set_key(kShino);
     Segment::Candidate *candidate;
     candidate = AddCandidate("しのみや", "四ノ宮", segment);
     candidate->content_key = segment->key();
     candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
-    candidate->consumed_key_size = Util::CharsLen(kShino);
+    candidate->consumed_key_size = strings::CharsLen(kShino);
     candidate = AddCandidate(kShino, "shino", segment);
   }
 
@@ -4911,12 +4910,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   // First, test against http://b/6027559
   config::Config config;
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
   }
   {
     Session session(&engine);
@@ -4961,12 +4960,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   }
 
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertAlternateSpace\n"
         "Composition\tSpace\tInsertAlternateSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
   }
   {
     Session session(&engine);
@@ -5013,12 +5012,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Second, the 1st case filed in http://b/2936141
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
 
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   }
@@ -5069,12 +5068,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Finally, the 2nd case filed in http://b/2936141
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
 
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   }
@@ -5123,12 +5122,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertSpace\n"
       "Precomposition\tShift Space\tInsertSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
   MockConverter converter;
@@ -5171,12 +5170,12 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertAlternateSpace\n"
       "Precomposition\tShift Space\tInsertAlternateSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
   MockConverter converter;
@@ -5219,12 +5218,12 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertHalfSpace\n"
       "Precomposition\tShift Space\tInsertHalfSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
 
   MockConverter converter;
   MockEngine engine;
@@ -5267,12 +5266,12 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertFullSpace\n"
       "Precomposition\tShift Space\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
 
   MockConverter converter;
   MockEngine engine;
@@ -5316,14 +5315,14 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
 
 TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Direct\tCtrl a\tInsertSpace\n"
       "Direct\tCtrl b\tInsertAlternateSpace\n"
       "Direct\tCtrl c\tInsertHalfSpace\n"
       "Direct\tCtrl d\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
 
   MockConverter converter;
   MockEngine engine;
@@ -5381,14 +5380,14 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
 TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Composition\tCtrl a\tInsertSpace\n"
       "Composition\tCtrl b\tInsertAlternateSpace\n"
       "Composition\tCtrl c\tInsertHalfSpace\n"
       "Composition\tCtrl d\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
   MockConverter converter;
@@ -5434,14 +5433,14 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
 TEST_F(SessionTest, InsertSpaceInConversionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "Conversion\tCtrl a\tInsertSpace\n"
       "Conversion\tCtrl b\tInsertAlternateSpace\n"
       "Conversion\tCtrl c\tInsertHalfSpace\n"
       "Conversion\tCtrl d\tInsertFullSpace\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
   MockConverter converter;
@@ -6540,11 +6539,11 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // for now.
 #ifdef _WIN32
   config::Config config;
-  const std::string custom_keymap_table =
+  constexpr absl::string_view kCustomKeymapTable =
       "status\tkey\tcommand\n"
       "DirectInput\tHiragana\tInputModeHiragana\n";
   config.set_session_keymap(config::Config::CUSTOM);
-  config.set_custom_keymap_table(custom_keymap_table);
+  config.set_custom_keymap_table(kCustomKeymapTable);
 
   MockConverter converter;
   MockEngine engine;
@@ -7739,7 +7738,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
 }
 
 bool FindCandidateID(const commands::Candidates &candidates,
-                     const std::string &value, int *id) {
+                     const absl::string_view value, int *id) {
   CHECK(id);
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates.candidate(i);
@@ -7752,7 +7751,7 @@ bool FindCandidateID(const commands::Candidates &candidates,
 }
 
 void FindCandidateIDs(const commands::Candidates &candidates,
-                      const std::string &value, std::vector<int> *ids) {
+                      const absl::string_view value, std::vector<int> *ids) {
   CHECK(ids);
   ids->clear();
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
@@ -7834,7 +7833,7 @@ TEST_F(SessionTest, ConvertReverseFails) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kKanjiContainsNewline[] = "改行\n禁止";
+  constexpr absl::string_view kKanjiContainsNewline = "改行\n禁止";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiContainsNewline,
                                    command.mutable_input());
@@ -7851,7 +7850,7 @@ TEST_F(SessionTest, ConvertReverse) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
   SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
@@ -7872,7 +7871,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
@@ -7901,7 +7900,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
   SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
@@ -7934,8 +7933,8 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kInput[] = "abcde";
-  constexpr char kReading[] = "abcde";
+  constexpr absl::string_view kInput = "abcde";
+  constexpr absl::string_view kReading = "abcde";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
@@ -7964,7 +7963,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kInput[] = "ゔ";
+  constexpr absl::string_view kInput = "ゔ";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
@@ -7991,7 +7990,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
-  constexpr char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr absl::string_view kKanjiAiueo = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
@@ -9238,13 +9237,13 @@ TEST_F(SessionTest, ImeOff) {
 TEST_F(SessionTest, EditCancelAndIMEOff) {
   config::Config config;
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Composition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Conversion\thankaku/zenkaku\tCancelAndIMEOff\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
   }
 
   Segments segments_mo;
@@ -9391,13 +9390,13 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   config::Config config;
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\tESC\tCancel\n"
         "Composition\tESC\tCancel\n"
         "Conversion\tESC\tCancel\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
   }
   Segments segments_mo;
   {
@@ -9514,13 +9513,13 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
 TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   config::Config config;
   {
-    const std::string custom_keymap_table =
+    constexpr absl::string_view kCustomKeymapTable =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Composition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Conversion\thankaku/zenkaku\tCancelAndIMEOff\n";
     config.set_session_keymap(config::Config::CUSTOM);
-    config.set_custom_keymap_table(custom_keymap_table);
+    config.set_custom_keymap_table(kCustomKeymapTable);
   }
   Segments segments_mo;
   {
@@ -9799,7 +9798,7 @@ TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
   InitSessionToDirect(&session);
 
   commands::Command command;
-  constexpr char kZa[] = "ざ";
+  constexpr absl::string_view kZa = "ざ";
   SetSendKeyCommandWithKeyString(kZa, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_FALSE(command.output().consumed());
@@ -9820,7 +9819,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 
   // Test for precomposition state.
   EXPECT_EQ(session.context().state(), ImeContext::PRECOMPOSITION);
-  constexpr char kZa[] = "ざ";
+  constexpr absl::string_view kZa = "ざ";
   SetSendKeyCommandWithKeyString(kZa, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -9833,14 +9832,14 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 
   // Test for composition state.
   EXPECT_EQ(session.context().state(), ImeContext::COMPOSITION);
-  constexpr char kOnsenManju[] = "♨饅頭";
+  constexpr absl::string_view kOnsenManju = "♨饅頭";
   SetSendKeyCommandWithKeyString(kOnsenManju, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_TRUE(command.output().consumed());
   command.mutable_output()->Clear();
   EXPECT_TRUE(session.SendKey(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_PREEDIT(std::string(kZa) + kOnsenManju, command);
+  EXPECT_PREEDIT(absl::StrCat(kZa, kOnsenManju), command);
 }
 
 TEST_F(SessionTest, IndirectImeOnOff) {

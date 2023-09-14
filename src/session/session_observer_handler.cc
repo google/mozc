@@ -31,15 +31,11 @@
 
 #include "session/session_observer_handler.h"
 
-#include <vector>
-
 #include "protocol/commands.pb.h"
 #include "session/session_observer_interface.h"
 
 namespace mozc {
 namespace session {
-
-typedef std::vector<SessionObserverInterface *>::iterator ItObservers;
 
 void SessionObserverHandler::AddObserver(SessionObserverInterface *observer) {
   observers_.push_back(observer);
@@ -47,8 +43,8 @@ void SessionObserverHandler::AddObserver(SessionObserverInterface *observer) {
 
 void SessionObserverHandler::EvalCommandHandler(
     const commands::Command &command) {
-  for (ItObservers it = observers_.begin(); it != observers_.end(); ++it) {
-    (*it)->EvalCommandHandler(command);
+  for (SessionObserverInterface *observer : observers_) {
+    observer->EvalCommandHandler(command);
   }
 }
 
