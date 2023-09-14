@@ -306,7 +306,7 @@ namespace {
 // Note that the '0' is invalid in the definition, so the corresponding
 // element is nullptr.
 const char *kPosTypeStringTable[] = {
-    nullptr,        "名詞",           "短縮よみ",     "サジェストのみ",
+    "品詞なし",     "名詞",           "短縮よみ",     "サジェストのみ",
     "固有名詞",     "人名",           "姓",           "名",
     "組織",         "地名",           "名詞サ変",     "名詞形動",
     "数",           "アルファベット", "記号",         "顔文字",

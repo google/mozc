@@ -119,12 +119,15 @@ bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
 
   constexpr absl::string_view kIsolatedWordPos = "短縮よみ";
   constexpr absl::string_view kSuggestionOnlyPos = "サジェストのみ";
+  constexpr absl::string_view kNoPos = "品詞なし";
 
   uint16_t attributes = 0;
   if (pos == kIsolatedWordPos) {
     attributes = UserPos::Token::ISOLATED_WORD;
   } else if (pos == kSuggestionOnlyPos) {
     attributes = UserPos::Token::SUGGESTION_ONLY;
+  } else if (pos == kNoPos) {
+    attributes = UserPos::Token::SHORTCUT;
   }
   if (is_non_ja_locale) {
     attributes |= UserPos::Token::NON_JA_LOCALE;
