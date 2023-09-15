@@ -30,34 +30,28 @@
 #include "dictionary/system/value_dictionary.h"
 
 #include <cstdint>
-#include <limits>
-#include <memory>
 #include <queue>
 #include <string>
 
-#include "base/logging.h"
-#include "base/mmap.h"
 #include "base/util.h"
+#include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_factory.h"
-#include "dictionary/file/dictionary_file.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
+#include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 #include "absl/strings/string_view.h"
 
-using mozc::storage::louds::LoudsTrie;
-
 namespace mozc {
 namespace dictionary {
+
+using ::mozc::storage::louds::LoudsTrie;
 
 ValueDictionary::ValueDictionary(const PosMatcher &pos_matcher,
                                  const LoudsTrie *value_trie)
     : value_trie_(value_trie),
       codec_(SystemDictionaryCodecFactory::GetCodec()),
       suggestion_only_word_id_(pos_matcher.GetSuggestOnlyWordId()) {}
-
-ValueDictionary::~ValueDictionary() {}
 
 // ValueDictionary is supposed to use the same data with SystemDictionary
 // and SystemDictionary::HasKey should return the same result with
