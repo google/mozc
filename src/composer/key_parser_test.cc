@@ -178,11 +178,11 @@ TEST(KeyParserTest, SpecialKeys) {
       {"on", KeyEvent::ON},
   };
 
-  for (const auto& [name, key] : kTestData) {
+  for (const auto [name, modifiers] : kTestData) {
     SCOPED_TRACE(name);
     KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(name, &key_event));
-    EXPECT_EQ(key_event.special_key(), key);
+    EXPECT_EQ(key_event.special_key(), modifiers);
   }
 }
 
