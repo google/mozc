@@ -33,6 +33,7 @@
 
 #include "base/file_util.h"
 #include "base/system_util.h"
+#include "unix/fcitx5/mozc_client_pool.h"
 #include "unix/fcitx5/mozc_state.h"
 
 namespace fcitx {
@@ -43,7 +44,13 @@ class MozcEngine;
 
 enum class ExpandMode { Always, OnFocus, Hotkey };
 
+enum class SharedStatePolicy { FollowGlobalConfig, All, Program, No };
+
 using CompositionMode = mozc::commands::CompositionMode;
+
+FCITX_CONFIG_ENUM_NAME_WITH_I18N(SharedStatePolicy,
+                                 N_("Follow Global Configuration"), N_("All"),
+                                 N_("Program"), N_("No"));
 
 FCITX_CONFIG_ENUM_NAME_WITH_I18N(ExpandMode, N_("Always"), N_("On Focus"),
                                  N_("Hotkey"));
@@ -62,6 +69,9 @@ FCITX_CONFIGURATION(
     OptionWithAnnotation<CompositionMode, CompositionModeI18NAnnotation>
         initialMode{this, "InitialMode", _("Initial Mode"),
                     mozc::commands::HIRAGANA};
+    Option<SharedStatePolicy> sharedStatePolicy{
+        this, "InputState", _("Shared Input State"),
+        SharedStatePolicy::FollowGlobalConfig};
     Option<bool> verticalList{this, "Vertical", _("Vertical candidate list"),
                               true};
     OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation> expandMode{
@@ -128,22 +138,27 @@ class MozcEngine final : public InputMethodEngineV2 {
 
   bool deactivating() const { return deactivating_; }
   auto *parser() const { return parser_.get(); }
+  auto *pool() const { return pool_.get(); }
 
  private:
+  void ResetClientPool();
+  PropertyPropagatePolicy GetSharedStatePolicy();
+
   Instance *instance_;
   const std::unique_ptr<MozcResponseParser> parser_;
   std::unique_ptr<MozcConnection> connection_;
   std::unique_ptr<mozc::client::ClientInterface> client_;
+  std::unique_ptr<MozcClientPool> pool_;
   FactoryFor<MozcState> factory_;
   SimpleAction toolAction_;
   std::vector<std::unique_ptr<MozcModeSubAction>> modeActions_;
+  std::unique_ptr<HandlerTableEntry<EventHandler>> globalConfigReloadHandle_;
 
   SimpleAction configToolAction_, dictionaryToolAction_, addWordAction_,
       aboutAction_;
   SimpleAction separatorAction_;
   Menu toolMenu_;
   MozcEngineConfig config_;
-  uint64_t lastSyncTime_;
   bool deactivating_ = false;
 
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());

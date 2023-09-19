@@ -43,6 +43,7 @@
 #include "base/process.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "client/client_interface.h"
 #include "unix/fcitx5/fcitx_key_event_handler.h"
 #include "unix/fcitx5/mozc_connection.h"
 #include "unix/fcitx5/mozc_engine.h"
@@ -51,17 +52,12 @@
 
 namespace fcitx {
 
-MozcState::MozcState(InputContext* ic,
-                     std::unique_ptr<mozc::client::ClientInterface> client,
-                     MozcEngine* engine)
-    : ic_(ic),
-      client_(std::move(client)),
-      engine_(engine),
-      handler_(std::make_unique<KeyEventHandler>()) {
+MozcState::MozcState(InputContext* ic, MozcEngine* engine)
+    : ic_(ic), engine_(engine), handler_(std::make_unique<KeyEventHandler>()) {
   // mozc::Logging::SetVerboseLevel(1);
   VLOG(1) << "MozcState created.";
 
-  if (client_->EnsureConnection()) {
+  if (GetClient()->EnsureConnection()) {
     UpdatePreeditMethod();
   }
 
@@ -76,18 +72,35 @@ MozcState::MozcState(InputContext* ic,
 }
 
 MozcState::~MozcState() {
-  client_->SyncData();
+  GetClient()->SyncData();
   VLOG(1) << "MozcState destroyed.";
 }
 
 void MozcState::UpdatePreeditMethod() {
   mozc::config::Config config;
-  if (!client_->GetConfig(&config)) {
+  if (!GetClient()->GetConfig(&config)) {
     LOG(ERROR) << "GetConfig failed";
     return;
   }
   preedit_method_ = config.has_preedit_method() ? config.preedit_method()
                                                 : mozc::config::Config::ROMAN;
+  std::string error;
+  mozc::commands::Output raw_response;
+  mozc::commands::CompositionMode mode = composition_mode_;
+  if (TrySendCommand(mozc::commands::SessionCommand::GET_STATUS, &raw_response,
+                     &error)) {
+    if (raw_response.has_status()) {
+      if (raw_response.status().activated()) {
+        mode = raw_response.status().mode();
+      } else {
+        mode = mozc::commands::DIRECT;
+      }
+    }
+  }
+  if (mode != composition_mode_) {
+    composition_mode_ = mode;
+    engine_->compositionModeUpdated(ic_);
+  }
 }
 
 bool MozcState::TrySendKeyEvent(
@@ -99,7 +112,8 @@ bool MozcState::TrySendKeyEvent(
 
   // Call EnsureConnection just in case MozcState::MozcConnection() fails
   // to establish the server connection.
-  if (!client_->EnsureConnection()) {
+  auto* client = GetClient();
+  if (!client->EnsureConnection()) {
     *out_error = "EnsureConnection failed";
     VLOG(1) << "EnsureConnection failed";
     return false;
@@ -111,7 +125,7 @@ bool MozcState::TrySendKeyEvent(
     return false;
 
   if ((composition_mode == mozc::commands::DIRECT) &&
-      !client_->IsDirectModeCommand(event)) {
+      !client->IsDirectModeCommand(event)) {
     VLOG(1) << "In DIRECT mode. Not consumed.";
     return false;  // not consumed.
   }
@@ -125,7 +139,7 @@ bool MozcState::TrySendKeyEvent(
   }
 
   VLOG(1) << "TrySendKeyEvent: " << std::endl << event.DebugString();
-  if (!client_->SendKeyWithContext(event, context, out)) {
+  if (!client->SendKeyWithContext(event, context, out)) {
     *out_error = "SendKey failed";
     VLOG(1) << "ERROR";
     return false;
@@ -177,7 +191,7 @@ bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                   mozc::commands::Output* out,
                                   std::string* out_error) const {
   VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
-  if (!client_->SendCommand(command, out)) {
+  if (!GetClient()->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
     VLOG(1) << "ERROR";
     return false;
@@ -414,5 +428,14 @@ void MozcState::DisplayUsage() {
   ic_->updatePreedit();
   ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
 }
+
+mozc::client::ClientInterface* MozcState::GetClient() const {
+  if (!client_holder_) {
+    client_holder_ = engine_->pool()->requestClient(ic_);
+  }
+  return client_holder_->client();
+}
+
+void MozcState::ReleaseClient() { client_holder_.reset(); }
 
 }  // namespace fcitx

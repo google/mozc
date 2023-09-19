@@ -21,6 +21,16 @@ mozc_cc_library(
 )
 
 mozc_cc_library(
+    name = "mozc_client_pool",
+    srcs = ["mozc_client_pool.cc"],
+    hdrs = ["mozc_client_pool.h"],
+    deps = [
+        ":mozc_connection",
+        "@fcitx5//:fcitx5",
+    ]
+)
+
+mozc_cc_library(
     name = "mozc_engine",
     srcs = [
         "mozc_engine.cc",
@@ -37,6 +47,7 @@ mozc_cc_library(
     ],
     deps = [
         ":mozc_connection",
+        ":mozc_client_pool",
         ":fcitx_key_util",
         ":surrounding_text_util",
         "//base:init_mozc",

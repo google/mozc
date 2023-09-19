@@ -19,6 +19,7 @@
 
 #include "unix/fcitx5/mozc_engine.h"
 
+#include <Fcitx5/Core/fcitx/inputcontextmanager.h>
 #include <fcitx-config/iniparser.h>
 #include <fcitx-utils/i18n.h>
 #include <fcitx-utils/log.h>
@@ -34,6 +35,7 @@
 #include "base/init_mozc.h"
 #include "base/process.h"
 #include "mozc_response_parser.h"
+#include "unix/fcitx5/mozc_client_pool.h"
 #include "unix/fcitx5/mozc_connection.h"
 #include "unix/fcitx5/mozc_response_parser.h"
 
@@ -131,15 +133,16 @@ MozcEngine::MozcEngine(Instance *instance)
       parser_(std::make_unique<MozcResponseParser>(this)),
       connection_(std::make_unique<MozcConnection>()),
       client_(connection_->CreateClient()),
-      factory_([this](InputContext &ic) {
-        return new MozcState(&ic, connection_->CreateClient(), this);
-      }) {
+      factory_([this](InputContext &ic) { return new MozcState(&ic, this); }) {
+  pool_ = std::make_unique<MozcClientPool>(connection_.get(),
+                                           GetSharedStatePolicy());
   for (auto command :
        {mozc::commands::DIRECT, mozc::commands::HIRAGANA,
         mozc::commands::FULL_KATAKANA, mozc::commands::FULL_ASCII,
         mozc::commands::HALF_ASCII, mozc::commands::HALF_KATAKANA}) {
     modeActions_.push_back(std::make_unique<MozcModeSubAction>(this, command));
   }
+
   instance_->inputContextManager().registerProperty("mozcState", &factory_);
   instance_->userInterfaceManager().registerAction("mozc-tool", &toolAction_);
   toolAction_.setShortText(_("Mozc Settings"));
@@ -205,6 +208,13 @@ MozcEngine::MozcEngine(Instance *instance)
 
   toolAction_.setMenu(&toolMenu_);
 
+  globalConfigReloadHandle_ =
+      instance_->watchEvent(EventType::GlobalConfigReloaded,
+                            EventWatcherPhase::Default, [this](Event &) {
+                              ResetClientPool();
+                              return true;
+                            });
+
   reloadConfig();
 }
 
@@ -213,9 +223,13 @@ MozcEngine::~MozcEngine() {}
 void MozcEngine::setConfig(const RawConfig &config) {
   config_.load(config, true);
   safeSaveAsIni(config_, "conf/mozc.conf");
+  ResetClientPool();
 }
 
-void MozcEngine::reloadConfig() { readAsIni(config_, "conf/mozc.conf"); }
+void MozcEngine::reloadConfig() {
+  readAsIni(config_, "conf/mozc.conf");
+  ResetClientPool();
+}
 void MozcEngine::activate(const fcitx::InputMethodEntry &,
                           fcitx::InputContextEvent &event) {
   if (client_) {
@@ -288,4 +302,31 @@ void MozcEngine::compositionModeUpdated(InputContext *ic) {
 }
 
 AddonInstance *MozcEngine::clipboardAddon() { return clipboard(); }
+
+void MozcEngine::ResetClientPool() {
+  if (pool_->policy() != GetSharedStatePolicy()) {
+    instance_->inputContextManager().foreach ([this](InputContext *ic) {
+      if (auto state = this->mozcState(ic)) {
+        state->ReleaseClient();
+      }
+      return true;
+    });
+    pool_->setPolicy(GetSharedStatePolicy());
+  }
+}
+
+PropertyPropagatePolicy MozcEngine::GetSharedStatePolicy() {
+  switch (*config_.sharedStatePolicy) {
+    case SharedStatePolicy::All:
+      return PropertyPropagatePolicy::All;
+    case SharedStatePolicy::Program:
+      return PropertyPropagatePolicy::Program;
+    case SharedStatePolicy::No:
+      return PropertyPropagatePolicy::No;
+    case SharedStatePolicy::FollowGlobalConfig:
+    default:
+      return instance_->globalConfig().shareInputState();
+  }
+}
+
 }  // namespace fcitx

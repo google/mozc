@@ -41,6 +41,7 @@
 #include "base/run_level.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "unix/fcitx5/mozc_client_pool.h"
 
 namespace fcitx {
 const int32_t kBadCandidateId = -12345;
@@ -53,9 +54,7 @@ class MozcEngine;
 class MozcState : public InputContextProperty {
  public:
   // This constructor is used by unittests.
-  MozcState(InputContext *ic,
-            std::unique_ptr<mozc::client::ClientInterface> client,
-            MozcEngine *engine);
+  MozcState(InputContext *ic, MozcEngine *engine);
   MozcState(const MozcState &) = delete;
   virtual ~MozcState();
 
@@ -96,7 +95,8 @@ class MozcState : public InputContextProperty {
     return composition_mode_;
   }
 
-  mozc::client::ClientInterface *GetClient() { return client_.get(); }
+  mozc::client::ClientInterface *GetClient() const;
+  void ReleaseClient();
 
   bool SendCommand(const mozc::commands::SessionCommand &session_command,
                    mozc::commands::Output *new_output);
@@ -148,8 +148,8 @@ class MozcState : public InputContextProperty {
   void OpenUrl();
 
   InputContext *ic_;
-  std::unique_ptr<mozc::client::ClientInterface> client_;
   MozcEngine *engine_;
+  mutable std::shared_ptr<MozcClientHolder> client_holder_;
 
   mozc::commands::CompositionMode composition_mode_ = mozc::commands::HIRAGANA;
   mozc::config::Config::PreeditMethod preedit_method_ =
