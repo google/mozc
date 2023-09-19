@@ -43,6 +43,7 @@ load(
 )
 load("//build_tools:embed_file.bzl", "mozc_embed_file")
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
+load("//bazel/win32:build_defs.bzl", "features_gdi")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -571,6 +572,7 @@ mozc_cc_library(
         android = ["android_util.h"],
         windows = ["//base/win32:win_util_h"],
     ),
+    features = features_gdi(),  # for unique_hdesk.
     local_defines = mozc_select(
         linux = [
             "MOZC_DOCUMENT_DIR=\\\"" + LINUX_MOZC_DOCUMENT_DIR + "\\\"",
@@ -591,6 +593,7 @@ mozc_cc_library(
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + mozc_select(
         android = [
@@ -601,6 +604,7 @@ mozc_cc_library(
         macos = ["//base/mac:mac_util"],
         windows = [
             "//base/win32:wide_char",
+            "//base/win32:hresult",
             # win_util.h includes gunit_prod.h for FRIEND_TEST.
             "//testing:gunit_prod",
             "//third_party/wil",
@@ -637,6 +641,7 @@ mozc_cc_library(
         ":file_util",
         ":logging",
         ":system_util",
+        "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(

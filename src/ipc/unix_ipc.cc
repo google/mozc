@@ -304,6 +304,10 @@ IPCClient::~IPCClient() {
 // RPC call
 bool IPCClient::Call(const std::string &request, std::string *response,
                      absl::Duration timeout) {
+  if (!connected_) {
+    LOG(ERROR) << "Call failed: not connected";
+    return false;
+  }
   last_ipc_error_ = SendMessage(socket_, request, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendMessage failed";

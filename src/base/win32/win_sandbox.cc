@@ -33,7 +33,6 @@
 #include <atlsecurity.h>
 #include <sddl.h>
 #include <wil/resource.h>
-#include <wil/token_helpers.h>
 #include <windows.h>
 // clang-format off
 #include <strsafe.h>  // needs to come after other headers
@@ -49,7 +48,6 @@
 #include "base/logging.h"
 #include "base/strings/zstring_view.h"
 #include "base/system_util.h"
-#include "base/win32/hresult.h"
 #include "base/win32/wide_char.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -57,21 +55,58 @@
 namespace mozc {
 namespace {
 
-using ::mozc::win32::HResult;
 using ::mozc::win32::StrAppendW;
 using ::mozc::win32::StrCatW;
 
 using UniquePACL = wil::unique_any<ACL *, decltype(::LocalFree), ::LocalFree>;
 
-wil::unique_hlocal_string_secure GetTokenUserSidStringW(const HANDLE token) {
-  wil::unique_tokeninfo_ptr<TOKEN_USER> token_user;
-  if (HResult hr(wil::get_token_information_nothrow(token_user, token));
-      hr.Failed()) {
+wil::unique_process_handle OpenEffectiveToken(const DWORD desired_access) {
+  wil::unique_process_handle token;
+
+  if (!::OpenThreadToken(::GetCurrentThread(), desired_access, TRUE,
+                         token.put())) {
+    if (ERROR_NO_TOKEN != ::GetLastError()) {
+      return nullptr;
+    }
+    if (!::OpenProcessToken(::GetCurrentProcess(), desired_access,
+                            token.put())) {
+      return nullptr;
+    }
+  }
+  return token;
+}
+
+template <typename T>
+wil::unique_hlocal_secure_ptr<T> AllocGetTokenInformation(
+    const HANDLE hToken, const TOKEN_INFORMATION_CLASS token_info_class) {
+  DWORD buffer_size = 0;
+  DWORD return_size = 0;
+
+  const BOOL bReturn =
+      ::GetTokenInformation(hToken, token_info_class, nullptr, 0, &buffer_size);
+  if (bReturn || (ERROR_INSUFFICIENT_BUFFER != ::GetLastError())) {
     return nullptr;
   }
+
+  wil::unique_hlocal_secure_ptr<T> buffer(
+      static_cast<T *>(::LocalAlloc(LPTR, buffer_size)));
+  if (buffer == nullptr) {
+    return nullptr;
+  }
+
+  if (!::GetTokenInformation(hToken, token_info_class, buffer.get(),
+                             buffer_size, &return_size)) {
+    return nullptr;
+  }
+  return buffer;
+}
+
+wil::unique_hlocal_string_secure GetTokenUserSidStringW(const HANDLE token) {
+  wil::unique_hlocal_secure_ptr<TOKEN_USER> token_user =
+      AllocGetTokenInformation<TOKEN_USER>(token, TokenUser);
   wil::unique_hlocal_string_secure sid_string;
-  if (::ConvertSidToStringSidW(token_user->User.Sid,
-                               wil::out_param(sid_string))) {
+  if (token_user && ::ConvertSidToStringSidW(token_user->User.Sid,
+                                             wil::out_param(sid_string))) {
     return sid_string;
   }
   return nullptr;
@@ -79,14 +114,11 @@ wil::unique_hlocal_string_secure GetTokenUserSidStringW(const HANDLE token) {
 
 wil::unique_hlocal_string_secure GetTokenPrimaryGroupSidStringW(
     const HANDLE token) {
-  wil::unique_tokeninfo_ptr<TOKEN_PRIMARY_GROUP> token_primary_group;
-  if (HResult hr(
-          wil::get_token_information_nothrow(token_primary_group, token));
-      hr.Failed()) {
-    return nullptr;
-  }
+  wil::unique_hlocal_secure_ptr<TOKEN_PRIMARY_GROUP> token_primary_group =
+      AllocGetTokenInformation<TOKEN_PRIMARY_GROUP>(token, TokenPrimaryGroup);
   wil::unique_hlocal_string_secure sid_string;
-  if (::ConvertSidToStringSidW(token_primary_group->PrimaryGroup,
+  if (token_primary_group &&
+      ::ConvertSidToStringSidW(token_primary_group->PrimaryGroup,
                                wil::out_param(sid_string))) {
     return sid_string;
   }
@@ -95,10 +127,8 @@ wil::unique_hlocal_string_secure GetTokenPrimaryGroupSidStringW(
 
 bool GetUserSid(std::wstring &token_user_sid,
                 std::wstring &token_primary_group_sid) {
-  wil::unique_process_handle token;
-  if (HResult hr(
-          wil::open_current_access_token_nothrow(token.put(), TOKEN_QUERY));
-      hr.Failed()) {
+  wil::unique_process_handle token = OpenEffectiveToken(TOKEN_QUERY);
+  if (!token) {
     LOG(ERROR) << "OpenEffectiveToken failed " << ::GetLastError();
     return false;
   }
@@ -442,9 +472,16 @@ namespace {
 // http://src.chromium.org/viewvc/chrome/trunk/src/sandbox/src/security_level.h?view=markup
 class LockedDownJob {
  public:
-  LockedDownJob() = default;
+  LockedDownJob() : job_handle_(nullptr) {}
   LockedDownJob(const LockedDownJob &) = delete;
   LockedDownJob &operator=(const LockedDownJob &) = delete;
+
+  ~LockedDownJob() {
+    if (job_handle_ != nullptr) {
+      ::CloseHandle(job_handle_);
+      job_handle_ = nullptr;
+    }
+  }
 
   bool IsValid() const { return (job_handle_ != nullptr); }
 
@@ -452,7 +489,7 @@ class LockedDownJob {
     if (job_handle_ != nullptr) {
       return ERROR_ALREADY_INITIALIZED;
     }
-    job_handle_.reset(::CreateJobObject(nullptr, job_name));
+    job_handle_ = ::CreateJobObject(nullptr, job_name);
     if (job_handle_ == nullptr) {
       return ::GetLastError();
     }
@@ -466,7 +503,7 @@ class LockedDownJob {
           // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
           JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION |
           JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
-      if (::SetInformationJobObject(job_handle_.get(),
+      if (::SetInformationJobObject(job_handle_,
                                     JobObjectExtendedLimitInformation,
                                     &limit_info, sizeof(limit_info))) {
         return ::GetLastError();
@@ -481,9 +518,9 @@ class LockedDownJob {
           JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
           JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_DESKTOP |
           JOB_OBJECT_UILIMIT_EXITWINDOWS;
-      if (!::SetInformationJobObject(
-              job_handle_.get(), JobObjectBasicUIRestrictions, &ui_restrictions,
-              sizeof(ui_restrictions))) {
+      if (!::SetInformationJobObject(job_handle_, JobObjectBasicUIRestrictions,
+                                     &ui_restrictions,
+                                     sizeof(ui_restrictions))) {
         return ::GetLastError();
       }
     }
@@ -494,17 +531,14 @@ class LockedDownJob {
     if (job_handle_ == nullptr) {
       return ERROR_NO_DATA;
     }
-    if (!::AssignProcessToJobObject(job_handle_.get(), process_handle)) {
+    if (!::AssignProcessToJobObject(job_handle_, process_handle)) {
       return ::GetLastError();
     }
     return ERROR_SUCCESS;
   }
 
  private:
-  using UniqueJobHandle =
-      wil::unique_any_handle_null_only<decltype(::CloseHandle), ::CloseHandle>;
-
-  UniqueJobHandle job_handle_;
+  HANDLE job_handle_;
 };
 
 std::optional<wil::unique_process_information> CreateSuspendedRestrictedProcess(
@@ -657,6 +691,39 @@ bool WinSandbox::SpawnSandboxedProcess(absl::string_view path,
 
 // Utility functions and classes for GetRestrictionInfo
 namespace {
+// A utility class for GetTokenInformation API.
+// This class manages data buffer into which |TokenDataType| type data
+// is filled.
+template <TOKEN_INFORMATION_CLASS TokenClass, typename TokenDataType>
+class ScopedTokenInfo {
+ public:
+  explicit ScopedTokenInfo(HANDLE token) : initialized_(false) {
+    DWORD num_bytes = 0;
+    ::GetTokenInformation(token, TokenClass, nullptr, 0, &num_bytes);
+    if (num_bytes == 0) {
+      return;
+    }
+    buffer_.reset(new BYTE[num_bytes]);
+    TokenDataType *all_token_groups =
+        reinterpret_cast<TokenDataType *>(buffer_.get());
+    if (!::GetTokenInformation(token, TokenClass, all_token_groups, num_bytes,
+                               &num_bytes)) {
+      const DWORD last_error = ::GetLastError();
+      DLOG(ERROR) << "GetTokenInformation failed. Last error: " << last_error;
+      buffer_.reset();
+      return;
+    }
+    initialized_ = true;
+  }
+  TokenDataType *get() const {
+    return reinterpret_cast<TokenDataType *>(buffer_.get());
+  }
+  TokenDataType *operator->() const { return get(); }
+
+ private:
+  std::unique_ptr<BYTE[]> buffer_;
+  bool initialized_;
+};
 
 // Wrapper class for the SID_AND_ATTRIBUTES structure.
 class SidAndAttributes {
@@ -678,16 +745,14 @@ class SidAndAttributes {
 // Returns all the 'TokenGroups' information of the specified |token_handle|.
 std::vector<SidAndAttributes> GetAllTokenGroups(HANDLE token_handle) {
   std::vector<SidAndAttributes> result;
-  wil::unique_tokeninfo_ptr<TOKEN_GROUPS_AND_PRIVILEGES> all_token_groups;
-  if (HResult hr(
-          wil::get_token_information_nothrow(all_token_groups, token_handle));
-      hr.Failed()) {
+  ScopedTokenInfo<TokenGroups, TOKEN_GROUPS> all_token_groups(token_handle);
+  if (all_token_groups.get() == nullptr) {
     return result;
   }
-  for (size_t i = 0; i < all_token_groups->SidCount; ++i) {
-    Sid sid(static_cast<SID *>(all_token_groups->Sids[i].Sid));
-    const DWORD attributes = all_token_groups->Sids[i].Attributes;
-    result.emplace_back(sid, attributes);
+  for (size_t i = 0; i < all_token_groups->GroupCount; ++i) {
+    Sid sid(static_cast<SID *>(all_token_groups->Groups[i].Sid));
+    const DWORD attributes = all_token_groups->Groups[i].Attributes;
+    result.push_back(SidAndAttributes(sid, attributes));
   }
   return result;
 }
@@ -764,9 +829,8 @@ std::vector<LUID> FilterPrivilegesExceptFor(
 }
 
 std::optional<SidAndAttributes> GetUserSid(HANDLE token) {
-  wil::unique_tokeninfo_ptr<TOKEN_USER> token_user;
-  if (HResult hr(wil::get_token_information_nothrow(token_user, token));
-      hr.Failed()) {
+  ScopedTokenInfo<TokenUser, TOKEN_USER> token_user(token);
+  if (token_user.get() == nullptr) {
     return std::nullopt;
   }
 
@@ -777,9 +841,8 @@ std::optional<SidAndAttributes> GetUserSid(HANDLE token) {
 
 std::vector<LUID_AND_ATTRIBUTES> GetPrivileges(HANDLE token) {
   std::vector<LUID_AND_ATTRIBUTES> result;
-  wil::unique_tokeninfo_ptr<TOKEN_PRIVILEGES> token_privileges;
-  if (HResult hr(wil::get_token_information_nothrow(token_privileges, token));
-      hr.Failed()) {
+  ScopedTokenInfo<TokenPrivileges, TOKEN_PRIVILEGES> token_privileges(token);
+  if (token_privileges.get() == nullptr) {
     return result;
   }
 
@@ -875,9 +938,8 @@ bool AddSidToDefaultDacl(HANDLE token, const Sid &sid, ACCESS_MASK access) {
     return false;
   }
 
-  wil::unique_tokeninfo_ptr<TOKEN_DEFAULT_DACL> default_dacl;
-  if (HResult hr(wil::get_token_information_nothrow(default_dacl, token));
-      hr.Failed()) {
+  ScopedTokenInfo<TokenDefaultDacl, TOKEN_DEFAULT_DACL> default_dacl(token);
+  if (default_dacl.get() == nullptr) {
     return false;
   }
 
@@ -1120,10 +1182,8 @@ wil::unique_process_handle WinSandbox::GetRestrictedTokenHandle(
   }
 
   {
-    wil::unique_tokeninfo_ptr<TOKEN_USER> token_user;
-    if (HResult hr(
-            wil::get_token_information_nothrow(token_user, new_token.get()));
-        hr.Failed()) {
+    ScopedTokenInfo<TokenUser, TOKEN_USER> token_user(new_token.get());
+    if (token_user.get() == nullptr) {
       return nullptr;
     }
     Sid user_sid(static_cast<SID *>(token_user->User.Sid));
@@ -1184,7 +1244,7 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
 
   // As of Windows 10 Anniversary Update, following access masks (==0x1200a9)
   // are specified to files under Program Files by default.
-  constexpr ACCESS_MASK kDesiredMask =
+  const ACCESS_MASK kDesiredMask =
       FILE_READ_DATA | FILE_READ_EA | FILE_EXECUTE | READ_CONTROL | SYNCHRONIZE;
 
   // Check if the desired ACE is already specified or not.

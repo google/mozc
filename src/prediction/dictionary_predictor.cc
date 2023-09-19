@@ -368,6 +368,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     }
   }
 
+  // Stores candidates that do not have lid or rid (i.e. POS).
+  // Candidates from history may not have lid or rid.
+  absl::flat_hash_map<std::string, Segment::Candidate *> posless_candidates;
+
 #ifdef MOZC_DEBUG
   auto add_debug_candidate = [&](Result result, const absl::string_view log) {
     absl::StrAppend(&result.log, log);
@@ -397,6 +401,16 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     std::string log_message;
     if (filter.ShouldRemove(result, added, &log_message)) {
       MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
+
+      // If the already added candidate does not have POS, use this removed
+      // POS as a fallback.
+      if (result.lid != 0 && result.rid != 0 &&
+          posless_candidates.contains(result.value)) {
+        MOZC_CANDIDATE_LOG(posless_candidates[result.value], "POS fallback");
+        posless_candidates[result.value]->lid = result.lid;
+        posless_candidates[result.value]->rid = result.rid;
+        posless_candidates.erase(result.value);
+      }
       continue;
     }
 
@@ -404,12 +418,13 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
     FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
                   merged_types, candidate);
+    if (candidate->lid == 0 || candidate->rid == 0) {
+      posless_candidates[result.value] = candidate;
+    }
     ++added;
   }
 
   MaybeApplyHomonymCorrection(request, segments);
-
-  MaybeMoveLiteralCandidateToTop(request, segments);
 
   if (rescorer_ != nullptr && IsDebug(request)) {
     AddRescoringDebugDescription(segments);
@@ -417,35 +432,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
-}
-
-// static
-void DictionaryPredictor::MaybeMoveLiteralCandidateToTop(
-    const ConversionRequest &request, Segments *segments) {
-  if (!request.request()
-           .decoder_experiment_params()
-           .typing_correction_move_literal_candidate_to_top() ||
-      segments->conversion_segments_size() == 0) {
-    return;
-  }
-
-  // Do nothing when the top candidate is already literal.
-  Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment->candidates_size() <= 1 ||
-      !(segment->candidate(0).attributes &
-        Segment::Candidate::TYPING_CORRECTION)) {
-    return;
-  }
-
-  const int max_size = std::min<int>(10, segment->candidates_size());
-  for (int i = 1; i < max_size; ++i) {
-    if (segment->candidate(i).attributes &
-        Segment::Candidate::TYPING_CORRECTION) {
-      continue;
-    }
-    segment->move_candidate(i, 0);
-    break;
-  }
 }
 
 // static

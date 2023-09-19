@@ -30,13 +30,14 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_GENERIC_TABLE_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_GENERIC_TABLE_EDITOR_H_
 
+#include <QAbstractButton>
+#include <QDialog>
 #include <QWidget>
+#include <cstddef>
 #include <istream>
 #include <string>
 
 #include "gui/config_dialog/ui_generic_table_editor.h"
-
-class QAbstractButton;
 
 namespace mozc {
 namespace gui {
@@ -47,7 +48,6 @@ class GenericTableEditorDialog : public QDialog,
 
  public:
   explicit GenericTableEditorDialog(QWidget *parent, size_t column_size);
-  ~GenericTableEditorDialog() override;
 
   bool LoadFromString(const std::string &str);
   const std::string &table() const;
@@ -72,7 +72,7 @@ class GenericTableEditorDialog : public QDialog,
   QMenu *mutable_edit_menu();
 
   // implements a method which returns default fileame
-  virtual std::string GetDefaultFilename() const = 0;
+  virtual QLatin1String GetDefaultFilename() const = 0;
 
   // implements a method which loads
   // internal data from istream

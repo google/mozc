@@ -194,6 +194,7 @@ mozc_cc_qt_library(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
+        "//base:port",
         "//base:process",
         "//base:run_level",
         "//base:singleton",
@@ -201,6 +202,7 @@ mozc_cc_qt_library(
         "//base:util",
         "//base:version",
         "//client",
+        "//client:client_interface",
         "//composer:key_parser",
         "//config:config_handler",
         "//config:stats_config_util",
@@ -210,12 +212,19 @@ mozc_cc_qt_library(
         "//protocol:config_cc_proto",
         "//session/internal:keymap",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
-    ] + mozc_select(macos = [
-        "//base/mac:mac_util",
-    ]),
+        "@com_google_absl//absl/types:span",
+    ] + mozc_select(
+        macos = [
+            "//base/mac:mac_util",
+        ],
+        windows = [
+            "//gui/base:win_util",
+        ],
+    ),
 )
 
 mozc_cc_qt_library(

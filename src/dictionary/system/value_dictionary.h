@@ -39,14 +39,14 @@
 #include <cstdint>
 
 #include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/system/codec_interface.h"
+#include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
-
-class PosMatcher;
-class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {
  public:
@@ -56,8 +56,6 @@ class ValueDictionary : public DictionaryInterface {
 
   ValueDictionary(const ValueDictionary &) = delete;
   ValueDictionary &operator=(const ValueDictionary &) = delete;
-
-  ~ValueDictionary() override;
 
   // Implementation of DictionaryInterface
   bool HasKey(absl::string_view key) const override;

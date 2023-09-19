@@ -48,6 +48,7 @@
 
 #include "base/win32/wide_char.h"
 #include "base/win32/win_sandbox.h"
+#include "absl/cleanup/cleanup.h"
 #else  // _WIN32
 #include <errno.h>
 #include <fcntl.h>
@@ -55,7 +56,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/types.h>
-#endif  // _WIN32
+#endif  // !_WIN32
 
 namespace mozc {
 namespace {
@@ -92,33 +93,30 @@ std::string NamedEventUtil::GetEventPath(const char *name) {
   //  equal to or less than 13 characters in length not including the
   //  terminating null character."
   constexpr size_t kEventPathLength = 13;
-  std::string buf =
-      absl::StrFormat("/%x", static_cast<uint64_t>(Fingerprint(event_name)));
+  std::string buf = absl::StrFormat("/%x", Fingerprint(event_name));
   buf.erase(std::min(kEventPathLength, buf.size()));
   return buf;
 #endif  // _WIN32
 }
 
 #ifdef _WIN32
-NamedEventListener::NamedEventListener(const char *name)
-    : is_owner_(false), handle_(nullptr) {
+NamedEventListener::NamedEventListener(const char *name) : is_owner_(false) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
 
-  handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
-
-  if (handle_ == nullptr) {
+  if (!handle_.try_open(event_path.c_str(), EVENT_ALL_ACCESS)) {
     SECURITY_ATTRIBUTES security_attributes;
     if (!WinSandbox::MakeSecurityAttributes(WinSandbox::kSharableEvent,
                                             &security_attributes)) {
       LOG(ERROR) << "Cannot make SecurityAttributes";
       return;
     }
+    absl::Cleanup security_descriptor_cleanup = [security_attributes]() {
+      ::LocalFree(security_attributes.lpSecurityDescriptor);
+    };
 
-    handle_ =
-        ::CreateEventW(&security_attributes, true, false, event_path.c_str());
-    ::LocalFree(security_attributes.lpSecurityDescriptor);
-    if (handle_ == nullptr) {
+    if (!handle_.try_create(wil::EventOptions::ManualReset, event_path.c_str(),
+                           &security_attributes)) {
       LOG(ERROR) << "CreateEvent() failed: " << ::GetLastError();
       return;
     }
@@ -127,13 +125,6 @@ NamedEventListener::NamedEventListener(const char *name)
   }
 
   VLOG(1) << "NamedEventListener " << name << " is created";
-}
-
-NamedEventListener::~NamedEventListener() {
-  if (nullptr != handle_) {
-    ::CloseHandle(handle_);
-  }
-  handle_ = nullptr;
 }
 
 bool NamedEventListener::IsAvailable() const { return (handle_ != nullptr); }
@@ -149,7 +140,7 @@ bool NamedEventListener::Wait(absl::Duration msec) {
   }
 
   const DWORD result = ::WaitForSingleObject(
-      handle_,
+      handle_.get(),
       msec < absl::ZeroDuration() ? INFINITE : absl::ToInt64Milliseconds(msec));
   if (result == WAIT_TIMEOUT) {
     LOG(WARNING) << "NamedEvent timeout " << ::GetLastError();
@@ -164,8 +155,9 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
     return TIMEOUT;
   }
 
-  HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid));
-  if (nullptr == handle) {
+  wil::unique_process_handle handle(
+      ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid)));
+  if (handle == nullptr) {
     LOG(ERROR) << "OpenProcess: failed() " << ::GetLastError() << " " << pid;
     if (::GetLastError() == ERROR_INVALID_PARAMETER) {
       LOG(ERROR) << "No such process found: " << pid;
@@ -173,7 +165,7 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
     }
   }
 
-  HANDLE handles[2] = {handle_, handle};
+  HANDLE handles[2] = {handle_.get(), handle.get()};
 
   const DWORD handles_size = (handle == nullptr) ? 1 : 2;
 
@@ -199,28 +191,16 @@ int NamedEventListener::WaitEventOrProcess(absl::Duration msec, size_t pid) {
       break;
   }
 
-  if (nullptr != handle) {
-    ::CloseHandle(handle);
-  }
-
   return result;
 }
 
 NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(nullptr) {
   std::wstring event_path =
       win32::Utf8ToWide(NamedEventUtil::GetEventPath(name));
-  handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
-  if (handle_ == nullptr) {
+  if (!handle_.try_open(event_path.c_str(), EVENT_MODIFY_STATE)) {
     LOG(ERROR) << "Cannot open Event name: " << name;
     return;
   }
-}
-
-NamedEventNotifier::~NamedEventNotifier() {
-  if (nullptr != handle_) {
-    ::CloseHandle(handle_);
-  }
-  handle_ = nullptr;
 }
 
 bool NamedEventNotifier::IsAvailable() const { return handle_ != nullptr; }
@@ -231,7 +211,7 @@ bool NamedEventNotifier::Notify() {
     return false;
   }
 
-  if (0 == ::SetEvent(handle_)) {
+  if (::SetEvent(handle_.get()) == 0) {
     LOG(ERROR) << "SetEvent() failed: " << ::GetLastError();
     return false;
   }

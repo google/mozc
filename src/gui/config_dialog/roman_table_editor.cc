@@ -40,7 +40,6 @@
 #include "base/config_file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "protocol/commands.pb.h"
 #include "absl/strings/str_split.h"
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"
@@ -60,8 +59,7 @@ constexpr char kRomanTableFile[] = "system://romanji-hiragana.tsv";
 }  // namespace
 
 RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
-    : GenericTableEditorDialog(parent, 3) {
-  actions_.reset(new QAction *[MENU_SIZE]);
+    : GenericTableEditorDialog(parent, 3), actions_(MENU_SIZE) {
   actions_[NEW_INDEX] = mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
       mutable_edit_menu()->addAction(tr("Remove selected entries"));
@@ -87,8 +85,6 @@ RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)
 
   UpdateMenuStatus();
 }
-
-RomanTableEditorDialog::~RomanTableEditorDialog() {}
 
 std::string RomanTableEditorDialog::GetDefaultRomanTable() {
   std::unique_ptr<std::istream> ifs(
@@ -143,11 +139,11 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
     }
 
     QTableWidgetItem *input =
-        new QTableWidgetItem(QString::fromUtf8(fields[0].c_str()));
+        new QTableWidgetItem(QString::fromStdString(fields[0]));
     QTableWidgetItem *output =
-        new QTableWidgetItem(QString::fromUtf8(fields[1].c_str()));
+        new QTableWidgetItem(QString::fromStdString(fields[1]));
     QTableWidgetItem *pending =
-        new QTableWidgetItem(QString::fromUtf8(fields[2].c_str()));
+        new QTableWidgetItem(QString::fromStdString(fields[2]));
 
     mutable_table_widget()->insertRow(row);
     mutable_table_widget()->setItem(row, 0, input);
@@ -171,7 +167,7 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
 bool RomanTableEditorDialog::LoadDefaultRomanTable() {
   std::unique_ptr<std::istream> ifs(
       ConfigFileStream::LegacyOpen(kRomanTableFile));
-  CHECK(ifs.get() != nullptr);  // should never happen
+  CHECK(ifs);  // should never happen
   CHECK(LoadFromStream(ifs.get()));
   return true;
 }

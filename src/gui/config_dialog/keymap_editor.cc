@@ -55,9 +55,11 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/combobox_delegate.h"
+#include "gui/config_dialog/generic_table_editor.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
@@ -69,7 +71,7 @@ namespace mozc {
 namespace gui {
 namespace {
 
-config::Config::SessionKeymap kKeyMaps[] = {
+constexpr config::Config::SessionKeymap kKeyMaps[] = {
     config::Config::ATOK,
     config::Config::MSIME,
     config::Config::KOTOERI,
@@ -162,7 +164,7 @@ class KeyMapValidator {
 
   // Returns true if the key map entry is valid
   // invalid keymaps are not exported/imported.
-  bool IsValidEntry(const std::vector<std::string> &fields) {
+  bool IsValidEntry(absl::Span<const std::string> fields) {
     if (fields.size() < 3) {
       return false;
     }
@@ -177,7 +179,7 @@ class KeyMapValidator {
 
   // Returns true if the key map entry is configurable and
   // we want to show them.
-  bool IsVisibleEntry(const std::vector<std::string> &fields) {
+  bool IsVisibleEntry(absl::Span<const std::string> fields) {
     if (fields.size() < 3) {
       return false;
     }
@@ -222,7 +224,7 @@ class KeyMapTableLoader {
       }
     }
     for (const std::string &command : commands) {
-      commands_ << QString::fromUtf8(command.data(), command.size());
+      commands_ << QString::fromStdString(command);
     }
 
     for (const absl::string_view status : kKeyMapStatus) {
@@ -241,8 +243,8 @@ class KeyMapTableLoader {
 
 KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
     : GenericTableEditorDialog(parent, 3),
-      actions_(std::make_unique<QAction *[]>(MENU_SIZE)),
-      import_actions_(std::make_unique<QAction *[]>(std::size(kKeyMaps))),
+      actions_(MENU_SIZE),
+      import_actions_(std::size(kKeyMaps)),
       status_delegate_(std::make_unique<ComboBoxDelegate>()),
       commands_delegate_(std::make_unique<ComboBoxDelegate>()),
       keybinding_delegate_(std::make_unique<KeyBindingEditorDelegate>()) {
@@ -359,12 +361,8 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
     // don't show invisible (not configurable) keymap entries.
     if (!Singleton<KeyMapValidator>::get()->IsVisibleEntry(fields)) {
       VLOG(3) << "invalid entry to show. add to invisible_keymap_table_";
-      invisible_keymap_table_ += status;
-      invisible_keymap_table_ += '\t';
-      invisible_keymap_table_ += key;
-      invisible_keymap_table_ += '\t';
-      invisible_keymap_table_ += command;
-      invisible_keymap_table_ += '\n';
+      absl::StrAppend(&invisible_keymap_table_, status, "\t", key, "\t",
+                      command, "\n");
       continue;
     }
 
@@ -374,7 +372,7 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
 
     QTableWidgetItem *status_item = new QTableWidgetItem(tr(status.c_str()));
     QTableWidgetItem *key_item =
-        new QTableWidgetItem(QString::fromUtf8(key.data(), key.size()));
+        new QTableWidgetItem(QString::fromStdString(key));
     QTableWidgetItem *command_item = new QTableWidgetItem(tr(command.c_str()));
 
     mutable_table_widget()->insertRow(row);

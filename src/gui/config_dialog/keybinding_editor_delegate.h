@@ -34,16 +34,15 @@
 #include <QModelIndex>
 #include <QObject>
 
+#include "gui/config_dialog/keybinding_editor.h"
+
 namespace mozc {
 namespace gui {
-
-class KeyBindingEditor;
 
 class KeyBindingEditorDelegate : public QItemDelegate {
   Q_OBJECT
  public:
   explicit KeyBindingEditorDelegate(QObject *parent = nullptr);
-  ~KeyBindingEditorDelegate() override;
 
   QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
                         const QModelIndex &index) const override;

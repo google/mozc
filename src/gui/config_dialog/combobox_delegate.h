@@ -33,10 +33,9 @@
 #include <QComboBox>
 #include <QItemDelegate>
 #include <QModelIndex>
+#include <QMouseEvent>
 #include <QObject>
 #include <QStringList>
-
-class QMouseEvent;
 
 namespace mozc {
 namespace gui {
@@ -45,7 +44,6 @@ class ComboBoxDelegate : public QItemDelegate {
   Q_OBJECT
  public:
   explicit ComboBoxDelegate(QObject *parent = nullptr);
-  ~ComboBoxDelegate() override;
 
   void SetItemList(const QStringList &item_list);
 

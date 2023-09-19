@@ -127,10 +127,10 @@ static const auto *kQtKeyModifierNonRequiredTable =
 #ifdef _WIN32
 struct WinVirtualKeyEntry {
   DWORD virtual_key;
-  const char *mozc_key_name;
+  absl::string_view mozc_key_name;
 };
 
-const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
+constexpr WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
     //  { VK_DBE_HIRAGANA, "Kana" },       // Kana
     // "Hiragana" and "Kana" are the same key on Mozc
     {VK_DBE_HIRAGANA, "Hiragana"},  // Hiragana
@@ -162,7 +162,7 @@ bool IsDownOnlyKey(const QKeyEvent &key_event) {
   const DWORD virtual_key = key_event.nativeVirtualKey();
   return (virtual_key == VK_DBE_ALPHANUMERIC ||
           virtual_key == VK_DBE_HIRAGANA || virtual_key == VK_DBE_KATAKANA);
-#else  // _WIN32
+#else   // _WIN32
   return false;
 #endif  // _WIN32
 }
@@ -170,37 +170,7 @@ bool IsDownOnlyKey(const QKeyEvent &key_event) {
 bool IsAlphabet(const char key) { return (key >= 'a' && key <= 'z'); }
 }  // namespace
 
-class KeyBindingFilter : public QObject {
- public:
-  KeyBindingFilter(QLineEdit *line_edit, QPushButton *ok_button);
-  ~KeyBindingFilter() override;
-
-  enum KeyState { DENY_KEY, ACCEPT_KEY, SUBMIT_KEY };
-
- protected:
-  bool eventFilter(QObject *obj, QEvent *event) override;
-
- private:
-  void Reset();
-
-  // add new "qt_key" to the filter.
-  // return true if the current key_bindings the KeyBindingFilter holds
-  // is valid. Composed key_bindings are stored to "result"
-  KeyState AddKey(const QKeyEvent &key_event, QString *result);
-
-  // encode the current key binding
-  KeyState Encode(QString *result) const;
-
-  bool committed_;
-  bool ctrl_pressed_;
-  bool alt_pressed_;
-  bool shift_pressed_;
-  QString modifier_required_key_;
-  QString modifier_non_required_key_;
-  QString unknown_key_;
-  QLineEdit *line_edit_;
-  QPushButton *ok_button_;
-};
+namespace key_binding_editor_internal {
 
 KeyBindingFilter::KeyBindingFilter(QLineEdit *line_edit, QPushButton *ok_button)
     : committed_(false),
@@ -211,8 +181,6 @@ KeyBindingFilter::KeyBindingFilter(QLineEdit *line_edit, QPushButton *ok_button)
       ok_button_(ok_button) {
   Reset();
 }
-
-KeyBindingFilter::~KeyBindingFilter() {}
 
 void KeyBindingFilter::Reset() {
   ctrl_pressed_ = false;
@@ -245,17 +213,17 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   QStringList results;
 
   if (ctrl_pressed_) {
-    results << QLatin1String("Ctrl");
+    results << QStringLiteral("Ctrl");
   }
 
   if (shift_pressed_) {
-    results << QLatin1String("Shift");
+    results << QStringLiteral("Shift");
   }
 
   if (alt_pressed_) {
 #ifdef __APPLE__
-    results << QLatin1String("Option");
-#else  // __APPLE__
+    results << QStringLiteral("Option");
+#else   // __APPLE__
     // Do not support and show keybindings with alt for Windows
     // results << "Alt";
 #endif  // __APPLE__
@@ -320,7 +288,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
     result_state = KeyBindingFilter::DENY_KEY;
   }
 
-  // no modifer for modifier_required_key
+  // no modifier for modifier_required_key
   if (!has_modifier && !modifier_required_key_.isEmpty()) {
     result_state = KeyBindingFilter::DENY_KEY;
   }
@@ -359,7 +327,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
                        //    case Qt::Key_Control:  Command key
       alt_pressed_ = true;
       return Encode(result);
-#else  // __APPLE__
+#else   // __APPLE__
     case Qt::Key_Control:
       ctrl_pressed_ = true;
       return Encode(result);
@@ -487,6 +455,8 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
   return QObject::eventFilter(obj, event);
 }
 
+}  // namespace key_binding_editor_internal
+
 KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
     : QDialog(parent), trigger_parent_(trigger_parent) {
   setupUi(this);
@@ -496,7 +466,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   // the edit is not raised. This might be a bug of setFocusProxy.
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool | Qt::WindowStaysOnTopHint);
-#else  // __linux__
+#else   // __linux__
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool);
 #endif  // __linux__
@@ -505,7 +475,8 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
   CHECK(ok_button != nullptr);
 
-  filter_ = std::make_unique<KeyBindingFilter>(KeyBindingLineEdit, ok_button);
+  filter_ = std::make_unique<key_binding_editor_internal::KeyBindingFilter>(
+      KeyBindingLineEdit, ok_button);
   KeyBindingLineEdit->installEventFilter(filter_.get());
 
   // no right click
@@ -526,8 +497,6 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   setFocusProxy(KeyBindingLineEdit);
 }
 
-KeyBindingEditor::~KeyBindingEditor() {}
-
 void KeyBindingEditor::Clicked(QAbstractButton *button) {
   switch (KeyBindingEditorbuttonBox->buttonRole(button)) {
     case QDialogButtonBox::AcceptRole:
@@ -539,7 +508,7 @@ void KeyBindingEditor::Clicked(QAbstractButton *button) {
   }
 }
 
-const QString KeyBindingEditor::GetBinding() const {
+QString KeyBindingEditor::GetBinding() const {
   return KeyBindingLineEdit->text();
 }
 

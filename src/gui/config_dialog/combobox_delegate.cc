@@ -37,8 +37,6 @@ namespace gui {
 
 ComboBoxDelegate::ComboBoxDelegate(QObject *parent) : QItemDelegate(parent) {}
 
-ComboBoxDelegate::~ComboBoxDelegate() {}
-
 QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
                                         const QStyleOptionViewItem &option,
                                         const QModelIndex &index) const {

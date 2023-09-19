@@ -135,6 +135,8 @@ namespace logging_internal {
 
 // Based on
 // https://github.com/abseil/abseil-cpp/blob/master/absl/strings/internal/has_absl_stringify.h
+//
+// This can be removed once Abseil LTS supports `absl::HasAbslStringify`.
 template <typename T, typename = void>
 struct HasAbslStringify : std::false_type {};
 

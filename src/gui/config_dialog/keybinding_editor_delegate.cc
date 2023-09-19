@@ -57,8 +57,6 @@ class KeyBindingEditorTriggerButton : public QPushButton {
 KeyBindingEditorDelegate::KeyBindingEditorDelegate(QObject *parent)
     : QItemDelegate(parent) {}
 
-KeyBindingEditorDelegate::~KeyBindingEditorDelegate() {}
-
 QWidget *KeyBindingEditorDelegate::createEditor(
     QWidget *parent, const QStyleOptionViewItem &option,
     const QModelIndex &index) const {

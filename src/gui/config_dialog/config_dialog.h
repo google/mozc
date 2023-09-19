@@ -39,25 +39,17 @@
 #include <string>
 
 #include "protocol/config.pb.h"
+#include "client/client_interface.h"
 #include "gui/config_dialog/ui_config_dialog.h"
 
 namespace mozc {
-
-namespace client {
-class ClientInterface;
-}
-
-namespace config {
-class Config;
-}
-
 namespace gui {
+
 class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   Q_OBJECT;
 
  public:
   ConfigDialog();
-  ~ConfigDialog() override;
 
   // Methods defined in the 'slots' section (Qt's extension) will be processed
   // by Qt's moc tool (moc.exe on Windows). Unfortunately, preprocessor macros
@@ -111,6 +103,7 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   std::map<QString, config::Config::SessionKeymap>
       keymapname_sessionkeymap_map_;
 };
+
 }  // namespace gui
 }  // namespace mozc
 #endif  // MOZC_GUI_CONFIG_DIALOG_CONFIG_DIALOG_H_

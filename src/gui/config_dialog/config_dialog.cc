@@ -82,9 +82,9 @@ void Connect(const QList<T *> &objects, const char *signal,
 }  // namespace
 
 namespace mozc {
-
 namespace gui {
-using mozc::config::StatsConfigUtil;
+
+using ::mozc::config::StatsConfigUtil;
 
 ConfigDialog::ConfigDialog()
     : client_(client::ClientFactory::NewClient()),
@@ -307,8 +307,6 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setEnabled(false);
 #endif  // CHANNEL_DEV
 }
-
-ConfigDialog::~ConfigDialog() {}
 
 bool ConfigDialog::SetConfig(const config::Config &config) {
   if (!client_->CheckVersionOrRestartServer()) {

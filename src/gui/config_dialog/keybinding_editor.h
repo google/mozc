@@ -33,13 +33,46 @@
 #include <QGuiApplication>
 #include <QtGui>
 #include <memory>
-#include <string>
 
 #include "gui/config_dialog/ui_keybinding_editor.h"
 
 namespace mozc {
 namespace gui {
-class KeyBindingFilter;
+namespace key_binding_editor_internal {
+
+class KeyBindingFilter : public QObject {
+ public:
+  KeyBindingFilter(QLineEdit *line_edit, QPushButton *ok_button);
+
+  enum KeyState { DENY_KEY, ACCEPT_KEY, SUBMIT_KEY };
+
+ protected:
+  bool eventFilter(QObject *obj, QEvent *event) override;
+
+ private:
+  void Reset();
+
+  // add new "qt_key" to the filter.
+  // return true if the current key_bindings the KeyBindingFilter holds
+  // is valid. Composed key_bindings are stored to "result"
+  KeyState AddKey(const QKeyEvent &key_event, QString *result);
+
+  // encode the current key binding
+  KeyState Encode(QString *result) const;
+
+  bool committed_;
+  bool ctrl_pressed_;
+  bool alt_pressed_;
+  bool shift_pressed_;
+  QString modifier_required_key_;
+  QString modifier_non_required_key_;
+  QString unknown_key_;
+  QLineEdit *line_edit_;
+  QPushButton *ok_button_;
+};
+
+}  // namespace key_binding_editor_internal
+
 class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   Q_OBJECT;
 
@@ -48,12 +81,11 @@ class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   // |trigger_parent| is the object who was the trigger of launching the editor.
   // QPushButton can be a trigger_parent.
   KeyBindingEditor(QWidget *parent, QWidget *trigger_parent);
-  ~KeyBindingEditor() override;
 
   QWidget *mutable_trigger_parent() const { return trigger_parent_; }
 
   // return current binding in QString
-  const QString GetBinding() const;
+  QString GetBinding() const;
   void SetBinding(const QString &binding);
 
   // For some reason, KeyBindingEditor lanuched by
@@ -72,7 +104,7 @@ class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
 
  private:
   QWidget *trigger_parent_;
-  std::unique_ptr<KeyBindingFilter> filter_;
+  std::unique_ptr<key_binding_editor_internal::KeyBindingFilter> filter_;
 };
 
 }  // namespace gui
