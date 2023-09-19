@@ -277,9 +277,6 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface *immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
-  static void MaybeMoveLiteralCandidateToTop(const ConversionRequest &request,
-                                             Segments *segments);
-
   static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
                                           Segments *segments);
 

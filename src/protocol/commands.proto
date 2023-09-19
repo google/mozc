@@ -233,7 +233,7 @@ message KeyEvent {
   }
   // LINT.ThenChange(
   //     //composer/key_parser.cc,
-  //     //gui/config_dialog/keybinding_editor.cc,
+  //     gui/config_dialog/keybinding_editor.cc,
   //     unix/ibus/key_translator.cc,
   // )
 
@@ -617,8 +617,7 @@ message DecoderExperimentParams {
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
   optional float typing_correction_score_offset = 23 [default = 0.0];
-  optional bool typing_correction_move_literal_candidate_to_top = 24
-      [default = false];
+  reserved 24;  // Deprecated typing_correction_move_literal_candidate_to_top
 
   // Cancel suffix penalty for content word in prediction module.
   optional bool cancel_content_word_suffix_penalty = 20 [default = false];
