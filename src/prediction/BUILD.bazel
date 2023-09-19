@@ -302,6 +302,7 @@ mozc_cc_test(
     deps = [
         ":dictionary_predictor",
         ":rescorer_mock",
+        ":result",
         ":suggestion_filter",
         "//base:logging",
         "//base:util",
