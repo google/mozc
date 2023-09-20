@@ -83,6 +83,7 @@
         'mozc_engine.cc',
         'mozc_engine_factory.cc',
         'mozc_state.cc',
+        'mozc_client_pool.cc',
       ],
       'dependencies': [
         '<@(fcitx_dependencies)',
