@@ -218,7 +218,6 @@ mozc_cc_library(
         "//base:hash",
         "//base:logging",
         "//base:system_util",
-        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
@@ -226,7 +225,6 @@ mozc_cc_library(
         windows = [
             "//base/win32:win_sandbox",
             "//base/win32:wide_char",
-            "//third_party/wil",
         ],
     ),
 )
