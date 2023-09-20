@@ -19,7 +19,6 @@
 
 #include "unix/fcitx5/mozc_engine.h"
 
-#include <Fcitx5/Core/fcitx/inputcontextmanager.h>
 #include <fcitx-config/iniparser.h>
 #include <fcitx-utils/i18n.h>
 #include <fcitx-utils/log.h>

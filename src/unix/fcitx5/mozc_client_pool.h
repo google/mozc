@@ -30,7 +30,6 @@
 #ifndef UNIX_FCITX5_MOZC_CLIENT_POOL_H_
 #define UNIX_FCITX5_MOZC_CLIENT_POOL_H_
 
-#include <Fcitx5/Core/fcitx/inputcontextmanager.h>
 #include <fcitx/inputcontextmanager.h>
 
 #include <unordered_map>
