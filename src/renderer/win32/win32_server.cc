@@ -32,13 +32,13 @@
 #include <windows.h>
 
 #include <memory>
-#include <string>
 
 #include "base/logging.h"
+#include "base/run_level.h"
+#include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "client/client_interface.h"
 #include "renderer/win32/window_manager.h"
 
 namespace mozc {
@@ -61,19 +61,22 @@ bool IsTSFMessage(const commands::RendererCommand &command) {
 namespace win32 {
 
 Win32Server::Win32Server()
-    : window_manager_(std::make_unique<WindowManager>()) {
+    : event_(nullptr), window_manager_(new WindowManager) {
   // Manual reset event to notify we have a renderer command
   // to be handled in the UI thread.
   // The renderer command is serialized into "message_".
-  DCHECK(event_.try_create(wil::EventOptions::None, nullptr))
+  event_ = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  DCHECK_NE(nullptr, event_)
       << "CreateEvent failed, Error = " << ::GetLastError();
 }
+
+Win32Server::~Win32Server() { ::CloseHandle(event_); }
 
 void Win32Server::AsyncHide() {
   {
     // Cancel the remaining event
     absl::MutexLock l(&mutex_);
-    event_.ResetEvent();
+    ::ResetEvent(event_);
   }
   window_manager_->AsyncHideAllWindows();
 }
@@ -82,7 +85,7 @@ void Win32Server::AsyncQuit() {
   {
     // Cancel the remaining event
     absl::MutexLock l(&mutex_);
-    event_.ResetEvent();
+    ::ResetEvent(event_);
   }
   window_manager_->AsyncQuitAllWindows();
 }
@@ -140,7 +143,7 @@ bool Win32Server::AsyncExecCommand(absl::string_view proto_message) {
   // previous content of |message_|.
   message_.assign(proto_message.data(), proto_message.size());
   // Set the event signaled to mark we have a message to render.
-  event_.SetEvent();
+  ::SetEvent(event_);
   return true;
 }
 
@@ -172,7 +175,7 @@ int Win32Server::StartMessageLoop() {
       {
         absl::MutexLock l(&mutex_);
         message.assign(message_);
-        event_.ResetEvent();
+        ::ResetEvent(event_);
       }
       commands::RendererCommand command;
       if (command.ParseFromString(message)) {

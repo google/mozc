@@ -36,8 +36,8 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
-load("//bazel:stubs.bzl", "lexan")
 load("//bazel/win32:build_defs.bzl", "copts_wtl")
+load("//bazel:stubs.bzl", "lexan")
 
 package(
     default_visibility = ["//renderer:__pkg__"],
@@ -190,13 +190,13 @@ mozc_cc_library(
     deps = [
         ":window_manager",
         "//base:logging",
-        "//client:client_interface",
+        "//base:run_level",
+        "//base:util",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_interface",
         "//renderer:renderer_server",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
-        "@com_microsoft_wil//:wil",
     ],
 )
 
