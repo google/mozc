@@ -11,10 +11,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-12-16 20:25+0000\n"
+"POT-Creation-Date: 2023-09-20 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: Neko ◣ 0xFF, 2022\n"
-"Language-Team: Chinese (Taiwan) (https://www.transifex.com/fcitx/teams/12005/"
+"Language-Team: Chinese (Taiwan) (https://app.transifex.com/fcitx/teams/12005/"
 "zh_TW/)\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -22,71 +22,79 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: mozc_engine.h:84 mozc_engine.cc:180
+#: mozc_engine.h:94 mozc_engine.cc:198
 msgid "About Mozc"
 msgstr "關於 Mozc"
 
-#: mozc_engine.h:82 mozc_engine.cc:173
+#: mozc_engine.h:92 mozc_engine.cc:191
 msgid "Add Word"
 msgstr "添加單詞"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:52
+msgid "All"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "Always"
 msgstr "總是"
 
-#: mozc_engine.h:78 mozc_engine.cc:157
+#: mozc_engine.h:88 mozc_engine.cc:175
 msgid "Configuration Tool"
 msgstr "設定工具"
 
-#: mozc_engine.h:80 mozc_engine.cc:165
+#: mozc_engine.h:90 mozc_engine.cc:183
 msgid "Dictionary Tool"
 msgstr "字典工具"
 
-#: mozc_engine.h:51 mozc_engine.cc:52
+#: mozc_engine.h:58 mozc_engine.cc:54
 msgid "Direct"
 msgstr "直接鍵盤輸入"
 
-#: mozc_engine.h:69
+#: mozc_engine.h:79
 msgid "Expand Usage (Requires vertical candidate list)"
 msgstr "擴展使用 (需要垂直候選列表)"
 
-#: mozc_engine.h:73
+#: mozc_engine.h:83
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
 msgstr "在預編輯的開頭修復嵌入的預編輯光標"
 
+#: mozc_engine.h:52
+msgid "Follow Global Configuration"
+msgstr ""
+
 #. Full width ASCII letter A.
-#: mozc_engine.h:53 mozc_engine.cc:82
+#: mozc_engine.h:60 mozc_engine.cc:84
 msgid "Full ASCII"
 msgstr "全形 ASCII"
 
 #. Katakana letter A.
-#: mozc_engine.h:52 mozc_engine.cc:66
+#: mozc_engine.h:59 mozc_engine.cc:68
 msgid "Full Katakana"
 msgstr "全形片假名"
 
-#: mozc_engine.h:52 mozc_engine.cc:74
+#: mozc_engine.h:59 mozc_engine.cc:76
 msgid "Half ASCII"
 msgstr "半形 ASCII"
 
 #. Half width Katakana letter A.
-#: mozc_engine.h:53 mozc_engine.cc:89
+#: mozc_engine.h:60 mozc_engine.cc:91
 msgid "Half Katakana"
 msgstr "半形片假名"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_engine.h:51 mozc_engine.cc:59
+#: mozc_engine.h:58 mozc_engine.cc:61
 msgid "Hiragana"
 msgstr "平假名"
 
-#: mozc_engine.h:49
+#: mozc_engine.h:56
 msgid "Hotkey"
 msgstr "快捷鍵"
 
-#: mozc_engine.h:75
+#: mozc_engine.h:85
 msgid "Hotkey to expand usage"
 msgstr "擴展使用的快捷鍵"
 
-#: mozc_engine.h:63
+#: mozc_engine.h:70
 msgid "Initial Mode"
 msgstr "初始模式"
 
@@ -94,7 +102,7 @@ msgstr "初始模式"
 msgid "Japanese input method based on Mozc"
 msgstr "基於 Mozc 的日語輸入法"
 
-#: mozc_engine.cc:143 mozc_engine.cc:144
+#: mozc_engine.cc:147 mozc_engine.cc:148
 msgid "Mozc Settings"
 msgstr "Mozc 設定"
 
@@ -102,7 +110,11 @@ msgstr "Mozc 設定"
 msgid "Mozc for Fcitx 5"
 msgstr "Fcitx 5 的 Mozc 支援"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:53
+msgid "No"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "On Focus"
 msgstr "選中時"
 
@@ -113,10 +125,18 @@ msgstr "選中時"
 msgid "Press %s to show usages."
 msgstr "按下 %s 顯示用法。"
 
-#: mozc_state.cc:408
+#: mozc_state.cc:426
 msgid "Press Escape to go back"
 msgstr "按下 Escape 返回"
 
-#: mozc_engine.h:65
+#: mozc_engine.h:53
+msgid "Program"
+msgstr ""
+
+#: mozc_engine.h:73
+msgid "Shared Input State"
+msgstr ""
+
+#: mozc_engine.h:75
 msgid "Vertical candidate list"
 msgstr "垂直候選字列表"

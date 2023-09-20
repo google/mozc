@@ -10,10 +10,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-06-02 20:25+0000\n"
+"POT-Creation-Date: 2023-09-20 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2022\n"
-"Language-Team: Russian (https://www.transifex.com/fcitx/teams/12005/ru/)\n"
+"Language-Team: Russian (https://app.transifex.com/fcitx/teams/12005/ru/)\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,73 +22,81 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: mozc_engine.h:84 mozc_engine.cc:180
+#: mozc_engine.h:94 mozc_engine.cc:198
 msgid "About Mozc"
 msgstr "О Mozc"
 
-#: mozc_engine.h:82 mozc_engine.cc:173
+#: mozc_engine.h:92 mozc_engine.cc:191
 msgid "Add Word"
 msgstr "Добавить слово"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:52
+msgid "All"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "Always"
 msgstr "Всегда"
 
-#: mozc_engine.h:78 mozc_engine.cc:157
+#: mozc_engine.h:88 mozc_engine.cc:175
 msgid "Configuration Tool"
 msgstr "Инструмент настройки"
 
-#: mozc_engine.h:80 mozc_engine.cc:165
+#: mozc_engine.h:90 mozc_engine.cc:183
 msgid "Dictionary Tool"
 msgstr "Инструмент словаря"
 
-#: mozc_engine.h:51 mozc_engine.cc:52
+#: mozc_engine.h:58 mozc_engine.cc:54
 msgid "Direct"
 msgstr "Непосредственный"
 
-#: mozc_engine.h:69
+#: mozc_engine.h:79
 msgid "Expand Usage (Requires vertical candidate list)"
 msgstr "Развернуть использование (требуется вертикальный список кандидатов)"
 
-#: mozc_engine.h:73
+#: mozc_engine.h:83
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
 msgstr ""
 "Зафиксировать встроенный курсор предварительного редактирования в начале "
 "предварительного редактирования."
 
+#: mozc_engine.h:52
+msgid "Follow Global Configuration"
+msgstr ""
+
 #. Full width ASCII letter A.
-#: mozc_engine.h:53 mozc_engine.cc:82
+#: mozc_engine.h:60 mozc_engine.cc:84
 msgid "Full ASCII"
 msgstr "Полная ASCII"
 
 #. Katakana letter A.
-#: mozc_engine.h:52 mozc_engine.cc:66
+#: mozc_engine.h:59 mozc_engine.cc:68
 msgid "Full Katakana"
 msgstr "Полная Катакана"
 
-#: mozc_engine.h:52 mozc_engine.cc:74
+#: mozc_engine.h:59 mozc_engine.cc:76
 msgid "Half ASCII"
 msgstr "Половинная ASCII"
 
 #. Half width Katakana letter A.
-#: mozc_engine.h:53 mozc_engine.cc:89
+#: mozc_engine.h:60 mozc_engine.cc:91
 msgid "Half Katakana"
 msgstr "Половинная Катакана"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_engine.h:51 mozc_engine.cc:59
+#: mozc_engine.h:58 mozc_engine.cc:61
 msgid "Hiragana"
 msgstr "Хирагана"
 
-#: mozc_engine.h:49
+#: mozc_engine.h:56
 msgid "Hotkey"
 msgstr "Горячая клавиша"
 
-#: mozc_engine.h:75
+#: mozc_engine.h:85
 msgid "Hotkey to expand usage"
 msgstr "Горячая клавиша для расширения использования"
 
-#: mozc_engine.h:63
+#: mozc_engine.h:70
 msgid "Initial Mode"
 msgstr "Начальный режим"
 
@@ -96,7 +104,7 @@ msgstr "Начальный режим"
 msgid "Japanese input method based on Mozc"
 msgstr "Японский метод ввода на основе Mozc"
 
-#: mozc_engine.cc:143 mozc_engine.cc:144
+#: mozc_engine.cc:147 mozc_engine.cc:148
 msgid "Mozc Settings"
 msgstr "Настройки Mozc"
 
@@ -104,7 +112,11 @@ msgstr "Настройки Mozc"
 msgid "Mozc for Fcitx 5"
 msgstr "Mozc для Fcitx 5"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:53
+msgid "No"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "On Focus"
 msgstr "В фокусе"
 
@@ -115,10 +127,18 @@ msgstr "В фокусе"
 msgid "Press %s to show usages."
 msgstr "Нажмите %s , чтобы показать использование."
 
-#: mozc_state.cc:408
+#: mozc_state.cc:426
 msgid "Press Escape to go back"
 msgstr "Нажмите Escape, чтобы вернуться назад"
 
-#: mozc_engine.h:65
+#: mozc_engine.h:53
+msgid "Program"
+msgstr ""
+
+#: mozc_engine.h:73
+msgid "Shared Input State"
+msgstr ""
+
+#: mozc_engine.h:75
 msgid "Vertical candidate list"
 msgstr "Вертикальный список кандидатов"

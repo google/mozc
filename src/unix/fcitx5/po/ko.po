@@ -5,87 +5,95 @@
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
 # Bon Keun Seo <scobyseo@gmail.com>, 2021
-# Junghee Lee <daemul72@gmail.com>, 2022
+# JungHee Lee <daemul72@gmail.com>, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-04-10 20:24+0000\n"
+"POT-Creation-Date: 2023-09-20 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Junghee Lee <daemul72@gmail.com>, 2022\n"
-"Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
+"Last-Translator: JungHee Lee <daemul72@gmail.com>, 2022\n"
+"Language-Team: Korean (https://app.transifex.com/fcitx/teams/12005/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: mozc_engine.h:84 mozc_engine.cc:180
+#: mozc_engine.h:94 mozc_engine.cc:198
 msgid "About Mozc"
 msgstr "Mozc 정보"
 
-#: mozc_engine.h:82 mozc_engine.cc:173
+#: mozc_engine.h:92 mozc_engine.cc:191
 msgid "Add Word"
 msgstr "단어 추가"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:52
+msgid "All"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "Always"
 msgstr "항상"
 
-#: mozc_engine.h:78 mozc_engine.cc:157
+#: mozc_engine.h:88 mozc_engine.cc:175
 msgid "Configuration Tool"
 msgstr "구성 도구"
 
-#: mozc_engine.h:80 mozc_engine.cc:165
+#: mozc_engine.h:90 mozc_engine.cc:183
 msgid "Dictionary Tool"
 msgstr "사전 도구"
 
-#: mozc_engine.h:51 mozc_engine.cc:52
+#: mozc_engine.h:58 mozc_engine.cc:54
 msgid "Direct"
 msgstr "직접"
 
-#: mozc_engine.h:69
+#: mozc_engine.h:79
 msgid "Expand Usage (Requires vertical candidate list)"
 msgstr "어법 확장 (세로 후보 목록 필요)"
 
-#: mozc_engine.h:73
+#: mozc_engine.h:83
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
 msgstr "사전편집 시작 부분에 포함된 사전편집 커서 수정"
 
+#: mozc_engine.h:52
+msgid "Follow Global Configuration"
+msgstr ""
+
 #. Full width ASCII letter A.
-#: mozc_engine.h:53 mozc_engine.cc:82
+#: mozc_engine.h:60 mozc_engine.cc:84
 msgid "Full ASCII"
 msgstr "전각 아스키"
 
 #. Katakana letter A.
-#: mozc_engine.h:52 mozc_engine.cc:66
+#: mozc_engine.h:59 mozc_engine.cc:68
 msgid "Full Katakana"
 msgstr "전각 가타카나"
 
-#: mozc_engine.h:52 mozc_engine.cc:74
+#: mozc_engine.h:59 mozc_engine.cc:76
 msgid "Half ASCII"
 msgstr "반각 아스키"
 
 #. Half width Katakana letter A.
-#: mozc_engine.h:53 mozc_engine.cc:89
+#: mozc_engine.h:60 mozc_engine.cc:91
 msgid "Half Katakana"
 msgstr "반각 가타카나"
 
 #. Hiragana letter A in UTF-8.
-#: mozc_engine.h:51 mozc_engine.cc:59
+#: mozc_engine.h:58 mozc_engine.cc:61
 msgid "Hiragana"
 msgstr "히라가나"
 
-#: mozc_engine.h:49
+#: mozc_engine.h:56
 msgid "Hotkey"
 msgstr "단축키"
 
-#: mozc_engine.h:75
+#: mozc_engine.h:85
 msgid "Hotkey to expand usage"
 msgstr "사용을 확장할 단축키"
 
-#: mozc_engine.h:63
+#: mozc_engine.h:70
 msgid "Initial Mode"
 msgstr "초기 모드"
 
@@ -93,7 +101,7 @@ msgstr "초기 모드"
 msgid "Japanese input method based on Mozc"
 msgstr "Mozc 기반 일본어 입력기"
 
-#: mozc_engine.cc:143 mozc_engine.cc:144
+#: mozc_engine.cc:147 mozc_engine.cc:148
 msgid "Mozc Settings"
 msgstr "Mozc 설정"
 
@@ -101,7 +109,11 @@ msgstr "Mozc 설정"
 msgid "Mozc for Fcitx 5"
 msgstr "Fcitx5용 Mozc"
 
-#: mozc_engine.h:48
+#: mozc_engine.h:53
+msgid "No"
+msgstr ""
+
+#: mozc_engine.h:55
 msgid "On Focus"
 msgstr "초점 맞추기"
 
@@ -112,10 +124,18 @@ msgstr "초점 맞추기"
 msgid "Press %s to show usages."
 msgstr "%s 키를 눌러 사용법을 표시합니다."
 
-#: mozc_state.cc:405
+#: mozc_state.cc:426
 msgid "Press Escape to go back"
 msgstr "돌아가려면 Esc 키를 눌러 취소합니다"
 
-#: mozc_engine.h:65
+#: mozc_engine.h:53
+msgid "Program"
+msgstr ""
+
+#: mozc_engine.h:73
+msgid "Shared Input State"
+msgstr ""
+
+#: mozc_engine.h:75
 msgid "Vertical candidate list"
 msgstr "세로 후보 목록"
