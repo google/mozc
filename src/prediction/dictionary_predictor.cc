@@ -793,9 +793,6 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
     single_kanji_dictionary_->GenerateDescription(candidate->value,
                                                   &candidate->description);
   }
-  if (types & PredictionType::TYPING_CORRECTION) {
-    AppendDescription(*candidate, "補正");
-  }
 }
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,

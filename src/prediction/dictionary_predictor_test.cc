@@ -942,7 +942,6 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_candidate(result, prediction::TYPING_CORRECTION, &c));
     EXPECT_EQ(c.value, "TYPING_CORRECTION");
     EXPECT_EQ(c.attributes, Segment::Candidate::TYPING_CORRECTION);
-    EXPECT_TRUE(absl::StrContains(c.description, "補正"));
   }
   {
     // USER_DICTIONARY
@@ -1046,7 +1045,6 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   const Segment &segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.candidates_size(), 3);
   EXPECT_EQ(segment.candidate(0).value, "補正");
-  EXPECT_TRUE(absl::StrContains(segment.candidate(0).description, "補正"));
   EXPECT_EQ(segment.candidate(1).value, "亞");
   // "亜の旧字体"
   // We cannot compare the description as-is, since the other description
