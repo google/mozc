@@ -657,16 +657,6 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
-  if ((result.types & PredictionType::TYPING_CORRECTION) &&
-      !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
-    auto it = seen_tc_keys_.find(result.non_expanded_original_key);
-    if (it != seen_tc_keys_.end() && it->second >= kTcMaxCountPerKey) {
-      *log_message = absl::StrCat("Too many TC for key: ",
-                                  result.non_expanded_original_key);
-      return true;
-    }
-  }
-
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
@@ -735,10 +725,6 @@ bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
     return true;
   }
   seen_.emplace(value);
-
-  if (result.types & PredictionType::TYPING_CORRECTION) {
-    ++seen_tc_keys_[result.non_expanded_original_key];
-  }
   return false;
 }
 
@@ -842,17 +828,8 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
   if (types & PredictionType::ENGLISH) {
     debug_desc.append(1, 'E');
   }
-  if (types & PredictionType::EXTENDED_TYPING_CORRECTION) {
-    if (types & PredictionType::TYPING_CORRECTION) {
-      // Non-hiragana variant. よろさく→よろしく
-      debug_desc.append("T1");
-    } else {
-      // Hiragana variant insensitive (a.k.a かつこう) from composition
-      // spellchecker.
-      debug_desc.append("H1");
-    }
-  } else if (types & PredictionType::TYPING_CORRECTION) {
-    debug_desc.append(1, 'T');  //  Legacy typing correction.
+  if (types & PredictionType::TYPING_CORRECTION) {
+    debug_desc.append("T");
   }
   return debug_desc;
 }
@@ -1055,16 +1032,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       constexpr int kBadSuggestionPenalty = 3453;
       cost += kBadSuggestionPenalty;
       MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
-    }
-
-    if ((result.types & PredictionType::TYPING_CORRECTION) &&
-        !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
-      // = 500 * log(100)
-      constexpr int kTypingCorrectionCostOffset = 2302;
-      cost += kTypingCorrectionCostOffset;
-      MOZC_WORD_LOG(result,
-                    absl::StrCat("Typing correction: ", cost, " (with offset ",
-                                 kTypingCorrectionCostOffset, ")"));
     }
 
     if (result.types & PredictionType::BIGRAM) {

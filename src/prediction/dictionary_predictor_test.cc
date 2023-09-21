@@ -1536,8 +1536,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
                                         absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
-    // kTcMaxCountPerKey: 2
-    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
 
@@ -1609,7 +1608,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
                                       absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
-  EXPECT_EQ(segment.candidates_size(), 4);
+  EXPECT_EQ(segment.candidates_size(), 5);
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value0"));
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value1"));
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value3"));
