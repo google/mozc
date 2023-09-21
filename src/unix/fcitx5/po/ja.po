@@ -4,15 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2022
+# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2023
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-09-20 20:24+0000\n"
+"POT-Creation-Date: 2023-09-21 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2022\n"
+"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2023\n"
 "Language-Team: Japanese (https://app.transifex.com/fcitx/teams/12005/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -30,7 +30,7 @@ msgstr "単語を追加"
 
 #: mozc_engine.h:52
 msgid "All"
-msgstr ""
+msgstr "すべて"
 
 #: mozc_engine.h:55
 msgid "Always"
@@ -58,7 +58,7 @@ msgstr "プリエディットカーソルをプリエディットの先頭に固
 
 #: mozc_engine.h:52
 msgid "Follow Global Configuration"
-msgstr ""
+msgstr "グローバル設定に従う"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:60 mozc_engine.cc:84
@@ -110,7 +110,7 @@ msgstr "Fcitx 5 用の Mozc"
 
 #: mozc_engine.h:53
 msgid "No"
-msgstr ""
+msgstr "しない"
 
 #: mozc_engine.h:55
 msgid "On Focus"
@@ -129,11 +129,11 @@ msgstr "Esc キーを押して戻る"
 
 #: mozc_engine.h:53
 msgid "Program"
-msgstr ""
+msgstr "プログラム"
 
 #: mozc_engine.h:73
 msgid "Shared Input State"
-msgstr ""
+msgstr "入力状態の共有"
 
 #: mozc_engine.h:75
 msgid "Vertical candidate list"
