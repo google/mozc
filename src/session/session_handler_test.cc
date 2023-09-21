@@ -40,6 +40,7 @@
 
 #include "base/clock_mock.h"
 #include "config/config_handler.h"
+#include "converter/segments.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"

@@ -403,6 +403,7 @@ mozc_cc_test(
         ":session_handler_test_util",
         "//base:clock_mock",
         "//config:config_handler",
+        "//converter:segments",
         "//engine:engine_builder_interface",
         "//engine:engine_mock",
         "//engine:engine_stub",

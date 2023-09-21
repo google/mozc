@@ -54,6 +54,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/rescorer_mock.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
@@ -1772,70 +1773,6 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   InitSegmentsWithKey("こーひー", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
-}
-
-TEST_F(DictionaryPredictorTest, MaybeApplyHomonymCorrectionTest) {
-  Segments segments;
-  InitSegmentsWithKey("key", &segments);
-
-  Segment *segment = segments.mutable_conversion_segment(0);
-
-  auto add_candidate = [&](const std::string &key, const std::string &value) {
-    auto *candidate = segment->add_candidate();
-    candidate->key = key;
-    candidate->value = value;
-  };
-
-  add_candidate("key_0", "value_0");
-  add_candidate("key_1", "value_1");
-  add_candidate("key_2", "value_2");
-  add_candidate("key_2", "value_3");
-  add_candidate("key_0", "value_4");
-
-  class MockSpellCheckerService
-      : public spelling::SpellCheckerServiceInterface {
-   public:
-    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-                (const commands::CheckSpellingRequest &), (const, override));
-    MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
-                CheckCompositionSpelling,
-                (absl::string_view, absl::string_view,
-                 const commands::Request &),
-                (const, override));
-    MOCK_METHOD(std::optional<std::vector<spelling::HomonymCorrection>>,
-                CheckHomonymSpelling,
-                (absl::Span<const absl::string_view>, absl::string_view),
-                (const, override));
-  };
-
-  std::vector<spelling::HomonymCorrection> expected;
-  auto add_expected = [&](const std::string &s) {
-    expected.emplace_back(spelling::HomonymCorrection{s, 1.0});
-  };
-
-  add_expected("replace");  // key_2
-  add_expected("value_1");  // key_1
-  add_expected("value_4");  // key_0
-
-  auto mock = std::make_unique<MockSpellCheckerService>();
-  EXPECT_CALL(*mock,
-              CheckHomonymSpelling(
-                  absl::Span<const absl::string_view>(
-                      // The first appearing values of key_2, key_1 and key_0.
-                      {"value_2", "value_1", "value_0"}),
-                  absl::string_view("")))
-      .WillOnce(Return(expected));
-
-  composer_->SetSpellCheckerService(mock.get());
-  DictionaryPredictorTestPeer::MaybeApplyHomonymCorrection(
-      *convreq_for_suggestion_, &segments);
-  composer_->SetSpellCheckerService(nullptr);
-
-  EXPECT_EQ(segment->candidate(0).value, "value_4");  // moved from 4
-  EXPECT_EQ(segment->candidate(1).value, "value_0");  // stay.
-  EXPECT_EQ(segment->candidate(2).value, "value_1");  // unchanged.
-  EXPECT_EQ(segment->candidate(3).value, "replace");  // value2 -> replace
-  EXPECT_EQ(segment->candidate(4).value, "value_3");  // stay.
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {

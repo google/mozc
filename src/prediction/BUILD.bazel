@@ -301,6 +301,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":dictionary_predictor",
+        ":prediction_aggregator_interface",
         ":rescorer_mock",
         ":result",
         ":suggestion_filter",

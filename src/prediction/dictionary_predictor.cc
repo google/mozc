@@ -59,7 +59,6 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -442,88 +441,7 @@ void DictionaryPredictor::MaybeApplyHomonymCorrection(
   const auto *spellchecker = request.composer().spellchecker_service();
   if (!spellchecker) return;
 
-  Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment->candidates_size() == 0) return;
-
-  // Do not apply the NWP candidates.
-  if (segment->key().empty()) return;
-
-  // Aggregates candidates passed to homonym spellchecker.
-  // Only apply the spellchecker to the top values grouped by the same key.
-  // key -> [value, candidate_index].
-  absl::flat_hash_map<absl::string_view, std::pair<absl::string_view, size_t>>
-      candidates;
-
-  constexpr size_t kMaxCandidatesSize = 5;
-  const size_t size = std::min(segment->candidates_size(), kMaxCandidatesSize);
-  for (size_t i = 0; i < size; ++i) {
-    const auto &c = segment->candidate(i);
-    candidates.emplace(c.key, std::pair<absl::string_view, size_t>{c.value, i});
-  }
-
-  std::vector<std::pair<absl::string_view, size_t>> values;
-  values.reserve(candidates.size());
-  for (auto &[key, v] : candidates) {
-    values.emplace_back(std::move(v));
-  }
-
-  // Sort by positions in descending order to insert new candidates efficiently.
-  std::sort(values.begin(), values.end(), [](const auto &lhs, const auto &rhs) {
-    return lhs.second > rhs.second;
-  });
-
-  std::vector<absl::string_view> queries;
-  queries.reserve(values.size());
-  for (const auto &[value, index] : values) {
-    queries.emplace_back(value);
-  }
-
-  // Runs spellchecker.
-  const auto result =
-      spellchecker->CheckHomonymSpelling(queries, segments->history_value());
-  if (!result) return;
-
-  const auto corrections = std::move(result.value());
-  if (corrections.size() != values.size()) return;
-
-  for (int i = 0; i < values.size(); ++i) {
-    const std::string &correction = corrections[i].correction;
-    const auto &[value, index] = values[i];
-
-    if (value == correction) {
-      continue;  // no correction.
-    }
-
-    // Finds the corrected candidate.
-    int correction_index = -1;
-    for (size_t i = 0; i < segment->candidates_size(); ++i) {
-      if (segment->candidate(i).value == correction) {
-        correction_index = i;
-        break;
-      }
-    }
-
-    // `correction` is already ranked higher.
-    if (correction_index <= index) continue;
-
-    // When `correction` is found, simply boosts the candidate.
-    if (correction_index != -1) {
-      segment->move_candidate(correction_index, index);
-    }
-
-    auto *candidate = segment->mutable_candidate(index);
-
-    // When `correction` is not found, replace the value.
-    // TODO(taku): Is it better to insert new candidate?
-    if (correction_index == -1) {
-      candidate->value = correction;
-      candidate->content_value = correction;
-    }
-
-    if (IsDebug(request)) {
-      AppendDescription(*candidate, "SP:", correction_index, "->", index);
-    }
-  }
+  spellchecker->MaybeApplyHomonymCorrection(segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(

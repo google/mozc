@@ -86,6 +86,7 @@ mozc_cc_test(
         "//composer/internal:typing_model",
         "//config:character_form_manager",
         "//config:config_handler",
+        "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
