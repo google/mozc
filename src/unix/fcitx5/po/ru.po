@@ -4,15 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# Dmitry <dmitrydmitry761@gmail.com>, 2022
+# Dmitry <dmitrydmitry761@gmail.com>, 2023
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-09-20 20:24+0000\n"
+"POT-Creation-Date: 2023-09-22 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2022\n"
+"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2023\n"
 "Language-Team: Russian (https://app.transifex.com/fcitx/teams/12005/ru/)\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -32,7 +32,7 @@ msgstr "Добавить слово"
 
 #: mozc_engine.h:52
 msgid "All"
-msgstr ""
+msgstr "Все"
 
 #: mozc_engine.h:55
 msgid "Always"
@@ -62,7 +62,7 @@ msgstr ""
 
 #: mozc_engine.h:52
 msgid "Follow Global Configuration"
-msgstr ""
+msgstr "Следовать глобальной конфигурации"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:60 mozc_engine.cc:84
@@ -114,7 +114,7 @@ msgstr "Mozc для Fcitx 5"
 
 #: mozc_engine.h:53
 msgid "No"
-msgstr ""
+msgstr "Нет"
 
 #: mozc_engine.h:55
 msgid "On Focus"
@@ -133,11 +133,11 @@ msgstr "Нажмите Escape, чтобы вернуться назад"
 
 #: mozc_engine.h:53
 msgid "Program"
-msgstr ""
+msgstr "Программа"
 
 #: mozc_engine.h:73
 msgid "Shared Input State"
-msgstr ""
+msgstr "Общее состояние ввода"
 
 #: mozc_engine.h:75
 msgid "Vertical candidate list"
