@@ -6,14 +6,15 @@
 # csslayer <wengxt@gmail.com>, 2017
 # bruh, 2020
 # Neko ◣ 0xFF, 2022
+# Lau YeeYu, 2023
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-09-20 20:24+0000\n"
+"POT-Creation-Date: 2023-09-23 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Neko ◣ 0xFF, 2022\n"
+"Last-Translator: Lau YeeYu, 2023\n"
 "Language-Team: Chinese (Taiwan) (https://app.transifex.com/fcitx/teams/12005/"
 "zh_TW/)\n"
 "Language: zh_TW\n"
@@ -32,7 +33,7 @@ msgstr "添加單詞"
 
 #: mozc_engine.h:52
 msgid "All"
-msgstr ""
+msgstr "所有"
 
 #: mozc_engine.h:55
 msgid "Always"
@@ -60,7 +61,7 @@ msgstr "在預編輯的開頭修復嵌入的預編輯光標"
 
 #: mozc_engine.h:52
 msgid "Follow Global Configuration"
-msgstr ""
+msgstr "跟隨全域配置"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:60 mozc_engine.cc:84
@@ -112,7 +113,7 @@ msgstr "Fcitx 5 的 Mozc 支援"
 
 #: mozc_engine.h:53
 msgid "No"
-msgstr ""
+msgstr "否"
 
 #: mozc_engine.h:55
 msgid "On Focus"
@@ -125,17 +126,17 @@ msgstr "選中時"
 msgid "Press %s to show usages."
 msgstr "按下 %s 顯示用法。"
 
-#: mozc_state.cc:426
+#: mozc_state.cc:425
 msgid "Press Escape to go back"
 msgstr "按下 Escape 返回"
 
 #: mozc_engine.h:53
 msgid "Program"
-msgstr ""
+msgstr "程式"
 
 #: mozc_engine.h:73
 msgid "Shared Input State"
-msgstr ""
+msgstr "共享輸入狀態"
 
 #: mozc_engine.h:75
 msgid "Vertical candidate list"

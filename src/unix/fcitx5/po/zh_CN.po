@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# csslayer <wengxt@gmail.com>, 2022
+# csslayer <wengxt@gmail.com>, 2023
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-09-20 20:24+0000\n"
+"POT-Creation-Date: 2023-09-23 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2022\n"
+"Last-Translator: csslayer <wengxt@gmail.com>, 2023\n"
 "Language-Team: Chinese (China) (https://app.transifex.com/fcitx/teams/12005/"
 "zh_CN/)\n"
 "Language: zh_CN\n"
@@ -30,7 +30,7 @@ msgstr "添加词组"
 
 #: mozc_engine.h:52
 msgid "All"
-msgstr ""
+msgstr "所有"
 
 #: mozc_engine.h:55
 msgid "Always"
@@ -58,7 +58,7 @@ msgstr "固定嵌入预编辑文本光标在预编辑的开头"
 
 #: mozc_engine.h:52
 msgid "Follow Global Configuration"
-msgstr ""
+msgstr "跟随全局配置"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:60 mozc_engine.cc:84
@@ -110,7 +110,7 @@ msgstr "Fcitx 5 的 Mozc 支持"
 
 #: mozc_engine.h:53
 msgid "No"
-msgstr ""
+msgstr "否"
 
 #: mozc_engine.h:55
 msgid "On Focus"
@@ -123,17 +123,17 @@ msgstr "选中时"
 msgid "Press %s to show usages."
 msgstr "按下 %s 显示用法。"
 
-#: mozc_state.cc:426
+#: mozc_state.cc:425
 msgid "Press Escape to go back"
 msgstr "按 Escape 返回"
 
 #: mozc_engine.h:53
 msgid "Program"
-msgstr ""
+msgstr "程序"
 
 #: mozc_engine.h:73
 msgid "Shared Input State"
-msgstr ""
+msgstr "共享输入状态"
 
 #: mozc_engine.h:75
 msgid "Vertical candidate list"
