@@ -72,7 +72,6 @@ MozcState::MozcState(InputContext* ic, MozcEngine* engine)
 }
 
 MozcState::~MozcState() {
-  GetClient()->SyncData();
   VLOG(1) << "MozcState destroyed.";
 }
 
