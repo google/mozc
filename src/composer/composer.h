@@ -42,7 +42,6 @@
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
-#include "composer/internal/typing_corrector.h"
 #include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
@@ -291,8 +290,6 @@ class Composer final {
 
   size_t shifted_sequence_count_;
   Composition composition_;
-
-  TypingCorrector typing_corrector_;
 
   // The original text for the composition.  The value is usually
   // empty, and used for reverse conversion.

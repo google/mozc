@@ -46,8 +46,6 @@
         'internal/mode_switching_handler.cc',
         'internal/special_key.cc',
         'internal/transliterators.cc',
-        'internal/typing_corrector.cc',
-        'internal/typing_model.cc',
         'table.cc',
       ],
       'dependencies': [

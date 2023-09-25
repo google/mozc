@@ -43,7 +43,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
@@ -366,13 +365,6 @@ DictionaryInterface *CreateSuffixDictionaryFromDataManager(
   return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
                               token_array);
 }
-
-class MockTypingModel : public mozc::composer::TypingModel {
- public:
-  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
-  ~MockTypingModel() override = default;
-  int GetCost(absl::string_view key) const override { return 10; }
-};
 
 // Simple immutable converter mock for the realtime conversion test
 class MockImmutableConverter : public ImmutableConverterInterface {

@@ -45,7 +45,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/special_key.h"
-#include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -143,8 +142,6 @@ bool Table::InitializeWithRequestAndConfig(
     const DataManagerInterface &data_manager) {
   case_sensitive_ = false;
   bool result = false;
-  typing_model_ = TypingModel::CreateTypingModel(
-      request.special_romanji_table(), data_manager);
   if (request.special_romanji_table() !=
       mozc::commands::Request::DEFAULT_TABLE) {
     const char *table_file_name;
@@ -430,8 +427,6 @@ bool Table::LoadFromFile(const char *filepath) {
   return LoadFromStream(ifs.get());
 }
 
-const TypingModel *Table::typing_model() const { return typing_model_.get(); }
-
 namespace {
 constexpr char kAttributeDelimiter = ' ';
 
@@ -548,9 +543,7 @@ bool Table::HasSubRules(const absl::string_view input) const {
   }
 }
 
-void Table::DeleteEntry(const Entry *entry) {
-  entry_set_.erase(entry);
-}
+void Table::DeleteEntry(const Entry *entry) { entry_set_.erase(entry); }
 
 bool Table::case_sensitive() const { return case_sensitive_; }
 

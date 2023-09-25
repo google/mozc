@@ -42,7 +42,6 @@
 
 #include "base/container/trie.h"
 #include "composer/internal/special_key.h"
-#include "composer/internal/typing_model.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -127,8 +126,6 @@ class Table final {
   bool case_sensitive() const;
   void set_case_sensitive(bool case_sensitive);
 
-  const TypingModel *typing_model() const;
-
   // Parses special key strings escaped with the pair of "{" and "}"
   // and returns the parsed string.
   std::string ParseSpecialKey(const absl::string_view input) const {
@@ -137,11 +134,6 @@ class Table final {
 
   // Return the default table.
   static const Table &GetDefaultTable();
-
-  void SetTypingModelForTesting(
-      std::unique_ptr<const TypingModel> typing_model) {
-    typing_model_ = std::move(typing_model);
-  }
 
  private:
   friend class TypingCorrectorTest;
@@ -160,9 +152,6 @@ class Table final {
   // If false, input alphabet characters are normalized to lower
   // characters.  The default value is false.
   bool case_sensitive_ = false;
-
-  // Typing model. nullptr if no corresponding model is available.
-  std::unique_ptr<const TypingModel> typing_model_;
 };
 
 class TableManager {
