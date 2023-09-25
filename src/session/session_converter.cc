@@ -839,6 +839,11 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(preedit, result_.get());
 
+  // Add ResultToken
+  commands::ResultToken *token = result_->add_tokens();
+  token->set_key(preedit);
+  token->set_value(preedit);
+
   // Cursor offset needs to be calculated based on normalized text.
   SessionOutput::FillCursorOffsetResult(
       CalculateCursorOffset(normalized_preedit), result_.get());
