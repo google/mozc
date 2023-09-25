@@ -157,6 +157,9 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     for (const uint32_t id : handler.GetCandidateIdsByValue(args[1])) {
       ShowLog(handler.LastOutput(), id);
     }
+    for (const uint32_t id : handler.GetRemovedCandidateIdsByValue(args[1])) {
+      ShowLog(handler.LastOutput(), id);
+    }
     return;
   }
 
