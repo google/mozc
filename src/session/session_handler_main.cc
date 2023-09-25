@@ -125,6 +125,11 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     std::cout << protobuf::Utf8Format(output) << std::endl;
     return;
   }
+  if (command == "SHOW_RESULT") {
+    commands::Output output = handler.LastOutput();
+    std::cout << protobuf::Utf8Format(output.result()) << std::endl;
+    return;
+  }
   if (command == "SHOW_CANDIDATES") {
     std::cout << protobuf::Utf8Format(handler.LastOutput().candidates())
               << std::endl;
