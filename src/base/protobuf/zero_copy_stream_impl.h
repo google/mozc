@@ -32,6 +32,6 @@
 
 #include "base/protobuf/protobuf.h"
 
-#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"  // IWYU pragma: export
 
 #endif  // MOZC_BASE_PROTOBUF_ZERO_COPY_STREAM_IMPL_H_
