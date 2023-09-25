@@ -56,6 +56,7 @@
 #include "session/session_converter.h"
 #include "session/session_converter_interface.h"
 #include "session/session_usage_stats_util.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
