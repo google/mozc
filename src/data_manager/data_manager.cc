@@ -401,18 +401,6 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     }
   }
 
-  for (const auto &kv : reader.name_to_data_map()) {
-    if (!absl::StartsWith(kv.first, "typing_model")) {
-      continue;
-    }
-    typing_model_data_.push_back(kv);
-  }
-  std::sort(typing_model_data_.begin(), typing_model_data_.end(),
-            [](const std::pair<std::string, absl::string_view> &l,
-               const std::pair<std::string, absl::string_view> &r) {
-              return l.first < r.first;
-            });
-
   if (!reader.Get("version", &data_version_)) {
     LOG(ERROR) << "Cannot find data version";
     return Status::DATA_MISSING;
@@ -618,17 +606,6 @@ void DataManager::GetUsageRewriterData(
   *string_array_data = usage_string_array_data_;
 }
 #endif  // NO_USAGE_REWRITER
-
-absl::string_view DataManager::GetTypingModel(const std::string &name) const {
-  const auto iter = std::lower_bound(
-      typing_model_data_.begin(), typing_model_data_.end(), name,
-      [](const std::pair<std::string, absl::string_view> &elem,
-         const std::string &key) { return elem.first < key; });
-  if (iter == typing_model_data_.end() || iter->first != name) {
-    return absl::string_view();
-  }
-  return iter->second;
-}
 
 absl::string_view DataManager::GetDataVersion() const { return data_version_; }
 

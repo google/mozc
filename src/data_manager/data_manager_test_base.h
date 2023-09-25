@@ -55,10 +55,7 @@ class DataManagerTestBase : public ::testing::Test {
                       int expected_resolution,
                       // The following two are used in suggestion filter test.
                       const std::vector<std::string> &dictionary_files,
-                      const std::vector<std::string> &suggestion_filter_files,
-                      // The following is used in typing model test.
-                      const std::vector<std::pair<std::string, std::string>>
-                          &typing_model_files);
+                      const std::vector<std::string> &suggestion_filter_files);
   DataManagerTestBase(const DataManagerTestBase &) = delete;
   DataManagerTestBase &operator=(const DataManagerTestBase &) = delete;
 
@@ -73,7 +70,6 @@ class DataManagerTestBase : public ::testing::Test {
   void SegmenterTest_SameAsInternal();
   void SuggestionFilterTest_IsBadSuggestion();
   void CounterSuffixTest_ValidateTest();
-  void TypingModelTest();
 
   std::unique_ptr<DataManagerInterface> data_manager_;
   const uint16_t lsize_;
@@ -83,7 +79,6 @@ class DataManagerTestBase : public ::testing::Test {
   const int expected_resolution_;
   const std::vector<std::string> dictionary_files_;
   const std::vector<std::string> suggestion_filter_files_;
-  const std::vector<std::pair<std::string, std::string>> typing_model_files_;
 };
 
 }  // namespace mozc
