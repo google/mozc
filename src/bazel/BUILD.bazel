@@ -29,9 +29,7 @@
 
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 bzl_library(
     name = "qt_bzl",
