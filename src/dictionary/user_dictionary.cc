@@ -161,9 +161,6 @@ class UserDictionary::TokensIndex {
         continue;
       }
 
-      const bool is_shortcuts =
-          (dic.name() == "__auto_imported_android_shortcuts_dictionary");
-
       for (const UserDictionaryStorage::UserDictionaryEntry &entry :
            dic.entries()) {
         if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
@@ -200,17 +197,6 @@ class UserDictionary::TokensIndex {
               absl::StripAsciiWhitespace(entry.comment());
           for (auto &token : tokens) {
             strings::Assign(token.comment, comment);
-            if (is_shortcuts &&
-                token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
-              // Words fed by Android shortcut are registered as SUGGESTION_ONLY
-              // POS in order to minimize the side-effect of extremely short
-              // reading. However, user expect that they should appear in the
-              // normal conversion. Here we replace the attribute from
-              // SUGGESTION_ONLY to SHORTCUT, which has more adaptive cost based
-              // on the length of the key.
-              token.remove_attribute(UserPos::Token::SUGGESTION_ONLY);
-              token.add_attribute(UserPos::Token::SHORTCUT);
-            }
             user_pos_tokens_.push_back(std::move(token));
           }
         }
