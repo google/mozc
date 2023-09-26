@@ -275,6 +275,12 @@ INSTANTIATE_TEST_SUITE_P(
                              request.mutable_decoder_experiment_params()
                                  ->set_enable_number_style_learning(true);
                              return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_realtime_conversion_v2(true);
+                             return request;
                            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {

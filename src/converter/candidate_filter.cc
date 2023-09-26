@@ -214,7 +214,10 @@ bool IsSameNodeStructure(const absl::Span<const Node *const> lnodes,
 }
 
 bool IsStrictModeEnabled(const ConversionRequest &request) {
-  return request.request().mixed_conversion();
+  return request.request().mixed_conversion() &&
+         !request.request()
+              .decoder_experiment_params()
+              .enable_realtime_conversion_v2();
 }
 
 }  // namespace

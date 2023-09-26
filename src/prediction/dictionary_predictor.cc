@@ -613,7 +613,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
       // example:
       // - "勝った" for the reading, "かった".
       // - "勝" for the reading, "かつ".
-      result.inner_segment_boundary.size() != 1 &&
+      result.inner_segment_boundary.size() >= 2 &&
       Util::CharsLen(result.value) != 1 &&
       (realtime_count_++ >= 3 || added_num >= 5)) {
     *log_message = "Added realtime >= 3 || added >= 5";
@@ -1000,7 +1000,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Demote predictive results for making exact candidates to have higher
     // ranking.
     // - Users expect the candidates for the input key on the candidates.
-    // - We want to show candidatey as many as possible in the limited
+    // - We want to show candidates as many as possible in the limited
     //   candidates area.
     const size_t candidate_lookup_key_len = Util::CharsLen(
         GetCandidateOriginalLookupKey(input_key, result, history.key));
@@ -1218,6 +1218,9 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   tmp_segments.add_segment()->set_key(Util::Utf8SubString(input_key, key_len));
   ConversionRequest req = request;
   req.set_max_conversion_candidates_size(1);
+  // Explicitly request conversion result for the entire key.
+  req.set_create_partial_candidates(false);
+  req.set_kana_modifier_insensitive_conversion(false);
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
       tmp_segments.segment(0).candidates_size() > 0) {
     const Segment::Candidate &top_candidate =

@@ -29,7 +29,9 @@
 
 #include "converter/immutable_converter.h"
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -40,8 +42,10 @@
 #include "base/util.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
+#include "converter/node.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_impl.h"
@@ -55,6 +59,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/match.h"
@@ -71,6 +76,7 @@ using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
 using dictionary::UserDictionaryStub;
 using dictionary::ValueDictionary;
+using ::testing::StrEq;
 
 void SetCandidate(absl::string_view key, absl::string_view value,
                   Segment *segment) {
@@ -538,6 +544,35 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
       }
     }
   }
+}
+
+TEST(ImmutableConverterTest, FirstInnerSegment) {
+  commands::Request request;
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()
+      ->set_enable_realtime_conversion_v2(true);
+  ConversionRequest conversion_request;
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+  conversion_request.set_request(&request);
+  conversion_request.set_create_partial_candidates(true);
+  conversion_request.set_max_conversion_candidates_size(100);
+
+  std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
+      new MockDataAndImmutableConverter);
+
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("くるまでこうどうした");
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+      conversion_request, &segments));
+
+  constexpr auto KeyIs = [](const auto &key) {
+    return Field(&Segment::Candidate::key, StrEq(key));
+  };
+
+  EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くるまでこうどうした")));
+  EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くるまで")));
+  EXPECT_THAT(*segment, ContainsCandidate(KeyIs("くる")));
 }
 
 }  // namespace mozc

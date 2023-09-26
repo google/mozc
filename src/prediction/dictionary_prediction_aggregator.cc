@@ -197,6 +197,11 @@ size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
   const auto &segment = segments.conversion_segment(0);
   const size_t size = (request.max_dictionary_prediction_candidates_size() -
                        segment.candidates_size());
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_realtime_conversion_v2()) {
+    return std::min<size_t>(size, 20);
+  }
   return is_long_key ? std::min<size_t>(size, 8) : size;
 }
 
@@ -901,8 +906,12 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     result->rid = candidate.rid;
     result->inner_segment_boundary = candidate.inner_segment_boundary;
     result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
+    if (candidate.key.size() < segment.key().size()) {
+      result->candidate_attributes |=
+          Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result->consumed_key_size = Util::CharsLen(candidate.key);
+    }
     result->candidate_attributes |= candidate.attributes;
-    result->consumed_key_size = candidate.consumed_key_size;
   }
 }
 

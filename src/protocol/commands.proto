@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 37
+// Next ID: 38
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -624,6 +624,8 @@ message DecoderExperimentParams {
 
   // Enable number style learning.
   optional bool enable_number_style_learning = 30 [default = false];
+
+  optional bool enable_realtime_conversion_v2 = 37 [default = false];
 }
 
 // Clients' request to the server.

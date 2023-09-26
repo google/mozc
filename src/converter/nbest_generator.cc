@@ -118,13 +118,13 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
 }
 
 void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
-                           const BoundaryCheckMode mode) {
+                           const Options options) {
   agenda_.Clear();
   freelist_.Free();
   top_nodes_.clear();
   filter_.Reset();
   viterbi_result_checked_ = false;
-  check_mode_ = mode;
+  options_ = options;
 
   begin_node_ = begin_node;
   end_node_ = end_node;
@@ -148,7 +148,7 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
 void NBestGenerator::MakeCandidate(
     Segment::Candidate *candidate, int32_t cost, int32_t structure_cost,
     int32_t wcost, const std::vector<const Node *> &nodes) const {
-  CHECK(!nodes.empty());
+  DCHECK(!nodes.empty());
 
   candidate->Clear();
   candidate->lid = nodes.front()->lid;
@@ -198,62 +198,109 @@ void NBestGenerator::MakeCandidate(
   }
 
   candidate->inner_segment_boundary.clear();
-  if (check_mode_ == ONLY_EDGE) {
-    // For realtime conversion.  Set inner segment boundary for user history
-    // prediction from realtime conversion result.
-    size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
-    size_t content_key_len = key_len, content_value_len = value_len;
-    bool is_content_boundary = false;
-    if (pos_matcher_->IsFunctional(nodes[0]->rid)) {
-      is_content_boundary = true;
+  // For realtime conversion.
+  if (options_.candidate_mode & CandidateMode::FILL_INNER_SEGMENT_INFO) {
+    FillInnerSegmentInfo(nodes, candidate);
+  }
+}
+
+void NBestGenerator::FillInnerSegmentInfo(
+    const std::vector<const Node *> &nodes,
+    Segment::Candidate *candidate) const {
+  size_t key_len = nodes[0]->key.size(), value_len = nodes[0]->value.size();
+  size_t content_key_len = key_len, content_value_len = value_len;
+  bool is_content_boundary = false;
+  if (pos_matcher_->IsFunctional(nodes[0]->rid)) {
+    is_content_boundary = true;
+    content_key_len = 0;
+    content_value_len = 0;
+  }
+  for (size_t i = 1; i < nodes.size(); ++i) {
+    const Node *lnode = nodes[i - 1];
+    const Node *rnode = nodes[i];
+    constexpr bool kMultipleSegments = false;
+    if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
+      // Keep the consistency with the above logic for candidate->content_*.
+      if (content_key_len == 0 || content_value_len == 0) {
+        content_key_len = key_len;
+        content_value_len = value_len;
+      }
+      candidate->PushBackInnerSegmentBoundary(
+          key_len, value_len, content_key_len, content_value_len);
+      key_len = 0;
+      value_len = 0;
       content_key_len = 0;
       content_value_len = 0;
+      is_content_boundary = false;
     }
-    for (size_t i = 1; i < nodes.size(); ++i) {
-      const Node *lnode = nodes[i - 1];
-      const Node *rnode = nodes[i];
-      constexpr bool kMultipleSegments = false;
-      if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
-        // Keep the consistency with the above logic for candidate->content_*.
-        if (content_key_len == 0 || content_value_len == 0) {
-          content_key_len = key_len;
-          content_value_len = value_len;
-        }
-        candidate->PushBackInnerSegmentBoundary(
-            key_len, value_len, content_key_len, content_value_len);
-        key_len = 0;
-        value_len = 0;
-        content_key_len = 0;
-        content_value_len = 0;
-        is_content_boundary = false;
-      }
-      key_len += rnode->key.size();
-      value_len += rnode->value.size();
-      if (is_content_boundary) {
-        continue;
-      }
-      // Set boundary only after content nouns or pronouns.  For example,
-      // "走った" is formed as
-      //     "走っ" (content word) + "た" (functional).
-      // Since the content word is incomplete, we don't want to learn "走っ".
-      if ((pos_matcher_->IsContentNoun(lnode->rid) ||
-           pos_matcher_->IsPronoun(lnode->rid)) &&
-          pos_matcher_->IsFunctional(rnode->lid)) {
-        is_content_boundary = true;
-      } else {
-        content_key_len += rnode->key.size();
-        content_value_len += rnode->value.size();
+    key_len += rnode->key.size();
+    value_len += rnode->value.size();
+    if (is_content_boundary) {
+      continue;
+    }
+    // Set boundary only after content nouns or pronouns.  For example,
+    // "走った" is formed as
+    //     "走っ" (content word) + "た" (functional).
+    // Since the content word is incomplete, we don't want to learn "走っ".
+    if ((pos_matcher_->IsContentNoun(lnode->rid) ||
+         pos_matcher_->IsPronoun(lnode->rid)) &&
+        pos_matcher_->IsFunctional(rnode->lid)) {
+      is_content_boundary = true;
+    } else {
+      content_key_len += rnode->key.size();
+      content_value_len += rnode->value.size();
+    }
+  }
+
+  // Keep the consistency with the above logic for candidate->content_*.
+  if (content_key_len == 0 || content_value_len == 0) {
+    content_key_len = key_len;
+    content_value_len = value_len;
+  }
+  candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
+                                          content_value_len);
+}
+
+CandidateFilter::ResultType NBestGenerator::MakeCandidateFromElement(
+    const ConversionRequest &request, const std::string &original_key,
+    const NBestGenerator::QueueElement *element,
+    Segment::Candidate *candidate) {
+  std::vector<const Node *> nodes;
+
+  if (options_.candidate_mode &
+      CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
+    const QueueElement *elm = element->next;
+    for (; elm->next != nullptr; elm = elm->next) {
+      nodes.push_back(elm->node);
+      if (segmenter_->IsBoundary(*elm->node, *elm->next->node, false)) {
+        break;
       }
     }
 
-    // Keep the consistency with the above logic for candidate->content_*.
-    if (content_key_len == 0 || content_value_len == 0) {
-      content_key_len = key_len;
-      content_value_len = value_len;
+    if (elm == nullptr) {
+      return CandidateFilter::BAD_CANDIDATE;
     }
-    candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
-                                            content_value_len);
+
+    // Does not contain the transition cost to the right
+    const int cost = element->gx - elm->gx;
+    const int structure_cost = element->structure_gx - elm->structure_gx;
+    const int wcost = element->w_gx - elm->w_gx;
+    MakeCandidate(candidate, cost, structure_cost, wcost, nodes);
+  } else {
+    for (const QueueElement *elm = element->next; elm->next != nullptr;
+         elm = elm->next) {
+      nodes.push_back(elm->node);
+    }
+
+    DCHECK(!nodes.empty());
+    DCHECK(!top_nodes_.empty());
+
+    MakeCandidate(candidate, element->gx, element->structure_gx, element->w_gx,
+                  nodes);
   }
+
+  return filter_.FilterCandidate(request, original_key, candidate, top_nodes_,
+                                 nodes);
 }
 
 // Set candidates.
@@ -347,7 +394,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
     DCHECK(top);
     agenda_.Pop();
     const Node *rnode = top->node;
-    CHECK(rnode);
+    DCHECK(rnode);
 
     if (num_trials++ > KMaxTrial) {  // too many trials
       VLOG(2) << "too many trials: " << num_trials;
@@ -356,17 +403,8 @@ bool NBestGenerator::Next(const ConversionRequest &request,
 
     // reached to the goal.
     if (rnode->end_pos == begin_node_->end_pos) {
-      std::vector<const Node *> nodes;
-      for (const QueueElement *elm = top->next; elm->next != nullptr;
-           elm = elm->next) {
-        nodes.push_back(elm->node);
-      }
-      CHECK(!nodes.empty());
-      CHECK(!top_nodes_.empty());
-
-      MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes);
-      const int filter_result = filter_.FilterCandidate(
-          request, original_key, candidate, top_nodes_, nodes);
+      const CandidateFilter::ResultType filter_result =
+          MakeCandidateFromElement(request, original_key, top, candidate);
 
       switch (filter_result) {
         case CandidateFilter::GOOD_CANDIDATE:
@@ -511,7 +549,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::BoundaryCheck(
     return VALID;
   }
 
-  switch (check_mode_) {
+  switch (options_.boundary_mode) {
     case STRICT:
       return NBestGenerator::CheckStrict(lnode, rnode, is_edge);
     case ONLY_MID:
@@ -575,9 +613,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   }
 }
 
-int NBestGenerator::InsertTopResult(const ConversionRequest &request,
-                                    const std::string &original_key,
-                                    Segment::Candidate *candidate) {
+void NBestGenerator::MakeCandidateFromBestPath(Segment::Candidate *candidate) {
   top_nodes_.clear();
   int total_wcost = 0;
   for (const Node *node = begin_node_->next; node != end_node_;
@@ -599,7 +635,50 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
                     begin_node_->next->wcost;
 
   MakeCandidate(candidate, cost, structure_cost, wcost, top_nodes_);
+}
 
+void NBestGenerator::MakePrefixCandidateFromBestPath(
+    Segment::Candidate *candidate) {
+  top_nodes_.clear();
+  int total_extra_wcost = 0;  // wcost sum excepting the first node
+  const Node *prev_node = begin_node_;
+  for (const Node *node = begin_node_->next; node != end_node_;
+       node = node->next) {
+    if (prev_node != begin_node_ &&
+        segmenter_->IsBoundary(*prev_node, *node, false)) {
+      break;
+    }
+    top_nodes_.push_back(node);
+    if (node != begin_node_->next) {
+      total_extra_wcost += node->wcost;
+    }
+    prev_node = node;
+  }
+  DCHECK(!top_nodes_.empty());
+
+  // Prefix candidate's |cost| does not include the transition cost
+  // to right segments / nodes.
+  const int cost = top_nodes_.back()->cost;
+
+  const int structure_cost =
+      top_nodes_.back()->cost - begin_node_->next->cost - total_extra_wcost;
+
+  // |wcost|: nodes cost without transition costs
+  const int wcost = top_nodes_.back()->cost - begin_node_->next->cost +
+                    begin_node_->next->wcost;
+
+  MakeCandidate(candidate, cost, structure_cost, wcost, top_nodes_);
+}
+
+int NBestGenerator::InsertTopResult(const ConversionRequest &request,
+                                    const std::string &original_key,
+                                    Segment::Candidate *candidate) {
+  if (options_.candidate_mode &
+      CandidateMode::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT) {
+    MakePrefixCandidateFromBestPath(candidate);
+  } else {
+    MakeCandidateFromBestPath(candidate);
+  }
   if (request.request_type() == ConversionRequest::SUGGESTION) {
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
   }
