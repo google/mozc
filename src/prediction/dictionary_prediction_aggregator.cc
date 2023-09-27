@@ -45,7 +45,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -61,6 +60,7 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -1335,7 +1335,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
 }
 
 void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
-    absl::Span<const composer::TypeCorrectedQuery> queries,
+    absl::Span<const spelling::TypeCorrectedQuery> queries,
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes base_selected_types, std::vector<Result> *results) const {
   if (queries.empty() || segments.conversion_segments_size() == 0) {
@@ -1351,11 +1351,7 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
   corrected_request.set_kana_modifier_insensitive_conversion(false);
 
   for (const auto &query : queries) {
-    // We here intentionally use 'asis' string since the composition
-    // spellchecker is designed to predict the word from incomplete composition
-    // string, e.g. おk. -> おか
-    // TODO(taku): Revisits this design once QWERTY model gets ready.
-    absl::string_view key = query.asis;
+    absl::string_view key = query.correction;
     const size_t key_len = Util::CharsLen(key);
 
     // Makes dummy segments with corrected query.
@@ -1390,8 +1386,8 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
       if (!query.is_kana_modifier_insensitive_only) {
         result.types |= TYPING_CORRECTION;
       }
-      result.wcost += query.cost;
-      result.cost += query.cost;
+      // bias = hyp_score - base_score, so larger is better.
+      result.wcost -= 500 * query.bias;
       results->emplace_back(std::move(result));
     }
   }
@@ -1606,15 +1602,15 @@ void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
     return;
   }
 
-  const std::optional<std::vector<composer::TypeCorrectedQuery>> corrected =
-      request.composer().GetTypeCorrectedQueries(segments.history_key());
-
-  if (!corrected) {
+  const size_t prev_results_size = results->size();
+  if (prev_results_size > 10000) {
     return;
   }
 
-  const size_t prev_results_size = results->size();
-  if (prev_results_size > 10000) {
+  const std::optional<std::vector<spelling::TypeCorrectedQuery>> corrected =
+      request.composer().GetTypeCorrectedQueries(segments.history_key());
+
+  if (!corrected) {
     return;
   }
 

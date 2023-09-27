@@ -423,6 +423,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
+  MaybeSuppressAggressiveTypingCorrection(request, segments);
+
   MaybeApplyHomonymCorrection(request, segments);
 
   if (rescorer_ != nullptr && IsDebug(request)) {
@@ -431,6 +433,40 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   return added > 0;
 #undef MOZC_ADD_DEBUG_CANDIDATE
+}
+
+// static
+void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
+    const ConversionRequest &request, Segments *segments) {
+  const int max_diff = request.request()
+                           .decoder_experiment_params()
+                           .typing_correction_conversion_cost_max_diff();
+  if (max_diff == 0 || segments->conversion_segments_size() == 0) {
+    return;
+  }
+
+  // Do nothing when the top candidate is already literal.
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() <= 1 ||
+      !(segment->candidate(0).attributes &
+        Segment::Candidate::TYPING_CORRECTION)) {
+    return;
+  }
+
+  const auto &top = segment->candidate(0);
+
+  const int max_size = std::min<int>(10, segment->candidates_size());
+  for (int i = 1; i < max_size; ++i) {
+    const auto &c = segment->candidate(i);
+    // Finds the first non-typing-corrected candidate.
+    if (!(c.attributes & Segment::Candidate::TYPING_CORRECTION)) {
+      // Replace the literal with top when the cost is close enough.
+      if (c.cost - top.cost < max_diff) {
+        segment->move_candidate(i, 0);
+      }
+      break;
+    }
+  }
 }
 
 // static

@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -63,6 +64,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"

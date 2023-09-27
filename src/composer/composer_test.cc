@@ -49,6 +49,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"

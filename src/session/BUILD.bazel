@@ -412,6 +412,7 @@ mozc_cc_test(
         "//engine:user_data_manager_mock",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//spelling:spellchecker_service_interface",
         "//testing:gunit_main",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",

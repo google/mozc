@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "composer/type_corrected_query.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
@@ -45,6 +44,26 @@ namespace spelling {
 
 using commands::CheckSpellingRequest;
 using commands::CheckSpellingResponse;
+
+struct TypeCorrectedQuery {
+  std::string correction;
+
+  // `score` is the score diff against identity score.
+  // score = hyp_score - identity_score.
+  // `score` can be used to determine the triggering condition.
+  float score = 0.0;
+
+  // `bias` is the score diff against the base score.
+  // bias = hyp_score - base_score.
+  // `bias` is used to calculate the penalty/bonus of the correction cost.
+  // base_score is usually the same as the identity_score, but  We consider that
+  // pure kana modifier insensitive correction is not an actual typing
+  // correction. So when the top is a pure kana modifier insensitive correction,
+  // uses the top score as the base score.
+  float bias = 0.0;
+
+  bool is_kana_modifier_insensitive_only = false;
+};
 
 class SpellCheckerServiceInterface {
  public:
@@ -61,7 +80,7 @@ class SpellCheckerServiceInterface {
   // Returns empty result when no correction is required.
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
-  virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
+  virtual std::optional<std::vector<TypeCorrectedQuery>>
   CheckCompositionSpelling(absl::string_view query, absl::string_view context,
                            const commands::Request &request) const = 0;
 

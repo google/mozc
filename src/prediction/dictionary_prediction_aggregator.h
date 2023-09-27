@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/util.h"
-#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -177,7 +176,7 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       std::vector<Result> *results) const;
 
   void GetPredictiveResultsUsingTypingCorrection(
-      absl::Span<const composer::TypeCorrectedQuery> queries,
+      absl::Span<const spelling::TypeCorrectedQuery> queries,
       const ConversionRequest &request, const Segments &segments,
       PredictionTypes base_selected_types, std::vector<Result> *results) const;
 

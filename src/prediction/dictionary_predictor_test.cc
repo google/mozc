@@ -144,6 +144,12 @@ class DictionaryPredictorTestPeer {
     return predictor_.AddPredictionToCandidates(request, segments, results);
   }
 
+  static void MaybeSuppressAggressiveTypingCorrection(
+      const ConversionRequest &request, Segments *segments) {
+    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(request,
+                                                                 segments);
+  }
+
   static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
                                           Segments *segments) {
     DictionaryPredictor::MaybeApplyHomonymCorrection(request, segments);
@@ -1773,6 +1779,65 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   InitSegmentsWithKey("こーひー", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
+}
+
+TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
+  Segments segments;
+  InitSegmentsWithKey("key", &segments);
+
+  Segment *segment = segments.mutable_conversion_segment(0);
+  for (int i = 0; i < 10; ++i) {
+    auto *candidate = segment->add_candidate();
+    candidate->key = absl::StrCat("key_", i);
+    candidate->value = absl::StrCat("value_", i);
+  }
+
+  auto get_top_value = [&segments]() {
+    return segments.conversion_segment(0).candidate(0).value;
+  };
+
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+
+  // Top is still literal
+  for (int i = 1; i <= 2; ++i) {
+    segment->mutable_candidate(i)->attributes |=
+        Segment::Candidate::TYPING_CORRECTION;
+  }
+
+  segment->mutable_candidate(0)->cost = 100;
+  segment->mutable_candidate(3)->cost = 500;
+
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // Top is TYPING CORRECTION, but
+  // `typing_correction_conversion_cost_max_diff` is 0.
+  segment->mutable_candidate(0)->attributes |=
+      Segment::Candidate::TYPING_CORRECTION;
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // `typing_correction_conversion_cost_max_diff` is 100.
+  // Do not move because 400 > 100.
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(100);
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // `typing_correction_conversion_cost_max_diff` is 1000;
+  // Move because 400 < 1000.
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(1000);
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_3");
+
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(0);
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {

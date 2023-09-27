@@ -52,11 +52,11 @@
 #include "composer/internal/transliterators.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
-#include "composer/type_corrected_query.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -850,17 +850,10 @@ void Composer::GetQueriesForPrediction(std::string *base,
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 
-std::optional<std::vector<TypeCorrectedQuery>>
+std::optional<std::vector<spelling::TypeCorrectedQuery>>
 Composer::GetTypeCorrectedQueries(absl::string_view context) const {
 
   return std::nullopt;
-}
-
-void Composer::GetTypeCorrectedQueriesForPrediction(
-    std::vector<TypeCorrectedQuery> *queries) const {
-  for (auto &query : *queries) {
-    RemoveExpandedCharsForModifier(query.asis, query.base, &query.expanded);
-  }
 }
 
 size_t Composer::GetLength() const { return composition_.GetLength(); }
