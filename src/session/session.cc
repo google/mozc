@@ -237,6 +237,9 @@ void Session::InitContext(ImeContext *context) const {
   context->SetConfig(&context->GetConfig());
   context->SetKeyMapManager(&context->GetKeyMapManager());
 
+  // TODO(team): Remove #if based behavior change for cascading window.
+  // Tests for session layer (session_handler_scenario_test, etc) can be
+  // unstable.
 #if (defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE) || defined(__linux__) || \
     defined(__wasm__)
   context->mutable_converter()->set_use_cascading_window(false);
