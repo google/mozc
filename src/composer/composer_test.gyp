@@ -41,7 +41,6 @@
         'internal/mode_switching_handler_test.cc',
         'internal/special_key_test.cc',
         'internal/transliterators_test.cc',
-        'internal/typing_corrector_test.cc',
         'table_test.cc',
       ],
       'dependencies': [

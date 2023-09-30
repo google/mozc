@@ -42,13 +42,6 @@ namespace {
 
 #include "data_manager/testing/segmenter_inl.inc"
 
-std::pair<std::string, std::string> GetTypingModelEntry(
-    const std::string &fname) {
-  return std::pair<std::string, std::string>(
-      fname, mozc::testing::GetSourceFileOrDie(
-                 {"data_manager", "testing", fname + ".data"}));
-}
-
 }  // namespace
 
 class MockDataManagerTest : public DataManagerTestBase {
@@ -56,23 +49,16 @@ class MockDataManagerTest : public DataManagerTestBase {
   MockDataManagerTest()
       : DataManagerTestBase(
             new MockDataManager, kLSize, kRSize, IsBoundaryInternal,
-            mozc::testing::GetSourceFileOrDie(
-                {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary",
-                 "connection_single_column.txt"}),
+            mozc::testing::GetSourceFileOrDie({MOZC_DICT_DIR_COMPONENTS, "test",
+                                               "dictionary",
+                                               "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
                 {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary"},
                 {"dictionary.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
                 {MOZC_DICT_DIR_COMPONENTS, "test", "dictionary"},
-                {"suggestion_filter.txt"}),
-            {
-                GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_godan-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_qwerty_mobile-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_toggle_flick-hiragana.tsv"),
-            }) {}
+                {"suggestion_filter.txt"})) {}
 };
 
 TEST_F(MockDataManagerTest, AllTests) { RunAllTests(); }

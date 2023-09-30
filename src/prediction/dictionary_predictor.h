@@ -112,8 +112,6 @@ class DictionaryPredictor : public PredictorInterface {
                       std::string *log_message);
 
    private:
-    static constexpr int kTcMaxCountPerKey = 2;
-
     bool CheckDupAndReturn(absl::string_view value, const Result &result,
                            std::string *log_message);
 
@@ -138,8 +136,6 @@ class DictionaryPredictor : public PredictorInterface {
 
     // Seen set for dup value check.
     absl::flat_hash_set<std::string> seen_;
-    // Seen set for typing correction dup key check.
-    absl::flat_hash_map<std::string, int> seen_tc_keys_;
   };
 
   // pair: <rid, key_length>
@@ -276,6 +272,9 @@ class DictionaryPredictor : public PredictorInterface {
       const Result &result,
       const ImmutableConverterInterface *immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
+
+  static void MaybeSuppressAggressiveTypingCorrection(
+      const ConversionRequest &request, Segments *segments);
 
   static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
                                           Segments *segments);

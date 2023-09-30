@@ -27,7 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -36,28 +35,20 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/number_util.h"
-#include "base/protobuf/message.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
-#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 
-using ::mozc::commands::CandidateList;
-using ::mozc::commands::CandidateWord;
-using ::mozc::commands::Output;
 using ::mozc::session::SessionHandlerInterpreter;
 using ::mozc::session::testing::SessionHandlerTestBase;
 using ::testing::WithParamInterface;
@@ -207,60 +198,6 @@ INSTANTIATE_TEST_SUITE_P(DISABLED_SessionHandlerScenarioParameters,
                          SessionHandlerScenarioTest,
                          ::testing::ValuesIn(kFailedScenarioFileList));
 
-bool GetCandidateIdByValue(const absl::string_view value, const Output &output,
-                           uint32_t *id) {
-  if (!output.has_all_candidate_words()) {
-    return false;
-  }
-
-  const CandidateList &all_candidate_words = output.all_candidate_words();
-  for (int i = 0; i < all_candidate_words.candidates_size(); ++i) {
-    const CandidateWord &candidate_word = all_candidate_words.candidates(i);
-    if (candidate_word.has_value() && candidate_word.value() == value) {
-      *id = candidate_word.id();
-      return true;
-    }
-  }
-  return false;
-}
-
-bool IsInAllCandidateWords(const absl::string_view expected_candidate,
-                           const Output &output) {
-  uint32_t tmp;
-  return GetCandidateIdByValue(expected_candidate, output, &tmp);
-}
-
-::testing::AssertionResult IsInAllCandidateWordsWithFormat(
-    const char *expected_candidate_string, const char *output_string,
-    const std::string &expected_candidate, const Output &output) {
-  if (!IsInAllCandidateWords(expected_candidate, output)) {
-    return ::testing::AssertionFailure()
-           << expected_candidate_string << "(" << expected_candidate << ")"
-           << " is not found in " << output_string << "\n"
-           << protobuf::Utf8Format(output);
-  }
-  return ::testing::AssertionSuccess();
-}
-
-::testing::AssertionResult IsNotInAllCandidateWordsWithFormat(
-    const char *expected_candidate_string, const char *output_string,
-    const absl::string_view expected_candidate, const Output &output) {
-  if (IsInAllCandidateWords(expected_candidate, output)) {
-    return ::testing::AssertionFailure()
-           << expected_candidate_string << "(" << expected_candidate << ")"
-           << " is found in " << output_string << "\n"
-           << protobuf::Utf8Format(output);
-  }
-  return ::testing::AssertionSuccess();
-}
-
-#define EXPECT_IN_ALL_CANDIDATE_WORDS(expected_candidate, output)          \
-  EXPECT_PRED_FORMAT2(IsInAllCandidateWordsWithFormat, expected_candidate, \
-                      output)
-#define EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(expected_candidate, output)         \
-  EXPECT_PRED_FORMAT2(IsNotInAllCandidateWordsWithFormat, expected_candidate, \
-                      output)
-
 void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
   std::vector<std::string> args = handler.Parse(line);
   if (args.empty()) {
@@ -271,134 +208,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
   if (status.ok()) {
     return;
   }
-  if (status.code() != absl::StatusCode::kUnimplemented) {
-    FAIL() << status.message();
-  }
-
-  const std::string &command = args[0];
-  const Output &output = handler.LastOutput();
-
-  if (command == "EXPECT_CONSUMED") {
-    ASSERT_EQ(args.size(), 2);
-    ASSERT_TRUE(output.has_consumed());
-    EXPECT_EQ(output.consumed(), args[1] == "true");
-  } else if (command == "EXPECT_PREEDIT") {
-    // Concat preedit segments and assert.
-    const std::string &expected_preedit = args.size() == 1 ? "" : args[1];
-    std::string preedit_string;
-    const mozc::commands::Preedit &preedit = output.preedit();
-    for (int i = 0; i < preedit.segment_size(); ++i) {
-      preedit_string += preedit.segment(i).value();
-    }
-    EXPECT_EQ(preedit_string, expected_preedit)
-        << "Expected preedit: " << expected_preedit << "\n"
-        << "Actual preedit: " << protobuf::Utf8Format(preedit);
-  } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
-    ASSERT_LE(1, args.size());
-    const mozc::commands::Preedit &preedit = output.preedit();
-    ASSERT_EQ(preedit.segment_size(), args.size() - 1);
-    for (int i = 0; i < preedit.segment_size(); ++i) {
-      EXPECT_EQ(preedit.segment(i).value(), args[i + 1])
-          << "Segment index = " << i;
-    }
-  } else if (command == "EXPECT_PREEDIT_CURSOR_POS") {
-    // Concat preedit segments and assert.
-    ASSERT_EQ(args.size(), 2);
-    const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
-    const mozc::commands::Preedit &preedit = output.preedit();
-    EXPECT_EQ(preedit.cursor(), expected_pos) << protobuf::Utf8Format(preedit);
-  } else if (command == "EXPECT_CANDIDATE") {
-    ASSERT_EQ(args.size(), 3);
-    uint32_t candidate_id = 0;
-    const bool has_result =
-        GetCandidateIdByValue(args[2], output, &candidate_id);
-    EXPECT_TRUE(has_result) << args[2] + " is not found\n"
-                            << protobuf::Utf8Format(output.candidates());
-    if (has_result) {
-      EXPECT_EQ(candidate_id, NumberUtil::SimpleAtoi(args[1]));
-    }
-  } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
-    ASSERT_EQ(args.size(), 3);
-    const CandidateWord &cand = handler.GetCandidateByValue(args[1]);
-    const bool has_cand = !cand.value().empty();
-    EXPECT_TRUE(has_cand) << args[1] + " is not found\n"
-                          << protobuf::Utf8Format(output.candidates());
-    if (has_cand) {
-      EXPECT_EQ(cand.annotation().description(), args[2])
-          << protobuf::Utf8Format(cand);
-    }
-  } else if (command == "EXPECT_RESULT") {
-    if (args.size() == 2 && !args[1].empty()) {
-      ASSERT_TRUE(output.has_result());
-      const mozc::commands::Result &result = output.result();
-      EXPECT_EQ(result.value(), args[1]) << protobuf::Utf8Format(result);
-    } else {
-      EXPECT_FALSE(output.has_result()) << protobuf::Utf8Format(output.result());
-    }
-  } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(args.size(), 2);
-    EXPECT_IN_ALL_CANDIDATE_WORDS(args[1], output)
-        << args[1] << " is not found.\n"
-        << protobuf::Utf8Format(output);
-  } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(args.size(), 2);
-    EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(args[1], output);
-  } else if (command == "EXPECT_HAS_CANDIDATES") {
-    if (args.size() == 2 && !args[1].empty()) {
-      ASSERT_TRUE(output.has_candidates());
-      ASSERT_GT(output.candidates().size(), NumberUtil::SimpleAtoi(args[1]))
-          << protobuf::Utf8Format(output);
-    } else {
-      ASSERT_TRUE(output.has_candidates());
-    }
-  } else if (command == "EXPECT_NO_CANDIDATES") {
-    ASSERT_FALSE(output.has_candidates());
-  } else if (command == "EXPECT_SEGMENTS_SIZE") {
-    ASSERT_EQ(args.size(), 2);
-    ASSERT_EQ(output.preedit().segment_size(), NumberUtil::SimpleAtoi(args[1]));
-  } else if (command == "EXPECT_HIGHLIGHTED_SEGMENT_INDEX") {
-    ASSERT_EQ(args.size(), 2);
-    ASSERT_TRUE(output.has_preedit());
-    const mozc::commands::Preedit &preedit = output.preedit();
-    int index = -1;
-    for (int i = 0; i < preedit.segment_size(); ++i) {
-      if (preedit.segment(i).annotation() ==
-          mozc::commands::Preedit::Segment::HIGHLIGHT) {
-        index = i;
-        break;
-      }
-    }
-    ASSERT_EQ(index, NumberUtil::SimpleAtoi(args[1]));
-  } else if (command == "EXPECT_USAGE_STATS_COUNT") {
-    ASSERT_EQ(args.size(), 3);
-    const uint32_t expected_value = NumberUtil::SimpleAtoi(args[2]);
-    if (expected_value == 0) {
-      EXPECT_STATS_NOT_EXIST(args[1]);
-    } else {
-      EXPECT_COUNT_STATS(args[1], expected_value);
-    }
-  } else if (command == "EXPECT_USAGE_STATS_INTEGER") {
-    ASSERT_EQ(args.size(), 3);
-    EXPECT_INTEGER_STATS(args[1], NumberUtil::SimpleAtoi(args[2]));
-  } else if (command == "EXPECT_USAGE_STATS_BOOLEAN") {
-    ASSERT_EQ(args.size(), 3);
-    EXPECT_BOOLEAN_STATS(args[1], args[2] == "true");
-  } else if (command == "EXPECT_USAGE_STATS_TIMING") {
-    ASSERT_EQ(args.size(), 6);
-    const uint64_t expected_total = NumberUtil::SimpleAtoi(args[2]);
-    const uint32_t expected_num = NumberUtil::SimpleAtoi(args[3]);
-    const uint32_t expected_min = NumberUtil::SimpleAtoi(args[4]);
-    const uint32_t expected_max = NumberUtil::SimpleAtoi(args[5]);
-    if (expected_num == 0) {
-      EXPECT_STATS_NOT_EXIST(args[1]);
-    } else {
-      EXPECT_TIMING_STATS(args[1], expected_total, expected_num, expected_min,
-                          expected_max);
-    }
-
-  } else {
-    FAIL() << "Unknown command";
-  }
+  FAIL() << line << "\n" << status.message();
 }
 
 TEST_P(SessionHandlerScenarioTest, TestImplBase) {
@@ -465,6 +275,12 @@ INSTANTIATE_TEST_SUITE_P(
                              request.mutable_decoder_experiment_params()
                                  ->set_enable_number_style_learning(true);
                              return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_realtime_conversion_v2(true);
+                             return request;
                            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
@@ -487,8 +303,4 @@ TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
     ParseLine(*handler_, line_text);
   }
 }
-
-#undef EXPECT_IN_ALL_CANDIDATE_WORDS
-#undef EXPECT_NOT_IN_ALL_CANDIDATE_WORDS
-
 }  // namespace mozc

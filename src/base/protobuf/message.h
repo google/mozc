@@ -32,7 +32,7 @@
 
 #include "base/protobuf/protobuf.h"
 
-#include "google/protobuf/message.h"
+#include "google/protobuf/message.h"  // IWYU pragma: export
 
 // |ptotobuf::Utf8Format| is available only in Protobuf 24.0 and later.
 // Define our own version to avoid build breakages.

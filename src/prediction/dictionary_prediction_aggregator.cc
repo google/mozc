@@ -45,7 +45,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/node_list_builder.h"
@@ -61,6 +60,7 @@
 #include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -197,6 +197,11 @@ size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
   const auto &segment = segments.conversion_segment(0);
   const size_t size = (request.max_dictionary_prediction_candidates_size() -
                        segment.candidates_size());
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_realtime_conversion_v2()) {
+    return std::min<size_t>(size, 20);
+  }
   return is_long_key ? std::min<size_t>(size, 8) : size;
 }
 
@@ -614,6 +619,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     AggregateRealtimeConversion(request, realtime_max_size, segments, results);
     selected_types |= REALTIME;
   }
+
   // In partial suggestion or prediction, only realtime candidates are used.
   if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
       request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
@@ -900,8 +906,12 @@ void DictionaryPredictionAggregator::AggregateRealtimeConversion(
     result->rid = candidate.rid;
     result->inner_segment_boundary = candidate.inner_segment_boundary;
     result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
+    if (candidate.key.size() < segment.key().size()) {
+      result->candidate_attributes |=
+          Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result->consumed_key_size = Util::CharsLen(candidate.key);
+    }
     result->candidate_attributes |= candidate.attributes;
-    result->consumed_key_size = candidate.consumed_key_size;
   }
 }
 
@@ -1324,12 +1334,10 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
   }
 }
 
-void DictionaryPredictionAggregator::
-    GetPredictiveResultsUsingExtendedTypingCorrection(
-        absl::Span<const composer::TypeCorrectedQuery> queries,
-        const ConversionRequest &request, const Segments &segments,
-        PredictionTypes base_selected_types,
-        std::vector<Result> *results) const {
+void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
+    absl::Span<const spelling::TypeCorrectedQuery> queries,
+    const ConversionRequest &request, const Segments &segments,
+    PredictionTypes base_selected_types, std::vector<Result> *results) const {
   if (queries.empty() || segments.conversion_segments_size() == 0) {
     return;
   }
@@ -1343,11 +1351,7 @@ void DictionaryPredictionAggregator::
   corrected_request.set_kana_modifier_insensitive_conversion(false);
 
   for (const auto &query : queries) {
-    // We here intentionally use 'asis' string since the composition
-    // spellchecker is designed to predict the word from incomplete composition
-    // string, e.g. おk. -> おか
-    // TODO(taku): Revisits this design once QWERTY model gets ready.
-    absl::string_view key = query.asis;
+    absl::string_view key = query.correction;
     const size_t key_len = Util::CharsLen(key);
 
     // Makes dummy segments with corrected query.
@@ -1382,42 +1386,9 @@ void DictionaryPredictionAggregator::
       if (!query.is_kana_modifier_insensitive_only) {
         result.types |= TYPING_CORRECTION;
       }
-      // EXTENDED_TYPING_CORRECTION is added to all candidates generated
-      // with the new composition spellchecker. They include
-      // kana modifier insensitive correction.
-      result.types |= EXTENDED_TYPING_CORRECTION;
-      result.wcost += query.cost;
-      result.cost += query.cost;
+      // bias = hyp_score - base_score, so larger is better.
+      result.wcost -= 500 * query.bias;
       results->emplace_back(std::move(result));
-    }
-  }
-}
-
-void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
-    absl::Span<const composer::TypeCorrectedQuery> queries,
-    const DictionaryInterface &dictionary, const ConversionRequest &request,
-    const Segments &segments, int lookup_limit,
-    std::vector<Result> *results) const {
-  for (size_t query_index = 0; query_index < queries.size(); ++query_index) {
-    const composer::TypeCorrectedQuery &query = queries[query_index];
-    const std::string &input_key = query.base;
-    const size_t previous_results_size = results->size();
-    PredictiveLookupCallback callback(
-        TYPING_CORRECTION, lookup_limit, input_key.size(),
-        query.expanded.empty() ? nullptr : &query.expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_,
-        query.asis, GetSpatialCostParams(request), results);
-    dictionary.LookupPredictive(input_key, request, &callback);
-
-    for (size_t i = previous_results_size; i < results->size(); ++i) {
-      // Query cost can be negative in 'diff cost' due to typing model.
-      // We do not want to strongly promote TC candidates even if the query cost
-      // is negative.
-      (*results)[i].wcost += std::max(0, query.cost);
-    }
-    lookup_limit -= results->size() - previous_results_size;
-    if (lookup_limit <= 0) {
-      break;
     }
   }
 }
@@ -1636,26 +1607,20 @@ void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
     return;
   }
 
-  const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
-
-  const std::optional<std::vector<composer::TypeCorrectedQuery>> corrected =
+  const std::optional<std::vector<spelling::TypeCorrectedQuery>> corrected =
       request.composer().GetTypeCorrectedQueries(segments.history_key());
 
-  if (corrected) {
-    // Use Extended composition spell checker.
-    GetPredictiveResultsUsingExtendedTypingCorrection(
-        corrected.value(), request, segments, base_selected_types, results);
-  } else {
-    // Runs the default fallback spell checker.
-    std::vector<composer::TypeCorrectedQuery> queries;
-    request.composer().GetTypeCorrectedQueriesForPrediction(&queries);
-    GetPredictiveResultsUsingTypingCorrection(queries, *dictionary_, request,
-                                              segments, lookup_limit, results);
+  if (!corrected) {
+    return;
   }
+
+  const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
+
+  GetPredictiveResultsUsingTypingCorrection(
+      corrected.value(), request, segments, base_selected_types, results);
 
   if (results->size() - prev_results_size >= lookup_limit) {
     results->resize(prev_results_size);
-    return;
   }
 }
 

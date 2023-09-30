@@ -149,9 +149,6 @@ class DataManagerInterface {
       absl::string_view *zero_query_number_token_array_data,
       absl::string_view *zero_query_number_string_array_data) const = 0;
 
-  // Gets the typing model binary data for the specified name.
-  virtual absl::string_view GetTypingModel(const std::string &name) const = 0;
-
   // Gets the data version string.
   virtual absl::string_view GetDataVersion() const = 0;
 

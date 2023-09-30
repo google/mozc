@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 37
+// Next ID: 39
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -608,15 +608,15 @@ message DecoderExperimentParams {
   optional int32 single_kanji_prediction_cost_offset = 15 [default = 800];
 
   // Parameters for typing correction candidates
-  reserved 16;  // Deprecated use_typing_correction_diff_cost
   optional int32 typing_correction_max_count = 17 [default = 3];
   optional int32 typing_correction_max_rank = 18 [default = 10];
-  reserved 19;  // Deprecated typing_correction_cost_offset
-
-  // Parameters for the new typing correction.
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
-  optional float typing_correction_score_offset = 23 [default = 0.0];
+  optional int32 typing_correction_conversion_cost_max_diff = 38 [default = 0];
+
+  reserved 16;  // Deprecated use_typing_correction_diff_cost
+  reserved 19;  // Deprecated typing_correction_cost_offset
+  reserved 23;  // Deprecated typing_correction_score_offset
   reserved 24;  // Deprecated typing_correction_move_literal_candidate_to_top
 
   // Cancel suffix penalty for content word in prediction module.
@@ -626,6 +626,8 @@ message DecoderExperimentParams {
 
   // Enable number style learning.
   optional bool enable_number_style_learning = 30 [default = false];
+
+  optional bool enable_realtime_conversion_v2 = 37 [default = false];
 }
 
 // Clients' request to the server.

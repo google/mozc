@@ -343,52 +343,51 @@ const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
 bool SessionHandlerInterpreter::GetCandidateIdByValue(
     const absl::string_view value, uint32_t *id) const {
   const Output &output = LastOutput();
-
-  auto find_id = [&value](const CandidateList &candidate_list,
-                          uint32_t *id) -> bool {
-    for (const CandidateWord &candidate : candidate_list.candidates()) {
-      if (candidate.has_value() && candidate.value() == value) {
-        *id = candidate.id();
-        return true;
-      }
-    }
+  if (!output.has_all_candidate_words()) {
     return false;
-  };
-
-  if (output.has_all_candidate_words() &&
-      find_id(output.all_candidate_words(), id)) {
-    return true;
   }
 
-  if (output.has_removed_candidate_words_for_debug() &&
-      find_id(output.removed_candidate_words_for_debug(), id)) {
-    return true;
+  for (const CandidateWord &candidate :
+       output.all_candidate_words().candidates()) {
+    if (candidate.has_value() && candidate.value() == value) {
+      *id = candidate.id();
+      return true;
+    }
   }
-
   return false;
 }
 
 std::vector<uint32_t> SessionHandlerInterpreter::GetCandidateIdsByValue(
     absl::string_view value) const {
   const Output &output = LastOutput();
+  if (!output.has_all_candidate_words()) {
+    return {};
+  }
 
-  auto find_ids = [&value](const CandidateList &candidate_list,
-                           std::vector<uint32_t> *ids) -> void {
-    for (const CandidateWord &candidate : candidate_list.candidates()) {
-      if (candidate.has_value() && candidate.value() == value) {
-        ids->push_back(candidate.id());
-      }
-    }
-  };
   std::vector<uint32_t> ids;
-  if (output.has_all_candidate_words()) {
-    find_ids(output.all_candidate_words(), &ids);
+  for (const CandidateWord &candidate :
+       output.all_candidate_words().candidates()) {
+    if (candidate.has_value() && candidate.value() == value) {
+      ids.push_back(candidate.id());
+    }
+  }
+  return ids;
+}
+
+std::vector<uint32_t> SessionHandlerInterpreter::GetRemovedCandidateIdsByValue(
+    absl::string_view value) const {
+  const Output &output = LastOutput();
+  if (!output.has_removed_candidate_words_for_debug()) {
+    return {};
   }
 
-  if (output.has_removed_candidate_words_for_debug()) {
-    find_ids(output.removed_candidate_words_for_debug(), &ids);
+  std::vector<uint32_t> ids;
+  for (const CandidateWord &candidate :
+       output.removed_candidate_words_for_debug().candidates()) {
+    if (candidate.has_value() && candidate.value() == value) {
+      ids.push_back(candidate.id());
+    }
   }
-
   return ids;
 }
 
@@ -490,6 +489,34 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
 #define MOZC_ASSERT_TRUE(result)           \
   if (!(result)) {                         \
     return absl::InvalidArgumentError(""); \
+  }
+
+#define MOZC_EXPECT_EQ_MSG(expected, actual, message) \
+  if ((expected) != (actual)) {                       \
+    return absl::InternalError(message);              \
+  }
+#define MOZC_EXPECT_EQ(expected, actual) \
+  if ((expected) != (actual)) {          \
+    return absl::InternalError("");      \
+  }
+
+#define MOZC_EXPECT_TRUE_MSG(result, message) \
+  if (!(result)) {                            \
+    return absl::InternalError(message);      \
+  }
+#define MOZC_EXPECT_TRUE(result)    \
+  if (!(result)) {                  \
+    return absl::InternalError(""); \
+  }
+
+// Placeholders
+#define MOZC_EXPECT_STATS_NOT_EXIST(name) while (false) {}
+#define MOZC_EXPECT_COUNT_STATS(name, value) while (false) {}
+#define MOZC_EXPECT_INTEGER_STATS(name, value) while (false) {}
+#define MOZC_EXPECT_BOOLEAN_STATS(name, value) while (false) {}
+// Uses args to suppress compiler warnings.
+#define MOZC_EXPECT_TIMING_STATS(name, total, num, min, max) \
+  while (false && total && num && min && max) {              \
   }
 
 absl::Status SessionHandlerInterpreter::Eval(
@@ -635,11 +662,139 @@ absl::Status SessionHandlerInterpreter::Eval(
   } else if (command == "CLEAR_USAGE_STATS") {
     MOZC_ASSERT_EQ(1, args.size());
     ClearUsageStats();
+  } else if (command == "EXPECT_CONSUMED") {
+    MOZC_ASSERT_EQ(args.size(), 2);
+    MOZC_ASSERT_TRUE(last_output_->has_consumed());
+    MOZC_EXPECT_EQ(last_output_->consumed(), args[1] == "true");
+  } else if (command == "EXPECT_PREEDIT") {
+    // Concat preedit segments and assert.
+    const std::string &expected_preedit = args.size() == 1 ? "" : args[1];
+    std::string preedit_string;
+    const mozc::commands::Preedit &preedit = last_output_->preedit();
+    for (int i = 0; i < preedit.segment_size(); ++i) {
+      preedit_string += preedit.segment(i).value();
+    }
+    MOZC_EXPECT_EQ_MSG(
+        preedit_string, expected_preedit,
+        absl::StrCat("Expected preedit: ", expected_preedit, "\n",
+                     "Actual preedit: ", protobuf::Utf8Format(preedit)));
+  } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
+    MOZC_ASSERT_TRUE(!args.empty());
+    const mozc::commands::Preedit &preedit = last_output_->preedit();
+    MOZC_ASSERT_EQ(preedit.segment_size(), args.size() - 1);
+    for (int i = 0; i < preedit.segment_size(); ++i) {
+      MOZC_EXPECT_EQ_MSG(preedit.segment(i).value(), args[i + 1],
+                         absl::StrCat("Segment index = ", i));
+    }
+  } else if (command == "EXPECT_PREEDIT_CURSOR_POS") {
+    // Concat preedit segments and assert.
+    MOZC_ASSERT_EQ(args.size(), 2);
+    const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
+    const mozc::commands::Preedit &preedit = last_output_->preedit();
+    MOZC_EXPECT_EQ_MSG(preedit.cursor(), expected_pos,
+                       protobuf::Utf8Format(preedit));
+  } else if (command == "EXPECT_CANDIDATE") {
+    MOZC_ASSERT_EQ(args.size(), 3);
+    uint32_t candidate_id = 0;
+    const bool has_result = GetCandidateIdByValue(args[2], &candidate_id);
+    MOZC_EXPECT_TRUE_MSG(
+        has_result,
+        absl::StrCat(args[2], " is not found\n",
+                     protobuf::Utf8Format(last_output_->candidates())));
+    if (has_result) {
+      MOZC_EXPECT_EQ(candidate_id, NumberUtil::SimpleAtoi(args[1]));
+    }
+  } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
+    MOZC_ASSERT_EQ(args.size(), 3);
+    const CandidateWord &cand = GetCandidateByValue(args[1]);
+    const bool has_cand = !cand.value().empty();
+    MOZC_EXPECT_TRUE_MSG(has_cand, absl::StrCat(args[1], " is not found\n",
+                           protobuf::Utf8Format(last_output_->candidates())));
+    MOZC_EXPECT_TRUE(has_cand);
+    MOZC_EXPECT_EQ_MSG(cand.annotation().description(), args[2],
+          protobuf::Utf8Format(cand));
+  } else if (command == "EXPECT_RESULT") {
+    if (args.size() == 2 && !args[1].empty()) {
+      MOZC_ASSERT_TRUE(last_output_->has_result());
+      const mozc::commands::Result &result = last_output_->result();
+      MOZC_EXPECT_EQ_MSG(result.value(), args[1], protobuf::Utf8Format(result));
+    } else {
+      MOZC_EXPECT_TRUE_MSG(!last_output_->has_result(),
+                           protobuf::Utf8Format(last_output_->result()));
+    }
+  } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
+    MOZC_ASSERT_EQ(args.size(), 2);
+    uint32_t candidate_id = 0;
+    const bool has_result = GetCandidateIdByValue(args[1], &candidate_id);
+    MOZC_EXPECT_TRUE_MSG(has_result,
+                         absl::StrCat(args[1], " is not found.\n",
+                                      protobuf::Utf8Format(*last_output_)));
+  } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
+    MOZC_ASSERT_EQ(args.size(), 2);
+    uint32_t candidate_id = 0;
+    const bool has_result = GetCandidateIdByValue(args[1], &candidate_id);
+    MOZC_EXPECT_TRUE_MSG(!has_result,
+                         absl::StrCat(args[1], " is found.\n",
+                                      protobuf::Utf8Format(*last_output_)));
+  } else if (command == "EXPECT_HAS_CANDIDATES") {
+    if (args.size() == 2 && !args[1].empty()) {
+      MOZC_ASSERT_TRUE(last_output_->has_candidates());
+      MOZC_ASSERT_TRUE_MSG(
+          last_output_->candidates().size() > NumberUtil::SimpleAtoi(args[1]),
+          protobuf::Utf8Format(*last_output_));
+    } else {
+      MOZC_ASSERT_TRUE(last_output_->has_candidates());
+    }
+  } else if (command == "EXPECT_NO_CANDIDATES") {
+    MOZC_ASSERT_TRUE(!last_output_->has_candidates());
+  } else if (command == "EXPECT_SEGMENTS_SIZE") {
+    MOZC_ASSERT_EQ(args.size(), 2);
+    MOZC_ASSERT_EQ(last_output_->preedit().segment_size(),
+                   NumberUtil::SimpleAtoi(args[1]));
+  } else if (command == "EXPECT_HIGHLIGHTED_SEGMENT_INDEX") {
+    MOZC_ASSERT_EQ(args.size(), 2);
+    MOZC_ASSERT_TRUE(last_output_->has_preedit());
+    const mozc::commands::Preedit &preedit = last_output_->preedit();
+    int index = -1;
+    for (int i = 0; i < preedit.segment_size(); ++i) {
+      if (preedit.segment(i).annotation() ==
+          mozc::commands::Preedit::Segment::HIGHLIGHT) {
+        index = i;
+        break;
+      }
+    }
+    MOZC_ASSERT_EQ(index, NumberUtil::SimpleAtoi(args[1]));
+  } else if (command == "EXPECT_USAGE_STATS_COUNT") {
+    MOZC_ASSERT_EQ(args.size(), 3);
+    const uint32_t expected_value = NumberUtil::SimpleAtoi(args[2]);
+    if (expected_value == 0) {
+      MOZC_EXPECT_STATS_NOT_EXIST(args[1]);
+    } else {
+      MOZC_EXPECT_COUNT_STATS(args[1], expected_value);
+    }
+  } else if (command == "EXPECT_USAGE_STATS_INTEGER") {
+    MOZC_ASSERT_EQ(args.size(), 3);
+    MOZC_EXPECT_INTEGER_STATS(args[1], NumberUtil::SimpleAtoi(args[2]));
+  } else if (command == "EXPECT_USAGE_STATS_BOOLEAN") {
+    MOZC_ASSERT_EQ(args.size(), 3);
+    MOZC_EXPECT_BOOLEAN_STATS(args[1], args[2] == "true");
+  } else if (command == "EXPECT_USAGE_STATS_TIMING") {
+    MOZC_ASSERT_EQ(args.size(), 6);
+    const uint32_t expected_num = NumberUtil::SimpleAtoi(args[3]);
+    if (expected_num == 0) {
+      MOZC_EXPECT_STATS_NOT_EXIST(args[1]);
+    } else {
+      const uint64_t expected_total = NumberUtil::SimpleAtoi(args[2]);
+      const uint32_t expected_min = NumberUtil::SimpleAtoi(args[4]);
+      const uint32_t expected_max = NumberUtil::SimpleAtoi(args[5]);
+      MOZC_EXPECT_TIMING_STATS(args[1], expected_total, expected_num,
+                               expected_min, expected_max);
+    }
   } else {
     return absl::Status(absl::StatusCode::kUnimplemented, "");
   }
 
-  return absl::Status();
+  return absl::OkStatus();
 }
 
 void SessionHandlerInterpreter::SetRequest(const commands::Request &request) {

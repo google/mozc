@@ -42,13 +42,6 @@ namespace {
 
 #include "data_manager/oss/segmenter_inl.inc"
 
-std::pair<std::string, std::string> GetTypingModelEntry(
-    const std::string &fname) {
-  return std::pair<std::string, std::string>(
-      fname, mozc::testing::GetSourceFileOrDie(
-                 {"data_manager", "oss", fname + ".data"}));
-}
-
 }  // namespace
 
 class OssDataManagerTest : public DataManagerTestBase {
@@ -56,9 +49,9 @@ class OssDataManagerTest : public DataManagerTestBase {
   OssDataManagerTest()
       : DataManagerTestBase(
             new OssDataManager, kLSize, kRSize, IsBoundaryInternal,
-            mozc::testing::GetSourceFileOrDie(
-                {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss",
-                 "connection_single_column.txt"}),
+            mozc::testing::GetSourceFileOrDie({MOZC_DICT_DIR_COMPONENTS,
+                                               "dictionary_oss",
+                                               "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
                 {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss"},
@@ -68,14 +61,7 @@ class OssDataManagerTest : public DataManagerTestBase {
                  "dictionary09.txt"}),
             mozc::testing::GetSourceFilesInDirOrDie(
                 {MOZC_DICT_DIR_COMPONENTS, "dictionary_oss"},
-                {"suggestion_filter.txt"}),
-            {
-                GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_godan-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_qwerty_mobile-hiragana.tsv"),
-                GetTypingModelEntry("typing_model_toggle_flick-hiragana.tsv"),
-            }) {}
+                {"suggestion_filter.txt"})) {}
 };
 
 TEST_F(OssDataManagerTest, AllTests) { RunAllTests(); }

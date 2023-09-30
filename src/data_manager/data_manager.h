@@ -157,7 +157,6 @@ class DataManager : public DataManagerInterface {
       absl::string_view *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
-  absl::string_view GetTypingModel(const std::string &name) const override;
   absl::string_view GetDataVersion() const override;
 
   std::optional<std::pair<size_t, size_t>> GetOffsetAndSize(
@@ -214,7 +213,6 @@ class DataManager : public DataManagerInterface {
   absl::string_view usage_conjugation_index_data_;
   absl::string_view usage_items_data_;
   absl::string_view usage_string_array_data_;
-  std::vector<std::pair<std::string, absl::string_view>> typing_model_data_;
   absl::string_view data_version_;
   absl::flat_hash_map<std::string, std::pair<size_t, size_t>> offset_and_size_;
 };

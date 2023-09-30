@@ -40,6 +40,7 @@
 
 #include "base/clock_mock.h"
 #include "config/config_handler.h"
+#include "converter/segments.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
@@ -48,6 +49,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_test_util.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "usage_stats/usage_stats_testing_util.h"

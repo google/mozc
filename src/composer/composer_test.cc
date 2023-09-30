@@ -41,14 +41,15 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "composer/internal/typing_model.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
+#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
@@ -58,6 +59,9 @@
 namespace mozc {
 namespace composer {
 namespace {
+
+using ProbableKeyEvent = commands::KeyEvent_ProbableKeyEvent;
+using ProbableKeyEvents = mozc::protobuf::RepeatedPtrField<ProbableKeyEvent>;
 
 using ::mozc::commands::CheckSpellingResponse;
 using ::mozc::commands::KeyEvent;
@@ -724,78 +728,6 @@ TEST_F(ComposerTest, DoubleTapSquareBracketPairKeyWithInterval) {
   composer_->InsertCharacterKeyEvent(key);
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ(preedit, "[][]");
-}
-
-TEST_F(ComposerTest, GetTypeCorrectedQueriesForPredictionMobile) {
-  config_->set_use_typing_correction(true);
-  request_->set_special_romanji_table(
-      commands::Request::TWELVE_KEYS_TO_HIRAGANA);
-  table_->InitializeWithRequestAndConfig(*request_, *config_,
-                                         mock_data_manager_);
-  table_->SetTypingModelForTesting(TypingModel::CreateTypingModel(
-      commands::Request::TWELVE_KEYS_TO_HIRAGANA, mock_data_manager_));
-
-  struct ProbableKeyInfo {
-    uint32_t key_code;
-    double prob;
-  };
-  struct KeyInfo {
-    uint32_t key_code;
-    std::vector<ProbableKeyInfo> prob_keys;
-  };
-
-  auto insert_key_events = [](const std::vector<KeyInfo> &keys,
-                              Composer *composer) {
-    composer->EditErase();
-    for (const auto &key : keys) {
-      commands::KeyEvent key_event;
-      key_event.set_key_code(key.key_code);
-      if (!key.prob_keys.empty()) {
-        ProbableKeyEvents *probable_key_events =
-            key_event.mutable_probable_key_event();
-        for (const ProbableKeyInfo &prob_key : key.prob_keys) {
-          ProbableKeyEvent *event = probable_key_events->Add();
-          event->set_key_code(prob_key.key_code);
-          event->set_probability(prob_key.prob);
-        }
-      }
-      composer->InsertCharacterKeyEvent(key_event);
-    }
-  };
-
-  auto contains = [](std::set<std::string> str_set, std::string str) {
-    return str_set.find(str) != str_set.end();
-  };
-
-  {
-    insert_key_events({{'4', {}},                          // た
-                       {'5', {{'5', 0.75}, {'2', 0.25}}},  // な
-                       {'2', {}}},                         // か
-                      composer_.get());
-    std::vector<TypeCorrectedQuery> queries;
-    composer_->GetTypeCorrectedQueriesForPrediction(&queries);
-    ASSERT_EQ(queries.size(), 1);
-    EXPECT_EQ(queries[0].base, "た");
-    EXPECT_EQ(queries[0].asis, "たき");
-    EXPECT_EQ(queries[0].expanded.size(), 2);
-    EXPECT_TRUE(contains(queries[0].expanded, "き"));
-    EXPECT_TRUE(contains(queries[0].expanded, "ぎ"));
-  }
-
-  {
-    insert_key_events({{'4', {}},                          // た
-                       {'5', {{'5', 0.75}, {'2', 0.25}}},  // な
-                       {'2', {}},                          // か
-                       {'*', {}}},                         // modifier key
-                      composer_.get());
-    std::vector<TypeCorrectedQuery> queries;
-    composer_->GetTypeCorrectedQueriesForPrediction(&queries);
-    ASSERT_EQ(queries.size(), 1);
-    EXPECT_EQ(queries[0].base, "た");
-    EXPECT_EQ(queries[0].asis, "たぎ");
-    EXPECT_EQ(queries[0].expanded.size(), 1);
-    EXPECT_TRUE(contains(queries[0].expanded, "ぎ"));
-  }
 }
 
 TEST_F(ComposerTest, GetStringFunctionsForN) {
@@ -2981,172 +2913,6 @@ KeyEvent GetKeyEvent(const absl::string_view raw,
 }
 
 }  // namespace
-
-class MockTypingModel : public TypingModel {
- public:
-  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
-  ~MockTypingModel() override = default;
-  int GetCost(absl::string_view key) const override { return 10; }
-};
-
-// Test fixture for setting up mobile qwerty romaji table to test typing
-// corrector inside composer.
-class TypingCorrectionTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    config_ = std::make_unique<Config>();
-    ConfigHandler::GetDefaultConfig(config_.get());
-    config_->set_use_typing_correction(true);
-
-    table_ = std::make_unique<Table>();
-    table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-
-    request_ = std::make_unique<Request>();
-    request_->set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
-
-    composer_ =
-        std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
-
-    table_->typing_model_ = std::make_unique<MockTypingModel>();
-  }
-
-  static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {
-    std::vector<TypeCorrectedQuery> queries;
-    composer.GetTypeCorrectedQueriesForPrediction(&queries);
-    return queries.empty();
-  }
-
-  std::unique_ptr<Config> config_;
-  std::unique_ptr<Request> request_;
-  std::unique_ptr<Composer> composer_;
-  std::unique_ptr<Table> table_;
-};
-
-TEST_F(TypingCorrectionTest, ResetAfterComposerReset) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->Reset();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterDeleteAt) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->DeleteAt(0);
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterDelete) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->Delete();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterDeleteRange) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->DeleteRange(0, 1);
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterAsIsKeyEvent) {
-  table_->AddRule("a", "あ", "");
-  commands::KeyEvent key = GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f));
-  key.set_key_string("あ");
-  composer_->InsertCharacterKeyEvent(key);
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-
-  key.set_input_style(commands::KeyEvent::AS_IS);
-  composer_->InsertCharacterKeyEvent(key);
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, ResetAfterEditErase) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->EditErase();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterBackspace) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->Backspace();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorLeft) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->MoveCursorLeft();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorRight) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->MoveCursorRight();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToBeginning) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->MoveCursorToBeginning();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToEnd) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->MoveCursorToEnd();
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorTo) {
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));
-  composer_->InsertCharacterKeyEvent(
-      GetKeyEvent("b", GetStubProbableKeyEvent('a', 0.9f)));
-  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  composer_->MoveCursorTo(0);
-  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-}
-
-TEST_F(TypingCorrectionTest, GetTypeCorrectedQueriesForPrediction) {
-  // This test only checks if typing correction candidates are nonempty after
-  // each key insertion. The quality of typing correction depends on data model
-  // and is tested in composer/internal/typing_corrector_test.cc.
-  const char *kKeys[] = {"m", "o", "z", "u", "k", "u"};
-  for (size_t i = 0; i < std::size(kKeys); ++i) {
-    composer_->InsertCharacterKeyEvent(
-        GetKeyEvent(kKeys[i], GetStubProbableKeyEvent(kKeys[i][0], 0.9f)));
-    EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  }
-  composer_->Backspace();
-  for (size_t i = 0; i < std::size(kKeys); ++i) {
-    composer_->InsertCharacterKeyEvent(
-        GetKeyEvent(kKeys[i], ProbableKeyEvents()));
-    EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
-  }
-}
 
 TEST_F(ComposerTest, GetRawString) {
   table_->AddRule("sa", "さ", "");

@@ -59,7 +59,6 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -424,6 +423,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     ++added;
   }
 
+  MaybeSuppressAggressiveTypingCorrection(request, segments);
+
   MaybeApplyHomonymCorrection(request, segments);
 
   if (rescorer_ != nullptr && IsDebug(request)) {
@@ -435,6 +436,40 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 }
 
 // static
+void DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(
+    const ConversionRequest &request, Segments *segments) {
+  const int max_diff = request.request()
+                           .decoder_experiment_params()
+                           .typing_correction_conversion_cost_max_diff();
+  if (max_diff == 0 || segments->conversion_segments_size() == 0) {
+    return;
+  }
+
+  // Do nothing when the top candidate is already literal.
+  Segment *segment = segments->mutable_conversion_segment(0);
+  if (segment->candidates_size() <= 1 ||
+      !(segment->candidate(0).attributes &
+        Segment::Candidate::TYPING_CORRECTION)) {
+    return;
+  }
+
+  const auto &top = segment->candidate(0);
+
+  const int max_size = std::min<int>(10, segment->candidates_size());
+  for (int i = 1; i < max_size; ++i) {
+    const auto &c = segment->candidate(i);
+    // Finds the first non-typing-corrected candidate.
+    if (!(c.attributes & Segment::Candidate::TYPING_CORRECTION)) {
+      // Replace the literal with top when the cost is close enough.
+      if (c.cost - top.cost < max_diff) {
+        segment->move_candidate(i, 0);
+      }
+      break;
+    }
+  }
+}
+
+// static
 void DictionaryPredictor::MaybeApplyHomonymCorrection(
     const ConversionRequest &request, Segments *segments) {
   if (!request.has_composer()) return;
@@ -442,88 +477,7 @@ void DictionaryPredictor::MaybeApplyHomonymCorrection(
   const auto *spellchecker = request.composer().spellchecker_service();
   if (!spellchecker) return;
 
-  Segment *segment = segments->mutable_conversion_segment(0);
-  if (segment->candidates_size() == 0) return;
-
-  // Do not apply the NWP candidates.
-  if (segment->key().empty()) return;
-
-  // Aggregates candidates passed to homonym spellchecker.
-  // Only apply the spellchecker to the top values grouped by the same key.
-  // key -> [value, candidate_index].
-  absl::flat_hash_map<absl::string_view, std::pair<absl::string_view, size_t>>
-      candidates;
-
-  constexpr size_t kMaxCandidatesSize = 5;
-  const size_t size = std::min(segment->candidates_size(), kMaxCandidatesSize);
-  for (size_t i = 0; i < size; ++i) {
-    const auto &c = segment->candidate(i);
-    candidates.emplace(c.key, std::pair<absl::string_view, size_t>{c.value, i});
-  }
-
-  std::vector<std::pair<absl::string_view, size_t>> values;
-  values.reserve(candidates.size());
-  for (auto &[key, v] : candidates) {
-    values.emplace_back(std::move(v));
-  }
-
-  // Sort by positions in descending order to insert new candidates efficiently.
-  std::sort(values.begin(), values.end(), [](const auto &lhs, const auto &rhs) {
-    return lhs.second > rhs.second;
-  });
-
-  std::vector<absl::string_view> queries;
-  queries.reserve(values.size());
-  for (const auto &[value, index] : values) {
-    queries.emplace_back(value);
-  }
-
-  // Runs spellchecker.
-  const auto result =
-      spellchecker->CheckHomonymSpelling(queries, segments->history_value());
-  if (!result) return;
-
-  const auto corrections = std::move(result.value());
-  if (corrections.size() != values.size()) return;
-
-  for (int i = 0; i < values.size(); ++i) {
-    const std::string &correction = corrections[i].correction;
-    const auto &[value, index] = values[i];
-
-    if (value == correction) {
-      continue;  // no correction.
-    }
-
-    // Finds the corrected candidate.
-    int correction_index = -1;
-    for (size_t i = 0; i < segment->candidates_size(); ++i) {
-      if (segment->candidate(i).value == correction) {
-        correction_index = i;
-        break;
-      }
-    }
-
-    // `correction` is already ranked higher.
-    if (correction_index <= index) continue;
-
-    // When `correction` is found, simply boosts the candidate.
-    if (correction_index != -1) {
-      segment->move_candidate(correction_index, index);
-    }
-
-    auto *candidate = segment->mutable_candidate(index);
-
-    // When `correction` is not found, replace the value.
-    // TODO(taku): Is it better to insert new candidate?
-    if (correction_index == -1) {
-      candidate->value = correction;
-      candidate->content_value = correction;
-    }
-
-    if (IsDebug(request)) {
-      AppendDescription(*candidate, "SP:", correction_index, "->", index);
-    }
-  }
+  spellchecker->MaybeApplyHomonymCorrection(segments);
 }
 
 int DictionaryPredictor::CalculateSingleKanjiCostOffset(
@@ -657,16 +611,6 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
     return true;
   }
 
-  if ((result.types & PredictionType::TYPING_CORRECTION) &&
-      !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
-    auto it = seen_tc_keys_.find(result.non_expanded_original_key);
-    if (it != seen_tc_keys_.end() && it->second >= kTcMaxCountPerKey) {
-      *log_message = absl::StrCat("Too many TC for key: ",
-                                  result.non_expanded_original_key);
-      return true;
-    }
-  }
-
   // User input: "おーすとり" (len = 5)
   // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
   if ((result.candidate_attributes & Segment::Candidate::SPELLING_CORRECTION) &&
@@ -705,7 +649,7 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
       // example:
       // - "勝った" for the reading, "かった".
       // - "勝" for the reading, "かつ".
-      result.inner_segment_boundary.size() != 1 &&
+      result.inner_segment_boundary.size() >= 2 &&
       Util::CharsLen(result.value) != 1 &&
       (realtime_count_++ >= 3 || added_num >= 5)) {
     *log_message = "Added realtime >= 3 || added >= 5";
@@ -735,10 +679,6 @@ bool DictionaryPredictor::ResultFilter::CheckDupAndReturn(
     return true;
   }
   seen_.emplace(value);
-
-  if (result.types & PredictionType::TYPING_CORRECTION) {
-    ++seen_tc_keys_[result.non_expanded_original_key];
-  }
   return false;
 }
 
@@ -807,9 +747,6 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
     single_kanji_dictionary_->GenerateDescription(candidate->value,
                                                   &candidate->description);
   }
-  if (types & PredictionType::TYPING_CORRECTION) {
-    AppendDescription(*candidate, "補正");
-  }
 }
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
@@ -842,17 +779,8 @@ std::string DictionaryPredictor::GetPredictionTypeDebugString(
   if (types & PredictionType::ENGLISH) {
     debug_desc.append(1, 'E');
   }
-  if (types & PredictionType::EXTENDED_TYPING_CORRECTION) {
-    if (types & PredictionType::TYPING_CORRECTION) {
-      // Non-hiragana variant. よろさく→よろしく
-      debug_desc.append("T1");
-    } else {
-      // Hiragana variant insensitive (a.k.a かつこう) from composition
-      // spellchecker.
-      debug_desc.append("H1");
-    }
-  } else if (types & PredictionType::TYPING_CORRECTION) {
-    debug_desc.append(1, 'T');  //  Legacy typing correction.
+  if (types & PredictionType::TYPING_CORRECTION) {
+    debug_desc.append("T");
   }
   return debug_desc;
 }
@@ -1057,16 +985,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
     }
 
-    if ((result.types & PredictionType::TYPING_CORRECTION) &&
-        !(result.types & PredictionType::EXTENDED_TYPING_CORRECTION)) {
-      // = 500 * log(100)
-      constexpr int kTypingCorrectionCostOffset = 2302;
-      cost += kTypingCorrectionCostOffset;
-      MOZC_WORD_LOG(result,
-                    absl::StrCat("Typing correction: ", cost, " (with offset ",
-                                 kTypingCorrectionCostOffset, ")"));
-    }
-
     if (result.types & PredictionType::BIGRAM) {
       // When user inputs "六本木" and there is an entry
       // "六本木ヒルズ" in the dictionary, we can suggest
@@ -1118,7 +1036,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Demote predictive results for making exact candidates to have higher
     // ranking.
     // - Users expect the candidates for the input key on the candidates.
-    // - We want to show candidatey as many as possible in the limited
+    // - We want to show candidates as many as possible in the limited
     //   candidates area.
     const size_t candidate_lookup_key_len = Util::CharsLen(
         GetCandidateOriginalLookupKey(input_key, result, history.key));
@@ -1336,6 +1254,9 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   tmp_segments.add_segment()->set_key(Util::Utf8SubString(input_key, key_len));
   ConversionRequest req = request;
   req.set_max_conversion_candidates_size(1);
+  // Explicitly request conversion result for the entire key.
+  req.set_create_partial_candidates(false);
+  req.set_kana_modifier_insensitive_conversion(false);
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
       tmp_segments.segment(0).candidates_size() > 0) {
     const Segment::Candidate &top_candidate =

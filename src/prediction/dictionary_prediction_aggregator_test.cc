@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -43,7 +44,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
-#include "composer/internal/typing_model.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
@@ -64,6 +64,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -366,13 +367,6 @@ DictionaryInterface *CreateSuffixDictionaryFromDataManager(
   return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
                               token_array);
 }
-
-class MockTypingModel : public mozc::composer::TypingModel {
- public:
-  MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
-  ~MockTypingModel() override = default;
-  int GetCost(absl::string_view key) const override { return 10; }
-};
 
 // Simple immutable converter mock for the realtime conversion test
 class MockImmutableConverter : public ImmutableConverterInterface {
@@ -1972,88 +1966,6 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::ValuesIn(*kEnglishPredictionTestEntries),
     [](const ::testing::TestParamInfo<AggregateEnglishPredictionTest::ParamType>
            &info) { return info.param.name; });
-
-TEST_F(DictionaryPredictionAggregatorTest, AggregateTypeCorrectingPrediction) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer &aggregator =
-      data_and_aggregator->aggregator();
-
-  constexpr char kInputText[] = "gu-huru";
-  constexpr uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
-  const char *kExpectedValues[] = {
-      "グーグルアドセンス",
-      "グーグルアドワーズ",
-  };
-
-  config_->set_use_typing_correction(true);
-  request_->set_special_romanji_table(
-      commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-  table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-  table_->SetTypingModelForTesting(std::make_unique<MockTypingModel>());
-  InsertInputSequenceForProbableKeyEvent(kInputText, kCorrectedKeyCodes, 0.1f,
-                                         composer_.get());
-  Segments segments;
-  InitSegmentsWithKey(kInputText, &segments);
-
-  std::vector<Result> results;
-  aggregator.AggregateTypeCorrectingPrediction(*prediction_convreq_, segments,
-                                               &results);
-
-  std::set<std::string> values;
-  for (const auto &result : results) {
-    EXPECT_EQ(result.types, TYPING_CORRECTION);
-    values.insert(result.value);
-  }
-  for (const auto expected_value : kExpectedValues) {
-    EXPECT_TRUE(values.find(expected_value) != values.end())
-        << expected_value << " isn't in the results";
-  }
-}
-
-TEST_F(DictionaryPredictionAggregatorTest,
-       AggregateTypeCorrectingPredictionWithDiffCost) {
-  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
-      CreateAggregatorWithMockData();
-  const DictionaryPredictionAggregatorTestPeer &aggregator =
-      data_and_aggregator->aggregator();
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
-
-  constexpr char kInputText[] = "gu-huru";
-  constexpr uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
-  const char *kExpectedValues[] = {
-      "グーグルアドセンス",
-      "グーグルアドワーズ",
-  };
-
-  config_->set_use_typing_correction(true);
-  request_->set_special_romanji_table(
-      commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
-  table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-  table_->SetTypingModelForTesting(std::make_unique<MockTypingModel>());
-  // Correctd key may have smaller query cost.
-  InsertInputSequenceForProbableKeyEvent(kInputText, kCorrectedKeyCodes, 0.8f,
-                                         composer_.get());
-  Segments segments;
-  InitSegmentsWithKey(kInputText, &segments);
-
-  std::vector<Result> results;
-  aggregator.AggregateTypeCorrectingPrediction(*prediction_convreq_, segments,
-                                               &results);
-
-  std::set<std::string> values;
-  for (const auto &result : results) {
-    EXPECT_EQ(result.types, TYPING_CORRECTION);
-    // Should not have the smaller cost than the original entry wcost (=
-    // 0).
-    EXPECT_GE(result.wcost, 0);
-    values.insert(result.value);
-  }
-  for (const auto expected_value : kExpectedValues) {
-    EXPECT_TRUE(values.find(expected_value) != values.end())
-        << expected_value << " isn't in the results";
-  }
-}
 
 TEST_F(DictionaryPredictionAggregatorTest, ZeroQuerySuggestionAfterNumbers) {
   std::unique_ptr<MockDataAndAggregator> data_and_aggregator =

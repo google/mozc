@@ -49,7 +49,7 @@ mozc_cc_library(
         "//:__subpackages__",
     ],
     deps = [
-        "//composer:type_corrected_query",
+        "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
     ],
@@ -71,7 +71,7 @@ mozc_cc_library(
     deps = [
         ":spellchecker_service",
         ":spellchecker_service_interface",
-        "//composer:type_corrected_query",
+        "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
     ],
@@ -101,9 +101,11 @@ mozc_cc_library(
         "//base:util",
         "//base/strings:assign",
         "//base/strings:japanese",
+        "//converter:segments",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",
@@ -126,8 +128,38 @@ mozc_cc_binary(
     deps = [
         ":spellchecker_service_interface",
         ":spellchecker_service_registration",
+        "//protocol:commands_cc_proto",
+        "//protocol:engine_builder_cc_proto",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mozc_cc_test(
+    name = "spellchecker_service_test",
+    size = "small",
+    srcs = ["spellchecker_service_test.cc"],
+    tags = [
+        "nomac",
+        "nowin",
+    ],
+    target_compatible_with = mozc_select(
+        default = [],
+        macos = ["@platforms//:incompatible"],
+        windows = ["@platforms//:incompatible"],
+    ),
+    deps = [
+        ":spellchecker_service",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:file_util_mock",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

@@ -331,7 +331,7 @@ class Segment final {
   // check if the specified index is valid or not.
   bool is_valid_index(int i) const;
 
-  // Candidate manupluations
+  // Candidate manipulations
   // getter
   const Candidate &candidate(int i) const;
 

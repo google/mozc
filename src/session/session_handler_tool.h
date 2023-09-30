@@ -114,6 +114,8 @@ class SessionHandlerInterpreter final {
       absl::string_view value) const;
   bool GetCandidateIdByValue(absl::string_view value, uint32_t *id) const;
   std::vector<uint32_t> GetCandidateIdsByValue(absl::string_view value) const;
+  std::vector<uint32_t> GetRemovedCandidateIdsByValue(
+      absl::string_view value) const;
   std::vector<std::string> Parse(absl::string_view line);
   absl::Status Eval(absl::Span<const std::string> args);
   void SetRequest(const commands::Request &request);

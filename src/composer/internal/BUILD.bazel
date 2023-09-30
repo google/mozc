@@ -35,9 +35,16 @@ load(
     "mozc_py_binary",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(
+    default_visibility = [
+        "//:__subpackages__",
+    ],
+)
+
+mozc_py_binary(
+    name = "gen_typing_model",
+    srcs = ["gen_typing_model.py"],
+)
 
 mozc_cc_library(
     name = "transliterator_interface",
@@ -251,79 +258,6 @@ mozc_cc_binary(
         "//base:init_mozc",
         "//composer:table",
         "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-mozc_py_binary(
-    name = "gen_typing_model",
-    srcs = ["gen_typing_model.py"],
-)
-
-mozc_cc_library(
-    name = "typing_model",
-    srcs = ["typing_model.cc"],
-    hdrs = ["typing_model.h"],
-    deps = [
-        "//data_manager:data_manager_interface",
-        "//protocol:commands_cc_proto",
-        "//testing:gunit_prod",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "typing_model_test",
-    size = "small",
-    srcs = ["typing_model_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":typing_model",
-        "//composer:type_corrected_query",
-        "//session:request_test_util",
-        "//testing:gunit_main",
-    ],
-)
-
-mozc_cc_library(
-    name = "typing_corrector",
-    srcs = [
-        "typing_corrector.cc",
-    ],
-    hdrs = ["typing_corrector.h"],
-    deps = [
-        ":composition",
-        ":composition_input",
-        ":typing_model",
-        "//base:logging",
-        "//base:util",
-        "//base/protobuf:repeated_field",
-        "//composer:table",
-        "//composer:type_corrected_query",
-        "//config:config_handler",
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_test(
-    name = "typing_corrector_test",
-    size = "small",
-    srcs = ["typing_corrector_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        "typing_corrector",
-        ":typing_model",
-        "//base:singleton",
-        "//composer:table",
-        "//composer:type_corrected_query",
-        "//config:config_handler",
-        "//data_manager/testing:mock_data_manager",
-        "//protocol:commands_cc_proto",
-        "//session:request_test_util",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
     ],
 )
 

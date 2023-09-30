@@ -40,6 +40,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/container/trie.h"
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -65,6 +66,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
@@ -1728,7 +1730,7 @@ void ImmutableConverterImpl::Resegment(const Segments &segments,
 // Single segment conversion results should be set to |segments|.
 void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
     const ConversionRequest &request, Segments *segments,
-    const Lattice &lattice, const std::vector<uint16_t> &group,
+    const Lattice &lattice, absl::Span<const uint16_t> group,
     size_t max_candidates_size, bool allow_exact) const {
   const size_t only_first_segment_candidate_pos =
       segments->conversion_segment(0).candidates_size();
@@ -1796,10 +1798,11 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   }
 }
 
-bool ImmutableConverterImpl::IsSegmentEndNode(
-    const ConversionRequest &request, const Segments &segments,
-    const Node *node, const std::vector<uint16_t> &group,
-    bool is_single_segment) const {
+bool ImmutableConverterImpl::IsSegmentEndNode(const ConversionRequest &request,
+                                              const Segments &segments,
+                                              const Node *node,
+                                              absl::Span<const uint16_t> group,
+                                              bool is_single_segment) const {
   DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
@@ -1847,11 +1850,10 @@ bool ImmutableConverterImpl::IsSegmentEndNode(
 }
 
 Segment *ImmutableConverterImpl::GetInsertTargetSegment(
-    const Lattice &lattice, const std::vector<uint16_t> &group,
+    const Lattice &lattice, absl::Span<const uint16_t> group,
     InsertCandidatesType type, size_t begin_pos, const Node *node,
     Segments *segments) const {
   if (type != MULTI_SEGMENTS) {
-    DCHECK(type == SINGLE_SEGMENT || type == ONLY_FIRST_SEGMENT);
     // Realtime conversion that produces only one segment.
     return segments->mutable_segment(segments->segments_size() - 1);
   }
@@ -1866,10 +1868,12 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
   return segment;
 }
 
-void ImmutableConverterImpl::InsertCandidates(
-    const ConversionRequest &request, Segments *segments,
-    const Lattice &lattice, const std::vector<uint16_t> &group,
-    size_t max_candidates_size, InsertCandidatesType type) const {
+void ImmutableConverterImpl::InsertCandidates(const ConversionRequest &request,
+                                              Segments *segments,
+                                              const Lattice &lattice,
+                                              absl::Span<const uint16_t> group,
+                                              size_t max_candidates_size,
+                                              InsertCandidatesType type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1881,7 +1885,8 @@ void ImmutableConverterImpl::InsertCandidates(
   const size_t expand_size =
       std::max<size_t>(1, std::min<size_t>(512, max_candidates_size));
 
-  const bool is_single_segment = (type == SINGLE_SEGMENT);
+  const bool is_single_segment =
+      (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT);
   NBestGenerator nbest_generator(suppression_dictionary_, segmenter_,
                                  connector_, pos_matcher_, &lattice,
                                  suggestion_filter_);
@@ -1905,15 +1910,22 @@ void ImmutableConverterImpl::InsertCandidates(
         GetInsertTargetSegment(lattice, group, type, begin_pos, node, segments);
     CHECK(segment);
 
-    NBestGenerator::BoundaryCheckMode mode = NBestGenerator::STRICT;
-    if (type == SINGLE_SEGMENT) {
+    NBestGenerator::Options options;
+    if (type == SINGLE_SEGMENT || type == FIRST_INNER_SEGMENT) {
       // For realtime conversion.
-      mode = NBestGenerator::ONLY_EDGE;
+      options.boundary_mode = NBestGenerator::ONLY_EDGE;
+      options.candidate_mode |= NBestGenerator::FILL_INNER_SEGMENT_INFO;
     } else if (segment->segment_type() == Segment::FIXED_BOUNDARY) {
       // Boundary is specified. Skip boundary check in nbest generator.
-      mode = NBestGenerator::ONLY_MID;
+      options.boundary_mode = NBestGenerator::ONLY_MID;
     }
-    nbest_generator.Reset(prev, node->next, mode);
+    if (type == FIRST_INNER_SEGMENT) {
+      // Inserts only first segment from realtime conversion path.
+      options.candidate_mode |=
+          NBestGenerator::BUILD_FROM_ONLY_FIRST_INNER_SEGMENT;
+      options.candidate_mode |= NBestGenerator::FILL_INNER_SEGMENT_INFO;
+    }
+    nbest_generator.Reset(prev, node->next, options);
     nbest_generator.SetCandidates(request, original_key, expand_size, segment);
 
     if (type == MULTI_SEGMENTS || type == SINGLE_SEGMENT) {
@@ -1934,7 +1946,7 @@ void ImmutableConverterImpl::InsertCandidates(
 
 bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                                           const Lattice &lattice,
-                                          const std::vector<uint16_t> &group,
+                                          absl::Span<const uint16_t> group,
                                           Segments *segments) const {
   if (segments == nullptr) {
     LOG(WARNING) << "Segments is nullptr";
@@ -1942,89 +1954,192 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
   }
 
   const ConversionRequest::RequestType type = request.request_type();
-  const bool is_prediction = (type == ConversionRequest::PREDICTION ||
-                              type == ConversionRequest::PARTIAL_PREDICTION);
-  const bool is_suggestion = (type == ConversionRequest::SUGGESTION ||
-                              type == ConversionRequest::PARTIAL_SUGGESTION);
 
-  auto do_suggestion = [this, &request, &lattice, &group, &segments,
-                        &is_prediction]() {
-    const size_t max_candidates_size = request.max_conversion_candidates_size();
-
-    if (request.create_partial_candidates()) {
-      // TODO(toshiyuki): It may be better to change this value
-      // according to the key length.
-      static constexpr size_t kOnlyFirstSegmentCandidateSize = 3;
-      const size_t single_segment_candidates_size =
-          ((max_candidates_size > kOnlyFirstSegmentCandidateSize)
-               ? max_candidates_size - kOnlyFirstSegmentCandidateSize
-               : 1);
-      InsertCandidates(request, segments, lattice, group,
-                       single_segment_candidates_size, SINGLE_SEGMENT);
-
-      // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
-      // is greater than max_candidates_size, we cannot skip
-      // InsertFirstSegmentToCandidates().
-      // For example:
-      //   the sum: 11
-      //   max_candidates_size: 10
-      //   current candidate size: 8
-      // In this case, the sum > |max_candidates_size|, but we should not
-      // skip calling InsertFirstSegmentToCandidates, as we want to add
-      // two candidates.
-      const size_t only_first_segment_candidates_size =
-          std::min(max_candidates_size, single_segment_candidates_size +
-                                            kOnlyFirstSegmentCandidateSize);
-      InsertFirstSegmentToCandidates(request, segments, lattice, group,
-                                     only_first_segment_candidates_size,
-                                     false /* allow_exact */);
-      // TODO(taku): We do not want to refer `is_prediction` here.
-      // This is a temporal workaround to fill all personal names appeared
-      // as exact partial candidates. Expand candidates as many as possible
-      if (is_prediction) {
-        InsertFirstSegmentToCandidates(request, segments, lattice, group,
-                                       request.max_conversion_candidates_size(),
-                                       true /* allow exact */);
-      }
-
-    } else {
-      InsertCandidates(request, segments, lattice, group, max_candidates_size,
-                       SINGLE_SEGMENT);
-    }
-  };
-
-  auto do_conversion = [this, &request, &lattice, &group, &segments]() {
-    DCHECK(!request.create_partial_candidates());
-    // Currently, we assume that REVERSE_CONVERSION only
-    // requires 1 result.
-    // TODO(taku): support to set the size on REVESER_CONVERSION mode.
-    const size_t max_candidates_size =
-        ((request.request_type() == ConversionRequest::REVERSE_CONVERSION)
-             ? 1
-             : request.max_conversion_candidates_size());
-
-    // InsertCandidates inserts new segments after the existing
-    // conversion segments. So we have to erase old conversion segments.
-    // We have to keep old segments for calling InsertCandidates because
-    // we need segment constraints like FIXED_BOUNDARY.
-    // TODO(toshiyuki): We want more beautiful structure.
-    const size_t old_conversion_segments_size =
-        segments->conversion_segments_size();
-    InsertCandidates(request, segments, lattice, group, max_candidates_size,
-                     MULTI_SEGMENTS);
-    if (old_conversion_segments_size > 0) {
-      segments->erase_segments(segments->history_segments_size(),
-                               old_conversion_segments_size);
-    }
-  };
-
-  if (is_suggestion || is_prediction) {
-    do_suggestion();
+  if (type == ConversionRequest::CONVERSION ||
+      type == ConversionRequest::REVERSE_CONVERSION) {
+    InsertCandidatesForConversion(request, lattice, group, segments);
   } else {
-    do_conversion();
+    InsertCandidatesForPrediction(request, lattice, group, segments);
   }
 
   return true;
+}
+
+void ImmutableConverterImpl::InsertCandidatesForConversion(
+    const ConversionRequest &request, const Lattice &lattice,
+    absl::Span<const uint16_t> group, Segments *segments) const {
+  DCHECK(!request.create_partial_candidates());
+  // Currently, we assume that REVERSE_CONVERSION only
+  // requires 1 result.
+  // TODO(taku): support to set the size on REVESER_CONVERSION mode.
+  const size_t max_candidates_size =
+      ((request.request_type() == ConversionRequest::REVERSE_CONVERSION)
+           ? 1
+           : request.max_conversion_candidates_size());
+
+  // InsertCandidates inserts new segments after the existing
+  // conversion segments. So we have to erase old conversion segments.
+  // We have to keep old segments for calling InsertCandidates because
+  // we need segment constraints like FIXED_BOUNDARY.
+  // TODO(toshiyuki): We want more beautiful structure.
+  const size_t old_conversion_segments_size =
+      segments->conversion_segments_size();
+  InsertCandidates(request, segments, lattice, group, max_candidates_size,
+                   MULTI_SEGMENTS);
+  if (old_conversion_segments_size > 0) {
+    segments->erase_segments(segments->history_segments_size(),
+                             old_conversion_segments_size);
+  }
+}
+
+void ImmutableConverterImpl::InsertCandidatesForRealtime(
+    const ConversionRequest &request, const Lattice &lattice,
+    absl::Span<const uint16_t> group, Segments *segments) const {
+  Segment *target_segment = segments->mutable_conversion_segment(0);
+
+  Segments tmp_segments = *segments;
+  {
+    // Candidates for the whole path
+    constexpr int kMaxSize = 3;
+    InsertCandidates(request, &tmp_segments, lattice, group, kMaxSize,
+                     SINGLE_SEGMENT);
+
+    auto get_boundary_info = [](const Segment::Candidate &c) {
+      std::vector<absl::string_view> ret;
+      for (Segment::Candidate::InnerSegmentIterator iter(&c); !iter.Done();
+           iter.Next()) {
+        ret.emplace_back(iter.GetKey());
+      }
+      return ret;
+    };
+
+    // InsertCandidates for SINGLE_SEGMENT should insert at least one candidate.
+    DCHECK_GT(tmp_segments.conversion_segment(0).candidates_size(), 0);
+    const auto &top_cand = tmp_segments.conversion_segment(0).candidate(0);
+    const std::vector<absl::string_view> top_boundary =
+        get_boundary_info(top_cand);
+    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
+         ++i) {
+      const auto &c = tmp_segments.conversion_segment(0).candidate(i);
+      constexpr int kCostDiff = 2302;  // 500*log(100)
+      if (c.cost - top_cand.cost > kCostDiff) {
+        continue;
+      }
+      if (i != 0 && get_boundary_info(c) == top_boundary) {
+        // Skip to add the similar candidates.
+        continue;
+      }
+      Segment::Candidate *candidate = target_segment->add_candidate();
+      *candidate = c;
+    }
+  }
+  tmp_segments.mutable_conversion_segment(0)->clear_candidates();
+
+  {
+    // Candidates for the first segment for each n-best path.
+    InsertCandidates(request, &tmp_segments, lattice, group,
+                     request.max_conversion_candidates_size() -
+                         target_segment->candidates_size(),
+                     FIRST_INNER_SEGMENT);
+    Trie<bool> added;
+    constexpr bool kPlaceholderValue = true;
+    constexpr int kMaxSingleSegmentCandidateSize = 5;
+    int single_segment_candidate_count = 0;
+    for (int i = 0; i < tmp_segments.conversion_segment(0).candidates_size();
+         ++i) {
+      const auto &c = tmp_segments.conversion_segment(0).candidate(i);
+      bool data;
+      size_t key_length;
+      if (added.LongestMatch(c.value, &data, &key_length)) {
+        // Prefix is already added
+        continue;
+      }
+      if (c.key.size() == target_segment->key().size() &&
+          c.key.size() != c.content_key.size() &&
+          single_segment_candidate_count++ >= kMaxSingleSegmentCandidateSize) {
+        // The key is for single segment (ex. きょうの, etc)
+        // Skip to add verbose candidates (凶の, 鏡の, 興の, etc)
+        continue;
+      }
+      Segment::Candidate *candidate = target_segment->add_candidate();
+      *candidate = c;
+      if (c.key.size() != target_segment->key().size()) {
+        // Suffix penalty is not added for the prefix path.
+        const int32_t suffix_penalty =
+            segmenter_->GetSuffixPenalty(candidate->rid);
+        candidate->wcost += suffix_penalty;
+        candidate->cost += suffix_penalty;
+      }
+      added.AddEntry(c.value, kPlaceholderValue);
+    }
+  }
+}
+
+void ImmutableConverterImpl::InsertCandidatesForPrediction(
+    const ConversionRequest &request, const Lattice &lattice,
+    absl::Span<const uint16_t> group, Segments *segments) const {
+  const size_t max_candidates_size = request.max_conversion_candidates_size();
+
+  if (!request.create_partial_candidates()) {
+    // Desktop (or physical keyboard in Mobile)
+    InsertCandidates(request, segments, lattice, group, max_candidates_size,
+                     SINGLE_SEGMENT);
+    return;
+  }
+
+  // Mobile
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_realtime_conversion_v2()) {
+    InsertCandidatesForRealtime(request, lattice, group, segments);
+    return;
+  }
+
+  // TODO(toshiyuki): It may be better to change this value
+  // according to the key length.
+  static constexpr size_t kOnlyFirstSegmentCandidateSize = 3;
+  const size_t single_segment_candidates_size =
+      ((max_candidates_size > kOnlyFirstSegmentCandidateSize)
+           ? max_candidates_size - kOnlyFirstSegmentCandidateSize
+           : 1);
+  InsertCandidates(request, segments, lattice, group,
+                   single_segment_candidates_size, SINGLE_SEGMENT);
+
+  // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
+  // is greater than max_candidates_size, we cannot skip
+  // InsertFirstSegmentToCandidates().
+  // For example:
+  //   the sum: 11
+  //   max_candidates_size: 10
+  //   current candidate size: 8
+  // In this case, the sum > |max_candidates_size|, but we should not
+  // skip calling InsertFirstSegmentToCandidates, as we want to add
+  // two candidates.
+  const size_t only_first_segment_candidates_size =
+      std::min(max_candidates_size,
+               single_segment_candidates_size + kOnlyFirstSegmentCandidateSize);
+  InsertFirstSegmentToCandidates(request, segments, lattice, group,
+                                 only_first_segment_candidates_size,
+                                 false /* allow_exact */);
+
+  const bool is_prediction =
+      request.request_type() == ConversionRequest::PREDICTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION;
+  // TODO(taku): We do not want to refer `is_prediction` here.
+  // This is a temporal workaround to fill all personal names appeared
+  // as exact partial candidates. Expand candidates as many as possible
+  //
+  // Note: This check is for just in case.
+  // For now,
+  // 1. `create_partial_candidates` can be true only for Mobile
+  //    (Request::mixed_conversion == true)
+  // 2. For mobile, the session does not issue SUGGESTION command
+  // So we do not check `is_prediction` here.
+  if (is_prediction) {
+    InsertFirstSegmentToCandidates(request, segments, lattice, group,
+                                   request.max_conversion_candidates_size(),
+                                   true /* allow exact */);
+  }
 }
 
 void ImmutableConverterImpl::MakeGroup(const Segments &segments,

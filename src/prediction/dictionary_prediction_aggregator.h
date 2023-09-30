@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/util.h"
-#include "composer/type_corrected_query.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
@@ -176,18 +175,10 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       PredictionTypes types, size_t lookup_limit,
       std::vector<Result> *results) const;
 
-  void GetPredictiveResultsUsingExtendedTypingCorrection(
-      absl::Span<const composer::TypeCorrectedQuery> queries,
+  void GetPredictiveResultsUsingTypingCorrection(
+      absl::Span<const spelling::TypeCorrectedQuery> queries,
       const ConversionRequest &request, const Segments &segments,
       PredictionTypes base_selected_types, std::vector<Result> *results) const;
-
-  // Performs look-ups using type-corrected queries from composer. Usually
-  // involves multiple look-ups from dictionary.
-  void GetPredictiveResultsUsingTypingCorrection(
-      absl::Span<const composer::TypeCorrectedQuery> queries,
-      const dictionary::DictionaryInterface &dictionary,
-      const ConversionRequest &request, const Segments &segments,
-      int lookup_limit, std::vector<Result> *results) const;
 
   // Returns true if the realtime conversion should be used.
   // TODO(hidehiko): add Config and Request instances into the arguments

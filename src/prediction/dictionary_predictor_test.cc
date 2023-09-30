@@ -54,6 +54,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/prediction_aggregator_interface.h"
 #include "prediction/rescorer_mock.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
@@ -141,6 +142,12 @@ class DictionaryPredictorTestPeer {
                                  Segments *segments,
                                  absl::Span<Result> results) const {
     return predictor_.AddPredictionToCandidates(request, segments, results);
+  }
+
+  static void MaybeSuppressAggressiveTypingCorrection(
+      const ConversionRequest &request, Segments *segments) {
+    DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(request,
+                                                                 segments);
   }
 
   static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
@@ -942,7 +949,6 @@ TEST_F(DictionaryPredictorTest, PropagateAttributes) {
     EXPECT_TRUE(get_top_candidate(result, prediction::TYPING_CORRECTION, &c));
     EXPECT_EQ(c.value, "TYPING_CORRECTION");
     EXPECT_EQ(c.attributes, Segment::Candidate::TYPING_CORRECTION);
-    EXPECT_TRUE(absl::StrContains(c.description, "補正"));
   }
   {
     // USER_DICTIONARY
@@ -1046,7 +1052,6 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
   const Segment &segment = segments.conversion_segment(0);
   EXPECT_EQ(segment.candidates_size(), 3);
   EXPECT_EQ(segment.candidate(0).value, "補正");
-  EXPECT_TRUE(absl::StrContains(segment.candidate(0).description, "補正"));
   EXPECT_EQ(segment.candidate(1).value, "亞");
   // "亜の旧字体"
   // We cannot compare the description as-is, since the other description
@@ -1536,8 +1541,7 @@ TEST_F(DictionaryPredictorTest, Dedup) {
                                         absl::MakeSpan(results));
 
     ASSERT_EQ(segments.conversion_segments_size(), 1);
-    // kTcMaxCountPerKey: 2
-    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 2);
+    EXPECT_EQ(segments.conversion_segment(0).candidates_size(), 3);
   }
 }
 
@@ -1609,7 +1613,7 @@ TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
                                       absl::MakeSpan(results));
   ASSERT_EQ(segments.conversion_segments_size(), 1);
   const Segment segment = segments.conversion_segment(0);
-  EXPECT_EQ(segment.candidates_size(), 4);
+  EXPECT_EQ(segment.candidates_size(), 5);
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value0"));
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value1"));
   EXPECT_TRUE(FindCandidateByValue(segment, "tc_value3"));
@@ -1777,68 +1781,63 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
 }
 
-TEST_F(DictionaryPredictorTest, MaybeApplyHomonymCorrectionTest) {
+TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {
   Segments segments;
   InitSegmentsWithKey("key", &segments);
 
   Segment *segment = segments.mutable_conversion_segment(0);
-
-  auto add_candidate = [&](const std::string &key, const std::string &value) {
+  for (int i = 0; i < 10; ++i) {
     auto *candidate = segment->add_candidate();
-    candidate->key = key;
-    candidate->value = value;
+    candidate->key = absl::StrCat("key_", i);
+    candidate->value = absl::StrCat("value_", i);
+  }
+
+  auto get_top_value = [&segments]() {
+    return segments.conversion_segment(0).candidate(0).value;
   };
 
-  add_candidate("key_0", "value_0");
-  add_candidate("key_1", "value_1");
-  add_candidate("key_2", "value_2");
-  add_candidate("key_2", "value_3");
-  add_candidate("key_0", "value_4");
-
-  class MockSpellCheckerService
-      : public spelling::SpellCheckerServiceInterface {
-   public:
-    MOCK_METHOD(commands::CheckSpellingResponse, CheckSpelling,
-                (const commands::CheckSpellingRequest &), (const, override));
-    MOCK_METHOD(std::optional<std::vector<composer::TypeCorrectedQuery>>,
-                CheckCompositionSpelling,
-                (absl::string_view, absl::string_view,
-                 const commands::Request &),
-                (const, override));
-    MOCK_METHOD(std::optional<std::vector<spelling::HomonymCorrection>>,
-                CheckHomonymSpelling,
-                (absl::Span<const absl::string_view>, absl::string_view),
-                (const, override));
-  };
-
-  std::vector<spelling::HomonymCorrection> expected;
-  auto add_expected = [&](const std::string &s) {
-    expected.emplace_back(spelling::HomonymCorrection{s, 1.0});
-  };
-
-  add_expected("replace");  // key_2
-  add_expected("value_1");  // key_1
-  add_expected("value_4");  // key_0
-
-  auto mock = std::make_unique<MockSpellCheckerService>();
-  EXPECT_CALL(*mock,
-              CheckHomonymSpelling(
-                  absl::Span<const absl::string_view>(
-                      // The first appearing values of key_2, key_1 and key_0.
-                      {"value_2", "value_1", "value_0"}),
-                  absl::string_view("")))
-      .WillOnce(Return(expected));
-
-  composer_->SetSpellCheckerService(mock.get());
-  DictionaryPredictorTestPeer::MaybeApplyHomonymCorrection(
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
       *convreq_for_suggestion_, &segments);
-  composer_->SetSpellCheckerService(nullptr);
 
-  EXPECT_EQ(segment->candidate(0).value, "value_4");  // moved from 4
-  EXPECT_EQ(segment->candidate(1).value, "value_0");  // stay.
-  EXPECT_EQ(segment->candidate(2).value, "value_1");  // unchanged.
-  EXPECT_EQ(segment->candidate(3).value, "replace");  // value2 -> replace
-  EXPECT_EQ(segment->candidate(4).value, "value_3");  // stay.
+  // Top is still literal
+  for (int i = 1; i <= 2; ++i) {
+    segment->mutable_candidate(i)->attributes |=
+        Segment::Candidate::TYPING_CORRECTION;
+  }
+
+  segment->mutable_candidate(0)->cost = 100;
+  segment->mutable_candidate(3)->cost = 500;
+
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // Top is TYPING CORRECTION, but
+  // `typing_correction_conversion_cost_max_diff` is 0.
+  segment->mutable_candidate(0)->attributes |=
+      Segment::Candidate::TYPING_CORRECTION;
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // `typing_correction_conversion_cost_max_diff` is 100.
+  // Do not move because 400 > 100.
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(100);
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_0");
+
+  // `typing_correction_conversion_cost_max_diff` is 1000;
+  // Move because 400 < 1000.
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(1000);
+  DictionaryPredictorTestPeer::MaybeSuppressAggressiveTypingCorrection(
+      *convreq_for_suggestion_, &segments);
+  EXPECT_EQ(get_top_value(), "value_3");
+
+  request_->mutable_decoder_experiment_params()
+      ->set_typing_correction_conversion_cost_max_diff(0);
 }
 
 TEST_F(DictionaryPredictorTest, Rescoring) {

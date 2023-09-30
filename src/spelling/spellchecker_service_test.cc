@@ -29,6 +29,7 @@
 
 #include "spelling/spellchecker_service.h"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>

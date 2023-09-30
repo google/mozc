@@ -50,25 +50,17 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/mode_switching_handler.h"
 #include "composer/internal/transliterators.h"
-#include "composer/internal/typing_corrector.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
-#include "composer/type_corrected_query.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-
-// Use flags instead of constant for performance evaluation.
-ABSL_FLAG(uint64_t, max_typing_correction_query_candidates, 40,
-          "Maximum # of typing correction query temporary candidates.");
-ABSL_FLAG(uint64_t, max_typing_correction_query_results, 8,
-          "Maximum # of typing correction query results.");
 
 namespace mozc {
 namespace composer {
@@ -269,10 +261,6 @@ Composer::Composer(const Table *table, const commands::Request *request,
       input_field_type_(commands::Context::NORMAL),
       shifted_sequence_count_(0),
       composition_(table),
-      typing_corrector_(
-          request, table,
-          absl::GetFlag(FLAGS_max_typing_correction_query_candidates),
-          absl::GetFlag(FLAGS_max_typing_correction_query_results)),
       max_length_(kMaxPreeditLength),
       request_(request),
       config_(config),
@@ -282,7 +270,6 @@ Composer::Composer(const Table *table, const commands::Request *request,
   if (config_ == nullptr) {
     config_ = &config::ConfigHandler::DefaultConfig();
   }
-  typing_corrector_.SetConfig(config_);
   Reset();
 }
 
@@ -291,7 +278,6 @@ void Composer::Reset() {
   ResetInputMode();
   SetOutputMode(transliteration::HIRAGANA);
   source_text_.clear();
-  typing_corrector_.Reset();
   timeout_threshold_msec_ = config_->composing_timeout_threshold_msec();
 }
 
@@ -306,11 +292,9 @@ bool Composer::Empty() const { return (GetLength() == 0); }
 void Composer::SetTable(const Table *table) {
   table_ = table;
   composition_.SetTable(table);
-  typing_corrector_.SetTable(table);
 }
 
 void Composer::SetRequest(const commands::Request *request) {
-  typing_corrector_.SetRequest(request);
   request_ = request;
 }
 
@@ -319,10 +303,7 @@ void Composer::SetSpellCheckerService(
   spellchecker_service_ = spellchecker_service;
 }
 
-void Composer::SetConfig(const config::Config *config) {
-  config_ = config;
-  typing_corrector_.SetConfig(config);
-}
+void Composer::SetConfig(const config::Config *config) { config_ = config; }
 
 void Composer::SetInputMode(transliteration::TransliterationType mode) {
   comeback_input_mode_ = mode;
@@ -462,7 +443,6 @@ bool Composer::ProcessCompositionInput(CompositionInput input) {
     return false;
   }
 
-  typing_corrector_.InsertCharacter(input);
   position_ = composition_.InsertInput(position_, std::move(input));
   is_new_input_ = false;
   return true;
@@ -589,7 +569,6 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     if (input.is_asis()) {
       composition_.SetInputMode(Transliterators::CONVERSION_STRING);
       // Disable typing correction mainly for Android. b/258369101
-      typing_corrector_.Invalidate();
       ProcessCompositionInput(std::move(input));
       SetInputMode(comeback_input_mode_);
     } else {
@@ -618,31 +597,23 @@ void Composer::DeleteAt(size_t pos) {
   if (position_ > pos) {
     position_--;
   }
-  // We do not call UpdateInputMode() here.
-  // 1. In composition mode, UpdateInputMode finalizes pending chunk.
-  // 2. In conversion mode, InputMode needs not to change.
-  typing_corrector_.Invalidate();
 }
 
 void Composer::Delete() {
   position_ = composition_.DeleteAt(position_);
   UpdateInputMode();
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::DeleteRange(size_t pos, size_t length) {
   for (int i = 0; i < length && pos < composition_.GetLength(); ++i) {
     DeleteAt(pos);
   }
-  typing_corrector_.Invalidate();
 }
 
 void Composer::EditErase() {
   composition_.Erase();
   position_ = 0;
   SetInputMode(comeback_input_mode_);
-  typing_corrector_.Reset();
 }
 
 void Composer::Backspace() {
@@ -665,8 +636,6 @@ void Composer::Backspace() {
 
   // Delete 'character to be deleted'
   position_ = composition_.DeleteAt(position_);
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::MoveCursorLeft() {
@@ -674,8 +643,6 @@ void Composer::MoveCursorLeft() {
     --position_;
   }
   UpdateInputMode();
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::MoveCursorRight() {
@@ -683,15 +650,11 @@ void Composer::MoveCursorRight() {
     ++position_;
   }
   UpdateInputMode();
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::MoveCursorToBeginning() {
   position_ = 0;
   SetInputMode(comeback_input_mode_);
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::MoveCursorToEnd() {
@@ -699,8 +662,6 @@ void Composer::MoveCursorToEnd() {
   // Behavior between MoveCursorToEnd and MoveCursorToRight is different.
   // MoveCursorToEnd always makes current input mode default.
   SetInputMode(comeback_input_mode_);
-
-  typing_corrector_.Invalidate();
 }
 
 void Composer::MoveCursorTo(uint32_t new_position) {
@@ -708,7 +669,6 @@ void Composer::MoveCursorTo(uint32_t new_position) {
     position_ = new_position;
     UpdateInputMode();
   }
-  typing_corrector_.Invalidate();
 }
 
 void Composer::GetPreedit(std::string *left, std::string *focused,
@@ -890,18 +850,10 @@ void Composer::GetQueriesForPrediction(std::string *base,
   japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 
-std::optional<std::vector<TypeCorrectedQuery>>
+std::optional<std::vector<spelling::TypeCorrectedQuery>>
 Composer::GetTypeCorrectedQueries(absl::string_view context) const {
 
   return std::nullopt;
-}
-
-void Composer::GetTypeCorrectedQueriesForPrediction(
-    std::vector<TypeCorrectedQuery> *queries) const {
-  typing_corrector_.GetQueriesForPrediction(queries);
-  for (auto &query : *queries) {
-    RemoveExpandedCharsForModifier(query.asis, query.base, &query.expanded);
-  }
 }
 
 size_t Composer::GetLength() const { return composition_.GetLength(); }

@@ -80,6 +80,20 @@ class NBestGenerator {
     ONLY_EDGE,
   };
 
+  enum CandidateMode {
+    CANDIDATE_MODE_NONE = 0,
+    // Fill inner segment boundary info
+    FILL_INNER_SEGMENT_INFO = 1 << 0,
+    // Make a candidate for the first inner segment boudnary
+    // for the given node path.
+    BUILD_FROM_ONLY_FIRST_INNER_SEGMENT = 1 << 1,
+  };
+
+  struct Options {
+    BoundaryCheckMode boundary_mode = STRICT;
+    uint32_t candidate_mode = CANDIDATE_MODE_NONE;
+  };
+
   // Try to enumerate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
@@ -91,8 +105,7 @@ class NBestGenerator {
   ~NBestGenerator() = default;
 
   // Reset the iterator status.
-  void Reset(const Node *begin_node, const Node *end_node,
-             BoundaryCheckMode mode);
+  void Reset(const Node *begin_node, const Node *end_node, Options options);
 
   // Set candidates.
   void SetCandidates(const ConversionRequest &request,
@@ -154,9 +167,19 @@ class NBestGenerator {
                       const std::string &original_key,
                       Segment::Candidate *candidate);
 
+  void MakeCandidateFromBestPath(Segment::Candidate *candidate);
+  void MakePrefixCandidateFromBestPath(Segment::Candidate *candidate);
+
   void MakeCandidate(Segment::Candidate *candidate, int32_t cost,
                      int32_t structure_cost, int32_t wcost,
                      const std::vector<const Node *> &nodes) const;
+
+  converter::CandidateFilter::ResultType MakeCandidateFromElement(
+      const ConversionRequest &request, const std::string &original_key,
+      const QueueElement *element, Segment::Candidate *candidate);
+
+  void FillInnerSegmentInfo(const std::vector<const Node *> &nodes,
+                            Segment::Candidate *candidate) const;
 
   // Helper function for Next(). Checks node boundary conditions.
   BoundaryCheckResult BoundaryCheck(const Node *lnode, const Node *rnode,
@@ -192,7 +215,7 @@ class NBestGenerator {
   std::vector<const Node *> top_nodes_;
   converter::CandidateFilter filter_;
   bool viterbi_result_checked_ = false;
-  BoundaryCheckMode check_mode_ = STRICT;
+  Options options_;
 
 #ifdef MOZC_CANDIDATE_DEBUG
   std::vector<Segment::Candidate> bad_candidates_;

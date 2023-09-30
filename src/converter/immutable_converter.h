@@ -50,6 +50,7 @@
 #include "request/conversion_request.h"
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
 #include "absl/base/attributes.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -85,6 +86,11 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     MULTI_SEGMENTS,      // Normal conversion ("私の|名前は|中野です")
     SINGLE_SEGMENT,      // Realtime conversion ("私の名前は中野です")
     ONLY_FIRST_SEGMENT,  // Insert only first segment ("私の")
+    // Insert only first segment for n-best path
+    // ここでは着物を脱ぐ
+    // ここで履物を脱ぐ
+    // → ここでは, ここで
+    FIRST_INNER_SEGMENT,
   };
 
   void ExpandCandidates(const ConversionRequest &request,
@@ -137,34 +143,39 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   void InsertFirstSegmentToCandidates(const ConversionRequest &request,
                                       Segments *segments,
                                       const Lattice &lattice,
-                                      const std::vector<uint16_t> &group,
+                                      absl::Span<const uint16_t> group,
                                       size_t max_candidates_size,
                                       bool allow_exact) const;
 
   void InsertCandidates(const ConversionRequest &request, Segments *segments,
                         const Lattice &lattice,
-                        const std::vector<uint16_t> &group,
+                        absl::Span<const uint16_t> group,
                         size_t max_candidates_size,
                         InsertCandidatesType type) const;
+
+  void InsertCandidatesForRealtime(const ConversionRequest &request,
+                                   const Lattice &lattice,
+                                   absl::Span<const uint16_t> group,
+                                   Segments *segments) const;
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.
   bool IsSegmentEndNode(const ConversionRequest &request,
                         const Segments &segments, const Node *node,
-                        const std::vector<uint16_t> &group,
+                        absl::Span<const uint16_t> group,
                         bool is_single_segment) const;
 
   // Helper function for InsertCandidates().
   // Returns the segment for inserting candidates.
   Segment *GetInsertTargetSegment(const Lattice &lattice,
-                                  const std::vector<uint16_t> &group,
+                                  absl::Span<const uint16_t> group,
                                   InsertCandidatesType type, size_t begin_pos,
                                   const Node *node, Segments *segments) const;
 
   bool MakeSegments(const ConversionRequest &request, const Lattice &lattice,
-                    const std::vector<uint16_t> &group,
-                    Segments *segments) const;
+                    absl::Span<const uint16_t> group, Segments *segments) const;
 
+  // |group| will be used to specify the segmentation.
   void MakeGroup(const Segments &segments, std::vector<uint16_t> *group) const;
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
@@ -175,6 +186,16 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     }
     return connector_.GetTransitionCost(lnode->rid, rnode->lid) + rnode->wcost;
   }
+
+  void InsertCandidatesForConversion(const ConversionRequest &request,
+                                     const Lattice &lattice,
+                                     absl::Span<const uint16_t> group,
+                                     Segments *segments) const;
+
+  void InsertCandidatesForPrediction(const ConversionRequest &request,
+                                     const Lattice &lattice,
+                                     absl::Span<const uint16_t> group,
+                                     Segments *segments) const;
 
   const dictionary::DictionaryInterface *dictionary_;
   const dictionary::DictionaryInterface *suffix_dictionary_;

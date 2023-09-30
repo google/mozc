@@ -198,7 +198,9 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
                                     group, kSingleSegment);
   {
-    nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
+    nbest_generator->Reset(
+        begin_node, end_node,
+        {NBestGenerator::STRICT, NBestGenerator::CANDIDATE_MODE_NONE});
     Segment result_segment;
     nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // The top result is treated exceptionally and has no boundary check
@@ -211,7 +213,9 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   }
 
   {
-    nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_MID);
+    nbest_generator->Reset(
+        begin_node, end_node,
+        {NBestGenerator::ONLY_MID, NBestGenerator::CANDIDATE_MODE_NONE});
     Segment result_segment;
     nbest_generator->SetCandidates(request, "", 10, &result_segment);
     ASSERT_EQ(result_segment.candidates_size(), 3);
@@ -251,7 +255,9 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
                                     group, kSingleSegment);
   {
-    nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
+    nbest_generator->Reset(
+        begin_node, end_node,
+        {NBestGenerator::STRICT, NBestGenerator::CANDIDATE_MODE_NONE});
     Segment result_segment;
     nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // Top result should be inserted, but other candidates will be cut
@@ -260,7 +266,9 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
     EXPECT_EQ(result_segment.candidate(0).value, "私の名前は中ノです");
   }
   {
-    nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
+    nbest_generator->Reset(
+        begin_node, end_node,
+        {NBestGenerator::ONLY_EDGE, NBestGenerator::FILL_INNER_SEGMENT_INFO});
     Segment result_segment;
     nbest_generator->SetCandidates(request, "", 10, &result_segment);
     // We can get several candidates.
@@ -299,7 +307,9 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
                                     group, kSingleSegment);
 
-  nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
+  nbest_generator->Reset(
+      begin_node, end_node,
+      {NBestGenerator::ONLY_EDGE, NBestGenerator::FILL_INNER_SEGMENT_INFO});
   Segment result_segment;
   nbest_generator->SetCandidates(request, "", 10, &result_segment);
   ASSERT_LE(1, result_segment.candidates_size());

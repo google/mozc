@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "composer/type_corrected_query.h"
+#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
 
@@ -45,10 +45,24 @@ namespace spelling {
 using commands::CheckSpellingRequest;
 using commands::CheckSpellingResponse;
 
-struct HomonymCorrection {
+struct TypeCorrectedQuery {
   std::string correction;
-  // score = score(correction) - score(query).
-  float score = 0.0;  // TODO(taku): want to return the Mozc's cost.
+
+  // `score` is the score diff against identity score.
+  // score = hyp_score - identity_score.
+  // `score` can be used to determine the triggering condition.
+  float score = 0.0;
+
+  // `bias` is the score diff against the base score.
+  // bias = hyp_score - base_score.
+  // `bias` is used to calculate the penalty/bonus of the correction cost.
+  // base_score is usually the same as the identity_score, but  We consider that
+  // pure kana modifier insensitive correction is not an actual typing
+  // correction. So when the top is a pure kana modifier insensitive correction,
+  // uses the top score as the base score.
+  float bias = 0.0;
+
+  bool is_kana_modifier_insensitive_only = false;
 };
 
 class SpellCheckerServiceInterface {
@@ -66,22 +80,12 @@ class SpellCheckerServiceInterface {
   // Returns empty result when no correction is required.
   // Returns std::nullopt when the composition spellchecker is not
   // enabled/available.
-  virtual std::optional<std::vector<composer::TypeCorrectedQuery>>
+  virtual std::optional<std::vector<TypeCorrectedQuery>>
   CheckCompositionSpelling(absl::string_view query, absl::string_view context,
                            const commands::Request &request) const = 0;
 
-  // Performs homonym spelling correction. Since the reading of the corrected
-  // candidates are the same as the query, we can safely call this method on the
-  // actual decoding process. `queries` are set of words to be corrected.
-  // `context` is the previous context. Returns std::nullopt when the homonym
-  // spellchecker is not enabled/available.
-  // Example:
-  //   context: 京都に
-  //   query:   [言った, 逝った]
-  //   output:  [(行った, 1.0), (行った, 5.0)]
-  virtual std::optional<std::vector<HomonymCorrection>> CheckHomonymSpelling(
-      absl::Span<const absl::string_view> queries,
-      absl::string_view context) const = 0;
+  // Performs homonym spelling correction.
+  virtual void MaybeApplyHomonymCorrection(Segments *segments) const = 0;
 
   // Loads spellchecker model asynchronously defined in the `request`.
   // Returns false if the LoadAsync is already running.

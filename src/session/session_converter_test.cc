@@ -1647,6 +1647,12 @@ TEST_F(SessionConverterTest, CommitPreedit) {
     const commands::Result &result = output.result();
     EXPECT_EQ(result.value(), kChars_Aiueo);
     EXPECT_EQ(result.key(), kChars_Aiueo);
+
+    EXPECT_EQ(result.tokens_size(), 1);
+    EXPECT_EQ(result.tokens(0).key(), kChars_Aiueo);
+    EXPECT_EQ(result.tokens(0).value(), kChars_Aiueo);
+    EXPECT_EQ(result.tokens(0).lid(), -1);
+    EXPECT_EQ(result.tokens(0).rid(), -1);
   }
   EXPECT_FALSE(converter.IsActive());
 
