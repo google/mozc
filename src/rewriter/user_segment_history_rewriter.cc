@@ -81,9 +81,8 @@ constexpr size_t kMaxRerankSize = 5;
 constexpr char kFileName[] = "user://segment.db";
 
 bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_number_style_learning();
+  // Enabled in mobile (software keyboard & hardware keyboard)
+  return request.request().kana_modifier_insensitive_conversion();
 }
 
 class FeatureValue {

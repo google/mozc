@@ -50,6 +50,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
+#include "rewriter/rewriter_interface.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
@@ -74,9 +75,8 @@ struct RewriteCandidateInfo {
 };
 
 bool IsNumberStyleLearningEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_number_style_learning();
+  // Enabled in mobile (software keyboard & hardware keyboard)
+  return request.request().kana_modifier_insensitive_conversion();
 }
 
 // Returns rewrite type for the given segment and base candidate information.

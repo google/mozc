@@ -49,6 +49,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
+#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -65,6 +66,7 @@ using config::Config;
 using config::ConfigHandler;
 using dictionary::PosGroup;
 using dictionary::PosMatcher;
+using ::testing::WithParamInterface;
 
 constexpr size_t kCandidatesSize = 20;
 
@@ -1249,10 +1251,27 @@ TEST_F(UserSegmentHistoryRewriterTest, NumberFullWidth) {
   }
 }
 
-TEST_F(UserSegmentHistoryRewriterTest, NumberStyleLearningEnabled) {
-  commands::Request request;
-  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
-      true);
+class UserSegmentHistoryNumberTest
+    : public UserSegmentHistoryRewriterTest,
+      public WithParamInterface<commands::Request> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    NumberStyleLearningTestForRequest, UserSegmentHistoryNumberTest,
+    ::testing::Values(
+        []() {
+          commands::Request request;
+          commands::RequestForUnitTest::FillMobileRequest(&request);
+          return request;
+        }(),
+        []() {
+          commands::Request request;
+          commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+              &request);
+          return request;
+        }()));
+
+TEST_P(UserSegmentHistoryNumberTest, UserSegmentHistoryRewriterTest) {
+  const commands::Request request = GetParam();
   request_.set_request(&request);
 
   SetNumberForm(Config::FULL_WIDTH);

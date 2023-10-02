@@ -624,8 +624,7 @@ message DecoderExperimentParams {
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
-  // Enable number style learning.
-  optional bool enable_number_style_learning = 30 [default = false];
+  reserved 30;  // Deprecated enable_number_style_learning
 
   optional bool enable_realtime_conversion_v2 = 37 [default = false];
 }
