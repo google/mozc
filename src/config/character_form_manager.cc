@@ -605,7 +605,10 @@ CharacterFormManager::Data::Data() {
   const uint32_t key_type = 0;
   storage_ = LruStorage::Create(filename.c_str(), sizeof(key_type), kLruSize,
                                 kSeedValue);
-  LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
+  if (!storage_) {
+    LOG(ERROR) << "cannot open " << filename;
+    storage_ = std::make_unique<LruStorage>();
+  }
   preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();
   number_style_ = std::make_unique<NumberStyleManager>();
