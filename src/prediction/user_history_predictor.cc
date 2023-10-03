@@ -1440,6 +1440,8 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     } else {
       VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, candidate);
     }
+    MOZC_CANDIDATE_LOG(candidate,
+                       "Added by UserHistoryPredictor::InsertCandidates");
 #if DEBUG
     if (!absl::StrContains(candidate->description, "History")) {
       candidate->description += " History";

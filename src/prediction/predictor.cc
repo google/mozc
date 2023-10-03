@@ -43,6 +43,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -309,6 +310,39 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
   return ret;
 }
 
+namespace {
+// Fills empty lid and rid of candidates with the candidates of the same value.
+void MaybeFillFallbackPos(Segments *segments) {
+  for (size_t si = 0; si < segments->conversion_segments_size(); ++si) {
+    absl::flat_hash_map<absl::string_view, Segment::Candidate *> posless_cands;
+    Segment *seg = segments->mutable_conversion_segment(si);
+    for (size_t ci = 0; ci < seg->candidates_size(); ++ci) {
+      Segment::Candidate *cand = seg->mutable_candidate(ci);
+      // Candidates with empty POS come before candidates with filled POS.
+      if (cand->lid == 0 || cand->rid == 0) {
+        posless_cands[cand->value] = cand;
+        continue;
+      }
+      if (!posless_cands.contains(cand->value)) {
+        continue;
+      }
+
+      Segment::Candidate *posless_cand = posless_cands[cand->value];
+      if (posless_cand->lid == 0) {
+        posless_cand->lid = cand->lid;
+      }
+      if (posless_cand->rid == 0) {
+        posless_cand->rid = cand->rid;
+      }
+      if (posless_cand->lid != 0 && posless_cand->rid != 0) {
+        posless_cands.erase(cand->value);
+      }
+      MOZC_CANDIDATE_LOG(cand, "Fallback POSes were filled.");
+    }
+  }
+}
+}  // namespace
+
 bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
                                         Segments *segments) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
@@ -360,6 +394,7 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
     }  // Never reach here
   }
 
+  MaybeFillFallbackPos(segments);
   return result;
 }
 

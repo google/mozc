@@ -367,10 +367,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     }
   }
 
-  // Stores candidates that do not have lid or rid (i.e. POS).
-  // Candidates from history may not have lid or rid.
-  absl::flat_hash_map<std::string, Segment::Candidate *> posless_candidates;
-
 #ifdef MOZC_DEBUG
   auto add_debug_candidate = [&](Result result, const absl::string_view log) {
     absl::StrAppend(&result.log, log);
@@ -400,16 +396,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     std::string log_message;
     if (filter.ShouldRemove(result, added, &log_message)) {
       MOZC_ADD_DEBUG_CANDIDATE(result, log_message);
-
-      // If the already added candidate does not have POS, use this removed
-      // POS as a fallback.
-      if (result.lid != 0 && result.rid != 0 &&
-          posless_candidates.contains(result.value)) {
-        MOZC_CANDIDATE_LOG(posless_candidates[result.value], "POS fallback");
-        posless_candidates[result.value]->lid = result.lid;
-        posless_candidates[result.value]->rid = result.rid;
-        posless_candidates.erase(result.value);
-      }
       continue;
     }
 
@@ -417,9 +403,6 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
     FillCandidate(request, result, GetCandidateKeyAndValue(result, history),
                   merged_types, candidate);
-    if (candidate->lid == 0 || candidate->rid == 0) {
-      posless_candidates[result.value] = candidate;
-    }
     ++added;
   }
 

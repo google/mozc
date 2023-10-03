@@ -1545,38 +1545,6 @@ TEST_F(DictionaryPredictorTest, Dedup) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, PoslessCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
-      CreateDictionaryPredictorWithMockData();
-  const DictionaryPredictorTestPeer &predictor =
-      data_and_predictor->predictor();
-  // turn on mobile mode
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
-
-  {
-    std::vector<Result> results = {
-        CreateResult6("key", "value1", prediction::UNIGRAM, 1, 1, Token::NONE),
-        CreateResult6("key", "value1", prediction::UNIGRAM, 2, 2, Token::NONE),
-    };
-    results[1].lid = 100;
-    results[1].rid = 200;
-    Segments segments;
-    InitSegmentsWithKey("key", &segments);
-    predictor.AddPredictionToCandidates(*convreq_for_prediction_, &segments,
-                                        absl::MakeSpan(results));
-
-    ASSERT_EQ(segments.conversion_segments_size(), 1);
-    ASSERT_EQ(segments.conversion_segment(0).candidates_size(), 1);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ(candidate.value, "value1");
-    EXPECT_EQ(candidate.wcost, 1);
-    EXPECT_EQ(candidate.cost, 1);
-    EXPECT_EQ(candidate.lid, 100);
-    EXPECT_EQ(candidate.rid, 200);
-  }
-}
-
 TEST_F(DictionaryPredictorTest, TypingCorrectionResultsLimit) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();

@@ -45,8 +45,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "testing/gmock.h"
-#include "testing/googletest.h"
+#include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
@@ -57,6 +56,7 @@ namespace mozc {
 namespace {
 
 using ::mozc::dictionary::PosMatcher;
+using ::testing::WithParamInterface;
 
 constexpr absl::string_view kKanjiDescription = "漢数字";
 constexpr absl::string_view kArabicDescription = "数字";
@@ -1107,8 +1107,6 @@ void LearnNumberStyle(const ConversionRequest &request,
 TEST_F(NumberRewriterTest, NumberStyleLearningNotEnabled) {
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
   commands::Request request;
-  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
-      false);
   ConversionRequest convreq(nullptr, &request,
                             &config::ConfigHandler::DefaultConfig());
 
@@ -1125,11 +1123,27 @@ TEST_F(NumberRewriterTest, NumberStyleLearningNotEnabled) {
   }
 }
 
-TEST_F(NumberRewriterTest, NumberStyleLearning) {
+class NumberStyleLearningTest : public NumberRewriterTest,
+                                public WithParamInterface<commands::Request> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    NumberStyleLearningTestForRequest, NumberStyleLearningTest,
+    ::testing::Values(
+        []() {
+          commands::Request request;
+          commands::RequestForUnitTest::FillMobileRequest(&request);
+          return request;
+        }(),
+        []() {
+          commands::Request request;
+          commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
+              &request);
+          return request;
+        }()));
+
+TEST_P(NumberStyleLearningTest, NumberRewriterTest) {
   std::unique_ptr<NumberRewriter> rewriter(CreateNumberRewriter());
-  commands::Request request;
-  request.mutable_decoder_experiment_params()->set_enable_number_style_learning(
-      true);
+  const commands::Request request = GetParam();
   ConversionRequest convreq(nullptr, &request,
                             &config::ConfigHandler::DefaultConfig());
 

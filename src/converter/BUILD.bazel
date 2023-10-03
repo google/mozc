@@ -600,7 +600,10 @@ mozc_cc_library(
     name = "gen_segmenter_bitarray",
     srcs = ["gen_segmenter_bitarray.cc"],
     hdrs = ["gen_segmenter_bitarray.h"],
-    visibility = ["//data_manager:__subpackages__"],
+    visibility = [
+        "//data_manager:__subpackages__",
+        "//tools/periodical_update:__subpackages__",
+    ],
     deps = [
         "//base:file_stream",
         "//base:logging",
@@ -621,7 +624,10 @@ mozc_py_binary(
 mozc_py_binary(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
-    visibility = ["//data_manager:__subpackages__"],
+    visibility = [
+        "//data_manager:__subpackages__",
+        "//tools/periodical_update:__subpackages__",
+    ],
 )
 
 mozc_cc_library(
