@@ -90,4 +90,4 @@ class AndroidUtil {
 };
 
 }  // namespace mozc
-#endif  // MOZC_BASE_ANDROID_UTIL_H
+#endif  // MOZC_BASE_ANDROID_UTIL_H_
