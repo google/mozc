@@ -1925,9 +1925,8 @@ TEST_F(ConverterTest,
   int o_index = GetCandidateIndexByValue("お", segments.conversion_segment(0));
   int otsukare_index =
       GetCandidateIndexByValue("お疲れ", segments.conversion_segment(0));
-  EXPECT_NE(o_index, -1);
   EXPECT_NE(otsukare_index, -1);
-  EXPECT_LT(otsukare_index, o_index);
+  EXPECT_TRUE(o_index == -1 || (otsukare_index < o_index));
 }
 
 TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {

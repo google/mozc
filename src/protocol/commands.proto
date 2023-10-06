@@ -589,23 +589,13 @@ message DecoderExperimentParams {
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
 
-  reserved 9;  // Deprecated enable_number_decoder
-
+  reserved 9;   // Deprecated enable_number_decoder
   reserved 10;  // Deprecated cancel_segment_model_penalty_for_prediction
-
   reserved 11;  // Deprecated enable_environmental_filter_rewriter
-
   reserved 12;  // Deprecated undo_partial_commit
-
   reserved 13;  // Deprecated use_actual_converter_for_realtime_conversion
-
-  // Enable single kanji prediction feature to generate single kanji candidates
-  // in predictor rather than rewriter.
-  optional bool enable_single_kanji_prediction = 14 [default = false];
-
-  // Cost offset for single kanji prediction feature.
-  // The default cost is 800(~= 500*ln(5)).
-  optional int32 single_kanji_prediction_cost_offset = 15 [default = 800];
+  reserved 14;  // Deprecated enable_single_kanji_prediction
+  reserved 15;  // Deprecated single_kanji_prediction_cost_offset
 
   // Parameters for typing correction candidates
   optional int32 typing_correction_max_count = 17 [default = 3];

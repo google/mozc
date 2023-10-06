@@ -1408,31 +1408,6 @@ TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
     EXPECT_LT(get_rank_by_value("阪"), get_rank_by_value("逆"));
     EXPECT_LT(get_rank_by_value("逆"), get_rank_by_value("差"));
   }
-  // Cost offset
-  {
-    segments.Clear();
-    request_->mutable_decoder_experiment_params()
-        ->set_single_kanji_prediction_cost_offset(10000);
-    InitSegmentsWithKey("さか", &segments);
-    EXPECT_TRUE(
-        predictor.PredictForRequest(*convreq_for_prediction_, &segments));
-    EXPECT_EQ(segments.conversion_segments_size(), 1);
-    EXPECT_NE(get_rank_by_value("佐"), -1);
-    EXPECT_EQ(get_rank_by_value("佐"),
-              segments.conversion_segment(0).candidates_size() - 1);
-  }
-  {
-    segments.Clear();
-    request_->mutable_decoder_experiment_params()
-        ->set_single_kanji_prediction_cost_offset(-10000);
-    InitSegmentsWithKey("さか", &segments);
-    EXPECT_TRUE(
-        predictor.PredictForRequest(*convreq_for_prediction_, &segments));
-    EXPECT_EQ(segments.conversion_segments_size(), 1);
-    const auto top_candidate = segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ(top_candidate.value, "逆");
-    EXPECT_GT(top_candidate.cost, 0);
-  }
 }
 
 TEST_F(DictionaryPredictorTest, SingleKanjiFallbackOffsetCost) {

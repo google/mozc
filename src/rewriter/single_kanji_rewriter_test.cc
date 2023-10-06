@@ -248,21 +248,6 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     convreq.set_request_type(ConversionRequest::PREDICTION);
     convreq.set_request(&request);
     ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
-    EXPECT_TRUE(rewriter.Rewrite(convreq, &segments));
-  }
-
-  {
-    Segments segments;
-    InitSegments("あ", "あ", &segments);
-
-    commands::Request request;
-    commands::RequestForUnitTest::FillMobileRequest(&request);
-    request.mutable_decoder_experiment_params()
-        ->set_enable_single_kanji_prediction(true);
-    ConversionRequest convreq;
-    convreq.set_request_type(ConversionRequest::PREDICTION);
-    convreq.set_request(&request);
-    ASSERT_TRUE(rewriter.capability(convreq) & RewriterInterface::PREDICTION);
     EXPECT_FALSE(rewriter.Rewrite(convreq, &segments));
   }
 
@@ -273,8 +258,6 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     commands::Request request;
     commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
         &request);
-    request.mutable_decoder_experiment_params()
-        ->set_enable_single_kanji_prediction(true);
     ConversionRequest convreq;
     convreq.set_request_type(ConversionRequest::PREDICTION);
     convreq.set_request(&request);
@@ -288,8 +271,6 @@ TEST_F(SingleKanjiRewriterTest, TriggerConditionForPrediction) {
     commands::Request request;
     commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
         &request);
-    request.mutable_decoder_experiment_params()
-        ->set_enable_single_kanji_prediction(true);
     ConversionRequest convreq;
     convreq.set_request_type(ConversionRequest::CONVERSION);
     convreq.set_request(&request);

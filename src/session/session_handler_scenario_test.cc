@@ -261,12 +261,6 @@ INSTANTIATE_TEST_SUITE_P(
                            []() {
                              auto request = GetMobileRequest();
                              request.mutable_decoder_experiment_params()
-                                 ->set_enable_single_kanji_prediction(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
                                  ->set_cancel_content_word_suffix_penalty(true);
                              return request;
                            }(),
