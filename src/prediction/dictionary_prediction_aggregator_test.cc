@@ -2669,8 +2669,6 @@ TEST_F(DictionaryPredictionAggregatorTest, SingleKanji) {
   const DictionaryPredictionAggregatorTestPeer &aggregator =
       data_and_aggregator->aggregator();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_enable_single_kanji_prediction(true);
 
   {
     auto create_single_kanji_result = [](absl::string_view key,
@@ -2711,8 +2709,6 @@ TEST_F(DictionaryPredictionAggregatorTest,
       data_and_aggregator->aggregator();
   commands::RequestForUnitTest::FillMobileRequestWithHardwareKeyboard(
       request_.get());
-  request_->mutable_decoder_experiment_params()
-      ->set_enable_single_kanji_prediction(true);
 
   {
     MockSingleKanjiPredictionAggregator *mock =

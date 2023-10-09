@@ -523,10 +523,8 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
                connector_.GetTransitionCost(0, general_symbol_id_));
   const int wcost_diff =
       std::max(0, single_kanji_max_cost - single_kanji_transition_cost);
-  const int single_kanji_offset = request.request()
-                                      .decoder_experiment_params()
-                                      .single_kanji_prediction_cost_offset();
-  return wcost_diff + single_kanji_offset;
+  const int kSingleKanjiPredictionCostOffset = 800;  // ~= 500*ln(5)
+  return wcost_diff + kSingleKanjiPredictionCostOffset;
 }
 
 DictionaryPredictor::ResultFilter::ResultFilter(

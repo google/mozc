@@ -94,12 +94,6 @@ using ::mozc::dictionary::Token;
 constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
 
-bool IsEnableSingleKanjiPrediction(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_single_kanji_prediction();
-}
-
 // Returns true if the |target| may be redundant result.
 bool MaybeRedundant(const absl::string_view reference,
                     const absl::string_view target) {
@@ -668,8 +662,7 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
     selected_types |= PREFIX;
   }
 
-  if (IsMixedConversionEnabled(request.request()) &&
-      IsEnableSingleKanjiPrediction(request)) {
+  if (IsMixedConversionEnabled(request.request())) {
     // We do not want to add single kanji results for non mixed conversion
     // (i.e., Desktop, or Hardware Keyboard in Mobile), since they contain
     // partial results.
@@ -1701,10 +1694,9 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
   // Excludes exact match nodes.
   Util::Utf8SubString(input_key, 0, input_key_len - 1, &input_key);
 
-  const int min_value_chars_len =
-      IsEnableSingleKanjiPrediction(request) ? 2 : 1;
+  constexpr int kMinValueCharsLen = 2;
   PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
-                                min_value_chars_len, results);
+                                kMinValueCharsLen, results);
   dictionary_->LookupPrefix(input_key, request, &callback);
   const size_t prefix_results_size = results->size() - prev_results_size;
   if (prefix_results_size >= cutoff_threshold) {

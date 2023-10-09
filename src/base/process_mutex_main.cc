@@ -27,18 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/process_mutex.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <cstdint>
 #include <string>
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/process_mutex.h"
 #include "absl/flags/flag.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(int32_t, sleep_time, 30, "sleep 30 sec");
 ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
@@ -46,7 +43,7 @@ ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::ProcessMutex mutex(absl::GetFlag(FLAGS_name).c_str());
+  mozc::ProcessMutex mutex(absl::GetFlag(FLAGS_name));
 
   if (!mutex.Lock()) {
     LOG(INFO) << "Process " << absl::GetFlag(FLAGS_name)
@@ -54,11 +51,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-#ifdef _WIN32
-  ::Sleep(absl::GetFlag(FLAGS_sleep_time) * 1000);
-#else   // _WIN32
-  ::sleep(absl::GetFlag(FLAGS_sleep_time));
-#endif  // _WIN32
+  absl::SleepFor(absl::Seconds(absl::GetFlag(FLAGS_sleep_time)));
 
   mutex.UnLock();
 

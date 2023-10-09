@@ -53,13 +53,6 @@ namespace mozc {
 
 namespace {
 
-bool IsEnableSingleKanjiPrediction(
-    const ConversionRequest &conversion_request) {
-  const commands::Request &request = conversion_request.request();
-  return request.mixed_conversion() &&
-         request.decoder_experiment_params().enable_single_kanji_prediction();
-}
-
 void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
                       SerializedDictionary::iterator begin,
                       SerializedDictionary::iterator end) {
@@ -122,7 +115,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     VLOG(2) << "no use_single_kanji_conversion";
     return false;
   }
-  if (IsEnableSingleKanjiPrediction(request) &&
+  if (request.request().mixed_conversion() &&
       request.request_type() != ConversionRequest::CONVERSION) {
     VLOG(2) << "single kanji prediction is enabled";
     return false;
