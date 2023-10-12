@@ -34,10 +34,9 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/status.h"
+#include "base/protobuf/message.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
-#include "base/protobuf/message.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/string_view.h"
 
