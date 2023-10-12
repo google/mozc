@@ -60,6 +60,8 @@
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"

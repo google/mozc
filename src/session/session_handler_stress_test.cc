@@ -43,7 +43,9 @@
 #include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 
 ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
           "Random seed value. This value will be interpreted as uint32_t.");

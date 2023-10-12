@@ -46,8 +46,10 @@
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
 // for FRIEND_TEST()
+#include "spelling/spellchecker_service_interface.h"
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
+#include "testing/production_stub/public/gunit_prod.h"
 #include "absl/time/time.h"
 
 namespace mozc {

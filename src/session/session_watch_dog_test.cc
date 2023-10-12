@@ -39,6 +39,7 @@
 #include "base/logging.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/base/public/gmock.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"

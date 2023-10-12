@@ -39,6 +39,7 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/log/check.h"
 
 namespace mozc {
 namespace {

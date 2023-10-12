@@ -40,6 +40,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
+#include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/candidates.pb.h"
