@@ -475,6 +475,7 @@ mozc_cc_test(
         "//dictionary:dictionary_impl",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_mock",
+        "//dictionary:dictionary_token",
         "//dictionary:pos_group",
         "//dictionary:pos_matcher",
         "//dictionary:suffix_dictionary",

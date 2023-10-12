@@ -167,12 +167,6 @@ KeyValueView GetHistoryKeyAndValue(
   return {history_segment.candidate(0).key, history_segment.candidate(0).value};
 }
 
-bool CancelContentWordSuffixPenalty(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .cancel_content_word_suffix_penalty();
-}
-
 template <typename... Args>
 void AppendDescription(Segment::Candidate &candidate, Args &&...args) {
   absl::StrAppend(&candidate.description,
@@ -933,16 +927,13 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   const std::string &input_key = segments.conversion_segment(0).key();
   const int single_kanji_offset = CalculateSingleKanjiCostOffset(
       request, rid, input_key, *results, &prefix_penalty_cache);
-  const bool cancel_content_word_suffix_penalty =
-      CancelContentWordSuffixPenalty(request);
 
   const KeyValueView history = GetHistoryKeyAndValue(segments);
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
-    if (cancel_content_word_suffix_penalty && result.lid == result.rid &&
-        !pos_matcher_.IsSuffixWord(result.rid) &&
+    if (result.lid == result.rid && !pos_matcher_.IsSuffixWord(result.rid) &&
         !pos_matcher_.IsFunctional(result.rid) &&
         !pos_matcher_.IsWeakCompoundVerbSuffix(result.rid)) {
       // TODO(b/242683049): It's better to define a new POS matcher rule once

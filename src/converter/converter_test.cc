@@ -29,6 +29,7 @@
 
 #include "converter/converter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -53,6 +54,7 @@
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_mock.h"
+#include "dictionary/dictionary_token.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
@@ -1867,16 +1869,20 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   Segments segments;
   composer.SetPreeditTextForTestOnly("あい");
 
-  const std::string top_candidate = "合い";
+  // Remember user history 3 times after getting the top candidate
+  std::string top_candidate;
   absl::flat_hash_set<std::string> seen;
-  seen.insert(top_candidate);
-
-  // Remember user history 3 times.
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < 4; ++i) {
     segments.Clear();
     EXPECT_TRUE(
         converter->StartPredictionForRequest(conversion_request, &segments));
     const Segment &segment = segments.conversion_segment(0);
+    if (i == 0) {
+      top_candidate = segment.candidate(0).value;
+      seen.insert(top_candidate);
+      continue;
+    }
+
     for (int index = 0; index < segment.candidates_size(); ++index) {
       const bool inserted = seen.insert(segment.candidate(index).value).second;
       if (inserted) {
