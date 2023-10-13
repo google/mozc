@@ -38,7 +38,6 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
-#include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "absl/strings/string_view.h"
 

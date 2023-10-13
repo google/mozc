@@ -52,6 +52,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/status.h"
 #include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/escaping.h"

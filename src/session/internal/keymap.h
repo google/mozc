@@ -41,7 +41,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit_prod.h"
-#include "testing/production_stub/public/gunit_prod.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 

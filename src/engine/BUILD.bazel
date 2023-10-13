@@ -87,7 +87,6 @@ mozc_cc_test(
         "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "//testing/base/public:gunit_main",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -134,7 +133,6 @@ mozc_cc_library(
         "//dictionary:user_pos",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
-        "//ngram:neg_log_prob",
         "//prediction:dictionary_predictor",
         "//prediction:predictor",
         "//prediction:predictor_interface",
@@ -329,8 +327,6 @@ mozc_cc_library(
         "//dictionary:suppression_dictionary",
         "//prediction:predictor_interface",
         "//request:conversion_request",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
     ],
 )

@@ -37,7 +37,6 @@
 #include "base/strings/assign.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
-#include "third_party/protobuf/repeated_ptr_field.h"
 
 namespace mozc {
 namespace composer {

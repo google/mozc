@@ -36,7 +36,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
-#include "testing/base/public/gunit.h"
 #include "absl/strings/str_cat.h"
 
 namespace mozc {

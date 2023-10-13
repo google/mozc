@@ -36,9 +36,7 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 

@@ -40,7 +40,6 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
-#include "absl/log/check.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

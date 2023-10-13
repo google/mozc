@@ -31,9 +31,9 @@
 
 #include <utility>
 
+#include "composer/key_parser.h"
 #include "composer/table.h"
 #include "testing/gunit.h"
-#include "third_party/protobuf/repeated_ptr_field.h"
 
 namespace mozc {
 

@@ -36,7 +36,6 @@
 #include "base/singleton.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "composer/internal/transliterator_interface.h"
 #include "config/character_form_manager.h"
 #include "absl/strings/string_view.h"
 

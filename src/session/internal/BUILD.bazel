@@ -71,7 +71,6 @@ mozc_cc_library(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
-        "//testing/production_stub/public:gunit_prod",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
@@ -145,7 +144,6 @@ mozc_cc_test(
         "//session:session_converter",
         "//testing:gunit_main",
         "//testing:testing_util",
-        "//testing/base/public:gunit_main",
         "@com_google_absl//absl/time",
     ],
 )
@@ -179,7 +177,6 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "//testing/base/public:gunit_main",
         "@com_google_absl//absl/strings",
     ],
 )

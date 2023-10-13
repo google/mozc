@@ -42,7 +42,6 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/words_info.h"
-#include "request/conversion_request.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
 #include "absl/container/btree_set.h"

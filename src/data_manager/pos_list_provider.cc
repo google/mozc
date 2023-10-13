@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+#include "base/container/serialized_string_array.h"
+#include "base/embedded_file.h"
 #include "base/logging.h"
 
 namespace mozc {
