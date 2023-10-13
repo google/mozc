@@ -38,16 +38,21 @@
 #include <utility>
 #include <vector>
 
+#include "base/clock.h"
 #include "base/clock_mock.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "engine/engine.h"
 #include "engine/engine_builder_interface.h"
+#include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/internal/keymap.h"
+#include "session/session_handler_interface.h"
 #include "session/session_handler_test_util.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
@@ -56,6 +61,7 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);

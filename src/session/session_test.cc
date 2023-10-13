@@ -61,6 +61,7 @@
 #include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/statusor.h"

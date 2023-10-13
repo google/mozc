@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "converter/segments.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 

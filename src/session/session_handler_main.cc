@@ -71,6 +71,8 @@ SHOW_LOG_BY_VALUE       ございました
 #include "session/session_handler_tool.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/numbers.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(std::string, profile, "", "User profile directory");

@@ -37,7 +37,6 @@
 #include "base/clock_mock.h"
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "protocol/commands.pb.h"

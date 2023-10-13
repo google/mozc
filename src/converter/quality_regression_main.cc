@@ -38,6 +38,7 @@
 #include "base/init_mozc.h"
 #include "base/system_util.h"
 #include "converter/quality_regression_util.h"
+#include "engine/engine.h"
 #include "engine/eval_engine_factory.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"

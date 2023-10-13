@@ -47,6 +47,7 @@
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/system/system_dictionary.h"
@@ -54,7 +55,6 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
