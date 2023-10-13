@@ -40,7 +40,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/number_util.h"
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/segments.h"

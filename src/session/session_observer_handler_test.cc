@@ -33,8 +33,6 @@
 #include "session/session_observer_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace session {

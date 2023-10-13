@@ -65,8 +65,6 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/gunit.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

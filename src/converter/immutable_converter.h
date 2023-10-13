@@ -49,7 +49,6 @@
 #include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
-#include "testing/production_stub/public/gunit_prod.h"
 #include "absl/base/attributes.h"
 #include "absl/types/span.h"
 

@@ -43,8 +43,6 @@
 #include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "testing/base/public/gunit.h"
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"

@@ -43,7 +43,6 @@
 #include "session/session_converter.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, test_deterministic, true,
