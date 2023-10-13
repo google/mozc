@@ -71,6 +71,7 @@ mozc_cc_library(
             ":logging",
             "@com_google_absl//absl/flags:parse",
         ],
+        windows = ["//base"],
     ),
 )
 
@@ -99,6 +100,7 @@ mozc_cc_library(
             ":system_util",
             "@com_google_absl//absl/flags:parse",
         ],
+        windows = ["//base"],
     ),
 )
 
