@@ -40,7 +40,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_converter.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 #include "absl/time/time.h"

@@ -31,7 +31,6 @@
 
 #include <utility>
 
-#include "composer/key_parser.h"
 #include "composer/table.h"
 #include "testing/gunit.h"
 

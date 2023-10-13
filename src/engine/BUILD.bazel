@@ -328,5 +328,6 @@ mozc_cc_library(
         "//prediction:predictor_interface",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )

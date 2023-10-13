@@ -33,6 +33,7 @@
 
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 

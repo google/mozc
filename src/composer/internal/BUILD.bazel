@@ -68,6 +68,7 @@ mozc_cc_library(
         "//base/strings:unicode",
         "//composer:table",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -119,6 +120,7 @@ mozc_cc_test(
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -148,7 +150,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":composition_input",
-        "//composer:key_parser",
         "//composer:table",
         "//testing:gunit_main",
     ],
@@ -189,6 +190,7 @@ mozc_cc_test(
         "//composer:table",
         "//testing:gunit_main",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -230,7 +232,6 @@ mozc_cc_library(
     srcs = ["mode_switching_handler.cc"],
     hdrs = ["mode_switching_handler.h"],
     deps = [
-        "//base:logging",
         "//base:singleton",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
