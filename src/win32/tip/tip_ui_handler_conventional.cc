@@ -273,16 +273,17 @@ bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
     return false;
   }
 
-  RendererCommand::Point *top_left =
-      app_info->mutable_composition_target()->mutable_top_left();
-  top_left->set_x(text_rect.left);
-  top_left->set_y(text_rect.top);
-  app_info->mutable_composition_target()->set_position(0);
-  app_info->mutable_composition_target()->set_line_height(text_rect.bottom -
-                                                          text_rect.top);
+  RendererCommand::CharacterPosition *composition_target =
+      app_info->mutable_composition_target();
+  composition_target->set_position(0);
+
+  RendererCommand::Point *point = composition_target->mutable_top_left();
+  point->set_x(text_rect.left);
+  point->set_y(text_rect.top);
+  composition_target->set_line_height(text_rect.bottom - text_rect.top);
 
   RendererCommand::Rectangle *area =
-      app_info->mutable_composition_target()->mutable_document_area();
+      composition_target->mutable_document_area();
   area->set_left(document_rect.left);
   area->set_top(document_rect.top);
   area->set_right(document_rect.right);
