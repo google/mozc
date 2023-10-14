@@ -69,6 +69,11 @@ class TipRangeUtil {
   static HRESULT GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
                                 std::vector<InputScope> *input_scopes);
 
+  // Retrieves whether the specified |range| is for vertical writing or not.
+  // Returns the general result code.
+  static HRESULT IsVerticalWriting(ITfRange *range, TfEditCookie read_cookie,
+                                   bool *vertical_writing);
+
   // Checks whether or not |range_test| becomes a subset of |range_cover|.
   static bool IsRangeCovered(TfEditCookie edit_cookie, ITfRange *range_test,
                              ITfRange *range_cover);

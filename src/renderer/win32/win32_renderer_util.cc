@@ -763,9 +763,12 @@ double LayoutManager::GetScalingFactor(HWND window_handle) const {
 
 LayoutManager::WritingDirection LayoutManager::GetWritingDirection(
     const commands::RendererCommand_ApplicationInfo &app_info) {
-  // TODO(https://github.com/google/mozc/issues/362): Implement this for TSF.
-  // When fixing this, we also need to update Chromium.
-  //   https://chromium-review.googlesource.com/c/chromium/src/+/4023235
+  const commands::RendererCommand::CharacterPosition &composition_target =
+      app_info.composition_target();
+  if (composition_target.has_vertical_writing()) {
+    return composition_target.vertical_writing() ? VERTICAL_WRITING
+                                                 : HORIZONTAL_WRITING;
+  }
   return WRITING_DIRECTION_UNSPECIFIED;
 }
 

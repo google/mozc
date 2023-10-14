@@ -277,10 +277,39 @@ bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
       app_info->mutable_composition_target();
   composition_target->set_position(0);
 
+  bool vertical_writing = false;
+  if (SUCCEEDED(TipRangeUtil::IsVerticalWriting(
+          target_range.get(), read_cookie, &vertical_writing))) {
+    composition_target->set_vertical_writing(vertical_writing);
+  }
+
   RendererCommand::Point *point = composition_target->mutable_top_left();
-  point->set_x(text_rect.left);
-  point->set_y(text_rect.top);
-  composition_target->set_line_height(text_rect.bottom - text_rect.top);
+  if (vertical_writing) {
+    // [Vertical Writing]
+    //    |
+    //    +-----< (pt)
+    //    |     |
+    //    |-----+
+    //    | (cLineHeight)
+    //    |
+    //    |
+    //    v
+    //   (Base Line)
+    point->set_x(text_rect.right);
+    point->set_y(text_rect.top);
+    composition_target->set_line_height(text_rect.right - text_rect.left);
+  } else {
+    // [Horizontal Writing]
+    //    (pt)
+    //     v_____
+    //     |     |
+    //     |     | (cLineHeight)
+    //     |     |
+    //   --+-----+---------->  (Base Line)
+    point->set_x(text_rect.left);
+    point->set_y(text_rect.top);
+    composition_target->set_line_height(text_rect.bottom - text_rect.top);
+  }
 
   RendererCommand::Rectangle *area =
       composition_target->mutable_document_area();

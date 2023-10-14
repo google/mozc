@@ -76,6 +76,9 @@ message RendererCommand {
     optional Point top_left = 2;
     optional uint32 line_height = 3;
     optional Rectangle document_area = 4;
+    // A quick solution for vertical writing support.
+    // Strictly speaking, this is not part of IMECHARPOSITION in IMM32.
+    optional bool vertical_writing = 5;
   }
 
   // Visual information about mode indicator.
