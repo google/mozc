@@ -179,7 +179,7 @@
           }],
           ['compiler_target=="clang" or compiler_target=="gcc"', {
             'cflags_cc': [
-              '-std=c++17',
+              '-std=c++20',
             ],
           }],
         ],
@@ -199,7 +199,7 @@
           }],
           ['compiler_host=="clang" or compiler_host=="gcc"', {
             'cflags_cc': [
-              '-std=c++17',
+              '-std=c++20',
             ],
           }],
         ],
@@ -262,7 +262,7 @@
             '-Wno-covered-switch-default',
             '-Wno-unnamed-type-template-args',
           ],
-          'CLANG_CXX_LANGUAGE_STANDARD': 'c++17',
+          'CLANG_CXX_LANGUAGE_STANDARD': 'c++20',
           'CLANG_CXX_LIBRARY': 'libc++',
           'OTHER_CPLUSPLUSFLAGS': [
             '$(inherited)',

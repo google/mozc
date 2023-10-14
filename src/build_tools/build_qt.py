@@ -261,6 +261,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     raise ValueError(f'Only Qt6 is supported but specified {qt_version}.')
 
   qt_configure_options = ['-opensource',
+                          '-c++std', 'c++20',
                           '-silent',
                           '-no-cups',
                           '-no-dbus',
@@ -306,8 +307,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
           '-DCMAKE_OSX_ARCHITECTURES:STRING=' + ';'.join(macos_cpus),
       ]
   elif is_windows():
-    qt_configure_options += ['-c++std', 'c++20',
-                             '-force-debug-info',
+    qt_configure_options += ['-force-debug-info',
                              '-ltcg',  # Note: ignored in debug build
                              '-no-freetype',
                              '-no-harfbuzz',
