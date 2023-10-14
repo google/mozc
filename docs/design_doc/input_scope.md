@@ -13,19 +13,18 @@ Starting with Windows 8, InputScope is the recommended way to set the conversion
 > property of .NET framework. InputScope is recommended in order to set the IME mode
 > under per user mode in Windows 8. - "[Switch text input changed from per-thread to per-user](http://msdn.microsoft.com/en-us/library/windows/desktop/hh994466.aspx)"
 
-Microsoft IME shipped with Windows Vista and later actually behaves like this. As for Mozc, Mozc client’s should behave like Microsoft IME 2012 in terms of open/close mode and conversion mode for each InputScope.
+Microsoft IME shipped with Windows Vista and later actually behaves like this. As for Mozc, Mozc client’s should behave like MS-IME shipped with Windows 11 22H2 in terms of open/close mode and conversion mode for each InputScope.
 This is the first step to support such context-awareness. As future work, Mozc should be able to behave more appropriately and adoptively based on each input context.
 
 Design Highlights
 -----------------
 
-When an input field is focused and it has InputScope, Mozc should change its on/off mode and conversion mode as follows.
+When an input field is focused and it has InputScope, Mozc should change its on/off mode and conversion mode as follows to be compatible with MS-IME shipped with Windows 11 22H2.
 
 | InputScope | Expected Input Mode |
 |:-----------|:--------------------|
-| `IS_URL`, `IS_EMAIL_USERNAME`, `IS_EMAIL_SMTPEMAILADDRESS`, `IS_DIGITS`, `IS_NUMBER`, `IS_PASSWORD`, `IS_TELEPHONE_FULLTELEPHONENUMBER`, `IS_TELEPHONE_COUNTRYCODE`, `IS_TELEPHONE_AREACODE`, `IS_TELEPHONE_LOCALNUMBER`, `IS_TIME_FULLTIME`, `IS_TIME_HOUR`, `IS_TIME_MINORSEC` | Direct Mode (IME Off) |
+| `IS_URL`, `IS_EMAIL_USERNAME`, `IS_EMAIL_SMTPEMAILADDRESS`, `IS_DIGITS`, `IS_NUMBER`, `IS_PASSWORD`, `IS_TELEPHONE_FULLTELEPHONENUMBER`, `IS_TELEPHONE_COUNTRYCODE`, `IS_TELEPHONE_AREACODE`, `IS_TELEPHONE_LOCALNUMBER`, `IS_TIME_FULLTIME`, `IS_TIME_HOUR`, `IS_TIME_MINORSEC`, `IS_ALPHANUMERIC_HALFWIDTH` | Direct Mode (IME Off) |
 | `IS_HIRAGANA` | Hiragana Mode (IME On) |
-| `IS_ALPHANUMERIC_HALFWIDTH` | Halfwidth Alphanumeric Mode (IME On) |
 | `IS_NUMBER_FULLWIDTH`, `IS_ALPHANUMERIC_FULLWIDTH` | Fullwidth Alphanumeric Mode (IME On) |
 | `IS_KATAKANA_HALFWIDTH` | Halfwidth Katakana Mode (IME On) |
 | `IS_KATAKANA_FULLWIDTH` | Fullwidth Katakana Mode (IME On) |
@@ -94,7 +93,9 @@ Available only for users who are using Mozc in TSF Mode. This means that only Wi
 Release History
 ---------------
 
-  * Initial release: 1.11.1490.10x dev on Windows
+  * 1.11.1490.10x: Initial release
+  * 2.29.5250.10x
+    * [#818](https://github.com/google/mozc/issues/818): Remapped `IS_ALPHANUMERIC_HALFWIDTH` to direct mode
 
 Reference
 ---------
