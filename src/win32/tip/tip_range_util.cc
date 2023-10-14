@@ -55,6 +55,31 @@ constexpr GUID kGuidPropInputscope = {
     0x4a5b,
     {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
 
+HRESULT GetReadOnlyAppProperty(ITfRange *range, TfEditCookie read_cookie,
+                               const GUID &guid, VARIANT *variant_addr) {
+  HRESULT result = S_OK;
+  wil::com_ptr_nothrow<ITfContext> context;
+  result = range->GetContext(&context);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  wil::com_ptr_nothrow<ITfReadOnlyProperty> readonly_property;
+  result = context->GetAppProperty(guid, &readonly_property);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (!readonly_property) {
+    return E_FAIL;
+  }
+
+  result = readonly_property->GetValue(read_cookie, range, variant_addr);
+  if (FAILED(result)) {
+    return result;
+  }
+  return S_OK;
+}
+
 }  // namespace
 
 HRESULT TipRangeUtil::SetSelection(ITfContext *context,
@@ -164,24 +189,11 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   }
   input_scopes->clear();
 
-  HRESULT result = S_OK;
-  wil::com_ptr_nothrow<ITfContext> context;
-  result = range->GetContext(&context);
-  if (FAILED(result)) {
-    return result;
-  }
-
-  wil::com_ptr_nothrow<ITfReadOnlyProperty> readonly_property;
-  result = context->GetAppProperty(kGuidPropInputscope, &readonly_property);
-  if (FAILED(result)) {
-    return result;
-  }
-  if (!readonly_property) {
-    return E_FAIL;
-  }
   wil::unique_variant variant;
-  result = readonly_property->GetValue(read_cookie, range,
-                                       variant.reset_and_addressof());
+  HRESULT result = GetReadOnlyAppProperty(range,
+                                          read_cookie,
+                                          kGuidPropInputscope,
+                                          variant.reset_and_addressof());
   if (FAILED(result)) {
     return result;
   }
