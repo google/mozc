@@ -42,6 +42,8 @@
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/algorithm/container.h"
+#include "absl/base/attributes.h"
+#include "absl/base/const_init.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/escaping.h"

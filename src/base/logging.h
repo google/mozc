@@ -358,11 +358,6 @@ class NullLogFinalizer {
 #endif  // MOZC_LOG_PROTOBUF
 
 
-#ifndef DVLOG_IF
-#define DVLOG_IF(verboselevel, condition) \
-  DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
-#endif  // !DVLOG_IF
-
 #ifndef MOZC_LOG_PROTOBUF
 #define MOZC_LOG_PROTOBUF(message) (message)
 #endif  // !MOZC_LOG_PROTOBUF

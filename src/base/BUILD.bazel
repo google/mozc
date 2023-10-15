@@ -58,6 +58,7 @@ mozc_cc_library(
         ":system_util",
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
+        android = ["//base"],
         client = [
             ":file_util",
             ":logging",
@@ -71,6 +72,7 @@ mozc_cc_library(
             ":logging",
             "@com_google_absl//absl/flags:parse",
         ],
+        windows = ["//base"],
     ),
 )
 
@@ -84,6 +86,7 @@ mozc_cc_library(
     deps = [
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
+        android = ["//base"],
         client = [
             ":file_util",
             ":logging",
@@ -99,6 +102,7 @@ mozc_cc_library(
             ":system_util",
             "@com_google_absl//absl/flags:parse",
         ],
+        windows = ["//base"],
     ),
 )
 
@@ -134,10 +138,9 @@ mozc_cc_library(
     ),
     deps = mozc_select(
         default = [
-            "//base",
-            "//base:logging_extensions",
             "@com_google_absl//absl/log",
             "@com_google_absl//absl/log:check",
+            "//base:vlog",
         ],
         oss = [
             ":clock",

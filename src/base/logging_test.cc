@@ -76,11 +76,6 @@ TEST(LoggingTest, CompileTest) {
   VLOG_IF(2, false) << "";
   VLOG_IF(3, false) << "";
 
-  DVLOG_IF(0, false) << "";
-  DVLOG_IF(1, false) << "";
-  DVLOG_IF(2, false) << "";
-  DVLOG_IF(3, false) << "";
-
   CHECK(true) << "";
   CHECK_EQ(true, true) << "";
   CHECK_NE(true, false) << "";

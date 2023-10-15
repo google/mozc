@@ -40,7 +40,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/random/distributions.h"
 #include "absl/strings/str_format.h"

@@ -39,11 +39,13 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {

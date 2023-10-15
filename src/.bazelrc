@@ -1,9 +1,9 @@
 # Common options
-build --cxxopt "-std=c++17"
+build --cxxopt "-std=c++20"
 build --copt "-funsigned-char"
 build --copt "-Wno-sign-compare"
 build --copt "-Wno-char-subscripts"
-build --host_cxxopt "-std=c++17"
+build --host_cxxopt "-std=c++20"
 build --host_copt "-funsigned-char"
 build --host_copt "-Wno-sign-compare"
 build --host_copt "-Wno-char-subscripts"

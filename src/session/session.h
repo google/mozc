@@ -45,6 +45,7 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
+#include "spelling/spellchecker_service_interface.h"
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"

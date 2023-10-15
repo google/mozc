@@ -55,6 +55,38 @@ constexpr GUID kGuidPropInputscope = {
     0x4a5b,
     {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
 
+// TSATTRID_Text_VerticalWriting
+constexpr GUID kGuidAttrIdTextVerticalWriting = {
+    0x6bba8195,
+    0x046f,
+    0x4ea9,
+    {0xb3, 0x11, 0x97, 0xfd, 0x66, 0xc4, 0x27, 0x4b}};
+
+HRESULT GetReadOnlyAppProperty(ITfRange *range, TfEditCookie read_cookie,
+                               const GUID &guid, VARIANT *variant_addr) {
+  HRESULT result = S_OK;
+  wil::com_ptr_nothrow<ITfContext> context;
+  result = range->GetContext(&context);
+  if (FAILED(result)) {
+    return result;
+  }
+
+  wil::com_ptr_nothrow<ITfReadOnlyProperty> readonly_property;
+  result = context->GetAppProperty(guid, &readonly_property);
+  if (FAILED(result)) {
+    return result;
+  }
+  if (!readonly_property) {
+    return E_FAIL;
+  }
+
+  result = readonly_property->GetValue(read_cookie, range, variant_addr);
+  if (FAILED(result)) {
+    return result;
+  }
+  return S_OK;
+}
+
 }  // namespace
 
 HRESULT TipRangeUtil::SetSelection(ITfContext *context,
@@ -164,24 +196,11 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   }
   input_scopes->clear();
 
-  HRESULT result = S_OK;
-  wil::com_ptr_nothrow<ITfContext> context;
-  result = range->GetContext(&context);
-  if (FAILED(result)) {
-    return result;
-  }
-
-  wil::com_ptr_nothrow<ITfReadOnlyProperty> readonly_property;
-  result = context->GetAppProperty(kGuidPropInputscope, &readonly_property);
-  if (FAILED(result)) {
-    return result;
-  }
-  if (!readonly_property) {
-    return E_FAIL;
-  }
   wil::unique_variant variant;
-  result = readonly_property->GetValue(read_cookie, range,
-                                       variant.reset_and_addressof());
+  HRESULT result = GetReadOnlyAppProperty(range,
+                                          read_cookie,
+                                          kGuidPropInputscope,
+                                          variant.reset_and_addressof());
   if (FAILED(result)) {
     return result;
   }
@@ -199,6 +218,26 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   input_scopes->assign(input_scopes_buffer,
                        input_scopes_buffer + num_input_scopes);
   ::CoTaskMemFree(input_scopes_buffer);
+  return S_OK;
+}
+
+HRESULT TipRangeUtil::IsVerticalWriting(ITfRange *range,
+                                        TfEditCookie read_cookie,
+                                        bool *vertical_writing) {
+  if (vertical_writing == nullptr) {
+    return E_FAIL;
+  }
+  *vertical_writing = false;
+
+  wil::unique_variant variant;
+  HRESULT result = GetReadOnlyAppProperty(range,
+                                          read_cookie,
+                                          kGuidAttrIdTextVerticalWriting,
+                                          variant.reset_and_addressof());
+  if (FAILED(result)) {
+    return result;
+  }
+  *vertical_writing = (variant.vt == VT_BOOL && variant.boolVal != 0);
   return S_OK;
 }
 

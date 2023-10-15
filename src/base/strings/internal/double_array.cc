@@ -52,7 +52,6 @@ LookupResult LookupDoubleArray(const DoubleArray *array,
   int n = 0;
   int b = array[0].base;
   uint32_t p = 0;
-  uint32_t num = 0;
   LookupResult result = {0};
 
   for (size_t i = 0; i < key.size(); ++i) {
@@ -61,7 +60,6 @@ LookupResult LookupDoubleArray(const DoubleArray *array,
     if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
       result.seekto = i;
       result.index = -n - 1;
-      ++num;
     }
     p = b + static_cast<uint8_t>(key[i]) + 1;
     if (static_cast<uint32_t>(b) == array[p].check) {

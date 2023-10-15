@@ -37,7 +37,6 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/file_stream.h"
-#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -47,7 +46,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
-#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/random/random.h"

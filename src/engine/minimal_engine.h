@@ -40,6 +40,7 @@
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 

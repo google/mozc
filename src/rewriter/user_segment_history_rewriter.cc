@@ -903,8 +903,9 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
       continue;
     }
 
-    DVLOG_IF(2, (segment->candidates_size() < max_candidates_size))
-        << "Cannot expand candidates. ignored. Rewrite may be failed";
+    if (segment->candidates_size() < max_candidates_size) {
+      DVLOG(2) << "Cannot expand candidates. ignored. Rewrite may be failed";
+    }
 
     // for each all candidates expanded
     std::vector<ScoreCandidate> scores;
