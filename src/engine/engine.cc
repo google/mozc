@@ -51,7 +51,6 @@
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 #include "engine/user_data_manager_interface.h"
-#include "ngram/neg_log_prob.h"
 #include "prediction/dictionary_predictor.h"
 #include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
