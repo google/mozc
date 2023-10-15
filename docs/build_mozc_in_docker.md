@@ -172,6 +172,21 @@ This command reverts the above change.
 git update-index --no-assume-unchanged src/config.bzl
 ```
 
+### Clean build cache
+
+You may have some build errors when you update build environment or configurations.
+In that case, cleaing the build cache possibly addresses the problem.
+
+```
+bazel clean
+```
+
+To clean the cache deeply, add the `--expunge` option.
+
+```
+bazel clean --expunge
+```
+
 ## Build Mozc library for Android:
 
 Client code for Android apk is deprecated.
