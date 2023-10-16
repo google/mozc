@@ -88,6 +88,7 @@ namespace {
 using ::mozc::commands::Request;
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::Token;
+using ::mozc::spelling::TypeCorrectedQuery;
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
 // Number of prediction calls should be minimized.
@@ -1353,34 +1354,48 @@ void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
 
     std::vector<Result> corrected_results;
 
-    const UnigramConfig &unigram_config = GetUnigramConfig(request);
-    if (key_len >= unigram_config.min_key_len) {
-      const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
-      (this->*unigram_fn)(corrected_request, corrected_segments,
-                          &corrected_results);
-    }
+    // Since COMPLETION query already performs predictive lookup,
+    // no need to run UNIGRAM and BIGRAM lookup.
+    const bool is_realtime_only = (query.type & TypeCorrectedQuery::COMPLETION);
 
-    if (base_selected_types & REALTIME) {
-      constexpr int kRealtimeSize = 2;
+    if (is_realtime_only) {
+      constexpr int kRealtimeSize = 1;
       AggregateRealtimeConversion(corrected_request, kRealtimeSize,
                                   corrected_segments, &corrected_results);
-    }
 
-    if (base_selected_types & BIGRAM) {
-      AggregateBigramPrediction(corrected_request, corrected_segments,
-                                Segment::Candidate::SOURCE_INFO_NONE,
-                                &corrected_results);
+    } else {
+      const UnigramConfig &unigram_config = GetUnigramConfig(request);
+      if (key_len >= unigram_config.min_key_len) {
+        const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
+        (this->*unigram_fn)(corrected_request, corrected_segments,
+                            &corrected_results);
+      }
+
+      if (base_selected_types & REALTIME) {
+        constexpr int kRealtimeSize = 2;
+        AggregateRealtimeConversion(corrected_request, kRealtimeSize,
+                                    corrected_segments, &corrected_results);
+      }
+
+      if (base_selected_types & BIGRAM) {
+        AggregateBigramPrediction(corrected_request, corrected_segments,
+                                  Segment::Candidate::SOURCE_INFO_NONE,
+                                  &corrected_results);
+      }
     }
 
     // Appends the result with TYPING_CORRECTION attribute.
     for (Result &result : corrected_results) {
       // If the correction is a pure kana modifier insensitive correction,
       // typing correction annotation is not necessary.
-      if (!query.is_kana_modifier_insensitive_only) {
+      if (!(query.type & TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY) &&
+          query.type & TypeCorrectedQuery::CORRECTION) {
         result.types |= TYPING_CORRECTION;
       }
       // bias = hyp_score - base_score, so larger is better.
-      result.wcost -= 500 * query.bias;
+      // bias is computed in log10 domain, so we need to use the different
+      // scale factor. 500 * log(10) = ~1150.
+      result.wcost -= 1150 * query.bias;
       results->emplace_back(std::move(result));
     }
   }

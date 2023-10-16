@@ -78,6 +78,8 @@
 namespace mozc {
 namespace prediction {
 
+using ::mozc::spelling::TypeCorrectedQuery;
+
 class DictionaryPredictionAggregatorTestPeer {
  public:
   DictionaryPredictionAggregatorTestPeer(
