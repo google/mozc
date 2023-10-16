@@ -95,6 +95,8 @@ mozc_cc_library(
         "//testing:gunit",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -150,9 +152,11 @@ mozc_cc_library(
         "//base:obfuscator_support",
         "//base:status",
         "//base:util",
+        "//base/protobuf",
         "//base/protobuf:message",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/numeric:bits",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -186,6 +190,7 @@ mozc_cc_binary(
         "//base:number_util",
         "//base:status",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -199,6 +204,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:obfuscator_support",
         "//base:util",
+        "//base/protobuf",
         "//base/protobuf:message",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
@@ -210,6 +216,7 @@ mozc_cc_test(
     srcs = ["dataset_reader_test.cc"],
     requires_full_emulation = False,
     deps = [
+        ":dataset_cc_proto",
         ":dataset_reader",
         ":dataset_writer",
         "//base:random",

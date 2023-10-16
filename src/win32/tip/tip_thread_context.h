@@ -47,9 +47,21 @@ class TipThreadContext {
   int32_t GetFocusRevision() const { return focus_revision_; }
   void IncrementFocusRevision();
 
+  void set_use_async_lock_in_key_handler(bool value) {
+    use_async_lock_in_key_handler_ = value;
+  }
+  bool use_async_lock_in_key_handler() const {
+    return use_async_lock_in_key_handler_;
+  }
+
  private:
   TipInputModeManager input_mode_manager_;
   int32_t focus_revision_ = 0;
+
+  // A workaround for MS Word's failure mode.
+  // See https://github.com/google/mozc/issues/819 for details.
+  // TODO(https://github.com/google/mozc/issues/821): Remove this workaround.
+  bool use_async_lock_in_key_handler_ = false;
 };
 
 }  // namespace tsf

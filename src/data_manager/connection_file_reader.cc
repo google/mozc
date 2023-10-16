@@ -29,8 +29,10 @@
 
 #include "data_manager/connection_file_reader.h"
 
+#include <istream>
 #include <string>
 
+#include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 

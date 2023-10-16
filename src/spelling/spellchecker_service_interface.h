@@ -30,6 +30,7 @@
 #ifndef MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
 #define MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -46,7 +47,17 @@ using commands::CheckSpellingRequest;
 using commands::CheckSpellingResponse;
 
 struct TypeCorrectedQuery {
+  // Bit field of correction type.
+  enum CorrectionType {
+    NO_CORRECTION = 0,
+    CORRECTION = 1,                    // Normal typing correction.
+    COMPLETION = 2,                    // complete the rest of words/phrases.
+    KANA_MODIFIER_INSENTIVE_ONLY = 4,  // Pure katukou conversion.
+  };
+
   std::string correction;
+
+  uint8_t type = NO_CORRECTION;
 
   // `score` is the score diff against identity score.
   // score = hyp_score - identity_score.
@@ -61,8 +72,6 @@ struct TypeCorrectedQuery {
   // correction. So when the top is a pure kana modifier insensitive correction,
   // uses the top score as the base score.
   float bias = 0.0;
-
-  bool is_kana_modifier_insensitive_only = false;
 };
 
 class SpellCheckerServiceInterface {

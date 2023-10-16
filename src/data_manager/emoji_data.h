@@ -30,7 +30,10 @@
 #ifndef MOZC_DATA_MANAGER_EMOJI_DATA_H_
 #define MOZC_DATA_MANAGER_EMOJI_DATA_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
+#include <utility>
 
 #include "base/container/serialized_string_array.h"
 

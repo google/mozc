@@ -29,13 +29,14 @@
 
 #include "data_manager/data_manager.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <new>
 #include <optional>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -46,7 +47,9 @@
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"

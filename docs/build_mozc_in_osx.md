@@ -16,6 +16,7 @@ cd mozc/src
 
 python3 build_tools/update_deps.py
 
+# CMake is also required to build Qt.
 python3 build_tools/build_qt.py --release --confirm_license
 
 MOZC_QT_PATH=${PWD}/third_party/qt bazel build package --config oss_macos -c opt
@@ -48,6 +49,7 @@ Building on Mac requires the following software.
 * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
 * Python 3.9 or later with the following pip module.
   * `requests`
+* CMake 3.18.4 or later (to build Qt6)
 
 ## Get the Code
 
@@ -101,6 +103,12 @@ python3 build_tools/build_qt.py --release --debug --confirm_license --macos_cpus
 ```
 
 You can skip this process if you have already installed Qt prebuilt binaries.
+
+CMake is also required to build Qt. If you use `brew`, you can install `cmake` as follows.
+
+```
+brew install cmake
+```
 
 -----
 

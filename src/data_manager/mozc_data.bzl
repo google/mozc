@@ -447,6 +447,7 @@ def mozc_dataset(
             "//converter:gen_segmenter_bitarray",
             "//:macro",
             "@com_google_absl//absl/flags:flag",
+            "@com_google_absl//absl/strings",
         ],
     )
 

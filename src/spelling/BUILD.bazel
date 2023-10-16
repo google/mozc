@@ -149,6 +149,8 @@ mozc_cc_test(
     deps = [
         ":rulebased_lm",
         ":spellchecker_service",
+        ":spellchecker_service_interface",
+        "//base:file_stream",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
@@ -195,13 +197,15 @@ mozc_cc_library(
     hdrs = ["rulebased_lm.h"],
     deps = [
         "//base:file_stream",
+        "//base:hash",
         "//base:logging",
+        "//base:mmap",
         "//base:util",
-        "//storage/louds:louds_trie",
-        "//storage/louds:louds_trie_builder",
+        "//storage:existence_filter",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -213,7 +217,10 @@ mozc_cc_test(
         ":rulebased_lm",
         "//base:file_stream",
         "//base:file_util",
+        "//base:hash",
+        "//storage:existence_filter",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )

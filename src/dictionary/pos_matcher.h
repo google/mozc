@@ -108,7 +108,7 @@ class PosMatcher {
 
   const uint16_t *data_;
 
-#include "dictionary/pos_matcher_impl.inc"
+#include "dictionary/pos_matcher_impl.inc"  // IWYU pragma: export
 };
 
 constexpr bool PosMatcher::IsRuleInTable(const int index,

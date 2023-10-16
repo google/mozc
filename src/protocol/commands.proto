@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 39
+// Next ID: 42
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -603,6 +603,16 @@ message DecoderExperimentParams {
   optional float typing_correction_identity_score_max_diff = 21 [default = 0.0];
   optional float typing_correction_top_score_max_diff = 22 [default = 1.0];
   optional int32 typing_correction_conversion_cost_max_diff = 38 [default = 0];
+
+  // Parameters for completion
+  // The diff against the identity score.
+  optional float typing_completion_identity_score_max_diff = 39
+      [default = -1.0];
+  // The maximum number of characters to complete. If zero, completion is
+  // disabled.
+  optional int32 typing_completion_max_length = 40 [default = 0];
+  // Starts the completion when |query| >= start_length.
+  optional int32 typing_completion_start_length = 41 [default = 4];
 
   reserved 16;  // Deprecated use_typing_correction_diff_cost
   reserved 19;  // Deprecated typing_correction_cost_offset
