@@ -506,6 +506,15 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
   auto edit_session = MakeComPtr<SyncEditSessionImpl>(text_service, context,
                                                       std::move(new_output));
 
+  TipThreadContext *thread_context = text_service->GetThreadContext();
+
+  if (mode == kSync && thread_context->use_async_lock_in_key_handler()) {
+    // A workaround for MS Word's failure mode.
+    // See https://github.com/google/mozc/issues/819 for details.
+    // TODO(https://github.com/google/mozc/issues/821): Remove this workaround.
+    mode = kAsync;
+  }
+
   DWORD edit_session_flag = TF_ES_READWRITE;
   switch (mode) {
     case kAsync:
@@ -526,6 +535,14 @@ bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
   const HRESULT hr = context->RequestEditSession(
       text_service->GetClientID(), edit_session.get(), edit_session_flag,
       &edit_session_result);
+
+  if (mode == kSync && edit_session_result == TF_E_SYNCHRONOUS) {
+    // A workaround for MS Word's failure mode.
+    // See https://github.com/google/mozc/issues/819 for details.
+    // TODO(https://github.com/google/mozc/issues/821): Remove this workaround.
+    thread_context->set_use_async_lock_in_key_handler(true);
+  }
+
   return SUCCEEDED(hr) && SUCCEEDED(edit_session_result);
 }
 
