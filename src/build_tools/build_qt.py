@@ -262,6 +262,7 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   qt_configure_options = ['-opensource',
                           '-c++std', 'c++20',
+                          '-optimize-size',
                           '-silent',
                           '-no-cups',
                           '-no-dbus',
