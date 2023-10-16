@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_reader.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -43,6 +44,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/random/distributions.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -93,36 +95,33 @@ TEST(DataSetReaderTest, InvalidMagicString) {
 
 TEST(DataSetReaderTest, BrokenMetadata) {
   DataSetReader r;
+  constexpr absl::string_view kContent = "content and metadata";
 
   // Only magic number, no metadata.
   EXPECT_FALSE(DataSetReader::VerifyChecksum(kTestMagicNumber));
   EXPECT_FALSE(r.Init(kTestMagicNumber, kTestMagicNumber));
 
   // Metadata size is too small.
-  std::string data(kTestMagicNumber);
-  data.append("content and metadata");
-  data.append(Util::SerializeUint64(0));
+  std::string data =
+      absl::StrCat(kTestMagicNumber, kContent, Util::SerializeUint64(0));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too small.
-  data = std::string(kTestMagicNumber);
-  data.append("content and metadata");
-  data.append(Util::SerializeUint64(4));
+  data = absl::StrCat(kTestMagicNumber, kContent, Util::SerializeUint64(4));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
   // Metadata size is too large.
-  data = std::string(kTestMagicNumber);
-  data.append("content and metadata");
-  data.append(Util::SerializeUint64(std::numeric_limits<uint64_t>::max()));
+  data =
+      absl::StrCat(kTestMagicNumber, kContent,
+                   Util::SerializeUint64(std::numeric_limits<uint64_t>::max()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 
-  // Metadata chunk is not a serialied protobuf.
-  data = std::string(kTestMagicNumber);
-  data.append("content and metadata");
-  data.append(Util::SerializeUint64(strlen("content and metadata")));
+  // Metadata chunk is not a serialized protobuf.
+  data = absl::StrCat(kTestMagicNumber, kContent,
+                      Util::SerializeUint64(kContent.size()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, kTestMagicNumber));
 }
@@ -140,7 +139,7 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     // Remove the metadata chunk at the bottom, which will be appended in each
     // test below.
     content = out.str();
-    const size_t metadata_size = w.metadata().SerializeAsString().size();
+    const size_t metadata_size = w.metadata().ByteSizeLong();
     content.erase(content.size() - metadata_size - 8);
   }
   {
@@ -151,9 +150,8 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     e->set_offset(content.size() + 3);  // Invalid offset
     e->set_size(kGoogle.size());
     const std::string &md_str = md.SerializeAsString();
-    std::string image = content;
-    image.append(md_str);
-    image.append(Util::SerializeUint64(md_str.size()));
+    std::string image =
+        absl::StrCat(content, md_str, Util::SerializeUint64(md_str.size()));
 
     DataSetReader r;
     EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
@@ -167,9 +165,8 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     e->set_offset(content.size());
     e->set_size(std::numeric_limits<uint64_t>::max());  // Too big size
     const std::string &md_str = md.SerializeAsString();
-    std::string image = content;
-    image.append(md_str);
-    image.append(Util::SerializeUint64(md_str.size()));
+    std::string image =
+        absl::StrCat(content, md_str, Util::SerializeUint64(md_str.size()));
 
     DataSetReader r;
     EXPECT_FALSE(DataSetReader::VerifyChecksum(image));
