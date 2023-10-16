@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>

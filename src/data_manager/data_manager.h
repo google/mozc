@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <iosfwd>
 #include <memory>

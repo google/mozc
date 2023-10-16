@@ -27,9 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <string>
+
 #include "base/init_mozc.h"
 #include "converter/gen_segmenter_bitarray.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace {
 #include "data_manager/oss/segmenter_inl.inc"

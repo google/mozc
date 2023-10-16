@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATASET_READER_H_
 #define MOZC_DATA_MANAGER_DATASET_READER_H_
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <utility>

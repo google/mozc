@@ -30,13 +30,15 @@
 #include "data_manager/dataset_reader.h"
 
 #include <cstdint>
-#include <iterator>
+#include <cstring>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <string>
 
 #include "base/random.h"
 #include "base/util.h"
+#include "data_manager/dataset.pb.h"
 #include "data_manager/dataset_writer.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
