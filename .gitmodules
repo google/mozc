@@ -19,3 +19,6 @@
 [submodule "src/third_party/wil"]
 	path = src/third_party/wil
 	url = https://github.com/microsoft/wil.git
+[submodule "src/third_party/protobuf-matchers"]
+	path = src/third_party/protobuf-matchers
+	url = https://github.com/inazarenko/protobuf-matchers.git
