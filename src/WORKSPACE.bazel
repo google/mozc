@@ -58,6 +58,11 @@ local_repository(
     path = "third_party/gtest",
 )
 
+# GMock matchers for protocol buffers
+local_repository(
+    name = "com_github_protobuf_matchers",
+    path = "third_party/protobuf-matchers",
+)
 
 # Bazel macOS build (1.1.3 2022-11-10)
 # https://github.com/bazelbuild/rules_apple/
