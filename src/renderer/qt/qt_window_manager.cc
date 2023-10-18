@@ -417,7 +417,15 @@ bool QtWindowManager::ShouldShowInfolistWindow(
 
 Rect QtWindowManager::GetMonitorRect(int x, int y) {
   QPoint point{x, y};
-  return GetRect(QGuiApplication::screenAt(point)->geometry());
+  const QScreen *screen = QGuiApplication::screenAt(point);
+  if (screen == nullptr) {
+    // (x, y) does not belong to any screen. Fall back to the primary screen.
+    // TODO: Return the nearest monitor rect instead.
+    // c.f. GetWorkingAreaFromPointImpl in win32_renderer_util.cc.
+    return GetRect(QGuiApplication::primaryScreen()->geometry());
+  }
+
+  return GetRect(screen->geometry());
 }
 
 void QtWindowManager::UpdateInfolistWindow(
