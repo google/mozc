@@ -217,11 +217,6 @@ TipInputModeManager::Action TipInputModeManager::OnSetFocus(
     }
   }
 
-  if (!new_input_scopes.empty() && (new_input_scopes == input_scope_)) {
-    // The same input scope is specified. Use the previous mode.
-    return kDoNothing;
-  }
-
   input_scope_ = std::move(new_input_scopes);
   mozc_state_ = GetOverriddenState(tsf_state_, input_scopes);
   if ((mozc_state_.open_close != prev_effective.open_close) ||

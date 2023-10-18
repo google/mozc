@@ -96,6 +96,7 @@ Release History
   * 1.11.1490.10x: Initial release
   * 2.29.5250.10x
     * [#818](https://github.com/google/mozc/issues/818): Remapped `IS_ALPHANUMERIC_HALFWIDTH` to direct mode
+    * [#826](https://github.com/google/mozc/issues/826): Reflect `InputFocus` on every focus change.
 
 Reference
 ---------
