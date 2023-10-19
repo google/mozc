@@ -213,6 +213,19 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
 #endif  // __linux__
   pid_t tmp_pid = 0;
 
+#ifdef __linux__
+  // Zombie Process Prevention
+  // If you start and close the mozc_tool,
+  // there are cases where the zombie process remains,
+  // so prevent it.
+   struct sigaction sa;
+   sa.sa_handler = SIG_IGN;
+   sa.sa_flags = SA_NOCLDWAIT;
+   if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+     LOG(ERROR) << "sigaction() failed: " << strerror(errno);
+   }
+#endif  // __linux__
+
   // Spawn new process.
   // NOTE:
   // posix_spawn returns 0 even if kMozcServer doesn't exist, because
