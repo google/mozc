@@ -185,9 +185,26 @@ class UserDictionary::TokensIndex {
           continue;
         }
 
-        // "抑制単語"
         if (entry.pos() == user_dictionary::UserDictionary::SUPPRESSION_WORD) {
+          // "抑制単語"
           suppression_dictionary_->AddEntry(reading, entry.value());
+        } else if (entry.pos() == user_dictionary::UserDictionary::NO_POS) {
+          // In theory NO_POS works without this implementation, as it is
+          // covered in the UserPos::GetTokens function. However, that function
+          // is depending on the user_pos_*.data in the dictionary and there
+          // will not be corresponding POS tag. To avoid invalid behavior, this
+          // special treatment is added here.
+          // "品詞なし"
+          const absl::string_view comment =
+              absl::StripAsciiWhitespace(entry.comment());
+          UserPos::Token token = {};
+          strings::Assign(token.key, entry.key());
+          strings::Assign(token.value, entry.value());
+          // NO_POS has '名詞サ変' id as in user_pos.def
+          user_pos_->GetPosIds("名詞サ変", &token.id);
+          strings::Assign(token.comment, comment);
+          token.attributes = UserPos::Token::SHORTCUT;
+          user_pos_tokens_.push_back(std::move(token));
         } else {
           tokens.clear();
           user_pos_->GetTokens(
