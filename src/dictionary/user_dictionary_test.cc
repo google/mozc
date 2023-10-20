@@ -584,17 +584,11 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
 
-    // SUGGESTION ONLY word is not handled as SHORTCUT word.
+    // SUGGESTION ONLY word is handled as SHORTCUT word.
     entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("suggest_only");
     entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
-
-    // NO POS word is handled as SHORTCUT word.
-    entry = dic->add_entries();
-    entry->set_key("key");
-    entry->set_value("no_pos");
-    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
 
     user_dic->Load(storage.GetProto());
   }
@@ -607,18 +601,13 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
   const uint16_t kUnknownId = pos_matcher.GetUnknownId();
   const Entry kExpected2[] = {
       {"key", "noun", kNounId, kNounId},
-      {"key", "no_pos", kUnknownId, kUnknownId},
-  };
-  const Entry kExpectedPrediction[] = {
-      {"key", "noun", kNounId, kNounId},
-      {"key", "no_pos", kUnknownId, kUnknownId},
       {"key", "suggest_only", kUnknownId, kUnknownId},
   };
 
   EXPECT_TRUE(TestLookupExactHelper(kExpected2, std::size(kExpected2), "key", 3,
                                     *user_dic));
-  EXPECT_TRUE(TestLookupPredictiveHelper(kExpectedPrediction,
-                             std::size(kExpectedPrediction), "ke", *user_dic));
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpected2, std::size(kExpected2),
+                                         "ke", *user_dic));
   EXPECT_TRUE(TestLookupPrefixHelper(kExpected2, std::size(kExpected2),
                                      "keykey", 3, *user_dic));
 }
