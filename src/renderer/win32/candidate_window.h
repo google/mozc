@@ -77,6 +77,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   BEGIN_MSG_MAP_EX(CandidateWindow)
   MSG_WM_CREATE(OnCreate)
   MSG_WM_DESTROY(OnDestroy)
+  MSG_WM_DPICHANGED(OnDpiChanged)
   MSG_WM_ERASEBKGND(OnEraseBkgnd)
   MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
   MSG_WM_LBUTTONDOWN(OnLButtonDown)
@@ -93,6 +94,7 @@ class CandidateWindow : public ATL::CWindowImpl<CandidateWindow, ATL::CWindow,
   ~CandidateWindow();
   LRESULT OnCreate(LPCREATESTRUCT create_struct);
   void OnDestroy();
+  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
   void OnLButtonDown(UINT nFlags, CPoint point);

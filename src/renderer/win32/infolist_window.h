@@ -70,6 +70,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
 
   BEGIN_MSG_MAP_EX(InfolistWindow)
   MSG_WM_DESTROY(OnDestroy)
+  MSG_WM_DPICHANGED(OnDpiChanged)
   MSG_WM_ERASEBKGND(OnEraseBkgnd)
   MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
   MSG_WM_SETTINGCHANGE(OnSettingChange)
@@ -83,6 +84,7 @@ class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
   InfolistWindow &operator=(const InfolistWindow &) = delete;
   ~InfolistWindow();
   void OnDestroy();
+  void OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect);
   BOOL OnEraseBkgnd(WTL::CDCHandle dc);
   void OnGetMinMaxInfo(MINMAXINFO *min_max_info);
   void OnPaint(WTL::CDCHandle dc);
