@@ -262,7 +262,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   qt_configure_options = ['-opensource',
                           '-c++std', 'c++20',
-                          '-optimize-size',
                           '-silent',
                           '-no-cups',
                           '-no-dbus',
@@ -361,6 +360,9 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += ['-debug']
   elif args.release:
     qt_configure_options += ['-release']
+
+  if args.release:
+    qt_configure_options += ['-optimize-size']
 
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()
