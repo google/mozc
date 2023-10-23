@@ -27,10 +27,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-品詞なし	 NO_POS	*	名詞,サ変接続,*,*,*,*
+品詞なし	NO_POS	*	名詞,サ変接続,*,*,*,*
 名詞	NOUN	*	名詞,一般,*,*,*,*
 短縮よみ	ABBREVIATION	*	特殊,短縮よみ
-サジェストのみ	 SUGGESTION_ONLY	*	特殊,サジェストのみ
+サジェストのみ	SUGGESTION_ONLY	*	特殊,サジェストのみ
 固有名詞	PROPER_NOUN	*	名詞,固有名詞,一般,*,*,*
 人名	PERSONAL_NAME	*	名詞,固有名詞,人名,一般,*,*
 姓	FAMILY_NAME	*	名詞,固有名詞,人名,姓,*,*
@@ -38,7 +38,7 @@
 組織	ORGANIZATION_NAME	*	名詞,固有名詞,組織,*,*,*
 地名	PLACE_NAME	*	名詞,固有名詞,地域,一般,*,*
 名詞サ変	SA_IRREGULAR_CONJUGATION_NOUN	*	名詞,サ変接続,*,*,*,*
-名詞形動 ADJECTIVE_VERBAL_NOUN	*	名詞,形容動詞語幹,*,*,*,*
+名詞形動	ADJECTIVE_VERBAL_NOUN	*	名詞,形容動詞語幹,*,*,*,*
 数	NUMBER	*	名詞,数,アラビア数字
 アルファベット	ALPHABET	*	記号,アルファベット,*,*,*,*
 記号	SYMBOL	*	記号,一般,*,*,*,*

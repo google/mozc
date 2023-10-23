@@ -291,6 +291,10 @@ void CandidateWindow::OnDestroy() {
   ::PostQuitMessage(0);
 }
 
+void CandidateWindow::OnDpiChanged(UINT dpiX, UINT dpiY, RECT *rect) {
+  metrics_changed_ = true;
+}
+
 BOOL CandidateWindow::OnEraseBkgnd(CDCHandle dc) {
   // We do not have to erase background
   // because all pixels in client area will be drawn in the DoPaint method.

@@ -35,6 +35,7 @@ option java_outer_classname = "ProtoUserDictionaryStorage";
 option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
 
 message UserDictionary {
+  // LINT.IfChange
   enum PosType {
     // Use this when the POS tag is not provided or unknown.
     NO_POS = 0;  // "品詞なし"
@@ -89,7 +90,9 @@ message UserDictionary {
 
     SUPPRESSION_WORD = 44;  // "抑制単語"
   }
-
+  // LINT.ThenChange(
+  //     //dictionary/user_dictionary_util.cc
+  // )
   // ID of this dictionary
   optional uint64 id = 1 [default = 0, jstype = JS_STRING];
 

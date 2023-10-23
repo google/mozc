@@ -37,7 +37,7 @@ with dropping unnecessary features to minimize the installer size.
 
 By default, this script assumes that Qt archives are stored as
 
-  src/third_party_cache/qtbase-everywhere-src-6.5.3.tar.xz
+  src/third_party_cache/qtbase-everywhere-src-6.6.0.tar.xz
 
 and Qt src files that are necessary to build Mozc will be checked out into
 
@@ -69,7 +69,7 @@ ABS_QT_SRC_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt_src')
 ABS_QT_DEST_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'qt')
 # The archive filename should be consistent with update_deps.py.
 ABS_QT6_ARCHIVE_PATH = ABS_MOZC_SRC_DIR.joinpath(
-    'third_party_cache', 'qtbase-everywhere-src-6.5.3.tar.xz')
+    'third_party_cache', 'qtbase-everywhere-src-6.6.0.tar.xz')
 ABS_DEFAULT_NINJA_DIR = ABS_MOZC_SRC_DIR.joinpath('third_party', 'ninja')
 
 
@@ -262,7 +262,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
 
   qt_configure_options = ['-opensource',
                           '-c++std', 'c++20',
-                          '-optimize-size',
                           '-silent',
                           '-no-cups',
                           '-no-dbus',
@@ -297,7 +296,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
                           '-no-feature-sqlmodel',
                           '-no-feature-sspi',
                           '-no-feature-stringlistmodel',
-                          '-no-feature-systemsemaphore',
                           '-no-feature-tabletevent',
                           '-no-feature-testlib',
                           '-no-feature-textbrowser',
@@ -361,6 +359,9 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += ['-debug']
   elif args.release:
     qt_configure_options += ['-release']
+
+  if args.release:
+    qt_configure_options += ['-optimize-size']
 
   qt_src_dir = pathlib.Path(args.qt_src_dir).resolve()
   qt_dest_dir = pathlib.Path(args.qt_dest_dir).resolve()

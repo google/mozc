@@ -29,6 +29,7 @@
 
 #include "dictionary/user_pos.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -65,7 +66,17 @@ TEST_F(UserPosTest, UserPosBasicTest) {
   std::vector<std::string> pos_list;
   user_pos_->GetPosList(&pos_list);
   EXPECT_FALSE(pos_list.empty());
-
+  // test contains
+  EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "名詞サ変") !=
+              pos_list.end());
+  EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "サジェストのみ") !=
+              pos_list.end());
+  EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "短縮よみ") !=
+              pos_list.end());
+  EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "抑制単語") !=
+              pos_list.end());
+  EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "品詞なし") !=
+              pos_list.end());
   uint16_t id = 0;
   for (size_t i = 0; i < pos_list.size(); ++i) {
     EXPECT_TRUE(user_pos_->IsValidPos(pos_list[i]));
