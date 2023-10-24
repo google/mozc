@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "protocol/user_dictionary_storage.pb.h"
-#include "rewriter/rewriter_interface.h"
 #ifndef NO_USAGE_REWRITER
 
 #include "rewriter/usage_rewriter.h"
