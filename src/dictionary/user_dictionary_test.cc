@@ -252,37 +252,38 @@ class UserDictionaryTest : public testing::TestWithTempUserProfile {
     dic.LookupPredictive(key, convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
-      return collector.entries().empty();
+      return (collector.entries().empty());
+    } else {
+      return !collector.entries().empty() &&
+             CompareEntries(expected, expected_size, collector.entries());
     }
-    return (!collector.entries().empty() &&
-            CompareEntries(expected, expected_size, collector.entries()));
   }
 
-  void TestLookupPrefixHelper(const Entry *expected, size_t expected_size,
+  bool TestLookupPrefixHelper(const Entry *expected, size_t expected_size,
                               const char *key, size_t key_size,
                               const UserDictionary &dic) {
     EntryCollector collector;
     dic.LookupPrefix(absl::string_view(key, key_size), convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
-      EXPECT_TRUE(collector.entries().empty());
+      return (collector.entries().empty());
     } else {
-      ASSERT_FALSE(collector.entries().empty());
-      CompareEntries(expected, expected_size, collector.entries());
+      return !collector.entries().empty() &&
+             CompareEntries(expected, expected_size, collector.entries());
     }
   }
 
-  void TestLookupExactHelper(const Entry *expected, size_t expected_size,
+  bool TestLookupExactHelper(const Entry *expected, size_t expected_size,
                              const char *key, size_t key_size,
                              const UserDictionary &dic) {
     EntryCollector collector;
     dic.LookupExact(absl::string_view(key, key_size), convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
-      EXPECT_TRUE(collector.entries().empty());
+      return collector.entries().empty();
     } else {
-      ASSERT_FALSE(collector.entries().empty());
-      CompareEntries(expected, expected_size, collector.entries());
+      return !collector.entries().empty() &&
+             CompareEntries(expected, expected_size, collector.entries());
     }
   }
 
@@ -390,14 +391,15 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
                                          "st", *dic));
 
   // Invalid input values should be just ignored.
-  TestLookupPredictiveHelper(nullptr, 0, "", *dic);
-  TestLookupPredictiveHelper(nullptr, 0, "あ\x81\x84う", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "", *dic));
+  EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "あ\x81\x84う", *dic));
 
   // Kanji is also a valid key chararcter.
   const Entry kExpected2[] = {
       {"水雲", "value", 100, 100},
   };
-  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "水雲", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpected2, std::size(kExpected2),
+                                         "水雲", *dic));
 
   // Make a change to the dictionary file and load it again.
   {
@@ -412,7 +414,8 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"ended", "ended", 210, 210},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected3, std::size(kExpected3), "end", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpected3, std::size(kExpected3),
+                                         "end", *dic));
 
   // Entries in the dictionary before reloading cannot be looked up.
   EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "start", *dic));
@@ -436,7 +439,8 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"start", "start", 200, 200},
       {"started", "started", 210, 210},
   };
-  TestLookupPrefixHelper(kExpected0, std::size(kExpected0), "started", 7, *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(kExpected0, std::size(kExpected0),
+                                     "started", 7, *dic));
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -445,18 +449,19 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected1, std::size(kExpected1), "starting", 8,
-                         *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(kExpected1, std::size(kExpected1),
+                                     "starting", 8, *dic));
 
   // Invalid input values should be just ignored.
-  TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
-  TestLookupPrefixHelper(nullptr, 0, "あ\x81\x84う", 8, *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(nullptr, 0, "", 0, *dic));
+  EXPECT_TRUE(TestLookupPrefixHelper(nullptr, 0, "あ\x81\x84う", 8, *dic));
 
   // Kanji is also a valid key chararcter.
   const Entry kExpected2[] = {
       {"水雲", "value", 100, 100},
   };
-  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "水雲", 6, *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "水雲",
+                                     6, *dic));
 
   // Make a change to the dictionary file and load it again.
   {
@@ -470,11 +475,12 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"end", "end", 200, 200},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected3, std::size(kExpected3), "ending", 6, *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(kExpected3, std::size(kExpected3),
+                                     "ending", 6, *dic));
 
   // Lookup for entries which are gone should returns empty result.
-  TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic);
-  TestLookupPrefixHelper(nullptr, 0, "starting", 8, *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic));
+  EXPECT_TRUE(TestLookupPrefixHelper(nullptr, 0, "starting", 8, *dic));
 }
 
 TEST_F(UserDictionaryTest, TestLookupExact) {
@@ -492,24 +498,27 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
   const Entry kExpected0[] = {
       {"start", "start", 200, 200},
   };
-  TestLookupExactHelper(kExpected0, std::size(kExpected0), "start", 5, *dic);
+  EXPECT_TRUE(TestLookupExactHelper(kExpected0, std::size(kExpected0), "start",
+                                    5, *dic));
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupExactHelper(kExpected1, std::size(kExpected1), "starting", 8, *dic);
+  EXPECT_TRUE(TestLookupExactHelper(kExpected1, std::size(kExpected1),
+                                    "starting", 8, *dic));
 
   // Invalid input values should be just ignored.
-  TestLookupExactHelper(nullptr, 0, "", 0, *dic);
-  TestLookupExactHelper(nullptr, 0, "あ\x81\x84う", 8, *dic);
+  EXPECT_TRUE(TestLookupExactHelper(nullptr, 0, "", 0, *dic));
+  EXPECT_TRUE(TestLookupExactHelper(nullptr, 0, "あ\x81\x84う", 8, *dic));
 
   // Kanji is also a valid key chararcter.
   const Entry kExpected2[] = {
       {"水雲", "value", 100, 100},
   };
-  TestLookupExactHelper(kExpected2, std::size(kExpected2), "水雲", 6, *dic);
+  EXPECT_TRUE(TestLookupExactHelper(kExpected2, std::size(kExpected2), "水雲",
+                                    6, *dic));
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
@@ -548,10 +557,11 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
       mock_data_manager.GetPosMatcherData());
   const uint16_t kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
-  TestLookupExactHelper(kExpected1, std::size(kExpected1), "key", 3, *user_dic);
+  EXPECT_TRUE(TestLookupExactHelper(kExpected1, std::size(kExpected1), "key", 3,
+                                    *user_dic));
 }
 
-TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
+TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
   std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
@@ -562,7 +572,7 @@ TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
   UserDictionaryStorage storage(filename);
   {
     uint64_t id = 0;
-    // Creates the shortcut dictionary.
+    // Creates the shortcut dictionary (from Gboard Android).
     EXPECT_TRUE(storage.CreateDictionary(
         "__auto_imported_android_shortcuts_dictionary", &id));
     UserDictionaryStorage::UserDictionary *dic =
@@ -574,11 +584,17 @@ TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
 
-    // SUGGESTION ONLY word is handled as SHORTCUT word.
+    // SUGGESTION ONLY word is not handled as SHORTCUT word.
     entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("suggest_only");
     entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
+
+    // NO POS word is handled as SHORTCUT word.
+    entry = dic->add_entries();
+    entry->set_key("key");
+    entry->set_value("no_pos");
+    entry->set_pos(user_dictionary::UserDictionary::NO_POS);
 
     user_dic->Load(storage.GetProto());
   }
@@ -591,13 +607,20 @@ TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
   const uint16_t kUnknownId = pos_matcher.GetUnknownId();
   const Entry kExpected2[] = {
       {"key", "noun", kNounId, kNounId},
+      {"key", "no_pos", kUnknownId, kUnknownId},
+  };
+  const Entry kExpectedPrediction[] = {
+      {"key", "noun", kNounId, kNounId},
+      {"key", "no_pos", kUnknownId, kUnknownId},
       {"key", "suggest_only", kUnknownId, kUnknownId},
   };
-  TestLookupExactHelper(kExpected2, std::size(kExpected2), "key", 3, *user_dic);
-  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "ke",
-                             *user_dic);
-  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "keykey", 3,
-                         *user_dic);
+
+  EXPECT_TRUE(TestLookupExactHelper(kExpected2, std::size(kExpected2), "key", 3,
+                                    *user_dic));
+  TestLookupPredictiveHelper(kExpectedPrediction,
+                             std::size(kExpectedPrediction), "ke", *user_dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(kExpected2, std::size(kExpected2),
+                                     "keykey", 3, *user_dic));
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
@@ -612,8 +635,8 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
     dic->Load(storage.GetProto());
   }
 
-  TestLookupPrefixHelper(nullptr, 0, "start", 4, *dic);
-  TestLookupPredictiveHelper(nullptr, 0, "s", *dic);
+  EXPECT_TRUE(TestLookupPrefixHelper(nullptr, 0, "start", 4, *dic));
+  EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "s", *dic));
 
   config_.set_incognito_mode(false);
   {
