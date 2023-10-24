@@ -617,8 +617,8 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
 
   EXPECT_TRUE(TestLookupExactHelper(kExpected2, std::size(kExpected2), "key", 3,
                                     *user_dic));
-  TestLookupPredictiveHelper(kExpectedPrediction,
-                             std::size(kExpectedPrediction), "ke", *user_dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpectedPrediction,
+                             std::size(kExpectedPrediction), "ke", *user_dic));
   EXPECT_TRUE(TestLookupPrefixHelper(kExpected2, std::size(kExpected2),
                                      "keykey", 3, *user_dic));
 }

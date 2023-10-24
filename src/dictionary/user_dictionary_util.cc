@@ -303,8 +303,6 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
 namespace {
 // The index of each element should be matched with the actual value of enum.
 // See also user_dictionary_storage.proto for the definition of the enum.
-// Note that the '0' is invalid in the definition, so the corresponding
-// element is nullptr.
 const char *kPosTypeStringTable[] = {
     "品詞なし",     "名詞",           "短縮よみ",     "サジェストのみ",
     "固有名詞",     "人名",           "姓",           "名",
@@ -332,8 +330,7 @@ const char *UserDictionaryUtil::GetStringPosType(
 
 user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
     const char *string_pos_type) {
-  // Skip the element at 0.
-  for (int i = 1; i < std::size(kPosTypeStringTable); ++i) {
+  for (int i = 0; i < std::size(kPosTypeStringTable); ++i) {
     if (strcmp(kPosTypeStringTable[i], string_pos_type) == 0) {
       return static_cast<user_dictionary::UserDictionary::PosType>(i);
     }

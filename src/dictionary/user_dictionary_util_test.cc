@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_util.h"
 
+#include <string.h>
+
 #include <cstdint>
 #include <string>
 
@@ -330,6 +332,35 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
 
   // Return -1 for a failing case.
   EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryIndexById(storage, -1), -1);
+}
+
+TEST(UserDictionaryUtilTest, ToPosType) {
+  EXPECT_TRUE(UserDictionaryUtil::ToPosType("品詞なし") ==
+              UserDictionary::NO_POS);
+  EXPECT_TRUE(UserDictionaryUtil::ToPosType("サジェストのみ") ==
+              UserDictionary::SUGGESTION_ONLY);
+  EXPECT_TRUE(UserDictionaryUtil::ToPosType("動詞ワ行五段") ==
+              UserDictionary::WA_GROUP1_VERB);
+  EXPECT_TRUE(UserDictionaryUtil::ToPosType("抑制単語") ==
+              UserDictionary::SUPPRESSION_WORD);
+}
+
+TEST(UserDictionaryUtilTest, GetStringPosType) {
+  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(UserDictionary::NO_POS),
+                   "品詞なし"),
+            0);
+  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
+                       UserDictionary::SUGGESTION_ONLY),
+                   "サジェストのみ"),
+            0);
+  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
+                       UserDictionary::WA_GROUP1_VERB),
+                   "動詞ワ行五段"),
+            0);
+  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
+                       UserDictionary::SUPPRESSION_WORD),
+                   "抑制単語"),
+            0);
 }
 
 TEST(UserDictionaryUtilTest, CreateDictionary) {
