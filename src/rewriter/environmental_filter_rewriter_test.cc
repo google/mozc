@@ -247,6 +247,13 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
     finder.Initialize({Util::Utf8ToUtf32("01234567890abcdefghij")});
     EXPECT_FALSE(finder.FindMatch(Util::Utf8ToUtf32("01234567890abcdefghXYZ")));
   }
+  {
+    // Test with empty finder.
+    CharacterGroupFinder finder;
+    finder.Initialize({});
+    EXPECT_FALSE(finder.FindMatch(
+        Util::Utf8ToUtf32("Empty finder should find nothing")));
+  }
 }
 
 // This test aims to check the ability using EnvironmentalFilterRewriter to
