@@ -911,6 +911,34 @@ TEST_F(VariantsRewriterTest, Capability) {
   EXPECT_EQ(rewriter->capability(request), RewriterInterface::ALL);
 }
 
+TEST_F(VariantsRewriterTest, LearningLevel) {
+  std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
+  CharacterFormManager *manager =
+      CharacterFormManager::GetCharacterFormManager();
+  config::Config config;
+  config.set_history_learning_level(Config::NO_HISTORY);
+  ConversionRequest request;
+  request.set_config(&config);
+
+  Segments segments;
+
+  Segment *segment = segments.push_back_segment();
+  segment->set_key("いちにさん");
+  segment->set_segment_type(Segment::FIXED_VALUE);
+
+  Segment::Candidate *cand = segment->add_candidate();
+  cand->key = "いちにさん";
+  cand->content_key = cand->key;
+
+  // Half-width number with style.
+  cand->value = "123";
+  cand->content_value = cand->value;
+  cand->style = NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH;
+  EXPECT_NE(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+  rewriter->Finish(request, &segments);
+  EXPECT_NE(manager->GetConversionCharacterForm("0"), Config::HALF_WIDTH);
+}
+
 TEST_F(VariantsRewriterTest, Finish) {
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
   auto *manager = CharacterFormManager::GetCharacterFormManager();

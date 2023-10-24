@@ -514,6 +514,11 @@ bool VariantsRewriter::GenerateAlternatives(
 
 void VariantsRewriter::Finish(const ConversionRequest &request,
                               Segments *segments) {
+  if (request.config().history_learning_level() !=
+      config::Config::DEFAULT_HISTORY) {
+    VLOG(2) << "history_learning_level is not DEFAULT_HISTORY";
+    return;
+  }
   if (!request.request().mixed_conversion() &&
       request.request_type() != ConversionRequest::CONVERSION) {
     return;
