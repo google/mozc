@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
 
+#include "request/conversion_request.h"
+#include "testing/production_stub/public/gunit_prod.h"
 #ifndef NO_USAGE_REWRITER
 
 #include <cstdint>

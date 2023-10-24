@@ -41,6 +41,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "testing/base/public/gmock.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
