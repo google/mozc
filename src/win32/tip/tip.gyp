@@ -151,11 +151,6 @@
             'gen_mozc_tip_resource_header',
             'tip_core',
           ],
-          'msvs_settings': {
-            'VCLinkerTool': {
-              'BaseAddress': '0x06000000',
-            },
-          },
         },
         {
           'target_name': 'mozc_tip64',
@@ -171,9 +166,6 @@
             'tip_core',
           ],
           'msvs_settings': {
-            'VCLinkerTool': {
-              'BaseAddress': '0x06000000',
-            },
             'VCManifestTool': {
               'EmbedManifest': 'true',
             },
