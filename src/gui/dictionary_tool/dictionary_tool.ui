@@ -52,7 +52,7 @@
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QListWidget" name="dic_list_"/>
-      <widget class="DictionaryContentTableWidget" name="dic_content_"/>
+      <widget class="::mozc::gui::DictionaryContentTableWidget" name="dic_content_"/>
      </widget>
     </item>
    </layout>
@@ -78,7 +78,7 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>DictionaryContentTableWidget</class>
+   <class>::mozc::gui::DictionaryContentTableWidget</class>
    <extends>QTableWidget</extends>
    <header>gui/dictionary_tool/dictionary_content_table_widget.h</header>
   </customwidget>

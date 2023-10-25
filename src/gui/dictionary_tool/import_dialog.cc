@@ -32,7 +32,6 @@
 #include <QFileDialog>
 #include <QtGui>
 
-#include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "gui/base/util.h"
 
@@ -102,15 +101,9 @@ ImportDialog::ImportDialog(QWidget *parent)
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
-ImportDialog::~ImportDialog() {}
+QString ImportDialog::file_name() const { return file_name_lineedit_->text(); }
 
-const QString ImportDialog::file_name() const {
-  return file_name_lineedit_->text();
-}
-
-const QString ImportDialog::dic_name() const {
-  return dic_name_lineedit_->text();
-}
+QString ImportDialog::dic_name() const { return dic_name_lineedit_->text(); }
 
 UserDictionaryImporter::IMEType ImportDialog::ime_type() const {
   return static_cast<UserDictionaryImporter::IMEType>(

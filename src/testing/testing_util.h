@@ -32,6 +32,7 @@
 
 #include "base/protobuf/message.h"
 #include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace testing {
@@ -65,7 +66,7 @@ namespace testing {
 
 namespace internal {
 ::testing::AssertionResult EqualsProtoFormat(
-    const char *expect_string, const char *actual_string,
+    absl::string_view expect_string, absl::string_view actual_string,
     const mozc::protobuf::Message &expect,
     const mozc::protobuf::Message &actual, bool is_partial);
 }  // namespace internal
@@ -73,26 +74,28 @@ namespace internal {
 // Thin wrapper of EqualsProto to check if expect and actual has same type
 // on compile time.
 template <typename T>
-::testing::AssertionResult EqualsProto(const char *expect_string,
-                                       const char *actual_string,
+::testing::AssertionResult EqualsProto(absl::string_view expect_string,
+                                       absl::string_view actual_string,
                                        const T &expect, const T &actual) {
   return ::mozc::testing::internal::EqualsProtoFormat(
       expect_string, actual_string, expect, actual, false);
 }
 
-// To accept string constant, we also define a function takeing const char *.
-::testing::AssertionResult EqualsProto(const char *expect_string,
-                                       const char *actual_string,
-                                       const char *expect,
+// To accept string constant, we also define a function taking
+// absl::string_view.
+::testing::AssertionResult EqualsProto(absl::string_view expect_string,
+                                       absl::string_view actual_string,
+                                       absl::string_view expect,
                                        const mozc::protobuf::Message &actual);
 
 #define EXPECT_PROTO_EQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::EqualsProto, expect, actual)
 
-// To accept string constant, we also define a function takeing const char *.
+// To accept string constant, we also define a function taking
+// absl::string_view .
 ::testing::AssertionResult PartiallyEqualsProto(
-    const char *expect_string, const char *actual_string, const char *expect,
-    const mozc::protobuf::Message &actual);
+    absl::string_view expect_string, absl::string_view actual_string,
+    absl::string_view expect, const mozc::protobuf::Message &actual);
 
 #define EXPECT_PROTO_PEQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::PartiallyEqualsProto, expect, actual)

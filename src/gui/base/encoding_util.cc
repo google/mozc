@@ -139,11 +139,12 @@ bool SjisToUtf8Internal(absl::string_view input, std::string *output) {
 
 }  // namespace
 
-void EncodingUtil::SjisToUtf8(const std::string &input, std::string *output) {
-  output->clear();
-  if (!SjisToUtf8Internal(input, output)) {
-    output->clear();
+std::string EncodingUtil::SjisToUtf8(absl::string_view input) {
+  std::string output;
+  if (!SjisToUtf8Internal(input, &output)) {
+    return {};
   }
+  return output;
 }
 
 }  // namespace mozc

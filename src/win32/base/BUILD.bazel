@@ -35,12 +35,12 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//bazel/win32:build_defs.bzl",
     "copts_wtl",
     "features_gdi",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 package(
     default_visibility = ["//win32:__subpackages__"],
@@ -231,6 +231,7 @@ mozc_cc_test(
     deps = [
         ":keyboard",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base",
     ],
 )
 
@@ -407,6 +408,31 @@ mozc_cc_test(
     deps = [
         ":input_dll",
         "//testing:gunit_main",
+    ],
+)
+
+lexan.cc_windows_dll(
+    name = "msctf_dll",
+    srcs = [
+        "msctf_dll.cc",
+    ],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    win_def_file = "msctf_dll.def",
+    deps = [
+        "//base:logging",
+    ],
+)
+
+mozc_cc_test(
+    name = "msctf_dll_test",
+    srcs = ["msctf_dll_test.cc"],
+    tags = MOZC_TAGS.WIN_ONLY,
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [
+        ":msctf_dll",
+        "//testing:gunit_main",
+        "@com_microsoft_wil//:wil",
     ],
 )
 

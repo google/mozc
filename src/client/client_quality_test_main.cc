@@ -170,13 +170,13 @@ std::optional<double> CalculateBleu(client::Client &client,
   VLOG(2) << "Server response: " << protobuf::Utf8Format(output);
 
   // Calculate score
-  std::string expected_normalized;
-  Scorer::NormalizeForEvaluate(expected_result, &expected_normalized);
+  std::string expected_normalized =
+      Scorer::NormalizeForEvaluate(expected_result);
 
   std::string preedit_normalized;
   if (std::optional<std::string> preedit = GetPreedit(output);
       preedit.has_value() && !preedit->empty()) {
-    Scorer::NormalizeForEvaluate(*preedit, &preedit_normalized);
+    preedit_normalized = Scorer::NormalizeForEvaluate(*preedit);
   } else {
     LOG(WARNING) << "Could not get output";
     return std::nullopt;

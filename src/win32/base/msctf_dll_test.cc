@@ -27,28 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
-#define MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
+#include <combaseapi.h>
+#include <msctf.h>
+#include <wil/com.h>
+#include <windows.h>
 
-#include <QSplitter>
+#include "testing/gunit.h"
 
-// Special QSplitter whose handle size is only 1px.
-// This line is drawn with a proper colour corresponding to
-// Mac style splitter.
-class ZeroWidthSplitterHandle : public QSplitterHandle {
-  Q_OBJECT;
+namespace {
 
- public:
-  ZeroWidthSplitterHandle(Qt::Orientation orientation, QSplitter *parent);
+void AssertComIsNotInitialized() {
+  APTTYPE type = APTTYPE_CURRENT;
+  APTTYPEQUALIFIER filter = APTTYPEQUALIFIER_NONE;
+  HRESULT result = ::CoGetApartmentType(&type, &filter);
+  EXPECT_EQ(result, CO_E_NOTINITIALIZED);
+}
 
-  void paintEvent(QPaintEvent *event) override;
-  QSize sizeHint() const override;
-};
+TEST(MsctfDllTest, CreateITfCategoryMgr) {
+  AssertComIsNotInitialized();
 
-class ZeroWidthSplitter : public QSplitter {
- public:
-  explicit ZeroWidthSplitter(QWidget *parent);
-  QSplitterHandle *createHandle() override;
-};
+  wil::com_ptr_nothrow<ITfCategoryMgr> obj;
+  HRESULT result = TF_CreateCategoryMgr(&obj);
+  EXPECT_EQ(result, S_OK);
+}
 
-#endif  // MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
+TEST(MsctfDllTest, CreateInputProcessorProfiles) {
+  AssertComIsNotInitialized();
+
+  wil::com_ptr_nothrow<ITfInputProcessorProfiles> obj;
+  HRESULT result = TF_CreateInputProcessorProfiles(&obj);
+  EXPECT_EQ(result, S_OK);
+}
+
+TEST(MsctfDllTest, CreateLangBarItemMgr) {
+  AssertComIsNotInitialized();
+
+  wil::com_ptr_nothrow<ITfLangBarItemMgr> obj;
+  HRESULT result = TF_CreateLangBarItemMgr(&obj);
+  EXPECT_EQ(result, S_OK);
+}
+
+}  // namespace

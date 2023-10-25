@@ -63,7 +63,7 @@ from build_tools import serialized_string_array_builder
 _FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
 _VERSION_ALL = [
     'E0.6', 'E0.7', 'E1.0', 'E2.0', 'E3.0', 'E4.0', 'E5.0', 'E11.0', 'E12.0',
-    'E12.1', 'E13.0', 'E13.1', 'E14.0', 'E15.0'
+    'E12.1', 'E13.0', 'E13.1', 'E14.0', 'E15.0', 'E15.1'
 ]
 # Dict for converting version string into enum index.
 VERSION_TO_INDEX = {v: i for i, v in enumerate(_VERSION_ALL)}

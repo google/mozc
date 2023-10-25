@@ -697,6 +697,7 @@ mozc_cc_library(
     hdrs = ["user_pos_interface.h"],
     visibility = [
         "//data_manager:__subpackages__",
+        "//gui:__subpackages__",
         "//rewriter:__subpackages__",
     ],
     deps = ["@com_google_absl//absl/strings"],

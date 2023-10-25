@@ -50,8 +50,6 @@ ZeroWidthSplitterHandle::ZeroWidthSplitterHandle(Qt::Orientation orientation,
                                                  QSplitter *parent)
     : QSplitterHandle(orientation, parent) {}
 
-ZeroWidthSplitterHandle::~ZeroWidthSplitterHandle() {}
-
 ZeroWidthSplitter::ZeroWidthSplitter(QWidget *parent) : QSplitter(parent) {}
 
 QSplitterHandle *ZeroWidthSplitter::createHandle() {

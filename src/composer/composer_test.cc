@@ -29,6 +29,8 @@
 
 #include "composer/composer.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -38,8 +40,6 @@
 #include <vector>
 
 #include "base/clock_mock.h"
-#include "base/logging.h"
-#include "base/system_util.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
@@ -51,8 +51,8 @@
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -68,7 +68,6 @@ using ::mozc::commands::KeyEvent;
 using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
-using ::mozc::config::ConfigHandler;
 using ::testing::_;
 using ::testing::Return;
 

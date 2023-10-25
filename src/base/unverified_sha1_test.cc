@@ -29,10 +29,10 @@
 
 #include "base/unverified_sha1.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

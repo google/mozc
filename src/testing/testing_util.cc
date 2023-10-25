@@ -34,6 +34,8 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
+#include "testing/gunit.h"
+#include "absl/strings/string_view.h"
 
 #undef GetMessage  // Undef Win32 macro.
 
@@ -183,8 +185,8 @@ bool EqualsProtoInternal(const Message &message1, const Message &message2,
 
 }  // namespace
 
-::testing::AssertionResult EqualsProtoFormat(const char *expect_string,
-                                             const char *actual_string,
+::testing::AssertionResult EqualsProtoFormat(absl::string_view expect_string,
+                                             absl::string_view actual_string,
                                              const Message &expect,
                                              const Message &actual,
                                              bool is_partial) {
@@ -204,9 +206,9 @@ bool EqualsProtoInternal(const Message &message1, const Message &message2,
 }  // namespace internal
 
 namespace {
-::testing::AssertionResult EqualsProtoWithParse(const char *expect_string,
-                                                const char *actual_string,
-                                                const char *expect,
+::testing::AssertionResult EqualsProtoWithParse(absl::string_view expect_string,
+                                                absl::string_view actual_string,
+                                                absl::string_view expect,
                                                 const Message &actual,
                                                 bool is_partial) {
   // Note: Message::New returns an instance of the actual type,
@@ -223,17 +225,17 @@ namespace {
 }
 }  // namespace
 
-::testing::AssertionResult EqualsProto(const char *expect_string,
-                                       const char *actual_string,
-                                       const char *expect,
+::testing::AssertionResult EqualsProto(absl::string_view expect_string,
+                                       absl::string_view actual_string,
+                                       absl::string_view expect,
                                        const Message &actual) {
   return EqualsProtoWithParse(expect_string, actual_string, expect, actual,
                               false);
 }
 
-::testing::AssertionResult PartiallyEqualsProto(const char *expect_string,
-                                                const char *actual_string,
-                                                const char *expect,
+::testing::AssertionResult PartiallyEqualsProto(absl::string_view expect_string,
+                                                absl::string_view actual_string,
+                                                absl::string_view expect,
                                                 const Message &actual) {
   return EqualsProtoWithParse(expect_string, actual_string, expect, actual,
                               true);

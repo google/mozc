@@ -29,7 +29,6 @@
 
 #include "win32/base/surrogate_pair_observer.h"
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/base/keyboard.h"
 

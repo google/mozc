@@ -30,7 +30,6 @@
 #include "win32/tip/tip_surrounding_text.h"
 
 #include "base/util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

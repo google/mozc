@@ -27,28 +27,34 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
-#define MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
+// This file will be used to create an import library.  Functions in this
+// file must not be called directly.
 
-#include <QSplitter>
+#include <windows.h>
 
-// Special QSplitter whose handle size is only 1px.
-// This line is drawn with a proper colour corresponding to
-// Mac style splitter.
-class ZeroWidthSplitterHandle : public QSplitterHandle {
-  Q_OBJECT;
+#include "base/logging.h"
 
- public:
-  ZeroWidthSplitterHandle(Qt::Orientation orientation, QSplitter *parent);
+class ITfCategoryMgr;
+class ITfLangBarItemMgr;
+class ITfInputProcessorProfiles;
 
-  void paintEvent(QPaintEvent *event) override;
-  QSize sizeHint() const override;
-};
+extern "C" UINT WINAPI
+TF_CreateCategoryMgr(__out ITfCategoryMgr **profile_mgr) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
+  return 0;
+}
 
-class ZeroWidthSplitter : public QSplitter {
- public:
-  explicit ZeroWidthSplitter(QWidget *parent);
-  QSplitterHandle *createHandle() override;
-};
+extern "C" UINT WINAPI
+TF_CreateInputProcessorProfiles(__out ITfInputProcessorProfiles **pplbim) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
+  return 0;
+}
 
-#endif  // MOZC_GUI_DICTIONARY_TOOL_ZERO_WIDTH_SPLITTER_H_
+extern "C" UINT WINAPI
+TF_CreateLangBarItemMgr(__out ITfLangBarItemMgr **pplbim) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
+  return 0;
+}

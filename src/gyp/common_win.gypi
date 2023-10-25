@@ -375,6 +375,9 @@
           'user32.lib',
           'uuid.lib',
         ],
+        'AdditionalOptions': [
+          '/CETCOMPAT',
+        ],
         'DataExecutionPrevention': '2',        # /NXCOMPAT
         'EnableCOMDATFolding': '2',            # /OPT:ICF
         'GenerateDebugInformation': 'true',    # /DEBUG

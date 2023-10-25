@@ -39,10 +39,6 @@
 
 namespace mozc {
 namespace gui {
-namespace {
-constexpr char kYellowSelectionStyleSheet[] =
-    "selection-background-color : yellow;";
-}
 
 FindDialog::FindDialog(QWidget *parent, QTableWidget *table)
     : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
@@ -60,8 +56,6 @@ FindDialog::FindDialog(QWidget *parent, QTableWidget *table)
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
-FindDialog::~FindDialog() {}
-
 void FindDialog::LineEditChanged(const QString &str) { UpdateUIStatus(); }
 
 void FindDialog::showEvent(QShowEvent *event) {
@@ -75,7 +69,7 @@ void FindDialog::showEvent(QShowEvent *event) {
 }
 
 void FindDialog::closeEvent(QCloseEvent *event) {
-  table_->setStyleSheet(QLatin1String(""));
+  table_->setStyleSheet(QString());
   last_item_ = nullptr;
 }
 
@@ -145,7 +139,8 @@ FOUND:
     QTableWidgetItem *item = table_->item(matched_row, matched_column);
     DCHECK(item);
     last_item_ = item;
-    table_->setStyleSheet(QLatin1String(kYellowSelectionStyleSheet));
+    table_->setStyleSheet(
+        QStringLiteral("selection-background-color : yellow;"));
     table_->setCurrentItem(item);
     table_->scrollToItem(item);
   } else {

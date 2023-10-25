@@ -29,12 +29,6 @@
 
 #include "gui/dictionary_tool/dictionary_tool.h"
 
-#include <cstdint>
-
-#if defined(__ANDROID__) || defined(__wasm__)
-#error "This platform is not supported."
-#endif  // __ANDROID__ || __wasm__
-
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMenu>
@@ -43,13 +37,9 @@
 #include <QShortcut>
 #include <QTimer>
 #include <QtGui>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif  // _WIN32
-
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <ios>
 #include <iosfwd>
@@ -68,6 +58,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client.h"
 #include "gui/base/encoding_util.h"
@@ -77,10 +68,16 @@
 #include "gui/dictionary_tool/import_dialog.h"
 
 #ifdef _WIN32
+#include <windows.h>
+
 #include "base/run_level.h"
 #include "gui/base/msime_user_dictionary_importer.h"
 #include "gui/base/win_util.h"
 #endif  // _WIN32
+
+#if defined(__ANDROID__) || defined(__wasm__)
+#error "This platform is not supported."
+#endif  // __ANDROID__ || __wasm__
 
 namespace mozc {
 namespace gui {
@@ -91,10 +88,8 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySession;
 using ::mozc::user_dictionary::UserDictionaryStorage;
 
-inline QString QUtf8(const char str[]) { return QString::fromUtf8(str); }
-
-inline QString QUtf8(const std::string &str) {
-  return QString::fromUtf8(str.c_str());
+inline QString QUtf8(absl::string_view str) {
+  return QString::fromUtf8(str.data(), static_cast<int>(str.size()));
 }
 
 // set longer timeout because it takes longer time
@@ -104,14 +99,16 @@ constexpr absl::Duration kSessionTimeout = absl::Milliseconds(100000);
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almsot square
-  const QRect rect = QFontMetrics(widget->font()).boundingRect(QUtf8("龍"));
+  const QRect rect =
+      QFontMetrics(widget->font()).boundingRect(QStringLiteral("龍"));
   return static_cast<int>(rect.height() * 1.4);
 }
 
-QProgressDialog *CreateProgressDialog(QString message, QWidget *parent,
-                                      int size) {
-  QProgressDialog *progress =
-      new QProgressDialog(message, QLatin1String(""), 0, size, parent);
+std::unique_ptr<QProgressDialog> CreateProgressDialog(const QString &message,
+                                                      QWidget *parent,
+                                                      int size) {
+  auto progress =
+      std::make_unique<QProgressDialog>(message, QString(), 0, size, parent);
   CHECK(progress);
   progress->setWindowFlags(Qt::Window | Qt::CustomizeWindowHint |
                            Qt::WindowCloseButtonHint);
@@ -136,19 +133,19 @@ class UTF16TextLineIterator
   UTF16TextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
                         const std::string &filename, const QString &message,
                         QWidget *parent)
-      : stream_(new QTextStream) {
+      : stream_(std::make_unique<QTextStream>()) {
     CHECK_EQ(UserDictionaryImporter::UTF16, encoding_type);
-    file_.setFileName(QString::fromUtf8(filename.c_str()));
+    file_.setFileName(QUtf8(filename));
     if (!file_.open(QIODevice::ReadOnly)) {
       LOG(ERROR) << "Cannot open: " << filename;
     }
     stream_->setDevice(&file_);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     stream_->setEncoding(QStringConverter::Utf16);
-#else  // Qt5 or lower
+#else   // Qt5 or lower
     stream_->setCodec("UTF-16");
 #endif  // QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    progress_.reset(CreateProgressDialog(message, parent, file_.size()));
+    progress_ = CreateProgressDialog(message, parent, file_.size());
   }
 
   bool IsAvailable() const override { return file_.error() == QFile::NoError; }
@@ -176,7 +173,7 @@ class UTF16TextLineIterator
 
     progress_->setValue(file_.pos());
 
-    *line = output_line.toUtf8().data();
+    *line = output_line.toStdString();
     return true;
   }
 
@@ -186,7 +183,7 @@ class UTF16TextLineIterator
     stream_->setDevice(&file_);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     stream_->setEncoding(QStringConverter::Utf16);
-#else  // Qt5 or lower
+#else   // Qt5 or lower
     stream_->setCodec("UTF-16");
 #endif  // QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   }
@@ -204,13 +201,13 @@ class MultiByteTextLineIterator
                             const std::string &filename, const QString &message,
                             QWidget *parent)
       : encoding_type_(encoding_type),
-        ifs_(new InputFileStream(filename)),
+        ifs_(std::make_unique<InputFileStream>(filename)),
         first_line_(true) {
     const std::streampos begin = ifs_->tellg();
     ifs_->seekg(0, std::ios::end);
     const size_t size = static_cast<size_t>(ifs_->tellg() - begin);
     ifs_->seekg(0, std::ios::beg);
-    progress_.reset(CreateProgressDialog(message, parent, size));
+    progress_ = CreateProgressDialog(message, parent, size);
   }
 
   bool IsAvailable() const override {
@@ -248,16 +245,15 @@ class MultiByteTextLineIterator
     // We can't use QTextCodec as QTextCodec is not enabled by default.
     // We won't enable it as it increases the binary size.
     if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
-      const std::string input = *line;
-      EncodingUtil::SjisToUtf8(input, line);
+      *line = EncodingUtil::SjisToUtf8(*line);
     }
 
     // strip UTF8 BOM
     if (first_line_ && encoding_type_ == UserDictionaryImporter::UTF8) {
-      mozc::Util::StripUtf8Bom(line);
+      Util::StripUtf8Bom(line);
     }
 
-    mozc::Util::ChopReturns(line);
+    Util::ChopReturns(line);
 
     first_line_ = false;
     return true;
@@ -277,9 +273,9 @@ class MultiByteTextLineIterator
   bool first_line_;
 };
 
-UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
-    UserDictionaryImporter::EncodingType encoding_type,
-    const std::string &filename, QWidget *parent) {
+std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface>
+CreateTextLineIterator(UserDictionaryImporter::EncodingType encoding_type,
+                       const std::string &filename, QWidget *parent) {
   if (encoding_type == UserDictionaryImporter::ENCODING_AUTO_DETECT) {
     encoding_type = UserDictionaryImporter::GuessFileEncodingType(filename);
   }
@@ -301,12 +297,12 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
   switch (encoding_type) {
     case UserDictionaryImporter::UTF8:
     case UserDictionaryImporter::SHIFT_JIS:
-      return new MultiByteTextLineIterator(encoding_type, filename, message,
-                                           parent);
+      return std::make_unique<MultiByteTextLineIterator>(
+          encoding_type, filename, message, parent);
       break;
     case UserDictionaryImporter::UTF16:
-      return new UTF16TextLineIterator(encoding_type, filename, message,
-                                       parent);
+      return std::make_unique<UTF16TextLineIterator>(encoding_type, filename,
+                                                     message, parent);
       break;
     default:
       return nullptr;
@@ -320,7 +316,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
     : QMainWindow(parent),
       import_dialog_(nullptr),
       find_dialog_(nullptr),
-      session_(new UserDictionarySession(
+      session_(std::make_unique<UserDictionarySession>(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0),
       window_title_(GuiUtil::ProductName()),
@@ -335,7 +331,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       import_default_ime_action_(nullptr),
       client_(client::ClientFactory::NewClient()),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      pos_list_provider_(new PosListProvider()),
+      pos_list_provider_(std::make_unique<PosListProvider>()),
       modified_(false),
       monitoring_user_edit_(false),
       is_available_(true) {
@@ -557,8 +553,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   qApp->installEventFilter(this);
 }
 
-DictionaryTool::~DictionaryTool() {}
-
 void DictionaryTool::closeEvent(QCloseEvent *event) {
   // QEvent::ApplicationDeactivate is not emitted here.
 
@@ -693,8 +687,8 @@ void DictionaryTool::CreateDictionary() {
     return;
   }
 
-  const QString dic_name = PromptForDictionaryName(
-      QLatin1String(""), tr("Name of the new dictionary"));
+  const QString dic_name =
+      PromptForDictionaryName(QString(), tr("Name of the new dictionary"));
   if (dic_name.isEmpty()) {
     return;  // canceld by user
   }
@@ -776,8 +770,7 @@ void DictionaryTool::ImportAndCreateDictionary() {
   }
 
   ImportHelper(0,  // dic_id == 0 means that "CreateNewDictionary" mode
-               import_dialog_->dic_name().toStdString(),
-               import_dialog_->file_name().toStdString(),
+               import_dialog_->dic_name(), import_dialog_->file_name(),
                import_dialog_->ime_type(), import_dialog_->encoding_type());
 }
 
@@ -803,20 +796,19 @@ void DictionaryTool::ImportAndAppendDictionary() {
     return;
   }
 
-  ImportHelper(dic_info.id, dic_info.item->text().toStdString(),
-               import_dialog_->file_name().toStdString(),
+  ImportHelper(dic_info.id, dic_info.item->text(), import_dialog_->file_name(),
                import_dialog_->ime_type(), import_dialog_->encoding_type());
 }
 
 void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
-                                       const std::string &dic_name,
+                                       const QString &dic_name,
                                        int added_entries_size) {
   switch (error) {
     case UserDictionaryImporter::IMPORT_NO_ERROR:
       QMessageBox::information(this, window_title_,
                                tr("%1 entries are imported to %2.")
                                    .arg(added_entries_size)
-                                   .arg(QUtf8(dic_name)));
+                                   .arg(dic_name));
       break;
     case UserDictionaryImporter::IMPORT_NOT_SUPPORTED:
       QMessageBox::information(this, window_title_,
@@ -833,7 +825,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
           tr("%1 doesn't have enough space to import all words in "
              "the file. First %2 entries "
              "are imported.")
-              .arg(QUtf8(dic_name))
+              .arg(dic_name)
               .arg(added_entries_size));
       break;
     case UserDictionaryImporter::IMPORT_INVALID_ENTRIES:
@@ -843,7 +835,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
              "words were not recognized by %3. "
              "Please check the original import file.")
               .arg(added_entries_size)
-              .arg(QUtf8(dic_name))
+              .arg(dic_name)
               .arg(window_title_));
       break;
     case UserDictionaryImporter::IMPORT_FATAL:
@@ -856,18 +848,19 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
 }
 
 void DictionaryTool::ImportHelper(
-    uint64_t dic_id, const std::string &dic_name, const std::string &file_name,
+    uint64_t dic_id, const QString &dic_name, const QString &file_name,
     UserDictionaryImporter::IMEType ime_type,
     UserDictionaryImporter::EncodingType encoding_type) {
   if (!IsReadableToImport(file_name)) {
     LOG(ERROR) << "File is not readable to import.";
     QMessageBox::critical(this, window_title_,
-                          tr("Can't open %1.").arg(QUtf8(file_name)));
+                          tr("Can't open %1.").arg(file_name));
     return;
   }
 
+  const std::string dic_name_str = dic_name.toStdString();
   if (dic_id == 0 &&
-      !session_->mutable_storage()->CreateDictionary(dic_name, &dic_id)) {
+      !session_->mutable_storage()->CreateDictionary(dic_name_str, &dic_id)) {
     LOG(ERROR) << "Failed to create the dictionary.";
     ReportError();
     return;
@@ -881,7 +874,7 @@ void DictionaryTool::ImportHelper(
     return;
   }
 
-  if (dic->name() != dic_name) {
+  if (dic->name() != dic_name_str) {
     LOG(ERROR) << "Dictionary name is inconsistent";
     ReportError();
     return;
@@ -892,7 +885,7 @@ void DictionaryTool::ImportHelper(
 
   // Open dictionary
   std::unique_ptr<UserDictionaryImporter::TextLineIteratorInterface> iter(
-      CreateTextLineIterator(encoding_type, file_name, this));
+      CreateTextLineIterator(encoding_type, file_name.toStdString(), this));
   if (iter == nullptr) {
     LOG(ERROR) << "CreateTextLineIterator returns nullptr";
     return;
@@ -988,25 +981,24 @@ void DictionaryTool::ExportDictionary() {
     return;
   }
 
-  const std::string file_name =
-      QFileDialog::getSaveFileName(this, tr("Export dictionary"),
-                                   QDir::homePath(),
-                                   tr("Text Files (*.txt);;All Files (*)"))
-          .toStdString();
-  if (file_name.empty()) {
+  const QString file_name = QFileDialog::getSaveFileName(
+      this, tr("Export dictionary"), QDir::homePath(),
+      tr("Text Files (*.txt);;All Files (*)"));
+  if (file_name.isEmpty()) {
     return;
   }
 
   if (!IsWritableToExport(file_name)) {
     LOG(ERROR) << "File is not writable to export.";
     QMessageBox::critical(this, window_title_,
-                          tr("Can't open %1.").arg(QUtf8(file_name)));
+                          tr("Can't open %1.").arg(file_name));
     return;
   }
 
   SyncToStorage();
 
-  if (!session_->mutable_storage()->ExportDictionary(dic_info.id, file_name)) {
+  if (!session_->mutable_storage()->ExportDictionary(dic_info.id,
+                                                     file_name.toStdString())) {
     LOG(ERROR) << "Failed to export the dictionary.";
     ReportError();
     return;
@@ -1027,10 +1019,10 @@ void DictionaryTool::AddWord() {
   }
 
   dic_content_->insertRow(row);
-  dic_content_->setItem(row, 0, new QTableWidgetItem(QLatin1String("")));
-  dic_content_->setItem(row, 1, new QTableWidgetItem(QLatin1String("")));
+  dic_content_->setItem(row, 0, new QTableWidgetItem(QString()));
+  dic_content_->setItem(row, 1, new QTableWidgetItem(QString()));
   dic_content_->setItem(row, 2, new QTableWidgetItem(default_pos_));
-  dic_content_->setItem(row, 3, new QTableWidgetItem(QLatin1String("")));
+  dic_content_->setItem(row, 3, new QTableWidgetItem(QString()));
 
   if (row + 1 >= max_entry_size_) {
     new_word_button_->setEnabled(false);
@@ -1119,13 +1111,13 @@ void DictionaryTool::DeleteWord() {
   modified_ = true;
 }
 
-void DictionaryTool::EditPos(const std::string &pos) {
+void DictionaryTool::EditPos(const absl::string_view pos) {
   const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
   }
 
-  const QString new_pos = QString::fromUtf8(pos.c_str());
+  const QString new_pos = QUtf8(pos);
   setUpdatesEnabled(false);
 
   for (int i = 0; i < items.size(); ++i) {
@@ -1188,6 +1180,8 @@ void DictionaryTool::MoveTo(int dictionary_row) {
         const int row = rows[i];
         entry->set_key(dic_content_->item(row, 0)->text().toStdString());
         entry->set_value(dic_content_->item(row, 1)->text().toStdString());
+        // TODO(yuryu): remove c_str() after changing ToPosType to take
+        // absl::string_view.
         entry->set_pos(UserDictionaryUtil::ToPosType(
             dic_content_->item(row, 2)->text().toStdString().c_str()));
         entry->set_comment(dic_content_->item(row, 3)->text().toStdString());
@@ -1220,8 +1214,8 @@ void DictionaryTool::EditComment() {
 
   bool ok = false;
   const QString new_comment = QInputDialog::getText(
-      this, window_title_, tr("New comment"), QLineEdit::Normal,
-      QLatin1String(""), &ok, Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
+      this, window_title_, tr("New comment"), QLineEdit::Normal, QString(), &ok,
+      Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
 
   if (!ok) {
     return;
@@ -1329,8 +1323,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   pos_list_provider_->GetPosList(&pos_list);
   std::vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
-    change_pos_actions[i] =
-        change_category_to->addAction(QString::fromUtf8(pos_list[i].c_str()));
+    change_pos_actions[i] = change_category_to->addAction(QUtf8(pos_list[i]));
   }
   QAction *edit_comment_action = menu->addAction(tr("Edit comment"));
 
@@ -1421,6 +1414,8 @@ void DictionaryTool::SyncToStorage() {
     UserDictionary::Entry *entry = dic->add_entries();
     entry->set_key(dic_content_->item(i, 0)->text().toStdString());
     entry->set_value(dic_content_->item(i, 1)->text().toStdString());
+    // TODO(yuryu): remove c_str() after changing ToPosType to take
+    // absl::string_view.
     entry->set_pos(UserDictionaryUtil::ToPosType(
         dic_content_->item(i, 2)->text().toStdString().c_str()));
     entry->set_comment(dic_content_->item(i, 3)->text().toStdString());
@@ -1456,7 +1451,7 @@ bool DictionaryTool::InitDictionaryList() {
   for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
     QListWidgetItem *item = new QListWidgetItem(dic_list_);
     DCHECK(item);
-    item->setText(storage.dictionaries(i).name().c_str());
+    item->setText(QUtf8(storage.dictionaries(i).name()));
     item->setData(
         Qt::UserRole,
         QVariant(static_cast<qulonglong>(storage.dictionaries(i).id())));
@@ -1562,13 +1557,13 @@ void DictionaryTool::SaveAndReloadServer() {
   }
 }
 
-bool DictionaryTool::IsReadableToImport(const std::string &file_name) {
-  QFileInfo file_info(QUtf8(file_name));
+bool DictionaryTool::IsReadableToImport(const QString &file_name) {
+  QFileInfo file_info(file_name);
   return file_info.isFile() && file_info.isReadable();
 }
 
-bool DictionaryTool::IsWritableToExport(const std::string &file_name) {
-  QFileInfo file_info(QUtf8(file_name));
+bool DictionaryTool::IsWritableToExport(const QString &file_name) {
+  QFileInfo file_info(file_name);
   if (file_info.exists()) {
     return file_info.isFile() && file_info.isWritable();
   } else {
@@ -1603,7 +1598,7 @@ void DictionaryTool::UpdateUIStatus() {
 
   const DictionaryInfo dic_info = current_dictionary();
   if (dic_info.item != nullptr) {
-    statusbar_message_ = QString(tr("%1: %2 entries"))
+    statusbar_message_ = tr("%1: %2 entries")
                              .arg(dic_info.item->text())
                              .arg(dic_content_->rowCount());
   } else {

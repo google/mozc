@@ -36,35 +36,25 @@
 #include <QSplitterHandle>
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "dictionary/user_dictionary_importer.h"
+#include "dictionary/user_dictionary_session.h"
+#include "dictionary/user_pos_interface.h"
+#include "absl/strings/string_view.h"
+#include "client/client_interface.h"
+#include "gui/dictionary_tool/find_dialog.h"
+#include "gui/dictionary_tool/import_dialog.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"
 
 namespace mozc {
-
-class PosListProviderInterface;
-
-namespace client {
-class ClientInterface;
-}  // namespace client
-
-namespace user_dictionary {
-class UserDictionarySession;
-}  // namespace user_dictionary
-
 namespace gui {
-
-class ImportDialog;
-class FindDialog;
 
 class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   Q_OBJECT
 
  public:
   explicit DictionaryTool(QWidget *parent = nullptr);
-  ~DictionaryTool() override;
 
   // return true DictionaryTool is available.
   bool IsAvailable() const { return is_available_; }
@@ -144,11 +134,10 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // Show a special dialog message according to the result
   // of UserDictionaryImporter.
   void ReportImportError(UserDictionaryImporter::ErrorType error,
-                         const std::string &dic_name, int added_entries_size);
+                         const QString &dic_name, int added_entries_size);
 
-  void ImportHelper(uint64_t dic_id, const std::string &dic_name,
-                    const std::string &file_name,
-                    UserDictionaryImporter::IMEType,
+  void ImportHelper(uint64_t dic_id, const QString &dic_name,
+                    const QString &file_name, UserDictionaryImporter::IMEType,
                     UserDictionaryImporter::EncodingType encoding_type);
 
   // Save storage contents into the disk and
@@ -160,15 +149,15 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   void EditComment();
 
   // Changes the POS of all selected items to |pos|.
-  void EditPos(const std::string &pos);
+  void EditPos(absl::string_view pos);
 
   // Moves selected items to the dictionary whose row is |dictionary_row|.
   void MoveTo(int dictionary_row);
 
   // Helper functions to check if a file with given name is readable
   // to import or writable to export without trying to open it.
-  static bool IsWritableToExport(const std::string &file_name);
-  static bool IsReadableToImport(const std::string &file_name);
+  static bool IsWritableToExport(const QString &file_name);
+  static bool IsReadableToImport(const QString &file_name);
 
   // Helper function for DeleteWord and MoveTo.
   // Fills selected word entry rows as a unique sorted sequence.
