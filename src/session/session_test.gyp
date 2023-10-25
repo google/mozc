@@ -144,6 +144,7 @@
         '../config/config.gyp:stats_config_util',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
@@ -221,6 +222,7 @@
       'dependencies': [
         '../engine/engine.gyp:engine_factory',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'session.gyp:random_keyevents_generator',
         'session.gyp:session',
         'session.gyp:session_handler_tool',

@@ -33,21 +33,21 @@
 #include <sstream>
 #include <string>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-void SetEntry(const std::string &name, uint64_t offset, uint64_t size,
+void SetEntry(absl::string_view name, uint64_t offset, uint64_t size,
               DataSetMetadata::Entry *entry) {
   entry->set_name(name);
   entry->set_offset(offset);
@@ -56,9 +56,9 @@ void SetEntry(const std::string &name, uint64_t offset, uint64_t size,
 
 TEST(DatasetWriterTest, Write) {
   // Create a dummy file to be packed.
-  const std::string &in =
-      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "in"});
-  absl::Status s = FileUtil::SetContents(in, absl::string_view("m\0zc\xEF", 5));
+  TempFile in = testing::MakeTempFileOrDie();
+  absl::Status s =
+      FileUtil::SetContents(in.path(), absl::string_view("m\0zc\xEF", 5));
   ASSERT_OK(s);
 
   // Generate a packed file into |actual|.
@@ -73,12 +73,12 @@ TEST(DatasetWriterTest, Write) {
     w.Add("data128", 128, std::string("data128 abcdefg"));
     w.Add("data256", 256, std::string("data256 xyz"));
 
-    w.AddFile("file8", 8, in);
-    w.AddFile("file16", 16, in);
-    w.AddFile("file32", 32, in);
-    w.AddFile("file64", 64, in);
-    w.AddFile("file128", 128, in);
-    w.AddFile("file256", 256, in);
+    w.AddFile("file8", 8, in.path());
+    w.AddFile("file16", 16, in.path());
+    w.AddFile("file32", 32, in.path());
+    w.AddFile("file64", 64, in.path());
+    w.AddFile("file128", 128, in.path());
+    w.AddFile("file256", 256, in.path());
 
     std::stringstream out;
     w.Finish(&out);
@@ -86,7 +86,7 @@ TEST(DatasetWriterTest, Write) {
   }
 
   // Define the expected binary image.
-  const char data_chunk[] =
+  constexpr char data_chunk[] =
       "magic"                               // offset 0, size 5
       "data8 \x00\x01"                      // offset 5, size 8
       "\0"                                  // offset 13, size 1 (padding)

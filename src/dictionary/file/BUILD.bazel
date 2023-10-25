@@ -79,8 +79,9 @@ mozc_cc_test(
         ":dictionary_file_builder",
         "//base:file_util",
         "//base:logging",
+        "//base/file:temp_dir",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 
@@ -152,9 +153,9 @@ mozc_cc_test(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:util",
+        "//base/file:temp_dir",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

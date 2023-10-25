@@ -31,33 +31,29 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/logging.h"
-#include "base/system_util.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "protocol/commands.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/flags/flag.h"
 #include "absl/time/time.h"
-
-using mozc::usage_stats::Stats;
-using mozc::usage_stats::UsageStats;
 
 namespace mozc {
 namespace session {
 
-class SessionUsageObserverTest : public testing::Test {
+using ::mozc::usage_stats::Stats;
+using ::mozc::usage_stats::UsageStats;
+
+class SessionUsageObserverTest : public testing::TestWithTempUserProfile {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     UsageStats::ClearAllStatsForTest();
 
     Clock::SetClockForUnitTest(nullptr);

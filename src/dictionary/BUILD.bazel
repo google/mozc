@@ -413,7 +413,6 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":user_dictionary_util",
-        "//base:util",
         "//testing:gunit_main",
         "//testing:testing_util",
         "@com_google_absl//absl/strings",
@@ -450,8 +449,6 @@ mozc_cc_test(
     deps = [
         ":user_dictionary_importer",
         ":user_dictionary_storage",
-        ":user_dictionary_util",
-        "//base:util",
         "//testing:gunit_main",
     ],
 )
@@ -494,10 +491,10 @@ mozc_cc_test(
         ":pos_matcher",
         ":text_dictionary_loader",
         "//base:file_util",
-        "//base:util",
+        "//base/file:temp_dir",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
     ],
 )
 

@@ -30,6 +30,7 @@
 #include "storage/lru_storage.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -40,14 +41,14 @@
 #include <vector>
 
 #include "base/clock_mock.h"
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/random.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
 
@@ -119,31 +120,16 @@ std::vector<std::string> GetValuesInStorageOrder(const LruStorage &storage) {
 }  // namespace
 
 class LruStorageTest : public ::testing::Test {
- protected:
-  void SetUp() override { UnlinkDBFileIfExists(); }
-
-  void TearDown() override { UnlinkDBFileIfExists(); }
-
-  static void UnlinkDBFileIfExists() {
-    const std::string path = GetTemporaryFilePath();
-    EXPECT_OK(FileUtil::UnlinkIfExists(path));
-  }
-
-  static std::string GetTemporaryFilePath() {
-    // This name should be unique to each test.
-    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                              "LruStorageTest_test.db");
-  }
 };
 
 TEST_F(LruStorageTest, LruStorageTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
-  const std::string file = GetTemporaryFilePath();
   for (int i = 0; i < std::size(kSize); ++i) {
-    LruStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
+    TempFile file(testing::MakeTempFileOrDie());
+    LruStorage::CreateStorageFile(file.path().c_str(), 4, kSize[i], kSeed);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file.c_str()));
-    EXPECT_EQ(storage.filename(), file);
+    EXPECT_TRUE(storage.Open(file.path().c_str()));
+    EXPECT_EQ(storage.filename(), file.path());
     EXPECT_EQ(storage.size(), kSize[i]);
     EXPECT_EQ(storage.value_size(), 4);
     EXPECT_EQ(storage.seed(), kSeed);
@@ -159,14 +145,14 @@ struct Entry {
 
 TEST_F(LruStorageTest, ReadWriteTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
-  const std::string file = GetTemporaryFilePath();
   absl::BitGen gen;
 
   for (int i = 0; i < std::size(kSize); ++i) {
-    LruStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
+    TempFile file(testing::MakeTempFileOrDie());
+    LruStorage::CreateStorageFile(file.path().c_str(), 4, kSize[i], kSeed);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file.c_str()));
-    EXPECT_EQ(storage.filename(), file);
+    EXPECT_TRUE(storage.Open(file.path().c_str()));
+    EXPECT_EQ(storage.filename(), file.path());
     EXPECT_EQ(storage.size(), kSize[i]);
     EXPECT_EQ(storage.value_size(), 4);
     EXPECT_EQ(storage.seed(), kSeed);
@@ -197,43 +183,43 @@ TEST_F(LruStorageTest, ReadWriteTest) {
 }
 
 TEST_F(LruStorageTest, Merge) {
-  const std::string file1 = GetTemporaryFilePath() + ".tmp1";
-  const std::string file2 = GetTemporaryFilePath() + ".tmp2";
+  TempFile file1(testing::MakeTempFileOrDie());
+  TempFile file2(testing::MakeTempFileOrDie());
 
   // Can merge
   {
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 100, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 4, 100, kSeed);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 100, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 4, 100, kSeed);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file1.c_str()));
-    EXPECT_TRUE(storage.Merge(file2.c_str()));
+    EXPECT_TRUE(storage.Open(file1.path().c_str()));
+    EXPECT_TRUE(storage.Merge(file2.path().c_str()));
   }
 
   // different entry size
   {
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 100, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 4, 200, kSeed);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 100, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 4, 200, kSeed);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file1.c_str()));
-    EXPECT_TRUE(storage.Merge(file2.c_str()));
+    EXPECT_TRUE(storage.Open(file1.path().c_str()));
+    EXPECT_TRUE(storage.Merge(file2.path().c_str()));
   }
 
   // seed is different
   {
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 100, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 4, 200, 0x76fee);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 100, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 4, 200, 0x76fee);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file1.c_str()));
-    EXPECT_FALSE(storage.Merge(file2.c_str()));
+    EXPECT_TRUE(storage.Open(file1.path().c_str()));
+    EXPECT_FALSE(storage.Merge(file2.path().c_str()));
   }
 
   // value size is different
   {
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 100, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 8, 200, kSeed);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 100, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 8, 200, kSeed);
     LruStorage storage;
-    EXPECT_TRUE(storage.Open(file1.c_str()));
-    EXPECT_FALSE(storage.Merge(file2.c_str()));
+    EXPECT_TRUE(storage.Open(file1.path().c_str()));
+    EXPECT_FALSE(storage.Merge(file2.path().c_str()));
   }
 
   {
@@ -241,17 +227,17 @@ TEST_F(LruStorageTest, Merge) {
     // timestamp set below is 50, so set the current time to 100.
     ScopedClockMock clock(absl::FromUnixSeconds(100));
 
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 8, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 4, 4, kSeed);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 8, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 4, 4, kSeed);
     LruStorage storage1;
-    EXPECT_TRUE(storage1.Open(file1.c_str()));
+    EXPECT_TRUE(storage1.Open(file1.path().c_str()));
     storage1.Write(0, 0, "test", 1);
     storage1.Write(1, 1, "test", 10);
     storage1.Write(2, 2, "test", 20);
     storage1.Write(3, 3, "test", 30);
 
     LruStorage storage2;
-    EXPECT_TRUE(storage2.Open(file2.c_str()));
+    EXPECT_TRUE(storage2.Open(file2.path().c_str()));
     storage2.Write(0, 4, "test", 2);
     storage2.Write(1, 5, "test", 50);
 
@@ -284,17 +270,17 @@ TEST_F(LruStorageTest, Merge) {
     // timestamp set below is 50, so set the current time to 100.
     ScopedClockMock clock(absl::FromUnixSeconds(100));
 
-    LruStorage::CreateStorageFile(file1.c_str(), 4, 8, kSeed);
-    LruStorage::CreateStorageFile(file2.c_str(), 4, 4, kSeed);
+    LruStorage::CreateStorageFile(file1.path().c_str(), 4, 8, kSeed);
+    LruStorage::CreateStorageFile(file2.path().c_str(), 4, 4, kSeed);
     LruStorage storage1;
-    EXPECT_TRUE(storage1.Open(file1.c_str()));
+    EXPECT_TRUE(storage1.Open(file1.path().c_str()));
     storage1.Write(0, 0, "test", 0);
     storage1.Write(1, 1, "test", 10);
     storage1.Write(2, 2, "test", 20);
     storage1.Write(3, 3, "test", 30);
 
     LruStorage storage2;
-    EXPECT_TRUE(storage2.Open(file2.c_str()));
+    EXPECT_TRUE(storage2.Open(file2.path().c_str()));
     storage2.Write(0, 2, "new1", 0);
     storage2.Write(1, 3, "new2", 50);
 
@@ -322,36 +308,32 @@ TEST_F(LruStorageTest, Merge) {
     EXPECT_EQ(fp, 0);
     EXPECT_EQ(last_access_time, 0);
   }
-
-  EXPECT_OK(FileUtil::Unlink(file1));
-  EXPECT_OK(FileUtil::Unlink(file2));
 }
 
 TEST_F(LruStorageTest, InvalidFileOpenTest) {
   LruStorage storage;
   EXPECT_FALSE(storage.Insert("test", nullptr));
 
-  const std::string filename = GetTemporaryFilePath();
-  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
+  TempFile file(testing::MakeTempFileOrDie());
 
   // cannot open
-  EXPECT_FALSE(storage.Open(filename.c_str()));
+  EXPECT_FALSE(storage.Open(file.path().c_str()));
   EXPECT_FALSE(storage.Insert("test", nullptr));
 }
 
 TEST_F(LruStorageTest, OpenOrCreateTest) {
-  const std::string file = GetTemporaryFilePath();
-  ASSERT_OK(FileUtil::SetContents(file, "test"));
+  TempFile file(testing::MakeTempFileOrDie());
+  ASSERT_OK(FileUtil::SetContents(file.path(), "test"));
 
   {
     LruStorage storage;
-    EXPECT_FALSE(storage.Open(file.c_str()))
+    EXPECT_FALSE(storage.Open(file.path().c_str()))
         << "Corrupted file should be detected as an error.";
   }
 
   {
     LruStorage storage;
-    EXPECT_TRUE(storage.OpenOrCreate(file.c_str(), 4, 10, kSeed))
+    EXPECT_TRUE(storage.OpenOrCreate(file.path().c_str(), 4, 10, kSeed))
         << "Corrupted file should be replaced with new one.";
     uint32_t v = 823;
     storage.Insert("test", reinterpret_cast<const char *>(&v));
@@ -368,7 +350,8 @@ TEST_F(LruStorageTest, Delete) {
   constexpr size_t kValueSize = 4;
   constexpr size_t kNumElements = 4;
   LruStorage storage;
-  ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
+  TempFile file(testing::MakeTempFileOrDie());
+  ASSERT_TRUE(storage.OpenOrCreate(file.path().c_str(), kValueSize,
                                    kNumElements, kSeed));
 
   EXPECT_TRUE(storage.Delete("nothing to delete"));
@@ -456,7 +439,8 @@ TEST_F(LruStorageTest, DeleteElementsBefore) {
   constexpr size_t kValueSize = 4;
   constexpr size_t kNumElements = 4;
   LruStorage storage;
-  ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
+  TempFile file(testing::MakeTempFileOrDie());
+  ASSERT_TRUE(storage.OpenOrCreate(file.path().c_str(), kValueSize,
                                    kNumElements, kSeed));
 
   // Auto advance clock after opening the file; otherwise OpenOrCreate()
@@ -506,7 +490,8 @@ TEST_F(LruStorageTest, DeleteElementsUntouchedFor62Days) {
   constexpr size_t kValueSize = 4;
   constexpr size_t kNumElements = 4;
   LruStorage storage;
-  ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
+  TempFile file(testing::MakeTempFileOrDie());
+  ASSERT_TRUE(storage.OpenOrCreate(file.path().c_str(), kValueSize,
                                    kNumElements, kSeed));
 
   // Auto advance clock after opening the file; otherwise OpenOrCreate()
@@ -540,7 +525,8 @@ TEST_F(LruStorageTest, OldDataAreNotLookedUp) {
   constexpr size_t kValueSize = 4;
   constexpr size_t kNumElements = 4;
   LruStorage storage;
-  ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
+  TempFile file(testing::MakeTempFileOrDie());
+  ASSERT_TRUE(storage.OpenOrCreate(file.path().c_str(), kValueSize,
                                    kNumElements, kSeed));
 
   EXPECT_TRUE(storage.Insert("1111", "aaaa"));

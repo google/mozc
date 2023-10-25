@@ -39,7 +39,6 @@
 #include <string>
 #include <system_error>
 #include <utility>
-#include <vector>
 
 #include "base/file_stream.h"
 #include "base/logging.h"
@@ -52,6 +51,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #ifdef _WIN32
 // clang-format off
@@ -622,7 +622,7 @@ absl::Status FileUtilImpl::CreateHardLink(const std::string &from,
 }
 
 std::string FileUtil::JoinPath(
-    const std::vector<absl::string_view> &components) {
+    const absl::Span<const absl::string_view> components) {
   std::string output;
   for (const absl::string_view component : components) {
     if (component.empty()) {

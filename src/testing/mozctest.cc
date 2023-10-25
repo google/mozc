@@ -45,14 +45,14 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace testing {
 
-std::string GetSourcePath(const std::vector<absl::string_view> &components) {
+std::string GetSourcePath(absl::Span<const absl::string_view> components) {
   const std::string test_srcdir = absl::GetFlag(FLAGS_test_srcdir);
   std::vector<absl::string_view> abs_components = {test_srcdir};
-
   const char *workspace = std::getenv("TEST_WORKSPACE");
   if (workspace && workspace[0]) {
     abs_components.push_back(workspace);
@@ -64,7 +64,7 @@ std::string GetSourcePath(const std::vector<absl::string_view> &components) {
 }
 
 absl::StatusOr<std::string> GetSourceFile(
-    const std::vector<absl::string_view> &components) {
+    absl::Span<const absl::string_view> components) {
   std::string path = GetSourcePath(components);
   if (absl::Status s = FileUtil::FileExists(path); !s.ok()) {
     return s;
@@ -72,15 +72,13 @@ absl::StatusOr<std::string> GetSourceFile(
   return path;
 }
 
-std::string GetSourceFileOrDie(
-    const std::vector<absl::string_view> &components) {
+std::string GetSourceFileOrDie(absl::Span<const absl::string_view> components) {
   absl::StatusOr<std::string> abs_path = GetSourceFile(components);
   CHECK_OK(abs_path);
   return *std::move(abs_path);
 }
 
-std::string GetSourceDirOrDie(
-    const std::vector<absl::string_view> &components) {
+std::string GetSourceDirOrDie(absl::Span<const absl::string_view> components) {
   const std::string path = GetSourcePath(components);
   CHECK_OK(FileUtil::DirectoryExists(path))
       << ": Directory doesn't exist: " << path;
@@ -88,8 +86,8 @@ std::string GetSourceDirOrDie(
 }
 
 std::vector<std::string> GetSourceFilesInDirOrDie(
-    const std::vector<absl::string_view> &dir_components,
-    const std::vector<absl::string_view> &filenames) {
+    absl::Span<const absl::string_view> dir_components,
+    absl::Span<const absl::string_view> filenames) {
   const std::string dir = GetSourceDirOrDie(dir_components);
   std::vector<std::string> paths;
   for (size_t i = 0; i < filenames.size(); ++i) {
@@ -100,10 +98,15 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
   return paths;
 }
 
-// Creates a new unique TempDirectory and returns it.
 TempDirectory MakeTempDirectoryOrDie() {
   absl::StatusOr<TempDirectory> result =
       TempDirectory::Default().CreateTempDirectory();
+  CHECK_OK(result);
+  return *std::move(result);
+}
+
+TempFile MakeTempFileOrDie() {
+  absl::StatusOr<TempFile> result = TempDirectory::Default().CreateTempFile();
   CHECK_OK(result);
   return *std::move(result);
 }

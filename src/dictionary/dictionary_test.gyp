@@ -96,6 +96,7 @@
         '../base/base.gyp:base',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'dictionary_base.gyp:text_dictionary_loader',
       ],
       'variables': {

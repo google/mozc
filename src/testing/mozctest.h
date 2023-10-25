@@ -37,6 +37,7 @@
 #include "testing/gunit.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace testing {
@@ -50,21 +51,20 @@ namespace testing {
 //
 // This call gives the absolute path to data/test/dictionary/id.def. (Note that
 // the actual result is separated by OS-specific path separator.)
-std::string GetSourcePath(const std::vector<absl::string_view> &components);
+std::string GetSourcePath(absl::Span<const absl::string_view> components);
 
 // Gets the absolute path of a test resource file. Returns an error status if
 // the path doesn't exist.
 absl::StatusOr<std::string> GetSourceFile(
-    const std::vector<absl::string_view> &components);
+    absl::Span<const absl::string_view> components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,
 // terminates the program.
-std::string GetSourceFileOrDie(
-    const std::vector<absl::string_view> &components);
+std::string GetSourceFileOrDie(absl::Span<const absl::string_view> components);
 
 // Gets an absolute path of test resource directory.  If the directory doesn't
 // exist, terminates the program.
-std::string GetSourceDirOrDie(const std::vector<absl::string_view> &components);
+std::string GetSourceDirOrDie(absl::Span<const absl::string_view> components);
 
 // Gets absolute paths of test resource files in a directory.  If one of files
 // don't exit, terminates the program.
@@ -75,11 +75,14 @@ std::string GetSourceDirOrDie(const std::vector<absl::string_view> &components);
 //   "/test/srcdir/my/dir/file2",
 // };
 std::vector<std::string> GetSourceFilesInDirOrDie(
-    const std::vector<absl::string_view> &dir_components,
-    const std::vector<absl::string_view> &filenames);
+    absl::Span<const absl::string_view> dir_components,
+    absl::Span<const absl::string_view> filenames);
 
-// Creates a new unique TempDirectory and returns it.
+// Creates and returns a new unique TempDirectory in TempDirectory::Default().
 TempDirectory MakeTempDirectoryOrDie();
+
+// Creates and returns a new unique TempFile in TempDirectory::Default().
+TempFile MakeTempFileOrDie();
 
 #ifndef MOZC_DICT_DIR_COMPONENTS
 #define MOZC_DICT_DIR_COMPONENTS "data"

@@ -103,8 +103,9 @@ mozc_cc_test(
         "//base:file_util",
         "//base:logging",
         "//base:random",
+        "//base/file:temp_dir",
         "//testing:gunit_main",
-        "@com_google_absl//absl/flags:flag",
+        "//testing:mozctest",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/time",
     ],
@@ -155,10 +156,10 @@ mozc_cc_test(
     deps = [
         ":storage_interaface",
         ":tiny_storage",
-        "//base:file_util",
+        "//base/file:temp_dir",
         "//testing:gunit_main",
+        "//testing:mozctest",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
