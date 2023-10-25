@@ -33,7 +33,6 @@
 
 #include <vector>
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

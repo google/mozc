@@ -29,7 +29,6 @@
 
 #include "base/win32/win_api_test_helper.h"
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

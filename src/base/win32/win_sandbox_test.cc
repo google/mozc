@@ -33,9 +33,9 @@
 #include <windows.h>
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/types/span.h"
 

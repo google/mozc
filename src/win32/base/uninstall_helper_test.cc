@@ -36,7 +36,6 @@
 
 #include "base/const.h"
 #include "base/win32/wide_char.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "win32/base/tsf_profile.h"
 

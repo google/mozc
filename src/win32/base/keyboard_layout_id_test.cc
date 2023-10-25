@@ -30,7 +30,6 @@
 #include "win32/base/keyboard_layout_id.h"
 
 #include "base/util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

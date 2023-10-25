@@ -39,7 +39,6 @@
 #include <cstdint>
 
 #include "protocol/commands.pb.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

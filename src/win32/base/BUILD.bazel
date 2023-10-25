@@ -35,12 +35,12 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//bazel/win32:build_defs.bzl",
     "copts_wtl",
     "features_gdi",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 package(
     default_visibility = ["//win32:__subpackages__"],
@@ -231,6 +231,7 @@ mozc_cc_test(
     deps = [
         ":keyboard",
         "//testing:gunit_main",
+        "@com_google_absl//absl/base",
     ],
 )
 

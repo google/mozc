@@ -34,7 +34,6 @@
 #include <utility>
 
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

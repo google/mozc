@@ -29,7 +29,6 @@
 
 #include "win32/base/input_dll.h"
 
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace {
