@@ -66,6 +66,39 @@
           },
         },
         {
+          'target_name': 'msctf_dll_import_lib',
+          'type': 'shared_library',
+          'sources': [
+            'msctf_dll.cc',
+            'msctf_dll.def',
+          ],
+          'dependencies': [
+            '<(mozc_src_dir)/base/base.gyp:base',
+          ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'AdditionalOptions': [
+                '/ignore:4070',
+              ],
+            },
+          },
+        },
+        {
+          'target_name': 'msctf_dll_test',
+          'type': 'executable',
+          'sources': [
+            'msctf_dll_test.cc',
+          ],
+          'dependencies': [
+            '<(mozc_src_dir)/base/base.gyp:base',
+            '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+            'msctf_dll_import_lib',
+          ],
+          'variables': {
+            'test_size': 'small',
+          },
+        },
+        {
           'target_name': 'imframework_util',
           'type': 'static_library',
           'sources': [
@@ -209,6 +242,7 @@
           'dependencies': [
             'ime_impl_base_test',
             'imframework_util_test',
+            'msctf_dll_test',
             'text_icon_test',
             'win32_base_test',
           ],
