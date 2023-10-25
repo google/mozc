@@ -240,18 +240,8 @@ void EnsureKanaLockUnlocked() {
 
 // A COM-independent way to instantiate Category Manager object.
 wil::com_ptr_nothrow<ITfCategoryMgr> GetCategoryMgr() {
-  const HMODULE module = WinUtil::GetSystemModuleHandle(L"msctf.dll");
-  if (module == nullptr) {
-    return nullptr;
-  }
-  const auto tf_create_tegory_mgr =
-      reinterpret_cast<decltype(&TF_CreateCategoryMgr)>(
-          GetProcAddress(module, "TF_CreateCategoryMgr"));
-  if (tf_create_tegory_mgr == nullptr) {
-    return nullptr;
-  }
   wil::com_ptr_nothrow<ITfCategoryMgr> ptr;
-  return SUCCEEDED(tf_create_tegory_mgr(&ptr)) ? ptr : nullptr;
+  return SUCCEEDED(TF_CreateCategoryMgr(&ptr)) ? ptr : nullptr;
 }
 
 // Custom hash function for wil::com_ptr_nothrow.
