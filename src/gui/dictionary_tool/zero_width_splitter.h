@@ -33,14 +33,13 @@
 #include <QSplitter>
 
 // Special QSplitter whose handle size is only 1px.
-// This line is drawed with a proper colour corresponding to
+// This line is drawn with a proper colour corresponding to
 // Mac style splitter.
 class ZeroWidthSplitterHandle : public QSplitterHandle {
   Q_OBJECT;
 
  public:
   ZeroWidthSplitterHandle(Qt::Orientation orientation, QSplitter *parent);
-  ~ZeroWidthSplitterHandle() override;
 
   void paintEvent(QPaintEvent *event) override;
   QSize sizeHint() const override;

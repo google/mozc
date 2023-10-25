@@ -32,6 +32,7 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -40,7 +41,7 @@ class EncodingUtil {
   EncodingUtil() = delete;
   EncodingUtil(const EncodingUtil &) = delete;
   EncodingUtil &operator=(const EncodingUtil &) = delete;
-  static void SjisToUtf8(const std::string &input, std::string *output);
+  static std::string SjisToUtf8(absl::string_view input);
 };
 
 }  // namespace mozc

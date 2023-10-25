@@ -41,9 +41,6 @@
 #include "gui/dictionary_tool/ui_import_dialog.h"
 
 namespace mozc {
-
-class UserDicStorageInterface;
-
 namespace gui {
 
 class ImportDialog : public QDialog, private Ui::ImportDialog {
@@ -51,11 +48,10 @@ class ImportDialog : public QDialog, private Ui::ImportDialog {
 
  public:
   explicit ImportDialog(QWidget *parent = nullptr);
-  ~ImportDialog() override;
 
   // Accessor methods to get form values.
-  const QString file_name() const;
-  const QString dic_name() const;
+  QString file_name() const;
+  QString dic_name() const;
 
   UserDictionaryImporter::IMEType ime_type() const;
   UserDictionaryImporter::EncodingType encoding_type() const;

@@ -56,6 +56,4 @@ class DictionaryContentTableWidget : public QTableWidget {
 }  // namespace gui
 }  // namespace mozc
 
-using mozc::gui::DictionaryContentTableWidget;
-
 #endif  // MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_CONTENT_TABLE_WIDGET_H_

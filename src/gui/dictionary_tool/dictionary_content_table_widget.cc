@@ -31,6 +31,8 @@
 
 #include <QtGui>
 
+namespace mozc::gui {
+
 DictionaryContentTableWidget::DictionaryContentTableWidget(QWidget *parent)
     : QTableWidget(parent) {}
 
@@ -78,12 +80,14 @@ void DictionaryContentTableWidget::mouseDoubleClickEvent(QMouseEvent *event) {
 
   // When empty area is double-clicked, emit a signal
 #ifdef __APPLE__
-  if (nullptr == itemAt(event->pos())) {
+  if (itemAt(event->pos()) == nullptr) {
     emit emptyAreaClicked();
   }
 #endif  // __APPLE__
 }
 
 void DictionaryContentTableWidget::focusInEvent(QFocusEvent *event) {
-  setStyleSheet(QLatin1String(""));
+  setStyleSheet(QString());
 }
+
+}  // namespace mozc::gui

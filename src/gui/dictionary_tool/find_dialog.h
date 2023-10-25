@@ -31,11 +31,9 @@
 #define MOZC_GUI_DICTIONARY_TOOL_FIND_DIALOG_H_
 
 #include <QDialog>
+#include <QTableWidget>
 
 #include "gui/dictionary_tool/ui_find_dialog.h"
-
-class QTableWidget;
-class QTableWidgetItem;
 
 namespace mozc {
 namespace gui {
@@ -45,7 +43,6 @@ class FindDialog : public QDialog, private Ui::FindDialog {
 
  public:
   FindDialog(QWidget *parent, QTableWidget *table);
-  ~FindDialog() override;
 
  protected:
   void closeEvent(QCloseEvent *event) override;

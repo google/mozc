@@ -31,6 +31,7 @@ load(
     "//:build_defs.bzl",
     "MOZC_TAGS",
     "mozc_cc_library",
+    "mozc_cc_test",
     "mozc_select",
 )
 load(
@@ -56,6 +57,19 @@ mozc_cc_library(
         "//base:util",
         "@com_google_absl//absl/strings",
     ],
+)
+
+mozc_cc_test(
+    name = "encoding_util_test",
+    srcs = ["encoding_util_test.cc"],
+    deps = [
+        ":encoding_util",
+        "//base:logging",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ] + mozc_select(
+        windows = ["//base/win32:wide_char"],
+    ),
 )
 
 mozc_qt_moc(

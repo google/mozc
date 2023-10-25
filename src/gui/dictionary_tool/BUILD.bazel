@@ -155,6 +155,7 @@ mozc_cc_qt_library(
         "//base:util",
         "//base:version",
         "//client",
+        "//client:client_interface",
         "//config:config_handler",
         "//data_manager:pos_list_provider",
         "//dictionary:user_dictionary",
@@ -162,6 +163,7 @@ mozc_cc_qt_library(
         "//dictionary:user_dictionary_session",
         "//dictionary:user_dictionary_storage",
         "//dictionary:user_dictionary_util",
+        "//dictionary:user_pos_interface",
         "//gui/base:encoding_util",
         "//gui/base:gui_base",
         "//gui/base:msime_user_dictionary_importer",
@@ -171,9 +173,13 @@ mozc_cc_qt_library(
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ] + mozc_select(
-        windows = ["//base/win32:scoped_com"],
+        windows = [
+            "//base/win32:scoped_com",
+            "//gui/base:win_util",
+        ],
     ),
 )
 
