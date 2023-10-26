@@ -141,8 +141,10 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
   // A workaround to satisfy both b/6106437 and b/6641460.
   // Keep the instance in |lang_bar_item_mgr_|.
   if (!lang_bar_item_mgr_) {
-    lang_bar_item_mgr_ =
-        ComCreateInstance<ITfLangBarItemMgr>(CLSID_TF_LangBarItemMgr);
+    result = TF_CreateLangBarItemMgr(lang_bar_item_mgr_.put());
+    if (FAILED(result)) {
+      return result;
+    }
     if (!lang_bar_item_mgr_) {
       return E_FAIL;
     }

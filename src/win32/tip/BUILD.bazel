@@ -274,6 +274,7 @@ mozc_cc_library(
         "//base/win32:com",
         "//base/win32:hresultor",
         "//protocol:commands_cc_proto",
+        "//win32/base:msctf_dll",
         "@com_microsoft_wil//:wil",
     ],
 )
