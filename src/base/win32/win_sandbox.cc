@@ -649,6 +649,7 @@ bool SpawnSandboxedProcessImpl(std::wstring_view command_line,
   if (!process_info.has_value()) {
     return false;
   }
+  pid = process_info->dwProcessId;
 
   if (job.IsValid()) {
     const DWORD error_code = job.AssignProcessToJob(process_info->hProcess);
