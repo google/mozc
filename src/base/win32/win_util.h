@@ -49,33 +49,6 @@ class WinUtil {
   WinUtil() = delete;
   ~WinUtil() = delete;
 
-  // Load a DLL which has the specified base-name and is located in the
-  // system directory.
-  // If the function succeeds, the return value is a handle to the module.
-  // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is nullptr.
-  static HMODULE LoadSystemLibrary(std::wstring_view base_filename);
-
-  // Load a DLL which has the specified base-name and is located in the
-  // Mozc server directory.
-  // If the function succeeds, the return value is a handle to the module.
-  // You should call FreeLibrary with the handle.
-  // If the function fails, the return value is nullptr.
-  static HMODULE LoadMozcLibrary(std::wstring_view base_filename);
-
-  // If a DLL which has the specified base-name and located in the system
-  // directory is loaded in the caller process, retrieve its module handle.
-  // If the function succeeds, the return value is a handle to the module
-  // without incrementing its reference count so that you should not call
-  // FreeLibrary with the handle.
-  // If the function fails, the return value is nullptr.
-  static HMODULE GetSystemModuleHandle(std::wstring_view base_filename);
-
-  // A variant ot GetSystemModuleHandle except that this method increments
-  // reference count of the target DLL.
-  static HMODULE GetSystemModuleHandleAndIncrementRefCount(
-      std::wstring_view base_filename);
-
   // Retrieve whether the calling thread hold loader lock or not.
   // Return true if the state is retrieved successfully.
   // Otherwise, the state of loader lock is unknown.
