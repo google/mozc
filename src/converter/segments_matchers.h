@@ -73,6 +73,7 @@ MATCHER_P(EqualsCandidate, candidate, "") {
   COMPARE_FIELD(rid);
   COMPARE_FIELD(attributes);
   COMPARE_FIELD(source_info);
+  COMPARE_FIELD(category);
   COMPARE_FIELD(style);
   COMPARE_FIELD(command);
   COMPARE_FIELD(inner_segment_boundary);

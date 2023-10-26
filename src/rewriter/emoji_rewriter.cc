@@ -84,6 +84,7 @@ std::unique_ptr<Segment::Candidate> CreateCandidate(
   }
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
+  candidate->category = Segment::Candidate::SYMBOL;
 
   return candidate;
 }
