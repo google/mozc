@@ -132,7 +132,6 @@ class MSIMEImportIterator
       return;
     }
 
-    std::string name;
     for (int i = 0; i < pos_size; ++i) {
       pos_map_.try_emplace(pos_table->nPos,
                            EncodingUtil::SjisToUtf8(
@@ -196,7 +195,8 @@ class MSIMEImportIterator
       if (buf_[index_].pvComment != nullptr) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
           entry->comment = EncodingUtil::SjisToUtf8(
-              reinterpret_cast<const char *>(buf_[index_].pvComment));        } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
+              reinterpret_cast<const char *>(buf_[index_].pvComment));
+        } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
           Util::WideToUtf8(
               reinterpret_cast<const wchar_t *>(buf_[index_].pvComment),
               &entry->comment);
