@@ -385,9 +385,24 @@
         'OptimizeReferences': '2',             # /OPT:REF
         'RandomizedBaseAddress': '2',          # /DYNAMICBASE
         'target_conditions': [
-          # /TSAWARE is valid only on executable target.
           ['_type=="executable"', {
+            # /TSAWARE is valid only on executable target.
             'TerminalServerAware': '2',        # /TSAWARE
+            'AdditionalOptions': [
+              # We build *.exe with dynamic CRT and deploy CRT DLLs into the
+              # application dir. Thus LOAD_LIBRARY_SEARCH_APPLICATION_DIR is
+              # also necessary.
+              #   0x200: LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+              #   0x800: LOAD_LIBRARY_SEARCH_SYSTEM32
+              '/DEPENDENTLOADFLAG:0xA00',
+            ],
+          }, '_type=="shared_library"', {
+            'AdditionalOptions': [
+              # We build *.dll with staticd CRT. Thus
+              # LOAD_LIBRARY_SEARCH_APPLICATION_DIR is not necessary.
+              #   0x800: LOAD_LIBRARY_SEARCH_SYSTEM32
+              '/DEPENDENTLOADFLAG:0x800',
+            ],
           }],
         ],
       },
