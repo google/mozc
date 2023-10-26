@@ -192,13 +192,16 @@ class Utf8CharIterator {
     return tmp;
   }
 
-  // Returns the code point of the  current character as char32_t.
+  // Returns the code point of the current character as char32_t.
   char32_t char32() const { return dr_.code_point(); }
 
   // Returns the UTF-8 string of the current character as absl::string_view.
   absl::string_view view() const {
     return absl::string_view(ptr_, dr_.bytes_seen());
   }
+
+  // Returns the byte length in UTF-8 of the current character.
+  uint_fast8_t size() const { return dr_.bytes_seen(); }
 
   // Returns if the current character has a valid UTF-8 encoding.
   //

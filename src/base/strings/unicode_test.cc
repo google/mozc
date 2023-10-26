@@ -382,14 +382,17 @@ TEST(Utf8AsCharsStandaloneTest, IteratorMethods) {
   auto it = chars.begin();
   EXPECT_EQ(it.char32(), 'a');
   EXPECT_EQ(it.view(), "a");
+  EXPECT_EQ(it.size(), it.view().size());
   EXPECT_TRUE(it.ok());
   ++it;
   EXPECT_EQ(it.char32(), 0xFFFD);
   EXPECT_EQ(it.view(), "\uFFFD");
+  EXPECT_EQ(it.size(), it.view().size());
   EXPECT_TRUE(it.ok());
   ++it;
   EXPECT_EQ(it.char32(), 0xFFFD);
   EXPECT_EQ(it.view(), "\xDF");
+  EXPECT_EQ(it.size(), it.view().size());
   EXPECT_FALSE(it.ok());
 }
 

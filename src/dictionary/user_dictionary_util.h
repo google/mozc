@@ -33,16 +33,16 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_UTIL_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_UTIL_H_
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
-#include <vector>
 
+#include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class UserPosInterface;
 
 // TODO(hidehiko): Move this class into user_dictionary namespace.
 class UserDictionaryUtil {
@@ -58,11 +58,12 @@ class UserDictionaryUtil {
   // character for reading.
   static bool IsValidReading(absl::string_view reading);
 
-  // Performs varirous kinds of character normalization such as
+  // Performs various kinds of character normalization such as
   // katakana-> hiragana and full-width ascii -> half width
   // ascii. Identity of reading of a word should be defined by the
   // output of this function.
   static void NormalizeReading(absl::string_view input, std::string *output);
+  static std::string NormalizeReading(absl::string_view input);
 
   // Returns true if all fields of the given data is properly set and
   // have a legitimate value. It checks for an empty string, an
@@ -131,16 +132,16 @@ class UserDictionaryUtil {
   // Returns the file name of UserDictionary.
   static std::string GetUserDictionaryFileName();
 
-  // Returns the string representation of PosType, or nullptr if the given
+  // Returns the string representation of PosType, or empty string if the given
   // pos is invalid.
-  // For historicall reason, the pos was represented in Japanese characters.
-  static const char *GetStringPosType(
+  // For historical reason, the pos was represented in Japanese characters.
+  static absl::string_view GetStringPosType(
       user_dictionary::UserDictionary::PosType pos_type);
 
-  // Returns the string representation of PosType, or nullptr if the given
-  // pos is invalid.
+  // Returns the string representation of PosType. INVALID if the given pos is
+  // invalid.
   static user_dictionary::UserDictionary::PosType ToPosType(
-      const char *string_pos_type);
+      absl::string_view string_pos_type);
 
   // Generates a new dictionary id, i.e. id which is not in the storage.
   static uint64_t CreateNewDictionaryId(
@@ -153,13 +154,12 @@ class UserDictionaryUtil {
 
   // Deletes dictionary specified by the given dictionary_id.
   // If the deleted_dictionary is not nullptr, the pointer to the
-  // delete dictionary is stored into it. In other words,
-  // caller has responsibility to actual deletion of the instance.
+  // delete dictionary is stored into it.
   // Returns true if succeeded, otherwise false.
   static bool DeleteDictionary(
       user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
       int *original_index,
-      user_dictionary::UserDictionary **deleted_dictionary);
+      std::unique_ptr<user_dictionary::UserDictionary> *deleted_dictionary);
 };
 }  // namespace mozc
 
