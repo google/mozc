@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 42
+// Next ID: 43
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -619,12 +619,13 @@ message DecoderExperimentParams {
   reserved 20;  // Deprecated cancel_content_word_suffix_penalty
   reserved 23;  // Deprecated typing_correction_score_offset
   reserved 24;  // Deprecated typing_correction_move_literal_candidate_to_top
+  reserved 30;  // Deprecated enable_number_style_learning
 
   optional bool disable_zero_query_suffix_prediction = 36 [default = false];
 
-  reserved 30;  // Deprecated enable_number_style_learning
-
   optional bool enable_realtime_conversion_v2 = 37 [default = false];
+
+  optional bool enable_findability_oriented_order = 42 [default = false];
 }
 
 // Clients' request to the server.

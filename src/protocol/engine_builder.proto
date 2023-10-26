@@ -57,6 +57,12 @@ message EngineReloadRequest {
   // unnecessary for normal cases.  However, this is required for some unit
   // tests as test data has a different magic number.
   optional string magic_number = 4;
+
+  // Priority of the request (smaller is more prioritized).
+  // The decoder keeps all the requests, and uses the most prioritized one.
+  // For the same priority request, later one overrides existing one.
+  // Effective only with CommandType.SEND_ENGINE_RELOAD_REQUEST.
+  optional int32 priority = 5;
 }
 
 message EngineReloadResponse {

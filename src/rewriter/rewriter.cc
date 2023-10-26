@@ -53,6 +53,7 @@
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
 #include "rewriter/number_rewriter.h"
+#include "rewriter/order_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
@@ -141,6 +142,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<T13nPromotionRewriter>());
   AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(*data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
+  AddRewriter(std::make_unique<OrderRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
 }
 

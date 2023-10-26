@@ -512,6 +512,7 @@ std::unique_ptr<Segment::Candidate> CreateCandidate(
   candidate->content_key = base_candidate.content_key;
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
                             Segment::Candidate::NO_VARIANTS_EXPANSION);
+  candidate->category = Segment::Candidate::OTHER;
   candidate->description = std::move(description);
   return candidate;
 }

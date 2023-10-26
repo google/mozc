@@ -1426,7 +1426,14 @@ void SessionConverter::AppendCandidateList() {
   const Segment &segment = segments_->conversion_segment(segment_index_);
   for (size_t i = candidate_list_->next_available_id();
        i < segment.candidates_size(); ++i) {
-    candidate_list_->AddCandidate(i, segment.candidate(i).value);
+    if (request_->decoder_experiment_params()
+            .enable_findability_oriented_order()) {
+      const Segment::Candidate &c = segment.candidate(i);
+      candidate_list_->AddCandidate(i,
+                                    absl::StrCat(c.key, c.value, c.category));
+    } else {
+      candidate_list_->AddCandidate(i, segment.candidate(i).value);
+    }
     // if candidate has spelling correction attribute,
     // always display the candidate to let user know the
     // miss spelled candidate.

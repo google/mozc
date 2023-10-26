@@ -140,6 +140,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
                          sorted_value[i].description().size());
       c->description = description;
     }
+    c->category = Segment::Candidate::SYMBOL;
   }
 }
 

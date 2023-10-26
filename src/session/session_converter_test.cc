@@ -2379,6 +2379,39 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
   }
 }
 
+TEST_F(SessionConverterTest, AppendCandidateListWithCategory) {
+  MockConverter mock_converter;
+  request_->mutable_decoder_experiment_params()
+      ->set_enable_findability_oriented_order(true);
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  SetState(SessionConverterInterface::PREDICTION, &converter);
+  Segments segments;
+
+  {
+    SetAiueo(&segments);
+    FillT13Ns(&segments, composer_.get());
+
+    SetSegments(segments, &converter);
+
+    Segment *segment = segments.mutable_conversion_segment(0);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "あいうえお";
+    candidate->value = "あいうえお";
+    candidate->category = Segment::Candidate::OTHER;
+
+    candidate = segment->add_candidate();
+    candidate->key = "あいうえお";
+    candidate->value = "あいうえお";
+
+    AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
+    const CandidateList &candidate_list = GetCandidateList(converter);
+
+    // default あいうえお, default アイウエオ, other あいうえお
+    EXPECT_EQ(candidate_list.size(), 3);
+    EXPECT_FALSE(candidate_list.focused());
+  }
+}
+
 TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());

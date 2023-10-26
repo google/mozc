@@ -223,6 +223,7 @@ void SymbolRewriter::InsertCandidates(
         candidate->value == "w" || candidate->value == "www") {
       candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
     }
+    candidate->category = Segment::Candidate::SYMBOL;
 
     candidate->description = GetDescription(
         candidate->value, iter.description(), iter.additional_description());

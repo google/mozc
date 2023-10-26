@@ -156,6 +156,12 @@ class Segment final {
       USER_HISTORY_PREDICTOR = 1 << 6,
     };
 
+    enum Category {
+      DEFAULT_CATEGORY,  // Realtime conversion, history prediction, etc
+      SYMBOL,            // Symbol, emoji
+      OTHER,             // Misc candidate
+    };
+
     // LINT.IfChange
     std::string key;    // reading
     std::string value;  // surface form
@@ -201,6 +207,8 @@ class Segment final {
 
     // Candidate's source info which will be used for usage stats.
     uint32_t source_info = SOURCE_INFO_NONE;
+
+    Category category = DEFAULT_CATEGORY;
 
     // Candidate style. This is not a bit-field.
     // The style is defined in enum |Style|.

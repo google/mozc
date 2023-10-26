@@ -142,6 +142,11 @@ bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
   if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
     return MaybeInsertLatinT13n(segment);
   }
+  if (request.request()
+          .decoder_experiment_params()
+          .enable_findability_oriented_order()) {
+    return false;
+  }
   return MaybePromoteKatakana(segment);
 }
 
