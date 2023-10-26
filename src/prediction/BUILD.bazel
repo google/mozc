@@ -371,6 +371,7 @@ mozc_cc_test(
     deps = [
         ":result",
         ":single_kanji_prediction_aggregator",
+        "//base/strings:unicode",
         "//composer",
         "//composer:table",
         "//config:config_handler",

@@ -30,9 +30,9 @@
 #include "prediction/single_kanji_prediction_aggregator.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
+#include "base/strings/unicode.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
@@ -45,7 +45,6 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 
@@ -173,7 +172,7 @@ TEST_F(SingleKanjiPredictionAggregatorTest, PrefixResult) {
   EXPECT_EQ(result.rid, pos_matcher_->GetGeneralSymbolId());
   EXPECT_TRUE(result.candidate_attributes &
               Segment::Candidate::PARTIALLY_KEY_CONSUMED);
-  EXPECT_EQ(result.consumed_key_size, Util::CharsLen("あけぼの"));
+  EXPECT_EQ(result.consumed_key_size, strings::CharsLen("あけぼの"));
 }
 
 TEST_F(SingleKanjiPredictionAggregatorTest, SvsVariation) {

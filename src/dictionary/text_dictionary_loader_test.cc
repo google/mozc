@@ -33,15 +33,14 @@
 #include <string>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_util.h"
-#include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace dictionary {
@@ -60,18 +59,17 @@ constexpr char kReadingCorrectionLines[] =
 
 class TextDictionaryLoaderTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-  }
+  TextDictionaryLoaderTest()
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()),
+        temp_dir_(testing::MakeTempDirectoryOrDie()) {}
 
   std::unique_ptr<TextDictionaryLoader> CreateTextDictionaryLoader() {
     return std::make_unique<TextDictionaryLoader>(pos_matcher_);
   }
 
+  testing::MockDataManager mock_data_manager_;
   PosMatcher pos_matcher_;
-
- private:
-  const testing::MockDataManager mock_data_manager_;
+  TempDirectory temp_dir_;
 };
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
@@ -82,8 +80,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_TRUE(tokens.empty());
   }
 
-  const std::string filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.tsv");
+  const std::string filename = FileUtil::JoinPath(temp_dir_.path(), "test.tsv");
   ASSERT_OK(FileUtil::SetContents(filename, kTextLines));
 
   {
@@ -205,9 +202,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
 
 TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   const std::string filename1 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1.tsv");
+      FileUtil::JoinPath(temp_dir_.path(), "test1.tsv");
   const std::string filename2 =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2.tsv");
+      FileUtil::JoinPath(temp_dir_.path(), "test2.tsv");
   const std::string filename = filename1 + "," + filename2;
 
   ASSERT_OK(FileUtil::SetContents(filename1, kTextLines));
@@ -226,9 +223,9 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   std::unique_ptr<TextDictionaryLoader> loader = CreateTextDictionaryLoader();
 
   const std::string dic_filename =
-      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.tsv");
-  const std::string reading_correction_filename = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "reading_correction.tsv");
+      FileUtil::JoinPath(temp_dir_.path(), "test.tsv");
+  const std::string reading_correction_filename =
+      FileUtil::JoinPath(temp_dir_.path(), "reading_correction.tsv");
 
   ASSERT_OK(FileUtil::SetContents(dic_filename, kTextLines));
   FileUnlinker dic_unlinker(dic_filename);

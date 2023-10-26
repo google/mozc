@@ -38,6 +38,7 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         'dictionary_file.gyp:codec',
         'dictionary_file.gyp:codec_factory',
       ],
@@ -54,6 +55,7 @@
       'dependencies': [
         '../../base/base.gyp:base_core',
         '../../testing/testing.gyp:gtest_main',
+        '../../testing/testing.gyp:mozctest',
         'dictionary_file.gyp:codec_factory',
         'dictionary_file.gyp:dictionary_file',
         'dictionary_file.gyp:dictionary_file_builder',

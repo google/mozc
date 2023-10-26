@@ -347,7 +347,6 @@ def make_configure_options(args: argparse.Namespace) -> list[str]:
     qt_configure_options += ['-force-debug-info',
                              '-intelcet',
                              '-ltcg',  # Note: ignored in debug build
-                             '-no-feature-texthtmlparser',
                              '-no-freetype',
                              '-no-harfbuzz',
                              '-platform', 'win32-msvc']

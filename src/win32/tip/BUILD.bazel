@@ -150,6 +150,7 @@ mozc_cc_library(
         "//base/win32:hresult",
         "//base/win32:hresultor",
         "//protocol:commands_cc_proto",
+        "//win32/base:msctf_dll",
         "//win32/base:win32_window_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -273,6 +274,7 @@ mozc_cc_library(
         "//base/win32:com",
         "//base/win32:hresultor",
         "//protocol:commands_cc_proto",
+        "//win32/base:msctf_dll",
         "@com_microsoft_wil//:wil",
     ],
 )

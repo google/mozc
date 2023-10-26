@@ -85,7 +85,8 @@ def main():
 
   unused_qtdir = os.path.abspath(opt.qtdir)  # TODO(komatsu): remove this.
   target = os.path.abspath(opt.target)
-  qtver = str(opt.qtver)
+  # 'A' is used for the path of Qt6 (and probably later) unlike Qt5.
+  qtver = 'A' if opt.qtver != 5 else '5'
 
   # Changes the reference to QtCore framework from the target application
   # From: @rpath/QtCore.framework/Versions/5/QtCore

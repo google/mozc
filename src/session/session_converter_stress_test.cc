@@ -29,20 +29,21 @@
 
 #include <cstdint>
 #include <memory>
+#include <random>
 #include <string>
 
 #include "base/random.h"
-#include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "config/config_handler.h"
+#include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_converter.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
 
@@ -56,12 +57,9 @@ ABSL_FLAG(int32_t, test_srand_seed, 0,
           "used only when \"test_deterministic\" is true");
 
 namespace mozc {
-
-class ConverterInterface;
-
 namespace session {
 
-class SessionConverterStressTest : public ::testing::Test {
+class SessionConverterStressTest : public testing::TestWithTempUserProfile {
  public:
   SessionConverterStressTest() {
     if (absl::GetFlag(FLAGS_test_deterministic)) {
@@ -70,7 +68,6 @@ class SessionConverterStressTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);

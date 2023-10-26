@@ -32,14 +32,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "base/util.h"
 #include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_dictionary_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -73,6 +73,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
         'config.gyp:stats_config_util',
         'install_stats_config_util_test_data',
       ],

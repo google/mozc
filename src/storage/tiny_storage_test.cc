@@ -37,13 +37,11 @@
 #include <utility>
 #include <vector>
 
-#include "base/file_util.h"
+#include "base/file/temp_dir.h"
 #include "storage/storage_interface.h"
-#include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "absl/container/flat_hash_map.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 
 namespace mozc {
@@ -61,46 +59,25 @@ void CreateKeyValue(TargetMap *output, int size) {
 
 }  // namespace
 
-class TinyStorageTest : public testing::Test {
+class TinyStorageTest : public ::testing::Test {
  protected:
-  TinyStorageTest() = default;
-  TinyStorageTest(const TinyStorageTest &) = delete;
-  TinyStorageTest &operator=(const TinyStorageTest &) = delete;
-
-  void SetUp() override { UnlinkDBFileIfExists(); }
-
-  void TearDown() override { UnlinkDBFileIfExists(); }
-
-  static void UnlinkDBFileIfExists() {
-    const std::string path = GetTemporaryFilePath();
-    EXPECT_OK(FileUtil::UnlinkIfExists(path));
-  }
-
   static std::unique_ptr<StorageInterface> CreateStorage() {
     return TinyStorage::New();
-  }
-
-  static std::string GetTemporaryFilePath() {
-    // This name should be unique to each test.
-    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                              "TinyStorageTest_test.db");
   }
 };
 
 TEST_F(TinyStorageTest, TinyStorageTest) {
-  const std::string filename = GetTemporaryFilePath();
-
   static constexpr int kSize[] = {10, 100, 1000};
 
   for (int i = 0; i < std::size(kSize); ++i) {
-    EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+    TempFile temp_file(testing::MakeTempFileOrDie());
     std::unique_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert
     TargetMap target;
     CreateKeyValue(&target, kSize[i]);
     {
-      EXPECT_TRUE(storage->Open(filename));
+      EXPECT_TRUE(storage->Open(temp_file.path()));
       for (const auto &[key, value] : target) {
         EXPECT_TRUE(storage->Insert(key, value));
       }
@@ -122,7 +99,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
     storage->Sync();
 
     std::unique_ptr<StorageInterface> storage2(CreateStorage());
-    EXPECT_TRUE(storage2->Open(filename));
+    EXPECT_TRUE(storage2->Open(temp_file.path()));
     EXPECT_EQ(storage2->Size(), storage->Size());
 
     // Lookup

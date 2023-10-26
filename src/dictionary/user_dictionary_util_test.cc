@@ -34,14 +34,13 @@
 #include <cstdint>
 #include <string>
 
-#include "base/util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
 using user_dictionary::UserDictionary;
 using user_dictionary::UserDictionaryCommandStatus;
@@ -433,4 +432,5 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   delete deleted_dictionary;
 }
 
+}  // namespace
 }  // namespace mozc

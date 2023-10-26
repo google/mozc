@@ -29,23 +29,22 @@
 
 #include "dictionary/file/codec.h"
 
+#include <cstddef>
 #include <ios>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
 
+#include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/gmock.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
+#include "testing/mozctest.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
@@ -55,20 +54,14 @@ namespace {
 
 class CodecTest : public ::testing::Test {
  public:
-  CodecTest()
-      : test_file_(FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
-                                      "testfile.txt")) {}
+  CodecTest() : test_file_(testing::MakeTempFileOrDie()) {}
 
  protected:
-  void SetUp() override {
-    DictionaryFileCodecFactory::SetCodec(nullptr);
-    EXPECT_OK(FileUtil::UnlinkIfExists(test_file_));
-  }
+  void SetUp() override { DictionaryFileCodecFactory::SetCodec(nullptr); }
 
   void TearDown() override {
     // Reset to default setting
     DictionaryFileCodecFactory::SetCodec(nullptr);
-    EXPECT_OK(FileUtil::UnlinkIfExists(test_file_));
   }
 
   void AddSection(const DictionaryFileCodecInterface *codec,
@@ -101,7 +94,7 @@ class CodecTest : public ::testing::Test {
     return (expected == value);
   }
 
-  const std::string test_file_;
+  TempFile test_file_;
 };
 
 class CodecMock : public DictionaryFileCodecInterface {
@@ -133,11 +126,12 @@ TEST_F(CodecTest, FactoryTest) {
   std::vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
-    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(sections, &ofs);
   }
   {
-    absl::StatusOr<std::string> content = FileUtil::GetContents(test_file_);
+    absl::StatusOr<std::string> content =
+        FileUtil::GetContents(test_file_.path());
     ASSERT_OK(content);
     EXPECT_EQ(*content, "placeholder value");
   }
@@ -163,12 +157,12 @@ TEST_F(CodecTest, DefaultTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::GetContents(test_file_, &buf));
+  ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
   ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
   ASSERT_EQ(2, sections.size());
   int index = -1;
@@ -196,12 +190,12 @@ TEST_F(CodecTest, RandomizedCodecTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_.path(), std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::GetContents(test_file_, &buf));
+  ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
   ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
   ASSERT_EQ(2, sections.size());
   int index = -1;

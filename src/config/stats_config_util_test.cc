@@ -31,18 +31,17 @@
 
 #include <string>
 
-#include "base/file_util.h"
 #include "base/singleton.h"
-#include "base/system_util.h"
-#include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 
 #ifdef __ANDROID__
+#include "base/file/temp_dir.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "testing/mozctest.h"
 #endif  // __ANDROID__
 
 #ifdef _WIN32
@@ -66,9 +65,7 @@ constexpr wchar_t kOmahaUsageKeyForEveryone[] =
 constexpr wchar_t kSendStatsName[] = L"usagestats";
 
 // TODO(yuryu): absl::bit_cast is not constexpr with VC++2017.
-HKEY DefineHKey(const uintptr_t value) {
-  return absl::bit_cast<HKEY>(value);
-}
+HKEY DefineHKey(const uintptr_t value) { return absl::bit_cast<HKEY>(value); }
 
 const HKEY kHKCU_ClientState = DefineHKey(1);
 const HKEY kHKLM_ClientState = DefineHKey(2);
@@ -681,11 +678,9 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 
 #ifdef __ANDROID__
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const std::string config_file = FileUtil::JoinPath(
-      absl::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
-  FileUtil::Unlink(config_file);
-  ConfigHandler::SetConfigFileName(config_file);
-  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file);
+  const TempFile config_file(testing::MakeTempFileOrDie());
+  ConfigHandler::SetConfigFileName(config_file.path());
+  EXPECT_EQ(ConfigHandler::GetConfigFileName(), config_file.path());
   ConfigHandler::Reload();
 #ifdef CHANNEL_DEV
   EXPECT_TRUE(StatsConfigUtil::IsEnabled());

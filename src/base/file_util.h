@@ -33,11 +33,11 @@
 #include <ctime>
 #include <ios>
 #include <string>
-#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -149,7 +149,7 @@ class FileUtil {
                                      const std::string &to);
 
   // Joins the give path components using the OS-specific path delimiter.
-  static std::string JoinPath(const std::vector<absl::string_view> &components);
+  static std::string JoinPath(absl::Span<const absl::string_view> components);
 
   // Joins the given two path components using the OS-specific path delimiter.
   static std::string JoinPath(const absl::string_view path1,

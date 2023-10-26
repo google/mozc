@@ -555,6 +555,7 @@ mozc_cc_test(
     requires_full_emulation = False,
     deps = [
         ":emoticon_rewriter",
+        ":rewriter_interface",
         "//base:logging",
         "//config:config_handler",
         "//converter:segments",
@@ -1600,6 +1601,8 @@ mozc_cc_test(
     srcs = ["ivs_variants_rewriter_test.cc"],
     deps = [
         ":ivs_variants_rewriter",
+        "//converter:segments",
+        "//request:conversion_request",
         "//testing:gunit_main",
     ],
 )
