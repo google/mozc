@@ -42,6 +42,7 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
+#include "base/protobuf/message.h"
 #include "base/stopwatch.h"
 #include "composer/table.h"
 #include "config/character_form_manager.h"
@@ -522,22 +523,47 @@ bool SessionHandler::CreateSession(commands::Command *command) {
             << " is removed";
   }
 
-  if (engine_builder_ && session_map_->Size() == 0 &&
-      engine_builder_->HasResponse()) {
-    auto *response =
-        command->mutable_output()->mutable_engine_reload_response();
-    engine_builder_->GetResponse(response);
-    if (response->status() == EngineReloadResponse::RELOAD_READY) {
-      if (engine_->GetUserDataManager()) {
+  // Maybe build new engine if new request is received.
+  // EngineBuilder::Build just returns a future object so
+  // client needs to replace the new engine when the future is the ready to use.
+  if (engine_builder_ && !engine_response_future_ &&
+      current_engine_id_ != latest_engine_id_ && latest_engine_id_ != 0) {
+    engine_response_future_ = engine_builder_->Build(latest_engine_id_);
+    // Wait the engine if the no new engine is loaded so far.
+    if (current_engine_id_ == 0 || always_wait_for_engine_response_future_) {
+      engine_response_future_->Wait();
+    }
+  }
+
+  // Replaces the engine when the new engine is ready to use.
+  if (engine_builder_ && session_map_->Size() == 0 && engine_response_future_ &&
+      engine_response_future_->Ready()) {
+    auto &&engine_response = std::move(*engine_response_future_).Get();
+    engine_response_future_.reset();
+    *command->mutable_output()->mutable_engine_reload_response() =
+        engine_response.response;
+    if (engine_response.engine && engine_response.response.status() ==
+                                      EngineReloadResponse::RELOAD_READY) {
+      if (engine_ && engine_->GetUserDataManager()) {
         engine_->GetUserDataManager()->Wait();
       }
-      engine_.reset();
-      engine_ = engine_builder_->BuildFromPreparedData();
+      engine_ = std::move(engine_response.engine);
+      current_engine_id_ = engine_response.id;
+      command->mutable_output()->mutable_engine_reload_response()->set_status(
+          EngineReloadResponse::RELOADED);
       LOG_IF(FATAL, !engine_) << "Critical failure in engine replace";
       table_manager_->ClearCaches();
-      response->set_status(EngineReloadResponse::RELOADED);
+    } else {
+      // This engine id causes a critical error, so rollback the id.
+      LOG(ERROR) << "Failure in engine loading: "
+                 << protobuf::Utf8Format(engine_response.response);
+      const uint64_t rollback_id =
+          engine_builder_->UnregisterRequest(engine_response.id);
+      // Update latest_engine_id_ if latest_engine_id_ == engine_response.id.
+      // Otherwise, latest_engine_id_ may already be updated by the new request.
+      latest_engine_id_.compare_exchange_strong(engine_response.id,
+                                                rollback_id);
     }
-    engine_builder_->Clear();
   }
 
   session::SessionInterface *session = NewSession();
@@ -682,9 +708,10 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
   if (!engine_builder_ || !command->input().has_engine_reload_request()) {
     return false;
   }
-  engine_builder_->PrepareAsync(
-      command->input().engine_reload_request(),
-      command->mutable_output()->mutable_engine_reload_response());
+  latest_engine_id_ = engine_builder_->RegisterRequest(
+      command->input().engine_reload_request());
+  command->mutable_output()->mutable_engine_reload_response()->set_status(
+      EngineReloadResponse::ACCEPTED);
   return true;
 }
 

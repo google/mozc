@@ -33,13 +33,14 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
-#include <optional>
 
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
+#include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 
@@ -48,28 +49,30 @@ class EngineBuilder : public EngineBuilderInterface {
   EngineBuilder() = default;
   EngineBuilder(const EngineBuilder &) = delete;
   EngineBuilder &operator=(const EngineBuilder &) = delete;
-  ~EngineBuilder() override;
+  ~EngineBuilder() override = default;
 
-  // Implementation of EngineBuilderInterface.  PrepareAsync() is implemented
-  // using Thread.
-  void PrepareAsync(const EngineReloadRequest &request,
-                    EngineReloadResponse *response) override;
-  bool HasResponse() const override;
-  void GetResponse(EngineReloadResponse *response) const override;
-  std::unique_ptr<EngineInterface> BuildFromPreparedData() override;
-  void Clear() override;
+  uint64_t RegisterRequest(const EngineReloadRequest &request) override;
 
-  // Waits for internal thread to complete.
-  void Wait();
+  uint64_t UnregisterRequest(uint64_t id) override;
+
+  std::unique_ptr<EngineResponseFuture> Build(uint64_t id) const override;
+
+  void Clear();
 
  private:
-  std::atomic<uint64_t> model_path_fp_ = 0;
-
-  struct Prepared {
-    EngineReloadResponse response;
-    std::unique_ptr<DataManager> data_manager;
+  struct RequestData {
+    uint64_t id = 0;           // Fingerprint of request.
+    int32_t priority = 0;      // Priority of the model. smaller is better.
+    uint32_t sequence_id = 0;  // Sequential id.
+    EngineReloadRequest request;
   };
-  std::optional<BackgroundFuture<Prepared>> prepare_;
+
+  // Sequential counter assigned to RequestData.
+  mutable std::atomic<uint32_t> sequence_id_ = 0;
+
+  mutable absl::Mutex mutex_;
+  absl::flat_hash_set<uint64_t> unregistered_ ABSL_GUARDED_BY(mutex_);
+  std::vector<RequestData> requests_ ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace mozc
