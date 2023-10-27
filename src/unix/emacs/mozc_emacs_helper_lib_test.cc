@@ -29,53 +29,57 @@
 
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <iterator>
 #include <string>
 #include <vector>
 
 #include "base/protobuf/message.h"
-#include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "testing/googletest.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
+#include "testing/testing_util.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
-class MozcEmacsHelperLibTest : public testing::Test {
+namespace mozc::emacs {
+namespace {
+
+using ::testing::ElementsAreArray;
+using ::testing::IsEmpty;
+
+class MozcEmacsHelperLibTest : public ::testing::Test {
  protected:
-  void ParseAndTestInputLine(const std::string &input_line, uint32_t event_id,
-                             uint32_t session_id, const std::string &protobuf) {
+  void ParseAndTestInputLine(absl::string_view input_line, uint32_t event_id,
+                             uint32_t session_id, absl::string_view protobuf) {
     uint32_t actual_event_id = 0xDEADBEEFU;
     uint32_t actual_session_id = 0xDEADBEEFU;
-    mozc::commands::Input input;
-    mozc::emacs::ParseInputLine(input_line, &actual_event_id,
-                                &actual_session_id, &input);
+    commands::Input input;
+    ParseInputLine(input_line, &actual_event_id, &actual_session_id, &input);
     EXPECT_EQ(actual_event_id, event_id);
     EXPECT_EQ(actual_session_id, session_id);
-    EXPECT_EQ(input.ShortDebugString(), protobuf);
+    EXPECT_PROTO_EQ(protobuf, input);
   }
 
-  void PrintAndTestSexpr(const mozc::protobuf::Message &message,
-                         const std::string &sexpr) {
+  void PrintAndTestSexpr(const protobuf::Message &message,
+                         absl::string_view sexpr) {
     std::vector<std::string> buffer;
-    mozc::emacs::PrintMessage(message, &buffer);
+    PrintMessage(message, &buffer);
     const std::string output = absl::StrJoin(buffer, "");
     EXPECT_EQ(output, sexpr);
   }
 
-  void TestUnquoteString(const std::string &expected,
-                         const std::string &input) {
+  void TestUnquoteString(absl::string_view expected, absl::string_view input) {
     std::string output;
-    EXPECT_TRUE(mozc::emacs::UnquoteString("\"" + input + "\"", &output));
+    EXPECT_TRUE(UnquoteString(absl::StrCat("\"", input, "\""), &output));
     EXPECT_EQ(output, expected);
   }
 
-  void ExpectUnquoteStringFails(const std::string &input) {
+  void ExpectUnquoteStringFails(absl::string_view input) {
     std::string output = "output string must become empty.";
-    EXPECT_FALSE(mozc::emacs::UnquoteString(input, &output));
-    EXPECT_TRUE(output.empty());
+    EXPECT_FALSE(UnquoteString(input, &output));
+    EXPECT_THAT(output, IsEmpty());
   }
 };
 
@@ -152,36 +156,36 @@ TEST_F(MozcEmacsHelperLibTest, ParseInputLine) {
 
 TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   // KeyEvent
-  mozc::commands::KeyEvent key_event;
+  commands::KeyEvent key_event;
   PrintAndTestSexpr(key_event, "()");
-  key_event.set_special_key(mozc::commands::KeyEvent::PAGE_UP);
+  key_event.set_special_key(commands::KeyEvent::PAGE_UP);
   PrintAndTestSexpr(key_event, "((special-key . page-up))");
-  key_event.add_modifier_keys(mozc::commands::KeyEvent::KEY_DOWN);
+  key_event.add_modifier_keys(commands::KeyEvent::KEY_DOWN);
   PrintAndTestSexpr(key_event,
                     "((special-key . page-up)"
                     "(modifier-keys key-down))");
-  key_event.add_modifier_keys(mozc::commands::KeyEvent::SHIFT);
+  key_event.add_modifier_keys(commands::KeyEvent::SHIFT);
   PrintAndTestSexpr(key_event,
                     "((special-key . page-up)"
                     "(modifier-keys key-down shift))");
 
   // Result
-  mozc::commands::Result result;
-  result.set_type(mozc::commands::Result::STRING);
+  commands::Result result;
+  result.set_type(commands::Result::STRING);
   result.set_value("RESULT_STRING");
   PrintAndTestSexpr(result,
                     "((type . string)"
                     "(value . \"RESULT_STRING\"))");
 
   // Preedit
-  mozc::commands::Preedit preedit;
+  commands::Preedit preedit;
   preedit.set_cursor(1);
-  mozc::commands::Preedit::Segment *segment;
+  commands::Preedit::Segment *segment;
   segment = preedit.add_segment();
-  segment->set_annotation(mozc::commands::Preedit::Segment::UNDERLINE);
+  segment->set_annotation(commands::Preedit::Segment::UNDERLINE);
   segment->set_value("UNDER_LINE");
   segment = preedit.add_segment();
-  segment->set_annotation(mozc::commands::Preedit::Segment::NONE);
+  segment->set_annotation(commands::Preedit::Segment::NONE);
   segment->set_value("なし");
   PrintAndTestSexpr(preedit,
                     "((cursor . 1)"
@@ -192,14 +196,14 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
                     "(value . \"なし\"))))");
 
   // Output
-  mozc::commands::Output output;
+  commands::Output output;
   output.set_consumed(false);
   PrintAndTestSexpr(output, "((consumed . nil))");  // bool false => nil
   output.set_consumed(true);
   PrintAndTestSexpr(output, "((consumed . t))");  // bool true => t
   // Complex big message
   output.set_id(1234);
-  output.set_mode(mozc::commands::HIRAGANA);
+  output.set_mode(commands::HIRAGANA);
   output.set_consumed(true);
   *output.mutable_result() = result;
   *output.mutable_preedit() = preedit;
@@ -220,7 +224,6 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
 }
 
 TEST_F(MozcEmacsHelperLibTest, NormalizeSymbol) {
-  using mozc::emacs::NormalizeSymbol;
   EXPECT_EQ(NormalizeSymbol("PAGE_UP"), "page-up");
   EXPECT_EQ(NormalizeSymbol("PAGE_DOWN"), "page-down");
   EXPECT_EQ(NormalizeSymbol("key_code"), "key-code");
@@ -229,7 +232,6 @@ TEST_F(MozcEmacsHelperLibTest, NormalizeSymbol) {
 }
 
 TEST_F(MozcEmacsHelperLibTest, QuoteString) {
-  using mozc::emacs::QuoteString;
   EXPECT_EQ(QuoteString(""), "\"\"");
   EXPECT_EQ(QuoteString("abc"), "\"abc\"");
   EXPECT_EQ(QuoteString("\"abc\""), "\"\\\"abc\\\"\"");
@@ -254,20 +256,14 @@ TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
 }
 
 TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
-  using mozc::emacs::TokenizeSExpr;
-  const std::string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
+  constexpr absl::string_view kInput =
+      " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
+  constexpr absl::string_view kGolden[] = {
+      "(", "'", "abc", "\" \t\\r\\\n\\\"\"", "-x0", "\"い\"", "p", ")"};
+
   std::vector<std::string> output;
-  bool result = TokenizeSExpr(input, &output);
-
-  const char *golden[] = {"(",   "'",      "abc", "\" \t\\r\\\n\\\"\"",
-                          "-x0", "\"い\"", "p",   ")"};
-
-  EXPECT_TRUE(result);
-  EXPECT_EQ(output.size(), std::size(golden));
-  int len = std::min(std::size(golden), output.size());
-  for (int i = 0; i < len; ++i) {
-    EXPECT_EQ(output[i], golden[i]);
-  }
+  EXPECT_TRUE(TokenizeSExpr(kInput, &output));
+  EXPECT_THAT(output, ElementsAreArray(kGolden));
 
   // control character
   EXPECT_FALSE(TokenizeSExpr("\x7f", &output));
@@ -278,23 +274,26 @@ TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
 TEST_F(MozcEmacsHelperLibTest, RemoveUsageDataTest) {
   {
     SCOPED_TRACE("If there are no candidates, do nothing.");
-    mozc::commands::Output output;
-    EXPECT_FALSE(mozc::emacs::RemoveUsageData(&output));
+    commands::Output output;
+    EXPECT_FALSE(RemoveUsageData(&output));
   }
   {
     SCOPED_TRACE("If there are no usage data, do nothing.");
-    mozc::commands::Output output;
+    commands::Output output;
     output.mutable_candidates();
-    EXPECT_FALSE(mozc::emacs::RemoveUsageData(&output));
+    EXPECT_FALSE(RemoveUsageData(&output));
     EXPECT_TRUE(output.has_candidates());
   }
   {
     SCOPED_TRACE("Removes usage data from output");
-    mozc::commands::Output output;
-    mozc::commands::Candidates *candidates = output.mutable_candidates();
+    commands::Output output;
+    commands::Candidates *candidates = output.mutable_candidates();
     candidates->mutable_usages();
-    EXPECT_TRUE(mozc::emacs::RemoveUsageData(&output));
+    EXPECT_TRUE(RemoveUsageData(&output));
     EXPECT_TRUE(output.has_candidates());
     EXPECT_TRUE(output.candidates().has_usages());
   }
 }
+
+}  // namespace
+}  // namespace mozc::emacs

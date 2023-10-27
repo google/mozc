@@ -34,28 +34,25 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/protobuf.h"
+#include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace commands {
-class Input;
-class Output;
-}  // namespace commands
-
 namespace emacs {
 
 // Error symbols used to call ErrorExit()
 // These symbols are taken from error symbols of GNU Emacs
 // except for ipc-error.
-inline constexpr char kErrFileError[] = "file-error";
-inline constexpr char kErrScanError[] = "scan-error";
-inline constexpr char kErrWrongNumberOfArguments[] =
+inline constexpr absl::string_view kErrFileError = "file-error";
+inline constexpr absl::string_view kErrScanError = "scan-error";
+inline constexpr absl::string_view kErrWrongNumberOfArguments =
     "wrong-number-of-arguments";
-inline constexpr char kErrWrongTypeArgument[] = "wrong-type-argument";
-inline constexpr char kErrVoidFunction[] = "void-function";
-inline constexpr char kErrSessionError[] = "session-error";
+inline constexpr absl::string_view kErrWrongTypeArgument =
+    "wrong-type-argument";
+inline constexpr absl::string_view kErrVoidFunction = "void-function";
+inline constexpr absl::string_view kErrSessionError = "session-error";
 
 // Parses a line, which must be a single complete command in form of:
 //     '(' EVENT_ID COMMAND [ARGUMENT]... ')'
@@ -66,7 +63,7 @@ inline constexpr char kErrSessionError[] = "session-error";
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(const std::string &line, uint32_t *event_id,
+void ParseInputLine(absl::string_view line, uint32_t *event_id,
                     uint32_t *session_id, mozc::commands::Input *input);
 
 // Prints the content of a protocol buffer in S-expression.
@@ -86,28 +83,28 @@ void PrintMessage(const mozc::protobuf::Message &message,
 // Normalizes a symbol with the following rule:
 // - all alphabets are converted to lowercase
 // - underscore('_') is converted to dash('-')
-std::string NormalizeSymbol(const std::string &symbol);
+std::string NormalizeSymbol(std::string symbol);
 
 // Returns a quoted string as a string literal in S-expression.
 // - double-quote is converted to backslash + double-quote
 // - backslash is converted to backslash + backslash
 //
 // Control characters, including newline('\n'), in a given string remain as is.
-std::string QuoteString(const std::string &str);
+std::string QuoteString(absl::string_view str);
 
 // Unquotes and unescapes a double-quoted string.
 // The input string must begin and end with double quotes.
-bool UnquoteString(const std::string &input, std::string *output);
+bool UnquoteString(absl::string_view input, std::string *output);
 
 // Tokenizes the given string as S expression.  Returns true if success.
 //
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output);
+bool TokenizeSExpr(absl::string_view input, std::vector<std::string> *output);
 
 // Prints an error message in S-expression and terminates with status code 1.
-void ErrorExit(const std::string &error, const std::string &message);
+void ErrorExit(absl::string_view error, absl::string_view message);
 
 // Removes unused usage information from output protocol buffers.
 // Usage data may contain line breaks, which have not been supported yet for IPC

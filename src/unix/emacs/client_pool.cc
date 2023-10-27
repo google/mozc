@@ -35,14 +35,17 @@
 
 namespace mozc {
 namespace emacs {
+namespace {
 
-static constexpr int kMaxClients = 64;  // max number of parallel clients
+constexpr int kMaxClients = 64;  // max number of parallel clients
+
+}  // namespace
 
 ClientPool::ClientPool() : lru_cache_(kMaxClients), next_id_(1) {}
 
 int ClientPool::CreateClient() {
   // Emacs supports at-least 28-bit integer.
-  const int k28BitIntMax = 134217727;
+  constexpr int k28BitIntMax = 134217727;
   while (lru_cache_.HasKey(next_id_)) {
     if (++next_id_ <= 0 || k28BitIntMax < next_id_) {
       next_id_ = 1;  // Keep next_id_ to be a positive 28-bit integer.
@@ -60,7 +63,7 @@ std::shared_ptr<ClientPool::Client> ClientPool::GetClient(int id) {
     lru_cache_.Insert(id, *value);  // Put id at the head of LRU.
     return *value;
   } else {
-    std::shared_ptr<Client> client_ptr = std::make_shared<Client>();
+    auto client_ptr = std::make_shared<Client>();
     lru_cache_.Insert(id, client_ptr);
     return client_ptr;
   }
