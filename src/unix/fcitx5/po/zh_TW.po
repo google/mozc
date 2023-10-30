@@ -7,14 +7,15 @@
 # bruh, 2020
 # Neko ◣ 0xFF, 2022
 # Lau YeeYu, 2023
+# rocka, 2023
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2023-09-23 20:24+0000\n"
+"POT-Creation-Date: 2023-10-30 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Lau YeeYu, 2023\n"
+"Last-Translator: rocka, 2023\n"
 "Language-Team: Chinese (Taiwan) (https://app.transifex.com/fcitx/teams/12005/"
 "zh_TW/)\n"
 "Language: zh_TW\n"
@@ -57,7 +58,7 @@ msgstr "擴展使用 (需要垂直候選列表)"
 
 #: mozc_engine.h:83
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
-msgstr "在預編輯的開頭修復嵌入的預編輯光標"
+msgstr "將嵌入預編輯文本的光標固定於開頭"
 
 #: mozc_engine.h:52
 msgid "Follow Global Configuration"
