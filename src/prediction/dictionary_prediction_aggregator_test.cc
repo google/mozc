@@ -319,29 +319,6 @@ void InsertInputSequence(absl::string_view text, composer::Composer *composer) {
   }
 }
 
-void InsertInputSequenceForProbableKeyEvent(absl::string_view text,
-                                            const uint32_t *corrected_key_codes,
-                                            float corrected_prob,
-                                            composer::Composer *composer) {
-  std::vector<commands::KeyEvent> keys;
-  GenerateKeyEvents(text, &keys);
-
-  for (size_t i = 0; i < keys.size(); ++i) {
-    if (keys[i].key_code() != corrected_key_codes[i]) {
-      commands::KeyEvent::ProbableKeyEvent *probable_key_event;
-
-      probable_key_event = keys[i].add_probable_key_event();
-      probable_key_event->set_key_code(keys[i].key_code());
-      probable_key_event->set_probability(1 - corrected_prob);
-
-      probable_key_event = keys[i].add_probable_key_event();
-      probable_key_event->set_key_code(corrected_key_codes[i]);
-      probable_key_event->set_probability(corrected_prob);
-    }
-    composer->InsertCharacterKeyEvent(keys[i]);
-  }
-}
-
 PredictionTypes AddDefaultPredictionTypes(PredictionTypes types,
                                           bool is_mobile) {
   if (!is_mobile) {
@@ -1192,7 +1169,7 @@ TEST_F(DictionaryPredictionAggregatorTest, MobileUnigram) {
   const absl::string_view kExpected[] = {
       "東京", "TOKYO", "東京!", "東京!?", "東京❤",
   };
-  for (int i = 0; i < ABSL_ARRAYSIZE(kExpected); ++i) {
+  for (int i = 0; i < std::size(kExpected); ++i) {
     EXPECT_EQ(results[i].value, kExpected[i]);
   }
 }

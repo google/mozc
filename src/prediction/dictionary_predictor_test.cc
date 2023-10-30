@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <utility>
@@ -55,6 +56,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/prediction_aggregator_interface.h"
+#include "prediction/rescorer_interface.h"
 #include "prediction/rescorer_mock.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
@@ -67,6 +69,7 @@
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/random/random.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -148,11 +151,6 @@ class DictionaryPredictorTestPeer {
       const ConversionRequest &request, Segments *segments) {
     DictionaryPredictor::MaybeSuppressAggressiveTypingCorrection(request,
                                                                  segments);
-  }
-
-  static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
-                                          Segments *segments) {
-    DictionaryPredictor::MaybeApplyHomonymCorrection(request, segments);
   }
 
   static void AddRescoringDebugDescription(Segments *segments) {
@@ -301,33 +299,13 @@ bool FindCandidateByValue(const Segment &segment, absl::string_view value) {
 // Simple immutable converter mock
 class MockImmutableConverter : public ImmutableConverterInterface {
  public:
-  MockImmutableConverter() = default;
-  ~MockImmutableConverter() override = default;
-
   MOCK_METHOD(bool, ConvertForRequest,
               (const ConversionRequest &request, Segments *segments),
               (const override));
-
-  static bool ConvertForRequestImpl(const ConversionRequest &request,
-                                    Segments *segments) {
-    if (!segments || segments->conversion_segments_size() != 1 ||
-        segments->conversion_segment(0).key().empty()) {
-      return false;
-    }
-    const std::string key = segments->conversion_segment(0).key();
-    Segment *segment = segments->mutable_conversion_segment(0);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = key;
-    candidate->key = key;
-    return true;
-  }
 };
 
 class MockAggregator : public prediction::PredictionAggregatorInterface {
  public:
-  MockAggregator() = default;
-  ~MockAggregator() override = default;
-
   MOCK_METHOD(std::vector<prediction::Result>, AggregateResults,
               (const ConversionRequest &request, const Segments &segments),
               (const override));

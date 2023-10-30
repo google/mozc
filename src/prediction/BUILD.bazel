@@ -304,6 +304,7 @@ mozc_cc_test(
     deps = [
         ":dictionary_predictor",
         ":prediction_aggregator_interface",
+        ":rescorer_interface",
         ":rescorer_mock",
         ":result",
         ":suggestion_filter",
@@ -332,6 +333,7 @@ mozc_cc_test(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",

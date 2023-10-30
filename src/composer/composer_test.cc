@@ -2890,29 +2890,6 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   }
 }
 
-namespace {
-ProbableKeyEvents GetStubProbableKeyEvent(int key_code, double probability) {
-  ProbableKeyEvents result;
-  ProbableKeyEvent *event;
-  event = result.Add();
-  event->set_key_code(key_code);
-  event->set_probability(probability);
-  event = result.Add();
-  event->set_key_code('z');
-  event->set_probability(1.0f - probability);
-  return result;
-}
-
-KeyEvent GetKeyEvent(const absl::string_view raw,
-                     ProbableKeyEvents probable_key_events) {
-  KeyEvent key_event;
-  key_event.set_key_code(Util::Utf8ToUcs4(raw));
-  *(key_event.mutable_probable_key_event()) = probable_key_events;
-  return key_event;
-}
-
-}  // namespace
-
 TEST_F(ComposerTest, GetRawString) {
   table_->AddRule("sa", "さ", "");
   table_->AddRule("shi", "し", "");
