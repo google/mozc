@@ -34,7 +34,7 @@
 # Usage:
 # % blaze --blazerc android/blazerc build --config=android_arm android/jni:libmozc.so
 
-load("//:build_defs.bzl", "MOZC_TAGS", "mozc_cc_library", "mozc_py_binary")
+load("//:build_defs.bzl", "MOZC_TAGS", "mozc_cc_library", "mozc_py_binary", "mozc_select")
 
 mozc_cc_library(
     name = "mozcjni",
@@ -75,10 +75,12 @@ android_binary(
     name = "mozc",
     srcs = [],
     manifest = "AndroidManifest.xml",
-    deps = [
-        ":fake_pthread",
-        ":mozcjni",
-    ],
+    deps = mozc_select(
+        android = [
+            ":fake_pthread",
+            ":mozcjni",
+        ],
+    ),
 )
 
 mozc_py_binary(
