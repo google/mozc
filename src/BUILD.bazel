@@ -143,7 +143,7 @@ bzl_library(
 filegroup(
     name = "package",
     srcs = mozc_select(
-        android = ["//android/jni:mozcjni"],
+        android = ["//android/jni:native_libs"],
         default = [],
         linux = ["//unix:package"],
         macos = ["//mac:package"],

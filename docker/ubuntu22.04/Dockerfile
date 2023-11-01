@@ -35,14 +35,16 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
 
 # Package installation
-RUN apt update --fix-missing
-RUN apt upgrade -y
+RUN apt-get update --fix-missing
+RUN apt-get upgrade -y
 ## Common packages for linux build environment
 RUN apt-get install -y python3 pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
 RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qt6-base-dev libgl-dev
 ## Packages for misc tools
 RUN apt-get install -y nano
+## Setting up Android SDK requires OpenJDK.
+RUN apt-get install -y openjdk-17-jdk
 
 ## For Bazel
 ## https://docs.bazel.build/versions/master/install-ubuntu.html
@@ -62,9 +64,12 @@ WORKDIR /home/mozc_builder/work
 ## Work around https://bugreports.qt.io/browse/QTBUG-86080 for Ubuntu 22.04
 ENV PKG_CONFIG_PATH="/home/mozc_builder/work/mozc/docker/ubuntu22.04/qt6-core-pkgconfig:${PKG_CONFIG_PATH}"
 
-## For Android NDK
-RUN curl -LO https://dl.google.com/android/repository/android-ndk-r25c-linux.zip && unzip android-ndk-r25c-linux.zip && rm android-ndk-r25c-linux.zip
-ENV ANDROID_NDK_HOME /home/mozc_builder/work/android-ndk-r25c
+## Set up Android SDK and NDK
+ENV ANDROID_HOME /home/mozc_builder/Android/Sdk
+RUN mkdir -p ${ANDROID_HOME}
+RUN curl -LO https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip && unzip commandlinetools-linux-10406996_latest.zip -d ${ANDROID_HOME} && rm commandlinetools-linux-10406996_latest.zip
+RUN yes | ${ANDROID_HOME}/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_HOME} "cmdline-tools;latest" "platforms;android-33" "build-tools;33.0.2" "platform-tools" "ndk;25.2.9519653"
+ENV ANDROID_NDK_HOME ${ANDROID_HOME}/ndk/25.2.9519653
 
 # check out Mozc source with submodules
 RUN mkdir /home/mozc_builder/work/mozc

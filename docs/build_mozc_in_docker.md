@@ -199,7 +199,7 @@ The conversion engine for Android is built with Bazel.
 bazel build package --config oss_android
 ```
 
-`package` is an alias to build `android/jni:mozc_lib`.
+`package` is an alias to build `android/jni:native_libs`.
 
 -----
 

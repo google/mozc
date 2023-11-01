@@ -32,6 +32,7 @@
 *.xml text
 
 # Known binary files
+*.a binary
 *.deflate binary
 *.png binary
 *.jpg binary
