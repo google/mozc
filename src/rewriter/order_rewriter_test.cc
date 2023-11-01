@@ -119,6 +119,8 @@ TEST_F(OrderRewriterTest, Rewrite) {
   Segments segments = BuildTestSegments();
   request_.mutable_decoder_experiment_params()
       ->set_enable_findability_oriented_order(true);
+  request_.mutable_decoder_experiment_params()
+      ->set_findability_oriented_order_top_size(5);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
 
   constexpr auto ValueIs = [](const auto &value) {

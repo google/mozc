@@ -153,10 +153,13 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
       single_kanji_partial(Segment::Candidate::OTHER),
       symbol(Segment::Candidate::OTHER), other(Segment::Candidate::OTHER);
 
-  constexpr int kTopCandidatesSize = 5;
+  const int top_candidates_size = request.request()
+                                      .decoder_experiment_params()
+                                      .findability_oriented_order_top_size();
+
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment->candidate(i);
-    if (top.size() < kTopCandidatesSize &&
+    if (top.size() < top_candidates_size &&
         candidate.category != Segment::Candidate::OTHER) {
       top.AddCandidate(candidate);
       continue;
