@@ -180,12 +180,16 @@ bool OrderRewriter::Rewrite(const ConversionRequest &request,
           Util::IsScriptType(candidate.value, Util::KANJI);
       const bool is_partial =
           candidate.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      const bool is_t13n = Util::IsScriptType(candidate.key, Util::HIRAGANA) &&
+                           Util::IsScriptType(candidate.value, Util::ALPHABET);
       if (is_partial && is_single_kanji) {
         single_kanji_partial.AddCandidate(candidate);
       } else if (is_partial) {
         partial.AddCandidate(candidate);
       } else if (is_single_kanji) {
         single_kanji.AddCandidate(candidate);
+      } else if (is_t13n) {
+        t13n.AddCandidate(candidate);
       } else {
         normal.AddCandidate(candidate);
       }
