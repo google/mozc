@@ -36,31 +36,32 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "client/client.h"
 #include "unix/emacs/client_pool.h"
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
 ABSL_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
 
+namespace mozc::emacs {
 namespace {
 
 // Prints a greeting message when a process starts.
 void PrintGreetingMessage() {
-  mozc::config::Config config;
-  mozc::config::ConfigHandler::GetConfig(&config);
-  const char *preedit_method = "unknown";
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  absl::string_view preedit_method = "unknown";
   switch (config.preedit_method()) {
-    case mozc::config::Config::ROMAN:
+    case config::Config::ROMAN:
       preedit_method = "roman";
       break;
-    case mozc::config::Config::KANA:
+    case config::Config::KANA:
       preedit_method = "kana";
       break;
   }
@@ -68,18 +69,15 @@ void PrintGreetingMessage() {
   absl::FPrintF(stdout,
                 "((mozc-emacs-helper . t)(version . %s)"
                 "(config . ((preedit-method . %s))))\n",
-                mozc::emacs::QuoteString(mozc::Version::GetMozcVersion()),
-                preedit_method);
+                QuoteString(Version::GetMozcVersion()), preedit_method);
   fflush(stdout);
 }
 
 // Main loop, which takes an input line as a command and print a corresponding
 // result returned by Mozc server in S-expression.
 void ProcessLoop() {
-  using mozc::emacs::ErrorExit;
-
-  mozc::emacs::ClientPool client_pool;
-  mozc::commands::Command command;
+  ClientPool client_pool;
+  commands::Command command;
   std::string line;
 
   while (std::getline(std::cin, line)) {
@@ -89,34 +87,33 @@ void ProcessLoop() {
     uint32_t session_id = 0;
 
     // Parse an input line.
-    mozc::emacs::ParseInputLine(line, &event_id, &session_id,
-                                command.mutable_input());
+    ParseInputLine(line, &event_id, &session_id, command.mutable_input());
 
     switch (command.input().type()) {
-      case mozc::commands::Input::CREATE_SESSION:
+      case commands::Input::CREATE_SESSION:
         session_id = client_pool.CreateClient();
         break;
-      case mozc::commands::Input::DELETE_SESSION:
+      case commands::Input::DELETE_SESSION:
         client_pool.DeleteClient(session_id);
         break;
-      case mozc::commands::Input::SEND_KEY: {
-        std::shared_ptr<mozc::client::Client> client =
+      case commands::Input::SEND_KEY: {
+        std::shared_ptr<client::Client> client =
             client_pool.GetClient(session_id);
         CHECK(client.get());
         if (!client->SendKey(command.input().key(), command.mutable_output())) {
-          ErrorExit(mozc::emacs::kErrSessionError, "Session failed");
+          ErrorExit(kErrSessionError, "Session failed");
         }
         break;
       }
       default:
-        ErrorExit(mozc::emacs::kErrVoidFunction, "Unknown function");
+        ErrorExit(kErrVoidFunction, "Unknown function");
     }
 
-    mozc::emacs::RemoveUsageData(command.mutable_output());
+    RemoveUsageData(command.mutable_output());
 
     // Output results.
     std::vector<std::string> buffer;
-    mozc::emacs::PrintMessage(command.output(), &buffer);
+    PrintMessage(command.output(), &buffer);
     const std::string output = absl::StrJoin(buffer, "");
     absl::FPrintF(
         stdout, "((emacs-event-id . %u)(emacs-session-id . %u)(output . %s))\n",
@@ -126,24 +123,25 @@ void ProcessLoop() {
 }
 
 }  // namespace
+}  // namespace mozc::emacs
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_suppress_stderr)) {
 #ifdef _WIN32
-    const char path[] = "NUL";
+    constexpr char kPath[] = "NUL";
 #else   // _WIN32
-    const char path[] = "/dev/null";
+    constexpr char kPath[] = "/dev/null";
 #endif  // _WIN32
-    if (!freopen(path, "a", stderr)) {
+    if (!freopen(kPath, "a", stderr)) {
       mozc::emacs::ErrorExit(mozc::emacs::kErrFileError,
                              "freopen for stderr failed");
     }
   }
 
-  PrintGreetingMessage();
+  mozc::emacs::PrintGreetingMessage();
 
-  ProcessLoop();
+  mozc::emacs::ProcessLoop();
 
   return 0;
 }

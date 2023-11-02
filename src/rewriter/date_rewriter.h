@@ -84,10 +84,6 @@ class DateRewriter : public RewriterInterface {
   // both Heisei and the new e
   static bool AdToEra(int year, int month, std::vector<std::string> *results);
 
-  // For backward compatibility
-  static bool AdToEra(int year, std::vector<std::string> *results) {
-    return AdToEra(year, 1, results);
-  }
   static std::vector<std::string> AdToEra(int year, int month);
 
   // Converts AD to Japanese ERA.

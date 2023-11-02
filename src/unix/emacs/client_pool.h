@@ -40,14 +40,13 @@
 namespace mozc {
 namespace emacs {
 
-class ClientPool {
+class ClientPool final {
  public:
-  typedef mozc::client::Client Client;
+  using Client = ::mozc::client::Client;
 
   ClientPool();
   ClientPool(const ClientPool&) = delete;
   ClientPool& operator=(const ClientPool&) = delete;
-  virtual ~ClientPool() {}
 
   // Returns a new session ID, which is not used in this pool.
   int CreateClient();
@@ -61,7 +60,7 @@ class ClientPool {
   std::shared_ptr<Client> GetClient(int id);
 
  private:
-  mozc::storage::LruCache<int, std::shared_ptr<Client>> lru_cache_;
+  storage::LruCache<int, std::shared_ptr<Client>> lru_cache_;
   int next_id_;
 };
 

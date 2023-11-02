@@ -30,11 +30,8 @@
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
-#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,10 +42,13 @@
 #include "composer/key_parser.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "absl/base/optimization.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace emacs {
@@ -74,8 +74,8 @@ void PrintFieldValue(const protobuf::Message &message,
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(const std::string &line, uint32_t *event_id,
-                    uint32_t *session_id, mozc::commands::Input *input) {
+void ParseInputLine(absl::string_view line, uint32_t *event_id,
+                    uint32_t *session_id, commands::Input *input) {
   CHECK(event_id);
   CHECK(session_id);
   CHECK(input);
@@ -95,11 +95,11 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
   // Read a command.
   const std::string &func = tokens[2];
   if (func == "SendKey") {  // SendKey is a most-frequently-used command.
-    input->set_type(mozc::commands::Input::SEND_KEY);
+    input->set_type(commands::Input::SEND_KEY);
   } else if (func == "CreateSession") {
-    input->set_type(mozc::commands::Input::CREATE_SESSION);
+    input->set_type(commands::Input::CREATE_SESSION);
   } else if (func == "DeleteSession") {
-    input->set_type(mozc::commands::Input::DELETE_SESSION);
+    input->set_type(commands::Input::DELETE_SESSION);
   } else {
     // Mozc has SendTestKey and SendCommand commands in addition to the above.
     // But this code doesn't support them because of no need so far.
@@ -107,14 +107,14 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
   }
 
   switch (input->type()) {
-    case mozc::commands::Input::CREATE_SESSION: {
+    case commands::Input::CREATE_SESSION: {
       // Suppose: (EVENT_ID CreateSession)
       if (tokens.size() != 4) {
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
       }
       break;
     }
-    case mozc::commands::Input::DELETE_SESSION: {
+    case commands::Input::DELETE_SESSION: {
       // Suppose: (EVENT_ID DeleteSession SESSION_ID)
       if (tokens.size() != 5) {
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
@@ -125,7 +125,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
       }
       break;
     }
-    case mozc::commands::Input::SEND_KEY: {
+    case commands::Input::SEND_KEY: {
       // Suppose: (EVENT_ID SendKey SESSION_ID KEY...)
       if (tokens.size() < 6) {
         ErrorExit(kErrWrongNumberOfArguments, "Wrong number of arguments");
@@ -138,7 +138,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
       std::vector<std::string> keys;
       std::string key_string;
       for (int i = 4; i < tokens.size() - 1; ++i) {
-        if (isdigit(tokens[i][0])) {  // Numeric key code
+        if (absl::ascii_isdigit(tokens[i][0])) {  // Numeric key code
           uint32_t key_code;
           if (!absl::SimpleAtoi(tokens[i], &key_code) || key_code > 255) {
             ErrorExit(kErrWrongTypeArgument, "Wrong character code");
@@ -155,11 +155,11 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
           keys.push_back(tokens[i]);
         }
       }
-      if (!mozc::KeyParser::ParseKeyVector(keys, input->mutable_key()) &&
+      if (!KeyParser::ParseKeyVector(keys, input->mutable_key()) &&
           // If there are any unsupported key symbols, falls back to
-          // mozc::commands::KeyEvent::UNDEFINED_KEY.
-          !mozc::KeyParser::ParseKey("undefinedkey", input->mutable_key())) {
-        DLOG(FATAL);  // Code must not reach here.
+          // commands::KeyEvent::UNDEFINED_KEY.
+          !KeyParser::ParseKey("undefinedkey", input->mutable_key())) {
+        ABSL_UNREACHABLE();
       }
       if (!key_string.empty()) {
         input->mutable_key()->set_key_string(key_string);
@@ -167,7 +167,7 @@ void ParseInputLine(const std::string &line, uint32_t *event_id,
       break;
     }
     default:
-      DLOG(FATAL);  // Code must not reach here.
+      ABSL_UNREACHABLE();
   }
 }
 
@@ -200,11 +200,10 @@ void PrintMessage(const protobuf::Message &message,
 // Normalizes a symbol with the following rules:
 // - all alphabets are converted to lowercase
 // - underscore('_') is converted to dash('-')
-std::string NormalizeSymbol(const std::string &symbol) {
-  std::string s = symbol;
-  mozc::Util::LowerString(&s);
-  std::replace(s.begin(), s.end(), '_', '-');
-  return s;
+std::string NormalizeSymbol(std::string symbol) {
+  Util::LowerString(&symbol);
+  std::replace(symbol.begin(), symbol.end(), '_', '-');
+  return symbol;
 }
 
 // Returns a quoted string as a string literal in S-expression.
@@ -212,18 +211,18 @@ std::string NormalizeSymbol(const std::string &symbol) {
 // - backslash is converted to backslash + backslash
 //
 // Control characters, including newline('\n'), in a given string remain as is.
-std::string QuoteString(const std::string &str) {
+std::string QuoteString(absl::string_view str) {
   return absl::StrCat(
       "\"", absl::StrReplaceAll(str, {{"\\", "\\\\"}, {"\"", "\\\""}}), "\"");
 }
 
 // Unquotes and unescapes a double-quoted string.
 // The input string must begin and end with double quotes.
-bool UnquoteString(const std::string &input, std::string *output) {
+bool UnquoteString(absl::string_view input, std::string *output) {
   DCHECK(output);
   output->clear();
 
-  if (input.length() < 2 || *input.begin() != '\"' || *input.rbegin() != '\"') {
+  if (input.length() < 2 || input.front() != '\"' || input.back() != '\"') {
     return false;  // wrong format
   }
 
@@ -231,11 +230,9 @@ bool UnquoteString(const std::string &input, std::string *output) {
   result.reserve(input.size());
 
   bool escape = false;
-  for (std::string::const_iterator i = ++input.begin(), e = --input.end();
-       i != e; ++i) {
+  for (char c : input.substr(1, input.length() - 2)) {
     if (escape) {
-      char c = *i;
-      switch (*i) {
+      switch (c) {
         case 'a':
           c = '\x07';
           break;  // control-g
@@ -269,14 +266,14 @@ bool UnquoteString(const std::string &input, std::string *output) {
       }
       result.push_back(c);
       escape = false;
-    } else if (*i == '\\') {
+    } else if (c == '\\') {
       escape = true;
-    } else if (*i == '\"') {
+    } else if (c == '\"') {
       // Double-quote w/o the escape sign must not appear inside a quoted
       // string.
       return false;
     } else {
-      result.push_back(*i);
+      result.push_back(c);
     }
   }
 
@@ -292,24 +289,24 @@ bool UnquoteString(const std::string &input, std::string *output) {
 // This function implements very simple tokenization and is NOT conforming to
 // the definition of S expression.  For example, this function does not return
 // an error for the input "\'".
-bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
+bool TokenizeSExpr(absl::string_view input, std::vector<std::string> *output) {
   DCHECK(output);
 
   std::vector<std::string> results;
 
-  for (std::string::const_iterator i = input.begin(); i != input.end(); ++i) {
-    if (isspace(*i)) {
+  for (auto it = input.begin(); it != input.end(); ++it) {
+    if (absl::ascii_isspace(*it)) {
       continue;
     }  // Skip white space.
 
-    if (!isgraph(*i)) {
+    if (!absl::ascii_isgraph(*it)) {
       return false;  // unrecognized control character
     }
 
-    switch (*i) {
+    switch (*it) {
       case ';':  // comment
-        while (i != input.end() && *i != '\n') {
-          ++i;
+        while (it != input.end() && *it != '\n') {
+          ++it;
         }
         break;
       case '(':
@@ -318,36 +315,36 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
       case ']':   // vector parentheses
       case '\'':  // quote
       case '`':   // quasiquote
-        results.push_back(std::string(1, *i));
+        results.emplace_back(1, *it);
         break;
       case '\"': {  // string
-        std::string::const_iterator start = i++;
-        for (bool escape = false;; ++i) {
-          if (i == input.end()) {
+        const auto start = it++;
+        for (bool escape = false;; ++it) {
+          if (it == input.end()) {
             return false;  // unexpected end of string
           }
           if (escape) {
             escape = false;
-          } else if (*i == '\\') {
+          } else if (*it == '\\') {
             escape = true;
-          } else if (*i == '\"') {
+          } else if (*it == '\"') {
             break;
           }
         }
-        results.push_back(std::string(start, i + 1));
+        results.emplace_back(start, it + 1);
         break;
       }
       default: {  // must be atom
-        std::string::const_iterator start = i++;
-        for (;; ++i) {
-          if (i == input.end()) {
+        const auto start = it++;
+        for (;; ++it) {
+          if (it == input.end()) {
             break;
           }
-          if (!isgraph(*i)) {
+          if (!absl::ascii_isgraph(*it)) {
             break;
           }
           bool is_special_char = false;
-          switch (*i) {
+          switch (*it) {
             case ';':  // comment
             case '(':
             case ')':  // list parentheses
@@ -362,8 +359,8 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
             break;
           }
         }
-        results.push_back(std::string(start, i));
-        --i;  // Put the last char back.
+        results.emplace_back(start, it);
+        --it;  // Put the last char back.
         break;
       }
     }
@@ -374,13 +371,13 @@ bool TokenizeSExpr(const std::string &input, std::vector<std::string> *output) {
 }
 
 // Prints an error message in S-expression and terminates with status code 1.
-void ErrorExit(const std::string &error, const std::string &message) {
+void ErrorExit(absl::string_view error, absl::string_view message) {
   absl::FPrintF(stdout, "((error . %s)(message . %s))\n", error,
                 QuoteString(message));
   exit(1);
 }
 
-bool RemoveUsageData(mozc::commands::Output *output) {
+bool RemoveUsageData(commands::Output *output) {
   if (!output->has_candidates()) {
     return false;
   }
@@ -479,11 +476,12 @@ void PrintFieldValue(const protobuf::Message &message,
       break;
 
     case protobuf::FieldDescriptor::CPPTYPE_STRING: {  // string
-      std::string str;
-      str = field.is_repeated()
-                ? reflection.GetRepeatedStringReference(message, &field, index,
-                                                        &str)
-                : reflection.GetStringReference(message, &field, &str);
+      std::string scratch;
+      absl::string_view str =
+          field.is_repeated()
+              ? reflection.GetRepeatedStringReference(message, &field, index,
+                                                      &scratch)
+              : reflection.GetStringReference(message, &field, &scratch);
       output->push_back(QuoteString(str));
       break;
     }

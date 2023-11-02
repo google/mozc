@@ -34,12 +34,12 @@ build:prod_windows --define TARGET=prod_windows --build_tag_filters=-nowin
 
 # Android / OSS Android (same configurations)
 build:android --define TARGET=oss_android --copt "-DOS_ANDROID"
-build:android --crosstool_top=@androidndk//:toolchain --cpu=armeabi-v7a
+build:android --android_crosstool_top=@androidndk//:toolchain --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64
 build:android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 build:android --build_tag_filters=-noandroid
 test:android --test_tag_filters=-noandroid
 build:oss_android --define TARGET=oss_android --copt "-DOS_ANDROID"
-build:oss_android --crosstool_top=@androidndk//:toolchain --cpu=armeabi-v7a
+build:oss_android --android_crosstool_top=@androidndk//:toolchain --fat_apk_cpu=armeabi-v7a,arm64-v8a,x86,x86_64
 build:oss_android --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 build:oss_android --build_tag_filters=-noandroid
 test:oss_android --test_tag_filters=-noandroid

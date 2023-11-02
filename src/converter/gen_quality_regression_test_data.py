@@ -58,13 +58,29 @@ def ParseArgs() -> argparse.Namespace:
 
 
 def ParseTSV(file):
+  r"""Parses TSV file for quality regression test.
+
+  Args:
+    file: TSV file path
+    TSV Format: <label> <key> <expected_value> <command> <expected_rank> \
+    <accuracy> <platform>
+
+    You can disable test entries by adding the prefix, 'DISABLED_', to the label
+
+  Yields:
+    (is_enabled, test_tsv)
+    Actual TSV parsing will be done in C++.
+  """
   for line in codecs.open(file, 'r', encoding='utf-8'):
     if line.startswith('#'):
       continue
     line = line.rstrip('\r\n')
     if not line:
       continue
-    yield (_ENABLED, line)
+    if line.startswith('DISABLED_'):
+      yield (_DISABLED, line[len('DISABLED_') :])
+    else:
+      yield (_ENABLED, line)
 
 
 def GetText(node):
@@ -75,6 +91,7 @@ def GetText(node):
 
 
 def ParseXML(file):
+  """Parses mozcsu XML file."""
   contents = codecs.open(file, 'r', encoding='utf-8').read()
   dom = xml.dom.minidom.parseString(contents)
   for issue in dom.getElementsByTagName('issue'):

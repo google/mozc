@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_H_
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -89,8 +90,9 @@ class SessionHandler : public SessionHandlerInterface {
   const EngineInterface &engine() const { return *engine_; }
 
  private:
-  FRIEND_TEST(SessionHandlerTest, StorageTest);
   FRIEND_TEST(SessionHandlerTest, KeyMapTest);
+  FRIEND_TEST(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest);
+  FRIEND_TEST(SessionHandlerTest, EngineRollbackDataTest);
 
   using SessionMap =
       mozc::storage::LruCache<SessionID, session::SessionInterface *>;
@@ -145,6 +147,8 @@ class SessionHandler : public SessionHandlerInterface {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_ = false;
   uint32_t max_session_size_ = 0;
+  std::atomic<uint64_t> latest_engine_id_ = 0;
+  std::atomic<uint64_t> current_engine_id_ = 0;
   absl::Time last_session_empty_time_ = absl::InfinitePast();
   absl::Time last_cleanup_time_ = absl::InfinitePast();
   absl::Time last_create_session_time_ = absl::InfinitePast();
@@ -158,6 +162,11 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
+  std::unique_ptr<EngineBuilderInterface::EngineResponseFuture>
+      engine_response_future_;
+
+  // used only in unittest to perform blocking behavior.
+  bool always_wait_for_engine_response_future_ = false;
 
   absl::BitGen bitgen_;
 };

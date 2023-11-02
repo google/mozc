@@ -30,8 +30,10 @@
 #ifndef MOZC_ENGINE_ENGINE_BUILDER_INTERFACE_H_
 #define MOZC_ENGINE_ENGINE_BUILDER_INTERFACE_H_
 
+#include <cstdint>
 #include <memory>
 
+#include "base/thread.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/strings/string_view.h"
@@ -46,25 +48,37 @@ class EngineBuilderInterface {
 
   virtual ~EngineBuilderInterface() = default;
 
-  // Accepts data load request and sets |response->status()| to one of the
-  // following values:
-  //   * ACCEPTED: Request is successfully accepted.
-  //   * ALREADY_RUNNING: The previous request is still being processed.
-  virtual void PrepareAsync(const EngineReloadRequest &request,
-                            EngineReloadResponse *response) = 0;
+  struct EngineResponse {
+    uint64_t id = 0;  // engine id. Fingerprint of EngineReloadRequest.
+    EngineReloadResponse response;
+    std::unique_ptr<EngineInterface> engine;
+  };
 
-  // Returns true if a response to PrepareAsync() is ready.
-  virtual bool HasResponse() const = 0;
+  // Wrapped with BackgroundFuture so the data loading is
+  // executed asynchronously.
+  using EngineResponseFuture = BackgroundFuture<EngineResponse>;
 
-  // Gets the response to PrepareAsync() if available.
-  virtual void GetResponse(EngineReloadResponse *response) const = 0;
+  // Accepts engine reload request and immediately returns the engine id with
+  // the highest priority defined as follows:
+  //  - Request with higher request priority (e.g., downloaded > bundled)
+  //  - When the priority is the same, the request registered last.
+  // The engine id 0 is reserved for unused engine.
+  virtual uint64_t RegisterRequest(const EngineReloadRequest &request) = 0;
 
-  // Builds an engine using the data requested by PrepareAsync().
-  // May return nullptr if bad data was requested in PrepareAsync().
-  virtual std::unique_ptr<EngineInterface> BuildFromPreparedData() = 0;
+  // Unregister the request associated with the `id` and immediately returns
+  // the new engine id after the unregistration. This method is usually called
+  // to notify the request is not processed due to model loading failures and
+  // avoid the multiple loading operations.  Client needs to load or use the
+  // engine of returned id. The unregistered request will not be accepted after
+  // calling this method.
+  virtual uint64_t UnregisterRequest(uint64_t id) = 0;
 
-  // Clears internal states to accept next request.
-  virtual void Clear() = 0;
+  // Builds the new engine associated with `id`.
+  // This method returns the future object immediately.
+  // Since BackgroundFuture is not movable/copyable, we wrap it with
+  // std::unique_ptr. This method doesn't return nullptr. All errors
+  // are stored in EngineReloadResponse::response::status.
+  virtual std::unique_ptr<EngineResponseFuture> Build(uint64_t id) const = 0;
 
  protected:
   EngineBuilderInterface() = default;

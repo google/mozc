@@ -34,23 +34,26 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <string>
 
 #include "base/config_file_stream.h"
-#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/protobuf/repeated_field.h"
-#include "base/util.h"
+#include "base/strings/japanese.h"
+#include "base/strings/unicode.h"
 #include "dictionary/user_pos_interface.h"
+#include "protocol/user_dictionary_storage.pb.h"
 #include "absl/random/random.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
 
 using ::mozc::protobuf::RepeatedPtrField;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
-namespace {
 // Maximum string length in UserDictionaryEntry's field
 constexpr size_t kMaxKeySize = 300;
 constexpr size_t kMaxValueSize = 300;
@@ -64,6 +67,7 @@ constexpr size_t kMaxDictionaryNameSize = 300;
 // The limits of dictionary/entry size.
 constexpr size_t kMaxDictionarySize = 100;
 constexpr size_t kMaxEntrySize = 1000000;
+
 }  // namespace
 
 size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }
@@ -79,22 +83,20 @@ bool UserDictionaryUtil::IsValidEntry(
 
 namespace {
 
-#define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
+bool InRange(const char32_t c, const char32_t lo, const char32_t hi) {
+  return lo <= c && c <= hi;
+}
 
 bool InternalValidateNormalizedReading(const absl::string_view reading) {
-  if (!Util::IsValidUtf8(reading)) {
-    return false;
-  }
-  for (ConstChar32Iterator iter(reading); !iter.Done(); iter.Next()) {
-    const char32_t c = iter.Get();
-    if (!INRANGE(c, 0x0021, 0x007E) &&  // Basic Latin (Ascii)
-        !INRANGE(c, 0x3041, 0x3096) &&  // Hiragana
-        !INRANGE(c, 0x309B, 0x309C) &&  // KATAKANA-HIRAGANA VOICED/SEMI-VOICED
+  for (const char32_t c : Utf8AsChars32(reading)) {
+    if (!InRange(c, 0x0021, 0x007E) &&  // Basic Latin (Ascii)
+        !InRange(c, 0x3041, 0x3096) &&  // Hiragana
+        !InRange(c, 0x309B, 0x309C) &&  // KATAKANA-HIRAGANA VOICED/SEMI-VOICED
                                         // SOUND MARK
-        !INRANGE(c, 0x30FB, 0x30FC) &&  // Nakaten, Prolonged sound mark
-        !INRANGE(c, 0x3001, 0x3002) &&  // Japanese punctuation marks
-        !INRANGE(c, 0x300C, 0x300F) &&  // Japanese brackets
-        !INRANGE(c, 0x301C, 0x301C)) {  // Japanese Wavedash
+        !InRange(c, 0x30FB, 0x30FC) &&  // Nakaten, Prolonged sound mark
+        !InRange(c, 0x3001, 0x3002) &&  // Japanese punctuation marks
+        !InRange(c, 0x300C, 0x300F) &&  // Japanese brackets
+        !InRange(c, 0x301C, 0x301C)) {  // Japanese Wavedash
       LOG(INFO) << "Invalid character in reading.";
       return false;
     }
@@ -102,23 +104,26 @@ bool InternalValidateNormalizedReading(const absl::string_view reading) {
   return true;
 }
 
-#undef INRANGE
-
 }  // namespace
 
 bool UserDictionaryUtil::IsValidReading(const absl::string_view reading) {
-  std::string normalized;
-  NormalizeReading(reading, &normalized);
-  return InternalValidateNormalizedReading(normalized);
+  return InternalValidateNormalizedReading(NormalizeReading(reading));
 }
 
 void UserDictionaryUtil::NormalizeReading(const absl::string_view input,
                                           std::string *output) {
   output->clear();
   std::string tmp1, tmp2;
-  japanese_util::FullWidthAsciiToHalfWidthAscii(input, &tmp1);
-  japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp1, &tmp2);
-  japanese_util::KatakanaToHiragana(tmp2, output);
+  japanese::FullWidthAsciiToHalfWidthAscii(input, &tmp1);
+  japanese::HalfWidthKatakanaToFullWidthKatakana(tmp1, &tmp2);
+  japanese::KatakanaToHiragana(tmp2, output);
+}
+
+std::string UserDictionaryUtil::NormalizeReading(
+    const absl::string_view input) {
+  std::string output;
+  NormalizeReading(input, &output);
+  return output;
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
@@ -134,7 +139,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     return UserDictionaryCommandStatus::READING_TOO_LONG;
   }
   if (reading.find_first_of(kInvalidChars) != std::string::npos ||
-      !Util::IsValidUtf8(reading)) {
+      !strings::IsValidUtf8(reading)) {
     VLOG(1) << "Invalid reading";
     return UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER;
   }
@@ -149,7 +154,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     return UserDictionaryCommandStatus::WORD_TOO_LONG;
   }
   if (word.find_first_of(kInvalidChars) != std::string::npos ||
-      !Util::IsValidUtf8(word)) {
+      !strings::IsValidUtf8(word)) {
     VLOG(1) << "Invalid character in value.";
     return UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER;
   }
@@ -161,7 +166,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     return UserDictionaryCommandStatus::COMMENT_TOO_LONG;
   }
   if (comment.find_first_of(kInvalidChars) != std::string::npos ||
-      !Util::IsValidUtf8(comment)) {
+      !strings::IsValidUtf8(comment)) {
     VLOG(1) << "Invalid character in comment.";
     return UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER;
   }
@@ -237,40 +242,24 @@ bool UserDictionaryUtil::SanitizeEntry(
 // static
 bool UserDictionaryUtil::Sanitize(std::string *str, size_t max_size) {
   // First part: Remove invalid characters.
-  {
-    const size_t original_size = str->size();
-    std::string::iterator begin = str->begin();
-    std::string::iterator end = str->end();
-    end = std::remove(begin, end, '\t');
-    end = std::remove(begin, end, '\n');
-    end = std::remove(begin, end, '\r');
-
-    if (end - begin <= max_size) {
-      if (end - begin == original_size) {
-        return false;
-      } else {
-        str->erase(end - begin);
-        return true;
-      }
-    }
-  }
+  const int n = absl::StrReplaceAll(
+      {
+          {"\t", ""},
+          {"\n", ""},
+          {"\r", ""},
+      },
+      str);
 
   // Second part: Truncate long strings.
-  {
-    const char *begin = str->data();
-    const char *p = begin;
-    const char *end = begin + str->size();
-    while (p < end) {
-      const size_t len = Util::OneCharLen(p);
-      if ((p + len - begin) > max_size) {
-        str->erase(p - begin);
-        return true;
-      }
-      p += len;
-    }
-    LOG(FATAL) << "There should be a bug in implementation of the function.";
+  if (str->size() <= max_size) {
+    return n > 0;
   }
-
+  const Utf8AsChars chars(*str);
+  size_t pos = 0;
+  for (auto it = chars.begin(); pos + it.size() <= max_size; ++it) {
+    pos += it.size();
+  }
+  str->erase(pos);
   return true;
 }
 
@@ -303,7 +292,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateDictionaryName(
 namespace {
 // The index of each element should be matched with the actual value of enum.
 // See also user_dictionary_storage.proto for the definition of the enum.
-const char *kPosTypeStringTable[] = {
+constexpr absl::string_view kPosTypeStringTable[] = {
     "品詞なし",     "名詞",           "短縮よみ",     "サジェストのみ",
     "固有名詞",     "人名",           "姓",           "名",
     "組織",         "地名",           "名詞サ変",     "名詞形動",
@@ -320,18 +309,18 @@ const char *kPosTypeStringTable[] = {
 };
 }  // namespace
 
-const char *UserDictionaryUtil::GetStringPosType(
+absl::string_view UserDictionaryUtil::GetStringPosType(
     user_dictionary::UserDictionary::PosType pos_type) {
   if (user_dictionary::UserDictionary::PosType_IsValid(pos_type)) {
     return kPosTypeStringTable[pos_type];
   }
-  return nullptr;
+  return {};
 }
 
 user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
-    const char *string_pos_type) {
+    absl::string_view string_pos_type) {
   for (int i = 0; i < std::size(kPosTypeStringTable); ++i) {
-    if (strcmp(kPosTypeStringTable[i], string_pos_type) == 0) {
+    if (kPosTypeStringTable[i] == string_pos_type) {
       return static_cast<user_dictionary::UserDictionary::PosType>(i);
     }
   }
@@ -396,7 +385,8 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
 
 bool UserDictionaryUtil::DeleteDictionary(
     user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
-    int *original_index, user_dictionary::UserDictionary **deleted_dictionary) {
+    int *original_index,
+    std::unique_ptr<user_dictionary::UserDictionary> *deleted_dictionary) {
   const int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   if (original_index != nullptr) {
     *original_index = index;
@@ -417,7 +407,7 @@ bool UserDictionaryUtil::DeleteDictionary(
   if (deleted_dictionary == nullptr) {
     dictionaries->RemoveLast();
   } else {
-    *deleted_dictionary = dictionaries->ReleaseLast();
+    deleted_dictionary->reset(dictionaries->ReleaseLast());
   }
 
   return true;

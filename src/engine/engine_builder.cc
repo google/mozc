@@ -29,10 +29,9 @@
 
 #include "engine/engine_builder.h"
 
-#include <atomic>
+#include <algorithm>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -47,17 +46,10 @@
 #include "protocol/engine_builder.pb.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
-
-uint64_t GetRequestHash(const EngineReloadRequest &request) {
-  if (request.file_path().empty() || request.install_location().empty()) {
-    return 0;
-  }
-  return Fingerprint(request.SerializeAsString());
-}
-
 EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   switch (status) {
     case DataManager::Status::ENGINE_VERSION_MISMATCH:
@@ -77,128 +69,132 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
 }
 }  // namespace
 
-EngineBuilder::~EngineBuilder() { Clear(); }
+uint64_t EngineBuilder::RegisterRequest(const EngineReloadRequest &request) {
+  const uint64_t id = Fingerprint(request.SerializeAsString());
 
-void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
-                                 EngineReloadResponse *response) {
-  *response->mutable_request() = request;
+  absl::WriterMutexLock lock(&mutex_);
 
-  // Skips the sync when loading the model with the same path.
-  const auto model_path_fp = model_path_fp_.load();
-  if (model_path_fp != 0 && model_path_fp == GetRequestHash(request)) {
-    LOG(INFO)
-        << "PrepareAsync is skipped because the same model is already loaded.";
-    response->set_status(EngineReloadResponse::RELOADED);
-    return;
+  // Already requesting latest id.
+  if (!requests_.empty() && requests_.front().id == id) {
+    return id;
   }
 
-  if (prepare_.has_value()) {
-    if (!prepare_->Ready()) {
-      response->set_status(EngineReloadResponse::ALREADY_RUNNING);
-      return;
-    }
-    VLOG(1) << "Previously loaded data is discarded";
+  if (unregistered_.contains(id)) {
+    return requests_.empty() ? 0 : requests_.front().id;
   }
 
-  prepare_.emplace([request]() -> Prepared {
-    EngineReloadResponse response;
-    *response.mutable_request() = request;
+  ++sequence_id_;
 
-    auto init_data_manager = [](const EngineReloadRequest &request,
-                                DataManager *data_manager) {
-      if (request.has_magic_number()) {
-        return data_manager->InitFromFile(request.file_path(),
-                                          request.magic_number());
+  auto it = std::find_if(requests_.begin(), requests_.end(),
+                         [id](const auto &v) { return v.id == id; });
+  if (it != requests_.end()) {
+    it->sequence_id = sequence_id_.load();
+  } else {
+    requests_.emplace_back(
+        RequestData{id, request.priority(), sequence_id_.load(), request});
+  }
+
+  // Sorts the requests so requests[0] stores the request with
+  // the highest priority.
+  std::sort(requests_.begin(), requests_.end(),
+            [](const auto &lhs, const auto &rhs) {
+              return (lhs.priority < rhs.priority ||
+                      (lhs.priority == rhs.priority &&
+                       lhs.sequence_id > rhs.sequence_id));
+            });
+
+  return requests_.front().id;
+}
+
+uint64_t EngineBuilder::UnregisterRequest(uint64_t id) {
+  absl::WriterMutexLock lock(&mutex_);
+
+  const auto it = std::remove_if(requests_.begin(), requests_.end(),
+                                 [id](const auto &v) { return v.id == id; });
+  if (it != requests_.end()) {
+    requests_.erase(it, requests_.end());
+    unregistered_.emplace(id);
+  }
+
+  return requests_.empty() ? 0 : requests_.front().id;
+}
+
+std::unique_ptr<EngineBuilder::EngineResponseFuture> EngineBuilder::Build(
+    uint64_t id) const {
+  return std::make_unique<BackgroundFuture<EngineResponse>>([&, id]() {
+    EngineResponse result;
+    result.id = id;
+    result.response.set_status(EngineReloadResponse::DATA_MISSING);
+
+    // Finds the request associated with `id`.
+    {
+      absl::ReaderMutexLock lock(&mutex_);
+      const auto it = std::find_if(requests_.begin(), requests_.end(),
+                                   [id](const auto &v) { return v.id == id; });
+      if (it == requests_.end()) {
+        return result;
       }
-      return data_manager->InitFromFile(request.file_path());
-    };
+      *result.response.mutable_request() = it->request;
+    }
 
+    const auto &request = result.response.request();
+
+    // Initializes DataManager
     auto data_manager = std::make_unique<DataManager>();
-    if (DataManager::Status status =
-            init_data_manager(request, data_manager.get());
-        status != DataManager::Status::OK) {
+
+    const auto status = request.has_magic_number()
+                            ? data_manager->InitFromFile(request.file_path(),
+                                                         request.magic_number())
+                            : data_manager->InitFromFile(request.file_path());
+
+    result.response.set_status(EngineReloadResponse::RELOAD_READY);
+
+    if (status != DataManager::Status::OK) {
       LOG(ERROR) << "Failed to load data [" << status << "] "
                  << protobuf::Utf8Format(request);
-      response.set_status(ConvertStatus(status));
-      return {std::move(response), std::move(data_manager)};
-    }
-
-    if (request.has_install_location()) {
-      if (absl::Status s = FileUtil::LinkOrCopyFile(request.file_path(),
-                                                    request.install_location());
+      result.response.set_status(ConvertStatus(status));
+    } else if (request.has_install_location()) {
+      if (const absl::Status s = FileUtil::LinkOrCopyFile(
+              request.file_path(), request.install_location());
           !s.ok()) {
         LOG(ERROR) << "Copy faild: " << protobuf::Utf8Format(request) << ": "
                    << s;
-        response.set_status(EngineReloadResponse::INSTALL_FAILURE);
-        return {
-            std::move(response),
-            std::move(data_manager),
-        };
+        result.response.set_status(EngineReloadResponse::INSTALL_FAILURE);
       }
     }
 
-    response.set_status(EngineReloadResponse::RELOAD_READY);
-    return {std::move(response), std::move(data_manager)};
+    if (result.response.status() != EngineReloadResponse::RELOAD_READY) {
+      return result;
+    }
+
+    // Initializes engine.
+    absl::StatusOr<std::unique_ptr<Engine>> engine;
+    switch (request.engine_type()) {
+      case EngineReloadRequest::DESKTOP:
+        engine = Engine::CreateDesktopEngine(std::move(data_manager));
+        break;
+      case EngineReloadRequest::MOBILE:
+        engine = Engine::CreateMobileEngine(std::move(data_manager));
+        break;
+      default:
+        LOG(DFATAL) << "Should not reach here";
+        break;
+    }
+
+    if (engine.ok()) {
+      result.engine = *std::move(engine);
+    } else {
+      LOG(ERROR) << engine.status();
+    }
+
+    return result;
   });
-  response->set_status(EngineReloadResponse::ACCEPTED);
-}
-
-void EngineBuilder::Wait() {
-  if (prepare_.has_value()) {
-    prepare_->Wait();
-  }
-}
-
-bool EngineBuilder::HasResponse() const {
-  return prepare_.has_value() && prepare_->Ready();
-}
-
-void EngineBuilder::GetResponse(EngineReloadResponse *response) const {
-  if (!HasResponse()) {
-    return;
-  }
-  *response = prepare_->Get().response;
-}
-
-std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
-  if (!HasResponse() || prepare_->Get().data_manager == nullptr ||
-      prepare_->Get().response.status() != EngineReloadResponse::RELOAD_READY) {
-    LOG(ERROR) << "Build() is called in invalid state";
-    return nullptr;
-  }
-  // operator-> doesn't support rvalue delegation :/
-  Prepared prepared = (*std::move(prepare_)).Get();
-  prepare_.reset();
-
-  absl::StatusOr<std::unique_ptr<Engine>> engine;
-  switch (prepared.response.request().engine_type()) {
-    case EngineReloadRequest::DESKTOP:
-      engine = Engine::CreateDesktopEngine(std::move(prepared.data_manager));
-      break;
-    case EngineReloadRequest::MOBILE:
-      engine = Engine::CreateMobileEngine(std::move(prepared.data_manager));
-      break;
-    default:
-      LOG(DFATAL) << "Should not reach here";
-      break;
-  }
-
-  if (!engine.ok()) {
-    LOG(ERROR) << engine.status();
-    return nullptr;
-  }
-
-  model_path_fp_.store(GetRequestHash(prepared.response.request()));
-
-  return *std::move(engine);
 }
 
 void EngineBuilder::Clear() {
-  if (!prepare_.has_value()) {
-    return;
-  }
-  prepare_->Wait();
-  prepare_.reset();
+  absl::WriterMutexLock lock(&mutex_);
+  requests_.clear();
+  sequence_id_ = 0;
 }
 
 }  // namespace mozc

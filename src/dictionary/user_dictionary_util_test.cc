@@ -29,28 +29,19 @@
 
 #include "dictionary/user_dictionary_util.h"
 
-#include <string.h>
-
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-using user_dictionary::UserDictionary;
-using user_dictionary::UserDictionaryCommandStatus;
-
-static void TestNormalizeReading(const absl::string_view golden,
-                                 const absl::string_view input) {
-  std::string output;
-  UserDictionaryUtil::NormalizeReading(input, &output);
-  EXPECT_EQ(golden, output);
-}
+using ::mozc::user_dictionary::UserDictionary;
+using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 TEST(UserDictionaryUtilTest, TestIsValidReading) {
   EXPECT_TRUE(UserDictionaryUtil::IsValidReading("ABYZabyz0189"));
@@ -73,18 +64,18 @@ TEST(UserDictionaryUtilTest, TestIsValidReading) {
 }
 
 TEST(UserDictionaryUtilTest, TestNormalizeReading) {
-  TestNormalizeReading("あいうゔゎ", "アイウヴヮ");
-  TestNormalizeReading("あいうゃ", "ｱｲｳｬ");
-  TestNormalizeReading("ABab01@&=|", "ＡＢａｂ０１＠＆＝｜");
-  TestNormalizeReading("。「」、・", "｡｢｣､･");
+  EXPECT_EQ(UserDictionaryUtil::NormalizeReading("アイウヴヮ"), "あいうゔゎ");
+  EXPECT_EQ(UserDictionaryUtil::NormalizeReading("ｱｲｳｬ"), "あいうゃ");
+  EXPECT_EQ(UserDictionaryUtil::NormalizeReading("ＡＢａｂ０１＠＆＝｜"),
+            "ABab01@&=|");
+  EXPECT_EQ(UserDictionaryUtil::NormalizeReading("｡｢｣､･"), "。「」、・");
 }
 
-namespace {
 struct UserDictionaryEntryData {
-  const char *key;
-  const char *value;
-  const UserDictionary::PosType pos;
-  const char *comment;
+  absl::string_view key;
+  absl::string_view value;
+  UserDictionary::PosType pos;
+  absl::string_view comment;
 };
 
 void ConvertUserDictionaryEntry(const UserDictionaryEntryData &input,
@@ -94,10 +85,9 @@ void ConvertUserDictionaryEntry(const UserDictionaryEntryData &input,
   output->set_pos(input.pos);
   output->set_comment(input.comment);
 }
-}  // namespace
 
 TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
-  const UserDictionaryEntryData golden_data = {
+  constexpr UserDictionaryEntryData kGoldenData = {
       "abc",
       "abc",
       UserDictionary::NOUN,
@@ -105,38 +95,38 @@ TEST(UserDictionaryUtilTest, TestSanitizeEntry) {
   };
 
   UserDictionary::Entry golden, input;
-  ConvertUserDictionaryEntry(golden_data, &golden);
+  ConvertUserDictionaryEntry(kGoldenData, &golden);
 
   {
-    UserDictionaryEntryData input_data = {"abc", "abc", UserDictionary::NOUN,
-                                          "abc"};
-    ConvertUserDictionaryEntry(input_data, &input);
+    constexpr UserDictionaryEntryData kInputData = {
+        "abc", "abc", UserDictionary::NOUN, "abc"};
+    ConvertUserDictionaryEntry(kInputData, &input);
     EXPECT_FALSE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
+    EXPECT_PROTO_EQ(golden, input);
   }
 
   {
-    UserDictionaryEntryData input_data = {"ab\tc", "abc", UserDictionary::NOUN,
-                                          "abc"};
-    ConvertUserDictionaryEntry(input_data, &input);
+    constexpr UserDictionaryEntryData kInputData = {
+        "ab\tc", "abc", UserDictionary::NOUN, "abc"};
+    ConvertUserDictionaryEntry(kInputData, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
+    EXPECT_PROTO_EQ(golden, input);
   }
 
   {
-    UserDictionaryEntryData input_data = {"abc", "ab\tc", UserDictionary::NOUN,
-                                          "ab\tc"};
-    ConvertUserDictionaryEntry(input_data, &input);
+    constexpr UserDictionaryEntryData kInputData = {
+        "abc", "ab\tc", UserDictionary::NOUN, "ab\tc"};
+    ConvertUserDictionaryEntry(kInputData, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
+    EXPECT_PROTO_EQ(golden, input);
   }
 
   {
-    UserDictionaryEntryData input_data = {"ab\tc", "ab\tc",
-                                          UserDictionary::NOUN, "ab\tc"};
-    ConvertUserDictionaryEntry(input_data, &input);
+    constexpr UserDictionaryEntryData kInputData = {
+        "ab\tc", "ab\tc", UserDictionary::NOUN, "ab\tc"};
+    ConvertUserDictionaryEntry(kInputData, &input);
     EXPECT_TRUE(UserDictionaryUtil::SanitizeEntry(&input));
-    EXPECT_EQ(absl::StrCat(input), absl::StrCat(golden));
+    EXPECT_PROTO_EQ(golden, input);
   }
 }
 
@@ -300,12 +290,11 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryById) {
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
 
-  EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, 1) ==
-              &storage.dictionaries(0));
-  EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, 2) ==
-              &storage.dictionaries(1));
-  EXPECT_TRUE(UserDictionaryUtil::GetUserDictionaryById(storage, -1) ==
-              nullptr);
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryById(storage, 1),
+            &storage.dictionaries(0));
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryById(storage, 2),
+            &storage.dictionaries(1));
+  EXPECT_EQ(UserDictionaryUtil::GetUserDictionaryById(storage, -1), nullptr);
 }
 
 TEST(UserDictionaryUtilTest, GetMutableUserDictionaryById) {
@@ -313,12 +302,12 @@ TEST(UserDictionaryUtilTest, GetMutableUserDictionaryById) {
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
 
-  EXPECT_TRUE(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, 1) ==
-              storage.mutable_dictionaries(0));
-  EXPECT_TRUE(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, 2) ==
-              storage.mutable_dictionaries(1));
-  EXPECT_TRUE(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, -1) ==
-              nullptr);
+  EXPECT_EQ(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, 1),
+            storage.mutable_dictionaries(0));
+  EXPECT_EQ(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, 2),
+            storage.mutable_dictionaries(1));
+  EXPECT_EQ(UserDictionaryUtil::GetMutableUserDictionaryById(&storage, -1),
+            nullptr);
 }
 
 TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
@@ -334,32 +323,27 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
 }
 
 TEST(UserDictionaryUtilTest, ToPosType) {
-  EXPECT_TRUE(UserDictionaryUtil::ToPosType("品詞なし") ==
-              UserDictionary::NO_POS);
-  EXPECT_TRUE(UserDictionaryUtil::ToPosType("サジェストのみ") ==
-              UserDictionary::SUGGESTION_ONLY);
-  EXPECT_TRUE(UserDictionaryUtil::ToPosType("動詞ワ行五段") ==
-              UserDictionary::WA_GROUP1_VERB);
-  EXPECT_TRUE(UserDictionaryUtil::ToPosType("抑制単語") ==
-              UserDictionary::SUPPRESSION_WORD);
+  EXPECT_EQ(UserDictionaryUtil::ToPosType("品詞なし"), UserDictionary::NO_POS);
+  EXPECT_EQ(UserDictionaryUtil::ToPosType("サジェストのみ"),
+            UserDictionary::SUGGESTION_ONLY);
+  EXPECT_EQ(UserDictionaryUtil::ToPosType("動詞ワ行五段"),
+            UserDictionary::WA_GROUP1_VERB);
+  EXPECT_EQ(UserDictionaryUtil::ToPosType("抑制単語"),
+            UserDictionary::SUPPRESSION_WORD);
 }
 
 TEST(UserDictionaryUtilTest, GetStringPosType) {
-  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(UserDictionary::NO_POS),
-                   "品詞なし"),
-            0);
-  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
-                       UserDictionary::SUGGESTION_ONLY),
-                   "サジェストのみ"),
-            0);
-  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
-                       UserDictionary::WA_GROUP1_VERB),
-                   "動詞ワ行五段"),
-            0);
-  EXPECT_EQ(strcmp(UserDictionaryUtil::GetStringPosType(
-                       UserDictionary::SUPPRESSION_WORD),
-                   "抑制単語"),
-            0);
+  EXPECT_EQ(UserDictionaryUtil::GetStringPosType(UserDictionary::NO_POS),
+            "品詞なし");
+  EXPECT_EQ(
+      UserDictionaryUtil::GetStringPosType(UserDictionary::SUGGESTION_ONLY),
+      "サジェストのみ");
+  EXPECT_EQ(
+      UserDictionaryUtil::GetStringPosType(UserDictionary::WA_GROUP1_VERB),
+      "動詞ワ行五段");
+  EXPECT_EQ(
+      UserDictionaryUtil::GetStringPosType(UserDictionary::SUPPRESSION_WORD),
+      "抑制単語");
 }
 
 TEST(UserDictionaryUtilTest, CreateDictionary) {
@@ -421,15 +405,12 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   storage.Clear();
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
-  UserDictionary *deleted_dictionary;
+  std::unique_ptr<UserDictionary> deleted_dictionary;
   EXPECT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, nullptr,
                                                    &deleted_dictionary));
   ASSERT_EQ(storage.dictionaries_size(), 1);
   EXPECT_EQ(storage.dictionaries(0).id(), 2);
   EXPECT_EQ(deleted_dictionary->id(), 1);
-
-  // Delete to avoid memoary leaking.
-  delete deleted_dictionary;
 }
 
 }  // namespace
