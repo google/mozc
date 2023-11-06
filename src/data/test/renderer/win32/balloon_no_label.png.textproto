@@ -42,7 +42,7 @@ input {
   inside_color: 16777215
   label: ""
   label_color: 0
-  label_font: "IPAexゴシック"
+  label_font: "MozcTestFont"
   label_size: 13
   rect_height: 39.0
   rect_width: 39.0
