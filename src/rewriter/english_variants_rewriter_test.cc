@@ -383,6 +383,31 @@ TEST_F(EnglishVariantsRewriterTest, ProperNouns) {
             0);
 }
 
+TEST_F(EnglishVariantsRewriterTest, FillConsumedKeySize) {
+  Segments segments;
+  const ConversionRequest request;
+  Segment *seg = segments.push_back_segment();
+
+  constexpr absl::string_view kKey = "なさ";
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->content_key = kKey;
+    candidate->key = kKey;
+    candidate->content_value = "nasa";
+    candidate->value = "nasa";
+    candidate->consumed_key_size = kKey.size();
+    candidate->attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+  }
+
+  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
+  EXPECT_GT(seg->candidates_size(), 1);
+  for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    const Segment::Candidate &c = seg->candidate(i);
+    EXPECT_TRUE(c.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+    EXPECT_EQ(c.consumed_key_size, kKey.size());
+  }
+}
+
 TEST_F(EnglishVariantsRewriterTest, MobileEnvironmentTest) {
   ConversionRequest convreq;
   commands::Request request;

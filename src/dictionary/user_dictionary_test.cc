@@ -541,7 +541,7 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
 
-    // SUGGESTION ONLY word is not handled as SHORTCUT word.
+    // SUGGESTION ONLY word is handled as SHORTCUT word.
     entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("suggest_only");
@@ -565,6 +565,7 @@ TEST_F(UserDictionaryTest, TestLookupWithShortCut) {
   const Entry kExpected2[] = {
       {"key", "noun", kNounId, kNounId},
       {"key", "no_pos", kUnknownId, kUnknownId},
+      {"key", "suggest_only", kUnknownId, kUnknownId},
   };
   const Entry kExpectedPrediction[] = {
       {"key", "noun", kNounId, kNounId},

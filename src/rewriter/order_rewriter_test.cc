@@ -100,12 +100,20 @@ Segments BuildTestSegments() {
   add_candidate("きょうの", "凶の", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "キョウの", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "キョウノ", Segment::Candidate::DEFAULT_CATEGORY);
+  add_candidate("きょうの", "KYOUNO", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "今日", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "きょう", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "京", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょう", "供", Segment::Candidate::DEFAULT_CATEGORY);
   add_candidate("きょうの", "😀", Segment::Candidate::SYMBOL);
   add_candidate("きょうの", "響野", Segment::Candidate::DEFAULT_CATEGORY);
+
+  Segment::Candidate *meta_candidate =
+      segments.mutable_conversion_segment(0)->add_meta_candidate();
+  meta_candidate->key = "きょうの";
+  meta_candidate->content_key = "きょうの";
+  meta_candidate->value = "ｷｮｳﾉ";
+  meta_candidate->content_value = "ｷｮｳﾉ";
 
   return segments;
 }
@@ -135,6 +143,8 @@ TEST_F(OrderRewriterTest, Rewrite) {
                                                   ValueIs("キョウの"),
                                                   ValueIs("キョウノ"),
                                                   ValueIs("響野"),
+                                                  ValueIs("KYOUNO"),
+                                                  ValueIs("ｷｮｳﾉ"),
                                                   ValueIs("other"),
                                                   ValueIs("😀"),
                                                   ValueIs("きょう"),

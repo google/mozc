@@ -67,8 +67,8 @@ class TextIconTest : public testing::Test {
   }
 
  protected:
-  static std::string GetGothicFontName() {
-    return WinFontTestHelper::GetIPAexGothicFontName();
+  static std::string GetTestFontName() {
+    return WinFontTestHelper::GetTestFontName();
   }
 };
 
@@ -155,16 +155,7 @@ TEST_F(TextIconTest, CreateMonochromeIcon) {
   {
     constexpr size_t kIconSize = 20;
     CIcon icon = TextIcon::CreateMonochromeIcon(
-        kIconSize, kIconSize, "A", GetGothicFontName(), RGB(0xff, 0x00, 0xff));
-    EXPECT_MONOCHROME_ICON(icon, kIconSize);
-  }
-
-  {
-    constexpr char kText[] = "あ";
-    constexpr size_t kIconSize = 20;
-    CIcon icon = TextIcon::CreateMonochromeIcon(kIconSize, kIconSize, kText,
-                                                GetGothicFontName(),
-                                                RGB(0xff, 0x00, 0xff));
+        kIconSize, kIconSize, "A", GetTestFontName(), RGB(0xff, 0x00, 0xff));
     EXPECT_MONOCHROME_ICON(icon, kIconSize);
   }
 }

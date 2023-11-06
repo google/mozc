@@ -100,7 +100,7 @@ mozc_cc_library(
     testonly = True,
     srcs = ["win_font_test_helper.cc"],
     hdrs = ["win_font_test_helper.h"],
-    data = ["//third_party/ipa_font:ipaex_fonts"],
+    data = ["//data/test/renderer/win32:mozc_test_font"],
     features = ["gdi"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],

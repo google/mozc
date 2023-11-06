@@ -71,10 +71,9 @@
           'copies': [
             {
               'files': [
-                '<(DEPTH)/third_party/ipa_font/ipaexg.ttf',
-                '<(DEPTH)/third_party/ipa_font/ipaexm.ttf',
+                '<(mozc_oss_src_dir)/data/test/renderer/win32/mozc_test_font.ttf',
               ],
-              'destination': '<(SHARED_INTERMEDIATE_DIR)/third_party/ipa_font',
+              'destination': '<(mozc_data_dir)/data/test/renderer/win32',
             },
           ],
         },

@@ -48,3 +48,9 @@ filegroup(
         "*.textproto",  # TODO: Consider using `proto_data` for parsing these files at build time.
     ]),
 )
+
+filegroup(
+    name = "mozc_test_font",
+    srcs = ["mozc_test_font.ttf"],
+    visibility = ["//base/win32:__subpackages__"],
+)

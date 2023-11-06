@@ -44,8 +44,7 @@
 namespace mozc {
 namespace {
 
-HANDLE g_ipa_gothic_ = nullptr;
-HANDLE g_ipa_mincho_ = nullptr;
+HANDLE g_font_handle_ = nullptr;
 
 HANDLE LoadPrivateFont(const wchar_t *font_name) {
   wchar_t w_path[MAX_PATH] = {};
@@ -90,47 +89,29 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
 
 // static
 bool WinFontTestHelper::Initialize() {
-  if (g_ipa_gothic_ == nullptr) {
+  if (g_font_handle_ == nullptr) {
     const std::string path = testing::GetSourceFileOrDie(
-        {"..", "..", "..", "third_party", "ipa_font", "ipaexg.ttf"});
-    g_ipa_gothic_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
-  }
-  if (g_ipa_mincho_ == nullptr) {
-    const std::string path = testing::GetSourceFileOrDie(
-        {"..", "..", "..", "third_party", "ipa_font", "ipaexm.ttf"});
-    g_ipa_mincho_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
-  }
-  if (g_ipa_gothic_ == nullptr || g_ipa_mincho_ == nullptr) {
-    Uninitialize();
-    return false;
+        {MOZC_DICT_DIR_COMPONENTS, "test", "renderer", "win32",
+         "mozc_test_font.ttf"});
+    g_font_handle_ = LoadPrivateFont(win32::Utf8ToWide(path).c_str());
+    if (g_font_handle_ == nullptr) {
+      return false;
+    }
   }
   return true;
 }
 
 // static
 void WinFontTestHelper::Uninitialize() {
-  if (g_ipa_gothic_ != nullptr) {
-    ::RemoveFontMemResourceEx(g_ipa_gothic_);
-    g_ipa_gothic_ = nullptr;
-  }
-  if (g_ipa_mincho_ != nullptr) {
-    ::RemoveFontMemResourceEx(g_ipa_mincho_);
-    g_ipa_mincho_ = nullptr;
+  if (g_font_handle_ != nullptr) {
+    ::RemoveFontMemResourceEx(g_font_handle_);
+    g_font_handle_ = nullptr;
   }
 }
 
 // static
-std::string WinFontTestHelper::GetIPAexGothicFontName() {
-  // "IPAexゴシック"
-  return "IPAex"
-         "\343\202\264\343\202\267\343\203\203\343\202\257";
-}
-
-// static
-std::string WinFontTestHelper::GetIPAexMinchoFontName() {
-  // "IPAex明朝"
-  return "IPAex"
-         "\346\230\216\346\234\235";
+std::string WinFontTestHelper::GetTestFontName() {
+  return "MozcTestFont";
 }
 
 }  // namespace mozc

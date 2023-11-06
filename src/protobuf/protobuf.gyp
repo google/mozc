@@ -75,9 +75,9 @@
     ],
     # Sources for protoc (common part and C++ generator only).
     'protoc_sources': [
-      '<!@(<(glob_protobuf) compiler "*.cc" --exclude "*_tester.cc" fake_plugin.cc main.cc)',
+      '<!@(<(glob_protobuf) compiler "*.cc" --exclude "*_tester.cc" fake_plugin.cc test_plugin.cc main.cc)',
       '<!@(<(glob_protobuf) compiler/allowlists "*.cc")',
-      '<!@(<(glob_protobuf) compiler/cpp "**/*.cc")',
+      '<!@(<(glob_protobuf) compiler/cpp "**/*.cc" --exclude main.cc)',
       'custom_protoc_main.cc',
     ],
   },
@@ -122,6 +122,13 @@
           'msvs_disabled_warnings': [
             '<@(msvc_disabled_warnings_for_protoc)',
           ],
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+              'AdditionalOptions': [
+                '/permissive',  # https://github.com/protocolbuffers/protobuf/issues/14602
+              ],
+            },
+          },
           'xcode_settings': {
             'USE_HEADERMAP': 'NO',
           },

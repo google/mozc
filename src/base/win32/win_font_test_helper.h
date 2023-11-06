@@ -48,10 +48,8 @@ class WinFontTestHelper {
   // Uninitializes the private fonts.
   static void Uninitialize();
 
-  // Returns the font face name of IPAex-Gothic.
-  static std::string GetIPAexGothicFontName();
-  // Returns the font face name of IPAex-Mincho.
-  static std::string GetIPAexMinchoFontName();
+  // Returns the font face name of the test font.
+  static std::string GetTestFontName();
 };
 
 }  // namespace mozc

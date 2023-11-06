@@ -181,6 +181,13 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
           new_candidate->rid = original_candidate->rid;
           new_candidate->attributes |=
               Segment::Candidate::NO_VARIANTS_EXPANSION;
+          if (original_candidate->attributes &
+              Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+            new_candidate->attributes |=
+                Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+            new_candidate->consumed_key_size =
+                original_candidate->consumed_key_size;
+          }
         }
       }
     } else if (IsEnglishCandidate(original_candidate)) {
