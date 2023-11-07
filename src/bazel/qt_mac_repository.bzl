@@ -43,6 +43,7 @@ def _qt_mac_repository_impl(repo_ctx):
 
 qt_mac_repository = repository_rule(
     implementation = _qt_mac_repository_impl,
+    local = True,
     environ = ["MOZC_QT_PATH"],
     attrs = {
         "default_path": attr.string(),
