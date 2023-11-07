@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
   // Without this flag, ::RaiseException makes the job stuck.
   // See b/2805521 for details.
-  testing::GTEST_FLAG(catch_exceptions) = true;
+  GTEST_FLAG_SET(catch_exceptions, true);
 
   return RUN_ALL_TESTS();
 }
