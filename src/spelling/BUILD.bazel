@@ -150,7 +150,7 @@ mozc_cc_test(
         ":rulebased_lm",
         ":spellchecker_service",
         ":spellchecker_service_interface",
-        "//base:file_stream",
+        "//base/strings:japanese",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
