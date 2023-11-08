@@ -62,5 +62,7 @@ def _android_repository_impl(repository_ctx):
 
 android_repository = repository_rule(
     implementation = _android_repository_impl,
+    configure = True,
+    local = True,
     environ = ["ANDROID_NDK_HOME"],
 )

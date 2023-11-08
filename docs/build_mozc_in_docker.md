@@ -172,16 +172,16 @@ This command reverts the above change.
 git update-index --no-assume-unchanged src/config.bzl
 ```
 
-### Clean build cache
+### Forcing reconfigure external dependencies
 
 You may have some build errors when you update build environment or configurations.
-In that case, cleaing the build cache possibly addresses the problem.
+In that case, try the following command to [refetch external repositories](https://bazel.build/extending/repo#forcing_refetch_of_external_repositories).
 
 ```
-bazel clean
+bazel sync --configure
 ```
 
-To clean the cache deeply, add the `--expunge` option.
+If the issue persists, also try the following command to [clean Bazel's build cache](https://bazel.build/docs/user-manual#clean)
 
 ```
 bazel clean --expunge

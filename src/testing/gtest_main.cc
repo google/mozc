@@ -40,7 +40,14 @@
 int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
   // given by gunit.
-  mozc::InitMozc(argv[0], &argc, &argv);
+#ifdef GTEST_HAS_ABSL
+  // Skip passing a usage if GoogleTest is built with Abseil, GoogleTest will
+  // provide its own usage in this configuration.
+  const char* usage = nullptr;
+#else   // !GTEST_HAS_ABSL
+  const char* usage = argv[0];
+#endif  // GTEST_HAS_ABSL
+  mozc::InitMozc(usage, &argc, &argv);
   mozc::InitTestFlags();
   testing::InitGoogleTest(&argc, argv);
 
@@ -51,7 +58,7 @@ int main(int argc, char **argv) {
 
   // Without this flag, ::RaiseException makes the job stuck.
   // See b/2805521 for details.
-  testing::GTEST_FLAG(catch_exceptions) = true;
+  GTEST_FLAG_SET(catch_exceptions, true);
 
   return RUN_ALL_TESTS();
 }

@@ -116,6 +116,8 @@ def _pkg_config_repository_impl(repo_ctx):
 
 pkg_config_repository = repository_rule(
     implementation = _pkg_config_repository_impl,
+    configure = True,
+    local = True,
     attrs = {
         "packages": attr.string_list(),
     },
