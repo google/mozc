@@ -39,9 +39,7 @@ load(
 )
 
 package(
-    default_visibility = [
-        "//:__subpackages__",
-    ],
+    default_visibility = ["//:__subpackages__"],
 )
 
 mozc_cc_library(
