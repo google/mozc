@@ -43,6 +43,7 @@
 #include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -249,27 +250,35 @@ commands::Request GetMobileRequest() {
 // Makes sure that the results are not changed by experiment params.
 INSTANTIATE_TEST_SUITE_P(
     TestForExperimentParams, SessionHandlerScenarioTestForRequest,
-    ::testing::Combine(::testing::ValuesIn(kScenariosForExperimentParams),
-                       ::testing::Values(
-                           GetMobileRequest(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_new_spatial_scoring(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_realtime_conversion_v2(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_findability_oriented_order(true);
-                             return request;
-                           }())));
+    ::testing::Combine(
+        ::testing::ValuesIn(kScenariosForExperimentParams),
+        ::testing::Values(
+            GetMobileRequest(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_new_spatial_scoring(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_realtime_conversion_v2(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_findability_oriented_order(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_apply_user_segment_history_rewriter_for_prediction(
+                      true);
+              return request;
+            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.

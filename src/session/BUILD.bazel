@@ -820,6 +820,7 @@ mozc_cc_test(
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
