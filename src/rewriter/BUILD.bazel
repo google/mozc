@@ -301,6 +301,7 @@ mozc_cc_test(
         "//config:character_form_manager",
         "//config:config_handler",
         "//converter:segments",
+        "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher",
         "//protocol:commands_cc_proto",

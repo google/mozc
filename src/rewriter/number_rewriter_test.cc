@@ -40,12 +40,14 @@
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
@@ -56,6 +58,8 @@ namespace mozc {
 namespace {
 
 using ::mozc::dictionary::PosMatcher;
+using ::testing::Field;
+using ::testing::Matcher;
 using ::testing::WithParamInterface;
 
 constexpr absl::string_view kKanjiDescription = "漢数字";
@@ -66,6 +70,10 @@ constexpr absl::string_view kRomanCapitalDescription = "ローマ数字(大文�
 constexpr absl::string_view kRomanNoCapitalDescription = "ローマ数字(小文字)";
 constexpr absl::string_view kSuperscriptDescription = "上付き文字";
 constexpr absl::string_view kSubscriptDescription = "下付き文字";
+
+Matcher<const Segment::Candidate *> ValueIs(absl::string_view value) {
+  return Field(&Segment::Candidate::value, value);
+}
 
 bool FindValue(const Segment &segment, const absl::string_view value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -645,6 +653,8 @@ TEST_F(NumberRewriterTest, NumberIsGoogol) {
     input += "0";
   }
 
+  candidate->key = input;
+  candidate->content_key = input;
   candidate->value = input;
   candidate->content_value = input;
 
@@ -817,6 +827,8 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
+    candidate->key = kSuccess[i][0];
+    candidate->content_key = kSuccess[i][0];
     candidate->value = kSuccess[i][0];
     candidate->content_value = kSuccess[i][0];
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -839,6 +851,8 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->lid = pos_matcher_.GetNumberId();
     candidate->rid = pos_matcher_.GetNumberId();
+    candidate->key = kFail[i][0];
+    candidate->content_key = kFail[i][0];
     candidate->value = kFail[i][0];
     candidate->content_value = kFail[i][0];
     EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
@@ -1045,6 +1059,46 @@ TEST_F(NumberRewriterTest, RewritePhonePrefix_b16668386) {
   candidate->content_key = "090-";
   candidate->content_value = "090-";
 
+  EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
+}
+
+TEST_F(NumberRewriterTest, RewriteFromPhoneticNumber) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  Segments segments;
+  {
+    Segment *seg = segments.push_back_segment();
+    seg->set_key("じゅうまん");
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
+    candidate->key = "じゅうまん";
+    candidate->content_key = "じゅうまん";
+    candidate->value = "10万";
+    candidate->content_value = "10万";
+  }
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+
+  ASSERT_EQ(segments.conversion_segments_size(), 1);
+  EXPECT_THAT(segments.conversion_segment(0),
+              ContainsCandidate(ValueIs("100000")));
+}
+
+TEST_F(NumberRewriterTest, DoNotGenerateLongCandidatesForPhoneticNumber) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+
+  Segments segments;
+  {
+    Segment *seg = segments.push_back_segment();
+    seg->set_key("ひゃくまん");
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->lid = pos_matcher_.GetNumberId();
+    candidate->rid = pos_matcher_.GetNumberId();
+    candidate->key = "ひゃくまん";
+    candidate->content_key = "ひゃくまん";
+    candidate->value = "100万";
+    candidate->content_value = "100万";
+  }
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
 }
 
