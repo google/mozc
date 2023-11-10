@@ -114,29 +114,36 @@ struct State {
   // Consumed keys
   // ["に", "じゅう"] for "にじゅう": "20"
   std::vector<absl::string_view> consumed_keys;
+
+  // The digit number
+  // 12万(=120000) → 6
+  int digit_num = 0;
 };
 
 }  // namespace number_decoder_internal
 
 struct NumberDecoderResult {
   NumberDecoderResult() = default;
-  NumberDecoderResult(size_t len, std::string c)
-      : consumed_key_byte_len(len), candidate(std::move(c)) {}
+  NumberDecoderResult(size_t len, std::string c, int digit_num)
+      : consumed_key_byte_len(len),
+        candidate(std::move(c)),
+        digit_num(digit_num) {}
 
   template <typename Sink>
   friend void AbslStringify(Sink &sink, const NumberDecoderResult &result) {
-    absl::Format(&sink, "(%d, %s)", result.consumed_key_byte_len,
-                 result.candidate);
+    absl::Format(&sink, "(%d,\" %s\", %d)", result.consumed_key_byte_len,
+                 result.candidate, result.digit_num);
   }
 
   size_t consumed_key_byte_len;
   std::string candidate;
+  int digit_num;  // 12万(=120000) → 6
 };
 
 constexpr bool operator==(const NumberDecoderResult &lhs,
                           const NumberDecoderResult &rhs) {
-  return std::tie(lhs.consumed_key_byte_len, lhs.candidate) ==
-         std::tie(rhs.consumed_key_byte_len, rhs.candidate);
+  return std::tie(lhs.consumed_key_byte_len, lhs.candidate, lhs.digit_num) ==
+         std::tie(rhs.consumed_key_byte_len, rhs.candidate, rhs.digit_num);
 }
 
 std::ostream &operator<<(std::ostream &os, const NumberDecoderResult &r);

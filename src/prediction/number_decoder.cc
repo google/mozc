@@ -113,19 +113,19 @@ Trie<Entry> InitEntries() {
   result.AddEntry("ぜん", Entry({Type::SMALL_DIGIT, 1000, 4, "", true}));
 
   // big digit
-  result.AddEntry("まん", Entry({Type::BIG_DIGIT, 10000, 1, "万"}));
-  result.AddEntry("おく", Entry({Type::BIG_DIGIT, -1, 2, "億"}));
-  result.AddEntry("おっ", Entry({Type::BIG_DIGIT, -1, 2, "億"}));
+  result.AddEntry("まん", Entry({Type::BIG_DIGIT, 10000, 5, "万"}));
+  result.AddEntry("おく", Entry({Type::BIG_DIGIT, -1, 9, "億"}));
+  result.AddEntry("おっ", Entry({Type::BIG_DIGIT, -1, 9, "億"}));
   // "町", etc
-  result.AddEntry("ちょう", Entry({Type::BIG_DIGIT, -1, 3, "兆", true}));
+  result.AddEntry("ちょう", Entry({Type::BIG_DIGIT, -1, 13, "兆", true}));
   // "系", etc
-  result.AddEntry("けい", Entry({Type::BIG_DIGIT, -1, 4, "京", true}));
-  result.AddEntry("がい", Entry({Type::BIG_DIGIT, -1, 5, "垓"}));
+  result.AddEntry("けい", Entry({Type::BIG_DIGIT, -1, 17, "京", true}));
+  result.AddEntry("がい", Entry({Type::BIG_DIGIT, -1, 21, "垓"}));
 
   // spacial cases
   // conflict with "にち"
   result.AddEntry("にちょう",
-                  Entry({Type::UNIT_AND_BIG_DIGIT, 2, 3, "兆", true, 3}));
+                  Entry({Type::UNIT_AND_BIG_DIGIT, 2, 13, "兆", true, 3}));
   result.AddEntry("にちょうめ",
                   Entry({Type::UNIT_AND_STOP_DECODING, 2, -1, "", false, 3}));
   result.AddEntry("にちゃん",
@@ -298,6 +298,7 @@ bool NumberDecoder::HandleUnitEntry(absl::string_view key, const Entry &entry,
     state.small_digit_num += entry.number;
   }
   state.consumed_keys.emplace_back(key);
+  state.digit_num = std::max(state.digit_num, 1);
   return true;
 }
 
@@ -327,6 +328,7 @@ bool NumberDecoder::HandleSmallDigitEntry(absl::string_view key,
   }
   state.small_digit = entry.digit;
   state.consumed_keys.emplace_back(key);
+  state.digit_num = std::max(state.digit_num, entry.digit);
   return true;
 }
 
@@ -350,10 +352,17 @@ bool NumberDecoder::HandleBigDigitEntry(absl::string_view key,
   //  state.current_num = -1;
   absl::StrAppend(&state.current_num_str, state.small_digit_num,
                   entry.digit_str);
+
+  state.digit_num = std::max(
+      state.digit_num,
+      entry.digit +
+          static_cast<int>(absl::StrCat(state.small_digit_num).size()) - 1);
+
   state.small_digit_num = -1;
   state.small_digit = -1;
   state.big_digit = entry.digit;
   state.consumed_keys.emplace_back(key);
+
   return true;
 }
 
@@ -369,13 +378,15 @@ std::optional<NumberDecoderResult> State::Result() const {
   if (small_digit > 0) {
     // "1万" + "2000"
     return NumberDecoderResult{consumed_key_byte_len,
-                               absl::StrCat(current_num_str, small_digit)};
+                               absl::StrCat(current_num_str, small_digit),
+                               digit_num};
   } else if (!current_num_str.empty()) {
     // "1万"
-    return NumberDecoderResult{consumed_key_byte_len, current_num_str};
+    return NumberDecoderResult{consumed_key_byte_len, current_num_str,
+                               digit_num};
   } else if (small_digit == 0) {
     // "0"
-    return NumberDecoderResult{consumed_key_byte_len, "0"};
+    return NumberDecoderResult{consumed_key_byte_len, "0", 1};
   }
   return std::nullopt;
 }
