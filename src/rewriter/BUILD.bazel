@@ -117,6 +117,7 @@ mozc_cc_library(
         "//base:logging",
         "//base:number_util",
         "//base:util",
+        "//base/strings:unicode",
         "//config:character_form_manager",
         "//converter:segments",
         "//dictionary:pos_group",

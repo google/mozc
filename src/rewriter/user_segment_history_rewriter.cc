@@ -43,6 +43,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
@@ -388,9 +389,21 @@ bool GetSameValueCandidatePosition(const Segment *segment,
 }
 
 bool IsT13NCandidate(const Segment::Candidate &cand) {
-  // Regard the cand with 0-id as the transliterated candidate.
-  return (cand.lid == 0 && cand.rid == 0);
+  // - The cand with 0-id can be the transliterated candidate.
+  const Util::ScriptType script_type = Util::GetScriptType(cand.value);
+  return ((cand.lid == 0 && cand.rid == 0) || script_type == Util::KATAKANA ||
+          script_type == Util::HIRAGANA || script_type == Util::ALPHABET);
 }
+
+bool IsSingleKanjiCandidate(const Segment::Candidate &cand) {
+  // POS info for single kanji can be filled using the base candidate and not
+  // reliable in general.
+  if (strings::CharsLen(cand.content_value) != 1) {
+    return false;
+  }
+  return Util::IsScriptType(cand.content_value, Util::KANJI);
+}
+
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
@@ -562,7 +575,8 @@ bool UserSegmentHistoryRewriter::Replaceable(
   const bool same_pos_group =
       (pos_group_->GetPosGroup(lhs.lid) == pos_group_->GetPosGroup(rhs.lid));
   return (same_functional_value &&
-          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs)));
+          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs) ||
+           IsSingleKanjiCandidate(lhs) || IsSingleKanjiCandidate(rhs)));
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
