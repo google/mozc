@@ -277,6 +277,7 @@ class Segment final {
       absl::string_view GetContentValue() const;
       absl::string_view GetFunctionalKey() const;
       absl::string_view GetFunctionalValue() const;
+      size_t GetIndex() const { return index_; }
 
      private:
       const Candidate *candidate_;
