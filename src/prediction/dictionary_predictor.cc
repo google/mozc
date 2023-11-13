@@ -59,6 +59,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -172,6 +173,35 @@ void AppendDescription(Segment::Candidate &candidate, Args &&...args) {
   absl::StrAppend(&candidate.description,
                   candidate.description.empty() ? "" : " ",
                   std::forward<Args>(args)...);
+}
+
+void MaybeFixRealtimeTopCost(absl::string_view input_key,
+                             std::vector<Result> &results) {
+  // Remember the minimum cost among those REALTIME
+  // candidates that have the same key length as |input_key| so that we can set
+  // a slightly smaller cost to REALTIME_TOP than these.
+  int realtime_cost_min = kInfinity;
+  Result *realtime_top_result = nullptr;
+  for (size_t i = 0; i < results.size(); ++i) {
+    const Result &result = results[i];
+    if (result.types & PredictionType::REALTIME_TOP) {
+      realtime_top_result = &results[i];
+    }
+
+    // Update the minimum cost for REALTIME candidates that have the same key
+    // length as input_key.
+    if (result.types & PredictionType::REALTIME &&
+        result.cost < realtime_cost_min &&
+        result.key.size() == input_key.size()) {
+      realtime_cost_min = result.cost;
+    }
+  }
+
+  // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
+  // those of REALTIME candidates.
+  if (realtime_top_result != nullptr && realtime_cost_min != kInfinity) {
+    realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
+  }
 }
 
 }  // namespace
@@ -817,21 +847,8 @@ void DictionaryPredictor::SetPredictionCost(
   const size_t bigram_key_len = Util::CharsLen(bigram_key);
   const size_t unigram_key_len = Util::CharsLen(input_key);
 
-  // In the loop below, we track the minimum cost among those REALTIME
-  // candidates that have the same key length as |input_key| so that we can set
-  // a slightly smaller cost to REALTIME_TOP than these.
-  int realtime_cost_min = kInfinity;
-  Result *realtime_top_result = nullptr;
-
   for (size_t i = 0; i < results->size(); ++i) {
-    const Result &result = results->at(i);
-
-    // The cost of REALTIME_TOP is determined after the loop based on the
-    // minimum cost for REALTIME. Just remember the pointer of result.
-    if (result.types & PredictionType::REALTIME_TOP) {
-      realtime_top_result = &results->at(i);
-    }
-
+    const Result &result = (*results)[i];
     const int cost = GetLMCost(result, rid);
     const size_t query_len = (result.types & PredictionType::BIGRAM)
                                  ? bigram_key_len
@@ -840,7 +857,7 @@ void DictionaryPredictor::SetPredictionCost(
 
     if (IsAggressiveSuggestion(query_len, key_len, cost, is_suggestion,
                                results->size())) {
-      results->at(i).cost = kInfinity;
+      (*results)[i].cost = kInfinity;
       continue;
     }
 
@@ -882,23 +899,11 @@ void DictionaryPredictor::SetPredictionCost(
     //
     // TODO(team): want find the best parameter instead of kCostFactor.
     constexpr int kCostFactor = 500;
-    results->at(i).cost =
+    (*results)[i].cost =
         cost - kCostFactor * log(1.0 + std::max<int>(0, key_len - query_len));
-
-    // Update the minimum cost for REALTIME candidates that have the same key
-    // length as input_key.
-    if (result.types & PredictionType::REALTIME &&
-        result.cost < realtime_cost_min &&
-        result.key.size() == input_key.size()) {
-      realtime_cost_min = result.cost;
-    }
   }
 
-  // Ensure that the REALTIME_TOP candidate has relatively smaller cost than
-  // those of REALTIME candidates.
-  if (realtime_top_result != nullptr) {
-    realtime_top_result->cost = std::max(0, realtime_cost_min - 10);
-  }
+  MaybeFixRealtimeTopCost(input_key, *results);
 }
 
 void DictionaryPredictor::SetPredictionCostForMixedConversion(
@@ -1041,6 +1046,12 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     result.cost = std::max(1, cost);
     MOZC_WORD_LOG(result, absl::StrCat("SetPredictionCost: ", result.cost));
   }
+
+  if (request.request()
+          .decoder_experiment_params()
+          .apply_user_segment_history_rewriter_for_prediction()) {
+    MaybeFixRealtimeTopCost(input_key, *results);
+  }
 }
 
 // This method should be deprecated, as it is unintentionally adding extra
@@ -1155,23 +1166,23 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
 
     // delete same_key_index and same_value_index
     if (!same_key_index.empty() && !same_value_index.empty()) {
-      results->at(i).removed = true;
-      MOZC_WORD_LOG(results->at(i), "Removed. same_(key|value)_index.");
-      for (size_t k = 0; k < same_key_index.size(); ++k) {
-        results->at(same_key_index[k]).removed = true;
-        MOZC_WORD_LOG(results->at(i), "Removed. same_(key|value)_index.");
+      (*results)[i].removed = true;
+      MOZC_WORD_LOG((*results)[i], "Removed. same_(key|value)_index.");
+      for (const size_t k : same_key_index) {
+        (*results)[k].removed = true;
+        MOZC_WORD_LOG((*results)[k], "Removed. same_(key|value)_index.");
       }
     } else if (same_key_index.empty() && !same_value_index.empty()) {
-      results->at(i).removed = true;
-      MOZC_WORD_LOG(results->at(i), "Removed. same_value_index.");
+      (*results)[i].removed = true;
+      MOZC_WORD_LOG((*results)[i], "Removed. same_value_index.");
     } else if (!same_key_index.empty() && same_value_index.empty()) {
-      for (size_t k = 0; k < same_key_index.size(); ++k) {
-        results->at(same_key_index[k]).removed = true;
-        MOZC_WORD_LOG(results->at(i), "Removed. same_key_index.");
+      for (const size_t k : same_key_index) {
+        (*results)[k].removed = true;
+        MOZC_WORD_LOG((*results)[k], "Removed. same_key_index.");
       }
       if (request_key_len <= GetMissSpelledPosition(result.key, result.value)) {
-        results->at(i).removed = true;
-        MOZC_WORD_LOG(results->at(i), "Removed. Invalid MissSpelledPosition.");
+        (*results)[i].removed = true;
+        MOZC_WORD_LOG((*results)[i], "Removed. Invalid MissSpelledPosition.");
       }
     }
   }

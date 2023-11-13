@@ -1670,8 +1670,10 @@ bool DictionaryPredictionAggregator::AggregateNumberCandidates(
     result.key = input_key.substr(0, decode_result.consumed_key_byte_len);
     result.value = std::move(decode_result.candidate);
     result.candidate_attributes |= Segment::Candidate::NO_SUGGEST_LEARNING;
-    // Heuristic small cost: 1000 ~= 500 * log(10)
-    result.wcost = 1000;
+    // Heuristic cost:
+    // Large digit number (1億, 1兆, etc) should have larger cost
+    // 1000 ~= 500 * log(10)
+    result.wcost = 1000 * (1 + decode_result.digit_num);
     result.lid = is_arabic ? number_id_ : kanji_number_id_;
     result.rid = is_arabic ? number_id_ : kanji_number_id_;
     if (decode_result.consumed_key_byte_len < input_key.size()) {

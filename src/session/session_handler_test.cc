@@ -44,7 +44,7 @@
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
-#include "engine/engine_builder_interface.h"
+#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
@@ -79,7 +79,7 @@ using ::testing::_;
 using ::testing::InSequence;
 using ::testing::Return;
 
-class MockEngineBuilder : public EngineBuilderInterface {
+class MockEngineBuilder : public EngineBuilder {
  public:
   MOCK_METHOD(uint64_t, RegisterRequest, (const EngineReloadRequest &),
               (override));
@@ -572,7 +572,7 @@ TEST_F(SessionHandlerTest, SyncDataTest) {
   handler.EvalCommand(&command);
 }
 
-// Tests the interaction with EngineBuilderInterface for successful Engine
+// Tests the interaction with EngineBuilder for successful Engine
 // reload event.
 TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
@@ -583,16 +583,16 @@ TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenarioTest) {
   EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillRepeatedly(Return(1));
   EXPECT_CALL(*engine_builder, Build(1))
       .WillOnce(Return(
-          std::make_unique<
-              BackgroundFuture<EngineBuilderInterface::EngineResponse>>([&]() {
-            // takes 0.1 seconds to make engine.
-            absl::SleepFor(absl::Milliseconds(100));
-            EngineBuilderInterface::EngineResponse result;
-            result.id = 1;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.engine = std::move(new_engine);
-            return result;
-          })));
+          std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+              [&]() {
+                // takes 0.1 seconds to make engine.
+                absl::SleepFor(absl::Milliseconds(100));
+                EngineBuilder::EngineResponse result;
+                result.id = 1;
+                result.response.set_status(EngineReloadResponse::RELOAD_READY);
+                result.engine = std::move(new_engine);
+                return result;
+              })));
 
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -630,15 +630,15 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
 
   EXPECT_CALL(*engine_builder, Build(1))
       .WillOnce(Return(
-          std::make_unique<
-              BackgroundFuture<EngineBuilderInterface::EngineResponse>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            EngineBuilderInterface::EngineResponse result;
-            result.id = 1;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.engine = std::move(new_engine1);
-            return result;
-          })));
+          std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+              [&]() {
+                absl::SleepFor(absl::Milliseconds(100));
+                EngineBuilder::EngineResponse result;
+                result.id = 1;
+                result.response.set_status(EngineReloadResponse::RELOAD_READY);
+                result.engine = std::move(new_engine1);
+                return result;
+              })));
 
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -656,15 +656,15 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
 
   EXPECT_CALL(*engine_builder, Build(2))
       .WillOnce(Return(
-          std::make_unique<
-              BackgroundFuture<EngineBuilderInterface::EngineResponse>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            EngineBuilderInterface::EngineResponse result;
-            result.id = 2;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.engine = std::move(new_engine2);
-            return result;
-          })));
+          std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+              [&]() {
+                absl::SleepFor(absl::Milliseconds(100));
+                EngineBuilder::EngineResponse result;
+                result.id = 2;
+                result.response.set_status(EngineReloadResponse::RELOAD_READY);
+                result.engine = std::move(new_engine2);
+                return result;
+              })));
 
   // engine_id = 2
   ASSERT_EQ(SendDummyEngineCommand(&handler), EngineReloadResponse::ACCEPTED);
@@ -674,7 +674,7 @@ TEST_F(SessionHandlerTest, EngineUpdateSuccessfulScenarioTest) {
   EXPECT_EQ(new_engine_ptr2, &handler.engine());
 }
 
-// Tests the interaction with EngineBuilderInterface in the situation where
+// Tests the interaction with EngineBuilder in the situation where
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
@@ -692,14 +692,14 @@ TEST_F(SessionHandlerTest, EngineReloadInvalidDataTest) {
 
   EXPECT_CALL(*engine_builder, Build(1))
       .WillOnce(Return(
-          std::make_unique<
-              BackgroundFuture<EngineBuilderInterface::EngineResponse>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            EngineBuilderInterface::EngineResponse result;
-            result.id = 1;
-            result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-            return result;
-          })));
+          std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+              [&]() {
+                absl::SleepFor(absl::Milliseconds(100));
+                EngineBuilder::EngineResponse result;
+                result.id = 1;
+                result.response.set_status(EngineReloadResponse::DATA_BROKEN);
+                return result;
+              })));
   EXPECT_CALL(*engine_builder, UnregisterRequest(1)).WillOnce(Return(0));
 
   // Build() is called, but it returns invalid engine, so new engine is not
@@ -740,19 +740,22 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   for (int eid = 3; eid >= 1; --eid) {
     // Rollback as 3 -> 2 -> 1.  1 is only valid engine.
     EXPECT_CALL(*engine_builder, Build(eid))
-        .WillOnce(Return(std::make_unique<BackgroundFuture<
-                             EngineBuilderInterface::EngineResponse>>([&]() {
-          absl::SleepFor(absl::Milliseconds(100));
-          EngineBuilderInterface::EngineResponse result;
-          result.id = eid;
-          if (eid == 1) {
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.engine = std::move(new_engine);
-          } else {
-            result.response.set_status(EngineReloadResponse::DATA_BROKEN);
-          }
-          return result;
-        })));
+        .WillOnce(Return(
+            std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+                [&]() {
+                  absl::SleepFor(absl::Milliseconds(100));
+                  EngineBuilder::EngineResponse result;
+                  result.id = eid;
+                  if (eid == 1) {
+                    result.response.set_status(
+                        EngineReloadResponse::RELOAD_READY);
+                    result.engine = std::move(new_engine);
+                  } else {
+                    result.response.set_status(
+                        EngineReloadResponse::DATA_BROKEN);
+                  }
+                  return result;
+                })));
     // Engine of 3, and 2 are unregistered.
     // The second best id (2, and 1) are used.
     if (eid > 1) {
@@ -768,7 +771,7 @@ TEST_F(SessionHandlerTest, EngineRollbackDataTest) {
   EXPECT_EQ(new_engine_ptr, &handler.engine());
 }
 
-// Tests the interaction with EngineBuilderInterface in the situation where
+// Tests the interaction with EngineBuilder in the situation where
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   auto old_engine = std::make_unique<EngineStub>();
@@ -781,15 +784,15 @@ TEST_F(SessionHandlerTest, EngineReloadSessionExistsTest) {
   EXPECT_CALL(*engine_builder, RegisterRequest(_)).WillOnce(Return(1));
   EXPECT_CALL(*engine_builder, Build(1))
       .WillOnce(Return(
-          std::make_unique<
-              BackgroundFuture<EngineBuilderInterface::EngineResponse>>([&]() {
-            absl::SleepFor(absl::Milliseconds(100));
-            EngineBuilderInterface::EngineResponse result;
-            result.id = 1;
-            result.response.set_status(EngineReloadResponse::RELOAD_READY);
-            result.engine = std::move(new_engine);
-            return result;
-          })));
+          std::make_unique<BackgroundFuture<EngineBuilder::EngineResponse>>(
+              [&]() {
+                absl::SleepFor(absl::Milliseconds(100));
+                EngineBuilder::EngineResponse result;
+                result.id = 1;
+                result.response.set_status(EngineReloadResponse::RELOAD_READY);
+                result.engine = std::move(new_engine);
+                return result;
+              })));
 
   SessionHandler handler(std::move(old_engine),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));

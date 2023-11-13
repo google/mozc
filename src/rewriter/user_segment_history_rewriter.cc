@@ -43,6 +43,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/strings/unicode.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
@@ -388,9 +389,21 @@ bool GetSameValueCandidatePosition(const Segment *segment,
 }
 
 bool IsT13NCandidate(const Segment::Candidate &cand) {
-  // Regard the cand with 0-id as the transliterated candidate.
-  return (cand.lid == 0 && cand.rid == 0);
+  // - The cand with 0-id can be the transliterated candidate.
+  const Util::ScriptType script_type = Util::GetScriptType(cand.value);
+  return ((cand.lid == 0 && cand.rid == 0) || script_type == Util::KATAKANA ||
+          script_type == Util::HIRAGANA || script_type == Util::ALPHABET);
 }
+
+bool IsSingleKanjiCandidate(const Segment::Candidate &cand) {
+  // POS info for single kanji can be filled using the base candidate and not
+  // reliable in general.
+  if (strings::CharsLen(cand.content_value) != 1) {
+    return false;
+  }
+  return Util::IsScriptType(cand.content_value, Util::KANJI);
+}
+
 }  // namespace
 
 bool UserSegmentHistoryRewriter::SortCandidates(
@@ -562,7 +575,8 @@ bool UserSegmentHistoryRewriter::Replaceable(
   const bool same_pos_group =
       (pos_group_->GetPosGroup(lhs.lid) == pos_group_->GetPosGroup(rhs.lid));
   return (same_functional_value &&
-          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs)));
+          (same_pos_group || IsT13NCandidate(lhs) || IsT13NCandidate(rhs) ||
+           IsSingleKanjiCandidate(lhs) || IsSingleKanjiCandidate(rhs)));
 }
 
 void UserSegmentHistoryRewriter::RememberNumberPreference(
@@ -593,10 +607,6 @@ void UserSegmentHistoryRewriter::RememberNumberPreference(
 void UserSegmentHistoryRewriter::RememberFirstCandidate(
     const Segments &segments, size_t segment_index) {
   const Segment &seg = segments.segment(segment_index);
-  if (seg.candidates_size() <= 1) {
-    return;
-  }
-
   const Segment::Candidate &candidate = seg.candidate(0);
 
   // http://b/issue?id=3156109
@@ -696,6 +706,49 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
   return true;
 }
 
+// Returns segments for learning.
+// Inner segments boundary will be expanded.
+Segments UserSegmentHistoryRewriter::MakeLearningSegmentsForTesting(
+    const Segments &segments) {
+  Segments ret;
+  for (size_t i = 0; i < segments.segments_size(); ++i) {
+    const Segment &segment = segments.segment(i);
+    const Segment::Candidate &candidate = segment.candidate(0);
+    if (candidate.inner_segment_boundary.size() <= 1) {
+      // No inner segment info
+      Segment *seg = ret.add_segment();
+      *seg = segment;
+      continue;
+    }
+    for (Segment::Candidate::InnerSegmentIterator iter(&candidate);
+         !iter.Done(); iter.Next()) {
+      size_t index = iter.GetIndex();
+      absl::string_view key = iter.GetKey();
+
+      Segment *seg = ret.add_segment();
+      seg->set_segment_type(segment.segment_type());
+      seg->set_key(key);
+      seg->clear_candidates();
+
+      Segment::Candidate *cand = seg->add_candidate();
+      cand->attributes = candidate.attributes;
+      cand->key = key;
+      cand->content_key = iter.GetContentKey();
+      cand->value = iter.GetValue();
+      cand->content_value = iter.GetContentValue();
+      // Fill IDs for the first and last inner segment.
+      if (index == 0) {
+        cand->lid = candidate.lid;
+        cand->rid = candidate.lid;
+      } else if (index == candidate.inner_segment_boundary.size() - 1) {
+        cand->lid = candidate.rid;
+        cand->rid = candidate.rid;
+      }
+    }
+  }
+  return ret;
+}
+
 void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
                                         Segments *segments) {
   if (request.request_type() != ConversionRequest::CONVERSION) {
@@ -711,9 +764,10 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  for (size_t i = segments->history_segments_size();
-       i < segments->segments_size(); ++i) {
-    const Segment &segment = segments->segment(i);
+  const Segments target_segments = MakeLearningSegmentsForTesting(*segments);
+  for (size_t i = target_segments.history_segments_size();
+       i < target_segments.segments_size(); ++i) {
+    const Segment &segment = target_segments.segment(i);
     if (segment.candidates_size() <= 0 ||
         segment.segment_type() != Segment::FIXED_VALUE ||
         segment.candidate(0).attributes &
@@ -725,7 +779,7 @@ void UserSegmentHistoryRewriter::Finish(const ConversionRequest &request,
       continue;
     }
     InsertTriggerKey(segment);
-    RememberFirstCandidate(*segments, i);
+    RememberFirstCandidate(target_segments, i);
   }
   // update usage stats here
   usage_stats::UsageStats::SetInteger("UserSegmentHistoryEntrySize",

@@ -32,6 +32,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "testing/gmock.h"
@@ -60,11 +61,13 @@ struct TestParam {
   std::vector<NumberDecoder::Result> expected;
 };
 
-TestParam AllConsumed(const absl::string_view key,
-                      const std::initializer_list<absl::string_view> results) {
+TestParam AllConsumed(
+    const absl::string_view key,
+    const std::initializer_list<std::pair<absl::string_view, int>> results) {
   TestParam param(key);
-  for (const absl::string_view &result : results) {
-    param.expected.emplace_back(key.size(), std::string(result));
+  for (const auto &result : results) {
+    param.expected.emplace_back(key.size(), std::string(result.first),
+                                result.second);
   }
   return param;
 }
@@ -77,74 +80,80 @@ TEST_P(NumberDecoderTest, Decode) {
               UnorderedElementsAreArray(GetParam().expected));
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    Units, NumberDecoderTest,
-    ::testing::Values(AllConsumed("ぜろ", {"0"}), AllConsumed("いち", {"1"}),
-                      AllConsumed("に", {"2"}), AllConsumed("さん", {"3"}),
-                      AllConsumed("し", {"4"}), AllConsumed("ご", {"5"}),
-                      AllConsumed("ろく", {"6"}), AllConsumed("なな", {"7"}),
-                      AllConsumed("はち", {"8"}),
-                      AllConsumed("きゅう", {"9"})));
+INSTANTIATE_TEST_SUITE_P(Units, NumberDecoderTest,
+                         ::testing::Values(AllConsumed("ぜろ", {{"0", 1}}),
+                                           AllConsumed("いち", {{"1", 1}}),
+                                           AllConsumed("に", {{"2", 1}}),
+                                           AllConsumed("さん", {{"3", 1}}),
+                                           AllConsumed("し", {{"4", 1}}),
+                                           AllConsumed("ご", {{"5", 1}}),
+                                           AllConsumed("ろく", {{"6", 1}}),
+                                           AllConsumed("なな", {{"7", 1}}),
+                                           AllConsumed("はち", {{"8", 1}}),
+                                           AllConsumed("きゅう", {{"9", 1}})));
 
 INSTANTIATE_TEST_SUITE_P(SmallDigits, NumberDecoderTest,
-                         ::testing::Values(AllConsumed("じゅう", {"10"}),
-                                           AllConsumed("ひゃく", {"100"}),
-                                           AllConsumed("せん", {"1000"})));
+                         ::testing::Values(AllConsumed("じゅう", {{"10", 2}}),
+                                           AllConsumed("ひゃく", {{"100", 3}}),
+                                           AllConsumed("せん", {{"1000", 4}})));
 
 INSTANTIATE_TEST_SUITE_P(
     BigDigits, NumberDecoderTest,
     ::testing::Values(AllConsumed("まん", {}), AllConsumed("おく", {}),
                       AllConsumed("ちょう", {}), AllConsumed("けい", {}),
-                      AllConsumed("がい", {}), AllConsumed("いちまん", {"1万"}),
-                      AllConsumed("いちおく", {"1億"}),
-                      TestParam{"いっちょう", {{6, "1"}, {15, "1兆"}}},
-                      TestParam{"いっけい", {{6, "1"}, {12, "1京"}}},
-                      AllConsumed("いちがい", {"1垓"})));
+                      AllConsumed("がい", {}),
+                      AllConsumed("いちまん", {{"1万", 5}}),
+                      AllConsumed("いちおく", {{"1億", 9}}),
+                      TestParam{"いっちょう", {{6, "1", 1}, {15, "1兆", 13}}},
+                      TestParam{"いっけい", {{6, "1", 1}, {12, "1京", 17}}},
+                      AllConsumed("いちがい", {{"1垓", 21}})));
 
-INSTANTIATE_TEST_SUITE_P(Suffix, NumberDecoderTest,
-                         ::testing::Values(TestParam("にせんち", {{3, "2"}}),
-                                           TestParam("にちょうめ", {{3, "2"}}),
-                                           TestParam("さんちょうめ",
-                                                     {{6, "3"}})));
+INSTANTIATE_TEST_SUITE_P(
+    Suffix, NumberDecoderTest,
+    ::testing::Values(TestParam("にせんち", {{3, "2", 1}}),
+                      TestParam("にちょうめ", {{3, "2", 1}}),
+                      TestParam("さんちょうめ", {{6, "3", 1}})));
 
 INSTANTIATE_TEST_SUITE_P(
     Others, NumberDecoderTest,
     ::testing::Values(
-        TestParam("ぜろに", {{6, "0"}}), TestParam("にいち", {{3, "2"}}),
-        TestParam("にぜろ", {{3, "2"}}), TestParam("にこ", {{3, "2"}}),
-        TestParam("にこにこ", {{3, "2"}}),
-        TestParam("にさんじゅう", {{3, "2"}}),
-        TestParam("にさんひゃく", {{3, "2"}}),
-        TestParam("にじゅう", {{3, "2"}, {12, "20"}}),
-        TestParam("にじゅうさん", {{18, "23"}}),
-        TestParam("にじゅうさんぜん", {{18, "23"}}),
-        TestParam("にせん", {{3, "2"}, {9, "2000"}}),
-        TestParam("にせんの", {{3, "2"}, {9, "2000"}}),
-        TestParam("にせんさん", {{15, "2003"}}),
-        TestParam("にせんさんせん", {{15, "2003"}}),
-        TestParam("いちまんにせん", {{15, "1万2"}, {21, "1万2000"}}),
-        TestParam("いちまんにせんさん", {{27, "1万2003"}}),
-        TestParam("いちおくさんぜんまん", {{30, "1億3000万"}}),
-        TestParam("いちまんさんおく", {{18, "1万3"}}),
-        TestParam("いちまんさんまん", {{18, "1万3"}}),
-        TestParam("いちおくにせん", {{15, "1億2"}, {21, "1億2000"}}),
-        TestParam("にちょう", {{3, "2"}, {12, "2兆"}}),
-        TestParam("にちょうせ", {{3, "2"}, {12, "2兆"}}),
-        TestParam("にちょうせん", {{12, "2兆"}, {18, "2兆1000"}}),
-        TestParam("じゅうにちょう", {{12, "12"}, {21, "12兆"}}),
-        TestParam("じゅうにちょうの", {{12, "12"}, {21, "12兆"}}),
-        TestParam("じゅうにちょうでも", {{12, "12"}, {21, "12兆"}}),
-        TestParam("じゅうにちょうめ", {{12, "12"}}),
-        TestParam("じゅうにちょうめの", {{12, "12"}}),
-        TestParam("にちゃん", {{3, "2"}}),
-        TestParam("にちゃんねる", {{3, "2"}}),
-        TestParam("じゅうにちゃん", {{12, "12"}}),
-        TestParam("ごごう", {{3, "5"}}), TestParam("じゅうごう", {{9, "10"}}),
-        TestParam("じゅうさんちーむ", {{9, "10"}, {15, "13"}}),
-        TestParam("にじゅうさんちーむ", {{12, "20"}, {18, "23"}}),
-        TestParam("にじゅうまんさんぜん", {{30, "20万3000"}, {24, "20万3"}}),
+        TestParam("ぜろに", {{6, "0", 1}}), TestParam("にいち", {{3, "2", 1}}),
+        TestParam("にぜろ", {{3, "2", 1}}), TestParam("にこ", {{3, "2", 1}}),
+        TestParam("にこにこ", {{3, "2", 1}}),
+        TestParam("にさんじゅう", {{3, "2", 1}}),
+        TestParam("にさんひゃく", {{3, "2", 1}}),
+        TestParam("にじゅう", {{3, "2", 1}, {12, "20", 2}}),
+        TestParam("にじゅうさん", {{18, "23", 2}}),
+        TestParam("にじゅうさんぜん", {{18, "23", 2}}),
+        TestParam("にせん", {{3, "2", 1}, {9, "2000", 4}}),
+        TestParam("にせんの", {{3, "2", 1}, {9, "2000", 4}}),
+        TestParam("にせんさん", {{15, "2003", 4}}),
+        TestParam("にせんさんせん", {{15, "2003", 4}}),
+        TestParam("いちまんにせん", {{15, "1万2", 5}, {21, "1万2000", 5}}),
+        TestParam("いちまんにせんさん", {{27, "1万2003", 5}}),
+        TestParam("いちおくさんぜんまん", {{30, "1億3000万", 9}}),
+        TestParam("いちまんさんおく", {{18, "1万3", 5}}),
+        TestParam("いちまんさんまん", {{18, "1万3", 5}}),
+        TestParam("いちおくにせん", {{15, "1億2", 9}, {21, "1億2000", 9}}),
+        TestParam("にちょう", {{3, "2", 1}, {12, "2兆", 13}}),
+        TestParam("にちょうせ", {{3, "2", 1}, {12, "2兆", 13}}),
+        TestParam("にちょうせん", {{12, "2兆", 13}, {18, "2兆1000", 13}}),
+        TestParam("じゅうにちょう", {{12, "12", 2}, {21, "12兆", 14}}),
+        TestParam("じゅうにちょうの", {{12, "12", 2}, {21, "12兆", 14}}),
+        TestParam("じゅうにちょうでも", {{12, "12", 2}, {21, "12兆", 14}}),
+        TestParam("じゅうにちょうめ", {{12, "12", 2}}),
+        TestParam("じゅうにちょうめの", {{12, "12", 2}}),
+        TestParam("にちゃん", {{3, "2", 1}}),
+        TestParam("にちゃんねる", {{3, "2", 1}}),
+        TestParam("じゅうにちゃん", {{12, "12", 2}}),
+        TestParam("ごごう", {{3, "5", 1}}),
+        TestParam("じゅうごう", {{9, "10", 2}}),
+        TestParam("じゅうさんちーむ", {{9, "10", 2}, {15, "13", 2}}),
+        TestParam("にじゅうさんちーむ", {{12, "20", 2}, {18, "23", 2}}),
+        TestParam("にじゅうまんさんぜん",
+                  {{30, "20万3000", 6}, {24, "20万3", 6}}),
         TestParam("せんにひゃくおくさんぜんよんひゃくまんごせんろっぴゃく",
-                  {{27 * 3, "1200億3400万5600"}})));
+                  {{27 * 3, "1200億3400万5600", 12}})));
 
 INSTANTIATE_TEST_SUITE_P(InvalidSequences, NumberDecoderTest,
                          ::testing::Values(TestParam("よせん", {}),

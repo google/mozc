@@ -29,6 +29,7 @@
 
 #include "rewriter/user_segment_history_rewriter.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -966,6 +967,87 @@ TEST_F(UserSegmentHistoryRewriterTest, ReplaceableT13NTest) {
 
     EXPECT_EQ(segments.segment(0).candidate(0).value, "candidate2:all");
   }
+
+  rewriter->Clear();
+  {
+    auto set_up_segments = [&]() {
+      InitSegments(&segments, 2);
+      AppendCandidateSuffix(segments.mutable_segment(0), 0, "", 1, 1);
+      // Prepare candidate2 as T13N candidate (lid, rid != 0)
+      {
+        Segment::Candidate *c =
+            segments.mutable_segment(0)->mutable_candidate(2);
+        c->value = "ひらがな";
+        c->content_value = "ひらがな";
+        c->lid = 10;
+        c->rid = 10;
+      }
+    };
+
+    set_up_segments();
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter->Finish(request_, &segments);
+
+    set_up_segments();
+    segments.mutable_segment(1)->mutable_candidate(0)->value =
+        "not_same_as_before";
+
+    rewriter->Rewrite(request_, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "ひらがな");
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, ReplaceableSingleKanji) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+
+  rewriter->Clear();
+  {
+    auto set_up_segments = [&]() {
+      InitSegments(&segments, 2);
+
+      {
+        Segment::Candidate *c =
+            segments.mutable_segment(0)->mutable_candidate(0);
+        c->value = "隆史";
+        c->content_value = "隆史";
+        c->lid = 10;
+        c->rid = 10;
+      }
+      {
+        // Single kanji may have arbitrary lid/rid based on the other reference
+        // candidate.
+        Segment::Candidate *c =
+            segments.mutable_segment(0)->mutable_candidate(2);
+        c->value = "崇";
+        c->content_value = "崇";
+        c->lid = 20;
+        c->rid = 20;
+      }
+    };
+
+    set_up_segments();
+    segments.mutable_segment(0)->move_candidate(2, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    rewriter->Finish(request_, &segments);
+
+    set_up_segments();
+    segments.mutable_segment(1)->mutable_candidate(0)->value =
+        "not_same_as_before";
+
+    rewriter->Rewrite(request_, &segments);
+
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "崇");
+  }
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, LeftRightNumber) {
@@ -1577,6 +1659,103 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     EXPECT_EQ(VariantsRewriter::kAlphabet,
               segments.segment(0).candidate(0).description);
     rewriter->Finish(request_, &segments);
+  }
+}
+
+TEST_F(UserSegmentHistoryRewriterTest, SupportInnerSegmentsOnLearning) {
+  Segments segments;
+  std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
+      CreateUserSegmentHistoryRewriter());
+
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    constexpr absl::string_view kKey = "わたしのなまえはなかのです";
+    constexpr absl::string_view kValue = "私の名前は中野です";
+    segments.mutable_segment(0)->set_key(kKey);
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(1);
+
+    candidate->value = kValue;
+    candidate->content_value = kValue;
+    candidate->key = kKey;
+    candidate->content_key = kKey;
+    // "わたしの, 私の", "わたし, 私"
+    candidate->PushBackInnerSegmentBoundary(12, 6, 9, 3);
+    // "なまえは, 名前は", "なまえ, 名前"
+    candidate->PushBackInnerSegmentBoundary(12, 9, 9, 6);
+    // "なかのです, 中野です", "なかの, 中野"
+    candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
+    candidate->lid = 10;
+    candidate->rid = 20;
+
+    segments.mutable_segment(0)->move_candidate(1, 0);
+    segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+        Segment::Candidate::RERANKED;
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+
+    {
+      const Segments learning_segments =
+          UserSegmentHistoryRewriter::MakeLearningSegmentsForTesting(segments);
+      EXPECT_EQ(learning_segments.segments_size(), 3);
+      EXPECT_EQ(learning_segments.segment(0).key(), "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).key, "わたしの");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).value, "私の");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_key,
+                "わたし");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).content_value, "私");
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).lid, 10);
+      EXPECT_EQ(learning_segments.segment(0).candidate(0).rid, 10);
+      EXPECT_EQ(learning_segments.segment(0).segment_type(),
+                Segment::FIXED_VALUE);
+
+      EXPECT_EQ(learning_segments.segment(1).key(), "なまえは");
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).key, "なまえは");
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).value, "名前は");
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).content_key,
+                "なまえ");
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).content_value,
+                "名前");
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).lid, 0);
+      EXPECT_EQ(learning_segments.segment(1).candidate(0).rid, 0);
+      EXPECT_EQ(learning_segments.segment(1).segment_type(),
+                Segment::FIXED_VALUE);
+
+      EXPECT_EQ(learning_segments.segment(2).key(), "なかのです");
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).key, "なかのです");
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).value, "中野です");
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).content_key,
+                "なかの");
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).content_value,
+                "中野");
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).lid, 20);
+      EXPECT_EQ(learning_segments.segment(2).candidate(0).rid, 20);
+      EXPECT_EQ(learning_segments.segment(2).segment_type(),
+                Segment::FIXED_VALUE);
+    }
+
+    rewriter->Finish(request_, &segments);
+  }
+
+  {
+    segments.Clear();
+    InitSegments(&segments, 1, 2);
+    segments.mutable_segment(0)->set_key("なかの");
+    Segment::Candidate *candidate =
+        segments.mutable_segment(0)->mutable_candidate(0);
+    candidate->value = "中埜";
+    candidate->content_value = "中埜";
+    candidate->content_key = "なかの";
+    candidate->content_key = "なかの";
+
+    candidate = segments.mutable_segment(0)->mutable_candidate(1);
+    candidate->value = "中野";
+    candidate->content_value = "中野";
+    candidate->content_key = "なかの";
+    candidate->content_key = "なかの";
+
+    EXPECT_TRUE(rewriter->Rewrite(request_, &segments));
+    EXPECT_EQ(segments.segment(0).candidate(0).value, "中野");
   }
 }
 

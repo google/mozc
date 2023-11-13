@@ -1305,6 +1305,39 @@ TEST_F(DictionaryPredictorTest,
   EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
 }
 
+TEST_F(DictionaryPredictorTest, FixSRealtimeTopCandidatesCostOnMobile) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  // turn on mobile mode
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_apply_user_segment_history_rewriter_for_prediction(true);
+
+  {
+    MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+    std::vector<Result> results;
+    results.push_back(CreateResult5(
+        "かった", "買った", 1002,
+        prediction::REALTIME_TOP | prediction::REALTIME, Token::NONE));
+    PushBackInnerSegmentBoundary(9, 9, 9, 9, &results.back());
+    results.push_back(CreateResult5("かった", "飼った", 1000,
+                                    prediction::REALTIME, Token::NONE));
+    PushBackInnerSegmentBoundary(9, 9, 9, 9, &results.back());
+    results.push_back(CreateResult5("かつた", "勝田", 1001,
+                                    prediction::REALTIME, Token::NONE));
+    PushBackInnerSegmentBoundary(9, 6, 9, 6, &results.back());
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(results));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("かった", &segments);
+  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_EQ(segments.conversion_segment(0).candidate(0).value, "買った");
+}
+
 TEST_F(DictionaryPredictorTest, SingleKanjiCost) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor =
       CreateDictionaryPredictorWithMockData();

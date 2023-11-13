@@ -59,6 +59,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool Reload() override;
   void Clear() override;
 
+  static Segments MakeLearningSegmentsForTesting(const Segments &segments);
+
  private:
   struct Score {
     constexpr void Update(const Score other) {
