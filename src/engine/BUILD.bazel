@@ -41,23 +41,11 @@ package(
 )
 
 mozc_cc_library(
-    name = "engine_builder_interface",
-    hdrs = ["engine_builder_interface.h"],
-    deps = [
-        ":engine_interface",
-        "//base:thread",
-        "//protocol:engine_builder_cc_proto",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-mozc_cc_library(
     name = "engine_builder",
     srcs = ["engine_builder.cc"],
     hdrs = ["engine_builder.h"],
     deps = [
         ":engine",
-        ":engine_builder_interface",
         ":engine_interface",
         "//base:file_util",
         "//base:hash",

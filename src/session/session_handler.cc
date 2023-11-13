@@ -48,7 +48,7 @@
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine_builder_interface.h"
+#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
@@ -133,18 +133,16 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
 }  // namespace
 
 SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine) {
-  Init(std::move(engine), std::unique_ptr<EngineBuilderInterface>());
+  Init(std::move(engine), std::unique_ptr<EngineBuilder>());
 }
 
-SessionHandler::SessionHandler(
-    std::unique_ptr<EngineInterface> engine,
-    std::unique_ptr<EngineBuilderInterface> engine_builder) {
+SessionHandler::SessionHandler(std::unique_ptr<EngineInterface> engine,
+                               std::unique_ptr<EngineBuilder> engine_builder) {
   Init(std::move(engine), std::move(engine_builder));
 }
 
-void SessionHandler::Init(
-    std::unique_ptr<EngineInterface> engine,
-    std::unique_ptr<EngineBuilderInterface> engine_builder) {
+void SessionHandler::Init(std::unique_ptr<EngineInterface> engine,
+                          std::unique_ptr<EngineBuilder> engine_builder) {
   is_available_ = false;
   max_session_size_ = 0;
   last_session_empty_time_ = Clock::GetAbslTime();

@@ -39,7 +39,7 @@
 
 #include "composer/table.h"
 #include "dictionary/user_dictionary_session_handler.h"
-#include "engine/engine_builder_interface.h"
+#include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -65,7 +65,7 @@ class SessionHandler : public SessionHandlerInterface {
  public:
   explicit SessionHandler(std::unique_ptr<EngineInterface> engine);
   SessionHandler(std::unique_ptr<EngineInterface> engine,
-                 std::unique_ptr<EngineBuilderInterface> engine_builder);
+                 std::unique_ptr<EngineBuilder> engine_builder);
   SessionHandler(const SessionHandler &) = delete;
   SessionHandler &operator=(const SessionHandler &) = delete;
   ~SessionHandler() override;
@@ -99,7 +99,7 @@ class SessionHandler : public SessionHandlerInterface {
   using SessionElement = SessionMap::Element;
 
   void Init(std::unique_ptr<EngineInterface> engine,
-            std::unique_ptr<EngineBuilderInterface> engine_builder);
+            std::unique_ptr<EngineBuilder> engine_builder);
 
   // Updates the config, if the |command| contains the config.
   void MaybeUpdateConfig(commands::Command *command);
@@ -154,7 +154,7 @@ class SessionHandler : public SessionHandlerInterface {
   absl::Time last_create_session_time_ = absl::InfinitePast();
 
   std::unique_ptr<EngineInterface> engine_;
-  std::unique_ptr<EngineBuilderInterface> engine_builder_;
+  std::unique_ptr<EngineBuilder> engine_builder_;
   std::unique_ptr<session::SessionObserverHandler> observer_handler_;
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
@@ -162,8 +162,7 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<const commands::Request> request_;
   std::unique_ptr<const config::Config> config_;
   std::unique_ptr<keymap::KeyMapManager> key_map_manager_;
-  std::unique_ptr<EngineBuilderInterface::EngineResponseFuture>
-      engine_response_future_;
+  std::unique_ptr<EngineBuilder::EngineResponseFuture> engine_response_future_;
 
   // used only in unittest to perform blocking behavior.
   bool always_wait_for_engine_response_future_ = false;

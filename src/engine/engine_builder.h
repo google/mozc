@@ -36,7 +36,6 @@
 
 #include "base/thread.h"
 #include "data_manager/data_manager.h"
-#include "engine/engine_builder_interface.h"
 #include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/base/thread_annotations.h"
@@ -44,18 +43,44 @@
 
 namespace mozc {
 
-class EngineBuilder : public EngineBuilderInterface {
+class EngineBuilder {
  public:
   EngineBuilder() = default;
   EngineBuilder(const EngineBuilder &) = delete;
   EngineBuilder &operator=(const EngineBuilder &) = delete;
-  ~EngineBuilder() override = default;
+  virtual ~EngineBuilder() = default;
 
-  uint64_t RegisterRequest(const EngineReloadRequest &request) override;
+  struct EngineResponse {
+    uint64_t id = 0;  // engine id. Fingerprint of EngineReloadRequest.
+    EngineReloadResponse response;
+    std::unique_ptr<EngineInterface> engine;
+  };
 
-  uint64_t UnregisterRequest(uint64_t id) override;
+  // Wrapped with BackgroundFuture so the data loading is
+  // executed asynchronously.
+  using EngineResponseFuture = BackgroundFuture<EngineResponse>;
 
-  std::unique_ptr<EngineResponseFuture> Build(uint64_t id) const override;
+  // Accepts engine reload request and immediately returns the engine id with
+  // the highest priority defined as follows:
+  //  - Request with higher request priority (e.g., downloaded > bundled)
+  //  - When the priority is the same, the request registered last.
+  // The engine id 0 is reserved for unused engine.
+  virtual uint64_t RegisterRequest(const EngineReloadRequest &request);
+
+  // Unregister the request associated with the `id` and immediately returns
+  // the new engine id after the unregistration. This method is usually called
+  // to notify the request is not processed due to model loading failures and
+  // avoid the multiple loading operations.  Client needs to load or use the
+  // engine of returned id. The unregistered request will not be accepted after
+  // calling this method.
+  virtual uint64_t UnregisterRequest(uint64_t id);
+
+  // Builds the new engine associated with `id`.
+  // This method returns the future object immediately.
+  // Since BackgroundFuture is not movable/copyable, we wrap it with
+  // std::unique_ptr. This method doesn't return nullptr. All errors
+  // are stored in EngineReloadResponse::response::status.
+  virtual std::unique_ptr<EngineResponseFuture> Build(uint64_t id) const;
 
   void Clear();
 

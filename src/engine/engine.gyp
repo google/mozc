@@ -92,6 +92,7 @@
         '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '../prediction/prediction.gyp:prediction',
         'engine',
+        'engine_builder'
       ],
     },
     {
@@ -106,6 +107,7 @@
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../request/request.gyp:conversion_request',
         'engine',
+        'engine_builder'
       ],
     },
     {
