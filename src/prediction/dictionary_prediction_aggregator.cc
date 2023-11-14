@@ -429,11 +429,13 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     : public DictionaryInterface::Callback {
  public:
   PrefixLookupCallback(size_t limit, int kanji_number_id, int unknown_id,
-                       int min_value_chars_len, std::vector<Result> *results)
+                       int min_value_chars_len, int input_key_len,
+                       std::vector<Result> *results)
       : limit_(limit),
         kanji_number_id_(kanji_number_id),
         unknown_id_(unknown_id),
         min_value_chars_len_(min_value_chars_len),
+        input_key_len_(input_key_len),
         results_(results) {}
 
   PrefixLookupCallback(const PrefixLookupCallback &) = delete;
@@ -468,7 +470,11 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
     if (key != actual_key) {
       result.candidate_attributes |= Segment::Candidate::TYPING_CORRECTION;
     }
-    result.consumed_key_size = Util::CharsLen(key);
+    const int key_len = Util::CharsLen(key);
+    if (key_len < input_key_len_) {
+      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.consumed_key_size = Util::CharsLen(key);
+    }
     results_->emplace_back(result);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
   }
@@ -478,6 +484,7 @@ class DictionaryPredictionAggregator::PrefixLookupCallback
   const int kanji_number_id_;
   const int unknown_id_;
   const int min_value_chars_len_;
+  const int input_key_len_;
   std::vector<Result> *results_;
 };
 
@@ -1697,24 +1704,28 @@ void DictionaryPredictionAggregator::AggregatePrefixCandidates(
     return;
   }
 
-  std::string input_key;
-  if (request.has_composer()) {
-    request.composer().GetQueryForPrediction(&input_key);
-  } else {
-    input_key = segments.conversion_segment(0).key();
-  }
+  const std::string &input_key = [&]() {
+    std::string ret;
+    if (request.has_composer()) {
+      request.composer().GetQueryForPrediction(&ret);
+    } else {
+      ret = segments.conversion_segment(0).key();
+    }
+    return ret;
+  }();
 
   const size_t input_key_len = Util::CharsLen(input_key);
   if (input_key_len <= 1) {
     return;
   }
   // Excludes exact match nodes.
-  Util::Utf8SubString(input_key, 0, input_key_len - 1, &input_key);
+  absl::string_view lookup_key =
+      Util::Utf8SubString(input_key, 0, input_key_len - 1);
 
   constexpr int kMinValueCharsLen = 2;
   PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
-                                kMinValueCharsLen, results);
-  dictionary_->LookupPrefix(input_key, request, &callback);
+                                kMinValueCharsLen, input_key_len, results);
+  dictionary_->LookupPrefix(lookup_key, request, &callback);
   const size_t prefix_results_size = results->size() - prev_results_size;
   if (prefix_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);

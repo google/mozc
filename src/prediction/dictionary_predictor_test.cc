@@ -206,6 +206,15 @@ Result CreateResult6(absl::string_view key, absl::string_view value, int wcost,
   return result;
 }
 
+Result CreateResult8(absl::string_view key, absl::string_view value, int wcost,
+                     int cost, int lid, int rid, PredictionTypes types,
+                     Token::AttributesBitfield token_attrs) {
+  Result result = CreateResult6(key, value, wcost, cost, types, token_attrs);
+  result.lid = lid;
+  result.rid = rid;
+  return result;
+}
+
 void PushBackInnerSegmentBoundary(size_t key_len, size_t value_len,
                                   size_t content_key_len,
                                   size_t content_value_len, Result *result) {
@@ -1733,6 +1742,71 @@ TEST_F(DictionaryPredictorTest, InvalidPrefixCandidate) {
   InitSegmentsWithKey("こーひー", &segments);
   EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "子"));
+}
+
+TEST_F(DictionaryPredictorTest, FilterNoisyNumberCandidate) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
+  const DictionaryPredictorTestPeer &predictor =
+      data_and_predictor->predictor();
+  MockAggregator *aggregator = data_and_predictor->mutable_aggregator();
+  MockImmutableConverter *immutable_converter =
+      data_and_predictor->mutable_immutable_converter();
+
+  // Exact key will not be filtered in mobile request
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  request_->mutable_decoder_experiment_params()
+      ->set_filter_noisy_number_candidate(true);
+
+  // Small prefix penalty for the following "五霞".
+  {
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->cost = 10;
+    EXPECT_CALL(*immutable_converter, ConvertForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+  }
+
+  {
+    const int number_id = data_and_predictor->pos_matcher().GetNumberId();
+    const int kanji_number_id =
+        data_and_predictor->pos_matcher().GetKanjiNumberId();
+    const int unknown_id = data_and_predictor->pos_matcher().GetUnknownId();
+    EXPECT_CALL(*aggregator, AggregateResults(_, _))
+        .WillRepeatedly(Return(std::vector<Result>{
+            CreateResult8("ごかい", "五回", 0, 10, kanji_number_id, unknown_id,
+                          prediction::REALTIME | prediction::REALTIME_TOP,
+                          Token::NONE),
+            CreateResult8("ご", "5", 0, 100, number_id, number_id,
+                          prediction::NUMBER, Token::NONE),
+            CreateResult8("ごかい", "五会", 0, 200, kanji_number_id, unknown_id,
+                          prediction::REALTIME, Token::NONE),
+            CreateResult8("ごかい", "五戒", 0, 300, kanji_number_id, unknown_id,
+                          prediction::UNIGRAM, Token::NONE),
+            CreateResult8("ごかい", "誤解", 0, 300, unknown_id, unknown_id,
+                          prediction::UNIGRAM, Token::NONE),
+            CreateResult8("ごか", "五霞", 0, 300, unknown_id, unknown_id,
+                          prediction::PREFIX, Token::NONE)}));
+  }
+
+  Segments segments;
+  InitSegmentsWithKey("ごかい", &segments);
+  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_THAT(segments.conversion_segment(0),
+              ContainsCandidate(Field(&Segment::Candidate::value, "五回")));
+  EXPECT_THAT(segments.conversion_segment(0),
+              ContainsCandidate(Field(&Segment::Candidate::value, "5")));
+  EXPECT_THAT(segments.conversion_segment(0),
+              ContainsCandidate(Field(&Segment::Candidate::value, "誤解")));
+  EXPECT_THAT(segments.conversion_segment(0),
+              ContainsCandidate(Field(&Segment::Candidate::value, "五霞")));
+  EXPECT_THAT(
+      segments.conversion_segment(0),
+      Not(ContainsCandidate(Field(&Segment::Candidate::value, "五会"))));
+  EXPECT_THAT(
+      segments.conversion_segment(0),
+      Not(ContainsCandidate(Field(&Segment::Candidate::value, "五戒"))));
 }
 
 TEST_F(DictionaryPredictorTest, MaybeSuppressAggressiveTypingCorrectionTest) {

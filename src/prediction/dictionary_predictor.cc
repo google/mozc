@@ -114,6 +114,10 @@ bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
+bool ShouldFilterNoisyNumberCandidate(const Request &request) {
+  return request.decoder_experiment_params().filter_noisy_number_candidate();
+}
+
 KeyValueView GetCandidateKeyAndValue(const Result &result
                                          ABSL_ATTRIBUTE_LIFETIME_BOUND,
                                      const KeyValueView history) {
@@ -379,7 +383,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   const size_t max_candidates_size = std::min(
       request.max_dictionary_prediction_candidates_size(), results.size());
 
-  ResultFilter filter(request, *segments, suggestion_filter_);
+  ResultFilter filter(request, *segments, pos_matcher_, suggestion_filter_);
 
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   absl::flat_hash_map<std::string, int32_t> merged_types;
@@ -553,12 +557,15 @@ int DictionaryPredictor::CalculateSingleKanjiCostOffset(
 
 DictionaryPredictor::ResultFilter::ResultFilter(
     const ConversionRequest &request, const Segments &segments,
+    dictionary::PosMatcher pos_matcher,
     const SuggestionFilter &suggestion_filter)
     : input_key_(segments.conversion_segment(0).key()),
       input_key_len_(Util::CharsLen(input_key_)),
+      pos_matcher_(pos_matcher),
       suggestion_filter_(suggestion_filter),
       is_mixed_conversion_(IsMixedConversionEnabled(request.request())),
-      include_exact_key_(IsMixedConversionEnabled(request.request())) {
+      include_exact_key_(IsMixedConversionEnabled(request.request())),
+      filter_number_(ShouldFilterNoisyNumberCandidate(request.request())) {
   const KeyValueView history = GetHistoryKeyAndValue(segments);
   strings::Assign(history_key_, history.key);
   strings::Assign(history_value_, history.value);
@@ -635,6 +642,18 @@ bool DictionaryPredictor::ResultFilter::ShouldRemove(const Result &result,
 
   if (!is_mixed_conversion_) {
     return CheckDupAndReturn(candidate.value, result, log_message);
+  }
+
+  if (filter_number_ && !(result.types & (PredictionType::REALTIME_TOP |
+                                          PredictionType::NUMBER))) {
+    // Filter number candidates other than REALTIME_TOP or NUMBER.
+    if (pos_matcher_.IsNumber(result.lid) ||
+        pos_matcher_.IsKanjiNumber(result.lid)) {
+      *log_message =
+          "Already added NumberDecoder result. "
+          "Other candidates for number can be noisy.";
+      return true;
+    }
   }
 
   // Suppress long candidates to show more candidates in the candidate view.

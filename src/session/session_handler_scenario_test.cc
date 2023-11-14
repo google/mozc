@@ -278,6 +278,12 @@ INSTANTIATE_TEST_SUITE_P(
                   ->set_apply_user_segment_history_rewriter_for_prediction(
                       true);
               return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_filter_noisy_number_candidate(true);
+              return request;
             }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
