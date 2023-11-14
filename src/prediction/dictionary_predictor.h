@@ -106,6 +106,7 @@ class DictionaryPredictor : public PredictorInterface {
   class ResultFilter {
    public:
     ResultFilter(const ConversionRequest &request, const Segments &segments,
+                 dictionary::PosMatcher pos_matcher,
                  const SuggestionFilter &suggestion_filter
                      ABSL_ATTRIBUTE_LIFETIME_BOUND);
     bool ShouldRemove(const Result &result, int added_num,
@@ -117,9 +118,11 @@ class DictionaryPredictor : public PredictorInterface {
 
     const std::string input_key_;
     const size_t input_key_len_;
+    const dictionary::PosMatcher pos_matcher_;
     const SuggestionFilter &suggestion_filter_;
     const bool is_mixed_conversion_;
     const bool include_exact_key_;
+    const bool filter_number_;
 
     std::string history_key_;
     std::string history_value_;
