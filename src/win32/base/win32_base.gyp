@@ -184,6 +184,7 @@
           'dependencies': [
             '<(mozc_src_dir)/base/base.gyp:base',
             'imframework_util',
+            'msctf_dll_import_lib',
           ],
         },
         {

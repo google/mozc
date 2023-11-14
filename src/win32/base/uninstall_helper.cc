@@ -44,8 +44,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/win32/com.h"
-#include "base/win32/scoped_com.h"
 #include "base/win32/win_util.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/input_dll.h"
@@ -187,15 +185,10 @@ std::wstring GetIMEFileName(HKL hkl) {
 
 bool GetInstalledProfilesByLanguageForTSF(
     LANGID langid, std::vector<LayoutProfileInfo> *installed_profiles) {
-  ScopedCOMInitializer com_initializer;
-  if (FAILED(com_initializer.error_code())) {
-    return false;
-  }
-
   HRESULT hr = S_OK;
 
-  auto profiles = ComCreateInstance<ITfInputProcessorProfiles>(
-      CLSID_TF_InputProcessorProfiles);
+  wil::com_ptr_nothrow<ITfInputProcessorProfiles> profiles;
+  hr = TF_CreateInputProcessorProfiles(profiles.put());
   if (!profiles) {
     return false;
   }
@@ -331,13 +324,15 @@ bool BroadcastNewIME(const KeyboardLayoutInfo &layout) {
 bool EnableAndBroadcastNewLayout(const LayoutProfileInfo &profile,
                                  bool broadcast_change) {
   if (profile.is_tip) {
-    ScopedCOMInitializer com_initializer;
-    if (FAILED(com_initializer.error_code())) {
-      return false;
+    wil::com_ptr_nothrow<ITfInputProcessorProfileMgr> profile_manager;
+    {
+      wil::com_ptr_nothrow<ITfInputProcessorProfiles> profiles;
+      TF_CreateInputProcessorProfiles(profiles.put());
+      if (!profiles) {
+        return false;
+      }
+      profiles.query_to(&profile_manager);
     }
-
-    auto profile_manager = ComCreateInstance<ITfInputProcessorProfileMgr>(
-        CLSID_TF_InputProcessorProfiles);
     if (!profile_manager) {
       return false;
     }
