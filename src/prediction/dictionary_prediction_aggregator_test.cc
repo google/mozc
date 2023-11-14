@@ -480,11 +480,11 @@ class DictionaryPredictionAggregatorTest
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("ぐーぐる"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
-            {"グーグル", "グーグル"},
+            {"ぐーぐる", "グーグル"},
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("あどせんす"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
-            {"アドセンス", "アドセンス"},
+            {"あどせんす", "アドセンス"},
         }));
     EXPECT_CALL(*mock, LookupPrefix(StrEq("てすと"), _, _))
         .WillRepeatedly(InvokeCallbackWithKeyValues({
@@ -2376,6 +2376,28 @@ TEST_F(DictionaryPredictionAggregatorTest, EnrichPartialCandidates) {
   std::vector<Result> results;
   EXPECT_TRUE(PREFIX & aggregator.AggregatePredictionForRequest(
                            *prediction_convreq_, segments, &results));
+}
+
+TEST_F(DictionaryPredictionAggregatorTest, PrefixCandidates) {
+  std::unique_ptr<MockDataAndAggregator> data_and_aggregator =
+      CreateAggregatorWithMockData();
+  const DictionaryPredictionAggregatorTestPeer &aggregator =
+      data_and_aggregator->aggregator();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("ぐーぐるあ", composer_.get(), &segments);
+
+  std::vector<Result> results;
+  EXPECT_TRUE(PREFIX & aggregator.AggregatePredictionForRequest(
+                           *prediction_convreq_, segments, &results));
+  for (const auto &r : results) {
+    if (r.types == PREFIX) {
+      EXPECT_TRUE(r.candidate_attributes &
+                  Segment::Candidate::PARTIALLY_KEY_CONSUMED);
+      EXPECT_NE(r.consumed_key_size, 0);
+    }
+  }
 }
 
 TEST_F(DictionaryPredictionAggregatorTest, CandidatesFromUserDictionary) {
