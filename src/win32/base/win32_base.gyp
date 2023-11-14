@@ -111,6 +111,7 @@
           'dependencies': [
             '<(mozc_src_dir)/base/base.gyp:base',
             'input_dll_import_lib',
+            'msctf_dll_import_lib',
           ],
         },
         {

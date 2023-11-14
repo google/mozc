@@ -45,8 +45,6 @@
 
 #include "base/logging.h"
 #include "base/system_util.h"
-#include "base/win32/com.h"
-#include "base/win32/scoped_com.h"
 #include "base/win32/wide_char.h"
 #include "win32/base/input_dll.h"
 #include "win32/base/tsf_profile.h"
@@ -89,13 +87,20 @@ bool ImeUtil::SetDefault() {
     return false;
   }
 
-  // Activate the TSF Mozc.
-  ScopedCOMInitializer com_initializer;
-  auto profile_mgr = ComCreateInstance<ITfInputProcessorProfileMgr>(
-      CLSID_TF_InputProcessorProfiles);
-  if (!profile_mgr) {
-    DLOG(ERROR) << "CoCreateInstance CLSID_TF_InputProcessorProfiles failed";
-    return false;
+  wil::com_ptr_nothrow<ITfInputProcessorProfileMgr> profile_mgr;
+  {
+    wil::com_ptr_nothrow<ITfInputProcessorProfiles> profiles;
+    HRESULT result = TF_CreateInputProcessorProfiles(profiles.put());
+    if (!profiles) {
+      DLOG(ERROR) << "TF_CreateInputProcessorProfiles failed:" << result;
+      return false;
+    }
+    result = profiles.query_to(profile_mgr.put());
+    if (!profile_mgr) {
+      DLOG(ERROR) << "QueryInterface to ITfInputProcessorProfileMgr failed:"
+                  << result;
+      return false;
+    }
   }
   const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
   if (FAILED(profile_mgr->ActivateProfile(
