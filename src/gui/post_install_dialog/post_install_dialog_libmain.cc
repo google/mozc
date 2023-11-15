@@ -42,6 +42,8 @@
 #include "gui/post_install_dialog/post_install_dialog.h"
 
 #ifdef _WIN32
+#include "base/const.h"
+#include "base/process.h"
 #include "base/win32/scoped_com.h"
 #endif  // _WIN32
 
@@ -49,6 +51,11 @@ int RunPostInstallDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_post_install_dialog);
 
   mozc::SystemUtil::DisableIME();
+
+#ifdef _WIN32
+  mozc::Process::SpawnMozcProcess(mozc::kMozcBroker,
+                                  "--mode=prelaunch_processes");
+#endif  // _WIN32
 
   std::string name = "post_install_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
