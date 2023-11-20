@@ -423,11 +423,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   ComboBoxDelegate *delegate = new ComboBoxDelegate;
   delegate->SetItemList(pos_list);
   dic_content_->setItemDelegateForColumn(2, delegate);
-  if (!pos_list.isEmpty()) {
-    default_pos_ = pos_list[0];
-  } else {
-    LOG(WARNING) << "No POS is given.";
-  }
+
+  // Set the default POS to "名詞" indexed with 1.
+  constexpr absl::string_view kNoun = "名詞";
+  DCHECK(pos_list[1] == kNoun.data()) << "pos_list[1] is not " << kNoun;
+  default_pos_ = kNoun.data();
 
   // Set up the main table widget for dictionary contents.
   dic_content_->setColumnCount(4);
