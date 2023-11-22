@@ -41,7 +41,6 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -54,6 +53,7 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/composer.h"
 
 namespace mozc {
 namespace {

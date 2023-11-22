@@ -50,7 +50,7 @@
         '../base/absl.gyp:absl_strings',
         '../base/absl.gyp:absl_time',
         '../base/base_test.gyp:clock_mock',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:immutable_converter',

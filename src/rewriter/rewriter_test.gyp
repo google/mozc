@@ -121,7 +121,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:segments',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
@@ -146,7 +146,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:request_test_util',

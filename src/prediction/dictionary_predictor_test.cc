@@ -41,8 +41,6 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
@@ -75,6 +73,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc::prediction {
 

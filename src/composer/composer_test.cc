@@ -41,8 +41,6 @@
 
 #include "base/clock_mock.h"
 #include "base/util.h"
-#include "composer/key_parser.h"
-#include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -55,6 +53,8 @@
 #include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "composer/key_parser.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

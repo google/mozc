@@ -36,7 +36,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -46,6 +45,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
 
 namespace mozc {
 namespace {

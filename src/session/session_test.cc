@@ -39,9 +39,6 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
-#include "composer/composer.h"
-#include "composer/key_parser.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -68,6 +65,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/key_parser.h"
+#include "composer/table.h"
 
 namespace mozc {
 

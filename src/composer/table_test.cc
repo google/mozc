@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "composer/internal/special_key.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
@@ -41,6 +40,7 @@
 #include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "composer/internal/special_key.h"
 
 namespace mozc::composer {
 namespace {

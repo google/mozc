@@ -37,7 +37,6 @@
 #include <memory>
 #include <optional>
 
-#include "composer/table.h"
 #include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
@@ -54,6 +53,7 @@
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "composer/table.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"

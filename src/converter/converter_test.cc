@@ -40,8 +40,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
 #include "converter/converter_interface.h"
@@ -86,6 +84,8 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace {

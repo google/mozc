@@ -36,7 +36,7 @@
         '../base/base_test.gyp:base_all_test',
         '<(mozc_oss_src_dir)/client/client_test.gyp:client_all_test',
         '../config/config_test.gyp:config_all_test',
-        '../composer/composer_test.gyp:composer_all_test',
+        '<(mozc_oss_src_dir)/composer/composer_test.gyp:composer_all_test',
         '../converter/converter_test.gyp:converter_all_test',
         '../dictionary/dictionary_test.gyp:dictionary_all_test',
         '../dictionary/file/dictionary_file_test.gyp:dictionary_file_all_test',

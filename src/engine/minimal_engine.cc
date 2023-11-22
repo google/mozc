@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/strings/assign.h"
-#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager.h"
@@ -46,6 +45,7 @@
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/composer.h"
 
 namespace mozc {
 namespace {

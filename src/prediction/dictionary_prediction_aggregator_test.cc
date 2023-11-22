@@ -43,8 +43,6 @@
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
@@ -74,6 +72,8 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace prediction {

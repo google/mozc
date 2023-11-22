@@ -41,7 +41,6 @@
 #include "base/logging.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/candidates.pb.h"
@@ -58,6 +57,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
 
 ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion, true,
           "If true, use the actual (non-immutable) converter for real "

@@ -43,7 +43,6 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "base/version.h"
-#include "composer/composer.h"
 #include "converter/segments.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -51,6 +50,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
 
 namespace mozc {
 namespace session {

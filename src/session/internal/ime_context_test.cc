@@ -32,8 +32,6 @@
 #include <memory>
 #include <string>
 
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -43,6 +41,8 @@
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
 #include "absl/time/time.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace session {

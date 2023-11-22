@@ -33,8 +33,6 @@
 #include <vector>
 
 #include "base/strings/unicode.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -47,6 +45,8 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc::prediction {
 namespace {

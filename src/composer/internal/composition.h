@@ -35,12 +35,12 @@
 #include <string>
 #include <tuple>
 
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 
 namespace mozc {
 namespace composer {

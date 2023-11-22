@@ -44,7 +44,6 @@
 #include "base/protobuf/text_format.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "composer/key_parser.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "engine/engine_factory.h"
@@ -66,6 +65,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/key_parser.h"
 
 namespace mozc {
 namespace session {

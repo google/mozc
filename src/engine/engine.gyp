@@ -129,7 +129,7 @@
         'minimal_engine.cc',
       ],
       'dependencies': [
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../converter/converter.gyp:converter',
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:suppression_dictionary',

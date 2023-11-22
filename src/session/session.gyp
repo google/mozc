@@ -44,7 +44,7 @@
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:version',
-        '../composer/composer.gyp:key_parser',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:segments',
         '../protocol/protocol.gyp:commands_proto',
@@ -70,7 +70,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
@@ -99,7 +99,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../config/config.gyp:character_form_manager',
         '../config/config.gyp:config_handler',
         '../dictionary/dictionary_base.gyp:user_dictionary',

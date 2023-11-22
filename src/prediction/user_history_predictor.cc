@@ -54,7 +54,6 @@
 #include "base/protobuf/message.h"
 #include "base/thread.h"
 #include "base/util.h"
-#include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -75,6 +74,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "composer/composer.h"
 
 namespace mozc::prediction {
 namespace {

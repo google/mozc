@@ -44,7 +44,6 @@
 #include "base/logging.h"
 #include "base/protobuf/message.h"
 #include "base/stopwatch.h"
-#include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "dictionary/user_dictionary_session_handler.h"
@@ -65,6 +64,7 @@
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "absl/time/time.h"
+#include "composer/table.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"

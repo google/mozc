@@ -46,8 +46,6 @@
 #include "base/protobuf/text_format.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
@@ -68,6 +66,8 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG

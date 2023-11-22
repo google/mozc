@@ -36,8 +36,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "composer/key_parser.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
@@ -54,6 +52,8 @@
 #include "testing/mozctest.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "composer/key_parser.h"
+#include "composer/table.h"
 
 ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 

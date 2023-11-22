@@ -36,13 +36,13 @@
 #include <tuple>
 #include <utility>
 
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
-#include "composer/table.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "composer/internal/composition_input.h"
+#include "composer/internal/transliterators.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

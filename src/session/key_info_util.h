@@ -32,9 +32,9 @@
 
 #include <vector>
 
-#include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "composer/key_event_util.h"
 
 namespace mozc {
 

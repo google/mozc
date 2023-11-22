@@ -49,7 +49,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:number_util',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:suffix_dictionary',

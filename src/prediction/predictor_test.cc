@@ -34,7 +34,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "composer/composer.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
@@ -51,6 +50,7 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
 
 namespace mozc::prediction {
 namespace {

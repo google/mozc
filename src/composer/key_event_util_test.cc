@@ -34,11 +34,11 @@
 #include <iterator>
 #include <string>
 
-#include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "composer/key_parser.h"
 
 namespace mozc {
 namespace {

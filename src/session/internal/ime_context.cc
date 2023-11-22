@@ -33,10 +33,10 @@
 #include "session/internal/ime_context.h"
 
 #include "base/logging.h"
-#include "composer/composer.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "session/session_converter_interface.h"
+#include "composer/composer.h"
 
 namespace mozc {
 namespace session {

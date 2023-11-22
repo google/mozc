@@ -35,11 +35,7 @@ load(
     "mozc_py_binary",
 )
 
-package(
-    default_visibility = [
-        "//:__subpackages__",
-    ],
-)
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_py_binary(
     name = "gen_typing_model",

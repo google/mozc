@@ -36,15 +36,15 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/internal/char_chunk.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
-#include "composer/table.h"
 #include "absl/algorithm/container.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "composer/internal/char_chunk.h"
+#include "composer/internal/composition_input.h"
+#include "composer/internal/transliterators.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

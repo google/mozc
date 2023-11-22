@@ -29,8 +29,6 @@
 
 #include <memory>
 
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "engine/engine_factory.h"
@@ -39,6 +37,8 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace {

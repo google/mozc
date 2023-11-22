@@ -46,8 +46,6 @@
 #include "base/random.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -73,6 +71,8 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc::prediction {
 namespace {

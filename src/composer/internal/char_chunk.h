@@ -36,12 +36,12 @@
 #include <utility>
 
 #include "base/strings/assign.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/transliterators.h"
-#include "composer/table.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "composer/internal/composition_input.h"
+#include "composer/internal/transliterators.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

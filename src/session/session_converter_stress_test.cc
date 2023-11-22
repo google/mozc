@@ -33,8 +33,6 @@
 #include <string>
 
 #include "base/random.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
@@ -46,6 +44,8 @@
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 ABSL_FLAG(bool, test_deterministic, true,
           "if true, srand() is initialized by \"test_srand_seed\"."

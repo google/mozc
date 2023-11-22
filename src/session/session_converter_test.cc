@@ -45,8 +45,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
@@ -66,6 +64,8 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace session {

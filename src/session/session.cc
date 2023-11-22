@@ -41,9 +41,6 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "composer/key_event_util.h"
-#include "composer/table.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -62,6 +59,9 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "composer/composer.h"
+#include "composer/key_event_util.h"
+#include "composer/table.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE

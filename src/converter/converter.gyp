@@ -43,7 +43,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:number_util',
-        '../composer/composer.gyp:composer',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction.gyp:prediction',
         '../prediction/prediction.gyp:prediction_protocol',
