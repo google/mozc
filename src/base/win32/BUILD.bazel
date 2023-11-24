@@ -334,6 +334,7 @@ mozc_cc_test(
     name = "com_implements_test",
     size = "small",
     srcs = ["com_implements_test.cc"],
+    copts = ["-Wno-microsoft-exception-spec"],
     tags = MOZC_TAGS.WIN_ONLY,
     target_compatible_with = ["@platforms//os:windows"],
     deps = [
