@@ -44,16 +44,10 @@ namespace {
 
 // Mock interfaces for testing.
 MIDL_INTERFACE("A03A80F4-9254-4C8B-AF25-0674FCED18E5")
-IMock1 : public IUnknown {
-  STDMETHOD(Test1)() = 0;
-  virtual ~IMock1() = default;
-};
+IMock1 : public IUnknown { STDMETHOD(Test1)() = 0; };
 
 MIDL_INTERFACE("863EF391-8485-4257-8423-8D919D1AE8DC")
-IMock2 : public IUnknown {
-  STDMETHOD(Test2)() = 0;
-  virtual ~IMock2() = default;
-};
+IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
 
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
 IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
@@ -62,10 +56,8 @@ MIDL_INTERFACE("F2B8DCC5-226C-4123-8F78-2BC36B574629")
 IDerivedDerived : public IDerived{};
 
 MIDL_INTERFACE("9C1A7121-BF54-4826-856E-55A90864EE64")
-IRefCount : public IUnknown {
-  STDMETHOD_(ULONG, RefCount)() = 0;
-  virtual ~IRefCount() = default;
-};
+IRefCount : public IUnknown { STDMETHOD_(ULONG, RefCount)() = 0; };
+
 }  // namespace
 
 // This specialization needs to be in the mozc::win32 namespace.
@@ -91,10 +83,10 @@ ULONG MockTraits::ref = 0;
 class Mock
     : public ComImplements<MockTraits, IMock2, IDerivedDerived, IRefCount> {
  public:
-  STDMETHODIMP COM_DECLSPEC_NOTHROW Test1() override { return 1; }
-  STDMETHODIMP COM_DECLSPEC_NOTHROW Test2() override { return 2; }
-  STDMETHODIMP COM_DECLSPEC_NOTHROW Derived() override { return 3; }
-  STDMETHODIMP_(ULONG) COM_DECLSPEC_NOTHROW RefCount() override {
+  STDMETHODIMP Test1() override { return 1; }
+  STDMETHODIMP Test2() override { return 2; }
+  STDMETHODIMP Derived() override { return 3; }
+  STDMETHODIMP_(ULONG) RefCount() override {
     AddRef();
     return Release();
   }
@@ -152,7 +144,7 @@ TEST_F(ComImplementsTest, QueryInterface) {
 
 class SingleMock : public ComImplements<MockTraits, IMock1> {
  public:
-  STDMETHODIMP COM_DECLSPEC_NOTHROW Test1() override { return 1; }
+  STDMETHODIMP Test1() override { return 1; }
 };
 
 TEST_F(ComImplementsTest, SingleMock) {
