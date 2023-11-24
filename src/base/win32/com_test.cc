@@ -55,10 +55,14 @@ MIDL_INTERFACE("A03A80F4-9254-4C8B-AF25-0674FCED18E5")
 IMock1 : public IUnknown {
   STDMETHOD(Test1)() = 0;
   STDMETHOD_(LONG, GetQICountAndReset)() = 0;
+  virtual ~IMock1() = default;
 };
 
 MIDL_INTERFACE("863EF391-8485-4257-8423-8D919D1AE8DC")
-IMock2 : public IUnknown { STDMETHOD(Test2)() = 0; };
+IMock2 : public IUnknown {
+  STDMETHOD(Test2)() = 0;
+  virtual ~IMock2() = default;
+};
 
 MIDL_INTERFACE("7CC0C082-8CA5-4A87-97C4-4FC14FBCE0B3")
 IDerived : public IMock1 { STDMETHOD(Derived()) = 0; };
@@ -84,10 +88,10 @@ class Mock : public ComImplements<ComImplementsTraits, IMock2, IDerived> {
     qi_count_++;
     return ComImplements::QueryInterface(iid, out);
   }
-  STDMETHODIMP Test1() override { return S_OK; }
-  STDMETHODIMP Test2() override { return S_FALSE; }
-  STDMETHODIMP Derived() override { return 2; }
-  STDMETHODIMP_(LONG) GetQICountAndReset() override {
+  STDMETHODIMP COM_DECLSPEC_NOTHROW Test1() override { return S_OK; }
+  STDMETHODIMP COM_DECLSPEC_NOTHROW Test2() override { return S_FALSE; }
+  STDMETHODIMP COM_DECLSPEC_NOTHROW Derived() override { return 2; }
+  STDMETHODIMP_(LONG) COM_DECLSPEC_NOTHROW GetQICountAndReset() override {
     return std::exchange(qi_count_, 0);
   }
 

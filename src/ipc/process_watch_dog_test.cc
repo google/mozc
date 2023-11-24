@@ -40,9 +40,8 @@
 namespace mozc {
 
 TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  absl::Time start = absl::Now();
-
 #ifndef _WIN32
+  absl::Time start = absl::Now();
   // revoke myself with different parameter
   pid_t pid = fork();
   if (pid == 0) {
