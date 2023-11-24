@@ -138,7 +138,6 @@ bool ConvertMain() {
     for (size_t x = 0; x < width; ++x) {
       Gdiplus::Color color;
       image->GetPixel(x, height - y - 1, &color);
-      const size_t index = (y * width + x) * 4;
       output_file << static_cast<uint8_t>(color.GetB() / 255.0 * color.GetA());
       output_file << static_cast<uint8_t>(color.GetG() / 255.0 * color.GetA());
       output_file << static_cast<uint8_t>(color.GetR() / 255.0 * color.GetA());

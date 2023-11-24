@@ -195,8 +195,7 @@ class IndicatorWindow::WindowImpl
     BLENDFUNCTION func = {AC_SRC_OVER, 0, alpha_, AC_SRC_ALPHA};
 
     const CBitmapHandle old_bitmap = dc.SelectBitmap(current_image_);
-    const BOOL result =
-        ::UpdateLayeredWindow(m_hWnd, nullptr, &top_left, &size, dc,
+    (void)::UpdateLayeredWindow(m_hWnd, nullptr, &top_left, &size, dc,
                               &src_left_top, 0, &func, ULW_ALPHA);
     dc.SelectBitmap(old_bitmap);
     ShowWindow(SW_SHOWNA);
@@ -234,6 +233,7 @@ class IndicatorWindow::WindowImpl
     switch (flags) {
       case SPI_SETACTIVEWINDOWTRACKING:
         EnableOrDisableWindowForWorkaround();
+        [[fallthrough]];
       default:
         // We ignore other changes.
         break;

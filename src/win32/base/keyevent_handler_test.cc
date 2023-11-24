@@ -2688,8 +2688,6 @@ TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
     constexpr wchar_t kHiraganaA = L'\u3042';
     constexpr VirtualKey kVirtualKey = VirtualKey::FromCombinedVirtualKey(
         (static_cast<DWORD>(kHiraganaA) << 16) | VK_PACKET);
-    constexpr VirtualKey kLastKeydownVirtualKey =
-        VirtualKey::FromVirtualKey(VK_ESCAPE);
 
     constexpr BYTE kScanCode = 0;  // will be ignored in this test
     constexpr bool kIsKeyDown = true;

@@ -79,6 +79,8 @@ class TipTextService : public IUnknown {
 
   // Returns true if the language bar is initialized.
   virtual bool IsLangbarInitialized() const = 0;
+
+  virtual ~TipTextService() = default;
 };
 
 class TipTextServiceFactory {

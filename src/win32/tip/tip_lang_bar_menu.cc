@@ -168,7 +168,6 @@ HRESULT TipLangBarMenuDataArray::Init(HINSTANCE instance,
   for (int i = 0; i < count; ++i) {
     TipLangBarMenuData data = {};
     int length = 0;
-    HICON icon = nullptr;
     if ((menu[i].flags_ & TF_LBMENUF_SEPARATOR) == 0) {
       // Retrieve the menu text and button icon.
       length = ::LoadString(instance, menu[i].text_id_, &data.text_[0],
@@ -280,7 +279,6 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
   for (size_t i = 0; i < menu_data_size(); ++i) {
     TipLangBarMenuData *data = menu_data(i);
     const UINT id = static_cast<UINT>(data->item_id_);
-    const wchar_t *text = data->text_;
     CMenuItemInfo info;
     if (data->flags_ == TF_LBMENUF_SEPARATOR) {
       info.fMask |= MIIM_FTYPE;
@@ -388,7 +386,6 @@ STDMETHODIMP TipLangBarButton::UnadviseSink(DWORD cookie) {
 // button menu to a language bar.
 HRESULT TipLangBarButton::Init(HINSTANCE instance, int string_id,
                                const TipLangBarMenuItem *menu, int count) {
-  HRESULT result = S_OK;
   // Retrieve the text label from the resource.
   // This string is also used as a tool-tip text.
   ::LoadString(instance, string_id, &item_info_.szDescription[0],
@@ -511,7 +508,6 @@ STDMETHODIMP TipLangBarMenuButton::OnMenuSelect(UINT menu_id) {
 // Implements the ITfLangBarItem::GetInfo() function.
 // This function is called by Windows to update this button menu.
 STDMETHODIMP TipLangBarMenuButton::GetInfo(TF_LANGBARITEMINFO *item_info) {
-  HRESULT result = S_OK;
 
   if (item_info == nullptr) {
     return E_INVALIDARG;
@@ -806,7 +802,7 @@ STDMETHODIMP TipSystemLangBarMenu::OnMenuSelect(UINT menu_id) {
   if (data->item_id_ == TipLangBarCallback::kCancel) {
     return S_OK;
   }
-  const HRESULT result = lang_bar_callback_->OnMenuSelect(
+  (void)lang_bar_callback_->OnMenuSelect(
       static_cast<TipLangBarCallback::ItemId>(data->item_id_));
   return S_OK;
 }

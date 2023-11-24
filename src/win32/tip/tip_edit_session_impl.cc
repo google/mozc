@@ -117,7 +117,6 @@ wil::com_ptr_nothrow<ITfComposition> CreateComposition(
   if (!composition_context) {
     return nullptr;
   }
-  TfActiveSelEnd sel_end = TF_AE_NONE;
   auto insert_selection = ComQuery<ITfInsertAtSelection>(context);
   if (!insert_selection) {
     return nullptr;

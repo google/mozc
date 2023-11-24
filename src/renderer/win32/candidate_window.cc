@@ -316,7 +316,7 @@ void CandidateWindow::HandleMouseEvent(UINT nFlags, const CPoint &point,
     return;
   }
 
-  const int focused_array_index = GetFocusedArrayIndex(*candidates_);
+  (void)GetFocusedArrayIndex(*candidates_);
 
   for (size_t i = 0; i < candidates_->candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate =
@@ -430,6 +430,7 @@ void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
       break;
     case SPI_SETACTIVEWINDOWTRACKING:
       EnableOrDisableWindowForWorkaround();
+      [[fallthrough]];
     default:
       // We ignore other changes.
       break;
@@ -618,8 +619,7 @@ Rect CandidateWindow::GetSelectionRectInScreenCord() const {
 
   if (0 <= focused_array_index &&
       focused_array_index < candidates_->candidate_size()) {
-    const commands::Candidates::Candidate &candidate =
-        candidates_->candidate(focused_array_index);
+    (void)candidates_->candidate(focused_array_index);
 
     CRect rect = ToCRect(table_layout_->GetRowRect(focused_array_index));
     ClientToScreen(&rect);
@@ -812,8 +812,7 @@ void CandidateWindow::DrawSelectedRect(CDCHandle dc) {
 
   if (0 <= focused_array_index &&
       focused_array_index < candidates_->candidate_size()) {
-    const commands::Candidates::Candidate &candidate =
-        candidates_->candidate(focused_array_index);
+    (void)candidates_->candidate(focused_array_index);
 
     const CRect selected_rect =
         ToCRect(table_layout_->GetRowRect(focused_array_index));

@@ -143,8 +143,7 @@ void WindowManager::UpdateLayout(
   const commands::RendererCommand::ApplicationInfo &app_info =
       command.application_info();
 
-  const HWND target_window_handle =
-      reinterpret_cast<HWND>(app_info.target_window_handle());
+  (void)app_info.target_window_handle();
   bool show_candidate =
       ((app_info.ui_visibilities() & ApplicationInfo::ShowCandidateWindow) ==
        ApplicationInfo::ShowCandidateWindow);
@@ -286,7 +285,7 @@ void WindowManager::UpdateLayout(
 
   if (candidates.has_subcandidates() &&
       candidates.subcandidates().display_type() == commands::CASCADE) {
-    const commands::Candidates &subcandidates = candidates.subcandidates();
+    (void)candidates.subcandidates();
     cascading_visible = true;
   }
 

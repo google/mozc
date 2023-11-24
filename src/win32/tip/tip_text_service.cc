@@ -814,7 +814,6 @@ class TipTextServiceImpl
   }
   STDMETHODIMP OnKeyUp(ITfContext *context, WPARAM wparam, LPARAM lparam,
                        BOOL *eaten) override {
-    HRESULT result = S_OK;
     BOOL dummy_eaten = FALSE;
     if (eaten == nullptr) {
       eaten = &dummy_eaten;

@@ -111,12 +111,15 @@ MIDL_INTERFACE(IIDSTR_IMozcLangBarItem)
 IMozcLangBarItem : public IUnknown {
   // Sets the status of this language bar menu.
   virtual STDMETHODIMP SetEnabled(bool enabled) = 0;
+
+  virtual ~IMozcLangBarItem() = default;
 };
 
 MIDL_INTERFACE(IIDSTR_IMozcLangBarToggleItem)
 IMozcLangBarToggleItem : public IUnknown {
   // Selects a menu item which has the given |menu_id|.
   virtual STDMETHODIMP SelectMenuItem(UINT menu_id) = 0;
+  virtual ~IMozcLangBarToggleItem() = default;
 };
 
 // Represents the common operations for a button-menu item in the language bar.
@@ -160,6 +163,8 @@ class TipLangBarButton : public TipComImplements<ITfLangBarItemButton,
   // the LangBar.  See http://b/2260057 and http://b/2265755
   // for details.
   static bool CanContextMenuDisplay32bppIcon();
+
+  virtual ~TipLangBarButton() = default;
 
  protected:
   // Update the item description. The caller is also responsible for calling

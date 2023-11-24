@@ -259,7 +259,6 @@ class RegistryEmulator {
       ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
-    const wchar_t *src = reinterpret_cast<const wchar_t *>(data);
     switch (type) {
       case REG_SZ:
         return UpdateString(value_name, reinterpret_cast<const wchar_t *>(data),
