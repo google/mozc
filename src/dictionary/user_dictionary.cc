@@ -584,9 +584,7 @@ bool UserDictionary::Load(
 }
 
 std::vector<std::string> UserDictionary::GetPosList() const {
-  std::vector<std::string> pos_list;
-  user_pos_->GetPosList(&pos_list);
-  return pos_list;
+  return user_pos_->GetPosList();
 }
 
 void UserDictionary::SetUserDictionaryName(const absl::string_view filename) {

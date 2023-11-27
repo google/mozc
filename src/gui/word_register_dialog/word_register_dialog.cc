@@ -156,8 +156,7 @@ WordRegisterDialog::WordRegisterDialog()
 #endif  // !ENABLE_CLOUD_SYNC
 
   // Initialize ComboBox
-  std::vector<std::string> pos_set;
-  pos_list_provider_->GetPosList(&pos_set);
+  const std::vector<std::string> pos_set = pos_list_provider_->GetPosList();
   CHECK(!pos_set.empty());
 
   for (const std::string &pos : pos_set) {

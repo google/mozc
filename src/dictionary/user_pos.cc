@@ -57,16 +57,17 @@ UserPos::UserPos(absl::string_view token_array_data,
   string_array_.Set(string_array_data);
 }
 
-void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
-  pos_list->clear();
+std::vector<std::string> UserPos::GetPosList() const {
+  std::vector<std::string> pos_list;
   absl::flat_hash_set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
     }
     const absl::string_view pos = string_array_[iter.pos_index()];
-    pos_list->emplace_back(pos.data(), pos.size());
+    pos_list.emplace_back(pos.data(), pos.size());
   }
+  return pos_list;
 }
 
 bool UserPos::IsValidPos(absl::string_view pos) const {

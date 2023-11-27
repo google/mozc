@@ -36,6 +36,8 @@
 #include "base/embedded_file.h"
 #include "base/logging.h"
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace {
 
@@ -49,13 +51,16 @@ namespace {
 
 }  // namespace
 
-void PosListProvider::GetPosList(std::vector<std::string> *pos_list) const {
+std::vector<std::string> PosListProvider::GetPosList() const {
+
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
-  pos_list->resize(array.size());
-  for (size_t i = 0; i < array.size(); ++i) {
-    (*pos_list)[i].assign(array[i].begin(), array[i].end());
+
+  std::vector<std::string> pos_list(array.size());
+  for (absl::string_view pos : array) {
+    pos_list.push_back({pos.data(), pos.size()});
   }
+  return pos_list;
 }
 
 }  // namespace mozc

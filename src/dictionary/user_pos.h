@@ -185,7 +185,7 @@ class UserPos : public UserPosInterface {
   UserPos &operator=(const UserPos &) = delete;
 
   // Implementation of UserPosInterface.
-  void GetPosList(std::vector<std::string> *pos_list) const override;
+  std::vector<std::string> GetPosList() const override;
   bool IsValidPos(absl::string_view pos) const override;
   bool GetPosIds(absl::string_view pos, uint16_t *id) const override;
   bool GetTokens(absl::string_view key, absl::string_view value,

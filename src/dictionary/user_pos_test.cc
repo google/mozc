@@ -63,8 +63,7 @@ class UserPosTest : public ::testing::Test {
 };
 
 TEST_F(UserPosTest, UserPosBasicTest) {
-  std::vector<std::string> pos_list;
-  user_pos_->GetPosList(&pos_list);
+  const std::vector<std::string> pos_list = user_pos_->GetPosList();
   EXPECT_FALSE(pos_list.empty());
   // test contains
   EXPECT_TRUE(std::find(pos_list.begin(), pos_list.end(), "名詞サ変") !=
@@ -86,8 +85,7 @@ TEST_F(UserPosTest, UserPosBasicTest) {
 }
 
 TEST_F(UserPosTest, UserPosGetTokensTest) {
-  std::vector<std::string> pos_list;
-  user_pos_->GetPosList(&pos_list);
+  const std::vector<std::string> pos_list = user_pos_->GetPosList();
 
   std::vector<UserPos::Token> tokens;
   EXPECT_FALSE(user_pos_->GetTokens("", "test", pos_list[0], &tokens));
@@ -136,8 +134,7 @@ TEST_F(UserPosTest, UserPosGetTokensWithAttributesTest) {
 }
 
 TEST_F(UserPosTest, UserPosGetTokensWithLocaleTest) {
-  std::vector<std::string> pos_list;
-  user_pos_->GetPosList(&pos_list);
+  const std::vector<std::string> pos_list = user_pos_->GetPosList();
 
   std::vector<UserPos::Token> tokens, tokens_ja, tokens_en;
   EXPECT_TRUE(user_pos_->GetTokens("あか", "赤", "形容詞", "", &tokens));
