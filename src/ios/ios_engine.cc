@@ -70,7 +70,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
   auto engine = Engine::CreateMobileEngine(*std::move(data_manager));
   if (!engine.ok()) {
     LOG(ERROR) << "Failed to create an engine: " << engine.status()
-               << ". Faillback to MinimalEngine";
+               << ". Fallback to MinimalEngine";
     return std::make_unique<MinimalEngine>();
   }
   return *std::move(engine);

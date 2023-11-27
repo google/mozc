@@ -1110,7 +1110,7 @@ message Input {
   }
   message TouchPosition {
     optional TouchAction action = 1;
-    // x, y potision: keyboad left-top is (0, 0), right-bottom is (1, 1).
+    // x, y potision: keyboard left-top is (0, 0), right-bottom is (1, 1).
     optional float x = 2;
     optional float y = 3;
     // timestamp (in ms) is set to zero when the touch event starts.

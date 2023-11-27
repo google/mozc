@@ -1388,12 +1388,12 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       is_valid_candidate = true;
     } else if (request.request_type() == ConversionRequest::SUGGESTION) {
       // The top result of suggestion should be a VALID suggestion candidate.
-      // i.e., SuggestionTrigerFunc should return true for the first
+      // i.e., SuggestionTriggerFunc should return true for the first
       // candidate.
       // If user types "デスノート" too many times, "デスノート" will be
       // suggested when user types "で". It is expected, but if user types
       // "です" after that,  showing "デスノート" is annoying.
-      // In this situation, "です" is in the LRU, but SuggestionTrigerFunc
+      // In this situation, "です" is in the LRU, but SuggestionTriggerFunc
       // returns false for "です", since it is short.
       if (IsValidSuggestion(request_type, input_key_len, *result_entry)) {
         is_valid_candidate = true;

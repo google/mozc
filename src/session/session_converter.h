@@ -175,7 +175,7 @@ class SessionConverter : public SessionConverterInterface {
                           const commands::Context &context,
                           size_t *consumed_key_size) override;
 
-  // Does allmost the same thing as CommitFirstSegment.
+  // Does almost the same thing as CommitFirstSegment.
   // The only difference is to fix the segments from the head to the focused.
   void CommitHeadToFocusedSegments(const composer::Composer &composer,
                                    const commands::Context &context,

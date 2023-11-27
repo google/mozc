@@ -37,7 +37,7 @@ namespace mozc {
 
 // User-dictionary candidates are not always placed at the top.
 // Since user expects that user-dictionary candidates may appear
-// on the top, we simply move user-dictoinary-candidate just
+// on the top, we simply move user-dictionary-candidate just
 // "after" the top candidate.
 bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
                                      Segments *segments) const {

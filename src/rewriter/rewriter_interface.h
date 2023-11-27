@@ -49,7 +49,7 @@ class RewriterInterface {
     ALL = (1 | 2 | 4),
   };
 
-  // Returns capablity of this rewriter.
+  // Returns capability of this rewriter.
   // If (capability() & CONVERSION), this rewriter
   // is called after StartConversion().
   virtual int capability(const ConversionRequest &request) const {
