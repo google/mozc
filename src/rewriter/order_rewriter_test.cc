@@ -36,10 +36,10 @@
 #include "converter/segments_matchers.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

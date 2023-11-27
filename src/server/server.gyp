@@ -49,7 +49,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
-        '<(mozc_src_dir)/session/session.gyp:session',
+        '<(mozc_oss_src_dir)/session/session.gyp:session',
         'mozc_server_lib',
       ],
       'conditions': [
@@ -101,7 +101,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:crash_report_handler',
-        '<(mozc_src_dir)/session/session.gyp:session_server',
+        '<(mozc_oss_src_dir)/session/session.gyp:session_server',
         '<(mozc_src_dir)/protocol/protocol.gyp:state_proto',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
       ],
@@ -115,9 +115,9 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
-        '<(mozc_src_dir)/session/session.gyp:session_handler',
-        '<(mozc_src_dir)/session/session.gyp:session_server',
-        '<(mozc_src_dir)/session/session.gyp:random_keyevents_generator',
+        '<(mozc_oss_src_dir)/session/session.gyp:session_handler',
+        '<(mozc_oss_src_dir)/session/session.gyp:session_server',
+        '<(mozc_oss_src_dir)/session/session.gyp:random_keyevents_generator',
       ],
     },
   ],

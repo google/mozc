@@ -40,11 +40,9 @@ load(
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-package(
-    default_visibility = [
-        "//:__subpackages__",
-    ],
-)
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 mozc_cc_library(
     name = "session_interface",

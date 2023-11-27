@@ -42,11 +42,11 @@
 #include "engine/minimal_engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/flags/flag.h"
+#include "absl/synchronization/mutex.h"
 #include "session/session.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
-#include "absl/flags/flag.h"
-#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace ios {

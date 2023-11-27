@@ -60,11 +60,11 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

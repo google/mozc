@@ -50,7 +50,6 @@
 #include "request/conversion_request.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -58,6 +57,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

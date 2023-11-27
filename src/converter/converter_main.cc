@@ -57,7 +57,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/status/statusor.h"
@@ -68,6 +67,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "session/request_test_util.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG

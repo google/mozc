@@ -38,12 +38,12 @@
 
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
-#include "session/random_keyevents_generator.h"
-#include "session/request_test_util.h"
-#include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/flags/flag.h"
+#include "session/random_keyevents_generator.h"
+#include "session/request_test_util.h"
+#include "session/session_handler_tool.h"
 
 ABSL_FLAG(std::optional<uint32_t>, random_seed, std::nullopt,
           "Random seed value. This value will be interpreted as uint32_t.");

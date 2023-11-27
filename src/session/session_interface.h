@@ -34,10 +34,10 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "absl/time/time.h"
 #include "composer/table.h"
+#include "session/internal/keymap.h"
 
 namespace mozc {
 namespace session {

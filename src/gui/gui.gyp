@@ -314,7 +314,7 @@
         '<(mozc_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/session/session_base.gyp:keymap',
+        '<(mozc_oss_src_dir)/session/session_base.gyp:keymap',
         'gen_config_dialog_files',
         'qrc_config_dialog',
       ],

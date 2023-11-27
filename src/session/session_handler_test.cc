@@ -52,9 +52,6 @@
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
-#include "session/session_handler_interface.h"
-#include "session/session_handler_test_util.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
@@ -65,6 +62,9 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "session/internal/keymap.h"
+#include "session/session_handler_interface.h"
+#include "session/session_handler_test_util.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);

@@ -62,7 +62,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../request/request.gyp:conversion_request',
         '../rewriter/rewriter.gyp:rewriter',
-        '../session/session_base.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '../storage/storage.gyp:storage',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
         'prediction_base.gyp:suggestion_filter',

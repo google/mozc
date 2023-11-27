@@ -53,9 +53,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/internal/candidate_list.h"
-#include "session/request_test_util.h"
-#include "session/session_converter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -66,6 +63,9 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "session/internal/candidate_list.h"
+#include "session/request_test_util.h"
+#include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {

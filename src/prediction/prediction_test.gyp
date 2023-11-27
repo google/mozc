@@ -64,7 +64,7 @@
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
-        '../session/session_base.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '../storage/storage.gyp:storage',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',

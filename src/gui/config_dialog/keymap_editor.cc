@@ -49,7 +49,6 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -61,6 +60,7 @@
 #include "gui/config_dialog/combobox_delegate.h"
 #include "gui/config_dialog/generic_table_editor.h"
 #include "gui/config_dialog/keybinding_editor_delegate.h"
+#include "session/internal/keymap.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
 #if defined(__ANDROID__) || defined(__wasm__)

@@ -45,10 +45,10 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace converter {

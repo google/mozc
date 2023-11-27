@@ -46,13 +46,6 @@
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/internal/ime_context.h"
-#include "session/internal/key_event_transformer.h"
-#include "session/internal/keymap.h"
-#include "session/internal/session_output.h"
-#include "session/session_converter.h"
-#include "session/session_converter_interface.h"
-#include "session/session_usage_stats_util.h"
 #include "spelling/spellchecker_service_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
@@ -62,6 +55,13 @@
 #include "composer/composer.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
+#include "session/internal/ime_context.h"
+#include "session/internal/key_event_transformer.h"
+#include "session/internal/keymap.h"
+#include "session/internal/session_output.h"
+#include "session/session_converter.h"
+#include "session/session_converter_interface.h"
+#include "session/session_usage_stats_util.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE

@@ -53,9 +53,6 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
-#include "session/internal/ime_context.h"
-#include "session/internal/keymap.h"
-#include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
@@ -68,6 +65,9 @@
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
+#include "session/internal/ime_context.h"
+#include "session/internal/keymap.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 

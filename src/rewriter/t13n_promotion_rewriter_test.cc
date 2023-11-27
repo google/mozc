@@ -38,11 +38,11 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
-#include "session/request_test_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

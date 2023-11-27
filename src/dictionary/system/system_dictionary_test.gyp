@@ -73,7 +73,7 @@
         '../../data_manager/oss/oss_data_manager_test.gyp:install_oss_data_manager_test_data',
         '../../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../../request/request.gyp:conversion_request',
-        '../../session/session_base.gyp:request_test_util',
+        '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '../../testing/testing.gyp:gtest_main',
         '../../testing/testing.gyp:mozctest',
         '../dictionary.gyp:dictionary_test_util',

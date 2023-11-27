@@ -53,10 +53,10 @@ using ssize_t = SSIZE_T;
 #include "base/system_util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
+#include "absl/flags/flag.h"
 #include "session/random_keyevents_generator.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, host, "localhost", "server host name");
 ABSL_FLAG(bool, server, true, "server mode");

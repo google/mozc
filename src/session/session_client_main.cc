@@ -43,10 +43,10 @@
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
-#include "session/session.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "composer/key_parser.h"
+#include "session/session.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(std::string, output, "", "Output file");

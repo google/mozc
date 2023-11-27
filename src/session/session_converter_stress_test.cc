@@ -39,13 +39,13 @@
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_converter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "session/session_converter.h"
 
 ABSL_FLAG(bool, test_deterministic, true,
           "if true, srand() is initialized by \"test_srand_seed\"."

@@ -56,7 +56,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
@@ -73,6 +72,7 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "session/request_test_util.h"
 
 namespace mozc::prediction {
 namespace {

@@ -40,11 +40,11 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "session/session_stress_test_data.h"
 #include "absl/random/distributions.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "session/session_stress_test_data.h"
 
 namespace mozc {
 namespace session {
