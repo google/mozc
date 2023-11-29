@@ -33,92 +33,108 @@
 // sent from client to renderer.  The messages structure of
 // RendererCommand and its child messages are here:
 
-syntax = "proto2";
+edition = "2023";
 
 package mozc.commands;
 
 import "protocol/commands.proto";
 
+option features.enum_type = CLOSED;
+option features.utf8_validation = UNVERIFIED;
+
 message RendererCommand {
   message Rectangle {
-    optional int32 left = 1;
-    optional int32 top = 2;
-    optional int32 right = 3;
-    optional int32 bottom = 4;
+    int32 left = 1;
+    int32 top = 2;
+    int32 right = 3;
+    int32 bottom = 4;
   }
+
   message Point {
-    optional int32 x = 1;
-    optional int32 y = 2;
+    int32 x = 1;
+    int32 y = 2;
   }
 
   enum CommandType {
-    NOOP = 0;      // No operation
-    UPDATE = 1;    // Update the current window
+    NOOP = 0;  // No operation
+
+    UPDATE = 1;  // Update the current window
+
     SHUTDOWN = 2;  // shutdown renderer
   }
 
-  optional CommandType type = 1 [default = NOOP];
+  CommandType type = 1 [default = NOOP];
 
   // set visibility
   // if visible is false, the content of output
   // is basically ignored.
-  optional bool visible = 2 [default = false];
+  bool visible = 2 [default = false];
 
-  optional Output output = 3;
+  Output output = 3;
 
   // Preedit rectangle
-  optional Rectangle preedit_rectangle = 4;
+  Rectangle preedit_rectangle = 4;
 
   // An equivalent to IMECHARPOSITION in IMM32. (For Windows only)
   // TODO(yukawa): make a common candidate form format for all platforms.
   message CharacterPosition {
-    optional uint32 position = 1;
-    optional Point top_left = 2;
-    optional uint32 line_height = 3;
-    optional Rectangle document_area = 4;
+    uint32 position = 1;
+    Point top_left = 2;
+    uint32 line_height = 3;
+    Rectangle document_area = 4;
+
     // A quick solution for vertical writing support.
     // Strictly speaking, this is not part of IMECHARPOSITION in IMM32.
-    optional bool vertical_writing = 5;
+    bool vertical_writing = 5;
   }
 
   // Visual information about mode indicator.
   message IndicatorInfo {
-    optional Status status = 1;
+    Status status = 1;
   }
 
   // Application information Mozc UI is attaching
   message ApplicationInfo {
-    optional uint32 process_id = 1;
-    optional uint32 thread_id = 2;
+    uint32 process_id = 1;
+    uint32 thread_id = 2;
+
     // used in Windows:
     // WHND of the message-only window:
-    optional uint32 receiver_handle = 3;
+    uint32 receiver_handle = 3;
+
     // used in Windows:
     // HWND of the window where composition is displayed.
-    optional uint32 target_window_handle = 4;
+    uint32 target_window_handle = 4;
 
     reserved 5;
-    reserved "composition_font";
+
+    reserved composition_font;
 
     // Represents IM Framework used in the client.
     // Currently only Windows IM frameworks are supported.
     enum InputFrameworkType {
       UNKNOWN_FRAMEWORK = 0;  // Default. For backward compatibility.
+
       TSF = 1;
+
       reserved 2;
-      reserved "IMM32";
+
+      reserved IMM32;
+
       IMKit = 3;
       IBus = 4;
     }
+
     // Specifies which IM Framework is used in the client.
-    optional InputFrameworkType input_framework = 6
-        [default = UNKNOWN_FRAMEWORK];
+    InputFrameworkType input_framework = 6 [default = UNKNOWN_FRAMEWORK];
 
     reserved 7;
-    reserved "composition_form";
+
+    reserved composition_form;
 
     reserved 8;
-    reserved "candidate_form";
+
+    reserved candidate_form;
 
     // used in Windows:
     // Indicates if a UI element is expected to be displayed or not.  Note
@@ -127,34 +143,40 @@ message RendererCommand {
     // regardless of the visibility specified in this field.
     enum UIVisibility {
       ShowUIDefault = 0;
+
       reserved 1;
-      reserved "ShowCompositionWindow";
+
+      reserved ShowCompositionWindow;
+
       ShowCandidateWindow = 2;
       ShowSuggestWindow = 4;
     }
+
     // used in Windows:
-    optional int32 ui_visibilities = 9 [default = 0];  // ShowUIDefault
+    int32 ui_visibilities = 9 [default = 0];  // ShowUIDefault
 
     // used in Windows:
     // Specifies the target position in composition window.
-    optional CharacterPosition composition_target = 10;
+    CharacterPosition composition_target = 10;
 
     reserved 11;
-    reserved "caret_info";
+
+    reserved caret_info;
 
     reserved 12;
-    reserved "message_sender_type";
+
+    reserved message_sender_type;
 
     // A string representation of PangoFontDescription
     // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
     // This field is not application specific information but temporaly locate
     // here.
     // TODO(nona): Make new message if necessary.
-    optional string pango_font_description = 13;
+    string pango_font_description = 13;
 
     // used in Windows:
-    optional IndicatorInfo indicator_info = 14;
+    IndicatorInfo indicator_info = 14;
   }
 
-  optional ApplicationInfo application_info = 5;
+  ApplicationInfo application_info = 5;
 }
