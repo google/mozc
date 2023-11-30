@@ -35,8 +35,6 @@
 #include <functional>
 #include <string>
 
-#include "converter/node.h"
-#include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
@@ -45,6 +43,8 @@
 #include "absl/hash/hash.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/node.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace converter {

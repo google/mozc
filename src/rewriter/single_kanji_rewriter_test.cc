@@ -33,7 +33,6 @@
 #include <memory>
 #include <string>
 
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -42,6 +41,7 @@
 #include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

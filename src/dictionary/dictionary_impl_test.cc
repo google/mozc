@@ -38,7 +38,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -52,6 +51,7 @@
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "converter/node_allocator.h"
 
 namespace mozc {
 namespace dictionary {

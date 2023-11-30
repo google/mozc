@@ -34,7 +34,6 @@
 
 #include "base/random.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -45,6 +44,7 @@
 #include "absl/flags/flag.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/converter_interface.h"
 #include "session/session_converter.h"
 
 ABSL_FLAG(bool, test_deterministic, true,

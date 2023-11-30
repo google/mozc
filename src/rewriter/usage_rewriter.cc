@@ -38,7 +38,6 @@
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -47,6 +46,7 @@
 #include "rewriter/usage_rewriter.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

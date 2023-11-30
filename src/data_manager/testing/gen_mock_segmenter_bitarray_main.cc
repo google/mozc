@@ -30,9 +30,9 @@
 #include <string>
 
 #include "base/init_mozc.h"
-#include "converter/gen_segmenter_bitarray.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
+#include "converter/gen_segmenter_bitarray.h"
 
 namespace {
 #include "data_manager/testing/segmenter_inl.inc"

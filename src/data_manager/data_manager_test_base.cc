@@ -39,9 +39,6 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/connector.h"
-#include "converter/node.h"
-#include "converter/segmenter.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -52,6 +49,9 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "converter/connector.h"
+#include "converter/node.h"
+#include "converter/segmenter.h"
 
 namespace mozc {
 namespace {

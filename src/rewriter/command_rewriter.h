@@ -30,10 +30,10 @@
 #ifndef MOZC_REWRITER_COMMAND_REWRITER_H_
 #define MOZC_REWRITER_COMMAND_REWRITER_H_
 
-#include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

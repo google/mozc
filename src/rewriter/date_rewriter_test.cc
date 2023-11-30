@@ -39,8 +39,6 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "converter/segments.h"
-#include "converter/segments_matchers.h"
 #include "dictionary/dictionary_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -51,6 +49,8 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/segments.h"
+#include "converter/segments_matchers.h"
 
 namespace mozc {
 namespace {

@@ -35,13 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "converter/connector.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/lattice.h"
-#include "converter/nbest_generator.h"
-#include "converter/node.h"
-#include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -51,6 +44,13 @@
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
 #include "absl/base/attributes.h"
 #include "absl/types/span.h"
+#include "converter/connector.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/lattice.h"
+#include "converter/nbest_generator.h"
+#include "converter/node.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

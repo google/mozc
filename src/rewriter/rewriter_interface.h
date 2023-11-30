@@ -32,8 +32,8 @@
 
 #include <cstddef>  // for size_t
 
-#include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

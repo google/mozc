@@ -43,8 +43,8 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/strings/assign.h"
-#include "converter/lattice.h"
 #include "absl/strings/string_view.h"
+#include "converter/lattice.h"
 
 #ifndef NDEBUG
 #define MOZC_CANDIDATE_DEBUG

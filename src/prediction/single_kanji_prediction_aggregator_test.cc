@@ -34,7 +34,6 @@
 
 #include "base/strings/unicode.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
@@ -46,6 +45,7 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/segments.h"
 #include "session/request_test_util.h"
 
 namespace mozc::prediction {

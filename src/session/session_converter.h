@@ -39,13 +39,13 @@
 #include <string>
 #include <vector>
 
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
 #include "session/internal/candidate_list.h"
 #include "session/session_converter_interface.h"
 

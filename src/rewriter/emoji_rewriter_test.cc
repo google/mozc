@@ -39,7 +39,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -52,6 +51,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

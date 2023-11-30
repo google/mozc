@@ -46,7 +46,7 @@
         '<(mozc_src_dir)/base/base.gyp:version',
         '<(mozc_oss_src_dir)/composer/composer.gyp:key_parser',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_src_dir)/converter/converter_base.gyp:segments',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',

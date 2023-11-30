@@ -32,10 +32,10 @@
 #include <tuple>
 
 #include "base/strings/unicode.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace prediction {

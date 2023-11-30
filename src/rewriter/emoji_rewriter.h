@@ -34,12 +34,12 @@
 #include <utility>
 
 #include "base/container/serialized_string_array.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/emoji_data.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

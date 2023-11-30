@@ -37,8 +37,6 @@
 
 #include "base/container/freelist.h"
 #include "base/logging.h"
-#include "converter/node.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
@@ -48,6 +46,8 @@
 #include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "converter/node.h"
+#include "converter/segments.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

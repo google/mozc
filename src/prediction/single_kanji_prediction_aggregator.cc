@@ -36,7 +36,6 @@
 
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -46,6 +45,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/composer.h"
+#include "converter/segments.h"
 
 namespace mozc::prediction {
 

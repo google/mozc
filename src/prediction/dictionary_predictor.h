@@ -37,11 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "converter/connector.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
@@ -57,6 +52,11 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/connector.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 
 namespace mozc::prediction {
 namespace dictionary_predictor_internal {

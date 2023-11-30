@@ -39,8 +39,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
@@ -50,6 +48,8 @@
 #include "rewriter/rewriter_util.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
 
 // SymbolRewriter:
 // 1. Update data/symbol/symbol.tsv

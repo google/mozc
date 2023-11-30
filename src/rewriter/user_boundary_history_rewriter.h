@@ -32,11 +32,11 @@
 
 #include <memory>
 
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

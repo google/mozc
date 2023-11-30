@@ -32,9 +32,6 @@
 #include <memory>
 #include <string>
 
-#include "converter/converter_interface.h"
-#include "converter/converter_mock.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -42,6 +39,9 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/converter_interface.h"
+#include "converter/converter_mock.h"
+#include "converter/segments.h"
 #include "session/session_converter.h"
 
 namespace mozc {

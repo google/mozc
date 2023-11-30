@@ -37,10 +37,10 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "rewriter/number_compound_util.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

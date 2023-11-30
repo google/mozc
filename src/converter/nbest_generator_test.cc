@@ -36,12 +36,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "converter/connector.h"
-#include "converter/immutable_converter.h"
-#include "converter/lattice.h"
-#include "converter/node.h"
-#include "converter/segmenter.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_impl.h"
@@ -57,6 +51,12 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "converter/connector.h"
+#include "converter/immutable_converter.h"
+#include "converter/lattice.h"
+#include "converter/node.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

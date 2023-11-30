@@ -44,10 +44,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/converter_interface.h"
-#include "converter/converter_mock.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -73,6 +69,10 @@
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/converter_interface.h"
+#include "converter/converter_mock.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segments.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

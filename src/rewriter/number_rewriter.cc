@@ -43,7 +43,6 @@
 #include "base/number_util.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
@@ -54,6 +53,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

@@ -34,10 +34,10 @@
 #include <utility>
 #include <vector>
 
-#include "converter/quality_regression_util.h"
 #include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
 #include "absl/status/status.h"
+#include "converter/quality_regression_util.h"
 
 namespace mozc {
 

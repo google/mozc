@@ -47,7 +47,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
@@ -72,6 +71,7 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "converter/segments.h"
 #include "session/request_test_util.h"
 
 namespace mozc::prediction {

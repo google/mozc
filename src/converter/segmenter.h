@@ -34,8 +34,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "converter/node.h"
 #include "data_manager/data_manager_interface.h"
+#include "converter/node.h"
 
 namespace mozc {
 
