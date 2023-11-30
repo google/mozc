@@ -47,7 +47,7 @@ mozc_dataset(
     outs = [
         "mozc.data",
         "mozc_data.inc",
-        "pos_list.h",
+        "pos_list.inc",
     ],
     a11y_description_src = (
         "//data/a11y_description:a11y_description_data.tsv"

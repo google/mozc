@@ -43,7 +43,7 @@ namespace {
 
 #if defined(MOZC_BUILD)
 // Contains the definition of kPosArray (embedded file).
-#include "data_manager/oss/pos_list.h"
+#include "data_manager/oss/pos_list.inc"
 #elif defined(GOOGLE_JAPANESE_INPUT_BUILD)  // MOZC_BUILD
 #else   // defined(MOZC_BUILD) or defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #error "Neither MOZC_BUILD nor GOOGLE_JAPANESE_INPUT_BUILD are defined"
