@@ -49,6 +49,9 @@ class PosListProviderInterface {
 
   // Gets possible list of POS which Mozc can handle.
   virtual std::vector<std::string> GetPosList() const = 0;
+
+  // Returns the index of the default POS in GetPosList.
+  virtual int GetPosListDefaultIndex() const = 0;
 };
 
 // Interface of the helper class used by POS.

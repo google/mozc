@@ -164,8 +164,10 @@ WordRegisterDialog::WordRegisterDialog()
     PartOfSpeechcomboBox->addItem(QString::fromUtf8(pos.c_str()));
   }
   // Set the default POS to "名詞" indexed with 1.
-  PartOfSpeechcomboBox->setCurrentIndex(1);
-  DCHECK(PartOfSpeechcomboBox->currentText() == "名詞") << "POS is not 名詞";
+  PartOfSpeechcomboBox->setCurrentIndex(
+      pos_list_provider_->GetPosListDefaultIndex());
+  DCHECK(PartOfSpeechcomboBox->currentText() == "名詞")
+      << "The default POS is not 名詞";
 
   // Create new dictionary if empty
   if (!session_->mutable_storage()->Exists().ok() ||

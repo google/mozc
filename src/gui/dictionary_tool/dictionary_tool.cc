@@ -423,10 +423,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   delegate->SetItemList(pos_list);
   dic_content_->setItemDelegateForColumn(2, delegate);
 
-  // Set the default POS to "名詞" indexed with 1.
-  constexpr absl::string_view kNoun = "名詞";
-  DCHECK(pos_list[1] == kNoun.data()) << "pos_list[1] is not " << kNoun;
-  default_pos_ = kNoun.data();
+  // Set the default POS. It should be "名詞".
+  default_pos_ = pos_list[pos_list_provider_->GetPosListDefaultIndex()];
+  DCHECK(default_pos_ == "名詞") << "The default POS is not 名詞";
 
   // Set up the main table widget for dictionary contents.
   dic_content_->setColumnCount(4);

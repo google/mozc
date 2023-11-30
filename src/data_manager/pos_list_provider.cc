@@ -51,16 +51,25 @@ namespace {
 
 }  // namespace
 
-std::vector<std::string> PosListProvider::GetPosList() const {
-
+PosListProvider::PosListProvider() {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
 
-  std::vector<std::string> pos_list(array.size());
+  std::vector<std::string> pos_list_(array.size());
   for (absl::string_view pos : array) {
-    pos_list.push_back({pos.data(), pos.size()});
+    if (pos == "名詞") {
+      pos_list_default_index_ = pos_list_.size();
+    }
+    pos_list_.push_back({pos.data(), pos.size()});
   }
-  return pos_list;
+}
+
+std::vector<std::string> PosListProvider::GetPosList() const {
+  return pos_list_;
+}
+
+int PosListProvider::GetPosListDefaultIndex() const {
+  return pos_list_default_index_;
 }
 
 }  // namespace mozc

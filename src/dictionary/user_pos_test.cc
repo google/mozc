@@ -62,6 +62,11 @@ class UserPosTest : public ::testing::Test {
   const testing::MockDataManager mock_data_manager_;
 };
 
+TEST_F(UserPosTest, GetPosListDefaultIndex) {
+  const std::vector<std::string> pos_list = user_pos_->GetPosList();
+  EXPECT_EQ(pos_list[user_pos_->GetPosListDefaultIndex()], "名詞");
+}
+
 TEST_F(UserPosTest, UserPosBasicTest) {
   const std::vector<std::string> pos_list = user_pos_->GetPosList();
   EXPECT_FALSE(pos_list.empty());
