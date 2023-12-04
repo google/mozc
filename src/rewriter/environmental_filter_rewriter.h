@@ -57,10 +57,10 @@
 #include <vector>
 
 #include "base/text_normalizer.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

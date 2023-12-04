@@ -29,12 +29,12 @@
 
 #include "session/session_usage_stats_util.h"
 
-#include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/string_view.h"
+#include "composer/key_parser.h"
 
 using mozc::commands::Context;
 using mozc::commands::Input;

@@ -44,7 +44,6 @@
 #include "base/protobuf/text_format.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "composer/key_parser.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "engine/engine_factory.h"
@@ -54,10 +53,6 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/request_test_util.h"
-#include "session/session_handler.h"
-#include "session/session_handler_interface.h"
-#include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/status/status.h"
@@ -66,6 +61,11 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/key_parser.h"
+#include "session/request_test_util.h"
+#include "session/session_handler.h"
+#include "session/session_handler_interface.h"
+#include "session/session_usage_observer.h"
 
 namespace mozc {
 namespace session {

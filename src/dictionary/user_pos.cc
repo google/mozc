@@ -55,17 +55,21 @@ UserPos::UserPos(absl::string_view token_array_data,
   DCHECK_EQ(token_array_data.size() % 8, 0);
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   string_array_.Set(string_array_data);
+  InitPosList();
 }
 
-void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
-  pos_list->clear();
+void UserPos::InitPosList() {
   absl::flat_hash_set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
     }
     const absl::string_view pos = string_array_[iter.pos_index()];
-    pos_list->emplace_back(pos.data(), pos.size());
+    if (pos == "名詞") {
+      // "名詞" is the default POS.
+      pos_list_default_index_ = pos_list_.size();
+    }
+    pos_list_.push_back({pos.data(), pos.size()});
   }
 }
 

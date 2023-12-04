@@ -32,7 +32,6 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
@@ -69,6 +68,7 @@
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
 #include "absl/flags/flag.h"
+#include "converter/converter_interface.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>  // for TARGET_OS_IPHONE

@@ -36,13 +36,13 @@
 #include <memory>
 #include <vector>
 
-#include "converter/segments.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

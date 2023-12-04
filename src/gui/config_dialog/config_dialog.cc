@@ -56,11 +56,11 @@
 #include "config/config_handler.h"
 #include "config/stats_config_util.h"
 #include "protocol/config.pb.h"
-#include "session/internal/keymap.h"
 #include "client/client.h"
 #include "gui/base/util.h"
 #include "gui/config_dialog/keymap_editor.h"
 #include "gui/config_dialog/roman_table_editor.h"
+#include "session/internal/keymap.h"
 
 #ifdef __APPLE__
 #include "base/mac/mac_util.h"

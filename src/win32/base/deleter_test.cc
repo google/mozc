@@ -117,8 +117,6 @@ TEST(VKBackBasedDeleterTest, OnKeyEventTestWhenNoDeletionIsOngoing) {
   commands::Output output;
   output.set_id(kOutputId);
 
-  InputState ime_state;
-
   EXPECT_FALSE(deleter.IsDeletionOngoing());
   EXPECT_EQ(keyboard_mock->last_send_input_data().size(), 0);
 

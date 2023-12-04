@@ -73,7 +73,7 @@ TEST(DictionaryFileTest, Basic) {
 
   {
     DictionaryFile df(DictionaryFileCodecFactory::GetCodec());
-    ASSERT_TRUE(df.OpenFromFile(dfn).ok());
+    ASSERT_OK(df.OpenFromFile(dfn));
     int len;
     const char *ptr = df.GetSection("sec1", &len);
     EXPECT_EQ(len, 10);

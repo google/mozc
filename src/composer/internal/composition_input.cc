@@ -34,9 +34,9 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "absl/strings/str_cat.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
-#include "absl/strings/str_cat.h"
 
 namespace mozc {
 namespace composer {

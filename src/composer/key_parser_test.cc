@@ -32,10 +32,10 @@
 #include <cstdint>
 #include <utility>
 
-#include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "composer/key_event_util.h"
 
 namespace mozc {
 namespace {

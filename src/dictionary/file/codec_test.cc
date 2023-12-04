@@ -137,7 +137,7 @@ TEST_F(CodecTest, FactoryTest) {
   }
   {
     EXPECT_EQ(sections.size(), 0);
-    EXPECT_TRUE(codec->ReadSections(nullptr, 0, &sections).ok());
+    EXPECT_OK(codec->ReadSections(nullptr, 0, &sections));
     EXPECT_EQ(sections.size(), 1);
     EXPECT_EQ(sections[0].name, "placeholder name");
   }
@@ -163,7 +163,7 @@ TEST_F(CodecTest, DefaultTest) {
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
-  ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
+  ASSERT_OK(codec->ReadSections(buf.data(), buf.size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));
@@ -196,7 +196,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
   ASSERT_OK(FileUtil::GetContents(test_file_.path(), &buf));
-  ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
+  ASSERT_OK(codec->ReadSections(buf.data(), buf.size(), &sections));
   ASSERT_EQ(2, sections.size());
   int index = -1;
   ASSERT_TRUE(FindSection(codec, sections, "Section 0", &index));

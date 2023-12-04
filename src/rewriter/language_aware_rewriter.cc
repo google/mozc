@@ -36,15 +36,15 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "composer/composer.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "composer/composer.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

@@ -39,20 +39,20 @@
 #include "base/strings/assign.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
-#include "converter/segments.h"
-#include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
+#include "converter/segments_matchers.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

@@ -35,9 +35,9 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 

@@ -59,7 +59,7 @@ TEST(ConnectorTest, CompareWithRawData) {
   ASSERT_OK(cmmap) << cmmap.status();
   auto status_or_connector =
       Connector::Create(cmmap->begin(), cmmap->size(), 256);
-  ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
+  ASSERT_OK(status_or_connector);
   auto connector = std::move(status_or_connector).value();
   ASSERT_EQ(1, connector.GetResolution());
 

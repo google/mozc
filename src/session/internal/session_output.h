@@ -36,12 +36,12 @@
 #include <cstdint>
 #include <string>
 
-#include "composer/composer.h"
-#include "converter/segments.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "session/internal/candidate_list.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "converter/segments.h"
+#include "session/internal/candidate_list.h"
 
 namespace mozc {
 namespace session {

@@ -39,15 +39,15 @@
 #include <string>
 #include <vector>
 
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/internal/candidate_list.h"
-#include "session/session_converter_interface.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
+#include "session/internal/candidate_list.h"
+#include "session/session_converter_interface.h"
 
 namespace mozc {
 namespace session {
@@ -175,7 +175,7 @@ class SessionConverter : public SessionConverterInterface {
                           const commands::Context &context,
                           size_t *consumed_key_size) override;
 
-  // Does allmost the same thing as CommitFirstSegment.
+  // Does almost the same thing as CommitFirstSegment.
   // The only difference is to fix the segments from the head to the focused.
   void CommitHeadToFocusedSegments(const composer::Composer &composer,
                                    const commands::Context &context,

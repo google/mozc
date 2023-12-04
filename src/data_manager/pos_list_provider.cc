@@ -36,12 +36,14 @@
 #include "base/embedded_file.h"
 #include "base/logging.h"
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 namespace {
 
 #if defined(MOZC_BUILD)
 // Contains the definition of kPosArray (embedded file).
-#include "data_manager/oss/pos_list.h"
+#include "data_manager/oss/pos_list.inc"
 #elif defined(GOOGLE_JAPANESE_INPUT_BUILD)  // MOZC_BUILD
 #else   // defined(MOZC_BUILD) or defined(GOOGLE_JAPANESE_INPUT_BUILD)
 #error "Neither MOZC_BUILD nor GOOGLE_JAPANESE_INPUT_BUILD are defined"
@@ -49,13 +51,25 @@ namespace {
 
 }  // namespace
 
-void PosListProvider::GetPosList(std::vector<std::string> *pos_list) const {
+PosListProvider::PosListProvider() {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
-  pos_list->resize(array.size());
-  for (size_t i = 0; i < array.size(); ++i) {
-    (*pos_list)[i].assign(array[i].begin(), array[i].end());
+
+  std::vector<std::string> pos_list_(array.size());
+  for (absl::string_view pos : array) {
+    if (pos == "名詞") {
+      pos_list_default_index_ = pos_list_.size();
+    }
+    pos_list_.push_back({pos.data(), pos.size()});
   }
+}
+
+std::vector<std::string> PosListProvider::GetPosList() const {
+  return pos_list_;
+}
+
+int PosListProvider::GetPosListDefaultIndex() const {
+  return pos_list_default_index_;
 }
 
 }  // namespace mozc

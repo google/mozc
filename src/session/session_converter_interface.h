@@ -35,13 +35,13 @@
 #include <cstddef>
 #include <string>
 
-#include "composer/composer.h"
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace session {

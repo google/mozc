@@ -37,9 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
@@ -49,6 +46,9 @@
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

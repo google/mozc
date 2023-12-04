@@ -44,16 +44,16 @@
 
 #include "base/logging.h"
 #include "base/version.h"
-#include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
-#include "session/key_info_util.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "client/client.h"
 #include "client/client_interface.h"
+#include "composer/key_event_util.h"
+#include "session/key_info_util.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
 
@@ -2688,8 +2688,6 @@ TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
     constexpr wchar_t kHiraganaA = L'\u3042';
     constexpr VirtualKey kVirtualKey = VirtualKey::FromCombinedVirtualKey(
         (static_cast<DWORD>(kHiraganaA) << 16) | VK_PACKET);
-    constexpr VirtualKey kLastKeydownVirtualKey =
-        VirtualKey::FromVirtualKey(VK_ESCAPE);
 
     constexpr BYTE kScanCode = 0;  // will be ignored in this test
     constexpr bool kIsKeyDown = true;

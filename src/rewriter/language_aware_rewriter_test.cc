@@ -31,10 +31,6 @@
 
 #include <string>
 
-#include "composer/composer.h"
-#include "composer/table.h"
-#include "converter/segments.h"
-#include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
@@ -46,6 +42,10 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "composer/table.h"
+#include "converter/segments.h"
+#include "converter/segments_matchers.h"
 
 namespace mozc {
 namespace {

@@ -38,9 +38,9 @@
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "absl/random/random.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

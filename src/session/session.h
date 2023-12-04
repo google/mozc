@@ -37,15 +37,15 @@
 #include <memory>
 #include <string>
 
-#include "composer/composer.h"
-#include "composer/table.h"
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "spelling/spellchecker_service_interface.h"
+#include "composer/composer.h"
+#include "composer/table.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
-#include "spelling/spellchecker_service_interface.h"
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"

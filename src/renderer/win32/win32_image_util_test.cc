@@ -276,11 +276,9 @@ class BalloonImageTest : public ::testing::Test,
   static CLSID clsid_png_;
   static CLSID clsid_bmp_;
 
-  static HANDLE font_handle_;
   static ULONG_PTR gdiplus_token_;
 };
 
-HANDLE BalloonImageTest::font_handle_;
 CLSID BalloonImageTest::clsid_png_;
 CLSID BalloonImageTest::clsid_bmp_;
 ULONG_PTR BalloonImageTest::gdiplus_token_;

@@ -35,8 +35,8 @@
 
 #include "base/protobuf/repeated_field.h"
 #include "base/strings/assign.h"
-#include "composer/table.h"
 #include "protocol/commands.pb.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

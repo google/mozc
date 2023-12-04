@@ -45,10 +45,10 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
-#include "session/session_server.h"
 #include "absl/base/config.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "session/session_server.h"
 
 ABSL_DECLARE_FLAG(bool, restricted);  // in SessionHandler
 

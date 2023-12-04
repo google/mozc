@@ -35,8 +35,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/converter_interface.h"
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -44,6 +42,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
+#include "converter/converter_interface.h"
+#include "converter/segments.h"
 
 namespace mozc {
 

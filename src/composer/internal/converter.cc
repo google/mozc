@@ -33,9 +33,9 @@
 
 #include <string>
 
-#include "composer/table.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

@@ -51,12 +51,12 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/key_info_util.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
+#include "session/key_info_util.h"
 
 #ifdef _WIN32
 #include <windows.h>

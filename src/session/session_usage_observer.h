@@ -37,8 +37,8 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
-#include "session/session_observer_interface.h"
 #include "usage_stats/usage_stats.h"
+#include "session/session_observer_interface.h"
 
 namespace mozc {
 namespace session {

@@ -415,7 +415,7 @@
             ],
           },
           'inputs': [
-            '<(mozc_dir)/converter/gen_segmenter_code.py',
+            '<(mozc_oss_src_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
           ],
           'outputs': [
@@ -424,7 +424,7 @@
           'action': [
             '<(python)', '<(mozc_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/segmenter_inl.inc',
-            '<(mozc_dir)/converter/gen_segmenter_code.py',
+            '<(mozc_oss_src_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
           ],
           'message': ('[<(dataset_tag)] Generating ' +
@@ -443,7 +443,7 @@
         '<(current_dir)/gen_<(dataset_tag)_segmenter_bitarray_main.cc',
       ],
       'dependencies': [
-        '<(mozc_dir)/converter/converter_base.gyp:gen_segmenter_bitarray',
+        '<(mozc_oss_src_dir)/converter/converter_base.gyp:gen_segmenter_bitarray',
         'gen_<(dataset_tag)_segmenter_inl_header',
       ],
     },
@@ -493,7 +493,7 @@
             'special_pos': '<(mozc_oss_src_dir)/data/rules/special_pos.def',
           },
           'inputs': [
-            '<(mozc_dir)/converter/gen_boundary_data.py',
+            '<(mozc_oss_src_dir)/converter/gen_boundary_data.py',
             '<(boundary_def_var)',
             '<(id_def)',
             '<(special_pos)',
@@ -503,7 +503,7 @@
           ],
           'action': [
             '<(python)',
-            '<(mozc_dir)/converter/gen_boundary_data.py',
+            '<(mozc_oss_src_dir)/converter/gen_boundary_data.py',
             '--boundary_def=<(boundary_def)',
             '--id_def=<(platform_data_dir)/id.def',
             '--special_pos=<(mozc_oss_src_dir)/data/rules/special_pos.def',

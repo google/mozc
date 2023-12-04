@@ -185,7 +185,10 @@ class UserPos : public UserPosInterface {
   UserPos &operator=(const UserPos &) = delete;
 
   // Implementation of UserPosInterface.
-  void GetPosList(std::vector<std::string> *pos_list) const override;
+  std::vector<std::string> GetPosList() const override { return pos_list_; }
+  int GetPosListDefaultIndex() const override {
+    return pos_list_default_index_;
+  }
   bool IsValidPos(absl::string_view pos) const override;
   bool GetPosIds(absl::string_view pos, uint16_t *id) const override;
   bool GetTokens(absl::string_view key, absl::string_view value,
@@ -198,8 +201,12 @@ class UserPos : public UserPosInterface {
   }
 
  private:
+  void InitPosList();
+
   absl::string_view token_array_data_;
   SerializedStringArray string_array_;
+  std::vector<std::string> pos_list_;
+  int pos_list_default_index_ = 0;
 };
 
 }  // namespace dictionary

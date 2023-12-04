@@ -32,10 +32,10 @@
 
 #include <string>
 
-#include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc::prediction {
 

@@ -172,7 +172,12 @@ class UserPosMock : public UserPosInterface {
     }
   }
 
-  void GetPosList(std::vector<std::string> *pos_list) const override {}
+  std::vector<std::string> GetPosList() const override {
+    return {{kNoun.data(), kNoun.size()}};
+  }
+  int GetPosListDefaultIndex() const override {
+    return 0;
+  }
 
   bool GetPosIds(absl::string_view pos, uint16_t *id) const override {
     return false;

@@ -38,15 +38,15 @@
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
-#include "session/request_test_util.h"
-#include "session/session_handler_test_util.h"
-#include "session/session_handler_tool.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "session/request_test_util.h"
+#include "session/session_handler_test_util.h"
+#include "session/session_handler_tool.h"
 
 namespace mozc {
 

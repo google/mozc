@@ -32,12 +32,12 @@
 #include <memory>
 #include <string>
 
-#include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

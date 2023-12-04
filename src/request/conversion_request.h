@@ -33,10 +33,10 @@
 #include <type_traits>
 
 #include "base/logging.h"
-#include "composer/composer.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "composer/composer.h"
 
 namespace mozc {
 inline constexpr size_t kMaxConversionCandidatesSize = 200;

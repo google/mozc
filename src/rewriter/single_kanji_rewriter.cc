@@ -36,7 +36,6 @@
 
 #include "base/logging.h"
 #include "base/strings/assign.h"
-#include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
@@ -46,6 +45,7 @@
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 using mozc::dictionary::PosMatcher;
 

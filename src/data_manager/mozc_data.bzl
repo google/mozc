@@ -101,7 +101,7 @@ def mozc_dataset(
 
     Args:
       name: data set target name to be generated.
-      outs: list of output files (mozc.data, mozc_data.inc, and pos_list.h).
+      outs: list of output files (mozc.data, mozc_data.inc, and pos_list.inc).
       a11y_description_src: the source of a11y descriptions.
       boundary_def: boundary definition file.
       cforms: cform definition file.

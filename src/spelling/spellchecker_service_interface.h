@@ -36,9 +36,9 @@
 #include <string>
 #include <vector>
 
-#include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/engine_builder.pb.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace spelling {

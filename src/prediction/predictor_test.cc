@@ -34,10 +34,7 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "composer/composer.h"
 #include "config/config_handler.h"
-#include "converter/converter_mock.h"
-#include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
@@ -47,10 +44,13 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "converter/converter_mock.h"
+#include "converter/segments.h"
+#include "session/request_test_util.h"
 
 namespace mozc::prediction {
 namespace {

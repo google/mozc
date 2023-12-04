@@ -280,16 +280,17 @@ mozc_cc_library(
     srcs = ["pos_list_provider.cc"],
     hdrs = ["pos_list_provider.h"],
     textual_hdrs = mozc_select(
-        android = ["//data_manager/android:pos_list.h"],
-        client = ["//data_manager/google:pos_list.h"],
+        android = ["//data_manager/android:pos_list.inc"],
+        client = ["//data_manager/google:pos_list.inc"],
         default = [],
-        oss = ["//data_manager/oss:pos_list.h"],
+        oss = ["//data_manager/oss:pos_list.inc"],
     ),
     deps = [
         "//base:embedded_file",
         "//base:logging",
         "//base/container:serialized_string_array",
         "//dictionary:user_pos_interface",
+        "@com_google_absl//absl/strings",
     ],
 )
 

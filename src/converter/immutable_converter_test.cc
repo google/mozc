@@ -40,12 +40,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "converter/connector.h"
-#include "converter/lattice.h"
-#include "converter/node.h"
-#include "converter/segmenter.h"
-#include "converter/segments.h"
-#include "converter/segments_matchers.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_impl.h"
@@ -60,11 +54,17 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "session/request_test_util.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "converter/connector.h"
+#include "converter/lattice.h"
+#include "converter/node.h"
+#include "converter/segmenter.h"
+#include "converter/segments.h"
+#include "converter/segments_matchers.h"
+#include "session/request_test_util.h"
 
 namespace mozc {
 namespace {

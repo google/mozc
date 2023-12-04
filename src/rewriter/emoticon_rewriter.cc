@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -47,6 +46,7 @@
 #include "rewriter/rewriter_util.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

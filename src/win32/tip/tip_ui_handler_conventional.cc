@@ -216,8 +216,7 @@ bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
     return false;
   }
 
-  const HWND window_handle =
-      WinUtil::DecodeWindowHandle(app_info->target_window_handle());
+  (void)WinUtil::DecodeWindowHandle(app_info->target_window_handle());
 
   wil::com_ptr_nothrow<ITfRange> range =
       has_composition ? GetCompositionRange(context, read_cookie)

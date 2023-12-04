@@ -32,8 +32,8 @@
 
 #include <string>
 
-#include "composer/internal/transliterator_interface.h"
 #include "absl/strings/string_view.h"
+#include "composer/internal/transliterator_interface.h"
 
 namespace mozc {
 namespace composer {

@@ -46,12 +46,6 @@
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
-#include "composer/internal/composition.h"
-#include "composer/internal/composition_input.h"
-#include "composer/internal/mode_switching_handler.h"
-#include "composer/internal/transliterators.h"
-#include "composer/key_event_util.h"
-#include "composer/table.h"
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -61,6 +55,12 @@
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "composer/internal/composition.h"
+#include "composer/internal/composition_input.h"
+#include "composer/internal/mode_switching_handler.h"
+#include "composer/internal/transliterators.h"
+#include "composer/key_event_util.h"
+#include "composer/table.h"
 
 namespace mozc {
 namespace composer {

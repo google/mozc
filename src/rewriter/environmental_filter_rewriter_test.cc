@@ -37,7 +37,6 @@
 
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "converter/segments.h"
 #include "data_manager/emoji_data.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
@@ -46,6 +45,7 @@
 #include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

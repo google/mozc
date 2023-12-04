@@ -33,9 +33,9 @@
 #include <string>
 
 #include "base/init_mozc.h"
+#include "absl/flags/flag.h"
 #include "composer/internal/composition.h"
 #include "composer/table.h"
-#include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
           "preedit conversion table file.");

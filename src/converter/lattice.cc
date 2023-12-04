@@ -42,10 +42,10 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/strings/unicode.h"
-#include "converter/node.h"
-#include "converter/node_allocator.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "converter/node.h"
+#include "converter/node_allocator.h"
 
 namespace mozc {
 namespace {

@@ -35,12 +35,12 @@
 #include <utility>
 #include <vector>
 
-#include "composer/composer.h"
-#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
+#include "composer/composer.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace date_rewriter_internal {

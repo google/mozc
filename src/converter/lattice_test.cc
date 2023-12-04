@@ -32,9 +32,9 @@
 #include <set>
 #include <string>
 
-#include "converter/node.h"
 #include "testing/gunit.h"
 #include "absl/container/btree_set.h"
+#include "converter/node.h"
 
 namespace mozc {
 

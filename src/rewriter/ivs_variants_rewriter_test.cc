@@ -29,9 +29,9 @@
 
 #include "rewriter/ivs_variants_rewriter.h"
 
-#include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
+#include "converter/segments.h"
 
 namespace mozc {
 namespace {

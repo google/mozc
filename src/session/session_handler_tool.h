@@ -40,11 +40,11 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/session_handler_interface.h"
-#include "session/session_observer_interface.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "session/session_handler_interface.h"
+#include "session/session_observer_interface.h"
 
 namespace mozc {
 namespace session {

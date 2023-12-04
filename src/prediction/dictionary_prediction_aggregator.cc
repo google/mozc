@@ -44,11 +44,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "composer/composer.h"
-#include "converter/converter_interface.h"
-#include "converter/immutable_converter_interface.h"
-#include "converter/node_list_builder.h"
-#include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
@@ -66,6 +61,11 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "composer/composer.h"
+#include "converter/converter_interface.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/node_list_builder.h"
+#include "converter/segments.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG

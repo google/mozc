@@ -61,7 +61,7 @@
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/client/client.gyp:client',
-        '<(mozc_src_dir)/composer/composer.gyp:key_parser',
+        '<(mozc_oss_src_dir)/composer/composer.gyp:key_parser',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/storage/storage.gyp:storage',
