@@ -42,16 +42,16 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "prediction/number_decoder.h"
-#include "prediction/prediction_aggregator_interface.h"
-#include "prediction/result.h"
-#include "prediction/single_kanji_prediction_aggregator.h"
-#include "prediction/zero_query_dict.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "prediction/number_decoder.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
+#include "prediction/single_kanji_prediction_aggregator.h"
+#include "prediction/zero_query_dict.h"
 
 namespace mozc {
 namespace prediction {

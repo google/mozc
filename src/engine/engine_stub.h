@@ -37,9 +37,9 @@
 #include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
-#include "prediction/predictor_interface.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc {
 

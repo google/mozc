@@ -30,10 +30,10 @@
 #ifndef MOZC_PREDICTION_RESCORER_INTERFACE_H_
 #define MOZC_PREDICTION_RESCORER_INTERFACE_H_
 
-#include "prediction/result.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "prediction/result.h"
 
 namespace mozc::prediction {
 

@@ -59,11 +59,6 @@
 #include "engine/engine.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
-#include "prediction/dictionary_predictor.h"
-#include "prediction/predictor.h"
-#include "prediction/predictor_interface.h"
-#include "prediction/suggestion_filter.h"
-#include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -85,6 +80,11 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "prediction/dictionary_predictor.h"
+#include "prediction/predictor.h"
+#include "prediction/predictor_interface.h"
+#include "prediction/suggestion_filter.h"
+#include "prediction/user_history_predictor.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

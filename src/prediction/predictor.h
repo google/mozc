@@ -33,12 +33,12 @@
 #include <memory>
 #include <string>
 
-#include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc::prediction {
 

@@ -38,7 +38,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -46,6 +45,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc::prediction {
 namespace {

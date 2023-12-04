@@ -39,13 +39,13 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "prediction/result.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "prediction/result.h"
 
 namespace mozc::prediction {
 

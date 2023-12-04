@@ -51,7 +51,6 @@
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -64,6 +63,7 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "prediction/suggestion_filter.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

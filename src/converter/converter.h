@@ -39,7 +39,6 @@
 
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
@@ -49,6 +48,7 @@
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc {
 

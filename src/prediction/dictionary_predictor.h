@@ -41,11 +41,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "prediction/prediction_aggregator_interface.h"
-#include "prediction/predictor_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/result.h"
-#include "prediction/suggestion_filter.h"
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -57,6 +52,11 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/predictor_interface.h"
+#include "prediction/rescorer_interface.h"
+#include "prediction/result.h"
+#include "prediction/suggestion_filter.h"
 
 namespace mozc::prediction {
 namespace dictionary_predictor_internal {

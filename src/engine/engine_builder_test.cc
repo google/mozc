@@ -38,13 +38,13 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "engine/engine_interface.h"
-#include "prediction/predictor_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "prediction/predictor_interface.h"
 
 namespace mozc {
 namespace {

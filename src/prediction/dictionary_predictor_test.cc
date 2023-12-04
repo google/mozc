@@ -46,11 +46,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/rescorer_mock.h"
-#include "prediction/result.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -74,6 +69,11 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/rescorer_interface.h"
+#include "prediction/rescorer_mock.h"
+#include "prediction/result.h"
+#include "prediction/suggestion_filter.h"
 #include "session/request_test_util.h"
 
 namespace mozc::prediction {

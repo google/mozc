@@ -654,7 +654,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
+        '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
       ],
       'actions': [
         {
@@ -888,7 +888,7 @@
         {
           'action_name': 'gen_separate_zero_query_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/prediction/gen_zero_query_data.py',
+            'generator': '<(mozc_oss_src_dir)/prediction/gen_zero_query_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_oss_src_dir)/data/emoticon/categorized.tsv',
@@ -917,7 +917,7 @@
         {
           'action_name': 'gen_separate_zero_query_number_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/prediction/gen_zero_query_number_data.py',
+            'generator': '<(mozc_oss_src_dir)/prediction/gen_zero_query_number_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/zero_query/zero_query_number.def',
             ],

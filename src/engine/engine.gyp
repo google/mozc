@@ -72,8 +72,8 @@
         '../dictionary/dictionary_base.gyp:user_pos',
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
         '../dictionary/system/system_dictionary.gyp:value_dictionary',
-        '../prediction/prediction.gyp:prediction',
-        '../prediction/prediction_base.gyp:suggestion_filter',
+        '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
+        '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../request/request.gyp:conversion_request',
@@ -90,7 +90,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../data_manager/oss/oss_data_manager.gyp:oss_data_manager',
-        '../prediction/prediction.gyp:prediction',
+        '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
         'engine',
         'engine_builder'
       ],

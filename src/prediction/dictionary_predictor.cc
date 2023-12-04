@@ -46,11 +46,6 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
-#include "prediction/dictionary_prediction_aggregator.h"
-#include "prediction/prediction_aggregator_interface.h"
-#include "prediction/rescorer_interface.h"
-#include "prediction/result.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
@@ -68,6 +63,11 @@
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "prediction/dictionary_prediction_aggregator.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/rescorer_interface.h"
+#include "prediction/result.h"
+#include "prediction/suggestion_filter.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG
