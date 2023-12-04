@@ -1,10 +1,11 @@
 #!/bin/sh
 
+set -e
 MOZC_VERSION=`../scripts/get_mozc_version`
 
 if [ "$?" != 0 -o -z MOZC_VERSION ]; then
     echo "Failed to get mozc version"
-    exit
+    exit 1
 fi
 
 xq -e --arg MOZC_VERSION "$MOZC_VERSION" '.component.releases.release[] | select(."@version" == $MOZC_VERSION)'  unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in && exit 1
