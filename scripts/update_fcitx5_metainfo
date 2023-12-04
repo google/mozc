@@ -12,6 +12,6 @@ xq -e --arg MOZC_VERSION "$MOZC_VERSION" '.component.releases.release[] | select
 
 DATE=`date +%Y-%m-%d`
 
-xq -x --xml-dtd --arg MOZC_VERSION "$MOZC_VERSION" --arg DATE "$DATE" '.component.releases.release |= . + [{"@version": $MOZC_VERSION, "@date": $DATE}]' unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in > unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in.new
+xq -x --xml-dtd --arg MOZC_VERSION "$MOZC_VERSION" --arg DATE "$DATE" '.component.releases.release |= [{"@version": $MOZC_VERSION, "@date": $DATE}] + .' unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in > unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in.new
 
 mv unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in{.new,}

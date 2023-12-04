@@ -10,8 +10,8 @@
   <url type="bugtracker">https://github.com/fcitx/mozc/issues</url>
   <project_group>Fcitx</project_group>
   <releases>
+    <release version="2.29.5291.102" date="2023-12-04"></release>
     <release version="2.26.4220.106.1" date="2021-01-16"></release>
     <release version="2.25.4150.102.1" date="2020-11-10"></release>
-    <release version="2.29.5291.102" date="2023-12-04"></release>
   </releases>
 </component>
