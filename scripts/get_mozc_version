@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+bazel build --config oss_linux base:mozc_version_txt >/dev/null 2>&1
+python3 -c 'from build_tools.mozc_version import MozcVersion; print(MozcVersion("bazel-bin/base/mozc_version.txt").GetVersionString())'
