@@ -77,7 +77,7 @@
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../request/request.gyp:conversion_request',
-        '../rewriter/rewriter.gyp:rewriter',
+        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
       ],
       'export_dependent_settings': [
         '../dictionary/dictionary_base.gyp:pos_matcher',

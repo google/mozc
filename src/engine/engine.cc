@@ -47,8 +47,6 @@
 #include "dictionary/user_dictionary.h"
 #include "dictionary/user_pos.h"
 #include "engine/user_data_manager_interface.h"
-#include "rewriter/rewriter.h"
-#include "rewriter/rewriter_interface.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -61,6 +59,8 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/variants_rewriter.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
@@ -52,6 +51,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "rewriter/variants_rewriter.h"
 
 namespace mozc {
 namespace {

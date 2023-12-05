@@ -31,8 +31,8 @@
 #define MOZC_REWRITER_IVS_VARIANTS_REWRITER_H_
 
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
 #include "converter/segments.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

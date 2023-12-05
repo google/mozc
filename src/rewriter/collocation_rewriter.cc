@@ -44,7 +44,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
-#include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
 #include "absl/status/statusor.h"
@@ -53,6 +52,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/segments.h"
+#include "rewriter/collocation_util.h"
 
 ABSL_FLAG(bool, use_collocation, true, "use collocation rewrite");
 

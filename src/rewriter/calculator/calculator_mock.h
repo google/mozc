@@ -36,9 +36,9 @@
 #include <string>
 #include <utility>
 
-#include "rewriter/calculator/calculator_interface.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
+#include "rewriter/calculator/calculator_interface.h"
 
 namespace mozc {
 

@@ -39,8 +39,8 @@
         'calculator.cc',
       ],
       'dependencies': [
-        '../../base/base.gyp:base',
-        '../../base/base.gyp:number_util',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:number_util',
       ],
       'msvs_disabled_warnings': [
         # switch statement contains 'default' but no 'case' labels
@@ -60,8 +60,8 @@
         'calculator_mock.cc',
       ],
       'dependencies': [
-        '../../base/absl.gyp:absl_strings',
-        '../../base/base.gyp:base',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/base.gyp:base',
         'calculator',
       ],
     },
@@ -83,8 +83,8 @@
         'calculator_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        '../../testing/testing.gyp:mozctest',
+        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
         'calculator',
         'install_calculator_test_data',
       ],

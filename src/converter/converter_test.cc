@@ -62,8 +62,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter.h"
-#include "rewriter/rewriter_interface.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -85,6 +83,8 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/user_history_predictor.h"
+#include "rewriter/rewriter.h"
+#include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

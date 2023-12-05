@@ -118,7 +118,7 @@
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         'connector',
         'immutable_converter_interface',
         'segmenter',

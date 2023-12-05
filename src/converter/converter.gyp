@@ -49,7 +49,7 @@
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction_protocol',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_src_dir)/rewriter/rewriter.gyp:rewriter',
+        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'converter_base.gyp:immutable_converter',
         'converter_base.gyp:immutable_converter_interface',

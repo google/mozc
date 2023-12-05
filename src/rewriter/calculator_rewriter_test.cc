@@ -39,8 +39,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/calculator/calculator_interface.h"
-#include "rewriter/calculator/calculator_mock.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -49,6 +47,8 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "rewriter/calculator/calculator_interface.h"
+#include "rewriter/calculator/calculator_mock.h"
 
 namespace mozc {
 namespace {

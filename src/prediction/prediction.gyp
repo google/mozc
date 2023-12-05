@@ -61,7 +61,7 @@
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_src_dir)/rewriter/rewriter.gyp:rewriter',
+        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '<(mozc_src_dir)/storage/storage.gyp:storage',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
