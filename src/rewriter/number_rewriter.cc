@@ -48,12 +48,12 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/number_compound_util.h"
-#include "rewriter/rewriter_interface.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "rewriter/number_compound_util.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

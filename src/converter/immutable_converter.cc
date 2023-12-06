@@ -49,7 +49,6 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -67,6 +66,7 @@
 #include "converter/node_list_builder.h"
 #include "converter/segmenter.h"
 #include "converter/segments.h"
+#include "prediction/suggestion_filter.h"
 
 namespace mozc {
 namespace {

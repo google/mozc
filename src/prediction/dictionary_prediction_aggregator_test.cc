@@ -51,9 +51,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suffix_dictionary.h"
-#include "prediction/prediction_aggregator_interface.h"
-#include "prediction/result.h"
-#include "prediction/zero_query_dict.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -73,6 +70,9 @@
 #include "converter/converter_mock.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "prediction/prediction_aggregator_interface.h"
+#include "prediction/result.h"
+#include "prediction/zero_query_dict.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

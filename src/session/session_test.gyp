@@ -65,7 +65,7 @@
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/engine/engine.gyp:engine',
         '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
-        '<(mozc_src_dir)/rewriter/rewriter.gyp:rewriter',
+        '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',

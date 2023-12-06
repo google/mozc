@@ -38,11 +38,11 @@
 
 #include "base/util.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "converter/segments.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

@@ -39,6 +39,7 @@ Typical usage:
 
 import glob
 import logging
+import multiprocessing
 import optparse
 import os
 import pathlib
@@ -532,6 +533,12 @@ def GypMain(options, unused_args):
   # TODO(yukawa): Enable GYP_CROSSCOMPILE for Windows.
   if not IsWindows():
     os.environ['GYP_CROSSCOMPILE'] = '1'
+
+  if IsWindows() and multiprocessing.cpu_count() > 63:
+    # GYP fails on Windows with more than 63 cores:
+    #   "ValueError: need at most 63 handles"
+    # GYP doesn't have an option to set max threads, just disable parallel.
+    gyp_options.append('--no-parallel')
 
   # Run GYP.
   logging.info('Running GYP...')

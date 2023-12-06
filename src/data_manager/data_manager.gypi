@@ -104,7 +104,7 @@
       'toolsets': ['host'],
       'dependencies': [
         '../data_manager_base.gyp:dataset_writer_main',
-        '../../rewriter/rewriter_base.gyp:gen_rewriter_files#host',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_rewriter_files#host',
         '<(dataset_tag)_data_manager_base.gyp:gen_separate_pos_matcher_data_for_<(dataset_tag)#host',
         '<(dataset_tag)_data_manager_base.gyp:gen_separate_user_pos_data_for_<(dataset_tag)#host',
         'gen_separate_connection_data_for_<(dataset_tag)#host',
@@ -570,7 +570,7 @@
             '<(gen_out_dir)/reading_correction_correction.data',
           ],
           'action': [
-            '<(python)', '<(mozc_dir)/rewriter/gen_reading_correction_data.py',
+            '<(python)', '<(mozc_oss_src_dir)/rewriter/gen_reading_correction_data.py',
             '--input=<@(input_files)',
             '--output_value_array=<(gen_out_dir)/reading_correction_value.data',
             '--output_error_array=<(gen_out_dir)/reading_correction_error.data',
@@ -586,7 +586,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_collocation_data_main#host',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_collocation_data_main#host',
       ],
       'actions': [
         {
@@ -620,7 +620,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_collocation_suppression_data_main#host',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_collocation_suppression_data_main#host',
       ],
       'actions': [
         {
@@ -654,7 +654,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
+        '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:gen_suggestion_filter_main#host',
       ],
       'actions': [
         {
@@ -690,7 +690,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_symbol_rewriter_dictionary_main#host',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_symbol_rewriter_dictionary_main#host',
       ],
       'actions': [
         {
@@ -731,7 +731,7 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_emoticon_rewriter_data_main',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_emoticon_rewriter_data_main',
       ],
       'actions': [
         {
@@ -768,7 +768,7 @@
         {
           'action_name': 'gen_separate_emoji_rewriter_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/rewriter/gen_emoji_rewriter_data.py',
+            'generator': '<(mozc_oss_src_dir)/rewriter/gen_emoji_rewriter_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
             ],
@@ -796,13 +796,13 @@
       'type': 'none',
       'toolsets': ['host'],
       'dependencies': [
-        '../../rewriter/rewriter_base.gyp:gen_single_kanji_noun_prefix_data_main',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_base.gyp:gen_single_kanji_noun_prefix_data_main',
       ],
       'actions': [
         {
           'action_name': 'gen_single_kanji_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/rewriter/gen_single_kanji_rewriter_data.py',
+            'generator': '<(mozc_oss_src_dir)/rewriter/gen_single_kanji_rewriter_data.py',
             'single_kanji_file': '<(mozc_oss_src_dir)/data/single_kanji/single_kanji.tsv',
             'variant_file': '<(mozc_oss_src_dir)/data/single_kanji/variant_rule.txt',
           },
@@ -870,7 +870,7 @@
             '<(gen_out_dir)/counter_suffix.data',
           ],
           'action': [
-            '<(python)', '<(mozc_dir)/rewriter/gen_counter_suffix_array.py',
+            '<(python)', '<(mozc_oss_src_dir)/rewriter/gen_counter_suffix_array.py',
             '--id_file=<(id_file)',
             '--output=<(gen_out_dir)/counter_suffix.data',
             '<@(input_files)',
@@ -888,7 +888,7 @@
         {
           'action_name': 'gen_separate_zero_query_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/prediction/gen_zero_query_data.py',
+            'generator': '<(mozc_oss_src_dir)/prediction/gen_zero_query_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/emoji/emoji_data.tsv',
               '<(mozc_oss_src_dir)/data/emoticon/categorized.tsv',
@@ -917,7 +917,7 @@
         {
           'action_name': 'gen_separate_zero_query_number_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/prediction/gen_zero_query_number_data.py',
+            'generator': '<(mozc_oss_src_dir)/prediction/gen_zero_query_number_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/zero_query/zero_query_number.def',
             ],
@@ -947,7 +947,7 @@
         {
           'action_name': 'gen_separate_a11y_description_rewriter_data_for_<(dataset_tag)',
           'variables': {
-            'generator': '<(mozc_dir)/rewriter/gen_a11y_description_rewriter_data.py',
+            'generator': '<(mozc_oss_src_dir)/rewriter/gen_a11y_description_rewriter_data.py',
             'input_files': [
               '<(mozc_oss_src_dir)/data/a11y_description/a11y_description_data.tsv',
             ],

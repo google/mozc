@@ -45,7 +45,7 @@
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',
         '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../prediction/prediction_base.gyp:suggestion_filter',
+        '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
         '../testing/testing.gyp:testing',
         'data_manager.gyp:connection_file_reader',
       ],

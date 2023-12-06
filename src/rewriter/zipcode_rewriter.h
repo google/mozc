@@ -33,8 +33,8 @@
 #include <string>
 
 #include "dictionary/pos_matcher.h"
-#include "rewriter/rewriter_interface.h"
 #include "converter/segments.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

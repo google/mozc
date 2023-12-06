@@ -40,7 +40,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
@@ -48,6 +47,7 @@
 #include "absl/strings/str_format.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "prediction/suggestion_filter.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

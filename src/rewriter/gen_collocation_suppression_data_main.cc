@@ -50,9 +50,9 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "rewriter/gen_existence_data.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_split.h"
+#include "rewriter/gen_existence_data.h"
 
 ABSL_FLAG(std::string, suppression_data, "", "suppression data text");
 ABSL_FLAG(std::string, output, "", "output file name (default: stdout)");

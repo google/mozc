@@ -43,10 +43,8 @@
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/predictor_interface.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
@@ -54,6 +52,8 @@
 #include "composer/composer.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "prediction/predictor_interface.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 namespace {

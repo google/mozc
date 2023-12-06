@@ -30,8 +30,8 @@
 #ifndef MOZC_REWRITER_DICE_REWRITER_H_
 #define MOZC_REWRITER_DICE_REWRITER_H_
 
-#include "rewriter/rewriter_interface.h"
 #include "absl/random/random.h"
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 

@@ -50,7 +50,6 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
@@ -60,6 +59,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "rewriter/variants_rewriter.h"
 
 namespace mozc {
 namespace {

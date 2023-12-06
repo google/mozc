@@ -51,7 +51,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -72,6 +71,7 @@
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/segments.h"
+#include "prediction/user_history_predictor.pb.h"
 #include "session/request_test_util.h"
 
 namespace mozc::prediction {

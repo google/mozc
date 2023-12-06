@@ -40,7 +40,7 @@
       'target_name': 'gen_rewriter_files',
       'type': 'none',
       'dependencies': [
-        '../dictionary/dictionary_base.gyp:pos_util',
+        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:pos_util',
         'gen_usage_rewriter_dictionary_main#host',
       ],
       'toolsets': ['host'],
@@ -89,8 +89,8 @@
         'gen_existence_data.cc'
       ],
       'dependencies': [
-        '../storage/storage.gyp:storage#host',
-        '../base/base.gyp:codegen_bytearray_stream#host',
+        '<(mozc_src_dir)/storage/storage.gyp:storage#host',
+        '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream#host',
       ],
     },
     {
@@ -101,7 +101,7 @@
         'gen_collocation_data_main.cc',
       ],
       'dependencies': [
-        '../base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         'gen_existence_data',
       ],
     },
@@ -125,13 +125,13 @@
         'gen_symbol_rewriter_dictionary_main.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:japanese_util',
-        '../base/base.gyp:serialized_string_array',
-        '../data_manager/data_manager_base.gyp:data_manager',
-        '../data_manager/data_manager_base.gyp:serialized_dictionary',
-        '../dictionary/dictionary_base.gyp:pos_matcher',
-        '../dictionary/dictionary_base.gyp:user_pos',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:japanese_util',
+        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
+        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:user_pos',
       ],
     },
     {
@@ -142,8 +142,8 @@
         'gen_usage_rewriter_dictionary_main.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:serialized_string_array',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
       ],
     },
     {
@@ -154,9 +154,9 @@
         'gen_emoticon_rewriter_data.cc',
       ],
       'dependencies': [
-        '../base/absl.gyp:absl_strings',
-        '../base/base.gyp:base',
-        '../data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
     {
@@ -167,8 +167,8 @@
         'gen_single_kanji_noun_prefix_data.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
   ],

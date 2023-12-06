@@ -44,9 +44,9 @@
         '../engine/engine_test.gyp:engine_all_test',
         '<(mozc_oss_src_dir)/gui/gui.gyp:gui_all_test',
         '../ipc/ipc.gyp:ipc_all_test',
-        '../prediction/prediction_test.gyp:prediction_all_test',
+        '<(mozc_oss_src_dir)/prediction/prediction_test.gyp:prediction_all_test',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_all_test',
-        '../rewriter/rewriter_test.gyp:rewriter_all_test',
+        '<(mozc_oss_src_dir)/rewriter/rewriter_test.gyp:rewriter_all_test',
         # Currently 'server_all_test' does not exist.
         # '<(mozc_oss_src_dir)/server/server.gyp:server_all_test',
         '<(mozc_oss_src_dir)/session/session_test.gyp:session_all_test',

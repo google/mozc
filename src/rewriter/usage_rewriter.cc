@@ -43,10 +43,10 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/usage_rewriter.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "converter/segments.h"
+#include "rewriter/usage_rewriter.h"
 
 namespace mozc {
 

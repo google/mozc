@@ -57,11 +57,9 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/user_history_predictor.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/variants_rewriter.h"
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
@@ -75,6 +73,8 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "prediction/user_history_predictor.pb.h"
+#include "rewriter/variants_rewriter.h"
 
 namespace mozc::prediction {
 namespace {

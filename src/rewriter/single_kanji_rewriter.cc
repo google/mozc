@@ -42,10 +42,10 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "rewriter/rewriter_interface.h"
-#include "rewriter/rewriter_util.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "rewriter/rewriter_interface.h"
+#include "rewriter/rewriter_util.h"
 
 using mozc::dictionary::PosMatcher;
 
