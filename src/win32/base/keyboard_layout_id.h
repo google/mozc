@@ -40,12 +40,12 @@ namespace win32 {
 // This class represents a keyboard layout identifier (KLID).  You can use this
 // class to convert to/from both KLID text representation like "04110411" and
 // KLID integer representation like 0x04110411.
-// Please note that the HKY (a handle to a keyboard layout) is based on
-// its entirely different principle from HKID.
-// To obtain a HKY corresponding to HKID, use ::LoadKeyboardLayout.  Do not
-// make a handle based on the integer representation of KLID.
+// Please note that the HKL (a handle to a keyboard layout) is based on
+// the entirely different principle from KLID.
+// To obtain a HKL corresponding to KLID, use ::LoadKeyboardLayout.  Do not
+// make a HKL handle based on the integer representation of KLID.
 // See the following article for details.
-// http://blogs.msdn.com/b/michkap/archive/2005/04/17/409032.aspx
+// https://archives.miloush.net/michkap/archive/2005/04/17/409032.html
 // Note that this simple wrapper accepts any KLID even if the ID is not
 // registered in the registry.
 class KeyboardLayoutID {
