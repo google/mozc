@@ -36,6 +36,7 @@
 #include "base/protobuf/text_format.h"
 #include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "third_party/protobuf/unredacted_debug_format_for_test.h"
 
 #undef GetMessage  // Undef Win32 macro.
 
@@ -47,6 +48,7 @@ using ::mozc::protobuf::FieldDescriptor;
 using ::mozc::protobuf::Message;
 using ::mozc::protobuf::Reflection;
 using ::mozc::protobuf::TextFormat;
+using ::proto2::util::UnredactedUtf8DebugFormatForTest;
 
 namespace internal {
 
@@ -198,9 +200,10 @@ bool EqualsProtoInternal(const Message &message1, const Message &message2,
          << "EXPECT_PROTO_" << (is_partial ? "P" : "") << "EQ(" << expect_string
          << ", " << actual_string << ")"
          << " evaluates to false, where\n"
-         << expect_string << " evaluates to " << expect.Utf8DebugString()
-         << "\n"
-         << actual_string << " evaluates to " << actual.Utf8DebugString();
+         << expect_string << " evaluates to "
+         << UnredactedUtf8DebugFormatForTest(expect) << "\n"
+         << actual_string << " evaluates to "
+         << UnredactedUtf8DebugFormatForTest(actual);
 }
 
 }  // namespace internal
