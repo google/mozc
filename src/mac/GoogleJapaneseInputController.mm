@@ -56,11 +56,11 @@
 #include "base/mac/mac_util.h"
 #include "base/process.h"
 #include "base/util.h"
-#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 #include "client/client.h"
+#include "ipc/ipc.h"
 #include "renderer/renderer_client.h"
 
 using mozc::kProductNameInEnglish;

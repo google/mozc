@@ -38,9 +38,6 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "ipc/ipc.h"
-#include "ipc/named_event.h"
-#include "ipc/process_watch_dog.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
@@ -49,6 +46,9 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
+#include "ipc/ipc.h"
+#include "ipc/named_event.h"
+#include "ipc/process_watch_dog.h"
 #include "renderer/renderer_interface.h"
 
 #ifdef _WIN32

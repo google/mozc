@@ -36,8 +36,8 @@
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/thread.h"
-#include "ipc/ipc_path_manager.h"
 #include "absl/strings/string_view.h"
+#include "ipc/ipc_path_manager.h"
 
 #ifdef _WIN32
 #include <wil/resource.h>

@@ -27,7 +27,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(
     "//:build_defs.bzl",
     "mozc_cc_binary",
@@ -38,6 +37,7 @@ load(
     "mozc_cc_qt_library",
     "mozc_qt_moc",
 )
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 package(default_visibility = [
     "//:__subpackages__",

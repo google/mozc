@@ -46,17 +46,17 @@
         'win32_ipc.cc',
       ],
       'dependencies': [
-        '../base/absl.gyp:absl_strings',
-        '../base/absl.gyp:absl_synchronization',
-        '../base/absl.gyp:absl_time',
-        '../base/base.gyp:base',
-        '../base/base.gyp:version',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/absl.gyp:absl_synchronization',
+        '<(mozc_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:version',
         'ipc_protocol',
       ],
       'conditions': [
         ['target_platform=="Windows"', {
           'dependencies': [
-            '../base/base.gyp:obfuscator_support',
+            '<(mozc_src_dir)/base/base.gyp:obfuscator_support',
           ],
         }],
       ],
@@ -69,7 +69,7 @@
         '<(proto_out_dir)/<(relative_dir)/ipc.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_ipc#host',
       ],
       'export_dependent_settings': [
@@ -95,7 +95,7 @@
         '<(proto_out_dir)/<(relative_dir)/window_info.pb.cc',
       ],
       'dependencies': [
-        '../protobuf/protobuf.gyp:protobuf',
+        '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
         'genproto_window_info#host',
       ],
       'export_dependent_settings': [
@@ -120,7 +120,7 @@
         'ipc_test_util.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:base',
         'ipc',
       ],
     },
@@ -134,12 +134,12 @@
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
-        '../base/absl.gyp:absl_time',
-        '../base/absl.gyp:absl_strings',
-        '../base/base.gyp:base_core',
-        '../base/base.gyp:version',
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:mozctest',
+        '<(mozc_src_dir)/base/absl.gyp:absl_time',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/base.gyp:version',
+        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
         'ipc',
         'ipc_test_util',
       ],
