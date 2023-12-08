@@ -55,7 +55,7 @@ PosListProvider::PosListProvider() {
   SerializedStringArray array;
   CHECK(array.Init(LoadEmbeddedFile(kPosArray)));
 
-  std::vector<std::string> pos_list_(array.size());
+  pos_list_.reserve(array.size());
   for (absl::string_view pos : array) {
     if (pos == "名詞") {
       pos_list_default_index_ = pos_list_.size();
