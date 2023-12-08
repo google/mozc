@@ -37,13 +37,13 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/hash.h"
-#include "engine/engine_interface.h"
 #include "protocol/engine_builder.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 
 namespace mozc {
@@ -225,8 +225,8 @@ TEST_P(EngineBuilderTest, AsyncBuildWithInstall) {
 TEST_P(EngineBuilderTest, FailureCaseDataBroken) {
   // Test the case where input file is invalid.
   request_.set_engine_type(GetParam().type);
-  request_.set_file_path(
-      testing::GetSourceFileOrDie({"engine", "engine_builder_test.cc"}));
+  request_.set_file_path(testing::GetSourceFileOrDie(
+      {MOZC_SRC_COMPONENTS("engine"), "engine_builder_test.cc"}));
   request_.set_magic_number(kMockMagicNumber);
   const auto id = builder_.RegisterRequest(request_);
 

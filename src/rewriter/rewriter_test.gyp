@@ -81,7 +81,7 @@
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/dictionary/dictionary_base.gyp:user_pos',
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',

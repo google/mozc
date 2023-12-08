@@ -30,9 +30,9 @@
 #ifndef MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 #define MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 
-#include "engine/user_data_manager_interface.h"
 #include "testing/gmock.h"
 #include "absl/strings/string_view.h"
+#include "engine/user_data_manager_interface.h"
 
 namespace mozc {
 

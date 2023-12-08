@@ -35,8 +35,6 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "engine/engine_interface.h"
-#include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -45,6 +43,8 @@
 #include "absl/strings/string_view.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "session/request_test_util.h"
 
 namespace mozc {

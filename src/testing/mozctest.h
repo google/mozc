@@ -88,6 +88,8 @@ TempFile MakeTempFileOrDie();
 #define MOZC_DICT_DIR_COMPONENTS "data"
 #endif  // MOZC_DICT_DIR_COMPONENTS
 
+#define MOZC_SRC_COMPONENTS(dirname) dirname
+
 // A test base fixture class for tests that use the user profile directory.
 // During the construction, it sets the user profile directory to a unique
 // temporary directory. The temporary directory will be deleted as the end of
