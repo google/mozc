@@ -34,9 +34,9 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "ipc/ipc.h"
 #include "ipc/process_watch_dog.h"
-#include "absl/strings/string_view.h"
 #include "renderer/renderer_interface.h"
 
 namespace mozc {

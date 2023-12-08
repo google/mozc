@@ -34,8 +34,6 @@
 
 #include "base/logging.h"
 #include "config/config_handler.h"
-#include "engine/engine_interface.h"
-#include "engine/mock_data_engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -47,6 +45,8 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "engine/engine_interface.h"
+#include "engine/mock_data_engine_factory.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
 

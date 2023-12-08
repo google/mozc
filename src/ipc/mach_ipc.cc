@@ -40,9 +40,9 @@
 #include "base/logging.h"
 #include "base/mac/mac_util.h"
 #include "base/singleton.h"
+#include "absl/time/time.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace {

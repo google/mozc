@@ -36,8 +36,8 @@
 #include <utility>
 
 #include "base/port.h"
-#include "ipc/ipc.h"
 #include "absl/strings/string_view.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {

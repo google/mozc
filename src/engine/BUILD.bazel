@@ -34,11 +34,9 @@ load(
     "mozc_select",
 )
 
-package(
-    default_visibility = [
-        "//:__subpackages__",
-    ],
-)
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 mozc_cc_library(
     name = "engine_builder",

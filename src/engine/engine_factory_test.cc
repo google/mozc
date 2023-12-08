@@ -31,8 +31,8 @@
 
 #include <memory>
 
-#include "engine/engine_interface.h"
 #include "testing/gunit.h"
+#include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
 
 namespace mozc {

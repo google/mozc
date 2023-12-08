@@ -37,7 +37,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/version.h"
-#include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "testing/gunit.h"
@@ -45,6 +44,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {

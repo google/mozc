@@ -42,8 +42,8 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/testing/testing.gyp:mozctest',
@@ -63,8 +63,8 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_src_dir)/engine/engine.gyp:engine',
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:engine',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_src_dir)/testing/testing.gyp:mozctest',
@@ -83,7 +83,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_src_dir)/testing/testing.gyp:mozctest',
         'session.gyp:session',
@@ -220,7 +220,7 @@
         'session_handler_stress_test.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_src_dir)/testing/testing.gyp:mozctest',
         'session.gyp:random_keyevents_generator',
@@ -255,7 +255,7 @@
         'session_converter_stress_test.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         'session.gyp:session',
       ],
@@ -291,7 +291,7 @@
         '<(mozc_src_dir)/base/base.gyp:number_util',
         '<(mozc_oss_src_dir)/data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '<(mozc_oss_src_dir)/data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
-        '<(mozc_src_dir)/engine/engine.gyp:mock_data_engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/protocol/protocol.gyp:candidates_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',

@@ -40,8 +40,6 @@
 #include "base/strings/assign.h"
 #include "base/version.h"
 #include "config/config_handler.h"
-#include "ipc/ipc.h"
-#include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
@@ -52,6 +50,8 @@
 #include "absl/strings/string_view.h"
 #include "client/client_interface.h"
 #include "composer/key_parser.h"
+#include "ipc/ipc.h"
+#include "ipc/ipc_mock.h"
 
 namespace mozc {
 namespace client {

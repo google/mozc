@@ -36,10 +36,10 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/thread.h"
-#include "ipc/ipc.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "ipc/ipc.h"
 
 ABSL_FLAG(std::string, server_address, "ipc_test", "");
 ABSL_FLAG(bool, test, false, "automatic test mode");

@@ -36,9 +36,9 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
-#include "ipc/ipc.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {

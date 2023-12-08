@@ -48,7 +48,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/session/session.gyp:session',
         'mozc_server_lib',
       ],
@@ -114,7 +114,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/engine/engine.gyp:engine_factory',
+        '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/session/session.gyp:session_handler',
         '<(mozc_oss_src_dir)/session/session.gyp:session_server',
         '<(mozc_oss_src_dir)/session/session.gyp:random_keyevents_generator',

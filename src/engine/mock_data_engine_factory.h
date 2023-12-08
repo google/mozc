@@ -32,8 +32,8 @@
 
 #include <memory>
 
-#include "engine/engine.h"
 #include "absl/status/statusor.h"
+#include "engine/engine.h"
 
 namespace mozc {
 

@@ -48,8 +48,6 @@
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
-#include "engine/engine.h"
-#include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -67,6 +65,8 @@
 #include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
 #include "converter/segments.h"
+#include "engine/engine.h"
+#include "engine/engine_interface.h"
 #include "session/request_test_util.h"
 
 #ifndef NDEBUG

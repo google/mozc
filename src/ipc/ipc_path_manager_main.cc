@@ -31,9 +31,9 @@
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "ipc/ipc_path_manager.h"
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
+#include "ipc/ipc_path_manager.h"
 
 ABSL_FLAG(bool, client, false, "client mode");
 ABSL_FLAG(bool, server, false, "server mode");
