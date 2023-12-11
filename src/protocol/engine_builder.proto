@@ -81,7 +81,7 @@ message EngineReloadResponse {
     // Failed to start reload because another reload job is currently running.
     ALREADY_RUNNING = 3;
 
-    // Erros in data file.
+    // Errors in data file.
     ENGINE_VERSION_MISMATCH = 4;
     DATA_MISSING = 5;
     DATA_BROKEN = 6;
