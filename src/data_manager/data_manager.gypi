@@ -305,7 +305,7 @@
             'pos_group_def': '<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
           },
           'inputs': [
-            '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_pos_rewrite_rule.py',
             '<(id_def)',
             '<(special_pos)',
             '<(pos_group_def)',
@@ -315,7 +315,7 @@
           ],
           'action': [
             '<(python)',
-            '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_pos_rewrite_rule.py',
             '--id_def=<(platform_data_dir)/id.def',
             '--special_pos=<(mozc_oss_src_dir)/data/rules/special_pos.def',
             '--pos_group_def=<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
@@ -527,7 +527,7 @@
             ],
           },
           'inputs': [
-            '<(mozc_dir)/dictionary/gen_suffix_data.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_suffix_data.py',
             '<@(input_files)',
           ],
           'outputs': [
@@ -537,7 +537,7 @@
           ],
           'action': [
             '<(python)',
-            '<(mozc_dir)/dictionary/gen_suffix_data.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_suffix_data.py',
             '--input=<(platform_data_dir)/suffix.txt',
             '--output_key_array=<(gen_out_dir)/suffix_key.data',
             '--output_value_array=<(gen_out_dir)/suffix_value.data',

@@ -33,10 +33,10 @@
 
 #include "base/logging.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
 #include "absl/flags/flag.h"
 #include "converter/converter_interface.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/a11y_description_rewriter.h"
 #include "rewriter/calculator_rewriter.h"
 #include "rewriter/collocation_rewriter.h"

@@ -40,7 +40,6 @@
 #include "config/character_form_manager.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/gmock.h"
@@ -51,6 +50,7 @@
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
 

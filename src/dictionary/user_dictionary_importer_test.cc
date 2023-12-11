@@ -35,8 +35,8 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/user_dictionary_storage.h"
 #include "testing/gunit.h"
+#include "dictionary/user_dictionary_storage.h"
 
 namespace mozc {
 

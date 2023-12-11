@@ -33,10 +33,10 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/pos_matcher.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

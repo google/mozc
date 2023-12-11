@@ -52,8 +52,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_token.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -67,6 +65,8 @@
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

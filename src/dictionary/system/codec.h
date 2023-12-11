@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/system/codec_interface.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/system/codec_interface.h"
 
 namespace mozc {
 namespace dictionary {

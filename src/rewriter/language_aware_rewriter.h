@@ -32,9 +32,9 @@
 
 #include <cstdint>
 
+#include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
-#include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

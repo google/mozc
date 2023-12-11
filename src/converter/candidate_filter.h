@@ -35,8 +35,6 @@
 #include <functional>
 #include <string>
 
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "request/conversion_request.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash.h"
@@ -44,6 +42,8 @@
 #include "absl/types/span.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 
 namespace mozc {

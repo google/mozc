@@ -44,12 +44,6 @@
 #include "base/file_util.h"
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_test_util.h"
-#include "dictionary/dictionary_token.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/system/system_dictionary_builder.h"
-#include "dictionary/text_dictionary_loader.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -61,6 +55,12 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_test_util.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/system/system_dictionary_builder.h"
+#include "dictionary/text_dictionary_loader.h"
 
 ABSL_FLAG(int32_t, dictionary_test_size, 100000,
           "Dictionary size for this test.");

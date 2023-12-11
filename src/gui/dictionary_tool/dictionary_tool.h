@@ -38,11 +38,11 @@
 #include <memory>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+#include "client/client_interface.h"
 #include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_pos_interface.h"
-#include "absl/strings/string_view.h"
-#include "client/client_interface.h"
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 #include "gui/dictionary_tool/ui_dictionary_tool.h"

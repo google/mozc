@@ -46,8 +46,6 @@
 #include "base/strings/unicode.h"
 #include "base/util.h"
 #include "config/character_form_manager.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "storage/lru_storage.h"
@@ -59,6 +57,8 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/variants_rewriter.h"
 
 namespace mozc {

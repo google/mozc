@@ -38,9 +38,9 @@
 #include <string>
 
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/user_pos_interface.h"
 #include "absl/container/btree_set.h"
 #include "absl/strings/str_format.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 namespace rewriter {

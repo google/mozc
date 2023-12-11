@@ -36,12 +36,12 @@
 #include <utility>
 #include <vector>
 
-#include "dictionary/dictionary_token.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_token.h"
 #include "prediction/zero_query_dict.h"
 
 namespace mozc {

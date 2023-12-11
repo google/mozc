@@ -36,8 +36,8 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/logging.h"
-#include "dictionary/dictionary_token.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
 namespace dictionary {

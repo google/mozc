@@ -36,11 +36,6 @@
 
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary.h"
-#include "dictionary/user_dictionary_storage.h"
-#include "dictionary/user_pos.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -48,6 +43,11 @@
 #include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_dictionary.h"
+#include "dictionary/user_dictionary_storage.h"
+#include "dictionary/user_pos.h"
 
 namespace mozc {
 namespace {

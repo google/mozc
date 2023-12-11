@@ -34,16 +34,16 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/dictionary_token.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 namespace dictionary {

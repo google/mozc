@@ -41,7 +41,6 @@
 #include "base/util.h"
 #include "data_manager/connection_file_reader.h"
 #include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/random/random.h"
@@ -51,6 +50,7 @@
 #include "converter/connector.h"
 #include "converter/node.h"
 #include "converter/segmenter.h"
+#include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
 
 namespace mozc {

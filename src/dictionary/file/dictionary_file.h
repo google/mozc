@@ -38,9 +38,9 @@
 #include <vector>
 
 #include "base/mmap.h"
-#include "dictionary/file/codec_interface.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/file/codec_interface.h"
 
 namespace mozc {
 namespace dictionary {

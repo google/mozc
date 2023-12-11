@@ -37,7 +37,6 @@
 #include <memory>
 #include <optional>
 
-#include "dictionary/user_dictionary_session_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "storage/lru_cache.h"
@@ -46,6 +45,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "composer/table.h"
+#include "dictionary/user_dictionary_session_handler.h"
 #include "engine/engine_builder.h"
 #include "engine/engine_interface.h"
 #include "session/common.h"
