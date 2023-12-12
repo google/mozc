@@ -31,9 +31,9 @@
 
 #include <string>
 
-#include "storage/registry.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "storage/registry.h"
 
 namespace mozc {
 namespace usage_stats {

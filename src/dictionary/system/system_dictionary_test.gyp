@@ -95,7 +95,7 @@
         '<(mozc_src_dir)/base/base.gyp:base_core',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
-        '<(mozc_src_dir)/storage/louds/louds.gyp:louds_trie_builder',
+        '<(mozc_oss_src_dir)/storage/louds/louds.gyp:louds_trie_builder',
         '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary_test_util',
         'system_dictionary.gyp:value_dictionary',

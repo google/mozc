@@ -36,9 +36,9 @@
 #include "base/logging.h"
 #include "base/status.h"
 #include "base/util.h"
-#include "storage/existence_filter.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "storage/existence_filter.h"
 
 namespace mozc {
 

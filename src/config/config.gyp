@@ -73,7 +73,7 @@
         '../protocol/protocol.gyp:config_proto',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.
-        '../storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ]
     },
   ],

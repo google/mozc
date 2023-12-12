@@ -89,7 +89,7 @@
         'gen_existence_data.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/storage/storage.gyp:storage#host',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage#host',
         '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream#host',
       ],
     },

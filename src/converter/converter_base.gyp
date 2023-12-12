@@ -57,7 +57,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_status',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/storage/louds/louds.gyp:simple_succinct_bit_vector_index',
+        '<(mozc_oss_src_dir)/storage/louds/louds.gyp:simple_succinct_bit_vector_index',
       ],
     },
     {

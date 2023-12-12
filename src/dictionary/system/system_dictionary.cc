@@ -63,8 +63,6 @@
 #include "base/mmap.h"
 #include "base/util.h"
 #include "request/conversion_request.h"
-#include "storage/louds/bit_vector_based_array.h"
-#include "storage/louds/louds_trie.h"
 #include "absl/container/btree_set.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -78,6 +76,8 @@
 #include "dictionary/system/key_expansion_table.h"
 #include "dictionary/system/token_decode_iterator.h"
 #include "dictionary/system/words_info.h"
+#include "storage/louds/bit_vector_based_array.h"
+#include "storage/louds/louds_trie.h"
 
 namespace mozc {
 namespace dictionary {

@@ -34,9 +34,9 @@
 
 #include "base/bits.h"
 #include "base/logging.h"
+#include "absl/strings/string_view.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {

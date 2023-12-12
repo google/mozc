@@ -34,8 +34,8 @@
 
 #include <memory>
 
-#include "storage/lru_cache.h"
 #include "client/client.h"
+#include "storage/lru_cache.h"
 
 namespace mozc {
 namespace emacs {

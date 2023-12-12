@@ -39,7 +39,6 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "storage/lru_cache.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
@@ -54,6 +53,7 @@
 #include "session/session_interface.h"
 #include "session/session_observer_handler.h"
 #include "session/session_observer_interface.h"
+#include "storage/lru_cache.h"
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"

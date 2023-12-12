@@ -38,12 +38,12 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "storage/storage_interface.h"
-#include "storage/tiny_storage.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "storage/storage_interface.h"
+#include "storage/tiny_storage.h"
 
 namespace mozc {
 namespace storage {

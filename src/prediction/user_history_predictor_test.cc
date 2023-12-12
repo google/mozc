@@ -51,8 +51,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "storage/encrypted_string_storage.h"
-#include "storage/lru_cache.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -73,6 +71,8 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/user_history_predictor.pb.h"
 #include "session/request_test_util.h"
+#include "storage/encrypted_string_storage.h"
+#include "storage/lru_cache.h"
 
 namespace mozc::prediction {
 namespace {

@@ -41,7 +41,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ],
     },
     {
@@ -55,7 +55,7 @@
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream',
         '<(mozc_src_dir)/base/base.gyp:multifile',
-        '<(mozc_src_dir)/storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ],
     },
   ],

@@ -64,7 +64,7 @@
         '<(mozc_oss_src_dir)/composer/composer.gyp:key_parser',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
       ],
     },
     {
