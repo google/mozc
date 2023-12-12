@@ -38,10 +38,10 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "data_manager/connection_file_reader.h"
+#include "absl/random/random.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/random/random.h"
 
 namespace mozc {
 namespace {

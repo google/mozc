@@ -32,10 +32,10 @@
 #include <ctime>
 
 #include "base/clock_mock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

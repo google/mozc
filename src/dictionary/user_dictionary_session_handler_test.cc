@@ -39,11 +39,11 @@
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "testing/testing_util.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

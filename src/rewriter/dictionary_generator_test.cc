@@ -34,12 +34,12 @@
 #include <string>
 
 #include "data_manager/testing/mock_data_manager.h"
-#include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace rewriter {

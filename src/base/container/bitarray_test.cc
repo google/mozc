@@ -33,8 +33,8 @@
 #include <utility>
 #include <vector>
 
-#include "testing/gunit.h"
 #include "absl/random/random.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

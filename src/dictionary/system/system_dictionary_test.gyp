@@ -38,7 +38,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_random',
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'system_dictionary.gyp:system_dictionary_codec',
       ],
       'variables': {
@@ -52,7 +52,7 @@
         'key_expansion_table_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'system_dictionary.gyp:key_expansion_table',
       ],
       
@@ -75,8 +75,8 @@
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary_test_util',
         'system_dictionary.gyp:system_dictionary',
         'system_dictionary.gyp:system_dictionary_builder',
@@ -96,7 +96,7 @@
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/storage/louds/louds.gyp:louds_trie_builder',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary_test_util',
         'system_dictionary.gyp:value_dictionary',
       ],

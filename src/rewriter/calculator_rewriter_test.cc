@@ -37,9 +37,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_mock.h"
@@ -49,6 +46,9 @@
 #include "engine/mock_data_engine_factory.h"
 #include "rewriter/calculator/calculator_interface.h"
 #include "rewriter/calculator/calculator_mock.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

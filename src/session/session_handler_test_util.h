@@ -36,9 +36,9 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/mozctest.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "session/session_handler_interface.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace session {

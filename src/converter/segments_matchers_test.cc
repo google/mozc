@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 
+#include "converter/segments.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "converter/segments.h"
 
 namespace mozc {
 namespace {

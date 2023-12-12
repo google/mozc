@@ -45,8 +45,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
@@ -65,6 +63,8 @@
 #include "session/internal/keymap.h"
 #include "session/session_handler_interface.h"
 #include "session/session_handler_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);

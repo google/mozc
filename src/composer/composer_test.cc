@@ -47,13 +47,13 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
 #include "converter/segments.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

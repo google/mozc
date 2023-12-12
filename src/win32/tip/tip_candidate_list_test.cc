@@ -40,8 +40,8 @@
 #include <string_view>
 #include <vector>
 
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "testing/gunit.h"
 #include "win32/tip/tip_dll_module.h"
 
 namespace mozc {

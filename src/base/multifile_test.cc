@@ -36,11 +36,11 @@
 #include "base/file/temp_dir.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 
 namespace mozc {
 

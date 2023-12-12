@@ -44,8 +44,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "converter/connector.h"
@@ -65,6 +63,8 @@
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

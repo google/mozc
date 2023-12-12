@@ -48,7 +48,7 @@
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
         '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'gen_key_mappings',
       ],
       'variables': {

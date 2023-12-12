@@ -34,11 +34,11 @@
 #include <string>
 #include <vector>
 
-#include "testing/gunit.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace dictionary {

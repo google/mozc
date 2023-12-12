@@ -31,8 +31,8 @@
 
 #include <string>
 
-#include "testing/gunit.h"
 #include "composer/internal/transliterator_interface.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace composer {

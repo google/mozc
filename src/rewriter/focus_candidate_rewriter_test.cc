@@ -36,10 +36,10 @@
 
 #include "base/number_util.h"
 #include "data_manager/testing/mock_data_manager.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

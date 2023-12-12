@@ -33,8 +33,8 @@
 #include <iterator>
 #include <string>
 
-#include "testing/gunit.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
+#include "testing/gunit.h"
 
 namespace {
 

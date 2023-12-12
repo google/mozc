@@ -39,14 +39,14 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

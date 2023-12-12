@@ -43,10 +43,10 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

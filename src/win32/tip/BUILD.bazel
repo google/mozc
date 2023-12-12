@@ -36,12 +36,12 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
+load("//bazel:stubs.bzl", "lexan")
 load(
     "//bazel/win32:build_defs.bzl",
     "copts_wtl",
     "features_gdi",
 )
-load("//bazel:stubs.bzl", "lexan")
 
 mozc_cc_binary(
     name = "mozc_tip",

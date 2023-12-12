@@ -51,7 +51,7 @@
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'composer.gyp:composer',
       ],
       'variables': {
@@ -68,7 +68,7 @@
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'composer.gyp:key_event_util',
         'composer.gyp:key_parser',
       ],
@@ -85,7 +85,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'composer.gyp:key_event_util',
         'composer.gyp:key_parser',
       ],

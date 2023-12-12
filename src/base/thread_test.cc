@@ -33,10 +33,10 @@
 #include <memory>
 #include <utility>
 
-#include "testing/gunit.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

@@ -54,9 +54,9 @@
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
-        '<(mozc_src_dir)/testing/testing.gyp:testing_util',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         '<(mozc_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'dictionary.gyp:dictionary',
@@ -79,7 +79,7 @@
         '<(mozc_src_dir)/base/absl.gyp:absl_time',
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'dictionary_base.gyp:suppression_dictionary',
       ],
       'variables': {
@@ -95,8 +95,8 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'dictionary_base.gyp:text_dictionary_loader',
       ],
       'variables': {

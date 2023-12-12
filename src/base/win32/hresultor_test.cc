@@ -38,9 +38,9 @@
 #include <vector>
 
 #include "base/win32/hresult.h"
+#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc::win32 {
 namespace {

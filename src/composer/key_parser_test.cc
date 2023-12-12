@@ -33,9 +33,9 @@
 #include <utility>
 
 #include "protocol/commands.pb.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "composer/key_event_util.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

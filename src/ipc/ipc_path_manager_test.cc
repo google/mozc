@@ -39,13 +39,13 @@
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/version.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 #if defined(__ANDROID__) || defined(__wasm__)
 #error "This platform is not supported."

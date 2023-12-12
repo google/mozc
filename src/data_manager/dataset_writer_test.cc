@@ -38,11 +38,11 @@
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

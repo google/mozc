@@ -39,8 +39,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/converter_mock.h"
@@ -51,6 +49,8 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc::prediction {
 namespace {

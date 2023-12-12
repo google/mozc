@@ -33,11 +33,11 @@
 
 #include "base/file/temp_dir.h"
 #include "base/logging.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_format.h"
 
 #ifdef _WIN32
 #include <windows.h>

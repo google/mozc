@@ -35,10 +35,10 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "rewriter/calculator/calculator_interface.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

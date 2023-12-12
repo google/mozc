@@ -43,8 +43,8 @@
         '../base/base.gyp:base',
         '../base/base.gyp:clock',
         '../base/base_test.gyp:clock_mock',
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'config.gyp:config_handler',
         'install_stats_config_util_test_data',
       ],
@@ -72,8 +72,8 @@
         'stats_config_util_test.cc',
       ],
       'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'config.gyp:stats_config_util',
         'install_stats_config_util_test_data',
       ],
@@ -88,8 +88,8 @@
         'character_form_manager_test.cc',
       ],
       'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        '../testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'config.gyp:character_form_manager',
       ],
       'variables': {

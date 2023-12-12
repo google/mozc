@@ -65,7 +65,7 @@
             'win_font_test_helper.cc',
           ],
           'dependencies': [
-            '../../testing/testing.gyp:mozctest',
+            '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
             '../base.gyp:base',
           ],
           'copies': [
@@ -87,7 +87,7 @@
           'dependencies': [
             '../absl.gyp:absl_strings',
             '../base.gyp:base',
-            '../../testing/testing.gyp:gtest_main',
+            '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
           ],
           'variables': {
             'test_size': 'small',
@@ -103,7 +103,7 @@
           'dependencies': [
             ':com_implements',
             '../base.gyp:base',
-            '../../testing/testing.gyp:gtest_main',
+            '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
           ],
           'variables': {
             'test_size': 'small',

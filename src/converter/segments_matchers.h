@@ -35,9 +35,9 @@
 #include <string>
 #include <vector>
 
-#include "testing/gmock.h"
 #include "absl/strings/str_format.h"
 #include "converter/segments.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 

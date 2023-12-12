@@ -37,9 +37,9 @@
 #include "base/util.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "testing/gunit.h"
 #include "converter/segments.h"
 #include "session/internal/candidate_list.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace session {

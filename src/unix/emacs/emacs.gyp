@@ -75,8 +75,8 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:testing_util',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:testing_util',
         'mozc_emacs_helper_lib',
       ],
       'variables': {

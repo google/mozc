@@ -34,10 +34,10 @@
 #include <string_view>
 #include <vector>
 
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc::strings {
 namespace {

@@ -34,9 +34,9 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "absl/flags/flag.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {

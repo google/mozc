@@ -42,8 +42,8 @@
         'mock_data_manager_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
-        '../../testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '../data_manager_test.gyp:data_manager_test_base',
         'install_test_connection_txt',
         'mock_data_manager.gyp:mock_data_manager',

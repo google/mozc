@@ -33,9 +33,9 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "testing/gunit.h"
 #include "testing/testing_util.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

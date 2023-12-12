@@ -37,9 +37,9 @@
 
 #include "data_manager/testing/mock_data_manager.h"
 #include "request/conversion_request.h"
+#include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "dictionary/pos_matcher.h"
 
 namespace mozc {
 namespace {

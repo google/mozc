@@ -45,9 +45,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -58,6 +55,9 @@
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

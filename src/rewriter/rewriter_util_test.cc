@@ -31,10 +31,10 @@
 
 #include <string>
 
-#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

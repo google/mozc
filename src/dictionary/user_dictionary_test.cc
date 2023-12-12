@@ -49,9 +49,6 @@
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/str_cat.h"
@@ -66,6 +63,9 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_pos.h"
 #include "dictionary/user_pos_interface.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace dictionary {

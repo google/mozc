@@ -32,9 +32,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace storage {

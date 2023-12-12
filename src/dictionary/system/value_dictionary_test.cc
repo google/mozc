@@ -36,7 +36,6 @@
 
 #include "data_manager/testing/mock_data_manager.h"
 #include "request/conversion_request.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_test_util.h"
 #include "dictionary/dictionary_token.h"
@@ -44,6 +43,7 @@
 #include "dictionary/system/codec_interface.h"
 #include "storage/louds/louds_trie.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace dictionary {

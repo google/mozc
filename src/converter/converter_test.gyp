@@ -64,8 +64,8 @@
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         '<(mozc_oss_src_dir)/transliteration/transliteration.gyp:transliteration',
         '<(mozc_src_dir)/usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'converter.gyp:converter',
@@ -91,8 +91,8 @@
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/session/session_base.gyp:request_test_util',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
       ],
     },
     {
@@ -106,8 +106,8 @@
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:gen_separate_connection_data_for_mock#host',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_src_dir)/data_manager/testing/mock_data_manager_test.gyp:install_test_connection_txt',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'converter_base.gyp:connector',
       ],
       'variables': {
@@ -121,8 +121,8 @@
         'pos_id_printer_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'converter_base.gyp:pos_id_printer',
       ],
       'variables': {

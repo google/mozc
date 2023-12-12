@@ -35,11 +35,11 @@
 #include "base/file/temp_dir.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "dictionary/file/codec_factory.h"
+#include "dictionary/file/dictionary_file_builder.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "dictionary/file/codec_factory.h"
-#include "dictionary/file/dictionary_file_builder.h"
 
 namespace mozc {
 namespace dictionary {

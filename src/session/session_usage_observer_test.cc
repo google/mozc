@@ -38,12 +38,12 @@
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
 #include "protocol/commands.pb.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace session {

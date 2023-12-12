@@ -30,8 +30,8 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 #define MOZC_DICTIONARY_DICTIONARY_MOCK_H_
 
-#include "testing/gmock.h"
 #include "dictionary/dictionary_interface.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace dictionary {
