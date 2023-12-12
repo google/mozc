@@ -38,7 +38,6 @@
 #include "protocol/config.pb.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -46,6 +45,7 @@
 #include "engine/engine_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "session/session_converter.h"
+#include "transliteration/transliteration.h"
 
 ABSL_FLAG(bool, test_deterministic, true,
           "if true, srand() is initialized by \"test_srand_seed\"."

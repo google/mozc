@@ -53,7 +53,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "transliteration/transliteration.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
@@ -74,6 +73,7 @@
 #include "prediction/result.h"
 #include "prediction/zero_query_dict.h"
 #include "session/request_test_util.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace prediction {

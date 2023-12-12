@@ -52,7 +52,7 @@
         '<(mozc_oss_src_dir)/session/session_test.gyp:session_all_test',
         '<(mozc_oss_src_dir)/storage/louds/louds_test.gyp:storage_louds_all_test',
         '<(mozc_oss_src_dir)/storage/storage_test.gyp:storage_all_test',
-        '../transliteration/transliteration_test.gyp:transliteration_all_test',
+        '<(mozc_oss_src_dir)/transliteration/transliteration_test.gyp:transliteration_all_test',
         '../usage_stats/usage_stats_test.gyp:usage_stats_all_test',
       ],
       'conditions': [

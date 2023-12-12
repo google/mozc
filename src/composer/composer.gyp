@@ -62,7 +62,7 @@
         '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/transliteration/transliteration.gyp:transliteration',
+        '<(mozc_oss_src_dir)/transliteration/transliteration.gyp:transliteration',
       ],
     },
     {

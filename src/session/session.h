@@ -48,8 +48,8 @@
 #include "session/session_interface.h"
 // for FRIEND_TEST()
 #include "testing/gunit_prod.h"
-#include "transliteration/transliteration.h"
 #include "absl/time/time.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace session {

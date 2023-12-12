@@ -49,7 +49,6 @@
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/container/flat_hash_set.h"
@@ -86,6 +85,7 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {

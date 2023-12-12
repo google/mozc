@@ -48,7 +48,6 @@
 #include "config/character_form_manager.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/container/btree_set.h"
 #include "absl/status/status.h"
@@ -60,6 +59,7 @@
 #include "dictionary/pos_matcher.h"
 #include "rewriter/variants_rewriter.h"
 #include "storage/lru_storage.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {

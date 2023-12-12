@@ -48,7 +48,6 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "spelling/spellchecker_service_interface.h"
-#include "transliteration/transliteration.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -66,6 +65,7 @@
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
+#include "transliteration/transliteration.h"
 
 #ifndef NDEBUG
 #define MOZC_DEBUG

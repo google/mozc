@@ -43,7 +43,6 @@
 #include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/strings/str_format.h"
@@ -52,6 +51,7 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace {

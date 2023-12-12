@@ -45,7 +45,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
@@ -58,6 +57,7 @@
 #include "session/internal/session_output.h"
 #include "session/session_converter_interface.h"
 #include "session/session_usage_stats_util.h"
+#include "transliteration/transliteration.h"
 
 ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion, true,
           "If true, use the actual (non-immutable) converter for real "
