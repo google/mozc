@@ -92,7 +92,7 @@
         '<(mozc_src_dir)/config/config.gyp:character_form_manager',
         '<(mozc_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:immutable_converter',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',

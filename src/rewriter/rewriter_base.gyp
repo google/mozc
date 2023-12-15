@@ -128,8 +128,8 @@
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:data_manager',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
       ],
@@ -156,7 +156,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
     {
@@ -168,7 +168,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
   ],

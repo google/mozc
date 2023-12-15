@@ -37,9 +37,9 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "data_manager/data_manager_interface.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "rewriter/number_compound_util.h"
 
 namespace mozc {

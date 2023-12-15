@@ -60,8 +60,11 @@ class EngineBuilderTest : public testing::TestWithTempUserProfile,
                           public ::testing::WithParamInterface<Param> {
  protected:
   EngineBuilderTest()
-      : mock_data_path_(testing::GetSourcePath(
-            {"data_manager", "testing", "mock_mozc.data"})) {}
+      : mock_data_path_(
+            testing::GetSourcePath({MOZC_SRC_COMPONENTS("data_manager"),
+                                    "testing", "mock_mozc.data"})) {
+    LOG(INFO) << mock_data_path_;
+  }
 
   void Clear() {
     builder_.Clear();

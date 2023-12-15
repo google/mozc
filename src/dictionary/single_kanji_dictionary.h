@@ -37,9 +37,9 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
+#include "absl/strings/string_view.h"
 #include "data_manager/data_manager_interface.h"
 #include "data_manager/serialized_dictionary.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {

@@ -38,12 +38,12 @@
 #include <vector>
 
 #include "base/util.h"
-#include "data_manager/data_manager_interface.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"

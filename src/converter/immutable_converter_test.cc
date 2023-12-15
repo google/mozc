@@ -40,8 +40,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/data_manager_interface.h"
-#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/match.h"
@@ -52,6 +50,8 @@
 #include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "data_manager/data_manager_interface.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"

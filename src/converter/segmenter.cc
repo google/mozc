@@ -35,8 +35,8 @@
 
 #include "base/container/bitarray.h"
 #include "base/logging.h"
-#include "data_manager/data_manager_interface.h"
 #include "converter/node.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 

@@ -35,9 +35,9 @@
 #include <optional>
 #include <vector>
 
-#include "data_manager/data_manager_interface.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 namespace mozc {

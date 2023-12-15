@@ -32,8 +32,8 @@
 
 #include <memory>
 
-#include "data_manager/oss/oss_data_manager.h"
 #include "absl/status/statusor.h"
+#include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
 
 namespace mozc {

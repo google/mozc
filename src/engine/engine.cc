@@ -36,7 +36,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "data_manager/data_manager_interface.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -44,6 +43,7 @@
 #include "converter/converter.h"
 #include "converter/immutable_converter.h"
 #include "converter/segmenter.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_impl.h"
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"

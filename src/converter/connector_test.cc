@@ -37,8 +37,8 @@
 
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "data_manager/connection_file_reader.h"
 #include "absl/random/random.h"
+#include "data_manager/connection_file_reader.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
@@ -54,7 +54,7 @@ struct ConnectionDataEntry {
 
 TEST(ConnectorTest, CompareWithRawData) {
   const std::string path = testing::GetSourceFileOrDie(
-      {"data_manager", "testing", "connection.data"});
+      {MOZC_SRC_COMPONENTS("data_manager"), "testing", "connection.data"});
   absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
   ASSERT_OK(cmmap) << cmmap.status();
   auto status_or_connector =
@@ -93,7 +93,7 @@ TEST(ConnectorTest, CompareWithRawData) {
 
 TEST(ConnectorTest, BrokenData) {
   const std::string path = testing::GetSourceFileOrDie(
-      {"data_manager", "testing", "connection.data"});
+      {MOZC_SRC_COMPONENTS("data_manager"), "testing", "connection.data"});
   absl::StatusOr<Mmap> cmmap = Mmap::Map(path);
   ASSERT_OK(cmmap) << cmmap.status();
 

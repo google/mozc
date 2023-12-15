@@ -31,7 +31,6 @@
 
 #include <string>
 
-#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -42,6 +41,7 @@
 #include "composer/table.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"

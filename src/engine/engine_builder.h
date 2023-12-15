@@ -35,10 +35,10 @@
 #include <memory>
 
 #include "base/thread.h"
-#include "data_manager/data_manager.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/base/thread_annotations.h"
 #include "absl/synchronization/mutex.h"
+#include "data_manager/data_manager.h"
 #include "engine/engine_interface.h"
 
 namespace mozc {

@@ -33,10 +33,10 @@
 #include <memory>
 #include <string>
 
-#include "data_manager/testing/mock_data_manager.h"
 #include "request/conversion_request.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_group.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit.h"

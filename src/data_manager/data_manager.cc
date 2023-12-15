@@ -44,8 +44,6 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/version.h"
-#include "data_manager/dataset_reader.h"
-#include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -54,6 +52,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "data_manager/dataset_reader.h"
+#include "data_manager/serialized_dictionary.h"
 
 namespace mozc {
 namespace {

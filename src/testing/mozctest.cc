@@ -66,6 +66,7 @@ std::string GetSourcePath(absl::Span<const absl::string_view> components) {
 absl::StatusOr<std::string> GetSourceFile(
     absl::Span<const absl::string_view> components) {
   std::string path = GetSourcePath(components);
+  LOG(INFO) << path;
   if (absl::Status s = FileUtil::FileExists(path); !s.ok()) {
     return s;
   }

@@ -34,8 +34,8 @@
 #include <string>
 #include <vector>
 
-#include "data_manager/data_manager_interface.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/single_kanji_dictionary.h"
 #include "rewriter/rewriter_interface.h"

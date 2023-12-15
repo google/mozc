@@ -44,7 +44,7 @@
         'engine',
         '<(mozc_src_dir)/base/absl.gyp:absl_status',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/protocol/protocol.gyp:engine_builder_proto',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
@@ -89,7 +89,7 @@
       'type': 'none',
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/oss/oss_data_manager.gyp:oss_data_manager',
+        '<(mozc_oss_src_dir)/data_manager/oss/oss_data_manager.gyp:oss_data_manager',
         '<(mozc_oss_src_dir)/prediction/prediction.gyp:prediction',
         'engine',
         'engine_builder'
@@ -103,7 +103,7 @@
         'mock_data_engine_factory.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',
         'engine',
@@ -131,7 +131,7 @@
       'dependencies': [
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
         '<(mozc_oss_src_dir)/converter/converter.gyp:converter',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
         '<(mozc_src_dir)/request/request.gyp:conversion_request',

@@ -45,7 +45,6 @@
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -58,6 +57,7 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "session/internal/candidate_list.h"
 #include "session/request_test_util.h"
 #include "session/session_converter_interface.h"

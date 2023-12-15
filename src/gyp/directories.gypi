@@ -52,6 +52,7 @@
     'protobuf_root': '<(third_party_dir)/protobuf',
 
     'mozc_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
+    'mozc_oss_data_dir': '<(SHARED_INTERMEDIATE_DIR)/',
 
     # Ninja requires <(abs_depth) instead of <(DEPTH).
     'mac_breakpad_dir': '<(PRODUCT_DIR)/Breakpad',

@@ -34,8 +34,8 @@
 #include <memory>
 
 #include "base/container/serialized_string_array.h"
-#include "data_manager/testing/mock_data_manager.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "testing/gunit.h"
 

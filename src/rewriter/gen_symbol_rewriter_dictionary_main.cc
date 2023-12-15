@@ -49,8 +49,6 @@
 #include "base/status.h"
 #include "base/strings/japanese.h"
 #include "base/util.h"
-#include "data_manager/data_manager.h"
-#include "data_manager/serialized_dictionary.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
@@ -60,6 +58,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "data_manager/data_manager.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
