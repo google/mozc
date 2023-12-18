@@ -134,6 +134,8 @@ class Session : public SessionInterface {
   bool InsertSpaceHalfWidth(mozc::commands::Command *command);
   bool InsertSpaceFullWidth(mozc::commands::Command *command);
   bool InsertCharacter(mozc::commands::Command *command);
+  bool UpdateComposition(mozc::commands::Command *command);
+  bool UpdateCompositionInternal(mozc::commands::Command *command);
   bool Delete(mozc::commands::Command *command);
   bool Backspace(mozc::commands::Command *command);
   bool EditCancel(mozc::commands::Command *command);

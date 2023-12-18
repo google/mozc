@@ -399,13 +399,11 @@ message SessionCommand {
     reserved 16;
     reserved "SEND_CARET_LOCATION";
 
-    // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
-    // TODO(team): Replace this command by useful one.
+    // Obsolete command. Don't simply remove this command.
     reserved 17;
     reserved "SEND_LANGUAGE_BAR_COMMAND";
 
-    // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
-    // TODO(team): Replace this command by useful one.
+    // Obsolete command. Don't simply remove this command.
     reserved 18;
     reserved "GET_ASYNC_RESULT";
 
@@ -436,6 +434,12 @@ message SessionCommand {
     // Stops key toggling of the composer if its table is a toggle-supported
     // layout (e.g., 12-key toggle flick.)
     STOP_KEY_TOGGLING = 25;
+
+    // Update composition with |compoisition_events|.
+    // Unlike SEND_KEY command, this command completely replaces the composition
+    // rather than appending to the existing composition.
+    // The command will be used for supporting handwriting.
+    UPDATE_COMPOSITION = 26;
   }
   required CommandType type = 1;
 
@@ -489,6 +493,18 @@ message SessionCommand {
   reserved 8;  // Deprecated caret_rectangle
 
   reserved 10;  // Deprecated asynchronous_request_id
+
+  // Used by UPDATE_COMPOSITION event
+  message CompositionEvent {
+    optional string composition_string = 1;
+    // Sum of probabilities must be lesser or equal than 1.
+    // 0<= probability <= 1
+    optional double probability = 2;
+  }
+
+  // Assumes that the entries are sorted by the probability.
+  // The most probable event should be at the top.
+  repeated CompositionEvent composition_events = 11;
 }
 
 message Context {

@@ -65,6 +65,7 @@
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
@@ -767,6 +768,29 @@ TEST_F(SessionTest, TestSendKey) {
   EXPECT_TRUE(command.output().consumed());
   SendKey("Up", &session, &command);
   EXPECT_TRUE(command.output().consumed());
+}
+
+TEST_F(SessionTest, UpdateComposition) {
+  MockEngine engine;
+  MockConverter converter;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+
+  commands::Command command;
+  commands::Input *input = command.mutable_input();
+  input->set_type(commands::Input::SEND_COMMAND);
+  input->mutable_command()->set_type(
+      commands::SessionCommand::UPDATE_COMPOSITION);
+  commands::SessionCommand::CompositionEvent *composition_event =
+      input->mutable_command()->add_composition_events();
+  composition_event->set_composition_string("かん字");
+  composition_event->set_probability(1.0);
+
+  EXPECT_TRUE(session.UpdateComposition(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "かん字");
 }
 
 TEST_F(SessionTest, SendCommand) {
@@ -2923,7 +2947,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
   Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
-  {  // Commit something. It's expected that Undo is not trigerred later.
+  {  // Commit something. It's expected that Undo is not triggered later.
     commands::Command command;
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);

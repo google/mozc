@@ -394,6 +394,9 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::STOP_KEY_TOGGLING:
       result = StopKeyToggling(command);
       break;
+    case commands::SessionCommand::UPDATE_COMPOSITION:
+      result = UpdateComposition(command);
+      break;
     default:
       LOG(WARNING) << "Unknown command" << MOZC_LOG_PROTOBUF(*command);
       result = DoNothing(command);
@@ -535,6 +538,50 @@ bool Session::SendKey(commands::Command *command) {
   SessionUsageStatsUtil::AddSendKeyOutputStats(command->output());
 
   MaybeSetUndoStatus(command);
+  return result;
+}
+
+bool Session::UpdateCompositionInternal(commands::Command *command) {
+  command->mutable_output()->set_consumed(true);
+
+  context_->mutable_composer()->Reset();
+  // Use the top entry for now.
+  // TODO: Support non-top entries.
+  context_->mutable_composer()->SetPreeditTextForTestOnly(
+      command->input().command().composition_events(0).composition_string());
+  ClearUndoContext();
+  SetSessionState(ImeContext::COMPOSITION, context_.get());
+
+  if (Suggest(command->input())) {
+    Output(command);
+    return true;
+  }
+
+  OutputComposition(command);
+  return true;
+}
+
+bool Session::UpdateComposition(commands::Command *command) {
+  bool result = false;
+  switch (context_->state()) {
+    case ImeContext::DIRECT:
+      result = EchoBackAndClearUndoContext(command);
+      break;
+
+    case ImeContext::PRECOMPOSITION:
+      [[fallthrough]];
+    case ImeContext::COMPOSITION:
+      result = UpdateCompositionInternal(command);
+      break;
+
+    case ImeContext::CONVERSION:
+      result = false;
+      break;
+
+    case ImeContext::NONE:
+      result = false;
+      break;
+  }
   return result;
 }
 
