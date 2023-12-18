@@ -97,7 +97,7 @@
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'calculator/calculator.gyp:calculator',

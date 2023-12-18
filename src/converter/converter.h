@@ -37,7 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
@@ -47,6 +46,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "testing/gunit_prod.h"  // for FRIEND_TEST()
 

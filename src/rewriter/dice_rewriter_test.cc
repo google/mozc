@@ -32,9 +32,9 @@
 #include <cstddef>
 #include <string>
 
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

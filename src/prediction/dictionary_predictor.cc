@@ -43,7 +43,6 @@
 #include "base/strings/japanese.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
@@ -67,6 +66,7 @@
 #include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 #include "transliteration/transliteration.h"
 
 #ifndef NDEBUG

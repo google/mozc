@@ -54,7 +54,6 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -67,6 +66,7 @@
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

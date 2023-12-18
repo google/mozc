@@ -32,9 +32,9 @@
 
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "converter/segments.h"
 #include "prediction/result.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace prediction {

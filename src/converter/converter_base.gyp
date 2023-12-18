@@ -99,7 +99,7 @@
         'immutable_converter_interface.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
       ],
     },
     {

@@ -47,7 +47,7 @@
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_src_dir)/protocol/protocol.gyp:engine_builder_proto',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
       ],
     },
     {
@@ -76,7 +76,7 @@
         '<(mozc_oss_src_dir)/prediction/prediction_base.gyp:suggestion_filter',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:user_dictionary_storage_proto',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/rewriter/rewriter.gyp:rewriter',
       ],
       'export_dependent_settings': [
@@ -105,7 +105,7 @@
       'dependencies': [
         '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         'engine',
         'engine_builder'
       ],
@@ -134,7 +134,7 @@
         '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
       ],
     },
   ],

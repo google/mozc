@@ -44,7 +44,6 @@
 #include "base/file_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/container/btree_set.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
@@ -59,6 +58,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

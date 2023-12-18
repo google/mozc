@@ -34,10 +34,10 @@
 #include <vector>
 
 #include "base/container/serialized_string_array.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

@@ -49,7 +49,7 @@
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segments',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_src_dir)/protocol/protocol.gyp:config_proto',
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
         '<(mozc_oss_src_dir)/transliteration/transliteration.gyp:transliteration',
         '<(mozc_src_dir)/usage_stats/usage_stats_base.gyp:usage_stats',
         'session_base.gyp:keymap',

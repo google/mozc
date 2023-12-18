@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/util.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/immutable_converter_interface.h"
@@ -52,6 +51,7 @@
 #include "prediction/result.h"
 #include "prediction/single_kanji_prediction_aggregator.h"
 #include "prediction/zero_query_dict.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace prediction {

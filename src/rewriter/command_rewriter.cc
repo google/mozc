@@ -35,11 +35,11 @@
 
 #include "base/logging.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/algorithm/container.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace {

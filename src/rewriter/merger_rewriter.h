@@ -36,9 +36,9 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

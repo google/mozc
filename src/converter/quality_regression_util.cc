@@ -42,7 +42,6 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "request/conversion_request.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -55,6 +54,7 @@
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace quality_regression {

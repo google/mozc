@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/types/span.h"
 #include "converter/connector.h"
@@ -50,6 +49,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 #include "testing/gunit_prod.h"  //  for FRIEND_TEST()
 
 namespace mozc {

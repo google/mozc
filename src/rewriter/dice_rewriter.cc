@@ -33,10 +33,10 @@
 #include <string>
 
 #include "base/logging.h"
-#include "request/conversion_request.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace {

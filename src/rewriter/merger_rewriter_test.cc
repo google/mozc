@@ -33,9 +33,9 @@
 #include <string>
 
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

@@ -40,11 +40,11 @@
 #include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
 #include "data_manager/serialized_dictionary.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
 
