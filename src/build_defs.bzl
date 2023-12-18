@@ -55,7 +55,7 @@ def _update_visibility(visibility = None):
     if not visibility:
         return visibility
     if ("//:__subpackages__" in visibility):
-        return visibility + ["//third_party/mozc:__subpackages__"]
+        return visibility + ["//:__subpackages__"]
     return visibility
 
 def mozc_cc_library(deps = [], copts = [], visibility = None, **kwargs):

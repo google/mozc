@@ -42,9 +42,7 @@ load(
 )
 load("//bazel/win32:build_defs.bzl", "copts_wtl", "features_gdi")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "renderer_client",
