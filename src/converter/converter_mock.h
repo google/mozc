@@ -30,8 +30,8 @@
 #ifndef MOZC_CONVERTER_CONVERTER_MOCK_H_
 #define MOZC_CONVERTER_CONVERTER_MOCK_H_
 
-#include "testing/gmock.h"
 #include "converter/converter_interface.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 

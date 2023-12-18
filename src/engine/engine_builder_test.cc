@@ -38,13 +38,13 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "protocol/engine_builder.pb.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "engine/engine_interface.h"
 #include "prediction/predictor_interface.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {
@@ -60,8 +60,11 @@ class EngineBuilderTest : public testing::TestWithTempUserProfile,
                           public ::testing::WithParamInterface<Param> {
  protected:
   EngineBuilderTest()
-      : mock_data_path_(testing::GetSourcePath(
-            {"data_manager", "testing", "mock_mozc.data"})) {}
+      : mock_data_path_(
+            testing::GetSourcePath({MOZC_SRC_COMPONENTS("data_manager"),
+                                    "testing", "mock_mozc.data"})) {
+    LOG(INFO) << mock_data_path_;
+  }
 
   void Clear() {
     builder_.Clear();

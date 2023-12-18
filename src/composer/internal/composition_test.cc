@@ -35,13 +35,13 @@
 #include <utility>
 #include <vector>
 
-#include "testing/gunit.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace composer {

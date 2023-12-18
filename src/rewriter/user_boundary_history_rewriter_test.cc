@@ -36,13 +36,13 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

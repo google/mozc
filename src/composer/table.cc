@@ -44,7 +44,6 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
@@ -52,6 +51,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "composer/internal/special_key.h"
+#include "data_manager/data_manager_interface.h"
 
 namespace mozc {
 namespace composer {

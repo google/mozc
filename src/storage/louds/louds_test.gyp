@@ -36,8 +36,8 @@
         'louds_test.cc',
       ],
       'dependencies': [
-        '../../base/absl.gyp:absl_strings',
-        '../../testing/testing.gyp:gtest_main',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:louds',
       ],
       'variables': {
@@ -51,7 +51,7 @@
         'louds_trie_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:louds_trie',
         'louds.gyp:louds_trie_builder',
       ],
@@ -66,7 +66,7 @@
         'bit_vector_based_array_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:bit_vector_based_array',
         'louds.gyp:bit_vector_based_array_builder',
       ],
@@ -81,7 +81,7 @@
         'simple_succinct_bit_vector_index_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:simple_succinct_bit_vector_index',
       ],
       'variables': {
@@ -95,7 +95,7 @@
         'bit_stream_test.cc',
       ],
       'dependencies': [
-        '../../testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'louds.gyp:bit_stream',
       ],
       'variables': {

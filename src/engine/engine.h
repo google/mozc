@@ -34,12 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_group.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
-#include "dictionary/user_dictionary.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -47,6 +41,12 @@
 #include "converter/converter.h"
 #include "converter/immutable_converter_interface.h"
 #include "converter/segmenter.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
+#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"

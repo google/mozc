@@ -35,15 +35,15 @@
 #include <vector>
 
 #include "base/strings/assign.h"
-#include "data_manager/data_manager.h"
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/suppression_dictionary.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
 

@@ -33,13 +33,13 @@
 #include <string>
 
 #include "base/strings/pfchar.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/hash/hash_testing.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

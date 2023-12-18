@@ -35,8 +35,8 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "testing/gunit.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

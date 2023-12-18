@@ -36,8 +36,8 @@ load(
     "mozc_cc_library",
     "mozc_cc_test",
 )
-load("//bazel/win32:build_defs.bzl", "copts_wtl")
 load("//bazel:stubs.bzl", "lexan")
+load("//bazel/win32:build_defs.bzl", "copts_wtl")
 
 package(
     default_visibility = ["//renderer:__pkg__"],

@@ -34,13 +34,13 @@
 #include <string>
 #include <vector>
 
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/single_kanji_dictionary.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/single_kanji_dictionary.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
 

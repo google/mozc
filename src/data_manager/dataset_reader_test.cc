@@ -39,14 +39,14 @@
 
 #include "base/random.h"
 #include "base/util.h"
-#include "data_manager/dataset.pb.h"
-#include "data_manager/dataset_writer.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/random/distributions.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/dataset.pb.h"
+#include "data_manager/dataset_writer.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

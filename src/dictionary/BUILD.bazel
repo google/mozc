@@ -41,6 +41,10 @@ load(
 )
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
 mozc_cc_library(
     name = "dictionary_interface",
     hdrs = ["dictionary_interface.h"],
@@ -97,7 +101,6 @@ mozc_cc_library(
     hdrs = [
         "dictionary_impl.h",
     ],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
@@ -114,7 +117,6 @@ mozc_cc_library(
     name = "suffix_dictionary",
     srcs = ["suffix_dictionary.cc"],
     hdrs = ["suffix_dictionary.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
@@ -132,7 +134,6 @@ mozc_cc_library(
     hdrs = [
         "user_dictionary.h",
     ],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
@@ -202,7 +203,6 @@ mozc_cc_test(
 mozc_cc_library(
     name = "user_dictionary_stub",
     hdrs = ["user_dictionary_stub.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
         "@com_google_absl//absl/strings",
@@ -227,23 +227,16 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_aux_dictionary",
     srcs = ["gen_aux_dictionary.py"],
-    visibility = [
-        "//:__subpackages__",
-    ],
 )
 
 mozc_py_binary(
     name = "gen_filtered_dictionary",
     srcs = ["gen_filtered_dictionary.py"],
-    visibility = [
-        "//:__subpackages__",
-    ],
 )
 
 mozc_cc_library(
     name = "pos_group",
     hdrs = ["pos_group.h"],
-    visibility = ["//:__subpackages__"],
     deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
@@ -311,7 +304,6 @@ mozc_cc_library(
     name = "user_dictionary_session_handler",
     srcs = ["user_dictionary_session_handler.cc"],
     hdrs = ["user_dictionary_session_handler.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":user_dictionary_session",
         ":user_dictionary_util",
@@ -347,7 +339,6 @@ mozc_cc_library(
     name = "user_dictionary_storage",
     srcs = ["user_dictionary_storage.cc"],
     hdrs = ["user_dictionary_storage.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":user_dictionary_util",
         "//base:file_stream",
@@ -463,9 +454,6 @@ mozc_cc_library(
     hdrs = [
         "text_dictionary_loader.h",
     ],
-    visibility = [
-        "//:__subpackages__",
-    ],
     deps = [
         ":dictionary_token",
         ":pos_matcher",
@@ -503,7 +491,6 @@ mozc_cc_library(
     name = "user_pos",
     srcs = ["user_pos.cc"],
     hdrs = ["user_pos.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":user_pos_interface",
         "//base:logging",
@@ -543,7 +530,6 @@ mozc_py_library(
 mozc_py_binary(
     name = "gen_user_pos_data",
     srcs = ["gen_user_pos_data.py"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":pos_util",
         "//build_tools:serialized_string_array_builder",
@@ -553,7 +539,6 @@ mozc_py_binary(
 mozc_py_binary(
     name = "gen_pos_matcher_code",
     srcs = ["gen_pos_matcher_code.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":pos_util"],
 )
 
@@ -584,13 +569,11 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
-    visibility = ["//:__subpackages__"],
 )
 
 mozc_cc_binary(
     name = "gen_system_dictionary_data_main",
     srcs = ["gen_system_dictionary_data_main.cc"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":pos_matcher",
         ":text_dictionary_loader",
@@ -608,7 +591,6 @@ mozc_cc_library(
     name = "suppression_dictionary",
     srcs = ["suppression_dictionary.cc"],
     hdrs = ["suppression_dictionary.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//base:logging",
         "@com_google_absl//absl/base:core_headers",
@@ -637,7 +619,6 @@ mozc_cc_library(
     name = "dictionary_mock",
     testonly = True,
     hdrs = ["dictionary_mock.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
         "//testing:gunit",
@@ -647,7 +628,6 @@ mozc_cc_library(
 mozc_py_binary(
     name = "gen_suffix_data",
     srcs = ["gen_suffix_data.py"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//build_tools:serialized_string_array_builder",
     ],
@@ -675,9 +655,6 @@ mozc_cc_library(
     testonly = True,
     srcs = ["dictionary_test_util.cc"],
     hdrs = ["dictionary_test_util.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
     deps = [
         ":dictionary_interface",
         ":dictionary_token",
@@ -705,7 +682,6 @@ mozc_cc_library(
     name = "single_kanji_dictionary",
     srcs = ["single_kanji_dictionary.cc"],
     hdrs = ["single_kanji_dictionary.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         "//base:text_normalizer",
         "//base:util",
@@ -761,7 +737,4 @@ run_binary(
         prod = [],
     ),
     tool = ":gen_zip_code_seed",
-    visibility = [
-        "//:__subpackages__",
-    ],
 )

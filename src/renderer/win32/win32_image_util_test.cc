@@ -51,11 +51,11 @@
 #include "base/protobuf/text_format.h"
 #include "base/win32/wide_char.h"
 #include "base/win32/win_font_test_helper.h"
+#include "absl/strings/str_cat.h"
+#include "data/test/renderer/win32/test_spec.pb.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/strings/str_cat.h"
-#include "data/test/renderer/win32/test_spec.pb.h"
 
 using ::std::max;
 using ::std::min;

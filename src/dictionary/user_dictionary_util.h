@@ -38,9 +38,9 @@
 #include <memory>
 #include <string>
 
-#include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/user_pos_interface.h"
 
 namespace mozc {
 

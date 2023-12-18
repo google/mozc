@@ -40,9 +40,9 @@
       'dependencies': [
         'engine.gyp:engine_builder',
         'install_engine_builder_test_src',
-        '<(mozc_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
       ],
     },
     {
@@ -50,7 +50,7 @@
       'type': 'none',
       'copies': [
         {
-          'destination': '<(mozc_data_dir)/engine',
+          'destination': '<(mozc_oss_data_dir)/engine',
           'files': [
             'engine_builder_test.cc',
           ],

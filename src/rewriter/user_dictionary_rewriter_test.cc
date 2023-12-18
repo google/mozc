@@ -36,11 +36,11 @@
 
 #include "base/logging.h"
 #include "request/conversion_request.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

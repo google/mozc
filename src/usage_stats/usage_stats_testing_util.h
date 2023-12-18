@@ -34,8 +34,8 @@
 #include <memory>
 
 #include "config/stats_config_util_mock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace usage_stats {

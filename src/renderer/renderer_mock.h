@@ -30,8 +30,8 @@
 #ifndef MOZC_RENDERER_RENDERER_MOCK_H_
 #define MOZC_RENDERER_RENDERER_MOCK_H_
 
-#include "testing/gmock.h"
 #include "renderer/renderer_interface.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace renderer {

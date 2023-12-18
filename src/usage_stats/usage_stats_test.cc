@@ -35,11 +35,11 @@
 
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
+#include "usage_stats/usage_stats.pb.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace usage_stats {

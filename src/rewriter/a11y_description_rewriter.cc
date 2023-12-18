@@ -35,9 +35,9 @@
 #include <vector>
 
 #include "base/util.h"
-#include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/serialized_dictionary.h"
 
 namespace mozc {
 namespace {

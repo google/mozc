@@ -33,10 +33,10 @@
 #include <string>
 #include <vector>
 
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/suppression_dictionary.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/suppression_dictionary.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"

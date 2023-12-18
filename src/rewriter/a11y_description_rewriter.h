@@ -33,10 +33,10 @@
 #include <memory>
 #include <string>
 
-#include "data_manager/data_manager_interface.h"
-#include "data_manager/serialized_dictionary.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

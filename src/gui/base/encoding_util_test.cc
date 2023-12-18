@@ -31,9 +31,9 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "absl/strings/string_view.h"
 
 #ifdef _WIN32
 #include <windows.h>

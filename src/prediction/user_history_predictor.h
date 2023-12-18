@@ -43,18 +43,18 @@
 #include "base/container/freelist.h"
 #include "base/container/trie.h"
 #include "base/thread.h"
-#include "dictionary/dictionary_interface.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "request/conversion_request.h"
-#include "storage/encrypted_string_storage.h"
-#include "storage/lru_cache.h"
-#include "testing/gunit_prod.h"  // IWYU pragma: keep
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "dictionary/dictionary_interface.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.pb.h"
+#include "storage/encrypted_string_storage.h"
+#include "storage/lru_cache.h"
+#include "testing/gunit_prod.h"  // IWYU pragma: keep
 
 namespace mozc::prediction {
 

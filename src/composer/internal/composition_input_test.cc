@@ -31,8 +31,8 @@
 
 #include <utility>
 
-#include "testing/gunit.h"
 #include "composer/table.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

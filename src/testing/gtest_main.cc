@@ -33,9 +33,9 @@
 #endif  // _WIN32
 
 #include "base/init_mozc.h"
+#include "absl/flags/flag.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
-#include "absl/flags/flag.h"
 
 int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option

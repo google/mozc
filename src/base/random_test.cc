@@ -36,9 +36,9 @@
 #include <vector>
 
 #include "base/util.h"
-#include "testing/gunit.h"
 #include "absl/algorithm/container.h"
 #include "absl/random/random.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

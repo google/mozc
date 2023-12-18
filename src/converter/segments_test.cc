@@ -35,9 +35,9 @@
 #include <vector>
 
 #include "base/number_util.h"
-#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 

@@ -35,9 +35,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/gunit_prod.h"
-#include "absl/strings/string_view.h"
 // for FRIEND_TEST
 
 namespace mozc {

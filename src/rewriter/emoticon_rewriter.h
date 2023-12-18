@@ -32,12 +32,12 @@
 
 #include <memory>
 
-#include "data_manager/data_manager_interface.h"
-#include "data_manager/serialized_dictionary.h"
 #include "request/conversion_request.h"
 #include "absl/random/random.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

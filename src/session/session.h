@@ -47,9 +47,9 @@
 #include "session/internal/keymap.h"
 #include "session/session_interface.h"
 // for FRIEND_TEST()
+#include "absl/time/time.h"
 #include "testing/gunit_prod.h"
 #include "transliteration/transliteration.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace session {

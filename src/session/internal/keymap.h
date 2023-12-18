@@ -39,10 +39,10 @@
 #include "base/protobuf/protobuf.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit_prod.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "composer/key_event_util.h"
+#include "testing/gunit_prod.h"
 
 namespace mozc {
 namespace keymap {

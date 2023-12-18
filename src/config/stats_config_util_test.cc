@@ -32,10 +32,10 @@
 #include <string>
 
 #include "base/singleton.h"
-#include "testing/gunit.h"
 #include "absl/base/casts.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "testing/gunit.h"
 
 #ifdef __ANDROID__
 #include "base/file/temp_dir.h"

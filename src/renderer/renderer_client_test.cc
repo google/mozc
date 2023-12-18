@@ -39,12 +39,12 @@
 #include "base/version.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
-#include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/time/time.h"
 #include "ipc/ipc.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace renderer {

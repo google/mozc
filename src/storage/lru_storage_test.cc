@@ -45,12 +45,12 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/random.h"
+#include "absl/random/random.h"
+#include "absl/time/time.h"
 #include "storage/lru_cache.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/random/random.h"
-#include "absl/time/time.h"
 
 namespace mozc {
 namespace storage {

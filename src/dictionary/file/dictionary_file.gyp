@@ -38,8 +38,8 @@
       ],
       'dependencies': [
         'codec_util',
-        '../../base/absl.gyp:absl_status',
-        '../../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -52,7 +52,7 @@
       'dependencies': [
         'codec',
         'codec_util',
-        '../../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -63,9 +63,9 @@
         'codec_util.cc',
       ],
       'dependencies': [
-        '../../base/absl.gyp:absl_strings',
-        '../../base/absl.gyp:absl_status',
-        '../../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -77,9 +77,9 @@
       ],
       'dependencies': [
         'codec',
-        '../../base/absl.gyp:absl_strings',
-        '../../base/absl.gyp:absl_status',
-        '../../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/absl.gyp:absl_status',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
       ],
     },
     {
@@ -91,7 +91,7 @@
       ],
       'dependencies': [
         'codec',
-        '../../base/base.gyp:base_core',
+        '<(mozc_src_dir)/base/base.gyp:base_core',
       ],
     },
   ],

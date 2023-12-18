@@ -35,10 +35,10 @@
 
 #include "base/container/serialized_string_array.h"
 #include "base/number_util.h"
-#include "data_manager/data_manager_interface.h"
-#include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
 #include "converter/segments.h"
+#include "data_manager/data_manager_interface.h"
+#include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

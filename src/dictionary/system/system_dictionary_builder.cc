@@ -46,13 +46,6 @@
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "dictionary/dictionary_token.h"
-#include "dictionary/file/codec_interface.h"
-#include "dictionary/file/section.h"
-#include "dictionary/system/codec_interface.h"
-#include "dictionary/system/words_info.h"
-#include "storage/louds/bit_vector_based_array_builder.h"
-#include "storage/louds/louds_trie_builder.h"
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -60,6 +53,13 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/dictionary_token.h"
+#include "dictionary/file/codec_interface.h"
+#include "dictionary/file/section.h"
+#include "dictionary/system/codec_interface.h"
+#include "dictionary/system/words_info.h"
+#include "storage/louds/bit_vector_based_array_builder.h"
+#include "storage/louds/louds_trie_builder.h"
 
 ABSL_FLAG(bool, preserve_intermediate_dictionary, false,
           "preserve inetemediate dictionary file.");

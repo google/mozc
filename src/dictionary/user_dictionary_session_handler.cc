@@ -34,10 +34,10 @@
 
 #include "base/logging.h"
 #include "base/protobuf/repeated_field.h"
-#include "dictionary/user_dictionary_session.h"
-#include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/random/random.h"
+#include "dictionary/user_dictionary_session.h"
+#include "dictionary/user_dictionary_util.h"
 
 namespace mozc {
 namespace user_dictionary {

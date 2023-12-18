@@ -53,13 +53,13 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/status.h"
-#include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/dataset_writer.h"
 
 ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
 ABSL_FLAG(std::string, output, "", "Output file");

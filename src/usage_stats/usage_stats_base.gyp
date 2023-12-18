@@ -43,7 +43,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../config/config.gyp:stats_config_util',
-        '../storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
         'usage_stats_uploader',
         'usage_stats_protocol',
@@ -111,7 +111,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../storage/storage.gyp:storage',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
       ],
     },

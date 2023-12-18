@@ -34,10 +34,10 @@
 #include <vector>
 
 #include "base/file/temp_dir.h"
-#include "testing/gunit.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace testing {

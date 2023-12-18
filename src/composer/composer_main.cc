@@ -36,10 +36,10 @@
 #include "base/init_mozc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "transliteration/transliteration.h"
 #include "absl/flags/flag.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "transliteration/transliteration.h"
 
 ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
           "preedit conversion table file.");

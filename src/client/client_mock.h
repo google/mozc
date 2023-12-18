@@ -35,10 +35,10 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gmock.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
+#include "testing/gmock.h"
 
 namespace mozc {
 namespace client {

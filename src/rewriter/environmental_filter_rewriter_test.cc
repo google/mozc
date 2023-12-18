@@ -37,15 +37,15 @@
 
 #include "base/text_normalizer.h"
 #include "base/util.h"
-#include "data_manager/emoji_data.h"
-#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "data_manager/emoji_data.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

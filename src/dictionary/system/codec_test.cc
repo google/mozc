@@ -37,13 +37,13 @@
 #include "base/logging.h"
 #include "base/random.h"
 #include "base/util.h"
+#include "absl/random/distributions.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "testing/gunit.h"
-#include "absl/random/distributions.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {

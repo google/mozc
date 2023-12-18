@@ -40,7 +40,7 @@
       'target_name': 'gen_rewriter_files',
       'type': 'none',
       'dependencies': [
-        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:pos_util',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_util',
         'gen_usage_rewriter_dictionary_main#host',
       ],
       'toolsets': ['host'],
@@ -89,7 +89,7 @@
         'gen_existence_data.cc'
       ],
       'dependencies': [
-        '<(mozc_src_dir)/storage/storage.gyp:storage#host',
+        '<(mozc_oss_src_dir)/storage/storage.gyp:storage#host',
         '<(mozc_src_dir)/base/base.gyp:codegen_bytearray_stream#host',
       ],
     },
@@ -128,10 +128,10 @@
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:japanese_util',
         '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:data_manager',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
-        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
-        '<(mozc_src_dir)/dictionary/dictionary_base.gyp:user_pos',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
+        '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:user_pos',
       ],
     },
     {
@@ -156,7 +156,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
     {
@@ -168,7 +168,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:serialized_dictionary',
       ],
     },
   ],

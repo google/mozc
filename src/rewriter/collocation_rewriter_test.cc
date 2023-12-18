@@ -35,9 +35,9 @@
 #include <memory>
 #include <string>
 
+#include "request/conversion_request.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
-#include "request/conversion_request.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 

@@ -39,8 +39,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "data_manager/data_manager_interface.h"
-#include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/algorithm/container.h"
 #include "absl/base/attributes.h"
 #include "absl/base/const_init.h"
@@ -49,6 +47,8 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/data_manager_interface.h"
+#include "storage/louds/simple_succinct_bit_vector_index.h"
 
 
 namespace mozc {

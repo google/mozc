@@ -31,11 +31,11 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/status/status.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 #ifndef _WIN32
 #include <unistd.h>

@@ -40,13 +40,13 @@
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
-#include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
+#include "dictionary/user_dictionary_util.h"
 
 namespace mozc {
 namespace {

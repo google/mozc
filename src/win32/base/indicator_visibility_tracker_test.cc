@@ -31,8 +31,8 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
-#include "testing/gunit.h"
 #include "absl/time/time.h"
+#include "testing/gunit.h"
 #include "win32/base/keyboard.h"
 
 namespace mozc {

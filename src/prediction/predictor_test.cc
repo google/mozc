@@ -35,22 +35,22 @@
 
 #include "base/logging.h"
 #include "config/config_handler.h"
-#include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/dictionary_mock.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/dictionary_mock.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc::prediction {
 namespace {

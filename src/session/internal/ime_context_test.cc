@@ -34,8 +34,6 @@
 
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit.h"
-#include "testing/testing_util.h"
 #include "absl/time/time.h"
 #include "composer/composer.h"
 #include "composer/table.h"
@@ -43,6 +41,8 @@
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "session/session_converter.h"
+#include "testing/gunit.h"
+#include "testing/testing_util.h"
 
 namespace mozc {
 namespace session {

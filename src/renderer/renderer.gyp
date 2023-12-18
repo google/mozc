@@ -114,7 +114,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/base.gyp:version',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'renderer_client',
       ],
       'variables': {
@@ -131,8 +131,8 @@
         '<(mozc_src_dir)/base/absl.gyp:absl_strings',
         '<(mozc_src_dir)/base/absl.gyp:absl_time',
         '<(mozc_oss_src_dir)/ipc/ipc.gyp:ipc_test_util',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-        '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
         'renderer_client',
         'renderer_server',
       ],
@@ -147,7 +147,7 @@
         'table_layout_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'table_layout',
       ],
       'variables': {
@@ -161,7 +161,7 @@
         'window_util_test.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'window_util',
       ],
       'variables': {
@@ -189,7 +189,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/protocol/protocol.gyp:renderer_proto',
-        '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'renderer_style_handler',
       ],
       'variables': {
@@ -258,8 +258,8 @@
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:install_test_data',
             '<(mozc_oss_src_dir)/data/test/renderer/win32/test_data.gyp:test_spec_proto',
             '<(mozc_src_dir)/protobuf/protobuf.gyp:protobuf',
-            '<(mozc_src_dir)/testing/testing.gyp:gtest_main',
-            '<(mozc_src_dir)/testing/testing.gyp:mozctest',
+            '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
+            '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
             'win32_renderer_core',
           ],
           'variables': {

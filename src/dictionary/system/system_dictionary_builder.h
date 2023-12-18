@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
@@ -45,7 +46,6 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {

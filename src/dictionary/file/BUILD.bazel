@@ -36,9 +36,7 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "dictionary_file",

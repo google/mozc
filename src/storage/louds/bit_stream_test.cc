@@ -31,8 +31,8 @@
 
 #include <string>
 
-#include "testing/gunit.h"
 #include "absl/strings/str_cat.h"
+#include "testing/gunit.h"
 
 namespace mozc::storage::louds::internal {
 namespace {

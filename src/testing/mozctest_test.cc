@@ -44,7 +44,8 @@ using ::testing::IsEmpty;
 using ::testing::Not;
 
 TEST(MozcTestTest, GetSourcePath) {
-  std::string path = GetSourcePath({"testing", "mozctest_test.cc"});
+  std::string path =
+      GetSourcePath({MOZC_SRC_COMPONENTS("testing"), "mozctest_test.cc"});
   std::ifstream ifs(path);
   EXPECT_TRUE(ifs.good()) << path;
 }

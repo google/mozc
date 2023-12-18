@@ -35,11 +35,11 @@
 #include <utility>
 #include <vector>
 
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

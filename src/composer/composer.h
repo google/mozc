@@ -42,13 +42,13 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
-#include "testing/gunit_prod.h"  // for FRIEND_TEST()
-#include "transliteration/transliteration.h"
 #include "absl/strings/string_view.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "testing/gunit_prod.h"  // for FRIEND_TEST()
+#include "transliteration/transliteration.h"
 
 namespace mozc {
 namespace composer {

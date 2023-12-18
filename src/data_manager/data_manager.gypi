@@ -61,9 +61,9 @@
         '<(dataset_tag)_data_manager.cc',
       ],
       'dependencies': [
-        '<(mozc_dir)/base/absl.gyp:absl_strings',
-        '<(mozc_dir)/base/base.gyp:base',
-        '<(mozc_dir)/data_manager/data_manager_base.gyp:data_manager',
+        '<(mozc_src_dir)/base/absl.gyp:absl_strings',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_oss_src_dir)/data_manager/data_manager_base.gyp:data_manager',
         'gen_embedded_mozc_dataset_for_<(dataset_tag)#host',
       ],
       'defines': [
@@ -90,7 +90,7 @@
             '<(gen_out_dir)/<(out_mozc_data_header)',
           ],
           'action': [
-            '<(python)', '<(mozc_dir)/build_tools/embed_file.py',
+            '<(python)', '<(mozc_src_dir)/build_tools/embed_file.py',
             '--input=<(gen_out_dir)/<(out_mozc_data)',
             '--name=<(mozc_data_varname)',
             '--output=<(gen_out_dir)/<(out_mozc_data_header)',
@@ -305,7 +305,7 @@
             'pos_group_def': '<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
           },
           'inputs': [
-            '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_pos_rewrite_rule.py',
             '<(id_def)',
             '<(special_pos)',
             '<(pos_group_def)',
@@ -315,7 +315,7 @@
           ],
           'action': [
             '<(python)',
-            '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_pos_rewrite_rule.py',
             '--id_def=<(platform_data_dir)/id.def',
             '--special_pos=<(mozc_oss_src_dir)/data/rules/special_pos.def',
             '--pos_group_def=<(mozc_oss_src_dir)/data/rules/user_segment_history_pos_group.def',
@@ -422,7 +422,7 @@
             '<(gen_out_dir)/segmenter_inl.inc',
           ],
           'action': [
-            '<(python)', '<(mozc_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_src_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/segmenter_inl.inc',
             '<(mozc_oss_src_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
@@ -527,7 +527,7 @@
             ],
           },
           'inputs': [
-            '<(mozc_dir)/dictionary/gen_suffix_data.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_suffix_data.py',
             '<@(input_files)',
           ],
           'outputs': [
@@ -537,7 +537,7 @@
           ],
           'action': [
             '<(python)',
-            '<(mozc_dir)/dictionary/gen_suffix_data.py',
+            '<(mozc_oss_src_dir)/dictionary/gen_suffix_data.py',
             '--input=<(platform_data_dir)/suffix.txt',
             '--output_key_array=<(gen_out_dir)/suffix_key.data',
             '--output_value_array=<(gen_out_dir)/suffix_value.data',

@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
-#include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/dictionary_token.h"
 
 namespace mozc {
 namespace dictionary {

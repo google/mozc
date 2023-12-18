@@ -39,14 +39,14 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/status/status.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {

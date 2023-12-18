@@ -34,19 +34,19 @@
 
 #include "base/strings/unicode.h"
 #include "config/config_handler.h"
-#include "data_manager/testing/mock_data_manager.h"
-#include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/segments.h"
+#include "data_manager/testing/mock_data_manager.h"
+#include "dictionary/pos_matcher.h"
 #include "prediction/result.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
 
 namespace mozc::prediction {
 namespace {

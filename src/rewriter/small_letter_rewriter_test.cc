@@ -34,10 +34,10 @@
 #include "base/strings/assign.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/strings/string_view.h"
 #include "engine/mock_data_engine_factory.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

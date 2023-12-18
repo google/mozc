@@ -32,8 +32,8 @@
 #include <string>
 #include <string_view>
 
-#include "testing/gunit.h"
 #include "absl/strings/string_view.h"
+#include "testing/gunit.h"
 
 namespace mozc::strings {
 namespace {

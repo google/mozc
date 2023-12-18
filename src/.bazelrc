@@ -8,6 +8,8 @@ build --host_copt "-funsigned-char"
 build --host_copt "-Wno-sign-compare"
 build --host_copt "-Wno-char-subscripts"
 build --objccopt "-fsigned-char"
+# enable_bzlmod causes the build failure. Suppress it util the fix.
+build --noenable_bzlmod
 
 # Linux
 build:linux --define TARGET=oss_linux --copt "-fPIC"

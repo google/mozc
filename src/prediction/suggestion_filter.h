@@ -32,10 +32,10 @@
 
 #include <utility>
 
-#include "storage/existence_filter.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "storage/existence_filter.h"
 
 namespace mozc {
 

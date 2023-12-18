@@ -33,11 +33,11 @@
 #include <string>
 
 #include "base/version.h"
+#include "absl/strings/string_view.h"
 #include "storage/registry.h"
 #include "storage/tiny_storage.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace usage_stats {

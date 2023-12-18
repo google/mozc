@@ -31,8 +31,8 @@
 
 #include <sstream>
 
-#include "testing/gunit.h"
 #include "absl/strings/str_format.h"
+#include "testing/gunit.h"
 
 namespace mozc {
 namespace {

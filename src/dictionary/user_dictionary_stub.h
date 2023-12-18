@@ -32,8 +32,8 @@
 
 #include <string>
 
-#include "dictionary/dictionary_interface.h"
 #include "absl/strings/string_view.h"
+#include "dictionary/dictionary_interface.h"
 
 namespace mozc {
 namespace dictionary {

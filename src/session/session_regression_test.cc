@@ -37,16 +37,14 @@
 
 #include "base/logging.h"
 #include "config/config_handler.h"
-#include "data_manager/testing/mock_data_manager.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
+#include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_interface.h"
@@ -54,6 +52,8 @@
 #include "session/request_test_util.h"
 #include "session/session.h"
 #include "session/session_handler.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 

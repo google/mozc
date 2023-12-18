@@ -42,14 +42,14 @@
 #include "base/mmap.h"
 #include "base/random.h"
 #include "base/system_util.h"
-#include "dictionary/user_dictionary_importer.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/mozctest.h"
 #include "absl/random/random.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "dictionary/user_dictionary_importer.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/mozctest.h"
 
 namespace mozc {
 namespace {

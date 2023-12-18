@@ -37,10 +37,10 @@
 #include <utility>
 
 #include "base/process_mutex.h"
-#include "testing/gunit_prod.h"  // For FRIEND_TEST
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "ipc/ipc.pb.h"
+#include "testing/gunit_prod.h"  // For FRIEND_TEST
 
 #ifdef _WIN32
 #include "absl/container/flat_hash_map.h"

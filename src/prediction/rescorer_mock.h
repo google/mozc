@@ -30,8 +30,8 @@
 #ifndef MOZC_PREDICTION_RESCORER_MOCK_H_
 #define MOZC_PREDICTION_RESCORER_MOCK_H_
 
-#include "testing/gmock.h"
 #include "prediction/rescorer_interface.h"
+#include "testing/gmock.h"
 
 namespace mozc::prediction {
 

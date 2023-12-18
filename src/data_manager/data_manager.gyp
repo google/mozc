@@ -45,7 +45,7 @@
         'pos_list_dep%': 'oss/oss_data_manager_base.gyp:gen_oss_embedded_pos_list#host',
       },
       'dependencies': [
-        '../base/base.gyp:serialized_string_array',
+        '<(mozc_src_dir)/base/base.gyp:serialized_string_array',
         '<(pos_list_dep)',
       ],
       'export_dependent_settings': [
@@ -60,8 +60,8 @@
         'connection_file_reader.cc',
       ],
       'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:number_util',
+        '<(mozc_src_dir)/base/base.gyp:base',
+        '<(mozc_src_dir)/base/base.gyp:number_util',
       ],
     },
   ],

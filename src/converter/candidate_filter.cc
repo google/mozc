@@ -42,14 +42,14 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
-#include "dictionary/pos_matcher.h"
-#include "dictionary/suppression_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/node.h"
 #include "converter/segments.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 
 namespace mozc {

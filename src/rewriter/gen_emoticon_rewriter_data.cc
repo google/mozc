@@ -38,13 +38,13 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "data_manager/serialized_dictionary.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "data_manager/serialized_dictionary.h"
 
 ABSL_FLAG(std::string, input, "", "Emoticon dictionary file");
 ABSL_FLAG(std::string, output_token_array, "", "Output token array");

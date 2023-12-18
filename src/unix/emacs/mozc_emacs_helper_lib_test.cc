@@ -36,12 +36,12 @@
 #include "base/protobuf/message.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
-#include "testing/gmock.h"
-#include "testing/gunit.h"
-#include "testing/testing_util.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "testing/gmock.h"
+#include "testing/gunit.h"
+#include "testing/testing_util.h"
 
 namespace mozc::emacs {
 namespace {

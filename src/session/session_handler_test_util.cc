@@ -37,11 +37,11 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "storage/registry.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "prediction/user_history_predictor.h"
 #include "session/session_handler_interface.h"
+#include "storage/registry.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);

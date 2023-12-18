@@ -91,7 +91,7 @@ message UserDictionary {
     SUPPRESSION_WORD = 44;  // "抑制単語"
   }
   // LINT.ThenChange(
-  //     //dictionary/user_dictionary_util.cc
+  //     dictionary/user_dictionary_util.cc
   // )
   // ID of this dictionary
   optional uint64 id = 1 [default = 0, jstype = JS_STRING];

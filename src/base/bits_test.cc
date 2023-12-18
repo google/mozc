@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/algorithm/container.h"
 #include "testing/gmock.h"
 #include "testing/gunit.h"
-#include "absl/algorithm/container.h"
 
 namespace mozc {
 namespace {

@@ -36,7 +36,7 @@
         'transliteration_test.cc',
       ],
       'dependencies': [
-        '../testing/testing.gyp:gtest_main',
+        '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'transliteration.gyp:transliteration',
       ],
       'variables': {

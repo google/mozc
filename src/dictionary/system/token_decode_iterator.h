@@ -35,12 +35,12 @@
 
 #include "base/japanese_util.h"
 #include "base/logging.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/louds_trie.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
