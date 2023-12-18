@@ -53,8 +53,8 @@
 #endif  // __APPLE__
 
 #if defined(__ANDROID__)
-#include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "config/config_handler.h"
 #endif  // __ANDROID__
 
 #include "base/file_util.h"

@@ -35,11 +35,11 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/flags/flag.h"
 #include "absl/synchronization/mutex.h"
+#include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_builder.h"

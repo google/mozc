@@ -36,7 +36,7 @@
       'type': 'none',
       'dependencies': [
         '../base/base.gyp:base',
-        '../config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
       ],

@@ -30,8 +30,8 @@
 #include "base/crash_report_handler.h"
 #include "base/init_mozc.h"
 #include "base/system_util.h"
-#include "config/stats_config_util.h"
 #include "absl/flags/flag.h"
+#include "config/stats_config_util.h"
 
 #ifdef _WIN32
 #include <windows.h>

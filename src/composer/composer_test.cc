@@ -41,8 +41,6 @@
 
 #include "base/clock_mock.h"
 #include "base/util.h"
-#include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
@@ -50,6 +48,8 @@
 #include "absl/time/time.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "testing/gmock.h"

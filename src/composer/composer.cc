@@ -46,8 +46,6 @@
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
 #include "base/util.h"
-#include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
@@ -60,6 +58,8 @@
 #include "composer/internal/transliterators.h"
 #include "composer/key_event_util.h"
 #include "composer/table.h"
+#include "config/character_form_manager.h"
+#include "config/config_handler.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {

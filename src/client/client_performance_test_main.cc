@@ -50,7 +50,6 @@
 #include "base/singleton.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/algorithm/container.h"
@@ -60,6 +59,7 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "client/client.h"
+#include "config/config_handler.h"
 #include "session/random_keyevents_generator.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");

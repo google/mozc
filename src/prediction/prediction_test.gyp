@@ -51,7 +51,7 @@
         '<(mozc_src_dir)/base/absl.gyp:absl_time',
         '<(mozc_src_dir)/base/base_test.gyp:clock_mock',
         '<(mozc_oss_src_dir)/composer/composer.gyp:composer',
-        '<(mozc_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:connector',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:immutable_converter',
         '<(mozc_oss_src_dir)/converter/converter_base.gyp:segmenter',

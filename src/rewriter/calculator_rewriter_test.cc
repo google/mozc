@@ -33,12 +33,12 @@
 #include <string>
 
 #include "base/logging.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
+#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"

@@ -33,11 +33,11 @@
 #include <string>
 #include <vector>
 
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "composer/key_event_util.h"
 #include "composer/key_parser.h"
+#include "config/config_handler.h"
 #include "testing/gunit.h"
 
 namespace mozc {

@@ -31,10 +31,10 @@
 
 #include <string>
 
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
