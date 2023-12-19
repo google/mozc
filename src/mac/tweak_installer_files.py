@@ -83,16 +83,23 @@ def SymlinkQtFrameworks(app_dir: str) -> None:
     framework_dir = os.path.join(app_dir,
                                  f'Contents/Frameworks/{framework}.framework/')
 
+    # Restore symlinks. Bazel uses zip without consideration of symlinks.
+    # It changes symlink files to normal files. The following logics remove
+    # those normal files and make symlinks again.
+
+    # rm {app_dir}/QtCore.framework/Versions/Current
     # ln -s A {app_dir}/QtCore.framework/Versions/Current
+    os.remove(framework_dir + 'Versions/Current')
     os.symlink('A', framework_dir + 'Versions/Current')
 
     # rm {app_dir}/QtCore.framework/QtCore
-    os.remove(framework_dir + framework)
-
     # ln -s Versions/Current/QtCore {app_dir}/QtCore.framework/QtCore
+    os.remove(framework_dir + framework)
     os.symlink('Versions/Current/' + framework, framework_dir + framework)
 
+    # rm {app_dir}/QtCore.framework/Resources
     # ln -s Versions/Current/Resources {app_dir}/QtCore.framework/Resources
+    os.remove(framework_dir + 'Resources')
     os.symlink('Versions/Current/Resources', framework_dir + 'Resources')
 
 
