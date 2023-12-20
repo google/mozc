@@ -124,6 +124,8 @@ struct Result {
   int cost_before_rescoring = 0;
   // If removed is true, this result is not used for a candidate.
   bool removed = false;
+  // confidence score of typing correction. Larger is more confident.
+  float typing_correction_score = 0.0;
 #ifndef NDEBUG
   std::string log;
 #endif  // NDEBUG

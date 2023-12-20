@@ -76,6 +76,10 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
   std::vector<Result> AggregateResults(const ConversionRequest &request,
                                        const Segments &segments) const override;
 
+  std::vector<Result> AggregateTypingCorrectedResults(
+      const ConversionRequest &request,
+      const Segments &segments) const override;
+
  private:
   class PredictiveLookupCallback;
   class PrefixLookupCallback;
@@ -175,11 +179,6 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       PredictionTypes types, size_t lookup_limit,
       std::vector<Result> *results) const;
 
-  void GetPredictiveResultsUsingTypingCorrection(
-      absl::Span<const spelling::TypeCorrectedQuery> queries,
-      const ConversionRequest &request, const Segments &segments,
-      PredictionTypes base_selected_types, std::vector<Result> *results) const;
-
   // Returns true if the realtime conversion should be used.
   // TODO(hidehiko): add Config and Request instances into the arguments
   //   to represent the dependency explicitly.
@@ -249,10 +248,10 @@ class DictionaryPredictionAggregator : public PredictionAggregatorInterface {
       const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 
-  void AggregateTypeCorrectingPrediction(const ConversionRequest &request,
-                                         const Segments &segments,
-                                         PredictionTypes base_selected_types,
-                                         std::vector<Result> *results) const;
+  void AggregateTypingCorrectedPrediction(const ConversionRequest &request,
+                                          const Segments &segments,
+                                          PredictionTypes base_selected_types,
+                                          std::vector<Result> *results) const;
 
   PredictionType AggregateUnigramCandidate(const ConversionRequest &request,
                                            const Segments &segments,

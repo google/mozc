@@ -90,6 +90,20 @@ class DictionaryPredictor : public PredictorInterface {
                       const prediction::RescorerInterface *rescorer = nullptr,
                       const void *user_arg = nullptr);
 
+  // Parameters to mix the literal and typing corrected results.
+  // These parameters define the position of literal and typing corrected
+  // results, and determined dynamically using various quality signals.
+  struct TypingCorrectionMixingParams {
+    // Moves the literal candidate to the top position even when
+    // the typing corrected result is placed at top.
+    // Set this flag when the typing correction is less confident.
+    bool literal_on_top = false;
+
+    // Moves the literal candidate to the at least second position.
+    // When the literal candidate is already at the top, do nothing.
+    bool literal_at_least_second = false;
+  };
+
   DictionaryPredictor(const DictionaryPredictor &) = delete;
   DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
 
@@ -156,12 +170,14 @@ class DictionaryPredictor : public PredictorInterface {
       const SuggestionFilter &suggestion_filter,
       const prediction::RescorerInterface *rescorer = nullptr);
 
-  static void ApplyPenaltyForKeyExpansion(const Segments &segments,
+  static void ApplyPenaltyForKeyExpansion(const ConversionRequest &request,
+                                          const Segments &segments,
                                           std::vector<Result> *results);
 
-  bool AddPredictionToCandidates(const ConversionRequest &request,
-                                 Segments *segments,
-                                 absl::Span<Result> results) const;
+  bool AddPredictionToCandidates(
+      const ConversionRequest &request, Segments *segments,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
+      absl::Span<Result> results) const;
 
   void FillCandidate(
       const ConversionRequest &request, const Result &result,
@@ -231,6 +247,11 @@ class DictionaryPredictor : public PredictorInterface {
   static void RemoveMissSpelledCandidates(size_t request_key_len,
                                           std::vector<Result> *results);
 
+  // Populate conversion costs to `results`.
+  void RewriteResultsForPrediction(const ConversionRequest &request,
+                                   const Segments &segments,
+                                   std::vector<Result> *results) const;
+
   // Scoring function which takes prediction bounus into account.
   // It basically reranks the candidate by lang_prob * (1 + remain_len).
   // This algorithm is mainly used for desktop.
@@ -276,8 +297,15 @@ class DictionaryPredictor : public PredictorInterface {
       const ImmutableConverterInterface *immutable_converter,
       absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
+  // Populates typing corrected results to `results`.
+  TypingCorrectionMixingParams MaybePopualteTypingCorrectedResults(
+      const ConversionRequest &request, const Segments &segments,
+      std::vector<Result> *results) const;
+
   static void MaybeSuppressAggressiveTypingCorrection(
-      const ConversionRequest &request, Segments *segments);
+      const ConversionRequest &request,
+      const TypingCorrectionMixingParams &typing_correction_mixing_params,
+      Segments *segments);
 
   static void MaybeApplyHomonymCorrection(const ConversionRequest &request,
                                           Segments *segments);

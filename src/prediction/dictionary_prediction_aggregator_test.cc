@@ -156,10 +156,10 @@ class DictionaryPredictionAggregatorTestPeer {
     aggregator_.AggregateEnglishPrediction(request, segments, results);
   }
 
-  void AggregateTypeCorrectingPrediction(const ConversionRequest &request,
-                                         const Segments &segments,
-                                         std::vector<Result> *results) const {
-    aggregator_.AggregateTypeCorrectingPrediction(
+  void AggregateTypingCorrectedPrediction(const ConversionRequest &request,
+                                          const Segments &segments,
+                                          std::vector<Result> *results) const {
+    aggregator_.AggregateTypingCorrectedPrediction(
         request, segments, BIGRAM | UNIGRAM | REALTIME, results);
   }
 

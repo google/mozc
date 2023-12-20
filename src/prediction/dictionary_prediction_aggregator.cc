@@ -166,6 +166,12 @@ bool IsTypingCorrectionEnabled(const ConversionRequest &request) {
   return request.config().use_typing_correction();
 }
 
+bool IsTypingCorrectionMixerV2Enabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_typing_correction_mixer_v2();
+}
+
 bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
                                       size_t utf8_len) {
   const size_t history_segments_size = segments.history_segments_size();
@@ -543,6 +549,15 @@ std::vector<Result> DictionaryPredictionAggregator::AggregateResults(
   return results;
 }
 
+std::vector<Result>
+DictionaryPredictionAggregator::AggregateTypingCorrectedResults(
+    const ConversionRequest &request, const Segments &segments) const {
+  std::vector<Result> results;
+  AggregateTypingCorrectedPrediction(request, segments,
+                                     (UNIGRAM | BIGRAM | REALTIME), &results);
+  return results;
+}
+
 PredictionTypes DictionaryPredictionAggregator::AggregatePredictionForTesting(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
@@ -657,11 +672,14 @@ PredictionTypes DictionaryPredictionAggregator::AggregatePrediction(
   }
 
   // Add typing correction candidates.
+  // When v2 mixer is enabled, typing corrected results are merged inside
+  // the predictor using various quality signals.
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (IsTypingCorrectionEnabled(request) &&
+      !IsTypingCorrectionMixerV2Enabled(request) &&
       key_len >= kMinTypingCorrectionKeyLen) {
-    AggregateTypeCorrectingPrediction(request, segments, selected_types,
-                                      results);
+    AggregateTypingCorrectedPrediction(request, segments, selected_types,
+                                       results);
     selected_types |= TYPING_CORRECTION;
   }
 
@@ -1335,79 +1353,6 @@ void DictionaryPredictionAggregator::GetPredictiveResultsForEnglishKey(
   }
 }
 
-void DictionaryPredictionAggregator::GetPredictiveResultsUsingTypingCorrection(
-    absl::Span<const spelling::TypeCorrectedQuery> queries,
-    const ConversionRequest &request, const Segments &segments,
-    PredictionTypes base_selected_types, std::vector<Result> *results) const {
-  if (queries.empty() || segments.conversion_segments_size() == 0) {
-    return;
-  }
-
-  // Make ConversionRequest that has no composer to avoid the original key
-  // from being used during the candidate aggregation. Kana modifier
-  // insensitive dictionary lookup is also disabled as composition
-  // spellchecker has already fixed them.
-  ConversionRequest corrected_request = request;
-  corrected_request.set_composer(nullptr);
-  corrected_request.set_kana_modifier_insensitive_conversion(false);
-
-  for (const auto &query : queries) {
-    absl::string_view key = query.correction;
-    const size_t key_len = Util::CharsLen(key);
-
-    // Makes dummy segments with corrected query.
-    Segments corrected_segments = segments;
-    corrected_segments.mutable_conversion_segment(0)->set_key(key);
-
-    std::vector<Result> corrected_results;
-
-    // Since COMPLETION query already performs predictive lookup,
-    // no need to run UNIGRAM and BIGRAM lookup.
-    const bool is_realtime_only = (query.type & TypeCorrectedQuery::COMPLETION);
-
-    if (is_realtime_only) {
-      constexpr int kRealtimeSize = 1;
-      AggregateRealtimeConversion(corrected_request, kRealtimeSize,
-                                  corrected_segments, &corrected_results);
-
-    } else {
-      const UnigramConfig &unigram_config = GetUnigramConfig(request);
-      if (key_len >= unigram_config.min_key_len) {
-        const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
-        (this->*unigram_fn)(corrected_request, corrected_segments,
-                            &corrected_results);
-      }
-
-      if (base_selected_types & REALTIME) {
-        constexpr int kRealtimeSize = 2;
-        AggregateRealtimeConversion(corrected_request, kRealtimeSize,
-                                    corrected_segments, &corrected_results);
-      }
-
-      if (base_selected_types & BIGRAM) {
-        AggregateBigramPrediction(corrected_request, corrected_segments,
-                                  Segment::Candidate::SOURCE_INFO_NONE,
-                                  &corrected_results);
-      }
-    }
-
-    // Appends the result with TYPING_CORRECTION attribute.
-    for (Result &result : corrected_results) {
-      // If the correction is a pure kana modifier insensitive correction,
-      // typing correction annotation is not necessary.
-      if (!(query.type & TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY) &&
-          query.type & TypeCorrectedQuery::CORRECTION) {
-        result.types |= TYPING_CORRECTION;
-      }
-      // bias = hyp_score - base_score, so larger is better.
-      // bias is computed in log10 domain, so we need to use the different
-      // scale factor. 500 * log(10) = ~1150.
-      result.wcost -= 1150 * query.bias;
-      results->emplace_back(std::move(result));
-    }
-  }
-}
-
 // static
 bool DictionaryPredictionAggregator::GetZeroQueryCandidatesForKey(
     const ConversionRequest &request, const absl::string_view key,
@@ -1607,18 +1552,16 @@ void DictionaryPredictionAggregator::AggregateEnglishPredictionUsingRawInput(
   }
 }
 
-void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
+void DictionaryPredictionAggregator::AggregateTypingCorrectedPrediction(
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes base_selected_types, std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(dictionary_);
 
-  if (!request.has_composer()) {
-    return;
-  }
-
   const size_t prev_results_size = results->size();
-  if (prev_results_size > 10000) {
+
+  if (!request.has_composer() || segments.conversion_segments_size() == 0 ||
+      prev_results_size > 10000) {
     return;
   }
 
@@ -1629,11 +1572,85 @@ void DictionaryPredictionAggregator::AggregateTypeCorrectingPrediction(
     return;
   }
 
+  const absl::Span<const spelling::TypeCorrectedQuery> queries =
+      corrected.value();
+
+  if (queries.empty()) {
+    return;
+  }
+
+  // Make ConversionRequest that has no composer to avoid the original key
+  // from being used during the candidate aggregation. Kana modifier
+  // insensitive dictionary lookup is also disabled as composition
+  // spellchecker has already fixed them.
+  ConversionRequest corrected_request = request;
+  corrected_request.set_composer(nullptr);
+  corrected_request.set_kana_modifier_insensitive_conversion(false);
+
+  for (const auto &query : queries) {
+    absl::string_view key = query.correction;
+    const size_t key_len = Util::CharsLen(key);
+
+    // Makes dummy segments with corrected query.
+    Segments corrected_segments = segments;
+    corrected_segments.mutable_conversion_segment(0)->set_key(key);
+
+    std::vector<Result> corrected_results;
+
+    // Since COMPLETION query already performs predictive lookup,
+    // no need to run UNIGRAM and BIGRAM lookup.
+    const bool is_realtime_only = (query.type & TypeCorrectedQuery::COMPLETION);
+
+    if (is_realtime_only) {
+      constexpr int kRealtimeSize = 1;
+      AggregateRealtimeConversion(corrected_request, kRealtimeSize,
+                                  corrected_segments, &corrected_results);
+
+    } else {
+      const UnigramConfig &unigram_config = GetUnigramConfig(request);
+      if (key_len >= unigram_config.min_key_len) {
+        const AggregateUnigramFn &unigram_fn = unigram_config.unigram_fn;
+        (this->*unigram_fn)(corrected_request, corrected_segments,
+                            &corrected_results);
+      }
+
+      if (base_selected_types & REALTIME) {
+        constexpr int kRealtimeSize = 2;
+        AggregateRealtimeConversion(corrected_request, kRealtimeSize,
+                                    corrected_segments, &corrected_results);
+      }
+
+      if (base_selected_types & BIGRAM) {
+        AggregateBigramPrediction(corrected_request, corrected_segments,
+                                  Segment::Candidate::SOURCE_INFO_NONE,
+                                  &corrected_results);
+      }
+    }
+
+    // Appends the result with TYPING_CORRECTION attribute.
+    for (Result &result : corrected_results) {
+      // If the correction is a pure kana modifier insensitive correction,
+      // typing correction annotation is not necessary.
+      if (IsTypingCorrectionMixerV2Enabled(request)) {
+        if (query.type & TypeCorrectedQuery::CORRECTION) {
+          result.types |= TYPING_CORRECTION;
+        }
+      } else {
+        if (!(query.type & TypeCorrectedQuery::KANA_MODIFIER_INSENTIVE_ONLY) &&
+            query.type & TypeCorrectedQuery::CORRECTION) {
+          result.types |= TYPING_CORRECTION;
+        }
+      }
+      result.typing_correction_score = query.score;
+      // bias = hyp_score - base_score, so larger is better.
+      // bias is computed in log10 domain, so we need to use the different
+      // scale factor. 500 * log(10) = ~1150.
+      result.wcost -= 1150 * query.bias;
+      results->emplace_back(std::move(result));
+    }
+  }
+
   const int lookup_limit = GetCandidateCutoffThreshold(request.request_type());
-
-  GetPredictiveResultsUsingTypingCorrection(
-      corrected.value(), request, segments, base_selected_types, results);
-
   if (results->size() - prev_results_size >= lookup_limit) {
     results->resize(prev_results_size);
   }
