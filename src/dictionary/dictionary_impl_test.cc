@@ -37,10 +37,9 @@
 
 #include "base/system_util.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
+#include "config/config_handler.h"
 #include "converter/node_allocator.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_interface.h"
@@ -50,6 +49,7 @@
 #include "dictionary/system/system_dictionary.h"
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
+#include "request/conversion_request.h"
 #include "testing/googletest.h"
 #include "testing/gunit.h"
 

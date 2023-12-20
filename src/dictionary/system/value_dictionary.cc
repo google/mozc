@@ -34,12 +34,12 @@
 #include <string>
 
 #include "base/util.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/codec_interface.h"
+#include "request/conversion_request.h"
 #include "storage/louds/louds_trie.h"
 
 namespace mozc {

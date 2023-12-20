@@ -39,9 +39,7 @@ load(
 )
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 licenses(["notice"])
 

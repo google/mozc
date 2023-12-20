@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "converter/segments.h"
@@ -43,6 +42,7 @@
 #include "dictionary/single_kanji_dictionary.h"
 #include "prediction/prediction_aggregator_interface.h"
 #include "prediction/result.h"
+#include "request/conversion_request.h"
 
 namespace mozc::prediction {
 

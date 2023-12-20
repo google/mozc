@@ -35,12 +35,12 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 

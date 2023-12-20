@@ -57,10 +57,10 @@ cc_library(
 apple_dynamic_framework_import(
     name = "QtCore_mac",
     framework_imports = glob(
-        include = [
-            "lib/QtCore.framework/Versions/A/QtCore",
-            "lib/QtCore.framework/QtCore",
-            "lib/QtCore.framework/Resoures/**",
+        include = ["lib/QtCore.framework/**"],
+        exclude = [
+            "lib/QtCore.framework/Headers/**",
+            "lib/QtCore.framework/Versions/A/Headers/**",
         ],
     ),
 )
@@ -68,10 +68,10 @@ apple_dynamic_framework_import(
 apple_dynamic_framework_import(
     name = "QtGui_mac",
     framework_imports = glob(
-        include = [
-          "lib/QtGui.framework/Versions/A/QtGui",
-          "lib/QtGui.framework/QtGui",
-          "lib/QtGui.framework/Resoures/**",
+        include = ["lib/QtGui.framework/**"],
+        exclude = [
+            "lib/QtGui.framework/Headers/**",
+            "lib/QtGui.framework/Versions/A/Headers/**",
         ],
     ),
 )
@@ -79,10 +79,10 @@ apple_dynamic_framework_import(
 apple_dynamic_framework_import(
     name = "QtPrintSupport_mac",
     framework_imports = glob(
-        include = [
-          "lib/QtPrintSupport.framework/Versions/A/QtPrintSupport",
-          "lib/QtPrintSupport.framework/QtPrintSupport",
-          "lib/QtPrintSupport.framework/Resoures/**",
+        include = ["lib/QtPrintSupport.framework/**"],
+        exclude = [
+            "lib/QtPrintSupport.framework/Headers/**",
+            "lib/QtPrintSupport.framework/Versions/A/Headers/**",
         ],
     ),
 )
@@ -90,10 +90,10 @@ apple_dynamic_framework_import(
 apple_dynamic_framework_import(
     name = "QtWidgets_mac",
     framework_imports = glob(
-        include = [
-          "lib/QtWidgets.framework/Versions/A/QtWidgets",
-          "lib/QtWidgets.framework/QtWidgets",
-          "lib/QtWidgets.framework/Resoures/**",
+        include = ["lib/QtWidgets.framework/**"],
+        exclude = [
+            "lib/QtWidgets.framework/Headers/**",
+            "lib/QtWidgets.framework/Versions/A/Headers/**",
         ],
     ),
 )

@@ -32,9 +32,9 @@
 #include <algorithm>
 
 #include "base/win32/win_util.h"
-#include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "client/client_interface.h"
+#include "config/config_handler.h"
 
 namespace mozc {
 namespace win32 {

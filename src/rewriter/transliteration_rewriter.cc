@@ -41,11 +41,11 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
+#include "request/conversion_request.h"
 // For T13n normalize
 #include "usage_stats/usage_stats.h"
 #include "transliteration/transliteration.h"

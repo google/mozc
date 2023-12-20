@@ -47,7 +47,6 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/base/attributes.h"
@@ -55,6 +54,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "client/client_interface.h"
+#include "config/config_handler.h"
 #include "ipc/ipc.h"
 #include "session/key_info_util.h"
 

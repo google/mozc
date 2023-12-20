@@ -35,11 +35,11 @@
 #include <utility>
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

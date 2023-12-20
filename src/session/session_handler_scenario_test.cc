@@ -113,6 +113,7 @@ const char *kScenarioFileList[] = {
     // Mac: We do not have the way to change the mode indicator from IME.
     DATA_DIR "input_mode.txt",
 #endif  // !__APPLE__
+    DATA_DIR "handwriting.txt",
     DATA_DIR "insert_characters.txt",
     DATA_DIR "kana_modifier_insensitive_conversion.txt",
     DATA_DIR "mobile_partial_variant_candidates.txt",

@@ -34,9 +34,7 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "config_handler",
@@ -138,7 +136,6 @@ mozc_cc_library(
     name = "character_form_manager",
     srcs = ["character_form_manager.cc"],
     hdrs = ["character_form_manager.h"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":config_handler",
         "//base:config_file_stream",

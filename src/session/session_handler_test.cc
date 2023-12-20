@@ -30,6 +30,7 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <memory>
@@ -41,7 +42,6 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/thread.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "spelling/spellchecker_service_interface.h"
@@ -52,10 +52,10 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "config/config_handler.h"
 #include "converter/segments.h"
 #include "engine/engine.h"
 #include "engine/engine_builder.h"
-#include "engine/engine_interface.h"
 #include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
 #include "engine/mock_data_engine_factory.h"
@@ -497,6 +497,41 @@ TEST_F(SessionHandlerTest, ConfigTest) {
   EXPECT_COUNT_STATS("SetConfig", 1);
   // CreateSession, GetConfig and SetConfig.
   EXPECT_COUNT_STATS("SessionAllEvent", 3);
+}
+
+TEST_F(SessionHandlerTest, UpdateComposition) {
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  config::ConfigHandler::SetConfig(config);
+  SessionHandler handler(CreateMockDataEngine());
+
+  uint64_t session_id = 0;
+  EXPECT_TRUE(CreateSession(&handler, &session_id));
+  {
+    // Move to PRECOMPOSITION mode.
+    // On Windows, its initial mode is DIRECT.
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_KEY);
+    input->mutable_key()->set_special_key(commands::KeyEvent::ON);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+  }
+  {
+    commands::Command command;
+    commands::Input *input = command.mutable_input();
+    input->set_id(session_id);
+    input->set_type(commands::Input::SEND_COMMAND);
+    input->mutable_command()->set_type(
+        commands::SessionCommand::UPDATE_COMPOSITION);
+    commands::SessionCommand::CompositionEvent *composition_event =
+        input->mutable_command()->add_composition_events();
+    composition_event->set_composition_string("かん字");
+    composition_event->set_probability(1.0);
+    EXPECT_TRUE(handler.EvalCommand(&command));
+    EXPECT_TRUE(command.output().consumed());
+    EXPECT_EQ(command.output().preedit().segment(0).value(), "かん字");
+  }
 }
 
 TEST_F(SessionHandlerTest, KeyMapTest) {

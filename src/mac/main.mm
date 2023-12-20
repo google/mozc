@@ -41,9 +41,9 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/run_level.h"
-#include "config/stats_config_util.h"
 #include "absl/flags/flag.h"
 #include "client/client.h"
+#include "config/stats_config_util.h"
 
 int main(int argc, char *argv[]) {
   if (!mozc::RunLevel::IsValidClientRunLevel()) {

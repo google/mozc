@@ -35,9 +35,7 @@
 load("//bazel/win32:internal.bzl", "mozc_win32_lib")
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 bzl_library(
     name = "build_defs_bzl",

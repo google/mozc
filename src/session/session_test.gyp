@@ -41,7 +41,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/engine/engine.gyp:engine_factory',
         '<(mozc_oss_src_dir)/engine/engine.gyp:mock_data_engine_factory',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
@@ -140,8 +140,8 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base_test.gyp:clock_mock',
-        '<(mozc_src_dir)/config/config.gyp:config_handler',
-        '<(mozc_src_dir)/config/config.gyp:stats_config_util',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         '<(mozc_oss_src_dir)/testing/testing.gyp:mozctest',
@@ -181,7 +181,7 @@
       ],
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
-        '<(mozc_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_src_dir)/protocol/protocol.gyp:commands_proto',
         '<(mozc_oss_src_dir)/testing/testing.gyp:gtest_main',
         'session_base.gyp:key_info_util',

@@ -33,8 +33,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "config/stats_config_util_mock.h"
 #include "absl/strings/string_view.h"
+#include "config/stats_config_util_mock.h"
 #include "testing/gunit.h"
 
 namespace mozc {

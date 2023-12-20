@@ -39,9 +39,7 @@ load(
     "LINUX_MOZC_SERVER_DIR",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 genrule(
     name = "icons",

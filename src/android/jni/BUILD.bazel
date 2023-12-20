@@ -40,7 +40,10 @@ mozc_cc_library(
     name = "mozcjni",
     srcs = ["mozcjni.cc"],
     tags = MOZC_TAGS.ANDROID_ONLY,
-    visibility = ["//:__subpackages__"],  # Scheuklappen: keep
+    # Scheuklappen: keep
+    visibility = [
+        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
+    ],
     deps = [
         "//base:logging",
         "//base:singleton",

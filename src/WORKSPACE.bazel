@@ -72,6 +72,24 @@ load(
 )
 apple_rules_dependencies()
 
+load(
+    "@build_bazel_rules_swift//swift:repositories.bzl",
+    "swift_rules_dependencies",
+)
+swift_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
+)
+swift_rules_extra_dependencies()
+
+load(
+    "@build_bazel_apple_support//lib:repositories.bzl",
+    "apple_support_dependencies",
+)
+apple_support_dependencies()
+
 
 # Android NDK setup
 RULES_ANDROID_NDK_COMMIT= "44dcd014f4b126f8941c29ff1b25e1584bd3eb26"

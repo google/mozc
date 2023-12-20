@@ -76,7 +76,7 @@
             '<(mozc_src_dir)/base/base.gyp:base',
             '<(mozc_src_dir)/base/base.gyp:url',
             '<(mozc_oss_src_dir)/client/client.gyp:client',
-            '<(mozc_src_dir)/config/config.gyp:stats_config_util',
+            '<(mozc_oss_src_dir)/config/config.gyp:stats_config_util',
             '<(mozc_oss_src_dir)/renderer/renderer.gyp:renderer_client',
             '../base/win32_base.gyp:ime_base',
             '../base/win32_base.gyp:imframework_util',

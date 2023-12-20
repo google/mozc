@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "request/conversion_request.h"
 #include "absl/strings/string_view.h"
 #include "converter/connector.h"
 #include "converter/immutable_converter.h"
@@ -56,6 +55,7 @@
 #include "dictionary/system/value_dictionary.h"
 #include "dictionary/user_dictionary_stub.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 #include "testing/gunit.h"
 
 namespace mozc {

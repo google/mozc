@@ -33,9 +33,7 @@
 load("//:build_defs.bzl", "mozc_select")
 load("//bazel:stubs.bzl", "bzl_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 package_group(
     name = "mozc",
@@ -119,9 +117,7 @@ bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
     test_size = "small",
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":config_bzl",
         "//bazel:run_build_tool_bzl",
@@ -135,9 +131,7 @@ bzl_library(
     name = "config_bzl",
     srcs = ["config.bzl"],
     test_size = "small",
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
 )
 
 filegroup(

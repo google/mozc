@@ -35,10 +35,10 @@
 #include "base/const.h"
 #include "base/logging.h"
 #include "base/version.h"
-#include "request/conversion_request.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace {

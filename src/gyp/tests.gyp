@@ -35,7 +35,7 @@
       'dependencies': [
         '../base/base_test.gyp:base_all_test',
         '<(mozc_oss_src_dir)/client/client_test.gyp:client_all_test',
-        '../config/config_test.gyp:config_all_test',
+        '<(mozc_oss_src_dir)/config/config_test.gyp:config_all_test',
         '<(mozc_oss_src_dir)/composer/composer_test.gyp:composer_all_test',
         '<(mozc_oss_src_dir)/converter/converter_test.gyp:converter_all_test',
         '<(mozc_oss_src_dir)/dictionary/dictionary_test.gyp:dictionary_all_test',

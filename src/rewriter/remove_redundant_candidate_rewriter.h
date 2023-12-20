@@ -34,8 +34,8 @@
 #ifndef MOZC_REWRITER_REMOVE_REDUNDANT_CANDIDATE_REWRITER_H_
 #define MOZC_REWRITER_REMOVE_REDUNDANT_CANDIDATE_REWRITER_H_
 
-#include "request/conversion_request.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

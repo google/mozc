@@ -32,9 +32,9 @@
 #include <cstdint>
 #include <memory>
 
+#include "absl/strings/string_view.h"
 #include "config/stats_config_util.h"
 #include "config/stats_config_util_mock.h"
-#include "absl/strings/string_view.h"
 #include "testing/gunit.h"
 
 using ::testing::AssertionSuccess;

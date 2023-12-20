@@ -41,13 +41,13 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "storage/lru_storage.h"
 
 namespace mozc {

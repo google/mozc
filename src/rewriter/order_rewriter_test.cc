@@ -32,9 +32,9 @@
 #include <memory>
 #include <string>
 
-#include "request/conversion_request.h"
 #include "converter/segments.h"
 #include "converter/segments_matchers.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
 #include "testing/gmock.h"

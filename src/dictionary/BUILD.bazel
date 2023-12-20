@@ -41,9 +41,7 @@ load(
 )
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "dictionary_interface",

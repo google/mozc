@@ -324,6 +324,7 @@ SendCommand_ConvertNextPage
 SendCommand_TurnOnIme
 SendCommand_TurnOffIme
 SendCommand_DeleteCandidateFromHistory
+SendCommand_UpdateComposition
 
 # The count of revert in Chrome Omnibox or Google search box
 SendCommand_RevertInChromeOmnibox

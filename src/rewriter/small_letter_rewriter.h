@@ -30,9 +30,9 @@
 #ifndef MOZC_REWRITER_SMALL_LETTER_REWRITER_H_
 #define MOZC_REWRITER_SMALL_LETTER_REWRITER_H_
 
-#include "request/conversion_request.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {

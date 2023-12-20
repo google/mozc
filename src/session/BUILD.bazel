@@ -40,9 +40,7 @@ load(
 )
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "session_interface",
@@ -758,6 +756,8 @@ mozc_cc_library(
         "//protocol:config_cc_proto",
         "//storage:registry",
         "//usage_stats",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:span",

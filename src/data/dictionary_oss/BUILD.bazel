@@ -29,9 +29,7 @@
 
 load("//converter:evaluation.bzl", "evaluation")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 exports_files([
     "collocation.txt",

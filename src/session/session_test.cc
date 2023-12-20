@@ -39,11 +39,9 @@
 #include "base/logging.h"
 #include "base/strings/assign.h"
 #include "base/strings/unicode.h"
-#include "config/config_handler.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/status/statusor.h"
@@ -53,6 +51,7 @@
 #include "composer/composer.h"
 #include "composer/key_parser.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -61,10 +60,12 @@
 #include "engine/engine_mock.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
+#include "request/conversion_request.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "session/internal/ime_context.h"
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
+#include "testing/gmock.h"
 #include "testing/gunit.h"
 #include "testing/mozctest.h"
 #include "transliteration/transliteration.h"
@@ -767,6 +768,29 @@ TEST_F(SessionTest, TestSendKey) {
   EXPECT_TRUE(command.output().consumed());
   SendKey("Up", &session, &command);
   EXPECT_TRUE(command.output().consumed());
+}
+
+TEST_F(SessionTest, UpdateComposition) {
+  MockEngine engine;
+  MockConverter converter;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+
+  commands::Command command;
+  commands::Input *input = command.mutable_input();
+  input->set_type(commands::Input::SEND_COMMAND);
+  input->mutable_command()->set_type(
+      commands::SessionCommand::UPDATE_COMPOSITION);
+  commands::SessionCommand::CompositionEvent *composition_event =
+      input->mutable_command()->add_composition_events();
+  composition_event->set_composition_string("かん字");
+  composition_event->set_probability(1.0);
+
+  EXPECT_TRUE(session.UpdateComposition(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_EQ(command.output().preedit().segment(0).value(), "かん字");
 }
 
 TEST_F(SessionTest, SendCommand) {
@@ -2923,7 +2947,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
   Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
-  {  // Commit something. It's expected that Undo is not trigerred later.
+  {  // Commit something. It's expected that Undo is not triggered later.
     commands::Command command;
     Segments segments;
     InsertCharacterChars("aiueo", &session, &command);

@@ -99,7 +99,7 @@
         'immutable_converter_interface.cc',
       ],
       'dependencies': [
-        '<(mozc_src_dir)/request/request.gyp:conversion_request',
+        '<(mozc_oss_src_dir)/request/request.gyp:conversion_request',
       ],
     },
     {
@@ -112,7 +112,7 @@
       'dependencies': [
         '<(mozc_src_dir)/base/base.gyp:base',
         '<(mozc_src_dir)/base/base.gyp:japanese_util',
-        '<(mozc_src_dir)/config/config.gyp:config_handler',
+        '<(mozc_oss_src_dir)/config/config.gyp:config_handler',
         '<(mozc_oss_src_dir)/dictionary/dictionary.gyp:suffix_dictionary',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:pos_matcher',
         '<(mozc_oss_src_dir)/dictionary/dictionary_base.gyp:suppression_dictionary',

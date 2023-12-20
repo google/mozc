@@ -34,9 +34,7 @@ load(
     "mozc_select",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "engine_builder",
@@ -101,9 +99,7 @@ mozc_cc_library(
         "engine.cc",
     ],
     hdrs = ["engine.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":engine_interface",
         ":user_data_manager_interface",

@@ -31,13 +31,12 @@
 
 #include <QHeaderView>
 #include <QtGui>
-
 #include <cstddef>
 #include <memory>
 #include <string>
 
-#include "config/config_handler.h"
 #include "absl/strings/string_view.h"
+#include "config/config_handler.h"
 #include "gui/config_dialog/combobox_delegate.h"
 
 namespace mozc {

@@ -34,9 +34,7 @@ load(
     "mozc_cc_test",
 )
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 exports_files(["mozc.el"])
 

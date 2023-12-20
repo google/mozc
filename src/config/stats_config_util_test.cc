@@ -39,8 +39,8 @@
 
 #ifdef __ANDROID__
 #include "base/file/temp_dir.h"
-#include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "config/config_handler.h"
 #include "testing/mozctest.h"
 #endif  // __ANDROID__
 

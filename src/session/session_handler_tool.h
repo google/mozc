@@ -73,6 +73,8 @@ class SessionHandlerTool {
   bool TestSendKeyWithOption(const commands::KeyEvent &key,
                              const commands::Input &option,
                              commands::Output *output);
+  bool UpdateComposition(absl::Span<const std::string> args,
+                         commands::Output *output);
   bool SelectCandidate(uint32_t id, commands::Output *output);
   bool SubmitCandidate(uint32_t id, commands::Output *output);
 

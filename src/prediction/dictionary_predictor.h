@@ -37,7 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -57,6 +56,7 @@
 #include "prediction/rescorer_interface.h"
 #include "prediction/result.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 
 namespace mozc::prediction {
 namespace dictionary_predictor_internal {

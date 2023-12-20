@@ -44,12 +44,12 @@
 #include "base/protobuf/text_format.h"
 #include "base/strings/assign.h"
 #include "base/util.h"
-#include "config/character_form_manager.h"
-#include "config/config_handler.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -57,6 +57,8 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "composer/key_parser.h"
+#include "config/character_form_manager.h"
+#include "config/config_handler.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
@@ -70,7 +72,6 @@
 namespace mozc {
 namespace session {
 
-using ::mozc::commands::CandidateList;
 using ::mozc::commands::CandidateWord;
 using ::mozc::commands::Command;
 using ::mozc::commands::CompositionMode;
@@ -143,6 +144,25 @@ bool SessionHandlerTool::TestSendKeyWithOption(const commands::KeyEvent &key,
   input.set_type(commands::Input::TEST_SEND_KEY);
   *input.mutable_key() = key;
   input.MergeFrom(option);
+  return EvalCommand(&input, output);
+}
+
+bool SessionHandlerTool::UpdateComposition(absl::Span<const std::string> args,
+                                           commands::Output *output) {
+  DCHECK_EQ(0, args.size() % 2);
+  commands::Input input;
+  //  input.set_type(commands::Input::UPDATE_COMPOSITION);
+  input.set_type(commands::Input::SEND_COMMAND);
+  input.mutable_command()->set_type(
+      commands::SessionCommand::UPDATE_COMPOSITION);
+  for (int i = 0; i < args.size(); i += 2) {
+    commands::SessionCommand::CompositionEvent *composition_event =
+        input.mutable_command()->add_composition_events();
+    composition_event->set_composition_string(args[i]);
+    if (double value = 0.0; NumberUtil::SafeStrToDouble(args[i + 1], &value)) {
+      composition_event->set_probability(value);
+    }
+  }
   return EvalCommand(&input, output);
 }
 
@@ -510,10 +530,18 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
   }
 
 // Placeholders
-#define MOZC_EXPECT_STATS_NOT_EXIST(name) while (false) {}
-#define MOZC_EXPECT_COUNT_STATS(name, value) while (false) {}
-#define MOZC_EXPECT_INTEGER_STATS(name, value) while (false) {}
-#define MOZC_EXPECT_BOOLEAN_STATS(name, value) while (false) {}
+#define MOZC_EXPECT_STATS_NOT_EXIST(name) \
+  while (false) {                         \
+  }
+#define MOZC_EXPECT_COUNT_STATS(name, value) \
+  while (false) {                            \
+  }
+#define MOZC_EXPECT_INTEGER_STATS(name, value) \
+  while (false) {                              \
+  }
+#define MOZC_EXPECT_BOOLEAN_STATS(name, value) \
+  while (false) {                              \
+  }
 // Uses args to suppress compiler warnings.
 #define MOZC_EXPECT_TIMING_STATS(name, total, num, min, max) \
   while (false && total && num && min && max) {              \
@@ -593,6 +621,10 @@ absl::Status SessionHandlerInterpreter::Eval(
     }
     MOZC_ASSERT_TRUE(
         client_->TestSendKeyWithOption(key_event, option, last_output_.get()));
+  } else if (command == "UPDATE_COMPOSITION") {
+    MOZC_ASSERT_EQ(1, args.size() % 2);
+    MOZC_ASSERT_TRUE(
+        client_->UpdateComposition(args.subspan(1), last_output_.get()));
   } else if (command == "SELECT_CANDIDATE") {
     MOZC_ASSERT_EQ(2, args.size());
     MOZC_ASSERT_TRUE(client_->SelectCandidate(NumberUtil::SimpleAtoi(args[1]),
@@ -624,6 +656,12 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_MOBILE_REQUEST") {
     RequestForUnitTest::FillMobileRequest(request_.get());
+    MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
+  } else if (command == "SET_HANDWRITING_REQUEST") {
+    request_->set_zero_query_suggestion(true);
+    request_->set_mixed_conversion(false);
+    request_->set_kana_modifier_insensitive_conversion(false);
+    request_->set_auto_partial_suggestion(false);
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_REQUEST") {
     MOZC_ASSERT_TRUE(args.size() >= 3);
@@ -708,11 +746,13 @@ absl::Status SessionHandlerInterpreter::Eval(
     MOZC_ASSERT_EQ(args.size(), 3);
     const CandidateWord &cand = GetCandidateByValue(args[1]);
     const bool has_cand = !cand.value().empty();
-    MOZC_EXPECT_TRUE_MSG(has_cand, absl::StrCat(args[1], " is not found\n",
-                           protobuf::Utf8Format(last_output_->candidates())));
+    MOZC_EXPECT_TRUE_MSG(
+        has_cand,
+        absl::StrCat(args[1], " is not found\n",
+                     protobuf::Utf8Format(last_output_->candidates())));
     MOZC_EXPECT_TRUE(has_cand);
     MOZC_EXPECT_EQ_MSG(cand.annotation().description(), args[2],
-          protobuf::Utf8Format(cand));
+                       protobuf::Utf8Format(cand));
   } else if (command == "EXPECT_RESULT") {
     if (args.size() == 2 && !args[1].empty()) {
       MOZC_ASSERT_TRUE(last_output_->has_result());

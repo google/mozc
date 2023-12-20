@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "request/conversion_request.h"
 #include "converter/candidate_filter.h"
 #include "converter/connector.h"
 #include "converter/lattice.h"
@@ -47,6 +46,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 namespace {

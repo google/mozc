@@ -44,13 +44,13 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
-#include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/str_split.h"
 #include "composer/key_parser.h"
+#include "config/config_handler.h"
 
 namespace mozc {
 namespace keymap {

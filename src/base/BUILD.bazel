@@ -44,9 +44,7 @@ load(
 load("//build_tools:embed_file.bzl", "mozc_embed_file")
 load("//bazel:run_build_tool.bzl", "mozc_run_build_tool")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
+package(default_visibility = ["//:__subpackages__"])
 
 mozc_cc_library(
     name = "init_mozc_buildtool",
@@ -65,6 +63,7 @@ mozc_cc_library(
             "@com_google_absl//absl/flags:parse",
         ],
         default = ["//base"],
+        ios = ["//base"],
         linux = ["//base"],
         macos = ["//base"],
         oss = [
@@ -80,9 +79,7 @@ mozc_cc_library(
     name = "init_mozc",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         "@com_google_absl//absl/flags:flag",
     ] + mozc_select(
@@ -94,6 +91,7 @@ mozc_cc_library(
             "@com_google_absl//absl/flags:parse",
         ],
         default = ["//base"],
+        ios = ["//base"],
         linux = ["//base"],
         macos = ["//base"],
         oss = [
@@ -703,9 +701,7 @@ mozc_cc_library(
         "run_level.cc",
     ],
     hdrs = ["run_level.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":const",
         ":logging",
@@ -792,9 +788,7 @@ mozc_run_build_tool(
             windows = ["--target_platform=Windows"],
         ),
     tool = "//build_tools:mozc_version",
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
 )
 
 mozc_run_build_tool(
