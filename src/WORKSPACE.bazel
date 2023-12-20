@@ -91,7 +91,7 @@ load(
 apple_support_dependencies()
 
 
-# Android NDK setup
+# Android NDK setup (2023-01-13)
 RULES_ANDROID_NDK_COMMIT= "44dcd014f4b126f8941c29ff1b25e1584bd3eb26"
 RULES_ANDROID_NDK_SHA = "79b1857e8e05e3007ad090a3269d2932e988b3ed176d7abd042719d45eb51500"
 http_archive(
